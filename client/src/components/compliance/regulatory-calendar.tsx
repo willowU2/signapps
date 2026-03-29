@@ -53,7 +53,7 @@ const TYPE_CONFIG: Record<DeadlineType, { label: string; color: string; badge: s
   labor: { label: "Labor", color: "bg-orange-500", badge: "bg-orange-100 text-orange-700" },
   environmental: { label: "Environmental", color: "bg-teal-500", badge: "bg-teal-100 text-teal-700" },
   security: { label: "Security", color: "bg-red-500", badge: "bg-red-100 text-red-700" },
-  custom: { label: "Custom", color: "bg-gray-500", badge: "bg-gray-100 text-gray-700" },
+  custom: { label: "Custom", color: "bg-gray-500", badge: "bg-muted text-muted-foreground" },
 }
 
 // Pre-loaded GDPR recurring deadlines

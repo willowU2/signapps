@@ -266,7 +266,7 @@ function ItemCard({
               'flex items-center gap-1 px-1.5 py-0.5 rounded',
               item.priority === 'urgent' && 'bg-red-100 text-red-700',
               item.priority === 'high' && 'bg-orange-100 text-orange-700',
-              item.priority === 'low' && 'bg-gray-100 text-gray-600'
+              item.priority === 'low' && 'bg-muted text-muted-foreground'
             )}>
               <Flag className="h-3 w-3" />
               <span className="capitalize">{item.priority}</span>

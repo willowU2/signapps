@@ -85,7 +85,7 @@ function getRoleColor(role: string): string {
     case "subordinate":
       return "bg-green-100 text-green-800";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-muted text-gray-800";
   }
 }
 
@@ -136,39 +136,39 @@ export function Feedback360() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">360° Feedback Review</h2>
-        <p className="text-gray-600">
+        <h2 className="text-2xl font-bold text-foreground">360° Feedback Review</h2>
+        <p className="text-muted-foreground">
           Comprehensive feedback from managers, peers, and team members
         </p>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Overall Rating</p>
+          <p className="text-sm text-muted-foreground font-medium">Overall Rating</p>
           <p className="text-3xl font-bold text-blue-900">{overallAverage}</p>
-          <p className="text-xs text-gray-500 mt-1">out of 5.0</p>
+          <p className="text-xs text-muted-foreground mt-1">out of 5.0</p>
         </div>
         <div className="rounded-lg border bg-purple-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Evaluators</p>
+          <p className="text-sm text-muted-foreground font-medium">Evaluators</p>
           <p className="text-3xl font-bold text-purple-900">{evaluators.length}</p>
-          <p className="text-xs text-gray-500 mt-1">Responses received</p>
+          <p className="text-xs text-muted-foreground mt-1">Responses received</p>
         </div>
         <div className="rounded-lg border bg-green-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Managers</p>
+          <p className="text-sm text-muted-foreground font-medium">Managers</p>
           <p className="text-3xl font-bold text-green-900">
             {evaluators.filter((e) => e.role === "manager").length}
           </p>
         </div>
         <div className="rounded-lg border bg-yellow-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Peers & Reports</p>
+          <p className="text-sm text-muted-foreground font-medium">Peers & Reports</p>
           <p className="text-3xl font-bold text-yellow-900">
             {evaluators.filter((e) => e.role !== "manager").length}
           </p>
         </div>
       </div>
 
-      <div className="border rounded-lg p-6 bg-white">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="border rounded-lg p-6 bg-card">
+        <h3 className="text-lg font-semibold text-foreground mb-4">
           Competency Scores
         </h3>
         <div className="space-y-3">
@@ -177,8 +177,8 @@ export function Feedback360() {
             return (
               <div key={comp.name} className={`rounded-lg border p-4 ${getCompetencyColor(avg)}`}>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="font-medium text-gray-900">{comp.name}</p>
-                  <span className="text-lg font-bold text-gray-900">{avg}</span>
+                  <p className="font-medium text-foreground">{comp.name}</p>
+                  <span className="text-lg font-bold text-foreground">{avg}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
@@ -193,11 +193,11 @@ export function Feedback360() {
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-gray-900">Evaluator Details</h3>
+        <h3 className="text-lg font-semibold text-foreground">Evaluator Details</h3>
         {evaluators.map((evaluator) => (
-          <div key={evaluator.id} className="border rounded-lg overflow-hidden bg-white">
+          <div key={evaluator.id} className="border rounded-lg overflow-hidden bg-card">
             <div
-              className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50"
+              className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted"
               onClick={() =>
                 setExpandedEvaluator(
                   expandedEvaluator === evaluator.id ? null : evaluator.id
@@ -207,7 +207,7 @@ export function Feedback360() {
               <div className="flex items-center gap-3">
                 <User className="w-5 h-5 text-gray-400" />
                 <div>
-                  <p className="font-medium text-gray-900">{evaluator.name}</p>
+                  <p className="font-medium text-foreground">{evaluator.name}</p>
                   <span
                     className={`text-xs font-medium px-2 py-1 rounded capitalize ${getRoleColor(evaluator.role)}`}
                   >
@@ -217,10 +217,10 @@ export function Feedback360() {
               </div>
             </div>
             {expandedEvaluator === evaluator.id && (
-              <div className="border-t bg-gray-50 p-4 space-y-3">
+              <div className="border-t bg-muted p-4 space-y-3">
                 {COMPETENCIES.map((comp) => (
                   <div key={comp.name} className="flex items-center justify-between">
-                    <span className="text-gray-700">{comp.name}</span>
+                    <span className="text-muted-foreground">{comp.name}</span>
                     <StarRating value={evaluator.ratings[comp.name] || 0} />
                   </div>
                 ))}

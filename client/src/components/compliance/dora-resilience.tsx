@@ -59,7 +59,7 @@ export default function DORAResilience() {
       case 'pending':
         return 'bg-amber-100 text-amber-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-gray-800';
     }
   };
 
@@ -75,7 +75,7 @@ export default function DORAResilience() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-xs font-semibold text-gray-600 uppercase">
+              <tr className="border-b text-xs font-semibold text-muted-foreground uppercase">
                 <th className="text-left py-2 px-2">Component</th>
                 <th className="text-right py-2 px-2">RTO</th>
                 <th className="text-right py-2 px-2">RPO</th>
@@ -84,10 +84,10 @@ export default function DORAResilience() {
             </thead>
             <tbody>
               {risks.map((risk) => (
-                <tr key={risk.id} className="border-b hover:bg-gray-50">
-                  <td className="py-3 px-2 font-medium text-gray-900">{risk.component}</td>
-                  <td className="py-3 px-2 text-right text-gray-600">{risk.rto}m</td>
-                  <td className="py-3 px-2 text-right text-gray-600">{risk.rpo}m</td>
+                <tr key={risk.id} className="border-b hover:bg-muted">
+                  <td className="py-3 px-2 font-medium text-foreground">{risk.component}</td>
+                  <td className="py-3 px-2 text-right text-muted-foreground">{risk.rto}m</td>
+                  <td className="py-3 px-2 text-right text-muted-foreground">{risk.rpo}m</td>
                   <td className="py-3 px-2">
                     <Badge className={getStatusColor(risk.status)}>
                       {risk.status.toUpperCase()}
@@ -98,7 +98,7 @@ export default function DORAResilience() {
             </tbody>
           </table>
         </div>
-        <p className="text-xs text-gray-500 mt-4">
+        <p className="text-xs text-muted-foreground mt-4">
           Last comprehensive test: <strong>2024-03-15</strong>
         </p>
       </CardContent>

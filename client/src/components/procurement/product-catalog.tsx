@@ -94,7 +94,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
             key={product.id}
             className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
           >
-            <div className="bg-gray-100 h-48 flex items-center justify-center">
+            <div className="bg-muted h-48 flex items-center justify-center">
               <ImageIcon className="w-16 h-16 text-gray-400" />
             </div>
 

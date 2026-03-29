@@ -38,7 +38,7 @@ function ConfidenceBar({ confidence }: { confidence: number }) {
       <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
         <div className={`h-full ${color} transition-all`} style={{ width: `${percentage}%` }} />
       </div>
-      <span className="text-xs font-semibold text-gray-700 w-10 text-right">{percentage}%</span>
+      <span className="text-xs font-semibold text-muted-foreground w-10 text-right">{percentage}%</span>
     </div>
   );
 }
@@ -136,7 +136,7 @@ export function AIClassifier({
   if (localFiles.length === 0) {
     return (
       <Card className="p-6 text-center">
-        <p className="text-gray-500">Aucun fichier à classer</p>
+        <p className="text-muted-foreground">Aucun fichier à classer</p>
       </Card>
     );
   }
@@ -146,7 +146,7 @@ export function AIClassifier({
       <div className="flex justify-between items-start">
         <div>
           <h3 className="text-lg font-semibold">Classification IA par catégorie</h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             {acceptedCount} sur {totalFiles} fichiers acceptés
           </p>
         </div>
@@ -179,14 +179,14 @@ export function AIClassifier({
             className={`p-4 rounded-lg border transition-colors ${
               file.accepted
                 ? "bg-green-50 border-green-200"
-                : "bg-white border-gray-300"
+                : "bg-card border-border"
             }`}
           >
             {/* File Header */}
             <div className="flex items-start gap-3 mb-3">
-              <FileText className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
+              <FileText className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="text-sm font-medium text-foreground truncate">
                   {file.fileName}
                 </p>
                 {file.accepted && (

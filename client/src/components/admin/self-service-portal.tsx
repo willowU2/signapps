@@ -94,21 +94,21 @@ export function SelfServicePortal() {
       case "error":
         return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-gray-800";
     }
   };
 
   return (
     <div className="space-y-6 w-full max-w-4xl">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Self-Service Portal</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="text-3xl font-bold text-foreground">Self-Service Portal</h1>
+        <p className="text-muted-foreground mt-2">
           Manage your profile, preferences, and module subscriptions
         </p>
       </div>
 
       {/* User Profile Card */}
-      <Card className="border border-gray-200 overflow-hidden">
+      <Card className="border border-border overflow-hidden">
         <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-24" />
         <div className="px-6 pb-6">
           <div className="flex items-end gap-4 -mt-10 mb-6">
@@ -118,15 +118,15 @@ export function SelfServicePortal() {
               className="w-24 h-24 rounded-lg border-4 border-white shadow"
             />
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
-              <p className="text-gray-600">{user.role}</p>
+              <h2 className="text-2xl font-bold text-foreground">{user.name}</h2>
+              <p className="text-muted-foreground">{user.role}</p>
             </div>
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-gray-500" />
-              <span className="text-gray-700">{user.email}</span>
+              <User className="w-4 h-4 text-muted-foreground" />
+              <span className="text-muted-foreground">{user.email}</span>
             </div>
             <div className="flex items-center gap-2">
               <Badge className="bg-blue-100 text-blue-800">Admin Access</Badge>
@@ -139,18 +139,18 @@ export function SelfServicePortal() {
       </Card>
 
       {/* Preferences Section */}
-      <Card className="border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <Card className="border border-border p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">
           Notification Preferences
         </h3>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 hover:bg-gray-50 rounded">
+          <div className="flex items-center justify-between p-3 hover:bg-muted rounded">
             <div className="flex items-center gap-3">
-              <Bell className="w-5 h-5 text-gray-500" />
+              <Bell className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="font-medium text-gray-900">Push Notifications</p>
-                <p className="text-sm text-gray-600">
+                <p className="font-medium text-foreground">Push Notifications</p>
+                <p className="text-sm text-muted-foreground">
                   Get notified about important events
                 </p>
               </div>
@@ -168,12 +168,12 @@ export function SelfServicePortal() {
 
           <Separator />
 
-          <div className="flex items-center justify-between p-3 hover:bg-gray-50 rounded">
+          <div className="flex items-center justify-between p-3 hover:bg-muted rounded">
             <div className="flex items-center gap-3">
-              <Bell className="w-5 h-5 text-gray-500" />
+              <Bell className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="font-medium text-gray-900">Email Alerts</p>
-                <p className="text-sm text-gray-600">
+                <p className="font-medium text-foreground">Email Alerts</p>
+                <p className="text-sm text-muted-foreground">
                   Send alerts to your email address
                 </p>
               </div>
@@ -192,18 +192,18 @@ export function SelfServicePortal() {
       </Card>
 
       {/* Display Preferences */}
-      <Card className="border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <Card className="border border-border p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">
           Display Preferences
         </h3>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 hover:bg-gray-50 rounded">
+          <div className="flex items-center justify-between p-3 hover:bg-muted rounded">
             <div className="flex items-center gap-3">
-              <Moon className="w-5 h-5 text-gray-500" />
+              <Moon className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="font-medium text-gray-900">Dark Mode</p>
-                <p className="text-sm text-gray-600">
+                <p className="font-medium text-foreground">Dark Mode</p>
+                <p className="text-sm text-muted-foreground">
                   Use dark theme across the platform
                 </p>
               </div>
@@ -221,12 +221,12 @@ export function SelfServicePortal() {
 
           <Separator />
 
-          <div className="flex items-center justify-between p-3 hover:bg-gray-50 rounded">
+          <div className="flex items-center justify-between p-3 hover:bg-muted rounded">
             <div className="flex items-center gap-3">
-              <Globe className="w-5 h-5 text-gray-500" />
+              <Globe className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="font-medium text-gray-900">Language</p>
-                <p className="text-sm text-gray-600">
+                <p className="font-medium text-foreground">Language</p>
+                <p className="text-sm text-muted-foreground">
                   Choose your preferred language
                 </p>
               </div>
@@ -254,12 +254,12 @@ export function SelfServicePortal() {
 
           <Separator />
 
-          <div className="flex items-center justify-between p-3 hover:bg-gray-50 rounded">
+          <div className="flex items-center justify-between p-3 hover:bg-muted rounded">
             <div className="flex items-center gap-3">
-              <Globe className="w-5 h-5 text-gray-500" />
+              <Globe className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="font-medium text-gray-900">Timezone</p>
-                <p className="text-sm text-gray-600">
+                <p className="font-medium text-foreground">Timezone</p>
+                <p className="text-sm text-muted-foreground">
                   Set your local timezone
                 </p>
               </div>
@@ -288,8 +288,8 @@ export function SelfServicePortal() {
       </Card>
 
       {/* Module Subscriptions */}
-      <Card className="border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <Card className="border border-border p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">
           Module Subscriptions
         </h3>
 
@@ -297,7 +297,7 @@ export function SelfServicePortal() {
           {Object.entries(subscriptions).map(([key, enabled]) => (
             <div
               key={key}
-              className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+              className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted"
             >
               <Switch
                 checked={enabled}
@@ -306,10 +306,10 @@ export function SelfServicePortal() {
                 }
               />
               <div className="flex-1">
-                <p className="font-medium text-gray-900 capitalize">
+                <p className="font-medium text-foreground capitalize">
                   {key.replace(/([A-Z])/g, " $1").trim()}
                 </p>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-muted-foreground">
                   {enabled ? "Active" : "Inactive"}
                 </p>
               </div>
@@ -319,8 +319,8 @@ export function SelfServicePortal() {
       </Card>
 
       {/* Action History */}
-      <Card className="border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <Card className="border border-border p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">
           Recent Actions
         </h3>
 
@@ -328,12 +328,12 @@ export function SelfServicePortal() {
           {actionHistory.map((item) => (
             <div
               key={item.id}
-              className="flex items-center justify-between p-3 hover:bg-gray-50 rounded border border-gray-100"
+              className="flex items-center justify-between p-3 hover:bg-muted rounded border border-gray-100"
             >
               <div className="flex-1">
-                <p className="font-medium text-gray-900">{item.action}</p>
-                <p className="text-sm text-gray-600">{item.details}</p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="font-medium text-foreground">{item.action}</p>
+                <p className="text-sm text-muted-foreground">{item.details}</p>
+                <p className="text-xs text-muted-foreground mt-1">
                   {new Date(item.timestamp).toLocaleString()}
                 </p>
               </div>

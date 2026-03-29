@@ -76,7 +76,7 @@ export default function RiskScoring() {
       case "critical":
         return "bg-red-100 border-red-300";
       default:
-        return "bg-gray-100 border-gray-300";
+        return "bg-muted border-border";
     }
   };
 
@@ -118,7 +118,7 @@ export default function RiskScoring() {
                   </div>
                   <div>
                     <h3 className="font-semibold">{supplier.name}</h3>
-                    <p className="text-xs text-gray-600">Risk Assessment</p>
+                    <p className="text-xs text-muted-foreground">Risk Assessment</p>
                   </div>
                 </div>
                 <div className="text-right">

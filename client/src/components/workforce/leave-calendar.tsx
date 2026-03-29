@@ -50,8 +50,8 @@ const LEAVE_COLORS: Record<LeaveType, { bg: string; text: string; label: string 
     label: 'Sick',
   },
   'Sans solde': {
-    bg: 'bg-gray-100 dark:bg-gray-800',
-    text: 'text-gray-700 dark:text-gray-200',
+    bg: 'bg-muted dark:bg-gray-800',
+    text: 'text-muted-foreground dark:text-gray-200',
     label: 'Unpaid',
   },
 };
@@ -144,16 +144,16 @@ export function LeaveCalendar({
           {/* Days header */}
           <div className="grid gap-px bg-gray-200 dark:bg-gray-700">
             <div className="grid grid-cols-[120px_repeat(31,_1fr)] gap-px">
-              <div className="bg-gray-100 p-2 dark:bg-gray-800">
+              <div className="bg-muted p-2 dark:bg-gray-800">
                 <span className="text-xs font-semibold">Employee</span>
               </div>
               {days.map((day) => (
                 <div
                   key={day}
-                  className="bg-gray-100 p-1 text-center dark:bg-gray-800"
+                  className="bg-muted p-1 text-center dark:bg-gray-800"
                 >
                   <div className="text-xs font-semibold">{day}</div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-muted-foreground">
                     {format(
                       new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day),
                       'EEE'
@@ -166,14 +166,14 @@ export function LeaveCalendar({
             {/* Employee rows */}
             {employees.length === 0 ? (
               <div className="grid grid-cols-[120px_repeat(31,_1fr)] gap-px">
-                <div className="col-span-full bg-white p-4 text-center text-sm text-gray-500 dark:bg-gray-900">
+                <div className="col-span-full bg-card p-4 text-center text-sm text-muted-foreground dark:bg-gray-900">
                   No leave records
                 </div>
               </div>
             ) : (
               employees.map((emp) => (
                 <div key={emp.id} className="grid grid-cols-[120px_repeat(31,_1fr)] gap-px">
-                  <div className="bg-white p-2 dark:bg-gray-900">
+                  <div className="bg-card p-2 dark:bg-gray-900">
                     <span className="truncate text-xs font-medium">{emp.name}</span>
                   </div>
                   {days.map((day) => {
@@ -184,7 +184,7 @@ export function LeaveCalendar({
                       <div
                         key={`${emp.id}-${day}`}
                         className={cn(
-                          'min-h-12 p-0.5 flex items-center justify-center border-r border-b bg-white dark:bg-gray-900',
+                          'min-h-12 p-0.5 flex items-center justify-center border-r border-b bg-card dark:bg-gray-900',
                           config && cn(config.bg, config.text)
                         )}
                         title={leave ? `${leave.leaveType}` : undefined}
@@ -205,8 +205,8 @@ export function LeaveCalendar({
       </div>
 
       {/* Summary stats */}
-      <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+      <div className="rounded-lg bg-muted p-4 dark:bg-gray-900">
+        <p className="text-sm text-muted-foreground dark:text-gray-400">
           Showing <span className="font-semibold">{employees.length}</span> employee(s) with{' '}
           <span className="font-semibold">{leaves.length}</span> leave request(s)
         </p>

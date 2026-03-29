@@ -81,7 +81,7 @@ function ResizeHandle({
       onMouseDown={onMouseDown}
       onTouchStart={onTouchStart}
     >
-      <div className="w-8 h-1 bg-white/50 rounded-full" />
+      <div className="w-8 h-1 bg-card/50 rounded-full" />
     </div>
   );
 }

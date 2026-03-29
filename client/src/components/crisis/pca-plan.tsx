@@ -69,7 +69,7 @@ function getRiskColor(risk: string) {
     case "medium":
       return "bg-yellow-100 text-yellow-700 border-yellow-300";
     default:
-      return "bg-gray-100 text-gray-700 border-gray-300";
+      return "bg-muted text-muted-foreground border-border";
   }
 }
 
@@ -78,11 +78,11 @@ function getStatusColor(status: string) {
     case "active":
       return "text-green-600 font-semibold";
     case "draft":
-      return "text-gray-600";
+      return "text-muted-foreground";
     case "archived":
       return "text-gray-400 line-through";
     default:
-      return "text-gray-600";
+      return "text-muted-foreground";
   }
 }
 
@@ -103,8 +103,8 @@ export function PcaPlan() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Disaster Recovery Plan</h2>
-        <p className="text-gray-600">Manage crisis scenarios and recovery procedures</p>
+        <h2 className="text-2xl font-bold text-foreground">Disaster Recovery Plan</h2>
+        <p className="text-muted-foreground">Manage crisis scenarios and recovery procedures</p>
       </div>
 
       <div className="space-y-3">
@@ -112,21 +112,21 @@ export function PcaPlan() {
           <div key={scenario.id} className="border rounded-lg overflow-hidden">
             <button
               onClick={() => toggleScenario(scenario.id)}
-              className={`w-full px-4 py-3 hover:bg-gray-50 flex items-center justify-between border-b ${
+              className={`w-full px-4 py-3 hover:bg-muted flex items-center justify-between border-b ${
                 scenario.riskLevel === "critical" ? "bg-red-50" : ""
               }`}
             >
               <div className="flex items-center gap-3 flex-1">
                 {expandedScenarios.has(scenario.id) ? (
-                  <ChevronDown className="w-5 h-5 text-gray-600" />
+                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
                 ) : (
-                  <ChevronRight className="w-5 h-5 text-gray-600" />
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
                 )}
                 {scenario.riskLevel === "critical" && (
                   <AlertTriangle className="w-5 h-5 text-red-600" />
                 )}
                 <div className="text-left">
-                  <h3 className="font-semibold text-gray-900">{scenario.name}</h3>
+                  <h3 className="font-semibold text-foreground">{scenario.name}</h3>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -140,20 +140,20 @@ export function PcaPlan() {
             </button>
 
             {expandedScenarios.has(scenario.id) && (
-              <div className="p-4 space-y-4 bg-gray-50">
+              <div className="p-4 space-y-4 bg-muted">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-gray-600 font-semibold">RTO (Recovery Time Objective)</p>
+                    <p className="text-xs text-muted-foreground font-semibold">RTO (Recovery Time Objective)</p>
                     <p className="text-lg font-bold text-blue-600">{scenario.rto}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-600 font-semibold">RPO (Recovery Point Objective)</p>
+                    <p className="text-xs text-muted-foreground font-semibold">RPO (Recovery Point Objective)</p>
                     <p className="text-lg font-bold text-green-600">{scenario.rpo}</p>
                   </div>
                 </div>
 
                 <div className="border-t pt-4">
-                  <h4 className="font-semibold text-gray-900 mb-3">Recovery Procedures</h4>
+                  <h4 className="font-semibold text-foreground mb-3">Recovery Procedures</h4>
                   <div className="space-y-2">
                     {scenario.procedures.map((proc) => (
                       <div key={proc.id} className="flex items-start gap-3 p-2 bg-background rounded border">
@@ -161,8 +161,8 @@ export function PcaPlan() {
                           {proc.step}
                         </span>
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900">{proc.action}</p>
-                          <div className="flex gap-4 text-xs text-gray-600">
+                          <p className="font-medium text-foreground">{proc.action}</p>
+                          <div className="flex gap-4 text-xs text-muted-foreground">
                             <span>Owner: {proc.owner}</span>
                             <span>~{proc.estDuration}</span>
                           </div>
@@ -179,13 +179,13 @@ export function PcaPlan() {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">Critical Scenarios</p>
+          <p className="text-sm text-muted-foreground">Critical Scenarios</p>
           <p className="text-2xl font-bold text-red-600">
             {scenarios.filter((s) => s.riskLevel === "critical").length}
           </p>
         </div>
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">Active Plans</p>
+          <p className="text-sm text-muted-foreground">Active Plans</p>
           <p className="text-2xl font-bold text-green-600">
             {scenarios.filter((s) => s.status === "active").length}
           </p>

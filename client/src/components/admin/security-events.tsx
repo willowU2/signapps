@@ -102,7 +102,7 @@ export function SecurityEvents() {
           <Shield className="h-6 w-6 text-red-600" />
           <div>
             <h2 className="text-xl font-bold">Security Events</h2>
-            <p className="text-sm text-gray-500">Last 24 hours activity</p>
+            <p className="text-sm text-muted-foreground">Last 24 hours activity</p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={fetchData} disabled={isLoading} className="gap-1">
@@ -162,11 +162,11 @@ export function SecurityEvents() {
           <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
         </div>
       ) : events.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center text-gray-500">
+        <div className="rounded-lg border border-border bg-muted p-8 text-center text-muted-foreground">
           No events found
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-gray-200">
+        <div className="overflow-hidden rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead className="bg-muted text-xs font-medium uppercase text-muted-foreground sticky top-0 z-10">
               <tr>
@@ -181,23 +181,23 @@ export function SecurityEvents() {
               {events.map((event) => {
                 const sev = SEVERITY_CONFIG[event.severity] ?? SEVERITY_CONFIG.info;
                 return (
-                  <tr key={event.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={event.id} className="hover:bg-muted transition-colors">
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${sev.color}`}>
                         {sev.icon}
                         {event.severity}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-medium text-gray-900">
+                    <td className="px-4 py-3 font-medium text-foreground">
                       {formatEventType(event.event_type)}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 hidden md:table-cell font-mono text-xs">
+                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell font-mono text-xs">
                       {event.ip_address || "—"}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 hidden lg:table-cell max-w-xs truncate">
+                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell max-w-xs truncate">
                       {event.details}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                    <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap">
                       {formatDate(event.created_at)}
                     </td>
                   </tr>
@@ -210,7 +210,7 @@ export function SecurityEvents() {
 
       {/* Pagination */}
       {events.length > 0 && (
-        <div className="flex items-center justify-between text-sm text-gray-500">
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>Page {page + 1}</span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>

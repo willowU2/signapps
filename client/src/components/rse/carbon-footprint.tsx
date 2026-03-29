@@ -52,9 +52,9 @@ export default function CarbonFootprint() {
         {/* Main Gauge */}
         <div className="p-4 bg-gradient-to-br from-blue-50 to-green-50 rounded-lg border border-blue-200">
           <div className="text-center mb-4">
-            <p className="text-sm text-gray-600 mb-1">Your Monthly Footprint</p>
+            <p className="text-sm text-muted-foreground mb-1">Your Monthly Footprint</p>
             <p className="text-4xl font-bold text-blue-900">{totalEmissions}</p>
-            <p className="text-sm text-gray-600">kg CO₂</p>
+            <p className="text-sm text-muted-foreground">kg CO₂</p>
           </div>
           {/* Gauge visual */}
           <div className="h-8 bg-gray-200 rounded-full overflow-hidden">
@@ -63,7 +63,7 @@ export default function CarbonFootprint() {
               style={{ width: `${Math.min((totalEmissions / 200) * 100, 100)}%` }}
             ></div>
           </div>
-          <div className="flex justify-between text-xs text-gray-600 mt-2">
+          <div className="flex justify-between text-xs text-muted-foreground mt-2">
             <span>0</span>
             <span>100</span>
             <span>200+</span>
@@ -72,12 +72,12 @@ export default function CarbonFootprint() {
 
         {/* Category Breakdown */}
         <div className="space-y-3">
-          <p className="font-semibold text-sm text-gray-700">Breakdown by Category</p>
+          <p className="font-semibold text-sm text-muted-foreground">Breakdown by Category</p>
           {categories.map((cat) => (
             <div key={cat.name}>
               <div className="flex justify-between text-sm mb-1">
                 <span className="font-medium">{cat.name}</span>
-                <span className="text-gray-600">{cat.value}% ({(totalEmissions * cat.value) / 100 | 0} kg)</span>
+                <span className="text-muted-foreground">{cat.value}% ({(totalEmissions * cat.value) / 100 | 0} kg)</span>
               </div>
               <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
                 <div
@@ -85,7 +85,7 @@ export default function CarbonFootprint() {
                   style={{ width: `${cat.value}%` }}
                 ></div>
               </div>
-              <p className="text-xs text-gray-500 mt-1">💡 {cat.tip}</p>
+              <p className="text-xs text-muted-foreground mt-1">💡 {cat.tip}</p>
             </div>
           ))}
         </div>

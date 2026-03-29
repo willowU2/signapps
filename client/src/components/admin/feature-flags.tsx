@@ -169,7 +169,7 @@ export function FeatureFlags() {
   };
 
   if (isLoading) {
-    return <div className="text-center text-gray-500">Chargement...</div>;
+    return <div className="text-center text-muted-foreground">Chargement...</div>;
   }
 
   return (
@@ -187,32 +187,32 @@ export function FeatureFlags() {
       </div>
 
       {/* Flags Table */}
-      <div className="rounded-lg border border-gray-200 overflow-hidden">
+      <div className="rounded-lg border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-muted border-b border-border sticky top-0 z-10">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
                   Name
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
                   Targeting %
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
                   Description
                 </th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
+                <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {flags.map((flag) => (
-                <tr key={flag.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                <tr key={flag.id} className="hover:bg-muted transition-colors">
+                  <td className="px-6 py-4 text-sm font-medium text-foreground">
                     {flag.name}
                   </td>
                   <td className="px-6 py-4">
@@ -223,7 +223,7 @@ export function FeatureFlags() {
                       }`}
                     >
                       <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${
                           flag.enabled ? "translate-x-6" : "translate-x-1"
                         }`}
                       />
@@ -241,12 +241,12 @@ export function FeatureFlags() {
                         }
                         className="w-20 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                       />
-                      <span className="text-sm text-gray-600 w-8 text-right">
+                      <span className="text-sm text-muted-foreground w-8 text-right">
                         {flag.targetingPercent}%
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
                     {flag.description || "—"}
                   </td>
                   <td className="px-6 py-4 text-right">

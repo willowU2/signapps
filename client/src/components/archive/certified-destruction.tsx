@@ -69,14 +69,14 @@ export function CertifiedDestruction() {
         <h3 className="font-semibold mb-3">Items to Destroy</h3>
         <div className="space-y-2">
           {items.map((item) => (
-            <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+            <div key={item.id} className="flex justify-between items-center p-3 bg-muted rounded">
               <div>
                 <p className="font-medium">{item.name}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   {formatSize(item.size)} • Archived: {item.archivedDate.toLocaleDateString()}
                 </p>
               </div>
-              <span className="text-sm font-medium text-gray-700">{formatSize(item.size)}</span>
+              <span className="text-sm font-medium text-muted-foreground">{formatSize(item.size)}</span>
             </div>
           ))}
         </div>
@@ -122,7 +122,7 @@ export function CertifiedDestruction() {
 
           <div className="border rounded-lg p-4 bg-yellow-50">
             <h3 className="font-semibold mb-2">Destruction Certificate Preview</h3>
-            <div className="bg-white border rounded p-4 text-sm space-y-1 font-mono">
+            <div className="bg-card border rounded p-4 text-sm space-y-1 font-mono">
               <p>Certificate ID: CERT-PENDING</p>
               <p>Item Count: {items.length}</p>
               <p>Total Size: {formatSize(totalSize)}</p>

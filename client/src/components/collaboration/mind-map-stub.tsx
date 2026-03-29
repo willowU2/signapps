@@ -16,16 +16,16 @@ export function MindMapStub() {
                 </div>
 
                 <div className="text-center space-y-2">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <h3 className="text-lg font-semibold text-foreground dark:text-gray-100">
                         Mind Mapping
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-muted-foreground dark:text-gray-400">
                         Coming Soon
                     </p>
                 </div>
 
                 <div
-                    className="w-full max-w-xs p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 flex items-center justify-center"
+                    className="w-full max-w-xs p-6 border border-border dark:border-gray-700 rounded-lg bg-muted dark:bg-gray-900 flex items-center justify-center"
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                 >
@@ -38,7 +38,7 @@ export function MindMapStub() {
                                     : "bg-purple-400 dark:bg-purple-600"
                             }`}
                         >
-                            <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                            <div className="w-1.5 h-1.5 bg-card rounded-full" />
                         </div>
 
                         {/* Branch nodes */}
@@ -82,7 +82,7 @@ export function MindMapStub() {
                     </div>
                 </div>
 
-                <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs">
+                <p className="text-xs text-muted-foreground dark:text-gray-400 max-w-xs">
                     Interactive mind maps with drag-and-drop nodes, AI suggestions, and team
                     collaboration
                 </p>

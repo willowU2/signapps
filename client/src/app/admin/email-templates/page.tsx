@@ -277,7 +277,7 @@ function HtmlPreview({ html }: { html: string }) {
   return (
     <iframe
       srcDoc={html}
-      className="w-full h-[500px] border rounded-lg bg-white"
+      className="w-full h-[500px] border rounded-lg bg-card"
       sandbox="allow-same-origin"
       title="Apercu du template"
     />

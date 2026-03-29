@@ -61,7 +61,7 @@ function tierBadgeClass(tier: string): string {
     case 'low':
       return 'bg-orange-500/15 text-orange-700 border-orange-200';
     case 'cpu':
-      return 'bg-gray-500/15 text-gray-700 border-gray-200';
+      return 'bg-gray-500/15 text-muted-foreground border-border';
     default:
       return '';
   }

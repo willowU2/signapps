@@ -93,14 +93,14 @@ export function BoardEditor({ docId }: BoardEditorProps) {
         <div className="p-6">
             <div className="mb-4">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-gray-900">Kanban Board</h2>
+                    <h2 className="text-xl font-bold text-foreground">Kanban Board</h2>
                     <div className="flex items-center gap-2">
                         <div
                             className={`w-2 h-2 rounded-full ${
                                 isSynced ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'
                             }`}
                         />
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-muted-foreground">
                             {isSynced ? 'Synced' : 'Syncing...'}
                         </span>
                     </div>
@@ -112,12 +112,12 @@ export function BoardEditor({ docId }: BoardEditorProps) {
                 {columns.map(column => (
                     <div
                         key={column.id}
-                        className="flex-shrink-0 w-80 bg-gray-50 rounded-lg border border-gray-200"
+                        className="flex-shrink-0 w-80 bg-muted rounded-lg border border-border"
                     >
                         {/* Column header */}
-                        <div className="p-4 border-b border-gray-200 bg-background">
-                            <h3 className="font-semibold text-gray-900">{column.title}</h3>
-                            <p className="text-xs text-gray-600 mt-1">
+                        <div className="p-4 border-b border-border bg-background">
+                            <h3 className="font-semibold text-foreground">{column.title}</h3>
+                            <p className="text-xs text-muted-foreground mt-1">
                                 {column.cards.length} cards
                             </p>
                         </div>
@@ -133,13 +133,13 @@ export function BoardEditor({ docId }: BoardEditorProps) {
                                     key={card.id}
                                     draggable
                                     onDragStart={(e) => handleDragStart(e, card.id, column.id)}
-                                    className="p-3 bg-background rounded border border-gray-200 hover:shadow-md cursor-move transition"
+                                    className="p-3 bg-background rounded border border-border hover:shadow-md cursor-move transition"
                                 >
-                                    <h4 className="font-semibold text-gray-900 text-sm">
+                                    <h4 className="font-semibold text-foreground text-sm">
                                         {card.title}
                                     </h4>
                                     {card.description && (
-                                        <p className="text-xs text-gray-600 mt-1">
+                                        <p className="text-xs text-muted-foreground mt-1">
                                             {card.description}
                                         </p>
                                     )}
@@ -147,7 +147,7 @@ export function BoardEditor({ docId }: BoardEditorProps) {
                             ))}
 
                             {/* Add card button */}
-                            <button className="w-full p-3 border-2 border-dashed border-gray-300 rounded text-gray-600 hover:border-gray-400 hover:text-gray-700 text-sm font-medium transition">
+                            <button className="w-full p-3 border-2 border-dashed border-border rounded text-muted-foreground hover:border-gray-400 hover:text-muted-foreground text-sm font-medium transition">
                                 + Add card
                             </button>
                         </div>

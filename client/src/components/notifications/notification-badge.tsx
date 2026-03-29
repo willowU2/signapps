@@ -22,7 +22,7 @@ export function NotificationBadge({ className = '' }: NotificationBadgeProps) {
 
   return (
     <div className={`relative ${className}`}>
-      <Bell className="h-5 w-5 text-gray-700" />
+      <Bell className="h-5 w-5 text-muted-foreground" />
       {unreadCount > 0 && (
         <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
           {unreadCount > 99 ? '99+' : unreadCount}

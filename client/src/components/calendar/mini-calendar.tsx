@@ -46,8 +46,8 @@ function DroppableDay({
       className={cn(
         "h-6 w-6 mx-auto flex items-center justify-center text-xs rounded-full transition-colors",
         isCurrentMonth
-          ? "text-[#3c4043] hover:bg-gray-100"
-          : "text-[#b0b5b9] hover:bg-gray-50",
+          ? "text-[#3c4043] hover:bg-muted"
+          : "text-[#b0b5b9] hover:bg-muted",
         isToday && "bg-[#1a73e8] text-white hover:bg-[#1557b0]",
         isSelected && !isToday && "bg-[#e8f0fe] text-[#1a73e8]",
         isOver && "ring-2 ring-[#1a73e8] ring-offset-1 bg-[#e8f0fe]"
@@ -145,7 +145,7 @@ export function MiniCalendar({ selectedDate, onSelectDate, className, calendarId
       <div className="flex items-center justify-between mb-2">
         <button
           onClick={prevMonth}
-          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+          className="p-1 hover:bg-muted rounded-full transition-colors"
         >
           <ChevronLeft className="h-4 w-4 text-[#5f6368]" />
         </button>
@@ -154,7 +154,7 @@ export function MiniCalendar({ selectedDate, onSelectDate, className, calendarId
         </span>
         <button
           onClick={nextMonth}
-          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+          className="p-1 hover:bg-muted rounded-full transition-colors"
         >
           <ChevronRight className="h-4 w-4 text-[#5f6368]" />
         </button>

@@ -143,11 +143,11 @@ export function DigitalTwin({ documentName = 'Contract_2024.pdf', bindings, last
 
           <div className="space-y-3">
             {displayBindings.map((binding, index) => (
-              <Card key={index} className="border-slate-200 bg-white">
+              <Card key={index} className="border-slate-200 bg-card">
                 <CardContent className="pt-4">
                   <div className="flex items-center justify-between gap-4 mb-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-900">{binding.field}</p>
+                      <p className="text-sm font-semibold text-foreground">{binding.field}</p>
                       <p className="text-xs text-slate-600 mt-1">From: {binding.dataSource}</p>
                     </div>
                     <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${getStatusColor(binding.status)}`}>

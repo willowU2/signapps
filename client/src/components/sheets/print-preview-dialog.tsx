@@ -87,9 +87,9 @@ export function PrintPreviewDialog({ data, evaluatedData, colWidths, rowHeights,
                 </div>
 
                 {/* Page preview */}
-                <div className="flex-1 overflow-auto bg-gray-100 dark:bg-gray-800 p-6 flex items-start justify-center">
+                <div className="flex-1 overflow-auto bg-muted dark:bg-gray-800 p-6 flex items-start justify-center">
                     <div
-                        className="bg-white shadow-xl border border-gray-200 relative"
+                        className="bg-card shadow-xl border border-border relative"
                         style={{ width: pageW * 0.6, height: pageH * 0.6, overflow: 'hidden' }}
                     >
                         {/* Margin lines */}
@@ -107,7 +107,7 @@ export function PrintPreviewDialog({ data, evaluatedData, colWidths, rowHeights,
 
                         {/* Grid content */}
                         <div style={{ position: 'absolute', top: MARGIN * 0.6, left: MARGIN * 0.6, overflow: 'hidden', maxWidth: printW * 0.6, maxHeight: printH * 0.6 }}>
-                            <div className="flex text-[6px] font-medium bg-gray-50">
+                            <div className="flex text-[6px] font-medium bg-muted">
                                 {showHeaders && <div style={{ width: 20, minWidth: 20, height: 12, borderRight: '1px solid #e5e7eb', borderBottom: '1px solid #e5e7eb' }} />}
                                 {Array.from({ length: maxC + 1 }).map((_, c) => (
                                     <div key={c} style={{ width: getColWidth(c) * 0.4, minWidth: getColWidth(c) * 0.4, height: 12, borderRight: '1px solid #e5e7eb', borderBottom: '1px solid #e5e7eb', textAlign: 'center', overflow: 'hidden' }}>

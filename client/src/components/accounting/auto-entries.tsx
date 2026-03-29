@@ -119,7 +119,7 @@ function getStatusBg(status: string): string {
     case "rejected":
       return "bg-red-50 border-red-200";
     default:
-      return "bg-gray-50 border-gray-200";
+      return "bg-muted border-border";
   }
 }
 
@@ -171,10 +171,10 @@ export function AutoEntries() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-foreground">
             Auto-Generated Journal Entries
           </h2>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Review and approve entries from invoices and bills
           </p>
         </div>
@@ -182,15 +182,15 @@ export function AutoEntries() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border bg-amber-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Pending Review</p>
+          <p className="text-sm text-muted-foreground font-medium">Pending Review</p>
           <p className="text-2xl font-bold text-amber-900">{pendingCount}</p>
         </div>
         <div className="rounded-lg border bg-green-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Approved</p>
+          <p className="text-sm text-muted-foreground font-medium">Approved</p>
           <p className="text-2xl font-bold text-green-900">{approvedCount}</p>
         </div>
         <div className="rounded-lg border bg-red-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Rejected</p>
+          <p className="text-sm text-muted-foreground font-medium">Rejected</p>
           <p className="text-2xl font-bold text-red-900">{rejectedCount}</p>
         </div>
       </div>
@@ -232,22 +232,22 @@ export function AutoEntries() {
                     }}
                   />
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
                   Source
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
                   Description
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
                   Debit
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
                   Credit
                 </th>
-                <th className="px-4 py-3 text-center font-semibold text-gray-900">
+                <th className="px-4 py-3 text-center font-semibold text-foreground">
                   Status
                 </th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-900">
+                <th className="px-4 py-3 text-right font-semibold text-foreground">
                   Actions
                 </th>
               </tr>
@@ -266,29 +266,29 @@ export function AutoEntries() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-mono font-semibold text-gray-900">
+                    <p className="font-mono font-semibold text-foreground">
                       {entry.sourceDoc}
                     </p>
-                    <p className="text-xs text-gray-500">{entry.date}</p>
+                    <p className="text-xs text-muted-foreground">{entry.date}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-foreground">
                       {entry.description}
                     </p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-sm text-gray-900 font-medium">
+                    <p className="text-sm text-foreground font-medium">
                       {entry.debit.account}
                     </p>
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold text-foreground">
                       €{entry.debit.amount.toFixed(2)}
                     </p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-sm text-gray-900 font-medium">
+                    <p className="text-sm text-foreground font-medium">
                       {entry.credit.account}
                     </p>
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold text-foreground">
                       €{entry.credit.amount.toFixed(2)}
                     </p>
                   </td>

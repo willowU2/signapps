@@ -133,8 +133,8 @@ export function JournalEntry() {
                     </td>
                   </tr>
                 ))}
-                <tr className={`border-t-2 font-bold ${isBalanced ? "bg-green-50" : totalDebit > 0 ? "bg-red-50" : "bg-gray-50"}`}>
-                  <td className="px-3 py-2 text-gray-700" colSpan={2}>
+                <tr className={`border-t-2 font-bold ${isBalanced ? "bg-green-50" : totalDebit > 0 ? "bg-red-50" : "bg-muted"}`}>
+                  <td className="px-3 py-2 text-muted-foreground" colSpan={2}>
                     <button onClick={addLine} className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"><Plus className="w-3.5 h-3.5" />Ajouter une ligne</button>
                   </td>
                   <td className="px-3 py-2 text-right text-blue-700">{totalDebit.toFixed(2)} €</td>
@@ -145,7 +145,7 @@ export function JournalEntry() {
             </table>
           </div>
 
-          <div className={`flex items-center gap-3 p-3 rounded-lg ${isBalanced ? "bg-green-50 text-green-700" : totalDebit > 0 ? "bg-red-50 text-red-700" : "bg-gray-50 text-gray-500"}`}>
+          <div className={`flex items-center gap-3 p-3 rounded-lg ${isBalanced ? "bg-green-50 text-green-700" : totalDebit > 0 ? "bg-red-50 text-red-700" : "bg-muted text-muted-foreground"}`}>
             {isBalanced ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
             <span className="text-sm font-medium">
               {isBalanced ? "Écriture équilibrée" : totalDebit > 0 ? `Déséquilibre : ${(totalDebit - totalCredit).toFixed(2)} €` : "Saisissez les montants débit/crédit"}
@@ -173,8 +173,8 @@ export function JournalEntry() {
               <tbody>
                 {entry.lines.map(l => (
                   <tr key={l.id} className="border-t">
-                    <td className="px-8 py-1.5 text-gray-500 w-52">{l.account}</td>
-                    <td className="px-3 py-1.5 text-gray-700">{l.label}</td>
+                    <td className="px-8 py-1.5 text-muted-foreground w-52">{l.account}</td>
+                    <td className="px-3 py-1.5 text-muted-foreground">{l.label}</td>
                     <td className="px-3 py-1.5 text-right text-blue-700 w-24">{l.debit ? `${Number(l.debit).toFixed(2)} €` : ""}</td>
                     <td className="px-3 py-1.5 text-right text-red-700 w-24">{l.credit ? `${Number(l.credit).toFixed(2)} €` : ""}</td>
                   </tr>

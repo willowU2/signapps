@@ -82,14 +82,14 @@ export function IPWhitelist() {
           <Globe className="h-6 w-6 text-blue-600" />
           <h2 className="text-2xl font-bold">IP Whitelist</h2>
         </div>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           {entries.filter((e) => e.enabled).length} of {entries.length} active
         </div>
       </div>
 
       {/* Add New Entry */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-        <h3 className="font-semibold text-gray-900 mb-4">Add IP Address</h3>
+      <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+        <h3 className="font-semibold text-foreground mb-4">Add IP Address</h3>
         <div className="flex flex-col gap-3 sm:flex-row">
           <Input
             type="text"
@@ -102,7 +102,7 @@ export function IPWhitelist() {
           <select
             value={newCIDR}
             onChange={(e) => setNewCIDR(e.target.value)}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded-md border border-border bg-card px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="/32">Single IP (/32)</option>
             <option value="/24">Subnet (/24)</option>
@@ -119,7 +119,7 @@ export function IPWhitelist() {
       {/* IP List */}
       <div className="space-y-2">
         {entries.length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center text-gray-500">
+          <div className="rounded-lg border border-border bg-muted p-8 text-center text-muted-foreground">
             No IP addresses whitelisted yet
           </div>
         ) : (
@@ -128,8 +128,8 @@ export function IPWhitelist() {
               key={entry.id}
               className={`rounded-lg border p-3 shadow-sm transition-opacity ${
                 entry.enabled
-                  ? "border-gray-200 bg-white"
-                  : "border-gray-100 bg-gray-50 opacity-60"
+                  ? "border-border bg-card"
+                  : "border-gray-100 bg-muted opacity-60"
               }`}
             >
               <div className="flex items-center justify-between gap-3">
@@ -139,9 +139,9 @@ export function IPWhitelist() {
                     {getCountryEmoji(entry.country)}
                   </span>
                   <div className="flex-1">
-                    <p className="font-mono text-sm font-medium text-gray-900">
+                    <p className="font-mono text-sm font-medium text-foreground">
                       {entry.address}
-                      <span className="ml-1 text-gray-500">{entry.cidr}</span>
+                      <span className="ml-1 text-muted-foreground">{entry.cidr}</span>
                     </p>
                     <Badge variant="outline" className="mt-1">
                       {entry.country}
@@ -155,7 +155,7 @@ export function IPWhitelist() {
                     variant="ghost"
                     size="sm"
                     onClick={() => toggleEntry(entry.id)}
-                    className="text-gray-600 hover:text-gray-900"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     {entry.enabled ? (
                       <ToggleRight className="h-4 w-4 text-green-600" />

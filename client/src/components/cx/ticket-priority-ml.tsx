@@ -83,7 +83,7 @@ export function TicketPriorityML({
     const colorMap = {
       Urgent: `bg-red-100 text-red-800 ${confStyle} border border-red-200`,
       Normal: `bg-blue-100 text-blue-800 ${confStyle} border border-blue-200`,
-      Low: `bg-gray-100 text-gray-800 ${confStyle} border border-gray-200`,
+      Low: `bg-muted text-gray-800 ${confStyle} border border-border`,
     };
 
     return (
@@ -94,7 +94,7 @@ export function TicketPriorityML({
           {priority === "Low" && <Zap className="mr-1 h-3 w-3" />}
           {priority}
         </Badge>
-        <span className="text-xs font-semibold text-gray-600">
+        <span className="text-xs font-semibold text-muted-foreground">
           {(confidence * 100).toFixed(0)}%
         </span>
       </div>
@@ -155,7 +155,7 @@ export function TicketPriorityML({
                       {overrides[ticket.id]}
                     </Badge>
                   ) : (
-                    <span className="text-xs text-gray-500">-</span>
+                    <span className="text-xs text-muted-foreground">-</span>
                   )}
                 </TableCell>
                 <TableCell>
@@ -186,7 +186,7 @@ export function TicketPriorityML({
           </TableBody>
         </Table>
 
-        <div className="mt-4 text-xs text-gray-600">
+        <div className="mt-4 text-xs text-muted-foreground">
           <p>
             💡 Cliquez sur les boutons de priorité pour surcharger la
             prédiction ML.

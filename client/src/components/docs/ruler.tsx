@@ -35,15 +35,15 @@ export function Ruler({ width, unitInPixels = 37.8 }: RulerProps) { // default 3
 
     return (
         <div
-            className="h-7 bg-background dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 relative overflow-hidden flex shrink-0 shadow-sm z-10"
+            className="h-7 bg-background dark:bg-gray-900 border-b border-border dark:border-gray-700 relative overflow-hidden flex shrink-0 shadow-sm z-10"
             style={{ width: `${width}px`, marginLeft: 'auto', marginRight: 'auto' }}
         >
             {/* Left Margin Indicator */}
-            <div className="absolute left-0 top-0 bottom-0 w-[96px] bg-gray-100 dark:bg-gray-800/80 border-r border-gray-400 dark:border-gray-600 opacity-80"
+            <div className="absolute left-0 top-0 bottom-0 w-[96px] bg-muted dark:bg-gray-800/80 border-r border-gray-400 dark:border-gray-600 opacity-80"
                 title="Left Margin" />
 
             {/* Right Margin Indicator */}
-            <div className="absolute right-0 top-0 bottom-0 w-[96px] bg-gray-100 dark:bg-gray-800/80 border-l border-gray-400 dark:border-gray-600 opacity-80"
+            <div className="absolute right-0 top-0 bottom-0 w-[96px] bg-muted dark:bg-gray-800/80 border-l border-gray-400 dark:border-gray-600 opacity-80"
                 title="Right Margin" />
 
             {/* Ticks */}
@@ -55,7 +55,7 @@ export function Ruler({ width, unitInPixels = 37.8 }: RulerProps) { // default 3
                 >
                     {tick.type === 'major' && (
                         <>
-                            <span className="text-[9px] font-medium text-gray-500 dark:text-gray-400 select-none mt-0.5">{tick.value}</span>
+                            <span className="text-[9px] font-medium text-muted-foreground dark:text-gray-400 select-none mt-0.5">{tick.value}</span>
                             <div className="w-px h-2.5 bg-gray-400 dark:bg-gray-600 absolute bottom-0"></div>
                         </>
                     )}

@@ -95,7 +95,7 @@ export default function CarbonOffset() {
             style={{ width: `${Math.min(parseFloat(offsetPercentage), 100)}%` }}
           ></div>
         </div>
-        <p className="text-xs text-gray-600 mt-2">
+        <p className="text-xs text-muted-foreground mt-2">
           You're offsetting {offsetPercentage}% of your monthly emissions
         </p>
       </div>
@@ -105,21 +105,21 @@ export default function CarbonOffset() {
         {projects.map((project) => (
           <div
             key={project.id}
-            className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow"
+            className="border rounded-lg p-4 bg-card hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between gap-3 mb-2">
               <div className="flex gap-3 flex-1">
                 <span className="text-3xl">{getTypeIcon(project.type)}</span>
                 <div className="flex-1">
                   <h3 className="font-semibold text-sm">{project.name}</h3>
-                  <p className="text-xs text-gray-600">{project.co2Offset} kg CO₂ offset</p>
+                  <p className="text-xs text-muted-foreground">{project.co2Offset} kg CO₂ offset</p>
                 </div>
               </div>
               <span
                 className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
                   project.status === "active"
                     ? "bg-green-100 text-green-800"
-                    : "bg-gray-100 text-gray-800"
+                    : "bg-muted text-gray-800"
                 }`}
               >
                 {project.status === "active" ? "🔄 Active" : "✓ Completed"}

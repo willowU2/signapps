@@ -174,22 +174,22 @@ export function BankReconciliation() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-foreground">
             Bank Reconciliation
           </h2>
-          <p className="text-gray-600">Match bank statements with ledger</p>
+          <p className="text-muted-foreground">Match bank statements with ledger</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Bank Balance</p>
+          <p className="text-sm text-muted-foreground font-medium">Bank Balance</p>
           <p className="text-2xl font-bold text-blue-900">
             €{bankBalance.toFixed(2)}
           </p>
         </div>
         <div className="rounded-lg border bg-green-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Ledger Balance</p>
+          <p className="text-sm text-muted-foreground font-medium">Ledger Balance</p>
           <p className="text-2xl font-bold text-green-900">
             €{ledgerBalance.toFixed(2)}
           </p>
@@ -203,7 +203,7 @@ export function BankReconciliation() {
                 : "bg-yellow-50"
           }`}
         >
-          <p className="text-sm text-gray-600 font-medium">Difference</p>
+          <p className="text-sm text-muted-foreground font-medium">Difference</p>
           <p
             className={`text-2xl font-bold ${
               isReconciled
@@ -236,7 +236,7 @@ export function BankReconciliation() {
         <div className="border rounded-lg overflow-hidden">
           <div className="bg-muted border-b p-3">
             <h3 className="font-semibold text-foreground">Bank Statement</h3>
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-muted-foreground">
               {bankTxns.filter((t) => t.matched).length} of {bankTxns.length}{" "}
               matched
             </p>
@@ -251,18 +251,18 @@ export function BankReconciliation() {
                     ? "bg-blue-100 border-l-4 border-blue-500"
                     : txn.matched
                       ? "bg-green-50 hover:bg-green-100"
-                      : "hover:bg-gray-50"
+                      : "hover:bg-muted"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-foreground">
                       {txn.description}
                     </p>
-                    <p className="text-xs text-gray-500">{txn.date}</p>
+                    <p className="text-xs text-muted-foreground">{txn.date}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold text-foreground">
                       {txn.type === "debit" ? "-" : "+"}€{txn.amount.toFixed(2)}
                     </p>
                     {txn.matched && (
@@ -289,7 +289,7 @@ export function BankReconciliation() {
         <div className="border rounded-lg overflow-hidden">
           <div className="bg-muted border-b p-3">
             <h3 className="font-semibold text-foreground">Ledger Entries</h3>
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-muted-foreground">
               {ledgerTxns.filter((t) => t.matched).length} of{" "}
               {ledgerTxns.length} matched
             </p>
@@ -304,20 +304,20 @@ export function BankReconciliation() {
                     ? "bg-blue-100 border-l-4 border-blue-500"
                     : txn.matched
                       ? "bg-green-50 hover:bg-green-100"
-                      : "hover:bg-gray-50"
+                      : "hover:bg-muted"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-foreground">
                       {txn.description}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {txn.account} • {txn.date}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold text-foreground">
                       €{txn.amount.toFixed(2)}
                     </p>
                     {txn.matched && (

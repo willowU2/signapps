@@ -34,7 +34,7 @@ const getStatusColor = (status: string) => {
     case 'resolved':
       return 'bg-green-100 text-green-800';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-muted text-gray-800';
   }
 };
 
@@ -47,7 +47,7 @@ const getPriorityColor = (priority: string) => {
     case 'low':
       return 'bg-green-100 text-green-800';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-muted text-gray-800';
   }
 };
 
@@ -82,7 +82,7 @@ export function TicketList({ tickets = [] }: TicketListProps) {
           <TableBody>
             {displayTickets.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No tickets found
                 </TableCell>
               </TableRow>
@@ -104,7 +104,7 @@ export function TicketList({ tickets = [] }: TicketListProps) {
                   <TableCell className="text-sm">
                     {ticket.assignee || '—'}
                   </TableCell>
-                  <TableCell className="text-sm text-gray-600">
+                  <TableCell className="text-sm text-muted-foreground">
                     {formatDate(ticket.createdDate)}
                   </TableCell>
                 </TableRow>

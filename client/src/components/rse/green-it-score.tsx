@@ -81,14 +81,14 @@ export default function GreenITScore() {
         {/* Circular Gauge */}
         <div className="flex justify-center">
           <div className="relative w-24 h-24">
-            <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-border"></div>
             <div
               className="absolute inset-0 rounded-full border-4 border-transparent border-t-green-500 border-r-green-500"
               style={{
                 transform: `rotate(${(greenScore / 100) * 360 - 90}deg)`,
               }}
             ></div>
-            <div className="absolute inset-1 rounded-full bg-white flex items-center justify-center">
+            <div className="absolute inset-1 rounded-full bg-card flex items-center justify-center">
               <span className="font-bold text-sm">{greenScore}%</span>
             </div>
           </div>
@@ -97,16 +97,16 @@ export default function GreenITScore() {
 
       {/* Metrics */}
       <div className="space-y-2">
-        <p className="font-semibold text-sm text-gray-700">Key Metrics</p>
+        <p className="font-semibold text-sm text-muted-foreground">Key Metrics</p>
         {metrics.map((metric) => (
           <div
             key={metric.name}
-            className="border rounded-lg p-3 bg-white hover:shadow-md transition-shadow"
+            className="border rounded-lg p-3 bg-card hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between mb-2">
               <div>
                 <p className="font-medium text-sm">{metric.name}</p>
-                <p className="text-xs text-gray-600">{metric.benchmark}</p>
+                <p className="text-xs text-muted-foreground">{metric.benchmark}</p>
               </div>
               <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(metric.status)}`}>
                 {metric.status === "good"
@@ -117,7 +117,7 @@ export default function GreenITScore() {
               </span>
             </div>
             <p className="text-lg font-bold">
-              {metric.value} <span className="text-xs text-gray-600 font-normal">{metric.unit}</span>
+              {metric.value} <span className="text-xs text-muted-foreground font-normal">{metric.unit}</span>
             </p>
           </div>
         ))}

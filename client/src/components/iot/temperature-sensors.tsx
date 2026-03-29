@@ -52,7 +52,7 @@ export default function TemperatureSensors() {
               )}
             </div>
             <div className="space-y-2">
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Min: {room.min}°C</span>
                 <span>Max: {room.max}°C</span>
               </div>
@@ -66,7 +66,7 @@ export default function TemperatureSensors() {
                 {getStatusBadge(room.current)}
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-3">History: Chart placeholder</p>
+            <p className="text-xs text-muted-foreground mt-3">History: Chart placeholder</p>
           </Card>
         ))}
       </div>

@@ -251,7 +251,7 @@ export function GuestLinkDialog({
             </div>
             {/* QR code for easy mobile scanning */}
             <div className="flex items-center gap-3">
-              <div className="bg-white p-2 rounded border">
+              <div className="bg-card p-2 rounded border">
                 <QRCodeSVG
                   value={`${typeof window !== 'undefined' ? window.location.origin : ''}/guest/${createdLink.token}`}
                   size={80}

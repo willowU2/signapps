@@ -83,7 +83,7 @@ export function ApplicantTracker({
       offer: "bg-orange-100 text-orange-800",
       hired: "bg-green-100 text-green-800",
     };
-    return colorMap[stage] || "bg-gray-100 text-gray-800";
+    return colorMap[stage] || "bg-muted text-gray-800";
   };
 
   return (
@@ -120,7 +120,7 @@ export function ApplicantTracker({
                 {stageCandidates.map((candidate) => (
                   <Card
                     key={candidate.id}
-                    className="relative cursor-move bg-white p-4 transition-all hover:shadow-md"
+                    className="relative cursor-move bg-card p-4 transition-all hover:shadow-md"
                   >
                     <div className="flex items-start gap-3">
                       <GripVertical className="mt-1 h-4 w-4 flex-shrink-0 text-gray-400" />
@@ -157,8 +157,8 @@ export function ApplicantTracker({
 
                 {/* Empty State */}
                 {stageCandidates.length === 0 && (
-                  <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 py-8 text-center">
-                    <p className="text-sm text-gray-500">
+                  <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-border py-8 text-center">
+                    <p className="text-sm text-muted-foreground">
                       Pas de candidat à cette étape
                     </p>
                   </div>
@@ -177,7 +177,7 @@ export function ApplicantTracker({
               <p className="text-3xl font-bold">
                 {getStageCount(stageConfig.key)}
               </p>
-              <p className="text-sm text-gray-600">{stageConfig.label}</p>
+              <p className="text-sm text-muted-foreground">{stageConfig.label}</p>
             </div>
           ))}
         </div>

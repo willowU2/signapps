@@ -146,17 +146,17 @@ export function PoInvoiceMatching() {
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                   <p className="text-xs text-slate-600 font-medium">PO Total</p>
-                  <p className="text-lg font-bold text-slate-900">€{totalPOAmount.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-foreground">€{totalPOAmount.toFixed(2)}</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                   <p className="text-xs text-slate-600 font-medium">Invoice Total</p>
-                  <p className="text-lg font-bold text-slate-900">€{totalInvoiceAmount.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-foreground">€{totalInvoiceAmount.toFixed(2)}</p>
                 </div>
               </div>
 
               {/* Line Items Comparison */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-slate-900">Line Items</h3>
+                <h3 className="text-sm font-semibold text-foreground">Line Items</h3>
                 {lineItems.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-4">No invoices found</p>
                 )}
@@ -172,7 +172,7 @@ export function PoInvoiceMatching() {
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
-                          <p className="font-medium text-slate-900">{item.description}</p>
+                          <p className="font-medium text-foreground">{item.description}</p>
                           {inv && (
                             <p className="text-xs text-slate-500 mt-0.5">
                               Status: <span className="font-semibold capitalize">{inv.status}</span>
@@ -192,10 +192,10 @@ export function PoInvoiceMatching() {
                       <div className="grid grid-cols-2 gap-4 text-xs">
                         <div>
                           <p className="text-slate-600 font-medium">PO</p>
-                          <p className="text-slate-900 mt-1">
+                          <p className="text-foreground mt-1">
                             Qty: <span className="font-semibold">{item.poQty}</span>
                           </p>
-                          <p className="text-slate-900">
+                          <p className="text-foreground">
                             Price: <span className="font-semibold">€{item.poPrice.toFixed(2)}</span>
                           </p>
                           <p className="text-slate-700 mt-1">
@@ -204,10 +204,10 @@ export function PoInvoiceMatching() {
                         </div>
                         <div>
                           <p className="text-slate-600 font-medium">Invoice</p>
-                          <p className="text-slate-900 mt-1">
+                          <p className="text-foreground mt-1">
                             Qty: <span className="font-semibold">{item.invoiceQty}</span>
                           </p>
-                          <p className="text-slate-900">
+                          <p className="text-foreground">
                             Price: <span className="font-semibold">€{item.invoicePrice.toFixed(2)}</span>
                           </p>
                           <p className="text-slate-700 mt-1">

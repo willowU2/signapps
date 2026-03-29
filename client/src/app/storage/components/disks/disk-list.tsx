@@ -55,7 +55,7 @@ export function DiskList({ disks, loading, onScan }: DiskListProps) {
       case 'failed':
         return <AlertCircle className="h-4 w-4 text-red-500" />;
       default:
-        return <HardDrive className="h-4 w-4 text-gray-500" />;
+        return <HardDrive className="h-4 w-4 text-muted-foreground" />;
     }
   };
 

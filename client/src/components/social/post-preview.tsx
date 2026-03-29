@@ -264,7 +264,7 @@ function BlueskyPreview({ content, accountName, accountAvatar, mediaUrls }: Omit
 /* ---------- LinkedIn Preview ---------- */
 function LinkedInPreview({ content, accountName, accountAvatar, mediaUrls }: Omit<PostPreviewProps, 'platform'>) {
   return (
-    <div className="rounded-2xl border bg-white dark:bg-zinc-50 text-zinc-900 space-y-0 font-[system-ui] overflow-hidden">
+    <div className="rounded-2xl border bg-card dark:bg-zinc-50 text-zinc-900 space-y-0 font-[system-ui] overflow-hidden">
       {/* Post header */}
       <div className="p-4 pb-2">
         <div className="flex items-start gap-3">
@@ -343,7 +343,7 @@ function LinkedInPreview({ content, accountName, accountAvatar, mediaUrls }: Omi
 /* ---------- Facebook Preview ---------- */
 function FacebookPreview({ content, accountName, accountAvatar, mediaUrls }: Omit<PostPreviewProps, 'platform'>) {
   return (
-    <div className="rounded-2xl border bg-white dark:bg-zinc-50 text-zinc-900 space-y-0 font-[system-ui] overflow-hidden">
+    <div className="rounded-2xl border bg-card dark:bg-zinc-50 text-zinc-900 space-y-0 font-[system-ui] overflow-hidden">
       {/* Header */}
       <div className="p-3">
         <div className="flex items-start gap-2.5">
@@ -419,7 +419,7 @@ function FacebookPreview({ content, accountName, accountAvatar, mediaUrls }: Omi
 function InstagramPreview({ content, accountName, accountAvatar, mediaUrls }: Omit<PostPreviewProps, 'platform'>) {
   const handle = accountName?.toLowerCase().replace(/\s+/g, '') ?? 'handle';
   return (
-    <div className="rounded-2xl border bg-white dark:bg-zinc-50 text-zinc-900 space-y-0 font-[system-ui] overflow-hidden">
+    <div className="rounded-2xl border bg-card dark:bg-zinc-50 text-zinc-900 space-y-0 font-[system-ui] overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2.5 p-3">
         <AvatarCircle
@@ -581,7 +581,7 @@ function YouTubePreview({ content, accountName, accountAvatar, mediaUrls }: Omit
 /* ---------- Pinterest Preview ---------- */
 function PinterestPreview({ content, accountName, accountAvatar, mediaUrls }: Omit<PostPreviewProps, 'platform'>) {
   return (
-    <div className="rounded-2xl border bg-white dark:bg-zinc-50 text-zinc-900 font-[system-ui] overflow-hidden">
+    <div className="rounded-2xl border bg-card dark:bg-zinc-50 text-zinc-900 font-[system-ui] overflow-hidden">
       {mediaUrls && mediaUrls.length > 0 ? (
         <div className="aspect-[2/3] bg-zinc-100 overflow-hidden">
           <img src={mediaUrls[0]} alt="Pin image" className="w-full h-full object-cover" />

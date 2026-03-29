@@ -70,7 +70,7 @@ export function EmployeeCard({
 
   const deptColor = departmentColors[department.toLowerCase()] || {
     bg: "bg-gray-500/15",
-    text: "text-gray-700 dark:text-gray-300",
+    text: "text-muted-foreground dark:text-gray-300",
   };
 
   return (

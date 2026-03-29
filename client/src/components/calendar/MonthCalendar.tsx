@@ -23,8 +23,8 @@ function DroppableDay({ day, isCurrentMonth, isTodayDate, dayEvents, selectedEve
   return (
     <div
       ref={setNodeRef}
-      className={`border-r border-gray-200 p-1 flex flex-col relative transition-colors ${
-        !isCurrentMonth ? "bg-gray-50/50" : "bg-background"
+      className={`border-r border-border p-1 flex flex-col relative transition-colors ${
+        !isCurrentMonth ? "bg-muted/50" : "bg-background"
       } ${isOver ? "bg-blue-50 ring-2 ring-blue-500 z-10" : ""}`}
     >
       {/* Day number */}
@@ -59,7 +59,7 @@ function DroppableDay({ day, isCurrentMonth, isTodayDate, dayEvents, selectedEve
           </div>
         ))}
         {dayEvents.length > 4 && (
-          <div className="text-[11px] font-medium text-[#3c4043] hover:bg-gray-100 rounded px-1 cursor-pointer">
+          <div className="text-[11px] font-medium text-[#3c4043] hover:bg-muted rounded px-1 cursor-pointer">
             {dayEvents.length - 4} autres
           </div>
         )}
@@ -125,7 +125,7 @@ export function MonthCalendar({ selectedCalendarId }: MonthCalendarProps) {
   return (
     <div className="flex flex-col h-full bg-background relative">
       {/* Day headers */}
-      <div className="grid grid-cols-7 border-b border-gray-200">
+      <div className="grid grid-cols-7 border-b border-border">
         {weekDays.map((day) => (
           <div key={day} className="py-2 text-center text-[11px] font-medium text-[#70757a] uppercase tracking-wider">
             {day}
@@ -136,7 +136,7 @@ export function MonthCalendar({ selectedCalendarId }: MonthCalendarProps) {
       {/* Grid */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {weeks.map((week, weekIdx) => (
-          <div key={weekIdx} className="flex-1 grid grid-cols-7 border-b border-gray-200 min-h-[100px]">
+          <div key={weekIdx} className="flex-1 grid grid-cols-7 border-b border-border min-h-[100px]">
             {week.map((day, dayIdx) => {
               const isCurrentMonth = isSameMonth(day, currentDate);
               const isTodayDate = isToday(day);

@@ -58,7 +58,7 @@ export function VatDeclaration() {
           <h2 className="text-2xl font-bold text-foreground">Déclaration TVA assistée</h2>
           <p className="text-muted-foreground">Calculée automatiquement depuis les écritures comptables</p>
         </div>
-        <button className="flex items-center gap-2 border hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium">
+        <button className="flex items-center gap-2 border hover:bg-muted px-4 py-2 rounded-lg text-sm font-medium">
           <Download className="w-4 h-4" /> Exporter CA3
         </button>
       </div>
@@ -90,10 +90,10 @@ export function VatDeclaration() {
             </thead>
             <tbody className="divide-y">
               {SALES_LINES.map(l => (
-                <tr key={l.account} className="hover:bg-gray-50">
-                  <td className="px-4 py-2.5 text-gray-700">{l.label}</td>
-                  <td className="px-4 py-2.5 text-right text-gray-700">{fmtBase(l.base)}</td>
-                  <td className="px-4 py-2.5 text-right text-gray-500">{l.rate}%</td>
+                <tr key={l.account} className="hover:bg-muted">
+                  <td className="px-4 py-2.5 text-muted-foreground">{l.label}</td>
+                  <td className="px-4 py-2.5 text-right text-muted-foreground">{fmtBase(l.base)}</td>
+                  <td className="px-4 py-2.5 text-right text-muted-foreground">{l.rate}%</td>
                   <td className="px-4 py-2.5 text-right font-semibold text-green-700">{fmtBase(l.vat)}</td>
                 </tr>
               ))}
@@ -117,10 +117,10 @@ export function VatDeclaration() {
             </thead>
             <tbody className="divide-y">
               {PURCHASE_LINES.map(l => (
-                <tr key={l.account} className="hover:bg-gray-50">
-                  <td className="px-4 py-2.5 text-gray-700">{l.label}</td>
-                  <td className="px-4 py-2.5 text-right text-gray-700">{fmtBase(l.base)}</td>
-                  <td className="px-4 py-2.5 text-right text-gray-500">{l.rate}%</td>
+                <tr key={l.account} className="hover:bg-muted">
+                  <td className="px-4 py-2.5 text-muted-foreground">{l.label}</td>
+                  <td className="px-4 py-2.5 text-right text-muted-foreground">{fmtBase(l.base)}</td>
+                  <td className="px-4 py-2.5 text-right text-muted-foreground">{l.rate}%</td>
                   <td className="px-4 py-2.5 text-right font-semibold text-orange-700">{fmtBase(l.vat)}</td>
                 </tr>
               ))}
@@ -138,14 +138,14 @@ export function VatDeclaration() {
       <div className={`rounded-xl border-2 p-6 ${isCredit ? "bg-blue-50 border-blue-300" : "bg-red-50 border-red-300"}`}>
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-bold text-gray-900">
+            <h3 className="text-xl font-bold text-foreground">
               {isCredit ? "Crédit de TVA" : "TVA à décaisser"}
             </h3>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               TVA collectée ({fmt(totalSalesVat)}) − TVA déductible ({fmt(totalPurchaseVat)})
             </p>
             <div className="mt-2 flex items-center gap-2">
-              <label className="text-sm text-gray-600">Ajustement :</label>
+              <label className="text-sm text-muted-foreground">Ajustement :</label>
               <input type="number" value={adjustments} onChange={e => setAdjustments(Number(e.target.value))} className="w-28 border rounded px-2 py-1 text-sm" step="0.01" />
             </div>
           </div>

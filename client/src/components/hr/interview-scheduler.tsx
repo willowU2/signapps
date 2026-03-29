@@ -79,7 +79,7 @@ function getStatusBadge(status: string) {
       );
     case "cancelled":
       return (
-        <div className="inline-flex items-center gap-1 bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs font-medium">
+        <div className="inline-flex items-center gap-1 bg-muted text-gray-800 px-2 py-1 rounded text-xs font-medium">
           Cancelled
         </div>
       );
@@ -114,60 +114,60 @@ export function InterviewScheduler() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Interview Scheduler</h2>
-        <p className="text-gray-600">Manage candidate interview schedule</p>
+        <h2 className="text-2xl font-bold text-foreground">Interview Scheduler</h2>
+        <p className="text-muted-foreground">Manage candidate interview schedule</p>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Scheduled</p>
+          <p className="text-sm text-muted-foreground font-medium">Scheduled</p>
           <p className="text-2xl font-bold text-blue-900">{scheduledCount}</p>
         </div>
         <div className="rounded-lg border bg-green-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Completed</p>
+          <p className="text-sm text-muted-foreground font-medium">Completed</p>
           <p className="text-2xl font-bold text-green-900">{completedCount}</p>
         </div>
-        <div className="rounded-lg border bg-gray-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Cancelled</p>
-          <p className="text-2xl font-bold text-gray-900">{cancelledCount}</p>
+        <div className="rounded-lg border bg-muted p-4">
+          <p className="text-sm text-muted-foreground font-medium">Cancelled</p>
+          <p className="text-2xl font-bold text-foreground">{cancelledCount}</p>
         </div>
       </div>
 
       <div className="border rounded-lg overflow-hidden">
-        <div className="bg-gray-100 border-b p-4">
-          <h3 className="font-semibold text-gray-900">Interview Calendar</h3>
+        <div className="bg-muted border-b p-4">
+          <h3 className="font-semibold text-foreground">Interview Calendar</h3>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm bg-white">
-            <thead className="bg-gray-50 border-b sticky top-0">
+          <table className="w-full text-sm bg-card">
+            <thead className="bg-muted border-b sticky top-0">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Candidate</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Interviewer</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Date & Time</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Room</th>
-                <th className="px-4 py-3 text-center font-semibold text-gray-900">Status</th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-900">Actions</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">Candidate</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">Interviewer</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">Date & Time</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">Room</th>
+                <th className="px-4 py-3 text-center font-semibold text-foreground">Status</th>
+                <th className="px-4 py-3 text-right font-semibold text-foreground">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {slots.map((slot) => (
-                <tr key={slot.id} className="hover:bg-gray-50">
+                <tr key={slot.id} className="hover:bg-muted">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-gray-400" />
-                      <p className="font-medium text-gray-900">{slot.candidateName}</p>
+                      <p className="font-medium text-foreground">{slot.candidateName}</p>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-gray-700">{slot.interviewer}</p>
+                    <p className="text-muted-foreground">{slot.interviewer}</p>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-gray-400" />
                       <div>
-                        <p className="font-medium text-gray-900">{slot.date}</p>
-                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                        <p className="font-medium text-foreground">{slot.date}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {slot.time}
                         </p>
@@ -177,7 +177,7 @@ export function InterviewScheduler() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-gray-400" />
-                      <p className="text-gray-700">{slot.room}</p>
+                      <p className="text-muted-foreground">{slot.room}</p>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-center">

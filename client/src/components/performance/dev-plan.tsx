@@ -122,7 +122,7 @@ function getStatusColor(status: string): string {
     case "in-progress":
       return "bg-blue-50 border-blue-200";
     default:
-      return "bg-gray-50 border-gray-200";
+      return "bg-muted border-border";
   }
 }
 
@@ -190,8 +190,8 @@ export function DevPlan() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Development Plan</h2>
-        <p className="text-gray-600">Track objectives, trainings, and milestones</p>
+        <h2 className="text-2xl font-bold text-foreground">Development Plan</h2>
+        <p className="text-muted-foreground">Track objectives, trainings, and milestones</p>
       </div>
 
       <div className="space-y-4">
@@ -216,10 +216,10 @@ export function DevPlan() {
                       {getStatusIcon(objective.status)}
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-lg font-semibold text-foreground">
                         {objective.title}
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         {objective.description}
                       </p>
                     </div>
@@ -240,8 +240,8 @@ export function DevPlan() {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Progress</span>
-                    <span className="font-medium text-gray-900">{Math.round(progress)}%</span>
+                    <span className="text-muted-foreground">Progress</span>
+                    <span className="font-medium text-foreground">{Math.round(progress)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
@@ -253,12 +253,12 @@ export function DevPlan() {
               </div>
 
               {isExpanded && (
-                <div className="border-t bg-white p-6 space-y-6">
+                <div className="border-t bg-card p-6 space-y-6">
                   {/* Trainings Section */}
                   <div>
                     <div className="flex items-center gap-2 mb-4">
                       <BookOpen className="w-5 h-5 text-blue-600" />
-                      <h4 className="font-semibold text-gray-900">Linked Trainings</h4>
+                      <h4 className="font-semibold text-foreground">Linked Trainings</h4>
                     </div>
                     <div className="space-y-3">
                       {objective.trainings.map((training) => (
@@ -276,10 +276,10 @@ export function DevPlan() {
                               className="rounded"
                             />
                             <div>
-                              <p className="font-medium text-gray-900">
+                              <p className="font-medium text-foreground">
                                 {training.name}
                               </p>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-muted-foreground">
                                 {training.provider} • {training.duration}
                               </p>
                             </div>
@@ -296,7 +296,7 @@ export function DevPlan() {
                   <div>
                     <div className="flex items-center gap-2 mb-4">
                       <Target className="w-5 h-5 text-purple-600" />
-                      <h4 className="font-semibold text-gray-900">Milestones</h4>
+                      <h4 className="font-semibold text-foreground">Milestones</h4>
                     </div>
                     <div className="space-y-3">
                       {objective.milestones.map((milestone) => (
@@ -314,10 +314,10 @@ export function DevPlan() {
                               className="rounded"
                             />
                             <div>
-                              <p className="font-medium text-gray-900">
+                              <p className="font-medium text-foreground">
                                 {milestone.name}
                               </p>
-                              <p className="text-sm text-gray-600 flex items-center gap-1">
+                              <p className="text-sm text-muted-foreground flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
                                 {new Date(milestone.dueDate).toLocaleDateString()}
                               </p>
@@ -333,7 +333,7 @@ export function DevPlan() {
 
                   {/* Manager Approval */}
                   <div className="border-t pt-4">
-                    <p className="text-sm text-gray-600 mb-3">Manager Approval</p>
+                    <p className="text-sm text-muted-foreground mb-3">Manager Approval</p>
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleApprove(objective.id)}

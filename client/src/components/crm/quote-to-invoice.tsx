@@ -52,19 +52,19 @@ export function QuoteToInvoice({
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-gray-600">Ref. Devis</p>
-          <h3 className="font-semibold text-gray-900 truncate">{quoteRef}</h3>
-          <p className="text-sm text-gray-600 mt-1">{clientName}</p>
+          <p className="text-sm text-muted-foreground">Ref. Devis</p>
+          <h3 className="font-semibold text-foreground truncate">{quoteRef}</h3>
+          <p className="text-sm text-muted-foreground mt-1">{clientName}</p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-gray-600">Montant</p>
+          <p className="text-sm text-muted-foreground">Montant</p>
           <p className="text-xl font-bold text-emerald-600">{formattedAmount}</p>
         </div>
       </div>
 
       {/* Progress Steps */}
       <div className="space-y-2">
-        <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Progression</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Progression</p>
         <div className="flex items-center gap-1">
           {STEPS.map((step, index) => {
             const isCompleted = index < currentStepIndex;
@@ -80,7 +80,7 @@ export function QuoteToInvoice({
                       ? 'bg-emerald-600 text-white'
                       : isCurrent
                         ? `${STEP_COLORS[step.id]}`
-                        : 'bg-gray-200 text-gray-600'
+                        : 'bg-gray-200 text-muted-foreground'
                   }`}
                 >
                   {isCompleted ? <Check className="h-4 w-4" /> : <StepIcon className="h-4 w-4" />}
@@ -96,10 +96,10 @@ export function QuoteToInvoice({
         </div>
 
         {/* Step labels */}
-        <div className="flex gap-1 text-xs text-gray-600">
+        <div className="flex gap-1 text-xs text-muted-foreground">
           {STEPS.map((step, index) => (
             <div key={step.id} className="flex-1">
-              <p className={index === currentStepIndex ? 'font-semibold text-gray-900' : ''}>
+              <p className={index === currentStepIndex ? 'font-semibold text-foreground' : ''}>
                 {step.label}
               </p>
             </div>
@@ -108,7 +108,7 @@ export function QuoteToInvoice({
       </div>
 
       {/* Meta info */}
-      <div className="text-xs text-gray-600 flex items-center justify-between py-2 border-t">
+      <div className="text-xs text-muted-foreground flex items-center justify-between py-2 border-t">
         <span>Créé le: {formattedDate}</span>
         <Badge variant="outline" className={STEP_COLORS[currentStep]}>
           {currentStep === 'quote' && 'En Attente'}
@@ -131,7 +131,7 @@ export function QuoteToInvoice({
       )}
 
       {!canConvert && currentStep !== 'paid' && (
-        <p className="text-xs text-gray-500 text-center py-2">
+        <p className="text-xs text-muted-foreground text-center py-2">
           {currentStep === 'quote' && 'En attente d\'acceptation du client'}
           {currentStep === 'invoice' && 'Facture générée. En attente de paiement.'}
         </p>

@@ -42,7 +42,7 @@ interface TaskTreeProps {
 }
 
 const PRIORITY_COLORS: Record<number, string> = {
-  0: "text-gray-500",    // Low
+  0: "text-muted-foreground",    // Low
   1: "text-blue-500",    // Medium
   2: "text-orange-500",  // High
   3: "text-red-500",     // Urgent

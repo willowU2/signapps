@@ -94,20 +94,20 @@ export function DocBranching({ documentId = 'doc-123', onMerge }: DocBranchingPr
           {/* Main Branch */}
           {mainBranch && (
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-700">Main Branch</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground">Main Branch</h3>
               <div className="relative">
                 <div
                   className={`p-4 rounded-lg border-2 transition-colors cursor-pointer ${
                     selectedBranch === mainBranch.id
                       ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                      : 'border-border bg-muted hover:border-border'
                   }`}
                   onClick={() => setSelectedBranch(mainBranch.id)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="font-semibold text-gray-900">{mainBranch.name}</p>
-                      <div className="flex gap-4 mt-2 text-xs text-gray-600">
+                      <p className="font-semibold text-foreground">{mainBranch.name}</p>
+                      <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           {formatDate(mainBranch.updatedAt)}
@@ -132,7 +132,7 @@ export function DocBranching({ documentId = 'doc-123', onMerge }: DocBranchingPr
           {/* Child Branches */}
           {childBranches.length > 0 && (
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-700 ml-8">Feature Branches</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground ml-8">Feature Branches</h3>
               <div className="space-y-2 ml-8 relative before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-gray-300">
                 {childBranches.map((branch) => (
                   <div
@@ -140,14 +140,14 @@ export function DocBranching({ documentId = 'doc-123', onMerge }: DocBranchingPr
                     className={`p-3 rounded-lg border transition-colors cursor-pointer pl-6 before:absolute before:left-0 before:top-4 before:w-6 before:h-0.5 before:bg-gray-300 ${
                       selectedBranch === branch.id
                         ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        : 'border-border hover:border-border'
                     } ${mergeFrom === branch.id ? 'ring-2 ring-orange-400' : ''}`}
                     onClick={() => setSelectedBranch(branch.id)}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900 text-sm">{branch.name}</p>
-                        <div className="flex gap-3 mt-1 text-xs text-gray-600">
+                        <p className="font-medium text-foreground text-sm">{branch.name}</p>
+                        <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
                           <span>{formatDate(branch.updatedAt)}</span>
                           <span>{branch.author}</span>
                         </div>

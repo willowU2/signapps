@@ -104,8 +104,8 @@ export function CSSOverrideEditor() {
     <div className="space-y-4 w-full max-w-6xl">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">CSS Override Editor</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-2xl font-bold text-foreground">CSS Override Editor</h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Customize tenant branding with custom CSS
           </p>
         </div>
@@ -169,9 +169,9 @@ export function CSSOverrideEditor() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="border border-gray-200 overflow-hidden">
-          <div className="bg-gray-100 px-4 py-2 border-b border-gray-200">
-            <p className="text-sm font-medium text-gray-700">Editor</p>
+        <Card className="border border-border overflow-hidden">
+          <div className="bg-muted px-4 py-2 border-b border-border">
+            <p className="text-sm font-medium text-muted-foreground">Editor</p>
           </div>
           <textarea
             value={css}
@@ -182,11 +182,11 @@ export function CSSOverrideEditor() {
         </Card>
 
         {showPreview && (
-          <Card className="border border-gray-200 overflow-hidden">
-            <div className="bg-gray-100 px-4 py-2 border-b border-gray-200">
-              <p className="text-sm font-medium text-gray-700">Live Preview</p>
+          <Card className="border border-border overflow-hidden">
+            <div className="bg-muted px-4 py-2 border-b border-border">
+              <p className="text-sm font-medium text-muted-foreground">Live Preview</p>
             </div>
-            <div className="h-96 overflow-auto bg-white p-4">
+            <div className="h-96 overflow-auto bg-card p-4">
               <style>{css}</style>
               <div className="space-y-4">
                 <div>
@@ -195,7 +195,7 @@ export function CSSOverrideEditor() {
                     <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
                       Primary
                     </button>
-                    <button className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                    <button className="px-4 py-2 border border-border rounded hover:bg-muted">
                       Secondary
                     </button>
                   </div>
@@ -203,7 +203,7 @@ export function CSSOverrideEditor() {
 
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Text</h3>
-                  <p className="text-gray-700">
+                  <p className="text-muted-foreground">
                     This is sample paragraph text with your custom CSS applied.
                   </p>
                 </div>
@@ -213,7 +213,7 @@ export function CSSOverrideEditor() {
                   <input
                     type="text"
                     placeholder="Sample input field"
-                    className="w-full px-3 py-2 border border-gray-300 rounded"
+                    className="w-full px-3 py-2 border border-border rounded"
                   />
                 </div>
               </div>

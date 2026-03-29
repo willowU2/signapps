@@ -43,7 +43,7 @@ function OrgChartNodeComponent({ node, level }: TreeNodeProps) {
     finance: "bg-slate-500/20 text-slate-700 dark:text-slate-400",
   };
 
-  const deptColor = departmentColors[node.department.toLowerCase()] || "bg-gray-500/20 text-gray-700 dark:text-gray-400";
+  const deptColor = departmentColors[node.department.toLowerCase()] || "bg-gray-500/20 text-muted-foreground dark:text-gray-400";
 
   return (
     <div className={cn("py-2", level > 0 && "ml-6")}>

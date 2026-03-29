@@ -109,10 +109,10 @@ export function IndividualDevPlan() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-foreground">
             Individual Development Plan
           </h2>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Skills development and training roadmap
           </p>
         </div>
@@ -135,18 +135,18 @@ export function IndividualDevPlan() {
         </p>
       </div>
 
-      <div className="border rounded-lg overflow-hidden bg-white">
-        <div className="bg-gray-50 border-b p-4 flex items-center gap-2">
-          <Target className="w-5 h-5 text-gray-700" />
-          <h3 className="font-semibold text-gray-900">Skill Gaps & Targets</h3>
+      <div className="border rounded-lg overflow-hidden bg-card">
+        <div className="bg-muted border-b p-4 flex items-center gap-2">
+          <Target className="w-5 h-5 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground">Skill Gaps & Targets</h3>
         </div>
 
         <div className="divide-y">
           {gaps.map((gap) => (
-            <div key={gap.id} className="p-4 hover:bg-gray-50">
+            <div key={gap.id} className="p-4 hover:bg-muted">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <p className="font-medium text-gray-900">{gap.skillName}</p>
+                  <p className="font-medium text-foreground">{gap.skillName}</p>
                   <span
                     className={`inline-block text-xs px-2 py-1 rounded mt-1 font-medium ${
                       gap.priority === "high"
@@ -163,7 +163,7 @@ export function IndividualDevPlan() {
 
               <div className="space-y-2">
                 <div>
-                  <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                     <span>Current: Level {gap.currentLevel}</span>
                     <span>Target: Level {gap.targetLevel}</span>
                   </div>
@@ -188,10 +188,10 @@ export function IndividualDevPlan() {
         </div>
       </div>
 
-      <div className="border rounded-lg overflow-hidden bg-white">
-        <div className="bg-gray-50 border-b p-4 flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-gray-700" />
-          <h3 className="font-semibold text-gray-900">Recommended Trainings</h3>
+      <div className="border rounded-lg overflow-hidden bg-card">
+        <div className="bg-muted border-b p-4 flex items-center gap-2">
+          <BookOpen className="w-5 h-5 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground">Recommended Trainings</h3>
         </div>
 
         <div className="divide-y">
@@ -199,7 +199,7 @@ export function IndividualDevPlan() {
             <div
               key={training.id}
               className={`p-4 cursor-pointer transition-all ${
-                training.completed ? "bg-green-50" : "hover:bg-gray-50"
+                training.completed ? "bg-green-50" : "hover:bg-muted"
               }`}
               onClick={() => handleToggleTraining(training.id)}
             >
@@ -210,15 +210,15 @@ export function IndividualDevPlan() {
                       <span className="text-white text-xs">✓</span>
                     </div>
                   ) : (
-                    <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                    <div className="w-5 h-5 rounded-full border-2 border-border" />
                   )}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900">{training.name}</p>
-                  <p className="text-sm text-gray-600">{training.provider}</p>
+                  <p className="font-medium text-foreground">{training.name}</p>
+                  <p className="text-sm text-muted-foreground">{training.provider}</p>
 
-                  <div className="flex flex-wrap gap-3 mt-2 text-xs text-gray-600">
+                  <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       {training.duration}
@@ -243,25 +243,25 @@ export function IndividualDevPlan() {
         <div className="rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-2">
             <BookOpen className="w-4 h-4 text-blue-600" />
-            <p className="text-sm font-medium text-gray-700">Total Trainings</p>
+            <p className="text-sm font-medium text-muted-foreground">Total Trainings</p>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{trainings.length}</p>
+          <p className="text-2xl font-bold text-foreground">{trainings.length}</p>
         </div>
 
         <div className="rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4 text-green-600" />
-            <p className="text-sm font-medium text-gray-700">Completed</p>
+            <p className="text-sm font-medium text-muted-foreground">Completed</p>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{completedTrainings}</p>
+          <p className="text-2xl font-bold text-foreground">{completedTrainings}</p>
         </div>
 
         <div className="rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-2">
             <Target className="w-4 h-4 text-purple-600" />
-            <p className="text-sm font-medium text-gray-700">Skills Tracked</p>
+            <p className="text-sm font-medium text-muted-foreground">Skills Tracked</p>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{gaps.length}</p>
+          <p className="text-2xl font-bold text-foreground">{gaps.length}</p>
         </div>
       </div>
 

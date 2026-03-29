@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { getServiceUrl, ServiceName } from "@/lib/api/factory";
 
 const PLATFORM_COLORS: Record<string, string> = {
   twitter: "#1DA1F2",
@@ -78,7 +79,7 @@ export function AiContentGenerator({ onAccept }: AiContentGeneratorProps) {
     setLoading(true);
     setVariationMode(variations);
     try {
-      const res = await fetch("http://localhost:3019/api/v1/social/ai/generate", {
+      const res = await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/ai/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic, tone, platforms, variations }),

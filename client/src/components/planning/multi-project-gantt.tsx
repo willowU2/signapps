@@ -57,7 +57,7 @@ export default function MultiProjectGantt() {
     return (
       <div key={task.id} className="flex items-center h-8 mb-2">
         <span className="w-32 text-sm font-medium truncate">{task.name}</span>
-        <div className="relative flex-1 h-full bg-gray-100 rounded">
+        <div className="relative flex-1 h-full bg-muted rounded">
           <div
             className={`absolute h-full rounded transition-all ${hasDeps ? "bg-orange-500" : "bg-blue-500"}`}
             style={{
@@ -84,7 +84,7 @@ export default function MultiProjectGantt() {
           <div key={project.id} className="mb-6">
             <button
               onClick={() => toggleProject(project.id)}
-              className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded w-full font-bold text-left"
+              className="flex items-center gap-2 p-2 hover:bg-muted rounded w-full font-bold text-left"
             >
               {expandedProjects.includes(project.id) ? (
                 <ChevronDown className="w-4 h-4" />
@@ -95,14 +95,14 @@ export default function MultiProjectGantt() {
             </button>
 
             {expandedProjects.includes(project.id) && (
-              <div className="pl-6 border-l-2 border-gray-300">
+              <div className="pl-6 border-l-2 border-border">
                 {project.tasks.map(renderGanttBar)}
               </div>
             )}
           </div>
         ))}
 
-        <div className="flex gap-1 mt-8 text-xs text-gray-600 mb-4">
+        <div className="flex gap-1 mt-8 text-xs text-muted-foreground mb-4">
           {Array.from({ length: 10 }).map((_, i) => (
             <div key={i} style={{ width: `${dayWidth * 5}px` }} className="text-center">
               Day {i * 5}

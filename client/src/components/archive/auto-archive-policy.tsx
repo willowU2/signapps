@@ -89,7 +89,7 @@ export function AutoArchivePolicy() {
                 )}
                 <h3 className="font-semibold">{policy.dataType}</h3>
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 {policy.action === "archive" ? "Archiver" : "Supprimer"} après {policy.ageThreshold} jours
               </p>
             </div>

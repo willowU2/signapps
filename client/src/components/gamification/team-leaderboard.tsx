@@ -80,7 +80,7 @@ export default function TeamLeaderboard() {
             className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
               period === p
                 ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                : "bg-gray-200 text-muted-foreground hover:bg-gray-300"
             }`}
           >
             {periodLabels[p]}
@@ -96,21 +96,21 @@ export default function TeamLeaderboard() {
               team.position === 1
                 ? "bg-yellow-50 border-yellow-400"
                 : team.position === 2
-                  ? "bg-gray-100 border-gray-400"
+                  ? "bg-muted border-gray-400"
                   : team.position === 3
                     ? "bg-orange-50 border-orange-400"
-                    : "bg-white border-blue-400"
+                    : "bg-card border-blue-400"
             }`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 flex-1">
-                <div className="text-2xl font-bold text-gray-600 w-8">
+                <div className="text-2xl font-bold text-muted-foreground w-8">
                   {team.position === 1 ? "🥇" : team.position === 2 ? "🥈" : team.position === 3 ? "🥉" : team.position}
                 </div>
                 <div className="text-2xl">{team.avatar}</div>
                 <div>
                   <p className="font-medium">{team.name}</p>
-                  <p className="text-xs text-gray-600">{team.score.toLocaleString()} points</p>
+                  <p className="text-xs text-muted-foreground">{team.score.toLocaleString()} points</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -127,7 +127,7 @@ export default function TeamLeaderboard() {
                   </div>
                 )}
                 {team.trend === "stable" && (
-                  <div className="text-sm font-medium text-gray-600">−</div>
+                  <div className="text-sm font-medium text-muted-foreground">−</div>
                 )}
               </div>
             </div>

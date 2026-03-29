@@ -133,7 +133,7 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
         accessorKey: 'name',
         header: 'Nom de l\'actif',
         cell: ({ row }) => (
-          <div className="font-medium text-gray-900">{row.original.name}</div>
+          <div className="font-medium text-foreground">{row.original.name}</div>
         ),
       },
       {
@@ -149,7 +149,7 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
         accessorKey: 'serialNumber',
         header: 'Numéro de série',
         cell: ({ row }) => (
-          <span className="text-sm text-gray-600 font-mono">
+          <span className="text-sm text-muted-foreground font-mono">
             {row.original.serialNumber}
           </span>
         ),
@@ -158,7 +158,7 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
         accessorKey: 'assignedTo',
         header: 'Assigné à',
         cell: ({ row }) => (
-          <span className="text-sm text-gray-700">{row.original.assignedTo}</span>
+          <span className="text-sm text-muted-foreground">{row.original.assignedTo}</span>
         ),
       },
       {
@@ -179,7 +179,7 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
 
           return (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-muted-foreground">
                 {format(parseISO(row.original.warrantyEndDate), 'd MMM yyyy', {
                   locale: fr,
                 })}

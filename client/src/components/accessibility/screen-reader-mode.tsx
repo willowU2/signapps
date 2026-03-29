@@ -33,23 +33,23 @@ export default function ScreenReaderMode() {
       <h2 className="text-2xl font-bold">Screen Reader Mode</h2>
 
       <div className="grid gap-3">
-        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+        <div className="flex items-center justify-between p-3 bg-muted rounded-lg border">
           <div className="flex items-center gap-2">
             <Volume2 className="w-5 h-5" />
             <div>
               <p className="font-medium">Screen Reader Active</p>
-              <p className="text-xs text-gray-600">Content will be announced</p>
+              <p className="text-xs text-muted-foreground">Content will be announced</p>
             </div>
           </div>
           <div className={`w-12 h-6 rounded-full ${screenReaderEnabled ? "bg-green-500" : "bg-gray-300"}`} />
         </div>
 
-        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+        <div className="flex items-center justify-between p-3 bg-muted rounded-lg border">
           <div className="flex items-center gap-2">
             <Eye className="w-5 h-5" />
             <div>
               <p className="font-medium">High Contrast Mode</p>
-              <p className="text-xs text-gray-600">Enhanced text visibility</p>
+              <p className="text-xs text-muted-foreground">Enhanced text visibility</p>
             </div>
           </div>
           <Button
@@ -61,12 +61,12 @@ export default function ScreenReaderMode() {
           </Button>
         </div>
 
-        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+        <div className="flex items-center justify-between p-3 bg-muted rounded-lg border">
           <div className="flex items-center gap-2">
             <Type className="w-5 h-5" />
             <div>
               <p className="font-medium">Large Text</p>
-              <p className="text-xs text-gray-600">Increase font size by 25%</p>
+              <p className="text-xs text-muted-foreground">Increase font size by 25%</p>
             </div>
           </div>
           <Button size="sm" variant={largeText ? "default" : "outline"} onClick={toggleLargeText}>
@@ -74,12 +74,12 @@ export default function ScreenReaderMode() {
           </Button>
         </div>
 
-        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+        <div className="flex items-center justify-between p-3 bg-muted rounded-lg border">
           <div className="flex items-center gap-2">
             <Tag className="w-5 h-5" />
             <div>
               <p className="font-medium">ARIA Labels Indicator</p>
-              <p className="text-xs text-gray-600">{ariaLabelsVisible ? "Showing" : "Hidden"} accessible labels</p>
+              <p className="text-xs text-muted-foreground">{ariaLabelsVisible ? "Showing" : "Hidden"} accessible labels</p>
             </div>
           </div>
           <Button
@@ -93,7 +93,7 @@ export default function ScreenReaderMode() {
       </div>
 
       <div className="p-3 bg-blue-50 rounded-lg text-sm">
-        <p className="font-medium">Tip: Press <kbd className="px-2 py-1 bg-white rounded border">Alt</kbd> + <kbd className="px-2 py-1 bg-white rounded border">A</kbd> to toggle accessibility features</p>
+        <p className="font-medium">Tip: Press <kbd className="px-2 py-1 bg-card rounded border">Alt</kbd> + <kbd className="px-2 py-1 bg-card rounded border">A</kbd> to toggle accessibility features</p>
       </div>
     </div>
   );

@@ -21,7 +21,7 @@ interface AssignedProject {
 const STATUS_CONFIG = {
   active: { label: "Actif", class: "bg-green-100 text-green-800" },
   "on-hold": { label: "En pause", class: "bg-yellow-100 text-yellow-800" },
-  completed: { label: "Terminé", class: "bg-gray-100 text-gray-800" },
+  completed: { label: "Terminé", class: "bg-muted text-gray-800" },
 };
 
 const DEMO_PROJECTS: AssignedProject[] = [

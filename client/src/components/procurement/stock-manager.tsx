@@ -121,7 +121,7 @@ export function StockManager({ items = SAMPLE_STOCK }: StockManagerProps) {
       <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50">
+            <TableRow className="bg-muted">
               <TableHead>Product</TableHead>
               <TableHead className="w-20 text-right">Quantity</TableHead>
               <TableHead className="w-24 text-right">Min Threshold</TableHead>
@@ -158,7 +158,7 @@ export function StockManager({ items = SAMPLE_STOCK }: StockManagerProps) {
                 <TableCell>
                   {getStatusBadge(item.quantity, item.minThreshold)}
                 </TableCell>
-                <TableCell className="text-sm text-gray-600">
+                <TableCell className="text-sm text-muted-foreground">
                   {new Date(item.lastMovement).toLocaleDateString()}
                 </TableCell>
                 <TableCell>
@@ -174,20 +174,20 @@ export function StockManager({ items = SAMPLE_STOCK }: StockManagerProps) {
 
       <div className="grid grid-cols-3 gap-4 text-center">
         <div className="border rounded-lg p-4">
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-2xl font-bold text-foreground">
             {items.reduce((sum, item) => sum + item.quantity, 0)}
           </p>
-          <p className="text-sm text-gray-600">Total Units</p>
+          <p className="text-sm text-muted-foreground">Total Units</p>
         </div>
         <div className="border rounded-lg p-4">
           <p className="text-2xl font-bold text-yellow-600">{alertItems.length}</p>
-          <p className="text-sm text-gray-600">Low Stock</p>
+          <p className="text-sm text-muted-foreground">Low Stock</p>
         </div>
         <div className="border rounded-lg p-4">
           <p className="text-2xl font-bold text-red-600">
             {items.filter((item) => item.quantity === 0).length}
           </p>
-          <p className="text-sm text-gray-600">Out of Stock</p>
+          <p className="text-sm text-muted-foreground">Out of Stock</p>
         </div>
       </div>
     </div>

@@ -452,7 +452,7 @@ export default function SheetsDashboard() {
                                 {isCreating ? (
                                     <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                                 ) : (
-                                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                                    <div className="absolute inset-0 bg-card/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                                 )}
                                 <span className="relative">Créer</span>
                             </Button>

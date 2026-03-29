@@ -67,14 +67,14 @@ const KPICard: React.FC<{ kpi: KPIData }> = ({ kpi }) => {
     <div className="bg-background rounded-lg border border-border p-6 shadow-sm hover:shadow-md transition-shadow">
       {/* Header with title */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-gray-600">{kpi.title}</h3>
+        <h3 className="text-sm font-medium text-muted-foreground">{kpi.title}</h3>
       </div>
 
       {/* Main value and unit */}
       <div className="mb-4">
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-bold text-gray-900">{kpi.value}</span>
-          {kpi.unit && <span className="text-sm text-gray-500">{kpi.unit}</span>}
+          <span className="text-3xl font-bold text-foreground">{kpi.value}</span>
+          {kpi.unit && <span className="text-sm text-muted-foreground">{kpi.unit}</span>}
         </div>
       </div>
 
@@ -157,7 +157,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
     <div className="w-full space-y-6">
       {/* Header with period selector */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">KPI Dashboard</h2>
+        <h2 className="text-2xl font-bold text-foreground">KPI Dashboard</h2>
         <div className="flex gap-2">
           {(['week', 'month', 'quarter'] as const).map((p) => (
             <button
@@ -166,7 +166,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
               className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
                 period === p
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-muted text-muted-foreground hover:bg-gray-200'
               }`}
             >
               {p.charAt(0).toUpperCase() + p.slice(1)}

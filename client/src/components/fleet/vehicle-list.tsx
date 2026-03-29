@@ -36,7 +36,7 @@ export function VehicleList({ vehicles, onAddVehicle }: VehicleListProps) {
       case 'Maintenance':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-gray-800';
     }
   };
 
@@ -59,21 +59,21 @@ export function VehicleList({ vehicles, onAddVehicle }: VehicleListProps) {
         accessorKey: 'plateNumber',
         header: 'Plaque d\'immatriculation',
         cell: ({ row }) => (
-          <div className="font-medium text-gray-900">{row.original.plateNumber}</div>
+          <div className="font-medium text-foreground">{row.original.plateNumber}</div>
         ),
       },
       {
         accessorKey: 'model',
         header: 'Modèle',
         cell: ({ row }) => (
-          <span className="text-sm text-gray-700">{row.original.model}</span>
+          <span className="text-sm text-muted-foreground">{row.original.model}</span>
         ),
       },
       {
         accessorKey: 'assignedDriver',
         header: 'Conducteur Assigné',
         cell: ({ row }) => (
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             {row.original.assignedDriver || '-'}
           </span>
         ),
@@ -91,7 +91,7 @@ export function VehicleList({ vehicles, onAddVehicle }: VehicleListProps) {
         accessorKey: 'nextServiceDate',
         header: 'Date Prochain Entretien',
         cell: ({ row }) => (
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             {row.original.nextServiceDate}
           </span>
         ),
@@ -100,7 +100,7 @@ export function VehicleList({ vehicles, onAddVehicle }: VehicleListProps) {
         accessorKey: 'kmCounter',
         header: 'Kilométrage',
         cell: ({ row }) => (
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-muted-foreground">
             {row.original.kmCounter.toLocaleString('fr-FR')} km
           </span>
         ),
@@ -117,7 +117,7 @@ export function VehicleList({ vehicles, onAddVehicle }: VehicleListProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Gestion de Flotte</h2>
+        <h2 className="text-lg font-semibold text-foreground">Gestion de Flotte</h2>
         <Button
           onClick={() => setIsFormOpen(true)}
           className="gap-2"

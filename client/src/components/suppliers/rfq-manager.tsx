@@ -67,7 +67,7 @@ export default function RFQManager() {
       case "awarded":
         return baseClass + " bg-blue-100 text-blue-700";
       default:
-        return baseClass + " bg-gray-100 text-gray-700";
+        return baseClass + " bg-muted text-muted-foreground";
     }
   };
 
@@ -85,7 +85,7 @@ export default function RFQManager() {
       </div>
 
       {showForm && (
-        <div className="rounded-lg border bg-gray-50 p-4">
+        <div className="rounded-lg border bg-muted p-4">
           <h3 className="mb-4 font-semibold">New RFQ</h3>
           <div className="space-y-3">
             <div>
@@ -119,7 +119,7 @@ export default function RFQManager() {
                   setShowForm(false);
                   setFormData({ title: "", deadline: "" });
                 }}
-                className="rounded bg-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-400"
+                className="rounded bg-gray-300 px-4 py-2 text-sm text-muted-foreground hover:bg-gray-400"
               >
                 Cancel
               </button>
@@ -137,11 +137,11 @@ export default function RFQManager() {
             <div key={rfq.id} className="flex items-center justify-between p-4">
               <div>
                 <p className="font-medium">{rfq.title}</p>
-                <p className="text-sm text-gray-600">Deadline: {rfq.deadline}</p>
+                <p className="text-sm text-muted-foreground">Deadline: {rfq.deadline}</p>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-gray-500" />
+                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-semibold">{rfq.responsesCount} responses</span>
                 </div>
                 <span className={getStatusBadge(rfq.status)}>{rfq.status}</span>

@@ -25,7 +25,7 @@ interface PriorityNotification {
 const PRIORITY_CONFIG: Record<Priority, { label: string; icon: React.ReactNode; class: string; badgeClass: string; order: number }> = {
   urgent: { label: "Urgent", icon: <AlertCircle className="size-3.5" />, class: "border-l-red-500 bg-red-50/50", badgeClass: "bg-red-100 text-red-800", order: 0 },
   normal: { label: "Normal", icon: <Bell className="size-3.5" />, class: "border-l-blue-500", badgeClass: "bg-blue-100 text-blue-800", order: 1 },
-  low: { label: "Faible", icon: <Info className="size-3.5" />, class: "border-l-gray-400 opacity-70", badgeClass: "bg-gray-100 text-gray-700", order: 2 },
+  low: { label: "Faible", icon: <Info className="size-3.5" />, class: "border-l-gray-400 opacity-70", badgeClass: "bg-muted text-muted-foreground", order: 2 },
 };
 
 const DEMO_NOTIFS: PriorityNotification[] = [

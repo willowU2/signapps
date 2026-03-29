@@ -135,7 +135,7 @@ Write a complete, professional contract in plain text (no markdown). Include all
           {/* Template Selection */}
           {!selectedTemplate ? (
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-slate-900">Select Template</h3>
+              <h3 className="text-sm font-semibold text-foreground">Select Template</h3>
               <div className="grid grid-cols-1 gap-3">
                 {TEMPLATES.map(template => (
                   <button
@@ -143,7 +143,7 @@ Write a complete, professional contract in plain text (no markdown). Include all
                     onClick={() => handleTemplateSelect(template.id)}
                     className="p-4 border border-slate-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition text-left"
                   >
-                    <p className="font-semibold text-slate-900">{template.name}</p>
+                    <p className="font-semibold text-foreground">{template.name}</p>
                     <p className="text-xs text-slate-600 mt-1">{template.description}</p>
                   </button>
                 ))}
@@ -153,7 +153,7 @@ Write a complete, professional contract in plain text (no markdown). Include all
             <div className="space-y-6">
               {/* Form Fields */}
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-slate-900">Contract Details</h3>
+                <h3 className="text-sm font-semibold text-foreground">Contract Details</h3>
 
                 <div>
                   <label className="text-xs font-medium text-slate-600 block mb-2">Client Name *</label>

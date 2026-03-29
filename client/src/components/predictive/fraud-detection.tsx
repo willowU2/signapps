@@ -57,7 +57,7 @@ export const FraudDetection: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow">
+    <div className="p-6 bg-card rounded-lg shadow">
       <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
         <Shield className="w-5 h-5 text-red-500" />
         Fraud Detection & Prevention
@@ -81,8 +81,8 @@ export const FraudDetection: React.FC = () => {
           >
             <div className="flex justify-between items-start mb-3">
               <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">{alert.patternType}</h3>
-                <p className="text-xs text-gray-600 mt-1">ID: {alert.transactionId}</p>
+                <h3 className="font-semibold text-foreground">{alert.patternType}</h3>
+                <p className="text-xs text-muted-foreground mt-1">ID: {alert.transactionId}</p>
               </div>
               <span className={`px-2 py-1 rounded text-xs font-bold ${getRiskBadgeColor(alert.riskScore)}`}>
                 {getRiskLabel(alert.riskScore)}
@@ -91,16 +91,16 @@ export const FraudDetection: React.FC = () => {
 
             <div className="grid grid-cols-3 gap-2 mb-3 text-xs">
               <div>
-                <p className="text-gray-600">Risk Score</p>
-                <p className="font-bold text-gray-900">{alert.riskScore}%</p>
+                <p className="text-muted-foreground">Risk Score</p>
+                <p className="font-bold text-foreground">{alert.riskScore}%</p>
               </div>
               <div>
-                <p className="text-gray-600">Amount</p>
-                <p className="font-bold text-gray-900">${alert.amount.toLocaleString()}</p>
+                <p className="text-muted-foreground">Amount</p>
+                <p className="font-bold text-foreground">${alert.amount.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-gray-600">Time</p>
-                <p className="font-bold text-gray-900">{alert.timestamp.split(' ')[1]}</p>
+                <p className="text-muted-foreground">Time</p>
+                <p className="font-bold text-foreground">{alert.timestamp.split(' ')[1]}</p>
               </div>
             </div>
 
@@ -128,16 +128,16 @@ export const FraudDetection: React.FC = () => {
 
       <div className="mt-4 pt-4 border-t">
         <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="p-2 bg-gray-50 rounded">
-            <p className="text-xs text-gray-600">Critical Alerts</p>
+          <div className="p-2 bg-muted rounded">
+            <p className="text-xs text-muted-foreground">Critical Alerts</p>
             <p className="text-lg font-bold text-red-600">{alerts.filter((a) => a.riskScore >= 85).length}</p>
           </div>
-          <div className="p-2 bg-gray-50 rounded">
-            <p className="text-xs text-gray-600">High Risk</p>
+          <div className="p-2 bg-muted rounded">
+            <p className="text-xs text-muted-foreground">High Risk</p>
             <p className="text-lg font-bold text-orange-600">{alerts.filter((a) => a.riskScore >= 70 && a.riskScore < 85).length}</p>
           </div>
-          <div className="p-2 bg-gray-50 rounded">
-            <p className="text-xs text-gray-600">Detection Rate</p>
+          <div className="p-2 bg-muted rounded">
+            <p className="text-xs text-muted-foreground">Detection Rate</p>
             <p className="text-lg font-bold text-blue-600">99.2%</p>
           </div>
         </div>

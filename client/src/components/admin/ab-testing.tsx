@@ -144,7 +144,7 @@ export function ABTesting() {
   };
 
   if (isLoading) {
-    return <div className="text-center text-gray-500">Chargement...</div>;
+    return <div className="text-center text-muted-foreground">Chargement...</div>;
   }
 
   const runningCount = experiments.filter((e) => e.status === "running").length;
@@ -160,13 +160,13 @@ export function ABTesting() {
           <TrendingUp className="h-6 w-6 text-blue-600" />
           <h2 className="text-2xl font-bold">A/B Testing</h2>
         </div>
-        <div className="space-x-6 text-sm text-gray-600">
+        <div className="space-x-6 text-sm text-muted-foreground">
           <span>
-            <span className="font-semibold text-gray-900">{runningCount}</span>{" "}
+            <span className="font-semibold text-foreground">{runningCount}</span>{" "}
             running
           </span>
           <span>
-            <span className="font-semibold text-gray-900">{completedCount}</span>{" "}
+            <span className="font-semibold text-foreground">{completedCount}</span>{" "}
             completed
           </span>
         </div>
@@ -196,15 +196,15 @@ export function ABTesting() {
         {experiments.map((experiment) => (
           <div
             key={experiment.id}
-            className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
+            className="rounded-lg border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow"
           >
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-foreground">
                   {experiment.name}
                 </h3>
-                <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
                     {formatDate(experiment.startDate)}
@@ -243,10 +243,10 @@ export function ABTesting() {
                 return (
                   <div key={idx} className="space-y-1">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium text-gray-900">
+                      <span className="font-medium text-foreground">
                         {variant.name}
                       </span>
-                      <span className="text-gray-600">
+                      <span className="text-muted-foreground">
                         {variant.conversions.toLocaleString()} conversions
                         {experiment.winner === variant.name && (
                           <span className="ml-2 text-yellow-600 font-semibold">
@@ -267,7 +267,7 @@ export function ABTesting() {
                           style={{ width: `${conversionRate}%` }}
                         />
                       </div>
-                      <span className="text-sm text-gray-600 w-12 text-right">
+                      <span className="text-sm text-muted-foreground w-12 text-right">
                         {variant.percentage}%
                       </span>
                     </div>

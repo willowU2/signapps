@@ -112,17 +112,17 @@ export function IdeaBox() {
 
       <div className="space-y-2">
         {ideas.length === 0 ? (
-          <p className="text-center text-gray-500 py-4">No ideas yet. Be the first to share!</p>
+          <p className="text-center text-muted-foreground py-4">No ideas yet. Be the first to share!</p>
         ) : (
           ideas.map((idea) => (
-            <div key={idea.id} className="border rounded-lg p-4 hover:bg-gray-50">
+            <div key={idea.id} className="border rounded-lg p-4 hover:bg-muted">
               <div className="flex items-start justify-between mb-2">
                 <p className="flex-1">{idea.text}</p>
                 <Badge className={getStatusColor(idea.status)}>
                   {idea.status}
                 </Badge>
               </div>
-              <div className="flex items-center justify-between text-sm text-gray-500">
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span>{idea.submittedAt.toLocaleDateString()}</span>
                 <div className="flex gap-2">
                   <Button

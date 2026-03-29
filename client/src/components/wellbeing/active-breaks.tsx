@@ -66,7 +66,7 @@ export default function ActiveBreaks() {
 
       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
         <div className="text-center">
-          <p className="text-sm text-gray-600 mb-2">Break Time</p>
+          <p className="text-sm text-muted-foreground mb-2">Break Time</p>
           <div className="text-6xl font-bold text-blue-600 font-mono mb-4">
             {formatTime(timeRemaining)}
           </div>
@@ -95,16 +95,16 @@ export default function ActiveBreaks() {
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="bg-card p-4 rounded-lg border border-border">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <Zap className="w-5 h-5 text-orange-500" />
           Current Exercise
         </h3>
         <div className="space-y-4">
           <div>
-            <h4 className="text-xl font-bold text-gray-900">{exercise.name}</h4>
-            <p className="text-sm text-gray-600 mt-1">{exercise.description}</p>
-            <p className="text-xs text-gray-500 mt-2">Duration: ~{exercise.duration}s</p>
+            <h4 className="text-xl font-bold text-foreground">{exercise.name}</h4>
+            <p className="text-sm text-muted-foreground mt-1">{exercise.description}</p>
+            <p className="text-xs text-muted-foreground mt-2">Duration: ~{exercise.duration}s</p>
           </div>
           <div className="bg-orange-50 p-3 rounded border border-orange-200">
             <p className="text-sm text-orange-900">
@@ -121,11 +121,11 @@ export default function ActiveBreaks() {
             <div
               key={idx}
               className={`p-3 rounded-lg text-sm ${
-                idx === currentExercise ? "bg-blue-100 border border-blue-300" : "bg-gray-50 border border-gray-200"
+                idx === currentExercise ? "bg-blue-100 border border-blue-300" : "bg-muted border border-border"
               }`}
             >
               <p className="font-medium">{ex.name}</p>
-              <p className="text-xs text-gray-600">{ex.description}</p>
+              <p className="text-xs text-muted-foreground">{ex.description}</p>
             </div>
           ))}
         </div>

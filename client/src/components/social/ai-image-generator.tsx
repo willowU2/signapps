@@ -322,9 +322,9 @@ export function AiImageGenerator({ onUseInPost }: AiImageGeneratorProps) {
               >
                 {/* Decorative elements to make the mock look more interesting */}
                 <div className="absolute inset-0 opacity-10">
-                  <div className="absolute top-1/4 left-1/4 w-32 h-32 rounded-full bg-white/30 blur-2xl" />
-                  <div className="absolute bottom-1/4 right-1/3 w-24 h-24 rounded-full bg-white/20 blur-xl" />
-                  <div className="absolute top-1/2 right-1/4 w-16 h-16 rounded-full bg-white/25 blur-lg" />
+                  <div className="absolute top-1/4 left-1/4 w-32 h-32 rounded-full bg-card/30 blur-2xl" />
+                  <div className="absolute bottom-1/4 right-1/3 w-24 h-24 rounded-full bg-card/20 blur-xl" />
+                  <div className="absolute top-1/2 right-1/4 w-16 h-16 rounded-full bg-card/25 blur-lg" />
                 </div>
 
                 {/* Style name overlay */}

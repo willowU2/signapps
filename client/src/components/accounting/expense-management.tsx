@@ -104,7 +104,7 @@ export function ExpenseManagement() {
 
       {showForm && (
         <div className="rounded-lg border bg-blue-50 p-5 space-y-4">
-          <h3 className="font-semibold text-gray-900">Nouvelle note de frais</h3>
+          <h3 className="font-semibold text-foreground">Nouvelle note de frais</h3>
           <div className="grid grid-cols-2 gap-4">
             <div><label className="block text-xs font-medium mb-1">Date</label><input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" /></div>
             <div><label className="block text-xs font-medium mb-1">Catégorie</label><select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm">{CATEGORIES.map(c => <option key={c}>{c}</option>)}</select></div>
@@ -114,12 +114,12 @@ export function ExpenseManagement() {
           </div>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.hasReceipt} onChange={e => setForm(f => ({ ...f, hasReceipt: e.target.checked }))} className="rounded" />
-            <span className="text-sm text-gray-700">Justificatif joint</span>
+            <span className="text-sm text-muted-foreground">Justificatif joint</span>
             <Upload className="w-4 h-4 text-gray-400" />
           </label>
           <div className="flex gap-2">
             <button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Soumettre</button>
-            <button onClick={() => setShowForm(false)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">Annuler</button>
+            <button onClick={() => setShowForm(false)} className="bg-gray-200 hover:bg-gray-300 text-muted-foreground px-4 py-2 rounded-lg text-sm font-medium">Annuler</button>
           </div>
         </div>
       )}
@@ -130,7 +130,7 @@ export function ExpenseManagement() {
           <input value={rejectNote} onChange={e => setRejectNote(e.target.value)} placeholder="Expliquer le refus..." className="w-full border rounded px-3 py-2 text-sm" />
           <div className="flex gap-2">
             <button onClick={handleReject} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Confirmer le refus</button>
-            <button onClick={() => setRejectId(null)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">Annuler</button>
+            <button onClick={() => setRejectId(null)} className="bg-gray-200 hover:bg-gray-300 text-muted-foreground px-4 py-2 rounded-lg text-sm font-medium">Annuler</button>
           </div>
         </div>
       )}
@@ -158,11 +158,11 @@ export function ExpenseManagement() {
           </thead>
           <tbody className="divide-y">
             {filtered.map(exp => (
-              <tr key={exp.id} className={`hover:bg-gray-50 ${exp.status === "rejected" ? "opacity-60" : ""}`}>
-                <td className="px-4 py-3"><p className="font-medium text-gray-900">{exp.submittedBy}</p><p className="text-xs text-gray-500">{exp.date}</p></td>
-                <td className="px-4 py-3 text-gray-700">{exp.description}{exp.notes && <p className="text-xs text-red-500">{exp.notes}</p>}</td>
+              <tr key={exp.id} className={`hover:bg-muted ${exp.status === "rejected" ? "opacity-60" : ""}`}>
+                <td className="px-4 py-3"><p className="font-medium text-foreground">{exp.submittedBy}</p><p className="text-xs text-muted-foreground">{exp.date}</p></td>
+                <td className="px-4 py-3 text-muted-foreground">{exp.description}{exp.notes && <p className="text-xs text-red-500">{exp.notes}</p>}</td>
                 <td className="px-4 py-3"><span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{exp.category}</span></td>
-                <td className="px-4 py-3 text-right font-bold text-gray-900">{fmt(exp.amount)}</td>
+                <td className="px-4 py-3 text-right font-bold text-foreground">{fmt(exp.amount)}</td>
                 <td className="px-4 py-3 text-center">{exp.hasReceipt ? <Check className="w-4 h-4 text-green-600 mx-auto" /> : <AlertCircle className="w-4 h-4 text-red-400 mx-auto" />}</td>
                 <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_CONFIG[exp.status].color}`}>{STATUS_CONFIG[exp.status].label}</span></td>
                 <td className="px-4 py-3">

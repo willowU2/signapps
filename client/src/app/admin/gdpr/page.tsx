@@ -91,7 +91,7 @@ const STATUS_COLORS: Record<string, string> = {
   completed: 'bg-green-500/10 text-green-600',
   ready: 'bg-green-500/10 text-green-600',
   rejected: 'bg-red-500/10 text-red-600',
-  expired: 'bg-gray-500/10 text-gray-600',
+  expired: 'bg-gray-500/10 text-muted-foreground',
 };
 
 // --------------------------------------------------------------------------

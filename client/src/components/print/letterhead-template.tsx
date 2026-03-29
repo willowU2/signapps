@@ -62,15 +62,15 @@ export function LetterheadTemplate() {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Preview */}
-        <div ref={previewRef} className="bg-white border rounded-lg overflow-hidden" style={{ minHeight: 400 }}>
+        <div ref={previewRef} className="bg-card border rounded-lg overflow-hidden" style={{ minHeight: 400 }}>
           {/* Header */}
           <div className="px-8 py-5 border-b-4" style={{ borderColor: cfg.accentColor }}>
             <div className="flex justify-between items-start">
               <div>
                 <h1 className="text-2xl font-bold" style={{ color: cfg.accentColor }}>{cfg.companyName}</h1>
-                <p className="text-xs text-gray-500 mt-0.5">{cfg.tagline}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{cfg.tagline}</p>
               </div>
-              <div className="text-right text-xs text-gray-600 space-y-0.5">
+              <div className="text-right text-xs text-muted-foreground space-y-0.5">
                 <p>{cfg.address}</p>
                 <p>{cfg.phone}</p>
                 <p>{cfg.email}</p>
@@ -81,7 +81,7 @@ export function LetterheadTemplate() {
 
           {/* Body */}
           <div className="px-8 py-6">
-            <p className="text-xs text-right text-gray-500 mb-6">Paris, le {new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p className="text-xs text-right text-muted-foreground mb-6">Paris, le {new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             <pre className="text-sm text-gray-800 whitespace-pre-wrap font-sans leading-relaxed">{cfg.bodyText}</pre>
           </div>
 

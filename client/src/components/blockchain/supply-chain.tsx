@@ -62,7 +62,7 @@ export function SupplyChain({ products = [] }: SupplyChainProps) {
   return (
     <div className="space-y-3">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">Supply Chain Traceability</h2>
+        <h2 className="text-lg font-semibold text-foreground">Supply Chain Traceability</h2>
         <p className="text-sm text-slate-500 mt-1">Track product journey from production to delivery</p>
       </div>
 

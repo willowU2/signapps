@@ -112,13 +112,13 @@ export function NotificationPreferencesForm() {
 
         {/* Notification Channels */}
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900">
+          <h3 className="text-sm font-semibold text-foreground">
             Notification Channels
           </h3>
 
           <div className="space-y-3">
             <div className="flex items-center justify-between py-2">
-              <label htmlFor="email-enabled" className="text-sm text-gray-700">
+              <label htmlFor="email-enabled" className="text-sm text-muted-foreground">
                 📧 Email Notifications
               </label>
               <Switch
@@ -132,7 +132,7 @@ export function NotificationPreferencesForm() {
             </div>
 
             <div className="flex items-center justify-between py-2">
-              <label htmlFor="push-enabled" className="text-sm text-gray-700">
+              <label htmlFor="push-enabled" className="text-sm text-muted-foreground">
                 🔔 Browser Push Notifications
               </label>
               <Switch
@@ -146,7 +146,7 @@ export function NotificationPreferencesForm() {
             </div>
 
             <div className="flex items-center justify-between py-2">
-              <label htmlFor="sms-enabled" className="text-sm text-gray-700">
+              <label htmlFor="sms-enabled" className="text-sm text-muted-foreground">
                 📱 SMS Notifications
               </label>
               <Switch
@@ -163,13 +163,13 @@ export function NotificationPreferencesForm() {
 
         {/* Notification Types */}
         <div className="space-y-4 border-t pt-4">
-          <h3 className="text-sm font-semibold text-gray-900">
+          <h3 className="text-sm font-semibold text-foreground">
             Notification Types
           </h3>
 
           <div className="space-y-3">
             <div className="flex items-center justify-between py-2">
-              <label htmlFor="event-reminders" className="text-sm text-gray-700">
+              <label htmlFor="event-reminders" className="text-sm text-muted-foreground">
                 📅 Event Reminders
               </label>
               <Switch
@@ -183,7 +183,7 @@ export function NotificationPreferencesForm() {
             </div>
 
             <div className="flex items-center justify-between py-2">
-              <label htmlFor="task-reminders" className="text-sm text-gray-700">
+              <label htmlFor="task-reminders" className="text-sm text-muted-foreground">
                 ✓ Task Reminders
               </label>
               <Switch
@@ -197,7 +197,7 @@ export function NotificationPreferencesForm() {
             </div>
 
             <div className="flex items-center justify-between py-2">
-              <label htmlFor="attendee-responses" className="text-sm text-gray-700">
+              <label htmlFor="attendee-responses" className="text-sm text-muted-foreground">
                 👥 Attendee Responses
               </label>
               <Switch
@@ -211,7 +211,7 @@ export function NotificationPreferencesForm() {
             </div>
 
             <div className="flex items-center justify-between py-2">
-              <label htmlFor="calendar-invites" className="text-sm text-gray-700">
+              <label htmlFor="calendar-invites" className="text-sm text-muted-foreground">
                 ✉️ Calendar Invites
               </label>
               <Switch

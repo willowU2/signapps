@@ -73,7 +73,7 @@ export default function ESGReporting() {
               category: s.category ?? s.name,
               score: s.score ?? s.value ?? 0,
               trend: (['up','down','stable'].includes(s.trend) ? s.trend : 'stable') as ESGScore['trend'],
-              color: s.color ?? 'bg-gray-100 text-gray-800',
+              color: s.color ?? 'bg-muted text-gray-800',
             }));
             setScores(mapped);
             localStorage.setItem(STORAGE_KEY_SCORES, JSON.stringify(mapped));
@@ -151,7 +151,7 @@ export default function ESGReporting() {
         {scores.map((item) => (
           <div
             key={item.category}
-            className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow"
+            className="border rounded-lg p-4 bg-card hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
@@ -172,11 +172,11 @@ export default function ESGReporting() {
                         if (e.key === "Escape") setEditingScore(null);
                       }}
                     />
-                    <span className="text-xs text-gray-500">/100</span>
+                    <span className="text-xs text-muted-foreground">/100</span>
                   </div>
                 ) : (
                   <p
-                    className="text-sm text-gray-600 cursor-pointer hover:text-indigo-600"
+                    className="text-sm text-muted-foreground cursor-pointer hover:text-indigo-600"
                     title="Click to edit"
                     onClick={() => setEditingScore(item.category)}
                   >
@@ -201,7 +201,7 @@ export default function ESGReporting() {
               ></div>
             </div>
 
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted-foreground">
               {item.score >= 80
                 ? "Excellent performance"
                 : item.score >= 70
@@ -213,8 +213,8 @@ export default function ESGReporting() {
       </div>
 
       {/* Quarterly Trend — editable bars */}
-      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <p className="font-semibold mb-2 text-sm">Quarterly Trend <span className="text-xs font-normal text-gray-500">(click bar to edit)</span></p>
+      <div className="p-4 bg-muted rounded-lg border border-border">
+        <p className="font-semibold mb-2 text-sm">Quarterly Trend <span className="text-xs font-normal text-muted-foreground">(click bar to edit)</span></p>
         <div className="h-20 flex items-end gap-2 justify-around">
           {quarterly.map((value, idx) => (
             <div key={idx} className="flex-1 flex flex-col items-center">
@@ -241,7 +241,7 @@ export default function ESGReporting() {
                   onClick={() => setEditingQuarterIdx(idx)}
                 ></div>
               )}
-              <p className="text-xs text-gray-600 mt-1">Q{idx + 1}</p>
+              <p className="text-xs text-muted-foreground mt-1">Q{idx + 1}</p>
             </div>
           ))}
         </div>

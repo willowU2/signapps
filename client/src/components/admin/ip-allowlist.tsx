@@ -99,7 +99,7 @@ export function IpAllowlist() {
           <Globe className="h-6 w-6 text-blue-600" />
           <div>
             <h2 className="text-xl font-bold">IP Allowlist</h2>
-            <p className="text-sm text-gray-500">{activeCount} of {entries.length} rules active</p>
+            <p className="text-sm text-muted-foreground">{activeCount} of {entries.length} rules active</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -115,8 +115,8 @@ export function IpAllowlist() {
       </div>
 
       {/* Add form */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-        <h3 className="mb-3 font-semibold text-gray-900">Add IP Rule</h3>
+      <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+        <h3 className="mb-3 font-semibold text-foreground">Add IP Rule</h3>
         <div className="flex flex-wrap gap-2">
           <Input
             placeholder="IP address (e.g. 192.168.1.0)"
@@ -128,7 +128,7 @@ export function IpAllowlist() {
           <select
             value={newCIDR}
             onChange={(e) => setNewCIDR(e.target.value)}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded-md border border-border bg-card px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="/32">Single (/32)</option>
             <option value="/24">Subnet (/24)</option>
@@ -155,7 +155,7 @@ export function IpAllowlist() {
           <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
         </div>
       ) : entries.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center text-gray-500">
+        <div className="rounded-lg border border-border bg-muted p-8 text-center text-muted-foreground">
           No IP rules configured — all IPs are allowed.
         </div>
       ) : (
@@ -164,16 +164,16 @@ export function IpAllowlist() {
             <div
               key={entry._key}
               className={`rounded-lg border p-3 shadow-sm transition-opacity ${
-                entry.enabled ? "border-gray-200 bg-white" : "border-gray-100 bg-gray-50 opacity-60"
+                entry.enabled ? "border-border bg-card" : "border-gray-100 bg-muted opacity-60"
               }`}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex flex-1 items-center gap-3">
                   <Globe className="h-4 w-4 shrink-0 text-gray-400" />
                   <div>
-                    <p className="font-mono text-sm font-medium text-gray-900">
+                    <p className="font-mono text-sm font-medium text-foreground">
                       {entry.address}
-                      <span className="ml-1 text-gray-500">{entry.cidr}</span>
+                      <span className="ml-1 text-muted-foreground">{entry.cidr}</span>
                     </p>
                     {entry.label && (
                       <Badge variant="outline" className="mt-0.5 text-xs">{entry.label}</Badge>

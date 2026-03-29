@@ -100,19 +100,19 @@ export function BrandGuidelines() {
       <div className="flex items-center gap-3">
         <Palette className="w-6 h-6 text-blue-600" />
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Brand Guidelines</h2>
-          <p className="text-gray-600">Visual identity and communication standards</p>
+          <h2 className="text-2xl font-bold text-foreground">Brand Guidelines</h2>
+          <p className="text-muted-foreground">Visual identity and communication standards</p>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b flex gap-1 bg-white rounded-lg p-1">
+      <div className="border-b flex gap-1 bg-card rounded-lg p-1">
         <button
           onClick={() => setActiveTab("colors")}
           className={`px-4 py-2 rounded font-medium transition-colors ${
             activeTab === "colors"
               ? "bg-blue-100 text-blue-900"
-              : "text-gray-600 hover:text-gray-900"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <Palette className="w-4 h-4 inline mr-2" />
@@ -123,7 +123,7 @@ export function BrandGuidelines() {
           className={`px-4 py-2 rounded font-medium transition-colors ${
             activeTab === "typography"
               ? "bg-blue-100 text-blue-900"
-              : "text-gray-600 hover:text-gray-900"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <Type className="w-4 h-4 inline mr-2" />
@@ -134,7 +134,7 @@ export function BrandGuidelines() {
           className={`px-4 py-2 rounded font-medium transition-colors ${
             activeTab === "tone"
               ? "bg-blue-100 text-blue-900"
-              : "text-gray-600 hover:text-gray-900"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <MessageSquare className="w-4 h-4 inline mr-2" />
@@ -145,7 +145,7 @@ export function BrandGuidelines() {
           className={`px-4 py-2 rounded font-medium transition-colors ${
             activeTab === "guidelines"
               ? "bg-blue-100 text-blue-900"
-              : "text-gray-600 hover:text-gray-900"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           Do&apos;s & Don&apos;ts
@@ -157,16 +157,16 @@ export function BrandGuidelines() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {COLORS.map((color) => (
-              <div key={color.name} className="border rounded-lg p-6 bg-white">
+              <div key={color.name} className="border rounded-lg p-6 bg-card">
                 <div className="flex items-center gap-4 mb-4">
                   <div
-                    className="w-20 h-20 rounded-lg border-2 border-gray-200"
+                    className="w-20 h-20 rounded-lg border-2 border-border"
                     style={{ backgroundColor: color.hex }}
                   />
                   <div>
-                    <p className="font-semibold text-gray-900">{color.name}</p>
-                    <p className="font-mono text-sm text-gray-600">{color.hex}</p>
-                    <p className="text-xs text-gray-500 mt-2">{color.usage}</p>
+                    <p className="font-semibold text-foreground">{color.name}</p>
+                    <p className="font-mono text-sm text-muted-foreground">{color.hex}</p>
+                    <p className="text-xs text-muted-foreground mt-2">{color.usage}</p>
                   </div>
                 </div>
               </div>
@@ -179,19 +179,19 @@ export function BrandGuidelines() {
       {activeTab === "typography" && (
         <div className="space-y-6">
           {TYPEFACES.map((typeface) => (
-            <div key={typeface.name} className="border rounded-lg p-6 bg-white">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <div key={typeface.name} className="border rounded-lg p-6 bg-card">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
                 {typeface.name}
               </h3>
               <div className="mb-4">
-                <p className="text-sm text-gray-600 font-medium mb-2">Family</p>
-                <p className="font-mono text-sm text-gray-900">{typeface.family}</p>
+                <p className="text-sm text-muted-foreground font-medium mb-2">Family</p>
+                <p className="font-mono text-sm text-foreground">{typeface.family}</p>
               </div>
               <div className="mb-4">
-                <p className="text-sm text-gray-600 font-medium mb-2">Available Weights</p>
+                <p className="text-sm text-muted-foreground font-medium mb-2">Available Weights</p>
                 <div className="flex flex-wrap gap-3">
                   {typeface.weights.map((weight) => (
-                    <div key={weight} className="bg-gray-50 rounded p-3">
+                    <div key={weight} className="bg-muted rounded p-3">
                       <p
                         className="text-center"
                         style={{
@@ -201,7 +201,7 @@ export function BrandGuidelines() {
                       >
                         {weight}
                       </p>
-                      <p className="text-xs text-gray-500 text-center mt-1">
+                      <p className="text-xs text-muted-foreground text-center mt-1">
                         The quick brown fox
                       </p>
                     </div>
@@ -209,19 +209,19 @@ export function BrandGuidelines() {
                 </div>
               </div>
               <div>
-                <p className="text-sm text-gray-600 font-medium">Usage</p>
-                <p className="text-gray-900">{typeface.usage}</p>
+                <p className="text-sm text-muted-foreground font-medium">Usage</p>
+                <p className="text-foreground">{typeface.usage}</p>
               </div>
             </div>
           ))}
 
-          <div className="border rounded-lg p-6 bg-white space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+          <div className="border rounded-lg p-6 bg-card space-y-4">
+            <h3 className="text-lg font-semibold text-foreground">
               Typography Hierarchy
             </h3>
             <div className="space-y-3">
               <div>
-                <p className="text-xs text-gray-500 uppercase font-medium mb-1">
+                <p className="text-xs text-muted-foreground uppercase font-medium mb-1">
                   H1 - Page Title
                 </p>
                 <p
@@ -232,7 +232,7 @@ export function BrandGuidelines() {
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase font-medium mb-1">
+                <p className="text-xs text-muted-foreground uppercase font-medium mb-1">
                   H2 - Section Title
                 </p>
                 <p
@@ -243,7 +243,7 @@ export function BrandGuidelines() {
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase font-medium mb-1">
+                <p className="text-xs text-muted-foreground uppercase font-medium mb-1">
                   Body - Regular Text
                 </p>
                 <p
@@ -263,8 +263,8 @@ export function BrandGuidelines() {
       {/* Tone Tab */}
       {activeTab === "tone" && (
         <div className="space-y-6">
-          <div className="border rounded-lg p-6 bg-white space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="border rounded-lg p-6 bg-card space-y-4">
+            <h3 className="text-lg font-semibold text-foreground mb-4">
               Tone of Voice
             </h3>
             <div className="space-y-3">
@@ -274,27 +274,27 @@ export function BrandGuidelines() {
                   className="flex items-center gap-3 p-3 rounded-lg bg-blue-50"
                 >
                   <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                  <p className="text-gray-900">{guideline}</p>
+                  <p className="text-foreground">{guideline}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="border rounded-lg p-6 bg-white space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="border rounded-lg p-6 bg-card space-y-4">
+            <h3 className="text-lg font-semibold text-foreground mb-4">
               Writing Examples
             </h3>
             <div className="space-y-4">
               <div className="border-l-4 border-green-400 pl-4">
-                <p className="text-sm text-gray-600 font-medium mb-1">Good</p>
-                <p className="text-gray-900">
+                <p className="text-sm text-muted-foreground font-medium mb-1">Good</p>
+                <p className="text-foreground">
                   "Your account has been created successfully. You can now start
                   using SignApps."
                 </p>
               </div>
               <div className="border-l-4 border-red-400 pl-4">
-                <p className="text-sm text-gray-600 font-medium mb-1">Avoid</p>
-                <p className="text-gray-900">
+                <p className="text-sm text-muted-foreground font-medium mb-1">Avoid</p>
+                <p className="text-foreground">
                   "ERROR: Account initialization process completed with positive
                   status code 200."
                 </p>
@@ -308,7 +308,7 @@ export function BrandGuidelines() {
       {activeTab === "guidelines" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
               <Check className="w-5 h-5 text-green-600" />
               Do&apos;s
             </h3>
@@ -319,14 +319,14 @@ export function BrandGuidelines() {
                   className="flex items-start gap-3 p-4 rounded-lg bg-green-50 border border-green-200"
                 >
                   <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
-                  <p className="text-gray-900">{item.text}</p>
+                  <p className="text-foreground">{item.text}</p>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
               <X className="w-5 h-5 text-red-600" />
               Don&apos;ts
             </h3>
@@ -337,7 +337,7 @@ export function BrandGuidelines() {
                   className="flex items-start gap-3 p-4 rounded-lg bg-red-50 border border-red-200"
                 >
                   <X className="w-5 h-5 text-red-600 flex-shrink-0 mt-1" />
-                  <p className="text-gray-900">{item.text}</p>
+                  <p className="text-foreground">{item.text}</p>
                 </div>
               ))}
             </div>

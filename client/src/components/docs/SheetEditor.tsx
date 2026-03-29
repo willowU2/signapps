@@ -53,13 +53,13 @@ export function SheetEditor({ docId }: SheetEditorProps) {
 
     return (
         <div className="p-6">
-            <div className="bg-background rounded-lg border border-gray-200">
+            <div className="bg-background rounded-lg border border-border">
                 {/* Toolbar */}
-                <div className="border-b border-gray-200 p-3 flex gap-2 bg-gray-50">
-                    <button className="px-3 py-1 rounded bg-background hover:bg-gray-100">
+                <div className="border-b border-border p-3 flex gap-2 bg-muted">
+                    <button className="px-3 py-1 rounded bg-background hover:bg-muted">
                         Insert Row
                     </button>
-                    <button className="px-3 py-1 rounded bg-background hover:bg-gray-100">
+                    <button className="px-3 py-1 rounded bg-background hover:bg-muted">
                         Insert Column
                     </button>
                     <div className="ml-auto flex items-center gap-2">
@@ -68,7 +68,7 @@ export function SheetEditor({ docId }: SheetEditorProps) {
                                 isSynced ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'
                             }`}
                         />
-                        <span className="text-xs text-gray-600">
+                        <span className="text-xs text-muted-foreground">
                             {isSynced ? 'Synced' : 'Syncing...'}
                         </span>
                     </div>
@@ -81,7 +81,7 @@ export function SheetEditor({ docId }: SheetEditorProps) {
                             {Array.from({ length: 100 }).map((_, row) => (
                                 <tr key={row}>
                                     {/* Row header */}
-                                    <td className="w-8 h-8 bg-gray-100 border border-gray-300 text-xs text-center text-gray-600 font-semibold">
+                                    <td className="w-8 h-8 bg-muted border border-border text-xs text-center text-muted-foreground font-semibold">
                                         {row + 1}
                                     </td>
 
@@ -95,7 +95,7 @@ export function SheetEditor({ docId }: SheetEditorProps) {
                                         return (
                                             <td
                                                 key={key}
-                                                className={`w-24 h-8 border border-gray-300 p-0 ${
+                                                className={`w-24 h-8 border border-border p-0 ${
                                                     isSelected ? 'ring-2 ring-blue-500' : ''
                                                 }`}
                                             >
@@ -122,11 +122,11 @@ export function SheetEditor({ docId }: SheetEditorProps) {
 
                     {/* Column headers */}
                     <div className="sticky top-0 flex">
-                        <div className="w-8 bg-gray-100 border border-gray-300" />
+                        <div className="w-8 bg-muted border border-border" />
                         {Array.from({ length: 26 }).map((_, col) => (
                             <div
                                 key={col}
-                                className="w-24 h-8 bg-gray-100 border border-gray-300 flex items-center justify-center text-xs font-semibold text-gray-600"
+                                className="w-24 h-8 bg-muted border border-border flex items-center justify-center text-xs font-semibold text-muted-foreground"
                             >
                                 {String.fromCharCode(65 + col)}
                             </div>

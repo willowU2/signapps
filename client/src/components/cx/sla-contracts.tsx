@@ -167,7 +167,7 @@ export function SLAContracts({
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-green-600" />
             <div>
-              <p className="text-xs text-gray-600">Conformes</p>
+              <p className="text-xs text-muted-foreground">Conformes</p>
               <p className="text-2xl font-bold">
                 {contracts.filter((c) => contractStatus(c) === "Compliant")
                   .length}
@@ -179,7 +179,7 @@ export function SLAContracts({
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-yellow-600" />
             <div>
-              <p className="text-xs text-gray-600">À risque</p>
+              <p className="text-xs text-muted-foreground">À risque</p>
               <p className="text-2xl font-bold">
                 {contracts.filter((c) => contractStatus(c) === "AtRisk").length}
               </p>
@@ -190,7 +190,7 @@ export function SLAContracts({
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-red-600" />
             <div>
-              <p className="text-xs text-gray-600">Violations</p>
+              <p className="text-xs text-muted-foreground">Violations</p>
               <p className="text-2xl font-bold">
                 {contracts.filter((c) => contractStatus(c) === "Breach").length}
               </p>
@@ -206,12 +206,12 @@ export function SLAContracts({
           {contracts.map((contract) => (
             <div
               key={contract.id}
-              className="rounded-lg border border-gray-200 p-4"
+              className="rounded-lg border border-border p-4"
             >
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <h4 className="font-semibold">{contract.client}</h4>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {contract.id} • {contract.startDate} → {contract.endDate}
                   </p>
                 </div>
@@ -220,7 +220,7 @@ export function SLAContracts({
 
               <Table className="text-sm">
                 <TableHeader>
-                  <TableRow className="border-gray-200 hover:bg-transparent">
+                  <TableRow className="border-border hover:bg-transparent">
                     <TableHead>Métrique</TableHead>
                     <TableHead>Cible</TableHead>
                     <TableHead>Réel</TableHead>

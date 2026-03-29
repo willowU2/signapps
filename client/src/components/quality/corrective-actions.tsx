@@ -119,7 +119,7 @@ export function CorrectiveActions({
         <div className="space-y-3">
           <h1 className="text-3xl font-bold">PDCA Corrective Actions</h1>
           {ncrId && (
-            <p className="text-sm text-gray-600 dark:text-gray-400">NCR ID: {ncrId}</p>
+            <p className="text-sm text-muted-foreground dark:text-gray-400">NCR ID: {ncrId}</p>
           )}
           <div className="flex items-center gap-4">
             <div>
@@ -143,20 +143,20 @@ export function CorrectiveActions({
             {/* Phase Header */}
             <div className="mb-4">
               <h2 className="text-xl font-bold">{phase}</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
                 {phaseDescriptions[phase]}
               </p>
             </div>
 
             {/* New Action Form */}
             {newActionPhase === phase && (
-              <div className="mb-4 p-4 border-2 border-dashed rounded bg-white/50 dark:bg-gray-900/50 space-y-3">
+              <div className="mb-4 p-4 border-2 border-dashed rounded bg-card/50 dark:bg-gray-900/50 space-y-3">
                 <input
                   type="text"
                   value={newActionForm.title}
                   onChange={(e) => setNewActionForm({ ...newActionForm, title: e.target.value })}
                   placeholder="Action title..."
-                  className="w-full px-3 py-2 border rounded text-sm bg-white dark:bg-gray-900 dark:border-gray-700"
+                  className="w-full px-3 py-2 border rounded text-sm bg-card dark:bg-gray-900 dark:border-gray-700"
                 />
 
                 <input
@@ -164,14 +164,14 @@ export function CorrectiveActions({
                   value={newActionForm.owner}
                   onChange={(e) => setNewActionForm({ ...newActionForm, owner: e.target.value })}
                   placeholder="Responsible person..."
-                  className="w-full px-3 py-2 border rounded text-sm bg-white dark:bg-gray-900 dark:border-gray-700"
+                  className="w-full px-3 py-2 border rounded text-sm bg-card dark:bg-gray-900 dark:border-gray-700"
                 />
 
                 <input
                   type="date"
                   value={newActionForm.deadline}
                   onChange={(e) => setNewActionForm({ ...newActionForm, deadline: e.target.value })}
-                  className="w-full px-3 py-2 border rounded text-sm bg-white dark:bg-gray-900 dark:border-gray-700"
+                  className="w-full px-3 py-2 border rounded text-sm bg-card dark:bg-gray-900 dark:border-gray-700"
                 />
 
                 <textarea
@@ -179,7 +179,7 @@ export function CorrectiveActions({
                   onChange={(e) => setNewActionForm({ ...newActionForm, description: e.target.value })}
                   placeholder="Description (optional)..."
                   rows={2}
-                  className="w-full px-3 py-2 border rounded text-sm bg-white dark:bg-gray-900 dark:border-gray-700"
+                  className="w-full px-3 py-2 border rounded text-sm bg-card dark:bg-gray-900 dark:border-gray-700"
                 />
 
                 <div className="flex gap-2">
@@ -213,7 +213,7 @@ export function CorrectiveActions({
                   return a.status === "Completed";
                 })
                 .map((action) => (
-                  <div key={action.id} className="flex items-start gap-3 p-3 border rounded bg-white dark:bg-gray-900/50">
+                  <div key={action.id} className="flex items-start gap-3 p-3 border rounded bg-card dark:bg-gray-900/50">
                     <button
                       onClick={() => {
                         const nextStatus =
@@ -231,14 +231,14 @@ export function CorrectiveActions({
 
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm">{action.title}</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      <p className="text-xs text-muted-foreground dark:text-gray-400 mt-1">
                         Owner: {action.owner}
                       </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground dark:text-gray-400">
                         Due: {action.deadline.toLocaleDateString()}
                       </p>
                       {action.description && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                        <p className="text-xs text-muted-foreground dark:text-gray-400 mt-2">
                           {action.description}
                         </p>
                       )}
@@ -282,7 +282,7 @@ export function CorrectiveActions({
                 <div key={action.id} className="flex items-center justify-between p-3 border rounded">
                   <div className="flex-1">
                     <p className="font-medium text-sm">{action.title}</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                    <p className="text-xs text-muted-foreground dark:text-gray-400">
                       {action.deadline.toLocaleDateString()} • {action.owner}
                     </p>
                   </div>
@@ -292,7 +292,7 @@ export function CorrectiveActions({
                         ? "bg-green-100 text-green-800 dark:bg-green-900/30"
                         : action.status === "InProgress"
                           ? "bg-orange-100 text-orange-800 dark:bg-orange-900/30"
-                          : "bg-gray-100 text-gray-800 dark:bg-gray-800"
+                          : "bg-muted text-gray-800 dark:bg-gray-800"
                     }`}
                   >
                     {action.status}

@@ -24,7 +24,7 @@ interface EmployeeProjectPerformance {
 const TREND_ICON = {
   up: <TrendingUp className="size-3.5 text-green-600" />,
   down: <TrendingDown className="size-3.5 text-red-600" />,
-  stable: <Minus className="size-3.5 text-gray-500" />,
+  stable: <Minus className="size-3.5 text-muted-foreground" />,
 };
 
 const PERF_LEVEL = (rate: number) => rate >= 85 ? { label: "Excellent", class: "bg-green-100 text-green-800" }

@@ -145,7 +145,7 @@ export function TeamOverlay({
     <div className={cn('border-b', className)}>
       {/* Header toggle */}
       <button
-        className="flex items-center justify-between w-full py-2 px-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded cursor-pointer group transition-colors"
+        className="flex items-center justify-between w-full py-2 px-2 hover:bg-muted dark:hover:bg-gray-800 rounded cursor-pointer group transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-2">
@@ -220,7 +220,7 @@ function TeamMemberItem({ member, eventCount, onToggle }: TeamMemberItemProps) {
   const displayName = user.display_name || user.username;
 
   return (
-    <label className="flex items-center gap-3 py-1 cursor-pointer group rounded hover:bg-gray-50 dark:hover:bg-gray-800 -mx-1 px-1 transition-colors">
+    <label className="flex items-center gap-3 py-1 cursor-pointer group rounded hover:bg-muted dark:hover:bg-gray-800 -mx-1 px-1 transition-colors">
       <div className="relative flex items-center justify-center">
         <input
           type="checkbox"

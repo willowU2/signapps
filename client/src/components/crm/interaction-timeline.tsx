@@ -54,7 +54,7 @@ export function InteractionTimeline({ interactions }: InteractionTimelineProps) 
     <div className="space-y-0">
       {sortedInteractions.length === 0 ? (
         <Card className="p-8 text-center">
-          <p className="text-gray-500">Aucune interaction enregistrée</p>
+          <p className="text-muted-foreground">Aucune interaction enregistrée</p>
         </Card>
       ) : (
         <div className="relative space-y-6 pl-8">
@@ -82,13 +82,13 @@ export function InteractionTimeline({ interactions }: InteractionTimelineProps) 
                           {config.label}
                         </Badge>
                       </div>
-                      <span className="text-xs text-gray-500">{date}</span>
+                      <span className="text-xs text-muted-foreground">{date}</span>
                     </div>
 
                     <p className="text-sm text-gray-800 line-clamp-2">{contentPreview}</p>
 
                     {interaction.author && (
-                      <p className="text-xs text-gray-500">Par: {interaction.author}</p>
+                      <p className="text-xs text-muted-foreground">Par: {interaction.author}</p>
                     )}
                   </div>
                 </Card>

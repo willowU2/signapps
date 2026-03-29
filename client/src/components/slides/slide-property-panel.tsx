@@ -10,7 +10,7 @@ interface SlidePropertyPanelProps {
 export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasRef }: SlidePropertyPanelProps) {
     if (!activeObject) {
         return (
-            <div className="w-72 flex-shrink-0 border-l border-gray-100 bg-gray-50/30 h-full flex flex-col items-center justify-center text-center p-6 text-gray-400">
+            <div className="w-72 flex-shrink-0 border-l border-gray-100 bg-muted/30 h-full flex flex-col items-center justify-center text-center p-6 text-gray-400">
                 <Settings2 className="w-8 h-8 mb-3 opacity-20" />
                 <p className="text-sm">Select an object or layout to edit its properties.</p>
             </div>
@@ -118,7 +118,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
         <div className="w-72 flex-shrink-0 border-l border-gray-100 bg-background h-full flex flex-col overflow-y-auto custom-scrollbar shadow-[-4px_0_24px_-12px_rgba(0,0,0,0.05)]">
             <div className="px-5 py-4 border-b border-gray-100 sticky top-0 bg-background/80 backdrop-blur-md z-10 flex items-center justify-between">
                 <h3 className="font-semibold text-gray-800 text-sm">Design</h3>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-muted px-2 py-0.5 rounded-full">
                     {activeObject.type}
                 </span>
             </div>
@@ -129,9 +129,9 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                 {isText && (
                     <div className="flex flex-col gap-4 animate-fade-in">
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Text Style</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Text Style</label>
                             <select
-                                className="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block p-2 transition-shadow outline-none"
+                                className="w-full bg-muted border border-border text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block p-2 transition-shadow outline-none"
                                 value=""
                                 onChange={(e) => {
                                     const style = e.target.value;
@@ -161,9 +161,9 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Font Family</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Font Family</label>
                             <select
-                                className="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block p-2 transition-shadow outline-none"
+                                className="w-full bg-muted border border-border text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block p-2 transition-shadow outline-none"
                                 value={(activeObject as any).fontFamily || "Inter"}
                                 onChange={(e) => handlePropertyChange('fontFamily', e.target.value)}
                             >
@@ -177,32 +177,32 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
 
                         <div className="flex gap-2 items-end">
                             <div className="flex-1 space-y-1.5 flex flex-col justify-end h-full">
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide opacity-0 h-0">Styles</label>
-                                <div className="flex bg-gray-50 p-1 rounded-lg border border-gray-200">
+                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide opacity-0 h-0">Styles</label>
+                                <div className="flex bg-muted p-1 rounded-lg border border-border">
                                     <button
                                         onClick={() => handlePropertyChange('fontWeight', (activeObject as any).fontWeight === 'bold' ? 'normal' : 'bold')}
-                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).fontWeight === 'bold' ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).fontWeight === 'bold' ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
                                         title="Bold"
                                     >
                                         <Bold className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={() => handlePropertyChange('fontStyle', (activeObject as any).fontStyle === 'italic' ? 'normal' : 'italic')}
-                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).fontStyle === 'italic' ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).fontStyle === 'italic' ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
                                         title="Italic"
                                     >
                                         <Italic className="w-4 h-4 ml-1 mr-1" />
                                     </button>
                                     <button
                                         onClick={() => handlePropertyChange('underline', !(activeObject as any).underline)}
-                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).underline ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).underline ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
                                         title="Underline"
                                     >
                                         <Underline className="w-4 h-4 ml-1 mr-1" />
                                     </button>
                                     <button
                                         onClick={() => handlePropertyChange('linethrough', !(activeObject as any).linethrough)}
-                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).linethrough ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).linethrough ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
                                         title="Strikethrough"
                                     >
                                         <Strikethrough className="w-4 h-4 ml-1 mr-1" />
@@ -211,10 +211,10 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                             </div>
 
                             <div className="space-y-1.5 w-20">
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide text-center block">Size</label>
+                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center block">Size</label>
                                 <input
                                     type="number"
-                                    className="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block p-2 text-center outline-none"
+                                    className="w-full bg-muted border border-border text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block p-2 text-center outline-none"
                                     value={(activeObject as any).fontSize || 20}
                                     onChange={(e) => handlePropertyChange('fontSize', parseInt(e.target.value))}
                                 />
@@ -222,9 +222,9 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                         </div>
 
                         <div className="space-y-1.5 flex flex-col pt-1">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Paragraph</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Paragraph</label>
                             <div className="flex gap-2 w-full">
-                                <div className="flex bg-gray-50 p-1 rounded-lg border border-gray-200 flex-1">
+                                <div className="flex bg-muted p-1 rounded-lg border border-border flex-1">
                                     {['left', 'center', 'right', 'justify'].map((align) => {
                                         const isActive = (activeObject as any).textAlign === align;
                                         const Icon = align === 'left' ? AlignLeft : align === 'center' ? AlignCenter : align === 'right' ? AlignRight : AlignJustify;
@@ -232,7 +232,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                                             <button
                                                 key={align}
                                                 onClick={() => handlePropertyChange('textAlign', align)}
-                                                className={`flex-1 flex justify-center py-1.5 rounded-md transition-colors ${isActive ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                                className={`flex-1 flex justify-center py-1.5 rounded-md transition-colors ${isActive ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
                                                 title={`Align ${align}`}
                                             >
                                                 <Icon className="w-4 h-4" />
@@ -241,24 +241,24 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                                     })}
                                 </div>
 
-                                <div className="flex bg-gray-50 p-1 rounded-lg border border-gray-200">
+                                <div className="flex bg-muted p-1 rounded-lg border border-border">
                                     <button
                                         onClick={() => toggleListStyle('bullet')}
-                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${((activeObject as any).text as string || '').startsWith('• ') ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${((activeObject as any).text as string || '').startsWith('• ') ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
                                         title="Bulleted List"
                                     >
                                         <List className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={() => toggleListStyle('check')}
-                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${(((activeObject as any).text as string || '').startsWith('☐ ') || ((activeObject as any).text as string || '').startsWith('✅ ')) ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${(((activeObject as any).text as string || '').startsWith('☐ ') || ((activeObject as any).text as string || '').startsWith('✅ ')) ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
                                         title="Checklist"
                                     >
                                         <CheckSquare className="w-4 h-4 ml-0.5 mr-0.5" />
                                     </button>
                                     <button
                                         onClick={() => toggleListStyle('number')}
-                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${/^\d+\./.test(((activeObject as any).text as string || '')) ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${/^\d+\./.test(((activeObject as any).text as string || '')) ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
                                         title="Numbered List"
                                     >
                                         <ListOrdered className="w-4 h-4" />
@@ -273,12 +273,12 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                 {(objType === 'rect' || objType === 'circle' || objType === 'triangle') && !isSmartChip && (
                     <div className="flex flex-col gap-4 pt-4 border-t border-gray-100 animate-fade-in" style={{ animationDelay: '50ms' }}>
                         <div className="flex items-center gap-2">
-                            <Hexagon className="w-4 h-4 rounded text-gray-500" />
-                            <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-widest">Shape</h4>
+                            <Hexagon className="w-4 h-4 rounded text-muted-foreground" />
+                            <h4 className="text-xs font-semibold text-foreground uppercase tracking-widest">Shape</h4>
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Fill Color</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Fill Color</label>
                             <div className="flex items-center gap-2">
                                 <input
                                     type="color"
@@ -288,7 +288,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                                 />
                                 <input
                                     type="text"
-                                    className="flex-1 bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 block p-2 outline-none font-mono"
+                                    className="flex-1 bg-muted border border-border text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 block p-2 outline-none font-mono"
                                     value={(activeObject.fill as string) || '#ffffff'}
                                     onChange={(e) => handlePropertyChange('fill', e.target.value)}
                                 />
@@ -296,7 +296,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Stroke (Border)</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Stroke (Border)</label>
                             <div className="flex items-center gap-2">
                                 <input
                                     type="color"
@@ -317,7 +317,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
 
                         {objType === 'rect' && (
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Corner Radius</label>
+                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Corner Radius</label>
                                 <input
                                     type="range"
                                     min="0" max="100"
@@ -338,12 +338,12 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                 {isImage && (
                     <div className="flex flex-col gap-4 pt-4 border-t border-gray-100 animate-fade-in" style={{ animationDelay: '50ms' }}>
                         <div className="flex items-center gap-2">
-                            <ImageIcon className="w-4 h-4 rounded text-gray-500" />
-                            <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-widest">Image settings</h4>
+                            <ImageIcon className="w-4 h-4 rounded text-muted-foreground" />
+                            <h4 className="text-xs font-semibold text-foreground uppercase tracking-widest">Image settings</h4>
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex justify-between">
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex justify-between">
                                 Opacity <span>{Math.round((activeObject.opacity ?? 1) * 100)}%</span>
                             </label>
                             <input
@@ -356,7 +356,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Corner Radius</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Corner Radius</label>
                             <input
                                 type="range"
                                 min="0" max="100"
@@ -381,7 +381,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
 
                         {chipType === 'status' && (
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Status Preset</label>
+                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status Preset</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <button onClick={() => handleSmartChipChange('#10b981', '✓ Done')} className="px-2 py-1.5 text-xs font-medium text-white bg-emerald-500 rounded hover:bg-emerald-600 transition-colors">✓ Done</button>
                                     <button onClick={() => handleSmartChipChange('#6b7280', '○ To Do')} className="px-2 py-1.5 text-xs font-medium text-white bg-gray-500 rounded hover:bg-gray-600 transition-colors">○ To Do</button>
@@ -392,7 +392,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                         )}
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Custom Color</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Custom Color</label>
                             <div className="flex items-center gap-2">
                                 <input
                                     type="color"
@@ -402,7 +402,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                                 />
                                 <input
                                     type="text"
-                                    className="flex-1 bg-background border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 block p-2 outline-none font-mono"
+                                    className="flex-1 bg-background border border-border text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 block p-2 outline-none font-mono"
                                     value={((activeObject as import("fabric").Group).getObjects()[0].fill as string) || '#ffffff'}
                                     onChange={(e) => handleSmartChipChange(e.target.value)}
                                 />
@@ -415,19 +415,19 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                 <div className="flex flex-col gap-4 pt-4 border-t border-gray-100 animate-fade-in" style={{ animationDelay: '150ms' }}>
                     <div className="flex gap-2">
                         <div className="space-y-1.5 w-1/2">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">X</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">X</label>
                             <input
                                 type="number"
-                                className="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 block p-2 outline-none font-mono"
+                                className="w-full bg-muted border border-border text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 block p-2 outline-none font-mono"
                                 value={Math.round(activeObject.left || 0)}
                                 onChange={(e) => handlePropertyChange('left', parseInt(e.target.value))}
                             />
                         </div>
                         <div className="space-y-1.5 w-1/2">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Y</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Y</label>
                             <input
                                 type="number"
-                                className="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 block p-2 outline-none font-mono"
+                                className="w-full bg-muted border border-border text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 block p-2 outline-none font-mono"
                                 value={Math.round(activeObject.top || 0)}
                                 onChange={(e) => handlePropertyChange('top', parseInt(e.target.value))}
                             />

@@ -103,15 +103,15 @@ export default function SmartMailbox() {
 
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-3 bg-yellow-50">
-          <p className="text-xs text-gray-600">Pending</p>
+          <p className="text-xs text-muted-foreground">Pending</p>
           <p className="text-2xl font-bold text-yellow-600">{pendingCount}</p>
         </Card>
         <Card className="p-3 bg-blue-50">
-          <p className="text-xs text-gray-600">Notified</p>
+          <p className="text-xs text-muted-foreground">Notified</p>
           <p className="text-2xl font-bold text-blue-600">{notifiedCount}</p>
         </Card>
         <Card className="p-3 bg-green-50">
-          <p className="text-xs text-gray-600">Collected</p>
+          <p className="text-xs text-muted-foreground">Collected</p>
           <p className="text-2xl font-bold text-green-600">{collectedCount}</p>
         </Card>
       </div>
@@ -122,7 +122,7 @@ export default function SmartMailbox() {
             <div className="flex items-start justify-between mb-3">
               <div>
                 <h3 className="font-semibold text-lg">{mailbox.lockerNumber}</h3>
-                <p className="text-sm text-gray-600">{mailbox.recipient}</p>
+                <p className="text-sm text-muted-foreground">{mailbox.recipient}</p>
                 <Badge className="mt-2 bg-gray-600">{mailbox.parcelType}</Badge>
               </div>
               <div className="text-right space-y-2">

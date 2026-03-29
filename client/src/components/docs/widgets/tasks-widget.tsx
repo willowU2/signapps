@@ -35,7 +35,7 @@ export function TasksWidget() {
             <div className="flex items-center justify-between mb-2">
                 <div>
                     <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Tasks</h3>
-                    <p className="text-xs text-gray-500">{completedCount} of {tasks.length} completed</p>
+                    <p className="text-xs text-muted-foreground">{completedCount} of {tasks.length} completed</p>
                 </div>
 
                 {/* Progress Circle Ring */}
@@ -55,7 +55,7 @@ export function TasksWidget() {
                 <input
                     type="text"
                     placeholder="Add a new task..."
-                    className="w-full bg-background dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-2.5 pl-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
+                    className="w-full bg-background dark:bg-gray-800 border border-border dark:border-gray-700 rounded-xl py-2.5 pl-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
                     value={newTaskTitle}
                     onChange={(e) => setNewTaskTitle(e.target.value)}
                 />
@@ -69,20 +69,20 @@ export function TasksWidget() {
                     <div
                         key={task.id}
                         className={`group flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer hover:shadow-sm ${task.completed
-                            ? 'bg-gray-50/50 dark:bg-gray-900/20 border-transparent'
+                            ? 'bg-muted/50 dark:bg-gray-900/20 border-transparent'
                             : 'bg-background dark:bg-gray-800 border-gray-100 dark:border-gray-700/50 hover:border-indigo-200'
                             }`}
                         onClick={() => toggleTask(task.id)}
                     >
-                        <div className={`mt-0.5 shrink-0 w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${task.completed ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 dark:border-gray-600 group-hover:border-indigo-400'
+                        <div className={`mt-0.5 shrink-0 w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${task.completed ? 'bg-green-500 border-green-500 text-white' : 'border-border dark:border-gray-600 group-hover:border-indigo-400'
                             }`}>
                             {task.completed && <Check className="w-3.5 h-3.5" />}
                         </div>
-                        <span className={`text-sm flex-1 leading-snug transition-all ${task.completed ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-700 dark:text-gray-200'
+                        <span className={`text-sm flex-1 leading-snug transition-all ${task.completed ? 'text-gray-400 dark:text-muted-foreground line-through' : 'text-muted-foreground dark:text-gray-200'
                             }`}>
                             {task.title}
                         </span>
-                        <button className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                        <button className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-muted-foreground transition-opacity" onClick={(e) => e.stopPropagation()}>
                             <MoreVertical className="w-4 h-4" />
                         </button>
                     </div>

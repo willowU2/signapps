@@ -108,16 +108,16 @@ export function OCRBatch({
     <Card className="p-6 space-y-4">
       <div>
         <h3 className="text-lg font-semibold">Traitement OCR par lot</h3>
-        <p className="text-sm text-gray-600">Extrayez le texte de plusieurs fichiers à la fois</p>
+        <p className="text-sm text-muted-foreground">Extrayez le texte de plusieurs fichiers à la fois</p>
       </div>
 
       {/* Folder Selection */}
-      <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <div className="space-y-3 p-4 bg-muted rounded-lg border border-border">
         <div className="flex items-center gap-3">
-          <Folder className="w-5 h-5 text-gray-600" />
+          <Folder className="w-5 h-5 text-muted-foreground" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-700">Dossier sélectionné</p>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-sm font-medium text-muted-foreground">Dossier sélectionné</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
               {folderPath || "Aucun dossier sélectionné"}
             </p>
           </div>
@@ -146,8 +146,8 @@ export function OCRBatch({
       {isProcessing && (
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <p className="text-sm font-medium text-gray-700">Progression</p>
-            <p className="text-sm font-semibold text-gray-600">{Math.round(progress)}%</p>
+            <p className="text-sm font-medium text-muted-foreground">Progression</p>
+            <p className="text-sm font-semibold text-muted-foreground">{Math.round(progress)}%</p>
           </div>
           <Progress value={progress} className="h-2" />
         </div>
@@ -165,7 +165,7 @@ export function OCRBatch({
       {/* Results List */}
       {results.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-gray-700">Résultats</h4>
+          <h4 className="text-sm font-semibold text-muted-foreground">Résultats</h4>
           <div className="max-h-64 overflow-y-auto space-y-2">
             {results.map((result) => (
               <div
@@ -175,7 +175,7 @@ export function OCRBatch({
                     ? "bg-green-50 border-green-200 hover:bg-green-100"
                     : result.status === "failed"
                     ? "bg-red-50 border-red-200 hover:bg-red-100"
-                    : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                    : "bg-muted border-border hover:bg-muted"
                 }`}
                 onClick={() =>
                   setExpandedResults(
@@ -185,13 +185,13 @@ export function OCRBatch({
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 flex-1">
-                    <FileText className="w-4 h-4 text-gray-600" />
+                    <FileText className="w-4 h-4 text-muted-foreground" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-700 truncate">
+                      <p className="text-sm font-medium text-muted-foreground truncate">
                         {result.fileName}
                       </p>
                       {result.status === "completed" && result.confidence && (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           Confiance: {Math.round(result.confidence * 100)}%
                         </p>
                       )}
@@ -210,11 +210,11 @@ export function OCRBatch({
 
                 {/* Expanded Content */}
                 {expandedResults === result.fileId && result.extractedText && (
-                  <div className="mt-3 pt-3 border-t border-gray-300">
-                    <p className="text-xs font-semibold text-gray-600 mb-2">
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">
                       Texte extrait:
                     </p>
-                    <div className="bg-white p-2 rounded border border-gray-300 text-xs text-gray-700 max-h-32 overflow-y-auto whitespace-pre-wrap">
+                    <div className="bg-card p-2 rounded border border-border text-xs text-muted-foreground max-h-32 overflow-y-auto whitespace-pre-wrap">
                       {result.extractedText.substring(0, 300)}
                       {result.extractedText.length > 300 && "..."}
                     </div>

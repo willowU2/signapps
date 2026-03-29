@@ -30,7 +30,7 @@ const CERTS: Certificate[] = [
 
 function CertificatePreview({ cert }: { cert: Certificate }) {
   return (
-    <div className="bg-white text-slate-900 rounded-2xl border-4 border-yellow-400 p-8 text-center shadow-xl mx-auto max-w-lg">
+    <div className="bg-card text-foreground rounded-2xl border-4 border-yellow-400 p-8 text-center shadow-xl mx-auto max-w-lg">
       <div className="flex justify-center mb-4">
         <div className="h-16 w-16 rounded-full bg-yellow-100 flex items-center justify-center border-4 border-yellow-400">
           <Award className="h-8 w-8 text-yellow-600" />
@@ -38,7 +38,7 @@ function CertificatePreview({ cert }: { cert: Certificate }) {
       </div>
       <p className="text-sm font-semibold uppercase tracking-widest text-yellow-600 mb-2">Certificate of Completion</p>
       <p className="text-slate-500 text-sm mb-4">This certifies that</p>
-      <h2 className="text-3xl font-bold text-slate-900 mb-1">{cert.studentName}</h2>
+      <h2 className="text-3xl font-bold text-foreground mb-1">{cert.studentName}</h2>
       <p className="text-slate-500 text-sm mb-4">has successfully completed</p>
       <h3 className="text-xl font-bold text-slate-800 mb-2">{cert.courseName}</h3>
       <div className="flex justify-center gap-6 text-sm text-slate-600 mb-6">

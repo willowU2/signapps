@@ -56,7 +56,7 @@ const ORDERS: SupplierOrder[] = [
 ];
 
 const orderStatusConfig = {
-  sent: { label: 'Sent', color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300' },
+  sent: { label: 'Sent', color: 'bg-muted text-gray-800 dark:bg-gray-900/30 dark:text-gray-300' },
   confirmed: { label: 'Confirmed', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
   shipped: { label: 'Shipped', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
   delivered: { label: 'Delivered', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
@@ -65,7 +65,7 @@ const orderStatusConfig = {
 
 const supplierStatusConfig = {
   active: { color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
-  inactive: { color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300' },
+  inactive: { color: 'bg-muted text-gray-800 dark:bg-gray-900/30 dark:text-gray-300' },
   pending: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
 };
 

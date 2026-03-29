@@ -102,7 +102,7 @@ export function DragCreateLayer({ day, hourHeight = 60, onCreateEvent }: DragCre
                     className="absolute left-0.5 right-0.5 bg-blue-400/30 border-2 border-blue-500 rounded pointer-events-none"
                     style={{ top, height }}
                 >
-                    <div className="absolute top-0.5 left-1 text-[10px] font-bold text-blue-700 bg-white/90 rounded px-1">
+                    <div className="absolute top-0.5 left-1 text-[10px] font-bold text-blue-700 bg-card/90 rounded px-1">
                         {minutesToTime(startMin)} – {minutesToTime(endMin)}
                     </div>
                 </div>

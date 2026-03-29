@@ -189,12 +189,12 @@ export function QAKnowledgeBase() {
 
       <div className="space-y-2">
         {filteredQA.length === 0 ? (
-          <p className="text-center text-gray-500 py-8">No Q&A found. Try a different search term.</p>
+          <p className="text-center text-muted-foreground py-8">No Q&A found. Try a different search term.</p>
         ) : (
           filteredQA.map((item) => (
             <div
               key={item.id}
-              className="border rounded-lg hover:bg-gray-50 transition-colors"
+              className="border rounded-lg hover:bg-muted transition-colors"
             >
               <button
                 onClick={() => toggleExpand(item.id)}
@@ -209,7 +209,7 @@ export function QAKnowledgeBase() {
                       </Badge>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-muted-foreground mt-2">
                     {item.author} · {item.date.toLocaleDateString()}
                   </p>
                 </div>
@@ -221,8 +221,8 @@ export function QAKnowledgeBase() {
               </button>
 
               {expandedId === item.id && (
-                <div className="border-t bg-gray-50 p-4 text-sm">
-                  <p className="text-gray-700">{item.answer}</p>
+                <div className="border-t bg-muted p-4 text-sm">
+                  <p className="text-muted-foreground">{item.answer}</p>
                 </div>
               )}
             </div>

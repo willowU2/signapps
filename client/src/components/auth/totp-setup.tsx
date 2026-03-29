@@ -84,8 +84,8 @@ export function TotpSetup() {
         <div className="flex justify-center">
           <ShieldCheck className="h-16 w-16 text-green-500" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900">2FA Enabled</h3>
-        <p className="text-sm text-gray-600">
+        <h3 className="text-lg font-semibold text-foreground">2FA Enabled</h3>
+        <p className="text-sm text-muted-foreground">
           Your account is now protected with two-factor authentication.
         </p>
       </div>
@@ -101,7 +101,7 @@ export function TotpSetup() {
 
       {step === "idle" && (
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Add an extra layer of security to your account using an authenticator app
             (Google Authenticator, Authy, etc.).
           </p>
@@ -114,9 +114,9 @@ export function TotpSetup() {
 
       {step === "scanning" && setupData && (
         <div className="space-y-5">
-          <div className="text-sm text-gray-700">
+          <div className="text-sm text-muted-foreground">
             <p className="font-medium mb-2">Step 1: Scan with your authenticator app</p>
-            <div className="flex justify-center rounded-lg border border-gray-200 bg-white p-4">
+            <div className="flex justify-center rounded-lg border border-border bg-card p-4">
               <img
                 src={setupData.qr_code}
                 alt="TOTP QR Code"
@@ -126,9 +126,9 @@ export function TotpSetup() {
           </div>
 
           <div className="space-y-1">
-            <p className="text-sm font-medium text-gray-700">Or enter manually:</p>
+            <p className="text-sm font-medium text-muted-foreground">Or enter manually:</p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 rounded bg-gray-100 px-3 py-2 font-mono text-xs break-all">
+              <code className="flex-1 rounded bg-muted px-3 py-2 font-mono text-xs break-all">
                 {setupData.secret}
               </code>
               <Button variant="outline" size="sm" onClick={copySecret} className="shrink-0">
@@ -139,7 +139,7 @@ export function TotpSetup() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-700">Backup codes (save these):</p>
+              <p className="text-sm font-medium text-muted-foreground">Backup codes (save these):</p>
               <Button variant="ghost" size="sm" onClick={copyBackupCodes} className="gap-1 text-xs">
                 {copiedCodes ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                 Copy all
@@ -164,7 +164,7 @@ export function TotpSetup() {
 
       {step === "verifying" && (
         <div className="space-y-4">
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-muted-foreground">
             <span className="font-medium">Step 2:</span> Enter the 6-digit code from your authenticator app to confirm setup.
           </p>
           <Input
@@ -187,7 +187,7 @@ export function TotpSetup() {
             </Button>
           </div>
           {setupData && (
-            <p className="text-xs text-gray-500 text-center">
+            <p className="text-xs text-muted-foreground text-center">
               <Badge variant="secondary" className="text-xs">Recovery</Badge>{" "}
               You can also use a backup code if your device is unavailable.
             </p>

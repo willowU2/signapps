@@ -140,21 +140,21 @@ export function SkillsHeatmap() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Skills Heatmap</h2>
-        <p className="text-gray-600">Team proficiency across key competencies</p>
+        <h2 className="text-2xl font-bold text-foreground">Skills Heatmap</h2>
+        <p className="text-muted-foreground">Team proficiency across key competencies</p>
       </div>
 
-      <div className="border rounded-lg overflow-x-auto bg-white">
+      <div className="border rounded-lg overflow-x-auto bg-card">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="bg-gray-50 border-b">
-              <th className="p-4 text-left font-semibold text-gray-900 border-r w-32">
+            <tr className="bg-muted border-b">
+              <th className="p-4 text-left font-semibold text-foreground border-r w-32">
                 Employee
               </th>
               {SKILLS.map((skill) => (
                 <th
                   key={skill}
-                  className="p-4 text-center font-semibold text-gray-900 border-r min-w-[100px]"
+                  className="p-4 text-center font-semibold text-foreground border-r min-w-[100px]"
                 >
                   <div className="text-sm">{skill}</div>
                 </th>
@@ -163,8 +163,8 @@ export function SkillsHeatmap() {
           </thead>
           <tbody>
             {EMPLOYEES.map((employee, empIdx) => (
-              <tr key={employee.name} className="border-b hover:bg-gray-50">
-                <td className="p-4 font-medium text-gray-900 border-r bg-gray-50">
+              <tr key={employee.name} className="border-b hover:bg-muted">
+                <td className="p-4 font-medium text-foreground border-r bg-muted">
                   {employee.name}
                 </td>
                 {SKILLS.map((skill) => {
@@ -202,35 +202,35 @@ export function SkillsHeatmap() {
       </div>
 
       <div className="grid grid-cols-2 gap-6">
-        <div className="border rounded-lg p-6 bg-white">
-          <h3 className="font-semibold text-gray-900 mb-4">Proficiency Legend</h3>
+        <div className="border rounded-lg p-6 bg-card">
+          <h3 className="font-semibold text-foreground mb-4">Proficiency Legend</h3>
           <div className="space-y-3">
             {[5, 4, 3, 2, 1].map((level) => (
               <div key={level} className="flex items-center gap-3">
                 <div className={`w-8 h-8 rounded ${getProficiencyColor(level)}`} />
                 <div>
-                  <p className="font-medium text-gray-900">{level}</p>
-                  <p className="text-sm text-gray-600">{getProficiencyLabel(level)}</p>
+                  <p className="font-medium text-foreground">{level}</p>
+                  <p className="text-sm text-muted-foreground">{getProficiencyLabel(level)}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="border rounded-lg p-6 bg-white">
-          <h3 className="font-semibold text-gray-900 mb-4">Team Statistics</h3>
+        <div className="border rounded-lg p-6 bg-card">
+          <h3 className="font-semibold text-foreground mb-4">Team Statistics</h3>
           <div className="space-y-3 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Total Employees</span>
-              <span className="font-bold text-gray-900">{EMPLOYEES.length}</span>
+              <span className="text-muted-foreground">Total Employees</span>
+              <span className="font-bold text-foreground">{EMPLOYEES.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Skills Tracked</span>
-              <span className="font-bold text-gray-900">{SKILLS.length}</span>
+              <span className="text-muted-foreground">Skills Tracked</span>
+              <span className="font-bold text-foreground">{SKILLS.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Expert Count</span>
-              <span className="font-bold text-gray-900">
+              <span className="text-muted-foreground">Expert Count</span>
+              <span className="font-bold text-foreground">
                 {EMPLOYEES.reduce((sum, emp) => {
                   return (
                     sum +
@@ -240,8 +240,8 @@ export function SkillsHeatmap() {
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Average Proficiency</span>
-              <span className="font-bold text-gray-900">
+              <span className="text-muted-foreground">Average Proficiency</span>
+              <span className="font-bold text-foreground">
                 {(
                   EMPLOYEES.reduce((sum, emp) => {
                     return (

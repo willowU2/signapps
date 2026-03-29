@@ -111,7 +111,7 @@ function getChannelBadgeColor(channel: string): string {
     case "search":
       return "bg-orange-100 text-orange-800";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-muted text-gray-800";
   }
 }
 
@@ -124,9 +124,9 @@ function getStatusColor(status: string): string {
     case "completed":
       return "bg-blue-100 text-blue-800";
     case "draft":
-      return "bg-gray-100 text-gray-800";
+      return "bg-muted text-gray-800";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-muted text-gray-800";
   }
 }
 
@@ -165,30 +165,30 @@ export function CampaignTracker() {
       <div className="flex items-center gap-3">
         <TrendingUp className="w-6 h-6 text-blue-600" />
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Campaign Tracker</h2>
-          <p className="text-gray-600">Monitor performance across all channels</p>
+          <h2 className="text-2xl font-bold text-foreground">Campaign Tracker</h2>
+          <p className="text-muted-foreground">Monitor performance across all channels</p>
         </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Active Campaigns</p>
+          <p className="text-sm text-muted-foreground font-medium">Active Campaigns</p>
           <p className="text-3xl font-bold text-blue-900">{activeCampaigns}</p>
         </div>
         <div className="rounded-lg border bg-green-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Total Views</p>
+          <p className="text-sm text-muted-foreground font-medium">Total Views</p>
           <p className="text-3xl font-bold text-green-900">
             {(totalViews / 1000).toFixed(1)}K
           </p>
         </div>
         <div className="rounded-lg border bg-purple-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Budget Spent</p>
+          <p className="text-sm text-muted-foreground font-medium">Budget Spent</p>
           <p className="text-3xl font-bold text-purple-900">
             ${(totalSpent / 1000).toFixed(1)}K
           </p>
         </div>
         <div className="rounded-lg border bg-orange-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Budget Remaining</p>
+          <p className="text-sm text-muted-foreground font-medium">Budget Remaining</p>
           <p className="text-3xl font-bold text-orange-900">
             ${((totalBudget - totalSpent) / 1000).toFixed(1)}K
           </p>
@@ -208,10 +208,10 @@ export function CampaignTracker() {
           return (
             <div
               key={campaign.id}
-              className="border rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow"
+              className="border rounded-lg overflow-hidden bg-card hover:shadow-md transition-shadow"
             >
               <div
-                className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                className="p-6 cursor-pointer hover:bg-muted transition-colors"
                 onClick={() =>
                   setExpandedId(isExpanded ? null : campaign.id)
                 }
@@ -222,10 +222,10 @@ export function CampaignTracker() {
                       {getChannelIcon(campaign.channel)}
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-lg font-semibold text-foreground">
                         {campaign.name}
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         {new Date(campaign.startDate).toLocaleDateString()} -{" "}
                         {new Date(campaign.endDate).toLocaleDateString()}
                       </p>
@@ -240,25 +240,25 @@ export function CampaignTracker() {
 
                 <div className="grid grid-cols-4 gap-4">
                   <div>
-                    <p className="text-xs text-gray-600 font-medium mb-1">Views</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-xs text-muted-foreground font-medium mb-1">Views</p>
+                    <p className="text-2xl font-bold text-foreground">
                       {(campaign.views / 1000).toFixed(1)}K
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-600 font-medium mb-1">Clicks</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-xs text-muted-foreground font-medium mb-1">Clicks</p>
+                    <p className="text-2xl font-bold text-foreground">
                       {campaign.clicks}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-600 font-medium mb-1">CTR</p>
+                    <p className="text-xs text-muted-foreground font-medium mb-1">CTR</p>
                     <p className="text-2xl font-bold text-blue-600">
                       {ctr.toFixed(2)}%
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-600 font-medium mb-1">Conv.</p>
+                    <p className="text-xs text-muted-foreground font-medium mb-1">Conv.</p>
                     <p className="text-2xl font-bold text-green-600">
                       {conversionRate.toFixed(2)}%
                     </p>
@@ -267,15 +267,15 @@ export function CampaignTracker() {
               </div>
 
               {isExpanded && (
-                <div className="border-t bg-gray-50 p-6 space-y-6">
+                <div className="border-t bg-muted p-6 space-y-6">
                   <div>
-                    <p className="text-sm text-gray-600 font-medium mb-2">Budget</p>
+                    <p className="text-sm text-muted-foreground font-medium mb-2">Budget</p>
                     <div className="flex items-end justify-between mb-2">
-                      <span className="text-gray-900 font-semibold">
+                      <span className="text-foreground font-semibold">
                         ${campaign.spent.toLocaleString()} / $
                         {campaign.budget.toLocaleString()}
                       </span>
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-muted-foreground">
                         {budgetUsed.toFixed(1)}%
                       </span>
                     </div>
@@ -288,27 +288,27 @@ export function CampaignTracker() {
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="rounded-lg bg-white p-4 border">
-                      <p className="text-xs text-gray-600 font-medium mb-2">
+                    <div className="rounded-lg bg-card p-4 border">
+                      <p className="text-xs text-muted-foreground font-medium mb-2">
                         Total Conversions
                       </p>
                       <p className="text-2xl font-bold text-green-600">
                         {campaign.conversions}
                       </p>
                     </div>
-                    <div className="rounded-lg bg-white p-4 border">
-                      <p className="text-xs text-gray-600 font-medium mb-2">
+                    <div className="rounded-lg bg-card p-4 border">
+                      <p className="text-xs text-muted-foreground font-medium mb-2">
                         Cost per Click
                       </p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-2xl font-bold text-foreground">
                         ${(campaign.spent / campaign.clicks).toFixed(2)}
                       </p>
                     </div>
-                    <div className="rounded-lg bg-white p-4 border">
-                      <p className="text-xs text-gray-600 font-medium mb-2">
+                    <div className="rounded-lg bg-card p-4 border">
+                      <p className="text-xs text-muted-foreground font-medium mb-2">
                         Cost per Conversion
                       </p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-2xl font-bold text-foreground">
                         ${campaign.conversions > 0 ? (campaign.spent / campaign.conversions).toFixed(2) : "—"}
                       </p>
                     </div>

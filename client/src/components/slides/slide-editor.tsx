@@ -1704,10 +1704,10 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
         const slideNodes = allSlides.map((slide) => {
             const slideObjects = getSlideObjects(slide.id)
             return (
-                <div key={slide.id} className="w-full h-full bg-white rounded-lg shadow-lg flex items-center justify-center p-8">
+                <div key={slide.id} className="w-full h-full bg-card rounded-lg shadow-lg flex items-center justify-center p-8">
                     <div className="text-center space-y-4">
                         <h2 className="text-4xl font-bold text-gray-800">{slide.title}</h2>
-                        <p className="text-gray-500">{Object.keys(slideObjects).length} objets</p>
+                        <p className="text-muted-foreground">{Object.keys(slideObjects).length} objets</p>
                     </div>
                 </div>
             )
@@ -2303,7 +2303,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
                 <div className="flex-1 w-full flex items-stretch min-h-0 relative">
                     {/* Outline Sidebar (Left) */}
-                    <div className="w-64 border-r border-gray-200 dark:border-gray-800 bg-background dark:bg-[#1a1a1a] hidden md:block z-10">
+                    <div className="w-64 border-r border-border dark:border-gray-800 bg-background dark:bg-[#1a1a1a] hidden md:block z-10">
                         <DocumentOutline canvasRef={fabricCanvasRef} />
                     </div>
 

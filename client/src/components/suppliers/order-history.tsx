@@ -75,7 +75,7 @@ export default function OrderHistory() {
       case "pending":
         return "bg-yellow-100 text-yellow-700";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -102,15 +102,15 @@ export default function OrderHistory() {
     <div className="space-y-6 p-6">
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border p-4">
-          <p className="text-sm text-gray-600">Total Spent</p>
+          <p className="text-sm text-muted-foreground">Total Spent</p>
           <p className="text-2xl font-bold">${totalSpent.toLocaleString()}</p>
         </div>
         <div className="rounded-lg border p-4">
-          <p className="text-sm text-gray-600">Total Orders</p>
+          <p className="text-sm text-muted-foreground">Total Orders</p>
           <p className="text-2xl font-bold">{orders.length}</p>
         </div>
         <div className="rounded-lg border p-4">
-          <p className="text-sm text-gray-600">Average Order</p>
+          <p className="text-sm text-muted-foreground">Average Order</p>
           <p className="text-2xl font-bold">${Math.round(totalSpent / orders.length).toLocaleString()}</p>
         </div>
       </div>
@@ -131,7 +131,7 @@ export default function OrderHistory() {
 
       {Object.entries(groupedBySupplier).map(([supplier, supplierOrders]) => (
         <div key={supplier} className="rounded-lg border">
-          <div className="border-b bg-gray-50 p-4">
+          <div className="border-b bg-muted p-4">
             <h3 className="font-semibold">{supplier}</h3>
           </div>
           <div className="overflow-x-auto">
@@ -147,7 +147,7 @@ export default function OrderHistory() {
                 {supplierOrders
                   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                   .map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
+                    <tr key={order.id} className="hover:bg-muted">
                       <td className="px-4 py-3 text-sm">{order.date}</td>
                       <td className="px-4 py-3 text-sm font-semibold">${order.amount.toLocaleString()}</td>
                       <td className="px-4 py-3 text-sm">
@@ -160,7 +160,7 @@ export default function OrderHistory() {
               </tbody>
             </table>
           </div>
-          <div className="border-t bg-gray-50 p-4 text-right">
+          <div className="border-t bg-muted p-4 text-right">
             <p className="text-sm font-semibold">
               Subtotal: ${supplierOrders.reduce((sum, o) => sum + o.amount, 0).toLocaleString()}
             </p>

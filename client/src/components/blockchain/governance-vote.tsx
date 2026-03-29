@@ -109,7 +109,7 @@ export const GovernanceVote: React.FC<GovernanceVoteProps> = ({
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
-                <Circle className="size-4 text-gray-600" />
+                <Circle className="size-4 text-muted-foreground" />
                 Abstention
               </span>
               <span className="font-medium">{votesAbstain}</span>

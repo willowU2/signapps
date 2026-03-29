@@ -211,7 +211,7 @@ export function VideoMessage() {
             <video ref={videoRef} className="w-full h-full object-cover" muted />
             {isRecording && (
               <div className="absolute top-3 right-3 flex items-center gap-2 px-3 py-1 bg-red-600 rounded-full">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                <div className="w-2 h-2 bg-card rounded-full animate-pulse" />
                 <span className="text-white text-xs font-semibold">{formatDuration(recordingTime)}</span>
               </div>
             )}

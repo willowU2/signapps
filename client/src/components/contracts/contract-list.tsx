@@ -32,7 +32,7 @@ export function ContractList({ contracts }: ContractListProps) {
       case 'Employe':
         return 'bg-purple-100 text-purple-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-gray-800';
     }
   };
 
@@ -45,7 +45,7 @@ export function ContractList({ contracts }: ContractListProps) {
       case 'Expired':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-gray-800';
     }
   };
 
@@ -55,7 +55,7 @@ export function ContractList({ contracts }: ContractListProps) {
         accessorKey: 'name',
         header: 'Nom du Contrat',
         cell: ({ row }) => (
-          <div className="font-medium text-gray-900">{row.original.name}</div>
+          <div className="font-medium text-foreground">{row.original.name}</div>
         ),
       },
       {
@@ -71,7 +71,7 @@ export function ContractList({ contracts }: ContractListProps) {
         accessorKey: 'startDate',
         header: 'Date de Démarrage',
         cell: ({ row }) => (
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             {format(parseISO(row.original.startDate), 'd MMM yyyy', { locale: fr })}
           </span>
         ),
@@ -80,7 +80,7 @@ export function ContractList({ contracts }: ContractListProps) {
         accessorKey: 'endDate',
         header: 'Date de Fin',
         cell: ({ row }) => (
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             {format(parseISO(row.original.endDate), 'd MMM yyyy', { locale: fr })}
           </span>
         ),

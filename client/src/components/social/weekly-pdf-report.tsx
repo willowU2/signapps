@@ -22,6 +22,7 @@ import {
   Legend,
 } from "recharts";
 import { toast } from "sonner";
+import { getServiceUrl, ServiceName } from "@/lib/api/factory";
 
 interface WeekStat {
   day: string;
@@ -90,7 +91,7 @@ export function WeeklyPdfReport({ weekData = DEMO_WEEK, weekLabel }: WeeklyPdfRe
         summary: { totalPosts, totalReach, totalEngagement, avgEngagementRate },
       };
 
-      const res = await fetch("http://localhost:3019/api/v1/social/reports/weekly-pdf", {
+      const res = await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/reports/weekly-pdf`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

@@ -139,11 +139,11 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
       {/* Report form (collapsible) */}
       {showForm && (
         <div className="mb-8 p-6 bg-muted rounded-lg border border-border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">New Report</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">New Report</h3>
           <div className="space-y-4">
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Report Name
               </label>
               <input
@@ -151,14 +151,14 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
                 value={formData.name || ''}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g., Weekly Performance Report"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             {/* Schedule and Format grid */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Schedule
                 </label>
                 <select
@@ -166,7 +166,7 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
                   onChange={(e) =>
                     setFormData({ ...formData, schedule: e.target.value as any })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -175,7 +175,7 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Format
                 </label>
                 <select
@@ -183,7 +183,7 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
                   onChange={(e) =>
                     setFormData({ ...formData, format: e.target.value as ReportFormat })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="PDF">PDF</option>
                   <option value="Excel">Excel</option>
@@ -194,7 +194,7 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
 
             {/* Recipients */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Recipients (comma-separated emails)
               </label>
               <textarea
@@ -206,7 +206,7 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
                   })
                 }
                 placeholder="user@example.com, another@example.com"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm h-20 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg text-sm h-20 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -217,15 +217,15 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
                   type="checkbox"
                   checked={formData.enabled || false}
                   onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-                  className="w-4 h-4 rounded border-gray-300"
+                  className="w-4 h-4 rounded border-border"
                 />
-                <span className="text-sm font-medium text-gray-700">Enable immediately</span>
+                <span className="text-sm font-medium text-muted-foreground">Enable immediately</span>
               </label>
 
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowForm(false)}
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium text-sm hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 rounded-lg border border-border text-muted-foreground font-medium text-sm hover:bg-muted transition-colors"
                 >
                   Cancel
                 </button>
@@ -244,7 +244,7 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
       {/* Reports list */}
       <div className="space-y-3">
         {reports.length === 0 ? (
-          <p className="text-center py-8 text-gray-500">No scheduled reports yet</p>
+          <p className="text-center py-8 text-muted-foreground">No scheduled reports yet</p>
         ) : (
           reports.map((report) => (
             <div
@@ -264,13 +264,13 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
 
                 {/* Info */}
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">{report.name}</h3>
+                  <h3 className="font-semibold text-foreground">{report.name}</h3>
                   <div className="flex items-center gap-3 mt-2">
-                    <span className="text-xs text-gray-600 capitalize">
+                    <span className="text-xs text-muted-foreground capitalize">
                       {report.schedule}
                     </span>
                     <FormatBadge format={report.format} />
-                    <span className="text-xs text-gray-600">
+                    <span className="text-xs text-muted-foreground">
                       {report.recipients.length} recipient{report.recipients.length !== 1 ? 's' : ''}
                     </span>
                   </div>
@@ -280,7 +280,7 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
               {/* Delete button */}
               <button
                 onClick={() => handleDelete(report.id)}
-                className="p-2 text-gray-500 hover:text-red-600 transition-colors rounded hover:bg-red-50"
+                className="p-2 text-muted-foreground hover:text-red-600 transition-colors rounded hover:bg-red-50"
                 title="Delete report"
               >
                 <Trash2 className="w-4 h-4" />
@@ -294,18 +294,18 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
       {reports.length > 0 && (
         <div className="mt-6 pt-6 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <p className="text-xs text-gray-600">Total Reports</p>
-            <p className="text-lg font-bold text-gray-900">{reports.length}</p>
+            <p className="text-xs text-muted-foreground">Total Reports</p>
+            <p className="text-lg font-bold text-foreground">{reports.length}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-600">Enabled</p>
-            <p className="text-lg font-bold text-gray-900">
+            <p className="text-xs text-muted-foreground">Enabled</p>
+            <p className="text-lg font-bold text-foreground">
               {reports.filter((r) => r.enabled).length}
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-600">Total Recipients</p>
-            <p className="text-lg font-bold text-gray-900">
+            <p className="text-xs text-muted-foreground">Total Recipients</p>
+            <p className="text-lg font-bold text-foreground">
               {reports.reduce((sum, r) => sum + r.recipients.length, 0)}
             </p>
           </div>

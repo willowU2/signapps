@@ -92,7 +92,7 @@ export function InternalConnectors({ onToggle }: InternalConnectorsProps) {
       Form: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200",
       Task: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
     };
-    return colors[service] || "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+    return colors[service] || "bg-muted text-gray-800 dark:bg-gray-900 dark:text-gray-200";
   };
 
   return (
@@ -100,7 +100,7 @@ export function InternalConnectors({ onToggle }: InternalConnectorsProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Service Connectors</CardTitle>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+          <p className="text-sm text-muted-foreground dark:text-gray-400 mt-2">
             Configure automated workflows between services
           </p>
         </CardHeader>
@@ -112,7 +112,7 @@ export function InternalConnectors({ onToggle }: InternalConnectorsProps) {
                 className={`border-2 rounded-lg p-4 transition-all ${
                   connector.enabled
                     ? "border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950"
-                    : "border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
+                    : "border-border bg-muted dark:border-gray-700 dark:bg-gray-900"
                 }`}
               >
                 <div className="space-y-3">
@@ -126,7 +126,7 @@ export function InternalConnectors({ onToggle }: InternalConnectorsProps) {
                   {/* Arrow and Event Type */}
                   <div className="flex items-center gap-2 justify-center">
                     <ArrowRight className="h-5 w-5 text-gray-400" />
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span className="text-xs font-medium text-muted-foreground dark:text-gray-400">
                       {connector.eventType}
                     </span>
                   </div>
@@ -144,7 +144,7 @@ export function InternalConnectors({ onToggle }: InternalConnectorsProps) {
                     className={`w-full py-2 px-3 rounded-md font-medium text-sm transition-colors ${
                       connector.enabled
                         ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : "bg-gray-300 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-400"
+                        : "bg-gray-300 text-muted-foreground dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-400"
                     }`}
                   >
                     {connector.enabled ? "Enabled" : "Disabled"}
@@ -164,15 +164,15 @@ export function InternalConnectors({ onToggle }: InternalConnectorsProps) {
               <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {connectors.filter((c) => c.enabled).length}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground dark:text-gray-400">
                 Active Connectors
               </p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+              <p className="text-2xl font-bold text-muted-foreground dark:text-gray-400">
                 {connectors.filter((c) => !c.enabled).length}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground dark:text-gray-400">
                 Disabled
               </p>
             </div>

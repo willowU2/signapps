@@ -49,24 +49,24 @@ export default function PeopleCounter() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100">
-          <p className="text-sm text-gray-600 mb-1">Live Occupancy</p>
+          <p className="text-sm text-muted-foreground mb-1">Live Occupancy</p>
           <p className="text-4xl font-bold text-blue-600">{data.liveCount}</p>
-          <p className="text-xs text-gray-600 mt-2">people in building</p>
+          <p className="text-xs text-muted-foreground mt-2">people in building</p>
         </Card>
 
         <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100">
-          <p className="text-sm text-gray-600 mb-1">Peak Hour</p>
+          <p className="text-sm text-muted-foreground mb-1">Peak Hour</p>
           <div className="flex items-baseline gap-2">
             <p className="text-2xl font-bold text-green-600">{getHourLabel(data.peakHour)}</p>
             <Badge className="bg-green-600 text-white">{data.peakCount} entries</Badge>
           </div>
-          <p className="text-xs text-gray-600 mt-2">highest traffic</p>
+          <p className="text-xs text-muted-foreground mt-2">highest traffic</p>
         </Card>
 
         <Card className="p-4 bg-gradient-to-br from-purple-50 to-purple-100">
-          <p className="text-sm text-gray-600 mb-1">Total Today</p>
+          <p className="text-sm text-muted-foreground mb-1">Total Today</p>
           <p className="text-4xl font-bold text-purple-600">{data.totalToday}</p>
-          <p className="text-xs text-gray-600 mt-2">entries & exits</p>
+          <p className="text-xs text-muted-foreground mt-2">entries & exits</p>
         </Card>
       </div>
 
@@ -81,7 +81,7 @@ export default function PeopleCounter() {
             <div key={idx}>
               <div className="flex justify-between items-center mb-1 text-sm">
                 <span className="font-medium">{getHourLabel(item.hour)}</span>
-                <span className="text-gray-600">
+                <span className="text-muted-foreground">
                   <span className="text-green-600 font-semibold">↓{item.in}</span> •{" "}
                   <span className="text-red-600 font-semibold">↑{item.out}</span>
                 </span>
@@ -102,7 +102,7 @@ export default function PeopleCounter() {
           ))}
         </div>
 
-        <div className="mt-4 pt-4 border-t text-xs text-gray-600 flex justify-center gap-4">
+        <div className="mt-4 pt-4 border-t text-xs text-muted-foreground flex justify-center gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-green-500 rounded" />
             Entries

@@ -147,7 +147,7 @@ function getContentTypeColor(type: string): string {
     case "whitepaper":
       return "bg-red-100 text-red-800";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-muted text-gray-800";
   }
 }
 
@@ -180,41 +180,41 @@ export function EmployeeAdvocacy() {
       <div className="flex items-center gap-3">
         <Users className="w-6 h-6 text-blue-600" />
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Employee Advocacy</h2>
-          <p className="text-gray-600">Amplify your reach through employee networks</p>
+          <h2 className="text-2xl font-bold text-foreground">Employee Advocacy</h2>
+          <p className="text-muted-foreground">Amplify your reach through employee networks</p>
         </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Active Advocates</p>
+          <p className="text-sm text-muted-foreground font-medium">Active Advocates</p>
           <p className="text-3xl font-bold text-blue-900">{employees.length}</p>
         </div>
         <div className="rounded-lg border bg-green-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Total Reaches</p>
+          <p className="text-sm text-muted-foreground font-medium">Total Reaches</p>
           <p className="text-3xl font-bold text-green-900">
             {(totalReaches / 1000).toFixed(1)}K
           </p>
         </div>
         <div className="rounded-lg border bg-purple-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Avg Engagement</p>
+          <p className="text-sm text-muted-foreground font-medium">Avg Engagement</p>
           <p className="text-3xl font-bold text-purple-900">{avgEngagement}%</p>
         </div>
         <div className="rounded-lg border bg-orange-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Top Advocate</p>
+          <p className="text-sm text-muted-foreground font-medium">Top Advocate</p>
           <p className="text-lg font-bold text-orange-900">{topAdvocate.name}</p>
-          <p className="text-xs text-gray-600">{topAdvocate.role}</p>
+          <p className="text-xs text-muted-foreground">{topAdvocate.role}</p>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b flex gap-1 bg-white rounded-lg p-1">
+      <div className="border-b flex gap-1 bg-card rounded-lg p-1">
         <button
           onClick={() => setActiveTab("content")}
           className={`px-4 py-2 rounded font-medium transition-colors ${
             activeTab === "content"
               ? "bg-blue-100 text-blue-900"
-              : "text-gray-600 hover:text-gray-900"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           Shareable Content
@@ -224,7 +224,7 @@ export function EmployeeAdvocacy() {
           className={`px-4 py-2 rounded font-medium transition-colors ${
             activeTab === "advocates"
               ? "bg-blue-100 text-blue-900"
-              : "text-gray-600 hover:text-gray-900"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           Top Advocates
@@ -237,16 +237,16 @@ export function EmployeeAdvocacy() {
           {content.map((item) => (
             <div
               key={item.id}
-              className="border rounded-lg p-6 bg-white hover:shadow-md transition-shadow"
+              className="border rounded-lg p-6 bg-card hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-start gap-4 flex-1">
                   <span className="text-3xl">{getContentTypeIcon(item.type)}</span>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    <h3 className="text-lg font-semibold text-foreground mb-1">
                       {item.title}
                     </h3>
-                    <p className="text-gray-600 text-sm mb-3">
+                    <p className="text-muted-foreground text-sm mb-3">
                       {item.description}
                     </p>
                     <div className="flex items-center gap-4">
@@ -255,7 +255,7 @@ export function EmployeeAdvocacy() {
                       >
                         {item.type}
                       </span>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {new Date(item.createdDate).toLocaleDateString()}
                       </p>
                     </div>
@@ -265,15 +265,15 @@ export function EmployeeAdvocacy() {
 
               <div className="grid grid-cols-3 gap-4 mb-4 py-4 border-t border-b">
                 <div>
-                  <p className="text-xs text-gray-600 font-medium mb-1">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">
                     Total Shares
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-foreground">
                     {item.totalShares}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600 font-medium mb-1">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">
                     Engagement Rate
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
@@ -281,7 +281,7 @@ export function EmployeeAdvocacy() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600 font-medium mb-1">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">
                     Estimated Reach
                   </p>
                   <p className="text-2xl font-bold text-green-600">
@@ -310,17 +310,17 @@ export function EmployeeAdvocacy() {
             .map((employee) => (
               <div
                 key={employee.id}
-                className="border rounded-lg p-6 bg-white hover:shadow-md transition-shadow"
+                className="border rounded-lg p-6 bg-card hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-foreground">
                       {employee.name}
                     </h3>
-                    <p className="text-sm text-gray-600">{employee.role}</p>
+                    <p className="text-sm text-muted-foreground">{employee.role}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-gray-600 font-medium mb-1">
+                    <p className="text-xs text-muted-foreground font-medium mb-1">
                       Influence Score
                     </p>
                     <p
@@ -333,7 +333,7 @@ export function EmployeeAdvocacy() {
 
                 <div className="grid grid-cols-4 gap-4">
                   <div className="rounded-lg bg-blue-50 p-3">
-                    <p className="text-xs text-gray-600 font-medium mb-1">
+                    <p className="text-xs text-muted-foreground font-medium mb-1">
                       Total Shares
                     </p>
                     <p className="text-2xl font-bold text-blue-900">
@@ -341,7 +341,7 @@ export function EmployeeAdvocacy() {
                     </p>
                   </div>
                   <div className="rounded-lg bg-green-50 p-3">
-                    <p className="text-xs text-gray-600 font-medium mb-1">
+                    <p className="text-xs text-muted-foreground font-medium mb-1">
                       Total Reaches
                     </p>
                     <p className="text-2xl font-bold text-green-900">
@@ -349,7 +349,7 @@ export function EmployeeAdvocacy() {
                     </p>
                   </div>
                   <div className="rounded-lg bg-purple-50 p-3">
-                    <p className="text-xs text-gray-600 font-medium mb-1">
+                    <p className="text-xs text-muted-foreground font-medium mb-1">
                       Engagement
                     </p>
                     <p className="text-2xl font-bold text-purple-900">
@@ -357,7 +357,7 @@ export function EmployeeAdvocacy() {
                     </p>
                   </div>
                   <div className="rounded-lg bg-orange-50 p-3">
-                    <p className="text-xs text-gray-600 font-medium mb-1">
+                    <p className="text-xs text-muted-foreground font-medium mb-1">
                       Followers
                     </p>
                     <p className="text-2xl font-bold text-orange-900">
@@ -369,7 +369,7 @@ export function EmployeeAdvocacy() {
                 <div className="mt-4 pt-4 border-t flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-green-600" />
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-foreground">
                       Top performer in advocacy metrics
                     </p>
                   </div>

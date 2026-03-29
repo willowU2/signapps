@@ -30,7 +30,7 @@ const TYPE_CONFIG: Record<FormType, { icon: React.ReactNode; label: string; clas
 
 const STATUS_CONFIG = {
   active: { label: "Actif", class: "bg-green-100 text-green-800" },
-  closed: { label: "Fermé", class: "bg-gray-100 text-gray-800" },
+  closed: { label: "Fermé", class: "bg-muted text-gray-800" },
   draft: { label: "Brouillon", class: "bg-yellow-100 text-yellow-800" },
 };
 

@@ -79,7 +79,7 @@ export function TicketForm({ onSubmit, isLoading = false }: TicketFormProps) {
               onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))} disabled={isLoading} rows={6}
               aria-invalid={!!errors.description}
               className={`w-full px-3 py-2 border rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
-                errors.description ? 'border-red-500' : 'border-gray-300'}`} />
+                errors.description ? 'border-red-500' : 'border-border'}`} />
             {errors.description && <p className="text-sm text-red-500">{errors.description}</p>}
           </div>
 

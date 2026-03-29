@@ -127,7 +127,7 @@ export function LogsDialog({ open, onOpenChange, containerId, containerName }: L
           {loading ? (
             <div className="text-green-400 font-mono text-sm">Chargement...</div>
           ) : logs.length === 0 ? (
-            <div className="text-gray-500 font-mono text-sm">No logs available</div>
+            <div className="text-muted-foreground font-mono text-sm">No logs available</div>
           ) : (
             <div className="font-mono text-sm space-y-0.5">
               {logs.map((line, index) => (

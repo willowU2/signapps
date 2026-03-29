@@ -85,7 +85,7 @@ export default function WaterMonitoring() {
                 />
               ))}
             </div>
-            <div className="text-xs text-gray-600 text-center">
+            <div className="text-xs text-muted-foreground text-center">
               {getDays().map((day, idx) => (
                 <span key={idx} className={idx === 6 ? "font-semibold" : ""}>
                   {day}
@@ -115,7 +115,7 @@ export default function WaterMonitoring() {
                 />
               ))}
             </div>
-            <div className="text-xs text-gray-600 text-center">
+            <div className="text-xs text-muted-foreground text-center">
               {getMonths().map((month, idx) => (
                 <span key={idx} className={idx === 5 ? "font-semibold" : ""}>
                   {month}

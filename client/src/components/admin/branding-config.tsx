@@ -151,7 +151,7 @@ export function BrandingConfig() {
           <h2 className="text-xl font-bold text-center" style={{ color: preview.primaryColor }}>
             {preview.orgName}
           </h2>
-          <p className="text-sm text-gray-500 text-center mt-2">Preview Card</p>
+          <p className="text-sm text-muted-foreground text-center mt-2">Preview Card</p>
         </div>
       </div>
     </div>

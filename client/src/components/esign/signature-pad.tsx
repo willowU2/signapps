@@ -98,7 +98,7 @@ export function SignaturePad({ onSignature, onCancel }: SignaturePadProps) {
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-md">
-      <div className="border-2 border-gray-300 rounded-lg bg-white">
+      <div className="border-2 border-border rounded-lg bg-card">
         <canvas
           ref={canvasRef}
           onMouseDown={startDrawing}

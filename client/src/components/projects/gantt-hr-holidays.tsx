@@ -108,7 +108,7 @@ export function GanttHRHolidays() {
                   return (
                     <div
                       key={day}
-                      className={cn("flex-1 text-center text-[9px] py-0.5 leading-tight border-r last:border-r-0", isWeekend && "bg-gray-100", holiday && HOLIDAY_TYPE_CLASS[holiday.type])}
+                      className={cn("flex-1 text-center text-[9px] py-0.5 leading-tight border-r last:border-r-0", isWeekend && "bg-muted", holiday && HOLIDAY_TYPE_CLASS[holiday.type])}
                       title={holiday?.name}
                     >
                       {d.getDate()}
@@ -140,7 +140,7 @@ export function GanttHRHolidays() {
                       className={cn("absolute inset-y-0.5 rounded", task.color, "opacity-80 flex items-center px-1.5 overflow-hidden")}
                       style={taskPositionStyle(task)}
                     >
-                      <div className="absolute inset-y-0 left-0 bg-white/30 rounded-l" style={{ width: `${task.progress}%` }} />
+                      <div className="absolute inset-y-0 left-0 bg-card/30 rounded-l" style={{ width: `${task.progress}%` }} />
                       <span className="text-[10px] text-white font-medium relative z-10 truncate">{task.assignee}</span>
                     </div>
                     {/* Today line */}

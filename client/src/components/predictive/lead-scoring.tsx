@@ -51,7 +51,7 @@ export const LeadScoring: React.FC = () => {
       case 'hot': return 'bg-red-100 text-red-800';
       case 'warm': return 'bg-orange-100 text-orange-800';
       case 'cold': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-muted text-gray-800';
     }
   };
 
@@ -62,7 +62,7 @@ export const LeadScoring: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow">
+    <div className="p-6 bg-card rounded-lg shadow">
       <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
         <Target className="w-5 h-5 text-green-500" />
         Lead Scoring & Conversion
@@ -71,20 +71,20 @@ export const LeadScoring: React.FC = () => {
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b bg-gray-50">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Lead</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">AI Score</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Conversion %</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Priority</th>
+            <tr className="border-b bg-muted">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">Lead</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">AI Score</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">Conversion %</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">Priority</th>
             </tr>
           </thead>
           <tbody>
             {leads.map((lead) => (
-              <tr key={lead.id} className="border-b hover:bg-gray-50 transition">
+              <tr key={lead.id} className="border-b hover:bg-muted transition">
                 <td className="px-4 py-3">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{lead.name}</p>
-                    <p className="text-xs text-gray-600">{lead.company}</p>
+                    <p className="text-sm font-medium text-foreground">{lead.name}</p>
+                    <p className="text-xs text-muted-foreground">{lead.company}</p>
                   </div>
                 </td>
                 <td className="px-4 py-3">
@@ -101,7 +101,7 @@ export const LeadScoring: React.FC = () => {
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <p className="text-sm font-semibold text-gray-900">{lead.conversionProbability}%</p>
+                  <p className="text-sm font-semibold text-foreground">{lead.conversionProbability}%</p>
                 </td>
                 <td className="px-4 py-3">
                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${getPriorityColor(lead.priority)}`}>
@@ -116,17 +116,17 @@ export const LeadScoring: React.FC = () => {
 
       <div className="mt-4 pt-4 border-t flex items-center justify-between">
         <div>
-          <p className="text-xs text-gray-600">Total Leads</p>
-          <p className="text-lg font-bold text-gray-900">{leads.length}</p>
+          <p className="text-xs text-muted-foreground">Total Leads</p>
+          <p className="text-lg font-bold text-foreground">{leads.length}</p>
         </div>
         <div>
-          <p className="text-xs text-gray-600">Avg Score</p>
-          <p className="text-lg font-bold text-gray-900">
+          <p className="text-xs text-muted-foreground">Avg Score</p>
+          <p className="text-lg font-bold text-foreground">
             {(leads.reduce((sum, l) => sum + l.aiScore, 0) / leads.length).toFixed(0)}
           </p>
         </div>
         <div>
-          <p className="text-xs text-gray-600">Hot Leads</p>
+          <p className="text-xs text-muted-foreground">Hot Leads</p>
           <p className="text-lg font-bold text-red-600">{leads.filter((l) => l.priority === 'hot').length}</p>
         </div>
       </div>

@@ -24,7 +24,7 @@ const MODULE_COLORS: Record<string, string> = {
   // Local activity types
   created: 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300',
   search: 'bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300',
-  navigated: 'bg-gray-100 text-gray-700 dark:bg-gray-950 dark:text-gray-300',
+  navigated: 'bg-muted text-muted-foreground dark:bg-gray-950 dark:text-gray-300',
   login: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
 };
 

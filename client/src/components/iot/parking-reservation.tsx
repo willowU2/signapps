@@ -35,7 +35,7 @@ export default function ParkingReservation() {
       case "ev-charging":
         return "bg-yellow-100 border-yellow-300 text-yellow-700";
       default:
-        return "bg-gray-100 border-gray-300 text-gray-700";
+        return "bg-muted border-border text-muted-foreground";
     }
   };
 
@@ -46,7 +46,7 @@ export default function ParkingReservation() {
       case "reserved":
         return <Badge className="bg-blue-500">Reserved</Badge>;
       case "ev-charging":
-        return <Badge className="bg-yellow-500 text-black">EV Charging</Badge>;
+        return <Badge className="bg-yellow-500 text-foreground">EV Charging</Badge>;
       default:
         return <Badge>Unknown</Badge>;
     }
@@ -91,15 +91,15 @@ export default function ParkingReservation() {
 
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-3 bg-green-50">
-          <p className="text-xs text-gray-600">Free</p>
+          <p className="text-xs text-muted-foreground">Free</p>
           <p className="text-2xl font-bold text-green-600">{freeSpots}</p>
         </Card>
         <Card className="p-3 bg-blue-50">
-          <p className="text-xs text-gray-600">Reserved</p>
+          <p className="text-xs text-muted-foreground">Reserved</p>
           <p className="text-2xl font-bold text-blue-600">{reservedSpots}</p>
         </Card>
         <Card className="p-3 bg-yellow-50">
-          <p className="text-xs text-gray-600">EV Charging</p>
+          <p className="text-xs text-muted-foreground">EV Charging</p>
           <p className="text-2xl font-bold text-yellow-600">{evSpots}</p>
         </Card>
       </div>
@@ -123,7 +123,7 @@ export default function ParkingReservation() {
                 {spot.status === "reserved" ? (
                   <div className="space-y-1">
                     <p className="font-semibold text-blue-700">{spot.reservedBy}</p>
-                    <p className="text-gray-600">Until {spot.reservedUntil}</p>
+                    <p className="text-muted-foreground">Until {spot.reservedUntil}</p>
                     {spot.reservedBy === "You" && (
                       <Button
                         size="xs"

@@ -137,7 +137,7 @@ const PRIORITY_OPTIONS: Array<{ priority: Priority; label: string; color: string
   { priority: 'urgent', label: 'Urgent', color: 'text-red-600' },
   { priority: 'high', label: 'Haute', color: 'text-orange-600' },
   { priority: 'medium', label: 'Moyenne', color: 'text-blue-600' },
-  { priority: 'low', label: 'Basse', color: 'text-gray-600' },
+  { priority: 'low', label: 'Basse', color: 'text-muted-foreground' },
 ];
 
 // ============================================================================

@@ -60,7 +60,7 @@ export default function Carpooling() {
         {trips.map((trip) => (
           <div
             key={trip.id}
-            className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow"
+            className="border rounded-lg p-4 bg-card hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
@@ -69,7 +69,7 @@ export default function Carpooling() {
                   <span className="text-gray-400">→</span>
                   <span className="font-semibold">{trip.to}</span>
                 </div>
-                <p className="text-sm text-gray-600 mb-3">{trip.date}</p>
+                <p className="text-sm text-muted-foreground mb-3">{trip.date}</p>
                 <div className="flex gap-4 text-sm">
                   <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">
                     {trip.seatsAvailable} seats

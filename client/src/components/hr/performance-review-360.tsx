@@ -94,8 +94,8 @@ export function PerformanceReview360() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Évaluation 360°</h2>
-          <p className="text-gray-600">Revue multi-évaluateurs avec scoring par critère</p>
+          <h2 className="text-2xl font-bold text-foreground">Évaluation 360°</h2>
+          <p className="text-muted-foreground">Revue multi-évaluateurs avec scoring par critère</p>
         </div>
         <div className="flex items-center gap-2 text-sm">
           <CheckCircle className="w-4 h-4 text-green-600" />
@@ -108,10 +108,10 @@ export function PerformanceReview360() {
           const catCriteria = CRITERIA.filter(c => c.category === cat);
           const avg = catCriteria.reduce((s, c) => s + avgScore(reviewers, c.id), 0) / catCriteria.length;
           return (
-            <div key={cat} className="rounded-lg border bg-white p-4">
-              <p className="text-xs font-semibold text-gray-500 uppercase">{cat}</p>
+            <div key={cat} className="rounded-lg border bg-card p-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase">{cat}</p>
               <div className="mt-1 flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-gray-900">{avg.toFixed(1)}</span>
+                <span className="text-2xl font-bold text-foreground">{avg.toFixed(1)}</span>
                 <span className="text-sm text-gray-400">/5</span>
               </div>
               <StarRating value={Math.round(avg)} />
@@ -121,9 +121,9 @@ export function PerformanceReview360() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="rounded-lg border bg-white overflow-hidden">
-          <div className="bg-gray-50 border-b px-4 py-3 flex items-center justify-between">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2"><Users className="w-4 h-4" /> Évaluateurs</h3>
+        <div className="rounded-lg border bg-card overflow-hidden">
+          <div className="bg-muted border-b px-4 py-3 flex items-center justify-between">
+            <h3 className="font-semibold text-foreground flex items-center gap-2"><Users className="w-4 h-4" /> Évaluateurs</h3>
             <div className="flex gap-2">
               <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nom..." className="border rounded px-2 py-1 text-sm w-32" onKeyDown={e => e.key === "Enter" && handleAddReviewer()} />
               <button onClick={handleAddReviewer} className="p-1 hover:bg-gray-200 rounded"><Plus className="w-4 h-4" /></button>
@@ -133,8 +133,8 @@ export function PerformanceReview360() {
             {reviewers.map(r => (
               <div key={r.id} className="px-4 py-3 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{r.name}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ROLE_COLORS[r.role] || "bg-gray-100 text-gray-600"}`}>{ROLE_LABELS[r.role] || r.role}</span>
+                  <p className="text-sm font-medium text-foreground">{r.name}</p>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ROLE_COLORS[r.role] || "bg-muted text-muted-foreground"}`}>{ROLE_LABELS[r.role] || r.role}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {r.submitted ? <CheckCircle className="w-4 h-4 text-green-600" /> : (
@@ -149,37 +149,37 @@ export function PerformanceReview360() {
         </div>
 
         {activeReviewer ? (
-          <div className="rounded-lg border bg-white overflow-hidden">
+          <div className="rounded-lg border bg-card overflow-hidden">
             <div className="bg-blue-50 border-b px-4 py-3">
-              <h3 className="font-semibold text-gray-900">Formulaire d'évaluation</h3>
-              <p className="text-xs text-gray-600">{reviewers.find(r => r.id === activeReviewer)?.name}</p>
+              <h3 className="font-semibold text-foreground">Formulaire d'évaluation</h3>
+              <p className="text-xs text-muted-foreground">{reviewers.find(r => r.id === activeReviewer)?.name}</p>
             </div>
             <div className="p-4 space-y-4">
               {CRITERIA.map(c => (
                 <div key={c.id} className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{c.label}</p>
-                    <p className="text-xs text-gray-500">{c.category}</p>
+                    <p className="text-sm font-medium text-foreground">{c.label}</p>
+                    <p className="text-xs text-muted-foreground">{c.category}</p>
                   </div>
                   <StarRating value={draftScores[c.id] || 0} onChange={v => setDraftScores(s => ({ ...s, [c.id]: v }))} />
                 </div>
               ))}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Commentaire</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-1">Commentaire</label>
                 <textarea value={draftComment} onChange={e => setDraftComment(e.target.value)} rows={3} className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Commentaire libre..." />
               </div>
               <div className="flex gap-2">
                 <button onClick={handleSubmitReview} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
                   <Send className="w-4 h-4" /> Soumettre
                 </button>
-                <button onClick={() => setActiveReviewer(null)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">Annuler</button>
+                <button onClick={() => setActiveReviewer(null)} className="bg-gray-200 hover:bg-gray-300 text-muted-foreground px-4 py-2 rounded-lg text-sm font-medium">Annuler</button>
               </div>
             </div>
           </div>
         ) : (
-          <div className="rounded-lg border bg-white overflow-hidden">
-            <div className="bg-gray-50 border-b px-4 py-3">
-              <h3 className="font-semibold text-gray-900">Synthèse par critère</h3>
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <div className="bg-muted border-b px-4 py-3">
+              <h3 className="font-semibold text-foreground">Synthèse par critère</h3>
             </div>
             <div className="divide-y">
               {CRITERIA.map(c => {
@@ -187,12 +187,12 @@ export function PerformanceReview360() {
                 return (
                   <div key={c.id} className="px-4 py-3 flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{c.label}</p>
-                      <p className="text-xs text-gray-500">{c.category}</p>
+                      <p className="text-sm font-medium text-foreground">{c.label}</p>
+                      <p className="text-xs text-muted-foreground">{c.category}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <StarRating value={Math.round(avg)} />
-                      <span className="text-sm font-bold text-gray-700 w-8 text-right">{avg > 0 ? avg.toFixed(1) : "—"}</span>
+                      <span className="text-sm font-bold text-muted-foreground w-8 text-right">{avg > 0 ? avg.toFixed(1) : "—"}</span>
                     </div>
                   </div>
                 );

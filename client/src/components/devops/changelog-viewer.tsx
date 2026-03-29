@@ -112,7 +112,7 @@ export function ChangelogViewer() {
     switch (type) {
       case "feat": return <Zap className="w-4 h-4 text-blue-500" />;
       case "fix": return <Bug className="w-4 h-4 text-red-500" />;
-      case "chore": return <Wrench className="w-4 h-4 text-gray-500" />;
+      case "chore": return <Wrench className="w-4 h-4 text-muted-foreground" />;
       case "docs": return <BookOpen className="w-4 h-4 text-green-500" />;
     }
   };
@@ -121,7 +121,7 @@ export function ChangelogViewer() {
     switch (type) {
       case "feat": return "bg-blue-100 text-blue-800";
       case "fix": return "bg-red-100 text-red-800";
-      case "chore": return "bg-gray-100 text-gray-800";
+      case "chore": return "bg-muted text-gray-800";
       case "docs": return "bg-green-100 text-green-800";
     }
   };
@@ -159,7 +159,7 @@ export function ChangelogViewer() {
       </div>
 
       {entries.size === 0 ? (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-muted-foreground">
           <p>No changelog entries yet. Add one to get started.</p>
         </div>
       ) : (
@@ -170,7 +170,7 @@ export function ChangelogViewer() {
               {versionEntries.map((entry) => (
                 <div
                   key={entry.id}
-                  className="flex items-start gap-3 pb-3 border-b border-gray-200 last:border-b-0"
+                  className="flex items-start gap-3 pb-3 border-b border-border last:border-b-0"
                 >
                   <div className="flex-shrink-0 mt-1">{getTypeIcon(entry.type)}</div>
                   <div className="flex-1 min-w-0">
@@ -179,9 +179,9 @@ export function ChangelogViewer() {
                         {entry.type}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-700">{entry.description}</p>
+                    <p className="text-sm text-muted-foreground">{entry.description}</p>
                   </div>
-                  <div className="flex-shrink-0 text-xs text-gray-500 whitespace-nowrap ml-4">
+                  <div className="flex-shrink-0 text-xs text-muted-foreground whitespace-nowrap ml-4">
                     {formatDate(entry.date)}
                   </div>
                 </div>

@@ -72,7 +72,7 @@ function getConditionColor(condition: string): { bg: string; badge: string; text
     case "poor":
       return { bg: "bg-red-50", badge: "bg-red-100 text-red-800", text: "text-red-900" };
     default:
-      return { bg: "bg-gray-50", badge: "bg-gray-100 text-gray-800", text: "text-gray-900" };
+      return { bg: "bg-muted", badge: "bg-muted text-gray-800", text: "text-foreground" };
   }
 }
 
@@ -88,8 +88,8 @@ export function FurnitureInventory() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Furniture Inventory</h2>
-          <p className="text-gray-600">Track and manage office furniture</p>
+          <h2 className="text-2xl font-bold text-foreground">Furniture Inventory</h2>
+          <p className="text-muted-foreground">Track and manage office furniture</p>
         </div>
         <Package className="w-8 h-8 text-blue-600" />
       </div>
@@ -97,17 +97,17 @@ export function FurnitureInventory() {
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
-          <p className="text-xs font-semibold text-gray-600 uppercase">Total Items</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase">Total Items</p>
           <p className="text-2xl font-bold text-blue-900">{totalItems}</p>
         </div>
 
         <div className="rounded-lg border bg-green-50 p-4">
-          <p className="text-xs font-semibold text-gray-600 uppercase">Good Condition</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase">Good Condition</p>
           <p className="text-2xl font-bold text-green-900">{goodCondition}</p>
         </div>
 
         <div className="rounded-lg border bg-red-50 p-4">
-          <p className="text-xs font-semibold text-gray-600 uppercase">Poor Condition</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase">Poor Condition</p>
           <p className="text-2xl font-bold text-red-900">{poorCondition}</p>
         </div>
       </div>
@@ -119,10 +119,10 @@ export function FurnitureInventory() {
             <table className="w-full text-sm">
               <thead className="bg-muted border-b sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-900">Item Name</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-900">Location</th>
-                  <th className="px-4 py-3 text-center font-semibold text-gray-900">Qty</th>
-                  <th className="px-4 py-3 text-center font-semibold text-gray-900">Condition</th>
+                  <th className="px-4 py-3 text-left font-semibold text-foreground">Item Name</th>
+                  <th className="px-4 py-3 text-left font-semibold text-foreground">Location</th>
+                  <th className="px-4 py-3 text-center font-semibold text-foreground">Qty</th>
+                  <th className="px-4 py-3 text-center font-semibold text-foreground">Condition</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -130,13 +130,13 @@ export function FurnitureInventory() {
                   <tr
                     key={item.id}
                     onClick={() => setSelectedItemId(item.id)}
-                    className={`hover:bg-gray-50 cursor-pointer transition-colors ${
+                    className={`hover:bg-muted cursor-pointer transition-colors ${
                       selectedItemId === item.id ? getConditionColor(item.condition).bg : ""
                     }`}
                   >
-                    <td className="px-4 py-3 font-medium text-gray-900">{item.name}</td>
-                    <td className="px-4 py-3 text-gray-600 text-xs">{item.location}</td>
-                    <td className="px-4 py-3 text-center font-semibold text-gray-900">{item.quantity}</td>
+                    <td className="px-4 py-3 font-medium text-foreground">{item.name}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">{item.location}</td>
+                    <td className="px-4 py-3 text-center font-semibold text-foreground">{item.quantity}</td>
                     <td className="px-4 py-3 text-center">
                       <span
                         className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
@@ -156,20 +156,20 @@ export function FurnitureInventory() {
         {/* Item Details */}
         <div className="space-y-4">
           {selectedItem ? (
-            <div className="rounded-lg border bg-white p-6 space-y-4">
+            <div className="rounded-lg border bg-card p-6 space-y-4">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">{selectedItem.name}</h3>
-                <p className="text-sm text-gray-600">{selectedItem.location}</p>
+                <h3 className="text-lg font-bold text-foreground">{selectedItem.name}</h3>
+                <p className="text-sm text-muted-foreground">{selectedItem.location}</p>
               </div>
 
               <div className="space-y-3">
                 <div className="rounded-lg bg-blue-50 p-3">
-                  <p className="text-xs font-semibold text-gray-600 uppercase">Quantity</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Quantity</p>
                   <p className="text-2xl font-bold text-blue-900 mt-1">{selectedItem.quantity}</p>
                 </div>
 
                 <div className={`rounded-lg p-3 ${getConditionColor(selectedItem.condition).bg}`}>
-                  <p className="text-xs font-semibold text-gray-600 uppercase">Condition</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Condition</p>
                   <p
                     className={`text-sm font-bold mt-1 ${getConditionColor(selectedItem.condition).text}`}
                   >
@@ -177,12 +177,12 @@ export function FurnitureInventory() {
                   </p>
                 </div>
 
-                <div className="rounded-lg bg-gray-50 p-3">
+                <div className="rounded-lg bg-muted p-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <Calendar className="w-4 h-4 text-gray-600" />
-                    <p className="text-xs font-semibold text-gray-600 uppercase">Last Checked</p>
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <p className="text-xs font-semibold text-muted-foreground uppercase">Last Checked</p>
                   </div>
-                  <p className="text-sm font-semibold text-gray-900 mt-1">
+                  <p className="text-sm font-semibold text-foreground mt-1">
                     {new Date(selectedItem.lastChecked).toLocaleDateString("de-DE")}
                   </p>
                 </div>
@@ -192,15 +192,15 @@ export function FurnitureInventory() {
                 <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors text-sm">
                   Update Item
                 </button>
-                <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium py-2 px-4 rounded transition-colors text-sm">
+                <button className="w-full bg-muted hover:bg-gray-200 text-foreground font-medium py-2 px-4 rounded transition-colors text-sm">
                   Mark as Checked
                 </button>
               </div>
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed bg-gray-50 p-6 text-center">
+            <div className="rounded-lg border border-dashed bg-muted p-6 text-center">
               <Package className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">Select an item to view details</p>
+              <p className="text-sm text-muted-foreground">Select an item to view details</p>
             </div>
           )}
         </div>

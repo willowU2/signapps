@@ -144,12 +144,12 @@ export function GoalSetter() {
                 value={newGoalTitle}
                 onChange={(e) => setNewGoalTitle(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && addGoal()}
-                className="flex-1 px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <select
                 value={newGoalQuarter}
                 onChange={(e) => setNewGoalQuarter(e.target.value)}
-                className="px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {QUARTERS.map((q) => (
                   <option key={q} value={q}>
@@ -168,12 +168,12 @@ export function GoalSetter() {
             {goals.map((goal) => (
               <div
                 key={goal.id}
-                className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                className="p-4 border border-border rounded-lg hover:shadow-md transition-shadow"
               >
                 {/* Goal Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{goal.title}</h3>
+                    <h3 className="font-semibold text-foreground">{goal.title}</h3>
                     <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded mt-1 inline-block">
                       {goal.quarter}
                     </span>
@@ -192,11 +192,11 @@ export function GoalSetter() {
                     goal.keyResults.map((kr) => (
                       <div key={kr.id} className="space-y-1.5">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700">
+                          <span className="text-sm font-medium text-muted-foreground">
                             {kr.title}
                           </span>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                            <span className="text-xs font-semibold text-muted-foreground bg-muted px-2 py-1 rounded">
                               {kr.progress}%
                             </span>
                             <button
@@ -211,7 +211,7 @@ export function GoalSetter() {
                         </div>
 
                         {/* Progress Bar */}
-                        <div className="w-full bg-gray-100 rounded-full h-2">
+                        <div className="w-full bg-muted rounded-full h-2">
                           <div
                             className={cn(
                               "h-2 rounded-full transition-all",
@@ -233,7 +233,7 @@ export function GoalSetter() {
                                 "px-2 py-0.5 rounded border text-xs font-medium transition",
                                 kr.progress === val
                                   ? "border-blue-500 bg-blue-50 text-blue-700"
-                                  : "border-gray-200 text-gray-600 hover:border-gray-300"
+                                  : "border-border text-muted-foreground hover:border-border"
                               )}
                             >
                               {val}%
@@ -243,7 +243,7 @@ export function GoalSetter() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-xs text-gray-500 italic">
+                    <p className="text-xs text-muted-foreground italic">
                       No key results yet
                     </p>
                   )}
@@ -256,7 +256,7 @@ export function GoalSetter() {
           </div>
 
           {goals.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               <p className="text-sm">No goals yet. Create one to get started!</p>
             </div>
           )}
@@ -289,7 +289,7 @@ function KeyResultInput({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-          className="flex-1 px-2 py-1.5 border border-gray-200 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 px-2 py-1.5 border border-border rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button
           onClick={handleAdd}

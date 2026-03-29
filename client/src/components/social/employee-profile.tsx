@@ -45,7 +45,7 @@ export function EmployeeProfile({
           <p className="text-sm text-muted-foreground">{title}</p>
         </div>
 
-        <p className="text-sm text-gray-600">{bio}</p>
+        <p className="text-sm text-muted-foreground">{bio}</p>
       </div>
 
       <div className="flex gap-2 flex-wrap justify-center">

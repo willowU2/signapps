@@ -28,7 +28,7 @@ function BadgePreview({ badge }: { badge: BadgeData }) {
         {badge.eventOrId || 'SignApps Event'}
       </div>
       <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">
-        <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-2">
+        <div className="w-16 h-16 rounded-full bg-card/20 flex items-center justify-center mb-2">
           <User className="h-10 w-10 text-white/80" />
         </div>
         <p className="font-bold text-base leading-tight">{badge.name || 'Name'}</p>

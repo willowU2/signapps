@@ -247,7 +247,7 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
                   {favorite.is_folder ? (
                     <Folder className="h-4 w-4 text-blue-500 flex-shrink-0" />
                   ) : (
-                    <FileIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <FileIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   )}
                 </div>
 

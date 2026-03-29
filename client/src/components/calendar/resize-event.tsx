@@ -86,7 +86,7 @@ export function ResizeHandle({ event, hourHeight = 60, onResizeCommit, container
             onMouseDown={handleMouseDown}
             title="Drag to resize"
         >
-            <div className="w-8 h-1.5 rounded-full bg-white/50 group-hover/resize:bg-white/90 transition-colors">
+            <div className="w-8 h-1.5 rounded-full bg-card/50 group-hover/resize:bg-card/90 transition-colors">
                 <GripHorizontal className="h-1.5 w-1.5 text-inherit opacity-0 group-hover/resize:opacity-60" />
             </div>
         </div>

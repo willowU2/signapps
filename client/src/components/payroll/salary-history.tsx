@@ -115,12 +115,12 @@ export function SalaryHistory() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Salary History</h2>
-        <p className="text-gray-600">Salary adjustments and changes over time</p>
+        <h2 className="text-2xl font-bold text-foreground">Salary History</h2>
+        <p className="text-muted-foreground">Salary adjustments and changes over time</p>
       </div>
 
-      <div className="border rounded-lg p-6 bg-white">
-        <h3 className="font-semibold text-gray-900 mb-4">Salary Evolution Chart</h3>
+      <div className="border rounded-lg p-6 bg-card">
+        <h3 className="font-semibold text-foreground mb-4">Salary Evolution Chart</h3>
         <div className="h-48 flex items-end justify-between gap-2 px-2 pb-4 border-b">
           {chartData.map((data, index) => {
             const height = ((data.salary - minSalary) / range) * 100;
@@ -138,7 +138,7 @@ export function SalaryHistory() {
                     €{data.salary}
                   </div>
                 </div>
-                <p className="text-xs text-gray-600 text-center w-full truncate">
+                <p className="text-xs text-muted-foreground text-center w-full truncate">
                   {data.date}
                 </p>
               </div>
@@ -148,42 +148,42 @@ export function SalaryHistory() {
       </div>
 
       <div className="border rounded-lg overflow-hidden">
-        <div className="bg-gray-100 border-b p-4">
-          <h3 className="font-semibold text-gray-900">Salary Changes</h3>
+        <div className="bg-muted border-b p-4">
+          <h3 className="font-semibold text-foreground">Salary Changes</h3>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm bg-white">
-            <thead className="bg-gray-50 border-b sticky top-0">
+          <table className="w-full text-sm bg-card">
+            <thead className="bg-muted border-b sticky top-0">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
                   Date
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
                   Type
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
                   Description
                 </th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-900">
+                <th className="px-4 py-3 text-right font-semibold text-foreground">
                   Amount
                 </th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-900">
+                <th className="px-4 py-3 text-right font-semibold text-foreground">
                   Base Salary
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {history.map((entry) => (
-                <tr key={entry.id} className="hover:bg-gray-50">
+                <tr key={entry.id} className="hover:bg-muted">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900">{entry.date}</p>
+                    <p className="font-medium text-foreground">{entry.date}</p>
                   </td>
                   <td className="px-4 py-3">
                     {getTypeBadge(entry.type)}
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-gray-700">{entry.description}</p>
+                    <p className="text-muted-foreground">{entry.description}</p>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <p className="text-green-700 font-semibold">
@@ -191,7 +191,7 @@ export function SalaryHistory() {
                     </p>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <p className="text-gray-900 font-semibold">
+                    <p className="text-foreground font-semibold">
                       €{entry.baseSalary.toFixed(2)}
                     </p>
                   </td>

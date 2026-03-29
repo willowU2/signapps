@@ -132,7 +132,7 @@ export function ShareNote({ noteId, noteTitle, onClose }: ShareNoteProps) {
           <label className="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="sr-only peer" />
             <div className="w-9 h-5 bg-muted rounded-full peer peer-checked:bg-primary transition-colors" />
-            <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4" />
+            <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-card rounded-full shadow transition-transform peer-checked:translate-x-4" />
           </label>
         </div>
 

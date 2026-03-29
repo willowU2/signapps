@@ -180,7 +180,7 @@ Provide only the translated content without any explanations.`;
               />
               <label htmlFor="file-upload" className="cursor-pointer">
                 <Upload className="h-8 w-8 mx-auto mb-2 text-slate-400" />
-                <p className="text-sm font-medium text-slate-900">
+                <p className="text-sm font-medium text-foreground">
                   {file ? file.name : 'Click to upload or drag file'}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">Max 50MB (TXT, PDF, DOC, MD)</p>

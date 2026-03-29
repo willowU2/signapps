@@ -18,9 +18,9 @@ export function DocumentEditor({ docId, docType, docName }: DocumentEditorProps)
     return (
         <div className="flex-1 flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="border-b border-gray-200 p-4 bg-background">
-                <h2 className="text-lg font-semibold text-gray-900">{docName || 'Untitled'}</h2>
-                <p className="text-sm text-gray-600">Type: {docType}</p>
+            <div className="border-b border-border p-4 bg-background">
+                <h2 className="text-lg font-semibold text-foreground">{docName || 'Untitled'}</h2>
+                <p className="text-sm text-muted-foreground">Type: {docType}</p>
             </div>
 
             {/* Editor Content */}
@@ -41,7 +41,7 @@ function LoadingFallback() {
         <div className="flex items-center justify-center h-full">
             <div className="text-center">
                 <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} />
-                <p className="text-gray-500 mt-2">Chargement...</p>
+                <p className="text-muted-foreground mt-2">Chargement...</p>
             </div>
         </div>
     );

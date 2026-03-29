@@ -56,8 +56,8 @@ export function ArchiveSearch() {
       </div>
 
       {hasSearched && results.length === 0 && searchQuery && (
-        <div className="border rounded-lg p-8 text-center bg-gray-50">
-          <p className="text-gray-600">Aucun résultat trouvé for "{searchQuery}"</p>
+        <div className="border rounded-lg p-8 text-center bg-muted">
+          <p className="text-muted-foreground">Aucun résultat trouvé for "{searchQuery}"</p>
         </div>
       )}
 
@@ -68,7 +68,7 @@ export function ArchiveSearch() {
             <div key={item.id} className="border rounded-lg p-4 flex items-center justify-between">
               <div className="flex-1">
                 <h4 className="font-medium mb-2">{item.name}</h4>
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
+                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                   <div className="flex items-center space-x-1">
                     <Calendar className="w-4 h-4" />
                     <span>Archived: {item.archivedDate.toLocaleDateString()}</span>
@@ -89,9 +89,9 @@ export function ArchiveSearch() {
       )}
 
       {!hasSearched && (
-        <div className="border rounded-lg p-8 text-center bg-gray-50">
+        <div className="border rounded-lg p-8 text-center bg-muted">
           <Search className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600">Enter a search query to find archived items</p>
+          <p className="text-muted-foreground">Enter a search query to find archived items</p>
         </div>
       )}
     </div>

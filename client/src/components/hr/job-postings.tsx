@@ -184,7 +184,7 @@ export function JobPostings({
                     </Badge>
                   </div>
 
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
                       {posting.location}

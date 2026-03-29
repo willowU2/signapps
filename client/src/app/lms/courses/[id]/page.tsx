@@ -94,7 +94,7 @@ export default function CoursePlayerPage({ params }: { params: Promise<{ id: str
             <div className="rounded-xl bg-slate-900 aspect-video flex flex-col items-center justify-center relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900" />
               <div className="relative z-10 flex flex-col items-center gap-3">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-card/10 backdrop-blur-sm">
                   {activeChapter.type === 'video' ? (
                     <button onClick={() => setIsPlaying(!isPlaying)}>
                       {isPlaying ? <Pause className="h-8 w-8 text-white" /> : <Play className="h-8 w-8 text-white ml-1" />}
@@ -108,8 +108,8 @@ export default function CoursePlayerPage({ params }: { params: Promise<{ id: str
               </div>
               {activeChapter.type === 'video' && (
                 <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <div className="h-1 bg-white/20 rounded-full cursor-pointer" onClick={e => { const rect = e.currentTarget.getBoundingClientRect(); setPlayProgress(((e.clientX - rect.left) / rect.width) * 100); }}>
-                    <div className="h-1 bg-white rounded-full transition-all" style={{ width: `${playProgress}%` }} />
+                  <div className="h-1 bg-card/20 rounded-full cursor-pointer" onClick={e => { const rect = e.currentTarget.getBoundingClientRect(); setPlayProgress(((e.clientX - rect.left) / rect.width) * 100); }}>
+                    <div className="h-1 bg-card rounded-full transition-all" style={{ width: `${playProgress}%` }} />
                   </div>
                   <div className="flex justify-between text-xs text-white/60 mt-1">
                     <span>{Math.round(playProgress * activeChapter.duration / 100)}m</span>

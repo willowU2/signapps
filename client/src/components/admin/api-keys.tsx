@@ -135,7 +135,7 @@ export function ApiKeys() {
           <Key className="h-6 w-6 text-blue-600" />
           <div>
             <h2 className="text-xl font-bold">API Keys</h2>
-            <p className="text-sm text-gray-500">{keys.filter((k) => k.is_active).length} active keys</p>
+            <p className="text-sm text-muted-foreground">{keys.filter((k) => k.is_active).length} active keys</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -155,7 +155,7 @@ export function ApiKeys() {
         <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-3">
           <p className="font-medium text-green-800">Key created — copy it now. It will not be shown again.</p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 rounded bg-white border border-green-200 px-3 py-2 font-mono text-sm break-all">
+            <code className="flex-1 rounded bg-card border border-green-200 px-3 py-2 font-mono text-sm break-all">
               {showKey ? newKeyResult.key : "•".repeat(40)}
             </code>
             <Button variant="outline" size="sm" onClick={() => setShowKey((v) => !v)}>
@@ -169,7 +169,7 @@ export function ApiKeys() {
               {copiedId === "new" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
             </Button>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => setNewKeyResult(null)} className="text-xs text-gray-500">
+          <Button variant="ghost" size="sm" onClick={() => setNewKeyResult(null)} className="text-xs text-muted-foreground">
             Dismiss
           </Button>
         </div>
@@ -177,15 +177,15 @@ export function ApiKeys() {
 
       {/* Create form */}
       {showForm && (
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm space-y-4">
-          <h3 className="font-semibold text-gray-900">Create New API Key</h3>
+        <div className="rounded-lg border border-border bg-card p-4 shadow-sm space-y-4">
+          <h3 className="font-semibold text-foreground">Create New API Key</h3>
           <Input
             placeholder="Key name (e.g. CI/CD pipeline)"
             value={newKeyName}
             onChange={(e) => setNewKeyName(e.target.value)}
           />
           <div>
-            <p className="mb-2 text-sm font-medium text-gray-700">Scopes</p>
+            <p className="mb-2 text-sm font-medium text-muted-foreground">Scopes</p>
             <div className="flex flex-wrap gap-2">
               {AVAILABLE_SCOPES.map((scope) => (
                 <button
@@ -195,7 +195,7 @@ export function ApiKeys() {
                   className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                     selectedScopes.includes(scope)
                       ? "border-blue-500 bg-blue-100 text-blue-700"
-                      : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                      : "border-border bg-card text-muted-foreground hover:bg-muted"
                   }`}
                 >
                   {scope}
@@ -205,7 +205,7 @@ export function ApiKeys() {
           </div>
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <label className="mb-1 block text-sm font-medium text-gray-700">Expires in days</label>
+              <label className="mb-1 block text-sm font-medium text-muted-foreground">Expires in days</label>
               <Input
                 type="number"
                 min="1"
@@ -232,7 +232,7 @@ export function ApiKeys() {
           <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
         </div>
       ) : keys.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center text-gray-500">
+        <div className="rounded-lg border border-border bg-muted p-8 text-center text-muted-foreground">
           No API keys yet
         </div>
       ) : (
@@ -240,18 +240,18 @@ export function ApiKeys() {
           {keys.map((key) => (
             <div
               key={key.id}
-              className={`rounded-lg border p-4 shadow-sm ${key.is_active ? "border-gray-200 bg-white" : "border-gray-100 bg-gray-50 opacity-60"}`}
+              className={`rounded-lg border p-4 shadow-sm ${key.is_active ? "border-border bg-card" : "border-gray-100 bg-muted opacity-60"}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-gray-900">{key.name}</span>
+                    <span className="font-medium text-foreground">{key.name}</span>
                     {!key.is_active && <Badge variant="destructive" className="text-xs">Revoked</Badge>}
                     {key.expires_at && new Date(key.expires_at) < new Date() && (
                       <Badge variant="outline" className="text-xs text-orange-600 border-orange-300">Expired</Badge>
                     )}
                   </div>
-                  <code className="mt-1 block font-mono text-xs text-gray-500">{key.prefix}…</code>
+                  <code className="mt-1 block font-mono text-xs text-muted-foreground">{key.prefix}…</code>
                   <div className="mt-1.5 flex flex-wrap gap-1">
                     {key.scopes.map((s) => (
                       <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>

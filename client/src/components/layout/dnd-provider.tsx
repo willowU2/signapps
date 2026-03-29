@@ -153,7 +153,7 @@ export function GlobalDndProvider({ children }: GlobalDndProviderProps) {
           easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
         }}>
         {activeId ? (
-          <div className="bg-background rounded border border-gray-200 shadow-xl px-4 py-3 flex items-center gap-3 w-64 rotate-2 opacity-90">
+          <div className="bg-background rounded border border-border shadow-xl px-4 py-3 flex items-center gap-3 w-64 rotate-2 opacity-90">
              {activeData?.type === 'file' && (
                 <div className="w-8 h-8 rounded bg-blue-100 flex items-center justify-center shrink-0">
                   <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -162,11 +162,11 @@ export function GlobalDndProvider({ children }: GlobalDndProviderProps) {
                 </div>
              )}
              {activeData?.type === 'task' && (
-                <div className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded border border-border flex items-center justify-center shrink-0">
                   <span className="w-4 h-4 rounded-sm border-2 border-gray-400" />
                 </div>
              )}
-            <div className="truncate text-sm font-medium text-gray-700">
+            <div className="truncate text-sm font-medium text-muted-foreground">
               {activeData?.file?.name || activeData?.task?.title || "Item"}
             </div>
           </div>

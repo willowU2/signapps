@@ -61,13 +61,13 @@ export function SelectiveRestore() {
             </span>
           )}
         </div>
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-muted-foreground">
           Select items to restore. Total size: {formatSize(totalSize)}
         </p>
       </div>
 
       <div className="space-y-2">
-        <div className="border rounded-lg p-4 bg-gray-50 flex items-center justify-between">
+        <div className="border rounded-lg p-4 bg-muted flex items-center justify-between">
           <Button
             variant="ghost"
             size="sm"
@@ -98,7 +98,7 @@ export function SelectiveRestore() {
             <Folder className="w-5 h-5 text-gray-400" />
             <div className="flex-1">
               <p className="font-medium">{item.name}</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 {formatSize(item.size)} • Archived: {item.archivedDate.toLocaleDateString()}
               </p>
             </div>

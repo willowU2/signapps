@@ -280,9 +280,9 @@ export const scopeColors: Record<Scope | 'all', { bg: string; text: string; bord
     border: 'border-green-200 dark:border-green-800',
   },
   all: {
-    bg: 'bg-gray-50 dark:bg-gray-950',
-    text: 'text-gray-600 dark:text-gray-400',
-    border: 'border-gray-200 dark:border-gray-800',
+    bg: 'bg-muted dark:bg-gray-950',
+    text: 'text-muted-foreground dark:text-gray-400',
+    border: 'border-border dark:border-gray-800',
   },
 };
 

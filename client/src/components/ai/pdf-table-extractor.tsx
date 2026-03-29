@@ -165,7 +165,7 @@ Respond with only the JSON object.`;
               />
               <label htmlFor="pdf-upload" className="cursor-pointer">
                 <FileUp className="h-8 w-8 mx-auto mb-2 text-slate-400" />
-                <p className="text-sm font-medium text-slate-900">
+                <p className="text-sm font-medium text-foreground">
                   {file ? file.name : 'Click to upload PDF'}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">PDF files only (Max 20MB)</p>
@@ -196,7 +196,7 @@ Respond with only the JSON object.`;
                       {tableData.headers.map((header, idx) => (
                         <th
                           key={idx}
-                          className="px-4 py-3 text-left font-semibold text-slate-900 whitespace-nowrap"
+                          className="px-4 py-3 text-left font-semibold text-foreground whitespace-nowrap"
                         >
                           {header}
                         </th>
@@ -205,7 +205,7 @@ Respond with only the JSON object.`;
                   </thead>
                   <tbody>
                     {tableData.rows.map((row, rowIdx) => (
-                      <tr key={rowIdx} className={rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                      <tr key={rowIdx} className={rowIdx % 2 === 0 ? 'bg-card' : 'bg-slate-50'}>
                         {row.map((cell, cellIdx) => (
                           <td key={cellIdx} className="px-4 py-3 text-slate-700 whitespace-nowrap">
                             {cell}

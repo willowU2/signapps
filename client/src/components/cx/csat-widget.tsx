@@ -68,10 +68,10 @@ export function CSATWidget({
       {/* Average Score Card */}
       <Card className="p-6">
         <div className="mb-6">
-          <p className="mb-1 text-sm text-gray-600">Score Moyen</p>
+          <p className="mb-1 text-sm text-muted-foreground">Score Moyen</p>
           <div className="flex items-baseline gap-2">
             <p className="text-5xl font-bold text-blue-600">{avgScore}</p>
-            <p className="text-gray-600">/5</p>
+            <p className="text-muted-foreground">/5</p>
           </div>
           <div className="mt-2 flex gap-1">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -85,7 +85,7 @@ export function CSATWidget({
               />
             ))}
           </div>
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-2 text-xs text-muted-foreground">
             Basé sur {ratings.length} évaluations
           </p>
         </div>
@@ -135,13 +135,13 @@ export function CSATWidget({
         <h3 className="mb-4 font-semibold">Avis Récents</h3>
         <div className="space-y-3 max-h-80 overflow-y-auto">
           {ratings.length === 0 ? (
-            <p className="text-sm text-gray-500">Aucune évaluation</p>
+            <p className="text-sm text-muted-foreground">Aucune évaluation</p>
           ) : (
             ratings
               .slice()
               .reverse()
               .map((rating) => (
-                <div key={rating.id} className="border-b border-gray-200 pb-3">
+                <div key={rating.id} className="border-b border-border pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex gap-1">
                       {Array.from({ length: 5 }).map((_, i) => (
@@ -156,12 +156,12 @@ export function CSATWidget({
                         />
                       ))}
                     </div>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       {new Date(rating.date).toLocaleDateString("fr-FR")}
                     </span>
                   </div>
                   {rating.comment && (
-                    <p className="mt-1 text-sm text-gray-700">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {rating.comment}
                     </p>
                   )}

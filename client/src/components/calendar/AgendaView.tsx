@@ -80,7 +80,7 @@ export function AgendaView({ events, onEventClick }: AgendaViewProps) {
                     className={`p-4 rounded-lg border-2 cursor-pointer transition ${
                       isSelected
                         ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                        : "border-border hover:border-border hover:bg-muted"
                     }`}
                   >
                     {/* Time and title */}
@@ -99,7 +99,7 @@ export function AgendaView({ events, onEventClick }: AgendaViewProps) {
 
                     {/* Details */}
                     {event.description && (
-                      <p className="text-sm text-gray-600 mb-2">
+                      <p className="text-sm text-muted-foreground mb-2">
                         {event.description}
                       </p>
                     )}

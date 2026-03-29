@@ -82,7 +82,7 @@ export function ReductionGoals({
           <TrendingDown className="h-5 w-5 text-red-600" />
         );
       default:
-        return <div className="h-5 w-5 text-gray-600" />;
+        return <div className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -197,7 +197,7 @@ export function ReductionGoals({
                         ? "bg-green-100 text-green-800"
                         : goal.trend === "down"
                           ? "bg-red-100 text-red-800"
-                          : "bg-gray-100 text-gray-800"
+                          : "bg-muted text-gray-800"
                     }`}
                   >
                     {getTrendIcon(goal.trend)}
@@ -207,7 +207,7 @@ export function ReductionGoals({
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Progression</span>
+                    <span className="text-muted-foreground">Progression</span>
                     <span className="font-bold">
                       {goal.currentPercent}% / {goal.targetPercent}%
                     </span>
@@ -220,7 +220,7 @@ export function ReductionGoals({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
                   {days > 0 ? (
                     <span>{days} jours restants</span>

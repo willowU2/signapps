@@ -56,7 +56,7 @@ export default function MaterialExchange() {
         {items.map((item) => (
           <div
             key={item.id}
-            className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow"
+            className="border rounded-lg p-4 bg-card hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between">
               <div className="flex gap-4 flex-1">
@@ -73,7 +73,7 @@ export default function MaterialExchange() {
                     >
                       {item.condition}
                     </span>
-                    <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded">
+                    <span className="px-2 py-1 bg-muted text-gray-800 rounded">
                       {item.department}
                     </span>
                   </div>

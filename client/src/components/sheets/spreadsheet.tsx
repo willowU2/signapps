@@ -339,7 +339,7 @@ function FindReplaceBar({ findText, replaceText, matchCount, currentMatch, showR
     return (
         <div className="absolute top-0 right-4 z-50 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-b-lg shadow-lg p-2 flex flex-col gap-1.5 w-[380px]">
             <div className="flex items-center gap-1.5">
-                <button onClick={onToggleReplace} className="p-1 hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded shrink-0" title={showReplace ? "Masquer remplacer" : "Afficher remplacer"}>
+                <button onClick={onToggleReplace} className="p-1 hover:bg-muted dark:hover:bg-[#3c4043] rounded shrink-0" title={showReplace ? "Masquer remplacer" : "Afficher remplacer"}>
                     {showReplace ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                 </button>
                 <div className="flex-1 flex items-center bg-[#f1f3f4] dark:bg-[#3c4043] rounded px-2 h-7">
@@ -347,9 +347,9 @@ function FindReplaceBar({ findText, replaceText, matchCount, currentMatch, showR
                     <input className="flex-1 bg-transparent outline-none text-[13px] px-1.5" placeholder="Rechercher..." value={findText} onChange={e => onFindChange(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') onNext(); if (e.key === 'Escape') onClose() }} />
                     <span className="text-[11px] text-[#5f6368] shrink-0">{matchCount > 0 ? `${currentMatch + 1}/${matchCount}` : findText ? '0' : ''}</span>
                 </div>
-                <button onClick={onPrev} className="p-1 hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded" title="Pr\u00E9c\u00E9dent"><ChevronLeft className="w-3.5 h-3.5" /></button>
-                <button onClick={onNext} className="p-1 hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded" title="Suivant"><ChevronRight className="w-3.5 h-3.5" /></button>
-                <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded" title="Fermer"><X className="w-3.5 h-3.5" /></button>
+                <button onClick={onPrev} className="p-1 hover:bg-muted dark:hover:bg-[#3c4043] rounded" title="Pr\u00E9c\u00E9dent"><ChevronLeft className="w-3.5 h-3.5" /></button>
+                <button onClick={onNext} className="p-1 hover:bg-muted dark:hover:bg-[#3c4043] rounded" title="Suivant"><ChevronRight className="w-3.5 h-3.5" /></button>
+                <button onClick={onClose} className="p-1 hover:bg-muted dark:hover:bg-[#3c4043] rounded" title="Fermer"><X className="w-3.5 h-3.5" /></button>
             </div>
             <div className="flex items-center gap-1.5 ml-6">
                 <label className="flex items-center gap-1.5 text-[11px] text-[#5f6368] dark:text-[#9aa0a6] cursor-pointer select-none">
@@ -363,8 +363,8 @@ function FindReplaceBar({ findText, replaceText, matchCount, currentMatch, showR
                         <Replace className="w-3.5 h-3.5 text-[#5f6368] shrink-0" />
                         <input className="flex-1 bg-transparent outline-none text-[13px] px-1.5" placeholder="Remplacer par..." value={replaceText} onChange={e => onReplaceChange(e.target.value)} onKeyDown={e => { if (e.key === 'Escape') onClose() }} />
                     </div>
-                    <button onClick={onReplace} className="px-2 h-7 text-[12px] hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded border border-[#dadce0] dark:border-[#5f6368]">Remplacer</button>
-                    <button onClick={onReplaceAll} className="px-2 h-7 text-[12px] hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded border border-[#dadce0] dark:border-[#5f6368]">Tout</button>
+                    <button onClick={onReplace} className="px-2 h-7 text-[12px] hover:bg-muted dark:hover:bg-[#3c4043] rounded border border-[#dadce0] dark:border-[#5f6368]">Remplacer</button>
+                    <button onClick={onReplaceAll} className="px-2 h-7 text-[12px] hover:bg-muted dark:hover:bg-[#3c4043] rounded border border-[#dadce0] dark:border-[#5f6368]">Tout</button>
                 </div>
             )}
         </div>
@@ -430,7 +430,7 @@ function CondFormatDialog({ rules, onAdd, onRemove, onClose }: {
                         <span className="text-[12px]">Couleur :</span>
                         <div className="flex gap-1">
                             {['#34a853', '#ea4335', '#fbbc04', '#4a86e8', '#ff6d01', '#9334e6'].map(c => (
-                                <button key={c} className={cn("w-5 h-5 rounded-sm border", color === c ? 'border-[#202124] scale-110' : 'border-gray-300')} style={{ backgroundColor: c }} onClick={() => setColor(c)} />
+                                <button key={c} className={cn("w-5 h-5 rounded-sm border", color === c ? 'border-[#202124] scale-110' : 'border-border')} style={{ backgroundColor: c }} onClick={() => setColor(c)} />
                             ))}
                         </div>
                     </div>
@@ -2474,9 +2474,9 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     </Popover>
                     {/* Font Size */}
                     <div className="flex items-center border border-transparent hover:border-[#c7c7c7] rounded h-7 ml-0.5 bg-transparent hover:bg-background transition-colors">
-                        <button className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-gray-100 h-full flex items-center" onClick={() => changeFontSize(-1)}><Minus className="w-[14px] h-[14px]" /></button>
+                        <button className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-muted h-full flex items-center" onClick={() => changeFontSize(-1)}><Minus className="w-[14px] h-[14px]" /></button>
                         <input className="px-1 text-[13px] text-[#444746] dark:text-[#e3e3e3] w-8 text-center bg-transparent outline-none" value={activeCellStyle.fontSize || 10} onChange={(e) => { const v = parseInt(e.target.value); if (!isNaN(v) && v >= 6 && v <= 72) applyToSelection({ fontSize: v }) }} onMouseDown={(e) => e.stopPropagation()} />
-                        <button className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-gray-100 h-full flex items-center" onClick={() => changeFontSize(1)}><Plus className="w-[14px] h-[14px]" /></button>
+                        <button className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-muted h-full flex items-center" onClick={() => changeFontSize(1)}><Plus className="w-[14px] h-[14px]" /></button>
                     </div>
                     <Sep />
                     <TBtn onClick={() => toggleBoolFormat('bold')} active={activeCellStyle.bold} title="Gras (Ctrl+B)" className="font-serif font-bold">B</TBtn>
@@ -2493,7 +2493,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                         </PopoverTrigger>
                         <PopoverContent className="w-[220px] p-2" align="start" sideOffset={8}>
                             <div className="grid grid-cols-10 gap-1">
-                                {PRESET_COLORS.map(color => (<button key={color} className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { applyToSelection({ textColor: color }); setShowTextColor(false) }} />))}
+                                {PRESET_COLORS.map(color => (<button key={color} className="w-5 h-5 rounded-sm border border-border hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { applyToSelection({ textColor: color }); setShowTextColor(false) }} />))}
                             </div>
                             <button className="mt-2 text-xs text-[#1a73e8] hover:underline" onClick={() => { applyToSelection({ textColor: undefined }); setShowTextColor(false) }}>R\u00E9initialiser</button>
                         </PopoverContent>
@@ -2508,7 +2508,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                         </PopoverTrigger>
                         <PopoverContent className="w-[220px] p-2" align="start" sideOffset={8}>
                             <div className="grid grid-cols-10 gap-1">
-                                {PRESET_COLORS.map(color => (<button key={color} className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { applyToSelection({ fillColor: color }); setShowFillColor(false) }} />))}
+                                {PRESET_COLORS.map(color => (<button key={color} className="w-5 h-5 rounded-sm border border-border hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { applyToSelection({ fillColor: color }); setShowFillColor(false) }} />))}
                             </div>
                             <button className="mt-2 text-xs text-[#1a73e8] hover:underline" onClick={() => { applyToSelection({ fillColor: undefined }); setShowFillColor(false) }}>Aucun</button>
                         </PopoverContent>
@@ -2541,7 +2541,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                             </div>
                             <div className="flex gap-1 mb-2">
                                 {[0, 45, 90, -45, -90, 180].map(deg => (
-                                    <button key={deg} className={cn("px-2 py-1 text-[11px] rounded border", activeCellStyle.rotation === deg ? "bg-[#e8f0fe] border-[#1a73e8]" : "border-gray-200 hover:bg-gray-100")} onClick={() => { applyToSelection({ rotation: deg === 0 ? undefined : deg }); setShowRotationInput(false) }}>{deg}°</button>
+                                    <button key={deg} className={cn("px-2 py-1 text-[11px] rounded border", activeCellStyle.rotation === deg ? "bg-[#e8f0fe] border-[#1a73e8]" : "border-border hover:bg-muted")} onClick={() => { applyToSelection({ rotation: deg === 0 ? undefined : deg }); setShowRotationInput(false) }}>{deg}°</button>
                                 ))}
                             </div>
                             <input type="range" min={-90} max={90} value={activeCellStyle.rotation || 0} className="w-full" onChange={(e) => applyToSelection({ rotation: Number(e.target.value) || undefined })} />
@@ -2909,7 +2909,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                             <div className="absolute bottom-10 left-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-36" onClick={(e) => e.stopPropagation()}>
                                 <div className="grid grid-cols-5 gap-1 mb-1">
                                     {TAB_COLORS.map(color => (
-                                        <button key={color} className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { setSheetColor(sheet.id, color); setShowTabColorPicker(null) }} />
+                                        <button key={color} className="w-5 h-5 rounded-sm border border-border hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { setSheetColor(sheet.id, color); setShowTabColorPicker(null) }} />
                                     ))}
                                 </div>
                                 <button className="text-[10px] text-[#1a73e8] hover:underline" onClick={() => { setSheetColor(sheet.id, undefined); setShowTabColorPicker(null) }}>Aucune</button>

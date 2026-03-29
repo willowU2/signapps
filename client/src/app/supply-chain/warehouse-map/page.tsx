@@ -92,7 +92,7 @@ export default function WarehouseMapPage() {
           </div>
           {zone.capacity > 0 && (
             <div className="mt-1">
-              <div className="h-1 rounded-full bg-black/10 dark:bg-white/10">
+              <div className="h-1 rounded-full bg-black/10 dark:bg-card/10">
                 <div className={cn('h-1 rounded-full', occ >= 90 ? 'bg-red-500' : occ >= 70 ? 'bg-yellow-500' : 'bg-green-500')} style={{ width: `${occ}%` }} />
               </div>
               <div className="text-xs mt-0.5">{occ}%</div>

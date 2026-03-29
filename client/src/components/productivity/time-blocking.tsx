@@ -16,7 +16,7 @@ const COLORS = {
   focus: "bg-blue-100 border-blue-300",
   meeting: "bg-purple-100 border-purple-300",
   break: "bg-green-100 border-green-300",
-  admin: "bg-gray-100 border-gray-300",
+  admin: "bg-muted border-border",
 };
 
 const DEFAULT_BLOCKS: TimeBlock[] = [
@@ -90,8 +90,8 @@ export function TimeBlocking() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Time Blocking</h2>
-          <p className="text-gray-600">
+          <h2 className="text-2xl font-bold text-foreground">Time Blocking</h2>
+          <p className="text-muted-foreground">
             Organize your day with focused time blocks
           </p>
         </div>
@@ -109,9 +109,9 @@ export function TimeBlocking() {
         <p className="text-2xl font-bold text-blue-900">{focusHours.toFixed(1)}h</p>
       </div>
 
-      <div className="border rounded-lg overflow-hidden bg-white">
-        <div className="bg-gray-50 border-b p-4">
-          <h3 className="font-semibold text-gray-900">Today's Schedule</h3>
+      <div className="border rounded-lg overflow-hidden bg-card">
+        <div className="bg-muted border-b p-4">
+          <h3 className="font-semibold text-foreground">Today's Schedule</h3>
         </div>
 
         <div className="space-y-2 p-4">
@@ -128,12 +128,12 @@ export function TimeBlocking() {
               <GripVertical className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <p className="font-semibold text-gray-900">{block.title}</p>
-                  <span className="text-xs font-medium text-gray-600 bg-white px-2 py-1 rounded">
+                  <p className="font-semibold text-foreground">{block.title}</p>
+                  <span className="text-xs font-medium text-muted-foreground bg-card px-2 py-1 rounded">
                     {block.startTime} - {block.endTime}
                   </span>
                 </div>
-                <p className="text-xs text-gray-600 capitalize mt-1">
+                <p className="text-xs text-muted-foreground capitalize mt-1">
                   {block.category}
                 </p>
               </div>
@@ -151,10 +151,10 @@ export function TimeBlocking() {
       <div className="grid grid-cols-4 gap-4">
         {Object.entries(COLORS).map(([category, color]) => (
           <div key={category} className={`rounded-lg p-3 border ${color}`}>
-            <p className="text-xs font-medium text-gray-700 capitalize">
+            <p className="text-xs font-medium text-muted-foreground capitalize">
               {category}
             </p>
-            <p className="text-lg font-bold text-gray-900">
+            <p className="text-lg font-bold text-foreground">
               {blocks.filter((b) => b.category === category).length}
             </p>
           </div>

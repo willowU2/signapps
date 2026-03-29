@@ -216,7 +216,7 @@ export function EmailComposer({
                     <DialogHeader>
                         <DialogTitle>Aperçu de l&apos;email</DialogTitle>
                     </DialogHeader>
-                    <div className="overflow-auto max-h-[70vh] border rounded-lg bg-white">
+                    <div className="overflow-auto max-h-[70vh] border rounded-lg bg-card">
                         <iframe
                             srcDoc={previewHtml}
                             title="Email Preview"

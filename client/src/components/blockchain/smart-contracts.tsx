@@ -54,7 +54,7 @@ export function SmartContracts({ contracts = [], onExecute }: SmartContractsProp
   return (
     <div className="space-y-3">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">Smart Contracts</h2>
+        <h2 className="text-lg font-semibold text-foreground">Smart Contracts</h2>
         <p className="text-sm text-slate-500 mt-1">Manage and execute automated contracts</p>
       </div>
 
@@ -82,7 +82,7 @@ export function SmartContracts({ contracts = [], onExecute }: SmartContractsProp
                   <div className="flex items-start gap-3 flex-1">
                     <FileText className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 truncate">
+                      <p className="text-sm font-semibold text-foreground truncate">
                         {contract.name}
                       </p>
                       <p className="text-xs text-slate-500 mt-1">

@@ -128,7 +128,7 @@ export function EmailSummarizer() {
             </div>
             <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
               <p className="text-xs text-slate-600 font-medium">Total Emails</p>
-              <p className="text-2xl font-bold text-slate-900">{emails.length}</p>
+              <p className="text-2xl font-bold text-foreground">{emails.length}</p>
             </div>
           </div>
 
@@ -144,7 +144,7 @@ export function EmailSummarizer() {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <p className="text-sm font-semibold text-slate-900 flex-1">{email.sender}</p>
+                      <p className="text-sm font-semibold text-foreground flex-1">{email.sender}</p>
                       <span
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getPriorityBadgeColor(
                           email.priority

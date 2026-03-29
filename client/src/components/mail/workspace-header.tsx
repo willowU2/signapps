@@ -49,7 +49,7 @@ export function WorkspaceHeader() {
                 <Button
                     variant="outline"
                     size="sm"
-                    className="hidden lg:flex h-9 rounded-full border-gray-300 dark:border-gray-700 text-[#444746] dark:text-[#e3e3e3] font-medium px-4 hover:bg-gray-100 dark:hover:bg-gray-800 mr-2 gap-2"
+                    className="hidden lg:flex h-9 rounded-full border-border dark:border-gray-700 text-[#444746] dark:text-[#e3e3e3] font-medium px-4 hover:bg-muted dark:hover:bg-gray-800 mr-2 gap-2"
                 >
                     <div className="w-2 h-2 rounded-full bg-green-600"></div>
                     Actif
@@ -59,11 +59,11 @@ export function WorkspaceHeader() {
                 </Button>
 
                 {/* Feature 20: Unified notification center */}
-                <UnifiedNotificationCenter className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-100 dark:hover:bg-gray-800" />
+                <UnifiedNotificationCenter className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-muted dark:hover:bg-gray-800" />
 
                 <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-muted dark:hover:bg-gray-800">
                             <HelpCircle className="h-5 w-5" />
                         </Button>
                     </TooltipTrigger>
@@ -74,7 +74,7 @@ export function WorkspaceHeader() {
 
                 <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-muted dark:hover:bg-gray-800">
                             <Settings className="h-5 w-5" />
                         </Button>
                     </TooltipTrigger>
@@ -85,7 +85,7 @@ export function WorkspaceHeader() {
 
                 <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-muted dark:hover:bg-gray-800">
                             <Grid className="h-5 w-5" />
                         </Button>
                     </TooltipTrigger>

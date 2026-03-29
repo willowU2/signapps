@@ -95,8 +95,8 @@ export default function CourseCatalogPage() {
                   <Badge className={cn('text-xs', levelColors[course.level])}>{course.level}</Badge>
                 </div>
                 {course.progress !== undefined && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-                    <div className="h-full bg-white/80 transition-all" style={{ width: `${course.progress}%` }} />
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-card/20">
+                    <div className="h-full bg-card/80 transition-all" style={{ width: `${course.progress}%` }} />
                   </div>
                 )}
               </div>

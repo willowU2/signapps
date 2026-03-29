@@ -85,7 +85,7 @@ export function RevisionWorkflow({
     <Card className="p-6 space-y-6">
       <div>
         <h3 className="text-lg font-semibold">{documentTitle}</h3>
-        <p className="text-sm text-gray-500">ID: {documentId}</p>
+        <p className="text-sm text-muted-foreground">ID: {documentId}</p>
       </div>
 
       {/* Timeline */}
@@ -98,7 +98,7 @@ export function RevisionWorkflow({
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-green-700">{step.label}</p>
-              <p className="text-xs text-gray-500">Complété</p>
+              <p className="text-xs text-muted-foreground">Complété</p>
             </div>
           </div>
         ))}
@@ -118,11 +118,11 @@ export function RevisionWorkflow({
         {/* Future Steps */}
         {futureSteps.map((step) => (
           <div key={step.id} className="flex items-center gap-3 opacity-50">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
               {step.icon}
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600">{step.label}</p>
+              <p className="text-sm font-medium text-muted-foreground">{step.label}</p>
               <p className="text-xs text-gray-400">À venir</p>
             </div>
           </div>
@@ -131,9 +131,9 @@ export function RevisionWorkflow({
 
       {/* Reviewer Info */}
       {(reviewerName || reviewerEmail) && (
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <p className="text-sm font-medium text-gray-700">Responsable de la relecture:</p>
-          <p className="text-sm text-gray-600 mt-1">
+        <div className="bg-muted p-4 rounded-lg border border-border">
+          <p className="text-sm font-medium text-muted-foreground">Responsable de la relecture:</p>
+          <p className="text-sm text-muted-foreground mt-1">
             {reviewerName}
             {reviewerEmail && ` (${reviewerEmail})`}
           </p>

@@ -37,7 +37,7 @@ const BUILTIN_BADGES: FullBadge[] = [
 ];
 
 const RARITY_COLORS: Record<string, string> = {
-  common: 'bg-gray-100 border-gray-300',
+  common: 'bg-muted border-border',
   rare: 'bg-blue-50 border-blue-300',
   epic: 'bg-purple-50 border-purple-300',
   legendary: 'bg-yellow-50 border-yellow-400',

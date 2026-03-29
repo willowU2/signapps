@@ -129,11 +129,11 @@ export default function RoomOccupancy() {
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
-                  <p className="text-gray-600">Total Visits</p>
+                  <p className="text-muted-foreground">Total Visits</p>
                   <p className="font-semibold">{room.totalVisits}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Avg Duration</p>
+                  <p className="text-muted-foreground">Avg Duration</p>
                   <p className="font-semibold">{room.avgDuration} min</p>
                 </div>
               </div>

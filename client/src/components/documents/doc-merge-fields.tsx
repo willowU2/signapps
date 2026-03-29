@@ -53,7 +53,7 @@ const SOURCE_COLORS: Record<FieldSource, string> = {
   deals: "bg-green-100 text-green-700",
   company: "bg-purple-100 text-purple-700",
   user: "bg-orange-100 text-orange-700",
-  custom: "bg-gray-100 text-gray-700",
+  custom: "bg-muted text-muted-foreground",
 }
 
 interface DocMergeFieldsProps {

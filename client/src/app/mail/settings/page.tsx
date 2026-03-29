@@ -65,7 +65,7 @@ const PROVIDER_PRESETS: ProviderPreset[] = [
   },
   {
     label: "Personnalise",
-    icon: <Server className="h-5 w-5 text-gray-500" />,
+    icon: <Server className="h-5 w-5 text-muted-foreground" />,
     provider: "custom",
     imap_server: "",
     imap_port: 993,
@@ -738,7 +738,7 @@ function SignatureBuilder({
           Apercu
         </p>
         <div
-          className="rounded-xl border bg-white dark:bg-zinc-900 p-6 min-h-24 overflow-auto"
+          className="rounded-xl border bg-card dark:bg-zinc-900 p-6 min-h-24 overflow-auto"
           dangerouslySetInnerHTML={{ __html: preview || "<em style='color:#999'>Apercu vide</em>" }}
         />
       </div>

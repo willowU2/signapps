@@ -186,7 +186,7 @@ export function EmailSignatureEditor() {
             </CardHeader>
             <CardContent>
               <div
-                className="bg-white rounded border p-4 min-h-[80px]"
+                className="bg-card rounded border p-4 min-h-[80px]"
                 dangerouslySetInnerHTML={{ __html: html }}
               />
             </CardContent>

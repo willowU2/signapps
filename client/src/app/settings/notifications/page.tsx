@@ -278,7 +278,7 @@ export default function NotificationSettingsPage() {
                             handleChange('reminder_times', times.filter((t) => t !== minutes));
                           }
                         }}
-                        className="rounded border-gray-300"
+                        className="rounded border-border"
                       />
                       <label htmlFor={`reminder-${minutes}`} className="text-sm">
                         {minutes === 15 && '15 minutes before'}

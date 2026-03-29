@@ -82,7 +82,7 @@ export function InterSiteSync() {
         <h3 className="font-semibold mb-3">Data Types to Sync</h3>
         <div className="space-y-2">
           {config.dataTypes.map((dataType, index) => (
-            <label key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100">
+            <label key={index} className="flex items-center space-x-3 p-3 bg-muted rounded cursor-pointer hover:bg-muted">
               <input
                 type="checkbox"
                 checked={dataType.enabled}
@@ -92,7 +92,7 @@ export function InterSiteSync() {
             </label>
           ))}
         </div>
-        <p className="text-sm text-gray-600 mt-3">
+        <p className="text-sm text-muted-foreground mt-3">
           Enabled: {getEnabledCount()} of {config.dataTypes.length} data types
         </p>
       </div>
@@ -108,12 +108,12 @@ export function InterSiteSync() {
           )}
         </div>
         {config.lastSyncTime ? (
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Clock className="w-4 h-4" />
             <span>{config.lastSyncTime.toLocaleString()}</span>
           </div>
         ) : (
-          <p className="text-sm text-gray-600">No sync performed yet</p>
+          <p className="text-sm text-muted-foreground">No sync performed yet</p>
         )}
       </div>
 

@@ -114,7 +114,7 @@ Respond with only the JSON array.`;
               />
               <label htmlFor="contract-upload" className="cursor-pointer">
                 <FileCheck className="h-8 w-8 mx-auto mb-2 text-slate-400" />
-                <p className="text-sm font-medium text-slate-900">
+                <p className="text-sm font-medium text-foreground">
                   {file ? file.name : 'Click to upload or drag file'}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">Max 50MB (PDF, DOC, DOCX)</p>
@@ -143,7 +143,7 @@ Respond with only the JSON array.`;
                     <CardContent className="pt-4">
                       <div className="flex items-start justify-between gap-4 mb-2">
                         <div className="flex-1">
-                          <p className="text-sm font-semibold text-slate-900">{clause.type}</p>
+                          <p className="text-sm font-semibold text-foreground">{clause.type}</p>
                           <p className="text-sm text-slate-600 mt-1">{clause.value}</p>
                         </div>
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${getConfidenceColor(clause.confidence)}`}>

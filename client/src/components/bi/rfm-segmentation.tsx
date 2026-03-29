@@ -75,12 +75,12 @@ export default function RFMSegmentation() {
             {segments.map((segment, idx) => {
               const percentage = ((segment.customers / total) * 100).toFixed(1);
               return (
-                <div key={idx} className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                <div key={idx} className="p-3 border border-border rounded-lg hover:bg-muted">
                   <div className="flex items-start gap-2">
                     <div className={`w-3 h-3 rounded-full ${segment.color} flex-shrink-0 mt-1`}></div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm text-gray-900">{segment.name}</h3>
-                      <p className="text-xs text-gray-500 mt-0.5">{segment.description}</p>
+                      <h3 className="font-medium text-sm text-foreground">{segment.name}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">{segment.description}</p>
                       <div className="flex gap-2 mt-2">
                         <Badge variant="outline" className="text-xs">
                           {segment.customers}
@@ -95,7 +95,7 @@ export default function RFMSegmentation() {
                           style={{ width: `${percentage}%` }}
                         ></div>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">{percentage}%</p>
+                      <p className="text-xs text-muted-foreground mt-1">{percentage}%</p>
                     </div>
                   </div>
                 </div>
@@ -105,7 +105,7 @@ export default function RFMSegmentation() {
 
           {/* Summary */}
           <div className="pt-3 border-t">
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-muted-foreground">
               <strong>{total.toLocaleString()}</strong> total customers across <strong>6</strong> segments
             </p>
           </div>

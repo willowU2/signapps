@@ -34,6 +34,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { toast } from "sonner";
+import { getServiceUrl, ServiceName } from "@/lib/api/factory";
 
 type DateRange = "7d" | "30d" | "90d" | "custom";
 type ScheduleFreq = "weekly" | "monthly" | "none";
@@ -114,7 +115,7 @@ export function ReportGenerator() {
     }
     setLoadingPreview(true);
     try {
-      const res = await fetch("http://localhost:3019/api/v1/social/reports/preview", {
+      const res = await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/reports/preview`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ range, accounts: selectedAccounts, customFrom, customTo }),
@@ -165,7 +166,7 @@ export function ReportGenerator() {
       return;
     }
     try {
-      await fetch("http://localhost:3019/api/v1/social/reports/schedule", {
+      await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/reports/schedule`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ frequency: schedule, email: scheduleEmail, accounts: selectedAccounts }),

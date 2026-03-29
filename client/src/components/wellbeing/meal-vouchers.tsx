@@ -55,7 +55,7 @@ function MealTransactionCard({ transaction }: { transaction: MealVoucher }) {
         <p className="text-sm font-semibold">-€{transaction.amount.toFixed(2)}</p>
         <Badge
           variant="secondary"
-          className={`mt-1 text-xs ${CATEGORY_COLORS[transaction.category] || 'bg-gray-100'}`}
+          className={`mt-1 text-xs ${CATEGORY_COLORS[transaction.category] || 'bg-muted'}`}
         >
           {transaction.category}
         </Badge>

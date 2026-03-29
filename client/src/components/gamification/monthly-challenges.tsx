@@ -73,7 +73,7 @@ export default function MonthlyChallenges() {
           <Target className="w-6 h-6" />
           Monthly Challenges
         </h2>
-        <span className="text-sm text-gray-600">March 2026</span>
+        <span className="text-sm text-muted-foreground">March 2026</span>
       </div>
 
       <div className="space-y-3">
@@ -82,9 +82,9 @@ export default function MonthlyChallenges() {
             <div className="flex justify-between items-start mb-2">
               <div>
                 <h3 className="font-bold text-lg">{challenge.name}</h3>
-                <p className="text-sm text-gray-600">{challenge.description}</p>
+                <p className="text-sm text-muted-foreground">{challenge.description}</p>
               </div>
-              <span className="text-xs bg-gray-100 px-2 py-1 rounded font-medium">
+              <span className="text-xs bg-muted px-2 py-1 rounded font-medium">
                 {challenge.progress}/{challenge.maxProgress}
               </span>
             </div>
@@ -98,7 +98,7 @@ export default function MonthlyChallenges() {
               </div>
             </div>
 
-            <div className="flex justify-between items-center text-xs text-gray-600">
+            <div className="flex justify-between items-center text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
                 {formatDeadline(challenge.deadline)}

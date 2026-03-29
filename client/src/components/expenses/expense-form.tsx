@@ -42,7 +42,7 @@ interface ExpenseFormProps {
 
 const CATEGORIES = ["Transport", "Repas", "Hotel", "Fournitures"];
 const STATUS_COLORS: Record<Expense["status"], string> = {
-  Draft: "bg-gray-100 text-gray-700",
+  Draft: "bg-muted text-muted-foreground",
   Submitted: "bg-blue-100 text-blue-700",
   Approved: "bg-green-100 text-green-700",
   Rejected: "bg-red-100 text-red-700",
@@ -213,7 +213,7 @@ export function ExpenseForm({
                 <FileUp className="mr-2 h-4 w-4" />
                 Télécharger
               </Button>
-              {fileName && <span className="text-xs text-gray-600">{fileName}</span>}
+              {fileName && <span className="text-xs text-muted-foreground">{fileName}</span>}
             </div>
           </div>
 

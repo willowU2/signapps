@@ -150,14 +150,14 @@ export function WatermarkConfig() {
         </form>
       </Form>
 
-      <div className="border rounded-lg p-8 bg-gray-50 relative overflow-hidden min-h-64 flex items-center justify-center">
+      <div className="border rounded-lg p-8 bg-muted relative overflow-hidden min-h-64 flex items-center justify-center">
         <div
           className={getPositionClass()}
           style={{ opacity: preview.opacity / 100 }}
         >
           {preview.text}
         </div>
-        <p className="text-sm text-gray-500 text-center">Preview</p>
+        <p className="text-sm text-muted-foreground text-center">Preview</p>
       </div>
     </div>
   );

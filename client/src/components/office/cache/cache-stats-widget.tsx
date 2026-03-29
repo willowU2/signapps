@@ -197,7 +197,7 @@ export function CacheStatsWidget({
           trend={performance && performance.hits > 0 ? 'up' : 'neutral'}
         />
         <StatItem
-          icon={<Minus className="h-4 w-4 text-gray-500" />}
+          icon={<Minus className="h-4 w-4 text-muted-foreground" />}
           label="Miss"
           value={stats.missCount.toLocaleString()}
         />

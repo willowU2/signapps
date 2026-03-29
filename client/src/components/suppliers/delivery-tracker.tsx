@@ -68,7 +68,7 @@ export default function DeliveryTracker() {
       case "late":
         return baseClass + " bg-red-100 text-red-700";
       default:
-        return baseClass + " bg-gray-100 text-gray-700";
+        return baseClass + " bg-muted text-muted-foreground";
     }
   };
 
@@ -89,16 +89,16 @@ export default function DeliveryTracker() {
           {deliveries.map((delivery) => (
             <div key={delivery.id} className="flex items-center justify-between p-4">
               <div className="flex items-center gap-4">
-                <div className="rounded-full bg-gray-100 p-2">
+                <div className="rounded-full bg-muted p-2">
                   {getStatusIcon(delivery.status)}
                 </div>
                 <div>
                   <p className="font-medium">{delivery.poRef}</p>
-                  <p className="text-sm text-gray-600">{delivery.supplier}</p>
+                  <p className="text-sm text-muted-foreground">{delivery.supplier}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-600">Expected: {delivery.expectedDate}</p>
+                <p className="text-sm text-muted-foreground">Expected: {delivery.expectedDate}</p>
                 <div className="mt-1">
                   <span className={getStatusBadge(delivery.status)}>
                     {getStatusText(delivery.status)}
@@ -115,7 +115,7 @@ export default function DeliveryTracker() {
           <div className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-600" />
             <div>
-              <p className="text-xs text-gray-600">Delivered</p>
+              <p className="text-xs text-muted-foreground">Delivered</p>
               <p className="text-xl font-bold">
                 {deliveries.filter((d) => d.status === "delivered").length}
               </p>
@@ -126,7 +126,7 @@ export default function DeliveryTracker() {
           <div className="flex items-center gap-2">
             <Package className="h-5 w-5 text-blue-600" />
             <div>
-              <p className="text-xs text-gray-600">In Transit</p>
+              <p className="text-xs text-muted-foreground">In Transit</p>
               <p className="text-xl font-bold">
                 {deliveries.filter((d) => d.status === "in-transit").length}
               </p>
@@ -137,7 +137,7 @@ export default function DeliveryTracker() {
           <div className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-red-600" />
             <div>
-              <p className="text-xs text-gray-600">Late</p>
+              <p className="text-xs text-muted-foreground">Late</p>
               <p className="text-xl font-bold">
                 {deliveries.filter((d) => d.status === "late").length}
               </p>

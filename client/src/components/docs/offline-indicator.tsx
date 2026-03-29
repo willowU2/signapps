@@ -163,7 +163,7 @@ export function OfflineIndicator() {
                             <span className={`font-medium ${
                                 connectionStatus === 'connected' ? 'text-emerald-600' :
                                 connectionStatus === 'connecting' || connectionStatus === 'reconnecting' ? 'text-amber-600' :
-                                'text-gray-500'
+                                'text-muted-foreground'
                             }`}>
                                 {connectionStatus === 'connected' ? 'Active' :
                                  connectionStatus === 'connecting' ? 'Connexion...' :

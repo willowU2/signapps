@@ -377,8 +377,8 @@ export default function GlobalDrivePage() {
                   <UploadCloud className="h-8 w-8" />
                 </div>
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Déposer les fichiers ici</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <h3 className="text-lg font-semibold text-foreground dark:text-gray-100">Déposer les fichiers ici</h3>
+                  <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
                     Ils seront ajoutés à {currentFolder ? <span className="font-medium text-blue-600">"{currentFolder.name}"</span> : "Mon Drive"}
                   </p>
                 </div>

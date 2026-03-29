@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { getServiceUrl, ServiceName } from "@/lib/api/factory";
 
 interface FeedItem {
   id: string;
@@ -111,7 +112,7 @@ export function RssAutoShare() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const res = await fetch("http://localhost:3019/api/v1/social/rss/fetch-all", { method: "POST" });
+      const res = await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/rss/fetch-all`, { method: "POST" });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setItems(data.items ?? items);
@@ -126,7 +127,7 @@ export function RssAutoShare() {
   const handleShare = async (item: FeedItem) => {
     const postContent = applyTemplate(item, config);
     try {
-      const res = await fetch("http://localhost:3019/api/v1/social/posts", {
+      const res = await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/posts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: postContent, source: "rss", rssItemId: item.id }),

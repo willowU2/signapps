@@ -88,16 +88,16 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
             onClick={() => onSelect(item.id)}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect(item.id); }}
             className={cn(
-                "group relative flex items-center gap-2 px-1 py-0 h-10 text-left text-sm transition-all duration-150 outline-none w-full border-b border-gray-200/60 dark:border-gray-800/60 select-none cursor-pointer hover:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] hover:z-10",
+                "group relative flex items-center gap-2 px-1 py-0 h-10 text-left text-sm transition-all duration-150 outline-none w-full border-b border-border/60 dark:border-gray-800/60 select-none cursor-pointer hover:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] hover:z-10",
                 selectedId === item.id
                     ? "bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff]"
-                    : "bg-background dark:bg-[#1f1f1f] hover:bg-gray-50/80 dark:hover:bg-[#202124]",
+                    : "bg-background dark:bg-[#1f1f1f] hover:bg-muted/80 dark:hover:bg-[#202124]",
                 !item.read && "bg-background dark:bg-[#1f1f1f]"
             )}
             {...swipeHandlers}
         >
-            <div className="flex-shrink-0 flex items-center gap-2 px-3 text-gray-400 dark:text-gray-500">
-                <Square className="h-[18px] w-[18px] hover:text-gray-700 dark:hover:text-gray-300 transition-colors" />
+            <div className="flex-shrink-0 flex items-center gap-2 px-3 text-gray-400 dark:text-muted-foreground">
+                <Square className="h-[18px] w-[18px] hover:text-muted-foreground dark:hover:text-gray-300 transition-colors" />
                 <button
                     type="button"
                     aria-label={starredIds?.has(item.id) ? "Retirer des favoris" : "Ajouter aux favoris"}
@@ -108,7 +108,7 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
                         "h-[18px] w-[18px] transition-colors",
                         starredIds?.has(item.id)
                             ? "text-amber-400 fill-amber-400"
-                            : "hover:text-gray-700 dark:hover:text-gray-300"
+                            : "hover:text-muted-foreground dark:hover:text-gray-300"
                     )} />
                 </button>
             </div>
@@ -136,10 +136,10 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
                 </span>
             </div>
             <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5 bg-background dark:bg-[#202124] rounded-md shadow-sm pl-1 pr-1 py-0.5">
-                <button type="button" aria-label="Archiver" className="p-1.5 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onArchive?.(item.id) }}>
+                <button type="button" aria-label="Archiver" className="p-1.5 rounded-full text-muted-foreground hover:bg-muted dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onArchive?.(item.id) }}>
                     <Archive className="w-[18px] h-[18px]" />
                 </button>
-                <button type="button" aria-label="Supprimer" className="p-1.5 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onDelete?.(item.id) }}>
+                <button type="button" aria-label="Supprimer" className="p-1.5 rounded-full text-muted-foreground hover:bg-muted dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onDelete?.(item.id) }}>
                     <Trash2 className="w-[18px] h-[18px]" />
                 </button>
                 <button type="button" aria-label={starredIds?.has(item.id) ? "Retirer des favoris" : "Ajouter aux favoris"} className="p-1.5 rounded-full text-muted-foreground hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-500 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onStar?.(item.id) }}>
@@ -156,7 +156,7 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
                 <SnoozeDatePicker
                     onSnooze={(isoStr, label) => { onSnooze?.(item.id, label) }}
                 >
-                    <button type="button" aria-label="Reporter" className="p-1.5 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer shadow-none bg-transparent border-none" onClick={(e) => e.stopPropagation()}>
+                    <button type="button" aria-label="Reporter" className="p-1.5 rounded-full text-muted-foreground hover:bg-muted dark:hover:bg-gray-800 transition-colors cursor-pointer shadow-none bg-transparent border-none" onClick={(e) => e.stopPropagation()}>
                         <Clock className="w-[18px] h-[18px]" />
                     </button>
                 </SnoozeDatePicker>
@@ -317,5 +317,5 @@ function getBadgeVariantFromLabel(label: string) {
         return "bg-purple-50/80 text-purple-700 border-purple-200/50 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-800/50"
     }
 
-    return "bg-gray-100/80 text-gray-600 border-gray-200/50 dark:bg-gray-800/80 dark:text-gray-400 dark:border-gray-700/50"
+    return "bg-muted/80 text-muted-foreground border-border/50 dark:bg-gray-800/80 dark:text-gray-400 dark:border-gray-700/50"
 }

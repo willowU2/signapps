@@ -87,8 +87,8 @@ export function NDAAutoSign() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">NDA Auto-Sign</h2>
-          <p className="text-gray-600">
+          <h2 className="text-2xl font-bold text-foreground">NDA Auto-Sign</h2>
+          <p className="text-muted-foreground">
             Digital signature tracking for mutual NDAs
           </p>
         </div>
@@ -108,22 +108,22 @@ export function NDAAutoSign() {
       </div>
 
       <div className="grid grid-cols-2 gap-6">
-        <div className="border rounded-lg overflow-hidden bg-white">
-          <div className="bg-gray-50 border-b p-4 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-gray-700" />
-            <h3 className="font-semibold text-gray-900">NDA Template</h3>
+        <div className="border rounded-lg overflow-hidden bg-card">
+          <div className="bg-muted border-b p-4 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-muted-foreground" />
+            <h3 className="font-semibold text-foreground">NDA Template</h3>
           </div>
 
           <div className="p-4 max-h-96 overflow-y-auto">
-            <div className="text-sm text-gray-700 whitespace-pre-wrap font-mono">
+            <div className="text-sm text-muted-foreground whitespace-pre-wrap font-mono">
               {NDA_PREVIEW}
             </div>
           </div>
         </div>
 
         <div className="space-y-6">
-          <div className="border rounded-lg p-4 bg-white">
-            <h3 className="font-semibold text-gray-900 mb-4">Add Signatory</h3>
+          <div className="border rounded-lg p-4 bg-card">
+            <h3 className="font-semibold text-foreground mb-4">Add Signatory</h3>
             <div className="space-y-3">
               <input
                 type="text"
@@ -156,19 +156,19 @@ export function NDAAutoSign() {
             </div>
           </div>
 
-          <div className="border rounded-lg overflow-hidden bg-white">
-            <div className="bg-gray-50 border-b p-4">
-              <h3 className="font-semibold text-gray-900">Signatories</h3>
+          <div className="border rounded-lg overflow-hidden bg-card">
+            <div className="bg-muted border-b p-4">
+              <h3 className="font-semibold text-foreground">Signatories</h3>
             </div>
 
             <div className="divide-y max-h-64 overflow-y-auto">
               {signatories.map((sig, idx) => (
-                <div key={idx} className="p-4 hover:bg-gray-50">
+                <div key={idx} className="p-4 hover:bg-muted">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-medium text-gray-900">{sig.signatoryName}</p>
-                      <p className="text-xs text-gray-600">{sig.signatoryEmail}</p>
-                      <p className="text-xs text-gray-500 mt-1">{sig.signatoryRole}</p>
+                      <p className="font-medium text-foreground">{sig.signatoryName}</p>
+                      <p className="text-xs text-muted-foreground">{sig.signatoryEmail}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{sig.signatoryRole}</p>
                     </div>
                     {sig.isSigned ? (
                       <div className="text-right">
@@ -176,7 +176,7 @@ export function NDAAutoSign() {
                           <Check className="w-4 h-4" />
                           <span className="text-xs font-medium">Signed</span>
                         </div>
-                        <p className="text-xs text-gray-600 flex items-center gap-1">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           {sig.signedAt}
                         </p>

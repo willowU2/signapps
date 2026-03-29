@@ -63,8 +63,8 @@ export function RemoteWorkPolicy() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Politique de télétravail</h2>
-          <p className="text-gray-600">Configuration bureau/télétravail par employé</p>
+          <h2 className="text-2xl font-bold text-foreground">Politique de télétravail</h2>
+          <p className="text-muted-foreground">Configuration bureau/télétravail par employé</p>
         </div>
       </div>
 
@@ -97,15 +97,15 @@ export function RemoteWorkPolicy() {
           const isSaved = saved.has(emp.id);
           const overLimit = emp.daysRemote > globalMax;
           return (
-            <div key={emp.id} className={`rounded-lg border bg-white p-4 transition-all ${overLimit ? "border-red-300 bg-red-50/30" : ""}`}>
+            <div key={emp.id} className={`rounded-lg border bg-card p-4 transition-all ${overLimit ? "border-red-300 bg-red-50/30" : ""}`}>
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                   {emp.name.split(" ").map(w => w[0]).slice(0, 2).join("")}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold text-gray-900">{emp.name}</p>
-                    <span className="text-xs text-gray-500">{emp.role} · {emp.department}</span>
+                    <p className="font-semibold text-foreground">{emp.name}</p>
+                    <span className="text-xs text-muted-foreground">{emp.role} · {emp.department}</span>
                     {overLimit && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">Dépasse la politique ({emp.daysRemote}j)</span>}
                     {isSaved && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Enregistré</span>}
                   </div>
@@ -126,7 +126,7 @@ export function RemoteWorkPolicy() {
                       return (
                         <button key={day} onClick={() => isEditing && handleToggleDay(emp.id, day, "remote")}
                           disabled={!isEditing}
-                          className={`w-10 h-8 rounded text-xs font-medium transition-colors ${isRemote ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-600"} ${isEditing ? "cursor-pointer hover:opacity-80" : "cursor-default"}`}>
+                          className={`w-10 h-8 rounded text-xs font-medium transition-colors ${isRemote ? "bg-blue-500 text-white" : "bg-muted text-muted-foreground"} ${isEditing ? "cursor-pointer hover:opacity-80" : "cursor-default"}`}>
                           {day}
                         </button>
                       );
@@ -135,7 +135,7 @@ export function RemoteWorkPolicy() {
                   {isEditing && (
                     <input value={emp.notes} onChange={e => handleNoteChange(emp.id, e.target.value)} placeholder="Notes..." className="w-full border rounded px-3 py-1.5 text-sm mt-1" />
                   )}
-                  {!isEditing && emp.notes && <p className="text-xs text-gray-500 italic mt-1">{emp.notes}</p>}
+                  {!isEditing && emp.notes && <p className="text-xs text-muted-foreground italic mt-1">{emp.notes}</p>}
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
                   {isEditing ? (
@@ -143,7 +143,7 @@ export function RemoteWorkPolicy() {
                       <Save className="w-3.5 h-3.5" /> Sauvegarder
                     </button>
                   ) : (
-                    <button onClick={() => setEditId(emp.id)} className="border hover:bg-gray-50 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700">Modifier</button>
+                    <button onClick={() => setEditId(emp.id)} className="border hover:bg-muted px-3 py-1.5 rounded-lg text-sm font-medium text-muted-foreground">Modifier</button>
                   )}
                 </div>
               </div>

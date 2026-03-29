@@ -438,7 +438,7 @@ export function LiveAudienceView({
                         <button
                             key={key}
                             onClick={() => sendReaction(key)}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-lg"
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-card/10 hover:bg-card/20 transition-colors text-lg"
                             title={REACTION_ICONS[key].label}
                         >
                             <span>{REACTION_ICONS[key].emoji}</span>

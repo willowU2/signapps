@@ -73,7 +73,7 @@ export function SignatureField({ fieldId, onChange }: Props) {
 
   return (
     <div className="mt-2 space-y-2">
-      <div className="border-2 rounded-lg overflow-hidden bg-white dark:bg-slate-950 relative">
+      <div className="border-2 rounded-lg overflow-hidden bg-card dark:bg-slate-950 relative">
         <canvas
           ref={canvasRef}
           width={600}

@@ -52,7 +52,7 @@ const CohortHeatmap: React.FC<CohortHeatmapProps> = ({
   return (
     <div className="w-full bg-background rounded-lg border border-border p-8 shadow-sm overflow-x-auto">
       {/* Header */}
-      <h2 className="text-2xl font-bold text-gray-900 mb-8">{title}</h2>
+      <h2 className="text-2xl font-bold text-foreground mb-8">{title}</h2>
 
       {/* Heatmap container */}
       <div className="inline-block min-w-full">
@@ -62,7 +62,7 @@ const CohortHeatmap: React.FC<CohortHeatmapProps> = ({
           {dayLabels.map((label, idx) => (
             <div
               key={idx}
-              className="w-12 flex-shrink-0 text-center text-xs font-medium text-gray-600"
+              className="w-12 flex-shrink-0 text-center text-xs font-medium text-muted-foreground"
             >
               {label}
             </div>
@@ -74,7 +74,7 @@ const CohortHeatmap: React.FC<CohortHeatmapProps> = ({
           {data.map((row) => (
             <div key={row.weekIndex} className="flex gap-1">
               {/* Week label */}
-              <div className="w-24 flex-shrink-0 text-sm font-medium text-gray-700 flex items-center">
+              <div className="w-24 flex-shrink-0 text-sm font-medium text-muted-foreground flex items-center">
                 {row.weekLabel}
               </div>
 
@@ -98,7 +98,7 @@ const CohortHeatmap: React.FC<CohortHeatmapProps> = ({
 
       {/* Legend */}
       <div className="mt-8 flex items-center gap-4">
-        <p className="text-sm font-medium text-gray-700">Low</p>
+        <p className="text-sm font-medium text-muted-foreground">Low</p>
         <div className="flex gap-1 flex-1">
           {Array.from({ length: 10 }, (_, idx) => {
             const value = minValue + (idx / 9) * (maxValue - minValue);
@@ -114,22 +114,22 @@ const CohortHeatmap: React.FC<CohortHeatmapProps> = ({
             );
           })}
         </div>
-        <p className="text-sm font-medium text-gray-700">High</p>
+        <p className="text-sm font-medium text-muted-foreground">High</p>
       </div>
 
       {/* Summary stats */}
       <div className="mt-6 pt-6 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <p className="text-xs text-gray-600">Min Retention</p>
-          <p className="text-lg font-bold text-gray-900">{Math.round(minValue)}%</p>
+          <p className="text-xs text-muted-foreground">Min Retention</p>
+          <p className="text-lg font-bold text-foreground">{Math.round(minValue)}%</p>
         </div>
         <div>
-          <p className="text-xs text-gray-600">Max Retention</p>
-          <p className="text-lg font-bold text-gray-900">{Math.round(maxValue)}%</p>
+          <p className="text-xs text-muted-foreground">Max Retention</p>
+          <p className="text-lg font-bold text-foreground">{Math.round(maxValue)}%</p>
         </div>
         <div>
-          <p className="text-xs text-gray-600">Avg Retention</p>
-          <p className="text-lg font-bold text-gray-900">
+          <p className="text-xs text-muted-foreground">Avg Retention</p>
+          <p className="text-lg font-bold text-foreground">
             {Math.round(allValues.reduce((a, b) => a + b, 0) / allValues.length)}%
           </p>
         </div>

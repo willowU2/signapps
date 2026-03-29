@@ -200,12 +200,12 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         if (actionId === 'version_history') {
             return (
                 <div className="flex bg-background dark:bg-[#1f1f1f] h-[400px] border rounded-md overflow-hidden mt-4">
-                    <div className="flex-1 p-8 flex flex-col items-center justify-center text-center border-r border-gray-200 dark:border-gray-800">
-                        <Clock className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" />
+                    <div className="flex-1 p-8 flex flex-col items-center justify-center text-center border-r border-border dark:border-gray-800">
+                        <Clock className="w-16 h-16 text-gray-300 dark:text-muted-foreground mb-4" />
                         <h3 className="text-lg font-medium">Aperçu de la version</h3>
                         {selectedVersionId ? (
                             <div className="mt-4 space-y-2">
-                                <p className="text-sm text-gray-500">Version sélectionnée : <code className="bg-gray-100 px-1 rounded text-xs">{selectedVersionId.slice(0, 8)}</code></p>
+                                <p className="text-sm text-muted-foreground">Version sélectionnée : <code className="bg-muted px-1 rounded text-xs">{selectedVersionId.slice(0, 8)}</code></p>
                                 <button
                                     onClick={() => handleRestore(selectedVersionId)}
                                     disabled={isRestoring}
@@ -215,11 +215,11 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                                 </button>
                             </div>
                         ) : (
-                            <p className="text-sm text-gray-500 mt-2 max-w-sm">Sélectionnez une version dans le panneau latéral pour la restaurer.</p>
+                            <p className="text-sm text-muted-foreground mt-2 max-w-sm">Sélectionnez une version dans le panneau latéral pour la restaurer.</p>
                         )}
                     </div>
-                    <div className="w-80 bg-gray-50 dark:bg-[#141414] flex flex-col">
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
+                    <div className="w-80 bg-muted dark:bg-[#141414] flex flex-col">
+                        <div className="p-4 border-b border-border dark:border-gray-800 flex justify-between items-center">
                             <span className="font-medium">Historique ({versions.length})</span>
                         </div>
                         <ScrollArea className="flex-1">
@@ -231,12 +231,12 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                                     <button
                                         key={v.id}
                                         onClick={() => setSelectedVersionId(v.id === selectedVersionId ? null : v.id)}
-                                        className={`w-full text-left p-3 hover:bg-background dark:hover:bg-[#1f1f1f] rounded-md transition-colors border flex items-start gap-3 ${v.id === selectedVersionId ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'border-transparent hover:border-gray-200 dark:hover:border-gray-800'}`}
+                                        className={`w-full text-left p-3 hover:bg-background dark:hover:bg-[#1f1f1f] rounded-md transition-colors border flex items-start gap-3 ${v.id === selectedVersionId ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'border-transparent hover:border-border dark:hover:border-gray-800'}`}
                                     >
                                         <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
                                         <div>
                                             <div className="text-sm font-medium">{v.label || new Date(v.createdAt).toLocaleTimeString()}</div>
-                                            <div className="text-xs text-gray-500 mt-1">{v.authorName || 'Vous'} · {new Date(v.createdAt).toLocaleDateString()}</div>
+                                            <div className="text-xs text-muted-foreground mt-1">{v.authorName || 'Vous'} · {new Date(v.createdAt).toLocaleDateString()}</div>
                                             {v.description && <div className="text-xs text-gray-400 mt-0.5 truncate max-w-[160px]">{v.description}</div>}
                                         </div>
                                     </button>
@@ -273,7 +273,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h4 className="font-medium text-sm">{tpl.name}</h4>
-                                        <p className="text-xs text-gray-500 mt-1">{tpl.desc}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">{tpl.desc}</p>
                                     </div>
                                 </button>
                             ))}
@@ -303,10 +303,10 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                                 <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 text-sm font-medium">V</div>
                                 <div>
                                     <div className="text-sm font-medium">Vous (Propriétaire)</div>
-                                    <div className="text-xs text-gray-500">vous@exemple.com</div>
+                                    <div className="text-xs text-muted-foreground">vous@exemple.com</div>
                                 </div>
                             </div>
-                            <span className="text-xs text-gray-500">Propriétaire</span>
+                            <span className="text-xs text-muted-foreground">Propriétaire</span>
                         </div>
                     </div>
                     <div className="space-y-2">
@@ -319,7 +319,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         </div>
                         <div className="flex items-center gap-2 mt-2">
                             <Link2 className="w-4 h-4 text-gray-400" />
-                            <span className="text-xs text-gray-500">Toute personne disposant du lien peut consulter</span>
+                            <span className="text-xs text-muted-foreground">Toute personne disposant du lien peut consulter</span>
                         </div>
                     </div>
                 </div>
@@ -347,11 +347,11 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                             <Switch />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-xs text-gray-500">URL publique</Label>
+                            <Label className="text-xs text-muted-foreground">URL publique</Label>
                             <Input readOnly value="https://signapps.io/pub/..." className="text-xs" disabled />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-xs text-gray-500">Intégrer dans un site</Label>
+                            <Label className="text-xs text-muted-foreground">Intégrer dans un site</Label>
                             <Input readOnly value='<iframe src="https://signapps.io/embed/..." />' className="text-xs font-mono" disabled />
                         </div>
                     </div>
@@ -376,7 +376,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         <textarea className="w-full h-20 px-3 py-2 border rounded-md text-sm resize-none dark:bg-[#1f1f1f]" placeholder="Ajoutez un message personnel..." />
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs text-gray-500">Format d'envoi</Label>
+                        <Label className="text-xs text-muted-foreground">Format d'envoi</Label>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" className="flex-1">
                                 <Link2 className="w-4 h-4 mr-2" />
@@ -400,10 +400,10 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         if (actionId === 'approvals') {
             return (
                 <div className="mt-4 space-y-4">
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
-                        <FileCheck className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
+                        <FileCheck className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
                         <h4 className="text-sm font-medium">Aucune approbation en cours</h4>
-                        <p className="text-xs text-gray-500 mt-1">Demandez l'approbation de collaborateurs pour ce document.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Demandez l'approbation de collaborateurs pour ce document.</p>
                     </div>
                     <Button className="w-full">
                         <Plus className="w-4 h-4 mr-2" />
@@ -421,7 +421,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         <Label>Nom de la version</Label>
                         <Input placeholder="ex: Version finale, Draft v2..." />
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                         Les versions nommées sont conservées indéfiniment et apparaissent en haut de l'historique.
                     </p>
                 </div>
@@ -437,7 +437,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                             <HardDrive className="w-5 h-5 text-gray-400" />
                             <div>
                                 <div className="text-sm font-medium">Accès hors connexion</div>
-                                <div className="text-xs text-gray-500">Modifiez ce fichier sans Internet</div>
+                                <div className="text-xs text-muted-foreground">Modifiez ce fichier sans Internet</div>
                             </div>
                         </div>
                         <Switch />
@@ -457,32 +457,32 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                 <div className="mt-4 space-y-4">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                            <div className="text-xs text-gray-500 mb-1">Propriétaire</div>
+                            <div className="text-xs text-muted-foreground mb-1">Propriétaire</div>
                             <div className="font-medium">Vous</div>
                         </div>
                         <div>
-                            <div className="text-xs text-gray-500 mb-1">Emplacement</div>
+                            <div className="text-xs text-muted-foreground mb-1">Emplacement</div>
                             <div className="font-medium">Mon Drive</div>
                         </div>
                         <div>
-                            <div className="text-xs text-gray-500 mb-1">Créé le</div>
+                            <div className="text-xs text-muted-foreground mb-1">Créé le</div>
                             <div className="font-medium">{new Date().toLocaleDateString('fr-FR')}</div>
                         </div>
                         <div>
-                            <div className="text-xs text-gray-500 mb-1">Modifié le</div>
+                            <div className="text-xs text-muted-foreground mb-1">Modifié le</div>
                             <div className="font-medium">{new Date().toLocaleDateString('fr-FR')}</div>
                         </div>
                         <div>
-                            <div className="text-xs text-gray-500 mb-1">Taille</div>
+                            <div className="text-xs text-muted-foreground mb-1">Taille</div>
                             <div className="font-medium">24 Ko</div>
                         </div>
                         <div>
-                            <div className="text-xs text-gray-500 mb-1">Feuilles</div>
+                            <div className="text-xs text-muted-foreground mb-1">Feuilles</div>
                             <div className="font-medium">1</div>
                         </div>
                     </div>
                     <div className="border-t pt-4">
-                        <div className="text-xs text-gray-500 mb-2">Description</div>
+                        <div className="text-xs text-muted-foreground mb-2">Description</div>
                         <textarea className="w-full h-16 px-3 py-2 border rounded-md text-sm resize-none dark:bg-[#1f1f1f]" placeholder="Ajoutez une description..." />
                     </div>
                 </div>
@@ -565,10 +565,10 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         if (actionId === 'protected_ranges') {
             return (
                 <div className="mt-4 space-y-4">
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
-                        <Shield className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
+                        <Shield className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
                         <h4 className="text-sm font-medium">Aucune plage protégée</h4>
-                        <p className="text-xs text-gray-500 mt-1">Protégez des cellules ou plages contre les modifications.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Protégez des cellules ou plages contre les modifications.</p>
                     </div>
                     <Button className="w-full">
                         <Plus className="w-4 h-4 mr-2" />
@@ -582,7 +582,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         if (actionId === 'group_rows_cols') {
             return (
                 <div className="mt-4 space-y-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-muted-foreground dark:text-gray-400">
                         Sélectionnez les lignes ou colonnes à grouper dans la feuille, puis cliquez sur Associer.
                     </p>
                     <div className="grid grid-cols-2 gap-4">
@@ -603,10 +603,10 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         if (actionId === 'ungroup_rows_cols') {
             return (
                 <div className="mt-4 space-y-4">
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
-                        <Grid3X3 className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
+                        <Grid3X3 className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
                         <h4 className="text-sm font-medium">Aucun groupe actif</h4>
-                        <p className="text-xs text-gray-500 mt-1">Créez d'abord un groupe de lignes ou colonnes.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Créez d'abord un groupe de lignes ou colonnes.</p>
                     </div>
                 </div>
             );
@@ -623,8 +623,8 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         </div>
                         <Switch defaultChecked />
                     </div>
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
-                        <p className="text-sm text-gray-500">Aucun commentaire dans ce document.</p>
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
+                        <p className="text-sm text-muted-foreground">Aucun commentaire dans ce document.</p>
                     </div>
                 </div>
             );
@@ -634,10 +634,10 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         if (actionId === 'hidden_sheets') {
             return (
                 <div className="mt-4 space-y-4">
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
-                        <Eye className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
+                        <Eye className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
                         <h4 className="text-sm font-medium">Aucune feuille masquée</h4>
-                        <p className="text-xs text-gray-500 mt-1">Toutes les feuilles sont visibles.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Toutes les feuilles sont visibles.</p>
                     </div>
                 </div>
             );
@@ -648,7 +648,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
             const direction = actionId === 'shift_cells_right' ? 'droite' : 'bas';
             return (
                 <div className="mt-4 space-y-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-muted-foreground dark:text-gray-400">
                         Insérer une cellule et décaler les cellules existantes vers la {direction}.
                     </p>
                     <Button className="w-full">
@@ -740,9 +740,9 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         <Label>Créer dans une nouvelle feuille</Label>
                         <Switch defaultChecked />
                     </div>
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
-                        <PieChart className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                        <p className="text-sm text-gray-500">Analysez vos données avec un tableau croisé dynamique</p>
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
+                        <PieChart className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
+                        <p className="text-sm text-muted-foreground">Analysez vos données avec un tableau croisé dynamique</p>
                     </div>
                 </div>
             );
@@ -753,13 +753,13 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
             return (
                 <div className="mt-4 space-y-4">
                     <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer">
-                        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <div className="w-12 h-12 bg-muted dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
                             <Plus className="w-6 h-6 text-gray-400" />
                         </div>
                         <p className="text-sm font-medium">Glissez une image ici</p>
-                        <p className="text-xs text-gray-500 mt-1">ou cliquez pour sélectionner</p>
+                        <p className="text-xs text-muted-foreground mt-1">ou cliquez pour sélectionner</p>
                     </div>
-                    <p className="text-xs text-gray-500 text-center">
+                    <p className="text-xs text-muted-foreground text-center">
                         L'image sera redimensionnée pour tenir dans la cellule sélectionnée.
                     </p>
                 </div>
@@ -771,13 +771,13 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
             return (
                 <div className="mt-4 space-y-4">
                     <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer">
-                        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <div className="w-12 h-12 bg-muted dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
                             <Plus className="w-6 h-6 text-gray-400" />
                         </div>
                         <p className="text-sm font-medium">Glissez une image ici</p>
-                        <p className="text-xs text-gray-500 mt-1">ou cliquez pour sélectionner</p>
+                        <p className="text-xs text-muted-foreground mt-1">ou cliquez pour sélectionner</p>
                     </div>
-                    <p className="text-xs text-gray-500 text-center">
+                    <p className="text-xs text-muted-foreground text-center">
                         L'image flotte au-dessus des cellules et peut être redimensionnée librement.
                     </p>
                 </div>
@@ -788,10 +788,10 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         if (actionId === 'insert_drawing') {
             return (
                 <div className="mt-4 space-y-4">
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
-                        <Edit3 className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
+                        <Edit3 className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
                         <h4 className="text-sm font-medium">Éditeur de dessin</h4>
-                        <p className="text-xs text-gray-500 mt-1">Créez des formes, lignes et annotations.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Créez des formes, lignes et annotations.</p>
                     </div>
                     <Button className="w-full">
                         <Plus className="w-4 h-4 mr-2" />
@@ -809,11 +809,11 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         <Label>Format personnalisé</Label>
                         <Input placeholder="#,##0.00" className="font-mono" />
                     </div>
-                    <div className="text-xs text-gray-500 space-y-1">
-                        <p><code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">#,##0.00</code> — Nombre avec séparateurs</p>
-                        <p><code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">0%</code> — Pourcentage</p>
-                        <p><code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">dd/mm/yyyy</code> — Date</p>
-                        <p><code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">hh:mm:ss</code> — Heure</p>
+                    <div className="text-xs text-muted-foreground space-y-1">
+                        <p><code className="bg-muted dark:bg-gray-800 px-1 rounded">#,##0.00</code> — Nombre avec séparateurs</p>
+                        <p><code className="bg-muted dark:bg-gray-800 px-1 rounded">0%</code> — Pourcentage</p>
+                        <p><code className="bg-muted dark:bg-gray-800 px-1 rounded">dd/mm/yyyy</code> — Date</p>
+                        <p><code className="bg-muted dark:bg-gray-800 px-1 rounded">hh:mm:ss</code> — Heure</p>
                     </div>
                 </div>
             );
@@ -879,7 +879,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         <Label>Plage de données</Label>
                         <Input placeholder="A1:D100" />
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                         Les vues filtrées vous permettent de créer des filtres personnalisés sans affecter les autres utilisateurs.
                     </p>
                 </div>
@@ -894,12 +894,12 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         <Label>Colonne source</Label>
                         <Input placeholder="Colonne A" />
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                         Les segments permettent de filtrer rapidement vos données avec des boutons visuels.
                     </p>
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
-                        <Database className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                        <p className="text-sm text-gray-500">Aperçu du segment</p>
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
+                        <Database className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
+                        <p className="text-sm text-muted-foreground">Aperçu du segment</p>
                     </div>
                 </div>
             );
@@ -920,7 +920,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                                 <Switch />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-xs text-gray-500">Exceptions (utilisateurs autorisés)</Label>
+                                <Label className="text-xs text-muted-foreground">Exceptions (utilisateurs autorisés)</Label>
                                 <Input placeholder="email@exemple.com" />
                             </div>
                         </TabsContent>
@@ -930,7 +930,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                                 <Input placeholder="A1:D10" />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-xs text-gray-500">Description</Label>
+                                <Label className="text-xs text-muted-foreground">Description</Label>
                                 <Input placeholder="Données importantes" />
                             </div>
                         </TabsContent>
@@ -943,10 +943,10 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         if (actionId === 'named_ranges') {
             return (
                 <div className="mt-4 space-y-4">
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
-                        <Table className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
+                        <Table className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
                         <h4 className="text-sm font-medium">Aucune plage nommée</h4>
-                        <p className="text-xs text-gray-500 mt-1">Les plages nommées facilitent l'utilisation dans les formules.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Les plages nommées facilitent l'utilisation dans les formules.</p>
                     </div>
                     <Button className="w-full">
                         <Plus className="w-4 h-4 mr-2" />
@@ -960,10 +960,10 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         if (actionId === 'named_functions') {
             return (
                 <div className="mt-4 space-y-4">
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
-                        <Calculator className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
+                        <Calculator className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
                         <h4 className="text-sm font-medium">Aucune fonction nommée</h4>
-                        <p className="text-xs text-gray-500 mt-1">Créez des fonctions personnalisées réutilisables.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Créez des fonctions personnalisées réutilisables.</p>
                     </div>
                     <Button className="w-full">
                         <Plus className="w-4 h-4 mr-2" />
@@ -983,11 +983,11 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label className="text-xs text-gray-500">Valeur min</Label>
+                            <Label className="text-xs text-muted-foreground">Valeur min</Label>
                             <Input type="number" defaultValue={1} />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-xs text-gray-500">Valeur max</Label>
+                            <Label className="text-xs text-muted-foreground">Valeur max</Label>
                             <Input type="number" defaultValue={100} />
                         </div>
                     </div>
@@ -1009,19 +1009,19 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                         <div className="p-3 border rounded-lg">
-                            <div className="text-xs text-gray-500">Somme</div>
+                            <div className="text-xs text-muted-foreground">Somme</div>
                             <div className="font-medium">—</div>
                         </div>
                         <div className="p-3 border rounded-lg">
-                            <div className="text-xs text-gray-500">Moyenne</div>
+                            <div className="text-xs text-muted-foreground">Moyenne</div>
                             <div className="font-medium">—</div>
                         </div>
                         <div className="p-3 border rounded-lg">
-                            <div className="text-xs text-gray-500">Min</div>
+                            <div className="text-xs text-muted-foreground">Min</div>
                             <div className="font-medium">—</div>
                         </div>
                         <div className="p-3 border rounded-lg">
-                            <div className="text-xs text-gray-500">Max</div>
+                            <div className="text-xs text-muted-foreground">Max</div>
                             <div className="font-medium">—</div>
                         </div>
                     </div>
@@ -1060,7 +1060,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         <Label>Les données ont des en-têtes</Label>
                         <Switch defaultChecked />
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                         Les lignes en double seront supprimées en conservant la première occurrence.
                     </p>
                 </div>
@@ -1076,7 +1076,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         <Input placeholder="A1:D100" />
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs text-gray-500">Options</Label>
+                        <Label className="text-xs text-muted-foreground">Options</Label>
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm">
                                 <input type="checkbox" defaultChecked className="accent-blue-600" />
@@ -1151,7 +1151,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs text-gray-500">Langue</Label>
+                        <Label className="text-xs text-muted-foreground">Langue</Label>
                         <Input defaultValue="Français (France)" />
                     </div>
                 </div>
@@ -1171,8 +1171,8 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                             </Button>
                         </div>
                     </div>
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
-                        <p className="text-sm text-gray-500">Votre dictionnaire est vide</p>
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
+                        <p className="text-sm text-muted-foreground">Votre dictionnaire est vide</p>
                     </div>
                 </div>
             );
@@ -1185,14 +1185,14 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
                             <div className="text-sm font-medium">Suggestion automatique</div>
-                            <div className="text-xs text-gray-500">Proposer des valeurs basées sur le contenu existant</div>
+                            <div className="text-xs text-muted-foreground">Proposer des valeurs basées sur le contenu existant</div>
                         </div>
                         <Switch defaultChecked />
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
                             <div className="text-sm font-medium">Compléter les formules</div>
-                            <div className="text-xs text-gray-500">Suggérer des fonctions pendant la saisie</div>
+                            <div className="text-xs text-muted-foreground">Suggérer des fonctions pendant la saisie</div>
                         </div>
                         <Switch defaultChecked />
                     </div>
@@ -1204,10 +1204,10 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         if (actionId === 'conditional_notifications') {
             return (
                 <div className="mt-4 space-y-4">
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
-                        <Activity className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
+                        <Activity className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
                         <h4 className="text-sm font-medium">Aucune règle de notification</h4>
-                        <p className="text-xs text-gray-500 mt-1">Créez des règles pour être notifié automatiquement.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Créez des règles pour être notifié automatiquement.</p>
                     </div>
                     <Button className="w-full">
                         <Plus className="w-4 h-4 mr-2" />
@@ -1224,14 +1224,14 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
                             <div className="text-sm font-medium">Toutes les modifications</div>
-                            <div className="text-xs text-gray-500">Recevoir une notification pour chaque changement</div>
+                            <div className="text-xs text-muted-foreground">Recevoir une notification pour chaque changement</div>
                         </div>
                         <Switch />
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
                             <div className="text-sm font-medium">Résumé quotidien</div>
-                            <div className="text-xs text-gray-500">Un récapitulatif par e-mail chaque jour</div>
+                            <div className="text-xs text-muted-foreground">Un récapitulatif par e-mail chaque jour</div>
                         </div>
                         <Switch defaultChecked />
                     </div>
@@ -1246,21 +1246,21 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
                             <div className="text-sm font-medium">Lecteur d'écran</div>
-                            <div className="text-xs text-gray-500">Optimiser pour les lecteurs d'écran</div>
+                            <div className="text-xs text-muted-foreground">Optimiser pour les lecteurs d'écran</div>
                         </div>
                         <Switch />
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
                             <div className="text-sm font-medium">Contraste élevé</div>
-                            <div className="text-xs text-gray-500">Augmenter le contraste des couleurs</div>
+                            <div className="text-xs text-muted-foreground">Augmenter le contraste des couleurs</div>
                         </div>
                         <Switch />
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
                             <div className="text-sm font-medium">Navigation au clavier</div>
-                            <div className="text-xs text-gray-500">Améliorer la navigation au clavier</div>
+                            <div className="text-xs text-muted-foreground">Améliorer la navigation au clavier</div>
                         </div>
                         <Switch defaultChecked />
                     </div>
@@ -1275,17 +1275,17 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                     <div className="grid grid-cols-2 gap-3">
                         <div className="p-3 border rounded-lg text-center">
                             <div className="text-2xl font-bold text-blue-600">12</div>
-                            <div className="text-xs text-gray-500">Modifications aujourd'hui</div>
+                            <div className="text-xs text-muted-foreground">Modifications aujourd'hui</div>
                         </div>
                         <div className="p-3 border rounded-lg text-center">
                             <div className="text-2xl font-bold text-green-600">3</div>
-                            <div className="text-xs text-gray-500">Collaborateurs actifs</div>
+                            <div className="text-xs text-muted-foreground">Collaborateurs actifs</div>
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <div className="text-xs text-gray-500 font-medium">Activité récente</div>
+                        <div className="text-xs text-muted-foreground font-medium">Activité récente</div>
                         <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm p-2 bg-gray-50 dark:bg-[#1a1a1a] rounded">
+                            <div className="flex items-center gap-2 text-sm p-2 bg-muted dark:bg-[#1a1a1a] rounded">
                                 <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 text-xs">V</div>
                                 <span>Vous avez modifié la cellule A1</span>
                             </div>
@@ -1387,8 +1387,8 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         <Label>Que voulez-vous calculer ?</Label>
                         <textarea className="w-full h-20 px-3 py-2 border rounded-md text-sm resize-none dark:bg-[#1f1f1f]" placeholder="Ex: La somme de A1:A10 divisée par le nombre de cellules non vides..." />
                     </div>
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-3">
-                        <div className="text-xs text-gray-500 mb-1">Formule générée</div>
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-3">
+                        <div className="text-xs text-muted-foreground mb-1">Formule générée</div>
                         <code className="text-sm font-mono">—</code>
                     </div>
                 </div>
@@ -1404,7 +1404,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         <Input placeholder="Colonne ou plage contenant le texte" />
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs text-gray-500">Longueur du résumé</Label>
+                        <Label className="text-xs text-muted-foreground">Longueur du résumé</Label>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" className="flex-1">Court</Button>
                             <Button variant="outline" size="sm" className="flex-1">Moyen</Button>
@@ -1490,10 +1490,10 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         if (actionId === 'apps_script') {
             return (
                 <div className="mt-4 space-y-4">
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
-                        <Cpu className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-4 text-center">
+                        <Cpu className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
                         <h4 className="text-sm font-medium">Éditeur de scripts</h4>
-                        <p className="text-xs text-gray-500 mt-1">Écrivez du code JavaScript pour automatiser vos feuilles.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Écrivez du code JavaScript pour automatiser vos feuilles.</p>
                     </div>
                     <Button className="w-full">
                         <ExternalLink className="w-4 h-4 mr-2" />
@@ -1581,7 +1581,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                             {categories.map((cat, i) => (
                                 <button key={i} className="w-full text-left p-3 border rounded-lg hover:border-blue-500 transition-colors">
                                     <div className="text-sm font-medium">{cat}</div>
-                                    <div className="text-xs text-gray-500 mt-1">12 fonctions</div>
+                                    <div className="text-xs text-muted-foreground mt-1">12 fonctions</div>
                                 </button>
                             ))}
                         </div>
@@ -1607,9 +1607,9 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                     <ScrollArea className="h-[250px]">
                         <div className="space-y-1">
                             {shortcuts.map((s, i) => (
-                                <div key={i} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] rounded">
+                                <div key={i} className="flex items-center justify-between p-2 hover:bg-muted dark:hover:bg-[#1a1a1a] rounded">
                                     <span className="text-sm">{s.desc}</span>
-                                    <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">{s.key}</kbd>
+                                    <kbd className="px-2 py-1 bg-muted dark:bg-gray-800 rounded text-xs font-mono">{s.key}</kbd>
                                 </div>
                             ))}
                         </div>
@@ -1640,7 +1640,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h4 className="font-medium text-sm truncate">{app.name}</h4>
-                                        <p className="text-xs text-gray-500 mt-1">{app.desc}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">{app.desc}</p>
                                         <Button variant="secondary" size="sm" className="mt-3 h-7 text-xs w-full">Installer</Button>
                                     </div>
                                 </div>
@@ -1664,14 +1664,14 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                             <div className="space-y-3">
                                 <Label>Orientation</Label>
                                 <div className="flex gap-4">
-                                    <label className="flex items-center gap-2 border p-3 rounded-md flex-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1a1a1a]">
+                                    <label className="flex items-center gap-2 border p-3 rounded-md flex-1 cursor-pointer hover:bg-muted dark:hover:bg-[#1a1a1a]">
                                         <input type="radio" name="orientation" defaultChecked className="hidden" />
                                         <div className="w-4 h-4 rounded-full border border-blue-500 flex items-center justify-center after:w-2 after:h-2 after:bg-blue-500 after:rounded-full" />
                                         Portrait
                                     </label>
                                     <label className="flex items-center gap-2 border p-3 rounded-md flex-1 cursor-pointer opacity-50">
                                         <input type="radio" name="orientation" disabled className="hidden" />
-                                        <div className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600" />
+                                        <div className="w-4 h-4 rounded-full border border-border dark:border-gray-600" />
                                         Paysage
                                     </label>
                                 </div>
@@ -1679,14 +1679,14 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                             <div className="space-y-3">
                                 <Label>Marges (cm)</Label>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div><Label className="text-xs text-gray-500">Haut</Label><Input type="number" defaultValue={2.54} /></div>
-                                    <div><Label className="text-xs text-gray-500">Bas</Label><Input type="number" defaultValue={2.54} /></div>
-                                    <div><Label className="text-xs text-gray-500">Gauche</Label><Input type="number" defaultValue={2.54} /></div>
-                                    <div><Label className="text-xs text-gray-500">Droite</Label><Input type="number" defaultValue={2.54} /></div>
+                                    <div><Label className="text-xs text-muted-foreground">Haut</Label><Input type="number" defaultValue={2.54} /></div>
+                                    <div><Label className="text-xs text-muted-foreground">Bas</Label><Input type="number" defaultValue={2.54} /></div>
+                                    <div><Label className="text-xs text-muted-foreground">Gauche</Label><Input type="number" defaultValue={2.54} /></div>
+                                    <div><Label className="text-xs text-muted-foreground">Droite</Label><Input type="number" defaultValue={2.54} /></div>
                                 </div>
                             </div>
                         </TabsContent>
-                        <TabsContent value="pageless" className="p-8 text-center text-gray-500">
+                        <TabsContent value="pageless" className="p-8 text-center text-muted-foreground">
                             Le format sans pages permet à votre document de s'adapter à n'importe quel écran.
                         </TabsContent>
                     </Tabs>
@@ -1701,7 +1701,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         // --- Slides Templates Gallery ---
         if (actionId === 'slides_templates') {
             const slideTemplates = [
-                { name: 'Présentation vierge', icon: <FileText className="w-6 h-6" />, color: 'bg-gray-100 dark:bg-gray-800 text-gray-600', desc: 'Commencez de zéro' },
+                { name: 'Présentation vierge', icon: <FileText className="w-6 h-6" />, color: 'bg-muted dark:bg-gray-800 text-muted-foreground', desc: 'Commencez de zéro' },
                 { name: 'Pitch Startup', icon: <BarChart3 className="w-6 h-6" />, color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600', desc: 'Présentez votre projet' },
                 { name: 'Rapport trimestriel', icon: <PieChart className="w-6 h-6" />, color: 'bg-green-100 dark:bg-green-900/30 text-green-600', desc: 'Analyse de performance' },
                 { name: 'Formation', icon: <Users className="w-6 h-6" />, color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600', desc: 'Support pédagogique' },
@@ -1725,7 +1725,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h4 className="font-medium text-sm">{tpl.name}</h4>
-                                        <p className="text-xs text-gray-500 mt-0.5">{tpl.desc}</p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">{tpl.desc}</p>
                                     </div>
                                 </button>
                             ))}
@@ -1739,17 +1739,17 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         if (actionId === 'slides_import') {
             return (
                 <div className="mt-4 space-y-4">
-                    <div className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center">
-                        <Download className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <div className="border-2 border-dashed border-border dark:border-gray-700 rounded-lg p-8 text-center">
+                        <Download className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
                         <h4 className="text-sm font-medium">Glissez un fichier ici</h4>
-                        <p className="text-xs text-gray-500 mt-1">ou cliquez pour parcourir</p>
+                        <p className="text-xs text-muted-foreground mt-1">ou cliquez pour parcourir</p>
                         <input type="file" accept=".pptx,.ppt,.pdf,.key" className="hidden" id="slides-import-input" />
                         <Button variant="outline" className="mt-4" onClick={() => document.getElementById('slides-import-input')?.click()}>
                             Parcourir les fichiers
                         </Button>
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs text-gray-500">Formats supportés</Label>
+                        <Label className="text-xs text-muted-foreground">Formats supportés</Label>
                         <div className="flex gap-2 flex-wrap">
                             <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-600 text-xs rounded">.pptx</span>
                             <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 text-xs rounded">.pdf</span>
@@ -1774,14 +1774,14 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         <Input defaultValue="Copie de Présentation" />
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs text-gray-500">Emplacement</Label>
+                        <Label className="text-xs text-muted-foreground">Emplacement</Label>
                         <div className="flex gap-2">
                             <Input readOnly value="Mon Drive" className="flex-1" />
                             <Button variant="outline">Modifier</Button>
                         </div>
                     </div>
                     <div className="space-y-3">
-                        <Label className="text-xs text-gray-500">Options</Label>
+                        <Label className="text-xs text-muted-foreground">Options</Label>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between p-3 border rounded-lg">
                                 <span className="text-sm">Copier les commentaires</span>
@@ -1821,10 +1821,10 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                                 <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center text-purple-600 text-sm font-medium">V</div>
                                 <div>
                                     <div className="text-sm font-medium">Vous (Propriétaire)</div>
-                                    <div className="text-xs text-gray-500">vous@exemple.com</div>
+                                    <div className="text-xs text-muted-foreground">vous@exemple.com</div>
                                 </div>
                             </div>
-                            <span className="text-xs text-gray-500">Propriétaire</span>
+                            <span className="text-xs text-muted-foreground">Propriétaire</span>
                         </div>
                     </div>
                     <div className="space-y-2">
@@ -1844,10 +1844,10 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         if (actionId === 'slides_insert_image_local') {
             return (
                 <div className="mt-4 space-y-4">
-                    <div className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center">
-                        <Download className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <div className="border-2 border-dashed border-border dark:border-gray-700 rounded-lg p-8 text-center">
+                        <Download className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
                         <h4 className="text-sm font-medium">Glissez une image ici</h4>
-                        <p className="text-xs text-gray-500 mt-1">ou cliquez pour parcourir</p>
+                        <p className="text-xs text-muted-foreground mt-1">ou cliquez pour parcourir</p>
                         <input type="file" accept="image/*" className="hidden" id="image-import-input" />
                         <Button variant="outline" className="mt-4" onClick={() => document.getElementById('image-import-input')?.click()}>
                             Parcourir les fichiers
@@ -1872,9 +1872,9 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         <Label>URL de l'image</Label>
                         <Input placeholder="https://exemple.com/image.png" />
                     </div>
-                    <div className="border rounded-lg p-8 text-center bg-gray-50 dark:bg-[#1a1a1a]">
-                        <Globe className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-                        <p className="text-xs text-gray-500">Aperçu de l'image</p>
+                    <div className="border rounded-lg p-8 text-center bg-muted dark:bg-[#1a1a1a]">
+                        <Globe className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-2" />
+                        <p className="text-xs text-muted-foreground">Aperçu de l'image</p>
                     </div>
                     <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                         <p className="text-xs text-amber-700 dark:text-amber-300">
@@ -1902,10 +1902,10 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                     <div className="border rounded-lg p-4">
                         <div className="grid grid-cols-3 gap-1">
                             {Array.from({ length: 9 }).map((_, i) => (
-                                <div key={i} className={`h-8 rounded ${i < 3 ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-gray-100 dark:bg-gray-800'}`} />
+                                <div key={i} className={`h-8 rounded ${i < 3 ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-muted dark:bg-gray-800'}`} />
                             ))}
                         </div>
-                        <p className="text-xs text-gray-500 text-center mt-2">Aperçu 3x3</p>
+                        <p className="text-xs text-muted-foreground text-center mt-2">Aperçu 3x3</p>
                     </div>
                 </div>
             );
@@ -1925,13 +1925,13 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                     <div className="grid grid-cols-4 gap-3">
                         {chartTypes.map((chart, i) => (
                             <button key={i} className={`flex flex-col items-center gap-2 p-4 border rounded-lg hover:border-blue-500 transition-colors ${i === 0 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''}`}>
-                                <div className="text-gray-600 dark:text-gray-400">{chart.icon}</div>
+                                <div className="text-muted-foreground dark:text-gray-400">{chart.icon}</div>
                                 <span className="text-xs font-medium">{chart.name}</span>
                             </button>
                         ))}
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs text-gray-500">Source de données</Label>
+                        <Label className="text-xs text-muted-foreground">Source de données</Label>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" className="flex-1">Nouvelle</Button>
                             <Button variant="outline" size="sm" className="flex-1">Depuis Sheets</Button>
@@ -1958,7 +1958,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                                 <button key={i} className={`w-full flex items-center justify-between p-3 border rounded-lg hover:border-blue-500 transition-colors text-left ${i === 1 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                                     <div>
                                         <div className="text-sm font-medium">{t.name}</div>
-                                        <div className="text-xs text-gray-500">{t.desc}</div>
+                                        <div className="text-xs text-muted-foreground">{t.desc}</div>
                                     </div>
                                     {i === 1 && <Check className="w-4 h-4 text-blue-500" />}
                                 </button>
@@ -1969,7 +1969,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         <Label>Durée</Label>
                         <div className="flex items-center gap-2">
                             <Input type="range" min={0} max={2} step={0.1} defaultValue={0.5} className="flex-1" />
-                            <span className="text-sm text-gray-500 w-12">0.5s</span>
+                            <span className="text-sm text-muted-foreground w-12">0.5s</span>
                         </div>
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -1984,10 +1984,10 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         if (actionId === 'slides_animations') {
             return (
                 <div className="mt-4 space-y-4">
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-6 text-center">
-                        <Activity className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-6 text-center">
+                        <Activity className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
                         <h4 className="text-sm font-medium">Sélectionnez un objet</h4>
-                        <p className="text-xs text-gray-500 mt-1">Pour ajouter une animation, sélectionnez d'abord un objet sur la diapositive.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Pour ajouter une animation, sélectionnez d'abord un objet sur la diapositive.</p>
                     </div>
                     <div className="space-y-2">
                         <Label>Animations disponibles</Label>
@@ -2029,9 +2029,9 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                             </div>
                         </TabsContent>
                         <TabsContent value="image" className="mt-4">
-                            <div className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-6 text-center">
-                                <Download className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-                                <p className="text-xs text-gray-500">Importer une image de fond</p>
+                            <div className="border-2 border-dashed border-border dark:border-gray-700 rounded-lg p-6 text-center">
+                                <Download className="w-8 h-8 text-gray-300 dark:text-muted-foreground mx-auto mb-2" />
+                                <p className="text-xs text-muted-foreground">Importer une image de fond</p>
                             </div>
                         </TabsContent>
                         <TabsContent value="gradient" className="mt-4">
@@ -2090,7 +2090,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         <textarea className="w-full h-24 px-3 py-2 border rounded-md text-sm resize-none dark:bg-[#1f1f1f]" placeholder="Ex: Une diapositive de titre sur les énergies renouvelables avec des statistiques clés..." />
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs text-gray-500">Type de contenu</Label>
+                        <Label className="text-xs text-muted-foreground">Type de contenu</Label>
                         <div className="grid grid-cols-2 gap-2">
                             <Button variant="outline" size="sm">Titre + Sous-titre</Button>
                             <Button variant="outline" size="sm">Liste à puces</Button>
@@ -2116,7 +2116,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                 <div className="mt-4 space-y-4">
                     <div className="space-y-2">
                         <Label>Texte sélectionné</Label>
-                        <div className="p-3 bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg text-sm text-gray-600 dark:text-gray-400 italic">
+                        <div className="p-3 bg-muted dark:bg-[#1a1a1a] border rounded-lg text-sm text-muted-foreground dark:text-gray-400 italic">
                             Sélectionnez du texte sur la diapositive pour le reformuler.
                         </div>
                     </div>
@@ -2156,7 +2156,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs text-gray-500">Options</Label>
+                        <Label className="text-xs text-muted-foreground">Options</Label>
                         <div className="flex items-center justify-between p-3 border rounded-lg">
                             <span className="text-sm">Traduire toutes les diapositives</span>
                             <Switch />
@@ -2174,13 +2174,13 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
         if (actionId === 'slides_presenter_mode') {
             return (
                 <div className="mt-4 space-y-4">
-                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-6 text-center">
-                        <Eye className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <div className="bg-muted dark:bg-[#1a1a1a] border rounded-lg p-6 text-center">
+                        <Eye className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-3" />
                         <h4 className="text-sm font-medium">Mode Présentateur</h4>
-                        <p className="text-xs text-gray-500 mt-1">Affichez vos notes, la diapositive suivante et un chronomètre sur votre écran.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Affichez vos notes, la diapositive suivante et un chronomètre sur votre écran.</p>
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs text-gray-500">Options</Label>
+                        <Label className="text-xs text-muted-foreground">Options</Label>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between p-3 border rounded-lg">
                                 <span className="text-sm">Afficher le chronomètre</span>
@@ -2219,9 +2219,9 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
                     <ScrollArea className="h-[300px]">
                         <div className="space-y-1">
                             {shortcuts.map((s, i) => (
-                                <div key={i} className="flex items-center justify-between p-2 rounded hover:bg-gray-50 dark:hover:bg-[#1a1a1a]">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">{s.desc}</span>
-                                    <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">{s.key}</kbd>
+                                <div key={i} className="flex items-center justify-between p-2 rounded hover:bg-muted dark:hover:bg-[#1a1a1a]">
+                                    <span className="text-sm text-muted-foreground dark:text-gray-400">{s.desc}</span>
+                                    <kbd className="px-2 py-1 bg-muted dark:bg-gray-800 rounded text-xs font-mono">{s.key}</kbd>
                                 </div>
                             ))}
                         </div>

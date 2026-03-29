@@ -127,7 +127,7 @@ export function LeaveRequest({
                 <SelectItem key={type.value} value={type.value}>
                   <div className="flex flex-col gap-1">
                     <span className="font-medium">{type.label}</span>
-                    <span className="text-xs text-gray-500">{type.description}</span>
+                    <span className="text-xs text-muted-foreground">{type.description}</span>
                   </div>
                 </SelectItem>
               ))}

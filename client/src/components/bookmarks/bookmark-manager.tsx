@@ -98,7 +98,7 @@ export function BookmarkManager() {
 
       <div className="space-y-2">
         {filteredBookmarks.length === 0 ? (
-          <p className="text-center text-gray-500 py-8">
+          <p className="text-center text-muted-foreground py-8">
             {bookmarks.length === 0 ? 'No bookmarks yet' : 'No matching bookmarks'}
           </p>
         ) : (
@@ -117,7 +117,7 @@ export function BookmarkManager() {
                   {bookmark.title}
                   <ExternalLink size={16} />
                 </a>
-                <p className="text-sm text-gray-600 break-all">{bookmark.url}</p>
+                <p className="text-sm text-muted-foreground break-all">{bookmark.url}</p>
                 {bookmark.tags.length > 0 && (
                   <div className="flex gap-2 mt-2 flex-wrap">
                     {bookmark.tags.map((tag, idx) => (

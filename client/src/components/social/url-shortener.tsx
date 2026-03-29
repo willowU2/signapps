@@ -13,6 +13,7 @@ import {
 import { Link, Copy, ExternalLink, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { socialApi, ShortUrl } from '@/lib/api/social';
+import { getServiceBaseUrl, ServiceName } from '@/lib/api/factory';
 
 // ---------------------------------------------------------------------------
 // Types & constants
@@ -83,7 +84,7 @@ export function useUrlShortener(content: string) {
         for (const su of res.data) {
           map[su.originalUrl] = {
             original: su.originalUrl,
-            short: su.shortUrl || `http://localhost:3019/s/${su.shortCode}`,
+            short: su.shortUrl || `${getServiceBaseUrl(ServiceName.SOCIAL)}/s/${su.shortCode}`,
             clicks: su.clicks,
           };
         }
@@ -118,7 +119,7 @@ export function useUrlShortener(content: string) {
         const res = await socialApi.shortUrls.create({ original_url: url });
         const entry: ShortenedEntry = {
           original: url,
-          short: res.data.shortUrl || `http://localhost:3019/s/${res.data.shortCode}`,
+          short: res.data.shortUrl || `${getServiceBaseUrl(ServiceName.SOCIAL)}/s/${res.data.shortCode}`,
           clicks: res.data.clicks,
         };
         setShortenedMap((prev) => ({ ...prev, [url]: entry }));
@@ -143,7 +144,7 @@ export function useUrlShortener(content: string) {
           const res = await socialApi.shortUrls.create({ original_url: url });
           currentMap[url] = {
             original: url,
-            short: res.data.shortUrl || `http://localhost:3019/s/${res.data.shortCode}`,
+            short: res.data.shortUrl || `${getServiceBaseUrl(ServiceName.SOCIAL)}/s/${res.data.shortCode}`,
             clicks: res.data.clicks,
           };
         }

@@ -24,7 +24,7 @@ interface ExpenseListProps {
 }
 
 const STATUS_COLORS: Record<Expense["status"], string> = {
-  Draft: "bg-gray-100 text-gray-700",
+  Draft: "bg-muted text-muted-foreground",
   Submitted: "bg-blue-100 text-blue-700",
   Approved: "bg-green-100 text-green-700",
   Rejected: "bg-red-100 text-red-700",
@@ -55,15 +55,15 @@ export function ExpenseList({
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-4">
-          <p className="text-sm text-gray-600">Total</p>
+          <p className="text-sm text-muted-foreground">Total</p>
           <p className="text-2xl font-bold">{total.toFixed(2)}€</p>
         </Card>
         <Card className="p-4">
-          <p className="text-sm text-gray-600">Approuvé</p>
+          <p className="text-sm text-muted-foreground">Approuvé</p>
           <p className="text-2xl font-bold text-green-600">{approved.toFixed(2)}€</p>
         </Card>
         <Card className="p-4">
-          <p className="text-sm text-gray-600">Attente</p>
+          <p className="text-sm text-muted-foreground">Attente</p>
           <p className="text-2xl font-bold text-blue-600">{pending.toFixed(2)}€</p>
         </Card>
       </div>
@@ -83,7 +83,7 @@ export function ExpenseList({
           <TableBody>
             {expenses.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   Aucune note
                 </TableCell>
               </TableRow>

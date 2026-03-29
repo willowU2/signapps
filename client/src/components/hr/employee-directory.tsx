@@ -53,10 +53,10 @@ export function EmployeeDirectory() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Annuaire des employés</h2>
-          <p className="text-gray-600">Fiches employés avec photo, rôle, département et contact</p>
+          <h2 className="text-2xl font-bold text-foreground">Annuaire des employés</h2>
+          <p className="text-muted-foreground">Fiches employés avec photo, rôle, département et contact</p>
         </div>
-        <span className="text-sm text-gray-500 font-medium">{filtered.length} / {EMPLOYEES.length} employés</span>
+        <span className="text-sm text-muted-foreground font-medium">{filtered.length} / {EMPLOYEES.length} employés</span>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -78,46 +78,46 @@ export function EmployeeDirectory() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filtered.map(emp => (
-          <div key={emp.id} onClick={() => setSelected(emp)} className="rounded-xl border bg-white p-4 cursor-pointer hover:shadow-md transition-shadow hover:border-blue-200">
+          <div key={emp.id} onClick={() => setSelected(emp)} className="rounded-xl border bg-card p-4 cursor-pointer hover:shadow-md transition-shadow hover:border-blue-200">
             <div className="flex items-start justify-between mb-3">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
                 {emp.name.split(" ").map(w => w[0]).slice(0, 2).join("")}
               </div>
               <div className="flex items-center gap-1.5">
                 <div className={`w-2 h-2 rounded-full ${STATUS_CONFIG[emp.status].color}`} />
-                <span className="text-xs text-gray-500">{STATUS_CONFIG[emp.status].label}</span>
+                <span className="text-xs text-muted-foreground">{STATUS_CONFIG[emp.status].label}</span>
               </div>
             </div>
             <div>
-              <p className="font-semibold text-gray-900">{emp.name}</p>
-              <p className="text-sm text-gray-600">{emp.role}</p>
+              <p className="font-semibold text-foreground">{emp.name}</p>
+              <p className="text-sm text-muted-foreground">{emp.role}</p>
               <div className="flex items-center gap-1 mt-1">
                 <Building2 className="w-3.5 h-3.5 text-gray-400" />
-                <span className="text-xs text-gray-500">{emp.department} · {emp.location}</span>
+                <span className="text-xs text-muted-foreground">{emp.department} · {emp.location}</span>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-1">
               {emp.skills.slice(0, 2).map(s => (
-                <span key={s} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{s}</span>
+                <span key={s} className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{s}</span>
               ))}
-              {emp.skills.length > 2 && <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">+{emp.skills.length - 2}</span>}
+              {emp.skills.length > 2 && <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">+{emp.skills.length - 2}</span>}
             </div>
             <div className="mt-3 pt-3 border-t flex gap-2">
               <a href={`mailto:${emp.email}`} onClick={e => e.stopPropagation()} className="flex-1 flex items-center justify-center gap-1 text-xs text-blue-600 hover:text-blue-800 py-1 rounded hover:bg-blue-50">
                 <Mail className="w-3.5 h-3.5" /> Email
               </a>
-              <a href={`tel:${emp.phone}`} onClick={e => e.stopPropagation()} className="flex-1 flex items-center justify-center gap-1 text-xs text-gray-600 hover:text-gray-800 py-1 rounded hover:bg-gray-50">
+              <a href={`tel:${emp.phone}`} onClick={e => e.stopPropagation()} className="flex-1 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-gray-800 py-1 rounded hover:bg-muted">
                 <Phone className="w-3.5 h-3.5" /> Appeler
               </a>
             </div>
           </div>
         ))}
-        {filtered.length === 0 && <p className="col-span-full text-center text-gray-500 py-8">Aucun employé trouvé</p>}
+        {filtered.length === 0 && <p className="col-span-full text-center text-muted-foreground py-8">Aucun employé trouvé</p>}
       </div>
 
       {selected && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setSelected(null)}>
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl" onClick={e => e.stopPropagation()}>
+          <div className="bg-card rounded-2xl p-6 max-w-md w-full shadow-xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-start gap-4">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">
                 {selected.name.split(" ").map(w => w[0]).slice(0, 2).join("")}
@@ -125,26 +125,26 @@ export function EmployeeDirectory() {
               <div className="flex-1">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900">{selected.name}</h3>
-                    <p className="text-gray-600">{selected.role}</p>
+                    <h3 className="text-xl font-bold text-foreground">{selected.name}</h3>
+                    <p className="text-muted-foreground">{selected.role}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <div className={`w-2 h-2 rounded-full ${STATUS_CONFIG[selected.status].color}`} />
-                      <span className="text-sm text-gray-500">{STATUS_CONFIG[selected.status].label}</span>
+                      <span className="text-sm text-muted-foreground">{STATUS_CONFIG[selected.status].label}</span>
                     </div>
                   </div>
-                  <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+                  <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-muted-foreground text-2xl leading-none">&times;</button>
                 </div>
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-              <div><span className="text-gray-500">Département</span><p className="font-medium">{selected.department}</p></div>
-              <div><span className="text-gray-500">Site</span><p className="font-medium">{selected.location}</p></div>
-              <div><span className="text-gray-500">Email</span><a href={`mailto:${selected.email}`} className="font-medium text-blue-600 hover:underline flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{selected.email}</a></div>
-              <div><span className="text-gray-500">Téléphone</span><p className="font-medium">{selected.phone}</p></div>
-              <div><span className="text-gray-500">Arrivée</span><p className="font-medium">{selected.joinDate}</p></div>
+              <div><span className="text-muted-foreground">Département</span><p className="font-medium">{selected.department}</p></div>
+              <div><span className="text-muted-foreground">Site</span><p className="font-medium">{selected.location}</p></div>
+              <div><span className="text-muted-foreground">Email</span><a href={`mailto:${selected.email}`} className="font-medium text-blue-600 hover:underline flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{selected.email}</a></div>
+              <div><span className="text-muted-foreground">Téléphone</span><p className="font-medium">{selected.phone}</p></div>
+              <div><span className="text-muted-foreground">Arrivée</span><p className="font-medium">{selected.joinDate}</p></div>
             </div>
             <div className="mt-4">
-              <p className="text-sm text-gray-500 mb-2">Compétences</p>
+              <p className="text-sm text-muted-foreground mb-2">Compétences</p>
               <div className="flex flex-wrap gap-1.5">
                 {selected.skills.map(s => <span key={s} className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">{s}</span>)}
               </div>

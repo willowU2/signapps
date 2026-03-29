@@ -82,17 +82,17 @@ export function MailClassifier({ emails = [], onCategoryChange }: MailClassifier
       <CardContent>
         <div className="space-y-3 max-h-96 overflow-y-auto">
           {items.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-8">No emails to classify</p>
+            <p className="text-sm text-muted-foreground text-center py-8">No emails to classify</p>
           ) : (
             items.map((email) => (
               <div
                 key={email.id}
-                className="p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                className="p-3 border rounded-lg hover:bg-muted transition-colors"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{email.subject}</p>
-                    <p className="text-xs text-gray-500">{email.from}</p>
+                    <p className="text-xs text-muted-foreground">{email.from}</p>
                   </div>
                   <div className="ml-2 flex-shrink-0">
                     {email.category && (
@@ -102,7 +102,7 @@ export function MailClassifier({ emails = [], onCategoryChange }: MailClassifier
                     )}
                   </div>
                 </div>
-                <p className="text-xs text-gray-600 mb-2 line-clamp-2">{email.preview}</p>
+                <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{email.preview}</p>
                 {!email.category && (
                   <div className="flex gap-1 flex-wrap">
                     {CATEGORIES.map((cat) => (

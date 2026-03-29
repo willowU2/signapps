@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { getServiceUrl, ServiceName } from "@/lib/api/factory";
 
 const PLATFORM_COLORS: Record<string, string> = {
   twitter: "#1DA1F2",
@@ -95,7 +96,7 @@ export function BestTimeAnalyzer({ onSchedule }: BestTimeAnalyzerProps) {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3019/api/v1/social/ai/best-time");
+      const res = await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/ai/best-time`);
       if (!res.ok) throw new Error("Not available");
       const json = await res.json();
       const parsed: Record<string, BestTimeData> = {};

@@ -71,9 +71,9 @@ export default function ReturnsManager() {
       case "approved":
         return "bg-yellow-100 text-yellow-700";
       case "pending":
-        return "bg-gray-100 text-gray-700";
+        return "bg-muted text-muted-foreground";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -91,7 +91,7 @@ export default function ReturnsManager() {
       </div>
 
       {showForm && (
-        <div className="rounded-lg border bg-gray-50 p-4">
+        <div className="rounded-lg border bg-muted p-4">
           <h3 className="mb-4 font-semibold">Create Return Request</h3>
           <div className="space-y-3">
             <div>
@@ -126,7 +126,7 @@ export default function ReturnsManager() {
                   setShowForm(false);
                   setFormData({ reason: "", items: "" });
                 }}
-                className="rounded bg-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-400"
+                className="rounded bg-gray-300 px-4 py-2 text-sm text-muted-foreground hover:bg-gray-400"
               >
                 Cancel
               </button>
@@ -147,14 +147,14 @@ export default function ReturnsManager() {
                   <RotateCcw className="h-5 w-5 text-red-500 mt-1" />
                   <div>
                     <p className="font-semibold">{ret.rmaNumber}</p>
-                    <p className="text-sm text-gray-600">Reason: {ret.reason}</p>
+                    <p className="text-sm text-muted-foreground">Reason: {ret.reason}</p>
                     <p className="mt-2 text-sm font-medium">Items:</p>
-                    <ul className="ml-4 list-disc text-sm text-gray-600">
+                    <ul className="ml-4 list-disc text-sm text-muted-foreground">
                       {ret.items.map((item, idx) => (
                         <li key={idx}>{item}</li>
                       ))}
                     </ul>
-                    <p className="mt-2 text-xs text-gray-500">Submitted: {ret.date}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">Submitted: {ret.date}</p>
                   </div>
                 </div>
                 <span className={`rounded px-3 py-1 text-xs font-semibold ${getStatusColor(ret.status)}`}>

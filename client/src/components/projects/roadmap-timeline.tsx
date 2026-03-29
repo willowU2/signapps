@@ -62,7 +62,7 @@ const QUARTERS = ["2026-Q1", "2026-Q2", "2026-Q3", "2026-Q4"];
 
 const STATUS_CONFIG = {
   planned: {
-    diamond: "border-2 border-gray-300 bg-gray-50",
+    diamond: "border-2 border-border bg-muted",
     label: "Planifié",
   },
   "in-progress": {

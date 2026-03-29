@@ -70,8 +70,8 @@ export function TrainingCertificationManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Formations & Certifications</h2>
-          <p className="text-gray-600">Suivi des cours, dates d'expiration et rappels</p>
+          <h2 className="text-2xl font-bold text-foreground">Formations & Certifications</h2>
+          <p className="text-muted-foreground">Suivi des cours, dates d'expiration et rappels</p>
         </div>
         <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
           <Plus className="w-4 h-4" /> Ajouter
@@ -81,15 +81,15 @@ export function TrainingCertificationManagement() {
       <div className="grid grid-cols-4 gap-4">
         {(Object.entries(counts) as [CertStatus, number][]).map(([status, count]) => (
           <div key={status} className={`rounded-lg border p-4 cursor-pointer ${certFilter === status ? "ring-2 ring-blue-500" : ""}`} onClick={() => setCertFilter(s => s === status ? "all" : status)}>
-            <div className="flex items-center gap-2 mb-1">{STATUS_CONFIG[status].icon}<span className="text-xs font-medium text-gray-600">{STATUS_CONFIG[status].label}</span></div>
-            <p className="text-2xl font-bold text-gray-900">{count}</p>
+            <div className="flex items-center gap-2 mb-1">{STATUS_CONFIG[status].icon}<span className="text-xs font-medium text-muted-foreground">{STATUS_CONFIG[status].label}</span></div>
+            <p className="text-2xl font-bold text-foreground">{count}</p>
           </div>
         ))}
       </div>
 
       <div className="flex gap-2 border-b">
         {(["certs", "trainings"] as const).map(t => (
-          <button key={t} onClick={() => setActiveTab(t)} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === t ? "border-blue-600 text-blue-600" : "border-transparent text-gray-600 hover:text-gray-900"}`}>
+          <button key={t} onClick={() => setActiveTab(t)} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === t ? "border-blue-600 text-blue-600" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             {t === "certs" ? "Certifications" : "Formations planifiées"}
           </button>
         ))}
@@ -106,21 +106,21 @@ export function TrainingCertificationManagement() {
                   <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Catégorie</th>
                   <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Émission</th>
                   <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Expiration</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Statut</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Oblig.</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Statut</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Oblig.</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {filtered.map(cert => (
-                  <tr key={cert.id} className={`hover:bg-gray-50 ${cert.status === "expired" ? "bg-red-50/50" : cert.status === "expiring" ? "bg-amber-50/50" : ""}`}>
-                    <td className="px-4 py-3 font-medium text-gray-900">{cert.employeeName}</td>
+                  <tr key={cert.id} className={`hover:bg-muted ${cert.status === "expired" ? "bg-red-50/50" : cert.status === "expiring" ? "bg-amber-50/50" : ""}`}>
+                    <td className="px-4 py-3 font-medium text-foreground">{cert.employeeName}</td>
                     <td className="px-4 py-3">
-                      <p className="font-medium text-gray-900">{cert.certName}</p>
-                      <p className="text-xs text-gray-500">{cert.provider}</p>
+                      <p className="font-medium text-foreground">{cert.certName}</p>
+                      <p className="text-xs text-muted-foreground">{cert.provider}</p>
                     </td>
-                    <td className="px-4 py-3"><span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{cert.category}</span></td>
-                    <td className="px-4 py-3 text-gray-600">{cert.issueDate}</td>
-                    <td className="px-4 py-3 text-gray-600">{cert.expiryDate || "—"}</td>
+                    <td className="px-4 py-3"><span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{cert.category}</span></td>
+                    <td className="px-4 py-3 text-muted-foreground">{cert.issueDate}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{cert.expiryDate || "—"}</td>
                     <td className="px-4 py-3">
                       <span className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full w-fit ${STATUS_CONFIG[cert.status].color}`}>
                         {STATUS_CONFIG[cert.status].icon}
@@ -139,29 +139,29 @@ export function TrainingCertificationManagement() {
       {activeTab === "trainings" && (
         <div className="grid sm:grid-cols-2 gap-4">
           {TRAININGS.map(t => (
-            <div key={t.id} className="rounded-lg border bg-white p-4 hover:shadow-md transition-shadow">
+            <div key={t.id} className="rounded-lg border bg-card p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <p className="font-semibold text-gray-900">{t.title}</p>
-                  <p className="text-sm text-gray-500">{t.provider} · {t.duration}</p>
+                  <p className="font-semibold text-foreground">{t.title}</p>
+                  <p className="text-sm text-muted-foreground">{t.provider} · {t.duration}</p>
                 </div>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${t.status === "full" ? "bg-red-100 text-red-700" : t.status === "completed" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
                   {t.status === "full" ? "Complet" : t.status === "completed" ? "Terminé" : "Ouvert"}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                <span className="bg-gray-100 px-2 py-0.5 rounded">{t.category}</span>
+              <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
+                <span className="bg-muted px-2 py-0.5 rounded">{t.category}</span>
                 <span>Échéance : {t.dueDate}</span>
               </div>
               <div className="space-y-1">
-                <div className="flex justify-between text-xs text-gray-600">
+                <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Inscrits</span><span>{t.enrolledCount}/{t.maxCapacity}</span>
                 </div>
-                <div className="h-1.5 rounded-full bg-gray-100">
+                <div className="h-1.5 rounded-full bg-muted">
                   <div className="h-full rounded-full bg-blue-500" style={{ width: `${(t.enrolledCount / t.maxCapacity) * 100}%` }} />
                 </div>
               </div>
-              <button disabled={t.status === "full"} className="mt-3 w-full py-1.5 rounded-lg text-sm font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-200 disabled:text-gray-500">
+              <button disabled={t.status === "full"} className="mt-3 w-full py-1.5 rounded-lg text-sm font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-200 disabled:text-muted-foreground">
                 {t.status === "full" ? "Complet" : "S'inscrire"}
               </button>
             </div>

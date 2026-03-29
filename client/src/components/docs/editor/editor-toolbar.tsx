@@ -440,7 +440,7 @@ export function EditorToolbar({
                             {TEXT_COLORS.map((color) => (
                                 <button
                                     key={color.value}
-                                    className={`w-6 h-6 rounded-sm border hover:scale-110 transition-transform ${currentTextColor === color.value ? 'ring-2 ring-primary' : 'border-gray-200'}`}
+                                    className={`w-6 h-6 rounded-sm border hover:scale-110 transition-transform ${currentTextColor === color.value ? 'ring-2 ring-primary' : 'border-border'}`}
                                     style={{ backgroundColor: color.value }}
                                     onClick={() => handleTextColorChange(color.value)}
                                     title={color.label}
@@ -448,7 +448,7 @@ export function EditorToolbar({
                             ))}
                         </div>
                         <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                            <span className="text-xs font-medium text-gray-500">Couleur</span>
+                            <span className="text-xs font-medium text-muted-foreground">Couleur</span>
                             <input 
                                 type="color" 
                                 className="w-6 h-6 p-0 border-0 rounded cursor-pointer bg-transparent"
@@ -478,14 +478,14 @@ export function EditorToolbar({
                             {HIGHLIGHT_COLORS.map((color) => (
                                 <button
                                     key={color.value}
-                                    className={`w-6 h-6 rounded-sm border hover:scale-110 transition-transform ${currentHighlightColor === color.value ? 'ring-2 ring-primary' : 'border-gray-200'}`}
+                                    className={`w-6 h-6 rounded-sm border hover:scale-110 transition-transform ${currentHighlightColor === color.value ? 'ring-2 ring-primary' : 'border-border'}`}
                                     style={{ backgroundColor: color.value }}
                                     onClick={() => handleHighlightChange(color.value)}
                                     title={color.label}
                                 />
                             ))}
                             <button
-                                className="w-6 h-6 rounded-sm border border-gray-200 hover:scale-110 transition-transform flex items-center justify-center text-xs"
+                                className="w-6 h-6 rounded-sm border border-border hover:scale-110 transition-transform flex items-center justify-center text-xs"
                                 onClick={() => handleHighlightChange(null)}
                                 title="Supprimer le surlignage"
                             >
@@ -493,7 +493,7 @@ export function EditorToolbar({
                             </button>
                         </div>
                         <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                            <span className="text-xs font-medium text-gray-500">Surlignage</span>
+                            <span className="text-xs font-medium text-muted-foreground">Surlignage</span>
                             <input 
                                 type="color" 
                                 className="w-6 h-6 p-0 border-0 rounded cursor-pointer bg-transparent"

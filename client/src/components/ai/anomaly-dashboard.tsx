@@ -179,7 +179,7 @@ Format as a clear, actionable report.`,
       case 'high':
         return 'bg-orange-500 text-white';
       case 'medium':
-        return 'bg-yellow-500 text-black';
+        return 'bg-yellow-500 text-foreground';
       case 'low':
         return 'bg-blue-500 text-white';
     }

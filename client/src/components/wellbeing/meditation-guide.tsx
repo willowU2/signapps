@@ -63,7 +63,7 @@ export default function MeditationGuide() {
       {/* Session Controls */}
       <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-200">
         <div className="text-center mb-6">
-          <h3 className="text-sm text-gray-600 mb-2">Session Duration</h3>
+          <h3 className="text-sm text-muted-foreground mb-2">Session Duration</h3>
           <div className="flex justify-center gap-2">
             {durations.map((d) => (
               <button
@@ -76,7 +76,7 @@ export default function MeditationGuide() {
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
                   duration === d
                     ? "bg-purple-600 text-white"
-                    : "bg-white border border-purple-200 text-purple-600 hover:bg-purple-50"
+                    : "bg-card border border-purple-200 text-purple-600 hover:bg-purple-50"
                 }`}
               >
                 {d}m
@@ -86,7 +86,7 @@ export default function MeditationGuide() {
         </div>
 
         <div className="text-center">
-          <p className="text-sm text-gray-600 mb-2">Time Elapsed</p>
+          <p className="text-sm text-muted-foreground mb-2">Time Elapsed</p>
           <div className="text-5xl font-bold text-purple-600 font-mono mb-4">
             {formatTime(timeElapsed)}
           </div>
@@ -129,7 +129,7 @@ export default function MeditationGuide() {
             />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <p className="text-sm font-medium text-gray-700 capitalize">{breathPhase}</p>
+                <p className="text-sm font-medium text-muted-foreground capitalize">{breathPhase}</p>
               </div>
             </div>
           </div>
@@ -150,7 +150,7 @@ export default function MeditationGuide() {
               className={`p-3 rounded-lg border-2 transition-all text-center ${
                 selectedSound === sound.id
                   ? "border-purple-500 bg-purple-50"
-                  : "border-gray-200 bg-white hover:border-purple-300"
+                  : "border-border bg-card hover:border-purple-300"
               }`}
             >
               <p className="text-2xl mb-1">{sound.icon}</p>

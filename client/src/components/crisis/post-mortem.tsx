@@ -111,15 +111,15 @@ export function PostMortem() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{report.title}</h2>
-          <p className="text-gray-600">
+          <h2 className="text-2xl font-bold text-foreground">{report.title}</h2>
+          <p className="text-muted-foreground">
             {new Date(report.date).toLocaleDateString()}
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="px-4 py-2 rounded border border-gray-300 text-gray-700 font-medium hover:bg-gray-50"
+            className="px-4 py-2 rounded border border-border text-muted-foreground font-medium hover:bg-muted"
           >
             {isEditing ? "View" : "Edit"}
           </button>
@@ -133,7 +133,7 @@ export function PostMortem() {
       <div className="grid grid-cols-1 gap-6">
         {/* Timeline Section */}
         <div className="border rounded-lg p-6 bg-background">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Incident Timeline</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Incident Timeline</h3>
           <div className="space-y-4">
             {report.timeline.map((event, idx) => (
               <div key={event.id} className="flex gap-4">
@@ -144,10 +144,10 @@ export function PostMortem() {
                   )}
                 </div>
                 <div className="pb-4">
-                  <p className="font-mono text-sm font-semibold text-gray-900">
+                  <p className="font-mono text-sm font-semibold text-foreground">
                     {event.time}
                   </p>
-                  <p className="text-gray-700">{event.description}</p>
+                  <p className="text-muted-foreground">{event.description}</p>
                 </div>
               </div>
             ))}
@@ -156,14 +156,14 @@ export function PostMortem() {
 
         {/* Root Causes Section */}
         <div className="border rounded-lg p-6 bg-background">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Root Causes</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Root Causes</h3>
           <div className="space-y-2">
             {report.rootCauses.map((cause, idx) => (
               <div
                 key={idx}
                 className="flex items-start justify-between p-3 bg-red-50 rounded border border-red-200"
               >
-                <p className="text-gray-900">{cause}</p>
+                <p className="text-foreground">{cause}</p>
                 {isEditing && (
                   <button
                     onClick={() => removeRootCause(idx)}
@@ -197,7 +197,7 @@ export function PostMortem() {
 
         {/* Actions Taken Section */}
         <div className="border rounded-lg p-6 bg-background">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions Taken</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Actions Taken</h3>
           <div className="space-y-2">
             {report.actionsTaken.map((action, idx) => (
               <div
@@ -206,7 +206,7 @@ export function PostMortem() {
               >
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-gray-900">{action}</p>
+                  <p className="text-foreground">{action}</p>
                 </div>
                 {isEditing && (
                   <button
@@ -241,14 +241,14 @@ export function PostMortem() {
 
         {/* Lessons Learned Section */}
         <div className="border rounded-lg p-6 bg-background">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Lessons Learned</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Lessons Learned</h3>
           <div className="space-y-2">
             {report.lessonsLearned.map((lesson, idx) => (
               <div
                 key={idx}
                 className="flex items-start justify-between p-3 bg-yellow-50 rounded border border-yellow-200"
               >
-                <p className="text-gray-900">{lesson}</p>
+                <p className="text-foreground">{lesson}</p>
                 {isEditing && (
                   <button
                     onClick={() => removeLesson(idx)}

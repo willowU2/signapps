@@ -65,19 +65,19 @@ export function FinancialConsolidation() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="border rounded-lg p-4 bg-blue-50">
-          <p className="text-sm text-gray-600 mb-1">Total Revenue</p>
+          <p className="text-sm text-muted-foreground mb-1">Total Revenue</p>
           <p className="text-2xl font-bold text-blue-700">{formatCurrency(consolidated.totalRevenue)}</p>
         </div>
         <div className="border rounded-lg p-4 bg-red-50">
-          <p className="text-sm text-gray-600 mb-1">Total Expenses</p>
+          <p className="text-sm text-muted-foreground mb-1">Total Expenses</p>
           <p className="text-2xl font-bold text-red-700">{formatCurrency(consolidated.totalExpenses)}</p>
         </div>
         <div className="border rounded-lg p-4 bg-green-50">
-          <p className="text-sm text-gray-600 mb-1">Net Profit</p>
+          <p className="text-sm text-muted-foreground mb-1">Net Profit</p>
           <p className="text-2xl font-bold text-green-700">{formatCurrency(consolidated.netProfit)}</p>
         </div>
         <div className="border rounded-lg p-4 bg-purple-50">
-          <p className="text-sm text-gray-600 mb-1">Profit Margin</p>
+          <p className="text-sm text-muted-foreground mb-1">Profit Margin</p>
           <p className="text-2xl font-bold text-purple-700">{consolidated.profitMargin}%</p>
         </div>
       </div>
@@ -96,7 +96,7 @@ export function FinancialConsolidation() {
             </thead>
             <tbody>
               {sites.map((site, index) => (
-                <tr key={index} className="border-b hover:bg-gray-50">
+                <tr key={index} className="border-b hover:bg-muted">
                   <td className="p-3 font-medium">{site.siteName}</td>
                   <td className="text-right p-3 text-green-700 font-semibold">
                     {formatCurrency(site.revenue)}
@@ -123,7 +123,7 @@ export function FinancialConsolidation() {
         </div>
       </div>
 
-      <div className="border rounded-lg p-4 bg-gray-50">
+      <div className="border rounded-lg p-4 bg-muted">
         <h3 className="font-semibold mb-3">Consolidated P&L Statement</h3>
         <div className="space-y-2 font-mono text-sm">
           <div className="flex justify-between">
@@ -138,7 +138,7 @@ export function FinancialConsolidation() {
             <span>Net Profit:</span>
             <span className="text-green-700">{formatCurrency(consolidated.netProfit)}</span>
           </div>
-          <div className="flex justify-between text-gray-600">
+          <div className="flex justify-between text-muted-foreground">
             <span>Profit Margin:</span>
             <span>{consolidated.profitMargin}%</span>
           </div>

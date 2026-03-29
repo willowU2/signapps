@@ -257,7 +257,7 @@ export function DriveRightSidebar() {
                                             {note.title && <h4 className="font-medium text-[14px] text-[#202124] dark:text-[#e8eaed] mb-1">{note.title}</h4>}
                                             <p className="text-[13px] text-[#444746] dark:text-[#bdc1c6] whitespace-pre-wrap">{note.content}</p>
                                             <button 
-                                                className="absolute top-2 right-2 p-1.5 bg-background dark:bg-[#202124] rounded-full opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-[#3c4043] transition-all"
+                                                className="absolute top-2 right-2 p-1.5 bg-background dark:bg-[#202124] rounded-full opacity-0 group-hover:opacity-100 hover:bg-muted dark:hover:bg-[#3c4043] transition-all"
                                                 onClick={() => handleDeleteNote(note.id)}
                                             >
                                                 <Trash2 className="w-3.5 h-3.5 text-[#5f6368]" />

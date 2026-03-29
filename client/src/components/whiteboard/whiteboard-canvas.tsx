@@ -132,15 +132,15 @@ export const WhiteboardCanvas: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 bg-gray-50 rounded-lg shadow-sm">
-      <div className="flex flex-wrap gap-2 items-center bg-white p-3 rounded-md border border-gray-200">
-        <div className="flex gap-1 border-r border-gray-300 pr-2">
+    <div className="flex flex-col gap-4 p-4 bg-muted rounded-lg shadow-sm">
+      <div className="flex flex-wrap gap-2 items-center bg-card p-3 rounded-md border border-border">
+        <div className="flex gap-1 border-r border-border pr-2">
           {(["pen", "rectangle", "circle", "text", "eraser"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTool(t)}
               className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
-                tool === t ? "bg-blue-500 text-white" : "bg-gray-100 hover:bg-gray-200"
+                tool === t ? "bg-blue-500 text-white" : "bg-muted hover:bg-gray-200"
               }`}
             >
               {t[0].toUpperCase() + t.slice(1)}
@@ -148,12 +148,12 @@ export const WhiteboardCanvas: React.FC = () => {
           ))}
         </div>
 
-        <div className="flex gap-1 border-r border-gray-300 pr-2">
+        <div className="flex gap-1 border-r border-border pr-2">
           {COLORS.map((c) => (
             <button
               key={c}
               onClick={() => setColor(c)}
-              className={`w-6 h-6 rounded border-2 ${color === c ? "border-gray-800" : "border-gray-300"}`}
+              className={`w-6 h-6 rounded border-2 ${color === c ? "border-gray-800" : "border-border"}`}
               style={{ backgroundColor: c }}
             />
           ))}
@@ -162,7 +162,7 @@ export const WhiteboardCanvas: React.FC = () => {
         <select
           value={strokeWidth}
           onChange={(e) => setStrokeWidth(Number(e.target.value))}
-          className="px-2 py-1 text-sm border border-gray-300 rounded"
+          className="px-2 py-1 text-sm border border-border rounded"
         >
           {STROKE_WIDTHS.map((w) => (
             <option key={w} value={w}>{w}px</option>
@@ -190,7 +190,7 @@ export const WhiteboardCanvas: React.FC = () => {
         ref={canvasRef}
         width="800"
         height="600"
-        className="border-2 border-gray-300 bg-white rounded-md cursor-crosshair shadow-md"
+        className="border-2 border-border bg-card rounded-md cursor-crosshair shadow-md"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

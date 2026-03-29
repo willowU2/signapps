@@ -60,7 +60,7 @@ export function CalendarSidebar({
                 <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#5f6368] pointer-events-none" />
                 <Input 
                    placeholder="Rechercher des co..." 
-                   className="pl-9 h-9 border-none bg-gray-100/50 hover:bg-gray-100 focus:bg-background focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded text-sm placeholder:text-[#5f6368] shadow-none"
+                   className="pl-9 h-9 border-none bg-muted/50 hover:bg-muted focus:bg-background focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded text-sm placeholder:text-[#5f6368] shadow-none"
                 />
              </div>
           </div>
@@ -68,19 +68,19 @@ export function CalendarSidebar({
           {/* Side Panels area (Mocking the Checkbox lists) */}
           <div className="flex-1 overflow-y-auto w-[240px] px-1 mt-4">
              {/* Accordion 1 */}
-             <div className="flex items-center justify-between py-2 px-2 hover:bg-gray-50 rounded cursor-pointer group">
+             <div className="flex items-center justify-between py-2 px-2 hover:bg-muted rounded cursor-pointer group">
                 <span className="text-sm font-medium text-[#3c4043]">Plages de réservation</span>
                 <ChevronDown className="h-4 w-4 text-[#5f6368] opacity-0 group-hover:opacity-100" />
              </div>
              
              {/* Accordion 2 */}
-             <div className="flex items-center justify-between py-2 px-2 hover:bg-gray-50 rounded cursor-pointer group mt-2">
+             <div className="flex items-center justify-between py-2 px-2 hover:bg-muted rounded cursor-pointer group mt-2">
                 <span className="text-sm font-medium text-[#3c4043]">Mes agendas</span>
                 <ChevronDown className="h-4 w-4 text-[#5f6368] opacity-0 group-hover:opacity-100" />
              </div>
              <div className="flex flex-col gap-1 px-2 mt-1">
                 {calendars.map((calendar) => (
-                  <label key={calendar.id} className="flex items-center gap-3 py-1 cursor-pointer group rounded hover:bg-gray-50 -mx-1 px-1">
+                  <label key={calendar.id} className="flex items-center gap-3 py-1 cursor-pointer group rounded hover:bg-muted -mx-1 px-1">
                     <div className="relative flex items-center justify-center">
                         <input type="checkbox" className="peer appearance-none w-4 h-4 border-2 rounded-[3px] border-[#5f6368] checked:border-transparent checked:bg-current transition-colors" style={{color: calendar.color || '#3b82f6'}} checked={selectedCalendarId === calendar.id} onChange={() => onSelectCalendar(calendar.id)} />
                         <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>

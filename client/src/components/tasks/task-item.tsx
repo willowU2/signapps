@@ -51,7 +51,7 @@ function getFileIcon(fileName: string) {
     if (['pdf', 'doc', 'docx', 'txt'].includes(ext || '')) {
         return <FileText className="w-3 h-3 text-red-500" />;
     }
-    return <File className="w-3 h-3 text-gray-500" />;
+    return <File className="w-3 h-3 text-muted-foreground" />;
 }
 
 export function TaskItem({ task, onToggle, onRemove, onRemoveFile }: TaskItemProps) {
@@ -141,7 +141,7 @@ export function TaskItem({ task, onToggle, onRemove, onRemoveFile }: TaskItemPro
                                 dueInfo.isOverdue && !task.done
                                     ? "bg-destructive/10 text-destructive border border-destructive/20"
                                     : task.done
-                                        ? "bg-gray-100 text-gray-400"
+                                        ? "bg-muted text-gray-400"
                                         : "bg-primary/10 text-primary border border-primary/20"
                             )}>
                                 <Calendar className="w-3.5 h-3.5" />

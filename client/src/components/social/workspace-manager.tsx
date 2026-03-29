@@ -303,7 +303,7 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
       case 'admin':
         return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
       default:
-        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+        return 'bg-muted text-muted-foreground dark:bg-gray-800 dark:text-gray-300';
     }
   };
 

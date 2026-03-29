@@ -98,8 +98,8 @@ export function AnnualReview() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Annual Review</h2>
-          <p className="text-gray-600">
+          <h2 className="text-2xl font-bold text-foreground">Annual Review</h2>
+          <p className="text-muted-foreground">
             Performance evaluation and development planning
           </p>
         </div>
@@ -130,18 +130,18 @@ export function AnnualReview() {
         </div>
       </div>
 
-      <div className="border rounded-lg overflow-hidden bg-white">
-        <div className="bg-gray-50 border-b p-4">
-          <h3 className="font-semibold text-gray-900">Performance Objectives</h3>
+      <div className="border rounded-lg overflow-hidden bg-card">
+        <div className="bg-muted border-b p-4">
+          <h3 className="font-semibold text-foreground">Performance Objectives</h3>
         </div>
 
         <div className="divide-y">
           {objectives.map((obj) => (
-            <div key={obj.id} className="p-4 hover:bg-gray-50">
+            <div key={obj.id} className="p-4 hover:bg-muted">
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <p className="font-medium text-gray-900">{obj.title}</p>
-                  <p className="text-sm text-gray-600">{obj.description}</p>
+                  <p className="font-medium text-foreground">{obj.title}</p>
+                  <p className="text-sm text-muted-foreground">{obj.description}</p>
                 </div>
                 <div className="flex-shrink-0 text-right">
                   <span
@@ -175,10 +175,10 @@ export function AnnualReview() {
         </div>
       </div>
 
-      <div className="border rounded-lg overflow-hidden bg-white">
-        <div className="bg-gray-50 border-b p-4 flex items-center gap-2">
-          <FileText className="w-5 h-5 text-gray-700" />
-          <h3 className="font-semibold text-gray-900">Development Plan</h3>
+      <div className="border rounded-lg overflow-hidden bg-card">
+        <div className="bg-muted border-b p-4 flex items-center gap-2">
+          <FileText className="w-5 h-5 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground">Development Plan</h3>
         </div>
 
         <div className="divide-y">
@@ -186,7 +186,7 @@ export function AnnualReview() {
             <div
               key={action.id}
               className={`p-4 cursor-pointer transition-all ${
-                action.completed ? "bg-green-50" : "hover:bg-gray-50"
+                action.completed ? "bg-green-50" : "hover:bg-muted"
               }`}
               onClick={() => handleToggleAction(action.id)}
             >
@@ -195,13 +195,13 @@ export function AnnualReview() {
                   {action.completed ? (
                     <CheckCircle className="w-5 h-5 text-green-600" />
                   ) : (
-                    <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                    <div className="w-5 h-5 rounded-full border-2 border-border" />
                   )}
                 </div>
 
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">{action.action}</p>
-                  <div className="flex gap-4 mt-1 text-xs text-gray-600">
+                  <p className="font-medium text-foreground">{action.action}</p>
+                  <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
                     <span>Due: {action.dueDate}</span>
                     <span>Owner: {action.owner}</span>
                   </div>
@@ -213,8 +213,8 @@ export function AnnualReview() {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="border rounded-lg p-4 bg-white">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="border rounded-lg p-4 bg-card">
+          <label className="block text-sm font-medium text-muted-foreground mb-2">
             Overall Rating
           </label>
           <div className="flex gap-1">
@@ -222,7 +222,7 @@ export function AnnualReview() {
               <button
                 key={star}
                 onClick={() => setOverallRating(star)}
-                className="p-1 hover:bg-gray-100 rounded"
+                className="p-1 hover:bg-muted rounded"
               >
                 <Star
                   className={`w-6 h-6 ${
@@ -236,8 +236,8 @@ export function AnnualReview() {
           </div>
         </div>
 
-        <div className="border rounded-lg p-4 bg-white">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="border rounded-lg p-4 bg-card">
+          <label className="block text-sm font-medium text-muted-foreground mb-2">
             Sign-off
           </label>
           <button
@@ -245,7 +245,7 @@ export function AnnualReview() {
             className={`w-full py-2 rounded-lg font-medium transition-colors ${
               isSigned
                 ? "bg-green-100 text-green-800"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-muted text-muted-foreground hover:bg-gray-200"
             }`}
           >
             {isSigned ? "✓ Signed" : "Sign Review"}
@@ -254,8 +254,8 @@ export function AnnualReview() {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="border rounded-lg p-4 bg-white">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="border rounded-lg p-4 bg-card">
+          <label className="block text-sm font-medium text-muted-foreground mb-2">
             Manager Comments
           </label>
           <textarea
@@ -267,8 +267,8 @@ export function AnnualReview() {
           />
         </div>
 
-        <div className="border rounded-lg p-4 bg-white">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="border rounded-lg p-4 bg-card">
+          <label className="block text-sm font-medium text-muted-foreground mb-2">
             Employee Response
           </label>
           <textarea

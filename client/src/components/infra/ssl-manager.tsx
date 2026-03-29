@@ -57,7 +57,7 @@ function getStatusBadge(status: string) {
     case "expired":
       return "bg-red-100 text-red-700";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "bg-muted text-muted-foreground";
   }
 }
 
@@ -82,8 +82,8 @@ export function SslManager() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">SSL/TLS Certificates</h2>
-          <p className="text-gray-600">Manage and monitor SSL certificates</p>
+          <h2 className="text-2xl font-bold text-foreground">SSL/TLS Certificates</h2>
+          <p className="text-muted-foreground">Manage and monitor SSL certificates</p>
         </div>
         <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex items-center gap-2">
           <Plus className="w-4 h-4" />
@@ -96,25 +96,25 @@ export function SslManager() {
           <table className="w-full text-sm">
             <thead className="bg-muted border-b sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Domain</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Issuer</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Expiry</th>
-                <th className="px-4 py-3 text-center font-semibold text-gray-900">Status</th>
-                <th className="px-4 py-3 text-center font-semibold text-gray-900">Auto-Renew</th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-900">Actions</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">Domain</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">Issuer</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">Expiry</th>
+                <th className="px-4 py-3 text-center font-semibold text-foreground">Status</th>
+                <th className="px-4 py-3 text-center font-semibold text-foreground">Auto-Renew</th>
+                <th className="px-4 py-3 text-right font-semibold text-foreground">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {certs.map((cert) => (
-                <tr key={cert.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{cert.domain}</td>
-                  <td className="px-4 py-3 text-gray-700">{cert.issuer}</td>
+                <tr key={cert.id} className="hover:bg-muted">
+                  <td className="px-4 py-3 font-medium text-foreground">{cert.domain}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{cert.issuer}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col">
-                      <span className="text-gray-900 font-medium">
+                      <span className="text-foreground font-medium">
                         {new Date(cert.expiryDate).toLocaleDateString()}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         {daysUntilExpiry(cert.expiryDate)} days remaining
                       </span>
                     </div>
@@ -151,19 +151,19 @@ export function SslManager() {
 
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">Valid Certs</p>
+          <p className="text-sm text-muted-foreground">Valid Certs</p>
           <p className="text-2xl font-bold text-green-600">
             {certs.filter((c) => c.status === "valid").length}
           </p>
         </div>
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">Expiring Soon</p>
+          <p className="text-sm text-muted-foreground">Expiring Soon</p>
           <p className="text-2xl font-bold text-amber-600">
             {certs.filter((c) => c.status === "expiring").length}
           </p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">Expired</p>
+          <p className="text-sm text-muted-foreground">Expired</p>
           <p className="text-2xl font-bold text-red-600">
             {certs.filter((c) => c.status === "expired").length}
           </p>

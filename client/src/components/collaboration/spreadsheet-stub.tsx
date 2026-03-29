@@ -16,16 +16,16 @@ export function SpreadsheetStub() {
                 </div>
 
                 <div className="text-center space-y-2">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <h3 className="text-lg font-semibold text-foreground dark:text-gray-100">
                         Tableur Collaboratif
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-muted-foreground dark:text-gray-400">
                         Coming Soon
                     </p>
                 </div>
 
                 <div
-                    className="w-full max-w-xs p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900"
+                    className="w-full max-w-xs p-4 border border-border dark:border-gray-700 rounded-lg bg-muted dark:bg-gray-900"
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                 >
@@ -43,7 +43,7 @@ export function SpreadsheetStub() {
                     </div>
                 </div>
 
-                <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs">
+                <p className="text-xs text-muted-foreground dark:text-gray-400 max-w-xs">
                     Real-time collaborative spreadsheet with shared cursors, comments, and data
                     integration
                 </p>

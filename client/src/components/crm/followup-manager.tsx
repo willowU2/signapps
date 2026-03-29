@@ -61,17 +61,17 @@ export function FollowupManager({ followups, onMarkDone }: FollowupManagerProps)
       {
         accessorKey: 'quoteRef',
         header: 'Ref. Devis',
-        cell: ({ row }) => <span className="font-mono text-sm text-gray-600">{row.original.quoteRef}</span>,
+        cell: ({ row }) => <span className="font-mono text-sm text-muted-foreground">{row.original.quoteRef}</span>,
       },
       {
         accessorKey: 'daysSinceCreation',
         header: 'J+N',
-        cell: ({ row }) => <span className="rounded-full bg-gray-100 px-2 py-1 text-sm">{`J+${row.original.daysSinceCreation}`}</span>,
+        cell: ({ row }) => <span className="rounded-full bg-muted px-2 py-1 text-sm">{`J+${row.original.daysSinceCreation}`}</span>,
       },
       {
         accessorKey: 'nextActionDate',
         header: 'Prochaine Action',
-        cell: ({ row }) => <span className="text-sm text-gray-600">{format(parseISO(row.original.nextActionDate), 'd MMM yyyy', { locale: fr })}</span>,
+        cell: ({ row }) => <span className="text-sm text-muted-foreground">{format(parseISO(row.original.nextActionDate), 'd MMM yyyy', { locale: fr })}</span>,
       },
       {
         accessorKey: 'status',
@@ -92,7 +92,7 @@ export function FollowupManager({ followups, onMarkDone }: FollowupManagerProps)
         header: 'Actions',
         cell: ({ row }) => {
           if (row.original.status === 'completed') {
-            return <span className="text-xs text-gray-500">Complété</span>;
+            return <span className="text-xs text-muted-foreground">Complété</span>;
           }
           return (
             <AlertDialog>

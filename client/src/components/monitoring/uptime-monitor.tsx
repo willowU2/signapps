@@ -116,12 +116,12 @@ export function UptimeMonitor() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {services.map((service) => (
-          <Card key={service.name} className="p-4 border border-gray-200 hover:shadow-lg transition">
+          <Card key={service.name} className="p-4 border border-border hover:shadow-lg transition">
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900">{service.name}</h4>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <h4 className="font-semibold text-foreground">{service.name}</h4>
+                  <p className="text-xs text-muted-foreground mt-1">
                     Last checked{" "}
                     {Math.round((Date.now() - new Date(service.lastChecked).getTime()) / 1000)}s ago
                   </p>
@@ -131,8 +131,8 @@ export function UptimeMonitor() {
 
               <div className="flex items-center justify-between py-2">
                 <div>
-                  <p className="text-xs text-gray-600">Uptime (30d)</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-xs text-muted-foreground">Uptime (30d)</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {service.uptime30d.toFixed(2)}%
                   </p>
                 </div>
@@ -140,13 +140,13 @@ export function UptimeMonitor() {
               </div>
 
               {service.responseTime > 0 && (
-                <div className="bg-gray-50 rounded p-3">
-                  <p className="text-xs text-gray-600 mb-2">Response Time</p>
+                <div className="bg-muted rounded p-3">
+                  <p className="text-xs text-muted-foreground mb-2">Response Time</p>
                   <div className="flex items-baseline gap-2">
                     <span className={`text-xl font-bold ${getResponseTimeColor(service.responseTime)}`}>
                       {service.responseTime}
                     </span>
-                    <span className="text-xs text-gray-500">ms</span>
+                    <span className="text-xs text-muted-foreground">ms</span>
                   </div>
                 </div>
               )}

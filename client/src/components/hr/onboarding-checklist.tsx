@@ -42,7 +42,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   access: "bg-purple-100 text-purple-700",
   training: "bg-orange-100 text-orange-700",
   meeting: "bg-green-100 text-green-700",
-  equipment: "bg-gray-100 text-gray-700",
+  equipment: "bg-muted text-muted-foreground",
   admin: "bg-red-100 text-red-700",
 };
 
@@ -93,8 +93,8 @@ export function OnboardingChecklist() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Onboarding des nouveaux employés</h2>
-          <p className="text-gray-600">Checklist de tâches par embauche</p>
+          <h2 className="text-2xl font-bold text-foreground">Onboarding des nouveaux employés</h2>
+          <p className="text-muted-foreground">Checklist de tâches par embauche</p>
         </div>
         <button onClick={() => setShowNewHire(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
           <UserPlus className="w-4 h-4" /> Nouvelle embauche
@@ -103,7 +103,7 @@ export function OnboardingChecklist() {
 
       <div className="flex gap-2 flex-wrap">
         {hires.map(h => (
-          <button key={h.id} onClick={() => setActiveHire(h.id)} className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${activeHire === h.id ? "bg-blue-600 text-white border-blue-600" : "bg-white hover:bg-gray-50"}`}>
+          <button key={h.id} onClick={() => setActiveHire(h.id)} className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${activeHire === h.id ? "bg-blue-600 text-white border-blue-600" : "bg-card hover:bg-muted"}`}>
             {h.name} · <span className="opacity-75">{h.position}</span>
           </button>
         ))}
@@ -111,7 +111,7 @@ export function OnboardingChecklist() {
 
       {showNewHire && (
         <div className="rounded-lg border bg-blue-50 p-5 space-y-4">
-          <h3 className="font-semibold text-gray-900">Nouvelle embauche</h3>
+          <h3 className="font-semibold text-foreground">Nouvelle embauche</h3>
           <div className="grid grid-cols-2 gap-4">
             <div><label className="block text-sm font-medium mb-1">Nom complet</label><input value={newHireForm.name} onChange={e => setNewHireForm(f => ({ ...f, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" /></div>
             <div><label className="block text-sm font-medium mb-1">Poste</label><input value={newHireForm.position} onChange={e => setNewHireForm(f => ({ ...f, position: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" /></div>
@@ -120,47 +120,47 @@ export function OnboardingChecklist() {
           </div>
           <div className="flex gap-2">
             <button onClick={handleAddHire} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Créer</button>
-            <button onClick={() => setShowNewHire(false)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">Annuler</button>
+            <button onClick={() => setShowNewHire(false)} className="bg-gray-200 hover:bg-gray-300 text-muted-foreground px-4 py-2 rounded-lg text-sm font-medium">Annuler</button>
           </div>
         </div>
       )}
 
-      <div className="rounded-lg border bg-white p-4">
+      <div className="rounded-lg border bg-card p-4">
         <div className="flex items-center justify-between mb-2">
           <div>
-            <p className="font-semibold text-gray-900">{hire.name}</p>
-            <p className="text-sm text-gray-500">{hire.position} · {hire.department} · Arrivée : {hire.startDate}</p>
+            <p className="font-semibold text-foreground">{hire.name}</p>
+            <p className="text-sm text-muted-foreground">{hire.position} · {hire.department} · Arrivée : {hire.startDate}</p>
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-blue-600">{progress}%</p>
-            <p className="text-xs text-gray-500">{completedCount}/{hire.tasks.length} tâches</p>
+            <p className="text-xs text-muted-foreground">{completedCount}/{hire.tasks.length} tâches</p>
           </div>
         </div>
-        <div className="h-2.5 rounded-full bg-gray-100">
+        <div className="h-2.5 rounded-full bg-muted">
           <div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
         </div>
       </div>
 
       <div className="flex gap-2 flex-wrap">
         {(["all", ...Object.keys(CATEGORY_LABELS)] as const).map(cat => (
-          <button key={cat} onClick={() => setFilterCategory(cat)} className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${filterCategory === cat ? "bg-gray-800 text-white" : cat === "all" ? "bg-gray-100 hover:bg-gray-200 text-gray-700" : `${CATEGORY_COLORS[cat]} hover:opacity-80`}`}>
+          <button key={cat} onClick={() => setFilterCategory(cat)} className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${filterCategory === cat ? "bg-gray-800 text-white" : cat === "all" ? "bg-muted hover:bg-gray-200 text-muted-foreground" : `${CATEGORY_COLORS[cat]} hover:opacity-80`}`}>
             {cat === "all" ? "Toutes" : CATEGORY_LABELS[cat]}
           </button>
         ))}
       </div>
 
-      <div className="rounded-lg border bg-white divide-y">
+      <div className="rounded-lg border bg-card divide-y">
         {filtered.map(task => (
-          <div key={task.id} onClick={() => handleToggle(task.id)} className="flex items-start gap-3 p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+          <div key={task.id} onClick={() => handleToggle(task.id)} className="flex items-start gap-3 p-4 cursor-pointer hover:bg-muted transition-colors">
             <div className="mt-0.5 flex-shrink-0">
               {task.completed ? <CheckCircle className="w-5 h-5 text-green-600" /> : <Circle className="w-5 h-5 text-gray-300" />}
             </div>
             <div className="flex-1">
-              <p className={`text-sm font-medium ${task.completed ? "line-through text-gray-400" : "text-gray-900"}`}>{task.title}</p>
+              <p className={`text-sm font-medium ${task.completed ? "line-through text-gray-400" : "text-foreground"}`}>{task.title}</p>
               <div className="flex items-center gap-3 mt-0.5">
                 <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${CATEGORY_COLORS[task.category]}`}>{CATEGORY_LABELS[task.category]}</span>
-                <span className="text-xs text-gray-500 flex items-center gap-1"><Calendar className="w-3 h-3" /> J{task.dueDay > 0 ? "+" : ""}{task.dueDay}</span>
-                <span className="text-xs text-gray-500">→ {task.assignee}</span>
+                <span className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="w-3 h-3" /> J{task.dueDay > 0 ? "+" : ""}{task.dueDay}</span>
+                <span className="text-xs text-muted-foreground">→ {task.assignee}</span>
               </div>
             </div>
           </div>

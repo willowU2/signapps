@@ -66,7 +66,7 @@ export default function BurndownChart() {
         </select>
       </div>
 
-      <div className="bg-white p-4 rounded-lg border">
+      <div className="bg-card p-4 rounded-lg border">
         <svg width="100%" height={chartHeight + 30} viewBox={`0 0 ${chartWidth + 40} ${chartHeight + 30}`} className="mx-auto">
           {/* Grid lines */}
           {[0, 25, 50, 75, 100].map((val) => (
@@ -124,7 +124,7 @@ export default function BurndownChart() {
 
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div className="p-2 bg-blue-50 rounded">Remaining: {data[data.length - 1].actual} story points</div>
-        <div className="p-2 bg-gray-50 rounded">Ideal: {data[data.length - 1].ideal} story points</div>
+        <div className="p-2 bg-muted rounded">Ideal: {data[data.length - 1].ideal} story points</div>
       </div>
     </div>
   );

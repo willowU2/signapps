@@ -82,7 +82,7 @@ export function SlideSorter({ slides, activeSlideId, onSelectSlide, onReorder, o
                             >
                                 {/* Thumbnail */}
                                 <div className={cn(
-                                    "aspect-[16/10] bg-white dark:bg-gray-800 rounded-lg border-2 transition-all flex flex-col items-center justify-center overflow-hidden shadow-sm",
+                                    "aspect-[16/10] bg-card dark:bg-gray-800 rounded-lg border-2 transition-all flex flex-col items-center justify-center overflow-hidden shadow-sm",
                                     slide.id === activeSlideId
                                         ? "border-[#1a73e8] shadow-md"
                                         : "border-border hover:border-[#4a86e8]"
@@ -90,9 +90,9 @@ export function SlideSorter({ slides, activeSlideId, onSelectSlide, onReorder, o
                                     {/* Simulated slide content */}
                                     <div className="w-full h-full p-2 relative">
                                         <div className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded mb-1.5" style={{ width: '70%' }} />
-                                        <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded mb-1" />
-                                        <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded mb-1" style={{ width: '80%' }} />
-                                        <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded" style={{ width: '60%' }} />
+                                        <div className="w-full h-1.5 bg-muted dark:bg-gray-700 rounded mb-1" />
+                                        <div className="w-full h-1.5 bg-muted dark:bg-gray-700 rounded mb-1" style={{ width: '80%' }} />
+                                        <div className="w-full h-1.5 bg-muted dark:bg-gray-700 rounded" style={{ width: '60%' }} />
                                     </div>
                                     {/* Drag handle */}
                                     <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab text-gray-400">

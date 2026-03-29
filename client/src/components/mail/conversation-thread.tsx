@@ -51,10 +51,10 @@ function ThreadRow({ thread, selectedId, onSelect }: {
         return (
             <button
                 className={cn(
-                    "group relative flex items-center gap-2 px-1 py-0 h-10 text-left text-sm transition-all w-full border-b border-gray-200/60 dark:border-gray-800/60 cursor-pointer",
+                    "group relative flex items-center gap-2 px-1 py-0 h-10 text-left text-sm transition-all w-full border-b border-border/60 dark:border-gray-800/60 cursor-pointer",
                     selectedId === latest.id
                         ? "bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff]"
-                        : "bg-background hover:bg-gray-50/80"
+                        : "bg-background hover:bg-muted/80"
                 )}
                 onClick={() => onSelect(latest.id)}
             >
@@ -75,10 +75,10 @@ function ThreadRow({ thread, selectedId, onSelect }: {
     }
 
     return (
-        <div className={cn("border-b border-gray-200/60 dark:border-gray-800/60", hasSelected && "bg-blue-50/40 dark:bg-blue-950/20")}>
+        <div className={cn("border-b border-border/60 dark:border-gray-800/60", hasSelected && "bg-blue-50/40 dark:bg-blue-950/20")}>
             {/* Thread header */}
             <button
-                className="flex items-center gap-2 px-1 h-10 w-full text-left text-sm hover:bg-gray-50/80 dark:hover:bg-[#202124] transition-all"
+                className="flex items-center gap-2 px-1 h-10 w-full text-left text-sm hover:bg-muted/80 dark:hover:bg-[#202124] transition-all"
                 onClick={() => setExpanded(!expanded)}
             >
                 <div className="flex-shrink-0 flex items-center gap-2 px-3">
@@ -114,7 +114,7 @@ function ThreadRow({ thread, selectedId, onSelect }: {
                         <button
                             key={msg.id}
                             className={cn(
-                                "flex items-center gap-3 px-3 py-2 w-full text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors",
+                                "flex items-center gap-3 px-3 py-2 w-full text-left text-sm hover:bg-muted dark:hover:bg-gray-900 transition-colors",
                                 selectedId === msg.id && "bg-[#c2e7ff] dark:bg-[#004a77]"
                             )}
                             onClick={() => onSelect(msg.id)}

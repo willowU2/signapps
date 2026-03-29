@@ -101,7 +101,7 @@ export function InterventionReport({
       <Card className="p-6 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900">
         <h1 className="text-2xl font-bold">Intervention Report</h1>
         {interventionId && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">ID: {interventionId}</p>
+          <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">ID: {interventionId}</p>
         )}
       </Card>
 
@@ -113,7 +113,7 @@ export function InterventionReport({
           <select
             value={formData.interventionType}
             onChange={(e) => handleFieldChange("interventionType", e.target.value)}
-            className="w-full px-3 py-2 border rounded bg-white dark:bg-gray-900 dark:border-gray-700"
+            className="w-full px-3 py-2 border rounded bg-card dark:bg-gray-900 dark:border-gray-700"
           >
             <option value="">Select type...</option>
             <option value="maintenance">Maintenance</option>
@@ -130,7 +130,7 @@ export function InterventionReport({
             type="date"
             value={formData.date}
             onChange={(e) => handleFieldChange("date", e.target.value)}
-            className="w-full px-3 py-2 border rounded bg-white dark:bg-gray-900 dark:border-gray-700"
+            className="w-full px-3 py-2 border rounded bg-card dark:bg-gray-900 dark:border-gray-700"
           />
         </Card>
 
@@ -142,7 +142,7 @@ export function InterventionReport({
             value={formData.location}
             onChange={(e) => handleFieldChange("location", e.target.value)}
             placeholder="Site address or coordinates..."
-            className="w-full px-3 py-2 border rounded bg-white dark:bg-gray-900 dark:border-gray-700"
+            className="w-full px-3 py-2 border rounded bg-card dark:bg-gray-900 dark:border-gray-700"
           />
         </Card>
 
@@ -154,7 +154,7 @@ export function InterventionReport({
             onChange={(e) => handleFieldChange("description", e.target.value)}
             placeholder="Detailed description of the intervention..."
             rows={4}
-            className="w-full px-3 py-2 border rounded bg-white dark:bg-gray-900 dark:border-gray-700"
+            className="w-full px-3 py-2 border rounded bg-card dark:bg-gray-900 dark:border-gray-700"
           />
         </Card>
       </div>
@@ -202,7 +202,7 @@ export function InterventionReport({
             ))}
           </div>
         ) : (
-          <div className="border-2 border-dashed rounded-lg p-8 text-center text-gray-500">
+          <div className="border-2 border-dashed rounded-lg p-8 text-center text-muted-foreground">
             <p>No photos added yet</p>
           </div>
         )}

@@ -50,7 +50,7 @@ export default function ProductRoadmap() {
         <div className="flex mb-4">
           <div className="w-40" />
           {Array.from({ length: Math.ceil(timelineMonths / 3) }).map((_, i) => (
-            <div key={i} style={{ width: monthWidth * 3 }} className="text-xs font-bold text-gray-600 text-center">
+            <div key={i} style={{ width: monthWidth * 3 }} className="text-xs font-bold text-muted-foreground text-center">
               Month {i * 3 + 1}-{Math.min(i * 3 + 3, timelineMonths)}
             </div>
           ))}
@@ -60,14 +60,14 @@ export default function ProductRoadmap() {
         {roadmapItems.map((item) => (
           <div
             key={item.id}
-            className="flex items-center h-12 mb-2 cursor-pointer hover:bg-gray-50 rounded"
+            className="flex items-center h-12 mb-2 cursor-pointer hover:bg-muted rounded"
             onClick={() => setSelectedItem(item.id)}
           >
             <div className="w-40 flex items-center gap-2 font-medium text-sm truncate">
               <span>{getTypeIcon(item.type)}</span>
               <span>{item.name}</span>
             </div>
-            <div className="relative flex-1 h-full bg-gray-100 rounded">
+            <div className="relative flex-1 h-full bg-muted rounded">
               <div
                 className={`absolute h-full rounded transition-all ${getStatusColor(item.status)}`}
                 style={{
@@ -107,8 +107,8 @@ export default function ProductRoadmap() {
             .map((item) => (
               <div key={item.id}>
                 <p className="font-bold text-lg mb-2">{item.name}</p>
-                <p className="text-sm text-gray-700">Teams: {item.teams.join(", ")}</p>
-                <p className="text-sm text-gray-700">Status: {item.status}</p>
+                <p className="text-sm text-muted-foreground">Teams: {item.teams.join(", ")}</p>
+                <p className="text-sm text-muted-foreground">Status: {item.status}</p>
               </div>
             ))}
         </div>

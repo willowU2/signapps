@@ -61,7 +61,7 @@ function getStatusColor(status: string): { bg: string; text: string; badge: stri
     case "expired":
       return { bg: "bg-red-50", text: "text-red-900", badge: "bg-red-100 text-red-800" };
     default:
-      return { bg: "bg-gray-50", text: "text-gray-900", badge: "bg-gray-100 text-gray-800" };
+      return { bg: "bg-muted", text: "text-foreground", badge: "bg-muted text-gray-800" };
   }
 }
 
@@ -76,8 +76,8 @@ export function LeaseManager() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Lease Manager</h2>
-          <p className="text-gray-600">Track and manage property leases</p>
+          <h2 className="text-2xl font-bold text-foreground">Lease Manager</h2>
+          <p className="text-muted-foreground">Track and manage property leases</p>
         </div>
         <div className="flex items-center gap-2">
           <FileText className="w-8 h-8 text-blue-600" />
@@ -91,7 +91,7 @@ export function LeaseManager() {
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
-          <p className="text-xs font-semibold text-gray-600 uppercase">Total Monthly Rent</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase">Total Monthly Rent</p>
           <p className="text-2xl font-bold text-blue-900">
             €{totalMonthlyRent.toLocaleString("de-DE", {
               minimumFractionDigits: 2,
@@ -101,12 +101,12 @@ export function LeaseManager() {
         </div>
 
         <div className="rounded-lg border bg-green-50 p-4">
-          <p className="text-xs font-semibold text-gray-600 uppercase">Active Leases</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase">Active Leases</p>
           <p className="text-2xl font-bold text-green-900">{activeLeasesCount}</p>
         </div>
 
         <div className="rounded-lg border bg-yellow-50 p-4">
-          <p className="text-xs font-semibold text-gray-600 uppercase">Expiring Soon</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase">Expiring Soon</p>
           <p className="text-2xl font-bold text-yellow-900">
             {LEASES.filter((l) => l.status === "expiring").length}
           </p>
@@ -120,10 +120,10 @@ export function LeaseManager() {
             <table className="w-full text-sm">
               <thead className="bg-muted border-b sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-900">Property</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-900">Tenant</th>
-                  <th className="px-4 py-3 text-right font-semibold text-gray-900">Rent (€)</th>
-                  <th className="px-4 py-3 text-center font-semibold text-gray-900">Status</th>
+                  <th className="px-4 py-3 text-left font-semibold text-foreground">Property</th>
+                  <th className="px-4 py-3 text-left font-semibold text-foreground">Tenant</th>
+                  <th className="px-4 py-3 text-right font-semibold text-foreground">Rent (€)</th>
+                  <th className="px-4 py-3 text-center font-semibold text-foreground">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -133,13 +133,13 @@ export function LeaseManager() {
                     <tr
                       key={lease.id}
                       onClick={() => setSelectedLeaseId(lease.id)}
-                      className={`hover:bg-gray-50 cursor-pointer transition-colors ${
+                      className={`hover:bg-muted cursor-pointer transition-colors ${
                         selectedLeaseId === lease.id ? colors.bg : ""
                       }`}
                     >
-                      <td className="px-4 py-3 font-medium text-gray-900">{lease.property}</td>
-                      <td className="px-4 py-3 text-gray-600">{lease.tenant}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                      <td className="px-4 py-3 font-medium text-foreground">{lease.property}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{lease.tenant}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-foreground">
                         €{lease.rentAmount.toLocaleString("de-DE", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
@@ -165,29 +165,29 @@ export function LeaseManager() {
         {/* Lease Details */}
         <div className="space-y-4">
           {selectedLease ? (
-            <div className="rounded-lg border bg-white p-6 space-y-4">
+            <div className="rounded-lg border bg-card p-6 space-y-4">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">{selectedLease.property}</h3>
-                <p className="text-sm text-gray-600">Tenant: {selectedLease.tenant}</p>
+                <h3 className="text-lg font-bold text-foreground">{selectedLease.property}</h3>
+                <p className="text-sm text-muted-foreground">Tenant: {selectedLease.tenant}</p>
               </div>
 
               <div className="space-y-3">
-                <div className="rounded-lg bg-gray-50 p-3">
-                  <p className="text-xs font-semibold text-gray-600 uppercase">Start Date</p>
-                  <p className="text-sm font-semibold text-gray-900 mt-1">
+                <div className="rounded-lg bg-muted p-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Start Date</p>
+                  <p className="text-sm font-semibold text-foreground mt-1">
                     {new Date(selectedLease.startDate).toLocaleDateString("de-DE")}
                   </p>
                 </div>
 
-                <div className="rounded-lg bg-gray-50 p-3">
-                  <p className="text-xs font-semibold text-gray-600 uppercase">End Date</p>
-                  <p className="text-sm font-semibold text-gray-900 mt-1">
+                <div className="rounded-lg bg-muted p-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">End Date</p>
+                  <p className="text-sm font-semibold text-foreground mt-1">
                     {new Date(selectedLease.endDate).toLocaleDateString("de-DE")}
                   </p>
                 </div>
 
                 <div className="rounded-lg bg-blue-50 p-3">
-                  <p className="text-xs font-semibold text-gray-600 uppercase">Monthly Rent</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Monthly Rent</p>
                   <p className="text-2xl font-bold text-blue-900 mt-1">
                     €{selectedLease.rentAmount.toLocaleString("de-DE", {
                       minimumFractionDigits: 2,
@@ -197,7 +197,7 @@ export function LeaseManager() {
                 </div>
 
                 <div className={`rounded-lg p-3 ${getStatusColor(selectedLease.status).bg}`}>
-                  <p className="text-xs font-semibold text-gray-600 uppercase">Status</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Status</p>
                   <p className={`text-sm font-bold mt-1 ${getStatusColor(selectedLease.status).text}`}>
                     {selectedLease.status.charAt(0).toUpperCase() + selectedLease.status.slice(1)}
                   </p>
@@ -208,15 +208,15 @@ export function LeaseManager() {
                 <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors text-sm">
                   Edit Lease
                 </button>
-                <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium py-2 px-4 rounded transition-colors text-sm">
+                <button className="w-full bg-muted hover:bg-gray-200 text-foreground font-medium py-2 px-4 rounded transition-colors text-sm">
                   View Documents
                 </button>
               </div>
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed bg-gray-50 p-6 text-center">
+            <div className="rounded-lg border border-dashed bg-muted p-6 text-center">
               <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">Select a lease to view details</p>
+              <p className="text-sm text-muted-foreground">Select a lease to view details</p>
             </div>
           )}
         </div>

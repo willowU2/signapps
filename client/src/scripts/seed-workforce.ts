@@ -4,7 +4,7 @@
  * Run with: npx tsx src/scripts/seed-workforce.ts
  */
 
-const WORKFORCE_API = 'http://localhost:3019/api/v1/workforce';
+const WORKFORCE_API = 'http://localhost:3024/api/v1/workforce';
 const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
 
 // Helper for API calls

@@ -77,11 +77,11 @@ function RatingSelector({
           <button
             key={r.value}
             onClick={() => onSelect(r.value)}
-            className="flex flex-col items-center gap-1 p-2 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+            className="flex flex-col items-center gap-1 p-2 rounded-lg border border-border hover:border-border hover:bg-muted transition-colors"
             title={r.label}
           >
             <Icon className={`w-6 h-6 ${r.color}`} />
-            <span className="text-xs font-medium text-gray-600">{r.value}</span>
+            <span className="text-xs font-medium text-muted-foreground">{r.value}</span>
           </button>
         );
       })}

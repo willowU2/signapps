@@ -35,7 +35,7 @@ export function CompanyCard({
   annualRevenue,
   tags,
 }: CompanyCardProps) {
-  const sectorColor = SECTOR_COLORS[sector] || { bg: 'bg-gray-100', text: 'text-gray-800' };
+  const sectorColor = SECTOR_COLORS[sector] || { bg: 'bg-muted', text: 'text-gray-800' };
   const formattedDate = format(parseISO(lastInteractionDate), 'd MMM yyyy', { locale: fr });
   const formattedRevenue = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(annualRevenue);
 
@@ -45,7 +45,7 @@ export function CompanyCard({
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 truncate text-lg">{name}</h3>
+            <h3 className="font-semibold text-foreground truncate text-lg">{name}</h3>
             <Badge className={`${sectorColor.bg} ${sectorColor.text} border-0 mt-1`}>
               {sector}
             </Badge>
@@ -57,24 +57,24 @@ export function CompanyCard({
           <div className="flex items-center gap-2 text-sm">
             <Users className="h-4 w-4 text-blue-600" />
             <div>
-              <p className="text-gray-600 text-xs">Contacts</p>
-              <p className="font-semibold text-gray-900">{contactsCount}</p>
+              <p className="text-muted-foreground text-xs">Contacts</p>
+              <p className="font-semibold text-foreground">{contactsCount}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 text-sm">
             <Calendar className="h-4 w-4 text-amber-600" />
             <div>
-              <p className="text-gray-600 text-xs">Dernière interaction</p>
-              <p className="font-semibold text-gray-900 text-xs">{formattedDate}</p>
+              <p className="text-muted-foreground text-xs">Dernière interaction</p>
+              <p className="font-semibold text-foreground text-xs">{formattedDate}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 text-sm col-span-2">
             <TrendingUp className="h-4 w-4 text-emerald-600" />
             <div className="flex-1">
-              <p className="text-gray-600 text-xs">CA Annuel</p>
-              <p className="font-semibold text-gray-900">{formattedRevenue}</p>
+              <p className="text-muted-foreground text-xs">CA Annuel</p>
+              <p className="font-semibold text-foreground">{formattedRevenue}</p>
             </div>
           </div>
         </div>

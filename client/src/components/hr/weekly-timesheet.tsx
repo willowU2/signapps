@@ -52,18 +52,18 @@ export function WeeklyTimesheet() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Feuille de temps hebdomadaire</h2>
-          <p className="text-gray-600">Saisie des heures par projet et par jour</p>
+          <h2 className="text-2xl font-bold text-foreground">Feuille de temps hebdomadaire</h2>
+          <p className="text-muted-foreground">Saisie des heures par projet et par jour</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 rounded-lg border bg-white p-1">
-            <button onClick={() => { setWeekOffset(w => w - 1); setSaved(false); }} className="p-1 hover:bg-gray-100 rounded">
+          <div className="flex items-center gap-1 rounded-lg border bg-card p-1">
+            <button onClick={() => { setWeekOffset(w => w - 1); setSaved(false); }} className="p-1 hover:bg-muted rounded">
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="text-sm font-medium px-2">
               {weekOffset === 0 ? "Cette semaine" : weekOffset === -1 ? "Semaine passée" : `S${weekOffset > 0 ? "+" : ""}${weekOffset}`}
             </span>
-            <button onClick={() => { setWeekOffset(w => w + 1); setSaved(false); }} className="p-1 hover:bg-gray-100 rounded">
+            <button onClick={() => { setWeekOffset(w => w + 1); setSaved(false); }} className="p-1 hover:bg-muted rounded">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -87,24 +87,24 @@ export function WeeklyTimesheet() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-white overflow-x-auto">
+      <div className="rounded-lg border bg-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-gray-50 border-b">
-              <th className="px-4 py-3 text-left font-semibold text-gray-900 w-48">Projet / Tâche</th>
+            <tr className="bg-muted border-b">
+              <th className="px-4 py-3 text-left font-semibold text-foreground w-48">Projet / Tâche</th>
               {DAYS.map((day, i) => (
-                <th key={day} className="px-3 py-3 text-center font-semibold text-gray-900 min-w-[80px]">
+                <th key={day} className="px-3 py-3 text-center font-semibold text-foreground min-w-[80px]">
                   <div>{day}</div>
-                  <div className="text-xs font-normal text-gray-500">{fmt(dates[i])}</div>
+                  <div className="text-xs font-normal text-muted-foreground">{fmt(dates[i])}</div>
                 </th>
               ))}
-              <th className="px-4 py-3 text-center font-semibold text-gray-900">Total</th>
+              <th className="px-4 py-3 text-center font-semibold text-foreground">Total</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {PROJECTS.map(project => (
-              <tr key={project} className="hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-900">{project}</td>
+              <tr key={project} className="hover:bg-muted">
+                <td className="px-4 py-3 font-medium text-foreground">{project}</td>
                 {DAYS.map(day => (
                   <td key={day} className="px-2 py-2 text-center">
                     <input
@@ -116,17 +116,17 @@ export function WeeklyTimesheet() {
                     />
                   </td>
                 ))}
-                <td className="px-4 py-3 text-center font-bold text-gray-900">
+                <td className="px-4 py-3 text-center font-bold text-foreground">
                   {getProjectTotal(project).toFixed(1)}h
                 </td>
               </tr>
             ))}
           </tbody>
           <tfoot>
-            <tr className="bg-gray-100 font-bold border-t-2">
-              <td className="px-4 py-3 text-gray-900">Total / jour</td>
+            <tr className="bg-muted font-bold border-t-2">
+              <td className="px-4 py-3 text-foreground">Total / jour</td>
               {DAYS.map(day => (
-                <td key={day} className={`px-3 py-3 text-center ${getDayTotal(day) > 8 ? "text-amber-600" : "text-gray-900"}`}>
+                <td key={day} className={`px-3 py-3 text-center ${getDayTotal(day) > 8 ? "text-amber-600" : "text-foreground"}`}>
                   {getDayTotal(day).toFixed(1)}h
                 </td>
               ))}

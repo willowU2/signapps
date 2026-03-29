@@ -228,7 +228,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
     return (
         <div className="flex h-full flex-col bg-background dark:bg-gray-950 relative">
             {/* Top Action Bar */}
-            <div className="sticky top-0 z-20 shadow-sm border-b border-gray-200 dark:border-[#5f6368]">
+            <div className="sticky top-0 z-20 shadow-sm border-b border-border dark:border-[#5f6368]">
                 <Toolbar className="border-b-0 bg-background/50 backdrop-blur-md">
                     <ToolbarGroup>
                         <ToolbarButton disabled={!mail} title="Archiver" onClick={() => mail && onArchive?.(mail.id)}>
@@ -437,7 +437,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                     )}
 
                     {/* Reply Composer Area */}
-                    <div className="mt-auto px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-white/20 dark:border-white/5 rounded-b-2xl backdrop-blur-sm">
+                    <div className="mt-auto px-6 py-4 bg-muted/50 dark:bg-gray-900/30 border-t border-white/20 dark:border-white/5 rounded-b-2xl backdrop-blur-sm">
                         <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide shrink-0">
                             {smartReplies.length === 0 ? (
                                 <Button
@@ -469,7 +469,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                         <form className="mt-2">
                             <div className="grid gap-3 relative">
                                 <Textarea
-                                    className="p-4 pt-5 pb-14 min-h-[140px] resize-none border border-gray-200/80 dark:border-gray-800/80 bg-background/80 dark:bg-gray-950/80 focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:border-transparent rounded-2xl shadow-sm transition-all text-[15px] leading-relaxed block w-full placeholder:text-gray-400"
+                                    className="p-4 pt-5 pb-14 min-h-[140px] resize-none border border-border/80 dark:border-gray-800/80 bg-background/80 dark:bg-gray-950/80 focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:border-transparent rounded-2xl shadow-sm transition-all text-[15px] leading-relaxed block w-full placeholder:text-gray-400"
                                     placeholder={`Write your reply to ${mail.name}...`}
                                     value={replyText + (interimReplyText ? (replyText && !replyText.endsWith(' ') ? ' ' : '') + interimReplyText : '')}
                                     onChange={(e) => {
@@ -478,13 +478,13 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                                     }}
                                 />
                                 <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-                                    <div className="text-[13px] font-medium text-gray-500/80 dark:text-gray-400/80 flex items-center gap-1.5 pl-2 pointer-events-auto">
+                                    <div className="text-[13px] font-medium text-muted-foreground/80 dark:text-gray-400/80 flex items-center gap-1.5 pl-2 pointer-events-auto">
                                         <Bot className="w-4 h-4" />
                                         <span>AI available via '/'</span>
                                     </div>
                                     {sending ? (
                                         <div className="flex items-center gap-3 bg-background/90 dark:bg-gray-900/90 py-1.5 px-2 rounded-xl border border-gray-100 dark:border-gray-800 backdrop-blur-md shadow-sm pointer-events-auto">
-                                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-2">
+                                            <span className="text-sm font-bold text-muted-foreground dark:text-gray-300 ml-2">
                                                 Sending in {countdown}s
                                             </span>
                                             <Button
@@ -507,7 +507,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                                                         setInterimReplyText(text)
                                                     }
                                                 }}
-                                                className="bg-background hover:bg-gray-100 text-gray-500 shadow-sm border border-gray-100 h-9 w-9 [&>svg]:w-4 [&>svg]:h-4 mr-1"
+                                                className="bg-background hover:bg-muted text-muted-foreground shadow-sm border border-gray-100 h-9 w-9 [&>svg]:w-4 [&>svg]:h-4 mr-1"
                                                 title="Dicter la réponse"
                                             />
                                             <DropdownMenu>
@@ -516,7 +516,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                                                         type="button"
                                                         variant="ghost"
                                                         size="sm"
-                                                        className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/80 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800/80 rounded-xl h-9 px-3 transition-colors"
+                                                        className="text-muted-foreground hover:text-foreground hover:bg-muted/80 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800/80 rounded-xl h-9 px-3 transition-colors"
                                                     >
                                                         <FileText className="w-4 h-4 mr-2" />
                                                         Templates

@@ -125,14 +125,14 @@ export function OnboardingChecklistHr() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Onboarding Checklist</h2>
-        <p className="text-gray-600">New employee onboarding progress tracking</p>
+        <h2 className="text-2xl font-bold text-foreground">Onboarding Checklist</h2>
+        <p className="text-muted-foreground">New employee onboarding progress tracking</p>
       </div>
 
-      <div className="rounded-lg border p-6 bg-white">
+      <div className="rounded-lg border p-6 bg-card">
         <div className="flex items-center justify-between mb-3">
-          <p className="font-semibold text-gray-900">Overall Progress</p>
-          <p className="text-sm font-bold text-gray-700">
+          <p className="font-semibold text-foreground">Overall Progress</p>
+          <p className="text-sm font-bold text-muted-foreground">
             {completedCount} of {totalCount} completed
           </p>
         </div>
@@ -142,7 +142,7 @@ export function OnboardingChecklistHr() {
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <p className="text-xs text-gray-600 mt-2">{progressPercent}% complete</p>
+        <p className="text-xs text-muted-foreground mt-2">{progressPercent}% complete</p>
       </div>
 
       <div className="space-y-4">
@@ -150,10 +150,10 @@ export function OnboardingChecklistHr() {
           <div key={category} className="border rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
               {getCategoryIcon(category)}
-              <h3 className="font-semibold text-gray-900">
+              <h3 className="font-semibold text-foreground">
                 {getCategoryLabel(category)}
               </h3>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted-foreground">
                 ({categoryTasks.filter((t) => t.completed).length}/{categoryTasks.length})
               </span>
             </div>
@@ -162,7 +162,7 @@ export function OnboardingChecklistHr() {
               {categoryTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-start gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                  className="flex items-start gap-3 p-2 rounded hover:bg-muted cursor-pointer"
                   onClick={() => handleToggleTask(task.id)}
                 >
                   <div className="mt-0.5">
@@ -176,13 +176,13 @@ export function OnboardingChecklistHr() {
                     <p
                       className={`text-sm font-medium ${
                         task.completed
-                          ? "text-gray-500 line-through"
-                          : "text-gray-900"
+                          ? "text-muted-foreground line-through"
+                          : "text-foreground"
                       }`}
                     >
                       {task.title}
                     </p>
-                    <p className="text-xs text-gray-600">{task.description}</p>
+                    <p className="text-xs text-muted-foreground">{task.description}</p>
                   </div>
                 </div>
               ))}

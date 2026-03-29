@@ -55,11 +55,11 @@ export function NPSSurvey({
       {/* NPS Gauge */}
       <Card className="p-8">
         <div className="mb-6 text-center">
-          <p className="mb-2 text-sm text-gray-600">Score NPS Actuel</p>
+          <p className="mb-2 text-sm text-muted-foreground">Score NPS Actuel</p>
           <p className={`text-5xl font-bold ${getGaugeColor(nps)}`}>
             {nps.toFixed(0)}
           </p>
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-2 text-xs text-muted-foreground">
             (Promoteurs: {promoters}% - Détracteurs: {detractors}%)
           </p>
         </div>
@@ -122,7 +122,7 @@ export function NPSSurvey({
                     className={`h-10 rounded text-sm font-semibold transition-colors ${
                       score === i
                         ? "bg-blue-600 text-white"
-                        : "border border-gray-300 hover:border-blue-400"
+                        : "border border-border hover:border-blue-400"
                     }`}
                   >
                     {i}

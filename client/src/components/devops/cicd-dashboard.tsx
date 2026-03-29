@@ -158,7 +158,7 @@ export function CICDDashboard() {
   };
 
   if (isLoading) {
-    return <div className="text-center text-gray-500">Chargement...</div>;
+    return <div className="text-center text-muted-foreground">Chargement...</div>;
   }
 
   const runningCount = pipelines.filter((p) => p.status === "running").length;
@@ -172,7 +172,7 @@ export function CICDDashboard() {
           <h2 className="text-2xl font-bold">CI/CD Pipelines</h2>
         </div>
         <div className="flex items-center gap-4">
-          <div className="space-x-4 text-sm text-gray-600">
+          <div className="space-x-4 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <span className="h-2 w-2 rounded-full bg-yellow-500"></span>
               {runningCount} running
@@ -199,7 +199,7 @@ export function CICDDashboard() {
       </div>
 
       {pipelines.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-muted-foreground">
           <p>No pipelines yet. Add one to get started.</p>
         </div>
       ) : (
@@ -207,12 +207,12 @@ export function CICDDashboard() {
           {pipelines.map((pipeline) => (
             <div
               key={pipeline.id}
-              className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
+              className="rounded-lg border border-border bg-card p-4 shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">{pipeline.repoName}</h3>
-                  <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
+                  <h3 className="font-semibold text-foreground">{pipeline.repoName}</h3>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                     <GitBranch className="h-3 w-3" />
                     {pipeline.branch}
                   </div>
@@ -235,12 +235,12 @@ export function CICDDashboard() {
                 {getStatusText(pipeline.status)}
               </div>
 
-              <div className="border-t border-gray-100 pt-3 space-y-2 text-xs text-gray-600">
+              <div className="border-t border-gray-100 pt-3 space-y-2 text-xs text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Clock className="h-3 w-3" />
                   Duration: {formatDuration(pipeline.duration)}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   Last run: {formatRelativeTime(pipeline.lastRunTime)}
                 </div>
                 {pipeline.status === "running" && (

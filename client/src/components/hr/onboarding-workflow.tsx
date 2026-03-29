@@ -98,8 +98,8 @@ export function OnboardingWorkflow() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Onboarding Workflow</h2>
-          <p className="text-gray-600">Employee onboarding with milestone tracking</p>
+          <h2 className="text-2xl font-bold text-foreground">Onboarding Workflow</h2>
+          <p className="text-muted-foreground">Employee onboarding with milestone tracking</p>
         </div>
       </div>
 
@@ -123,7 +123,7 @@ export function OnboardingWorkflow() {
             className={`border rounded-lg p-4 cursor-pointer transition-all ${
               step.completed
                 ? "bg-green-50 border-green-300"
-                : "bg-white hover:bg-gray-50"
+                : "bg-card hover:bg-muted"
             }`}
             onClick={() => handleToggleStep(step.id)}
           >
@@ -138,8 +138,8 @@ export function OnboardingWorkflow() {
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900">{step.name}</h3>
-                  <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
+                  <h3 className="font-semibold text-foreground">{step.name}</h3>
+                  <span className="text-xs bg-gray-200 text-muted-foreground px-2 py-1 rounded">
                     {step.dueDate}
                   </span>
                 </div>
@@ -151,7 +151,7 @@ export function OnboardingWorkflow() {
                       className={`text-xs px-2 py-1 rounded ${
                         step.completed
                           ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-700"
+                          : "bg-muted text-muted-foreground"
                       }`}
                     >
                       ✓ {task}
@@ -164,10 +164,10 @@ export function OnboardingWorkflow() {
         ))}
       </div>
 
-      <div className="border rounded-lg overflow-hidden bg-white">
-        <div className="bg-gray-50 border-b p-4 flex items-center gap-2">
-          <Users className="w-5 h-5 text-gray-700" />
-          <h3 className="font-semibold text-gray-900">Mentoring Assignment</h3>
+      <div className="border rounded-lg overflow-hidden bg-card">
+        <div className="bg-muted border-b p-4 flex items-center gap-2">
+          <Users className="w-5 h-5 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground">Mentoring Assignment</h3>
         </div>
 
         <div className="p-4 space-y-4">
@@ -175,12 +175,12 @@ export function OnboardingWorkflow() {
             <div key={mentee.id} className="border rounded-lg p-4">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <p className="font-semibold text-gray-900">{mentee.name}</p>
-                  <p className="text-sm text-gray-600">{mentee.role}</p>
+                  <p className="font-semibold text-foreground">{mentee.name}</p>
+                  <p className="text-sm text-muted-foreground">{mentee.role}</p>
                 </div>
               </div>
 
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 Assign Mentor
               </label>
               <select
@@ -204,9 +204,9 @@ export function OnboardingWorkflow() {
         <div className="rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-2">
             <Calendar className="w-4 h-4 text-blue-600" />
-            <p className="text-sm font-medium text-gray-700">J1 Milestone</p>
+            <p className="text-sm font-medium text-muted-foreground">J1 Milestone</p>
           </div>
-          <p className="text-sm text-gray-700 font-medium">
+          <p className="text-sm text-muted-foreground font-medium">
             {steps[0]?.completed ? "✓ Completed" : "In progress"}
           </p>
         </div>
@@ -214,9 +214,9 @@ export function OnboardingWorkflow() {
         <div className="rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-2">
             <Calendar className="w-4 h-4 text-orange-600" />
-            <p className="text-sm font-medium text-gray-700">J7 Milestone</p>
+            <p className="text-sm font-medium text-muted-foreground">J7 Milestone</p>
           </div>
-          <p className="text-sm text-gray-700 font-medium">
+          <p className="text-sm text-muted-foreground font-medium">
             {steps[1]?.completed ? "✓ Completed" : "In progress"}
           </p>
         </div>
@@ -224,9 +224,9 @@ export function OnboardingWorkflow() {
         <div className="rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-2">
             <Calendar className="w-4 h-4 text-green-600" />
-            <p className="text-sm font-medium text-gray-700">J30 Milestone</p>
+            <p className="text-sm font-medium text-muted-foreground">J30 Milestone</p>
           </div>
-          <p className="text-sm text-gray-700 font-medium">
+          <p className="text-sm text-muted-foreground font-medium">
             {steps[2]?.completed ? "✓ Completed" : "Scheduled"}
           </p>
         </div>

@@ -49,7 +49,7 @@ export default function SupplierPortal() {
       case "overdue":
         return "text-red-600";
       default:
-        return "text-gray-600";
+        return "text-muted-foreground";
     }
   };
 
@@ -64,7 +64,7 @@ export default function SupplierPortal() {
         <div className="rounded-lg border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Invoices Submitted</p>
+              <p className="text-sm text-muted-foreground">Invoices Submitted</p>
               <p className="text-2xl font-bold">{invoices.length}</p>
             </div>
             <DollarSign className="h-8 w-8 text-blue-500" />
@@ -73,7 +73,7 @@ export default function SupplierPortal() {
         <div className="rounded-lg border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Amount</p>
+              <p className="text-sm text-muted-foreground">Total Amount</p>
               <p className="text-2xl font-bold">
                 ${invoices.reduce((sum, i) => sum + i.amount, 0).toLocaleString()}
               </p>
@@ -84,7 +84,7 @@ export default function SupplierPortal() {
         <div className="rounded-lg border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Next Payment</p>
+              <p className="text-sm text-muted-foreground">Next Payment</p>
               <p className="text-sm font-semibold">{getNextPaymentDate()}</p>
             </div>
             <Calendar className="h-8 w-8 text-purple-500" />
@@ -101,7 +101,7 @@ export default function SupplierPortal() {
             <div key={invoice.id} className="flex items-center justify-between p-4">
               <div>
                 <p className="font-medium">{invoice.invoiceNumber}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Submitted: {invoice.submittedDate}
                 </p>
               </div>

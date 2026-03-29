@@ -60,8 +60,8 @@ export function MediaGallery({
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{albumTitle}</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-2xl font-bold text-foreground">{albumTitle}</h2>
+          <p className="text-sm text-muted-foreground">
             {photoCount} photos · {date}
           </p>
         </div>
@@ -99,7 +99,7 @@ export function MediaGallery({
           {/* Close Button */}
           <button
             onClick={closeLightbox}
-            className="absolute right-4 top-4 rounded-full bg-white p-2 text-black hover:bg-gray-200"
+            className="absolute right-4 top-4 rounded-full bg-card p-2 text-foreground hover:bg-gray-200"
             aria-label="Close lightbox"
           >
             <X className="h-6 w-6" />
@@ -115,7 +115,7 @@ export function MediaGallery({
           {/* Previous Arrow */}
           <button
             onClick={goToPrevious}
-            className="absolute left-4 top-1/2 -translate-y-1/2 transform rounded-full bg-white p-2 text-black hover:bg-gray-200"
+            className="absolute left-4 top-1/2 -translate-y-1/2 transform rounded-full bg-card p-2 text-foreground hover:bg-gray-200"
             aria-label="Previous photo"
           >
             <ChevronLeft className="h-6 w-6" />
@@ -124,7 +124,7 @@ export function MediaGallery({
           {/* Next Arrow */}
           <button
             onClick={goToNext}
-            className="absolute right-4 top-1/2 -translate-y-1/2 transform rounded-full bg-white p-2 text-black hover:bg-gray-200"
+            className="absolute right-4 top-1/2 -translate-y-1/2 transform rounded-full bg-card p-2 text-foreground hover:bg-gray-200"
             aria-label="Next photo"
           >
             <ChevronRight className="h-6 w-6" />

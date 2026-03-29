@@ -58,11 +58,11 @@ export function CalendarWidget() {
                     </div>
                 ) : events.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
-                        <Calendar className="w-10 h-10 text-gray-300 dark:text-gray-600 mb-3" />
+                        <Calendar className="w-10 h-10 text-gray-300 dark:text-muted-foreground mb-3" />
                         <p className="text-sm text-gray-400">Aucun événement aujourd'hui</p>
                     </div>
                 ) : (
-                    <div className="relative border-l border-gray-200 dark:border-gray-700/50 pl-4 py-2 space-y-6">
+                    <div className="relative border-l border-border dark:border-gray-700/50 pl-4 py-2 space-y-6">
                         <div className="absolute top-10 left-[-4px] w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"></div>
                         <div className="absolute top-11 left-0 w-8 h-px bg-red-400"></div>
 
@@ -74,7 +74,7 @@ export function CalendarWidget() {
                                     <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{event.title}</span>
                                     {event.type === 'video' && <Video className="w-4 h-4 text-blue-500 shrink-0" />}
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                     <Clock className="w-3 h-3" />
                                     <span>{event.time}</span>
                                     {event.duration && <span>· {event.duration}</span>}

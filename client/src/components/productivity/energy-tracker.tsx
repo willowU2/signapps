@@ -125,17 +125,17 @@ export function EnergyTracker() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Energy Tracker</h2>
-          <p className="text-gray-600">3-click check-in for daily energy levels</p>
+          <h2 className="text-2xl font-bold text-foreground">Energy Tracker</h2>
+          <p className="text-muted-foreground">3-click check-in for daily energy levels</p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-gray-600">Average Energy</p>
+          <p className="text-sm text-muted-foreground">Average Energy</p>
           <p className="text-3xl font-bold text-green-600">{avgEnergy}/5</p>
         </div>
       </div>
 
       <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-6">
-        <h3 className="font-semibold text-gray-900 mb-4">How's your energy?</h3>
+        <h3 className="font-semibold text-foreground mb-4">How's your energy?</h3>
         <div className="flex gap-3 justify-center">
           {[1, 2, 3, 4, 5].map((level) => (
             <button
@@ -149,15 +149,15 @@ export function EnergyTracker() {
             </button>
           ))}
         </div>
-        <p className="text-center text-xs text-gray-600 mt-3">
+        <p className="text-center text-xs text-muted-foreground mt-3">
           1 = Exhausted → 5 = Excellent
         </p>
       </div>
 
-      <div className="border rounded-lg overflow-hidden bg-white">
-        <div className="bg-gray-50 border-b p-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-gray-700" />
-          <h3 className="font-semibold text-gray-900">Weekly Chart</h3>
+      <div className="border rounded-lg overflow-hidden bg-card">
+        <div className="bg-muted border-b p-4 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground">Weekly Chart</h3>
         </div>
 
         <div className="p-6">
@@ -169,7 +169,7 @@ export function EnergyTracker() {
                   style={{ height: `${data.level * 40}px` }}
                   title={`${data.level}/5 - ${data.taskCount} tasks`}
                 />
-                <span className="text-xs font-medium text-gray-700">
+                <span className="text-xs font-medium text-muted-foreground">
                   {data.day}
                 </span>
               </div>
@@ -182,41 +182,41 @@ export function EnergyTracker() {
         <div className="border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
             <Heart className="w-5 h-5 text-red-500" />
-            <p className="text-sm font-medium text-gray-700">Check-ins</p>
+            <p className="text-sm font-medium text-muted-foreground">Check-ins</p>
           </div>
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-2xl font-bold text-foreground">
             {checkInData.length}
           </p>
         </div>
         <div className="border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
             <Zap className="w-5 h-5 text-yellow-500" />
-            <p className="text-sm font-medium text-gray-700">Task Correlation</p>
+            <p className="text-sm font-medium text-muted-foreground">Task Correlation</p>
           </div>
-          <p className="text-sm text-gray-700 font-medium">{correlation}</p>
+          <p className="text-sm text-muted-foreground font-medium">{correlation}</p>
         </div>
       </div>
 
-      <div className="border rounded-lg overflow-hidden bg-white">
-        <div className="bg-gray-50 border-b p-4">
-          <h3 className="font-semibold text-gray-900">Recent Check-ins</h3>
+      <div className="border rounded-lg overflow-hidden bg-card">
+        <div className="bg-muted border-b p-4">
+          <h3 className="font-semibold text-foreground">Recent Check-ins</h3>
         </div>
         <div className="divide-y">
           {checkInData.slice().reverse().slice(0, 5).map((data, idx) => (
             <div
               key={idx}
-              className="p-4 flex items-center justify-between hover:bg-gray-50"
+              className="p-4 flex items-center justify-between hover:bg-muted"
             >
               <div>
-                <p className="font-medium text-gray-900">{data.day}</p>
-                <p className="text-xs text-gray-600">{data.timestamp}</p>
+                <p className="font-medium text-foreground">{data.day}</p>
+                <p className="text-xs text-muted-foreground">{data.timestamp}</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-foreground">
                     {getEnergyLabel(data.level)}
                   </p>
-                  <p className="text-xs text-gray-600">{data.taskCount} tasks</p>
+                  <p className="text-xs text-muted-foreground">{data.taskCount} tasks</p>
                 </div>
                 <div
                   className={`w-8 h-8 rounded-full ${getEnergyColor(

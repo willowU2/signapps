@@ -48,7 +48,7 @@ const FunnelChart: React.FC<FunnelChartProps> = ({
   return (
     <div className="w-full bg-background rounded-lg border border-border p-8 shadow-sm">
       {/* Header */}
-      <h2 className="text-2xl font-bold text-gray-900 mb-8">{title}</h2>
+      <h2 className="text-2xl font-bold text-foreground mb-8">{title}</h2>
 
       {/* Funnel visualization */}
       <div className="space-y-6">
@@ -57,15 +57,15 @@ const FunnelChart: React.FC<FunnelChartProps> = ({
             {/* Label row */}
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-muted-foreground">
                   {step.label}
                 </span>
               </div>
               <div className="flex items-center gap-4">
-                <span className="text-sm font-semibold text-gray-900">
+                <span className="text-sm font-semibold text-foreground">
                   {step.count.toLocaleString()}
                 </span>
-                <span className="text-xs text-gray-500 w-12 text-right">
+                <span className="text-xs text-muted-foreground w-12 text-right">
                   {step.conversion.toFixed(1)}%
                 </span>
               </div>
@@ -82,7 +82,7 @@ const FunnelChart: React.FC<FunnelChartProps> = ({
                   }}
                 />
               </div>
-              <span className="text-xs text-gray-600 w-10 text-right">
+              <span className="text-xs text-muted-foreground w-10 text-right">
                 {step.overallConversion.toFixed(1)}%
               </span>
             </div>
@@ -94,20 +94,20 @@ const FunnelChart: React.FC<FunnelChartProps> = ({
       <div className="mt-8 pt-6 border-t border-border">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <p className="text-xs text-gray-600">Total Entered</p>
-            <p className="text-lg font-bold text-gray-900">
+            <p className="text-xs text-muted-foreground">Total Entered</p>
+            <p className="text-lg font-bold text-foreground">
               {steps[0].count.toLocaleString()}
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-600">Total Converted</p>
-            <p className="text-lg font-bold text-gray-900">
+            <p className="text-xs text-muted-foreground">Total Converted</p>
+            <p className="text-lg font-bold text-foreground">
               {steps[steps.length - 1].count.toLocaleString()}
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-600">Overall Conversion</p>
-            <p className="text-lg font-bold text-gray-900">
+            <p className="text-xs text-muted-foreground">Overall Conversion</p>
+            <p className="text-lg font-bold text-foreground">
               {(
                 (steps[steps.length - 1].count / steps[0].count) *
                 100

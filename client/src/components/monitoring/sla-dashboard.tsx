@@ -60,7 +60,7 @@ export function SLADashboard() {
   };
 
   const getTrendColor = (value: number, isNegativeBetter: boolean = false) => {
-    if (value === 0) return "text-gray-600";
+    if (value === 0) return "text-muted-foreground";
     const isPositive = value > 0;
     const shouldBePositive = isNegativeBetter ? !isPositive : isPositive;
     return shouldBePositive ? "text-green-600" : "text-red-600";
@@ -79,15 +79,15 @@ export function SLADashboard() {
     trend: number;
     isNegativeBetter?: boolean;
   }) => (
-    <Card className="p-6 border border-gray-200">
+    <Card className="p-6 border border-border">
       <div className="space-y-4">
         <div>
-          <p className="text-sm text-gray-600 mb-1">{label}</p>
+          <p className="text-sm text-muted-foreground mb-1">{label}</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-gray-900">
+            <span className="text-3xl font-bold text-foreground">
               {value.toFixed(2)}
             </span>
-            <span className="text-gray-500">{unit}</span>
+            <span className="text-muted-foreground">{unit}</span>
           </div>
         </div>
 
@@ -98,7 +98,7 @@ export function SLADashboard() {
               {Math.abs(trend).toFixed(2)}% {trend >= 0 ? "↑" : "↓"}
             </span>
           </div>
-          <span className="text-xs text-gray-500">vs last period</span>
+          <span className="text-xs text-muted-foreground">vs last period</span>
         </div>
       </div>
     </Card>
@@ -108,8 +108,8 @@ export function SLADashboard() {
     <div className="space-y-6 w-full">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">SLA Metrics</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-2xl font-bold text-foreground">SLA Metrics</h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Service level agreement performance
           </p>
         </div>
@@ -157,11 +157,11 @@ export function SLADashboard() {
         />
       </div>
 
-      <Card className="p-6 border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">SLA Compliance</h3>
+      <Card className="p-6 border border-border">
+        <h3 className="text-lg font-semibold text-foreground mb-4">SLA Compliance</h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-gray-700">Target Uptime (99.9%)</span>
+            <span className="text-muted-foreground">Target Uptime (99.9%)</span>
             <div className="flex items-center gap-2">
               <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div
@@ -169,7 +169,7 @@ export function SLADashboard() {
                   style={{ width: `${Math.min(100, metrics.uptime)}%` }}
                 />
               </div>
-              <span className="text-sm font-medium text-gray-900">{metrics.uptime.toFixed(2)}%</span>
+              <span className="text-sm font-medium text-foreground">{metrics.uptime.toFixed(2)}%</span>
             </div>
           </div>
         </div>

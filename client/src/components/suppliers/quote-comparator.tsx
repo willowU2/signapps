@@ -64,7 +64,7 @@ export default function QuoteComparator() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b bg-gray-50">
+              <tr className="border-b bg-muted">
                 <th className="px-4 py-3 text-left text-sm font-semibold">Supplier</th>
                 <th className="px-4 py-3 text-center text-sm font-semibold">Price</th>
                 <th className="px-4 py-3 text-center text-sm font-semibold">Delivery (Days)</th>
@@ -74,7 +74,7 @@ export default function QuoteComparator() {
             </thead>
             <tbody className="divide-y">
               {quotes.map((quote) => (
-                <tr key={quote.id} className={`hover:bg-gray-50 ${quote.isWinner ? "bg-green-50" : ""}`}>
+                <tr key={quote.id} className={`hover:bg-muted ${quote.isWinner ? "bg-green-50" : ""}`}>
                   <td className="px-4 py-3 text-sm font-medium">{quote.supplier}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col items-center">
@@ -100,7 +100,7 @@ export default function QuoteComparator() {
                         <span className="text-sm font-semibold text-green-600">Winner</span>
                       </div>
                     ) : (
-                      <span className="text-xs text-gray-500">Not selected</span>
+                      <span className="text-xs text-muted-foreground">Not selected</span>
                     )}
                   </td>
                 </tr>

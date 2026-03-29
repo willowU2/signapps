@@ -17,16 +17,16 @@ export function ChargesSimulator() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Payroll Charges Simulator</h2>
-          <p className="text-gray-600">Calculate gross, net, and charge breakdowns</p>
+          <h2 className="text-2xl font-bold text-foreground">Payroll Charges Simulator</h2>
+          <p className="text-muted-foreground">Calculate gross, net, and charge breakdowns</p>
         </div>
         <DollarSign className="w-8 h-8 text-blue-600" />
       </div>
 
-      <div className="rounded-lg border bg-white p-6 space-y-6">
+      <div className="rounded-lg border bg-card p-6 space-y-6">
         {/* Gross Salary Input */}
         <div className="space-y-3">
-          <label className="block text-sm font-semibold text-gray-900">
+          <label className="block text-sm font-semibold text-foreground">
             Gross Salary (€)
           </label>
           <input
@@ -42,7 +42,7 @@ export function ChargesSimulator() {
         {/* Employee Rate Slider */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="block text-sm font-semibold text-gray-900">
+            <label className="block text-sm font-semibold text-foreground">
               Employee Charge Rate
             </label>
             <span className="text-lg font-bold text-red-600">{employeeRate}%</span>
@@ -61,7 +61,7 @@ export function ChargesSimulator() {
         {/* Employer Rate Slider */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="block text-sm font-semibold text-gray-900">
+            <label className="block text-sm font-semibold text-foreground">
               Employer Charge Rate
             </label>
             <span className="text-lg font-bold text-orange-600">{employerRate}%</span>
@@ -81,7 +81,7 @@ export function ChargesSimulator() {
       {/* Results Grid */}
       <div className="grid grid-cols-2 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
-          <p className="text-xs font-semibold text-gray-600 uppercase">Gross Salary</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase">Gross Salary</p>
           <p className="text-2xl font-bold text-blue-900">
             €{grossSalary.toLocaleString("de-DE", {
               minimumFractionDigits: 2,
@@ -91,7 +91,7 @@ export function ChargesSimulator() {
         </div>
 
         <div className="rounded-lg border bg-green-50 p-4">
-          <p className="text-xs font-semibold text-gray-600 uppercase">Net Pay</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase">Net Pay</p>
           <p className="text-2xl font-bold text-green-900">
             €{netPay.toLocaleString("de-DE", {
               minimumFractionDigits: 2,
@@ -101,7 +101,7 @@ export function ChargesSimulator() {
         </div>
 
         <div className="rounded-lg border bg-red-50 p-4">
-          <p className="text-xs font-semibold text-gray-600 uppercase">Employee Charges</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase">Employee Charges</p>
           <p className="text-2xl font-bold text-red-900">
             €{employeeCharges.toLocaleString("de-DE", {
               minimumFractionDigits: 2,
@@ -111,7 +111,7 @@ export function ChargesSimulator() {
         </div>
 
         <div className="rounded-lg border bg-orange-50 p-4">
-          <p className="text-xs font-semibold text-gray-600 uppercase">Employer Charges</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase">Employer Charges</p>
           <p className="text-2xl font-bold text-orange-900">
             €{employerCharges.toLocaleString("de-DE", {
               minimumFractionDigits: 2,
@@ -121,7 +121,7 @@ export function ChargesSimulator() {
         </div>
 
         <div className="col-span-2 rounded-lg border bg-purple-50 p-4">
-          <p className="text-xs font-semibold text-gray-600 uppercase">Total Cost (Gross + Employer)</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase">Total Cost (Gross + Employer)</p>
           <p className="text-2xl font-bold text-purple-900">
             €{totalCost.toLocaleString("de-DE", {
               minimumFractionDigits: 2,
@@ -136,24 +136,24 @@ export function ChargesSimulator() {
         <table className="w-full text-sm">
           <thead className="bg-muted border-b sticky top-0 z-10">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-gray-900">Component</th>
-              <th className="px-4 py-3 text-right font-semibold text-gray-900">Amount (€)</th>
-              <th className="px-4 py-3 text-right font-semibold text-gray-900">% of Gross</th>
+              <th className="px-4 py-3 text-left font-semibold text-foreground">Component</th>
+              <th className="px-4 py-3 text-right font-semibold text-foreground">Amount (€)</th>
+              <th className="px-4 py-3 text-right font-semibold text-foreground">% of Gross</th>
             </tr>
           </thead>
           <tbody className="divide-y">
-            <tr className="hover:bg-gray-50">
-              <td className="px-4 py-3 font-medium text-gray-900">Gross Salary</td>
-              <td className="px-4 py-3 text-right font-semibold text-gray-900">
+            <tr className="hover:bg-muted">
+              <td className="px-4 py-3 font-medium text-foreground">Gross Salary</td>
+              <td className="px-4 py-3 text-right font-semibold text-foreground">
                 €{grossSalary.toLocaleString("de-DE", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
               </td>
-              <td className="px-4 py-3 text-right font-semibold text-gray-900">100.0%</td>
+              <td className="px-4 py-3 text-right font-semibold text-foreground">100.0%</td>
             </tr>
-            <tr className="hover:bg-gray-50">
-              <td className="px-4 py-3 font-medium text-gray-900">Employee Charges</td>
+            <tr className="hover:bg-muted">
+              <td className="px-4 py-3 font-medium text-foreground">Employee Charges</td>
               <td className="px-4 py-3 text-right text-red-600 font-semibold">
                 -€{employeeCharges.toLocaleString("de-DE", {
                   minimumFractionDigits: 2,
@@ -162,8 +162,8 @@ export function ChargesSimulator() {
               </td>
               <td className="px-4 py-3 text-right font-semibold text-red-600">{employeeRate}%</td>
             </tr>
-            <tr className="hover:bg-gray-50 bg-gray-50">
-              <td className="px-4 py-3 font-medium text-gray-900">Net Pay</td>
+            <tr className="hover:bg-muted bg-muted">
+              <td className="px-4 py-3 font-medium text-foreground">Net Pay</td>
               <td className="px-4 py-3 text-right font-bold text-green-600">
                 €{netPay.toLocaleString("de-DE", {
                   minimumFractionDigits: 2,
@@ -174,8 +174,8 @@ export function ChargesSimulator() {
                 {((netPay / grossSalary) * 100).toFixed(1)}%
               </td>
             </tr>
-            <tr className="hover:bg-gray-50">
-              <td className="px-4 py-3 font-medium text-gray-900">Employer Charges</td>
+            <tr className="hover:bg-muted">
+              <td className="px-4 py-3 font-medium text-foreground">Employer Charges</td>
               <td className="px-4 py-3 text-right text-orange-600 font-semibold">
                 €{employerCharges.toLocaleString("de-DE", {
                   minimumFractionDigits: 2,
@@ -185,7 +185,7 @@ export function ChargesSimulator() {
               <td className="px-4 py-3 text-right font-semibold text-orange-600">+{employerRate}%</td>
             </tr>
             <tr className="bg-purple-50">
-              <td className="px-4 py-3 font-bold text-gray-900">Total Cost</td>
+              <td className="px-4 py-3 font-bold text-foreground">Total Cost</td>
               <td className="px-4 py-3 text-right font-bold text-purple-600">
                 €{totalCost.toLocaleString("de-DE", {
                   minimumFractionDigits: 2,

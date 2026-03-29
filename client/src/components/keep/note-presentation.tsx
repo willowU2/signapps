@@ -76,7 +76,7 @@ export function NotePresentation({ notes, startIndex = 0, onClose }: NotePresent
           <div className="flex gap-1.5">
             {notes.map((_, i) => (
               <button key={i} onClick={() => setCurrent(i)}
-                className={cn("size-2 rounded-full transition-all", i === current ? "bg-white" : "bg-white/30 hover:bg-white/60")}
+                className={cn("size-2 rounded-full transition-all", i === current ? "bg-card" : "bg-card/30 hover:bg-card/60")}
               />
             ))}
           </div>
@@ -86,19 +86,19 @@ export function NotePresentation({ notes, startIndex = 0, onClose }: NotePresent
           <div className="flex items-center gap-1">
             <span className="text-white/60 text-xs">Intervalle:</span>
             <select value={intervalMs} onChange={(e) => setIntervalMs(Number(e.target.value))}
-              className="h-7 rounded text-xs px-1 bg-white/10 text-white border-0">
+              className="h-7 rounded text-xs px-1 bg-card/10 text-white border-0">
               <option value={3000}>3s</option>
               <option value={5000}>5s</option>
               <option value={10000}>10s</option>
               <option value={20000}>20s</option>
             </select>
           </div>
-          <Button size="sm" variant="ghost" className="text-white hover:bg-white/10 gap-1"
+          <Button size="sm" variant="ghost" className="text-white hover:bg-card/10 gap-1"
             onClick={() => setAutoPlay(!autoPlay)}>
             {autoPlay ? <Pause className="size-4" /> : <Play className="size-4" />}
             {autoPlay ? "Pause" : "Auto"}
           </Button>
-          <Button size="icon" variant="ghost" className="text-white hover:bg-white/10" onClick={onClose}>
+          <Button size="icon" variant="ghost" className="text-white hover:bg-card/10" onClick={onClose}>
             <X className="size-5" />
           </Button>
         </div>
@@ -118,7 +118,7 @@ export function NotePresentation({ notes, startIndex = 0, onClose }: NotePresent
             <div className="space-y-3">
               {/* Progress bar */}
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex-1 h-2 bg-white/20 rounded-full overflow-hidden">
+                <div className="flex-1 h-2 bg-card/20 rounded-full overflow-hidden">
                   <div className="h-full bg-green-400 rounded-full transition-all" style={{ width: `${checkPct}%` }} />
                 </div>
                 <span className="text-white/70 text-sm">{checkPct}%</span>
@@ -148,7 +148,7 @@ export function NotePresentation({ notes, startIndex = 0, onClose }: NotePresent
           {note.labels.length > 0 && (
             <div className="flex gap-2 flex-wrap mt-6">
               {note.labels.map((l) => (
-                <Badge key={l} className="bg-white/10 text-white border-white/20 text-sm">{l}</Badge>
+                <Badge key={l} className="bg-card/10 text-white border-white/20 text-sm">{l}</Badge>
               ))}
             </div>
           )}
@@ -157,12 +157,12 @@ export function NotePresentation({ notes, startIndex = 0, onClose }: NotePresent
 
       {/* Nav arrows */}
       <div className="flex items-center justify-center gap-8 py-6" onClick={(e) => e.stopPropagation()}>
-        <Button size="icon" variant="ghost" className="text-white hover:bg-white/10 size-12"
+        <Button size="icon" variant="ghost" className="text-white hover:bg-card/10 size-12"
           disabled={current === 0} onClick={prev}>
           <ChevronLeft className="size-7" />
         </Button>
         <div className="text-white/40 text-sm">← → ou espace</div>
-        <Button size="icon" variant="ghost" className="text-white hover:bg-white/10 size-12"
+        <Button size="icon" variant="ghost" className="text-white hover:bg-card/10 size-12"
           disabled={current === notes.length - 1} onClick={next}>
           <ChevronRight className="size-7" />
         </Button>

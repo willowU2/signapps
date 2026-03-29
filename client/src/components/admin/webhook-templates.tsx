@@ -97,21 +97,21 @@ export function WebhookTemplates() {
         {WEBHOOK_TEMPLATES.map((template) => (
           <div
             key={template.id}
-            className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
+            className="rounded-lg border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow"
           >
             {/* Header */}
             <div className="flex items-start justify-between mb-3">
               <div>
-                <h4 className="font-semibold text-gray-900">{template.name}</h4>
+                <h4 className="font-semibold text-foreground">{template.name}</h4>
                 <p className="text-xs text-muted-foreground mt-1">{template.description}</p>
               </div>
             </div>
 
             {/* Payload Preview */}
             <div className="mb-4 space-y-2">
-              <p className="text-xs font-medium text-gray-600">Payload Preview</p>
-              <pre className="bg-gray-50 rounded-md p-3 text-xs overflow-auto max-h-40 border border-gray-200">
-                <code className="font-mono text-gray-700">
+              <p className="text-xs font-medium text-muted-foreground">Payload Preview</p>
+              <pre className="bg-muted rounded-md p-3 text-xs overflow-auto max-h-40 border border-border">
+                <code className="font-mono text-muted-foreground">
                   {JSON.stringify(template.payloadPreview, null, 2)}
                 </code>
               </pre>

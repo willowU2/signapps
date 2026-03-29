@@ -127,7 +127,7 @@ export function WeekCalendar({ selectedCalendarId, onCreateEvent }: WeekCalendar
                 </div>
                 {/* Multi-day events bar (IDEA-045) */}
                 {events.some(isMultiDay) && (
-                    <div className="flex border-t border-dashed border-gray-200 bg-muted/20">
+                    <div className="flex border-t border-dashed border-border bg-muted/20">
                         <div className="flex min-w-max border-r" style={{ minWidth: `${timezones.length * 64}px` }} />
                         <div className="flex-1 relative px-1 py-1">
                             <MultiDayEventBars
@@ -147,7 +147,7 @@ export function WeekCalendar({ selectedCalendarId, onCreateEvent }: WeekCalendar
                     {/* Time Axes */}
                     <div className="flex min-w-max border-r bg-muted/30">
                         {timezones.map((tz, i) => (
-                            <div key={tz} className={`w-16 ${i > 0 ? 'border-l border-gray-200/50 dark:border-gray-800/50' : ''}`}>
+                            <div key={tz} className={`w-16 ${i > 0 ? 'border-l border-border/50 dark:border-gray-800/50' : ''}`}>
                                 {hours.map((hour) => {
                                     const date = new Date();
                                     date.setHours(hour, 0, 0, 0);

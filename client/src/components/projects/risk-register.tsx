@@ -48,8 +48,8 @@ const INITIAL_RISKS: Risk[] = [
 function getMatrixColor(score: number): string {
   if (score >= 16) return "bg-red-500 text-white";
   if (score >= 9) return "bg-orange-400 text-white";
-  if (score >= 4) return "bg-yellow-300 text-black";
-  return "bg-green-200 text-black";
+  if (score >= 4) return "bg-yellow-300 text-foreground";
+  return "bg-green-200 text-foreground";
 }
 
 function RiskMatrix({ risks }: { risks: Risk[] }) {

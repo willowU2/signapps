@@ -173,7 +173,7 @@ export function PptxImportDialog({ onImport, onClose }: PptxImportDialogProps) {
                     className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors ${
                         isDragging
                             ? 'border-[#1a73e8] bg-[#1a73e8]/5'
-                            : 'border-gray-300 dark:border-gray-600 hover:border-[#4a86e8] hover:bg-muted/50'
+                            : 'border-border dark:border-gray-600 hover:border-[#4a86e8] hover:bg-muted/50'
                     }`}
                 >
                     {isProcessing ? (

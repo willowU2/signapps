@@ -28,7 +28,7 @@ function getHealthColor(status: string) {
     case "down":
       return "bg-red-100 text-red-700";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "bg-muted text-muted-foreground";
   }
 }
 
@@ -50,8 +50,8 @@ export function LoadBalancer() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Load Balancer</h2>
-          <p className="text-gray-600">Manage upstream servers and load distribution</p>
+          <h2 className="text-2xl font-bold text-foreground">Load Balancer</h2>
+          <p className="text-muted-foreground">Manage upstream servers and load distribution</p>
         </div>
         <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex items-center gap-2">
           <Plus className="w-4 h-4" />
@@ -61,15 +61,15 @@ export function LoadBalancer() {
 
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">Total Servers</p>
+          <p className="text-sm text-muted-foreground">Total Servers</p>
           <p className="text-2xl font-bold text-blue-600">{servers.length}</p>
         </div>
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">Healthy</p>
+          <p className="text-sm text-muted-foreground">Healthy</p>
           <p className="text-2xl font-bold text-green-600">{healthyCount}</p>
         </div>
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">Total Weight</p>
+          <p className="text-sm text-muted-foreground">Total Weight</p>
           <p className="text-2xl font-bold text-purple-600">{totalWeight}</p>
         </div>
       </div>
@@ -79,26 +79,26 @@ export function LoadBalancer() {
           <table className="w-full text-sm">
             <thead className="bg-muted border-b sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Host</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Port</th>
-                <th className="px-4 py-3 text-center font-semibold text-gray-900">Health</th>
-                <th className="px-4 py-3 text-center font-semibold text-gray-900">Response Time</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Weight</th>
-                <th className="px-4 py-3 text-center font-semibold text-gray-900">Actions</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">Host</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">Port</th>
+                <th className="px-4 py-3 text-center font-semibold text-foreground">Health</th>
+                <th className="px-4 py-3 text-center font-semibold text-foreground">Response Time</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">Weight</th>
+                <th className="px-4 py-3 text-center font-semibold text-foreground">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {servers.map((server) => (
-                <tr key={server.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-mono text-gray-900">{server.host}</td>
-                  <td className="px-4 py-3 text-gray-700">{server.port}</td>
+                <tr key={server.id} className="hover:bg-muted">
+                  <td className="px-4 py-3 font-mono text-foreground">{server.host}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{server.port}</td>
                   <td className="px-4 py-3 text-center">
                     <span className={`text-xs font-semibold px-2 py-1 rounded ${getHealthColor(server.healthStatus)}`}>
                       {server.healthStatus}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className="font-mono text-gray-900">{server.responseTime}ms</span>
+                    <span className="font-mono text-foreground">{server.responseTime}ms</span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -110,7 +110,7 @@ export function LoadBalancer() {
                         onChange={(e) => updateWeight(server.id, parseInt(e.target.value))}
                         className="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                       />
-                      <span className="w-10 text-right font-semibold text-gray-900">{server.weight}</span>
+                      <span className="w-10 text-right font-semibold text-foreground">{server.weight}</span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-center">

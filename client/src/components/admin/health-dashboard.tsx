@@ -128,8 +128,8 @@ export function HealthDashboard() {
             <p className="text-2xl font-bold text-red-700">{unhealthyCount}</p>
             <p className="text-xs text-red-600">Down</p>
           </div>
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-center">
-            <p className="text-2xl font-bold text-gray-500">{unknownCount}</p>
+          <div className="rounded-lg border border-border bg-muted p-3 text-center">
+            <p className="text-2xl font-bold text-muted-foreground">{unknownCount}</p>
             <p className="text-xs text-gray-400">Unknown</p>
           </div>
         </div>
@@ -149,15 +149,15 @@ export function HealthDashboard() {
             key={svc.port}
             className={`rounded-lg border p-4 shadow-sm transition-all ${
               svc.isHealthy === true
-                ? "border-green-200 bg-white"
+                ? "border-green-200 bg-card"
                 : svc.isHealthy === false
                 ? "border-red-200 bg-red-50"
-                : "border-gray-200 bg-gray-50"
+                : "border-border bg-muted"
             }`}
           >
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="font-semibold text-gray-900">{svc.name}</h3>
+                <h3 className="font-semibold text-foreground">{svc.name}</h3>
                 <p className="text-sm text-gray-400 font-mono">:{svc.port}</p>
               </div>
               <div>

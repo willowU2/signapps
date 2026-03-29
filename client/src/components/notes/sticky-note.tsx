@@ -72,7 +72,7 @@ export function StickyNote({ note, onUpdate, onDelete }: StickyNoteProps) {
             value={tempText}
             onChange={(e) => setTempText(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="min-h-[120px] w-full resize-none rounded border-0 bg-white/50 p-2 text-sm outline-none focus:bg-white focus:ring-2 focus:ring-gray-400"
+            className="min-h-[120px] w-full resize-none rounded border-0 bg-card/50 p-2 text-sm outline-none focus:bg-card focus:ring-2 focus:ring-gray-400"
             autoFocus
           />
           <div className="flex gap-2 justify-end">

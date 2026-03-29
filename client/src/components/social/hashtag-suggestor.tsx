@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { getServiceUrl, ServiceName } from "@/lib/api/factory";
 
 interface HashtagResult {
   tag: string;
@@ -49,7 +50,7 @@ export function HashtagSuggestor({
     }
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3019/api/v1/social/ai/hashtags", {
+      const res = await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/ai/hashtags`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: postContent }),

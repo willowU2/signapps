@@ -75,7 +75,7 @@ export function OrderSystem({ cartItems = [], onSubmit }: OrderSystemProps) {
 
   return (
     <div className="space-y-6">
-      <div className="border rounded-lg p-6 bg-gray-50">
+      <div className="border rounded-lg p-6 bg-muted">
         <h2 className="font-semibold text-lg mb-4">Order Workflow</h2>
         <div className="flex justify-between items-center mb-4">
           {STATUS_STEPS.map((status, index) => {
@@ -91,7 +91,7 @@ export function OrderSystem({ cartItems = [], onSubmit }: OrderSystemProps) {
                       ? "bg-blue-600 text-white"
                       : isCompleted
                         ? "bg-green-600 text-white"
-                        : "bg-gray-300 text-gray-600"
+                        : "bg-gray-300 text-muted-foreground"
                   }`}
                 >
                   {isCompleted ? (
@@ -108,7 +108,7 @@ export function OrderSystem({ cartItems = [], onSubmit }: OrderSystemProps) {
                       ? "text-blue-600"
                       : isCompleted
                         ? "text-green-600"
-                        : "text-gray-500"
+                        : "text-muted-foreground"
                   }`}
                 >
                   {status}
@@ -130,12 +130,12 @@ export function OrderSystem({ cartItems = [], onSubmit }: OrderSystemProps) {
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-semibold text-lg">Cart Items</h3>
           {items.length > 0 && (
-            <span className="text-sm text-gray-600">{items.length} item(s)</span>
+            <span className="text-sm text-muted-foreground">{items.length} item(s)</span>
           )}
         </div>
 
         {items.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-muted-foreground">
             Le panier est vide. Add items from the product catalog.
           </div>
         ) : (

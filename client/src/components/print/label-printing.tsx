@@ -90,14 +90,14 @@ export function LabelPrinting() {
         </div>
 
         {/* Label preview */}
-        <div ref={printRef} className="border rounded-lg p-3 bg-white overflow-auto max-h-40">
+        <div ref={printRef} className="border rounded-lg p-3 bg-card overflow-auto max-h-40">
           <div className="flex flex-wrap gap-1">
             {labels.slice(0, 6).map((l, i) => (
-              <div key={i} className="text-xs border border-dashed border-gray-300 rounded p-2"
+              <div key={i} className="text-xs border border-dashed border-border rounded p-2"
                 style={{ width: Math.min(format.width / 2, 160) }}>
                 <p className="font-semibold truncate">{l.line1 || '—'}</p>
-                {l.line2 && <p className="truncate text-gray-600">{l.line2}</p>}
-                {l.line3 && <p className="truncate text-gray-600">{l.line3}</p>}
+                {l.line2 && <p className="truncate text-muted-foreground">{l.line2}</p>}
+                {l.line3 && <p className="truncate text-muted-foreground">{l.line3}</p>}
               </div>
             ))}
           </div>

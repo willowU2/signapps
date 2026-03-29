@@ -50,11 +50,11 @@ export default function XpSystem() {
       <div className={`p-4 rounded-lg border-2 ${getLevelColor(currentLevel)}`}>
         <div className="flex justify-between items-end mb-2">
           <div>
-            <p className="text-sm text-gray-600">Current Level</p>
+            <p className="text-sm text-muted-foreground">Current Level</p>
             <p className="text-4xl font-bold">{currentLevel}</p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-600">Experience</p>
+            <p className="text-sm text-muted-foreground">Experience</p>
             <p className="font-mono text-lg">{currentXp.toLocaleString()} XP</p>
           </div>
         </div>
@@ -69,7 +69,7 @@ export default function XpSystem() {
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
-          <p className="text-xs text-gray-600 text-right">
+          <p className="text-xs text-muted-foreground text-right">
             {(xpToNextLevel - currentXp).toLocaleString()} XP needed
           </p>
         </div>
@@ -82,10 +82,10 @@ export default function XpSystem() {
         </h3>
         <div className="space-y-2">
           {recentGains.map((gain) => (
-            <div key={gain.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+            <div key={gain.id} className="flex justify-between items-center p-2 bg-muted rounded">
               <div>
                 <p className="text-sm font-medium">{gain.action}</p>
-                <p className="text-xs text-gray-500">{formatTime(gain.timestamp)}</p>
+                <p className="text-xs text-muted-foreground">{formatTime(gain.timestamp)}</p>
               </div>
               <p className="font-mono font-bold text-yellow-600">+{gain.xp} XP</p>
             </div>

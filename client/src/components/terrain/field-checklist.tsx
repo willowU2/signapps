@@ -78,7 +78,7 @@ export function FieldChecklist({
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">{checklistName}</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
               {completionRate}% Complete ({localItems.filter((i) => i.completed).length}/{localItems.length})
             </p>
           </div>
@@ -127,7 +127,7 @@ export function FieldChecklist({
                   onClick={() => setExpandedItem(expandedItem === item.id ? null : item.id)}
                   className="w-full text-left"
                 >
-                  <p className={`font-medium ${item.completed ? "line-through text-gray-500" : ""}`}>
+                  <p className={`font-medium ${item.completed ? "line-through text-muted-foreground" : ""}`}>
                     {item.label}
                   </p>
                 </button>
@@ -138,14 +138,14 @@ export function FieldChecklist({
                     {/* Notes Section */}
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <MessageSquare className="size-4 text-gray-600" />
+                        <MessageSquare className="size-4 text-muted-foreground" />
                         <label className="text-sm font-medium">Notes</label>
                       </div>
                       <textarea
                         value={item.notes || ""}
                         onChange={(e) => handleNotesChange(item.id, e.target.value)}
                         placeholder="Add notes for this item..."
-                        className="w-full px-3 py-2 border rounded text-sm bg-white dark:bg-gray-900 dark:border-gray-700"
+                        className="w-full px-3 py-2 border rounded text-sm bg-card dark:bg-gray-900 dark:border-gray-700"
                         rows={2}
                       />
                     </div>
@@ -153,7 +153,7 @@ export function FieldChecklist({
                     {/* Photos Section */}
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <Upload className="size-4 text-gray-600" />
+                        <Upload className="size-4 text-muted-foreground" />
                         <label className="text-sm font-medium">Photos</label>
                       </div>
                       {item.photos && item.photos.length > 0 && (

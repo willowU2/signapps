@@ -53,8 +53,8 @@ export default function RACIMatrix() {
       R: "bg-red-100 text-red-900",
       A: "bg-blue-100 text-blue-900",
       C: "bg-yellow-100 text-yellow-900",
-      I: "bg-gray-100 text-gray-900",
-      "": "bg-white",
+      I: "bg-muted text-foreground",
+      "": "bg-card",
     };
     return colors[value];
   };
@@ -73,9 +73,9 @@ export default function RACIMatrix() {
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr>
-              <th className="border p-2 bg-gray-100 font-bold text-left">Task</th>
+              <th className="border p-2 bg-muted font-bold text-left">Task</th>
               {roles.map((role) => (
-                <th key={role} className="border p-2 bg-gray-100 font-bold text-center w-16">
+                <th key={role} className="border p-2 bg-muted font-bold text-center w-16">
                   {role}
                 </th>
               ))}
@@ -108,7 +108,7 @@ export default function RACIMatrix() {
         <div className="p-2 bg-red-50 rounded">R = Responsible</div>
         <div className="p-2 bg-blue-50 rounded">A = Accountable</div>
         <div className="p-2 bg-yellow-50 rounded">C = Consulted</div>
-        <div className="p-2 bg-gray-50 rounded">I = Informed</div>
+        <div className="p-2 bg-muted rounded">I = Informed</div>
       </div>
     </div>
   );

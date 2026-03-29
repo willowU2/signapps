@@ -99,7 +99,7 @@ export function ActiveSessions() {
           <Monitor className="h-6 w-6 text-blue-600" />
           <div>
             <h2 className="text-xl font-bold">Active Sessions</h2>
-            <p className="text-sm text-gray-500">Manage where you are signed in</p>
+            <p className="text-sm text-muted-foreground">Manage where you are signed in</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -121,7 +121,7 @@ export function ActiveSessions() {
           <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
         </div>
       ) : activeSessions.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center text-gray-500">
+        <div className="rounded-lg border border-border bg-muted p-8 text-center text-muted-foreground">
           No active sessions found
         </div>
       ) : (
@@ -133,7 +133,7 @@ export function ActiveSessions() {
             return (
               <div
                 key={session.id}
-                className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+                className="flex items-center justify-between rounded-lg border border-border bg-card p-4 shadow-sm"
               >
                 <div className="flex items-center gap-3">
                   {isMobile ? (
@@ -143,12 +143,12 @@ export function ActiveSessions() {
                   )}
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">{label}</span>
+                      <span className="font-medium text-foreground">{label}</span>
                       {session.is_current && (
                         <Badge variant="secondary" className="text-xs">Current</Badge>
                       )}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-3 text-xs text-gray-500">
+                    <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
                       {session.ip_address && <span>{session.ip_address}</span>}
                       <span>Started {formatDate(session.created_at)}</span>
                       <span>Expires {formatDate(session.expires_at)}</span>

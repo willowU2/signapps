@@ -116,12 +116,12 @@ export function BatchProcessor({ onProcess }: BatchProcessorProps) {
         <CardContent>
           <div className="flex gap-4 items-center">
             <label className="relative cursor-pointer flex-1">
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 hover:border-blue-400 dark:hover:border-blue-600 transition-colors text-center">
+              <div className="border-2 border-dashed border-border dark:border-gray-700 rounded-lg p-6 hover:border-blue-400 dark:hover:border-blue-600 transition-colors text-center">
                 <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <p className="text-sm font-medium text-foreground dark:text-white">
                   {selectedFile ? selectedFile : "Click to select a file"}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   CSV, JSON, or XLSX formats supported
                 </p>
               </div>
@@ -147,10 +147,10 @@ export function BatchProcessor({ onProcess }: BatchProcessorProps) {
             {/* Progress Bar */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <p className="text-sm font-medium text-muted-foreground dark:text-gray-300">
                   Progress: {progress.toFixed(0)}%
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground dark:text-gray-400">
                   {processedItems} / {totalItems} items
                 </p>
               </div>
@@ -181,7 +181,7 @@ export function BatchProcessor({ onProcess }: BatchProcessorProps) {
                 </>
               )}
               {!isProcessing && progress === 0 && selectedFile && (
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="text-sm text-muted-foreground dark:text-gray-400">
                   Ready to process
                 </span>
               )}
@@ -259,15 +259,15 @@ export function BatchProcessor({ onProcess }: BatchProcessorProps) {
                 {errors.map((error) => (
                   <div
                     key={error.id}
-                    className="bg-white dark:bg-gray-800 rounded p-3 text-sm border border-red-100 dark:border-red-900"
+                    className="bg-card dark:bg-gray-800 rounded p-3 text-sm border border-red-100 dark:border-red-900"
                   >
-                    <p className="font-medium text-gray-900 dark:text-white">
+                    <p className="font-medium text-foreground dark:text-white">
                       {error.file}
                     </p>
                     <p className="text-red-600 dark:text-red-400 text-xs mt-1">
                       {error.error}
                     </p>
-                    <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
+                    <p className="text-muted-foreground dark:text-gray-400 text-xs mt-1">
                       {error.timestamp}
                     </p>
                   </div>
@@ -296,7 +296,7 @@ export function BatchProcessor({ onProcess }: BatchProcessorProps) {
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {totalItems}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground dark:text-gray-400">
                   Total Items
                 </p>
               </div>
@@ -304,7 +304,7 @@ export function BatchProcessor({ onProcess }: BatchProcessorProps) {
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {processedItems}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground dark:text-gray-400">
                   Processed
                 </p>
               </div>
@@ -312,7 +312,7 @@ export function BatchProcessor({ onProcess }: BatchProcessorProps) {
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {errors.length}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground dark:text-gray-400">
                   Errors
                 </p>
               </div>

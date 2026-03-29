@@ -149,7 +149,7 @@ export function GlobalHeader() {
         HeaderIcon = <HardDrive className="h-5 w-5 text-indigo-500" />;
     } else if (pathname.startsWith('/storage')) {
         headerTitle = "Stockage (Infra)";
-        HeaderIcon = <HardDrive className="h-5 w-5 text-gray-500" />;
+        HeaderIcon = <HardDrive className="h-5 w-5 text-muted-foreground" />;
     } else if (pathname.startsWith('/tasks')) {
         headerTitle = "Tâches";
         HeaderIcon = <CheckSquare className="h-5 w-5 text-green-500" />;
@@ -158,7 +158,7 @@ export function GlobalHeader() {
         HeaderIcon = <Video className="h-5 w-5 text-teal-500" />;
     } else if (pathname.startsWith('/settings')) {
         headerTitle = "Paramètres";
-        HeaderIcon = <Settings className="h-5 w-5 text-gray-500" />;
+        HeaderIcon = <Settings className="h-5 w-5 text-muted-foreground" />;
     } else if (pathname.startsWith('/monitoring')) {
         headerTitle = "Supervision";
         HeaderIcon = <Activity className="h-5 w-5 text-orange-500" />;

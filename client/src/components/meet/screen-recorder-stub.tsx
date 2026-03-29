@@ -16,16 +16,16 @@ export function ScreenRecorderStub() {
                 </div>
 
                 <div className="text-center space-y-2">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <h3 className="text-lg font-semibold text-foreground dark:text-gray-100">
                         Screen Recording
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-muted-foreground dark:text-gray-400">
                         Coming Soon
                     </p>
                 </div>
 
                 <div
-                    className="w-full max-w-xs aspect-video border border-gray-200 dark:border-gray-700 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center overflow-hidden"
+                    className="w-full max-w-xs aspect-video border border-border dark:border-gray-700 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center overflow-hidden"
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                 >
@@ -48,7 +48,7 @@ export function ScreenRecorderStub() {
                     Commencer l'enregistrement
                 </Button>
 
-                <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs">
+                <p className="text-xs text-muted-foreground dark:text-gray-400 max-w-xs">
                     Record your screen with annotation tools, camera overlay, and instant cloud
                     upload
                 </p>

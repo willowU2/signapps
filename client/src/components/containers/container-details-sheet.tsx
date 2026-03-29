@@ -105,7 +105,7 @@ export function ContainerDetailsSheet({
                 className={
                   details.state?.toLowerCase().includes('running')
                     ? 'bg-green-500/10 text-green-600'
-                    : 'bg-gray-500/10 text-gray-600'
+                    : 'bg-gray-500/10 text-muted-foreground'
                 }
               >
                 {details.state}
@@ -400,7 +400,7 @@ export function ContainerDetailsSheet({
                                 className={
                                   route.enabled
                                     ? 'bg-green-500/10 text-green-600'
-                                    : 'bg-gray-500/10 text-gray-600'
+                                    : 'bg-gray-500/10 text-muted-foreground'
                                 }
                               >
                                 {route.enabled ? 'Active' : 'Disabled'}

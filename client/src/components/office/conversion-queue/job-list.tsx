@@ -48,7 +48,7 @@ import {
 function getStatusIcon(status: JobStatus, className?: string) {
   switch (status) {
     case 'pending':
-      return <Clock className={cn('h-4 w-4 text-gray-500', className)} />;
+      return <Clock className={cn('h-4 w-4 text-muted-foreground', className)} />;
     case 'queued':
       return <PauseCircle className={cn('h-4 w-4 text-blue-500', className)} />;
     case 'processing':
@@ -60,7 +60,7 @@ function getStatusIcon(status: JobStatus, className?: string) {
     case 'cancelled':
       return <X className={cn('h-4 w-4 text-gray-400', className)} />;
     default:
-      return <FileText className={cn('h-4 w-4 text-gray-500', className)} />;
+      return <FileText className={cn('h-4 w-4 text-muted-foreground', className)} />;
   }
 }
 

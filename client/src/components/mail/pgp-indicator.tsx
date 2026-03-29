@@ -79,7 +79,7 @@ export function PgpStatusBadges({ body, accountId }: PgpStatusBadgesProps) {
                         <TooltipTrigger asChild>
                             <Badge
                                 variant="outline"
-                                className="h-5 px-1.5 text-[10px] font-semibold bg-gray-50 text-gray-500 border-gray-200 dark:bg-gray-900/30 dark:text-gray-500 dark:border-gray-800/50 cursor-help"
+                                className="h-5 px-1.5 text-[10px] font-semibold bg-muted text-muted-foreground border-border dark:bg-gray-900/30 dark:text-muted-foreground dark:border-gray-800/50 cursor-help"
                             >
                                 <LockOpen className="h-3 w-3 mr-0.5" />
                                 Unencrypted

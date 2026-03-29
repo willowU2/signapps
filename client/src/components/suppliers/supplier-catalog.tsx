@@ -80,13 +80,13 @@ export default function SupplierCatalog() {
           <div key={supplier.id} className="rounded-lg border hover:shadow-lg transition-shadow">
             <div className="border-b bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
               <h3 className="text-lg font-bold">{supplier.name}</h3>
-              <p className="text-sm text-gray-600">{supplier.sector}</p>
+              <p className="text-sm text-muted-foreground">{supplier.sector}</p>
             </div>
 
             <div className="p-4 space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-gray-700">Rating</span>
+                  <span className="text-sm font-semibold text-muted-foreground">Rating</span>
                   <span className="text-sm font-bold text-blue-600">{supplier.rating}/5.0</span>
                 </div>
                 {renderStars(supplier.rating)}
@@ -94,19 +94,19 @@ export default function SupplierCatalog() {
 
               <div className="border-t pt-3 space-y-3">
                 <div className="flex items-start gap-3">
-                  <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-gray-600">{supplier.country}</div>
+                  <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-muted-foreground">{supplier.country}</div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Mail className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                  <Mail className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <a href={`mailto:${supplier.email}`} className="text-sm text-blue-600 hover:underline">
                     {supplier.email}
                   </a>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Phone className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                  <Phone className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <a href={`tel:${supplier.phone}`} className="text-sm text-blue-600 hover:underline">
                     {supplier.phone}
                   </a>
@@ -114,7 +114,7 @@ export default function SupplierCatalog() {
 
                 {supplier.website && (
                   <div className="flex items-start gap-3">
-                    <span className="text-sm font-medium text-gray-600">Web:</span>
+                    <span className="text-sm font-medium text-muted-foreground">Web:</span>
                     <a
                       href={`https://${supplier.website}`}
                       target="_blank"

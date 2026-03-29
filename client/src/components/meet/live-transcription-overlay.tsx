@@ -228,7 +228,7 @@ export function LiveTranscriptionOverlay({
           <Button
             size="icon"
             variant="ghost"
-            className="h-6 w-6 text-white hover:bg-white/10"
+            className="h-6 w-6 text-white hover:bg-card/10"
             onClick={() => setCollapsed(!collapsed)}
           >
             {collapsed ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -237,7 +237,7 @@ export function LiveTranscriptionOverlay({
             <Button
               size="icon"
               variant="ghost"
-              className="h-6 w-6 text-white hover:bg-white/10"
+              className="h-6 w-6 text-white hover:bg-card/10"
               onClick={handleExport}
               title="Exporter"
             >
@@ -247,7 +247,7 @@ export function LiveTranscriptionOverlay({
           <Button
             size="icon"
             variant="ghost"
-            className="h-6 w-6 text-white hover:bg-white/10"
+            className="h-6 w-6 text-white hover:bg-card/10"
             onClick={() => { stopRecording(); onClose(); }}
           >
             <X className="h-3.5 w-3.5" />

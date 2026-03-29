@@ -116,11 +116,11 @@ export default function WasteManagement() {
 
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
-                  <p className="text-gray-600">Last Emptied</p>
+                  <p className="text-muted-foreground">Last Emptied</p>
                   <p className="font-semibold text-xs">{bin.lastEmptied}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Next Pickup</p>
+                  <p className="text-muted-foreground">Next Pickup</p>
                   <p className="font-semibold text-xs">{bin.nextPickup}</p>
                 </div>
               </div>

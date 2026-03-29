@@ -55,7 +55,7 @@ function getFileIcon(mimeType: string) {
   if (mimeType.includes('presentation') || mimeType.includes('slide')) {
     return <Presentation className="h-5 w-5 text-orange-500" />;
   }
-  return <FileText className="h-5 w-5 text-gray-500" />;
+  return <FileText className="h-5 w-5 text-muted-foreground" />;
 }
 
 function formatFileSize(bytes?: number): string {

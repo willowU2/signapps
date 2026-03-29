@@ -35,11 +35,11 @@ export default function AutoStaffing() {
             <div className="flex justify-between items-start mb-3">
               <div>
                 <p className="font-bold text-lg">{project.name}</p>
-                <p className="text-xs text-gray-600">Team size: {project.teamSize}</p>
+                <p className="text-xs text-muted-foreground">Team size: {project.teamSize}</p>
               </div>
               <div className="text-right">
                 <p className="text-2xl font-bold text-blue-600">{project.skillMatchPercent}%</p>
-                <p className="text-xs text-gray-600">Match</p>
+                <p className="text-xs text-muted-foreground">Match</p>
               </div>
             </div>
 

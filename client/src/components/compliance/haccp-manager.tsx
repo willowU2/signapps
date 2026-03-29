@@ -65,7 +65,7 @@ export default function HACCPManager() {
       case 'critical':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-gray-800';
     }
   };
 
@@ -88,11 +88,11 @@ export default function HACCPManager() {
           {ccpPoints.map((point) => (
             <div
               key={point.id}
-              className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+              className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted"
             >
               <div className="flex-1">
-                <h3 className="font-medium text-sm text-gray-900">{point.name}</h3>
-                <p className="text-xs text-gray-500 mt-1">
+                <h3 className="font-medium text-sm text-foreground">{point.name}</h3>
+                <p className="text-xs text-muted-foreground mt-1">
                   Range: {point.minTemp}°C to {point.maxTemp}°C | Current: {point.currentTemp}°C
                 </p>
               </div>
@@ -101,7 +101,7 @@ export default function HACCPManager() {
                   {getStatusIcon(point.status)}
                   {point.status.toUpperCase()}
                 </Badge>
-                <span className="text-xs text-gray-500">{point.lastCheck}</span>
+                <span className="text-xs text-muted-foreground">{point.lastCheck}</span>
               </div>
             </div>
           ))}

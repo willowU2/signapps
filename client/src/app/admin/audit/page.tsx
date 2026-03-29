@@ -50,7 +50,7 @@ const ACTION_LABELS: Record<AuditEntry['action'], string> = {
 
 const ACTION_COLORS: Record<AuditEntry['action'], string> = {
   login: 'bg-purple-500/10 text-purple-600',
-  logout: 'bg-gray-500/10 text-gray-600',
+  logout: 'bg-gray-500/10 text-muted-foreground',
   create: 'bg-green-500/10 text-green-600',
   edit: 'bg-blue-500/10 text-blue-600',
   delete: 'bg-red-500/10 text-red-600',

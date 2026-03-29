@@ -293,7 +293,7 @@ export default function FloorPlanEditor() {
                     {/* Main Canvas Editor Zone */}
                     <div className="flex-1 bg-black/[0.03] overflow-hidden relative touch-none select-none flex items-center justify-center p-8 cursor-crosshair">
                         {planData.svgContent ? (
-                            <div className="relative shadow-2xl bg-white border border-border/50 rounded-lg overflow-hidden" style={{ width: planData.width, height: planData.height }}>
+                            <div className="relative shadow-2xl bg-card border border-border/50 rounded-lg overflow-hidden" style={{ width: planData.width, height: planData.height }}>
                                 <img src={`data:image/svg+xml;utf8,${encodeURIComponent(planData.svgContent)}`} className="w-full h-full object-cover pointer-events-none" />
                                 
                                 {/* Overlay hitboxes */}

@@ -51,7 +51,7 @@ export default function PivotTable() {
           {/* Dimension Selectors */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-2">Rows</label>
+              <label className="text-xs font-semibold text-muted-foreground block mb-2">Rows</label>
               <div className="flex gap-1 flex-wrap">
                 {dimensions.map((dim) => (
                   <Button
@@ -67,7 +67,7 @@ export default function PivotTable() {
               </div>
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-2">Columns</label>
+              <label className="text-xs font-semibold text-muted-foreground block mb-2">Columns</label>
               <div className="flex gap-1 flex-wrap">
                 {dimensions.map((dim) => (
                   <Button
@@ -88,28 +88,28 @@ export default function PivotTable() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="bg-gray-100 border-b">
-                  <th className="border px-3 py-2 text-left font-semibold text-gray-700">
+                <tr className="bg-muted border-b">
+                  <th className="border px-3 py-2 text-left font-semibold text-muted-foreground">
                     {rowDimension}
                   </th>
                   {cols.map((col) => (
-                    <th key={col} className="border px-3 py-2 text-right font-semibold text-gray-700">
+                    <th key={col} className="border px-3 py-2 text-right font-semibold text-muted-foreground">
                       {String(col)}
                     </th>
                   ))}
-                  <th className="border px-3 py-2 text-right font-semibold text-gray-700">Total</th>
+                  <th className="border px-3 py-2 text-right font-semibold text-muted-foreground">Total</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row) => (
-                  <tr key={row} className="hover:bg-gray-50 border-b">
-                    <td className="border px-3 py-2 font-medium text-gray-900">{String(row)}</td>
+                  <tr key={row} className="hover:bg-muted border-b">
+                    <td className="border px-3 py-2 font-medium text-foreground">{String(row)}</td>
                     {cols.map((col) => (
-                      <td key={`${row}-${col}`} className="border px-3 py-2 text-right text-gray-600">
+                      <td key={`${row}-${col}`} className="border px-3 py-2 text-right text-muted-foreground">
                         ${getValue(row, col).toLocaleString()}
                       </td>
                     ))}
-                    <td className="border px-3 py-2 text-right font-medium text-gray-900">
+                    <td className="border px-3 py-2 text-right font-medium text-foreground">
                       $
                       {cols
                         .reduce((sum: number, col) => sum + getValue(row, col), 0)

@@ -126,7 +126,7 @@ Respond with only the JSON array, example format:
               />
               <label htmlFor="invoice-upload" className="cursor-pointer">
                 <FileUp className="h-8 w-8 mx-auto mb-2 text-slate-400" />
-                <p className="text-sm font-medium text-slate-900">
+                <p className="text-sm font-medium text-foreground">
                   {file ? file.name : 'Click to upload invoice'}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">PDF or Image (Max 10MB)</p>
@@ -154,7 +154,7 @@ Respond with only the JSON array, example format:
                   <div key={field.label} className="flex items-start justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
                     <div className="flex-1">
                       <p className="text-xs font-medium text-slate-500 uppercase">{field.label}</p>
-                      <p className="text-sm font-semibold text-slate-900 mt-1">{field.value}</p>
+                      <p className="text-sm font-semibold text-foreground mt-1">{field.value}</p>
                     </div>
                     <div className="text-right">
                       <p className={`text-xs font-medium ${getConfidenceColor(field.confidence)}`}>

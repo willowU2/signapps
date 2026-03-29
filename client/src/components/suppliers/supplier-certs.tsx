@@ -89,7 +89,7 @@ export default function SupplierCerts() {
       case "expired":
         return baseClass + " bg-red-100 text-red-700";
       default:
-        return baseClass + " bg-gray-100 text-gray-700";
+        return baseClass + " bg-muted text-muted-foreground";
     }
   };
 
@@ -125,16 +125,16 @@ export default function SupplierCerts() {
               </div>
               <div className="space-y-2 ml-2">
                 {certList.map((cert) => (
-                  <div key={cert.id} className="flex items-center justify-between rounded bg-gray-50 p-3">
+                  <div key={cert.id} className="flex items-center justify-between rounded bg-muted p-3">
                     <div className="flex items-center gap-3">
                       {getStatusIcon(cert.status)}
                       <div>
                         <p className="text-sm font-medium">{cert.type}</p>
-                        <p className="text-xs text-gray-600">{cert.certNumber}</p>
+                        <p className="text-xs text-muted-foreground">{cert.certNumber}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-gray-600">Expires: {cert.expiryDate}</p>
+                      <p className="text-xs text-muted-foreground">Expires: {cert.expiryDate}</p>
                       <span className={getStatusBadge(cert.status)}>
                         {cert.status.charAt(0).toUpperCase() + cert.status.slice(1)}
                       </span>
@@ -152,7 +152,7 @@ export default function SupplierCerts() {
           <div className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-600" />
             <div>
-              <p className="text-xs text-gray-600">Valid</p>
+              <p className="text-xs text-muted-foreground">Valid</p>
               <p className="text-xl font-bold">
                 {certs.filter((c) => c.status === "valid").length}
               </p>
@@ -163,7 +163,7 @@ export default function SupplierCerts() {
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-yellow-600" />
             <div>
-              <p className="text-xs text-gray-600">Expiring Soon</p>
+              <p className="text-xs text-muted-foreground">Expiring Soon</p>
               <p className="text-xl font-bold">
                 {certs.filter((c) => c.status === "expiring").length}
               </p>
@@ -174,7 +174,7 @@ export default function SupplierCerts() {
           <div className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-red-600" />
             <div>
-              <p className="text-xs text-gray-600">Expired</p>
+              <p className="text-xs text-muted-foreground">Expired</p>
               <p className="text-xl font-bold">
                 {certs.filter((c) => c.status === "expired").length}
               </p>

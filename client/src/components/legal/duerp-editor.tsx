@@ -107,7 +107,7 @@ export function DuerpEditor() {
                 onChange={(e) => setFrequency(parseInt(e.target.value))}
                 className="w-full"
               />
-              <p className="text-xs text-gray-500 mt-1">1 = Rare, 5 = Très fréquent</p>
+              <p className="text-xs text-muted-foreground mt-1">1 = Rare, 5 = Très fréquent</p>
             </div>
 
             <div>
@@ -122,7 +122,7 @@ export function DuerpEditor() {
                 onChange={(e) => setSeverity(parseInt(e.target.value))}
                 className="w-full"
               />
-              <p className="text-xs text-gray-500 mt-1">1 = Mineure, 5 = Critique</p>
+              <p className="text-xs text-muted-foreground mt-1">1 = Mineure, 5 = Critique</p>
             </div>
           </div>
 
@@ -169,12 +169,12 @@ export function DuerpEditor() {
               {risks.map((risk) => (
                 <div
                   key={risk.id}
-                  className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                  className="border rounded-lg p-4 hover:bg-muted transition-colors"
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
                       <h3 className="font-semibold text-base">{risk.workUnitName}</h3>
-                      <p className="text-sm text-gray-600">{risk.riskDescription}</p>
+                      <p className="text-sm text-muted-foreground">{risk.riskDescription}</p>
                     </div>
                     <Badge className={`${getSeverityColor(risk.riskScore)} ml-2`}>
                       Score: {risk.riskScore}
@@ -182,22 +182,22 @@ export function DuerpEditor() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                    <span className="text-gray-600">
+                    <span className="text-muted-foreground">
                       Fréquence: <strong>{risk.frequency}/5</strong>
                     </span>
-                    <span className="text-gray-600">
+                    <span className="text-muted-foreground">
                       Sévérité: <strong>{risk.severity}/5</strong>
                     </span>
                   </div>
 
                   <div className="mb-3 p-2 bg-blue-50 rounded text-sm">
-                    <p className="text-gray-700">
+                    <p className="text-muted-foreground">
                       <strong>Plan d'action:</strong> {risk.actionPlan}
                     </p>
                   </div>
 
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       {risk.createdAt.toLocaleString('fr-FR')}
                     </span>
                     <Button

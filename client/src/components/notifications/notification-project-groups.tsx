@@ -25,7 +25,7 @@ const TYPE_ICON_CLASS: Record<ProjectNotification["type"], string> = {
   task: "text-green-600",
   risk: "text-red-600",
   member: "text-purple-600",
-  general: "text-gray-600",
+  general: "text-muted-foreground",
 };
 
 const DEMO_NOTIFS: ProjectNotification[] = [

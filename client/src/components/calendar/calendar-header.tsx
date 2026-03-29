@@ -30,7 +30,7 @@ export function CalendarHeader({
   return (
       <header className="h-16 shrink-0 flex items-center justify-between px-2 pr-6 border-b border-gray-100 dark:border-[#2b2d31]">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full text-[#5f6368] hover:bg-gray-100">
+          <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full text-[#5f6368] hover:bg-muted">
             <Menu className="h-6 w-6" />
           </Button>
           
@@ -45,15 +45,15 @@ export function CalendarHeader({
             <span className="text-[22px] text-[#5f6368] ml-1">Agenda</span>
           </div>
 
-          <Button variant="outline" className="h-9 px-4 rounded-md border-gray-300 font-medium text-sm text-[#3c4043] ml-2 hover:bg-gray-50 shadow-sm transition-colors">
+          <Button variant="outline" className="h-9 px-4 rounded-md border-border font-medium text-sm text-[#3c4043] ml-2 hover:bg-muted shadow-sm transition-colors">
             Aujourd&apos;hui
           </Button>
 
           <div className="flex items-center gap-1 mx-2">
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-[#5f6368] hover:bg-gray-100">
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-[#5f6368] hover:bg-muted">
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-[#5f6368] hover:bg-gray-100">
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-[#5f6368] hover:bg-muted">
               <ChevronRight className="h-5 w-5" />
             </Button>
           </div>
@@ -80,23 +80,23 @@ export function CalendarHeader({
             )}
 
             <div className="flex items-center gap-2 mr-2">
-               <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#5f6368] hover:bg-gray-100">
+               <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#5f6368] hover:bg-muted">
                   <Search className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#5f6368] hover:bg-gray-100">
+              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#5f6368] hover:bg-muted">
                   <HelpCircle className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#5f6368] hover:bg-gray-100">
+              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#5f6368] hover:bg-muted">
                   <Settings className="h-5 w-5" />
               </Button>
             </div>
 
-            <Button variant="outline" className="h-9 px-3 rounded-md border-gray-300 font-medium text-sm text-[#3c4043] gap-2 hover:bg-gray-50 shadow-sm flex items-center group">
+            <Button variant="outline" className="h-9 px-3 rounded-md border-border font-medium text-sm text-[#3c4043] gap-2 hover:bg-muted shadow-sm flex items-center group">
               {viewMode === "day" ? "Jour" : viewMode === "week" ? "Semaine" : "Mois"}
               <ChevronDown className="h-4 w-4 text-[#5f6368] group-hover:text-[#3c4043]" />
             </Button>
 
-            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#5f6368] hover:bg-gray-100 ml-4 mr-2">
+            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#5f6368] hover:bg-muted ml-4 mr-2">
                 <Grid className="h-5 w-5" />
             </Button>
             

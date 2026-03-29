@@ -94,8 +94,8 @@ export function OffboardingChecklist() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Offboarding Checklist</h2>
-          <p className="text-gray-600">Employee exit and access revocation workflow</p>
+          <h2 className="text-2xl font-bold text-foreground">Offboarding Checklist</h2>
+          <p className="text-muted-foreground">Employee exit and access revocation workflow</p>
         </div>
       </div>
 
@@ -146,9 +146,9 @@ export function OffboardingChecklist() {
 
       <div className="space-y-4">
         {["equipment", "access", "documentation"].map((category) => (
-          <div key={category} className="border rounded-lg overflow-hidden bg-white">
-            <div className="bg-gray-50 border-b p-4">
-              <h3 className="font-semibold text-gray-900 capitalize">
+          <div key={category} className="border rounded-lg overflow-hidden bg-card">
+            <div className="bg-muted border-b p-4">
+              <h3 className="font-semibold text-foreground capitalize">
                 {category === "equipment"
                   ? "Equipment Return"
                   : category === "access"
@@ -164,7 +164,7 @@ export function OffboardingChecklist() {
                   <div
                     key={task.id}
                     className={`p-4 cursor-pointer transition-all ${
-                      task.completed ? "bg-green-50" : "hover:bg-gray-50"
+                      task.completed ? "bg-green-50" : "hover:bg-muted"
                     }`}
                     onClick={() => handleToggleTask(task.id)}
                   >
@@ -178,9 +178,9 @@ export function OffboardingChecklist() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900">{task.title}</p>
-                        <p className="text-sm text-gray-600">{task.description}</p>
-                        <div className="flex gap-3 mt-2 text-xs text-gray-600">
+                        <p className="font-medium text-foreground">{task.title}</p>
+                        <p className="text-sm text-muted-foreground">{task.description}</p>
+                        <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
                           <span>Assigned: {task.assignedTo}</span>
                           <span>Due: {task.dueDate}</span>
                         </div>
@@ -193,8 +193,8 @@ export function OffboardingChecklist() {
         ))}
       </div>
 
-      <div className="border rounded-lg p-4 bg-white">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="border rounded-lg p-4 bg-card">
+        <label className="block text-sm font-medium text-muted-foreground mb-2">
           Exit Interview Notes
         </label>
         <textarea

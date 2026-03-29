@@ -104,17 +104,17 @@ export default function CseDigital() {
           <Gift className="w-5 h-5 text-pink-500" />
           Your Benefits
         </h3>
-        <p className="text-sm text-gray-700 mb-3">
+        <p className="text-sm text-muted-foreground mb-3">
           You have {myBenefits.length} active benefit{myBenefits.length !== 1 ? "s" : ""}
         </p>
         <div className="space-y-2 max-h-32 overflow-y-auto">
           {myBenefits.length === 0 ? (
-            <p className="text-sm text-gray-600 italic">No benefits selected yet</p>
+            <p className="text-sm text-muted-foreground italic">No benefits selected yet</p>
           ) : (
             myBenefits.map((id) => {
               const benefit = benefits.find((b) => b.id === id);
               return benefit ? (
-                <div key={id} className="flex justify-between items-center bg-white p-2 rounded border border-purple-100">
+                <div key={id} className="flex justify-between items-center bg-card p-2 rounded border border-purple-100">
                   <span className="text-sm font-medium">{benefit.name}</span>
                   <span className="text-sm font-bold text-pink-600">-{benefit.discount}%</span>
                 </div>
@@ -125,11 +125,11 @@ export default function CseDigital() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-200">
+      <div className="flex gap-2 border-b border-border">
         <button
           onClick={() => setActiveTab("all")}
           className={`px-4 py-2 font-medium border-b-2 transition-all ${
-            activeTab === "all" ? "border-blue-500 text-blue-600" : "border-transparent text-gray-600 hover:text-gray-900"
+            activeTab === "all" ? "border-blue-500 text-blue-600" : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           All Benefits ({benefits.length})
@@ -137,7 +137,7 @@ export default function CseDigital() {
         <button
           onClick={() => setActiveTab("my")}
           className={`px-4 py-2 font-medium border-b-2 transition-all ${
-            activeTab === "my" ? "border-blue-500 text-blue-600" : "border-transparent text-gray-600 hover:text-gray-900"
+            activeTab === "my" ? "border-blue-500 text-blue-600" : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           My Benefits ({myBenefits.length})
@@ -147,7 +147,7 @@ export default function CseDigital() {
       {/* Benefits Grid */}
       <div className="grid grid-cols-1 gap-3">
         {displayedBenefits.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-muted-foreground">
             <p>No benefits in this category</p>
           </div>
         ) : (
@@ -157,15 +157,15 @@ export default function CseDigital() {
               className={`p-4 rounded-lg border-2 transition-all ${
                 myBenefits.includes(benefit.id)
                   ? "border-green-400 bg-green-50"
-                  : "border-gray-200 bg-white hover:border-blue-300"
+                  : "border-border bg-card hover:border-blue-300"
               }`}
             >
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
-                  <h4 className="font-bold text-gray-900">{benefit.name}</h4>
-                  <p className="text-xs text-gray-600 mt-1">{benefit.description}</p>
+                  <h4 className="font-bold text-foreground">{benefit.name}</h4>
+                  <p className="text-xs text-muted-foreground mt-1">{benefit.description}</p>
                   <div className="flex items-center gap-4 mt-2">
-                    <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                    <span className="text-xs bg-muted px-2 py-1 rounded">
                       <ShoppingBag className="w-3 h-3 inline mr-1" />
                       {benefit.provider}
                     </span>
@@ -179,7 +179,7 @@ export default function CseDigital() {
                   className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
                     myBenefits.includes(benefit.id)
                       ? "bg-green-500 text-white"
-                      : "bg-gray-200 text-gray-600 hover:bg-blue-200 hover:text-blue-600"
+                      : "bg-gray-200 text-muted-foreground hover:bg-blue-200 hover:text-blue-600"
                   }`}
                 >
                   {myBenefits.includes(benefit.id) ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />}

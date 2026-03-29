@@ -202,7 +202,7 @@ export function FAQManager({ onSave }: FAQManagerProps) {
       {/* FAQ List by Category */}
       {categories.length === 0 ? (
         <Card>
-          <CardContent className="pt-6 text-center text-gray-500">
+          <CardContent className="pt-6 text-center text-muted-foreground">
             No FAQs yet. Click "Add FAQ" to create one.
           </CardContent>
         </Card>
@@ -210,7 +210,7 @@ export function FAQManager({ onSave }: FAQManagerProps) {
         categories.map((category) => (
           <Card key={category}>
             <CardHeader
-              className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900"
+              className="cursor-pointer hover:bg-muted dark:hover:bg-gray-900"
               onClick={() =>
                 setExpandedCategory(
                   expandedCategory === category ? null : category
@@ -225,7 +225,7 @@ export function FAQManager({ onSave }: FAQManagerProps) {
                   }`}
                 />
               </div>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {faqs.filter((f) => f.category === category).length} items
               </p>
             </CardHeader>
@@ -237,14 +237,14 @@ export function FAQManager({ onSave }: FAQManagerProps) {
                   .map((faq) => (
                     <div
                       key={faq.id}
-                      className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900"
+                      className="border rounded-lg p-4 bg-muted dark:bg-gray-900"
                     >
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900 dark:text-white mb-2">
+                          <p className="font-medium text-foreground dark:text-white mb-2">
                             {faq.question}
                           </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-sm text-muted-foreground dark:text-gray-400">
                             {faq.answer}
                           </p>
                         </div>

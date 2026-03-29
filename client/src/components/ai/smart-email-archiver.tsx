@@ -78,7 +78,7 @@ export function SmartEmailArchiver({ emails = [], onArchive }: SmartEmailArchive
       <CardContent>
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {items.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-8">No emails to archive</p>
+            <p className="text-sm text-muted-foreground text-center py-8">No emails to archive</p>
           ) : (
             items.map((email) => {
               const folders = getEmailFolders(email);
@@ -88,14 +88,14 @@ export function SmartEmailArchiver({ emails = [], onArchive }: SmartEmailArchive
                 <div
                   key={email.id}
                   className={`p-3 border rounded-lg transition-colors ${
-                    isArchived ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'
+                    isArchived ? 'bg-muted opacity-60' : 'hover:bg-muted'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
                       <p className="text-sm font-medium">{email.subject}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-500">{email.from}</span>
+                        <span className="text-xs text-muted-foreground">{email.from}</span>
                         <span className="text-xs text-gray-400">{email.date}</span>
                       </div>
                     </div>

@@ -96,7 +96,7 @@ export default function SmartLighting() {
                   className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
                     light.mode === "manual"
                       ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      : "bg-gray-200 text-muted-foreground hover:bg-gray-300"
                   }`}
                   onClick={() => setMode(light.id, "manual")}
                 >
@@ -106,7 +106,7 @@ export default function SmartLighting() {
                   className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
                     light.mode === "presence-auto"
                       ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      : "bg-gray-200 text-muted-foreground hover:bg-gray-300"
                   }`}
                   onClick={() => setMode(light.id, "presence-auto")}
                 >

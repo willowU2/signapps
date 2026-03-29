@@ -82,25 +82,25 @@ export function SignDocument({
 
   return (
     <div className="w-full max-w-2xl">
-      <div className="border rounded-lg p-6 bg-white shadow-sm">
+      <div className="border rounded-lg p-6 bg-card shadow-sm">
         {/* Document Header */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">{documentName}</h2>
-          <p className="text-sm text-gray-500 mt-1">Signature électronique</p>
+          <h2 className="text-2xl font-bold text-foreground">{documentName}</h2>
+          <p className="text-sm text-muted-foreground mt-1">Signature électronique</p>
         </div>
 
         {/* Signataires List */}
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-gray-700">Signataires</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground">Signataires</h3>
           <div className="space-y-2">
             {signataires.map((signataire) => (
               <div
                 key={signataire.id}
-                className="flex items-center justify-between p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                className="flex items-center justify-between p-4 border rounded-lg bg-muted hover:bg-muted transition-colors"
               >
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">{signataire.name}</p>
-                  <p className="text-sm text-gray-500">{signataire.email}</p>
+                  <p className="font-medium text-foreground">{signataire.name}</p>
+                  <p className="text-sm text-muted-foreground">{signataire.email}</p>
                   {signataire.signedAt && (
                     <p className="text-xs text-gray-400 mt-1">
                       Signé le {new Date(signataire.signedAt).toLocaleDateString('fr-FR')}
@@ -153,7 +153,7 @@ export function SignDocument({
 
           {selectedSignataire && (
             <div className="py-4">
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 <span className="font-semibold">{selectedSignataire.name}</span>, veuillez signer
                 ci-dessous :
               </p>

@@ -44,7 +44,7 @@ const ROLE_CONFIG: Record<WorkspaceRole, { label: string; icon: typeof Crown; co
     owner: { label: "Owner", icon: Crown, color: "text-amber-500" },
     admin: { label: "Admin", icon: Shield, color: "text-blue-500" },
     member: { label: "Member", icon: User, color: "text-green-500" },
-    viewer: { label: "Viewer", icon: Eye, color: "text-gray-500" },
+    viewer: { label: "Viewer", icon: Eye, color: "text-muted-foreground" },
 }
 
 export function WorkspaceMembersSheet({ open, onOpenChange, workspace }: WorkspaceMembersSheetProps) {

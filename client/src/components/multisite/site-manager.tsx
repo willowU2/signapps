@@ -113,7 +113,7 @@ export function SiteManager() {
             <div className="flex items-start justify-between mb-3">
               <div>
                 <h3 className="font-semibold text-lg">{site.name}</h3>
-                <div className="flex items-center space-x-1 mt-1 text-gray-600">
+                <div className="flex items-center space-x-1 mt-1 text-muted-foreground">
                   <MapPin className="w-4 h-4" />
                   <span className="text-sm">{site.address}</span>
                 </div>
@@ -121,7 +121,7 @@ export function SiteManager() {
               <span className={`text-xs font-bold px-2 py-1 rounded ${
                 site.status === "active"
                   ? "bg-green-100 text-green-800"
-                  : "bg-gray-100 text-gray-800"
+                  : "bg-muted text-gray-800"
               }`}>
                 {site.status === "active" ? "Active" : "Inactive"}
               </span>

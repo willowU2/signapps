@@ -42,7 +42,7 @@ function getStatusColor(status: string) {
     case "stopped":
       return "bg-red-100 text-red-700 border-red-300";
     default:
-      return "bg-gray-100 text-gray-700 border-gray-300";
+      return "bg-muted text-muted-foreground border-border";
   }
 }
 
@@ -58,15 +58,15 @@ export function ServiceMesh() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Service Mesh</h2>
-        <p className="text-gray-600">Monitor services and inter-service communication</p>
+        <h2 className="text-2xl font-bold text-foreground">Service Mesh</h2>
+        <p className="text-muted-foreground">Monitor services and inter-service communication</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Service Graph */}
-        <div className="lg:col-span-2 border rounded-lg p-6 bg-white">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Service Graph</h3>
-          <div className="flex flex-wrap gap-4 items-center justify-center min-h-96 bg-gray-50 rounded p-4">
+        <div className="lg:col-span-2 border rounded-lg p-6 bg-card">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Service Graph</h3>
+          <div className="flex flex-wrap gap-4 items-center justify-center min-h-96 bg-muted rounded p-4">
             {SAMPLE_SERVICES.map((service) => (
               <button
                 key={service.id}
@@ -84,31 +84,31 @@ export function ServiceMesh() {
 
         {/* Connections & Details */}
         <div className="space-y-4">
-          <div className="border rounded-lg p-4 bg-white">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Service Status</h3>
+          <div className="border rounded-lg p-4 bg-card">
+            <h3 className="text-lg font-semibold text-foreground mb-3">Service Status</h3>
             <div className="space-y-2">
               {SAMPLE_SERVICES.map((service) => (
                 <div
                   key={service.id}
-                  className="flex items-center justify-between p-2 rounded hover:bg-gray-50 cursor-pointer"
+                  className="flex items-center justify-between p-2 rounded hover:bg-muted cursor-pointer"
                   onClick={() => setSelectedService(service.id)}
                 >
-                  <span className="text-sm font-medium text-gray-900">{service.name}</span>
+                  <span className="text-sm font-medium text-foreground">{service.name}</span>
                   <div className={`w-3 h-3 rounded-full ${service.status === "running" ? "bg-green-500" : service.status === "degraded" ? "bg-amber-500" : "bg-red-500"}`} />
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="border rounded-lg p-4 bg-white">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Latency</h3>
+          <div className="border rounded-lg p-4 bg-card">
+            <h3 className="text-lg font-semibold text-foreground mb-3">Latency</h3>
             <div className="space-y-2 text-sm">
               {SAMPLE_CONNECTIONS.slice(0, 5).map((conn, idx) => {
                 const fromService = SAMPLE_SERVICES.find((s) => s.id === conn.from);
                 const toService = SAMPLE_SERVICES.find((s) => s.id === conn.to);
                 return (
-                  <div key={idx} className="flex items-center justify-between p-2 rounded hover:bg-gray-50">
-                    <span className="text-gray-700">
+                  <div key={idx} className="flex items-center justify-between p-2 rounded hover:bg-muted">
+                    <span className="text-muted-foreground">
                       {fromService?.name} → {toService?.name}
                     </span>
                     <span className={`font-mono font-semibold ${getLatencyColor(conn.latency)}`}>
@@ -124,19 +124,19 @@ export function ServiceMesh() {
 
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">Running</p>
+          <p className="text-sm text-muted-foreground">Running</p>
           <p className="text-2xl font-bold text-green-600">
             {SAMPLE_SERVICES.filter((s) => s.status === "running").length}
           </p>
         </div>
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">Degraded</p>
+          <p className="text-sm text-muted-foreground">Degraded</p>
           <p className="text-2xl font-bold text-amber-600">
             {SAMPLE_SERVICES.filter((s) => s.status === "degraded").length}
           </p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">Stopped</p>
+          <p className="text-sm text-muted-foreground">Stopped</p>
           <p className="text-2xl font-bold text-red-600">
             {SAMPLE_SERVICES.filter((s) => s.status === "stopped").length}
           </p>

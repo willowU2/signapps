@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { getServiceUrl, ServiceName } from "@/lib/api/factory";
 
 type TriggerType = "rss" | "blog_post" | "schedule" | "manual";
 type ConditionType = "keyword" | "category" | "time_window" | "none";
@@ -167,7 +168,7 @@ export function WorkflowBuilder() {
     }
     setSaving(true);
     try {
-      await fetch("http://localhost:3019/api/v1/social/workflows", {
+      await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/workflows`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(draft),

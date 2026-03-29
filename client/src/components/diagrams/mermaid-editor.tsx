@@ -62,24 +62,24 @@ export default function MermaidEditor() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 rounded-lg border border-gray-200">
+    <div className="flex flex-col h-full bg-muted rounded-lg border border-border">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2 p-4 border-b border-gray-200 bg-white">
+      <div className="flex flex-wrap items-center gap-2 p-4 border-b border-border bg-card">
         <button
           onClick={() => handleTemplateSelect('flowchart')}
-          className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 transition-colors"
+          className="px-3 py-2 text-sm font-medium text-muted-foreground bg-muted hover:bg-gray-200 rounded border border-border transition-colors"
         >
           Flowchart
         </button>
         <button
           onClick={() => handleTemplateSelect('sequence')}
-          className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 transition-colors"
+          className="px-3 py-2 text-sm font-medium text-muted-foreground bg-muted hover:bg-gray-200 rounded border border-border transition-colors"
         >
           Sequence
         </button>
         <button
           onClick={() => handleTemplateSelect('class')}
-          className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 transition-colors"
+          className="px-3 py-2 text-sm font-medium text-muted-foreground bg-muted hover:bg-gray-200 rounded border border-border transition-colors"
         >
           Class Diagram
         </button>
@@ -89,21 +89,21 @@ export default function MermaidEditor() {
         <button
           onClick={handleCopy}
           title="Copy to clipboard"
-          className="p-2 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+          className="p-2 text-muted-foreground hover:bg-muted rounded transition-colors"
         >
           <Copy size={18} />
         </button>
         <button
           onClick={handleDownload}
           title="Download as .mmd file"
-          className="p-2 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+          className="p-2 text-muted-foreground hover:bg-muted rounded transition-colors"
         >
           <Download size={18} />
         </button>
         <button
           onClick={handleReset}
           title="Reset to default"
-          className="p-2 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+          className="p-2 text-muted-foreground hover:bg-muted rounded transition-colors"
         >
           <RotateCcw size={18} />
         </button>
@@ -114,26 +114,26 @@ export default function MermaidEditor() {
       {/* Editor Split View */}
       <div className="flex flex-1 overflow-hidden">
         {/* Textarea (Left) */}
-        <div className="flex-1 flex flex-col border-r border-gray-200">
-          <label className="text-xs font-medium text-gray-600 px-4 pt-3 pb-2 bg-gray-50">
+        <div className="flex-1 flex flex-col border-r border-border">
+          <label className="text-xs font-medium text-muted-foreground px-4 pt-3 pb-2 bg-muted">
             Mermaid Syntax
           </label>
           <textarea
             value={diagram}
             onChange={(e) => setDiagram(e.target.value)}
-            className="flex-1 p-4 font-mono text-sm text-gray-900 resize-none focus:outline-none border-none bg-white"
+            className="flex-1 p-4 font-mono text-sm text-foreground resize-none focus:outline-none border-none bg-card"
             placeholder="Enter Mermaid diagram syntax..."
             spellCheck="false"
           />
         </div>
 
         {/* Preview (Right) */}
-        <div className="flex-1 flex flex-col bg-gray-50 overflow-hidden">
-          <label className="text-xs font-medium text-gray-600 px-4 pt-3 pb-2 bg-gray-100">
+        <div className="flex-1 flex flex-col bg-muted overflow-hidden">
+          <label className="text-xs font-medium text-muted-foreground px-4 pt-3 pb-2 bg-muted">
             Preview
           </label>
           <div className="flex-1 overflow-auto p-4">
-            <pre className="text-xs text-gray-700 bg-white p-3 rounded border border-gray-200 font-mono whitespace-pre-wrap break-words">
+            <pre className="text-xs text-muted-foreground bg-card p-3 rounded border border-border font-mono whitespace-pre-wrap break-words">
               {diagram}
             </pre>
           </div>

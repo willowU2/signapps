@@ -64,7 +64,7 @@ function getPriorityColor(priority: string): { bg: string; badge: string; text: 
     case "high":
       return { bg: "bg-red-50", badge: "bg-red-100 text-red-800", text: "text-red-900" };
     default:
-      return { bg: "bg-gray-50", badge: "bg-gray-100 text-gray-800", text: "text-gray-900" };
+      return { bg: "bg-muted", badge: "bg-muted text-gray-800", text: "text-foreground" };
   }
 }
 
@@ -77,7 +77,7 @@ function getStatusColor(status: string): { bg: string; badge: string; text: stri
     case "done":
       return { bg: "bg-green-50", badge: "bg-green-100 text-green-800", text: "text-green-900" };
     default:
-      return { bg: "bg-gray-50", badge: "bg-gray-100 text-gray-800", text: "text-gray-900" };
+      return { bg: "bg-muted", badge: "bg-muted text-gray-800", text: "text-foreground" };
   }
 }
 
@@ -99,8 +99,8 @@ export function MaintenanceRequests() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Maintenance Requests</h2>
-          <p className="text-gray-600">Track and manage facility maintenance tasks</p>
+          <h2 className="text-2xl font-bold text-foreground">Maintenance Requests</h2>
+          <p className="text-muted-foreground">Track and manage facility maintenance tasks</p>
         </div>
         <div className="flex items-center gap-2">
           <Wrench className="w-8 h-8 text-blue-600" />
@@ -117,17 +117,17 @@ export function MaintenanceRequests() {
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
-          <p className="text-xs font-semibold text-gray-600 uppercase">Total Requests</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase">Total Requests</p>
           <p className="text-2xl font-bold text-blue-900">{MAINTENANCE_REQUESTS.length}</p>
         </div>
 
         <div className="rounded-lg border bg-orange-50 p-4">
-          <p className="text-xs font-semibold text-gray-600 uppercase">Open</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase">Open</p>
           <p className="text-2xl font-bold text-orange-900">{openRequests}</p>
         </div>
 
         <div className="rounded-lg border bg-purple-50 p-4">
-          <p className="text-xs font-semibold text-gray-600 uppercase">In Progress</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase">In Progress</p>
           <p className="text-2xl font-bold text-purple-900">{inProgressRequests}</p>
         </div>
       </div>
@@ -137,11 +137,11 @@ export function MaintenanceRequests() {
         <div className="lg:col-span-2 space-y-4">
           {/* Request Form */}
           {showForm && (
-            <div className="rounded-lg border bg-white p-6 space-y-4">
-              <h3 className="text-lg font-bold text-gray-900">Submit New Request</h3>
+            <div className="rounded-lg border bg-card p-6 space-y-4">
+              <h3 className="text-lg font-bold text-foreground">Submit New Request</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  <label className="block text-sm font-semibold text-foreground mb-2">
                     Request Title
                   </label>
                   <input
@@ -154,7 +154,7 @@ export function MaintenanceRequests() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  <label className="block text-sm font-semibold text-foreground mb-2">
                     Location
                   </label>
                   <input
@@ -167,7 +167,7 @@ export function MaintenanceRequests() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  <label className="block text-sm font-semibold text-foreground mb-2">
                     Priority
                   </label>
                   <select
@@ -190,7 +190,7 @@ export function MaintenanceRequests() {
                   </button>
                   <button
                     onClick={() => setShowForm(false)}
-                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium py-2 px-4 rounded transition-colors"
+                    className="flex-1 bg-muted hover:bg-gray-200 text-foreground font-medium py-2 px-4 rounded transition-colors"
                   >
                     Cancel
                   </button>
@@ -208,14 +208,14 @@ export function MaintenanceRequests() {
                 className={`rounded-lg border p-4 cursor-pointer transition-all ${
                   selectedRequestId === request.id
                     ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:border-gray-300 bg-white"
+                    : "border-border hover:border-border bg-card"
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900">{request.title}</h4>
-                    <p className="text-sm text-gray-600 mt-1">{request.location}</p>
-                    <p className="text-xs text-gray-500 mt-2">
+                    <h4 className="font-semibold text-foreground">{request.title}</h4>
+                    <p className="text-sm text-muted-foreground mt-1">{request.location}</p>
+                    <p className="text-xs text-muted-foreground mt-2">
                       Created: {new Date(request.createdDate).toLocaleDateString("de-DE")}
                     </p>
                   </div>
@@ -236,15 +236,15 @@ export function MaintenanceRequests() {
         {/* Request Details */}
         <div className="space-y-4">
           {selectedRequest ? (
-            <div className="rounded-lg border bg-white p-6 space-y-4">
+            <div className="rounded-lg border bg-card p-6 space-y-4">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">{selectedRequest.title}</h3>
-                <p className="text-sm text-gray-600 mt-1">{selectedRequest.location}</p>
+                <h3 className="text-lg font-bold text-foreground">{selectedRequest.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{selectedRequest.location}</p>
               </div>
 
               <div className="space-y-3">
                 <div className={`rounded-lg p-3 ${getPriorityColor(selectedRequest.priority).bg}`}>
-                  <p className="text-xs font-semibold text-gray-600 uppercase">Priority</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Priority</p>
                   <p
                     className={`text-sm font-bold mt-1 ${getPriorityColor(selectedRequest.priority).text}`}
                   >
@@ -253,7 +253,7 @@ export function MaintenanceRequests() {
                 </div>
 
                 <div className={`rounded-lg p-3 ${getStatusColor(selectedRequest.status).bg}`}>
-                  <p className="text-xs font-semibold text-gray-600 uppercase">Status</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Status</p>
                   <p
                     className={`text-sm font-bold mt-1 ${getStatusColor(selectedRequest.status).text}`}
                   >
@@ -263,9 +263,9 @@ export function MaintenanceRequests() {
                   </p>
                 </div>
 
-                <div className="rounded-lg bg-gray-50 p-3">
-                  <p className="text-xs font-semibold text-gray-600 uppercase">Created</p>
-                  <p className="text-sm font-semibold text-gray-900 mt-1">
+                <div className="rounded-lg bg-muted p-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Created</p>
+                  <p className="text-sm font-semibold text-foreground mt-1">
                     {new Date(selectedRequest.createdDate).toLocaleDateString("de-DE")}
                   </p>
                 </div>
@@ -275,15 +275,15 @@ export function MaintenanceRequests() {
                 <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors text-sm">
                   Update Status
                 </button>
-                <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium py-2 px-4 rounded transition-colors text-sm">
+                <button className="w-full bg-muted hover:bg-gray-200 text-foreground font-medium py-2 px-4 rounded transition-colors text-sm">
                   Assign to Technician
                 </button>
               </div>
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed bg-gray-50 p-6 text-center">
+            <div className="rounded-lg border border-dashed bg-muted p-6 text-center">
               <Wrench className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">Select a request to view details</p>
+              <p className="text-sm text-muted-foreground">Select a request to view details</p>
             </div>
           )}
         </div>

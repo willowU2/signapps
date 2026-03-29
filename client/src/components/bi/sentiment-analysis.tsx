@@ -88,7 +88,7 @@ export default function SentimentAnalysis() {
           <div className="space-y-3">
             <div>
               <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium text-gray-700">Positive</span>
+                <span className="text-sm font-medium text-muted-foreground">Positive</span>
                 <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
                   {sentiment.positive}%
                 </Badge>
@@ -100,8 +100,8 @@ export default function SentimentAnalysis() {
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium text-gray-700">Neutral</span>
-                <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                <span className="text-sm font-medium text-muted-foreground">Neutral</span>
+                <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
                   {sentiment.neutral}%
                 </Badge>
               </div>
@@ -112,7 +112,7 @@ export default function SentimentAnalysis() {
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium text-gray-700">Negative</span>
+                <span className="text-sm font-medium text-muted-foreground">Negative</span>
                 <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
                   {sentiment.negative}%
                 </Badge>
@@ -124,7 +124,7 @@ export default function SentimentAnalysis() {
           </div>
 
           {/* Metadata */}
-          <div className="pt-3 border-t text-xs text-gray-600">
+          <div className="pt-3 border-t text-xs text-muted-foreground">
             <p>Based on 1,245 customer feedback entries</p>
           </div>
         </div>

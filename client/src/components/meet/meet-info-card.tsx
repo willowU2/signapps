@@ -24,7 +24,7 @@ export function MeetInfoCard({ roomId, onClose }: MeetInfoCardProps) {
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-medium text-[#1f1f1f] dark:text-[#e8eaed]">Votre réunion est prête</h3>
                 {onClose && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5f6368] hover:bg-gray-100 dark:hover:bg-[#28292a] rounded-full" onClick={onClose}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5f6368] hover:bg-muted dark:hover:bg-[#28292a] rounded-full" onClick={onClose}>
                         <X className="h-5 w-5" />
                     </Button>
                 )}
@@ -39,7 +39,7 @@ export function MeetInfoCard({ roomId, onClose }: MeetInfoCardProps) {
                 Vous pouvez également partager ces informations de connexion avec les personnes que vous souhaitez inviter à la réunion
             </p>
 
-            <div className="flex items-center justify-between mb-4 bg-gray-50 dark:bg-[#28292a] p-3 rounded-md">
+            <div className="flex items-center justify-between mb-4 bg-muted dark:bg-[#28292a] p-3 rounded-md">
                 <span className="text-sm text-[#1f1f1f] dark:text-[#e8eaed] font-medium truncate mr-2">{meetingLink}</span>
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5f6368] shrink-0" onClick={handleCopy}>
                     <Copy className="h-4 w-4" />

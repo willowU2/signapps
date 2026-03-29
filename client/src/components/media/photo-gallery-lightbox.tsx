@@ -114,14 +114,14 @@ export function PhotoGalleryLightbox() {
       {/* Lightbox */}
       {lightboxIdx !== null && filtered[lightboxIdx] && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center" onClick={closeLightbox}>
-          <Button variant="ghost" size="icon" className="absolute top-4 right-4 text-white hover:bg-white/20" onClick={closeLightbox}>
+          <Button variant="ghost" size="icon" className="absolute top-4 right-4 text-white hover:bg-card/20" onClick={closeLightbox}>
             <X className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20"
+          <Button variant="ghost" size="icon" className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-card/20"
             onClick={e => { e.stopPropagation(); prev() }}>
             <ChevronLeft className="h-6 w-6" />
           </Button>
-          <Button variant="ghost" size="icon" className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20"
+          <Button variant="ghost" size="icon" className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-card/20"
             onClick={e => { e.stopPropagation(); next() }}>
             <ChevronRight className="h-6 w-6" />
           </Button>

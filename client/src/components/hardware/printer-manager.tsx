@@ -75,7 +75,7 @@ export default function PrinterManager() {
       case "error":
         return "text-red-600 bg-red-50 border-red-200";
       default:
-        return "text-gray-600 bg-gray-50 border-gray-200";
+        return "text-muted-foreground bg-muted border-border";
     }
   };
 
@@ -107,7 +107,7 @@ export default function PrinterManager() {
           <Printer className="w-6 h-6" />
           Printer Manager
         </h2>
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-muted-foreground">
           {printers.filter((p) => p.status === "online").length}/{printers.length} Online
         </span>
       </div>

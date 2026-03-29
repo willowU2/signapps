@@ -131,7 +131,7 @@ export function ExportMenu({ editor, documentTitle = 'document', comments }: Exp
           disabled={isExporting}
           className="cursor-pointer"
         >
-          <FileText className="h-4 w-4 mr-2 text-gray-600" />
+          <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
           <div className="flex flex-col">
             <span>Texte brut</span>
             <span className="text-xs text-muted-foreground">.txt</span>

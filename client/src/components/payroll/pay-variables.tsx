@@ -91,60 +91,60 @@ export function PayVariables() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Pay Variables</h2>
-        <p className="text-gray-600">
+        <h2 className="text-2xl font-bold text-foreground">Pay Variables</h2>
+        <p className="text-muted-foreground">
           Manage monthly overtime, bonuses, and absences
         </p>
       </div>
 
       <div className="border rounded-lg overflow-hidden">
-        <div className="bg-gray-100 border-b p-4">
-          <h3 className="font-semibold text-gray-900">Monthly Variables</h3>
+        <div className="bg-muted border-b p-4">
+          <h3 className="font-semibold text-foreground">Monthly Variables</h3>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm bg-white">
-            <thead className="bg-gray-50 border-b sticky top-0">
+          <table className="w-full text-sm bg-card">
+            <thead className="bg-muted border-b sticky top-0">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
                   Employee
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
                   ID
                 </th>
-                <th className="px-4 py-3 text-center font-semibold text-gray-900">
+                <th className="px-4 py-3 text-center font-semibold text-foreground">
                   <div className="flex items-center justify-center gap-1">
                     <Clock className="w-4 h-4" />
                     Overtime Hours
                   </div>
                 </th>
-                <th className="px-4 py-3 text-center font-semibold text-gray-900">
+                <th className="px-4 py-3 text-center font-semibold text-foreground">
                   <div className="flex items-center justify-center gap-1">
                     <Award className="w-4 h-4" />
                     Bonus (€)
                   </div>
                 </th>
-                <th className="px-4 py-3 text-center font-semibold text-gray-900">
+                <th className="px-4 py-3 text-center font-semibold text-foreground">
                   <div className="flex items-center justify-center gap-1">
                     <AlertCircle className="w-4 h-4" />
                     Absence Days
                   </div>
                 </th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-900">
+                <th className="px-4 py-3 text-right font-semibold text-foreground">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {variables.map((variable) => (
-                <tr key={variable.id} className="hover:bg-gray-50">
+                <tr key={variable.id} className="hover:bg-muted">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-foreground">
                       {variable.employeeName}
                     </p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-gray-600 font-mono text-xs">
+                    <p className="text-muted-foreground font-mono text-xs">
                       {variable.employeeId}
                     </p>
                   </td>
@@ -159,7 +159,7 @@ export function PayVariables() {
                         className="w-16 border rounded px-2 py-1 text-center text-sm"
                       />
                     ) : (
-                      <p className="text-gray-900 font-medium">
+                      <p className="text-foreground font-medium">
                         {variable.overtimeHours}h
                       </p>
                     )}
@@ -191,7 +191,7 @@ export function PayVariables() {
                         className="w-16 border rounded px-2 py-1 text-center text-sm"
                       />
                     ) : (
-                      <p className="text-gray-900 font-medium">
+                      <p className="text-foreground font-medium">
                         {variable.absenceDays}d
                       </p>
                     )}
@@ -207,7 +207,7 @@ export function PayVariables() {
                         </button>
                         <button
                           onClick={handleEditCancel}
-                          className="text-gray-600 hover:text-gray-800 text-xs font-medium"
+                          className="text-muted-foreground hover:text-gray-800 text-xs font-medium"
                         >
                           Cancel
                         </button>

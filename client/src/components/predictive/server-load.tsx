@@ -55,7 +55,7 @@ export const ServerLoad: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow">
+    <div className="p-6 bg-card rounded-lg shadow">
       <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
         <Server className="w-5 h-5 text-purple-500" />
         Server Load Prediction
@@ -78,12 +78,12 @@ export const ServerLoad: React.FC = () => {
           return (
             <div
               key={server.id}
-              className={`p-4 border rounded-lg ${needsAction ? 'border-orange-200 bg-orange-50' : 'border-gray-200'}`}
+              className={`p-4 border rounded-lg ${needsAction ? 'border-orange-200 bg-orange-50' : 'border-border'}`}
             >
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h3 className="font-semibold text-gray-900">{server.name}</h3>
-                  <p className="text-xs text-gray-600">{server.region}</p>
+                  <h3 className="font-semibold text-foreground">{server.name}</h3>
+                  <p className="text-xs text-muted-foreground">{server.region}</p>
                 </div>
                 {needsAction && (
                   <span className="px-2 py-1 bg-orange-500 text-white text-xs font-bold rounded">
@@ -95,8 +95,8 @@ export const ServerLoad: React.FC = () => {
               <div className="space-y-3">
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <p className="text-xs font-medium text-gray-700">Current Load</p>
-                    <p className="text-sm font-bold text-gray-900">{server.currentLoad}%</p>
+                    <p className="text-xs font-medium text-muted-foreground">Current Load</p>
+                    <p className="text-sm font-bold text-foreground">{server.currentLoad}%</p>
                   </div>
                   <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div
@@ -108,8 +108,8 @@ export const ServerLoad: React.FC = () => {
 
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <p className="text-xs font-medium text-gray-700">Predicted Load</p>
-                    <p className="text-sm font-bold text-gray-900">{server.predictedLoad}%</p>
+                    <p className="text-xs font-medium text-muted-foreground">Predicted Load</p>
+                    <p className="text-sm font-bold text-foreground">{server.predictedLoad}%</p>
                   </div>
                   <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div
@@ -120,7 +120,7 @@ export const ServerLoad: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-600">Scale Threshold: {server.scaleThreshold}%</span>
+                  <span className="text-muted-foreground">Scale Threshold: {server.scaleThreshold}%</span>
                   <span className={`font-semibold ${needsAction ? 'text-orange-600' : 'text-green-600'}`}>
                     {needsAction ? 'Critical' : 'Healthy'}
                   </span>

@@ -64,7 +64,7 @@ export function CertificateGenerator() {
         <div className="overflow-x-auto">
           <div
             ref={certRef}
-            className="bg-white shadow-xl mx-auto text-center relative"
+            className="bg-card shadow-xl mx-auto text-center relative"
             style={{
               width: 700, minHeight: 500, padding: '40px 60px',
               border: `12px solid ${cert.borderColor}`,
@@ -84,21 +84,21 @@ export function CertificateGenerator() {
               <h1 className="text-3xl font-bold" style={{ color: '#1e293b', letterSpacing: '0.05em' }}>{cert.title}</h1>
             </div>
 
-            <p className="text-sm text-gray-500 uppercase tracking-widest mb-2">This is to certify that</p>
+            <p className="text-sm text-muted-foreground uppercase tracking-widest mb-2">This is to certify that</p>
             <p className="text-4xl font-bold italic mb-2" style={{ color: cert.borderColor }}>{cert.recipient}</p>
-            <p className="text-sm text-gray-500 mb-3">has successfully completed</p>
+            <p className="text-sm text-muted-foreground mb-3">has successfully completed</p>
             <p className="text-xl font-semibold text-gray-800 mb-4">{cert.achievement}</p>
-            <p className="text-sm text-gray-600 max-w-xl mx-auto leading-relaxed">{cert.description}</p>
+            <p className="text-sm text-muted-foreground max-w-xl mx-auto leading-relaxed">{cert.description}</p>
 
             <div className="mt-10 flex justify-between items-end px-8">
               <div className="text-center">
                 <div className="border-t-2 border-gray-400 w-40 pt-2">
-                  <p className="text-sm font-semibold text-gray-700">{cert.issuer}</p>
-                  <p className="text-xs text-gray-500">{cert.issuerTitle}</p>
+                  <p className="text-sm font-semibold text-muted-foreground">{cert.issuer}</p>
+                  <p className="text-xs text-muted-foreground">{cert.issuerTitle}</p>
                 </div>
               </div>
               <div className="text-center">
-                <p className="text-sm text-gray-500">{cert.date}</p>
+                <p className="text-sm text-muted-foreground">{cert.date}</p>
                 <p className="text-xs text-gray-400 mt-1">Date of Issue</p>
               </div>
             </div>

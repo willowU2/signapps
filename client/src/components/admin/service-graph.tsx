@@ -42,11 +42,11 @@ function ServiceNode({ data }: { data: ServiceNodeData }) {
     <div className={`rounded-lg border-2 px-3 py-2 shadow-sm min-w-[120px] ${STATUS_COLORS[data.type]}`}>
       <Handle type="target" position={Position.Top} className="!bg-gray-400" />
       <div className="flex items-center gap-1.5">
-        <Activity className="h-3.5 w-3.5 text-gray-500 shrink-0" />
+        <Activity className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         <span className="font-semibold text-sm text-gray-800">{data.label}</span>
       </div>
       <div className="mt-1 flex items-center justify-between gap-2">
-        <span className="font-mono text-xs text-gray-500">:{data.port}</span>
+        <span className="font-mono text-xs text-muted-foreground">:{data.port}</span>
         <span className={`rounded-full px-1.5 py-0.5 text-xs font-medium ${STATUS_BADGE[data.type]}`}>
           {data.type}
         </span>
@@ -137,13 +137,13 @@ export function ServiceGraph() {
           {legend.map((l) => (
             <div key={l.label} className="flex items-center gap-1.5">
               <div className={`h-3 w-3 rounded border-2 ${l.color}`} />
-              <span className="text-xs text-gray-600">{l.label}</span>
+              <span className="text-xs text-muted-foreground">{l.label}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="h-[600px] w-full rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="h-[600px] w-full rounded-xl border border-border bg-card overflow-hidden">
         <ReactFlow
           nodes={nodes}
           edges={edges}

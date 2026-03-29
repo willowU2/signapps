@@ -176,7 +176,7 @@ export function RemoteWorkPlanner({
                       {getTeamPresence(day)} au bureau
                     </Badge>
                   </div>
-                  <div className="space-y-2 pl-2 border-l border-gray-200">
+                  <div className="space-y-2 pl-2 border-l border-border">
                     {teamMembers.map((member) => (
                       <TeamMemberAvailability
                         key={member.id}

@@ -16,27 +16,27 @@ export function ErrorTrackingStub() {
                 </div>
 
                 <div className="text-center space-y-2">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <h3 className="text-lg font-semibold text-foreground dark:text-gray-100">
                         Error Tracking
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-muted-foreground dark:text-gray-400">
                         Coming Soon
                     </p>
                 </div>
 
                 <div
-                    className="w-full max-w-xs p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 flex items-center justify-center"
+                    className="w-full max-w-xs p-6 border border-border dark:border-gray-700 rounded-lg bg-muted dark:bg-gray-900 flex items-center justify-center"
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                 >
                     <Lock className={`w-12 h-12 transition-all ${
                         isHovered
                             ? "text-red-500 scale-110"
-                            : "text-gray-400 dark:text-gray-600"
+                            : "text-gray-400 dark:text-muted-foreground"
                     }`} />
                 </div>
 
-                <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs">
+                <p className="text-xs text-muted-foreground dark:text-gray-400 max-w-xs">
                     Track and monitor application errors with source maps and stack traces
                 </p>
 

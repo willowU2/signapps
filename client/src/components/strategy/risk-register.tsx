@@ -92,8 +92,8 @@ export function RiskRegister() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Risk Register</h2>
-          <p className="text-gray-600">
+          <h2 className="text-2xl font-bold text-foreground">Risk Register</h2>
+          <p className="text-muted-foreground">
             Identify, assess, and mitigate organizational risks
           </p>
         </div>
@@ -101,7 +101,7 @@ export function RiskRegister() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-3">
-          <h3 className="font-semibold text-gray-900">Risk Assessment</h3>
+          <h3 className="font-semibold text-foreground">Risk Assessment</h3>
           <div className="overflow-auto border rounded-lg">
             <table className="w-full text-sm">
               <thead className="bg-muted border-b sticky top-0 z-10">
@@ -122,10 +122,10 @@ export function RiskRegister() {
                       className={`border-l-4 ${getRiskColor(score)}`}
                     >
                       <td className="px-3 py-2">
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-foreground">
                           {risk.name}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           {risk.description}
                         </p>
                       </td>
@@ -138,12 +138,12 @@ export function RiskRegister() {
                       <td className="px-3 py-2 text-center">
                         <span className="inline-flex items-center gap-1 font-bold text-sm">
                           <span>{score}</span>
-                          <span className="text-xs font-normal text-gray-600">
+                          <span className="text-xs font-normal text-muted-foreground">
                             ({getRiskLevel(score)})
                           </span>
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-gray-700">{risk.owner}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{risk.owner}</td>
                     </tr>
                   );
                 })}
@@ -153,9 +153,9 @@ export function RiskRegister() {
         </div>
 
         <div className="space-y-3">
-          <h3 className="font-semibold text-gray-900">Risk Heatmap</h3>
-          <div className="border rounded-lg p-4 bg-white">
-            <div className="mb-4 text-xs text-gray-600 flex gap-2">
+          <h3 className="font-semibold text-foreground">Risk Heatmap</h3>
+          <div className="border rounded-lg p-4 bg-card">
+            <div className="mb-4 text-xs text-muted-foreground flex gap-2">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 bg-green-500 rounded" />
                 <span>Low (1-5)</span>
@@ -211,7 +211,7 @@ export function RiskRegister() {
               </table>
             </div>
 
-            <p className="mt-3 text-xs text-gray-600">
+            <p className="mt-3 text-xs text-muted-foreground">
               <strong>P:</strong> Probability (1-5) | <strong>I:</strong> Impact
               (1-5)
             </p>
@@ -219,20 +219,20 @@ export function RiskRegister() {
         </div>
       </div>
 
-      <div className="border rounded-lg p-4 bg-white">
-        <h3 className="font-semibold text-gray-900 mb-3">
+      <div className="border rounded-lg p-4 bg-card">
+        <h3 className="font-semibold text-foreground mb-3">
           Mitigation Strategies
         </h3>
         <div className="space-y-2">
           {sortedRisks.slice(0, 3).map((risk) => (
             <div
               key={risk.id}
-              className="flex gap-3 p-2 rounded bg-gray-50 border"
+              className="flex gap-3 p-2 rounded bg-muted border"
             >
               <AlertTriangle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="font-medium text-gray-900">{risk.name}</p>
-                <p className="text-sm text-gray-600">{risk.mitigation}</p>
+                <p className="font-medium text-foreground">{risk.name}</p>
+                <p className="text-sm text-muted-foreground">{risk.mitigation}</p>
               </div>
             </div>
           ))}

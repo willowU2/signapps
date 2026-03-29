@@ -312,7 +312,7 @@ export function WebhookManager() {
                       type="checkbox"
                       checked={formEvents.has(ev)}
                       onChange={() => toggleEvent(ev)}
-                      className="rounded border-gray-300"
+                      className="rounded border-border"
                     />
                     <span className="text-xs">{ev}</span>
                   </label>
@@ -328,7 +328,7 @@ export function WebhookManager() {
                 }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${
                     formEnabled ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />

@@ -112,10 +112,10 @@ export function PublicContactForm({
             <div className="text-center py-8 space-y-4">
               <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
               <div>
-                <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+                <h3 className="font-semibold text-lg text-foreground dark:text-white">
                   Message Sent!
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 mt-2">
+                <p className="text-muted-foreground dark:text-gray-400 mt-2">
                   Thank you for your message. We'll get back to you soon.
                 </p>
               </div>
@@ -193,10 +193,10 @@ export function PublicContactForm({
       </Card>
 
       {/* Embed Code Card */}
-      <Card className="border-0 shadow-lg bg-gray-50 dark:bg-gray-900">
+      <Card className="border-0 shadow-lg bg-muted dark:bg-gray-900">
         <CardHeader>
           <CardTitle className="text-base">Embed This Form</CardTitle>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+          <p className="text-sm text-muted-foreground dark:text-gray-400 mt-2">
             Copy the code below to embed this contact form on your website
           </p>
         </CardHeader>
@@ -209,7 +209,7 @@ export function PublicContactForm({
               onClick={copyEmbedCode}
               size="sm"
               variant="outline"
-              className="absolute top-3 right-3 bg-white dark:bg-gray-800"
+              className="absolute top-3 right-3 bg-card dark:bg-gray-800"
             >
               {copiedEmbed ? (
                 <>

@@ -95,7 +95,7 @@ export function DayCalendar({ selectedCalendarId }: DayCalendarProps) {
                     {/* Time Axes */}
                     <div className="flex min-w-max border-r bg-muted/30 z-10 bg-background dark:bg-gray-950">
                         {timezones.map((tz, i) => (
-                            <div key={tz} className={`w-16 ${i > 0 ? 'border-l border-gray-200/50 dark:border-gray-800/50' : ''}`}>
+                            <div key={tz} className={`w-16 ${i > 0 ? 'border-l border-border/50 dark:border-gray-800/50' : ''}`}>
                                 {hours.map((hour) => {
                                     const date = new Date();
                                     date.setHours(hour, 0, 0, 0);

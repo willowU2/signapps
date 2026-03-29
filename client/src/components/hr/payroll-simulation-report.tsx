@@ -57,23 +57,23 @@ export function PayrollSimulationReport() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Rapport de simulation de paie</h2>
-          <p className="text-gray-600">Estimation des coûts salariaux par département</p>
+          <h2 className="text-2xl font-bold text-foreground">Rapport de simulation de paie</h2>
+          <p className="text-muted-foreground">Estimation des coûts salariaux par département</p>
         </div>
-        <button className="flex items-center gap-2 border hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium">
+        <button className="flex items-center gap-2 border hover:bg-muted px-4 py-2 rounded-lg text-sm font-medium">
           <Download className="w-4 h-4" /> Exporter
         </button>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-lg border bg-white p-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <div className="rounded-lg border bg-card p-4">
+          <label className="block text-sm font-semibold text-muted-foreground mb-2">
             Taux charges salariales : <span className="text-red-600 font-bold">{employeeRate}%</span>
           </label>
           <input type="range" value={employeeRate} onChange={e => setEmployeeRate(Number(e.target.value))} min={15} max={35} step={0.5} className="w-full accent-red-500" />
         </div>
-        <div className="rounded-lg border bg-white p-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <div className="rounded-lg border bg-card p-4">
+          <label className="block text-sm font-semibold text-muted-foreground mb-2">
             Taux charges patronales : <span className="text-orange-600 font-bold">{employerRate}%</span>
           </label>
           <input type="range" value={employerRate} onChange={e => setEmployerRate(Number(e.target.value))} min={25} max={55} step={0.5} className="w-full accent-orange-500" />
@@ -85,9 +85,9 @@ export function PayrollSimulationReport() {
           <div className="flex items-center gap-2 mb-1"><Users className="w-4 h-4 text-blue-600" /><span className="text-xs text-blue-700 font-medium">Effectif total</span></div>
           <p className="text-2xl font-bold text-blue-900">{totals.headcount}</p>
         </div>
-        <div className="rounded-lg border bg-gray-50 p-4">
-          <div className="flex items-center gap-2 mb-1"><DollarSign className="w-4 h-4 text-gray-600" /><span className="text-xs text-gray-700 font-medium">Masse brute</span></div>
-          <p className="text-xl font-bold text-gray-900">{fmt(totals.totalGross)}</p>
+        <div className="rounded-lg border bg-muted p-4">
+          <div className="flex items-center gap-2 mb-1"><DollarSign className="w-4 h-4 text-muted-foreground" /><span className="text-xs text-muted-foreground font-medium">Masse brute</span></div>
+          <p className="text-xl font-bold text-foreground">{fmt(totals.totalGross)}</p>
         </div>
         <div className="rounded-lg border bg-green-50 p-4">
           <div className="flex items-center gap-2 mb-1"><DollarSign className="w-4 h-4 text-green-600" /><span className="text-xs text-green-700 font-medium">Net versé</span></div>
@@ -99,8 +99,8 @@ export function PayrollSimulationReport() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-white p-4">
-        <h3 className="font-semibold text-gray-900 mb-4">Répartition par département</h3>
+      <div className="rounded-lg border bg-card p-4">
+        <h3 className="font-semibold text-foreground mb-4">Répartition par département</h3>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -125,23 +125,23 @@ export function PayrollSimulationReport() {
                 <th className="px-4 py-3 text-right font-semibold text-muted-foreground">Brut total</th>
                 <th className="px-4 py-3 text-right font-semibold text-muted-foreground">Ch. salariales</th>
                 <th className="px-4 py-3 text-right font-semibold text-muted-foreground">Net versé</th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-700">Ch. patronales</th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-700 bg-purple-50">Coût total</th>
+                <th className="px-4 py-3 text-right font-semibold text-muted-foreground">Ch. patronales</th>
+                <th className="px-4 py-3 text-right font-semibold text-muted-foreground bg-purple-50">Coût total</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {data.map(d => (
-                <tr key={d.department} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{d.department}</td>
-                  <td className="px-4 py-3 text-center text-gray-700">{d.headcount}</td>
-                  <td className="px-4 py-3 text-right text-gray-700">{fmt(d.totalGross)}</td>
+                <tr key={d.department} className="hover:bg-muted">
+                  <td className="px-4 py-3 font-medium text-foreground">{d.department}</td>
+                  <td className="px-4 py-3 text-center text-muted-foreground">{d.headcount}</td>
+                  <td className="px-4 py-3 text-right text-muted-foreground">{fmt(d.totalGross)}</td>
                   <td className="px-4 py-3 text-right text-red-600">{fmt(d.employeeCharges)}</td>
                   <td className="px-4 py-3 text-right text-green-600">{fmt(d.netTotal)}</td>
                   <td className="px-4 py-3 text-right text-orange-600">{fmt(d.employerCharges)}</td>
                   <td className="px-4 py-3 text-right font-bold text-purple-700 bg-purple-50">{fmt(d.totalCost)}</td>
                 </tr>
               ))}
-              <tr className="bg-gray-100 font-bold border-t-2">
+              <tr className="bg-muted font-bold border-t-2">
                 <td className="px-4 py-3">TOTAL</td>
                 <td className="px-4 py-3 text-center">{totals.headcount}</td>
                 <td className="px-4 py-3 text-right">{fmt(totals.totalGross)}</td>

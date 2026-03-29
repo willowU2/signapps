@@ -19,7 +19,7 @@ const PLATFORM_ICONS: Record<string, string> = {
 const PLATFORM_COLORS: Record<string, string> = {
   linkedin: "bg-blue-100 text-blue-700",
   twitter: "bg-slate-100 text-slate-700",
-  github: "bg-gray-100 text-gray-700",
+  github: "bg-muted text-muted-foreground",
   website: "bg-green-100 text-green-700",
 }
 

@@ -314,7 +314,7 @@ export function MacroEditor({ data, evaluatedData, sheetId, sheetName, setCell, 
                             value={macroName} onChange={e => setMacroName(e.target.value)} />
                         <button onClick={runMacro} disabled={isRunning || !code.trim()}
                             className={cn("flex items-center gap-1 px-3 h-7 rounded text-[12px] font-medium transition-colors",
-                                isRunning ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-[#34a853] text-white hover:bg-[#2d9249]"
+                                isRunning ? "bg-gray-200 text-muted-foreground cursor-not-allowed" : "bg-[#34a853] text-white hover:bg-[#2d9249]"
                             )}>
                             <Play className="w-3.5 h-3.5" /> Executer
                         </button>

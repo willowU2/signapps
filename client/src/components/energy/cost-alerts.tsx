@@ -94,7 +94,7 @@ export function CostAlerts({
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Consommation</span>
+                    <span className="text-muted-foreground">Consommation</span>
                     <span className="font-bold">
                       {alert.current} {alert.unit}
                     </span>
@@ -130,7 +130,7 @@ export function CostAlerts({
                   </div>
                 ) : (
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">
+                    <span className="text-muted-foreground">
                       Seuil: {alert.threshold} {alert.unit}
                     </span>
                     <Button
@@ -145,7 +145,7 @@ export function CostAlerts({
                   </div>
                 )}
 
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   {percentage}% du seuil
                 </div>
               </div>

@@ -33,7 +33,7 @@ export default function ISO27001Tracker() {
   };
 
   const getMaturityColor = (maturity: number) => {
-    const colors = ['bg-gray-100', 'bg-red-100', 'bg-amber-100', 'bg-blue-100', 'bg-lime-100', 'bg-emerald-100'];
+    const colors = ['bg-muted', 'bg-red-100', 'bg-amber-100', 'bg-blue-100', 'bg-lime-100', 'bg-emerald-100'];
     return colors[maturity] || colors[0];
   };
 
@@ -50,21 +50,21 @@ export default function ISO27001Tracker() {
           </CardTitle>
           <div className="text-right">
             <p className="text-2xl font-bold text-blue-600">{avgMaturity}</p>
-            <p className="text-xs text-gray-500">Avg Maturity</p>
+            <p className="text-xs text-muted-foreground">Avg Maturity</p>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {controls.map((control) => (
-            <div key={control.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
+            <div key={control.id} className="flex items-center gap-3 p-2 hover:bg-muted rounded">
               <Checkbox
                 checked={control.implemented}
                 onCheckedChange={() => toggleImplemented(control.id)}
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">{control.code}</p>
-                <p className="text-xs text-gray-600">{control.name}</p>
+                <p className="text-sm font-medium text-foreground">{control.code}</p>
+                <p className="text-xs text-muted-foreground">{control.name}</p>
               </div>
               <Badge className={`${getMaturityColor(control.maturity)} text-xs whitespace-nowrap`}>
                 L{control.maturity}
@@ -72,7 +72,7 @@ export default function ISO27001Tracker() {
             </div>
           ))}
         </div>
-        <div className="mt-4 pt-3 border-t text-xs text-gray-600">
+        <div className="mt-4 pt-3 border-t text-xs text-muted-foreground">
           <p>
             {implementedCount}/{controls.length} controls implemented
           </p>

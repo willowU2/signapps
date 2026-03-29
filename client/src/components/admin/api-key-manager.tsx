@@ -140,7 +140,7 @@ export function ApiKeyManager() {
     if (daysUntilExpiry < 0) return { text: "Expired", className: "text-destructive" };
     if (daysUntilExpiry < 7) return { text: `Expires in ${daysUntilExpiry}d`, className: "text-orange-600" };
     if (daysUntilExpiry < 30) return { text: `Expires in ${daysUntilExpiry}d`, className: "text-yellow-600" };
-    return { text: `Expires in ${daysUntilExpiry}d`, className: "text-gray-600" };
+    return { text: `Expires in ${daysUntilExpiry}d`, className: "text-muted-foreground" };
   };
 
   return (
@@ -170,14 +170,14 @@ export function ApiKeyManager() {
                 key={key.id}
                 className={`rounded-lg border p-4 ${
                   key.isActive
-                    ? "border-gray-200 bg-white hover:shadow-sm transition-shadow"
-                    : "border-gray-100 bg-gray-50 opacity-75"
+                    ? "border-border bg-card hover:shadow-sm transition-shadow"
+                    : "border-gray-100 bg-muted opacity-75"
                 }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
-                      <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono font-semibold text-gray-700">
+                      <code className="bg-muted px-2 py-1 rounded text-xs font-mono font-semibold text-muted-foreground">
                         {isRevealed ? key.prefix : key.prefix.slice(0, 12) + "..." + key.prefix.slice(-4)}
                       </code>
                       {!key.isActive && (

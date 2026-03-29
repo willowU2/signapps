@@ -51,7 +51,7 @@ export function LegalArchive() {
       PV: 'bg-purple-100 text-purple-800',
       Bulletin: 'bg-orange-100 text-orange-800',
     };
-    return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    return colors[category as keyof typeof colors] || 'bg-muted text-gray-800';
   };
 
   const handleDownload = (doc: ArchivedDocument) => {
@@ -81,7 +81,7 @@ export function LegalArchive() {
         </CardHeader>
         <CardContent>
           {documents.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               Aucun document archivé pour le moment.
             </div>
           ) : (
@@ -99,17 +99,17 @@ export function LegalArchive() {
                 </thead>
                 <tbody>
                   {documents.map((doc) => (
-                    <tr key={doc.id} className="border-b hover:bg-gray-50">
+                    <tr key={doc.id} className="border-b hover:bg-muted">
                       <td className="py-3">{doc.name}</td>
                       <td className="py-3">
                         <Badge className={getCategoryColor(doc.category)}>
                           {doc.category}
                         </Badge>
                       </td>
-                      <td className="py-3 font-mono text-xs text-gray-600">
+                      <td className="py-3 font-mono text-xs text-muted-foreground">
                         {doc.sha256Hash.substring(0, 16)}...
                       </td>
-                      <td className="py-3 text-gray-600">
+                      <td className="py-3 text-muted-foreground">
                         {doc.timestamp.toLocaleDateString('fr-FR')}
                       </td>
                       <td className="py-3">

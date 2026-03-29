@@ -152,12 +152,12 @@ export function CashFlowDashboard() {
           <div className="divide-y">
             {Object.entries(categoryOut).sort((a, b) => b[1] - a[1]).map(([cat, amount]) => (
               <div key={cat} className="flex items-center justify-between px-4 py-2.5">
-                <span className="text-sm text-gray-700">{cat}</span>
+                <span className="text-sm text-muted-foreground">{cat}</span>
                 <div className="flex items-center gap-2">
                   <div className="w-24 h-1.5 rounded-full bg-muted">
                     <div className="h-full rounded-full bg-red-400" style={{ width: `${(amount / totalOut) * 100}%` }} />
                   </div>
-                  <span className="text-sm font-semibold text-gray-900 w-20 text-right">{fmt(amount)}</span>
+                  <span className="text-sm font-semibold text-foreground w-20 text-right">{fmt(amount)}</span>
                 </div>
               </div>
             ))}
@@ -173,8 +173,8 @@ export function CashFlowDashboard() {
                   {e.type === "in" ? <ArrowUpRight className="w-3.5 h-3.5 text-green-600" /> : <ArrowDownRight className="w-3.5 h-3.5 text-red-600" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{e.label}</p>
-                  <p className="text-xs text-gray-500">{e.date} · {e.category}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{e.label}</p>
+                  <p className="text-xs text-muted-foreground">{e.date} · {e.category}</p>
                 </div>
                 <span className={`text-sm font-bold flex-shrink-0 ${e.type === "in" ? "text-green-600" : "text-red-600"}`}>
                   {e.type === "in" ? "+" : "-"}{fmt(e.amount)}

@@ -80,27 +80,27 @@ export default function ScrumBoard() {
         <h2 className="text-2xl font-bold">Scrum Board</h2>
         <div className="flex gap-4 text-sm">
           <div className="p-2 bg-blue-50 rounded">
-            <p className="text-xs text-gray-600">Sprint Points</p>
+            <p className="text-xs text-muted-foreground">Sprint Points</p>
             <p className="font-bold text-blue-600">{sprintPoints}</p>
           </div>
-          <div className="p-2 bg-gray-50 rounded">
-            <p className="text-xs text-gray-600">Total Points</p>
-            <p className="font-bold text-gray-600">{totalPoints}</p>
+          <div className="p-2 bg-muted rounded">
+            <p className="text-xs text-muted-foreground">Total Points</p>
+            <p className="font-bold text-muted-foreground">{totalPoints}</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4 overflow-x-auto">
         {columns.map((column) => (
-          <div key={column} className="bg-gray-100 rounded-lg p-3 min-w-80">
-            <h3 className="font-bold text-sm mb-3 p-2 bg-white rounded text-center">
+          <div key={column} className="bg-muted rounded-lg p-3 min-w-80">
+            <h3 className="font-bold text-sm mb-3 p-2 bg-card rounded text-center">
               {displayNames[column]}
             </h3>
             <div className="space-y-2">
               {board[column].map((story) => (
                 <div
                   key={story.id}
-                  className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-blue-500 hover:shadow-md transition-shadow"
+                  className="bg-card p-3 rounded-lg shadow-sm border-l-4 border-blue-500 hover:shadow-md transition-shadow"
                   draggable
                   onDragStart={(e) => {
                     e.dataTransfer?.setData("storyId", story.id);
@@ -137,7 +137,7 @@ export default function ScrumBoard() {
                   </div>
 
                   {story.assignee && (
-                    <p className="text-xs text-gray-600 mt-2">👤 {story.assignee}</p>
+                    <p className="text-xs text-muted-foreground mt-2">👤 {story.assignee}</p>
                   )}
                 </div>
               ))}

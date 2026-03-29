@@ -101,7 +101,7 @@ export function FileGridItem({
                     {item.type === 'folder' ? (
                         <Folder className="h-4 w-4 text-blue-500" />
                     ) : (
-                        <File className="h-4 w-4 text-gray-500" />
+                        <File className="h-4 w-4 text-muted-foreground" />
                     )}
                 </div>
 

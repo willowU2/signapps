@@ -44,7 +44,7 @@ const EMPLOYEES = [
 ];
 
 const getStatusColor = (status: string) => {
-  return status === 'checked-in' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+  return status === 'checked-in' ? 'bg-green-100 text-green-800' : 'bg-muted text-gray-800';
 };
 
 const formatTime = (dateString: string) => {
@@ -208,7 +208,7 @@ export function VisitorRegister({ visitors = [], onCheckIn, onCheckOut }: Visito
             <TableBody>
               {todayVisitors.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     No visitors today
                   </TableCell>
                 </TableRow>

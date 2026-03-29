@@ -96,7 +96,7 @@ export function NotificationPermissionDialog({
           </div>
           <button
             onClick={handleDontAsk}
-            className="rounded-md p-1 hover:bg-gray-100"
+            className="rounded-md p-1 hover:bg-muted"
             aria-label="Close"
           >
             <X className="h-4 w-4" />
@@ -104,11 +104,11 @@ export function NotificationPermissionDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="text-sm text-gray-600">
-            <p className="font-medium text-gray-900 mb-2">
+          <div className="text-sm text-muted-foreground">
+            <p className="font-medium text-foreground mb-2">
               We'll notify you about:
             </p>
-            <ul className="space-y-2 text-gray-600">
+            <ul className="space-y-2 text-muted-foreground">
               <li className="flex items-start gap-2">
                 <span className="text-blue-600 mt-1">✓</span>
                 <span>Event reminders and invitations</span>
@@ -143,7 +143,7 @@ export function NotificationPermissionDialog({
             variant="ghost"
             size="sm"
             onClick={handleDontAsk}
-            className="text-gray-500"
+            className="text-muted-foreground"
           >
             Don't Ask Again
           </Button>

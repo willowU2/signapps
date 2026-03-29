@@ -52,7 +52,7 @@ export const EquipmentFailure: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow">
+    <div className="p-6 bg-card rounded-lg shadow">
       <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
         <Zap className="w-5 h-5 text-orange-500" />
         Equipment Failure Prediction
@@ -62,11 +62,11 @@ export const EquipmentFailure: React.FC = () => {
         {equipment.map((item) => (
           <div
             key={item.id}
-            className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition"
+            className="p-4 border border-border rounded-lg hover:shadow-md transition"
           >
             <div className="flex justify-between items-start mb-3">
               <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">{item.name}</h3>
+                <h3 className="font-semibold text-foreground">{item.name}</h3>
               </div>
               <span className={`px-2 py-1 rounded text-xs font-bold ${getRiskBadgeColor(item.riskLevel)}`}>
                 {item.riskLevel.toUpperCase()}
@@ -75,7 +75,7 @@ export const EquipmentFailure: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-gray-600 mb-1">Failure Probability</p>
+                <p className="text-xs text-muted-foreground mb-1">Failure Probability</p>
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
                     className={`h-full ${
@@ -88,15 +88,15 @@ export const EquipmentFailure: React.FC = () => {
                     style={{ width: `${item.failureProbability}%` }}
                   />
                 </div>
-                <p className="text-sm font-bold text-gray-900 mt-1">{item.failureProbability}%</p>
+                <p className="text-sm font-bold text-foreground mt-1">{item.failureProbability}%</p>
               </div>
 
               <div>
-                <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
+                <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   Next Maintenance
                 </p>
-                <p className="text-sm font-medium text-gray-900">{item.nextMaintenance}</p>
+                <p className="text-sm font-medium text-foreground">{item.nextMaintenance}</p>
               </div>
             </div>
           </div>

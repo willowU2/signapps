@@ -46,7 +46,7 @@ export default function VelocityTracker() {
         </label>
       </div>
 
-      <div className="bg-white p-4 rounded-lg border">
+      <div className="bg-card p-4 rounded-lg border">
         <svg width="100%" height={chartHeight + 50} viewBox={`0 0 ${allData.length * 50 + 50} ${chartHeight + 50}`}>
           {allData.map((data, idx) => {
             const velocity = "velocity" in data ? data.velocity : data.completed;
@@ -85,15 +85,15 @@ export default function VelocityTracker() {
 
       <div className="grid grid-cols-3 gap-3 text-sm">
         <div className="p-3 bg-blue-50 rounded">
-          <p className="text-xs text-gray-600">Current</p>
+          <p className="text-xs text-muted-foreground">Current</p>
           <p className="text-xl font-bold text-blue-600">{velocityData[velocityData.length - 1].completed}</p>
         </div>
         <div className="p-3 bg-orange-50 rounded">
-          <p className="text-xs text-gray-600">Average</p>
+          <p className="text-xs text-muted-foreground">Average</p>
           <p className="text-xl font-bold text-orange-600">{average}</p>
         </div>
         <div className="p-3 bg-green-50 rounded">
-          <p className="text-xs text-gray-600">Peak</p>
+          <p className="text-xs text-muted-foreground">Peak</p>
           <p className="text-xl font-bold text-green-600">{maxVelocity}</p>
         </div>
       </div>

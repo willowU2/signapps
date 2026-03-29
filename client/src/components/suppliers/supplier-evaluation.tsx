@@ -66,7 +66,7 @@ export default function SupplierEvaluation() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b bg-gray-50">
+              <tr className="border-b bg-muted">
                 <th className="px-4 py-3 text-left text-sm font-semibold">Supplier</th>
                 <th className="px-4 py-3 text-center text-sm font-semibold">Quality</th>
                 <th className="px-4 py-3 text-center text-sm font-semibold">Delivery</th>
@@ -79,7 +79,7 @@ export default function SupplierEvaluation() {
               {scores.map((supplier) => {
                 const avg = getAverageScore(supplier);
                 return (
-                  <tr key={supplier.id} className="hover:bg-gray-50">
+                  <tr key={supplier.id} className="hover:bg-muted">
                     <td className="px-4 py-3 text-sm font-medium">{supplier.supplierName}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-center">

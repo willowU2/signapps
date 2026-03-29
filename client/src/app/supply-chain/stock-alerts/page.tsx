@@ -145,7 +145,7 @@ export default function StockAlertsPage() {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between flex-wrap gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm">
+                        <div className="h-10 w-10 rounded-full bg-card dark:bg-gray-800 flex items-center justify-center shadow-sm">
                           <Icon className="h-5 w-5" />
                         </div>
                         <div>

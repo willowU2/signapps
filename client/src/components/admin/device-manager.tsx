@@ -81,7 +81,7 @@ export function DeviceManager() {
           <Smartphone className="h-6 w-6 text-blue-600" />
           <h2 className="text-2xl font-bold">Trusted Devices</h2>
         </div>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           {devices.filter((d) => d.trusted).length} of {devices.length} active
         </div>
       </div>
@@ -89,20 +89,20 @@ export function DeviceManager() {
       {/* Devices List */}
       <div className="space-y-3">
         {devices.length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center text-gray-500">
+          <div className="rounded-lg border border-border bg-muted p-8 text-center text-muted-foreground">
             No devices registered yet
           </div>
         ) : (
           devices.map((device) => (
             <div
               key={device.id}
-              className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
+              className="rounded-lg border border-border bg-card p-4 shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between gap-4">
                 {/* Device Info */}
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-gray-900">
+                    <h3 className="font-semibold text-foreground">
                       {device.name}
                     </h3>
                     {device.trusted && (
@@ -120,18 +120,18 @@ export function DeviceManager() {
                   {/* Browser Info */}
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 text-sm">
                     <div>
-                      <p className="text-gray-500">Browser</p>
-                      <p className="font-mono text-gray-900">{device.browser}</p>
+                      <p className="text-muted-foreground">Browser</p>
+                      <p className="font-mono text-foreground">{device.browser}</p>
                     </div>
                     <div>
-                      <p className="text-gray-500">IP Address</p>
-                      <p className="font-mono text-gray-900">{device.ip}</p>
+                      <p className="text-muted-foreground">IP Address</p>
+                      <p className="font-mono text-foreground">{device.ip}</p>
                     </div>
                     <div className="flex items-end gap-1">
                       <Clock className="h-4 w-4 text-gray-400 mb-0.5" />
                       <div>
-                        <p className="text-gray-500">Last Seen</p>
-                        <p className="font-medium text-gray-900">
+                        <p className="text-muted-foreground">Last Seen</p>
+                        <p className="font-medium text-foreground">
                           {formatLastSeen(device.lastSeen)}
                         </p>
                       </div>

@@ -54,7 +54,7 @@ export function NfcBadge() {
             <span className="font-semibold">Reader Status</span>
           </div>
           <p className="text-2xl font-bold text-green-700">Connecté</p>
-          <p className="text-sm text-gray-600">Last seen: {status.lastSeen.toLocaleTimeString()}</p>
+          <p className="text-sm text-muted-foreground">Last seen: {status.lastSeen.toLocaleTimeString()}</p>
         </div>
 
         <div className="border rounded-lg p-4">
@@ -90,12 +90,12 @@ export function NfcBadge() {
         <h3 className="font-semibold mb-3">Event Log</h3>
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {eventLog.map((event) => (
-            <div key={event.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+            <div key={event.id} className="flex justify-between items-center p-2 bg-muted rounded">
               <div>
                 <p className="font-medium">{event.employeeName}</p>
-                <p className="text-sm text-gray-600">{event.location}</p>
+                <p className="text-sm text-muted-foreground">{event.location}</p>
               </div>
-              <span className="text-sm text-gray-500">{event.timestamp.toLocaleTimeString()}</span>
+              <span className="text-sm text-muted-foreground">{event.timestamp.toLocaleTimeString()}</span>
             </div>
           ))}
         </div>

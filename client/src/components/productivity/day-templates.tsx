@@ -60,18 +60,18 @@ export default function DayTemplates() {
           {templates.map((template) => (
             <div
               key={template.id}
-              className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition cursor-pointer"
+              className="p-4 border border-border rounded-lg hover:shadow-md transition cursor-pointer"
               onClick={() => setSelectedTemplate(template.id)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">{template.name}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{template.description}</p>
+                  <h3 className="font-semibold text-foreground">{template.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{template.description}</p>
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {template.blocks.map((block, idx) => (
                       <span
                         key={idx}
-                        className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full"
+                        className="text-xs px-2 py-1 bg-muted text-muted-foreground rounded-full"
                       >
                         {block}
                       </span>

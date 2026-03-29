@@ -58,7 +58,7 @@ export default function AirQuality() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <p className="text-xs text-gray-600 mb-1">CO₂</p>
+                <p className="text-xs text-muted-foreground mb-1">CO₂</p>
                 <p className="font-semibold">{reading.co2} ppm</p>
                 <div className="mt-2 h-1 bg-gray-200 rounded">
                   <div
@@ -68,7 +68,7 @@ export default function AirQuality() {
                 </div>
               </div>
               <div>
-                <p className="text-xs text-gray-600 mb-1">VOC</p>
+                <p className="text-xs text-muted-foreground mb-1">VOC</p>
                 <p className="font-semibold">{reading.voc} ppb</p>
                 <div className="mt-2 h-1 bg-gray-200 rounded">
                   <div
@@ -78,7 +78,7 @@ export default function AirQuality() {
                 </div>
               </div>
               <div>
-                <p className="text-xs text-gray-600 mb-1">Humidity</p>
+                <p className="text-xs text-muted-foreground mb-1">Humidity</p>
                 <p className="font-semibold">{reading.humidity}%</p>
                 <div className="mt-2 h-1 bg-gray-200 rounded">
                   <div

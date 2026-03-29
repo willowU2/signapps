@@ -43,7 +43,7 @@ export default function AIForecast() {
       <CardContent>
         <div className="space-y-4">
           {/* Chart */}
-          <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="bg-muted p-4 rounded-lg">
             <svg className="w-full" height="300" viewBox="0 0 540 300" preserveAspectRatio="xMidYMid meet">
               {/* Grid */}
               {[0, 1, 2, 3, 4].map((i) => (

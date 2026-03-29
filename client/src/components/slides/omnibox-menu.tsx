@@ -43,11 +43,11 @@ export function OmniboxMenu({ x, y, isOpen, onClose, onInsertText, onInsertShape
 
     const items: OmniboxItem[] = [
         // Basic
-        { id: "text", title: "Text Box", description: "Insert a plain text block", icon: <Type className="w-4 h-4 text-gray-500" />, category: "Basic", action: () => onInsertText("New Text") },
-        { id: "heading", title: "Heading 1", description: "Large title", icon: <Type className="w-4 h-4 text-gray-500" />, category: "Basic", action: () => onInsertText("Heading", { fontSize: 48, fontWeight: "bold" }) },
-        { id: "table", title: "Table", description: "Insert a 3x3 editable grid", icon: <Table2 className="w-4 h-4 text-gray-500" />, category: "Basic", action: () => onInsertTable(3, 3) },
+        { id: "text", title: "Text Box", description: "Insert a plain text block", icon: <Type className="w-4 h-4 text-muted-foreground" />, category: "Basic", action: () => onInsertText("New Text") },
+        { id: "heading", title: "Heading 1", description: "Large title", icon: <Type className="w-4 h-4 text-muted-foreground" />, category: "Basic", action: () => onInsertText("Heading", { fontSize: 48, fontWeight: "bold" }) },
+        { id: "table", title: "Table", description: "Insert a 3x3 editable grid", icon: <Table2 className="w-4 h-4 text-muted-foreground" />, category: "Basic", action: () => onInsertTable(3, 3) },
         {
-            id: "image", title: "Image Wrapper", description: "Import web image via URL", icon: <ImageIcon className="w-4 h-4 text-gray-500" />, category: "Basic", action: () => {
+            id: "image", title: "Image Wrapper", description: "Import web image via URL", icon: <ImageIcon className="w-4 h-4 text-muted-foreground" />, category: "Basic", action: () => {
                 setImageUrl("https://images.unsplash.com/photo-1616469829581-73993eb86b02?w=800&q=80");
                 setShowImageDialog(true);
             }
@@ -65,7 +65,7 @@ export function OmniboxMenu({ x, y, isOpen, onClose, onInsertText, onInsertShape
 
         // Smart Chips
         { id: "status-done", title: "Status: Done", description: "Green success badge", icon: <Tag className="w-4 h-4 text-emerald-500" />, category: "Smart Chips", action: () => onInsertSmartChip('status', 'Done', '#10b981') },
-        { id: "status-todo", title: "Status: To Do", description: "Gray pending badge", icon: <Tag className="w-4 h-4 text-gray-500" />, category: "Smart Chips", action: () => onInsertSmartChip('status', 'To Do', '#6b7280') },
+        { id: "status-todo", title: "Status: To Do", description: "Gray pending badge", icon: <Tag className="w-4 h-4 text-muted-foreground" />, category: "Smart Chips", action: () => onInsertSmartChip('status', 'To Do', '#6b7280') },
         { id: "status-urgent", title: "Status: Urgent", description: "Red alert badge", icon: <Tag className="w-4 h-4 text-rose-500" />, category: "Smart Chips", action: () => onInsertSmartChip('status', 'Urgent', '#f43f5e') },
         { id: "user-tag", title: "User Mention", description: "Tag a collaborator", icon: <User className="w-4 h-4 text-blue-500" />, category: "Smart Chips", action: () => onInsertSmartChip('user', '@Etienne') },
         { id: "date-tag", title: "Date", description: "Insert today's date", icon: <Calendar className="w-4 h-4 text-yellow-500" />, category: "Smart Chips", action: () => onInsertSmartChip('date', new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })) },
@@ -132,15 +132,15 @@ export function OmniboxMenu({ x, y, isOpen, onClose, onInsertText, onInsertShape
         <>
         {!isOpen ? null : <div
             ref={menuRef}
-            className="fixed z-50 w-80 bg-background/95 backdrop-blur-xl border border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col"
+            className="fixed z-50 w-80 bg-background/95 backdrop-blur-xl border border-border shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col"
             style={{ left: safeX, top: safeY, maxHeight: 400 }}
         >
-            <div className="p-3 border-b border-gray-100 bg-gray-50/50">
+            <div className="p-3 border-b border-gray-100 bg-muted/50">
                 <input
                     ref={inputRef}
                     type="text"
                     placeholder="Type to filter..."
-                    className="w-full bg-background border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 block p-2 outline-none shadow-sm"
+                    className="w-full bg-background border border-border text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 block p-2 outline-none shadow-sm"
                     value={query}
                     onChange={(e) => {
                         setQuery(e.target.value)
@@ -174,17 +174,17 @@ export function OmniboxMenu({ x, y, isOpen, onClose, onInsertText, onInsertShape
                                                 onClose()
                                             }}
                                             onMouseEnter={() => setSelectedIndex(absoluteIndex)}
-                                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${isSelected ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50 text-gray-700'}`}
+                                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${isSelected ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-muted text-muted-foreground'}`}
                                         >
-                                            <div className={`flex items-center justify-center p-2 rounded-md ${isSelected ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500'}`}>
+                                            <div className={`flex items-center justify-center p-2 rounded-md ${isSelected ? 'bg-indigo-100 text-indigo-600' : 'bg-muted text-muted-foreground'}`}>
                                                 {item.icon}
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className={`text-sm font-medium ${isSelected ? 'text-indigo-900' : 'text-gray-900'}`}>
+                                                <span className={`text-sm font-medium ${isSelected ? 'text-indigo-900' : 'text-foreground'}`}>
                                                     {item.title}
                                                 </span>
                                                 {item.description && (
-                                                    <span className={`text-xs ${isSelected ? 'text-indigo-500' : 'text-gray-500'}`}>
+                                                    <span className={`text-xs ${isSelected ? 'text-indigo-500' : 'text-muted-foreground'}`}>
                                                         {item.description}
                                                     </span>
                                                 )}
@@ -198,18 +198,18 @@ export function OmniboxMenu({ x, y, isOpen, onClose, onInsertText, onInsertShape
                 })}
 
                 {filteredItems.length === 0 && (
-                    <div className="p-4 text-center text-sm text-gray-500">
+                    <div className="p-4 text-center text-sm text-muted-foreground">
                         Aucun résultat trouvé for "{query}"
                     </div>
                 )}
             </div>
 
-            <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-400">
+            <div className="px-4 py-2 bg-muted border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-400">
                 <div className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 rounded bg-background border border-gray-200 font-sans shadow-sm">↑↓</kbd> to navigate
+                    <kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-sans shadow-sm">↑↓</kbd> to navigate
                 </div>
                 <div className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 rounded bg-background border border-gray-200 font-sans shadow-sm">Enter</kbd> to select
+                    <kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-sans shadow-sm">Enter</kbd> to select
                 </div>
             </div>
         </div>}

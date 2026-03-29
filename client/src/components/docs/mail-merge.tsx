@@ -227,7 +227,7 @@ export function MailMerge({ editor, open, onOpenChange }: MailMergeProps) {
                                     <Button variant="outline" size="sm" onClick={() => setPreviewIndex(Math.min(rows.length - 1, previewIndex + 1))} disabled={previewIndex >= rows.length - 1}><ChevronRight className="h-4 w-4" /></Button>
                                 </div>
                             </div>
-                            <div className="border rounded-md p-4 bg-white dark:bg-[#1f1f1f] max-h-[300px] overflow-y-auto prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                            <div className="border rounded-md p-4 bg-card dark:bg-[#1f1f1f] max-h-[300px] overflow-y-auto prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: previewHtml }} />
                         </div>
                     )}
 

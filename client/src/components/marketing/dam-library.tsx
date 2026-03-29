@@ -29,7 +29,7 @@ const DEFAULT_ASSETS: Asset[] = [
     id: "2",
     name: "SignApps Logo - Monochrome",
     type: "image",
-    thumbnail: "bg-gray-100",
+    thumbnail: "bg-muted",
     size: "1.8 MB",
     uploadedDate: "2026-03-15",
     tags: ["logo", "brand", "monochrome"],
@@ -99,7 +99,7 @@ function getTypeBadgeColor(type: string): string {
     case "doc":
       return "bg-red-100 text-red-800";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-muted text-gray-800";
   }
 }
 
@@ -151,25 +151,25 @@ export function DAMLibrary() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Digital Asset Library</h2>
-        <p className="text-gray-600">Manage and organize marketing assets</p>
+        <h2 className="text-2xl font-bold text-foreground">Digital Asset Library</h2>
+        <p className="text-muted-foreground">Manage and organize marketing assets</p>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Total Assets</p>
+          <p className="text-sm text-muted-foreground font-medium">Total Assets</p>
           <p className="text-3xl font-bold text-blue-900">{assetStats.total}</p>
         </div>
         <div className="rounded-lg border bg-green-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Images</p>
+          <p className="text-sm text-muted-foreground font-medium">Images</p>
           <p className="text-3xl font-bold text-green-900">{assetStats.images}</p>
         </div>
         <div className="rounded-lg border bg-purple-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Videos</p>
+          <p className="text-sm text-muted-foreground font-medium">Videos</p>
           <p className="text-3xl font-bold text-purple-900">{assetStats.videos}</p>
         </div>
         <div className="rounded-lg border bg-orange-50 p-4">
-          <p className="text-sm text-gray-600 font-medium">Total Downloads</p>
+          <p className="text-sm text-muted-foreground font-medium">Total Downloads</p>
           <p className="text-3xl font-bold text-orange-900">{assetStats.totalDownloads}</p>
         </div>
       </div>
@@ -182,7 +182,7 @@ export function DAMLibrary() {
             placeholder="Rechercher..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            className="w-full pl-10 pr-4 py-2 border rounded-lg bg-card text-foreground placeholder-gray-500 focus:outline-none focus:border-blue-500"
           />
         </div>
 
@@ -208,14 +208,14 @@ export function DAMLibrary() {
       {/* Assets Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredAssets.length === 0 ? (
-          <div className="col-span-full rounded-lg border border-dashed p-12 text-center bg-gray-50">
-            <p className="text-gray-600">No assets found matching your criteria</p>
+          <div className="col-span-full rounded-lg border border-dashed p-12 text-center bg-muted">
+            <p className="text-muted-foreground">No assets found matching your criteria</p>
           </div>
         ) : (
           filteredAssets.map((asset) => (
             <div
               key={asset.id}
-              className="rounded-lg border bg-white overflow-hidden hover:shadow-lg transition-shadow"
+              className="rounded-lg border bg-card overflow-hidden hover:shadow-lg transition-shadow"
             >
               <div
                 className={`${asset.thumbnail} w-full h-40 flex items-center justify-center border-b`}
@@ -228,7 +228,7 @@ export function DAMLibrary() {
               <div className="p-4 space-y-3">
                 <div>
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900 text-sm flex-1 leading-tight">
+                    <h3 className="font-semibold text-foreground text-sm flex-1 leading-tight">
                       {asset.name}
                     </h3>
                     <span
@@ -237,16 +237,16 @@ export function DAMLibrary() {
                       {asset.type}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500">{asset.size}</p>
+                  <p className="text-xs text-muted-foreground">{asset.size}</p>
                 </div>
 
                 <div>
-                  <p className="text-xs text-gray-600 font-medium mb-1">Tags</p>
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Tags</p>
                   <div className="flex flex-wrap gap-1">
                     {asset.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
+                        className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded"
                       >
                         {tag}
                       </span>
@@ -255,8 +255,8 @@ export function DAMLibrary() {
                 </div>
 
                 <div className="border-t pt-3 flex items-center justify-between">
-                  <p className="text-xs text-gray-500">
-                    <strong className="text-gray-900">{asset.downloads}</strong> downloads
+                  <p className="text-xs text-muted-foreground">
+                    <strong className="text-foreground">{asset.downloads}</strong> downloads
                   </p>
                   <div className="flex gap-2">
                     <button className="text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded">

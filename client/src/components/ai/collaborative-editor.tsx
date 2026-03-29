@@ -285,7 +285,7 @@ export function CollaborativeEditor({
 
     if (!editor || !ydoc || !provider) {
         return (
-            <div className="flex items-center justify-center h-full w-full bg-gray-50 dark:bg-gray-900 absolute inset-0">
+            <div className="flex items-center justify-center h-full w-full bg-muted dark:bg-gray-900 absolute inset-0">
                 <div className="text-center">
                     <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className=" h-8 w-8 text-muted-foreground mx-auto" />
                     <p className="text-muted-foreground mt-4 text-sm font-medium">Initialisation du document...</p>
@@ -415,7 +415,7 @@ export function CollaborativeEditor({
                                     </Button>
                                     <Button
                                         variant="secondary"
-                                        className="bg-background hover:bg-gray-50 text-[#444746] rounded-full shadow-sm ring-1 ring-[#dadce0] font-medium h-[36px] px-4 pointer-events-auto transition-colors"
+                                        className="bg-background hover:bg-muted text-[#444746] rounded-full shadow-sm ring-1 ring-[#dadce0] font-medium h-[36px] px-4 pointer-events-auto transition-colors"
                                     >
                                         <PanelRightOpen className="h-[18px] w-[18px] mb-0.5 mr-2" />
                                         Plus

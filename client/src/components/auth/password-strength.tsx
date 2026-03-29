@@ -89,7 +89,7 @@ export function PasswordStrength({ password, showRequirements = true }: Password
                 <X className="h-3.5 w-3.5 shrink-0 text-gray-400" />
               )}
               <span
-                className={`text-xs ${req.met ? "text-gray-700" : "text-gray-400"}`}
+                className={`text-xs ${req.met ? "text-muted-foreground" : "text-gray-400"}`}
               >
                 {req.label}
               </span>

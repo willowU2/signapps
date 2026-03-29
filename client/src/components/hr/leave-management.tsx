@@ -78,8 +78,8 @@ export function LeaveManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Gestion des congés</h2>
-          <p className="text-gray-600">Demandes, approbations et soldes</p>
+          <h2 className="text-2xl font-bold text-foreground">Gestion des congés</h2>
+          <p className="text-muted-foreground">Demandes, approbations et soldes</p>
         </div>
         <button onClick={() => setShowForm(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
           <Plus className="w-4 h-4" /> Nouvelle demande
@@ -88,56 +88,56 @@ export function LeaveManagement() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {LEAVE_BALANCES.map(b => (
-          <div key={b.type} className="rounded-lg border bg-white p-4">
-            <p className="text-xs font-semibold text-gray-500 uppercase">{b.label}</p>
+          <div key={b.type} className="rounded-lg border bg-card p-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase">{b.label}</p>
             <div className="mt-1 flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-gray-900">{b.total - b.used - b.pending}</span>
-              <span className="text-sm text-gray-500">/ {b.total} j</span>
+              <span className="text-2xl font-bold text-foreground">{b.total - b.used - b.pending}</span>
+              <span className="text-sm text-muted-foreground">/ {b.total} j</span>
             </div>
-            <div className="mt-2 h-1.5 rounded-full bg-gray-100">
+            <div className="mt-2 h-1.5 rounded-full bg-muted">
               <div className="h-full rounded-full bg-blue-500" style={{ width: `${((b.used + b.pending) / b.total) * 100}%` }} />
             </div>
-            <p className="mt-1 text-xs text-gray-500">{b.used} utilisés · {b.pending} en attente</p>
+            <p className="mt-1 text-xs text-muted-foreground">{b.used} utilisés · {b.pending} en attente</p>
           </div>
         ))}
       </div>
 
       {showForm && (
         <div className="rounded-lg border bg-blue-50 p-5 space-y-4">
-          <h3 className="font-semibold text-gray-900">Nouvelle demande de congé</h3>
+          <h3 className="font-semibold text-foreground">Nouvelle demande de congé</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-1">Type</label>
               <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as LeaveType }))} className="w-full border rounded-lg px-3 py-2 text-sm">
                 {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Motif</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-1">Motif</label>
               <input value={form.reason} onChange={e => setForm(f => ({ ...f, reason: e.target.value }))} className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Motif..." />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date début</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-1">Date début</label>
               <input type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date fin</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-1">Date fin</label>
               <input type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
           </div>
           <div className="flex gap-2">
             <button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Soumettre</button>
-            <button onClick={() => setShowForm(false)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">Annuler</button>
+            <button onClick={() => setShowForm(false)} className="bg-gray-200 hover:bg-gray-300 text-muted-foreground px-4 py-2 rounded-lg text-sm font-medium">Annuler</button>
           </div>
         </div>
       )}
 
-      <div className="rounded-lg border bg-white overflow-hidden">
-        <div className="flex items-center justify-between border-b px-4 py-3 bg-gray-50">
-          <h3 className="font-semibold text-gray-900">Demandes</h3>
+      <div className="rounded-lg border bg-card overflow-hidden">
+        <div className="flex items-center justify-between border-b px-4 py-3 bg-muted">
+          <h3 className="font-semibold text-foreground">Demandes</h3>
           <div className="flex gap-1">
             {(["all", "pending", "approved", "rejected"] as const).map(s => (
-              <button key={s} onClick={() => setFilterStatus(s)} className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${filterStatus === s ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}>
+              <button key={s} onClick={() => setFilterStatus(s)} className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${filterStatus === s ? "bg-blue-600 text-white" : "text-muted-foreground hover:bg-muted"}`}>
                 {s === "all" ? "Tous" : s === "pending" ? "En attente" : s === "approved" ? "Approuvés" : "Refusés"}
               </button>
             ))}
@@ -145,14 +145,14 @@ export function LeaveManagement() {
         </div>
         <div className="divide-y">
           {filtered.map(r => (
-            <div key={r.id} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50">
+            <div key={r.id} className="flex items-center gap-4 px-4 py-3 hover:bg-muted">
               <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="font-medium text-gray-900 text-sm">{r.employeeName}</p>
-                  <span className="text-xs text-gray-500">{TYPE_LABELS[r.type]}</span>
+                  <p className="font-medium text-foreground text-sm">{r.employeeName}</p>
+                  <span className="text-xs text-muted-foreground">{TYPE_LABELS[r.type]}</span>
                 </div>
-                <p className="text-xs text-gray-500">{r.startDate} → {r.endDate} · {r.days} jour{r.days > 1 ? "s" : ""}</p>
+                <p className="text-xs text-muted-foreground">{r.startDate} → {r.endDate} · {r.days} jour{r.days > 1 ? "s" : ""}</p>
                 {r.reason && <p className="text-xs text-gray-400 truncate">{r.reason}</p>}
               </div>
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[r.status]}`}>
@@ -166,7 +166,7 @@ export function LeaveManagement() {
               )}
             </div>
           ))}
-          {filtered.length === 0 && <p className="text-center text-sm text-gray-500 py-8">Aucune demande</p>}
+          {filtered.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">Aucune demande</p>}
         </div>
       </div>
     </div>

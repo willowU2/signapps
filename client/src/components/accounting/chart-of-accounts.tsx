@@ -230,7 +230,7 @@ function getTypeColor(type: string): string {
     case "expense":
       return "text-orange-600";
     default:
-      return "text-gray-600";
+      return "text-muted-foreground";
   }
 }
 
@@ -250,7 +250,7 @@ function AccountRow({
 
   return (
     <>
-      <tr className="hover:bg-gray-50 border-b">
+      <tr className="hover:bg-muted border-b">
         <td className="px-4 py-3">
           <div style={{ marginLeft: `${level * 20}px` }} className="flex items-center gap-2">
             {hasChildren ? (
@@ -267,13 +267,13 @@ function AccountRow({
             ) : (
               <div className="w-4" />
             )}
-            <span className="font-mono text-sm font-medium text-gray-700">
+            <span className="font-mono text-sm font-medium text-muted-foreground">
               {account.number}
             </span>
           </div>
         </td>
         <td className="px-4 py-3">
-          <p className="font-medium text-gray-900">{account.name}</p>
+          <p className="font-medium text-foreground">{account.name}</p>
         </td>
         <td className="px-4 py-3">
           <span className={`text-xs font-semibold px-2 py-1 rounded ${getTypeColor(account.type)}`}>
@@ -281,7 +281,7 @@ function AccountRow({
           </span>
         </td>
         <td className="px-4 py-3 text-right">
-          <p className="font-semibold text-gray-900">
+          <p className="font-semibold text-foreground">
             €{account.balance.toLocaleString("de-DE", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
@@ -289,7 +289,7 @@ function AccountRow({
           </p>
         </td>
         <td className="px-4 py-3 text-right">
-          <button className="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-gray-900">
+          <button className="p-1 hover:bg-gray-200 rounded text-muted-foreground hover:text-foreground">
             <Edit2 className="w-4 h-4" />
           </button>
         </td>
@@ -340,10 +340,10 @@ export function ChartOfAccounts() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-foreground">
             Chart of Accounts
           </h2>
-          <p className="text-gray-600">Manage account structure and balances</p>
+          <p className="text-muted-foreground">Manage account structure and balances</p>
         </div>
         <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex items-center gap-2">
           <Plus className="w-4 h-4" />
@@ -352,7 +352,7 @@ export function ChartOfAccounts() {
       </div>
 
       <div className="rounded-lg border bg-blue-50 p-4">
-        <p className="text-sm text-gray-600 font-medium">Total Balance</p>
+        <p className="text-sm text-muted-foreground font-medium">Total Balance</p>
         <p className="text-2xl font-bold text-blue-900">
           €{totalBalance.toLocaleString("de-DE", {
             minimumFractionDigits: 2,
@@ -366,19 +366,19 @@ export function ChartOfAccounts() {
           <table className="w-full text-sm">
             <thead className="bg-muted border-b sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
                   Account #
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
                   Name
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
                   Type
                 </th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-900">
+                <th className="px-4 py-3 text-right font-semibold text-foreground">
                   Balance
                 </th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-900">
+                <th className="px-4 py-3 text-right font-semibold text-foreground">
                   Actions
                 </th>
               </tr>
@@ -412,7 +412,7 @@ export function ChartOfAccounts() {
           return (
             <div key={type} className="rounded-lg border bg-background p-3">
               <p className={`text-xs font-semibold ${color}`}>{label}</p>
-              <p className="text-lg font-bold text-gray-900">
+              <p className="text-lg font-bold text-foreground">
                 €{sum.toLocaleString("de-DE")}
               </p>
             </div>

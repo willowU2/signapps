@@ -68,7 +68,7 @@ export default function DailyPlanner() {
       case 'low':
         return 'text-blue-600 bg-blue-50';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-muted-foreground bg-muted';
     }
   };
 
@@ -89,7 +89,7 @@ export default function DailyPlanner() {
       <CardContent className="space-y-6">
         {/* Top 3 Tasks */}
         <div>
-          <h3 className="font-semibold text-sm text-gray-900 mb-3">Top 3 Tasks</h3>
+          <h3 className="font-semibold text-sm text-foreground mb-3">Top 3 Tasks</h3>
           <div className="space-y-2">
             {topTasks.map((task) => (
               <div
@@ -99,18 +99,18 @@ export default function DailyPlanner() {
                     ? 'bg-emerald-50 border-emerald-200'
                     : task.status === 'blocked'
                       ? 'bg-red-50 border-red-200'
-                      : 'bg-white border-gray-200 hover:border-gray-300'
+                      : 'bg-card border-border hover:border-border'
                 }`}
               >
                 <div className="flex items-start gap-3">
                   {getStatusIcon(task.status)}
                   <div className="flex-1 min-w-0">
                     <p
-                      className={`text-sm font-medium ${task.status === 'done' ? 'line-through text-gray-500' : 'text-gray-900'}`}
+                      className={`text-sm font-medium ${task.status === 'done' ? 'line-through text-muted-foreground' : 'text-foreground'}`}
                     >
                       {task.title}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">{task.time}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{task.time}</p>
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${getPriorityColor(task.priority)}`}>
                     {task.priority}
@@ -141,22 +141,22 @@ export default function DailyPlanner() {
 
         {/* Time Blocks */}
         <div>
-          <h3 className="font-semibold text-sm text-gray-900 mb-3">Time Blocks</h3>
+          <h3 className="font-semibold text-sm text-foreground mb-3">Time Blocks</h3>
           <div className="space-y-2">
             {timeBlocks.map((block) => (
-              <div key={block.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded border border-gray-200">
-                <div className="text-xs font-semibold text-gray-600 w-12">{block.time}</div>
+              <div key={block.id} className="flex items-center gap-3 p-2 bg-muted rounded border border-border">
+                <div className="text-xs font-semibold text-muted-foreground w-12">{block.time}</div>
                 <div className="flex-1">
-                  <p className="text-sm text-gray-900">{block.task}</p>
+                  <p className="text-sm text-foreground">{block.task}</p>
                 </div>
-                <div className="text-xs text-gray-500">{block.duration}m</div>
+                <div className="text-xs text-muted-foreground">{block.duration}m</div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Summary */}
-        <div className="pt-3 border-t text-xs text-gray-600">
+        <div className="pt-3 border-t text-xs text-muted-foreground">
           <p>
             Progress: {topTasks.filter((t) => t.status === 'done').length}/{topTasks.length} tasks completed
           </p>

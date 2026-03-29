@@ -88,21 +88,21 @@ export function MacroRecorder() {
           </div>
         )}
         {isRecording && (
-          <p className="text-xs text-gray-600">{currentActions.length} action(s)</p>
+          <p className="text-xs text-muted-foreground">{currentActions.length} action(s)</p>
         )}
       </div>
 
       <div className="rounded border p-4">
         <h2 className="mb-3 font-semibold">Saved ({macros.length})</h2>
         {macros.length === 0 ? (
-          <p className="text-xs text-gray-500">Empty</p>
+          <p className="text-xs text-muted-foreground">Empty</p>
         ) : (
           <div className="space-y-2">
             {macros.map((m) => (
               <div key={m.id} className="flex justify-between items-center">
                 <div>
                   <p className="text-sm font-medium">{m.name}</p>
-                  <p className="text-xs text-gray-500">{m.actions.length} action(s)</p>
+                  <p className="text-xs text-muted-foreground">{m.actions.length} action(s)</p>
                 </div>
                 <div className="flex gap-1">
                   <Button size="xs" variant="outline" onClick={() => playMacro(m)}>

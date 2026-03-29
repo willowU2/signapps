@@ -38,8 +38,8 @@ export function NotesBoard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Sticky Notes</h1>
-          <p className="mt-1 text-sm text-gray-600">{notes.length} note{notes.length !== 1 ? 's' : ''}</p>
+          <h1 className="text-3xl font-bold text-foreground">Sticky Notes</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{notes.length} note{notes.length !== 1 ? 's' : ''}</p>
         </div>
         <Button
           onClick={handleAddNote}
@@ -66,7 +66,7 @@ export function NotesBoard() {
       {/* Empty State */}
       {notes.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-lg text-gray-500">No notes yet. Create one to get started!</p>
+          <p className="text-lg text-muted-foreground">No notes yet. Create one to get started!</p>
         </div>
       )}
     </div>

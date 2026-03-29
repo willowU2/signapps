@@ -56,7 +56,7 @@ export function BirthdayAnniversaryAlerts() {
     if (days === 0) return "bg-red-100 border-red-300";
     if (days <= 3) return "bg-orange-50 border-orange-300";
     if (days <= 7) return "bg-amber-50 border-amber-200";
-    return "bg-white border-gray-200";
+    return "bg-card border-border";
   };
 
   const formatDays = (days: number) => {
@@ -69,8 +69,8 @@ export function BirthdayAnniversaryAlerts() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Anniversaires & Célébrations</h2>
-          <p className="text-gray-600">Liste des prochaines célébrations à venir</p>
+          <h2 className="text-2xl font-bold text-foreground">Anniversaires & Célébrations</h2>
+          <p className="text-muted-foreground">Liste des prochaines célébrations à venir</p>
         </div>
         {urgentCount > 0 && (
           <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
@@ -101,15 +101,15 @@ export function BirthdayAnniversaryAlerts() {
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex gap-1">
           {(["all", "birthday", "anniversary"] as const).map(f => (
-            <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === f ? "bg-gray-800 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-700"}`}>
+            <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === f ? "bg-gray-800 text-white" : "bg-muted hover:bg-gray-200 text-muted-foreground"}`}>
               {f === "all" ? "Tous" : f === "birthday" ? "Anniversaires" : "Anciennetés"}
             </button>
           ))}
         </div>
         <div className="flex items-center gap-2 ml-auto">
-          <span className="text-sm text-gray-600">Horizon :</span>
+          <span className="text-sm text-muted-foreground">Horizon :</span>
           {[7, 14, 30, 60].map(d => (
-            <button key={d} onClick={() => setHorizon(d)} className={`px-2.5 py-1 rounded text-xs font-medium ${horizon === d ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-600"}`}>{d}j</button>
+            <button key={d} onClick={() => setHorizon(d)} className={`px-2.5 py-1 rounded text-xs font-medium ${horizon === d ? "bg-blue-600 text-white" : "bg-muted hover:bg-gray-200 text-muted-foreground"}`}>{d}j</button>
           ))}
         </div>
       </div>
@@ -122,20 +122,20 @@ export function BirthdayAnniversaryAlerts() {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <p className="font-semibold text-gray-900">{alert.name}</p>
-                <span className="text-xs text-gray-500">{alert.department}</span>
+                <p className="font-semibold text-foreground">{alert.name}</p>
+                <span className="text-xs text-muted-foreground">{alert.department}</span>
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 {alert.type === "birthday" ? "Anniversaire" : `${alert.years} an${alert.years !== 1 ? "s" : ""} d'ancienneté`}
                 {" · "}{alert.date}
               </p>
             </div>
             <div className="text-right flex-shrink-0">
-              <p className={`text-sm font-bold ${alert.daysUntil === 0 ? "text-red-600" : alert.daysUntil <= 7 ? "text-orange-600" : "text-gray-700"}`}>
+              <p className={`text-sm font-bold ${alert.daysUntil === 0 ? "text-red-600" : alert.daysUntil <= 7 ? "text-orange-600" : "text-muted-foreground"}`}>
                 {formatDays(alert.daysUntil)}
               </p>
             </div>
-            <button onClick={() => toggleNotify(alert.id)} className={`p-2 rounded-lg transition-colors ${notified.has(alert.id) ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100 text-gray-400"}`}>
+            <button onClick={() => toggleNotify(alert.id)} className={`p-2 rounded-lg transition-colors ${notified.has(alert.id) ? "bg-blue-100 text-blue-600" : "hover:bg-muted text-gray-400"}`}>
               {notified.has(alert.id) ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
             </button>
           </div>

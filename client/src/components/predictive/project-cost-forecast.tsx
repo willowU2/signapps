@@ -56,7 +56,7 @@ export const ProjectCostForecast: React.FC = () => {
       case 'on-track': return 'bg-green-100 text-green-800';
       case 'warning': return 'bg-yellow-100 text-yellow-800';
       case 'overrun': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-muted text-gray-800';
     }
   };
 
@@ -75,7 +75,7 @@ export const ProjectCostForecast: React.FC = () => {
   const overrunProjects = projects.filter((p) => p.status === 'overrun');
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow">
+    <div className="p-6 bg-card rounded-lg shadow">
       <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
         <Briefcase className="w-5 h-5 text-purple-500" />
         Project Cost Forecast
@@ -101,8 +101,8 @@ export const ProjectCostForecast: React.FC = () => {
             <div key={project.id} className={`p-4 border rounded-lg ${getStatusColor(project.status)}`}>
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h3 className="font-semibold text-gray-900">{project.name}</h3>
-                  <p className="text-xs text-gray-600 mt-1">Confidence: {project.confidence}%</p>
+                  <h3 className="font-semibold text-foreground">{project.name}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Confidence: {project.confidence}%</p>
                 </div>
                 <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusBadge(project.status)}`}>
                   {project.status.replace('-', ' ').toUpperCase()}
@@ -128,21 +128,21 @@ export const ProjectCostForecast: React.FC = () => {
 
               <div className="grid grid-cols-4 gap-2 text-xs">
                 <div>
-                  <p className="text-gray-600">Spent</p>
-                  <p className="font-bold text-gray-900">${(project.spent / 1000).toFixed(0)}k</p>
+                  <p className="text-muted-foreground">Spent</p>
+                  <p className="font-bold text-foreground">${(project.spent / 1000).toFixed(0)}k</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Planned</p>
-                  <p className="font-bold text-gray-900">${(project.plannedBudget / 1000).toFixed(0)}k</p>
+                  <p className="text-muted-foreground">Planned</p>
+                  <p className="font-bold text-foreground">${(project.plannedBudget / 1000).toFixed(0)}k</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Predicted</p>
+                  <p className="text-muted-foreground">Predicted</p>
                   <p className={`font-bold ${variance > 0 ? 'text-red-600' : 'text-green-600'}`}>
                     ${(project.predictedCost / 1000).toFixed(0)}k
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Variance</p>
+                  <p className="text-muted-foreground">Variance</p>
                   <p className={`font-bold ${variance > 0 ? 'text-red-600' : 'text-green-600'}`}>
                     {variance > 0 ? '+' : ''}{variancePercent}%
                   </p>
@@ -156,15 +156,15 @@ export const ProjectCostForecast: React.FC = () => {
       <div className="border-t pt-4">
         <div className="grid grid-cols-3 gap-3">
           <div className="p-3 bg-blue-50 rounded-lg">
-            <p className="text-xs text-gray-600">Total Planned</p>
+            <p className="text-xs text-muted-foreground">Total Planned</p>
             <p className="text-lg font-bold text-blue-600">${(totalPlanned / 1000).toFixed(0)}k</p>
           </div>
           <div className="p-3 bg-orange-50 rounded-lg">
-            <p className="text-xs text-gray-600">Total Predicted</p>
+            <p className="text-xs text-muted-foreground">Total Predicted</p>
             <p className="text-lg font-bold text-orange-600">${(totalPredicted / 1000).toFixed(0)}k</p>
           </div>
           <div className="p-3 bg-purple-50 rounded-lg">
-            <p className="text-xs text-gray-600">Total Spent</p>
+            <p className="text-xs text-muted-foreground">Total Spent</p>
             <p className="text-lg font-bold text-purple-600">${(totalSpent / 1000).toFixed(0)}k</p>
           </div>
         </div>

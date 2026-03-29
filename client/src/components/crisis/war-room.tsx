@@ -67,7 +67,7 @@ function getPriorityColor(priority: string) {
     case "low":
       return "bg-green-100 text-green-700";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "bg-muted text-muted-foreground";
   }
 }
 
@@ -78,9 +78,9 @@ function getStatusColor(status: string) {
     case "notified":
       return "text-blue-600";
     case "ready":
-      return "text-gray-600";
+      return "text-muted-foreground";
     default:
-      return "text-gray-600";
+      return "text-muted-foreground";
   }
 }
 
@@ -99,25 +99,25 @@ export function WarRoom() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Crisis War Room</h2>
-        <p className="text-gray-600">Coordinate incident response in real-time</p>
+        <h2 className="text-2xl font-bold text-foreground">Crisis War Room</h2>
+        <p className="text-muted-foreground">Coordinate incident response in real-time</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">Checklist Progress</p>
+          <p className="text-sm text-muted-foreground">Checklist Progress</p>
           <p className="text-2xl font-bold text-blue-600">
             {completedCount}/{checklist.length}
           </p>
         </div>
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">Team Engaged</p>
+          <p className="text-sm text-muted-foreground">Team Engaged</p>
           <p className="text-2xl font-bold text-green-600">
             {SAMPLE_ROLES.filter((r) => r.status === "engaged").length}/{SAMPLE_ROLES.length}
           </p>
         </div>
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">Critical Events</p>
+          <p className="text-sm text-muted-foreground">Critical Events</p>
           <p className="text-2xl font-bold text-amber-600">
             {SAMPLE_TIMELINE.filter((t) => t.severity === "critical").length}
           </p>
@@ -128,8 +128,8 @@ export function WarRoom() {
         {/* Checklist */}
         <div className="border rounded-lg p-4 bg-background">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Response Checklist</h3>
-            <button className="p-1 hover:bg-gray-200 rounded text-gray-600">
+            <h3 className="text-lg font-semibold text-foreground">Response Checklist</h3>
+            <button className="p-1 hover:bg-gray-200 rounded text-muted-foreground">
               <Plus className="w-4 h-4" />
             </button>
           </div>
@@ -137,7 +137,7 @@ export function WarRoom() {
             {checklist.map((item) => (
               <label
                 key={item.id}
-                className="flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
               >
                 <input
                   type="checkbox"
@@ -145,7 +145,7 @@ export function WarRoom() {
                   onChange={() => toggleChecklistItem(item.id)}
                   className="rounded"
                 />
-                <span className={`flex-1 text-sm ${item.completed ? "line-through text-gray-500" : "text-gray-900"}`}>
+                <span className={`flex-1 text-sm ${item.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
                   {item.task}
                 </span>
                 <span className={`text-xs font-semibold px-2 py-1 rounded ${getPriorityColor(item.priority)}`}>
@@ -158,16 +158,16 @@ export function WarRoom() {
 
         {/* Team Roles */}
         <div className="border rounded-lg p-4 bg-background">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Team Roles</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Team Roles</h3>
           <div className="space-y-2">
             {SAMPLE_ROLES.map((role) => (
               <div
                 key={role.id}
-                className="flex items-center justify-between p-2 rounded border hover:bg-gray-50"
+                className="flex items-center justify-between p-2 rounded border hover:bg-muted"
               >
                 <div>
-                  <p className="font-medium text-gray-900">{role.role}</p>
-                  <p className="text-sm text-gray-600">{role.assignee}</p>
+                  <p className="font-medium text-foreground">{role.role}</p>
+                  <p className="text-sm text-muted-foreground">{role.assignee}</p>
                 </div>
                 <span className={`text-xs font-semibold capitalize ${getStatusColor(role.status)}`}>
                   {role.status}
@@ -180,17 +180,17 @@ export function WarRoom() {
 
       {/* Timeline */}
       <div className="border rounded-lg p-4 bg-background">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <Clock className="w-5 h-5" />
           Timeline
         </h3>
         <div className="space-y-2">
           {SAMPLE_TIMELINE.map((event) => (
-            <div key={event.id} className="flex items-start gap-3 p-2 rounded hover:bg-gray-50">
+            <div key={event.id} className="flex items-start gap-3 p-2 rounded hover:bg-muted">
               <span className={`text-sm font-mono font-bold ${event.severity === "critical" ? "text-red-600" : event.severity === "warning" ? "text-amber-600" : "text-blue-600"}`}>
                 {event.time}
               </span>
-              <p className="text-sm text-gray-900 flex-1">{event.event}</p>
+              <p className="text-sm text-foreground flex-1">{event.event}</p>
               <span
                 className={`text-xs font-semibold px-2 py-1 rounded ${
                   event.severity === "critical"
@@ -209,15 +209,15 @@ export function WarRoom() {
 
       {/* Decision Log */}
       <div className="border rounded-lg p-4 bg-background">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Decision Log</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4">Decision Log</h3>
         <div className="space-y-3">
           {SAMPLE_DECISIONS.map((decision) => (
-            <div key={decision.id} className="border rounded p-3 hover:bg-gray-50">
+            <div key={decision.id} className="border rounded p-3 hover:bg-muted">
               <div className="flex items-start justify-between mb-2">
-                <span className="text-sm font-mono text-gray-600">{decision.time}</span>
-                <span className="text-xs font-semibold text-gray-600">{decision.owner}</span>
+                <span className="text-sm font-mono text-muted-foreground">{decision.time}</span>
+                <span className="text-xs font-semibold text-muted-foreground">{decision.owner}</span>
               </div>
-              <p className="font-medium text-gray-900 mb-1">{decision.decision}</p>
+              <p className="font-medium text-foreground mb-1">{decision.decision}</p>
               <p className="text-sm text-green-700 bg-green-50 px-2 py-1 rounded">
                 Impact: {decision.impact}
               </p>

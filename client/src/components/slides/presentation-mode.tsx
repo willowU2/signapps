@@ -88,7 +88,7 @@ export function PresentationMode({ slides, transitions, onExit }: PresentationMo
                 <span>{current + 1} / {slides.length}</span>
                 <button
                     onClick={(e) => { e.stopPropagation(); onExit(); }}
-                    className="px-3 py-1 rounded bg-white/10 hover:bg-white/20 transition-colors"
+                    className="px-3 py-1 rounded bg-card/10 hover:bg-card/20 transition-colors"
                 >
                     ESC
                 </button>

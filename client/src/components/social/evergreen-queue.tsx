@@ -16,6 +16,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { toast } from "sonner";
+import { getServiceUrl, ServiceName } from "@/lib/api/factory";
 
 interface EvergreenPost {
   id: string;
@@ -94,7 +95,7 @@ export function EvergreenQueue({
     if (!id) return;
     setLoading("add");
     try {
-      await fetch(`http://localhost:3019/api/v1/social/posts/${id}/evergreen`, {
+      await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/posts/${id}/evergreen`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_evergreen: true }),
@@ -112,7 +113,7 @@ export function EvergreenQueue({
   const handleRemove = async (post: EvergreenPost) => {
     setLoading(post.id);
     try {
-      await fetch(`http://localhost:3019/api/v1/social/posts/${post.id}/evergreen`, {
+      await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/posts/${post.id}/evergreen`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_evergreen: false }),

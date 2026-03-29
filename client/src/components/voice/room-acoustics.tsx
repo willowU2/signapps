@@ -46,7 +46,7 @@ export function RoomAcoustics() {
       case 'high':
         return 'bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-200';
       default:
-        return 'bg-gray-100 dark:bg-gray-800';
+        return 'bg-muted dark:bg-gray-800';
     }
   };
 

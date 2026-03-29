@@ -46,7 +46,7 @@ export default function ContrastAdjuster() {
     <div className="space-y-4 p-4">
       <h2 className="text-2xl font-bold">Contrast Adjuster</h2>
 
-      <div className="bg-gray-50 p-4 rounded-lg">
+      <div className="bg-muted p-4 rounded-lg">
         <div className="flex justify-between items-center mb-2">
           <p className="font-medium">Current Contrast Ratio</p>
           <p className="text-2xl font-bold text-blue-600">{contrastLevel}:1</p>
@@ -66,7 +66,7 @@ export default function ContrastAdjuster() {
             Auto-Fix
           </Button>
         </div>
-        <p className="text-xs text-gray-600 mt-2">
+        <p className="text-xs text-muted-foreground mt-2">
           {contrastLevel >= 7 ? "✓ AAA Compliant (Best)" : contrastLevel >= 4.5 ? "✓ AA Compliant" : "✗ Below WCAG AA"}
         </p>
       </div>

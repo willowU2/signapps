@@ -61,7 +61,7 @@ export default function RGPDAudit() {
       case 'high':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-gray-800';
     }
   };
 
@@ -76,7 +76,7 @@ export default function RGPDAudit() {
           <div className="flex items-center gap-2">
             <div className="text-right">
               <p className="text-2xl font-bold text-blue-600">{complianceScore}%</p>
-              <p className="text-xs text-gray-500">Compliant</p>
+              <p className="text-xs text-muted-foreground">Compliant</p>
             </div>
             <div className="relative w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
               <div
@@ -92,17 +92,17 @@ export default function RGPDAudit() {
       <CardContent>
         <div className="space-y-3">
           {dataFlows.map((flow) => (
-            <div key={flow.id} className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+            <div key={flow.id} className="p-3 border border-border rounded-lg hover:bg-muted">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-foreground">
                     {flow.source} → {flow.destination}
                   </p>
-                  <p className="text-xs text-gray-600 mt-1">{flow.dataType}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{flow.dataType}</p>
                 </div>
                 <Badge className={getRiskColor(flow.risk)}>{flow.risk.toUpperCase()}</Badge>
               </div>
-              <p className="text-xs text-gray-500">Processor: {flow.processor}</p>
+              <p className="text-xs text-muted-foreground">Processor: {flow.processor}</p>
             </div>
           ))}
         </div>

@@ -76,8 +76,8 @@ export function SlideEditor({ docId }: SlideEditorProps) {
     return (
         <div className="p-6 flex gap-6">
             {/* Slide thumbnails */}
-            <div className="w-48 flex flex-col gap-3 bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-900">Slides</h3>
+            <div className="w-48 flex flex-col gap-3 bg-muted p-4 rounded-lg">
+                <h3 className="font-semibold text-foreground">Slides</h3>
                 <div className="flex-1 overflow-y-auto space-y-2">
                     {slides.map((slide, idx) => (
                         <div
@@ -86,13 +86,13 @@ export function SlideEditor({ docId }: SlideEditorProps) {
                             className={`p-3 border-2 rounded cursor-pointer transition ${
                                 currentSlideIndex === idx
                                     ? 'border-blue-500 bg-blue-50'
-                                    : 'border-gray-300 bg-background hover:border-gray-400'
+                                    : 'border-border bg-background hover:border-gray-400'
                             }`}
                         >
-                            <p className="text-xs font-semibold text-gray-900">
+                            <p className="text-xs font-semibold text-foreground">
                                 {slide.title}
                             </p>
-                            <p className="text-xs text-gray-600 line-clamp-2 mt-1">
+                            <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
                                 {slide.content || '(empty)'}
                             </p>
                         </div>
@@ -108,11 +108,11 @@ export function SlideEditor({ docId }: SlideEditorProps) {
             </div>
 
             {/* Main editor */}
-            <div className="flex-1 bg-background rounded-lg border border-gray-200 flex flex-col">
+            <div className="flex-1 bg-background rounded-lg border border-border flex flex-col">
                 {/* Toolbar */}
-                <div className="border-b border-gray-200 p-3 flex justify-between items-center bg-gray-50">
+                <div className="border-b border-border p-3 flex justify-between items-center bg-muted">
                     <div>
-                        <p className="text-sm font-semibold text-gray-900">
+                        <p className="text-sm font-semibold text-foreground">
                             Slide {currentSlideIndex + 1} of {slides.length}
                         </p>
                     </div>
@@ -122,7 +122,7 @@ export function SlideEditor({ docId }: SlideEditorProps) {
                                 isSynced ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'
                             }`}
                         />
-                        <span className="text-xs text-gray-600">
+                        <span className="text-xs text-muted-foreground">
                             {isSynced ? 'Synced' : 'Syncing...'}
                         </span>
                     </div>
@@ -137,7 +137,7 @@ export function SlideEditor({ docId }: SlideEditorProps) {
                                 type="text"
                                 value={currentSlide.title}
                                 onChange={(e) => updateSlideTitle(e.target.value)}
-                                className="w-full text-3xl font-bold text-gray-900 mb-6 border-0 bg-transparent outline-none"
+                                className="w-full text-3xl font-bold text-foreground mb-6 border-0 bg-transparent outline-none"
                                 placeholder="Slide title"
                             />
 
@@ -145,7 +145,7 @@ export function SlideEditor({ docId }: SlideEditorProps) {
                             <textarea
                                 value={currentSlide.content}
                                 onChange={(e) => updateSlideContent(e.target.value)}
-                                className="w-full text-lg text-gray-700 border-0 bg-transparent outline-none resize-none"
+                                className="w-full text-lg text-muted-foreground border-0 bg-transparent outline-none resize-none"
                                 placeholder="Add content here..."
                                 rows={8}
                             />

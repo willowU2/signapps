@@ -139,7 +139,7 @@ function getPreviewIcon(previewType: PreviewType, size: 'sm' | 'lg' = 'lg') {
     case 'markdown':
       return <FileText className={`${sizeClass} text-blue-500`} />;
     default:
-      return <FileIcon className={`${sizeClass} text-gray-500`} />;
+      return <FileIcon className={`${sizeClass} text-muted-foreground`} />;
   }
 }
 

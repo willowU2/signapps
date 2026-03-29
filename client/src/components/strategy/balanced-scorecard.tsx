@@ -127,7 +127,7 @@ function getStatusColor(status: string): string {
     case "off-track":
       return "text-red-600 bg-red-50";
     default:
-      return "text-gray-600 bg-gray-50";
+      return "text-muted-foreground bg-muted";
   }
 }
 
@@ -151,10 +151,10 @@ export function BalancedScorecard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-foreground">
             Balanced Scorecard
           </h2>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Monitor KPIs across four strategic perspectives
           </p>
         </div>
@@ -167,8 +167,8 @@ export function BalancedScorecard() {
             className={`rounded-lg border-2 p-5 ${perspective.color}`}
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="text-gray-700">{perspective.icon}</div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <div className="text-muted-foreground">{perspective.icon}</div>
+              <h3 className="text-lg font-semibold text-foreground">
                 {perspective.title}
               </h3>
             </div>
@@ -177,13 +177,13 @@ export function BalancedScorecard() {
               {perspective.kpis.map((kpi) => {
                 const percentage = (kpi.actual / kpi.target) * 100;
                 return (
-                  <div key={kpi.id} className="bg-white rounded p-3">
+                  <div key={kpi.id} className="bg-card rounded p-3">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-foreground">
                           {kpi.name}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           Target: {kpi.target} {kpi.unit}
                         </p>
                       </div>
@@ -204,10 +204,10 @@ export function BalancedScorecard() {
                     </div>
 
                     <div className="flex justify-between mt-1">
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         {percentage.toFixed(0)}% of target
                       </span>
-                      <span className="text-xs font-medium text-gray-600">
+                      <span className="text-xs font-medium text-muted-foreground">
                         {kpi.status.replace("-", " ")}
                       </span>
                     </div>

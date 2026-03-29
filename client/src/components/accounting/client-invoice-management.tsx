@@ -27,7 +27,7 @@ interface Invoice {
 }
 
 const STATUS_CONFIG: Record<InvoiceStatus, { label: string; color: string; icon: React.ReactNode }> = {
-  draft: { label: "Brouillon", color: "bg-gray-100 text-gray-700", icon: <Clock className="w-3.5 h-3.5" /> },
+  draft: { label: "Brouillon", color: "bg-muted text-muted-foreground", icon: <Clock className="w-3.5 h-3.5" /> },
   sent: { label: "Envoyée", color: "bg-blue-100 text-blue-700", icon: <Send className="w-3.5 h-3.5" /> },
   paid: { label: "Payée", color: "bg-green-100 text-green-700", icon: <CheckCircle className="w-3.5 h-3.5" /> },
   overdue: { label: "En retard", color: "bg-red-100 text-red-700", icon: <AlertCircle className="w-3.5 h-3.5" /> },
@@ -115,7 +115,7 @@ export function ClientInvoiceManagement() {
 
       {showCreate && (
         <div className="rounded-lg border bg-blue-50 p-5 space-y-4">
-          <h3 className="font-semibold text-gray-900">Nouvelle facture</h3>
+          <h3 className="font-semibold text-foreground">Nouvelle facture</h3>
           <div className="grid grid-cols-2 gap-4">
             <div><label className="block text-xs font-medium mb-1">Client</label><input value={newInvoice.client} onChange={e => setNewInvoice(f => ({ ...f, client: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" /></div>
             <div><label className="block text-xs font-medium mb-1">Email client</label><input type="email" value={newInvoice.clientEmail} onChange={e => setNewInvoice(f => ({ ...f, clientEmail: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" /></div>
@@ -124,7 +124,7 @@ export function ClientInvoiceManagement() {
           </div>
           <div className="flex gap-2">
             <button onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Créer</button>
-            <button onClick={() => setShowCreate(false)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">Annuler</button>
+            <button onClick={() => setShowCreate(false)} className="bg-gray-200 hover:bg-gray-300 text-muted-foreground px-4 py-2 rounded-lg text-sm font-medium">Annuler</button>
           </div>
         </div>
       )}
@@ -155,12 +155,12 @@ export function ClientInvoiceManagement() {
               const { ttc } = calcTotals(inv.lines);
               const cfg = STATUS_CONFIG[inv.status];
               return (
-                <tr key={inv.id} className={`hover:bg-gray-50 ${inv.status === "overdue" ? "bg-red-50/30" : ""}`}>
-                  <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-700">{inv.number}</td>
-                  <td className="px-4 py-3"><p className="font-medium text-gray-900">{inv.client}</p><p className="text-xs text-gray-500">{inv.clientEmail}</p></td>
-                  <td className="px-4 py-3 text-right font-bold text-gray-900">{fmt(ttc)}</td>
-                  <td className="px-4 py-3 text-gray-600">{inv.issueDate}</td>
-                  <td className="px-4 py-3 text-gray-600">{inv.dueDate || "—"}</td>
+                <tr key={inv.id} className={`hover:bg-muted ${inv.status === "overdue" ? "bg-red-50/30" : ""}`}>
+                  <td className="px-4 py-3 font-mono text-xs font-semibold text-muted-foreground">{inv.number}</td>
+                  <td className="px-4 py-3"><p className="font-medium text-foreground">{inv.client}</p><p className="text-xs text-muted-foreground">{inv.clientEmail}</p></td>
+                  <td className="px-4 py-3 text-right font-bold text-foreground">{fmt(ttc)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{inv.issueDate}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{inv.dueDate || "—"}</td>
                   <td className="px-4 py-3"><span className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full w-fit ${cfg.color}`}>{cfg.icon}{cfg.label}</span></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
@@ -180,8 +180,8 @@ export function ClientInvoiceManagement() {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setViewInvoice(null)}>
           <div className="bg-background rounded-2xl p-6 max-w-lg w-full shadow-xl space-y-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <div><h3 className="text-xl font-bold">{viewInvoice.number}</h3><p className="text-gray-500">{viewInvoice.client}</p></div>
-              <button onClick={() => setViewInvoice(null)}><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
+              <div><h3 className="text-xl font-bold">{viewInvoice.number}</h3><p className="text-muted-foreground">{viewInvoice.client}</p></div>
+              <button onClick={() => setViewInvoice(null)}><X className="w-5 h-5 text-gray-400 hover:text-muted-foreground" /></button>
             </div>
             <table className="w-full text-sm">
               <thead className="bg-muted border-b sticky top-0 z-10">
@@ -195,8 +195,8 @@ export function ClientInvoiceManagement() {
             </table>
             {(() => { const { ht, vat, ttc } = calcTotals(viewInvoice.lines); return (
               <div className="space-y-1 text-sm border-t pt-3">
-                <div className="flex justify-between"><span className="text-gray-600">HT</span><span>{fmt(ht)}</span></div>
-                <div className="flex justify-between"><span className="text-gray-600">TVA (20%)</span><span>{fmt(vat)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">HT</span><span>{fmt(ht)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">TVA (20%)</span><span>{fmt(vat)}</span></div>
                 <div className="flex justify-between font-bold text-lg border-t pt-1"><span>TTC</span><span>{fmt(ttc)}</span></div>
               </div>
             );})()}

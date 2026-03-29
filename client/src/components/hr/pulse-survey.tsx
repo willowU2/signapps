@@ -65,7 +65,7 @@ function StarRating({
             <Star
               size={24}
               className={`${
-                isFilled ? 'fill-amber-400 text-amber-400' : 'text-gray-300 dark:text-gray-600'
+                isFilled ? 'fill-amber-400 text-amber-400' : 'text-gray-300 dark:text-muted-foreground'
               }`}
             />
           </button>

@@ -2252,7 +2252,7 @@ ${html}
     };
 
     if (!editor || !ydoc || !provider) {
-        return <div className="flex items-center justify-center p-8 text-gray-500">Initializing editor...</div>;
+        return <div className="flex items-center justify-center p-8 text-muted-foreground">Initializing editor...</div>;
     }
 
     return (
@@ -2266,7 +2266,7 @@ ${html}
                 {/* Focus mode button */}
                 <button
                     onClick={() => setIsFocusMode(true)}
-                    className="ml-auto p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
+                    className="ml-auto p-1 rounded hover:bg-muted dark:hover:bg-gray-800 text-muted-foreground transition-colors"
                     title="Mode focus (F11)"
                 >
                     <Maximize2 className="w-4 h-4" />
@@ -2341,7 +2341,7 @@ ${html}
                         title="Dictée Vocale"
                     />
                     {interimVoiceText && (
-                        <div className="absolute top-10 left-0 bg-background dark:bg-[#1e1f20] border border-gray-200 dark:border-gray-700 shadow-md rounded-md px-3 py-1.5 text-xs whitespace-nowrap z-50 animate-pulse text-gray-500 dark:text-gray-400 pointer-events-none">
+                        <div className="absolute top-10 left-0 bg-background dark:bg-[#1e1f20] border border-border dark:border-gray-700 shadow-md rounded-md px-3 py-1.5 text-xs whitespace-nowrap z-50 animate-pulse text-muted-foreground dark:text-gray-400 pointer-events-none">
                             🎤 {interimVoiceText}...
                         </div>
                     )}
@@ -2378,7 +2378,7 @@ ${html}
                             <button
                                 role="combobox"
                                 aria-expanded={fontOpen}
-                                className="flex items-center justify-between h-[28px] w-[130px] rounded-none px-3 border-0 border-r border-[#c7c7c7] dark:border-[#5f6368] bg-transparent hover:bg-gray-50 dark:hover:bg-[#303134] focus:outline-none text-[13px] text-[#444746] dark:text-[#e3e3e3] font-medium transition-colors"
+                                className="flex items-center justify-between h-[28px] w-[130px] rounded-none px-3 border-0 border-r border-[#c7c7c7] dark:border-[#5f6368] bg-transparent hover:bg-muted dark:hover:bg-[#303134] focus:outline-none text-[13px] text-[#444746] dark:text-[#e3e3e3] font-medium transition-colors"
                             >
                                 <span className="truncate" style={{ fontFamily: currentFont }}>{currentFont}</span>
                                 <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
@@ -2418,7 +2418,7 @@ ${html}
                     <div className="flex items-center">
                         <span
                             onClick={() => { setDocFontSize(s => { const ns = Math.max(1, (typeof s === 'number'? s : 11) - 1); setTimeout(() => editor.chain().focus().setFontSize(`${ns}pt`).run(), 50); return ns; }) }}
-                            className="flex items-center justify-center h-full px-2.5 text-[14px] text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-50 dark:hover:bg-[#303134] cursor-pointer border-r border-[#c7c7c7] dark:border-[#5f6368] select-none"
+                            className="flex items-center justify-center h-full px-2.5 text-[14px] text-[#444746] dark:text-[#e3e3e3] hover:bg-muted dark:hover:bg-[#303134] cursor-pointer border-r border-[#c7c7c7] dark:border-[#5f6368] select-none"
                         >-</span>
                         
                         <input
@@ -2452,7 +2452,7 @@ ${html}
 
                         <span
                             onClick={() => { setDocFontSize(s => { const ns = (typeof s === 'number' ? s : 11) + 1; setTimeout(() => editor.chain().focus().setFontSize(`${ns}pt`).run(), 50); return ns; }) }}
-                            className="flex items-center justify-center h-full px-2 text-[14px] text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-50 dark:hover:bg-[#303134] cursor-pointer border-l border-[#c7c7c7] dark:border-[#5f6368] select-none"
+                            className="flex items-center justify-center h-full px-2 text-[14px] text-[#444746] dark:text-[#e3e3e3] hover:bg-muted dark:hover:bg-[#303134] cursor-pointer border-l border-[#c7c7c7] dark:border-[#5f6368] select-none"
                         >+</span>
                     </div>
                 </div>
@@ -2488,7 +2488,7 @@ ${html}
                         </div>
                     </ToolbarButton>
                     {showColorPicker && (
-                        <div className="absolute top-10 left-0 bg-background dark:bg-[#2d2e30] border border-gray-200 dark:border-gray-700 shadow-xl rounded-md p-2 flex flex-wrap w-[140px] gap-1 z-30">
+                        <div className="absolute top-10 left-0 bg-background dark:bg-[#2d2e30] border border-border dark:border-gray-700 shadow-xl rounded-md p-2 flex flex-wrap w-[140px] gap-1 z-30">
                             {['#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff',
                                 '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff', '#9900ff', '#ff00ff',
                             ].map(color => (
@@ -2500,7 +2500,7 @@ ${html}
                                 />
                             ))}
                             <div className="w-full mt-1 flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-2 pb-1">
-                                <span className="text-xs text-gray-500 pl-1 font-medium">Couleur</span>
+                                <span className="text-xs text-muted-foreground pl-1 font-medium">Couleur</span>
                                 <input 
                                     type="color" 
                                     className="w-5 h-5 p-0 border-0 rounded cursor-pointer shrink-0 bg-transparent"
@@ -2511,7 +2511,7 @@ ${html}
                                 />
                             </div>
                             <button
-                                className="w-full mt-1 text-xs text-center py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded font-medium"
+                                className="w-full mt-1 text-xs text-center py-1 hover:bg-muted dark:hover:bg-gray-800 rounded font-medium"
                                 onClick={() => { handleFormat(() => editor.chain().unsetColor().run()); setShowColorPicker(false); }}
                             >
                                 Réinitialiser
@@ -2527,7 +2527,7 @@ ${html}
                         </div>
                     </ToolbarButton>
                     {showHighlightPicker && (
-                        <div className="absolute top-10 left-0 bg-background dark:bg-[#2d2e30] border border-gray-200 dark:border-gray-700 shadow-xl rounded-md p-2 flex flex-wrap w-[140px] gap-1 z-30">
+                        <div className="absolute top-10 left-0 bg-background dark:bg-[#2d2e30] border border-border dark:border-gray-700 shadow-xl rounded-md p-2 flex flex-wrap w-[140px] gap-1 z-30">
                             {['#fce8e6', '#fce8b2', '#fff2cc', '#e6f4ea', '#e8f0fe', '#f3e8fd', '#ffffff',
                             ].map(color => (
                                 <button
@@ -2538,7 +2538,7 @@ ${html}
                                 />
                             ))}
                             <div className="w-full mt-1 flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-2 pb-1">
-                                <span className="text-xs text-gray-500 pl-1 font-medium">Surlignage</span>
+                                <span className="text-xs text-muted-foreground pl-1 font-medium">Surlignage</span>
                                 <input 
                                     type="color" 
                                     className="w-5 h-5 p-0 border-0 rounded cursor-pointer shrink-0 bg-transparent"
@@ -2549,7 +2549,7 @@ ${html}
                                 />
                             </div>
                             <button
-                                className="w-full mt-1 text-xs text-center py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded font-medium"
+                                className="w-full mt-1 text-xs text-center py-1 hover:bg-muted dark:hover:bg-gray-800 rounded font-medium"
                                 onClick={() => { handleFormat(() => editor.chain().unsetHighlight().run()); setShowHighlightPicker(false); }}
                             >
                                 Aucun
@@ -2619,25 +2619,25 @@ ${html}
                             <h4 className="font-medium text-sm text-[#202124] dark:text-[#e8eaed]">Insérer ou modifier un lien</h4>
                             
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-xs text-gray-500 font-medium">Texte à afficher (optionnel)</label>
+                                <label className="text-xs text-muted-foreground font-medium">Texte à afficher (optionnel)</label>
                                 <input
                                     type="text"
                                     placeholder="Texte cliquable..."
                                     value={linkText}
                                     onChange={(e) => setLinkText(e.target.value)}
-                                    className="flex h-8 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary text-[#202124] dark:text-[#e8eaed]"
+                                    className="flex h-8 w-full rounded-md border border-border dark:border-gray-700 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary text-[#202124] dark:text-[#e8eaed]"
                                 />
                             </div>
 
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-xs text-gray-500 font-medium">Lien web</label>
+                                <label className="text-xs text-muted-foreground font-medium">Lien web</label>
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="url"
                                         placeholder="https://..."
                                         value={linkUrl}
                                         onChange={(e) => setLinkUrl(e.target.value)}
-                                        className="flex h-8 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary text-[#202124] dark:text-[#e8eaed]"
+                                        className="flex h-8 w-full rounded-md border border-border dark:border-gray-700 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary text-[#202124] dark:text-[#e8eaed]"
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') {
                                                 if (linkUrl) {
@@ -2700,12 +2700,12 @@ ${html}
                             <h4 className="font-medium text-sm text-[#202124] dark:text-[#e8eaed]">Insérer une image</h4>
                             
                             {/* File Upload Option */}
-                            <label className="flex flex-col items-center justify-center w-full h-24 px-4 transition bg-gray-50 dark:bg-[#202124] border-2 border-gray-200 dark:border-gray-700 border-dashed rounded-md cursor-pointer hover:border-primary hover:bg-gray-100 dark:hover:bg-[#303134]">
+                            <label className="flex flex-col items-center justify-center w-full h-24 px-4 transition bg-muted dark:bg-[#202124] border-2 border-border dark:border-gray-700 border-dashed rounded-md cursor-pointer hover:border-primary hover:bg-muted dark:hover:bg-[#303134]">
                                 <div className="flex items-center space-x-2">
-                                    <FileImage className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                                    <span className="font-medium text-sm text-gray-600 dark:text-gray-300">Choisir un fichier...</span>
+                                    <FileImage className="w-5 h-5 text-muted-foreground dark:text-gray-400" />
+                                    <span className="font-medium text-sm text-muted-foreground dark:text-gray-300">Choisir un fichier...</span>
                                 </div>
-                                <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">PNG, JPG, GIF jusqu'à 10MB</span>
+                                <span className="text-xs text-gray-400 dark:text-muted-foreground mt-1">PNG, JPG, GIF jusqu'à 10MB</span>
                                 <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
@@ -2716,9 +2716,9 @@ ${html}
                             </label>
 
                             <div className="relative flex items-center py-1">
-                                <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+                                <div className="flex-grow border-t border-border dark:border-gray-700"></div>
                                 <span className="flex-shrink-0 mx-3 text-xs text-gray-400">ou via URL</span>
-                                <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+                                <div className="flex-grow border-t border-border dark:border-gray-700"></div>
                             </div>
 
                             <div className="flex items-center gap-2">
@@ -2727,7 +2727,7 @@ ${html}
                                     placeholder="https://..."
                                     value={imageUrl}
                                     onChange={(e) => setImageUrl(e.target.value)}
-                                    className="flex h-8 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary text-[#202124] dark:text-[#e8eaed]"
+                                    className="flex h-8 w-full rounded-md border border-border dark:border-gray-700 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary text-[#202124] dark:text-[#e8eaed]"
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                             if (imageUrl) {
@@ -2857,12 +2857,12 @@ ${html}
             <div className={`flex-1 overflow-y-auto w-full relative pb-16 custom-scrollbar bg-[#f8f9fa] dark:bg-[#1b1b1b] flex flex-row justify-center py-6 ${splitView ? 'gap-0' : ''}`}>
                 {/* IDEA-009: Split view Markdown preview */}
                 {splitView && (
-                    <div className="flex-1 min-w-0 max-w-[400px] border-r border-gray-200 dark:border-gray-700 overflow-y-auto p-6 font-mono text-sm">
-                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Markdown</span>
+                    <div className="flex-1 min-w-0 max-w-[400px] border-r border-border dark:border-gray-700 overflow-y-auto p-6 font-mono text-sm">
+                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-border dark:border-gray-700">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Markdown</span>
                             <SplitSquareHorizontal className="w-4 h-4 text-gray-400" />
                         </div>
-                        <pre className="whitespace-pre-wrap text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
+                        <pre className="whitespace-pre-wrap text-xs text-muted-foreground dark:text-gray-300 leading-relaxed">
                             {htmlToMarkdown(editor.getHTML())}
                         </pre>
                     </div>
@@ -2893,7 +2893,7 @@ ${html}
                                     placement: 'top',
                                     offset: 6,
                                 }}
-                                className="bg-background/95 dark:bg-[#202124]/95 backdrop-blur-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-200/50 dark:border-gray-700/50 rounded-[8px] overflow-hidden flex divide-x divide-gray-100 dark:divide-gray-800 pl-1"
+                                className="bg-background/95 dark:bg-[#202124]/95 backdrop-blur-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-border/50 dark:border-gray-700/50 rounded-[8px] overflow-hidden flex divide-x divide-gray-100 dark:divide-gray-800 pl-1"
                             >
                                 <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleBold().run())} isActive={editor.isActive('bold')}>
                                     <Bold className="w-[16px] h-[16px]" />
@@ -2912,7 +2912,7 @@ ${html}
                                         setActiveCommentId(commentId);
                                         setShowComments(true);
                                     }}
-                                    className="flex items-center gap-1.5 px-3 py-1 hover:bg-gray-100 dark:hover:bg-[#303134] text-[13px] font-medium text-[#444746] dark:text-[#e3e3e3] transition-colors"
+                                    className="flex items-center gap-1.5 px-3 py-1 hover:bg-muted dark:hover:bg-[#303134] text-[13px] font-medium text-[#444746] dark:text-[#e3e3e3] transition-colors"
                                 >
                                     <MessageSquarePlus className="w-3.5 h-3.5" />
                                     Comment
@@ -2929,7 +2929,7 @@ ${html}
                                 <button
                                     onClick={() => handleAiAction('fix')}
                                     disabled={isStreaming}
-                                    className="flex items-center gap-1.5 px-3 py-1 hover:bg-gray-100 dark:hover:bg-[#303134] text-[13px] font-medium text-[#444746] dark:text-[#e3e3e3] transition-colors"
+                                    className="flex items-center gap-1.5 px-3 py-1 hover:bg-muted dark:hover:bg-[#303134] text-[13px] font-medium text-[#444746] dark:text-[#e3e3e3] transition-colors"
                                 >
                                     {aiAction === 'fix' ? <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="w-3.5 h-3.5 " /> : <CheckCheck className="w-3.5 h-3.5" />}
                                     Fix
@@ -2945,7 +2945,7 @@ ${html}
                                     placement: 'bottom-start',
                                     offset: 6,
                                 }}
-                                className="bg-background/95 dark:bg-[#202124]/95 backdrop-blur-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-200 dark:border-[#5f6368] rounded-[8px] overflow-hidden min-w-[220px]"
+                                className="bg-background/95 dark:bg-[#202124]/95 backdrop-blur-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-border dark:border-[#5f6368] rounded-[8px] overflow-hidden min-w-[220px]"
                             >
                                 {floatingMode === 'menu' && (
                                     <div className="flex flex-col py-1.5 min-w-[200px]">
@@ -2960,7 +2960,7 @@ ${html}
                                         <button
                                             onClick={handleContinueWriting}
                                             disabled={isStreaming}
-                                            className="flex items-center gap-2.5 px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#303134] text-[13px] text-[#444746] dark:text-[#e3e3e3] transition-colors text-left"
+                                            className="flex items-center gap-2.5 px-4 py-2 hover:bg-muted dark:hover:bg-[#303134] text-[13px] text-[#444746] dark:text-[#e3e3e3] transition-colors text-left"
                                         >
                                             {aiAction === 'continue' ? <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="w-4 h-4 " /> : <ArrowRight className="w-4 h-4" />}
                                             Continue writing
@@ -2968,7 +2968,7 @@ ${html}
                                         <button
                                             onClick={() => setFloatingMode('translate')}
                                             disabled={isStreaming}
-                                            className="flex items-center gap-2.5 px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#303134] text-[13px] text-[#444746] dark:text-[#e3e3e3] transition-colors text-left"
+                                            className="flex items-center gap-2.5 px-4 py-2 hover:bg-muted dark:hover:bg-[#303134] text-[13px] text-[#444746] dark:text-[#e3e3e3] transition-colors text-left"
                                         >
                                             <Languages className="w-4 h-4" />
                                             Translate...
@@ -3006,7 +3006,7 @@ ${html}
                                         </button>
                                         <button
                                             onClick={() => { setFloatingMode('menu'); setPromptValue(''); }}
-                                            className="p-1.5 rounded-md text-[#5f6368] dark:text-[#9aa0a6] hover:bg-gray-100 dark:hover:bg-[#303134] transition-colors"
+                                            className="p-1.5 rounded-md text-[#5f6368] dark:text-[#9aa0a6] hover:bg-muted dark:hover:bg-[#303134] transition-colors"
                                         >
                                             <X className="w-4 h-4" />
                                         </button>
@@ -3021,14 +3021,14 @@ ${html}
                                                 key={lang.code}
                                                 onClick={() => handleTranslate(lang.code, lang.label)}
                                                 disabled={isStreaming}
-                                                className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#303134] text-[13px] text-[#444746] dark:text-[#e3e3e3] transition-colors text-left"
+                                                className="flex items-center gap-2 px-4 py-2 hover:bg-muted dark:hover:bg-[#303134] text-[13px] text-[#444746] dark:text-[#e3e3e3] transition-colors text-left"
                                             >
                                                 {lang.label}
                                             </button>
                                         ))}
                                         <button
                                             onClick={() => setFloatingMode('menu')}
-                                            className="flex items-center gap-2.5 px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#303134] text-[13px] text-[#5f6368] dark:text-[#9aa0a6] transition-colors text-left border-t border-[#e3e3e3] dark:border-[#3c4043] mt-1"
+                                            className="flex items-center gap-2.5 px-4 py-2 hover:bg-muted dark:hover:bg-[#303134] text-[13px] text-[#5f6368] dark:text-[#9aa0a6] transition-colors text-left border-t border-[#e3e3e3] dark:border-[#3c4043] mt-1"
                                         >
                                             <X className="w-4 h-4" />
                                             Back
@@ -3047,7 +3047,7 @@ ${html}
                 <div className="hidden lg:block w-[240px] shrink-0 border-l border-gray-100 dark:border-gray-800/50 p-4 pt-8 overflow-y-auto max-h-full sticky top-0 custom-scrollbar">
                     {toc.length > 0 && (
                         <div className="space-y-3">
-                            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-1.5">
+                            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-muted-foreground flex items-center gap-1.5">
                                 <BookOpen className="w-3 h-3" /> Sur cette page
                             </h3>
                             <nav className="flex flex-col gap-1">
@@ -3062,8 +3062,8 @@ ${html}
                                         }}
                                         className={`text-left text-[12px] hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate py-0.5
                                             ${heading.level === 1 ? 'font-medium text-gray-800 dark:text-gray-200 mt-1' : ''}
-                                            ${heading.level === 2 ? 'text-gray-600 dark:text-gray-400 ml-3' : ''}
-                                            ${heading.level === 3 ? 'text-gray-500 dark:text-gray-500 ml-6 text-[11px]' : ''}
+                                            ${heading.level === 2 ? 'text-muted-foreground dark:text-gray-400 ml-3' : ''}
+                                            ${heading.level === 3 ? 'text-muted-foreground dark:text-muted-foreground ml-6 text-[11px]' : ''}
                                         `}
                                     >
                                         {heading.text || 'Section sans titre'}
@@ -3077,10 +3077,10 @@ ${html}
                     {showComments && comments.length > 0 && (
                         <div className="mt-6 space-y-3">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-1.5">
+                                <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-muted-foreground flex items-center gap-1.5">
                                     <MessageCircle className="w-3 h-3" /> Commentaires
                                 </h3>
-                                <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-full">
+                                <span className="text-[10px] text-gray-400 bg-muted dark:bg-gray-800 px-1.5 py-0.5 rounded-full">
                                     {comments.filter(c => !resolvedComments.includes(c.id)).length}
                                 </span>
                             </div>
@@ -3092,7 +3092,7 @@ ${html}
                                         className={`p-2.5 rounded-lg border text-sm transition-all relative group
                                             ${activeCommentId === comment.id
                                                 ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 shadow-sm'
-                                                : 'border-gray-200 dark:border-gray-800 bg-background dark:bg-[#202124] hover:border-gray-300 dark:hover:border-gray-700'
+                                                : 'border-border dark:border-gray-800 bg-background dark:bg-[#202124] hover:border-border dark:hover:border-gray-700'
                                             }
                                         `}
                                         onClick={() => setActiveCommentId(comment.id)}
@@ -3100,7 +3100,7 @@ ${html}
                                         <div className="flex items-center justify-between mb-1">
                                             <span className="font-semibold text-[12px] text-gray-800 dark:text-gray-200">{comment.author}</span>
                                             <div className="flex items-center gap-1">
-                                                <span className="text-[10px] text-gray-500">{new Date(comment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <span className="text-[10px] text-muted-foreground">{new Date(comment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                 {/* IDEA-010: Resolve button */}
                                                 <button
                                                     className="opacity-0 group-hover:opacity-100 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 p-0.5 rounded transition-all"
@@ -3133,13 +3133,13 @@ ${html}
                                                 setComments(prev => prev.map(c => c.id === comment.id ? { ...c, text: newText } : c));
                                             }}
                                             placeholder="Ajouter un commentaire..."
-                                            className="w-full bg-transparent border-none resize-none focus:outline-none text-gray-700 dark:text-gray-300 min-h-[36px] text-[12px]"
+                                            className="w-full bg-transparent border-none resize-none focus:outline-none text-muted-foreground dark:text-gray-300 min-h-[36px] text-[12px]"
                                         />
                                         {/* IDEA-011: Threaded replies */}
                                         {(commentReplies[comment.id] || []).map(reply => (
-                                            <div key={reply.id} className="mt-1.5 ml-3 pl-2 border-l-2 border-gray-200 dark:border-gray-700">
-                                                <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300">{reply.author}</span>
-                                                <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">{reply.text}</p>
+                                            <div key={reply.id} className="mt-1.5 ml-3 pl-2 border-l-2 border-border dark:border-gray-700">
+                                                <span className="text-[11px] font-semibold text-muted-foreground dark:text-gray-300">{reply.author}</span>
+                                                <p className="text-[11px] text-muted-foreground dark:text-gray-400 mt-0.5">{reply.text}</p>
                                             </div>
                                         ))}
                                         {activeCommentId === comment.id && (
@@ -3149,7 +3149,7 @@ ${html}
                                                     value={replyInputs[comment.id] || ''}
                                                     onChange={e => setReplyInputs(prev => ({ ...prev, [comment.id]: e.target.value }))}
                                                     placeholder="Répondre..."
-                                                    className="flex-1 text-[11px] border border-gray-200 dark:border-gray-700 rounded px-2 py-1 bg-transparent focus:outline-none focus:border-blue-400"
+                                                    className="flex-1 text-[11px] border border-border dark:border-gray-700 rounded px-2 py-1 bg-transparent focus:outline-none focus:border-blue-400"
                                                     onKeyDown={e => {
                                                         if (e.key === 'Enter' && replyInputs[comment.id]?.trim()) {
                                                             const replyText = replyInputs[comment.id].trim();
@@ -3173,7 +3173,7 @@ ${html}
                                 {/* IDEA-010: Resolved comments section */}
                                 {resolvedComments.filter(id => comments.find(c => c.id === id)).length > 0 && (
                                     <details className="mt-2">
-                                        <summary className="text-[10px] text-gray-400 cursor-pointer hover:text-gray-600 flex items-center gap-1">
+                                        <summary className="text-[10px] text-gray-400 cursor-pointer hover:text-muted-foreground flex items-center gap-1">
                                             <CheckCircle className="w-3 h-3 text-green-500" />
                                             {resolvedComments.filter(id => comments.find(c => c.id === id)).length} résolus
                                         </summary>
@@ -3183,7 +3183,7 @@ ${html}
                                                 .map(id => {
                                                     const c = comments.find(cm => cm.id === id)!;
                                                     return (
-                                                        <div key={id} className="p-2 rounded border border-gray-100 dark:border-gray-800 text-[11px] text-gray-500">
+                                                        <div key={id} className="p-2 rounded border border-gray-100 dark:border-gray-800 text-[11px] text-muted-foreground">
                                                             <span className="font-medium">{c.author}:</span> {c.text || '(vide)'}
                                                             <button
                                                                 className="ml-2 text-blue-400 hover:underline"
@@ -3234,7 +3234,7 @@ ${html}
             </Dialog>
 
             {/* Global Character/Word Count Status Bar — IDEA-002 + IDEA-003 */}
-            <div className="flex-none flex items-center justify-between px-4 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-[#202124] border-t border-gray-200 dark:border-gray-800 shadow-[0_-1px_3px_rgba(0,0,0,0.02)] z-10 w-full relative">
+            <div className="flex-none flex items-center justify-between px-4 py-1.5 text-xs text-muted-foreground dark:text-gray-400 bg-card dark:bg-[#202124] border-t border-border dark:border-gray-800 shadow-[0_-1px_3px_rgba(0,0,0,0.02)] z-10 w-full relative">
                 <div className="flex items-center gap-3">
                     <OfflineIndicator />
                     <AutoSaveIndicator status={saveStatus} />
@@ -3243,7 +3243,7 @@ ${html}
                     {/* Word count + goal */}
                     <button
                         onClick={() => { setWordGoalInput(wordGoal ? String(wordGoal) : ''); setShowWordGoalDialog(true); }}
-                        className="flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                        className="flex items-center gap-1.5 hover:text-muted-foreground dark:hover:text-gray-200 transition-colors"
                         title="Définir un objectif de mots"
                     >
                         <Target className="w-3 h-3" />
@@ -3288,7 +3288,7 @@ ${html}
                     {/* IDEA-001: Focus mode toggle in status bar */}
                     <button
                         onClick={() => setIsFocusMode(prev => !prev)}
-                        className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                        className="flex items-center gap-1 hover:text-muted-foreground dark:hover:text-gray-200 transition-colors"
                         title="Mode focus (F11)"
                     >
                         {isFocusMode ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}

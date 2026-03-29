@@ -84,7 +84,7 @@ export function DriveFilePreview({ node, fileUrl }: DriveFilePreviewProps) {
               </div>
             )}
             {type === 'text' && fileUrl && (
-              <iframe src={fileUrl} className="w-full h-[500px] border-none bg-white" title={node.name} />
+              <iframe src={fileUrl} className="w-full h-[500px] border-none bg-card" title={node.name} />
             )}
             {type === 'unknown' && (
               <div className="p-6 text-center text-muted-foreground">

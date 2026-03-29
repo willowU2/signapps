@@ -70,7 +70,7 @@ export function RaidOverview({
       case 'failed':
         return <AlertTriangle className="h-4 w-4 text-red-500" />;
       default:
-        return <Database className="h-4 w-4 text-gray-500" />;
+        return <Database className="h-4 w-4 text-muted-foreground" />;
     }
   };
 

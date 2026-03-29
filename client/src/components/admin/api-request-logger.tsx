@@ -75,7 +75,7 @@ export function ApiRequestLogger() {
     : logs;
 
   const statusColor = (status?: number) => {
-    if (!status) return 'bg-gray-100 text-gray-600';
+    if (!status) return 'bg-muted text-muted-foreground';
     if (status < 300) return 'bg-green-100 text-green-700';
     if (status < 400) return 'bg-yellow-100 text-yellow-700';
     return 'bg-red-100 text-red-700';
@@ -129,7 +129,7 @@ export function ApiRequestLogger() {
             <div className="space-y-1 pr-2">
               {filtered.map(log => (
                 <div key={log.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 text-xs font-mono">
-                  <span className={`shrink-0 px-1.5 py-0.5 rounded font-semibold text-[10px] ${methodColor[log.method] || 'bg-gray-100 text-gray-700'}`}>
+                  <span className={`shrink-0 px-1.5 py-0.5 rounded font-semibold text-[10px] ${methodColor[log.method] || 'bg-muted text-muted-foreground'}`}>
                     {log.method}
                   </span>
                   <span className="flex-1 truncate text-muted-foreground">{log.url}</span>

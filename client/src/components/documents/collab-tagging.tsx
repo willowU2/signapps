@@ -74,9 +74,9 @@ export function CollabTagging({ documentName = 'document.pdf', onTagsChange }: C
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Document Preview */}
-          <div className="p-3 bg-gray-50 rounded-lg border">
-            <p className="text-sm text-gray-600 font-medium mb-1">Document</p>
-            <p className="text-sm text-gray-700">{documentName}</p>
+          <div className="p-3 bg-muted rounded-lg border">
+            <p className="text-sm text-muted-foreground font-medium mb-1">Document</p>
+            <p className="text-sm text-muted-foreground">{documentName}</p>
           </div>
 
           {/* Tag Input */}
@@ -100,9 +100,9 @@ export function CollabTagging({ documentName = 'document.pdf', onTagsChange }: C
             <label className="text-sm font-medium mb-2 block">
               Applied Tags ({tags.length}/10)
             </label>
-            <div className="flex flex-wrap gap-2 min-h-8 p-2 bg-gray-50 rounded-lg border">
+            <div className="flex flex-wrap gap-2 min-h-8 p-2 bg-muted rounded-lg border">
               {tags.length === 0 ? (
-                <p className="text-xs text-gray-500">No tags yet</p>
+                <p className="text-xs text-muted-foreground">No tags yet</p>
               ) : (
                 tags.map((tag) => (
                   <div
@@ -167,10 +167,10 @@ export function CollabTagging({ documentName = 'document.pdf', onTagsChange }: C
                 key={tag.name}
                 onClick={() => addTag(tag.name)}
                 disabled={tags.includes(tag.name)}
-                className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-left text-sm"
+                className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-left text-sm"
               >
                 <span className="font-medium">{tag.name}</span>
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
                   {tag.count}
                 </span>
               </button>

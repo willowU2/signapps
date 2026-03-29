@@ -171,7 +171,7 @@ export function AdvancedCondFormatDialog({ rules, onAdd, onRemove, onClose }: Ad
                             <input type="checkbox" checked={showVal} onChange={e => setShowVal(e.target.checked)} className="accent-[#1a73e8]" />
                             Afficher la valeur dans la cellule
                         </label>
-                        <div className="h-6 rounded flex items-center px-1 text-[10px] text-white font-medium overflow-hidden bg-gray-100 dark:bg-gray-800">
+                        <div className="h-6 rounded flex items-center px-1 text-[10px] text-white font-medium overflow-hidden bg-muted dark:bg-gray-800">
                             <div className="h-full rounded" style={{ width: '60%', backgroundColor: dbColor }} />
                             {showVal && <span className="ml-1 text-foreground text-[10px]">60</span>}
                         </div>

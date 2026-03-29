@@ -111,10 +111,10 @@ export function ConsumptionTracker({ data }: ConsumptionTrackerProps) {
             </p>
           </Card>
 
-          <Card className="p-4 bg-gray-50 space-y-2">
+          <Card className="p-4 bg-muted space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">Previous Month</p>
-              <span className="text-xs font-semibold bg-gray-200 text-gray-900 px-2 py-1 rounded">
+              <span className="text-xs font-semibold bg-gray-200 text-foreground px-2 py-1 rounded">
                 Last Month
               </span>
             </div>

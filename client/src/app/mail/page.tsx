@@ -417,7 +417,7 @@ export default function MailPage() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={clearSelection}
-                                    className="gap-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+                                    className="gap-2 rounded-full hover:bg-muted dark:hover:bg-gray-800"
                                 >
                                     &larr; Retour
                                 </Button>

@@ -83,7 +83,7 @@ export default function Achievements() {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Achievements</h2>
         <div className="text-right">
-          <p className="text-sm text-gray-600">Unlocked</p>
+          <p className="text-sm text-muted-foreground">Unlocked</p>
           <p className="text-2xl font-bold">
             {unlockedCount}/{badges.length}
           </p>
@@ -98,7 +98,7 @@ export default function Achievements() {
             className={`p-3 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
               badge.unlocked
                 ? "bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-300"
-                : "bg-gray-50 border-gray-300 opacity-75"
+                : "bg-muted border-border opacity-75"
             } ${selectedBadge?.id === badge.id ? "ring-2 ring-blue-500" : ""}`}
           >
             <div className="text-center">
@@ -110,7 +110,7 @@ export default function Achievements() {
                   style={{ width: `${(badge.progress / badge.maxProgress) * 100}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {badge.progress}/{badge.maxProgress}
               </p>
             </div>
@@ -124,7 +124,7 @@ export default function Achievements() {
             <div className="text-4xl">{selectedBadge.icon}</div>
             <div className="flex-1">
               <h3 className="font-bold text-lg">{selectedBadge.name}</h3>
-              <p className="text-sm text-gray-700 mb-2">{selectedBadge.description}</p>
+              <p className="text-sm text-muted-foreground mb-2">{selectedBadge.description}</p>
               <div className="space-y-1">
                 <div className="flex justify-between text-xs">
                   <span>Progress</span>
@@ -142,7 +142,7 @@ export default function Achievements() {
                 </div>
               </div>
               {selectedBadge.unlocked && selectedBadge.unlockedDate && (
-                <p className="text-xs text-gray-600 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   Unlocked {selectedBadge.unlockedDate.toLocaleDateString()}
                 </p>
               )}

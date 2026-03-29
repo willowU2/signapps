@@ -51,13 +51,13 @@ export function CarbonReport({
       <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 p-6">
         <div className="flex items-end justify-between">
           <div>
-            <p className="mb-2 text-sm font-medium text-gray-600">
+            <p className="mb-2 text-sm font-medium text-muted-foreground">
               Émissions Totales CO₂
             </p>
             <p className="text-4xl font-bold text-emerald-700">
               {totalCO2.toLocaleString("fr-FR")}
             </p>
-            <p className="mt-2 text-sm text-gray-600">tonnes équivalent CO₂</p>
+            <p className="mt-2 text-sm text-muted-foreground">tonnes équivalent CO₂</p>
           </div>
           <div className="text-right">
             <Badge className="gap-1 bg-emerald-200 text-emerald-800">
@@ -85,13 +85,13 @@ export function CarbonReport({
                       </div>
                       <div>
                         <p className="font-medium">{source.name}</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           {source.co2.toLocaleString("fr-FR")} t CO₂
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-gray-700">
+                      <p className="font-bold text-muted-foreground">
                         {percentage.toFixed(1)}%
                       </p>
                     </div>
@@ -131,7 +131,7 @@ export function CarbonReport({
             </div>
           </div>
 
-          <div className="flex justify-between text-sm text-gray-600">
+          <div className="flex justify-between text-sm text-muted-foreground">
             <span>Progression actuelle: {currentReduction}%</span>
             <span>Restant: {(targetReduction - currentReduction).toFixed(1)}%</span>
           </div>

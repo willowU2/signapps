@@ -81,7 +81,7 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
   if (!baseVersion || !selectedVersion) {
     return (
       <Card className="p-6 text-center">
-        <p className="text-gray-500">Aucune version disponible pour la comparaison</p>
+        <p className="text-muted-foreground">Aucune version disponible pour la comparaison</p>
       </Card>
     );
   }
@@ -91,7 +91,7 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Comparaison des versions</h3>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">Comparer vers:</span>
+          <span className="text-sm text-muted-foreground">Comparer vers:</span>
           <Select value={selectedVersion.id} onValueChange={handleVersionChange}>
             <SelectTrigger className="w-48">
               <SelectValue />
@@ -109,11 +109,11 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
 
       {/* Version Info */}
       <div className="grid grid-cols-3 gap-4 mb-4">
-        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <p className="text-xs font-semibold text-gray-600 uppercase">Base</p>
-          <p className="text-sm text-gray-700 mt-1">v{baseVersion.version}</p>
-          <p className="text-xs text-gray-500 mt-1">{baseVersion.author}</p>
-          <p className="text-xs text-gray-500">
+        <div className="p-3 bg-muted rounded-lg border border-border">
+          <p className="text-xs font-semibold text-muted-foreground uppercase">Base</p>
+          <p className="text-sm text-muted-foreground mt-1">v{baseVersion.version}</p>
+          <p className="text-xs text-muted-foreground mt-1">{baseVersion.author}</p>
+          <p className="text-xs text-muted-foreground">
             {baseVersion.timestamp.toLocaleDateString()} {baseVersion.timestamp.toLocaleTimeString()}
           </p>
         </div>
@@ -133,15 +133,15 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
       </div>
 
       {/* Side-by-side diff view */}
-      <div className="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto border rounded-lg p-4 bg-gray-50">
+      <div className="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto border rounded-lg p-4 bg-muted">
         {/* Original */}
         <div className="space-y-0 font-mono text-xs">
-          <div className="text-gray-600 font-semibold mb-2">Version de base</div>
+          <div className="text-muted-foreground font-semibold mb-2">Version de base</div>
           <div className="space-y-0">
             {baseVersion.content.split("\n").map((line, idx) => (
               <div key={idx} className="flex gap-2">
                 <span className="text-gray-400 w-6 text-right">{idx + 1}</span>
-                <span className="flex-1 text-gray-700">{line || "\u00A0"}</span>
+                <span className="flex-1 text-muted-foreground">{line || "\u00A0"}</span>
               </div>
             ))}
           </div>
@@ -149,7 +149,7 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
 
         {/* Comparison with highlights */}
         <div className="space-y-0 font-mono text-xs">
-          <div className="text-gray-600 font-semibold mb-2">Version {selectedVersion.version}</div>
+          <div className="text-muted-foreground font-semibold mb-2">Version {selectedVersion.version}</div>
           <div className="space-y-0">
             {diff.map((line, idx) => (
               <div
@@ -179,7 +179,7 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
                       ? "text-green-900 font-semibold"
                       : line.type === "removed"
                       ? "text-red-900 line-through opacity-70"
-                      : "text-gray-700"
+                      : "text-muted-foreground"
                   }`}
                 >
                   {line.content || "\u00A0"}
@@ -202,8 +202,8 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
             {diff.filter((d) => d.type === "removed").length} suppressions
           </p>
         </div>
-        <div className="text-center p-2 bg-gray-50 rounded border border-gray-200">
-          <p className="text-gray-700 font-semibold">
+        <div className="text-center p-2 bg-muted rounded border border-border">
+          <p className="text-muted-foreground font-semibold">
             {diff.filter((d) => d.type === "unchanged").length} inchangés
           </p>
         </div>

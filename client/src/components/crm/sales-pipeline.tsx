@@ -45,8 +45,8 @@ export function SalesPipeline({ deals, onMoveDeal, onDeleteDeal }: SalesPipeline
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Valeur Pipeline</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-muted-foreground">Valeur Pipeline</p>
+              <p className="text-2xl font-bold text-foreground">
                 {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(totalValue)}
               </p>
             </div>
@@ -56,8 +56,8 @@ export function SalesPipeline({ deals, onMoveDeal, onDeleteDeal }: SalesPipeline
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Opportunités</p>
-              <p className="text-2xl font-bold text-gray-900">{totalDealCount}</p>
+              <p className="text-sm text-muted-foreground">Opportunités</p>
+              <p className="text-2xl font-bold text-foreground">{totalDealCount}</p>
             </div>
             <TrendingUp className="h-8 w-8 text-blue-600" />
           </div>
@@ -69,7 +69,7 @@ export function SalesPipeline({ deals, onMoveDeal, onDeleteDeal }: SalesPipeline
         {STAGES.map(stage => (
           <div key={stage.id} className="flex-shrink-0 w-64 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">{stage.label}</h3>
+              <h3 className="font-semibold text-foreground">{stage.label}</h3>
               <Badge variant="outline">{dealsByStage[stage.id].length}</Badge>
             </div>
 
@@ -77,7 +77,7 @@ export function SalesPipeline({ deals, onMoveDeal, onDeleteDeal }: SalesPipeline
               {dealsByStage[stage.id].map(deal => (
                 <Card
                   key={deal.id}
-                  className="p-3 bg-white cursor-move hover:shadow-md transition-shadow group"
+                  className="p-3 bg-card cursor-move hover:shadow-md transition-shadow group"
                   draggable
                   onDragStart={(e) => {
                     // Store stage for drop handling
@@ -95,8 +95,8 @@ export function SalesPipeline({ deals, onMoveDeal, onDeleteDeal }: SalesPipeline
                   <div className="space-y-2">
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 text-sm truncate">{deal.title}</p>
-                        <p className="text-xs text-gray-600 truncate">{deal.company}</p>
+                        <p className="font-semibold text-foreground text-sm truncate">{deal.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{deal.company}</p>
                       </div>
                       <Button
                         variant="ghost"
@@ -110,7 +110,7 @@ export function SalesPipeline({ deals, onMoveDeal, onDeleteDeal }: SalesPipeline
 
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-gray-700">
+                        <span className="text-xs font-medium text-muted-foreground">
                           {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(deal.value)}
                         </span>
                         <Badge variant="secondary" className="text-xs">

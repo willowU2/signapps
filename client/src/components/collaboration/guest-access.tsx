@@ -88,8 +88,8 @@ export function GuestAccess() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Guest Access</h2>
-          <p className="text-gray-600">Generate temporary guest access links</p>
+          <h2 className="text-2xl font-bold text-foreground">Guest Access</h2>
+          <p className="text-muted-foreground">Generate temporary guest access links</p>
         </div>
       </div>
 
@@ -98,12 +98,12 @@ export function GuestAccess() {
         <p className="text-2xl font-bold text-blue-900">{activeLinks}</p>
       </div>
 
-      <div className="border rounded-lg p-6 bg-white">
-        <h3 className="font-semibold text-gray-900 mb-4">Generate New Link</h3>
+      <div className="border rounded-lg p-6 bg-card">
+        <h3 className="font-semibold text-foreground mb-4">Generate New Link</h3>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Duration (hours)
             </label>
             <div className="flex gap-2">
@@ -114,7 +114,7 @@ export function GuestAccess() {
                   className={`px-3 py-2 rounded-lg border font-medium transition-colors ${
                     selectedTTL === hours
                       ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-white text-gray-700 border-gray-300 hover:border-blue-300"
+                      : "bg-card text-muted-foreground border-border hover:border-blue-300"
                   }`}
                 >
                   {hours}h
@@ -124,7 +124,7 @@ export function GuestAccess() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Permissions
             </label>
             <div className="space-y-2">
@@ -136,7 +136,7 @@ export function GuestAccess() {
                     onChange={() => togglePermission(perm)}
                     className="rounded"
                   />
-                  <span className="text-sm text-gray-700 capitalize">
+                  <span className="text-sm text-muted-foreground capitalize">
                     {perm}
                   </span>
                 </label>
@@ -155,24 +155,24 @@ export function GuestAccess() {
         </div>
       </div>
 
-      <div className="border rounded-lg overflow-hidden bg-white">
-        <div className="bg-gray-50 border-b p-4 flex items-center gap-2">
-          <Link2 className="w-5 h-5 text-gray-700" />
-          <h3 className="font-semibold text-gray-900">Active Links</h3>
+      <div className="border rounded-lg overflow-hidden bg-card">
+        <div className="bg-muted border-b p-4 flex items-center gap-2">
+          <Link2 className="w-5 h-5 text-muted-foreground" />
+          <h3 className="font-semibold text-foreground">Active Links</h3>
         </div>
 
         <div className="divide-y">
           {links.map((link) => (
-            <div key={link.id} className="p-4 hover:bg-gray-50">
+            <div key={link.id} className="p-4 hover:bg-muted">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono text-gray-900">
+                    <code className="text-xs bg-muted px-2 py-1 rounded font-mono text-foreground">
                       {link.token.substring(0, 20)}...
                     </code>
                     <button
                       onClick={() => handleCopyLink(link.token, link.id)}
-                      className="text-gray-500 hover:text-blue-600"
+                      className="text-muted-foreground hover:text-blue-600"
                       title="Copy link"
                     >
                       <Copy className="w-4 h-4" />
@@ -193,14 +193,14 @@ export function GuestAccess() {
                       </span>
                     ))}
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-gray-600">
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <span>Created: {link.createdAt}</span>
                     <span>Accesses: {link.accessCount}</span>
                   </div>
                 </div>
 
                 <div className="text-right flex-shrink-0">
-                  <div className="flex items-center gap-1 text-xs text-gray-600 mb-2">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
                     <Clock className="w-4 h-4" />
                     Expires: {link.expiresAt}
                   </div>

@@ -392,7 +392,7 @@ export function PDFPreview({
       </div>
 
       {/* PDF Content */}
-      <div className="flex-1 overflow-auto p-4 bg-gray-100 dark:bg-gray-900">
+      <div className="flex-1 overflow-auto p-4 bg-muted dark:bg-gray-900">
         <Document
           file={src}
           onLoadSuccess={handleLoadSuccess}
@@ -411,7 +411,7 @@ export function PDFPreview({
                 ref={(el) => {
                   if (el) pageRefs.current.set(index + 1, el);
                 }}
-                className="relative shadow-lg bg-white"
+                className="relative shadow-lg bg-card"
               >
                 {/* Page number indicator */}
                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs text-muted-foreground">
@@ -437,7 +437,7 @@ export function PDFPreview({
                           const parts = str.split(new RegExp(`(${searchTerm})`, 'gi'));
                           return parts.map((part, i) =>
                             part.toLowerCase() === searchTerm.toLowerCase() ? (
-                              <mark key={i} className="bg-yellow-300 text-black">
+                              <mark key={i} className="bg-yellow-300 text-foreground">
                                 {part}
                               </mark>
                             ) : (

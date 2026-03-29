@@ -54,19 +54,19 @@ export function GroupDashboard() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="border rounded-lg p-4 bg-blue-50">
-          <p className="text-sm text-gray-600 mb-1">Total Revenue</p>
+          <p className="text-sm text-muted-foreground mb-1">Total Revenue</p>
           <p className="text-2xl font-bold text-blue-700">{formatCurrency(consolidated.totalRevenue)}</p>
         </div>
         <div className="border rounded-lg p-4 bg-green-50">
-          <p className="text-sm text-gray-600 mb-1">Total Employees</p>
+          <p className="text-sm text-muted-foreground mb-1">Total Employees</p>
           <p className="text-2xl font-bold text-green-700">{consolidated.totalEmployees}</p>
         </div>
         <div className="border rounded-lg p-4 bg-purple-50">
-          <p className="text-sm text-gray-600 mb-1">Active Users</p>
+          <p className="text-sm text-muted-foreground mb-1">Active Users</p>
           <p className="text-2xl font-bold text-purple-700">{consolidated.totalActiveUsers}</p>
         </div>
         <div className="border rounded-lg p-4 bg-orange-50">
-          <p className="text-sm text-gray-600 mb-1">Avg Efficiency</p>
+          <p className="text-sm text-muted-foreground mb-1">Avg Efficiency</p>
           <p className="text-2xl font-bold text-orange-700">{consolidated.avgEfficiency}%</p>
         </div>
       </div>
@@ -76,8 +76,8 @@ export function GroupDashboard() {
           <BarChart3 className="w-5 h-5 text-blue-600" />
           <h3 className="font-semibold">KPI Comparison Chart</h3>
         </div>
-        <div className="bg-gray-100 rounded h-64 flex items-center justify-center">
-          <p className="text-gray-500">Chart visualization would render here</p>
+        <div className="bg-muted rounded h-64 flex items-center justify-center">
+          <p className="text-muted-foreground">Chart visualization would render here</p>
         </div>
       </div>
 
@@ -85,7 +85,7 @@ export function GroupDashboard() {
         <h3 className="font-semibold mb-4">Site Performance</h3>
         <div className="space-y-3">
           {sites.map((site, index) => (
-            <div key={index} className="p-3 bg-gray-50 rounded">
+            <div key={index} className="p-3 bg-muted rounded">
               <div className="flex justify-between items-start mb-2">
                 <h4 className="font-medium">{site.siteName}</h4>
                 <span className="text-sm font-bold text-green-600 flex items-center gap-1">
@@ -94,15 +94,15 @@ export function GroupDashboard() {
               </div>
               <div className="grid grid-cols-3 gap-2 text-sm">
                 <div>
-                  <p className="text-gray-600">Revenue</p>
+                  <p className="text-muted-foreground">Revenue</p>
                   <p className="font-medium">{formatCurrency(site.revenue)}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Employees</p>
+                  <p className="text-muted-foreground">Employees</p>
                   <p className="font-medium">{site.employees}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Active</p>
+                  <p className="text-muted-foreground">Active</p>
                   <p className="font-medium">{site.activeUsers}/{site.employees}</p>
                 </div>
               </div>

@@ -71,13 +71,13 @@ export function NamedRangesDialog({ namedRanges, onAdd, onRemove, onUpdate, onCl
                                     <input className="flex-1 h-7 bg-[#f1f3f4] dark:bg-[#3c4043] rounded px-2 text-[12px] outline-none font-mono" value={editName} onChange={e => setEditName(e.target.value)} placeholder="Nom" />
                                     <input className="flex-1 h-7 bg-[#f1f3f4] dark:bg-[#3c4043] rounded px-2 text-[12px] outline-none font-mono uppercase" value={editRange} onChange={e => setEditRange(e.target.value.toUpperCase())} placeholder="A1:B10" />
                                     <button onClick={handleUpdate} className="p-1 text-green-600 hover:bg-green-50 rounded"><Check className="w-4 h-4" /></button>
-                                    <button onClick={() => setEditingName(null)} className="p-1 hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded"><X className="w-4 h-4" /></button>
+                                    <button onClick={() => setEditingName(null)} className="p-1 hover:bg-muted dark:hover:bg-[#3c4043] rounded"><X className="w-4 h-4" /></button>
                                 </>
                             ) : (
                                 <>
                                     <span className="flex-1 text-[12px] font-semibold text-[#1a73e8]">{nr.name}</span>
                                     <span className="flex-1 text-[12px] font-mono text-muted-foreground">{nr.range}</span>
-                                    <button onClick={() => { setEditingName(nr.name); setEditName(nr.name); setEditRange(nr.range) }} className="p-1 hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded"><Edit2 className="w-3.5 h-3.5" /></button>
+                                    <button onClick={() => { setEditingName(nr.name); setEditName(nr.name); setEditRange(nr.range) }} className="p-1 hover:bg-muted dark:hover:bg-[#3c4043] rounded"><Edit2 className="w-3.5 h-3.5" /></button>
                                     <button onClick={() => { onRemove(nr.name); toast.info(`"${nr.name}" supprimé`) }} className="p-1 hover:bg-red-50 text-red-500 rounded"><Trash2 className="w-3.5 h-3.5" /></button>
                                 </>
                             )}

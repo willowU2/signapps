@@ -83,8 +83,8 @@ export function BudgetForecast() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Budget prévisionnel par centre de coûts</h2>
-          <p className="text-gray-600">Budget vs réalisé avec graphique comparatif</p>
+          <h2 className="text-2xl font-bold text-foreground">Budget prévisionnel par centre de coûts</h2>
+          <p className="text-muted-foreground">Budget vs réalisé avec graphique comparatif</p>
         </div>
       </div>
 
@@ -93,9 +93,9 @@ export function BudgetForecast() {
           <div className="flex items-center gap-2 mb-1"><DollarSign className="w-4 h-4 text-blue-600" /><span className="text-xs text-blue-700 font-medium">Budget total</span></div>
           <p className="text-2xl font-bold text-blue-900">{fmt(totalBudget)}</p>
         </div>
-        <div className="rounded-lg border bg-gray-50 p-4">
-          <div className="flex items-center gap-2 mb-1"><DollarSign className="w-4 h-4 text-gray-600" /><span className="text-xs text-gray-700 font-medium">Réalisé</span></div>
-          <p className="text-2xl font-bold text-gray-900">{fmt(totalActual)}</p>
+        <div className="rounded-lg border bg-muted p-4">
+          <div className="flex items-center gap-2 mb-1"><DollarSign className="w-4 h-4 text-muted-foreground" /><span className="text-xs text-muted-foreground font-medium">Réalisé</span></div>
+          <p className="text-2xl font-bold text-foreground">{fmt(totalActual)}</p>
         </div>
         <div className={`rounded-lg border p-4 ${isOverBudget ? "bg-red-50" : "bg-green-50"}`}>
           <div className="flex items-center gap-2 mb-1">
@@ -119,7 +119,7 @@ export function BudgetForecast() {
             return (
               <div key={c.id} onClick={() => setSelectedCenter(c.id)} className={`rounded-lg border p-3 cursor-pointer transition-all ${selectedCenter === c.id ? "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950" : "bg-background hover:border-blue-200"}`}>
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-semibold text-gray-900">{c.name}</p>
+                  <p className="text-sm font-semibold text-foreground">{c.name}</p>
                   {editBudget === c.id ? (
                     <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                       <input value={budgetInput} onChange={e => setBudgetInput(e.target.value)} className="w-24 border rounded px-1 py-0.5 text-xs" autoFocus />
@@ -127,7 +127,7 @@ export function BudgetForecast() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <span className="text-xs text-gray-500">{fmt(c.budget)}</span>
+                      <span className="text-xs text-muted-foreground">{fmt(c.budget)}</span>
                       <button onClick={e => { e.stopPropagation(); setEditBudget(c.id); setBudgetInput(String(c.budget)); }} className="p-0.5 hover:text-blue-600 text-gray-300"><Edit2 className="w-3 h-3" /></button>
                     </div>
                   )}
@@ -136,7 +136,7 @@ export function BudgetForecast() {
                   <div className={`h-full rounded-full transition-all ${over ? "bg-red-500" : "bg-blue-500"}`} style={{ width: `${p}%` }} />
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-gray-500">Réalisé : {fmt(c.actual)}</span>
+                  <span className="text-muted-foreground">Réalisé : {fmt(c.actual)}</span>
                   <span className={over ? "text-red-600 font-medium" : "text-green-600 font-medium"}>{p}%</span>
                 </div>
               </div>
@@ -145,7 +145,7 @@ export function BudgetForecast() {
         </div>
 
         <div className="md:col-span-2 rounded-lg border bg-background p-4">
-          <h3 className="font-semibold text-gray-900 mb-4">{center.name} — Budget vs Réalisé (mensuel)</h3>
+          <h3 className="font-semibold text-foreground mb-4">{center.name} — Budget vs Réalisé (mensuel)</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />

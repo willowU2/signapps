@@ -57,7 +57,7 @@ export function TwoFactorPolicy() {
           <Shield className="h-6 w-6 text-blue-600" />
           <h2 className="text-2xl font-bold">Two-Factor Authentication Policy</h2>
         </div>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           {totalNonCompliant} non-compliant users
         </div>
       </div>
@@ -67,12 +67,12 @@ export function TwoFactorPolicy() {
         {policies.map((policy) => (
           <div
             key={policy.role}
-            className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+            className="rounded-lg border border-border bg-card p-4 shadow-sm"
           >
             {/* Role Header */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <h3 className="font-semibold text-gray-900">{policy.role}</h3>
+                <h3 className="font-semibold text-foreground">{policy.role}</h3>
                 {policy.required && (
                   <Badge variant="default" className="bg-blue-600">
                     Required
@@ -91,8 +91,8 @@ export function TwoFactorPolicy() {
             {/* Adoption Progress */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Adoption Rate</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-muted-foreground">Adoption Rate</span>
+                <span className="font-medium text-foreground">
                   {policy.adoptionRate}%
                 </span>
               </div>
@@ -119,19 +119,19 @@ export function TwoFactorPolicy() {
 
       {/* Non-Compliant Users List */}
       {nonCompliantUsers.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <h3 className="font-semibold text-gray-900 mb-4">
+        <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+          <h3 className="font-semibold text-foreground mb-4">
             Non-Compliant Users
           </h3>
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {nonCompliantUsers.map((user) => (
               <div
                 key={user.id}
-                className="flex items-center justify-between p-2 rounded hover:bg-gray-50 border border-gray-100"
+                className="flex items-center justify-between p-2 rounded hover:bg-muted border border-gray-100"
               >
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
+                  <p className="text-sm font-medium text-foreground">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{user.role}</Badge>

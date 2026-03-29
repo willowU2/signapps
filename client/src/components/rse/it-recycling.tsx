@@ -60,13 +60,13 @@ export default function ITRecycling() {
         {equipment.map((item) => (
           <div
             key={item.id}
-            className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow"
+            className="border rounded-lg p-4 bg-card hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between gap-4 mb-3">
               <div>
                 <h3 className="font-semibold mb-1">{item.name}</h3>
                 <div className="flex gap-2 text-xs">
-                  <span className="px-2 py-1 bg-gray-100 rounded">{item.age}</span>
+                  <span className="px-2 py-1 bg-muted rounded">{item.age}</span>
                   <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">
                     {item.condition}
                   </span>

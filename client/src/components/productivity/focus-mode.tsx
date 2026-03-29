@@ -79,7 +79,7 @@ export function FocusMode() {
               "text-xs font-semibold px-2.5 py-1 rounded-full",
               isActive
                 ? "bg-amber-100 text-amber-700"
-                : "bg-gray-100 text-gray-600"
+                : "bg-muted text-muted-foreground"
             )}>
               {isActive ? "ACTIF" : "INACTIF"}
             </span>
@@ -93,7 +93,7 @@ export function FocusMode() {
               "relative w-32 h-32 mx-auto rounded-full flex items-center justify-center",
               isActive
                 ? "bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-400"
-                : "bg-gray-50 border-2 border-gray-200"
+                : "bg-muted border-2 border-border"
             )}>
               {/* Progress Ring */}
               <svg className="absolute inset-0 w-full h-full -rotate-90" style={{ overflow: "visible" }}>
@@ -116,7 +116,7 @@ export function FocusMode() {
               <div className="text-center z-10">
                 <div className={cn(
                   "text-4xl font-bold font-mono",
-                  isActive ? "text-amber-600" : "text-gray-600"
+                  isActive ? "text-amber-600" : "text-muted-foreground"
                 )}>
                   {formatTime(timeLeft)}
                 </div>
@@ -127,10 +127,10 @@ export function FocusMode() {
           {/* Duration Slider */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-600">
+              <label className="text-sm font-medium text-muted-foreground">
                 Durée
               </label>
-              <span className="text-sm font-semibold text-gray-900">
+              <span className="text-sm font-semibold text-foreground">
                 {duration} min
               </span>
             </div>
@@ -143,7 +143,7 @@ export function FocusMode() {
               disabled={isActive}
               className="w-full"
             />
-            <div className="flex justify-between text-xs text-gray-500 px-1">
+            <div className="flex justify-between text-xs text-muted-foreground px-1">
               <span>25 min</span>
               <span>90 min</span>
             </div>
@@ -174,7 +174,7 @@ export function FocusMode() {
                 <Clock className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium text-muted-foreground">
                   Temps focus aujourd'hui
                 </p>
                 <p className="text-2xl font-bold text-blue-600">

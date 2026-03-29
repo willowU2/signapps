@@ -143,23 +143,23 @@ export default function BCorporTracker() {
           return (
             <div
               key={area.id}
-              className="border rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow"
+              className="border rounded-lg overflow-hidden bg-card hover:shadow-md transition-shadow"
             >
               <button
                 onClick={() => toggleExpand(area.id)}
-                className="w-full p-3 flex items-center justify-between hover:bg-gray-50"
+                className="w-full p-3 flex items-center justify-between hover:bg-muted"
               >
                 <div className="flex items-center gap-3 flex-1 text-left">
                   <span className="text-2xl">{area.icon}</span>
                   <div>
                     <p className="font-semibold text-sm">{area.name}</p>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-muted-foreground">
                       {area.completed}/{area.total} completed
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-sm text-gray-900">{percentage}%</p>
+                  <p className="font-bold text-sm text-foreground">{percentage}%</p>
                   <span className="text-xs">{isExpanded ? "▲" : "▼"}</span>
                 </div>
               </button>
@@ -182,7 +182,7 @@ export default function BCorporTracker() {
 
               {/* Expanded Items */}
               {isExpanded && (
-                <div className="border-t px-3 py-2 bg-gray-50 space-y-2">
+                <div className="border-t px-3 py-2 bg-muted space-y-2">
                   {area.items.map((item, idx) => (
                     <label
                       key={idx}
@@ -198,7 +198,7 @@ export default function BCorporTracker() {
                         className={
                           checked[`${area.id}-${idx}`]
                             ? "line-through text-gray-400"
-                            : "text-gray-700"
+                            : "text-muted-foreground"
                         }
                       >
                         {item}

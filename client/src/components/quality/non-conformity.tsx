@@ -152,7 +152,7 @@ export function NonConformity({
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="NCR title..."
-                className="w-full px-3 py-2 border rounded bg-white dark:bg-gray-900 dark:border-gray-700"
+                className="w-full px-3 py-2 border rounded bg-card dark:bg-gray-900 dark:border-gray-700"
               />
             </div>
 
@@ -164,7 +164,7 @@ export function NonConformity({
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Detailed description of the non-conformity..."
                 rows={3}
-                className="w-full px-3 py-2 border rounded bg-white dark:bg-gray-900 dark:border-gray-700"
+                className="w-full px-3 py-2 border rounded bg-card dark:bg-gray-900 dark:border-gray-700"
               />
             </div>
 
@@ -177,7 +177,7 @@ export function NonConformity({
                   onChange={(e) =>
                     setFormData({ ...formData, severity: e.target.value as "High" | "Medium" | "Low" })
                   }
-                  className="w-full px-3 py-2 border rounded bg-white dark:bg-gray-900 dark:border-gray-700"
+                  className="w-full px-3 py-2 border rounded bg-card dark:bg-gray-900 dark:border-gray-700"
                 >
                   <option value="Low">Low</option>
                   <option value="Medium">Medium</option>
@@ -192,7 +192,7 @@ export function NonConformity({
                   value={formData.areaAffected}
                   onChange={(e) => setFormData({ ...formData, areaAffected: e.target.value })}
                   placeholder="e.g., Production Floor..."
-                  className="w-full px-3 py-2 border rounded bg-white dark:bg-gray-900 dark:border-gray-700"
+                  className="w-full px-3 py-2 border rounded bg-card dark:bg-gray-900 dark:border-gray-700"
                 />
               </div>
             </div>
@@ -205,7 +205,7 @@ export function NonConformity({
                 onChange={(e) => setFormData({ ...formData, correctiveAction: e.target.value })}
                 placeholder="Describe the corrective action to be taken..."
                 rows={3}
-                className="w-full px-3 py-2 border rounded bg-white dark:bg-gray-900 dark:border-gray-700"
+                className="w-full px-3 py-2 border rounded bg-card dark:bg-gray-900 dark:border-gray-700"
               />
             </div>
 
@@ -225,7 +225,7 @@ export function NonConformity({
       {/* NCR List */}
       <div className="space-y-3">
         {ncrs.length === 0 ? (
-          <Card className="p-8 text-center text-gray-500">
+          <Card className="p-8 text-center text-muted-foreground">
             <p>No non-conformities recorded</p>
           </Card>
         ) : (
@@ -236,7 +236,7 @@ export function NonConformity({
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="font-bold text-lg">{ncr.title}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
                       {ncr.createdDate.toLocaleDateString()}
                     </p>
                   </div>
@@ -246,7 +246,7 @@ export function NonConformity({
                     </span>
                     <button
                       onClick={() => handleEditNCR(ncr)}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                      className="p-2 hover:bg-muted dark:hover:bg-gray-800 rounded"
                     >
                       <Edit2 className="size-4" />
                     </button>
@@ -266,11 +266,11 @@ export function NonConformity({
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="font-medium">Area Affected:</span>
-                    <p className="text-gray-600 dark:text-gray-400">{ncr.areaAffected}</p>
+                    <p className="text-muted-foreground dark:text-gray-400">{ncr.areaAffected}</p>
                   </div>
                   <div>
                     <span className="font-medium">Corrective Action:</span>
-                    <p className="text-gray-600 dark:text-gray-400">{ncr.correctiveAction}</p>
+                    <p className="text-muted-foreground dark:text-gray-400">{ncr.correctiveAction}</p>
                   </div>
                 </div>
 

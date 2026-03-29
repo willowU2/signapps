@@ -104,14 +104,14 @@ export function EmergencyBroadcast() {
       <div className="flex items-center gap-3">
         <AlertCircle className="w-6 h-6 text-red-600" />
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Emergency Broadcast</h2>
-          <p className="text-gray-600">Send urgent messages to staff across all channels</p>
+          <h2 className="text-2xl font-bold text-foreground">Emergency Broadcast</h2>
+          <p className="text-muted-foreground">Send urgent messages to staff across all channels</p>
         </div>
       </div>
 
       <div className="border rounded-lg bg-background p-6 space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-muted-foreground mb-2">
             Message
           </label>
           <textarea
@@ -124,7 +124,7 @@ export function EmergencyBroadcast() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
+          <label className="block text-sm font-medium text-muted-foreground mb-3">
             Recipient Groups ({recipientCount} recipients)
           </label>
           <div className="space-y-2">
@@ -136,8 +136,8 @@ export function EmergencyBroadcast() {
                   onChange={() => handleGroupToggle(group.id)}
                   className="rounded"
                 />
-                <span className="text-gray-900 font-medium">{group.name}</span>
-                <span className="text-xs text-gray-500">
+                <span className="text-foreground font-medium">{group.name}</span>
+                <span className="text-xs text-muted-foreground">
                   ({group.memberCount} members)
                 </span>
               </label>
@@ -146,7 +146,7 @@ export function EmergencyBroadcast() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
+          <label className="block text-sm font-medium text-muted-foreground mb-3">
             Send via
           </label>
           <div className="space-y-2">
@@ -158,7 +158,7 @@ export function EmergencyBroadcast() {
                 className="rounded"
               />
               <Bell className="w-4 h-4 text-blue-600" />
-              <span className="text-gray-900">Push Notification</span>
+              <span className="text-foreground">Push Notification</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
@@ -168,7 +168,7 @@ export function EmergencyBroadcast() {
                 className="rounded"
               />
               <Mail className="w-4 h-4 text-blue-600" />
-              <span className="text-gray-900">Email</span>
+              <span className="text-foreground">Email</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
@@ -178,7 +178,7 @@ export function EmergencyBroadcast() {
                 className="rounded"
               />
               <Smartphone className="w-4 h-4 text-blue-600" />
-              <span className="text-gray-900">SMS</span>
+              <span className="text-foreground">SMS</span>
             </label>
           </div>
         </div>
@@ -194,16 +194,16 @@ export function EmergencyBroadcast() {
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-gray-900">Recent Broadcasts</h3>
+        <h3 className="text-lg font-semibold text-foreground">Recent Broadcasts</h3>
         {messages.map((msg) => (
-          <div key={msg.id} className="border rounded-lg p-4 bg-gray-50">
+          <div key={msg.id} className="border rounded-lg p-4 bg-muted">
             <div className="flex items-start justify-between mb-2">
-              <p className="text-gray-900 font-medium">{msg.content}</p>
+              <p className="text-foreground font-medium">{msg.content}</p>
               <span className="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">
                 {msg.status}
               </span>
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               {new Date(msg.createdAt).toLocaleString()} •{" "}
               {msg.recipients.map((r) => DEFAULT_GROUPS.find((g) => g.id === r)?.name).join(", ")}
             </p>

@@ -118,7 +118,7 @@ export function TenantLandingPage({
             ) : (
               <div>
                 <h1 className="text-3xl font-bold">{editedWelcome.title}</h1>
-                <p className="text-gray-600 mt-2">{editedWelcome.subtitle}</p>
+                <p className="text-muted-foreground mt-2">{editedWelcome.subtitle}</p>
               </div>
             )}
           </div>
@@ -155,7 +155,7 @@ export function TenantLandingPage({
             </Card>
           ))}
           {editMode && (
-            <Card className="p-4 flex items-center justify-center border-dashed border-2 cursor-pointer hover:bg-gray-50">
+            <Card className="p-4 flex items-center justify-center border-dashed border-2 cursor-pointer hover:bg-muted">
               <Button variant="ghost" size="icon">
                 <Plus className="size-4" />
               </Button>
@@ -177,7 +177,7 @@ export function TenantLandingPage({
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="font-medium">{announcement.title}</p>
-                    <p className="text-sm text-gray-600 mt-1">{announcement.content}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{announcement.content}</p>
                   </div>
                   <span
                     className={`px-2 py-1 rounded text-xs font-medium ${
@@ -187,7 +187,7 @@ export function TenantLandingPage({
                     {announcement.priority}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   {announcement.date.toLocaleDateString()}
                 </p>
               </div>
@@ -212,7 +212,7 @@ export function TenantLandingPage({
                   className={`px-3 py-1 rounded text-sm font-medium transition ${
                     module.enabled
                       ? "bg-green-100 text-green-800"
-                      : "bg-gray-100 text-gray-800"
+                      : "bg-muted text-gray-800"
                   }`}
                 >
                   {module.enabled ? "Enabled" : "Disabled"}

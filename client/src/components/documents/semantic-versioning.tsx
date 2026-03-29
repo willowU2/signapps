@@ -97,7 +97,7 @@ export function SemanticVersioning({ versions }: SemanticVersioningProps) {
                 <CardContent className="pt-4">
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <span className="text-xl font-bold text-slate-900">{version.version}</span>
+                      <span className="text-xl font-bold text-foreground">{version.version}</span>
                       <span
                         className={`inline-block px-2 py-1 rounded text-xs font-semibold border ${getBadgeColor(version.type)}`}
                       >

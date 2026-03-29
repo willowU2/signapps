@@ -54,7 +54,7 @@ const STATUS_DOT: Record<WorkspaceMember["status"], string> = {
 
 const PRIORITY_COLOR = { high: "text-red-600", medium: "text-yellow-600", low: "text-gray-400" };
 const TASK_STATUS_CLASS = {
-  todo: "border-gray-200",
+  todo: "border-border",
   in_progress: "border-blue-300 bg-blue-50/30",
   done: "border-green-200 bg-green-50/30 opacity-60",
 };

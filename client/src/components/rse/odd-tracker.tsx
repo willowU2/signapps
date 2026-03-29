@@ -134,11 +134,11 @@ export default function OddTracker() {
 
       <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
         <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-gray-600">Average Progress</p>
+          <p className="text-muted-foreground">Average Progress</p>
           <p className="text-2xl font-bold text-blue-900">{avgProgress}%</p>
         </div>
         <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-          <p className="text-gray-600">Total Contributions</p>
+          <p className="text-muted-foreground">Total Contributions</p>
           <p className="text-2xl font-bold text-green-900">{totalContributions}</p>
         </div>
       </div>
@@ -147,7 +147,7 @@ export default function OddTracker() {
         {sdgs.map((sdg) => (
           <div
             key={sdg.id}
-            className="p-3 rounded-lg border bg-white hover:shadow-md transition-shadow"
+            className="p-3 rounded-lg border bg-card hover:shadow-md transition-shadow"
           >
             <div className="text-center mb-2">
               <p className="text-2xl mb-1">{sdg.emoji}</p>
@@ -160,8 +160,8 @@ export default function OddTracker() {
               ></div>
             </div>
             <div className="text-center">
-              <p className="text-xs font-bold text-gray-700">{sdg.progress}%</p>
-              <p className="text-xs text-gray-500">{sdg.contributions} pts</p>
+              <p className="text-xs font-bold text-muted-foreground">{sdg.progress}%</p>
+              <p className="text-xs text-muted-foreground">{sdg.contributions} pts</p>
             </div>
           </div>
         ))}

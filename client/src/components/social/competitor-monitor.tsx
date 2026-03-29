@@ -27,6 +27,7 @@ import {
   Legend,
 } from "recharts";
 import { toast } from "sonner";
+import { getServiceUrl, ServiceName } from "@/lib/api/factory";
 
 interface Competitor {
   id: string;
@@ -84,7 +85,7 @@ export function CompetitorMonitor() {
   const handleRefresh = async (id: string) => {
     setRefreshingId(id);
     try {
-      const res = await fetch(`http://localhost:3019/api/v1/social/competitors/${id}/refresh`, {
+      const res = await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/competitors/${id}/refresh`, {
         method: "POST",
       });
       if (!res.ok) throw new Error();

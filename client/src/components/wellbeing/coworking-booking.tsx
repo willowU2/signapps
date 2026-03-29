@@ -140,7 +140,7 @@ function BookingDialog({
         <div className="space-y-4">
           <div>
             <p className="text-sm font-medium mb-2">Lieu</p>
-            <div className="bg-gray-50 p-3 rounded-lg border">
+            <div className="bg-muted p-3 rounded-lg border">
               <p className="font-medium">{space.name}</p>
               <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                 <MapPin className="w-4 h-4" />

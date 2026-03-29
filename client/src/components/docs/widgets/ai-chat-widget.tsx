@@ -68,12 +68,12 @@ export function AiChatWidget() {
 
     return (
         <div className="flex flex-col h-full bg-slate-50/50 dark:bg-black/20 animate-fade-in-up">
-            <div className="p-3 border-b border-gray-200/50 dark:border-gray-800/50 bg-background/50 dark:bg-gray-900/50 backdrop-blur-sm">
+            <div className="p-3 border-b border-border/50 dark:border-gray-800/50 bg-background/50 dark:bg-gray-900/50 backdrop-blur-sm">
                 <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                     <Bot className="w-4 h-4 text-indigo-500" />
                     Document Assistant
                 </h3>
-                <p className="text-xs text-gray-500 mt-0.5">Powered by {config.modelId || 'AI'}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Powered by {config.modelId || 'AI'}</p>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
@@ -108,7 +108,7 @@ export function AiChatWidget() {
                 <div ref={messagesEndRef} />
             </div>
 
-            <div className="p-3 bg-background/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-200/50 dark:border-gray-800/50 shrink-0">
+            <div className="p-3 bg-background/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-border/50 dark:border-gray-800/50 shrink-0">
                 <form onSubmit={handleSend} className="relative">
                     <input
                         type="text"
@@ -116,7 +116,7 @@ export function AiChatWidget() {
                         onChange={(e) => setInput(e.target.value)}
                         placeholder="Ask about your document..."
                         disabled={isStreaming}
-                        className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700/50 rounded-full py-2.5 pl-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all shadow-inner disabled:opacity-50"
+                        className="w-full bg-muted dark:bg-gray-800 border border-border dark:border-gray-700/50 rounded-full py-2.5 pl-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all shadow-inner disabled:opacity-50"
                     />
                     <button
                         type="submit"

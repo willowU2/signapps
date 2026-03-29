@@ -67,13 +67,13 @@ export default function SportChallenge() {
               className={`p-3 rounded-lg border-2 text-left transition-all ${
                 selectedChallenge === challenge.id
                   ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 bg-white hover:border-blue-300"
+                  : "border-border bg-card hover:border-blue-300"
               }`}
             >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="font-medium">{challenge.name}</p>
-                  <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                     <Calendar className="w-3 h-3" />
                     {challenge.deadline}
                   </p>
@@ -88,11 +88,11 @@ export default function SportChallenge() {
       {/* Challenge Progress */}
       <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-lg border border-green-200">
         <div className="text-center">
-          <h3 className="text-sm text-gray-600 mb-2">{currentChallenge.name}</h3>
+          <h3 className="text-sm text-muted-foreground mb-2">{currentChallenge.name}</h3>
           <div className="text-4xl font-bold text-green-600 mb-2">
-            {currentProgress.toLocaleString()} <span className="text-lg text-gray-500">{currentChallenge.unit}</span>
+            {currentProgress.toLocaleString()} <span className="text-lg text-muted-foreground">{currentChallenge.unit}</span>
           </div>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Goal: {currentChallenge.target.toLocaleString()} {currentChallenge.unit}
           </p>
 
@@ -103,7 +103,7 @@ export default function SportChallenge() {
             />
           </div>
 
-          <p className="text-sm font-medium text-gray-700 mb-4">
+          <p className="text-sm font-medium text-muted-foreground mb-4">
             {Math.round(progressPercent)}% Complete
           </p>
 
@@ -125,12 +125,12 @@ export default function SportChallenge() {
           <Trophy className="w-5 h-5 text-yellow-500" />
           Team Leaderboard
         </h3>
-        <div className="space-y-2 bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="space-y-2 bg-card rounded-lg border border-border overflow-hidden">
           {teamMembers.map((member) => (
             <div key={member.id} className={`p-3 flex justify-between items-center ${member.rank <= 3 ? "bg-yellow-50" : ""}`}>
               <div className="flex items-center gap-3 flex-1">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                  member.rank === 1 ? "bg-yellow-400 text-white" : member.rank === 2 ? "bg-gray-300 text-white" : member.rank === 3 ? "bg-orange-400 text-white" : "bg-gray-100"
+                  member.rank === 1 ? "bg-yellow-400 text-white" : member.rank === 2 ? "bg-gray-300 text-white" : member.rank === 3 ? "bg-orange-400 text-white" : "bg-muted"
                 }`}>
                   {member.rank}
                 </div>
@@ -139,8 +139,8 @@ export default function SportChallenge() {
                 </p>
               </div>
               <div className="text-right text-sm">
-                <p className="font-semibold text-gray-900">{member.steps.toLocaleString()} steps</p>
-                <p className="text-xs text-gray-600">{member.km} km</p>
+                <p className="font-semibold text-foreground">{member.steps.toLocaleString()} steps</p>
+                <p className="text-xs text-muted-foreground">{member.km} km</p>
               </div>
             </div>
           ))}

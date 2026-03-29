@@ -8,7 +8,7 @@ export function MailHeader() {
     return (
         <header className="h-16 shrink-0 flex items-center justify-between px-4 pr-6">
             <div className="flex items-center gap-4 w-[260px] shrink-0 relative z-20">
-                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-100 dark:hover:bg-gray-800">
+                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-muted dark:hover:bg-gray-800">
                     <Menu className="h-6 w-6" />
                 </Button>
                 <div className="flex items-center gap-2 px-2 select-none cursor-pointer">
@@ -41,20 +41,20 @@ export function MailHeader() {
 
             {/* Right action area */}
             <div className="flex items-center gap-1 shrink-0 z-20">
-                <Button variant="outline" size="sm" className="hidden lg:flex h-9 rounded-full border-gray-300 dark:border-gray-700 text-[#444746] dark:text-[#e3e3e3] font-medium px-4 hover:bg-gray-100 dark:hover:bg-gray-800 mr-2 gap-2">
+                <Button variant="outline" size="sm" className="hidden lg:flex h-9 rounded-full border-border dark:border-gray-700 text-[#444746] dark:text-[#e3e3e3] font-medium px-4 hover:bg-muted dark:hover:bg-gray-800 mr-2 gap-2">
                     <div className="w-2 h-2 rounded-full bg-green-600"></div>
                     Actif
                     <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1 opacity-60">
                         <path d="M5 6L0 1.05562L1.07143 0L5 3.88876L8.92857 0L10 1.05562L5 6Z" fill="currentColor"/>
                     </svg>
                 </Button>
-                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-100 dark:hover:bg-gray-800">
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-muted dark:hover:bg-gray-800">
                     <HelpCircle className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-100 dark:hover:bg-gray-800">
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-muted dark:hover:bg-gray-800">
                     <Settings className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-100 dark:hover:bg-gray-800 ml-1">
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-muted dark:hover:bg-gray-800 ml-1">
                     <Grid className="h-5 w-5" />
                 </Button>
                 <div className="mx-2 flex items-center justify-center">

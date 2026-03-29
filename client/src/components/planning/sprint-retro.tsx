@@ -75,7 +75,7 @@ export default function SprintRetro() {
           {cards
             .sort((a, b) => b.votes - a.votes)
             .map((card) => (
-              <div key={card.id} className="bg-white p-3 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
+              <div key={card.id} className="bg-card p-3 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start gap-2 mb-2">
                   <p className="text-sm font-medium flex-1">{card.content}</p>
                   <button
@@ -86,7 +86,7 @@ export default function SprintRetro() {
                   </button>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-600">
+                  <span className="text-xs text-muted-foreground">
                     {card.anonymous ? "Anonymous" : "Team"}
                   </span>
                   <button
@@ -134,11 +134,11 @@ export default function SprintRetro() {
         {renderColumn("Start", "start", retro.start, "bg-blue-50")}
       </div>
 
-      <div className="p-3 bg-gray-50 rounded-lg text-sm border">
+      <div className="p-3 bg-muted rounded-lg text-sm border">
         <p className="font-medium">
           Total cards: {retro.keep.length + retro.stop.length + retro.start.length}
         </p>
-        <p className="text-xs text-gray-600 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           Anonymous voting enabled • Team members can vote on actions
         </p>
       </div>

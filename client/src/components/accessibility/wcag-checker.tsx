@@ -165,8 +165,8 @@ export default function WcagChecker() {
               )}
               <div className="flex-1">
                 <p className="font-medium text-sm">{result.rule}</p>
-                <p className="text-xs text-gray-600 mt-1">Element: {result.element}</p>
-                <p className="text-xs text-gray-700 mt-1">Fix: {result.fixSuggestion}</p>
+                <p className="text-xs text-muted-foreground mt-1">Element: {result.element}</p>
+                <p className="text-xs text-muted-foreground mt-1">Fix: {result.fixSuggestion}</p>
               </div>
             </div>
           </div>

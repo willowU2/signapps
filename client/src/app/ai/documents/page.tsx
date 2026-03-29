@@ -17,17 +17,17 @@ export default function DocumentsPage() {
             <div className="w-full p-6 space-y-6">
                 {/* Header */}
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">
+                    <h1 className="text-3xl font-bold text-foreground">
                         Collaborative Documents
                     </h1>
-                    <p className="text-gray-600 mt-1">
+                    <p className="text-muted-foreground mt-1">
                         Edit documents in real-time with team members
                     </p>
                 </div>
 
                 {/* Document Editor */}
                 <div className="bg-background rounded-lg shadow-sm p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                    <h2 className="text-lg font-semibold text-foreground mb-4">
                         Untitled Document
                     </h2>
                     <CollaborativeEditor

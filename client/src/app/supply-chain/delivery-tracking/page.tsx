@@ -64,7 +64,7 @@ const SHIPMENTS: Shipment[] = [
 ];
 
 const statusConfig = {
-  processing: { label: 'Processing', color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300', step: 0 },
+  processing: { label: 'Processing', color: 'bg-muted text-gray-800 dark:bg-gray-900/30 dark:text-gray-300', step: 0 },
   'picked-up': { label: 'Picked Up', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300', step: 1 },
   'in-transit': { label: 'In Transit', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300', step: 2 },
   'out-for-delivery': { label: 'Out for Delivery', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300', step: 3 },

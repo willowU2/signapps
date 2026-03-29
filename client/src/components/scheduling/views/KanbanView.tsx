@@ -410,7 +410,7 @@ function KanbanCard({
               <Flag
                 className={cn(
                   'h-3.5 w-3.5',
-                  PRIORITY_ICONS[item.priority] || 'text-gray-500'
+                  PRIORITY_ICONS[item.priority] || 'text-muted-foreground'
                 )}
               />
             )}

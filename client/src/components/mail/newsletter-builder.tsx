@@ -201,7 +201,7 @@ export function NewsletterBuilder({ onExport }: NewsletterBuilderProps) {
 
                 {preview ? (
                     <div
-                        className="flex-1 rounded-xl border bg-gray-50 overflow-auto p-4"
+                        className="flex-1 rounded-xl border bg-muted overflow-auto p-4"
                         dangerouslySetInnerHTML={{ __html: buildHtml() }}
                     />
                 ) : (

@@ -49,7 +49,7 @@ function KPICard({
   const getTrendColor = () => {
     if (trend === 'up') return 'text-green-600';
     if (trend === 'down') return 'text-red-600';
-    return 'text-gray-600';
+    return 'text-muted-foreground';
   };
 
   return (

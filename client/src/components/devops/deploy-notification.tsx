@@ -160,16 +160,16 @@ export function DeployNotification() {
       </div>
 
       {deploys.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-muted-foreground">
           <p>No deployments recorded yet.</p>
         </div>
       ) : (
         deploys.map((deploy) => (
-          <div key={deploy.id} className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
+          <div key={deploy.id} className="border rounded-lg p-4 bg-card hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
                 <h3 className="font-semibold text-base">{deploy.serviceName}</h3>
-                <p className="text-sm text-gray-500">{deploy.version}</p>
+                <p className="text-sm text-muted-foreground">{deploy.version}</p>
               </div>
               <div className="flex items-center gap-2">
                 {getStatusIcon(deploy.status)}
@@ -179,11 +179,11 @@ export function DeployNotification() {
               </div>
             </div>
 
-            <div className="mb-3 pb-3 border-b border-gray-200">
-              <p className="text-sm text-gray-700">{deploy.commitMessage}</p>
+            <div className="mb-3 pb-3 border-b border-border">
+              <p className="text-sm text-muted-foreground">{deploy.commitMessage}</p>
             </div>
 
-            <div className="flex items-center justify-between text-xs text-gray-500">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{deploy.author}</span>
               <span>{formatTime(deploy.deployTime)}</span>
             </div>
