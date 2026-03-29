@@ -37,6 +37,18 @@ export const metadata: Metadata = {
     ],
     apple: "/icon-192.png",
   },
+  openGraph: {
+    title: "SignApps Platform",
+    description: "Plateforme collaborative tout-en-un",
+    siteName: "SignApps",
+    locale: "fr_FR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "SignApps Platform",
+    description: "Plateforme collaborative tout-en-un",
+  },
 };
 
 export default function RootLayout({

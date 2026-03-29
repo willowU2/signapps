@@ -284,6 +284,63 @@ export default function HelpPage() {
           </div>
         </div>
 
+        {/* Quoi de neuf */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-yellow-500" />
+              Quoi de neuf
+            </CardTitle>
+            <CardDescription>
+              Dernières mises à jour et nouvelles fonctionnalités.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[
+                {
+                  icon: <Brain className="h-4 w-4 text-purple-500" />,
+                  title: 'AI Multimodal Gateway',
+                  description: 'Génération d\'images, vidéo, audio et 3D via une interface unifiée. Support multi-providers (OpenAI, Anthropic, Ollama, natif GGUF).',
+                },
+                {
+                  icon: <Mail className="h-4 w-4 text-blue-500" />,
+                  title: 'Mail intégré',
+                  description: 'Client email complet avec boîte de réception, composition, filtres et signatures personnalisées.',
+                },
+                {
+                  icon: <FileText className="h-4 w-4 text-green-500" />,
+                  title: 'Import Excel',
+                  description: 'Importation et prévisualisation de fichiers Excel (.xlsx) directement dans la plateforme.',
+                },
+                {
+                  icon: <Zap className="h-4 w-4 text-orange-500" />,
+                  title: 'PWA Support',
+                  description: 'Installez SignApps comme application native sur desktop et mobile avec support offline.',
+                },
+                {
+                  icon: <Star className="h-4 w-4 text-yellow-500" />,
+                  title: '50+ pages',
+                  description: 'Plus de 50 pages et modules couvrant tous les besoins de collaboration : Drive, Chat, Calendrier, Tâches, IA, Monitoring et plus.',
+                },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="flex items-start gap-3 rounded-lg border p-3"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted shrink-0">
+                    {item.icon}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{item.title}</p>
+                    <p className="text-xs text-muted-foreground">{item.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
