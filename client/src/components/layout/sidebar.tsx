@@ -87,7 +87,6 @@ export function Sidebar() {
     setAddLabelOpen(false);
   };
 
-<<<<<<< Updated upstream
   // ── Drop zone handlers (sidebar accepts apps from dashboard/right sidebar) ──
   const handleDragOver = (e: React.DragEvent) => {
     if (e.dataTransfer.types.includes('application/json')) {
@@ -163,32 +162,6 @@ export function Sidebar() {
           isActive
             ? 'bg-accent text-accent-foreground font-semibold'
             : 'text-sidebar-foreground hover:bg-muted active:scale-[0.98]'
-=======
-  // On mobile the sidebar is a drawer: it is open when NOT collapsed.
-  // toggleSidebar flips sidebarCollapsed, so collapsed=false means open on mobile.
-  const mobileOpen = !sidebarCollapsed;
-
-  return (
-    <TooltipProvider delayDuration={0}>
-      {/* Mobile backdrop — tap to close */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/40 md:hidden"
-          onClick={toggleSidebar}
-          aria-hidden="true"
-        />
-      )}
-
-      <aside
-        className={cn(
-          // Base layout
-          'fixed top-0 left-0 bottom-0 z-50 flex h-full flex-col bg-sidebar py-4 transition-all duration-200 border-r border-sidebar-border',
-          // Width based on collapsed state (applies on all breakpoints)
-          sidebarCollapsed ? 'w-16' : 'w-64 pr-4',
-          // Mobile: hidden by default (slide left), open as overlay when mobileOpen
-          // Desktop: always visible (translate-x-0)
-          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
->>>>>>> Stashed changes
         )}
       >
         <Icon className={cn('h-5 w-5 shrink-0', isActive ? 'text-accent-foreground' : item.color || 'text-muted-foreground')} />
@@ -408,14 +381,7 @@ export function Sidebar() {
         </nav>
 
         {/* Version footer */}
-<<<<<<< Updated upstream
         <div className={cn('mt-auto pt-2 border-t border-sidebar-border text-[10px] text-muted-foreground/60', sidebarCollapsed ? 'text-center px-1' : 'px-6')}>
-=======
-        <div className={cn(
-          'mt-auto pt-2 border-t border-sidebar-border text-[10px] text-muted-foreground/60',
-          sidebarCollapsed ? 'text-center px-1' : 'px-6'
-        )}>
->>>>>>> Stashed changes
           {sidebarCollapsed ? 'v0.1' : 'SignApps v0.1.0'}
         </div>
       </aside>

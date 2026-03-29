@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +53,7 @@ import {
   ChevronDown,
   EyeIcon,
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { DriveSearchDocs } from '@/components/interop/DriveSearchDocs';
@@ -268,18 +269,73 @@ export default function GlobalDrivePage() {
     }
   };
 
-  // ── Selection ───────────────────────────────────────────────────
+  // ── Selection (with Shift+Click range support) ─────────────────
+  const lastClickedIndex = useRef<number | null>(null);
+
   const toggleSelect = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
+    const clickedIndex = currentFiles.findIndex((f) => f.id === id);
+
+    if (e.shiftKey && lastClickedIndex.current !== null && clickedIndex !== -1) {
+      // Range selection
+      const start = Math.min(lastClickedIndex.current, clickedIndex);
+      const end = Math.max(lastClickedIndex.current, clickedIndex);
+      setSelectedItems((prev) => {
+        const next = new Set(prev);
+        for (let i = start; i <= end; i++) {
+          next.add(currentFiles[i].id);
+        }
+        return next;
+      });
+    } else {
+      setSelectedItems((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+        return next;
+      });
+    }
+    lastClickedIndex.current = clickedIndex;
+  };
+
+  const selectAll = () => {
+    setSelectedItems(new Set(currentFiles.map((f) => f.id)));
+  };
+
+  const clearSelection = () => {
+    setSelectedItems(new Set());
+  };
+
+  const isAllSelected = currentFiles.length > 0 && selectedItems.size === currentFiles.length;
+  const isSomeSelected = selectedItems.size > 0 && selectedItems.size < currentFiles.length;
+
+  // ── Bulk operations ────────────────────────────────────────────
+  const bulkDownload = () => {
+    const names = currentFiles
+      .filter((f) => selectedItems.has(f.id))
+      .map((f) => f.name);
+    toast.success(`Telechargement de ${names.length} element(s)...`);
+    clearSelection();
+  };
+
+  const bulkMove = () => {
+    toast.info(`Deplacement de ${selectedItems.size} element(s)...`);
+    clearSelection();
+  };
+
+  const bulkDelete = () => {
+    const idsToRemove = new Set<string>();
+    const collectIds = (id: string) => {
+      idsToRemove.add(id);
+      files.filter((f) => f.parentId === id).forEach((f) => collectIds(f.id));
+    };
+    selectedItems.forEach((id) => collectIds(id));
+    setFiles((prev) => prev.filter((f) => !idsToRemove.has(f.id)));
+    toast.success(`${selectedItems.size} element(s) supprime(s)`);
+    clearSelection();
   };
 
   // ── CRUD Operations ─────────────────────────────────────────────
@@ -491,6 +547,44 @@ export default function GlobalDrivePage() {
         </div>
       </div>
 
+      {/* Bulk Actions Toolbar */}
+      {selectedItems.size > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={isAllSelected}
+              onCheckedChange={(checked) => {
+                if (checked) selectAll();
+                else clearSelection();
+              }}
+              aria-label="Tout selectionner"
+            />
+            <span className="text-sm font-medium">
+              {selectedItems.size} selectionne{selectedItems.size > 1 ? 's' : ''}
+            </span>
+          </div>
+          <Separator orientation="vertical" className="h-5" />
+          <div className="flex items-center gap-1.5">
+            <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={bulkDownload}>
+              <DownloadIcon className="size-3.5" />
+              Telecharger
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={bulkMove}>
+              <FolderInputIcon className="size-3.5" />
+              Deplacer
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5 h-8 text-destructive hover:text-destructive" onClick={bulkDelete}>
+              <Trash2Icon className="size-3.5" />
+              Supprimer
+            </Button>
+          </div>
+          <div className="flex-1" />
+          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={clearSelection}>
+            Annuler la selection
+          </Button>
+        </div>
+      )}
+
       {/* Empty State */}
       {currentFiles.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -514,12 +608,33 @@ export default function GlobalDrivePage() {
             <ContextMenu key={item.id}>
               <ContextMenuTrigger>
                 <Card
-                  className={`group cursor-pointer transition-all hover:shadow-md hover:border-primary/30 ${
+                  className={`group cursor-pointer transition-all hover:shadow-md hover:border-primary/30 relative ${
                     selectedItems.has(item.id) ? 'border-primary bg-primary/5 ring-1 ring-primary' : ''
                   }`}
                   onClick={(e) => toggleSelect(item.id, e)}
                   onDoubleClick={() => handleDoubleClick(item)}
                 >
+                  <div
+                    className={`absolute top-2 left-2 z-10 transition-opacity ${
+                      selectedItems.has(item.id) || selectedItems.size > 0
+                        ? 'opacity-100'
+                        : 'opacity-0 group-hover:opacity-100'
+                    }`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Checkbox
+                      checked={selectedItems.has(item.id)}
+                      onCheckedChange={() => {
+                        setSelectedItems((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(item.id)) next.delete(item.id);
+                          else next.add(item.id);
+                          return next;
+                        });
+                      }}
+                      aria-label={`Selectionner ${item.name}`}
+                    />
+                  </div>
                   <CardContent className="flex flex-col items-center gap-3 p-4">
                     <div className="transition-transform group-hover:scale-105">
                       {getFileIcon(item.type)}
@@ -594,6 +709,17 @@ export default function GlobalDrivePage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/50">
+                    <th className="w-10 px-4 py-3">
+                      <Checkbox
+                        checked={isAllSelected}
+                        onCheckedChange={(checked) => {
+                          if (checked) selectAll();
+                          else clearSelection();
+                        }}
+                        aria-label="Tout selectionner"
+                        className={isSomeSelected ? 'data-[state=unchecked]:bg-primary/20' : ''}
+                      />
+                    </th>
                     <th className="text-left font-medium px-4 py-3 w-[40%]">
                       <button onClick={() => toggleSort('name')} className="flex items-center gap-1 hover:text-foreground">
                         Nom
@@ -634,6 +760,20 @@ export default function GlobalDrivePage() {
                           onClick={(e) => toggleSelect(item.id, e)}
                           onDoubleClick={() => handleDoubleClick(item)}
                         >
+                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedItems.has(item.id)}
+                              onCheckedChange={() => {
+                                setSelectedItems((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(item.id)) next.delete(item.id);
+                                  else next.add(item.id);
+                                  return next;
+                                });
+                              }}
+                              aria-label={`Selectionner ${item.name}`}
+                            />
+                          </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
                               {getFileIcon(item.type, 'size-5')}

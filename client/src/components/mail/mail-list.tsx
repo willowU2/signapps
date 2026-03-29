@@ -2,7 +2,7 @@ import { ComponentProps, useRef, useState, useEffect, useCallback } from "react"
 import { formatDistanceToNow } from "date-fns"
 
 import { cn } from "@/lib/utils"
-import { Archive, Clock, Trash2, Square, Star, Loader2, ShieldAlert, Inbox, Reply, Forward, CheckSquare, CalendarPlus, Bell, FolderPlus, Mail as MailIcon } from "lucide-react"
+import { Archive, Clock, Trash2, Square, Star, Loader2, ShieldAlert, Inbox, Reply, Forward, CheckSquare, CalendarPlus, Bell, FolderPlus, Mail as MailIcon, MailOpen } from "lucide-react"
 import { Mail } from "@/lib/data/mail"
 import { EmptyState } from "@/components/ui/empty-state"
 import { SpamBadge } from "./spam-filter-settings"
@@ -41,7 +41,10 @@ interface MailListProps extends Omit<ComponentProps<"div">, "onSelect"> {
     onArchive?: (id: string) => void
     onDelete?: (id: string) => void
     onReportSpam?: (id: string) => void
+    onStar?: (id: string) => void
+    onMarkUnread?: (id: string) => void
     spamIds?: Set<string>
+    starredIds?: Set<string>
     isSearchActive?: boolean
 }
 
@@ -55,10 +58,13 @@ interface MailRowProps {
     onArchive?: (id: string) => void
     onDelete?: (id: string) => void
     onReportSpam?: (id: string) => void
+    onStar?: (id: string) => void
+    onMarkUnread?: (id: string) => void
     spamIds?: Set<string>
+    starredIds?: Set<string>
 }
 
-function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, onReportSpam, spamIds }: MailRowProps) {
+function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, onReportSpam, onStar, onMarkUnread, spamIds, starredIds }: MailRowProps) {
     const { handlers: swipeHandlers } = useSwipeAction({
         onSwipeLeft: () => onArchive?.(item.id),
         onSwipeRight: () => onDelete?.(item.id),
@@ -92,7 +98,19 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
         >
             <div className="flex-shrink-0 flex items-center gap-2 px-3 text-gray-400 dark:text-gray-500">
                 <Square className="h-[18px] w-[18px] hover:text-gray-700 dark:hover:text-gray-300 transition-colors" />
-                <Star className="h-[18px] w-[18px] hover:text-gray-700 dark:hover:text-gray-300 transition-colors" />
+                <button
+                    type="button"
+                    aria-label={starredIds?.has(item.id) ? "Retirer des favoris" : "Ajouter aux favoris"}
+                    className="bg-transparent border-none p-0 cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); onStar?.(item.id) }}
+                >
+                    <Star className={cn(
+                        "h-[18px] w-[18px] transition-colors",
+                        starredIds?.has(item.id)
+                            ? "text-amber-400 fill-amber-400"
+                            : "hover:text-gray-700 dark:hover:text-gray-300"
+                    )} />
+                </button>
             </div>
             <div className="flex items-center w-full overflow-hidden gap-2 pr-4">
                 <span className={cn(
@@ -117,23 +135,29 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
                     {formatDistanceToNow(new Date(item.date))}
                 </span>
             </div>
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1 bg-background dark:bg-[#202124] pl-2 pr-1 py-1">
-                <button type="button" aria-label="Archiver" className="p-2 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onArchive?.(item.id) }}>
-                    <Archive className="w-5 h-5" />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5 bg-background dark:bg-[#202124] rounded-md shadow-sm pl-1 pr-1 py-0.5">
+                <button type="button" aria-label="Archiver" className="p-1.5 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onArchive?.(item.id) }}>
+                    <Archive className="w-[18px] h-[18px]" />
                 </button>
-                <button type="button" aria-label="Supprimer" className="p-2 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onDelete?.(item.id) }}>
-                    <Trash2 className="w-5 h-5" />
+                <button type="button" aria-label="Supprimer" className="p-1.5 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onDelete?.(item.id) }}>
+                    <Trash2 className="w-[18px] h-[18px]" />
+                </button>
+                <button type="button" aria-label={starredIds?.has(item.id) ? "Retirer des favoris" : "Ajouter aux favoris"} className="p-1.5 rounded-full text-muted-foreground hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-500 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onStar?.(item.id) }}>
+                    <Star className={cn("w-[18px] h-[18px]", starredIds?.has(item.id) && "text-amber-400 fill-amber-400")} />
+                </button>
+                <button type="button" aria-label="Marquer comme non lu" className="p-1.5 rounded-full text-muted-foreground hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-500 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onMarkUnread?.(item.id) }}>
+                    <MailOpen className="w-[18px] h-[18px]" />
                 </button>
                 {onReportSpam && (
-                    <button type="button" aria-label="Signaler comme spam" className="p-2 rounded-full text-muted-foreground hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onReportSpam(item.id) }}>
-                        <ShieldAlert className="w-5 h-5" />
+                    <button type="button" aria-label="Signaler comme spam" className="p-1.5 rounded-full text-muted-foreground hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onReportSpam(item.id) }}>
+                        <ShieldAlert className="w-[18px] h-[18px]" />
                     </button>
                 )}
                 <SnoozeDatePicker
                     onSnooze={(isoStr, label) => { onSnooze?.(item.id, label) }}
                 >
-                    <button type="button" aria-label="Reporter" className="p-2 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer shadow-none bg-transparent border-none" onClick={(e) => e.stopPropagation()}>
-                        <Clock className="w-5 h-5" />
+                    <button type="button" aria-label="Reporter" className="p-1.5 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer shadow-none bg-transparent border-none" onClick={(e) => e.stopPropagation()}>
+                        <Clock className="w-[18px] h-[18px]" />
                     </button>
                 </SnoozeDatePicker>
             </div>
@@ -161,6 +185,13 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
                 <FolderPlus className="h-3.5 w-3.5 mr-2 text-indigo-500" /> Créer un projet
             </ContextMenuItem>
             <ContextMenuSeparator />
+            <ContextMenuItem onClick={() => onStar?.(item.id)}>
+                <Star className={cn("h-3.5 w-3.5 mr-2", starredIds?.has(item.id) ? "text-amber-400 fill-amber-400" : "text-amber-500")} />
+                {starredIds?.has(item.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => onMarkUnread?.(item.id)}>
+                <MailOpen className="h-3.5 w-3.5 mr-2 text-blue-500" /> Marquer comme non lu
+            </ContextMenuItem>
             <ContextMenuItem onClick={() => onArchive?.(item.id)}>
                 <Archive className="h-3.5 w-3.5 mr-2" /> Archiver
             </ContextMenuItem>
@@ -179,7 +210,7 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
 
 // ─── MailList ────────────────────────────────────────────────────────────────
 
-export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onDelete, onReportSpam, spamIds, isSearchActive }: MailListProps) {
+export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onDelete, onReportSpam, onStar, onMarkUnread, spamIds, starredIds, isSearchActive }: MailListProps) {
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
     const sentinelRef = useRef<HTMLDivElement | null>(null)
     const scrollContainerRef = useRef<HTMLDivElement | null>(null)
@@ -265,7 +296,10 @@ export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onD
                             onArchive={onArchive}
                             onDelete={onDelete}
                             onReportSpam={onReportSpam}
+                            onStar={onStar}
+                            onMarkUnread={onMarkUnread}
                             spamIds={spamIds}
+                            starredIds={starredIds}
                         />
                     )}
                 />

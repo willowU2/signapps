@@ -289,14 +289,11 @@ export default function LoginPage() {
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Connexion en cours...
-<<<<<<< Updated upstream
                 </>
               ) : isLockedOut ? (
                 <>
                   <ShieldAlert className="mr-2 h-4 w-4" />
                   Verrouillé ({lockoutRemaining}s)
-=======
->>>>>>> Stashed changes
                 </>
               ) : (
                 'Se connecter'
