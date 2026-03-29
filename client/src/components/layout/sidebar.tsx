@@ -155,8 +155,9 @@ export function Sidebar() {
       <Link
         href={safeHref}
         title={item.label}
+        data-active={isActive}
         className={cn(
-          'flex items-center gap-4 py-2.5 min-h-[44px] text-sm font-medium transition-all duration-150',
+          'sidebar-indicator flex items-center gap-4 py-2.5 min-h-[44px] text-sm font-medium transition-all duration-150',
           sidebarCollapsed ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6',
           isActive
             ? 'bg-accent text-accent-foreground font-semibold'
@@ -212,8 +213,9 @@ export function Sidebar() {
         <Link
           href={safeHref}
           title={app.label}
+          data-active={isActive}
           className={cn(
-            'flex flex-1 items-center gap-4 py-2.5 min-h-[44px] text-sm font-medium transition-all duration-150',
+            'sidebar-indicator flex flex-1 items-center gap-4 py-2.5 min-h-[44px] text-sm font-medium transition-all duration-150',
             sidebarCollapsed ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6 pl-5',
             isActive
               ? 'bg-accent text-accent-foreground font-semibold'
