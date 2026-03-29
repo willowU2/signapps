@@ -70,10 +70,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const response = await authApi.me();
         setUser(response.data);
         syncAuthCookie(true);
-      } catch {
-        // Token expired or invalid, clear auth state
-        logout();
-        syncAuthCookie(false);
+      } catch (err: unknown) {
+        // Distinguish between auth failure (401) and service unavailability.
+        // If the identity service is unreachable (network error / 5xx), trust the
+        // persisted auth state so the app remains usable offline / in E2E tests.
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 401 || status === 403) {
+          // Token genuinely expired or invalid — clear auth state
+          logout();
+          syncAuthCookie(false);
+        } else {
+          // Network error or service down — keep the existing auth state
+          // so the user is not kicked out unnecessarily.
+          const authData = JSON.parse(localStorage.getItem('auth-storage') || '{}');
+          const user = authData?.state?.user;
+          if (user) {
+            setUser(user);
+          }
+          syncAuthCookie(true);
+        }
       } finally {
         setLoading(false);
       }

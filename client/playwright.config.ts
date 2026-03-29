@@ -1,4 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
+
+const authFile = path.join(__dirname, 'playwright/.auth/user.json');
 
 /**
  * Playwright E2E Test Configuration for SignApps Platform
@@ -53,6 +56,7 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
+        storageState: authFile,
       },
       dependencies: ['setup'],
     },
@@ -61,6 +65,7 @@ export default defineConfig({
       name: 'firefox',
       use: {
         ...devices['Desktop Firefox'],
+        storageState: authFile,
       },
       dependencies: ['setup'],
     },
@@ -69,6 +74,7 @@ export default defineConfig({
       name: 'webkit',
       use: {
         ...devices['Desktop Safari'],
+        storageState: authFile,
       },
       dependencies: ['setup'],
     },
@@ -78,6 +84,7 @@ export default defineConfig({
       name: 'Mobile Chrome',
       use: {
         ...devices['Pixel 5'],
+        storageState: authFile,
       },
       dependencies: ['setup'],
     },
@@ -86,6 +93,7 @@ export default defineConfig({
       name: 'Mobile Safari',
       use: {
         ...devices['iPhone 12'],
+        storageState: authFile,
       },
       dependencies: ['setup'],
     },

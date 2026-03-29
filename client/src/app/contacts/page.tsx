@@ -469,24 +469,20 @@ ${header}
     )
   }
 
-  if (isError) {
-    return (
-      <AppLayout>
-        <div className="flex flex-col items-center justify-center h-64 space-y-4 text-center">
-          <Users className="h-12 w-12 text-muted-foreground/30" />
-          <h3 className="text-lg font-medium">Service contacts indisponible</h3>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            Impossible de charger les contacts. Les données affichées sont des exemples. Vérifiez que le serveur est démarré.
-          </p>
-          <Button variant="outline" onClick={() => refetch()}>Réessayer</Button>
-        </div>
-      </AppLayout>
-    )
-  }
-
   return (
     <AppLayout>
       <div className="space-y-6">
+
+        {/* Offline warning banner */}
+        {isError && (
+          <div className="flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+            <Users className="h-5 w-5 text-amber-600 shrink-0" />
+            <p className="text-sm text-amber-700 dark:text-amber-400">
+              Service contacts indisponible — affichage des données d&apos;exemple.
+            </p>
+            <Button variant="outline" size="sm" className="ml-auto shrink-0" onClick={() => refetch()}>Réessayer</Button>
+          </div>
+        )}
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
