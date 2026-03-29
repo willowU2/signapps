@@ -36,13 +36,20 @@ function subscribe(listener: () => void) {
   };
 }
 
+let cachedSnapshot: TrackedActivity[] = [];
+let cachedRaw: string | null = null;
+
 function getSnapshot(): TrackedActivity[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === 'undefined') return cachedSnapshot;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (raw !== cachedRaw) {
+      cachedRaw = raw;
+      cachedSnapshot = raw ? JSON.parse(raw) : [];
+    }
+    return cachedSnapshot;
   } catch {
-    return [];
+    return cachedSnapshot;
   }
 }
 

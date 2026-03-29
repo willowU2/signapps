@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { activitiesApi } from '@/lib/api/crosslinks';
 import type { Activity } from '@/types/crosslinks';
 import { Button } from '@/components/ui/button';
@@ -97,7 +97,6 @@ interface Props {
 
 export function GlobalActivityFeed({ compact = false, limit = 50 }: Props) {
   const [apiActivities, setApiActivities] = useState<Activity[]>([]);
-  const [filtered, setFiltered] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [moduleFilter, setModuleFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -120,23 +119,20 @@ export function GlobalActivityFeed({ compact = false, limit = 50 }: Props) {
   useEffect(() => { load(); }, [load]);
 
   // Merge API activities with local activities (local as fallback or supplement)
-  const mergedActivities: Activity[] = (() => {
-    const localConverted = localActivities.slice(0, limit).map(localToActivity);
-
+  const mergedActivities = useMemo(() => {
+    const localConverted = (localActivities || []).slice(0, limit).map(localToActivity);
     if (apiActivities.length > 0) {
-      // API has data: show API activities first, then local ones that are not duplicates
       const apiIds = new Set(apiActivities.map(a => a.id));
       const uniqueLocal = localConverted.filter(l => !apiIds.has(l.id));
       return [...apiActivities, ...uniqueLocal]
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, limit);
     }
-
-    // No API data: show local activities only
     return localConverted;
-  })();
+  }, [apiActivities, localActivities, limit]);
 
-  useEffect(() => {
+  // Filter activities — also stable via useMemo
+  const filtered = useMemo(() => {
     let result = mergedActivities;
     if (moduleFilter !== 'all') result = result.filter(a => a.entity_type === moduleFilter || a.action === moduleFilter);
     if (search) {
@@ -147,9 +143,8 @@ export function GlobalActivityFeed({ compact = false, limit = 50 }: Props) {
         a.action.toLowerCase().includes(q)
       );
     }
-    setFiltered(result);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mergedActivities.length, apiActivities, localActivities, moduleFilter, search]);
+    return result;
+  }, [mergedActivities, moduleFilter, search]);
 
   const modules = [...new Set(mergedActivities.map(a => a.entity_type))];
 
