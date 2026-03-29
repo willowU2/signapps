@@ -19,6 +19,24 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.6.0',
+    date: '2026-03-29',
+    highlights: [
+      'Thèmes personnalisables : couleur primaire, taille de police, mode compact, coins arrondis',
+      'Transitions de pages fluides avec animations fade-in',
+      'Micro-interactions : boutons, cartes, sidebar, toasts',
+      'Améliorations accessibilité WCAG AA (focus, contraste, aria-live)',
+    ],
+    improvements: [
+      'Page /settings/appearance avec prévisualisation en temps réel',
+      'Indicateurs de focus visibles sur tous les éléments interactifs',
+      'Animations respectent prefers-reduced-motion',
+    ],
+    fixes: [
+      'Animation de page ne se déclenchait qu\'au premier chargement',
+    ],
+  },
+  {
     version: '2.5.0',
     date: '2026-03-28',
     highlights: [
@@ -56,6 +74,19 @@ const CHANGELOG: ChangelogEntry[] = [
     fixes: [
       'Amélioration des performances du feed d\'activités',
     ],
+  },
+  {
+    version: '0.1.0',
+    date: '2026-03-01',
+    highlights: [
+      'AI Multimodal Gateway (10 capabilities)',
+      'Mail intégré avec Mailpit',
+      'Import Excel complet',
+      '41+ pages fonctionnelles',
+      'PWA support',
+    ],
+    improvements: [],
+    fixes: [],
   },
 ];
 

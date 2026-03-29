@@ -42,7 +42,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Link as LinkIcon, MoreVertical, Users, Pencil, Trash2, Webhook, Play, Pause, TestTube2, ExternalLink, Settings, Check, Globe } from 'lucide-react';
+import { Plus, Link as LinkIcon, MoreVertical, Users, Pencil, Trash2, Webhook, Play, Pause, TestTube2, ExternalLink, Settings, Check, Globe, Palette } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -672,6 +672,21 @@ export default function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="appearance" className="space-y-6">
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-8 text-center">
+                <Palette className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold">Personnalisation avancee</h3>
+                <p className="text-sm text-muted-foreground mt-1 mb-4">
+                  Couleur primaire, taille de police, mode compact, coins arrondis et plus.
+                </p>
+                <Link href="/settings/appearance">
+                  <Button>
+                    Ouvrir la personnalisation
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
             <AppearanceSettings />
             <InstanceBranding />
             <ThemePresetsLibrary />

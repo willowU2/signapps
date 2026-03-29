@@ -14,18 +14,35 @@ setup('authenticate', async ({ page }) => {
   // Wait for React hydration
   await page.waitForLoadState('networkidle');
 
-  // Close any onboarding/welcome dialogs that may block the form
-  const closeBtn = page.locator('button:has-text("Passer"), button:has-text("Close"), button[aria-label="Close"]');
-  if (await closeBtn.first().isVisible({ timeout: 3000 }).catch(() => false)) {
-    await closeBtn.first().click();
-    await page.waitForTimeout(500);
+  // Aggressively close any dialogs/modals blocking the login form
+  for (let i = 0; i < 5; i++) {
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
   }
+  // Click any dismiss/close/skip button that might be visible
+  for (const selector of [
+    'button:has-text("Passer")',
+    'button:has-text("Compris")',
+    'button:has-text("Close")',
+    'button:has-text("Fermer")',
+    'button:has-text("Skip")',
+    'button[aria-label="Close"]',
+    '[data-state="open"] button:has-text("×")',
+    'div[role="dialog"] button',
+  ]) {
+    const btn = page.locator(selector).first();
+    if (await btn.isVisible({ timeout: 500 }).catch(() => false)) {
+      await btn.click({ force: true }).catch(() => {});
+      await page.waitForTimeout(300);
+    }
+  }
+  // Final escape to close anything remaining
   await page.keyboard.press('Escape');
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(500);
 
   // Fill in login credentials using IDs (language-independent)
   const usernameInput = page.locator('#username');
-  await usernameInput.click();
+  await usernameInput.click({ force: true });
   await usernameInput.fill('admin');
 
   const passwordInput = page.locator('#password');

@@ -239,6 +239,13 @@ export function CommandBarEnhanced() {
         icon: SlidersHorizontal,
         action: () => router.push("/settings/preferences"),
       },
+      {
+        id: "nav-appearance",
+        label: "Apparence",
+        description: "Couleur, police, mode compact, coins",
+        icon: SlidersHorizontal,
+        action: () => router.push("/settings/appearance"),
+      },
     ],
     [router]
   );

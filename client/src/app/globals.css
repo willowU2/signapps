@@ -359,3 +359,187 @@ body {
   outline-offset: 2px !important;
   box-shadow: 0 0 0 6px #000000 !important;
 }
+
+/* ───────────── Theme Customization (CSS Variables) ───────────── */
+/* These are overridden by the theme customization system in localStorage */
+
+/* Font size presets */
+.font-size-small {
+  font-size: 13px;
+}
+.font-size-medium {
+  font-size: 15px;
+}
+.font-size-large {
+  font-size: 17px;
+}
+
+/* Compact mode — reduce padding and margins globally */
+.compact-mode {
+  --spacing-page: 0.75rem;
+  --spacing-card: 0.75rem;
+}
+.compact-mode .p-4 { padding: 0.625rem; }
+.compact-mode .p-6 { padding: 1rem; }
+.compact-mode .gap-4 { gap: 0.625rem; }
+.compact-mode .gap-6 { gap: 1rem; }
+.compact-mode .space-y-4 > * + * { margin-top: 0.625rem; }
+.compact-mode .space-y-6 > * + * { margin-top: 1rem; }
+
+/* Border radius presets */
+.radius-sharp { --radius: 0.125rem; }
+.radius-rounded { --radius: 0.625rem; }
+.radius-pill { --radius: 1.5rem; }
+
+/* Primary color theme overrides */
+.theme-blue {
+  --primary: #135bec;
+  --ring: #135bec;
+  --sidebar-primary: #135bec;
+  --sidebar-ring: #135bec;
+  --chart-1: #135bec;
+  --accent: #e8f0fe;
+  --accent-foreground: #174ea6;
+  --sidebar-accent: #e8f0fe;
+  --sidebar-accent-foreground: #174ea6;
+}
+.dark.theme-blue, .dark .theme-blue {
+  --primary: #3b82f6;
+  --ring: #3b82f6;
+  --sidebar-primary: #3b82f6;
+  --sidebar-ring: #3b82f6;
+  --chart-1: #3b82f6;
+  --accent: rgba(59, 130, 246, 0.15);
+  --accent-foreground: #60a5fa;
+  --sidebar-accent: rgba(59, 130, 246, 0.15);
+  --sidebar-accent-foreground: #60a5fa;
+}
+
+.theme-green {
+  --primary: #059669;
+  --ring: #059669;
+  --sidebar-primary: #059669;
+  --sidebar-ring: #059669;
+  --chart-1: #059669;
+  --accent: #d1fae5;
+  --accent-foreground: #065f46;
+  --sidebar-accent: #d1fae5;
+  --sidebar-accent-foreground: #065f46;
+}
+.dark.theme-green, .dark .theme-green {
+  --primary: #10b981;
+  --ring: #10b981;
+  --sidebar-primary: #10b981;
+  --sidebar-ring: #10b981;
+  --chart-1: #10b981;
+  --accent: rgba(16, 185, 129, 0.15);
+  --accent-foreground: #34d399;
+  --sidebar-accent: rgba(16, 185, 129, 0.15);
+  --sidebar-accent-foreground: #34d399;
+}
+
+.theme-purple {
+  --primary: #7c3aed;
+  --ring: #7c3aed;
+  --sidebar-primary: #7c3aed;
+  --sidebar-ring: #7c3aed;
+  --chart-1: #7c3aed;
+  --accent: #ede9fe;
+  --accent-foreground: #5b21b6;
+  --sidebar-accent: #ede9fe;
+  --sidebar-accent-foreground: #5b21b6;
+}
+.dark.theme-purple, .dark .theme-purple {
+  --primary: #8b5cf6;
+  --ring: #8b5cf6;
+  --sidebar-primary: #8b5cf6;
+  --sidebar-ring: #8b5cf6;
+  --chart-1: #8b5cf6;
+  --accent: rgba(139, 92, 246, 0.15);
+  --accent-foreground: #a78bfa;
+  --sidebar-accent: rgba(139, 92, 246, 0.15);
+  --sidebar-accent-foreground: #a78bfa;
+}
+
+.theme-orange {
+  --primary: #ea580c;
+  --ring: #ea580c;
+  --sidebar-primary: #ea580c;
+  --sidebar-ring: #ea580c;
+  --chart-1: #ea580c;
+  --accent: #fff7ed;
+  --accent-foreground: #9a3412;
+  --sidebar-accent: #fff7ed;
+  --sidebar-accent-foreground: #9a3412;
+}
+.dark.theme-orange, .dark .theme-orange {
+  --primary: #f97316;
+  --ring: #f97316;
+  --sidebar-primary: #f97316;
+  --sidebar-ring: #f97316;
+  --chart-1: #f97316;
+  --accent: rgba(249, 115, 22, 0.15);
+  --accent-foreground: #fb923c;
+  --sidebar-accent: rgba(249, 115, 22, 0.15);
+  --sidebar-accent-foreground: #fb923c;
+}
+
+.theme-red {
+  --primary: #dc2626;
+  --ring: #dc2626;
+  --sidebar-primary: #dc2626;
+  --sidebar-ring: #dc2626;
+  --chart-1: #dc2626;
+  --accent: #fef2f2;
+  --accent-foreground: #991b1b;
+  --sidebar-accent: #fef2f2;
+  --sidebar-accent-foreground: #991b1b;
+}
+.dark.theme-red, .dark .theme-red {
+  --primary: #ef4444;
+  --ring: #ef4444;
+  --sidebar-primary: #ef4444;
+  --sidebar-ring: #ef4444;
+  --chart-1: #ef4444;
+  --accent: rgba(239, 68, 68, 0.15);
+  --accent-foreground: #f87171;
+  --sidebar-accent: rgba(239, 68, 68, 0.15);
+  --sidebar-accent-foreground: #f87171;
+}
+
+/* ───────────── Enhanced Focus Indicators (Accessibility) ───────────── */
+*:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Ensure buttons and interactive elements have clear focus */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ───────────── aria-live region styles ───────────── */
+[aria-live="polite"],
+[aria-live="assertive"] {
+  /* Ensure screen readers can find these */
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

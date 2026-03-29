@@ -29,6 +29,7 @@ import { PwaInstallPrompt } from '@/components/pwa/pwa-install-prompt';
 import { useServiceWorker } from '@/hooks/use-service-worker';
 import { DragDropOverlay } from '@/components/drag-drop-overlay';
 import { GlobalPolling } from '@/components/global-polling';
+import { ThemeInitializer } from '@/components/theme-initializer';
 
 function LoadingFallback() {
   return (
@@ -108,6 +109,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       <GlobalModals />
                       <GlobalHooks />
                       <GlobalPolling />
+                      <ThemeInitializer />
                       <DragDropOverlay />
                       <OnboardingWizard />
                     </PermissionsProvider>

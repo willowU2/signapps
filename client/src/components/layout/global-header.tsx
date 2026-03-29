@@ -24,7 +24,7 @@ import {
     LogOut, User as UserIcon, Settings, PanelLeft, PanelRight,
     Share2, MessageSquare, History, HardDrive, Mail, CheckSquare,
     Video, Activity, Route, Calendar, Shield, Users, MessageCircle, Search, SlidersHorizontal, FileText,
-    Clock, HelpCircle, Star, Copy, Check
+    Clock, HelpCircle, Star, Copy, Check, Palette
 } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
@@ -613,6 +613,10 @@ export function GlobalHeader() {
                         <DropdownMenuItem onClick={() => router.push('/settings')}>
                             <Settings className="mr-2 h-4 w-4" />
                             Paramètres
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push('/settings/appearance')}>
+                            <Palette className="mr-2 h-4 w-4" />
+                            Apparence
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout} className="text-destructive">
