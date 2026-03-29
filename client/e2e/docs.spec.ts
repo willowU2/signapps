@@ -49,7 +49,7 @@ test.describe('Document Editor', () => {
       }
 
       // Wait for editor to load
-      await page.waitForSelector('.tiptap, .ProseMirror, [contenteditable="true"]', { timeout: 10000 }).catch(() => {});
+      const editorVisible = await page.locator('.tiptap, .ProseMirror, [contenteditable="true"]').isVisible({ timeout: 10000 }).catch(() => false);
     });
 
     test('should display editor with toolbar', async ({ page }) => {
@@ -130,8 +130,9 @@ test.describe('Document Editor', () => {
         await page.keyboard.press('Enter');
 
         const hasHeading = await editor.locator('h1, h2, h3').isVisible().catch(() => false);
-        // Markdown conversion may or may not be instant
-        expect(true).toBeTruthy(); // Soft check
+        // Markdown conversion may or may not be instant — either heading or plain text is acceptable
+        const editorContent = await editor.textContent();
+        expect(editorContent?.length).toBeGreaterThan(0);
       }
     });
 
@@ -144,7 +145,9 @@ test.describe('Document Editor', () => {
         await page.keyboard.type('Item 2');
 
         const hasList = await editor.locator('ul, ol, li').isVisible().catch(() => false);
-        expect(true).toBeTruthy(); // Soft check
+        // Markdown conversion may or may not be instant — verify editor has content
+        const listContent = await editor.textContent();
+        expect(listContent?.length).toBeGreaterThan(0);
       }
     });
   });
@@ -159,8 +162,9 @@ test.describe('Document Editor', () => {
         // Look for character count display
         const charCount = page.locator('[data-testid="char-count"], .character-count, text=/\\d+.*character|\\d+.*caractère/i');
         const hasCharCount = await charCount.isVisible().catch(() => false);
-        // Character count may not be visible in all views
-        expect(true).toBeTruthy();
+        // Character count widget may not be present in all editor configurations
+        // Verify the editor itself is still functional
+        await expect(editor).toBeVisible();
       }
     });
   });
@@ -174,7 +178,7 @@ test.describe('Document Comments', () => {
     const docItem = page.locator('[data-testid="document-item"], .document-card').first();
     if (await docItem.isVisible()) {
       await docItem.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle').catch(() => {});
 
       // Look for comments button
       const commentsBtn = page.getByRole('button', { name: /comment|annotation/i });
@@ -184,7 +188,7 @@ test.describe('Document Comments', () => {
         // Comments sidebar should open
         const sidebar = page.locator('[data-testid="comments-sidebar"], .comments-panel');
         const hasSidebar = await sidebar.isVisible().catch(() => false);
-        expect(true).toBeTruthy(); // Soft check
+        expect(hasSidebar).toBeTruthy();
       }
     }
   });
@@ -197,7 +201,7 @@ test.describe('Document Export', () => {
     const docItem = page.locator('[data-testid="document-item"], .document-card').first();
     if (await docItem.isVisible()) {
       await docItem.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle').catch(() => {});
 
       // Look for export/download button
       const exportBtn = page.getByRole('button', { name: /export|download|télécharger/i });
@@ -206,7 +210,7 @@ test.describe('Document Export', () => {
 
         // Export options should appear
         const hasOptions = await page.locator('text=/pdf|docx|markdown|html/i').isVisible().catch(() => false);
-        expect(true).toBeTruthy(); // Soft check
+        expect(hasOptions).toBeTruthy();
       }
     }
   });

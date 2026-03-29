@@ -9,8 +9,6 @@ import { test, expect } from './fixtures';
  * Uses the authenticated fixture (auth.setup.ts) so all tests run as a logged-in user.
  */
 
-const BASE = 'http://localhost:3000';
-
 // ---------------------------------------------------------------------------
 // All major platform pages with expected content markers
 // ---------------------------------------------------------------------------
@@ -68,6 +66,18 @@ const PAGES = [
 ];
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+async function dismissDialogs(page: import('@playwright/test').Page) {
+  await page.keyboard.press('Escape');
+  const skipBtn = page.locator('button:has-text("Passer")');
+  if (await skipBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await skipBtn.click();
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -77,10 +87,10 @@ test.describe('Platform Smoke Test — All Pages', () => {
       test.setTimeout(30_000);
 
       // Navigate to the page
-      await page.goto(`${BASE}${p.path}`, { waitUntil: 'domcontentloaded' });
+      await page.goto(p.path, { waitUntil: 'domcontentloaded' });
 
-      // Wait for React to render — use a short timeout to give the page time to load
-      await page.waitForTimeout(2000);
+      // Wait for React to render
+      await page.waitForLoadState('networkidle').catch(() => {});
 
       // Get the full body text
       const content = await page.textContent('body');
@@ -106,20 +116,10 @@ test.describe('Platform Smoke Test — All Pages', () => {
 test.describe('Platform Smoke Test — Critical Interactions', () => {
   test('Dashboard loads and shows quick actions', async ({ page }) => {
     test.setTimeout(30_000);
-    await page.goto(`${BASE}/dashboard`, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(2000);
-    // Dismiss onboarding dialog if present
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+    await page.waitForLoadState('networkidle').catch(() => {});
 
-    // Dismiss all dialogs aggressively
-    for (let i = 0; i < 3; i++) {
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(200);
-    }
-    const skipBtn = page.locator('button:has-text("Passer")');
-    if (await skipBtn.isVisible({ timeout: 1000 }).catch(() => false)) await skipBtn.click();
-    await page.waitForTimeout(500);
+    await dismissDialogs(page);
 
     // Verify page loaded with content
     const body = await page.textContent('body');
@@ -128,8 +128,8 @@ test.describe('Platform Smoke Test — Critical Interactions', () => {
 
   test('Status page shows service list', async ({ page }) => {
     test.setTimeout(30_000);
-    await page.goto(`${BASE}/status`, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(3000);
+    await page.goto('/status', { waitUntil: 'domcontentloaded' });
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     // Verify the page title
     const title = page.locator('h1:has-text("Status")');
@@ -142,15 +142,10 @@ test.describe('Platform Smoke Test — Critical Interactions', () => {
 
   test('Navigation sidebar is accessible', async ({ page }) => {
     test.setTimeout(30_000);
-    await page.goto(`${BASE}/dashboard`, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(2000);
-    for (let i = 0; i < 3; i++) {
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(200);
-    }
-    const skipBtn = page.locator('button:has-text("Passer")');
-    if (await skipBtn.isVisible({ timeout: 1000 }).catch(() => false)) await skipBtn.click();
-    await page.waitForTimeout(500);
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+    await page.waitForLoadState('networkidle').catch(() => {});
+
+    await dismissDialogs(page);
 
     // Verify navigation exists (any nav or link container)
     const navLinks = page.locator('a[href="/dashboard"], a[href="/docs"], a[href="/mail"]');
@@ -160,7 +155,7 @@ test.describe('Platform Smoke Test — Critical Interactions', () => {
 
   test('Health API returns service statuses', async ({ page }) => {
     test.setTimeout(15_000);
-    const response = await page.goto(`${BASE}/api/health`);
+    const response = await page.goto('/api/health');
     expect(response).not.toBeNull();
     expect(response!.status()).toBe(200);
 
@@ -189,8 +184,8 @@ test.describe('Platform Smoke Test — Console Error Audit', () => {
       errors.push(err.message);
     });
 
-    await page.goto(`${BASE}/dashboard`, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(5000);
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     // Filter out expected network errors (services may not be running in test env)
     const criticalErrors = errors.filter(

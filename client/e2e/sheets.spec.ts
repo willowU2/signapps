@@ -30,10 +30,10 @@ test.describe('Spreadsheet', () => {
         await newBtn.click();
 
         // Spreadsheet grid should appear
-        await page.waitForSelector('[data-testid="spreadsheet-grid"], .spreadsheet, table', { timeout: 10000 }).catch(() => {});
+        const gridVisible = await page.locator('[data-testid="spreadsheet-grid"], .spreadsheet, table').isVisible({ timeout: 10000 }).catch(() => false);
 
         const hasGrid = await page.locator('[data-testid="spreadsheet-grid"], .spreadsheet, table').isVisible().catch(() => false);
-        expect(hasGrid || true).toBeTruthy(); // Soft check for dialog flow
+        expect(hasGrid).toBeTruthy();
       }
     });
   });
@@ -45,7 +45,7 @@ test.describe('Spreadsheet', () => {
       if (await newBtn.isVisible()) {
         await newBtn.click();
       }
-      await page.waitForSelector('[data-testid="spreadsheet-grid"], .spreadsheet, table, [role="grid"]', { timeout: 10000 }).catch(() => {});
+      await page.locator('[data-testid="spreadsheet-grid"], .spreadsheet, table, [role="grid"]').isVisible({ timeout: 10000 }).catch(() => false);
     });
 
     test('should display grid with cells', async ({ page }) => {
@@ -73,7 +73,7 @@ test.describe('Spreadsheet', () => {
                  el.querySelector(':focus') !== null;
         }).catch(() => false);
 
-        expect(true).toBeTruthy(); // Soft check
+        expect(isSelected).toBeTruthy();
       }
     });
 
@@ -107,7 +107,7 @@ test.describe('Spreadsheet', () => {
       if (await newBtn.isVisible()) {
         await newBtn.click();
       }
-      await page.waitForSelector('[data-testid="spreadsheet-grid"], .spreadsheet, table', { timeout: 10000 }).catch(() => {});
+      await page.locator('[data-testid="spreadsheet-grid"], .spreadsheet, table').isVisible({ timeout: 10000 }).catch(() => false);
     });
 
     test('should calculate SUM formula', async ({ page }) => {
@@ -127,14 +127,14 @@ test.describe('Spreadsheet', () => {
 
         // Should show result 30
         const hasResult = await page.locator('text=30').isVisible().catch(() => false);
-        expect(true).toBeTruthy(); // Formula support may vary
+        expect(hasResult).toBeTruthy();
       }
     });
 
     test('should show formula bar', async ({ page }) => {
       const formulaBar = page.locator('[data-testid="formula-bar"], .formula-bar, input[placeholder*="formule"]');
       const hasFormulaBar = await formulaBar.isVisible().catch(() => false);
-      expect(true).toBeTruthy(); // Soft check
+      expect(hasFormulaBar).toBeTruthy();
     });
   });
 
@@ -144,7 +144,7 @@ test.describe('Spreadsheet', () => {
       if (await newBtn.isVisible()) {
         await newBtn.click();
       }
-      await page.waitForSelector('[data-testid="spreadsheet-grid"], .spreadsheet, table', { timeout: 10000 }).catch(() => {});
+      await page.locator('[data-testid="spreadsheet-grid"], .spreadsheet, table').isVisible({ timeout: 10000 }).catch(() => false);
     });
 
     test('should show column headers', async ({ page }) => {
@@ -156,7 +156,7 @@ test.describe('Spreadsheet', () => {
     test('should show row numbers', async ({ page }) => {
       const rowNumbers = page.locator('.row-number, [data-testid="row-number"], th:first-child');
       const hasRowNumbers = await rowNumbers.isVisible().catch(() => false);
-      expect(true).toBeTruthy(); // Soft check
+      expect(hasRowNumbers).toBeTruthy();
     });
   });
 
@@ -168,7 +168,7 @@ test.describe('Spreadsheet', () => {
 
         // Should show file type options
         const hasOptions = await page.locator('text=/xlsx|csv|ods/i').isVisible().catch(() => false);
-        expect(true).toBeTruthy();
+        expect(hasOptions).toBeTruthy();
       }
     });
 
@@ -177,14 +177,14 @@ test.describe('Spreadsheet', () => {
       const sheetItem = page.locator('[data-testid="sheet-item"], .sheet-card').first();
       if (await sheetItem.isVisible()) {
         await sheetItem.click();
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('networkidle').catch(() => {});
 
         const exportBtn = page.getByRole('button', { name: /export|télécharger|download/i });
         if (await exportBtn.isVisible()) {
           await exportBtn.click();
 
           const hasOptions = await page.locator('text=/xlsx|csv|ods/i').isVisible().catch(() => false);
-          expect(true).toBeTruthy();
+          expect(hasOptions).toBeTruthy();
         }
       }
     });
@@ -195,7 +195,7 @@ test.describe('Spreadsheet', () => {
       const newBtn = page.getByRole('button', { name: /nouveau|new/i });
       if (await newBtn.isVisible()) {
         await newBtn.click();
-        await page.waitForSelector('[data-testid="spreadsheet-grid"], .spreadsheet', { timeout: 10000 }).catch(() => {});
+        await page.locator('[data-testid="spreadsheet-grid"], .spreadsheet').isVisible({ timeout: 10000 }).catch(() => false);
 
         // Look for sheet tabs
         const sheetTabs = page.locator('[data-testid="sheet-tabs"], .sheet-tabs, [role="tablist"]');
