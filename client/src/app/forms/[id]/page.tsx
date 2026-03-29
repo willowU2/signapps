@@ -294,6 +294,7 @@ export default function FormBuilderPage() {
                 setFields(res.data.fields || [])
             } catch (err) {
                 console.error("Failed to load form builder:", err)
+                toast.error("Impossible de charger le formulaire")
                 setError("Impossible de charger le formulaire.")
             } finally {
                 setLoading(false)
@@ -312,6 +313,7 @@ export default function FormBuilderPage() {
             toast.success("Formulaire sauvegardé avec succès !")
         } catch (err) {
             console.error("Impossible d'enregistrer form:", err)
+            toast.error("Erreur lors de la sauvegarde du formulaire")
             setError("Erreur lors de la sauvegarde du formulaire.")
         } finally {
             setSaving(false)

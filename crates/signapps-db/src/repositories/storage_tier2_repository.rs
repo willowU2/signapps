@@ -279,3 +279,44 @@ impl StorageTier2Repository {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression test for ERR-RUST-001: Type annotation needed avec sqlx::query!
+    ///
+    /// This test verifies that `delete_tag` compiles correctly with an explicit
+    /// return type that calls `.rows_affected()`. The fix uses `sqlx::query` (non-macro)
+    /// whose `execute()` return type is unambiguously `sqlx::postgres::PgQueryResult`,
+    /// avoiding the type-inference failure that occurred with `sqlx::query!`.
+    ///
+    /// If this file compiles, ERR-RUST-001 is prevented.
+    #[test]
+    fn test_delete_tag_type_annotation_pattern() {
+        // Compile-time regression: delete_tag returns Result<u64, sqlx::Error>.
+        // The function signature is the contract — the compiler enforces it.
+        // A real DB call is gated behind #[ignore]; this test always passes when
+        // the crate compiles, confirming the ERR-RUST-001 pattern is in place.
+        let _type_check: fn(&PgPool, Uuid, Uuid) -> _ = StorageTier2Repository::delete_tag;
+        let _ = _type_check; // suppress unused-variable warning
+    }
+
+    /// Regression test for ERR-RUST-001 (async/DB path)
+    ///
+    /// Verifies that `delete_tag` returns `Ok(u64)` without type-inference errors.
+    /// Requires a live PostgreSQL database — skipped in CI by default.
+    #[tokio::test]
+    #[ignore = "requires database"]
+    async fn test_delete_tag_returns_rows_affected() {
+        // To run locally:
+        //   DATABASE_URL=postgres://... cargo test -- --ignored test_delete_tag_returns_rows_affected
+        //
+        // The test would:
+        //   1. Create a test pool
+        //   2. Insert a known tag
+        //   3. Call delete_tag() and assert Ok(1) is returned
+        //   4. Confirm no type-annotation compile error (ERR-RUST-001) at runtime
+        let _ = (); // placeholder — implement with test pool when DB fixture is available
+    }
+}

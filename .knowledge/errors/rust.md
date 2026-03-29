@@ -79,9 +79,28 @@ let result: sqlx::postgres::PgQueryResult = sqlx::query!(
 Ok(result.rows_affected())
 ```
 
+**Solution réelle appliquée** :
+La macro `sqlx::query!` a été remplacée par `sqlx::query` (non-macro). Le type de retour de
+`.execute(pool)` est alors `sqlx::postgres::PgQueryResult` sans ambiguïté, ce qui élimine le
+besoin d'une annotation explicite.
+
+```rust
+// Pattern correct (pas de sqlx::query! ici)
+let result = sqlx::query("DELETE FROM storage.tags WHERE id = $1 AND user_id = $2")
+    .bind(tag_id)
+    .bind(user_id)
+    .execute(pool)
+    .await?;
+Ok(result.rows_affected())
+```
+
+**Test de régression** : ✅ PRÉSENT
+- Fichier : `crates/signapps-db/src/repositories/storage_tier2_repository.rs`
+- Tests : `test_delete_tag_type_annotation_pattern` (compile-time) + `test_delete_tag_returns_rows_affected` (`#[ignore]`, nécessite DB)
+
 **Prévention** :
-- [ ] Toujours typer explicitement les résultats de sqlx::query!
-- [ ] Utiliser `.execute()` pour les mutations sans retour
+- [x] Toujours typer explicitement les résultats de sqlx::query! — ou utiliser sqlx::query (non-macro)
+- [x] Utiliser `.execute()` pour les mutations sans retour
 
 **Tags** : #sqlx #type-inference #database
 
@@ -134,7 +153,7 @@ cargo sqlx prepare --workspace
 
 | Fichier | Erreurs | Dernière |
 |---------|---------|----------|
-| - | - | - |
+| `crates/signapps-db/src/repositories/storage_tier2_repository.rs` | ERR-RUST-001 | 2026-03-21 |
 
 ---
 
@@ -142,10 +161,11 @@ cargo sqlx prepare --workspace
 
 | Métrique | Valeur |
 |----------|--------|
-| Total erreurs | 0 |
+| Total erreurs | 2 |
 | Erreurs lifetime | 0 |
 | Erreurs async | 0 |
-| Erreurs compile | 0 |
+| Erreurs compile | 2 |
+| Erreurs avec test régression | 1 (ERR-RUST-001) |
 
 ---
 

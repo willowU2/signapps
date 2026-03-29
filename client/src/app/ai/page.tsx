@@ -310,6 +310,7 @@ export default function AIPage() {
       setStats(response.data);
     } catch (error) {
       console.error('Failed to fetch AI stats:', error);
+      toast.error('Erreur lors du chargement des statistiques IA');
       setStats({
         documents_count: 0,
         chunks_count: 0,
@@ -336,6 +337,7 @@ export default function AIPage() {
       });
     } catch (error) {
       console.error('Failed to fetch providers:', error);
+      toast.error('Erreur lors du chargement des fournisseurs IA');
       setProviders([{
         id: 'ollama',
         name: 'Ollama (Local)',
@@ -366,6 +368,7 @@ export default function AIPage() {
       });
     } catch (error) {
       console.error('Failed to fetch models:', error);
+      toast.error('Erreur lors du chargement des modèles IA');
       const provider = providersList.find(p => p.id === providerId);
       if (provider) {
         setModels([{ id: provider.default_model, name: provider.default_model }]);
@@ -386,6 +389,7 @@ export default function AIPage() {
       setKnowledgeBases(response.data.collections || []);
     } catch (error) {
       console.error('Failed to fetch knowledge bases:', error);
+      toast.error('Erreur lors du chargement des bases de connaissances');
       setKnowledgeBases([]);
     } finally {
       setLoadingKnowledgeBases(false);
@@ -834,6 +838,7 @@ export default function AIPage() {
       setInput('');
     } catch (error) {
       console.error('Search error:', error);
+      toast.error('Erreur lors de la recherche dans les documents');
     } finally {
       setIsLoading(false);
     }
