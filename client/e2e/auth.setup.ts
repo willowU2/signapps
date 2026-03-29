@@ -14,17 +14,27 @@ setup('authenticate', async ({ page }) => {
   // Wait for React hydration
   await page.waitForLoadState('networkidle');
 
-  // Fill in login credentials using accessibility labels (click first to ensure focus/hydration)
-  const usernameInput = page.getByLabel(/username/i);
+  // Close any onboarding/welcome dialogs that may block the form
+  const closeBtn = page.locator('button:has-text("Passer"), button:has-text("Close"), button[aria-label="Close"]');
+  if (await closeBtn.first().isVisible({ timeout: 3000 }).catch(() => false)) {
+    await closeBtn.first().click();
+    await page.waitForTimeout(500);
+  }
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+
+  // Fill in login credentials using IDs (language-independent)
+  const usernameInput = page.locator('#username');
   await usernameInput.click();
   await usernameInput.fill('admin');
 
-  const passwordInput = page.getByLabel(/password/i);
+  const passwordInput = page.locator('#password');
   await passwordInput.click();
   await passwordInput.fill('admin');
 
-  // Click the sign in button within the form
-  await page.locator('form').getByRole('button', { name: /sign in/i }).click();
+  // Click the sign in button within the form (supports both FR and EN labels)
+  const signInBtn = page.locator('form').getByRole('button', { name: /sign in|se connecter|connexion/i });
+  await signInBtn.click();
 
   // Wait for either the redirect OR an error message to appear
   try {
