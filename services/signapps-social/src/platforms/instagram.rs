@@ -86,10 +86,14 @@ impl SocialPlatform for InstagramClient {
         let status = container_resp.status().as_u16();
         if !container_resp.status().is_success() {
             let body = container_resp.text().await.unwrap_or_default();
-            return Err(PlatformError::Api { status, message: body });
+            return Err(PlatformError::Api {
+                status,
+                message: body,
+            });
         }
 
-        let container: IgMediaResponse = container_resp.json().await.map_err(PlatformError::Http)?;
+        let container: IgMediaResponse =
+            container_resp.json().await.map_err(PlatformError::Http)?;
 
         // Step 2: Publish the container
         let publish_resp = client
@@ -108,7 +112,10 @@ impl SocialPlatform for InstagramClient {
         let status = publish_resp.status().as_u16();
         if !publish_resp.status().is_success() {
             let body = publish_resp.text().await.unwrap_or_default();
-            return Err(PlatformError::Api { status, message: body });
+            return Err(PlatformError::Api {
+                status,
+                message: body,
+            });
         }
 
         let published: IgMediaResponse = publish_resp.json().await.map_err(PlatformError::Http)?;
@@ -134,7 +141,10 @@ impl SocialPlatform for InstagramClient {
         if !resp.status().is_success() {
             let status = resp.status().as_u16();
             let body = resp.text().await.unwrap_or_default();
-            return Err(PlatformError::Api { status, message: body });
+            return Err(PlatformError::Api {
+                status,
+                message: body,
+            });
         }
         Ok(())
     }
@@ -202,7 +212,10 @@ impl SocialPlatform for InstagramClient {
         if !resp.status().is_success() {
             let status = resp.status().as_u16();
             let body = resp.text().await.unwrap_or_default();
-            return Err(PlatformError::Api { status, message: body });
+            return Err(PlatformError::Api {
+                status,
+                message: body,
+            });
         }
         Ok(())
     }
@@ -212,10 +225,7 @@ impl SocialPlatform for InstagramClient {
 
         // Fetch user profile for follower counts
         let user_resp = client
-            .get(format!(
-                "https://graph.facebook.com/v18.0/{}",
-                self.user_id
-            ))
+            .get(format!("https://graph.facebook.com/v18.0/{}", self.user_id))
             .query(&[
                 ("fields", "followers_count,follows_count,media_count"),
                 ("access_token", &self.access_token),

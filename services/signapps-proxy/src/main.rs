@@ -296,8 +296,12 @@ fn create_router(state: AppState) -> Router {
             axum::http::HeaderName::from_static("x-request-id"),
         ]);
 
+    // Root-level health check (outside /api/v1 nest so it's reachable at /health)
+    let root_health = Router::new().route("/health", get(health::health_check));
+
     // Combine all routes
     Router::new()
+        .merge(root_health)
         .nest("/api/v1", public_routes)
         .nest("/api/v1", route_routes)
         .nest("/api/v1", cert_routes)

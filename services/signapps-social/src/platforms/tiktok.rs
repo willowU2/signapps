@@ -159,8 +159,10 @@ impl SocialPlatform for TikTokClient {
             return Ok(vec![]);
         }
 
-        let data: TkData<TkCommentsData> =
-            resp.json().await.unwrap_or(TkData { data: None, error: None });
+        let data: TkData<TkCommentsData> = resp.json().await.unwrap_or(TkData {
+            data: None,
+            error: None,
+        });
 
         let items = data
             .data
@@ -202,7 +204,10 @@ impl SocialPlatform for TikTokClient {
         let resp = client
             .get("https://open.tiktokapis.com/v2/user/info/")
             .bearer_auth(&self.access_token)
-            .query(&[("fields", "follower_count,following_count,video_count,likes_count")])
+            .query(&[(
+                "fields",
+                "follower_count,following_count,video_count,likes_count",
+            )])
             .send()
             .await
             .map_err(PlatformError::Http)?;
@@ -218,8 +223,10 @@ impl SocialPlatform for TikTokClient {
             });
         }
 
-        let data: TkData<TkUserData> =
-            resp.json().await.unwrap_or(TkData { data: None, error: None });
+        let data: TkData<TkUserData> = resp.json().await.unwrap_or(TkData {
+            data: None,
+            error: None,
+        });
 
         let user = data.data.and_then(|d| d.user).unwrap_or(TkUserInfo {
             follower_count: None,

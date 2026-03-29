@@ -45,8 +45,9 @@ export function createApiClient(baseURL: string): AxiosInstance {
     // Non-critical paths that should silently fail on 401/403
     const SILENT_PATHS = [
         '/users/me/profile', '/users/me/history', '/users/me/preferences',
+        '/users/me/recent-docs', '/users/me/streak', '/users/me/export',
         '/activities', '/workspaces/mine', '/workspaces', '/links',
-        '/audit', '/notifications',
+        '/audit', '/notifications', '/health',
     ];
     const isSilentPath = (url?: string) => url ? SILENT_PATHS.some(p => url.includes(p)) : false;
 

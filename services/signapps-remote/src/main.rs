@@ -58,6 +58,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let app = Router::new()
+        .route("/health", get(health_check))
         .route("/api/v1/remote/health", get(health_check))
         .route(
             "/api/v1/remote/connections",

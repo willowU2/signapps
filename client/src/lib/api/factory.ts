@@ -136,12 +136,16 @@ const SILENT_AUTH_PATHS = [
   '/users/me/profile',
   '/users/me/history',
   '/users/me/preferences',
+  '/users/me/recent-docs',
+  '/users/me/streak',
+  '/users/me/export',
   '/activities',
   '/workspaces/mine',
   '/workspaces',
   '/links',
   '/audit',
   '/notifications',
+  '/health',
 ];
 
 /**

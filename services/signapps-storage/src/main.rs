@@ -419,7 +419,11 @@ fn create_router(state: AppState) -> Router {
         .merge(admin_routes)
         .merge(protected_routes);
 
+    // Root-level health check (outside /api/v1 nest so it's reachable at /health)
+    let root_health = Router::new().route("/health", get(health::health_check));
+
     Router::new()
+        .merge(root_health)
         .nest("/api/v1", v1_routes)
         .layer(
             ServiceBuilder::new()

@@ -103,7 +103,10 @@ impl SocialPlatform for PinterestClient {
         let status = resp.status().as_u16();
         if !resp.status().is_success() {
             let body = resp.text().await.unwrap_or_default();
-            return Err(PlatformError::Api { status, message: body });
+            return Err(PlatformError::Api {
+                status,
+                message: body,
+            });
         }
 
         let pin: PinResponse = resp.json().await.map_err(PlatformError::Http)?;
@@ -132,7 +135,10 @@ impl SocialPlatform for PinterestClient {
         if !resp.status().is_success() {
             let status = resp.status().as_u16();
             let body = resp.text().await.unwrap_or_default();
-            return Err(PlatformError::Api { status, message: body });
+            return Err(PlatformError::Api {
+                status,
+                message: body,
+            });
         }
         Ok(())
     }
@@ -151,7 +157,8 @@ impl SocialPlatform for PinterestClient {
         // Pinterest does not expose a comment reply endpoint in v5 API.
         tracing::warn!(
             "Pinterest: reply to {} with '{}' — not supported in Pinterest API v5.",
-            item_id, content
+            item_id,
+            content
         );
         Ok(())
     }
@@ -168,11 +175,12 @@ impl SocialPlatform for PinterestClient {
             .map_err(PlatformError::Http)?;
 
         let (followers, following, posts_count) = if user_resp.status().is_success() {
-            let user: PinterestUserSummary = user_resp.json().await.unwrap_or(PinterestUserSummary {
-                follower_count: None,
-                following_count: None,
-                pin_count: None,
-            });
+            let user: PinterestUserSummary =
+                user_resp.json().await.unwrap_or(PinterestUserSummary {
+                    follower_count: None,
+                    following_count: None,
+                    pin_count: None,
+                });
             (
                 user.follower_count.unwrap_or(0),
                 user.following_count.unwrap_or(0),
@@ -205,15 +213,19 @@ impl SocialPlatform for PinterestClient {
         let mut engagement = 0i32;
 
         if analytics_resp.status().is_success() {
-            let data: PinterestAnalytics = analytics_resp
-                .json()
-                .await
-                .unwrap_or(PinterestAnalytics { daily_metrics: None });
+            let data: PinterestAnalytics =
+                analytics_resp.json().await.unwrap_or(PinterestAnalytics {
+                    daily_metrics: None,
+                });
 
             // Average over the last day with data
             if let Some(metric) = data
                 .daily_metrics
-                .and_then(|m| m.into_iter().rev().find(|d| d.data_status.as_deref() != Some("PROCESSING")))
+                .and_then(|m| {
+                    m.into_iter()
+                        .rev()
+                        .find(|d| d.data_status.as_deref() != Some("PROCESSING"))
+                })
                 .and_then(|d| d.metrics)
             {
                 impressions = metric.impression.unwrap_or(0);

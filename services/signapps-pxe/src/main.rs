@@ -71,6 +71,7 @@ async fn main() -> anyhow::Result<()> {
     });
 
     let app = Router::new()
+        .route("/health", get(health_check))
         .nest_service("/boot", ServeDir::new(http_boot_dir))
         .route("/api/v1/pxe/health", get(health_check))
         // Profiles

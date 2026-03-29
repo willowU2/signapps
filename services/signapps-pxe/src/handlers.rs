@@ -321,14 +321,13 @@ pub async fn generate_ipxe_script(
         Some(a) if a.profile_id.is_some() => a.profile_id,
         _ => {
             // Find default profile
-            let row: Option<(Uuid,)> = sqlx::query_as(
-                "SELECT id FROM pxe.profiles WHERE is_default = true LIMIT 1",
-            )
-            .fetch_optional(state.db.inner())
-            .await
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "".to_string()))?;
+            let row: Option<(Uuid,)> =
+                sqlx::query_as("SELECT id FROM pxe.profiles WHERE is_default = true LIMIT 1")
+                    .fetch_optional(state.db.inner())
+                    .await
+                    .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "".to_string()))?;
             row.map(|(id,)| id)
-        }
+        },
     };
 
     if let Some(pid) = active_profile_id {

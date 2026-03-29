@@ -97,23 +97,27 @@ async fn main() {
             axum::http::HeaderName::from_static("x-request-id"),
         ]);
 
-    // Unauthenticated health route merged before auth middleware is applied
-    let public_router = axum::Router::new()
-        .route("/health", axum::routing::get(|| async {
+    // Unauthenticated health route (no auth middleware)
+    let public_router = axum::Router::new().route(
+        "/health",
+        axum::routing::get(|| async {
             axum::Json(serde_json::json!({ "status": "ok", "service": "signapps-mail" }))
-        }))
-        .with_state(state.clone());
+        }),
+    );
 
-    let app = api::router()
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            auth_middleware::<AppState>,
-        ))
+    // Auth-protected API routes
+    let protected_router = api::router().layer(axum::middleware::from_fn_with_state(
+        state.clone(),
+        auth_middleware::<AppState>,
+    ));
+
+    // Combine public + protected, then apply shared layers (CORS, tracing)
+    let app = public_router
+        .merge(protected_router)
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .layer(axum::extract::DefaultBodyLimit::max(10 * 1024 * 1024))
-        .with_state(state)
-        .merge(public_router);
+        .with_state(state);
 
     // Start server
     let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();

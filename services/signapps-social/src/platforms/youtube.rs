@@ -131,7 +131,10 @@ impl SocialPlatform for YouTubeClient {
             let status = init_resp.status().as_u16();
             if !init_resp.status().is_success() {
                 let body = init_resp.text().await.unwrap_or_default();
-                return Err(PlatformError::Api { status, message: body });
+                return Err(PlatformError::Api {
+                    status,
+                    message: body,
+                });
             }
 
             let upload_url = init_resp
@@ -139,7 +142,9 @@ impl SocialPlatform for YouTubeClient {
                 .get("location")
                 .and_then(|v| v.to_str().ok())
                 .map(String::from)
-                .ok_or_else(|| PlatformError::Other("No upload URL in YouTube response".to_string()))?;
+                .ok_or_else(|| {
+                    PlatformError::Other("No upload URL in YouTube response".to_string())
+                })?;
 
             // Fetch video bytes from URL and upload
             let video_bytes = client
@@ -162,11 +167,17 @@ impl SocialPlatform for YouTubeClient {
             let status = upload_resp.status().as_u16();
             if !upload_resp.status().is_success() {
                 let body = upload_resp.text().await.unwrap_or_default();
-                return Err(PlatformError::Api { status, message: body });
+                return Err(PlatformError::Api {
+                    status,
+                    message: body,
+                });
             }
 
-            let inserted: YtInsertResponse = upload_resp.json().await.map_err(PlatformError::Http)?;
-            let video_id = inserted.id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+            let inserted: YtInsertResponse =
+                upload_resp.json().await.map_err(PlatformError::Http)?;
+            let video_id = inserted
+                .id
+                .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
             return Ok(PlatformPost {
                 platform_post_id: video_id.clone(),
@@ -192,7 +203,10 @@ impl SocialPlatform for YouTubeClient {
         let status = community_resp.status().as_u16();
         if !community_resp.status().is_success() {
             let body = community_resp.text().await.unwrap_or_default();
-            return Err(PlatformError::Api { status, message: body });
+            return Err(PlatformError::Api {
+                status,
+                message: body,
+            });
         }
 
         let post: YtInsertResponse = community_resp.json().await.map_err(PlatformError::Http)?;
@@ -220,7 +234,10 @@ impl SocialPlatform for YouTubeClient {
         if !resp.status().is_success() {
             let status = resp.status().as_u16();
             let body = resp.text().await.unwrap_or_default();
-            return Err(PlatformError::Api { status, message: body });
+            return Err(PlatformError::Api {
+                status,
+                message: body,
+            });
         }
         Ok(())
     }
@@ -297,7 +314,10 @@ impl SocialPlatform for YouTubeClient {
         if !resp.status().is_success() {
             let status = resp.status().as_u16();
             let body = resp.text().await.unwrap_or_default();
-            return Err(PlatformError::Api { status, message: body });
+            return Err(PlatformError::Api {
+                status,
+                message: body,
+            });
         }
         Ok(())
     }
@@ -307,10 +327,7 @@ impl SocialPlatform for YouTubeClient {
         let resp = client
             .get("https://www.googleapis.com/youtube/v3/channels")
             .bearer_auth(&self.access_token)
-            .query(&[
-                ("part", "statistics"),
-                ("id", &self.channel_id),
-            ])
+            .query(&[("part", "statistics"), ("id", &self.channel_id)])
             .send()
             .await
             .map_err(PlatformError::Http)?;
@@ -341,9 +358,8 @@ impl SocialPlatform for YouTubeClient {
                 view_count: None,
             });
 
-        let parse_stat = |s: Option<String>| -> i32 {
-            s.and_then(|v| v.parse::<i32>().ok()).unwrap_or(0)
-        };
+        let parse_stat =
+            |s: Option<String>| -> i32 { s.and_then(|v| v.parse::<i32>().ok()).unwrap_or(0) };
 
         Ok(AccountAnalytics {
             followers: parse_stat(stats.subscriber_count),

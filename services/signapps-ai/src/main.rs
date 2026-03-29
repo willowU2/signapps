@@ -413,8 +413,12 @@ fn create_router(state: AppState) -> Router {
         .allow_methods(Any)
         .allow_headers(Any);
 
+    // Root-level health check (outside /api/v1 nest so it's reachable at /health)
+    let root_health = Router::new().route("/health", get(health::health_check));
+
     // Combine all routes
     Router::new()
+        .merge(root_health)
         .nest("/api/v1", public_routes)
         .nest("/api/v1/ai", ai_routes)
         .nest("/api/v1/admin/ai", admin_routes)
