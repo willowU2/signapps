@@ -31,6 +31,7 @@ import { DragDropOverlay } from '@/components/drag-drop-overlay';
 import { GlobalPolling } from '@/components/global-polling';
 import { ThemeInitializer } from '@/components/theme-initializer';
 import { QuickDocumentSwitcher } from '@/components/layout/quick-switcher';
+import { FirstRunDialog } from '@/components/first-run-dialog';
 
 function LoadingFallback() {
   return (
@@ -114,6 +115,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       <ThemeInitializer />
                       <DragDropOverlay />
                       <OnboardingWizard />
+                      <FirstRunDialog />
                     </PermissionsProvider>
                   </AccessibilityProvider>
                 </PreferencesProvider>
