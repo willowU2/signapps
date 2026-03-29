@@ -14,17 +14,21 @@ import { getClient, ServiceName } from './factory';
 
 export interface Contact {
   id: string;
+  owner_id?: string;
   first_name: string;
   last_name: string;
   email?: string;
   phone?: string;
-  company?: string;
-  title?: string;
-  notes?: string;
-  avatar_url?: string;
-  groups?: string[];
+  organization?: string; // matches Rust backend field name
+  job_title?: string;    // matches Rust backend field name
+  group_ids?: string[];
   created_at: string;
   updated_at: string;
+  // Frontend-only aliases kept for UI compatibility
+  /** @deprecated use organization */
+  company?: string;
+  /** @deprecated use job_title */
+  title?: string;
 }
 
 export interface ContactGroup {

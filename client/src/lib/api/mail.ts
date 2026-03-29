@@ -296,4 +296,80 @@ export const mailApi = {
 
     getStats: () =>
         mailClient.get<MailStats>('/mail/stats'),
+
+    // ========================================================================
+    // Templates — AQ-EMTPL: GET/POST /api/v1/mail/templates
+    // ========================================================================
+
+    listTemplates: (params?: { limit?: number; offset?: number }) =>
+        mailClient.get<MailTemplate[]>('/mail/templates', { params }),
+
+    createTemplate: (data: CreateMailTemplateRequest) =>
+        mailClient.post<MailTemplate>('/mail/templates', data),
+
+    getTemplate: (id: string) =>
+        mailClient.get<MailTemplate>(`/mail/templates/${id}`),
+
+    updateTemplate: (id: string, data: Partial<CreateMailTemplateRequest>) =>
+        mailClient.put<MailTemplate>(`/mail/templates/${id}`, data),
+
+    deleteTemplate: (id: string) =>
+        mailClient.delete(`/mail/templates/${id}`),
+};
+
+// ============================================================================
+// Mail Template types — aligned with Rust EmailTemplate
+// ============================================================================
+
+export interface MailTemplate {
+    id: string;
+    account_id: string;
+    name: string;
+    subject: string;
+    body_html: string;
+    variables: unknown; // JSON array of variable name strings, e.g. ["prenom","entreprise"]
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateMailTemplateRequest {
+    account_id: string;
+    name: string;
+    subject?: string;
+    body_html?: string;
+    variables?: unknown;
+}
+
+// ============================================================================
+// Spam API — /api/v1/mail/spam/*
+// ============================================================================
+
+export interface SpamClassifyRequest {
+    account_id: string;
+    subject?: string;
+    body?: string;
+}
+
+export interface SpamClassifyResponse {
+    is_spam: boolean;
+    confidence: number;
+    spam_probability: number;
+    ham_probability: number;
+}
+
+export interface SpamTrainRequest {
+    account_id: string;
+    email_id: string;
+    is_spam: boolean;
+}
+
+export const mailSpamApi = {
+    classify: (data: SpamClassifyRequest) =>
+        mailClient.post<SpamClassifyResponse>('/mail/spam/classify', data),
+    train: (data: SpamTrainRequest) =>
+        mailClient.post('/mail/spam/train', data),
+    getSettings: (accountId: string) =>
+        mailClient.get(`/mail/spam/settings/${accountId}`),
+    updateSettings: (accountId: string, data: { enabled?: boolean; threshold?: number }) =>
+        mailClient.patch(`/mail/spam/settings/${accountId}`, data),
 };

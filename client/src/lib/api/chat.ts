@@ -132,6 +132,8 @@ export const chatApi = {
 
     // ========================================================================
     // Channel Members
+    // NOTE: signapps-chat backend has no /members routes — not implemented yet.
+    // These are forwarded to the docs service chat channels for now.
     // ========================================================================
 
     getMembers: (channelId: string) =>
@@ -248,10 +250,12 @@ export const chatApi = {
 
     // ========================================================================
     // WebSocket URL helper
+    // Backend registers: /api/v1/ws (not /ws)
     // ========================================================================
 
     getWebSocketUrl: () => {
         const baseUrl = process.env.NEXT_PUBLIC_CHAT_URL || 'http://localhost:3020/api/v1';
+        // baseUrl already ends in /api/v1, replace http→ws and append /ws
         const wsBaseUrl = baseUrl.replace(/^http/, 'ws');
         return `${wsBaseUrl}/ws`;
     },

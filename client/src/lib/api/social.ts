@@ -1,19 +1,31 @@
-import { createApiClient } from './core';
+import { getClient, ServiceName } from './factory';
 
-export const SOCIAL_URL = process.env.NEXT_PUBLIC_SOCIAL_URL || 'http://localhost:3019/api/v1/social';
+// Social backend routes are prefixed with /social (under /api/v1/social/...)
+const _socialClient = getClient(ServiceName.SOCIAL);
 
-export const socialApiClient = createApiClient(SOCIAL_URL);
+// Thin proxy so all method calls go through /social/<path>
+const socialApiClient = {
+  get: <T = any>(path: string, config?: any) => _socialClient.get<T>(`/social${path}`, config),
+  post: <T = any>(path: string, data?: any, config?: any) => _socialClient.post<T>(`/social${path}`, data, config),
+  patch: <T = any>(path: string, data?: any, config?: any) => _socialClient.patch<T>(`/social${path}`, data, config),
+  put: <T = any>(path: string, data?: any, config?: any) => _socialClient.put<T>(`/social${path}`, data, config),
+  delete: <T = any>(path: string, config?: any) => _socialClient.delete<T>(`/social${path}`, config),
+};
 
+// Aligned with Rust SocialAccount model (snake_case)
 export interface SocialAccount {
   id: string;
-  platform: 'twitter' | 'facebook' | 'instagram' | 'linkedin' | 'tiktok' | 'youtube' | 'pinterest' | 'threads' | 'mastodon' | 'bluesky';
-  username: string;
-  displayName: string;
-  avatar?: string;
-  status: 'connected' | 'expired' | 'error';
-  followersCount?: number;
-  instanceUrl?: string; // for mastodon
-  createdAt: string;
+  user_id: string;
+  platform: string;
+  platform_user_id?: string;
+  username?: string;
+  display_name?: string;
+  avatar_url?: string;
+  token_expires_at?: string;
+  platform_config: Record<string, unknown>;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ThreadPost {
@@ -170,24 +182,27 @@ export interface WorkspaceMember {
   joinedAt: string;
 }
 
+// Aligned with Rust PostComment struct in models.rs
 export interface PostComment {
   id: string;
-  postId: string;
-  authorName: string;
-  authorUsername: string;
-  authorAvatar?: string;
+  post_id: string;
+  user_id: string;
   content: string;
-  platform: SocialAccount['platform'];
-  createdAt: string;
+  parent_comment_id?: string;
+  created_at: string;
+  updated_at: string;
 }
 
+// Aligned with Rust TimeSlot model (snake_case)
 export interface TimeSlot {
   id: string;
-  dayOfWeek: number; // 0=Sunday, 6=Saturday
+  user_id: string;
+  account_id?: string;
+  day_of_week: number; // 0=Sunday, 6=Saturday
   hour: number;
   minute: number;
-  accountIds?: string[];
-  createdAt: string;
+  is_active: boolean;
+  created_at: string;
 }
 
 export interface ContentSet {
@@ -217,33 +232,40 @@ export const socialApi = {
     update: (id: string, data: Partial<SocialAccount>) =>
       socialApiClient.patch<SocialAccount>(`/accounts/${id}`, data),
     delete: (id: string) => socialApiClient.delete(`/accounts/${id}`),
-    refreshToken: (id: string) => socialApiClient.post(`/accounts/${id}/refresh`),
+    refreshToken: (id: string) => socialApiClient.post(`/accounts/${id}/refresh-token`),
   },
 
   posts: {
+    // Backend returns SocialPost[] array directly (no pagination wrapper)
     list: (params?: { status?: string; accountId?: string; page?: number; limit?: number }) =>
-      socialApiClient.get<{ items: SocialPost[]; total: number }>('/posts', { params }),
+      socialApiClient.get<SocialPost[]>('/posts', { params }),
     get: (id: string) => socialApiClient.get<SocialPost>(`/posts/${id}`),
     create: (data: Partial<SocialPost>) => socialApiClient.post<SocialPost>('/posts', data),
     update: (id: string, data: Partial<SocialPost>) => socialApiClient.patch<SocialPost>(`/posts/${id}`, data),
     delete: (id: string) => socialApiClient.delete(`/posts/${id}`),
     publish: (id: string) => socialApiClient.post<SocialPost>(`/posts/${id}/publish`),
     schedule: (id: string, scheduledAt: string, repeatInterval?: number) =>
-      socialApiClient.post<SocialPost>(`/posts/${id}/schedule`, { scheduledAt, repeatInterval }),
+      // Backend expects snake_case fields: scheduled_at, repeat_interval
+      socialApiClient.post<SocialPost>(`/posts/${id}/schedule`, {
+        scheduled_at: scheduledAt,
+        repeat_interval: repeatInterval,
+      }),
   },
 
   comments: {
     list: (postId: string) =>
       socialApiClient.get<PostComment[]>(`/posts/${postId}/comments`),
-    create: (postId: string, data: { content: string }) =>
+    create: (postId: string, data: { content: string; parent_comment_id?: string }) =>
       socialApiClient.post<PostComment>(`/posts/${postId}/comments`, data),
     delete: (postId: string, commentId: string) =>
       socialApiClient.delete(`/posts/${postId}/comments/${commentId}`),
   },
 
   inbox: {
-    list: (params?: { platform?: string; type?: string; unreadOnly?: boolean }) =>
-      socialApiClient.get<{ items: InboxItem[]; total: number }>('/inbox', { params }),
+    // Backend returns InboxItem[] array directly (no pagination wrapper)
+    // Backend query params: account_id, item_type, unread_only (not platform/type/unreadOnly)
+    list: (params?: { account_id?: string; item_type?: string; unread_only?: boolean }) =>
+      socialApiClient.get<InboxItem[]>('/inbox', { params }),
     markRead: (id: string) => socialApiClient.patch(`/inbox/${id}/read`),
     reply: (id: string, content: string) => socialApiClient.post(`/inbox/${id}/reply`, { content }),
   },
@@ -318,14 +340,18 @@ export const socialApi = {
     listMembers: (id: string) =>
       socialApiClient.get<WorkspaceMember[]>(`/workspaces/${id}/members`),
     inviteMember: (id: string, data: { userId: string; role?: string }) =>
-      socialApiClient.post<WorkspaceMember>(`/workspaces/${id}/members`, data),
+      // Backend expects snake_case: user_id
+      socialApiClient.post<WorkspaceMember>(`/workspaces/${id}/members`, {
+        user_id: data.userId,
+        role: data.role,
+      }),
     removeMember: (id: string, userId: string) =>
       socialApiClient.delete(`/workspaces/${id}/members/${userId}`),
   },
 
   timeSlots: {
     list: () => socialApiClient.get<TimeSlot[]>('/time-slots'),
-    create: (data: Omit<TimeSlot, 'id' | 'createdAt'>) =>
+    create: (data: { day_of_week: number; hour: number; minute?: number; account_id?: string }) =>
       socialApiClient.post<TimeSlot>('/time-slots', data),
     delete: (id: string) => socialApiClient.delete(`/time-slots/${id}`),
   },
@@ -354,4 +380,31 @@ export const socialApi = {
     smartReplies: (inboxItemId: string) =>
       socialApiClient.get<{ suggestions: string[] }>(`/ai/smart-replies/${inboxItemId}`),
   },
+
+  // AI Threads — /api/v1/social/ai-threads
+  aiThreads: {
+    list: () =>
+      socialApiClient.get<AiThread[]>('/ai-threads'),
+    create: (data: { title: string; messages?: unknown }) =>
+      socialApiClient.post<AiThread>('/ai-threads', data),
+    get: (id: string) =>
+      socialApiClient.get<AiThread>(`/ai-threads/${id}`),
+    update: (id: string, data: { title?: string; messages?: unknown }) =>
+      socialApiClient.put<AiThread>(`/ai-threads/${id}`, data),
+    delete: (id: string) =>
+      socialApiClient.delete(`/ai-threads/${id}`),
+  },
 };
+
+// ============================================================================
+// AI Thread type
+// ============================================================================
+
+export interface AiThread {
+  id: string;
+  user_id: string;
+  title: string;
+  messages: unknown; // JSON array of message objects
+  created_at: string;
+  updated_at: string;
+}

@@ -297,6 +297,37 @@ async fn get_invoice(
     Ok(Json(InvoiceResponse::from(invoice)))
 }
 
+/// Patch request for invoice status update
+#[derive(Debug, Deserialize)]
+pub struct PatchInvoiceRequest {
+    pub status: Option<String>,
+}
+
+async fn patch_invoice(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<PatchInvoiceRequest>,
+) -> Result<Json<InvoiceResponse>, (StatusCode, String)> {
+    if let Some(status) = payload.status {
+        sqlx::query("UPDATE billing.invoices SET status = $1 WHERE id = $2")
+            .bind(&status)
+            .bind(id)
+            .execute(&state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to patch invoice {}: {}", id, e);
+                (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+            })?;
+    }
+    let invoice = sqlx::query_as::<_, Invoice>("SELECT * FROM billing.invoices WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or_else(|| (StatusCode::NOT_FOUND, "Invoice not found".to_string()))?;
+    Ok(Json(InvoiceResponse::from(invoice)))
+}
+
 async fn list_plans(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<Plan>>, (StatusCode, String)> {
@@ -459,7 +490,7 @@ fn create_router(state: AppState) -> Router {
 
     let protected_routes = Router::new()
         .route("/api/v1/invoices", get(list_invoices).post(create_invoice))
-        .route("/api/v1/invoices/:id", get(get_invoice))
+        .route("/api/v1/invoices/:id", get(get_invoice).patch(patch_invoice))
         // Usage endpoint (SYNC-BILLING-PREFIX)
         .route("/api/v1/usage", get(get_usage))
         // Line items — AQ-BILLDB

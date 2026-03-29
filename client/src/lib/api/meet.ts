@@ -184,4 +184,66 @@ export const meetApi = {
 
     listHistory: () =>
         meetClient.get<MeetingHistory[]>('/meet/history'),
+
+    // ========================================================================
+    // Voicemails — /api/v1/meet/voicemails
+    // ========================================================================
+
+    voicemails: {
+        list: () =>
+            meetClient.get<Voicemail[]>('/meet/voicemails'),
+        delete: (id: string) =>
+            meetClient.delete(`/meet/voicemails/${id}`),
+        markRead: (id: string) =>
+            meetClient.patch(`/meet/voicemails/${id}/read`),
+    },
+
+    // ========================================================================
+    // Video Messages — /api/v1/meet/video-messages
+    // ========================================================================
+
+    videoMessages: {
+        list: () =>
+            meetClient.get<VideoMessage[]>('/meet/video-messages'),
+        create: (data: CreateVideoMessageRequest) =>
+            meetClient.post<VideoMessage>('/meet/video-messages', data),
+        delete: (id: string) =>
+            meetClient.delete(`/meet/video-messages/${id}`),
+        markRead: (id: string) =>
+            meetClient.patch(`/meet/video-messages/${id}/read`),
+    },
 };
+
+// ============================================================================
+// Meet — Voicemail & VideoMessage types
+// ============================================================================
+
+export interface Voicemail {
+    id: string;
+    user_id: string;
+    caller_name?: string;
+    caller_phone?: string;
+    duration_seconds?: number;
+    transcription?: string;
+    audio_storage_key?: string;
+    is_read: boolean;
+    created_at: string;
+}
+
+export interface VideoMessage {
+    id: string;
+    sender_id: string;
+    recipient_id: string;
+    duration_seconds?: number;
+    thumbnail_url?: string;
+    video_storage_key?: string;
+    is_read: boolean;
+    created_at: string;
+}
+
+export interface CreateVideoMessageRequest {
+    recipient_id: string;
+    duration_seconds?: number;
+    thumbnail_url?: string;
+    video_storage_key?: string;
+}

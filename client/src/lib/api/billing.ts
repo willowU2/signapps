@@ -4,7 +4,8 @@
  * Migrated to use API Factory pattern.
  * @see factory.ts for client creation details
  */
-import { getClient, ServiceName } from './factory';
+import axios from 'axios';
+import { getClient, getServiceBaseUrl, ServiceName } from './factory';
 
 const billingClient = getClient(ServiceName.BILLING);
 
@@ -15,21 +16,82 @@ export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
 export interface Invoice {
   id: string;
   number: string;
-  client_name: string;
+  // client_name is extracted from metadata by backend (InvoiceResponse)
+  client_name?: string;
+  // total_ttc is amount_cents / 100
   total_ttc: number;
+  amount_cents: number;
   currency: string;
-  status: InvoiceStatus;
+  status: string;
   created_at: string;
-  due_date: string;
+  issued_at: string;
+  due_at?: string;
+  // Alias for compatibility
+  due_date?: string;
+  paid_at?: string;
   download_url?: string;
+  tenant_id?: string;
+  plan_id?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface CreateInvoiceRequest {
+  number: string;
+  amount_cents: number;
+  currency?: string;
+  tenant_id?: string;
+  plan_id?: string;
+  due_at?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface LineItem {
+  id: string;
+  invoice_id: string;
+  description: string;
+  quantity: number;
+  unit_price_cents: number;
+  total_cents: number;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface CreateLineItemRequest {
+  description: string;
+  quantity?: number;
+  unit_price_cents: number;
+  sort_order?: number;
+}
+
+export interface Payment {
+  id: string;
+  invoice_id: string;
+  amount_cents: number;
+  currency: string;
+  method: string;
+  reference?: string;
+  paid_at: string;
+  created_at: string;
+}
+
+export interface CreatePaymentRequest {
+  amount_cents: number;
+  currency?: string;
+  method?: string;
+  reference?: string;
+  paid_at?: string;
 }
 
 export interface BillingPlan {
   id: string;
   name: string;
-  price_monthly: number;
+  description?: string;
+  // Backend stores price_cents, not price_monthly
+  price_cents: number;
   currency: string;
-  features: string[];
+  features: string[] | Record<string, unknown>;
+  is_active: boolean;
+  created_at: string;
 }
 
 export interface BillingUsage {
@@ -44,15 +106,45 @@ export interface BillingUsage {
 // ─── API ──────────────────────────────────────────────────────────────────────
 
 export const billingApi = {
+  // Plans
+  listPlans: () =>
+    billingClient.get<BillingPlan[]>('/plans'),
+
+  // Invoices
   listInvoices: () =>
     billingClient.get<Invoice[]>('/invoices'),
 
-  updateInvoiceStatus: (id: string, status: InvoiceStatus) =>
+  createInvoice: (data: CreateInvoiceRequest) =>
+    billingClient.post<Invoice>('/invoices', data),
+
+  getInvoice: (id: string) =>
+    billingClient.get<Invoice>(`/invoices/${id}`),
+
+  updateInvoiceStatus: (id: string, status: string) =>
     billingClient.patch<Invoice>(`/invoices/${id}`, { status }),
 
+  // Line Items — AQ-BILLDB
+  listLineItems: (invoiceId: string) =>
+    billingClient.get<LineItem[]>(`/invoices/${invoiceId}/line-items`),
+
+  createLineItem: (invoiceId: string, data: CreateLineItemRequest) =>
+    billingClient.post<LineItem>(`/invoices/${invoiceId}/line-items`, data),
+
+  deleteLineItem: (invoiceId: string, itemId: string) =>
+    billingClient.delete(`/invoices/${invoiceId}/line-items/${itemId}`),
+
+  // Payments — AQ-BILLDB
+  listPayments: (invoiceId: string) =>
+    billingClient.get<Payment[]>(`/invoices/${invoiceId}/payments`),
+
+  createPayment: (invoiceId: string, data: CreatePaymentRequest) =>
+    billingClient.post<Payment>(`/invoices/${invoiceId}/payments`, data),
+
+  // Usage
   getUsage: () =>
     billingClient.get<BillingUsage>('/usage'),
 
+  // Health endpoint is at root /health (not under /api/v1)
   health: () =>
-    billingClient.get('/health'),
+    axios.get(`${getServiceBaseUrl(ServiceName.BILLING)}/health`, { withCredentials: true }),
 };

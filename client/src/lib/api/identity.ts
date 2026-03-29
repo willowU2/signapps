@@ -77,13 +77,21 @@ export interface RefreshResponse {
     refresh_token: string;
 }
 
+// Role values as sent by backend (i16): 0=guest, 1=user, 2=admin, 3=superadmin
+export enum UserRole {
+    Guest = 0,
+    User = 1,
+    Admin = 2,
+    SuperAdmin = 3,
+}
+
 // Aligned with Rust UserResponse from signapps-identity
 export interface User {
     id: string;
     username: string;
     email?: string;
     display_name?: string;
-    role: number; // i16 in Rust: 0=guest, 1=user, 2=admin
+    role: UserRole; // i16 in Rust: 0=guest, 1=user, 2=admin, 3=superadmin
     mfa_enabled: boolean;
     auth_provider: string; // 'local' | 'ldap'
     created_at: string;
@@ -92,9 +100,14 @@ export interface User {
     avatar_url?: string;
 }
 
-// Helper to check if user is admin (role >= 2)
+// Helper to check if user is admin (role >= Admin)
 export function isAdmin(user: User): boolean {
-    return user.role >= 2;
+    return user.role >= UserRole.Admin;
+}
+
+// Helper to check if user is superadmin
+export function isSuperAdmin(user: User): boolean {
+    return user.role >= UserRole.SuperAdmin;
 }
 
 // Helper to check if user is LDAP user
@@ -118,8 +131,10 @@ export interface LdapConfig {
 
 // Users API
 export const usersApi = {
-    list: (page?: number, limit?: number) =>
-        identityClient.get<UserListResponse>('/users', { params: { page, limit } }),
+    // Backend returns User[] array directly — no pagination wrapper
+    // Query params: offset, limit (not page)
+    list: (offset?: number, limit?: number) =>
+        identityClient.get<User[]>('/users', { params: { offset, limit } }),
     get: (id: string) => identityClient.get<User>(`/users/${id}`),
     create: (data: CreateUserRequest) => identityClient.post<User>('/users', data),
     update: (id: string, data: UpdateUserRequest) =>
@@ -191,7 +206,8 @@ export interface CreateWebhookRequest {
 export interface UserListResponse {
     users: User[];
     total: number;
-    page: number;
+    // Backend returns `offset` and `limit` (not `page`) — matches UserListResponse in users.rs
+    offset: number;
     limit: number;
 }
 
@@ -340,6 +356,40 @@ export interface AuditLogListResponse {
     offset: number;
 }
 
+// Security Events API (admin only) — GET /api/v1/admin/security/events
+export const securityEventsApi = {
+    list: (params?: { limit?: number; offset?: number; event_type?: string }) =>
+        identityClient.get<SecurityEventsResponse>('/admin/security/events', { params }),
+    summary: () =>
+        identityClient.get<SecurityEventsSummary>('/admin/security/events/summary'),
+};
+
+export interface SecurityEvent {
+    id: string;
+    event_type: string;
+    user_id?: string;
+    username?: string;
+    ip_address?: string;
+    user_agent?: string;
+    details?: Record<string, unknown>;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    created_at: string;
+}
+
+export interface SecurityEventsResponse {
+    events: SecurityEvent[];
+    total: number;
+    limit: number;
+    offset: number;
+}
+
+export interface SecurityEventsSummary {
+    total_events: number;
+    by_severity: Record<string, number>;
+    by_type: Record<string, number>;
+    recent_count: number;
+}
+
 // Users Import/Export
 export interface UserImportRow {
     username: string;
@@ -354,4 +404,116 @@ export interface UserImportResult {
     failed: number;
     duplicates: number;
     errors: { row: number; username: string; error: string }[];
+}
+
+// ============================================================================
+// IP Allowlist API — GET/PUT /api/v1/admin/security/ip-allowlist
+// ============================================================================
+
+export interface IpAllowlistEntry {
+    address: string;
+    cidr: string;
+    label?: string;
+    enabled: boolean;
+}
+
+export const identityApi = {
+    // IP Allowlist (admin only)
+    ipAllowlist: {
+        list: () =>
+            identityClient.get<IpAllowlistEntry[]>('/admin/security/ip-allowlist'),
+        update: (entries: IpAllowlistEntry[]) =>
+            identityClient.put<IpAllowlistEntry[]>('/admin/security/ip-allowlist', entries),
+    },
+
+    // Guest tokens — /api/v1/guest-tokens
+    guestTokens: {
+        create: (data: {
+            resource_type: string;
+            resource_id: string;
+            permission: 'read' | 'comment';
+            expires_in_hours?: number;
+            description?: string;
+        }) => identityClient.post('/guest-tokens', data),
+        list: () => identityClient.get('/guest-tokens'),
+        revoke: (id: string) => identityClient.delete(`/guest-tokens/${id}`),
+        validate: (token: string) =>
+            identityClient.post('/guest-tokens/validate', { token }),
+    },
+
+    // Webhooks — /api/v1/webhooks (already exported separately as webhooksApi)
+    webhooks: {
+        list: () => identityClient.get<Webhook[]>('/webhooks'),
+        create: (data: CreateWebhookRequest) => identityClient.post<Webhook>('/webhooks', data),
+        delete: (id: string) => identityClient.delete(`/webhooks/${id}`),
+    },
+
+    // OpenAPI spec — GET /api/v1/openapi.json
+    openApiSpec: () => identityClient.get('/openapi.json'),
+
+    // User profile — /api/v1/users/me/profile, recent-docs, history, streak
+    profile: {
+        get: () => identityClient.get('/users/me/profile'),
+        update: (data: {
+            onboarding_completed_at?: string;
+            streak_count?: number;
+            streak_last_date?: string;
+        }) => identityClient.patch('/users/me/profile', data),
+        recentDocs: () => identityClient.get('/users/me/recent-docs'),
+        upsertRecentDoc: (data: {
+            doc_id: string;
+            doc_name: string;
+            doc_kind: string;
+            doc_href: string;
+        }) => identityClient.post('/users/me/recent-docs', data),
+        history: () => identityClient.get('/users/me/history'),
+        addHistory: (data: {
+            action: string;
+            entity_type?: string;
+            entity_id?: string;
+            entity_title?: string;
+            metadata?: Record<string, unknown>;
+        }) => identityClient.post('/users/me/history', data),
+        streak: () => identityClient.post('/users/me/streak/checkin'),
+    },
+
+    // Feature flags (admin only) — /api/v1/admin/feature-flags
+    featureFlags: {
+        list: () => identityClient.get<FeatureFlag[]>('/admin/feature-flags'),
+        create: (data: { name: string; enabled?: boolean; rollout_pct?: number; description?: string }) =>
+            identityClient.post<FeatureFlag>('/admin/feature-flags', data),
+        update: (id: string, data: { name?: string; enabled?: boolean; rollout_pct?: number; description?: string }) =>
+            identityClient.put<FeatureFlag>(`/admin/feature-flags/${id}`, data),
+        delete: (id: string) =>
+            identityClient.delete(`/admin/feature-flags/${id}`),
+    },
+
+    // Tenant CSS (admin only) — /api/v1/admin/tenants/:id/css
+    tenantCss: {
+        get: (tenantId: string) =>
+            identityClient.get<TenantCssResponse>(`/admin/tenants/${tenantId}/css`),
+        update: (tenantId: string, css_override: string | null) =>
+            identityClient.put<TenantCssResponse>(`/admin/tenants/${tenantId}/css`, { css_override }),
+        clear: (tenantId: string) =>
+            identityClient.delete(`/admin/tenants/${tenantId}/css`),
+    },
+};
+
+// ============================================================================
+// Supporting types for identityApi
+// ============================================================================
+
+export interface FeatureFlag {
+    id: string;
+    name: string;
+    enabled: boolean;
+    rollout_pct: number;
+    description?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface TenantCssResponse {
+    tenant_id: string;
+    css_override?: string;
 }

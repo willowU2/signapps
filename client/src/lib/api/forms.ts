@@ -10,10 +10,13 @@ import { getClient, ServiceName } from './factory';
 // Types
 // ============================================================================
 
+// Matches Rust FieldType enum (PascalCase, serde default)
+export type FieldType = 'Text' | 'TextArea' | 'SingleChoice' | 'MultipleChoice' | 'Rating' | 'Date' | 'Email' | 'Number';
+
 export interface FormField {
   id: string;
   label: string;
-  field_type: 'Text' | 'Number' | 'Email' | 'SingleChoice' | 'MultipleChoice' | 'TextArea' | 'Date' | 'File' | 'Rating';
+  field_type: FieldType;
   required: boolean;
   options?: string[];
   layout?: string;

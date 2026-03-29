@@ -219,3 +219,81 @@ export const timeItemsApi = {
     queryUsersEvents: (user_ids: string[], start: string, end: string) =>
         schedulerClient.post<{items: TimeItem[]}>('/time_items/availability', { user_ids, start, end })
 };
+
+// ============================================================================
+// DevOps API — /api/v1/devops/*
+// ============================================================================
+
+export interface ChangelogEntry {
+    id: string;
+    version: string;
+    change_type: string;
+    description: string;
+    author: string;
+    created_at: string;
+}
+
+export interface Pipeline {
+    id: string;
+    repo_name: string;
+    branch: string;
+    status: string;
+    started_at?: string;
+    completed_at?: string;
+    created_at: string;
+}
+
+export interface Deployment {
+    id: string;
+    service_name: string;
+    version: string;
+    commit_message: string;
+    status: string;
+    deployed_by?: string;
+    created_at: string;
+}
+
+export interface CreateChangelogRequest {
+    version: string;
+    change_type?: string;
+    description: string;
+    author?: string;
+}
+
+export interface CreatePipelineRequest {
+    repo_name: string;
+    branch?: string;
+    status?: string;
+}
+
+export interface CreateDeploymentRequest {
+    service_name: string;
+    version: string;
+    commit_message: string;
+    status?: string;
+}
+
+export const schedulerDevopsApi = {
+    // Changelog — /api/v1/devops/changelog
+    changelog: {
+        list: () => schedulerClient.get<ChangelogEntry[]>('/devops/changelog'),
+        create: (data: CreateChangelogRequest) =>
+            schedulerClient.post<ChangelogEntry>('/devops/changelog', data),
+    },
+
+    // Pipelines — /api/v1/devops/pipelines
+    pipelines: {
+        list: () => schedulerClient.get<Pipeline[]>('/devops/pipelines'),
+        create: (data: CreatePipelineRequest) =>
+            schedulerClient.post<Pipeline>('/devops/pipelines', data),
+        update: (id: string, data: { status?: string; started_at?: string; completed_at?: string }) =>
+            schedulerClient.put<Pipeline>(`/devops/pipelines/${id}`, data),
+    },
+
+    // Deployments — /api/v1/devops/deployments
+    deployments: {
+        list: () => schedulerClient.get<Deployment[]>('/devops/deployments'),
+        create: (data: CreateDeploymentRequest) =>
+            schedulerClient.post<Deployment>('/devops/deployments', data),
+    },
+};

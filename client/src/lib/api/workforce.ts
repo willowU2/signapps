@@ -245,6 +245,44 @@ export const validationApi = {
 // Combined Export
 // ============================================================================
 
+// ============================================================================
+// Learning API — /api/v1/learning/*
+// ============================================================================
+
+export interface Course {
+  id: string;
+  title: string;
+  description: string;
+  modules: unknown; // JSON array of module objects
+  created_by: string;
+  created_at: string;
+}
+
+export interface CourseProgress {
+  id: string;
+  course_id: string;
+  user_id: string;
+  module_completions: unknown;
+  progress: number;
+  status: string;
+  updated_at: string;
+}
+
+export interface UpdateProgressRequest {
+  module_completions: unknown;
+  progress: number;
+  status?: string;
+}
+
+export const learningApi = {
+  listCourses: () =>
+    workforceClient.get<{ courses: (Course & { user_progress?: CourseProgress })[] }>('/learning/courses'),
+  getCourse: (id: string) =>
+    workforceClient.get<Course & { user_progress?: CourseProgress }>(`/learning/courses/${id}`),
+  updateProgress: (courseId: string, data: UpdateProgressRequest) =>
+    workforceClient.put<CourseProgress>(`/learning/courses/${courseId}/progress`, data),
+};
+
 export const workforceApi = {
   nodeTypes: orgNodeTypesApi,
   nodes: orgNodesApi,
@@ -253,6 +291,7 @@ export const workforceApi = {
   templates: coverageTemplatesApi,
   rules: coverageRulesApi,
   validation: validationApi,
+  learning: learningApi,
 
   // Raw HTTP access for custom endpoints
   get: <T = unknown>(url: string, config?: AxiosRequestConfig) =>

@@ -176,6 +176,82 @@ export const timezonesApi = {
     setUserTimezone: (timezone: string) => calendarClient.put('/timezones/me', { timezone }),
 };
 
+// Out-of-Office API — GET/PUT/DELETE /api/v1/ooo
+export interface OooSettings {
+    enabled: boolean;
+    start_date?: string;
+    end_date?: string;
+    message?: string;
+}
+
+export const oooApi = {
+    get: () => calendarClient.get<OooSettings>('/ooo'),
+    set: (data: OooSettings) => calendarClient.put<OooSettings>('/ooo', data),
+    delete: () => calendarClient.delete('/ooo'),
+};
+
+// Scheduling Polls API — GET/POST /api/v1/polls
+// Types aligned with backend polls.rs PollSummary / PollDetail
+export interface Poll {
+    id: string;
+    organizer_id: string;
+    title: string;
+    description?: string;
+    status: string; // 'open' | 'confirmed' | 'cancelled'
+    confirmed_slot_id?: string;
+    confirmed_event_id?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PollSlotInput {
+    slot_date: string;   // YYYY-MM-DD
+    start_time: string;  // HH:MM:SS
+    end_time: string;    // HH:MM:SS
+}
+
+export interface CreatePollRequest {
+    title: string;
+    description?: string;
+    slots: PollSlotInput[];
+}
+
+export interface PollVoteRequest {
+    voter_name: string;
+    voter_email: string;
+    votes: Record<string, string>; // slot_id -> "yes"|"maybe"|"no"
+}
+
+export const pollsApi = {
+    list: () => calendarClient.get<Poll[]>('/polls'),
+    create: (data: CreatePollRequest) => calendarClient.post<Poll>('/polls', data),
+    get: (id: string) => calendarClient.get(`/polls/${id}`),
+    vote: (id: string, data: PollVoteRequest) =>
+        calendarClient.post(`/polls/${id}/vote`, data),
+    confirm: (id: string, slotId: string) =>
+        calendarClient.post(`/polls/${id}/confirm`, { slot_id: slotId }),
+};
+
+// Meeting Suggestions API — POST /api/v1/calendar/meeting-suggestions
+export interface MeetingSuggestionsRequest {
+    participant_ids: string[];
+    duration_minutes: number;
+    earliest: string;
+    latest: string;
+    count?: number;
+}
+
+export interface MeetingSuggestion {
+    start_time: string;
+    end_time: string;
+    score: number;
+}
+
+export const meetingSuggestionsApi = {
+    suggest: (data: MeetingSuggestionsRequest) =>
+        calendarClient.post<MeetingSuggestion[]>('/calendar/meeting-suggestions', data),
+};
+
 // Imports & ICS
 export const importApi = {
     importIcs: (calendarId: string, file: File) => {
@@ -185,4 +261,67 @@ export const importApi = {
     },
     exportIcs: (calendarId: string) =>
         calendarClient.get(`/calendars/${calendarId}/export`, { responseType: 'blob' }),
+};
+
+// ============================================================================
+// CalDAV feed — /caldav/calendars/:id
+// ============================================================================
+
+export const caldavFeedApi = {
+    feed: (calendarId: string) =>
+        calendarClient.get(`/caldav/calendars/${calendarId}`, {
+            headers: { Accept: 'text/calendar' },
+            responseType: 'text',
+        }),
+    getEventIcs: (calendarId: string, eventId: string) =>
+        calendarClient.get(`/caldav/calendars/${calendarId}/events/${eventId}.ics`, {
+            responseType: 'text',
+        }),
+};
+
+// ============================================================================
+// External Calendar Sync — /api/v1/external-sync/*
+// ============================================================================
+
+export interface ExternalSyncConfig {
+    id: string;
+    connection_id: string;
+    calendar_id: string;
+    external_calendar_id: string;
+    sync_direction: string;
+    enabled: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export const externalSyncApi = {
+    listConnections: () =>
+        calendarClient.get('/external-sync/connections'),
+    initOAuth: (data: { provider: string; redirect_uri: string }) =>
+        calendarClient.post('/external-sync/oauth/init', data),
+    oauthCallback: (data: { code: string; state: string }) =>
+        calendarClient.post('/external-sync/oauth/callback', data),
+    disconnect: (connectionId: string) =>
+        calendarClient.delete(`/external-sync/connections/${connectionId}`),
+    triggerSync: (configId: string) =>
+        calendarClient.post(`/external-sync/configs/${configId}/sync`),
+    syncStatus: (configId: string) =>
+        calendarClient.get(`/external-sync/configs/${configId}/logs`),
+    listConfigs: () =>
+        calendarClient.get<ExternalSyncConfig[]>('/external-sync/configs'),
+    createConfig: (data: Partial<ExternalSyncConfig>) =>
+        calendarClient.post<ExternalSyncConfig>('/external-sync/configs', data),
+    deleteConfig: (configId: string) =>
+        calendarClient.delete(`/external-sync/configs/${configId}`),
+};
+
+// ============================================================================
+// User Timezone/Settings — /timezones/me
+// ============================================================================
+
+export const calendarUserSettingsApi = {
+    getTimezone: () =>
+        calendarClient.get<{ timezone: string }>('/timezones/me'),
+    setTimezone: (timezone: string) =>
+        calendarClient.put('/timezones/me', { timezone }),
 };
