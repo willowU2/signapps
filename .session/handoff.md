@@ -11,7 +11,7 @@ created_for: "Prochaine instance d'AgentIQ"
 ## Résumé Exécutif
 
 1. Session `e5fdb947` démarrée le 2026-03-29T16:50:15.849Z
-2. Terminée proprement le 2026-03-29T17:11:01.533Z
+2. Terminée proprement le 2026-03-29T17:24:12.799Z
 3. Travail : (non renseigné)
 
 ---
@@ -77,7 +77,7 @@ Fichiers à lire en priorité :
 |----------|--------|
 | Session ID | e5fdb947-2af7-485f-afe2-0b381dd32bbe |
 | Démarrée | 2026-03-29T16:50:15.849Z |
-| Terminée | 2026-03-29T17:11:01.533Z |
+| Terminée | 2026-03-29T17:24:12.799Z |
 | Crashes enregistrés | 0 |
 | Checkpoints | 0 |
 
