@@ -73,6 +73,116 @@ import {
 } from '@/hooks/use-monitoring';
 import { usePageTitle } from '@/hooks/use-page-title';
 
+// ---- localStorage alert rules with client-side threshold checking ----
+const LOCAL_ALERT_RULES_KEY = 'signapps_monitoring_alert_rules';
+const LOCAL_ALERT_NOTIFICATIONS_KEY = 'signapps_monitoring_notifications';
+
+interface LocalAlertRule {
+  id: string;
+  name: string;
+  metric: 'cpu' | 'memory' | 'disk' | 'service';
+  threshold: number;
+  durationMinutes: number;
+  enabled: boolean;
+  severity: 'warning' | 'critical';
+}
+
+interface LocalNotification {
+  id: string;
+  ruleId: string;
+  ruleName: string;
+  metric: string;
+  value: number;
+  threshold: number;
+  severity: 'warning' | 'critical';
+  timestamp: string;
+  acknowledged: boolean;
+}
+
+const DEFAULT_LOCAL_RULES: LocalAlertRule[] = [
+  { id: 'cpu-90', name: 'CPU > 90% for 5 min', metric: 'cpu', threshold: 90, durationMinutes: 5, enabled: true, severity: 'critical' },
+  { id: 'mem-85', name: 'Memory > 85%', metric: 'memory', threshold: 85, durationMinutes: 0, enabled: true, severity: 'warning' },
+  { id: 'disk-90', name: 'Disk > 90%', metric: 'disk', threshold: 90, durationMinutes: 0, enabled: true, severity: 'critical' },
+  { id: 'svc-down', name: 'Service down', metric: 'service', threshold: 0, durationMinutes: 0, enabled: true, severity: 'critical' },
+];
+
+function getLocalRules(): LocalAlertRule[] {
+  if (typeof window === 'undefined') return DEFAULT_LOCAL_RULES;
+  try {
+    const stored = localStorage.getItem(LOCAL_ALERT_RULES_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch { /* ignore */ }
+  localStorage.setItem(LOCAL_ALERT_RULES_KEY, JSON.stringify(DEFAULT_LOCAL_RULES));
+  return DEFAULT_LOCAL_RULES;
+}
+
+function saveLocalRules(rules: LocalAlertRule[]) {
+  localStorage.setItem(LOCAL_ALERT_RULES_KEY, JSON.stringify(rules));
+}
+
+function getLocalNotifications(): LocalNotification[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    return JSON.parse(localStorage.getItem(LOCAL_ALERT_NOTIFICATIONS_KEY) || '[]');
+  } catch { return []; }
+}
+
+function saveLocalNotifications(notifs: LocalNotification[]) {
+  localStorage.setItem(LOCAL_ALERT_NOTIFICATIONS_KEY, JSON.stringify(notifs.slice(0, 50)));
+}
+
+function checkThresholds(
+  rules: LocalAlertRule[],
+  cpu: number,
+  memory: number,
+  disk: number,
+  existingNotifs: LocalNotification[],
+): LocalNotification[] {
+  const newNotifs: LocalNotification[] = [];
+  const now = new Date().toISOString();
+
+  for (const rule of rules) {
+    if (!rule.enabled) continue;
+    let currentValue = 0;
+    let triggered = false;
+
+    if (rule.metric === 'cpu') {
+      currentValue = cpu;
+      triggered = cpu > rule.threshold;
+    } else if (rule.metric === 'memory') {
+      currentValue = memory;
+      triggered = memory > rule.threshold;
+    } else if (rule.metric === 'disk') {
+      currentValue = disk;
+      triggered = disk > rule.threshold;
+    }
+    // Service-down is handled by absence of metrics data
+
+    if (triggered) {
+      // Only add if no un-acknowledged notification for this rule in the last 5 minutes
+      const recentExists = existingNotifs.some(
+        n => n.ruleId === rule.id && !n.acknowledged &&
+          (Date.now() - new Date(n.timestamp).getTime()) < 300000
+      );
+      if (!recentExists) {
+        newNotifs.push({
+          id: `${rule.id}-${Date.now()}`,
+          ruleId: rule.id,
+          ruleName: rule.name,
+          metric: rule.metric,
+          value: currentValue,
+          threshold: rule.threshold,
+          severity: rule.severity,
+          timestamp: now,
+          acknowledged: false,
+        });
+      }
+    }
+  }
+
+  return newNotifs;
+}
+
 interface MetricPoint {
   time: string;
   timestamp: number;
@@ -112,6 +222,10 @@ export default function MonitoringPage() {
   const [editingConfig, setEditingConfig] = useState<AlertConfig | null>(null);
   const [deleteConfigId, setDeleteConfigId] = useState<string | null>(null);
 
+  // localStorage-based alert rules
+  const [localRules, setLocalRules] = useState<LocalAlertRule[]>(getLocalRules);
+  const [localNotifications, setLocalNotifications] = useState<LocalNotification[]>(getLocalNotifications);
+
   const queryClient = useQueryClient();
   const [history, setHistory] = useState<MetricPoint[]>([]);
 
@@ -133,6 +247,52 @@ export default function MonitoringPage() {
   const acknowledgeAlert = useAcknowledgeAlert();
   const toggleAlertConfig = useToggleAlertConfig();
   const deleteAlertConfig = useDeleteAlertConfig();
+
+  // Client-side threshold checking against localStorage rules
+  useEffect(() => {
+    if (!metrics) return;
+    const cpu = metrics.cpu_usage_percent || metrics.cpu || 0;
+    const mem = metrics.memory_usage_percent || metrics.memory || 0;
+    const dsk = metrics.disk_usage_percent || metrics.disk || 0;
+
+    const existing = getLocalNotifications();
+    const newNotifs = checkThresholds(localRules, cpu, mem, dsk, existing);
+    if (newNotifs.length > 0) {
+      const updated = [...newNotifs, ...existing];
+      saveLocalNotifications(updated);
+      setLocalNotifications(updated);
+      // Show browser toast for each new notification
+      for (const n of newNotifs) {
+        toast.warning(`${n.ruleName}: ${n.metric} at ${n.value.toFixed(1)}% (threshold: ${n.threshold}%)`, {
+          duration: 8000,
+        });
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metrics]);
+
+  const handleToggleLocalRule = (ruleId: string) => {
+    const updated = localRules.map(r =>
+      r.id === ruleId ? { ...r, enabled: !r.enabled } : r
+    );
+    setLocalRules(updated);
+    saveLocalRules(updated);
+  };
+
+  const handleAcknowledgeLocalNotif = (notifId: string) => {
+    const updated = localNotifications.map(n =>
+      n.id === notifId ? { ...n, acknowledged: true } : n
+    );
+    setLocalNotifications(updated);
+    saveLocalNotifications(updated);
+  };
+
+  const handleClearLocalNotifications = () => {
+    setLocalNotifications([]);
+    saveLocalNotifications([]);
+  };
+
+  const unacknowledgedLocalNotifs = localNotifications.filter(n => !n.acknowledged);
 
   // Build history from metrics updates
   useEffect(() => {
@@ -382,6 +542,96 @@ export default function MonitoringPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Local Alert Notifications Banner */}
+        {unacknowledgedLocalNotifs.length > 0 && (
+          <Card className="border-yellow-500/50 bg-yellow-500/5">
+            <CardContent className="py-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-yellow-600" />
+                  <p className="font-medium text-yellow-700">
+                    {unacknowledgedLocalNotifs.length} Local Alert{unacknowledgedLocalNotifs.length > 1 ? 's' : ''}
+                  </p>
+                </div>
+                <Button variant="ghost" size="sm" onClick={handleClearLocalNotifications} className="text-xs">
+                  Clear All
+                </Button>
+              </div>
+              <div className="space-y-1.5">
+                {unacknowledgedLocalNotifs.slice(0, 5).map(n => (
+                  <div key={n.id} className="flex items-center justify-between text-sm rounded-md border border-yellow-500/20 p-2 bg-background/50">
+                    <div className="flex items-center gap-2">
+                      {n.severity === 'critical' ? (
+                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                      ) : (
+                        <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                      )}
+                      <span>{n.ruleName}</span>
+                      <Badge variant={n.severity === 'critical' ? 'destructive' : 'secondary'} className="text-[10px] h-4 px-1.5">
+                        {n.value.toFixed(1)}%
+                      </Badge>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-6 text-xs"
+                      onClick={() => handleAcknowledgeLocalNotif(n.id)}
+                    >
+                      OK
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Local Alert Rules (localStorage) */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Settings className="h-4 w-4 text-primary" />
+                Threshold Alert Rules
+                <Badge variant="outline" className="text-[10px]">Local</Badge>
+              </CardTitle>
+            </div>
+            <CardDescription className="text-xs">
+              Client-side alert rules stored in browser. Triggers notifications when thresholds are exceeded.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {localRules.map(rule => (
+                <div
+                  key={rule.id}
+                  className={`flex items-center justify-between rounded-lg border p-3 transition-colors ${
+                    rule.enabled ? '' : 'opacity-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {rule.metric === 'cpu' && <Cpu className="h-4 w-4 text-blue-500" />}
+                    {rule.metric === 'memory' && <MemoryStick className="h-4 w-4 text-purple-500" />}
+                    {rule.metric === 'disk' && <HardDrive className="h-4 w-4 text-orange-500" />}
+                    {rule.metric === 'service' && <Server className="h-4 w-4 text-red-500" />}
+                    <div>
+                      <p className="text-xs font-medium">{rule.name}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {rule.severity === 'critical' ? 'Critical' : 'Warning'}
+                        {rule.durationMinutes > 0 && ` (${rule.durationMinutes}m)`}
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={rule.enabled}
+                    onCheckedChange={() => handleToggleLocalRule(rule.id)}
+                  />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Quick Stats */}
         <div className="grid gap-4 md:grid-cols-4">

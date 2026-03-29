@@ -28,9 +28,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { User, Shield, Key, Check, Copy, ArrowLeft, Upload, Trash2 } from 'lucide-react';
+import { User, Shield, Key, Check, Copy, ArrowLeft, Upload, Trash2, Clock, Monitor, CalendarDays } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 import { authApi, usersApi } from '@/lib/api';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -70,7 +71,50 @@ export default function ProfilePage() {
   const [mfaLoading, setMfaLoading] = useState(false);
   const [copiedCodes, setCopiedCodes] = useState(false);
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
-  
+
+  // Session history (from localStorage)
+  const [sessionHistory, setSessionHistory] = useState<Array<{ date: string; browser: string; ip: string }>>([]);
+
+  useEffect(() => {
+    // Track current session
+    const sessions = JSON.parse(localStorage.getItem('signapps_session_history') || '[]');
+    const currentSession = {
+      date: new Date().toISOString(),
+      browser: navigator.userAgent.replace(/.*?(Chrome|Firefox|Safari|Edge|Opera)[/\s](\d+).*/, '$1 $2') || 'Unknown',
+      ip: 'local',
+    };
+    // Only add if last session was more than 5 minutes ago
+    const lastSession = sessions[0];
+    if (!lastSession || new Date().getTime() - new Date(lastSession.date).getTime() > 300000) {
+      sessions.unshift(currentSession);
+      if (sessions.length > 20) sessions.length = 20;
+      localStorage.setItem('signapps_session_history', JSON.stringify(sessions));
+    }
+    setSessionHistory(sessions);
+  }, []);
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return 'Never';
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      });
+    } catch { return dateStr; }
+  };
+
+  const formatTimeAgo = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
   const handleAvatarUploadStrategy = async (
     id: string,
     file: File,
@@ -391,6 +435,90 @@ export default function ProfilePage() {
                 Save Changes
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Account Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarDays className="h-5 w-5" />
+              Account Information
+            </CardTitle>
+            <CardDescription>
+              Account details and login activity
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Account Created</p>
+                <p className="text-sm font-medium">{formatDate(user.created_at)}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Last Login</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium">{formatDate(user.last_login)}</p>
+                  {user.last_login && (
+                    <span className="text-xs text-muted-foreground">({formatTimeAgo(user.last_login)})</span>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Auth Provider</p>
+                <Badge variant="outline" className="capitalize">{user.auth_provider || 'local'}</Badge>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">User ID</p>
+                <p className="text-xs font-mono text-muted-foreground truncate">{user.id}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Session History */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Monitor className="h-5 w-5" />
+              Session History
+            </CardTitle>
+            <CardDescription>
+              Recent login sessions for your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {sessionHistory.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">No session history available</p>
+            ) : (
+              <ScrollArea className="h-48">
+                <div className="space-y-2">
+                  {sessionHistory.map((session, i) => (
+                    <div
+                      key={`${session.date}-${i}`}
+                      className={`flex items-center justify-between rounded-lg border p-3 ${i === 0 ? 'border-primary/30 bg-primary/5' : ''}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`flex h-8 w-8 items-center justify-center rounded-md ${i === 0 ? 'bg-primary/10' : 'bg-muted'}`}>
+                          <Monitor className={`h-4 w-4 ${i === 0 ? 'text-primary' : 'text-muted-foreground'}`} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium flex items-center gap-2">
+                            {session.browser}
+                            {i === 0 && <Badge className="bg-green-500/10 text-green-600 text-[10px] h-4 px-1.5">Current</Badge>}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{formatDate(session.date)}</p>
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3 inline mr-1" />
+                        {formatTimeAgo(session.date)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
           </CardContent>
         </Card>
 
