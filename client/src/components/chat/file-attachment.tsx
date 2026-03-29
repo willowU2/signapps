@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Paperclip, X, File, Image, FileText, Film, Music, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { chatApi, ChatAttachment as Attachment } from "@/lib/api/chat";
+import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface FileAttachButtonProps {
@@ -30,7 +31,7 @@ export function FileAttachButton({ channelId, onAttach, disabled }: FileAttachBu
             const res = await chatApi.uploadFile(channelId, file, (pct) => setProgress(pct));
             onAttach(res.data);
         } catch {
-            // ignore — TODO toast
+            toast.error("Erreur lors de l'envoi du fichier");
         } finally {
             setUploading(false);
             setProgress(0);

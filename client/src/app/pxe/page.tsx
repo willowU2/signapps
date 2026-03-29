@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Terminal, Upload, Play, Settings, RefreshCw, HardDrive, Cpu, FileJson, CheckCircle2, Trash2, Edit, Plus, Network, Clock } from 'lucide-react';
-import { pxeApi, PxeProfile, PxeAsset, CreatePxeProfileRequest, UpdatePxeProfileRequest, RegisterPxeAssetRequest, UpdatePxeAssetRequest } from "@/lib/api-pxe"
+import { pxeApi, PxeProfile, PxeAsset, CreatePxeProfileRequest, UpdatePxeProfileRequest, RegisterPxeAssetRequest, UpdatePxeAssetRequest } from "@/lib/api/pxe"
 import { toast } from "sonner"
 import {
     AlertDialog,
@@ -65,10 +65,11 @@ export default function PXEDashboard() {
     const loadData = useCallback(async () => {
         try {
             setLoading(true)
-            const [profilesData, assetsData] = await Promise.all([
-                pxeApi.profiles.list(),
-                pxeApi.assets.list(),
+            const [profilesRes, assetsRes] = await Promise.all([
+                pxeApi.listProfiles(),
+                pxeApi.listAssets(),
             ])
+            const [profilesData, assetsData] = [profilesRes.data, assetsRes.data]
             setProfiles(profilesData)
             setAssets(assetsData)
         } catch (err) {
@@ -119,11 +120,11 @@ export default function PXEDashboard() {
         try {
             setSaving(true)
             if (editingProfile) {
-                const updated = await pxeApi.profiles.update(editingProfile.id, profileForm as UpdatePxeProfileRequest)
+                const updated = (await pxeApi.updateProfile(editingProfile.id, profileForm as UpdatePxeProfileRequest)).data
                 setProfiles(prev => prev.map(p => p.id === updated.id ? updated : p))
                 toast.success('Profil mis  jour')
             } else {
-                const created = await pxeApi.profiles.create(profileForm)
+                const created = (await pxeApi.createProfile(profileForm)).data
                 setProfiles(prev => [...prev, created])
                 toast.success('Profil cr')
             }
@@ -144,7 +145,7 @@ export default function PXEDashboard() {
         if (!deleteProfileId) return
         setDeleteProfileId(null)
         try {
-            await pxeApi.profiles.delete(deleteProfileId)
+            await pxeApi.deleteProfile(deleteProfileId)
             setProfiles(prev => prev.filter(p => p.id !== deleteProfileId))
             toast.success('Profil supprim')
         } catch (err) {
@@ -187,11 +188,11 @@ export default function PXEDashboard() {
                     hostname: assetForm.hostname || undefined,
                     profile_id: assetForm.profile_id,
                 }
-                const updated = await pxeApi.assets.update(editingAsset.id, updateData)
+                const updated = (await pxeApi.updateAsset(editingAsset.id, updateData)).data
                 setAssets(prev => prev.map(a => a.id === updated.id ? updated : a))
                 toast.success('Asset mis  jour')
             } else {
-                const created = await pxeApi.assets.register(assetForm)
+                const created = (await pxeApi.registerAsset(assetForm)).data
                 setAssets(prev => [...prev, created])
                 toast.success('Asset enregistr')
             }
@@ -212,7 +213,7 @@ export default function PXEDashboard() {
         if (!deleteAssetId) return
         setDeleteAssetId(null)
         try {
-            await pxeApi.assets.delete(deleteAssetId)
+            await pxeApi.deleteAsset(deleteAssetId)
             setAssets(prev => prev.filter(a => a.id !== deleteAssetId))
             toast.success('Asset supprim')
         } catch (err) {

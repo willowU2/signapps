@@ -15,8 +15,7 @@ import { getClient, getServiceBaseUrl, ServiceName } from '@/lib/api/factory';
 
 const remoteClient = getClient(ServiceName.REMOTE);
 
-// Legacy nested API shape kept for backward compatibility with remote/page.tsx
-// TODO: migrate remote/page.tsx to use flat API from @/lib/api/remote
+// Legacy nested API shape kept for backward compatibility.
 
 export const connectionApi = {
   list: async () => (await remoteClient.get('/remote/connections')).data,

@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { MonitorSmartphone, Shield, Server, Plug, Settings, History, Lock, Eye, Terminal, X, Trash2, RefreshCw, Edit } from 'lucide-react';
-import { remoteApi, RemoteConnection, CreateConnectionRequest, UpdateConnectionRequest } from "@/lib/api-remote"
+import { remoteApi, RemoteConnection, CreateConnectionRequest, UpdateConnectionRequest } from "@/lib/api/remote"
 import { toast } from "sonner"
 import {
     AlertDialog,
@@ -57,7 +57,7 @@ export default function RemoteAccessDashboard() {
     const loadConnections = useCallback(async () => {
         try {
             setLoading(true)
-            const data = await remoteApi.connections.list()
+            const data = (await remoteApi.listConnections()).data
             setConnections(data)
         } catch (err) {
             console.debug('Failed to load connections:', err)
@@ -79,7 +79,7 @@ export default function RemoteAccessDashboard() {
 
         try {
             setCreating(true)
-            const created = await remoteApi.connections.create(newConnection)
+            const created = (await remoteApi.createConnection(newConnection)).data
             setConnections(prev => [...prev, created])
             setCreateDialogOpen(false)
             setNewConnection({
@@ -104,7 +104,7 @@ export default function RemoteAccessDashboard() {
 
         try {
             setEditing(true)
-            const updated = await remoteApi.connections.update(activeConnection.id, editConnection)
+            const updated = (await remoteApi.updateConnection(activeConnection.id, editConnection)).data
             setConnections(prev => prev.map(c => c.id === updated.id ? updated : c))
             setEditDialogOpen(false)
             setActiveConnection(null)
@@ -126,7 +126,7 @@ export default function RemoteAccessDashboard() {
         if (!deleteConnectionId) return
         setDeleteConnectionId(null)
         try {
-            await remoteApi.connections.delete(deleteConnectionId)
+            await remoteApi.deleteConnection(deleteConnectionId)
             setConnections(prev => prev.filter(c => c.id !== deleteConnectionId))
             toast.success('Connexion supprime')
         } catch (err) {
@@ -152,7 +152,7 @@ export default function RemoteAccessDashboard() {
         setViewerOpen(true)
 
         // Connect via WebSocket
-        const wsUrl = remoteApi.connections.getWebSocketUrl(conn.id)
+        const wsUrl = remoteApi.getWebSocketUrl(conn.id)
         const ws = new WebSocket(wsUrl)
         wsRef.current = ws
 

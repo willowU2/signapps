@@ -18,8 +18,7 @@ import { getClient, ServiceName } from '@/lib/api/factory';
 
 const pxeClient = getClient(ServiceName.PXE);
 
-// Legacy nested API shape kept for backward compatibility with pxe/page.tsx
-// TODO: migrate pxe/page.tsx to use flat API from @/lib/api/pxe
+// Legacy nested API shape kept for backward compatibility.
 
 export const profileApi = {
   list: async () => (await pxeClient.get('/pxe/profiles')).data,
