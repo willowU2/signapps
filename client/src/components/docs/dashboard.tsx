@@ -223,7 +223,7 @@ export default function DocsDashboard() {
             <section className="bg-muted/30 py-8 px-6 md:px-12 w-full border-b border-border/40 shrink-0">
                 <div className="max-w-6xl mx-auto w-full flex flex-col gap-6">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-medium text-foreground tracking-tight">Cr\u00e9er un document</h2>
+                        <h2 className="text-lg font-medium text-foreground tracking-tight">Créer un document</h2>
                     </div>
 
                     <div className="flex gap-4 sm:gap-6 overflow-x-auto pt-2 pb-4 snap-x smooth-scroll no-scrollbar -mt-2">
@@ -273,7 +273,7 @@ export default function DocsDashboard() {
                         <div className="mt-2">
                             <div className="flex items-center gap-2 mb-3">
                                 <User className="h-4 w-4 text-muted-foreground" />
-                                <h3 className="text-sm font-medium text-muted-foreground">Mes mod\u00e8les</h3>
+                                <h3 className="text-sm font-medium text-muted-foreground">Mes mod\èles</h3>
                             </div>
                             <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-2 snap-x smooth-scroll no-scrollbar">
                                 {userTemplates.map(tpl => (

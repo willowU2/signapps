@@ -377,8 +377,8 @@ type FloatingMode = 'menu' | 'prompt' | 'translate';
 
 const LANGUAGES = [
     { code: 'en', label: 'English' },
-    { code: 'fr', label: 'Fran\u00e7ais' },
-    { code: 'es', label: 'Espa\u00f1ol' },
+    { code: 'fr', label: 'Fran\çais' },
+    { code: 'es', label: 'Espa\ñol' },
     { code: 'de', label: 'Deutsch' },
     { code: 'it', label: 'Italiano' },
     {
@@ -387,11 +387,11 @@ const LANGUAGES = [
     },
     {
         code: 'fr',
-        label: 'Fran\u00e7ais'
+        label: 'Fran\çais'
     },
     {
         code: 'es',
-        label: 'Espa\u00f1ol'
+        label: 'Espa\ñol'
     },
     {
         code: 'de',
@@ -403,7 +403,7 @@ const LANGUAGES = [
     },
     {
         code: 'pt',
-        label: 'Portugu\u00eas'
+        label: 'Portugu\ês'
     },
 ];
 
@@ -452,7 +452,7 @@ const Editor = ({
 
     // Cover & Icon states
     const [coverImage, setCoverImage] = useState<string | null>(null);
-    const [docIcon, setDocIcon] = useState<string>('\ud83d\udcc4');
+    const [docIcon, setDocIcon] = useState<string>('\�\�');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
     const [isReadOnly, setIsReadOnly] = useState(false);
@@ -698,8 +698,8 @@ const Editor = ({
                 ellipsis: '…',      // ... → …
                 openDoubleQuote: '«', // French quotes
                 closeDoubleQuote: '»',
-                openSingleQuote: '\u2018', // '
-                closeSingleQuote: '\u2019', // '
+                openSingleQuote: '\‘', // '
+                closeSingleQuote: '\’', // '
             }),
             Dropcursor.configure({
                 color: '#3b82f6', // blue-500
@@ -1616,11 +1616,11 @@ ${html}
                 shortcut: 'Ctrl+O'
             },
             {
-                label: 'Cr\u00e9er une copie',
+                label: 'Cr\éer une copie',
                 action: 'copy_file'
             },
             {
-                label: 'Sauvegarder comme mod\u00e8le',
+                label: 'Sauvegarder comme mod\èle',
                 action: 'saveAsTemplate'
             },
             {
@@ -2036,14 +2036,14 @@ ${html}
         }
         if (action === 'saveAsTemplate') {
             const html = editor.getHTML();
-            const name = documentName || 'Mon mod\u00e8le';
+            const name = documentName || 'Mon mod\èle';
             saveUserTemplate({
                 title: name,
-                description: `Mod\u00e8le cr\u00e9\u00e9 depuis "${name}"`,
+                description: `Mod\èle cr\é\é depuis "${name}"`,
                 type: 'document',
                 content: html,
             });
-            toast.success('Document sauvegard\u00e9 comme mod\u00e8le');
+            toast.success('Document sauvegard\é comme mod\èle');
             return;
         }
 
@@ -2077,7 +2077,7 @@ ${html}
             return;
         }
         if (action === 'downloadPdf') {
-            toast.info("G\u00E9n\u00E9ration du PDF via le gestionnaire d'impression...");
+            toast.info("G\én\ération du PDF via le gestionnaire d'impression...");
             window.print();
         }
         if (action === 'download_docx') {

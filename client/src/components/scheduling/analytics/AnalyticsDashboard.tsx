@@ -100,9 +100,9 @@ const CATEGORY_COLORS = {
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
-  meetings: 'R\u00e9unions',
+  meetings: 'R\éunions',
   focus: 'Temps de focus',
-  tasks: 'T\u00e2ches',
+  tasks: 'T\âches',
   breaks: 'Pauses',
   other: 'Autre',
 };
@@ -221,7 +221,7 @@ export function AnalyticsDashboard({
           description={`${Math.round(analytics.totalHours / (selectedPeriod === '7d' ? 7 : selectedPeriod === '14d' ? 14 : 30))}h/jour en moyenne`}
         />
         <SummaryCard
-          title="R\u00e9unions"
+          title="R\éunions"
           value={`${Math.round(analytics.breakdown.find((b) => b.category === 'meetings')?.hours || 0)}h`}
           icon={Users}
           color={CATEGORY_COLORS.meetings.text}
@@ -235,7 +235,7 @@ export function AnalyticsDashboard({
           description={`${analytics.breakdown.find((b) => b.category === 'focus')?.percent.toFixed(0) || 0}% du temps`}
         />
         <SummaryCard
-          title="T\u00e2ches"
+          title="T\âches"
           value={`${Math.round(analytics.breakdown.find((b) => b.category === 'tasks')?.hours || 0)}h`}
           icon={Calendar}
           color={CATEGORY_COLORS.tasks.text}
@@ -248,7 +248,7 @@ export function AnalyticsDashboard({
         {/* Breakdown Pie Chart */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">R\u00e9partition du temps</CardTitle>
+            <CardTitle className="text-base">R\épartition du temps</CardTitle>
           </CardHeader>
           <CardContent>
             <BreakdownChart breakdown={analytics.breakdown} />
@@ -258,7 +258,7 @@ export function AnalyticsDashboard({
         {/* Daily Chart */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">\u00c9volution quotidienne</CardTitle>
+            <CardTitle className="text-base">\Évolution quotidienne</CardTitle>
           </CardHeader>
           <CardContent>
             <DailyChart stats={dailyStats} />
@@ -288,7 +288,7 @@ export function AnalyticsDashboard({
       {/* Day Breakdown */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">D\u00e9tail par jour</CardTitle>
+          <CardTitle className="text-base">D\étail par jour</CardTitle>
         </CardHeader>
         <CardContent>
           <DayBreakdownTable stats={dailyStats} />
@@ -369,7 +369,7 @@ function BreakdownChart({ breakdown }: BreakdownChartProps) {
   if (total === 0) {
     return (
       <div className="h-48 flex items-center justify-center text-muted-foreground">
-        Aucune donn\u00e9e
+        Aucune donn\ée
       </div>
     );
   }
@@ -517,7 +517,7 @@ function DailyChart({ stats }: DailyChartProps) {
                   <div className="text-sm">
                     <div className="font-medium">{format(day.date, 'EEEE d MMMM', { locale: fr })}</div>
                     <div className="text-muted-foreground">
-                      {day.hours > 0 ? `${day.hours.toFixed(1)}h total` : 'Aucune activit\u00e9'}
+                      {day.hours > 0 ? `${day.hours.toFixed(1)}h total` : 'Aucune activit\é'}
                     </div>
                   </div>
                 </TooltipContent>
@@ -613,9 +613,9 @@ function DayBreakdownTable({ stats }: DayBreakdownTableProps) {
           <tr className="border-b">
             <th className="text-left py-2 font-medium">Jour</th>
             <th className="text-right py-2 font-medium">Total</th>
-            <th className="text-right py-2 font-medium text-blue-500">R\u00e9unions</th>
+            <th className="text-right py-2 font-medium text-blue-500">R\éunions</th>
             <th className="text-right py-2 font-medium text-green-500">Focus</th>
-            <th className="text-right py-2 font-medium text-purple-500">T\u00e2ches</th>
+            <th className="text-right py-2 font-medium text-purple-500">T\âches</th>
           </tr>
         </thead>
         <tbody>
@@ -746,8 +746,8 @@ function generateInsights(
     insights.push({
       id: 'high-meetings',
       type: 'warning',
-      title: 'Beaucoup de r\u00e9unions',
-      description: `Les r\u00e9unions repr\u00e9sentent ${meetingPercent.toFixed(0)}% de votre temps. Envisagez de bloquer des cr\u00e9neaux de focus.`,
+      title: 'Beaucoup de r\éunions',
+      description: `Les r\éunions repr\ésentent ${meetingPercent.toFixed(0)}% de votre temps. Envisagez de bloquer des cr\éneaux de focus.`,
       metric: {
         value: meetingPercent,
         unit: '%',
@@ -762,7 +762,7 @@ function generateInsights(
       id: 'low-focus',
       type: 'suggestion',
       title: 'Peu de temps de focus',
-      description: 'Vous pourriez b\u00e9n\u00e9ficier de plus de blocs de temps pour le travail concentr\u00e9.',
+      description: 'Vous pourriez b\én\éficier de plus de blocs de temps pour le travail concentr\é.',
       metric: {
         value: focusPercent,
         unit: '%',
@@ -778,7 +778,7 @@ function generateInsights(
         id: 'increasing-load',
         type: 'warning',
         title: 'Charge en hausse',
-        description: `Votre charge a augment\u00e9 de ${change.toFixed(0)}% par rapport \u00e0 la p\u00e9riode pr\u00e9c\u00e9dente.`,
+        description: `Votre charge a augment\é de ${change.toFixed(0)}% par rapport \à la p\ériode pr\éc\édente.`,
         metric: {
           value: Math.round(change),
           unit: '%',
@@ -790,7 +790,7 @@ function generateInsights(
         id: 'decreasing-load',
         type: 'info',
         title: 'Charge en baisse',
-        description: `Votre charge a diminu\u00e9 de ${Math.abs(change).toFixed(0)}% par rapport \u00e0 la p\u00e9riode pr\u00e9c\u00e9dente.`,
+        description: `Votre charge a diminu\é de ${Math.abs(change).toFixed(0)}% par rapport \à la p\ériode pr\éc\édente.`,
         metric: {
           value: Math.round(Math.abs(change)),
           unit: '%',

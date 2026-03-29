@@ -68,7 +68,7 @@ export function QuickNoteDialog({ open, onOpenChange }: QuickNoteDialogProps) {
                 content: content.trim(),
                 color: selectedColor,
             });
-            toast.success('Note enregistr\u00e9e dans Keep');
+            toast.success('Note enregistr\ée dans Keep');
         }
         setTitle('');
         setContent('');
