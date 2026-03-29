@@ -307,7 +307,7 @@ export default function SlidesDashboard() {
                                     </div>
                                 </div>
                                 {/* Footer Info */}
-                                <div className="p-3 bg-card h-[72px] shrink-0 flex flex-col justify-center">
+                                <div className="p-3 bg-card shrink-0 flex flex-col justify-center min-h-[72px]">
                                     <div className="flex items-center justify-between gap-2 mb-1">
                                         <div className="flex items-center gap-2 min-w-0 flex-1">
                                             <div className="bg-yellow-500/10 p-1.5 rounded-sm shrink-0">
@@ -334,10 +334,13 @@ export default function SlidesDashboard() {
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
-                                    <div className="flex items-center gap-2 pl-8">
+                                    <div className="flex items-center gap-2 pl-8 mb-1">
                                         <span className="text-[11px] font-medium text-muted-foreground/70 truncate uppercase tracking-wider">
                                             Ouvert le {new Date(doc.updated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                                         </span>
+                                    </div>
+                                    <div className="pl-8">
+                                        <DocumentTags documentId={doc.id} compact onFilterByTag={setActiveTagFilter} />
                                     </div>
                                 </div>
                             </Card>
