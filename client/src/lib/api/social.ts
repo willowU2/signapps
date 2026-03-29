@@ -1,15 +1,17 @@
 import { getClient, ServiceName } from './factory';
 
-// Social backend routes are prefixed with /social (under /api/v1/social/...)
-const _socialClient = getClient(ServiceName.SOCIAL);
+// Raw axios client for the social service — base URL: http://localhost:3019/api/v1
+// All social backend routes are under /social/... (full path: /api/v1/social/...)
+// Export this so components can call with /social/<path> directly.
+export const socialApiClient = getClient(ServiceName.SOCIAL);
 
-// Thin proxy so all method calls go through /social/<path>
-const socialApiClient = {
-  get: <T = any>(path: string, config?: any) => _socialClient.get<T>(`/social${path}`, config),
-  post: <T = any>(path: string, data?: any, config?: any) => _socialClient.post<T>(`/social${path}`, data, config),
-  patch: <T = any>(path: string, data?: any, config?: any) => _socialClient.patch<T>(`/social${path}`, data, config),
-  put: <T = any>(path: string, data?: any, config?: any) => _socialClient.put<T>(`/social${path}`, data, config),
-  delete: <T = any>(path: string, config?: any) => _socialClient.delete<T>(`/social${path}`, config),
+// Internal helper used by socialApi methods — adds /social prefix automatically
+const s = {
+  get: <T = any>(path: string, config?: any) => socialApiClient.get<T>(`/social${path}`, config),
+  post: <T = any>(path: string, data?: any, config?: any) => socialApiClient.post<T>(`/social${path}`, data, config),
+  patch: <T = any>(path: string, data?: any, config?: any) => socialApiClient.patch<T>(`/social${path}`, data, config),
+  put: <T = any>(path: string, data?: any, config?: any) => socialApiClient.put<T>(`/social${path}`, data, config),
+  delete: <T = any>(path: string, config?: any) => socialApiClient.delete<T>(`/social${path}`, config),
 };
 
 // Aligned with Rust SocialAccount model (snake_case)
@@ -28,46 +30,45 @@ export interface SocialAccount {
   updated_at: string;
 }
 
+// ThreadPost is a frontend-only abstraction (not returned by backend directly)
 export interface ThreadPost {
   id: string;
   content: string;
-  delayMinutes: number; // delay before posting this item (0 for first)
+  delayMinutes: number;
 }
 
+// Aligned with Rust Post model (snake_case)
 export interface SocialPost {
   id: string;
+  user_id: string;
   content: string;
-  platformContent?: Record<string, string>; // per-platform overrides
-  threadPosts?: ThreadPost[]; // multi-post thread array
-  platformOverrides?: Record<string, { content: string; threadPosts?: ThreadPost[] }>; // full per-platform overrides
-  accounts: string[]; // account IDs
-  status: 'draft' | 'scheduled' | 'published' | 'failed';
-  scheduledAt?: string;
-  publishedAt?: string;
-  mediaUrls?: string[];
-  hashtags?: string[];
-  repeatInterval?: number; // recurring post interval in days (0 or undefined = no repeat)
-  engagementCount?: number;
-  likesCount?: number;
-  sharesCount?: number;
-  commentsCount?: number;
-  platformPostIds?: Record<string, string>;
-  createdAt: string;
-  updatedAt: string;
+  status: string; // 'draft' | 'scheduled' | 'published' | 'failed'
+  media_urls: string[] | Record<string, unknown>;
+  hashtags: string[] | Record<string, unknown>;
+  scheduled_at?: string;
+  published_at?: string;
+  error_message?: string;
+  is_evergreen: boolean;
+  template_id?: string;
+  created_at: string;
+  updated_at: string;
 }
 
+// Aligned with Rust InboxItem model (snake_case)
 export interface InboxItem {
   id: string;
-  accountId: string;
-  platform: SocialAccount['platform'];
-  type: 'comment' | 'mention' | 'dm';
-  authorName: string;
-  authorUsername: string;
-  authorAvatar?: string;
-  content: string;
-  read: boolean;
-  postId?: string;
-  createdAt: string;
+  account_id: string;
+  platform_item_id?: string;
+  item_type: string; // 'comment' | 'mention' | 'dm'
+  author_name?: string;
+  author_avatar?: string;
+  content?: string;
+  post_id?: string;
+  parent_id?: string;
+  is_read: boolean;
+  sentiment?: string;
+  received_at: string;
+  created_at: string;
 }
 
 export interface AnalyticsOverview {
@@ -92,24 +93,30 @@ export interface PlatformEngagement {
   posts: number;
 }
 
+// Aligned with Rust RssFeed model (snake_case)
 export interface RssFeed {
   id: string;
-  name: string;
-  url: string;
-  targetAccountIds: string[];
-  template: string; // supports {{title}} {{link}} {{description}}
-  active: boolean;
-  lastCheckedAt?: string;
-  createdAt: string;
+  user_id: string;
+  feed_url: string;
+  name?: string;
+  target_accounts: string[] | Record<string, unknown>;
+  post_template?: string;
+  is_active: boolean;
+  last_checked_at?: string;
+  last_item_guid?: string;
+  check_interval_minutes: number;
+  created_at: string;
 }
 
+// Aligned with Rust PostTemplate model (snake_case)
 export interface PostTemplate {
   id: string;
+  user_id: string;
   name: string;
   content: string;
-  hashtags: string[];
-  category: string;
-  createdAt: string;
+  hashtags: string[] | Record<string, unknown>;
+  category?: string;
+  created_at: string;
 }
 
 export interface AiGenerateRequest {
@@ -118,68 +125,88 @@ export interface AiGenerateRequest {
   tone?: string;
 }
 
+// Aligned with backend ai_generate response: only `content` is guaranteed
 export interface AiGenerateResponse {
   content: string;
-  hashtags: string[];
+  hashtags?: string[];
 }
 
+// Aligned with Rust Signature model (snake_case)
 export interface Signature {
   id: string;
+  user_id: string;
   name: string;
   content: string;
-  autoAdd: boolean;
-  createdAt: string;
+  is_auto_add: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
+// Aligned with Rust MediaItem model (snake_case)
 export interface MediaItem {
   id: string;
-  url: string;
+  user_id: string;
   filename: string;
-  mimeType: string;
-  size: number;
+  original_name?: string;
+  mime_type: string;
+  size_bytes: number;
+  url: string;
+  thumbnail_url?: string;
   width?: number;
   height?: number;
-  alt?: string;
-  createdAt: string;
+  duration_seconds?: number;
+  tags: unknown;
+  usage_count: number;
+  created_at: string;
 }
 
+// Aligned with Rust ShortUrl model (snake_case)
 export interface ShortUrl {
   id: string;
-  originalUrl: string;
-  shortCode: string;
-  shortUrl: string;
-  postId?: string;
+  user_id: string;
+  short_code: string;
+  original_url: string;
+  post_id?: string;
   clicks: number;
-  createdAt: string;
+  created_at: string;
 }
 
+// Aligned with Rust Webhook model (snake_case)
 export interface Webhook {
   id: string;
+  user_id: string;
   name: string;
   url: string;
-  events: string[];
+  events: string[] | Record<string, unknown>;
+  account_filter?: string;
   secret?: string;
-  active: boolean;
-  lastTriggeredAt?: string;
-  createdAt: string;
+  is_active: boolean;
+  last_triggered_at?: string;
+  last_status_code?: number;
+  failure_count: number;
+  created_at: string;
 }
 
+// Aligned with Rust Workspace model (snake_case)
 export interface Workspace {
   id: string;
+  owner_id: string;
   name: string;
+  slug: string;
+  avatar_url?: string;
   description?: string;
-  ownerId: string;
-  memberCount: number;
-  createdAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
+// Aligned with Rust WorkspaceMember model (snake_case)
 export interface WorkspaceMember {
   id: string;
-  userId: string;
-  username: string;
-  displayName: string;
-  role: 'owner' | 'admin' | 'member';
-  joinedAt: string;
+  workspace_id: string;
+  user_id: string;
+  role: string;
+  invited_at: string;
+  accepted_at?: string;
 }
 
 // Aligned with Rust PostComment struct in models.rs
@@ -205,48 +232,74 @@ export interface TimeSlot {
   created_at: string;
 }
 
+// Aligned with Rust ContentSet model (snake_case)
 export interface ContentSet {
   id: string;
+  user_id: string;
   name: string;
   description?: string;
-  postIds: string[];
-  createdAt: string;
+  content: string;
+  media_urls: unknown;
+  hashtags: unknown;
+  target_accounts: unknown;
+  platform_overrides: unknown;
+  signature_id?: string;
+  created_at: string;
+  updated_at: string;
 }
 
+// Aligned with Rust ApiKey model (snake_case)
 export interface ApiKeyInfo {
   id: string;
+  user_id: string;
   name: string;
-  prefix: string;
-  scopes: string[];
-  lastUsedAt?: string;
-  expiresAt?: string;
-  revoked: boolean;
-  createdAt: string;
+  key_prefix: string;
+  scopes: string[] | Record<string, unknown>;
+  rate_limit_per_hour: number;
+  last_used_at?: string;
+  expires_at?: string;
+  is_active: boolean;
+  created_at: string;
 }
 
 export const socialApi = {
   accounts: {
-    list: () => socialApiClient.get<SocialAccount[]>('/accounts'),
+    list: () => s.get<SocialAccount[]>('/accounts'),
     create: (data: Record<string, string>) =>
-      socialApiClient.post<SocialAccount>('/accounts', data),
+      s.post<SocialAccount>('/accounts', data),
     update: (id: string, data: Partial<SocialAccount>) =>
-      socialApiClient.patch<SocialAccount>(`/accounts/${id}`, data),
-    delete: (id: string) => socialApiClient.delete(`/accounts/${id}`),
-    refreshToken: (id: string) => socialApiClient.post(`/accounts/${id}/refresh-token`),
+      s.patch<SocialAccount>(`/accounts/${id}`, data),
+    delete: (id: string) => s.delete(`/accounts/${id}`),
+    refreshToken: (id: string) => s.post(`/accounts/${id}/refresh-token`),
   },
 
   posts: {
     // Backend returns SocialPost[] array directly (no pagination wrapper)
     list: (params?: { status?: string; accountId?: string; page?: number; limit?: number }) =>
-      socialApiClient.get<SocialPost[]>('/posts', { params }),
-    get: (id: string) => socialApiClient.get<SocialPost>(`/posts/${id}`),
-    create: (data: Partial<SocialPost>) => socialApiClient.post<SocialPost>('/posts', data),
-    update: (id: string, data: Partial<SocialPost>) => socialApiClient.patch<SocialPost>(`/posts/${id}`, data),
-    delete: (id: string) => socialApiClient.delete(`/posts/${id}`),
-    publish: (id: string) => socialApiClient.post<SocialPost>(`/posts/${id}/publish`),
+      s.get<SocialPost[]>('/posts', { params }),
+    get: (id: string) => s.get<SocialPost>(`/posts/${id}`),
+    // CreatePostRequest: content, media_urls?, hashtags?, scheduled_at?, is_evergreen?, template_id?, account_ids?
+    create: (data: {
+      content: string;
+      media_urls?: unknown;
+      hashtags?: unknown;
+      scheduled_at?: string;
+      is_evergreen?: boolean;
+      template_id?: string;
+      account_ids?: string[];
+    }) => s.post<SocialPost>('/posts', data),
+    update: (id: string, data: {
+      content?: string;
+      media_urls?: unknown;
+      hashtags?: unknown;
+      scheduled_at?: string;
+      is_evergreen?: boolean;
+    }) => s.patch<SocialPost>(`/posts/${id}`, data),
+    delete: (id: string) => s.delete(`/posts/${id}`),
+    publish: (id: string) => s.post<SocialPost>(`/posts/${id}/publish`),
     schedule: (id: string, scheduledAt: string, repeatInterval?: number) =>
       // Backend expects snake_case fields: scheduled_at, repeat_interval
-      socialApiClient.post<SocialPost>(`/posts/${id}/schedule`, {
+      s.post<SocialPost>(`/posts/${id}/schedule`, {
         scheduled_at: scheduledAt,
         repeat_interval: repeatInterval,
       }),
@@ -254,145 +307,175 @@ export const socialApi = {
 
   comments: {
     list: (postId: string) =>
-      socialApiClient.get<PostComment[]>(`/posts/${postId}/comments`),
+      s.get<PostComment[]>(`/posts/${postId}/comments`),
     create: (postId: string, data: { content: string; parent_comment_id?: string }) =>
-      socialApiClient.post<PostComment>(`/posts/${postId}/comments`, data),
+      s.post<PostComment>(`/posts/${postId}/comments`, data),
     delete: (postId: string, commentId: string) =>
-      socialApiClient.delete(`/posts/${postId}/comments/${commentId}`),
+      s.delete(`/posts/${postId}/comments/${commentId}`),
   },
 
   inbox: {
     // Backend returns InboxItem[] array directly (no pagination wrapper)
     // Backend query params: account_id, item_type, unread_only (not platform/type/unreadOnly)
     list: (params?: { account_id?: string; item_type?: string; unread_only?: boolean }) =>
-      socialApiClient.get<InboxItem[]>('/inbox', { params }),
-    markRead: (id: string) => socialApiClient.patch(`/inbox/${id}/read`),
-    reply: (id: string, content: string) => socialApiClient.post(`/inbox/${id}/reply`, { content }),
+      s.get<InboxItem[]>('/inbox', { params }),
+    markRead: (id: string) => s.patch(`/inbox/${id}/read`),
+    reply: (id: string, content: string) => s.post(`/inbox/${id}/reply`, { content }),
   },
 
   analytics: {
-    overview: () => socialApiClient.get<AnalyticsOverview>('/analytics/overview'),
-    postAnalytics: (postId: string) => socialApiClient.get(`/analytics/posts/${postId}`),
+    overview: () => s.get<AnalyticsOverview>('/analytics/overview'),
+    postAnalytics: (postId: string) => s.get(`/analytics/posts/${postId}`),
     followers: (days?: number) =>
-      socialApiClient.get<FollowerDataPoint[]>('/analytics/followers', { params: { days: days ?? 30 } }),
-    byPlatform: () => socialApiClient.get<PlatformEngagement[]>('/analytics/by-platform'),
+      s.get<FollowerDataPoint[]>('/analytics/followers', { params: { days: days ?? 30 } }),
+    byPlatform: () => s.get<PlatformEngagement[]>('/analytics/by-platform'),
     topPosts: (limit?: number) =>
-      socialApiClient.get<SocialPost[]>('/analytics/top-posts', { params: { limit: limit ?? 10 } }),
+      s.get<SocialPost[]>('/analytics/top-posts', { params: { limit: limit ?? 10 } }),
   },
 
   rssFeeds: {
-    list: () => socialApiClient.get<RssFeed[]>('/rss-feeds'),
-    create: (data: Omit<RssFeed, 'id' | 'createdAt' | 'lastCheckedAt'>) =>
-      socialApiClient.post<RssFeed>('/rss-feeds', data),
-    delete: (id: string) => socialApiClient.delete(`/rss-feeds/${id}`),
-    checkNow: (id: string) => socialApiClient.post(`/rss-feeds/${id}/check`),
-    toggle: (id: string, active: boolean) => socialApiClient.patch(`/rss-feeds/${id}`, { active }),
+    list: () => s.get<RssFeed[]>('/rss-feeds'),
+    create: (data: {
+      feed_url: string;
+      name?: string;
+      target_accounts?: unknown;
+      post_template?: string;
+      check_interval_minutes?: number;
+    }) => s.post<RssFeed>('/rss-feeds', data),
+    delete: (id: string) => s.delete(`/rss-feeds/${id}`),
+    checkNow: (id: string) => s.post(`/rss-feeds/${id}/check`),
+    toggle: (id: string, is_active: boolean) => s.patch(`/rss-feeds/${id}`, { is_active }),
   },
 
   templates: {
-    list: () => socialApiClient.get<PostTemplate[]>('/templates'),
-    create: (data: Omit<PostTemplate, 'id' | 'createdAt'>) => socialApiClient.post<PostTemplate>('/templates', data),
-    update: (id: string, data: Partial<PostTemplate>) =>
-      socialApiClient.patch<PostTemplate>(`/templates/${id}`, data),
-    delete: (id: string) => socialApiClient.delete(`/templates/${id}`),
+    list: () => s.get<PostTemplate[]>('/templates'),
+    create: (data: { name: string; content: string; hashtags?: unknown; category?: string }) =>
+      s.post<PostTemplate>('/templates', data),
+    update: (id: string, data: { name?: string; content?: string; hashtags?: unknown; category?: string }) =>
+      s.patch<PostTemplate>(`/templates/${id}`, data),
+    delete: (id: string) => s.delete(`/templates/${id}`),
   },
 
   signatures: {
-    list: () => socialApiClient.get<Signature[]>('/signatures'),
-    create: (data: Omit<Signature, 'id' | 'createdAt'>) =>
-      socialApiClient.post<Signature>('/signatures', data),
-    update: (id: string, data: Partial<Omit<Signature, 'id' | 'createdAt'>>) =>
-      socialApiClient.patch<Signature>(`/signatures/${id}`, data),
-    delete: (id: string) => socialApiClient.delete(`/signatures/${id}`),
+    list: () => s.get<Signature[]>('/signatures'),
+    create: (data: { name: string; content: string; is_auto_add?: boolean }) =>
+      s.post<Signature>('/signatures', data),
+    update: (id: string, data: { name?: string; content?: string; is_auto_add?: boolean }) =>
+      s.patch<Signature>(`/signatures/${id}`, data),
+    delete: (id: string) => s.delete(`/signatures/${id}`),
   },
 
   media: {
     list: (params?: { mime_type?: string; sort?: string }) =>
-      socialApiClient.get<MediaItem[]>('/media', { params }),
-    create: (data: Omit<MediaItem, 'id' | 'createdAt'>) =>
-      socialApiClient.post<MediaItem>('/media', data),
-    delete: (id: string) => socialApiClient.delete(`/media/${id}`),
+      s.get<MediaItem[]>('/media', { params }),
+    create: (data: {
+      filename: string;
+      mime_type: string;
+      url: string;
+      original_name?: string;
+      size_bytes?: number;
+      thumbnail_url?: string;
+      width?: number;
+      height?: number;
+      tags?: unknown;
+    }) => s.post<MediaItem>('/media', data),
+    delete: (id: string) => s.delete(`/media/${id}`),
   },
 
   shortUrls: {
-    list: () => socialApiClient.get<ShortUrl[]>('/short-urls'),
+    list: () => s.get<ShortUrl[]>('/short-urls'),
     create: (data: { original_url: string; post_id?: string }) =>
-      socialApiClient.post<ShortUrl>('/short-urls', data),
-    delete: (id: string) => socialApiClient.delete(`/short-urls/${id}`),
+      s.post<ShortUrl>('/short-urls', data),
+    delete: (id: string) => s.delete(`/short-urls/${id}`),
   },
 
   webhooks: {
-    list: () => socialApiClient.get<Webhook[]>('/webhooks'),
-    create: (data: Omit<Webhook, 'id' | 'createdAt' | 'lastTriggeredAt'>) =>
-      socialApiClient.post<Webhook>('/webhooks', data),
-    update: (id: string, data: Partial<Webhook>) =>
-      socialApiClient.patch<Webhook>(`/webhooks/${id}`, data),
-    delete: (id: string) => socialApiClient.delete(`/webhooks/${id}`),
-    test: (id: string) => socialApiClient.post(`/webhooks/${id}/test`),
+    list: () => s.get<Webhook[]>('/webhooks'),
+    create: (data: {
+      name: string;
+      url: string;
+      events: unknown;
+      account_filter?: string;
+      secret?: string;
+      is_active?: boolean;
+    }) => s.post<Webhook>('/webhooks', data),
+    update: (id: string, data: Partial<Pick<Webhook, 'name' | 'url' | 'events' | 'is_active' | 'secret'>>) =>
+      s.patch<Webhook>(`/webhooks/${id}`, data),
+    delete: (id: string) => s.delete(`/webhooks/${id}`),
+    test: (id: string) => s.post(`/webhooks/${id}/test`),
   },
 
   workspaces: {
-    list: () => socialApiClient.get<Workspace[]>('/workspaces'),
-    create: (data: { name: string; description?: string }) =>
-      socialApiClient.post<Workspace>('/workspaces', data),
-    get: (id: string) => socialApiClient.get<Workspace>(`/workspaces/${id}`),
-    delete: (id: string) => socialApiClient.delete(`/workspaces/${id}`),
+    list: () => s.get<Workspace[]>('/workspaces'),
+    create: (data: { name: string; slug: string; description?: string; avatar_url?: string }) =>
+      s.post<Workspace>('/workspaces', data),
+    get: (id: string) => s.get<Workspace>(`/workspaces/${id}`),
+    delete: (id: string) => s.delete(`/workspaces/${id}`),
     listMembers: (id: string) =>
-      socialApiClient.get<WorkspaceMember[]>(`/workspaces/${id}/members`),
+      s.get<WorkspaceMember[]>(`/workspaces/${id}/members`),
     inviteMember: (id: string, data: { userId: string; role?: string }) =>
       // Backend expects snake_case: user_id
-      socialApiClient.post<WorkspaceMember>(`/workspaces/${id}/members`, {
+      s.post<WorkspaceMember>(`/workspaces/${id}/members`, {
         user_id: data.userId,
         role: data.role,
       }),
     removeMember: (id: string, userId: string) =>
-      socialApiClient.delete(`/workspaces/${id}/members/${userId}`),
+      s.delete(`/workspaces/${id}/members/${userId}`),
   },
 
   timeSlots: {
-    list: () => socialApiClient.get<TimeSlot[]>('/time-slots'),
+    list: () => s.get<TimeSlot[]>('/time-slots'),
     create: (data: { day_of_week: number; hour: number; minute?: number; account_id?: string }) =>
-      socialApiClient.post<TimeSlot>('/time-slots', data),
-    delete: (id: string) => socialApiClient.delete(`/time-slots/${id}`),
+      s.post<TimeSlot>('/time-slots', data),
+    delete: (id: string) => s.delete(`/time-slots/${id}`),
   },
 
   contentSets: {
-    list: () => socialApiClient.get<ContentSet[]>('/content-sets'),
-    create: (data: Omit<ContentSet, 'id' | 'createdAt'>) =>
-      socialApiClient.post<ContentSet>('/content-sets', data),
-    delete: (id: string) => socialApiClient.delete(`/content-sets/${id}`),
+    list: () => s.get<ContentSet[]>('/content-sets'),
+    create: (data: {
+      name: string;
+      content: string;
+      description?: string;
+      media_urls?: unknown;
+      hashtags?: unknown;
+      target_accounts?: unknown;
+      platform_overrides?: unknown;
+      signature_id?: string;
+    }) => s.post<ContentSet>('/content-sets', data),
+    delete: (id: string) => s.delete(`/content-sets/${id}`),
   },
 
   apiKeys: {
-    list: () => socialApiClient.get<ApiKeyInfo[]>('/api-keys'),
-    create: (data: { name: string; scopes: string[]; expiresAt?: string }) =>
-      socialApiClient.post<ApiKeyInfo & { key: string }>('/api-keys', data),
-    revoke: (id: string) => socialApiClient.post(`/api-keys/${id}/revoke`),
+    list: () => s.get<ApiKeyInfo[]>('/api-keys'),
+    // Backend CreateApiKeyRequest: name, scopes?, rate_limit_per_hour?, expires_at?
+    create: (data: { name: string; scopes?: unknown; rate_limit_per_hour?: number; expires_at?: string }) =>
+      s.post<ApiKeyInfo & { key: string }>('/api-keys', data),
+    revoke: (id: string) => s.post(`/api-keys/${id}/revoke`),
   },
 
   ai: {
     generate: (data: AiGenerateRequest) =>
-      socialApiClient.post<AiGenerateResponse>('/ai/generate', data),
+      s.post<AiGenerateResponse>('/ai/generate', data),
     hashtags: (content: string) =>
-      socialApiClient.post<{ hashtags: string[] }>('/ai/hashtags', { content }),
+      s.post<{ hashtags: string[] }>('/ai/hashtags', { content }),
     bestTime: (accountId: string) =>
-      socialApiClient.post<{ best_times: { day_of_week: number; hour: number; engagement_score: number }[] }>(`/ai/best-time`, { account_id: accountId }),
+      s.post<{ best_times: { day_of_week: number; hour: number; engagement_score: number }[] }>(`/ai/best-time`, { account_id: accountId }),
     smartReplies: (inboxItemId: string) =>
-      socialApiClient.get<{ suggestions: string[] }>(`/ai/smart-replies/${inboxItemId}`),
+      s.get<{ suggestions: string[] }>(`/ai/smart-replies/${inboxItemId}`),
   },
 
   // AI Threads — /api/v1/social/ai-threads
   aiThreads: {
     list: () =>
-      socialApiClient.get<AiThread[]>('/ai-threads'),
+      s.get<AiThread[]>('/ai-threads'),
     create: (data: { title: string; messages?: unknown }) =>
-      socialApiClient.post<AiThread>('/ai-threads', data),
+      s.post<AiThread>('/ai-threads', data),
     get: (id: string) =>
-      socialApiClient.get<AiThread>(`/ai-threads/${id}`),
+      s.get<AiThread>(`/ai-threads/${id}`),
     update: (id: string, data: { title?: string; messages?: unknown }) =>
-      socialApiClient.put<AiThread>(`/ai-threads/${id}`, data),
+      s.put<AiThread>(`/ai-threads/${id}`, data),
     delete: (id: string) =>
-      socialApiClient.delete(`/ai-threads/${id}`),
+      s.delete(`/ai-threads/${id}`),
   },
 };
 

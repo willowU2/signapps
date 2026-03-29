@@ -177,16 +177,27 @@ export const timezonesApi = {
 };
 
 // Out-of-Office API — GET/PUT/DELETE /api/v1/ooo
+// Aligned with Rust OooSettings: uses ooo_start/ooo_end (not start_date/end_date)
 export interface OooSettings {
+    id?: string;
+    user_id?: string;
     enabled: boolean;
-    start_date?: string;
-    end_date?: string;
+    ooo_start?: string;
+    ooo_end?: string;
+    message?: string;
+    updated_at?: string;
+}
+
+export interface SetOooRequest {
+    enabled?: boolean;
+    ooo_start?: string;
+    ooo_end?: string;
     message?: string;
 }
 
 export const oooApi = {
     get: () => calendarClient.get<OooSettings>('/ooo'),
-    set: (data: OooSettings) => calendarClient.put<OooSettings>('/ooo', data),
+    set: (data: SetOooRequest) => calendarClient.put<OooSettings>('/ooo', data),
     delete: () => calendarClient.delete('/ooo'),
 };
 
@@ -233,23 +244,35 @@ export const pollsApi = {
 };
 
 // Meeting Suggestions API — POST /api/v1/calendar/meeting-suggestions
+// Field names aligned with Rust MeetingSuggestionsRequest
 export interface MeetingSuggestionsRequest {
     participant_ids: string[];
     duration_minutes: number;
-    earliest: string;
-    latest: string;
-    count?: number;
+    search_from: string;       // ISO 8601 (was `earliest`)
+    search_until: string;      // ISO 8601 (was `latest`)
+    work_start_hour?: number;
+    work_end_hour?: number;
+    max_suggestions?: number;
 }
 
+// Aligned with Rust TimeSlot struct
 export interface MeetingSuggestion {
-    start_time: string;
-    end_time: string;
+    start: string;
+    end: string;
     score: number;
+    conflicts: number;
+    conflicted_participants: string[];
+}
+
+export interface MeetingSuggestionsResponse {
+    slots: MeetingSuggestion[];
+    participants_checked: number;
+    search_range_days: number;
 }
 
 export const meetingSuggestionsApi = {
     suggest: (data: MeetingSuggestionsRequest) =>
-        calendarClient.post<MeetingSuggestion[]>('/calendar/meeting-suggestions', data),
+        calendarClient.post<MeetingSuggestionsResponse>('/calendar/meeting-suggestions', data),
 };
 
 // Imports & ICS

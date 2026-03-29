@@ -445,7 +445,7 @@ ${header}
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
-  if (isLoading) {
+  if (isLoading && contacts.length === 0) {
     return (
       <AppLayout>
         <div className="space-y-6">
