@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useRecentHistory } from "@/components/recent-history";
 import { useTabSync } from "@/hooks/use-tab-sync";
+import { cleanupLocalStorage } from "@/lib/cleanup-local-storage";
 
 /**
  * Global hooks wrapper — mounts hooks that need to run app-wide.
@@ -13,6 +14,11 @@ import { useTabSync } from "@/hooks/use-tab-sync";
 export function GlobalHooks() {
   useKeyboardShortcuts();
   useRecentHistory();
+
+  // Run localStorage cleanup once on app boot (internally debounced to 1x/day)
+  useEffect(() => {
+    cleanupLocalStorage();
+  }, []);
 
   const router = useRouter();
   useTabSync(
