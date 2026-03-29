@@ -13,6 +13,9 @@ import { usePageTitle } from "@/hooks/use-page-title";
 import { trackDocVisit } from '@/components/ui/quick-switcher';
 import { DocShareSocial } from '@/components/interop/DocShareSocial';
 import { AiDocActions } from '@/components/interop/AiDocSummarize';
+import { LinkedEntitiesPanel } from '@/components/interop/linked-entities-panel';
+import { CrossModuleComments } from '@/components/interop/cross-module-comments';
+import { SmartSuggestions } from '@/components/interop/smart-suggestions';
 import { AiDocTranslate } from '@/components/interop/AiDocTranslate';
 import { DocAutoSaveDrive, DocExportDrive } from '@/components/interop/DocAutoSaveDrive';
 import { DocCollabIndicator } from '@/components/interop/DocCollabIndicator';
@@ -87,8 +90,14 @@ function EditorContent() {
                     <Editor documentId={id} documentName={name || undefined} className="h-full" bucket={name ? 'drive' : undefined} fileName={name || undefined} userName={userName} />
                 </div>
                 {id !== 'new' && (
-                    <div className="border-t p-4 bg-background/50">
+                    <div className="border-t p-4 bg-background/50 space-y-4">
                         <EntityLinks entityType="document" entityId={id} />
+                        {/* Idea 28: Linked entities panel */}
+                        <LinkedEntitiesPanel entityType="document" entityId={id} />
+                        {/* Idea 29: Smart suggestions */}
+                        <SmartSuggestions entityType="document" entityId={id} entityTitle={name || 'Document'} />
+                        {/* Idea 43: Cross-module comments */}
+                        <CrossModuleComments entityType="document" entityId={id} compact />
                     </div>
                 )}
             </div>

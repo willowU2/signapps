@@ -52,12 +52,12 @@ export function DriveShareEmail({ node }: DriveShareEmailProps) {
     try {
       // Use the mail API if available
       const { mailApi } = await import('@/lib/api/mail').catch(() => ({ mailApi: null }));
-      if (mailApi && (mailApi as any).send) {
-        await (mailApi as any).send({
+      if (mailApi && mailApi.sendEmail) {
+        await mailApi.sendEmail({
           to: recipients,
           subject: `Partage de fichier : ${node.name}`,
-          body: `${message || `Bonjour,\n\nJe partage avec vous le fichier "${node.name}".\n`}\n\nLien d'accès : ${fileUrl}\n\nCordialement`,
-        });
+          html_body: `${message || `Bonjour,\n\nJe partage avec vous le fichier "${node.name}".\n`}\n\nLien d'accès : <a href="${fileUrl}">${fileUrl}</a>\n\nCordialement`,
+        } as any);
       } else {
         // Fallback: mailto link
         const subject = encodeURIComponent(`Partage : ${node.name}`);

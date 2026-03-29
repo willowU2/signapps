@@ -93,7 +93,16 @@ export default function UsersPage() {
                 await usersApi.update(selectedUser.id, data as UpdateUserRequest)
                 toast.success("Utilisateur mis à jour")
             } else {
-                await usersApi.create(data as CreateUserRequest)
+                const res = await usersApi.create(data as CreateUserRequest)
+                // Idea 18: Trigger HR onboarding on user creation
+                const newUser = res.data as { id: string; email?: string; display_name?: string; username?: string }
+                if (newUser?.id) {
+                    triggerHrOnboarding(
+                        newUser.id,
+                        newUser.email || (data as CreateUserRequest).email || '',
+                        newUser.display_name || (data as CreateUserRequest).username || ''
+                    )
+                }
                 toast.success("Utilisateur créé avec succès")
             }
             setIsSheetOpen(false)

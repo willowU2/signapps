@@ -12,7 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Shield, Download, RefreshCw, Trash2 } from 'lucide-react';
+import { Shield, Download, RefreshCw, Trash2, Filter } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { PageHeader } from '@/components/ui/page-header';

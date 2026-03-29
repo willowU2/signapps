@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { X, Minimize2, Maximize2 } from "lucide-react";
 import { CalendarContactSuggestions } from "@/components/interop/CalendarContactSuggestions";
+import { interopStore } from "@/lib/interop/store";
 import {
     Dialog,
     DialogContent,
@@ -109,6 +110,8 @@ export function ComposeRichDialog({
                     body_html: bodyHtml,
                 });
                 toast.success(encryptEnabled ? "Encrypted email sent!" : "Email envoyé !");
+                // Feature 5: auto-log sent email in activity timeline
+                interopStore.logActivity({ type: "mail_sent", contactEmail: recipient.trim(), title: `Email envoyé : ${subject.trim() || "(Sans objet)"}`, description: `À ${recipient.trim()}`, entityId: Date.now().toString(), entityType: "mail" });
                 handleReset();
                 onOpenChange(false);
             } catch {

@@ -18,8 +18,10 @@ export interface KeepNote {
   title: string;
   content: string;
   checklist?: Array<{ text: string; checked: boolean }>;
+  checklistItems?: Array<{ id: string; text: string; checked: boolean }>;
   color?: string;
-  created_at: string;
+  created_at?: string;
+  createdAt?: string;
 }
 
 /** Idea 8 – Convert Keep note to a document */

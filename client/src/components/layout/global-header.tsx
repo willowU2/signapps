@@ -34,6 +34,8 @@ import { NotificationPopover } from '@/components/notifications/notification-pop
 import { ChangelogDialog } from '@/components/onboarding/ChangelogDialog';
 import { RecentHistory } from '@/components/recent-history';
 import { NotificationBadge } from '@/components/notifications/notification-badge';
+import { GlobalUndoButton } from '@/components/interop/global-undo-clipboard';
+import { CrossModuleSearchBar } from '@/components/interop/cross-module-search-filters';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
     Breadcrumb,
@@ -487,6 +489,8 @@ export function GlobalHeader() {
                     <div className="mr-2 flex items-center gap-2">
                         <ChangelogDialog />
                         <RecentHistory />
+                        {/* Idea 40: Global undo across modules */}
+                        <GlobalUndoButton />
                         <NotificationPopover />
                     </div>
                 )}

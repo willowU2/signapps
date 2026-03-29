@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
+import { MonitoringAlertToTicket } from '@/components/interop/it-hr-compliance-bridge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -779,15 +780,26 @@ export default function MonitoringPage() {
                                 </p>
                               </div>
                             </div>
-                            {!alert.acknowledged_at && !alert.resolved_at && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleAcknowledgeAlert(alert.id)}
-                              >
-                                Acknowledge
-                              </Button>
-                            )}
+                            <div className="flex gap-1.5 items-center">
+                              {/* Idea 17: Create IT incident from monitoring alert */}
+                              {!alert.resolved_at && (
+                                <MonitoringAlertToTicket
+                                  alertId={alert.id}
+                                  alertTitle={alert.config_name || alert.message || 'Alerte'}
+                                  severity={(['low','medium','high','critical'].includes(alert.severity) ? alert.severity : 'medium') as 'low'|'medium'|'high'|'critical'}
+                                  serviceAffected={alert.config_name || 'unknown'}
+                                />
+                              )}
+                              {!alert.acknowledged_at && !alert.resolved_at && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleAcknowledgeAlert(alert.id)}
+                                >
+                                  Acknowledge
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>

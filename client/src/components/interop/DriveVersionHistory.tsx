@@ -42,20 +42,22 @@ export function DriveVersionHistory({ node }: DriveVersionHistoryProps) {
   const { data: versions = [], isLoading: loadingVersions } = useQuery<VersionEntry[]>({
     queryKey: ['drive-versions', node.id],
     queryFn: async () => {
-      // Versions from existing versions store if available
-      const { versionsStore } = await import('@/stores/versions-store').catch(() => ({ versionsStore: null }));
-      if (versionsStore) {
-        const state = (versionsStore as any).getState?.() ?? {};
-        const docVersions = (state.versions ?? {})[node.target_id ?? node.id] ?? [];
-        return docVersions.slice(0, 20).map((v: any, i: number) => ({
-          id: v.id ?? `v${i}`,
-          version: docVersions.length - i,
-          createdAt: v.createdAt ?? v.created_at ?? node.updated_at,
-          size: v.size ?? node.size ?? 0,
-          author: v.author ?? 'Vous',
-        }));
+      try {
+        // Try fetching via the versions API directly
+        const { versionsApi } = await import('@/lib/office/versions/api');
+        const resp = await versionsApi.getVersions({ documentId: node.target_id ?? node.id, page: 1, pageSize: 20 });
+        if (resp.versions && resp.versions.length > 0) {
+          return resp.versions.map((v: any, i: number) => ({
+            id: v.id,
+            version: resp.versions.length - i,
+            createdAt: v.createdAt ?? v.created_at ?? node.updated_at,
+            size: v.size ?? node.size ?? 0,
+            author: v.createdBy?.displayName ?? v.author ?? 'Vous',
+          }));
+        }
+      } catch {
+        // Fall through to fallback
       }
-      // Fallback: single entry from node metadata
       return [{
         id: node.id,
         version: 1,

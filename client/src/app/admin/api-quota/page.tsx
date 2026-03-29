@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { RefreshCw, Activity, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface ApiQuotaEntry {
   user_id: string;
@@ -60,17 +61,17 @@ export default function ApiQuotaDashboardPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">API Quota Dashboard</h1>
-            <p className="text-muted-foreground">Per-user API usage and rate limit status</p>
-          </div>
-          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </div>
+        <PageHeader
+          title="Quota API"
+          description="Utilisation API par utilisateur et statut des limites de débit"
+          icon={<Activity className="h-5 w-5" />}
+          actions={
+            <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Actualiser
+            </Button>
+          }
+        />
 
         {/* Summary cards */}
         <div className="grid gap-4 md:grid-cols-3">
