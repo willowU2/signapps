@@ -4,6 +4,7 @@ pub mod approval;
 pub mod caldav;
 pub mod calendars;
 pub mod categories;
+pub mod cron_jobs;
 pub mod events;
 pub mod external_sync;
 pub mod floor_plans;

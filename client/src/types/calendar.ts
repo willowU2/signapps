@@ -93,3 +93,76 @@ export interface CalendarMember {
   created_at: string;
   updated_at: string;
 }
+
+export type EventType = 'event' | 'task' | 'leave' | 'shift' | 'booking' | 'milestone' | 'blocker' | 'cron';
+export type EventScope = 'personal' | 'team' | 'org';
+export type EventStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'completed';
+export type EventPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type LeaveType = 'cp' | 'rtt' | 'sick' | 'unpaid' | 'other';
+export type PresenceMode = 'office' | 'remote' | 'absent';
+export type EnergyLevel = 'low' | 'medium' | 'high';
+export type RuleType = 'min_onsite' | 'mandatory_days' | 'max_remote_same_day' | 'min_coverage';
+export type EnforcementLevel = 'soft' | 'hard';
+
+export interface Category {
+  id: string;
+  name: string;
+  color: string;
+  icon?: string;
+  owner_id?: string;
+  org_id?: string;
+  rules: Record<string, unknown>;
+}
+
+export interface PresenceRule {
+  id: string;
+  org_id: string;
+  team_id?: string;
+  rule_type: RuleType;
+  rule_config: Record<string, unknown>;
+  enforcement: EnforcementLevel;
+  active: boolean;
+}
+
+export interface LeaveBalance {
+  id: string;
+  user_id: string;
+  leave_type: LeaveType;
+  year: number;
+  total_days: number;
+  used_days: number;
+  pending_days: number;
+}
+
+export interface TimesheetEntry {
+  id: string;
+  user_id: string;
+  event_id?: string;
+  date: string;
+  hours: number;
+  category_id?: string;
+  auto_generated: boolean;
+  validated: boolean;
+  validated_at?: string;
+  exported_at?: string;
+}
+
+export interface LayerConfig {
+  layer_id: string;
+  enabled: boolean;
+  opacity: number;
+  color_override?: string;
+}
+
+export interface HeadcountPoint {
+  time: string;
+  role: string;
+  count: number;
+}
+
+export interface PresenceViolation {
+  rule_id: string;
+  rule_type: RuleType;
+  enforcement: EnforcementLevel;
+  message: string;
+}

@@ -5,7 +5,7 @@
  * @see factory.ts for client creation details
  */
 import { getClient, ServiceName } from './factory';
-import { Calendar, CreateCalendar, UpdateCalendar, Event, CreateEvent, UpdateEvent, EventAttendee, AddEventAttendee } from '@/types/calendar';
+import { Calendar, CreateCalendar, UpdateCalendar, Event, CreateEvent, UpdateEvent, EventAttendee, AddEventAttendee, LayerConfig } from '@/types/calendar';
 
 // Get the calendar service client (cached)
 const calendarClient = getClient(ServiceName.CALENDAR);
@@ -347,4 +347,96 @@ export const calendarUserSettingsApi = {
         calendarClient.get<{ timezone: string }>('/timezones/me'),
     setTimezone: (timezone: string) =>
         calendarClient.put('/timezones/me', { timezone }),
+};
+
+// ============================================================================
+// Leave Management — /api/v1/events/:id/approve|reject, /api/v1/leave/*
+// ============================================================================
+
+export const leaveApi = {
+    approve: (eventId: string, comment?: string) =>
+        calendarClient.put(`/events/${eventId}/approve`, { comment }),
+    reject: (eventId: string, comment: string) =>
+        calendarClient.put(`/events/${eventId}/reject`, { comment }),
+    balances: () => calendarClient.get('/leave/balances'),
+    predict: (days: number, leaveType: string) =>
+        calendarClient.get('/leave/balances/predict', { params: { days, leave_type: leaveType } }),
+    teamConflicts: (start: string, end: string) =>
+        calendarClient.get('/leave/team-conflicts', { params: { start, end } }),
+    delegate: (eventId: string, assignments: Array<{ task_id: string; assign_to: string }>) =>
+        calendarClient.post('/leave/delegate', { event_id: eventId, assignments }),
+};
+
+// ============================================================================
+// Presence — /api/v1/presence/*
+// ============================================================================
+
+export const presenceApi = {
+    rules: () => calendarClient.get('/presence/rules'),
+    createRule: (rule: any) => calendarClient.post('/presence/rules', rule),
+    updateRule: (id: string, rule: any) => calendarClient.put(`/presence/rules/${id}`, rule),
+    deleteRule: (id: string) => calendarClient.delete(`/presence/rules/${id}`),
+    validate: (action: any) => calendarClient.post('/presence/validate', action),
+    teamStatus: (date: string) => calendarClient.get('/presence/team-status', { params: { date } }),
+    headcount: (date: string, teamId?: string) =>
+        calendarClient.get('/presence/headcount', { params: { date, team_id: teamId } }),
+};
+
+// ============================================================================
+// Categories — /api/v1/categories
+// ============================================================================
+
+export const categoriesApi = {
+    list: () => calendarClient.get('/categories'),
+    create: (cat: any) => calendarClient.post('/categories', cat),
+    update: (id: string, cat: any) => calendarClient.put(`/categories/${id}`, cat),
+    delete: (id: string) => calendarClient.delete(`/categories/${id}`),
+};
+
+// ============================================================================
+// Timesheets — /api/v1/timesheets
+// ============================================================================
+
+export const timesheetsApi = {
+    list: (params: { user_id?: string; week?: string }) =>
+        calendarClient.get('/timesheets', { params }),
+    update: (id: string, data: any) => calendarClient.put(`/timesheets/${id}`, data),
+    validate: (week: string) => calendarClient.post('/timesheets/validate', { week }),
+    export: (start: string, end: string) =>
+        calendarClient.post('/timesheets/export', { start, end }),
+    generate: (start: string, end: string) =>
+        calendarClient.post('/timesheets/generate', { start, end }),
+};
+
+// ============================================================================
+// Approval Workflows — /api/v1/approval-workflows
+// ============================================================================
+
+export const approvalWorkflowsApi = {
+    list: () => calendarClient.get('/approval-workflows'),
+    create: (wf: any) => calendarClient.post('/approval-workflows', wf),
+    update: (id: string, wf: any) => calendarClient.put(`/approval-workflows/${id}`, wf),
+    delete: (id: string) => calendarClient.delete(`/approval-workflows/${id}`),
+};
+
+// ============================================================================
+// Layers Config — /api/v1/layers/config
+// ============================================================================
+
+export const layersApi = {
+    getConfig: () => calendarClient.get<LayerConfig[]>('/layers/config'),
+    saveConfig: (config: LayerConfig[]) =>
+        calendarClient.put('/layers/config', { layers: config }),
+};
+
+// ============================================================================
+// CRON Jobs — /api/v1/cron-jobs
+// ============================================================================
+
+export const cronJobsApi = {
+    list: () => calendarClient.get('/cron-jobs'),
+    create: (job: any) => calendarClient.post('/cron-jobs', job),
+    update: (id: string, job: any) => calendarClient.put(`/cron-jobs/${id}`, job),
+    delete: (id: string) => calendarClient.delete(`/cron-jobs/${id}`),
+    run: (id: string) => calendarClient.post(`/cron-jobs/${id}/run`),
 };

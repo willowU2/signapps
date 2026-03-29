@@ -117,9 +117,9 @@ async fn main() -> anyhow::Result<()> {
 fn build_router(state: AppState) -> Router {
     use axum::routing::{any, delete, get, post, put};
     use handlers::{
-        approval, caldav, calendars, categories, events, external_sync, floor_plans, icalendar,
-        layers, leave, meeting_suggestions, notifications, ooo, polls, presence, push, recurrence,
-        resources, shares, tasks, timesheets, timezones, websocket,
+        approval, caldav, calendars, categories, cron_jobs, events, external_sync, floor_plans,
+        icalendar, layers, leave, meeting_suggestions, notifications, ooo, polls, presence, push,
+        recurrence, resources, shares, tasks, timesheets, timezones, websocket,
     };
 
     // Public routes (no auth required)
@@ -304,6 +304,12 @@ fn build_router(state: AppState) -> Router {
             "/api/v1/layers/config",
             get(layers::get_layer_config).put(layers::save_layer_config),
         )
+        // CRON job routes (scheduler absorbed into calendar)
+        .route("/api/v1/cron-jobs", get(cron_jobs::list_cron_jobs))
+        .route("/api/v1/cron-jobs", post(cron_jobs::create_cron_job))
+        .route("/api/v1/cron-jobs/:id", put(cron_jobs::update_cron_job))
+        .route("/api/v1/cron-jobs/:id", delete(cron_jobs::delete_cron_job))
+        .route("/api/v1/cron-jobs/:id/run", post(cron_jobs::run_cron_job))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
