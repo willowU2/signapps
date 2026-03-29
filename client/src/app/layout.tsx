@@ -23,6 +23,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "SignApps Platform",
+<<<<<<< Updated upstream
   description: "Plateforme collaborative tout-en-un",
   manifest: "/manifest.json",
   appleWebApp: {
@@ -30,6 +31,10 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "SignApps",
   },
+=======
+  description: "Plateforme de gestion d'infrastructure microservices",
+  manifest: "/manifest.json",
+>>>>>>> Stashed changes
   icons: {
     icon: [
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },

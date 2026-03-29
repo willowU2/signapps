@@ -107,14 +107,25 @@ export function RightSidebar() {
 
   return (
     <>
-      {/* Expanded Panel */}
+      {/* Expanded Panel — fixed, sits to the left of the icon bar.
+          When closed: translate it fully off-screen to the right (past the icon bar).
+          We shift by panel-width + icon-bar-width = 20rem + 4rem = 24rem. */}
       <div
         ref={panelRef}
         className={cn(
+<<<<<<< Updated upstream
           "hidden md:flex fixed top-0 right-16 bottom-0 w-80 bg-background border-l border-border",
           "transition-all duration-300 ease-in-out z-30 flex-col shadow-xl",
           isOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none"
+=======
+          "hidden md:flex fixed top-0 bottom-0 bg-background border-l border-border transition-transform duration-300 ease-in-out z-30 flex-col shadow-xl",
+          isRightSidebarOpen ? "translate-x-0" : "translate-x-[24rem]"
+>>>>>>> Stashed changes
         )}
+        style={{
+          right: 'var(--right-sidebar-icon-width)',
+          width: 'var(--right-sidebar-panel-width)',
+        }}
       >
         {/* Panel header */}
         <div className="h-14 flex items-center justify-between px-4 border-b border-border shrink-0">
@@ -219,8 +230,16 @@ export function RightSidebar() {
         </ScrollArea>
       </div>
 
+<<<<<<< Updated upstream
       {/* Icon Bar (always visible, fixed on far right) */}
       <div ref={iconBarRef} className="hidden md:flex fixed top-0 right-0 bottom-0 w-16 bg-background border-l border-border z-40 flex-col items-center py-4 gap-1">
+=======
+      {/* Icon Bar — always visible on the far right */}
+      <div
+        className="hidden md:flex fixed top-0 right-0 bottom-0 bg-background border-l border-border z-40 flex-col items-center py-4 gap-4"
+        style={{ width: 'var(--right-sidebar-icon-width)' }}
+      >
+>>>>>>> Stashed changes
         <TooltipProvider delayDuration={0}>
           {widgetItems.map((item) => {
             const isActive = isOpen && activeRightWidget === item.id && panelMode === "widget";

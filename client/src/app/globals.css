@@ -51,6 +51,14 @@
   --color-ai-purple: #8b5cf6;
 }
 
+/* ───────────── Sidebar Width Variables ───────────── */
+:root {
+  --sidebar-width: 16rem;           /* 256px = w-64 */
+  --sidebar-collapsed-width: 4rem;  /* 64px  = w-16 */
+  --right-sidebar-icon-width: 4rem; /* 64px  = w-16 */
+  --right-sidebar-panel-width: 20rem; /* 320px = w-80 */
+}
+
 /* ───────────── Light Mode ───────────── */
 :root {
   --radius: 0.625rem;

@@ -62,11 +62,13 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
+// Right sidebar widget types
+export type RightWidgetType = 'chat' | 'calendar' | 'tasks' | 'notes' | 'details';
+
 // UI State
 export type RightWidgetType = 'chat' | 'calendar' | 'tasks' | 'notes' | 'details';
 
 interface UIState {
-  sidebarOpen: boolean;
   sidebarCollapsed: boolean;
   rightSidebarOpen: boolean;
   activeRightWidget: RightWidgetType;
@@ -89,10 +91,13 @@ interface UIState {
 export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
-      sidebarOpen: true,
       sidebarCollapsed: false,
       rightSidebarOpen: false,
+<<<<<<< Updated upstream
       activeRightWidget: 'chat',
+=======
+      activeRightWidget: 'chat' as RightWidgetType,
+>>>>>>> Stashed changes
       theme: 'system',
       createWorkspaceModalOpen: false,
       createProjectModalOpen: false,
