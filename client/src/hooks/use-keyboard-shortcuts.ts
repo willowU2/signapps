@@ -136,10 +136,7 @@ export function useKeyboardShortcuts() {
           return;
         }
         if (key === "s" && !e.shiftKey) {
-<<<<<<< Updated upstream
-=======
           // Let editor components handle their own save; dispatch global event as fallback
->>>>>>> Stashed changes
           if (
             pathname.startsWith("/docs") ||
             pathname.startsWith("/sheets") ||

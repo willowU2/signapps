@@ -29,15 +29,9 @@ export function WorkspaceShell({
     return (
         // AQ-MOBI: no left padding on mobile (sidebar hidden as drawer), md+ uses sidebar width
         <div className={cn(
-<<<<<<< Updated upstream
             "h-screen w-full flex flex-col overflow-hidden transition-all duration-300",
             sidebarCollapsed ? 'md:pl-16' : 'md:pl-64',
             rightSidebarOpen ? 'md:pr-[24rem]' : 'md:pr-16',
-=======
-            "h-screen w-full flex flex-col overflow-hidden transition-all duration-200",
-            sidebarCollapsed ? 'md:pl-16' : 'md:pl-64',
-            rightSidebarOpen ? 'md:pr-[calc(var(--right-sidebar-icon-width)+var(--right-sidebar-panel-width))]' : 'md:pr-16',
->>>>>>> Stashed changes
             className
         )}>
             <Sidebar />
