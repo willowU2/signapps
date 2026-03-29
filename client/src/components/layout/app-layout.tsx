@@ -46,7 +46,8 @@ export function AppLayout({ children }: AppLayoutProps) {
             'flex-1 min-w-0 overflow-y-auto rounded-tl-2xl border-l border-t border-border bg-card dark:bg-[#0b0e14] p-4 md:p-6 pb-28 transition-all duration-200'
           )}
         >
-          <div className="w-full fade-in">
+          {/* key on pathname forces fade-in to re-trigger on every page navigation */}
+          <div key={pathname} className="w-full fade-in">
             {children}
           </div>
         </main>

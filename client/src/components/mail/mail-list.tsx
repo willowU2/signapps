@@ -53,7 +53,11 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
     })
 
     return (
-        <button
+        <div
+            role="button"
+            tabIndex={0}
+            onClick={() => onSelect(item.id)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect(item.id); }}
             className={cn(
                 "group relative flex items-center gap-2 px-1 py-0 h-10 text-left text-sm transition-all duration-150 outline-none w-full border-b border-gray-200/60 dark:border-gray-800/60 select-none cursor-pointer hover:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] hover:z-10",
                 selectedId === item.id
@@ -61,7 +65,6 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
                     : "bg-background dark:bg-[#1f1f1f] hover:bg-gray-50/80 dark:hover:bg-[#202124]",
                 !item.read && "bg-background dark:bg-[#1f1f1f]"
             )}
-            onClick={() => onSelect(item.id)}
             {...swipeHandlers}
         >
             <div className="flex-shrink-0 flex items-center gap-2 px-3 text-gray-400 dark:text-gray-500">
@@ -111,7 +114,7 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
                     </button>
                 </SnoozeDatePicker>
             </div>
-        </button>
+        </div>
     )
 }
 

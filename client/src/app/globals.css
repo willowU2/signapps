@@ -224,7 +224,45 @@
   }
 
   .fade-in {
-    animation: fadeIn 0.2s ease-in;
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  /* ── Toast slide-in from right ── */
+  .toast-slide-in {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  /* ── Sidebar active indicator ── */
+  .sidebar-indicator {
+    position: relative;
+  }
+  .sidebar-indicator::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%) scaleY(0);
+    width: 3px;
+    height: 60%;
+    border-radius: 0 3px 3px 0;
+    background-color: var(--primary);
+    transition: transform 0.2s ease-out;
+  }
+  .sidebar-indicator[data-active="true"]::before {
+    transform: translateY(-50%) scaleY(1);
+  }
+
+  /* ── Button press micro-interaction ── */
+  .btn-press {
+    @apply active:scale-[0.98] transition-transform duration-100;
+  }
+
+  /* ── Card hover lift ── */
+  .card-lift {
+    @apply transition-all duration-200 ease-out;
+  }
+  .card-lift:hover {
+    @apply -translate-y-0.5 shadow-md;
   }
 
   /* ── Responsive layout helpers ── */
@@ -246,8 +284,24 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideOutRight {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(100%); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .fade-in {
+  .fade-in,
+  .toast-slide-in {
     animation: none;
   }
 }
