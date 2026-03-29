@@ -128,7 +128,7 @@ export function IncrementalBackupSettings() {
 
         <Button onClick={save} disabled={saving} className="gap-1.5">
           <Save className="h-4 w-4" />
-          {saving ? 'Saving...' : 'Save Settings'}
+          {saving ? 'Enregistrement...' : 'Enregistrer les paramètres'}
         </Button>
       </CardContent>
     </Card>

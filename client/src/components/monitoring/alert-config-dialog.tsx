@@ -338,10 +338,10 @@ export function AlertConfigDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              Annuler
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Saving...' : config ? 'Update' : 'Create'}
+              {loading ? 'Enregistrement...' : config ? 'Mettre à jour' : 'Créer'}
             </Button>
           </DialogFooter>
         </form>

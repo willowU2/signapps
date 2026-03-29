@@ -464,9 +464,9 @@ export function UserSheet({
                   className="h-[52px] px-8 rounded-xl text-[15px] bg-[#4d51f2] hover:bg-[#4d51f2]/90 text-white shadow-sm font-bold transition-all hover:-translate-y-0.5"
                 >
                   {isLoading ? (
-                    <><SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-5 w-5 " /> {isEditing ? "Saving..." : "Creating..."}</>
+                    <><SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-5 w-5 " /> {isEditing ? "Enregistrement..." : "Création..."}</>
                   ) : (
-                    isEditing ? "Save User" : "Create User"
+                    isEditing ? "Enregistrer" : "Créer l'utilisateur"
                   )}
                 </Button>
               </div>

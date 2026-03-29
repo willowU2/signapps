@@ -127,6 +127,18 @@ function getDefaultMessageForStatus(status: number): string {
 }
 
 /**
+ * Centralized error extraction for React Query / mutation error handlers.
+ * Single entry-point: extractApiError(error) → localized string.
+ *
+ * Usage:
+ *   const msg = extractApiError(error);
+ *   toast.error(msg);
+ */
+export function extractApiError(error: unknown): string {
+  return parseApiError(error);
+}
+
+/**
  * Extract field-specific validation errors from API response
  */
 export function extractValidationErrors(

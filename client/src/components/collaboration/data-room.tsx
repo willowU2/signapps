@@ -217,7 +217,7 @@ export function DataRoom() {
             onClick={() => setShowNewQA(!showNewQA)}
             className="text-blue-600 hover:text-blue-700 text-sm font-medium"
           >
-            {showNewQA ? "Close" : "Ask Question"}
+            {showNewQA ? "Fermer" : "Poser une question"}
           </button>
         </div>
 

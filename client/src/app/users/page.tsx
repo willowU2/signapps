@@ -559,7 +559,7 @@ function ImportUsersDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>
-            {importResult ? 'Close' : 'Cancel'}
+            {importResult ? 'Fermer' : 'Annuler'}
           </Button>
           {!importResult && file && (
             <Button

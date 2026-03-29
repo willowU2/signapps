@@ -116,7 +116,7 @@ export default function NewsletterPage() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base">{editing ? 'Edit Newsletter' : 'New Newsletter'}</CardTitle>
                     <Button variant="outline" size="sm" onClick={() => setPreviewMode(!previewMode)}>
-                      <Eye className="h-3.5 w-3.5 mr-1" />{previewMode ? 'Edit' : 'Preview'}
+                      <Eye className="h-3.5 w-3.5 mr-1" />{previewMode ? 'Modifier' : 'Aperçu'}
                     </Button>
                   </div>
                 </CardHeader>

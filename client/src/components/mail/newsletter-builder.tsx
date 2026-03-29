@@ -191,7 +191,7 @@ export function NewsletterBuilder({ onExport }: NewsletterBuilderProps) {
                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => setPreview(!preview)}>
                         {preview ? <Code2 className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
-                        {preview ? "Edit" : "Preview"}
+                        {preview ? "Modifier" : "Aperçu"}
                     </Button>
                     <Button size="sm" onClick={handleExport}>
                         <Code2 className="h-4 w-4 mr-1" />

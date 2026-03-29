@@ -1044,10 +1044,10 @@ function DnsTab() {
               {editConfig ? (
                 <>
                   <Button variant="outline" size="sm" onClick={() => setEditConfig(false)}>
-                    Cancel
+                    Annuler
                   </Button>
                   <Button size="sm" onClick={handleSaveConfig} disabled={saving}>
-                    {saving ? 'Saving…' : 'Save'}
+                    {saving ? 'Enregistrement…' : 'Enregistrer'}
                   </Button>
                 </>
               ) : (

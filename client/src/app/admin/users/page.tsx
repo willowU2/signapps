@@ -5,7 +5,7 @@ import { usePageTitle } from "@/hooks/use-page-title"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 import {
     Table,
     TableBody,
@@ -15,7 +15,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { type User, isAdmin, isActive } from "@/lib/api-admin"
-import { Plus, Search, MoreHorizontal, UserCog, Upload } from "lucide-react"
+import { Plus, MoreHorizontal, UserCog, Upload, Users } from "lucide-react"
 import { ExportButton } from "@/components/ui/export-button"
 import {
     DropdownMenu,
@@ -31,16 +31,11 @@ import { CreateUserRequest, UpdateUserRequest } from "@/lib/api"
 import { toast } from "sonner"
 import { BulkUserImportDialog } from "@/components/admin/bulk-user-import-dialog"
 import { ImpersonateDialog } from "@/components/admin/impersonate-dialog"
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
+import { PageHeader } from "@/components/ui/page-header"
+import { SearchInput } from "@/components/ui/search-input"
+import { StatusBadge } from "@/components/ui/status-badge"
+import { DateDisplay } from "@/components/ui/date-display"
 
 
 export default function UsersPage() {
@@ -119,9 +114,11 @@ export default function UsersPage() {
     return (
         <AppLayout>
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-                    <div className="flex gap-2">
+                <PageHeader
+                    title="Utilisateurs"
+                    description="Gestion des comptes utilisateurs"
+                    icon={<Users className="h-5 w-5" />}
+                    actions={<>
                         <ExportButton
                             data={filteredUsers.map(u => ({
                                 username: u.username,
@@ -142,25 +139,20 @@ export default function UsersPage() {
                             }}
                         />
                         <Button variant="outline" onClick={() => setImportOpen(true)}>
-                            <Upload className="mr-2 h-4 w-4" /> Import CSV
+                            <Upload className="h-4 w-4" /> Import CSV
                         </Button>
                         <Button onClick={handleOpenCreate}>
-                            <Plus className="mr-2 h-4 w-4" /> Add User
+                            <Plus className="h-4 w-4" /> Ajouter
                         </Button>
-                    </div>
-                </div>
+                    </>}
+                />
 
-                <div className="flex items-center space-x-2">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search users..."
-                            className="pl-8"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
-                </div>
+                <SearchInput
+                    value={search}
+                    onValueChange={setSearch}
+                    placeholder="Rechercher un utilisateur..."
+                    containerClassName="max-w-sm"
+                />
 
                 <div className="rounded-md border overflow-x-auto">
                     <Table>
@@ -180,16 +172,14 @@ export default function UsersPage() {
                                     <TableCell className="font-medium">{user.display_name || user.username}</TableCell>
                                     <TableCell>{user.email || '-'}</TableCell>
                                     <TableCell>
-                                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${user.role >= 2 ? 'bg-primary/10 text-primary' : user.role === 1 ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>
+                                        <Badge variant="secondary" className="text-xs px-2 py-0.5 rounded-full">
                                             {user.role >= 2 ? 'Admin' : user.role === 1 ? 'User' : 'Guest'}
-                                        </span>
+                                        </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${isActive(user) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                            {isActive(user) ? 'Active' : 'Inactive'}
-                                        </span>
+                                        <StatusBadge status={isActive(user) ? 'active' : 'inactive'} />
                                     </TableCell>
-                                    <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                                    <TableCell><DateDisplay date={user.created_at} /></TableCell>
                                     <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -239,22 +229,13 @@ export default function UsersPage() {
                     onOpenChange={(v) => !v && setImpersonateUser(null)}
                 />
             )}
-            <AlertDialog open={!!deleteUserId} onOpenChange={(v) => !v && setDeleteUserId(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Supprimer cet utilisateur ?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Cette action est irréversible. L'utilisateur sera supprimé définitivement.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Annuler</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Supprimer
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <ConfirmDeleteDialog
+                open={!!deleteUserId}
+                onOpenChange={(v) => !v && setDeleteUserId(null)}
+                title="Supprimer cet utilisateur ?"
+                description="Cette action est irréversible. L'utilisateur sera supprimé définitivement."
+                onConfirm={handleDeleteUser}
+            />
         </AppLayout>
     )
 }

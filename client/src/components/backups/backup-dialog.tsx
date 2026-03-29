@@ -377,13 +377,13 @@ export function BackupDialog({ open, onOpenChange, profile }: BackupDialogProps)
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Annuler
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={loading || !name.trim() || selectedContainers.length === 0}
           >
-            {loading ? 'Saving...' : isEdit ? 'Update' : 'Create'}
+            {loading ? 'Enregistrement...' : isEdit ? 'Mettre à jour' : 'Créer'}
           </Button>
         </DialogFooter>
       </DialogContent>

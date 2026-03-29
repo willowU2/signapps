@@ -410,7 +410,7 @@ export default function ITAssetsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleSave} disabled={!formData.name?.trim() || isSaving}>
-              {isSaving ? "Saving…" : editingAsset ? "Save Changes" : "Create Asset"}
+              {isSaving ? "Enregistrement…" : editingAsset ? "Enregistrer" : "Créer l'équipement"}
             </Button>
           </DialogFooter>
         </DialogContent>
