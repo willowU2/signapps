@@ -9,10 +9,10 @@ import { usePageTitle } from '@/hooks/use-page-title';
 
 function AudienceSlideRenderer({ index }: { index: number }) {
     return (
-        <div className="w-full h-full bg-white rounded-lg shadow-lg flex items-center justify-center p-8">
+        <div className="w-full h-full bg-background rounded-lg shadow-lg flex items-center justify-center p-8">
             <div className="text-center space-y-4">
-                <h2 className="text-4xl font-bold text-gray-800">Diapositive {index + 1}</h2>
-                <p className="text-gray-500">Contenu synchronise avec le presentateur</p>
+                <h2 className="text-4xl font-bold text-foreground">Diapositive {index + 1}</h2>
+                <p className="text-muted-foreground">Contenu synchronise avec le presentateur</p>
             </div>
         </div>
     )

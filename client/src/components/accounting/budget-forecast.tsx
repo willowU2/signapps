@@ -117,7 +117,7 @@ export function BudgetForecast() {
             const over = c.actual > c.budget;
             const p = Math.min(100, Math.round((c.actual / c.budget) * 100));
             return (
-              <div key={c.id} onClick={() => setSelectedCenter(c.id)} className={`rounded-lg border p-3 cursor-pointer transition-all ${selectedCenter === c.id ? "ring-2 ring-blue-500 bg-blue-50" : "bg-white hover:border-blue-200"}`}>
+              <div key={c.id} onClick={() => setSelectedCenter(c.id)} className={`rounded-lg border p-3 cursor-pointer transition-all ${selectedCenter === c.id ? "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950" : "bg-background hover:border-blue-200"}`}>
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-semibold text-gray-900">{c.name}</p>
                   {editBudget === c.id ? (
@@ -132,7 +132,7 @@ export function BudgetForecast() {
                     </div>
                   )}
                 </div>
-                <div className="h-1.5 rounded-full bg-gray-100 mb-1">
+                <div className="h-1.5 rounded-full bg-muted mb-1">
                   <div className={`h-full rounded-full transition-all ${over ? "bg-red-500" : "bg-blue-500"}`} style={{ width: `${p}%` }} />
                 </div>
                 <div className="flex justify-between text-xs">
@@ -144,7 +144,7 @@ export function BudgetForecast() {
           })}
         </div>
 
-        <div className="md:col-span-2 rounded-lg border bg-white p-4">
+        <div className="md:col-span-2 rounded-lg border bg-background p-4">
           <h3 className="font-semibold text-gray-900 mb-4">{center.name} — Budget vs Réalisé (mensuel)</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>

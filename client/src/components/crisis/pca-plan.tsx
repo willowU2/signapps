@@ -156,7 +156,7 @@ export function PcaPlan() {
                   <h4 className="font-semibold text-gray-900 mb-3">Recovery Procedures</h4>
                   <div className="space-y-2">
                     {scenario.procedures.map((proc) => (
-                      <div key={proc.id} className="flex items-start gap-3 p-2 bg-white rounded border">
+                      <div key={proc.id} className="flex items-start gap-3 p-2 bg-background rounded border">
                         <span className="flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
                           {proc.step}
                         </span>

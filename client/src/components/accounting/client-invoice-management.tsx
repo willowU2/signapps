@@ -90,8 +90,8 @@ export function ClientInvoiceManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Factures clients</h2>
-          <p className="text-gray-600">Créer, envoyer et suivre les factures</p>
+          <h2 className="text-2xl font-bold text-foreground">Factures clients</h2>
+          <p className="text-muted-foreground">Créer, envoyer et suivre les factures</p>
         </div>
         <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
           <Plus className="w-4 h-4" /> Nouvelle facture
@@ -131,23 +131,23 @@ export function ClientInvoiceManagement() {
 
       <div className="flex gap-1">
         {(["all", "draft", "sent", "paid", "overdue"] as const).map(s => (
-          <button key={s} onClick={() => setStatusFilter(s)} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${statusFilter === s ? "bg-gray-800 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-700"}`}>
+          <button key={s} onClick={() => setStatusFilter(s)} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${statusFilter === s ? "bg-foreground text-background" : "bg-muted hover:bg-muted/80 text-foreground"}`}>
             {s === "all" ? "Toutes" : STATUS_CONFIG[s as InvoiceStatus]?.label}
           </button>
         ))}
       </div>
 
-      <div className="rounded-lg border bg-white overflow-hidden">
+      <div className="rounded-lg border bg-background overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-muted border-b sticky top-0 z-10">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">N°</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Client</th>
-              <th className="px-4 py-3 text-right font-semibold text-gray-700">Montant TTC</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Émission</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Échéance</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Statut</th>
-              <th className="px-4 py-3 text-right font-semibold text-gray-700">Actions</th>
+              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">N°</th>
+              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Client</th>
+              <th className="px-4 py-3 text-right font-semibold text-muted-foreground">Montant TTC</th>
+              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Émission</th>
+              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Échéance</th>
+              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Statut</th>
+              <th className="px-4 py-3 text-right font-semibold text-muted-foreground">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -164,7 +164,7 @@ export function ClientInvoiceManagement() {
                   <td className="px-4 py-3"><span className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full w-fit ${cfg.color}`}>{cfg.icon}{cfg.label}</span></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
-                      <button onClick={() => setViewInvoice(inv)} className="p-1.5 hover:bg-gray-100 rounded text-gray-500"><Eye className="w-4 h-4" /></button>
+                      <button onClick={() => setViewInvoice(inv)} className="p-1.5 hover:bg-muted rounded text-muted-foreground"><Eye className="w-4 h-4" /></button>
                       {inv.status === "draft" && <button onClick={() => handleStatusChange(inv.id, "sent")} className="p-1.5 hover:bg-blue-100 rounded text-blue-600" title="Envoyer"><Send className="w-4 h-4" /></button>}
                       {inv.status === "sent" && <button onClick={() => handleStatusChange(inv.id, "paid")} className="p-1.5 hover:bg-green-100 rounded text-green-600" title="Marquer payée"><CheckCircle className="w-4 h-4" /></button>}
                     </div>
@@ -178,13 +178,13 @@ export function ClientInvoiceManagement() {
 
       {viewInvoice && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setViewInvoice(null)}>
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-xl space-y-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-background rounded-2xl p-6 max-w-lg w-full shadow-xl space-y-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <div><h3 className="text-xl font-bold">{viewInvoice.number}</h3><p className="text-gray-500">{viewInvoice.client}</p></div>
               <button onClick={() => setViewInvoice(null)}><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
             </div>
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-muted border-b sticky top-0 z-10">
                 <tr><th className="px-3 py-2 text-left">Description</th><th className="px-3 py-2 text-center">Qté</th><th className="px-3 py-2 text-right">PU</th><th className="px-3 py-2 text-right">Total HT</th></tr>
               </thead>
               <tbody className="divide-y">

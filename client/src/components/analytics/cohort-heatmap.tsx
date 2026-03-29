@@ -50,7 +50,7 @@ const CohortHeatmap: React.FC<CohortHeatmapProps> = ({
   const maxValue = Math.max(...allValues);
 
   return (
-    <div className="w-full bg-white rounded-lg border border-gray-200 p-8 shadow-sm overflow-x-auto">
+    <div className="w-full bg-background rounded-lg border border-border p-8 shadow-sm overflow-x-auto">
       {/* Header */}
       <h2 className="text-2xl font-bold text-gray-900 mb-8">{title}</h2>
 
@@ -118,7 +118,7 @@ const CohortHeatmap: React.FC<CohortHeatmapProps> = ({
       </div>
 
       {/* Summary stats */}
-      <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="mt-6 pt-6 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <p className="text-xs text-gray-600">Min Retention</p>
           <p className="text-lg font-bold text-gray-900">{Math.round(minValue)}%</p>

@@ -104,7 +104,7 @@ export function RiskRegister() {
           <h3 className="font-semibold text-gray-900">Risk Assessment</h3>
           <div className="overflow-auto border rounded-lg">
             <table className="w-full text-sm">
-              <thead className="bg-gray-100 border-b">
+              <thead className="bg-muted border-b sticky top-0 z-10">
                 <tr>
                   <th className="px-3 py-2 text-left font-semibold">Risk</th>
                   <th className="px-3 py-2 text-center font-semibold">P</th>

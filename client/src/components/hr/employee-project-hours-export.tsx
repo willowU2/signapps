@@ -93,7 +93,7 @@ export function EmployeeProjectHoursExport() {
 
         <div className="rounded-lg border overflow-hidden">
           <table className="w-full text-xs">
-            <thead className="bg-muted/50">
+            <thead className="bg-muted/50 sticky top-0 z-10">
               <tr>
                 <th className="text-left px-2 py-1.5 font-medium">Employé</th>
                 <th className="text-left px-2 py-1.5 font-medium">Projet</th>

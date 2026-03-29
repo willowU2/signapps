@@ -463,7 +463,7 @@ export function ReportBuilder() {
           {showPreview && (
             <div className="rounded-md border overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted border-b">
+                <thead className="bg-muted border-b sticky top-0 z-10">
                   <tr>
                     {Array.from(config.columns).map((colId) => (
                       <th key={colId} className="px-3 py-2 text-left font-medium">

@@ -123,10 +123,10 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
   };
 
   return (
-    <div className="w-full bg-white rounded-lg border border-gray-200 p-8 shadow-sm">
+    <div className="w-full bg-background rounded-lg border border-border p-8 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">Scheduled Reports</h2>
+        <h2 className="text-2xl font-bold text-foreground">Scheduled Reports</h2>
         <button
           onClick={() => setShowForm(!showForm)}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
@@ -138,7 +138,7 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
 
       {/* Report form (collapsible) */}
       {showForm && (
-        <div className="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="mb-8 p-6 bg-muted rounded-lg border border-border">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">New Report</h3>
           <div className="space-y-4">
             {/* Name */}
@@ -249,7 +249,7 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
           reports.map((report) => (
             <div
               key={report.id}
-              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted transition-colors"
             >
               {/* Content */}
               <div className="flex-1 flex items-center gap-6">
@@ -292,7 +292,7 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
 
       {/* Footer stats */}
       {reports.length > 0 && (
-        <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="mt-6 pt-6 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <p className="text-xs text-gray-600">Total Reports</p>
             <p className="text-lg font-bold text-gray-900">{reports.length}</p>

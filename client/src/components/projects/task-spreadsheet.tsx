@@ -124,7 +124,7 @@ export function TaskSpreadsheet() {
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-xs text-muted-foreground">
+          <thead className="bg-muted/50 text-xs text-muted-foreground sticky top-0 z-10">
             <tr>
               <th className="w-8 px-2 py-2" />
               <th className="text-left px-3 py-2 font-medium min-w-[180px]">Titre</th>

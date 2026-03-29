@@ -96,16 +96,16 @@ export function TrainingCertificationManagement() {
       </div>
 
       {activeTab === "certs" && (
-        <div className="rounded-lg border bg-white overflow-hidden">
+        <div className="rounded-lg border bg-background overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-muted border-b sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Employé</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Certification</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Catégorie</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Émission</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Expiration</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Employé</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Certification</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Catégorie</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Émission</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Expiration</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Statut</th>
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">Oblig.</th>
                 </tr>

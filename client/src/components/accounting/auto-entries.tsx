@@ -196,8 +196,8 @@ export function AutoEntries() {
       </div>
 
       <div className="border rounded-lg overflow-hidden">
-        <div className="bg-gray-100 border-b p-4 flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">Entry List</h3>
+        <div className="bg-muted border-b p-4 flex items-center justify-between">
+          <h3 className="font-semibold text-foreground">Entry List</h3>
           {selectedIds.size > 0 && (
             <button
               onClick={handleBatchPost}
@@ -210,8 +210,8 @@ export function AutoEntries() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm bg-white">
-            <thead className="bg-gray-50 border-b sticky top-0">
+          <table className="w-full text-sm">
+            <thead className="bg-muted border-b sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-3 text-left">
                   <input

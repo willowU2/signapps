@@ -363,8 +363,8 @@ export function ChartOfAccounts() {
 
       <div className="border rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm bg-white">
-            <thead className="bg-gray-100 border-b sticky top-0">
+          <table className="w-full text-sm">
+            <thead className="bg-muted border-b sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-3 text-left font-semibold text-gray-900">
                   Account #
@@ -410,7 +410,7 @@ export function ChartOfAccounts() {
             DEFAULT_COA.filter((a) => a.type === type)
           );
           return (
-            <div key={type} className="rounded-lg border bg-white p-3">
+            <div key={type} className="rounded-lg border bg-background p-3">
               <p className={`text-xs font-semibold ${color}`}>{label}</p>
               <p className="text-lg font-bold text-gray-900">
                 €{sum.toLocaleString("de-DE")}

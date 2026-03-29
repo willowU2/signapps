@@ -234,8 +234,8 @@ export function BankReconciliation() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="border rounded-lg overflow-hidden">
-          <div className="bg-gray-100 border-b p-3">
-            <h3 className="font-semibold text-gray-900">Bank Statement</h3>
+          <div className="bg-muted border-b p-3">
+            <h3 className="font-semibold text-foreground">Bank Statement</h3>
             <p className="text-xs text-gray-600">
               {bankTxns.filter((t) => t.matched).length} of {bankTxns.length}{" "}
               matched
@@ -287,8 +287,8 @@ export function BankReconciliation() {
         </div>
 
         <div className="border rounded-lg overflow-hidden">
-          <div className="bg-gray-100 border-b p-3">
-            <h3 className="font-semibold text-gray-900">Ledger Entries</h3>
+          <div className="bg-muted border-b p-3">
+            <h3 className="font-semibold text-foreground">Ledger Entries</h3>
             <p className="text-xs text-gray-600">
               {ledgerTxns.filter((t) => t.matched).length} of{" "}
               {ledgerTxns.length} matched
@@ -342,7 +342,7 @@ export function BankReconciliation() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-white p-4">
+      <div className="rounded-lg border bg-background p-4">
         <button
           onClick={handleMatch}
           disabled={!selectedBank || !selectedLedger}

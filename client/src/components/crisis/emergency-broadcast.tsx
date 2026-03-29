@@ -109,7 +109,7 @@ export function EmergencyBroadcast() {
         </div>
       </div>
 
-      <div className="border rounded-lg bg-white p-6 space-y-4">
+      <div className="border rounded-lg bg-background p-6 space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Message
@@ -118,7 +118,7 @@ export function EmergencyBroadcast() {
             value={messageContent}
             onChange={(e) => setMessageContent(e.target.value)}
             placeholder="Type your emergency message here..."
-            className="w-full rounded border bg-white border-gray-300 p-3 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+            className="w-full rounded border bg-background border-border p-3 text-foreground placeholder-muted-foreground focus:border-blue-500 focus:outline-none"
             rows={4}
           />
         </div>

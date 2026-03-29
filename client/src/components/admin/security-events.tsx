@@ -168,7 +168,7 @@ export function SecurityEvents() {
       ) : (
         <div className="overflow-hidden rounded-lg border border-gray-200">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-xs font-medium uppercase text-gray-500">
+            <thead className="bg-muted text-xs font-medium uppercase text-muted-foreground sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-3 text-left">Severity</th>
                 <th className="px-4 py-3 text-left">Type</th>

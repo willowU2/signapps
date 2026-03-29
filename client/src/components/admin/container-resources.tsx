@@ -266,7 +266,7 @@ export function ContainerResources() {
           </CardHeader>
           <CardContent className="p-0">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50">
+              <thead className="bg-muted/50 sticky top-0 z-10">
                 <tr>
                   <th className="text-left px-4 py-2 font-medium">Container</th>
                   <th className="text-right px-4 py-2 font-medium">CPU %</th>

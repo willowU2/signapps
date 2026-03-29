@@ -133,8 +133,8 @@ export function ChargesSimulator() {
 
       {/* Summary Table */}
       <div className="border rounded-lg overflow-hidden">
-        <table className="w-full text-sm bg-white">
-          <thead className="bg-gray-100 border-b">
+        <table className="w-full text-sm">
+          <thead className="bg-muted border-b sticky top-0 z-10">
             <tr>
               <th className="px-4 py-3 text-left font-semibold text-gray-900">Component</th>
               <th className="px-4 py-3 text-right font-semibold text-gray-900">Amount (€)</th>

@@ -126,7 +126,7 @@ export function WarRoom() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Checklist */}
-        <div className="border rounded-lg p-4 bg-white">
+        <div className="border rounded-lg p-4 bg-background">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Response Checklist</h3>
             <button className="p-1 hover:bg-gray-200 rounded text-gray-600">
@@ -157,7 +157,7 @@ export function WarRoom() {
         </div>
 
         {/* Team Roles */}
-        <div className="border rounded-lg p-4 bg-white">
+        <div className="border rounded-lg p-4 bg-background">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Team Roles</h3>
           <div className="space-y-2">
             {SAMPLE_ROLES.map((role) => (
@@ -179,7 +179,7 @@ export function WarRoom() {
       </div>
 
       {/* Timeline */}
-      <div className="border rounded-lg p-4 bg-white">
+      <div className="border rounded-lg p-4 bg-background">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Clock className="w-5 h-5" />
           Timeline
@@ -208,7 +208,7 @@ export function WarRoom() {
       </div>
 
       {/* Decision Log */}
-      <div className="border rounded-lg p-4 bg-white">
+      <div className="border rounded-lg p-4 bg-background">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Decision Log</h3>
         <div className="space-y-3">
           {SAMPLE_DECISIONS.map((decision) => (

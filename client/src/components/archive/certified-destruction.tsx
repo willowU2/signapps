@@ -80,7 +80,7 @@ export function CertifiedDestruction() {
             </div>
           ))}
         </div>
-        <div className="mt-4 p-3 bg-gray-100 rounded font-semibold text-right">
+        <div className="mt-4 p-3 bg-muted rounded font-semibold text-right">
           Total: {formatSize(totalSize)}
         </div>
       </div>

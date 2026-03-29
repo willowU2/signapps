@@ -345,7 +345,7 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
   return (
     <div className="border rounded-xl overflow-hidden shadow-sm">
       <table className="w-full text-sm">
-        <thead className="bg-muted/50">
+        <thead className="bg-muted/50 sticky top-0 z-10">
           <tr>
             <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
               Numéro

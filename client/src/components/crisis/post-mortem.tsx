@@ -132,7 +132,7 @@ export function PostMortem() {
 
       <div className="grid grid-cols-1 gap-6">
         {/* Timeline Section */}
-        <div className="border rounded-lg p-6 bg-white">
+        <div className="border rounded-lg p-6 bg-background">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Incident Timeline</h3>
           <div className="space-y-4">
             {report.timeline.map((event, idx) => (
@@ -155,7 +155,7 @@ export function PostMortem() {
         </div>
 
         {/* Root Causes Section */}
-        <div className="border rounded-lg p-6 bg-white">
+        <div className="border rounded-lg p-6 bg-background">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Root Causes</h3>
           <div className="space-y-2">
             {report.rootCauses.map((cause, idx) => (
@@ -181,7 +181,7 @@ export function PostMortem() {
                   value={newRootCause}
                   onChange={(e) => setNewRootCause(e.target.value)}
                   placeholder="Add root cause..."
-                  className="flex-1 rounded border border-gray-300 px-3 py-2 text-gray-900 bg-white"
+                  className="flex-1 rounded border border-border px-3 py-2 text-foreground bg-background"
                   onKeyDown={(e) => e.key === "Enter" && addRootCause()}
                 />
                 <button
@@ -196,7 +196,7 @@ export function PostMortem() {
         </div>
 
         {/* Actions Taken Section */}
-        <div className="border rounded-lg p-6 bg-white">
+        <div className="border rounded-lg p-6 bg-background">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions Taken</h3>
           <div className="space-y-2">
             {report.actionsTaken.map((action, idx) => (
@@ -225,7 +225,7 @@ export function PostMortem() {
                   value={newAction}
                   onChange={(e) => setNewAction(e.target.value)}
                   placeholder="Add action taken..."
-                  className="flex-1 rounded border border-gray-300 px-3 py-2 text-gray-900 bg-white"
+                  className="flex-1 rounded border border-border px-3 py-2 text-foreground bg-background"
                   onKeyDown={(e) => e.key === "Enter" && addAction()}
                 />
                 <button
@@ -240,7 +240,7 @@ export function PostMortem() {
         </div>
 
         {/* Lessons Learned Section */}
-        <div className="border rounded-lg p-6 bg-white">
+        <div className="border rounded-lg p-6 bg-background">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Lessons Learned</h3>
           <div className="space-y-2">
             {report.lessonsLearned.map((lesson, idx) => (
@@ -266,7 +266,7 @@ export function PostMortem() {
                   value={newLesson}
                   onChange={(e) => setNewLesson(e.target.value)}
                   placeholder="Add lesson learned..."
-                  className="flex-1 rounded border border-gray-300 px-3 py-2 text-gray-900 bg-white"
+                  className="flex-1 rounded border border-border px-3 py-2 text-foreground bg-background"
                   onKeyDown={(e) => e.key === "Enter" && addLesson()}
                 />
                 <button

@@ -64,7 +64,7 @@ const KPICard: React.FC<{ kpi: KPIData }> = ({ kpi }) => {
   const bgColor = isPositive ? 'bg-green-50' : 'bg-red-50';
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-background rounded-lg border border-border p-6 shadow-sm hover:shadow-md transition-shadow">
       {/* Header with title */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-medium text-gray-600">{kpi.title}</h3>

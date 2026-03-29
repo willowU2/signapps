@@ -73,8 +73,8 @@ export function JournalEntry() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Saisie d'écritures comptables</h2>
-          <p className="text-gray-600">Débit/crédit avec vérification d'équilibre</p>
+          <h2 className="text-2xl font-bold text-foreground">Saisie d'écritures comptables</h2>
+          <p className="text-muted-foreground">Débit/crédit avec vérification d'équilibre</p>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
           <Plus className="w-4 h-4" /> Nouvelle écriture
@@ -82,29 +82,29 @@ export function JournalEntry() {
       </div>
 
       {showForm && (
-        <div className="rounded-lg border bg-white p-5 space-y-4">
-          <h3 className="font-semibold text-gray-900">Nouvelle écriture</h3>
+        <div className="rounded-lg border bg-background p-5 space-y-4">
+          <h3 className="font-semibold text-foreground">Nouvelle écriture</h3>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Date</label>
               <input type="date" value={draft.date} onChange={e => setDraft(d => ({ ...d, date: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Référence</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Référence</label>
               <input value={draft.reference} onChange={e => setDraft(d => ({ ...d, reference: e.target.value }))} placeholder="VTE-001" className="w-full border rounded px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Description</label>
               <input value={draft.description} onChange={e => setDraft(d => ({ ...d, description: e.target.value }))} placeholder="Description..." className="w-full border rounded px-3 py-2 text-sm" />
             </div>
           </div>
 
           <div className="rounded-lg border overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-muted border-b sticky top-0 z-10">
                 <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-gray-700 w-48">Compte</th>
-                  <th className="px-3 py-2 text-left font-semibold text-gray-700">Libellé</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground w-48">Compte</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Libellé</th>
                   <th className="px-3 py-2 text-right font-semibold text-blue-700 w-28">Débit (€)</th>
                   <th className="px-3 py-2 text-right font-semibold text-red-700 w-28">Crédit (€)</th>
                   <th className="px-3 py-2 w-10" />
@@ -157,15 +157,15 @@ export function JournalEntry() {
         </div>
       )}
 
-      <div className="rounded-lg border bg-white overflow-hidden">
-        <div className="bg-gray-50 border-b px-4 py-3"><h3 className="font-semibold text-gray-900">Écritures enregistrées</h3></div>
+      <div className="rounded-lg border bg-background overflow-hidden">
+        <div className="bg-muted border-b px-4 py-3"><h3 className="font-semibold text-foreground">Écritures enregistrées</h3></div>
         {entries.map(entry => (
           <div key={entry.id} className="border-b last:border-0">
-            <div className="px-4 py-3 bg-gray-50 flex items-center justify-between">
+            <div className="px-4 py-3 bg-muted flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="font-mono text-xs bg-white border rounded px-2 py-0.5">{entry.reference || "—"}</span>
-                <span className="font-medium text-gray-900 text-sm">{entry.description}</span>
-                <span className="text-xs text-gray-500">{entry.date}</span>
+                <span className="font-mono text-xs bg-background border rounded px-2 py-0.5">{entry.reference || "—"}</span>
+                <span className="font-medium text-foreground text-sm">{entry.description}</span>
+                <span className="text-xs text-muted-foreground">{entry.date}</span>
               </div>
               <CheckCircle className="w-4 h-4 text-green-600" />
             </div>

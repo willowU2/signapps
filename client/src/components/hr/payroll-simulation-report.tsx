@@ -115,16 +115,16 @@ export function PayrollSimulationReport() {
         </ResponsiveContainer>
       </div>
 
-      <div className="rounded-lg border bg-white overflow-hidden">
+      <div className="rounded-lg border bg-background overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-muted border-b sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-gray-700">Département</th>
-                <th className="px-4 py-3 text-center font-semibold text-gray-700">ETP</th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-700">Brut total</th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-700">Ch. salariales</th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-700">Net versé</th>
+                <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Département</th>
+                <th className="px-4 py-3 text-center font-semibold text-muted-foreground">ETP</th>
+                <th className="px-4 py-3 text-right font-semibold text-muted-foreground">Brut total</th>
+                <th className="px-4 py-3 text-right font-semibold text-muted-foreground">Ch. salariales</th>
+                <th className="px-4 py-3 text-right font-semibold text-muted-foreground">Net versé</th>
                 <th className="px-4 py-3 text-right font-semibold text-gray-700">Ch. patronales</th>
                 <th className="px-4 py-3 text-right font-semibold text-gray-700 bg-purple-50">Coût total</th>
               </tr>

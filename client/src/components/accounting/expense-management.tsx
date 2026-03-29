@@ -76,8 +76,8 @@ export function ExpenseManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Gestion des notes de frais</h2>
-          <p className="text-gray-600">Soumission, approbation et suivi des dépenses</p>
+          <h2 className="text-2xl font-bold text-foreground">Gestion des notes de frais</h2>
+          <p className="text-muted-foreground">Soumission, approbation et suivi des dépenses</p>
         </div>
         <button onClick={() => setShowForm(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
           <Plus className="w-4 h-4" /> Nouvelle note de frais
@@ -137,23 +137,23 @@ export function ExpenseManagement() {
 
       <div className="flex gap-1 mb-4">
         {(["all", "pending", "approved", "rejected"] as const).map(s => (
-          <button key={s} onClick={() => setFilter(s)} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${filter === s ? "bg-gray-800 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-700"}`}>
+          <button key={s} onClick={() => setFilter(s)} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${filter === s ? "bg-foreground text-background" : "bg-muted hover:bg-muted/80 text-foreground"}`}>
             {s === "all" ? "Toutes" : STATUS_CONFIG[s as ExpenseStatus]?.label}
           </button>
         ))}
       </div>
 
-      <div className="rounded-lg border bg-white overflow-hidden">
+      <div className="rounded-lg border bg-background overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-muted border-b sticky top-0 z-10">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Employé</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Description</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Catégorie</th>
-              <th className="px-4 py-3 text-right font-semibold text-gray-700">Montant</th>
-              <th className="px-4 py-3 text-center font-semibold text-gray-700">Justif.</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Statut</th>
-              <th className="px-4 py-3 text-right font-semibold text-gray-700">Actions</th>
+              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Employé</th>
+              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Description</th>
+              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Catégorie</th>
+              <th className="px-4 py-3 text-right font-semibold text-muted-foreground">Montant</th>
+              <th className="px-4 py-3 text-center font-semibold text-muted-foreground">Justif.</th>
+              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Statut</th>
+              <th className="px-4 py-3 text-right font-semibold text-muted-foreground">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -161,7 +161,7 @@ export function ExpenseManagement() {
               <tr key={exp.id} className={`hover:bg-gray-50 ${exp.status === "rejected" ? "opacity-60" : ""}`}>
                 <td className="px-4 py-3"><p className="font-medium text-gray-900">{exp.submittedBy}</p><p className="text-xs text-gray-500">{exp.date}</p></td>
                 <td className="px-4 py-3 text-gray-700">{exp.description}{exp.notes && <p className="text-xs text-red-500">{exp.notes}</p>}</td>
-                <td className="px-4 py-3"><span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{exp.category}</span></td>
+                <td className="px-4 py-3"><span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{exp.category}</span></td>
                 <td className="px-4 py-3 text-right font-bold text-gray-900">{fmt(exp.amount)}</td>
                 <td className="px-4 py-3 text-center">{exp.hasReceipt ? <Check className="w-4 h-4 text-green-600 mx-auto" /> : <AlertCircle className="w-4 h-4 text-red-400 mx-auto" />}</td>
                 <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_CONFIG[exp.status].color}`}>{STATUS_CONFIG[exp.status].label}</span></td>

@@ -160,9 +160,9 @@ export function CsvFecImport() {
             </div>
           </div>
 
-          <div className="rounded-lg border bg-white overflow-hidden">
-            <div className="bg-gray-50 border-b px-4 py-3 flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900 text-sm">Aperçu des écritures ({entries.length})</h3>
+          <div className="rounded-lg border bg-background overflow-hidden">
+            <div className="bg-muted border-b px-4 py-3 flex items-center justify-between">
+              <h3 className="font-semibold text-foreground text-sm">Aperçu des écritures ({entries.length})</h3>
               {step === "preview" && (
                 <button onClick={handleImport} disabled={stats.valid === 0} className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-4 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2">
                   <CheckCircle className="w-4 h-4" /> Importer {stats.valid} écriture{stats.valid > 1 ? "s" : ""}
@@ -172,15 +172,15 @@ export function CsvFecImport() {
             </div>
             <div className="overflow-x-auto max-h-72">
               <table className="w-full text-xs">
-                <thead className="bg-gray-50 border-b sticky top-0">
+                <thead className="bg-muted border-b sticky top-0 z-10">
                   <tr>
-                    <th className="px-3 py-2 text-left font-semibold text-gray-600">Date</th>
-                    <th className="px-3 py-2 text-left font-semibold text-gray-600">Réf.</th>
-                    <th className="px-3 py-2 text-left font-semibold text-gray-600">Compte</th>
-                    <th className="px-3 py-2 text-left font-semibold text-gray-600">Libellé</th>
+                    <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Date</th>
+                    <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Réf.</th>
+                    <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Compte</th>
+                    <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Libellé</th>
                     <th className="px-3 py-2 text-right font-semibold text-blue-700">Débit</th>
                     <th className="px-3 py-2 text-right font-semibold text-red-700">Crédit</th>
-                    <th className="px-3 py-2 text-center font-semibold text-gray-600">Statut</th>
+                    <th className="px-3 py-2 text-center font-semibold text-muted-foreground">Statut</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">

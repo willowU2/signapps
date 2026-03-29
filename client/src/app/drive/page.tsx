@@ -434,7 +434,7 @@ export default function GlobalDrivePage() {
             ) : viewMode === 'list' ? (
               <div className="rounded-xl border shadow-sm bg-card overflow-hidden">
                 <table className="w-full text-sm text-left">
-                  <thead className="bg-muted/50 text-muted-foreground">
+                  <thead className="bg-muted/50 text-muted-foreground sticky top-0 z-10">
                     <tr>
                       <th className="px-6 py-3 font-medium">Nom</th>
                       <th className="px-6 py-3 font-medium w-32 hidden md:table-cell">Propriétaire</th>

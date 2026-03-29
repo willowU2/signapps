@@ -72,12 +72,12 @@ export function CashFlowDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Tableau de bord cash flow</h2>
-          <p className="text-gray-600">Entrées/sorties et solde sur la ligne du temps</p>
+          <h2 className="text-2xl font-bold text-foreground">Tableau de bord cash flow</h2>
+          <p className="text-muted-foreground">Entrées/sorties et solde sur la ligne du temps</p>
         </div>
         <div className="flex gap-2">
           {(["all", "march", "april"] as const).map(p => (
-            <button key={p} onClick={() => setPeriodFilter(p)} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${periodFilter === p ? "bg-gray-800 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-700"}`}>
+            <button key={p} onClick={() => setPeriodFilter(p)} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${periodFilter === p ? "bg-foreground text-background" : "bg-muted hover:bg-muted/80 text-foreground"}`}>
               {p === "all" ? "Tout" : p === "march" ? "Mars" : "Avril"}
             </button>
           ))}
@@ -106,12 +106,12 @@ export function CashFlowDashboard() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-white p-4">
+      <div className="rounded-lg border bg-background p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-gray-900">Évolution du cash flow</h3>
+          <h3 className="font-semibold text-foreground">Évolution du cash flow</h3>
           <div className="flex gap-1">
-            <button onClick={() => setView("area")} className={`px-3 py-1 rounded text-xs font-medium ${view === "area" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"}`}>Aire</button>
-            <button onClick={() => setView("bar")} className={`px-3 py-1 rounded text-xs font-medium ${view === "bar" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"}`}>Barres</button>
+            <button onClick={() => setView("area")} className={`px-3 py-1 rounded text-xs font-medium ${view === "area" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>Aire</button>
+            <button onClick={() => setView("bar")} className={`px-3 py-1 rounded text-xs font-medium ${view === "bar" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>Barres</button>
           </div>
         </div>
         <ResponsiveContainer width="100%" height={240}>
@@ -147,14 +147,14 @@ export function CashFlowDashboard() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        <div className="rounded-lg border bg-white overflow-hidden">
-          <div className="bg-gray-50 border-b px-4 py-3"><h3 className="font-semibold text-gray-900 text-sm">Sorties par catégorie</h3></div>
+        <div className="rounded-lg border bg-background overflow-hidden">
+          <div className="bg-muted border-b px-4 py-3"><h3 className="font-semibold text-foreground text-sm">Sorties par catégorie</h3></div>
           <div className="divide-y">
             {Object.entries(categoryOut).sort((a, b) => b[1] - a[1]).map(([cat, amount]) => (
               <div key={cat} className="flex items-center justify-between px-4 py-2.5">
                 <span className="text-sm text-gray-700">{cat}</span>
                 <div className="flex items-center gap-2">
-                  <div className="w-24 h-1.5 rounded-full bg-gray-100">
+                  <div className="w-24 h-1.5 rounded-full bg-muted">
                     <div className="h-full rounded-full bg-red-400" style={{ width: `${(amount / totalOut) * 100}%` }} />
                   </div>
                   <span className="text-sm font-semibold text-gray-900 w-20 text-right">{fmt(amount)}</span>
@@ -164,8 +164,8 @@ export function CashFlowDashboard() {
           </div>
         </div>
 
-        <div className="rounded-lg border bg-white overflow-hidden">
-          <div className="bg-gray-50 border-b px-4 py-3"><h3 className="font-semibold text-gray-900 text-sm">Derniers mouvements</h3></div>
+        <div className="rounded-lg border bg-background overflow-hidden">
+          <div className="bg-muted border-b px-4 py-3"><h3 className="font-semibold text-foreground text-sm">Derniers mouvements</h3></div>
           <div className="divide-y max-h-64 overflow-y-auto">
             {filteredEntries.slice(-8).reverse().map((e, i) => (
               <div key={i} className="flex items-center gap-3 px-4 py-2.5">

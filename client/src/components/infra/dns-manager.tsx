@@ -89,8 +89,8 @@ export function DnsManager() {
 
             {expandedZones.has(zone.id) && (
               <div className="border-t overflow-x-auto">
-                <table className="w-full text-sm bg-white">
-                  <thead className="bg-gray-50 border-b">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted border-b sticky top-0 z-10">
                     <tr>
                       <th className="px-4 py-2 text-left font-semibold text-gray-900">Type</th>
                       <th className="px-4 py-2 text-left font-semibold text-gray-900">Name</th>

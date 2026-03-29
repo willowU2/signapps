@@ -46,7 +46,7 @@ const FunnelChart: React.FC<FunnelChartProps> = ({
   };
 
   return (
-    <div className="w-full bg-white rounded-lg border border-gray-200 p-8 shadow-sm">
+    <div className="w-full bg-background rounded-lg border border-border p-8 shadow-sm">
       {/* Header */}
       <h2 className="text-2xl font-bold text-gray-900 mb-8">{title}</h2>
 
@@ -73,7 +73,7 @@ const FunnelChart: React.FC<FunnelChartProps> = ({
 
             {/* Bar with gradient */}
             <div className="flex items-center gap-3">
-              <div className="flex-1 bg-gray-100 rounded-full h-8 overflow-hidden">
+              <div className="flex-1 bg-muted rounded-full h-8 overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-300"
                   style={{
@@ -91,7 +91,7 @@ const FunnelChart: React.FC<FunnelChartProps> = ({
       </div>
 
       {/* Footer metrics */}
-      <div className="mt-8 pt-6 border-t border-gray-200">
+      <div className="mt-8 pt-6 border-t border-border">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <p className="text-xs text-gray-600">Total Entered</p>

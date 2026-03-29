@@ -29,6 +29,22 @@ export function formatPercent(n: number | null | undefined): string {
   return `${PCT_FR.format(n)} %`;
 }
 
+// COH-044 — Unified date formatting (fr-FR)
+const DATE_FR = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const DATETIME_FR = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+/** COH-044: "28/03/2026" */
+export function formatDate(d: Date | string | number | null | undefined): string {
+  if (d == null) return '—';
+  try { return DATE_FR.format(new Date(d)); } catch { return '—'; }
+}
+
+/** COH-044: "28/03/2026 14:30" */
+export function formatDateTime(d: Date | string | number | null | undefined): string {
+  if (d == null) return '—';
+  try { return DATETIME_FR.format(new Date(d)); } catch { return '—'; }
+}
+
 const WEB_PORT_PRIORITY = [80, 443, 8080, 8443, 3000, 8000, 5000, 9000];
 
 export function getContainerUrl(
