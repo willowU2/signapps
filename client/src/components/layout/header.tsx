@@ -14,16 +14,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { NotificationPopover } from '@/components/notifications/notification-popover';
 import { ChangelogDialog } from '@/components/onboarding/ChangelogDialog';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import Link from 'next/link';
-import { useBreadcrumbStore } from '@/lib/store/breadcrumb-store';
 
 const LABEL_MAP: Record<string, string> = {
   dashboard: 'Dashboard',
@@ -85,7 +76,6 @@ export function Header() {
   const { user } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
-  const { customLabels } = useBreadcrumbStore();
   const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   // Build breadcrumb items from pathname
@@ -93,8 +83,7 @@ export function Header() {
   const breadcrumbItems = pathSegments.map((segment, index) => {
     const url = `/${pathSegments.slice(0, index + 1).join('/')}`;
     const isLast = index === pathSegments.length - 1;
-    const label = customLabels[segment]
-      || LABEL_MAP[segment]
+    const label = LABEL_MAP[segment]
       || segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
     const displayLabel = label.length > 24 ? `${label.substring(0, 10)}…` : label;
     return { label: displayLabel, url, isLast };
@@ -163,33 +152,26 @@ export function Header() {
       </div>
 
       {/* Center: Breadcrumbs */}
-      <div className="hidden md:flex flex-1 items-center justify-center">
+      {/* Center: inline breadcrumbs */}
+      <nav aria-label="breadcrumb" className="hidden md:flex flex-1 items-center justify-center">
         {breadcrumbItems.length > 0 && (
-          <Breadcrumb>
-            <BreadcrumbList className="gap-1 sm:gap-1.5">
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link href="/dashboard" className="text-xs text-muted-foreground hover:text-foreground">Accueil</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              {breadcrumbItems.map((item) => (
-                <div key={item.url} className="flex items-center gap-1 sm:gap-1.5">
-                  <BreadcrumbSeparator className="[&>svg]:size-3" />
-                  <BreadcrumbItem>
-                    {item.isLast ? (
-                      <BreadcrumbPage className="text-xs font-semibold">{item.label}</BreadcrumbPage>
-                    ) : (
-                      <BreadcrumbLink asChild>
-                        <Link href={item.url} className="text-xs text-muted-foreground hover:text-foreground">{item.label}</Link>
-                      </BreadcrumbLink>
-                    )}
-                  </BreadcrumbItem>
-                </div>
-              ))}
-            </BreadcrumbList>
-          </Breadcrumb>
+          <ol className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+            <li className="inline-flex items-center">
+              <Link href="/dashboard" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Accueil</Link>
+            </li>
+            {breadcrumbItems.map((item) => (
+              <li key={item.url} className="inline-flex items-center gap-1.5">
+                <span className="text-muted-foreground/40">/</span>
+                {item.isLast ? (
+                  <span className="text-xs font-semibold text-foreground">{item.label}</span>
+                ) : (
+                  <Link href={item.url} className="text-xs text-muted-foreground hover:text-foreground transition-colors">{item.label}</Link>
+                )}
+              </li>
+            ))}
+          </ol>
         )}
-      </div>
+      </nav>
 
       {/* Right: actions */}
       <div className="flex items-center gap-1 md:min-w-[240px] justify-end">
