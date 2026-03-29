@@ -77,7 +77,8 @@ export const MentionInput = forwardRef<HTMLTextAreaElement, MentionInputProps>(
         .list(1, 10)
         .then((response) => {
           if (abortController.signal.aborted) return;
-          const allUsers = response.data?.users || response.data || [];
+          const ud = response.data as any;
+          const allUsers = ud?.users || (Array.isArray(ud) ? ud : []);
           const filtered = allUsers.filter(
             (u: User) =>
               u.username.toLowerCase().includes(query.toLowerCase()) ||

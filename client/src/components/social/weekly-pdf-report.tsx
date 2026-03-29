@@ -70,7 +70,10 @@ export function WeeklyPdfReport({ weekData = DEMO_WEEK, weekLabel }: WeeklyPdfRe
   const captureChartAsDataUrl = useCallback(async (ref: React.RefObject<HTMLDivElement | null>): Promise<string | null> => {
     if (!ref.current) return null;
     try {
-      const { default: html2canvas } = await import("html2canvas" as any);
+      // html2canvas is optional - return null if not available
+      const mod = await import(/* webpackIgnore: true */ 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.esm.js' as any).catch(() => null);
+      if (!mod) return null;
+      const html2canvas = mod.default;
       const canvas = await html2canvas(ref.current, { scale: 2, backgroundColor: "#ffffff" });
       return canvas.toDataURL("image/png");
     } catch {

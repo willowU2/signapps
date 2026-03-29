@@ -34,7 +34,7 @@ export function SocialAnalyticsDocLink() {
     queryKey: ['social-posts-with-docs'],
     queryFn: async () => {
       const res = await socialApi.posts.list({ status: 'published', limit: 50 });
-      const rawPosts: SocialPost[] = res?.data?.items ?? (res?.data as any)?.posts ?? [];
+      const rawPosts: SocialPost[] = (res?.data as any)?.items ?? (res?.data as any)?.posts ?? [];
       return rawPosts.map((p) => ({
         ...p,
         docLink: extractDocLink(p.content),
@@ -43,7 +43,7 @@ export function SocialAnalyticsDocLink() {
     enabled: open,
   });
 
-  const totalClicks = posts.reduce((acc, p) => acc + (p.engagementCount ?? 0), 0);
+  const totalClicks = posts.reduce((acc, p) => acc + ((p as any).engagementCount ?? 0), 0);
 
   return (
     <>
@@ -89,9 +89,9 @@ export function SocialAnalyticsDocLink() {
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <MousePointer className="h-3 w-3" />
-                    {post.engagementCount ?? 0} interactions
+                    {(post as any).engagementCount ?? 0} interactions
                   </span>
-                  <span>{post.publishedAt ? formatDistanceToNow(new Date(post.publishedAt), { addSuffix: true }) : ''}</span>
+                  <span>{post.published_at ? formatDistanceToNow(new Date(post.published_at), { addSuffix: true }) : ''}</span>
                 </div>
                 {post.docLink && (
                   <a href={post.docLink} className="flex items-center gap-1 text-xs text-primary hover:underline">
@@ -101,7 +101,7 @@ export function SocialAnalyticsDocLink() {
                   </a>
                 )}
                 <div className="flex flex-wrap gap-1">
-                  {post.accounts.slice(0, 3).map((id) => (
+                  {((post as any).accounts ?? []).slice(0, 3).map((id: string) => (
                     <Badge key={id} variant="secondary" className="text-xs">{id.slice(0, 8)}</Badge>
                   ))}
                 </div>

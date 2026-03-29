@@ -60,7 +60,7 @@ export function UserActivity() {
     setLoading(true);
     try {
       const usersRes = await usersApi.list(1, 500);
-      const users: User[] = usersRes.data?.users || [];
+      const ud = usersRes.data as any; const users: User[] = Array.isArray(ud) ? ud : (ud?.users || []);
 
       // Fetch audit counts per user
       const auditCounts = new Map<string, number>();

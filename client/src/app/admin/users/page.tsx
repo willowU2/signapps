@@ -54,7 +54,7 @@ export default function UsersPage() {
         queryKey: ['admin-users'],
         queryFn: async () => {
             const res = await usersApi.list()
-            return Array.isArray(res.data) ? res.data : (res.data?.users || [])
+            const d = res.data as any; return Array.isArray(d) ? d : (d?.users || [])
         },
     })
 

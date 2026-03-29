@@ -141,7 +141,8 @@ export function WorkspaceSharing({
       setIsSearching(true);
       try {
         const response = await usersApi.list(1, 10);
-        const users = response.data?.users || response.data || [];
+        const ud = response.data as any;
+        const users = ud?.users || (Array.isArray(ud) ? ud : []);
         const filtered = users.filter(
           (u: User) =>
             (u.email || '').toLowerCase().includes(inviteEmail.toLowerCase()) ||

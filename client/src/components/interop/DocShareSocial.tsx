@@ -43,9 +43,8 @@ export function DocShareSocial({ docId, docName, docContent }: DocShareSocialPro
       }
       await socialApi.posts.create({
         content: customText || defaultText,
-        accounts: accountIds,
-        status: 'published',
-      });
+        account_ids: accountIds,
+      } as any);
       toast.success('Partagé sur les réseaux sociaux');
       setOpen(false);
     } catch {
@@ -66,10 +65,9 @@ export function DocShareSocial({ docId, docName, docContent }: DocShareSocialPro
       const accountIds: string[] = (accountsRes?.data ?? []).map((a: any) => a.id);
       await socialApi.posts.create({
         content: customText || defaultText,
-        accounts: accountIds,
-        status: 'scheduled',
-        scheduledAt: new Date(scheduleDate).toISOString(),
-      });
+        account_ids: accountIds,
+        scheduled_at: new Date(scheduleDate).toISOString(),
+      } as any);
       toast.success('Publication planifiée');
       setOpen(false);
     } catch {

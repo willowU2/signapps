@@ -96,8 +96,9 @@ async function fetchReportData(source: DataSource, columns: string[]): Promise<R
   switch (source) {
     case "users": {
       const res = await usersApi.list(1, 50);
-      const users = res.data?.users ?? [];
-      return users.map((u) => {
+      const rud = res.data as any;
+      const users = rud?.users ?? (Array.isArray(rud) ? rud : []);
+      return users.map((u: any) => {
         const row: ReportData = {};
         if (columns.includes("id")) row["id"] = u.id;
         if (columns.includes("email")) row["email"] = u.email ?? "";

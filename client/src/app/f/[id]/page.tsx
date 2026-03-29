@@ -385,7 +385,7 @@ export default function PublicFormPage() {
             </div>
           )}
 
-          {field.field_type === 'File' && (
+          {(field as any).field_type === 'File' && (
             <FileUploadField
               fieldId={field.id}
               required={field.required}

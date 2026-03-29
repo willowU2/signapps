@@ -84,7 +84,7 @@ export function GroupMembersSheet({ open, onOpenChange, group, onMembersChange }
     const loadUsers = async () => {
         try {
             const response = await usersApi.list()
-            setAllUsers(response.data?.users || [])
+            const ud = response.data as any; setAllUsers(Array.isArray(ud) ? ud : (ud?.users || []))
         } catch (error) {
             console.error("Failed to load users:", error)
         }

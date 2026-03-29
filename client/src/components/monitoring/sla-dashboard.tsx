@@ -31,7 +31,7 @@ export function SLADashboard() {
   const [metrics, setMetrics] = useState<SLAMetrics | null>(null);
 
   useEffect(() => {
-    metricsApi.summary().then((res) => {
+    (metricsApi as any).summary().then((res: any) => {
       const data = res.data;
       const uptimePct = data?.uptime_seconds
         ? Math.min(100, (data.uptime_seconds / (30 * 24 * 3600)) * 100)

@@ -376,7 +376,7 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
         <tbody>
           {invoices.map((inv) => {
             const st =
-              STATUS_META[inv.status] ?? STATUS_META.draft;
+              STATUS_META[inv.status as InvoiceStatus] ?? STATUS_META.draft;
             // Try to find local invoice for email sending
             const localInv = localInvoicesApi.list().find(
               li => li.number === inv.number || li.clientName === inv.client_name
