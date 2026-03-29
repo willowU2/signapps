@@ -403,3 +403,110 @@ pub struct UpdateFloorPlan {
     #[serde(rename = "svgContent")]
     pub svg_content: Option<String>,
 }
+
+// ============================================================================
+// Category
+// ============================================================================
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct Category {
+    pub id: Uuid,
+    pub name: String,
+    pub color: String,
+    pub icon: Option<String>,
+    pub owner_id: Option<Uuid>,
+    pub org_id: Option<Uuid>,
+    pub rules: Option<serde_json::Value>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateCategory {
+    pub name: String,
+    pub color: Option<String>,
+    pub icon: Option<String>,
+    pub org_id: Option<Uuid>,
+    pub rules: Option<serde_json::Value>,
+}
+
+// ============================================================================
+// PresenceRule
+// ============================================================================
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct PresenceRule {
+    pub id: Uuid,
+    pub org_id: Uuid,
+    pub team_id: Option<Uuid>,
+    pub rule_type: String,
+    pub rule_config: serde_json::Value,
+    pub enforcement: Option<String>,
+    pub active: Option<bool>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreatePresenceRule {
+    pub org_id: Uuid,
+    pub team_id: Option<Uuid>,
+    pub rule_type: String,
+    pub rule_config: serde_json::Value,
+    pub enforcement: Option<String>,
+}
+
+// ============================================================================
+// LeaveBalance
+// ============================================================================
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct LeaveBalance {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub leave_type: String,
+    pub year: i32,
+    pub total_days: f64,
+    pub used_days: f64,
+    pub pending_days: f64,
+    pub updated_at: Option<DateTime<Utc>>,
+}
+
+// ============================================================================
+// TimesheetEntry
+// ============================================================================
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct TimesheetEntry {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub event_id: Option<Uuid>,
+    pub date: NaiveDate,
+    pub hours: f64,
+    pub category_id: Option<Uuid>,
+    pub auto_generated: Option<bool>,
+    pub validated: Option<bool>,
+    pub validated_at: Option<DateTime<Utc>>,
+    pub exported_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
+}
+
+// ============================================================================
+// ApprovalWorkflow
+// ============================================================================
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct ApprovalWorkflow {
+    pub id: Uuid,
+    pub org_id: Uuid,
+    pub trigger_type: String,
+    pub trigger_config: serde_json::Value,
+    pub approvers: serde_json::Value,
+    pub active: Option<bool>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateApprovalWorkflow {
+    pub org_id: Uuid,
+    pub trigger_type: String,
+    pub trigger_config: serde_json::Value,
+    pub approvers: serde_json::Value,
+}

@@ -37,6 +37,12 @@ pub use calendar_repository::{
     FloorPlanRepository, ResourceRepository, TaskRepository,
 };
 
+pub mod calendar_hr_repository;
+pub use calendar_hr_repository::{
+    ApprovalWorkflowRepository, CategoryRepository, LeaveBalanceRepository, PresenceRuleRepository,
+    TimesheetRepository,
+};
+
 pub mod notification_repository;
 pub use notification_repository::{
     NotificationDigestRepository, NotificationPreferencesRepository, NotificationSentRepository,
