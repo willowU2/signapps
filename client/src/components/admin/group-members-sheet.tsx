@@ -25,7 +25,7 @@ import {
     TableCell,
     TableRow,
 } from "@/components/ui/table"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/ui/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
@@ -225,11 +225,7 @@ export function GroupMembersSheet({ open, onOpenChange, group, onMembersChange }
                                                 <TableRow key={member.user_id}>
                                                     <TableCell className="py-2">
                                                         <div className="flex items-center gap-3">
-                                                            <Avatar className="h-8 w-8">
-                                                                <AvatarFallback className="text-xs">
-                                                                    {getInitials(member.full_name || member.username || "?")}
-                                                                </AvatarFallback>
-                                                            </Avatar>
+                                                            <UserAvatar name={member.full_name || member.username || "?"} />
                                                             <div className="min-w-0">
                                                                 <p className="font-medium text-sm truncate">
                                                                     {member.full_name || member.username}

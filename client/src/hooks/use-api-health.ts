@@ -20,17 +20,22 @@ export interface ApiHealthResult {
  * - staleTime: 30s (same cadence as useServiceHealth)
  * - Falls back to offline on any error
  */
+interface HealthData {
+  online: boolean;
+  responseTime?: number;
+}
+
 export function useApiHealth(service: ServiceName): ApiHealthResult {
-  const { data, isLoading } = useQuery<boolean>({
+  const { data, isLoading } = useQuery<HealthData>({
     queryKey: ['api-health', service],
-    queryFn: async () => {
+    queryFn: async (): Promise<HealthData> => {
       const start = Date.now();
       try {
         const client = getClient(service);
         await client.get('/health', { timeout: 3000 });
-        return Date.now() - start;
+        return { online: true, responseTime: Date.now() - start };
       } catch {
-        return false;
+        return { online: false };
       }
     },
     staleTime: 30_000,
@@ -42,12 +47,12 @@ export function useApiHealth(service: ServiceName): ApiHealthResult {
     return { status: 'checking', isOnline: false, isOffline: false, isChecking: true };
   }
 
-  const online = typeof data === 'number' ? data > 0 : !!data;
+  const online = data?.online ?? false;
   return {
     status: online ? 'online' : 'offline',
     isOnline: online,
     isOffline: !online,
     isChecking: false,
-    responseTime: typeof data === 'number' ? data : undefined,
+    responseTime: data?.responseTime,
   };
 }

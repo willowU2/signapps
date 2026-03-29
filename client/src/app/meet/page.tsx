@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { usePageTitle } from "@/hooks/use-page-title"
+import { MeetRecordingToDoc } from "@/components/interop/meet-doc-bridge"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -31,7 +32,7 @@ import { Switch } from "@/components/ui/switch"
 import dynamic from "next/dynamic"
 const MeetRoom = dynamic(
     () => import("@/components/meet/meet-room").then((m) => ({ default: m.MeetRoom })),
-    { ssr: false, loading: () => <div className="flex items-center justify-center h-full text-muted-foreground">Loading meeting room…</div> }
+    { ssr: false, loading: () => <div className="flex items-center justify-center h-full text-muted-foreground">Chargement...</div> }
 )
 // IDEA-129: Real-time transcription overlay
 import { LiveTranscriptionOverlay } from "@/components/meet/live-transcription-overlay"
@@ -840,6 +841,14 @@ export default function MeetPage() {
                                                                                     <Download className="w-3.5 h-3.5" />
                                                                                 </a>
                                                                             </Button>
+                                                                        )}
+                                                                        {/* Idea 7: Create doc from recording */}
+                                                                        {rec.status === "ready" && (
+                                                                            <MeetRecordingToDoc
+                                                                                meetingId={rec.id}
+                                                                                meetingTitle={selectedRoom?.name || 'Réunion'}
+                                                                                transcript=""
+                                                                            />
                                                                         )}
                                                                         <Button
                                                                             size="sm"

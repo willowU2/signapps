@@ -183,7 +183,7 @@ export function CronManager() {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center h-24">
-                  Loading cron jobs...
+                  Chargement...
                 </TableCell>
               </TableRow>
             ) : jobs.length === 0 && editingId !== "new" ? (

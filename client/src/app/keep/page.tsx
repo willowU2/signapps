@@ -5,6 +5,7 @@ import { SpinnerInfinity } from 'spinners-react';
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { Search, Menu, Settings, Grid, List, RefreshCw, Lightbulb, Bell, Pencil, Archive, Trash2, Image, Palette, MoreVertical, Pin, CheckSquare, Check, X, Plus, Tag, Share2, ScanText, Presentation } from 'lucide-react';
+import { NoteToDoc, NoteToTask } from '@/components/interop/keep-convert';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ShareNote } from "@/components/keep/share-note";
 import { NoteReminder, type NoteReminder as NoteReminderType } from "@/components/keep/note-reminder";
@@ -1322,6 +1323,24 @@ function NoteCard({
               <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
                 Extraire texte (OCR)
               </TooltipContent>
+            </Tooltip>
+
+            {/* Idea 8+9: Convert note to Doc or Task */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span onClick={(e) => e.stopPropagation()}>
+                  <NoteToDoc note={note} />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">Convertir en document</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span onClick={(e) => e.stopPropagation()}>
+                  <NoteToTask note={note} />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">Convertir en tâche</TooltipContent>
             </Tooltip>
 
             <Tooltip>

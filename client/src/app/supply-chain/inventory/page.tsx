@@ -154,7 +154,7 @@ export default function InventoryPage() {
           <TabsContent value="stock" className="mt-4 space-y-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, SKU, or category..." className="pl-9" />
+              <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..." className="pl-9" />
             </div>
             <Card>
               <CardContent className="p-0">

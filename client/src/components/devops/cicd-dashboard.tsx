@@ -158,7 +158,7 @@ export function CICDDashboard() {
   };
 
   if (isLoading) {
-    return <div className="text-center text-gray-500">Loading pipelines...</div>;
+    return <div className="text-center text-gray-500">Chargement...</div>;
   }
 
   const runningCount = pipelines.filter((p) => p.status === "running").length;

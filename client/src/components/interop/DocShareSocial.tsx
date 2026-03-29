@@ -35,13 +35,13 @@ export function DocShareSocial({ docId, docName, docContent }: DocShareSocialPro
   const handleShareNow = async () => {
     setLoading(true);
     try {
-      const accounts = await (socialApi as any).getAccounts?.() ?? { data: [] };
-      const accountIds: string[] = (accounts?.data ?? []).map((a: any) => a.id);
+      const accountsRes = await socialApi.accounts.list();
+      const accountIds: string[] = (accountsRes?.data ?? []).map((a: any) => a.id);
       if (!accountIds.length) {
         toast.error('Aucun compte social connecté');
         return;
       }
-      await (socialApi as any).createPost?.({
+      await socialApi.posts.create({
         content: customText || defaultText,
         accounts: accountIds,
         status: 'published',
@@ -62,9 +62,9 @@ export function DocShareSocial({ docId, docName, docContent }: DocShareSocialPro
     if (!scheduleDate) { toast.error('Choisissez une date'); return; }
     setLoading(true);
     try {
-      const accounts = await (socialApi as any).getAccounts?.() ?? { data: [] };
-      const accountIds: string[] = (accounts?.data ?? []).map((a: any) => a.id);
-      await (socialApi as any).createPost?.({
+      const accountsRes = await socialApi.accounts.list();
+      const accountIds: string[] = (accountsRes?.data ?? []).map((a: any) => a.id);
+      await socialApi.posts.create({
         content: customText || defaultText,
         accounts: accountIds,
         status: 'scheduled',

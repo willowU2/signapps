@@ -1,7 +1,5 @@
 "use client";
 
-import { SpinnerInfinity } from 'spinners-react';
-
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Switch } from "@/components/ui/switch";
 import { WebhookTemplatesDialog, WebhookTemplate } from "./webhook-templates";
 
@@ -242,10 +240,9 @@ export function WebhookSheet({
             />
 
             <div className="flex justify-end pt-4">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
-                {isEditing ? "Save Changes" : "Create Webhook"}
-              </Button>
+              <LoadingButton type="submit" loading={isLoading} loadingText="Enregistrement...">
+                {isEditing ? "Enregistrer" : "Créer le webhook"}
+              </LoadingButton>
             </div>
           </form>
         </Form>

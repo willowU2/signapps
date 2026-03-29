@@ -192,7 +192,7 @@ export function QuickSwitcher() {
       showCloseButton={false}
     >
       <CommandInput
-        placeholder="Search recent documents..."
+        placeholder="Rechercher..."
         value={query}
         onValueChange={setQuery}
       />

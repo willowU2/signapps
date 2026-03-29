@@ -1,12 +1,15 @@
 import { SpinnerInfinity } from 'spinners-react';
 import { format } from "date-fns"
-import { Archive, ArchiveX, Clock, Forward, MoreVertical, Reply, ReplyAll, Trash2, Sparkles, Bot, X, Send, FileText, Link2, CheckSquare, CalendarPlus } from 'lucide-react';
+import { Archive, ArchiveX, Clock, Forward, MoreVertical, Reply, ReplyAll, Trash2, Sparkles, Bot, X, Send, FileText, Link2, CheckSquare, CalendarPlus, Wand2 } from 'lucide-react';
 import { AttachmentPreviewBar, type Attachment } from "./attachment-preview"
 import { ScheduleSendPopup } from "./schedule-send-popup"
 import { SnoozeDatePicker } from "./snooze-picker"
 import { EntityLinks } from '@/components/crosslinks/EntityLinks';
 import { PgpStatusBadges, DecryptButton } from './pgp-indicator';
 import { EmailToTaskDialog } from './email-to-task-dialog';
+import { LinkedEntitiesPanel } from '@/components/interop/LinkedEntitiesPanel';
+import { extractActionItems } from '@/components/interop/UnifiedSearch';
+import { LabelTagSyncBadges } from '@/components/interop/LabelTagSync';
 
 import {
     DropdownMenu,
@@ -53,6 +56,25 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
 
     // Email-to-task dialog
     const [showTaskDialog, setShowTaskDialog] = useState(false)
+
+    // Interop: extract action items
+    const [extracting, setExtracting] = useState(false)
+
+    const handleExtractActions = async () => {
+        if (!mail) return
+        setExtracting(true)
+        try {
+            const API = process.env.NEXT_PUBLIC_CALENDAR_API || 'http://localhost:3011/api/v1'
+            const calsRes = await fetch(`${API}/calendars`, { credentials: 'include' })
+            const cals = await calsRes.json()
+            const calId = (cals.data ?? cals)?.[0]?.id ?? 'default'
+            const count = await extractActionItems(mail.text, mail.id, calId)
+            if (count > 0) toast.success(`${count} action(s) extraite(s) en tâches`)
+            else toast.info("Aucune action détectée dans cet email")
+        } catch {
+            toast.error("Impossible d'extraire les actions")
+        } finally { setExtracting(false) }
+    }
 
     // PGP decryption
     const [decryptedBody, setDecryptedBody] = useState<string | null>(null)
@@ -241,6 +263,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
 
                     <ToolbarGroup className="ml-auto">
                         {mail && (
+                            <>
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -250,6 +273,17 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                                 <CheckSquare className="h-3.5 w-3.5 mr-2 text-emerald-500" />
                                 Creer une tache
                             </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="mr-2 h-7 text-amber-600 dark:text-amber-400 border-amber-200/60 dark:border-amber-800/60 bg-amber-50/60 dark:bg-amber-900/30 hover:bg-amber-100/80 dark:hover:bg-amber-900/50 transition-all font-semibold"
+                                onClick={handleExtractActions}
+                                disabled={extracting}
+                            >
+                                <Wand2 className="h-3.5 w-3.5 mr-2 text-amber-500" />
+                                {extracting ? 'Extraction…' : 'Extraire actions'}
+                            </Button>
+                            </>
                         )}
                         {mail && (
                             <Button
@@ -366,6 +400,13 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                         {decryptedBody ?? mail.text}
                     </div>
 
+                    {/* Feature 25: Label → task tag sync badges */}
+                    {mail.labels?.length > 0 && (
+                        <div className="px-8 py-1">
+                            <LabelTagSyncBadges emailId={mail.id} labels={mail.labels} />
+                        </div>
+                    )}
+
                     {/* Inline attachment preview (IDEA-037) */}
                     {(mail as any).attachments?.length > 0 && (
                         <AttachmentPreviewBar
@@ -387,10 +428,11 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                         </Button>
                     </div>
 
-                    {/* Entity Crosslinks */}
+                    {/* Entity Crosslinks + Interop Links */}
                     {mail && (
-                      <div className="px-8 py-4 border-t border-border/50">
+                      <div className="px-8 py-4 border-t border-border/50 space-y-3">
                         <EntityLinks entityType="mail_message" entityId={mail.id} />
+                        <LinkedEntitiesPanel entityType="mail" entityId={mail.id} />
                       </div>
                     )}
 

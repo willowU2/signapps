@@ -125,7 +125,7 @@ export function SemanticSearch({
       <div className="flex gap-2">
         <div className="flex-1 relative">
           <Input
-            placeholder="Search by meaning, not just keywords..."
+            placeholder="Rechercher..."
             value={query}
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyDown={handleKeyDown}

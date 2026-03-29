@@ -33,6 +33,7 @@ import {
 import { ActiveSessions } from '@/components/settings/active-sessions';
 import { toast } from 'sonner';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { PageHeader } from '@/components/ui/page-header';
 
 // ---------------------------------------------------------------------------
 // Mock recovery codes
@@ -112,16 +113,11 @@ export default function SecuritySettingsPage() {
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold">Securite du compte</h1>
-            <p className="text-sm text-muted-foreground">
-              Authentification a deux facteurs, sessions actives et codes de recuperation
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          title="Sécurité du compte"
+          description="Authentification à deux facteurs, sessions actives et codes de récupération"
+          icon={<ShieldCheck className="h-5 w-5" />}
+        />
 
         {/* ---------------------------------------------------------------- */}
         {/* 2FA Toggle */}

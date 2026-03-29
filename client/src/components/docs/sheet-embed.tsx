@@ -116,7 +116,7 @@ export function SheetEmbedView({ node, updateAttributes, selected }: NodeViewPro
         {loading && !data && (
           <div className="flex items-center justify-center py-8 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin mr-2" />
-            <span className="text-sm">Loading sheet data...</span>
+            <span className="text-sm">Chargement...</span>
           </div>
         )}
 

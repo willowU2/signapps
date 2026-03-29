@@ -63,6 +63,10 @@ import type {
   Attendee,
   EventTemplate,
 } from '@/lib/scheduling/types/scheduling';
+import { EventFollowUpSuggestion, useEventTaskSuggestions } from '@/components/interop/EventFollowUpSuggestion';
+import { EventNotesDocSave } from '@/components/interop/EventNotesDoc';
+import { LinkedEntitiesPanel } from '@/components/interop/LinkedEntitiesPanel';
+import { RecurringEventToTask } from '@/components/interop/RecurringEventToTask';
 
 // ============================================================================
 // Types
@@ -606,6 +610,30 @@ export function EventSheet({
             </CollapsibleContent>
           </Collapsible>
         </div>
+
+        {/* Interop features: follow-up suggestions, notes doc save, linked entities */}
+        {isEditing && event && (
+          <div className="px-6 py-3 border-t border-border/40 space-y-2 bg-muted/5">
+            {/* Feature 17: Save notes as doc */}
+            {description.trim() && (
+              <EventNotesDocSave eventId={event.id} eventTitle={title} notes={description} />
+            )}
+            {/* Feature 6: Suggest follow-up task when event is ending soon */}
+            <EventFollowUpSuggestion event={event} mode="follow_up" />
+            {/* Feature 11: Auto-create prep task */}
+            <EventFollowUpSuggestion event={event} mode="prepare" />
+            {/* Feature 26: Recurring event → recurring tasks */}
+            {recurrence !== 'none' && (
+              <RecurringEventToTask
+                eventId={event.id}
+                eventTitle={title}
+                recurrenceFrequency={recurrence}
+              />
+            )}
+            {/* Feature 4: Show linked tasks */}
+            <LinkedEntitiesPanel entityType="event" entityId={event.id} />
+          </div>
+        )}
 
         {/* Footer fully matching workspace style */}
         <div className="flex justify-end gap-3 p-6 pt-4 border-t border-border/50 bg-muted/10 shrink-0">

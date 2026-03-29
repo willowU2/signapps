@@ -27,16 +27,16 @@ export default function Error({
 
         {/* Title */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Une erreur est survenue</h1>
+          <h1 className="text-3xl font-bold">Erreur serveur</h1>
           <p className="text-muted-foreground">
-            An unexpected error occurred. Please try again or return to the dashboard.
+            Une erreur inattendue s'est produite. Veuillez réessayer ou retourner au tableau de bord.
           </p>
         </div>
 
         {/* Error details (development only) */}
         {process.env.NODE_ENV === 'development' && (
           <div className="rounded-lg border bg-muted/50 p-4 text-left">
-            <p className="text-sm font-medium text-destructive mb-2">Error Details:</p>
+            <p className="text-sm font-medium text-destructive mb-2">Détails de l'erreur :</p>
             <code className="text-xs text-muted-foreground break-all">
               {error.message}
             </code>
@@ -52,19 +52,19 @@ export default function Error({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button variant="outline" onClick={reset}>
             <RefreshCw className="mr-2 h-4 w-4" />
-            Try Again
+            Réessayer
           </Button>
           <Link href="/dashboard">
             <Button>
               <Home className="mr-2 h-4 w-4" />
-              Dashboard
+              Tableau de bord
             </Button>
           </Link>
         </div>
 
         {/* Help text */}
         <p className="text-sm text-muted-foreground">
-          If the problem persists, please contact support.
+          Si le problème persiste, veuillez contacter le support.
         </p>
       </div>
     </div>

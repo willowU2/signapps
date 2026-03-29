@@ -127,7 +127,7 @@ export function LogViewer() {
           <div className="flex-1 relative">
             <Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-500" />
             <Input
-              placeholder="Search logs..."
+              placeholder="Rechercher..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-8 bg-slate-800 border-slate-600 text-gray-100"

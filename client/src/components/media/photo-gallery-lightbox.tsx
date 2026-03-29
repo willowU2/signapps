@@ -86,7 +86,7 @@ export function PhotoGalleryLightbox() {
           ) : (
             <div className="space-y-3">
               {images.length > 4 && (
-                <Input placeholder="Search by filename…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="h-8 text-sm" />
+                <Input placeholder="Rechercher..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="h-8 text-sm" />
               )}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                 {filtered.map((img, idx) => (

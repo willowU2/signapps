@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { PageHeader } from '@/components/ui/page-header';
 
 // ─── Template types ─────────────────────────────────────────────────────────
 
@@ -379,15 +380,11 @@ export default function EmailTemplatesPage() {
   return (
     <AppLayout>
       <div className="space-y-6 p-6">
-        <div className="flex items-center gap-3">
-          <Mail className="h-6 w-6 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Templates d&apos;emails</h1>
-            <p className="text-sm text-muted-foreground">
-              Gerez les templates de notifications email de la plateforme.
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          title="Templates d'emails"
+          description="Gérez les templates de notifications email de la plateforme."
+          icon={<Mail className="h-5 w-5" />}
+        />
 
         {/* Template list */}
         <div className="grid gap-4 md:grid-cols-2">

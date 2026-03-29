@@ -101,7 +101,7 @@ export function DocMergeFields({ onInsert }: DocMergeFieldsProps) {
           <Database className="h-4 w-4" /> Merge Fields
         </CardTitle>
         <Input
-          placeholder="Search fields…"
+          placeholder="Rechercher..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="h-7 text-xs mt-1"

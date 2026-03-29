@@ -82,7 +82,7 @@ export function ContentSearchDialog({
         <div className="flex gap-2">
           <Input
             ref={inputRef}
-            placeholder="Search within file text, code, documents..."
+            placeholder="Rechercher..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKey}

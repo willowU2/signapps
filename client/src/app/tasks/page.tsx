@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { Plus, Download, Upload, MoreVertical, ExternalLink, X, Settings, FolderPlus, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Download, Upload, MoreVertical, ExternalLink, X, Settings, FolderPlus, Sparkles, Loader2, CheckSquare } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TaskTree } from "@/components/tasks/TaskTree";
@@ -104,24 +105,14 @@ export default function TasksPage() {
                 <p className="text-sm font-medium animate-pulse">Chargement de votre espace de travail...</p>
               </div>
             ) : projects.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto text-center px-4 space-y-6">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
-                  <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 shadow-inner">
-                    <FolderPlus className="h-10 w-10 text-primary" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-semibold tracking-tight">Où est passé votre projet ?</h3>
-                  <p className="text-muted-foreground text-[15px] leading-relaxed">
-                    Il semble que vous n'ayez encore aucun projet. Créez-en un dans le Hub pour débloquer toute la puissance de la gestion des tâches intelligente.
-                  </p>
-                </div>
-                <Button onClick={() => window.location.href='/projects'} size="lg" className="rounded-full shadow-lg hover:shadow-xl bg-primary text-primary-foreground font-medium h-12 px-8 transition-all hover:-translate-y-1 mt-2">
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Aller dans le Hub
-                </Button>
-              </div>
+              <EmptyState
+                icon={FolderPlus}
+                context="empty"
+                title="Aucun projet"
+                description="Créez un projet dans le Hub pour commencer à gérer vos tâches."
+                actionLabel="Aller dans le Hub"
+                onAction={() => { window.location.href = '/projects'; }}
+              />
             ) : selectedProjectId && (
                 <div className="pb-32 h-full z-10 relative">
                     {viewMode === 'list' ? (

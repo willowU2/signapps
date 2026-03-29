@@ -156,7 +156,7 @@ export function ComplianceAuditTrail() {
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search actions, actors…"
+            placeholder="Rechercher..."
             className="pl-8 h-8 text-xs"
           />
         </div>

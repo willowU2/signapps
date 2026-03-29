@@ -125,7 +125,7 @@ export default function DesignFontsLibrary({ fabricCanvasRef }: DesignFontsLibra
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search fonts…"
+            placeholder="Rechercher..."
             className="h-7 text-xs pl-7"
           />
         </div>

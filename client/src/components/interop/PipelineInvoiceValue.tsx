@@ -71,8 +71,8 @@ export function PipelineInvoiceValue() {
                 <XAxis dataKey="stageName" tick={{ fontSize: 11 }} />
                 <YAxis tickFormatter={fmt} tick={{ fontSize: 11 }} />
                 <Tooltip
-                  formatter={(value: number, name: string) => [fmtFull(value), name === "invoicedAmount" ? "Facturé" : "Payé"]}
-                  labelFormatter={(l: string) => `Étape: ${l}`}
+                  formatter={(value: unknown) => [fmtFull(Number(value)), ""]}
+                  labelFormatter={(l: unknown) => `Étape: ${String(l)}`}
                 />
                 <Bar dataKey="invoicedAmount" name="Facturé" radius={[3, 3, 0, 0]}>
                   {data.map(entry => (

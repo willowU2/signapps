@@ -60,6 +60,7 @@ export function useServiceHealth() {
       );
       return results;
     },
-    refetchInterval: 30000,
+    staleTime: 30_000,    // STALE_REALTIME-style: always want fresh health data
+    refetchInterval: 30_000,
   });
 }

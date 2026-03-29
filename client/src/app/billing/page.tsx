@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { AppLayout } from "@/components/layout/app-layout";
 import { billingApi, type BillingUsage, type Invoice, type InvoiceStatus } from "@/lib/api/billing";
+import { OverdueInvoicesCrmFlag } from "@/components/interop/OverdueInvoicesCrmFlag";
+import { InvoiceEmailSender } from "@/components/interop/InvoiceEmailSender";
+import { localInvoicesApi } from "@/lib/api/interop";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -261,6 +264,11 @@ export default function BillingPage() {
         </div>
       </section>
 
+      {/* Feature 11: Overdue invoices with CRM flag */}
+      <section>
+        <OverdueInvoicesCrmFlag />
+      </section>
+
       {/* Invoices table */}
       <section>
         {/* Tabs */}
@@ -360,12 +368,19 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
             <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
               Télécharger
             </th>
+            <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody>
           {invoices.map((inv) => {
             const st =
               STATUS_META[inv.status] ?? STATUS_META.draft;
+            // Try to find local invoice for email sending
+            const localInv = localInvoicesApi.list().find(
+              li => li.number === inv.number || li.clientName === inv.client_name
+            );
             return (
               <tr
                 key={inv.id}
@@ -401,6 +416,22 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
                     </a>
                   ) : (
                     <span className="text-muted-foreground text-xs">—</span>
+                  )}
+                </td>
+                {/* Feature 22: Email invoice to contact */}
+                <td className="px-4 py-3">
+                  {localInv ? (
+                    <InvoiceEmailSender
+                      invoice={localInv}
+                      contactEmail={localInv.contactEmail}
+                    />
+                  ) : (
+                    <a
+                      href={`mailto:?subject=Facture ${inv.number}`}
+                      className="text-primary text-xs hover:underline"
+                    >
+                      Envoyer
+                    </a>
                   )}
                 </td>
               </tr>

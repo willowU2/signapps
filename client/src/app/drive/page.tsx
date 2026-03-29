@@ -43,6 +43,12 @@ import { EntityContextMenu } from '@/components/context-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { EntityLinks } from '@/components/crosslinks/EntityLinks';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { DriveVersionHistory } from '@/components/interop/DriveVersionHistory';
+import { DriveShareEmail } from '@/components/interop/DriveShareEmail';
+import { AiAutoTagDrive } from '@/components/interop/AiAutoTagDrive';
+import { DriveFilePreview } from '@/components/interop/DriveFilePreview';
+import { DriveBulkDownload } from '@/components/interop/DriveBulkDownload';
+import { DocFromTemplate } from '@/components/interop/DocFromTemplate';
 
 export default function GlobalDrivePage() {
   usePageTitle('Drive');
@@ -340,6 +346,9 @@ export default function GlobalDrivePage() {
                   <FileText className="h-4 w-4 text-blue-600" />
                   Document texte
                 </DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="p-0">
+                  <DocFromTemplate triggerLabel="Depuis un modèle" />
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -455,11 +464,18 @@ export default function GlobalDrivePage() {
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuContent align="end" className="w-56">
                               <DropdownMenuItem onClick={() => handleNavigate(node)}>Ouvrir</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { setRenameNode(node); setRenameOpen(true); }}>Renommer</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { setShareNode(node); setShareOpen(true); }}>Partager</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { setDetailNode(node); setDetailOpen(true); }}>Détails</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="p-0">
+                                <DriveShareEmail node={node} />
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="p-0">
+                                <DriveVersionHistory node={node} />
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={(e) => handleDownload(node, e)} className="gap-2 focus:bg-[#f1f3f4] dark:focus:bg-[#3c4043] cursor-pointer">
                                 <Download className="h-4 w-4 text-[#5f6368] dark:text-[#9aa0a6]" />
@@ -548,6 +564,12 @@ export default function GlobalDrivePage() {
                   <div>Modifié le {new Date(detailNode.updated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
                   {detailNode.size && <div>Taille : {(detailNode.size / 1024).toFixed(1)} KB</div>}
                 </div>
+                <div className="flex flex-wrap gap-2">
+                  <DriveFilePreview node={detailNode} />
+                  <DriveVersionHistory node={detailNode} />
+                  <DriveShareEmail node={detailNode} />
+                </div>
+                <AiAutoTagDrive node={detailNode} />
                 <div className="border-t pt-4">
                   <EntityLinks entityType="drive_node" entityId={detailNode.id} />
                 </div>

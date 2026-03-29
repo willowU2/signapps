@@ -162,7 +162,7 @@ export function MonthCalendar({ selectedCalendarId }: MonthCalendarProps) {
 
       {isLoading && (
         <div className="absolute inset-0 bg-background/50 flex items-center justify-center pointer-events-none">
-          <span className="text-[#5f6368] text-sm">Loading events...</span>
+          <span className="text-[#5f6368] text-sm">Chargement...</span>
         </div>
       )}
     </div>

@@ -41,7 +41,7 @@ function LoadingFallback() {
         <div className="flex items-center justify-center h-full">
             <div className="text-center">
                 <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} />
-                <p className="text-gray-500 mt-2">Loading editor...</p>
+                <p className="text-gray-500 mt-2">Chargement...</p>
             </div>
         </div>
     );

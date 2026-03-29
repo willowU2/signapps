@@ -24,6 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { useEntityStore } from "@/stores/entity-hub-store";
 import { toast } from "sonner";
 import { TaskAssigneeSelector } from "./task-assignee-selector";
+import { useCalendarAvailability } from "@/components/interop/CalendarContactSuggestions";
 
 interface TaskFormProps {
   open: boolean;
@@ -59,6 +60,9 @@ export function TaskForm({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Feature 24: Calendar availability for assignee
+  const [assigneeEmail, setAssigneeEmail] = useState<string | null>(null);
+  const availabilitySlots = useCalendarAvailability(assigneeEmail);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -171,10 +175,18 @@ export function TaskForm({
             <Label>Assigné à</Label>
             <TaskAssigneeSelector
               assigneeId={formData.assignee_id}
-              onAssigneeChange={(userId) =>
-                setFormData((prev) => ({ ...prev, assignee_id: userId }))
-              }
+              onAssigneeChange={(userId) => {
+                setFormData((prev) => ({ ...prev, assignee_id: userId }));
+                // Feature 24: check assignee calendar availability
+                if (userId) setAssigneeEmail(userId);
+              }}
             />
+            {/* Feature 24: Show next free slot */}
+            {availabilitySlots.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Prochain créneau libre : {new Date(availabilitySlots[0].start).toLocaleString("fr-FR", { weekday: "short", hour: "2-digit", minute: "2-digit" })}
+              </p>
+            )}
           </div>
 
           {/* Due date reminder */}

@@ -31,12 +31,14 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { BUILTIN_SLIDE_TEMPLATES, getUserTemplates, deleteUserTemplate, type DocTemplate } from '@/lib/document-templates';
+import { DocumentTags, TagFilterBar, getDocumentTags } from '@/components/docs/document-tags';
 
 export default function SlidesDashboard() {
     const router = useRouter();
     const [docs, setDocs] = useState<DriveNode[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
 
     // Modal State
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -153,7 +155,11 @@ export default function SlidesDashboard() {
         toast.success('Mod\u00e8le supprim\u00e9');
     };
 
-    const filteredDocs = docs.filter(d => !searchQuery.trim() || d.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    const filteredDocs = docs.filter(d => {
+        const matchesSearch = !searchQuery.trim() || d.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesTag = !activeTagFilter || getDocumentTags(d.id).includes(activeTagFilter);
+        return matchesSearch && matchesTag;
+    });
 
     const handleOpenDoc = (node: DriveNode) => {
         const targetId = node.target_id || node.id;
@@ -266,16 +272,20 @@ export default function SlidesDashboard() {
                     </div>
                 </div>
 
+                <div className="mb-6">
+                    <TagFilterBar activeTag={activeTagFilter} onFilterChange={setActiveTagFilter} />
+                </div>
+
                 {filteredDocs.length === 0 ? (
                      <div className="flex flex-col items-center justify-center py-16 text-center rounded-xl bg-transparent">
                         <Presentation className="h-12 w-12 text-muted-foreground/30 mb-4" />
                         <h3 className="text-lg font-medium text-muted-foreground">
-                          {searchQuery ? 'Aucune présentation trouvée' : 'Créez votre première présentation'}
+                          {searchQuery || activeTagFilter ? 'Aucune présentation trouvée' : 'Créez votre première présentation'}
                         </h3>
                         <p className="mt-1 text-sm text-muted-foreground/70">
-                          {searchQuery ? 'Essayez un autre terme de recherche' : 'Cliquez sur "Présentation vierge" ci-dessus pour commencer'}
+                          {searchQuery || activeTagFilter ? 'Essayez un autre terme de recherche' : 'Cliquez sur "Présentation vierge" ci-dessus pour commencer'}
                         </p>
-                        {!searchQuery && (
+                        {!searchQuery && !activeTagFilter && (
                           <Button className="mt-4" onClick={openCreateModal}>
                             <Plus className="mr-2 h-4 w-4" /> Nouvelle présentation
                           </Button>

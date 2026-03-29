@@ -2,9 +2,8 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -13,9 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Shield, Download, Search, RefreshCw, Trash2, Filter } from 'lucide-react';
+import { Shield, Download, RefreshCw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { PageHeader } from '@/components/ui/page-header';
+import { SearchInput } from '@/components/ui/search-input';
+import { DateDisplay } from '@/components/ui/date-display';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -321,36 +323,31 @@ export default function AuditLogPage() {
   return (
     <AppLayout>
       <div className="w-full space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Shield className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-2xl font-bold">Journal d&apos;audit</h1>
-              <p className="text-sm text-muted-foreground">
-                Toutes les actions utilisateur — connexions, modifications, suppressions
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={refresh}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Rafraichir
-            </Button>
-            <Button variant="outline" size="sm" onClick={exportCsv}>
-              <Download className="h-4 w-4 mr-2" />
-              CSV
-            </Button>
-            <Button variant="outline" size="sm" onClick={exportJson}>
-              <Download className="h-4 w-4 mr-2" />
-              JSON
-            </Button>
-            <Button variant="outline" size="sm" onClick={clearAuditLog}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Reset
-            </Button>
-          </div>
-        </div>
+        <PageHeader
+          title="Journal d'audit"
+          description="Toutes les actions utilisateur — connexions, modifications, suppressions"
+          icon={<Shield className="h-5 w-5" />}
+          actions={
+            <>
+              <Button variant="outline" size="sm" onClick={refresh}>
+                <RefreshCw className="h-4 w-4" />
+                Rafraîchir
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportCsv}>
+                <Download className="h-4 w-4" />
+                CSV
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportJson}>
+                <Download className="h-4 w-4" />
+                JSON
+              </Button>
+              <Button variant="outline" size="sm" onClick={clearAuditLog}>
+                <Trash2 className="h-4 w-4" />
+                Reset
+              </Button>
+            </>
+          }
+        />
 
         {/* Filters */}
         <Card>
@@ -361,15 +358,11 @@ export default function AuditLogPage() {
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">
                   Recherche
                 </label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Utilisateur, action, cible..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
+                <SearchInput
+                  value={search}
+                  onValueChange={setSearch}
+                  placeholder="Utilisateur, action, cible..."
+                />
               </div>
 
               {/* Action filter */}
@@ -451,9 +444,9 @@ export default function AuditLogPage() {
                 </thead>
                 <tbody className="divide-y">
                   {filtered.map((e) => (
-                    <tr key={e.id} className="hover:bg-accent/40 transition-colors">
+                    <tr key={e.id} className="h-12 hover:bg-muted/50 transition-colors">
                       <td className="px-4 py-2 text-muted-foreground text-xs whitespace-nowrap">
-                        {new Date(e.timestamp).toLocaleString('fr-FR')}
+                        <DateDisplay date={e.timestamp} withTime />
                       </td>
                       <td className="px-4 py-2 font-mono text-xs">{e.user}</td>
                       <td className="px-4 py-2">

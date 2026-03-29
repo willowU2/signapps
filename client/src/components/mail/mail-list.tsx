@@ -2,8 +2,9 @@ import { ComponentProps, useRef, useState, useEffect, useCallback } from "react"
 import { formatDistanceToNow } from "date-fns"
 
 import { cn } from "@/lib/utils"
-import { Archive, Clock, Trash2, Square, Star, Loader2, ShieldAlert, Inbox, Reply, Forward } from "lucide-react"
+import { Archive, Clock, Trash2, Square, Star, Loader2, ShieldAlert, Inbox, Reply, Forward, CheckSquare, CalendarPlus, Bell, FolderPlus, Mail as MailIcon } from "lucide-react"
 import { Mail } from "@/lib/data/mail"
+import { EmptyState } from "@/components/ui/empty-state"
 import { SpamBadge } from "./spam-filter-settings"
 import {
     DropdownMenu,
@@ -18,6 +19,10 @@ import {
     ContextMenuSeparator,
     ContextMenuTrigger,
 } from "@/components/ui/context-menu"
+import { EmailToTaskDialog } from "@/components/mail/email-to-task-dialog"
+import { EmailToEventDialog } from "@/components/interop/EmailToEventDialog"
+import { EmailFollowUpDialog } from "@/components/interop/EmailFollowUpDialog"
+import { EmailThreadToProjectDialog } from "@/components/interop/EmailThreadToProject"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { VirtualList } from "@/components/ui/virtual-list"
 import { useSwipeAction } from "@/hooks/use-swipe-action"
@@ -58,8 +63,17 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
         onSwipeLeft: () => onArchive?.(item.id),
         onSwipeRight: () => onDelete?.(item.id),
     })
+    const [taskOpen, setTaskOpen] = useState(false)
+    const [eventOpen, setEventOpen] = useState(false)
+    const [followUpOpen, setFollowUpOpen] = useState(false)
+    const [projectOpen, setProjectOpen] = useState(false)
 
     return (
+        <>
+        <EmailToTaskDialog open={taskOpen} onOpenChange={setTaskOpen} emailSubject={item.subject} emailBody={item.text} emailFrom={item.email} emailId={item.id} />
+        <EmailToEventDialog open={eventOpen} onOpenChange={setEventOpen} mail={item} />
+        <EmailFollowUpDialog open={followUpOpen} onOpenChange={setFollowUpOpen} mail={item} />
+        <EmailThreadToProjectDialog open={projectOpen} onOpenChange={setProjectOpen} mail={item} />
         <ContextMenu>
         <ContextMenuTrigger asChild>
         <div
@@ -125,12 +139,26 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
             </div>
         </div>
         </ContextMenuTrigger>
-        <ContextMenuContent>
+        <ContextMenuContent className="w-56">
             <ContextMenuItem onClick={() => onSelect(item.id)}>
                 <Reply className="h-3.5 w-3.5 mr-2" /> Repondre
             </ContextMenuItem>
             <ContextMenuItem onClick={() => onSelect(item.id)}>
                 <Forward className="h-3.5 w-3.5 mr-2" /> Transferer
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            {/* Interop actions — Features 1, 2, 12, 19 */}
+            <ContextMenuItem onClick={(e) => { e.preventDefault(); setTaskOpen(true) }}>
+                <CheckSquare className="h-3.5 w-3.5 mr-2 text-emerald-500" /> Créer une tâche
+            </ContextMenuItem>
+            <ContextMenuItem onClick={(e) => { e.preventDefault(); setEventOpen(true) }}>
+                <CalendarPlus className="h-3.5 w-3.5 mr-2 text-blue-500" /> Ajouter au calendrier
+            </ContextMenuItem>
+            <ContextMenuItem onClick={(e) => { e.preventDefault(); setFollowUpOpen(true) }}>
+                <Bell className="h-3.5 w-3.5 mr-2 text-amber-500" /> Rappel de suivi
+            </ContextMenuItem>
+            <ContextMenuItem onClick={(e) => { e.preventDefault(); setProjectOpen(true) }}>
+                <FolderPlus className="h-3.5 w-3.5 mr-2 text-indigo-500" /> Créer un projet
             </ContextMenuItem>
             <ContextMenuSeparator />
             <ContextMenuItem onClick={() => onArchive?.(item.id)}>
@@ -145,6 +173,7 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
             </ContextMenuItem>
         </ContextMenuContent>
         </ContextMenu>
+        </>
     )
 }
 
@@ -207,12 +236,16 @@ export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onD
 
             {/* Virtualised email list — only visible rows are rendered */}
             {items.length === 0 ? (
-                <div className="flex flex-col items-center justify-center flex-1 py-20 text-muted-foreground gap-3">
-                    <Inbox className="h-12 w-12 opacity-30" />
-                    <p className="text-sm">
-                        {isSearchActive ? "Aucun résultat" : "Votre boîte est vide"}
-                    </p>
-                </div>
+                <EmptyState
+                    icon={MailIcon}
+                    context={isSearchActive ? "search" : "empty"}
+                    title={isSearchActive ? "Aucun résultat" : "Votre boîte est vide"}
+                    description={
+                        isSearchActive
+                            ? "Aucun email ne correspond à votre recherche."
+                            : "Tous vos messages apparaîtront ici."
+                    }
+                />
             ) : (
                 <VirtualList
                     items={items}

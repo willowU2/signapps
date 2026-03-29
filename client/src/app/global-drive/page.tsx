@@ -53,7 +53,14 @@ import {
   ChevronDown,
   EyeIcon,
 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { DriveSearchDocs } from '@/components/interop/DriveSearchDocs';
+import { DriveBulkDownload } from '@/components/interop/DriveBulkDownload';
+import { DocFromTemplate } from '@/components/interop/DocFromTemplate';
+import { UnifiedContentLibrary } from '@/components/interop/UnifiedContentLibrary';
+import { DriveShareEmail } from '@/components/interop/DriveShareEmail';
+import { DriveNode } from '@/lib/api/drive';
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface FileItem {
@@ -207,6 +214,7 @@ export default function GlobalDrivePage() {
   const [showUpload, setShowUpload] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
+  const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
 
   // ── Navigation ──────────────────────────────────────────────────
   const getBreadcrumbPath = useCallback((): { id: string | null; name: string }[] => {
@@ -249,7 +257,7 @@ export default function GlobalDrivePage() {
     if (item.type === 'folder') {
       navigateToFolder(item.id);
     } else {
-      toast.info(`Ouverture de "${item.name}"...`);
+      setPreviewFile(item);
     }
   };
 
@@ -378,7 +386,7 @@ export default function GlobalDrivePage() {
             {totalFolders} dossiers, {totalFiles} fichiers
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={() => setShowNewFolder(true)} className="gap-2">
             <PlusIcon className="size-4" />
             Nouveau dossier
@@ -387,6 +395,8 @@ export default function GlobalDrivePage() {
             <UploadIcon className="size-4" />
             Importer
           </Button>
+          <DocFromTemplate />
+          <UnifiedContentLibrary />
         </div>
       </div>
 
@@ -426,15 +436,9 @@ export default function GlobalDrivePage() {
             </Button>
           )}
 
-          {/* Search */}
-          <div className="relative">
-            <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher..."
-              className="pl-9 w-48"
-            />
+          {/* Enhanced Search (Drive + Doc content) */}
+          <div className="w-64">
+            <DriveSearchDocs />
           </div>
 
           {/* Sort */}
@@ -540,14 +544,23 @@ export default function GlobalDrivePage() {
                     Ouvrir
                   </ContextMenuItem>
                 ) : (
-                  <ContextMenuItem onClick={() => toast.info(`Ouverture de "${item.name}"...`)}>
+                  <ContextMenuItem onClick={() => setPreviewFile(item)}>
                     <EyeIcon className="size-4 mr-2" />
-                    Ouvrir
+                    Apercu
                   </ContextMenuItem>
                 )}
-                <ContextMenuItem onClick={() => toast.info(`T\u00e9l\u00e9chargement de "${item.name}"...`)}>
+                <ContextMenuItem onClick={() => toast.info(`Téléchargement de "${item.name}"...`)}>
                   <DownloadIcon className="size-4 mr-2" />
-                  T\u00e9l\u00e9charger
+                  Télécharger
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => {
+                  const node: DriveNode = { id: item.id, parent_id: item.parentId, name: item.name, node_type: item.type === 'folder' ? 'folder' : 'file', target_id: null, owner_id: '', size: null, mime_type: null, created_at: item.modified, updated_at: item.modified, deleted_at: null };
+                  const url = `${window.location.origin}/global-drive?node=${item.id}`;
+                  navigator.clipboard.writeText(url);
+                  toast.success('Lien copié');
+                }}>
+                  <CopyIcon className="size-4 mr-2" />
+                  Copier le lien
                 </ContextMenuItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem onClick={() => openRenameDialog(item)}>
@@ -558,9 +571,9 @@ export default function GlobalDrivePage() {
                   <CopyIcon className="size-4 mr-2" />
                   Copier
                 </ContextMenuItem>
-                <ContextMenuItem onClick={() => toast.info('D\u00e9placement...')}>
+                <ContextMenuItem onClick={() => toast.info('Déplacement...')}>
                   <FolderInputIcon className="size-4 mr-2" />
-                  D\u00e9placer
+                  Déplacer
                 </ContextMenuItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem variant="destructive" onClick={() => openDeleteDialog(item)}>
@@ -806,6 +819,123 @@ export default function GlobalDrivePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── File Preview Dialog ─────────────────────────────────── */}
+      <Dialog open={!!previewFile} onOpenChange={(open) => { if (!open) setPreviewFile(null); }}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {previewFile && getFileIcon(previewFile.type, 'size-5')}
+              {previewFile?.name}
+            </DialogTitle>
+            <DialogDescription>
+              {previewFile && `${getTypeLabel(previewFile.type)} — ${previewFile.size || 'Taille inconnue'} — ${formatDate(previewFile.modified)}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 min-h-0">
+            {previewFile && <FilePreviewContent file={previewFile} />}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewFile(null)}>
+              Fermer
+            </Button>
+            <Button onClick={() => { toast.info(`Telechargement de "${previewFile?.name}"...`); setPreviewFile(null); }}>
+              <DownloadIcon className="size-4 mr-2" />
+              Telecharger
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── File Preview Content Component ──────────────────────────────────
+function FilePreviewContent({ file }: { file: FileItem }) {
+  const isImage = ['png', 'jpg', 'jpeg', 'gif', 'svg'].includes(file.type);
+  const isText = ['md', 'txt'].includes(file.type);
+  const isPdf = file.type === 'pdf';
+  const isVideo = file.type === 'mp4';
+
+  if (isImage) {
+    return (
+      <div className="flex items-center justify-center bg-muted/30 rounded-lg p-6 min-h-[300px]">
+        <div className="text-center">
+          <ImageIcon className="size-16 text-purple-500 mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground font-medium">{file.name}</p>
+          <p className="text-xs text-muted-foreground mt-1">{file.size}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isPdf) {
+    return (
+      <div className="flex flex-col items-center justify-center bg-muted/30 rounded-lg p-8 min-h-[300px]">
+        <FileTextIcon className="size-16 text-red-500 mb-4" />
+        <p className="text-sm font-medium">{file.name}</p>
+        <p className="text-xs text-muted-foreground mt-1">{file.size}</p>
+        <Badge variant="outline" className="mt-3">Document PDF</Badge>
+      </div>
+    );
+  }
+
+  if (isText) {
+    const sampleContent = file.type === 'md'
+      ? `# ${file.name.replace('.md', '')}\n\nApercu du fichier Markdown.\n\n## Section 1\n\nContenu du document...\n\n## Section 2\n\n- Point 1\n- Point 2\n- Point 3\n\n> Note : L'apercu complet sera disponible lorsque le fichier sera charge depuis le serveur.`
+      : `Contenu du fichier texte "${file.name}"\n\nLe contenu complet sera affiche lorsque le fichier sera charge depuis le serveur de stockage.\n\nTaille : ${file.size || 'inconnue'}\nDerniere modification : ${file.modified}`;
+
+    return (
+      <ScrollArea className="h-[350px] rounded-lg border bg-muted/20">
+        <pre className="p-4 text-sm font-mono whitespace-pre-wrap text-foreground/80 leading-relaxed">
+          {sampleContent}
+        </pre>
+      </ScrollArea>
+    );
+  }
+
+  if (isVideo) {
+    return (
+      <div className="flex flex-col items-center justify-center bg-muted/30 rounded-lg p-8 min-h-[300px]">
+        <div className="w-64 h-40 bg-black/80 rounded-lg flex items-center justify-center">
+          <div className="w-0 h-0 border-l-[24px] border-l-white border-y-[16px] border-y-transparent ml-2" />
+        </div>
+        <p className="text-sm font-medium mt-4">{file.name}</p>
+        <p className="text-xs text-muted-foreground mt-1">{file.size}</p>
+      </div>
+    );
+  }
+
+  // Default: show file info card
+  return (
+    <div className="space-y-4 py-2">
+      <div className="flex items-center justify-center py-6">
+        {getFileIcon(file.type, 'size-20')}
+      </div>
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="space-y-1">
+          <p className="text-muted-foreground">Nom</p>
+          <p className="font-medium">{file.name}</p>
+        </div>
+        <div className="space-y-1">
+          <p className="text-muted-foreground">Type</p>
+          <p className="font-medium">{getTypeLabel(file.type)}</p>
+        </div>
+        <div className="space-y-1">
+          <p className="text-muted-foreground">Taille</p>
+          <p className="font-medium">{file.size || 'Inconnue'}</p>
+        </div>
+        <div className="space-y-1">
+          <p className="text-muted-foreground">Modification</p>
+          <p className="font-medium">{formatDate(file.modified)}</p>
+        </div>
+        {file.owner && (
+          <div className="space-y-1">
+            <p className="text-muted-foreground">Proprietaire</p>
+            <p className="font-medium">{file.owner}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

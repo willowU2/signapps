@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
-import { Settings2 } from "lucide-react";
+import { Settings2, Bell } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   notificationsApi,
   type Notification,
@@ -289,7 +290,7 @@ export default function NotificationsPage() {
       {loading ? (
         <LoadingSkeleton />
       ) : filtered.length === 0 ? (
-        <EmptyState filter={filter} />
+        <NotificationsEmptyState filter={filter} />
       ) : (
         <div className="space-y-2">
           {filtered.map((n) => (
@@ -396,35 +397,24 @@ function LoadingSkeleton() {
   );
 }
 
-function EmptyState({ filter }: { filter: FilterMode }) {
+function NotificationsEmptyState({ filter }: { filter: FilterMode }) {
   const messages: Record<string, { title: string; hint: string }> = {
-    all:     { title: "Aucune notification",       hint: "Vous êtes à jour !" },
-    unread:  { title: "Tout est lu",               hint: "Pas de notification non lue." },
-    info:    { title: "Aucune info",               hint: "Aucune notification de type Infos." },
-    warning: { title: "Aucun avertissement",       hint: "Tout semble se passer correctement." },
-    alert:   { title: "Aucune alerte",             hint: "Aucun problème critique à signaler." },
-    success: { title: "Aucune notification succès",hint: "Aucune action réussie récente." },
+    all:     { title: "Aucune notification",        hint: "Vous êtes à jour !" },
+    unread:  { title: "Tout est lu",                hint: "Pas de notification non lue." },
+    info:    { title: "Aucune info",                hint: "Aucune notification de type Infos." },
+    warning: { title: "Aucun avertissement",        hint: "Tout semble se passer correctement." },
+    alert:   { title: "Aucune alerte",              hint: "Aucun problème critique à signaler." },
+    success: { title: "Aucune notification succès", hint: "Aucune action réussie récente." },
   };
 
   const { title, hint } = messages[filter] ?? messages.all;
 
   return (
-    <div className="text-center py-20 text-muted-foreground">
-      <svg
-        className="mx-auto mb-4 w-12 h-12 opacity-25"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={1.5}
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-        />
-      </svg>
-      <p className="text-lg font-medium">{title}</p>
-      <p className="text-sm mt-1">{hint}</p>
-    </div>
+    <EmptyState
+      icon={Bell}
+      context="empty"
+      title={title}
+      description={hint}
+    />
   );
 }

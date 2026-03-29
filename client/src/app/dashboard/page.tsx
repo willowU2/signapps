@@ -19,6 +19,7 @@ import { UnifiedStats } from '@/components/dashboard/unified-stats';
 import { RecentFiles } from '@/components/dashboard/recent-files';
 import { GlobalActivityFeed as ActivityFeed } from '@/components/crosslinks/GlobalActivityFeed';
 import { UpcomingEventsCard } from '@/components/dashboard/upcoming-events-card';
+import { TodayView } from '@/components/interop/TodayView';
 import { APP_REGISTRY, APP_CATEGORIES, type AppEntry } from '@/lib/app-registry';
 import { usePinnedAppsStore } from '@/lib/store';
 import { resetAllBreakers } from '@/lib/circuit-breaker';
@@ -215,6 +216,11 @@ export default function DashboardPage() {
 
             <AiDailyBrief data={data} />
             <UnifiedStats data={data} />
+
+            {/* Feature 30: Unified Today view (emails + tasks + events) */}
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <TodayView maxItems={15} />
+            </div>
 
             {/* Upcoming Events */}
             <UpcomingEventsCard />

@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { X, Minimize2, Maximize2 } from "lucide-react";
+import { CalendarContactSuggestions } from "@/components/interop/CalendarContactSuggestions";
 import {
     Dialog,
     DialogContent,
@@ -176,7 +177,7 @@ export function ComposeRichDialog({
                 <div className="flex flex-col h-full overflow-hidden">
                     {/* Email fields */}
                     <div className="px-4 py-2 space-y-2 border-b bg-muted/30">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 relative">
                             <Label className="w-12 text-sm text-muted-foreground">
                                 À
                             </Label>
@@ -185,6 +186,12 @@ export function ComposeRichDialog({
                                 onChange={(e) => setRecipient(e.target.value)}
                                 placeholder="destinataire@exemple.com"
                                 className="flex-1 border-0 bg-transparent focus-visible:ring-0 px-0"
+                            />
+                            {/* Feature 9: Contact suggestions from calendar events */}
+                            <CalendarContactSuggestions
+                                query={recipient}
+                                onSelect={(c) => setRecipient(c.email)}
+                                className="absolute top-full left-0 right-0 z-50 mt-1"
                             />
                             {!showCcBcc && (
                                 <Button

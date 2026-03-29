@@ -28,6 +28,7 @@ import {
 import { UserSheet } from "@/components/admin/user-sheet"
 import { usersApi } from "@/lib/api/identity"
 import { CreateUserRequest, UpdateUserRequest } from "@/lib/api"
+import { triggerHrOnboarding } from "@/components/interop/lms-hr-bridge"
 import { toast } from "sonner"
 import { BulkUserImportDialog } from "@/components/admin/bulk-user-import-dialog"
 import { ImpersonateDialog } from "@/components/admin/impersonate-dialog"
@@ -168,7 +169,7 @@ export default function UsersPage() {
                         </TableHeader>
                         <TableBody>
                             {filteredUsers.map((user) => (
-                                <TableRow key={user.id} className="transition-colors hover:bg-muted/50">
+                                <TableRow key={user.id} className="h-12 transition-colors hover:bg-muted/50">
                                     <TableCell className="font-medium">{user.display_name || user.username}</TableCell>
                                     <TableCell>{user.email || '-'}</TableCell>
                                     <TableCell>

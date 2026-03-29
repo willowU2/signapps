@@ -130,7 +130,7 @@ export function DeployNotification() {
   };
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading deploys...</div>;
+    return <div className="text-center py-8">Chargement...</div>;
   }
 
   return (

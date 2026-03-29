@@ -32,12 +32,14 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { BUILTIN_SHEET_TEMPLATES, getUserTemplates, deleteUserTemplate, type DocTemplate } from '@/lib/document-templates';
+import { DocumentTags, TagFilterBar, getDocumentTags } from '@/components/docs/document-tags';
 
 export default function SheetsDashboard() {
     const router = useRouter();
     const [docs, setDocs] = useState<DriveNode[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
 
     // Modal State
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -153,7 +155,11 @@ export default function SheetsDashboard() {
         toast.success('Mod\u00e8le supprim\u00e9');
     };
 
-    const filteredDocs = docs.filter(d => !searchQuery.trim() || d.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    const filteredDocs = docs.filter(d => {
+        const matchesSearch = !searchQuery.trim() || d.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesTag = !activeTagFilter || getDocumentTags(d.id).includes(activeTagFilter);
+        return matchesSearch && matchesTag;
+    });
 
     const handleOpenDoc = (node: DriveNode) => {
         const targetId = node.target_id || node.id;
@@ -279,16 +285,20 @@ export default function SheetsDashboard() {
                     </div>
                 </div>
 
+                <div className="mb-6">
+                    <TagFilterBar activeTag={activeTagFilter} onFilterChange={setActiveTagFilter} />
+                </div>
+
                 {filteredDocs.length === 0 ? (
                      <div className="flex flex-col items-center justify-center py-16 text-center rounded-xl bg-transparent">
                         <Table className="h-12 w-12 text-muted-foreground/30 mb-4" />
                         <h3 className="text-lg font-medium text-muted-foreground">
-                          {searchQuery ? 'Aucune feuille trouvée' : 'Créez votre premier classeur'}
+                          {searchQuery || activeTagFilter ? 'Aucune feuille trouvée' : 'Créez votre premier classeur'}
                         </h3>
                         <p className="mt-1 text-sm text-muted-foreground/70">
-                          {searchQuery ? 'Essayez un autre terme de recherche' : 'Cliquez sur "Feuille vierge" ci-dessus pour commencer'}
+                          {searchQuery || activeTagFilter ? 'Essayez un autre terme de recherche' : 'Cliquez sur "Feuille vierge" ci-dessus pour commencer'}
                         </p>
-                        {!searchQuery && (
+                        {!searchQuery && !activeTagFilter && (
                           <Button className="mt-4" onClick={openCreateModal}>
                             <Plus className="mr-2 h-4 w-4" /> Nouveau classeur
                           </Button>
@@ -325,7 +335,7 @@ export default function SheetsDashboard() {
                                     </div>
                                 </div>
                                 {/* Footer Info */}
-                                <div className="p-3 bg-card h-[72px] shrink-0 flex flex-col justify-center">
+                                <div className="p-3 bg-card shrink-0 flex flex-col justify-center min-h-[72px]">
                                     <div className="flex items-center justify-between gap-2 mb-1">
                                         <div className="flex items-center gap-2 min-w-0 flex-1">
                                             <div className="bg-green-500/10 p-1.5 rounded-sm shrink-0">
@@ -352,10 +362,13 @@ export default function SheetsDashboard() {
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
-                                    <div className="flex items-center gap-2 pl-8">
+                                    <div className="flex items-center gap-2 pl-8 mb-1">
                                         <span className="text-[11px] font-medium text-muted-foreground/70 truncate uppercase tracking-wider">
                                             Ouvert le {new Date(doc.updated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                                         </span>
+                                    </div>
+                                    <div className="pl-8">
+                                        <DocumentTags documentId={doc.id} compact onFilterByTag={setActiveTagFilter} />
                                     </div>
                                 </div>
                             </Card>

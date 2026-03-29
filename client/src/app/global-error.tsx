@@ -25,14 +25,14 @@ export default function GlobalError({
                             <AlertOctagon className="h-12 w-12 text-destructive" />
                         </div>
                         <div className="space-y-2">
-                            <h1 className="text-3xl font-bold">Critical Error</h1>
+                            <h1 className="text-3xl font-bold">Erreur critique</h1>
                             <p className="text-muted-foreground">
-                                The application encountered a critical error and cannot continue.
+                                L'application a rencontré une erreur critique et ne peut pas continuer.
                             </p>
                         </div>
                         <Button onClick={() => reset()} className="gap-2">
                             <RefreshCw className="h-4 w-4" />
-                            Reload Application
+                            Relancer l'application
                         </Button>
                     </div>
                 </div>

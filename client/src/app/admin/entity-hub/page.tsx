@@ -85,7 +85,7 @@ export default function EntityHubAdminPage() {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <p>Loading workspaces...</p>
+                <p>Chargement des espaces...</p>
               ) : workspaces.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No workspaces found.</p>
               ) : (
@@ -107,7 +107,7 @@ export default function EntityHubAdminPage() {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <p>Loading calendars...</p>
+                <p>Chargement des calendriers...</p>
               ) : calendars.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No calendars found.</p>
               ) : (

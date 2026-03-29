@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,6 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { getClient, ServiceName } from '@/lib/api/factory';
-import { toast } from 'sonner';
 import { usePageTitle } from '@/hooks/use-page-title';
 
 interface EmailAnalyticsPoint {
@@ -48,27 +47,17 @@ function StatCard({ label, value, sub, trend }: { label: string; value: string; 
 
 export default function EmailAnalyticsPage() {
   usePageTitle('Analytique email');
-  const [data, setData] = useState<EmailAnalyticsSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const { data, isLoading: loading, isError, refetch } = useQuery<EmailAnalyticsSummary>({
+    queryKey: ['admin-email-analytics'],
+    queryFn: async () => {
       const client = getClient(ServiceName.MAIL);
       const res = await client.get<EmailAnalyticsSummary>('/mail/analytics');
-      setData(res.data);
-    } catch (err) {
-      const msg = 'Endpoint d\'analyse des e-mails indisponible';
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchData(); }, []);
+      return res.data;
+    },
+    staleTime: 30_000,
+    retry: false,
+  });
 
   const fmtRate = (r: number) => `${r.toFixed(1)}%`;
 
@@ -80,15 +69,15 @@ export default function EmailAnalyticsPage() {
             <Mail className="h-6 w-6 text-primary" />
             <h1 className="text-3xl font-bold tracking-tight">Email Analytics</h1>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            Rafraîchir
           </Button>
         </div>
 
-        {error && (
+        {isError && (
           <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-            {error} — please check that the mail service is running.
+            Endpoint d&apos;analyse des e-mails indisponible — vérifiez que le service mail est démarré.
           </div>
         )}
 

@@ -1,8 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, Plus, Trash2, CalendarIcon, MessageSquare, Star } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Trash2, CalendarIcon, MessageSquare, Star, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { QuickComposeButton } from "@/components/interop/QuickComposeFromTask";
+import { LinkedEntitiesPanel } from "@/components/interop/LinkedEntitiesPanel";
+import { useTaskNotifications } from "@/components/interop/TaskNotificationHooks";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -120,25 +123,36 @@ function TaskItem({
             </div>
 
             {/* Action buttons (shown on hover) */}
-            <div className="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity flex-wrap">
                 {level < 3 && (
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-6 px-2 text-xs text-muted-foreground hover:text-primary" 
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs text-muted-foreground hover:text-primary"
                         onClick={(e) => { e.stopPropagation(); onAddChild?.(node.task.id); }}
                     >
                         <Plus className="h-3.5 w-3.5 mr-1" /> Sous-tâche
                     </Button>
                 )}
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-6 w-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10" 
+                {/* Feature 21: Quick compose email from task */}
+                <div onClick={(e) => e.stopPropagation()}>
+                  <QuickComposeButton
+                    task={{ id: node.task.id, title: node.task.title }}
+                    className="h-6 px-2 text-xs"
+                  />
+                </div>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                     onClick={(e) => { e.stopPropagation(); onDelete?.(node.task.id); }}
                 >
                     <Trash2 className="h-3.5 w-3.5" />
                 </Button>
+            </div>
+            {/* Feature 3: Show linked emails for this task */}
+            <div onClick={(e) => e.stopPropagation()} className="mt-2">
+              <LinkedEntitiesPanel entityType="task" entityId={node.task.id} className="text-xs" />
             </div>
 
             {/* Subtasks expander (Google Tasks style) */}
@@ -185,6 +199,8 @@ export function TaskTree({
 }: TaskTreeProps) {
   const { tasks, deleteTask, isLoading } = useEntityStore();
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  // Features 10, 13, 18, 28 — task notifications & activity logging
+  const { onTaskCompleted, onStatusChanged } = useTaskNotifications();
 
   // Filter tasks for this project
   const projectTasks = React.useMemo(() => {

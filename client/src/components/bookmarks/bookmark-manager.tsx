@@ -89,7 +89,7 @@ export function BookmarkManager() {
         </div>
 
         <Input
-          placeholder="Search bookmarks..."
+          placeholder="Rechercher..."
           value={searchFilter}
           onChange={(e) => setSearchFilter(e.target.value)}
           className="mt-4"

@@ -150,7 +150,7 @@ export function StorageRulesSettings() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center h-24">Loading rules...</TableCell>
+                <TableCell colSpan={5} className="text-center h-24">Chargement...</TableCell>
               </TableRow>
             ) : rules.length === 0 && editingId !== "new" ? (
               <TableRow>

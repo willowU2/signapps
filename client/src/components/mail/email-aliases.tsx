@@ -134,7 +134,7 @@ export function EmailAliases({ accountId, accountEmail }: EmailAliasesProps) {
           </div>
         </div>
 
-        {loading && <p className="text-xs text-muted-foreground py-2">Loading aliases…</p>}
+        {loading && <p className="text-xs text-muted-foreground py-2">Chargement...</p>}
 
         {aliases.map(alias => (
           <div key={alias.id} className="flex items-center justify-between rounded-md border px-3 py-2">

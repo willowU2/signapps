@@ -153,7 +153,7 @@ export function WikiSidebar({
 
         {/* Search placeholder - can be enhanced later */}
         {/* <Input
-          placeholder="Search pages..."
+          placeholder="Rechercher..."
           className="h-8"
         /> */}
 

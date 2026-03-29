@@ -44,6 +44,8 @@ import type { SocialAccount, ThreadPost } from '@/lib/api/social';
 import { PostPreview } from './post-preview';
 import { SignatureSelector } from './post-signatures';
 import { UrlShortenerPopover } from './url-shortener';
+import { SocialAttachDrive } from '@/components/interop/SocialAttachDrive';
+import { DocFromTemplate } from '@/components/interop/DocFromTemplate';
 import {
   PLATFORM_LABELS,
   PLATFORM_COLORS,
@@ -733,6 +735,20 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
               ))}
             </div>
           )}
+        </div>
+
+        {/* Interop: Attach Drive files & Doc templates */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <SocialAttachDrive
+            onAttach={(attachments) => {
+              const links = attachments.map((a) => `\n📎 ${a.node.name}: ${a.url}`).join('');
+              setContent((prev) => prev + links);
+            }}
+          />
+          <DocFromTemplate
+            triggerLabel="Modèle doc"
+            onInsertContent={(text) => setContent((prev) => prev ? `${prev}\n\n${text}` : text)}
+          />
         </div>
 
         {/* URL Shortener */}

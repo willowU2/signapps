@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { TrendingUp, Plus, Kanban, List, BarChart3, Target, Calendar, Upload } from "lucide-react"
+import { TrendingUp, Plus, Kanban, List, BarChart3, Target, Calendar, Upload, DollarSign, Download } from "lucide-react"
 import { DealKanban } from "@/components/crm/deal-kanban"
 import { DealTable } from "@/components/crm/deal-table"
 import { SalesForecast } from "@/components/crm/sales-forecast"
@@ -17,6 +17,10 @@ import { QuotaTracker } from "@/components/crm/quota-tracker"
 import { ProspectCsvImport } from "@/components/crm/prospect-csv-import"
 import { CalendarActivities } from "@/components/crm/calendar-activities"
 import { dealsApi, type Deal, type DealStage, STAGE_OPTIONS, STAGE_LABELS } from "@/lib/api/crm"
+import { PipelineInvoiceValue } from "@/components/interop/PipelineInvoiceValue"
+import { BillingForecast } from "@/components/interop/BillingForecast"
+import { OverdueInvoicesCrmFlag } from "@/components/interop/OverdueInvoicesCrmFlag"
+import { DealsExportCsv } from "@/components/interop/DealsExportCsv"
 import { toast } from "sonner"
 
 export default function CRMPage() {
@@ -97,6 +101,9 @@ export default function CRMPage() {
           ))}
         </div>
 
+        {/* Overdue invoices alert — Feature 11 */}
+        <OverdueInvoicesCrmFlag compact />
+
         {/* Tabs */}
         <Tabs defaultValue="kanban">
           <TabsList className="flex-wrap h-auto gap-1">
@@ -108,6 +115,12 @@ export default function CRMPage() {
             </TabsTrigger>
             <TabsTrigger value="forecast" className="gap-1.5">
               <BarChart3 className="h-3.5 w-3.5" /> Prévisions
+            </TabsTrigger>
+            <TabsTrigger value="billing-report" className="gap-1.5">
+              <DollarSign className="h-3.5 w-3.5" /> Facturation
+            </TabsTrigger>
+            <TabsTrigger value="billing-forecast" className="gap-1.5">
+              <TrendingUp className="h-3.5 w-3.5" /> Prév. enrichies
             </TabsTrigger>
             <TabsTrigger value="quotas" className="gap-1.5">
               <Target className="h-3.5 w-3.5" /> Quotas
@@ -125,11 +138,27 @@ export default function CRMPage() {
           </TabsContent>
 
           <TabsContent value="table" className="mt-4">
-            <DealTable deals={deals} onDelete={deleteDeal} />
+            <div className="space-y-3">
+              <div className="flex justify-end">
+                {/* Feature 29: Export deals with contact info */}
+                <DealsExportCsv contacts={[]} compact />
+              </div>
+              <DealTable deals={deals} onDelete={deleteDeal} />
+            </div>
           </TabsContent>
 
           <TabsContent value="forecast" className="mt-4">
             <SalesForecast deals={deals} />
+          </TabsContent>
+
+          {/* Feature 8 + 20: Pipeline invoice value + CRM revenue report */}
+          <TabsContent value="billing-report" className="mt-4">
+            <PipelineInvoiceValue />
+          </TabsContent>
+
+          {/* Feature 25: Billing-enriched forecast */}
+          <TabsContent value="billing-forecast" className="mt-4">
+            <BillingForecast />
           </TabsContent>
 
           <TabsContent value="quotas" className="mt-4">
@@ -154,15 +183,16 @@ export default function CRMPage() {
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3 py-2">
             <div className="col-span-2 space-y-1">
-              <Label>Titre *</Label>
+              <Label>Titre <span className="text-destructive">*</span></Label>
               <Input
+                autoFocus
                 placeholder="Nom du deal…"
                 value={form.title ?? ""}
                 onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
               />
             </div>
             <div className="space-y-1">
-              <Label>Société *</Label>
+              <Label>Société <span className="text-destructive">*</span></Label>
               <Input
                 placeholder="Acme Corp"
                 value={form.company ?? ""}
@@ -170,7 +200,7 @@ export default function CRMPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label>Email contact</Label>
+              <Label>Email contact <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
               <Input
                 type="email"
                 placeholder="contact@acme.com"
@@ -179,7 +209,7 @@ export default function CRMPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label>Valeur (€)</Label>
+              <Label>Valeur (€) <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
               <Input
                 type="number"
                 min={0}
@@ -188,7 +218,7 @@ export default function CRMPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label>Probabilité (%)</Label>
+              <Label>Probabilité (%) <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
               <Input
                 type="number"
                 min={0}
@@ -212,7 +242,7 @@ export default function CRMPage() {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label>Date de clôture</Label>
+              <Label>Date de clôture <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
               <Input
                 type="date"
                 value={form.closeDate ?? ""}
@@ -220,7 +250,7 @@ export default function CRMPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label>Assigné à</Label>
+              <Label>Assigné à <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
               <Input
                 placeholder="Jean Dupont"
                 value={form.assignedTo ?? ""}

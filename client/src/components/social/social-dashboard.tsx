@@ -12,6 +12,9 @@ import { PLATFORM_COLORS, PLATFORM_LABELS } from './platform-utils';
 import { ChannelSidebar } from './channel-sidebar';
 import { StreakCounter } from './streak-counter';
 import type { SocialAccount } from '@/lib/api/social';
+import { SocialPostFromDoc } from '@/components/interop/SocialPostFromDoc';
+import { SocialAnalyticsDocLink } from '@/components/interop/SocialAnalyticsDocLink';
+import { UnifiedContentLibrary } from '@/components/interop/UnifiedContentLibrary';
 
 function PlatformBadge({ platform }: { platform: SocialAccount['platform'] }) {
   const color = PLATFORM_COLORS[platform];
@@ -135,12 +138,17 @@ export function SocialDashboard() {
             </div>
             <StreakCounter />
           </div>
-          <Button asChild>
-            <Link href="/social/compose">
-              <Plus className="h-4 w-4 mr-2" />
-              Nouveau post
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <SocialPostFromDoc />
+            <SocialAnalyticsDocLink />
+            <UnifiedContentLibrary />
+            <Button asChild>
+              <Link href="/social/compose">
+                <Plus className="h-4 w-4 mr-2" />
+                Nouveau post
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}

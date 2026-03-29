@@ -19,6 +19,7 @@ import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
 import { TimeGrid, useSlotClickHandler } from '../calendar/TimeGrid';
 import { TimeItemBlock } from '../calendar/TimeItemBlock';
 import { calculateItemPositions } from '@/lib/scheduling/utils/overlap-calculator';
+import { TasksDueInCalendar } from '@/components/interop/TasksDueInCalendar';
 import type { TimeItem, PositionedItem } from '@/lib/scheduling/types';
 
 // ============================================================================
@@ -101,15 +102,19 @@ export function DayView({
   }
 
   return (
-    <div className={cn('h-full', className)}>
-      <TimeGrid
-        items={items}
-        positions={positions}
-        slotHeight={slotHeight}
-        onSlotClick={handleSlotClick}
-        onItemClick={onItemClick}
-        onItemDoubleClick={onItemDoubleClick}
-      />
+    <div className={cn('h-full flex flex-col', className)}>
+      {/* Feature 7 & 22: Tasks due today shown at top of day view */}
+      <TasksDueInCalendar date={currentDate} className="px-4 pt-2 pb-1 border-b border-border/40" maxItems={3} />
+      <div className="flex-1 min-h-0">
+        <TimeGrid
+          items={items}
+          positions={positions}
+          slotHeight={slotHeight}
+          onSlotClick={handleSlotClick}
+          onItemClick={onItemClick}
+          onItemDoubleClick={onItemDoubleClick}
+        />
+      </div>
     </div>
   );
 }

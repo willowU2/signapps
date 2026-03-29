@@ -125,7 +125,7 @@ export function LogsDialog({ open, onOpenChange, containerId, containerName }: L
 
         <ScrollArea className="flex-1 rounded-md border bg-black p-4" ref={scrollRef}>
           {loading ? (
-            <div className="text-green-400 font-mono text-sm">Loading logs...</div>
+            <div className="text-green-400 font-mono text-sm">Chargement...</div>
           ) : logs.length === 0 ? (
             <div className="text-gray-500 font-mono text-sm">No logs available</div>
           ) : (

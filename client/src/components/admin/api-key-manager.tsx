@@ -154,7 +154,7 @@ export function ApiKeyManager() {
       </div>
 
       {isLoading ? (
-        <div className="text-center text-muted-foreground py-8">Loading API keys...</div>
+        <div className="text-center text-muted-foreground py-8">Chargement...</div>
       ) : apiKeys.length === 0 ? (
         <div className="rounded-md border border-dashed p-8 text-center text-muted-foreground">
           <p>No API keys generated yet. Create one to get started.</p>

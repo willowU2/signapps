@@ -151,7 +151,7 @@ export function ConsentDashboard() {
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by email or name…"
+            placeholder="Rechercher..."
             className="pl-8 h-8 text-xs"
           />
         </div>

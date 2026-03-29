@@ -30,7 +30,7 @@ const TYPE_CONFIG = {
   event: { icon: Calendar, color: 'text-green-500', label: 'Événement', bg: 'bg-green-50 dark:bg-green-950/20' },
 };
 
-export function WidgetMyDay({ config }: Partial<WidgetRenderProps> = {}) {
+export function WidgetMyDay({ widget }: Partial<WidgetRenderProps> = {}) {
   const client = getClient(ServiceName.IDENTITY);
   const today = format(new Date(), 'yyyy-MM-dd');
 

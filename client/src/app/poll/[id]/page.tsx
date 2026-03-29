@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 
 const PollVoteView = dynamic(
   () => import("@/components/calendar/scheduling-poll").then((m) => m.PollVoteView),
-  { ssr: false, loading: () => <div className="flex items-center justify-center h-64">Loading poll...</div> }
+  { ssr: false, loading: () => <div className="flex items-center justify-center h-64">Chargement...</div> }
 );
 
 interface PollPageProps {

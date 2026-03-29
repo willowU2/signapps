@@ -145,7 +145,7 @@ export function RateLimitConfig() {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center h-24">
-                  Loading rate limit rules...
+                  Chargement...
                 </TableCell>
               </TableRow>
             ) : rules.length === 0 && editingId !== "new" ? (

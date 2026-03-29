@@ -127,7 +127,7 @@ export function CrmTemplateVariables({ body, onBodyChange, contactEmail }: CrmTe
           <DropdownMenuContent className="w-64" align="end">
             <div className="px-2 py-1.5">
               <Input
-                placeholder="Search variables…"
+                placeholder="Rechercher..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="h-7 text-xs"

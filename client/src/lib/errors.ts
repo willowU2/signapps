@@ -23,12 +23,12 @@ export function parseApiError(error: unknown): string {
     if (!response) {
       // Erreur réseau
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
-        return 'Unable to connect to the server. Please check your connection.';
+        return 'Impossible de se connecter au serveur. Vérifiez votre connexion.';
       }
       if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
-        return 'Request timed out. Please try again.';
+        return 'La requête a expiré. Veuillez réessayer.';
       }
-      return 'Erreur réseau. Please check your connection and try again.';
+      return 'Erreur réseau. Vérifiez votre connexion et réessayez.';
     }
 
     const data = response.data;
@@ -66,7 +66,7 @@ export function parseApiError(error: unknown): string {
   }
 
   // Fallback
-  return 'An unexpected error occurred. Please try again.';
+  return 'Une erreur inattendue s\'est produite. Veuillez réessayer.';
 }
 
 /**
@@ -102,27 +102,27 @@ function isProblemDetails(data: unknown): data is ProblemDetails {
 function getDefaultMessageForStatus(status: number): string {
   switch (status) {
     case 400:
-      return 'Invalid request. Please check your input.';
+      return 'Requête invalide. Vérifiez les informations saisies.';
     case 401:
-      return 'Identifiants invalides. Please try again.';
+      return 'Identifiants invalides. Veuillez vous reconnecter.';
     case 403:
-      return 'Accès refusé. You do not have permission to perform this action.';
+      return 'Accès refusé. Vous n\'avez pas les permissions nécessaires.';
     case 404:
-      return 'Resource not found.';
+      return 'Ressource introuvable.';
     case 409:
-      return 'This resource already exists.';
+      return 'Cette ressource existe déjà.';
     case 422:
-      return 'Invalid data provided. Please check your input.';
+      return 'Données invalides. Vérifiez les informations saisies.';
     case 429:
-      return 'Too many requests. Please wait a moment and try again.';
+      return 'Trop de requêtes. Veuillez patienter un moment.';
     case 500:
-      return 'Server error. Please try again later.';
+      return 'Erreur serveur. Veuillez réessayer ultérieurement.';
     case 502:
     case 503:
     case 504:
-      return 'Service temporarily unavailable. Please try again later.';
+      return 'Service temporairement indisponible. Veuillez réessayer.';
     default:
-      return 'Une erreur est survenue. Please try again.';
+      return 'Une erreur est survenue. Veuillez réessayer.';
   }
 }
 

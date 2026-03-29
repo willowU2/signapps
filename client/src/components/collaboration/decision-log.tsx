@@ -84,7 +84,7 @@ export function DecisionLog() {
         </div>
         <div className="relative mt-2">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search decisions..." className="pl-8 h-8 text-sm" />
+          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..." className="pl-8 h-8 text-sm" />
         </div>
       </CardHeader>
       <CardContent>

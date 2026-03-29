@@ -9,6 +9,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { UnifiedNotificationCenter } from "@/components/interop/UnifiedNotificationCenter"
 
 export function WorkspaceHeader() {
     return (
@@ -56,6 +57,9 @@ export function WorkspaceHeader() {
                         <path d="M5 6L0 1.05562L1.07143 0L5 3.88876L8.92857 0L10 1.05562L5 6Z" fill="currentColor"/>
                     </svg>
                 </Button>
+
+                {/* Feature 20: Unified notification center */}
+                <UnifiedNotificationCenter className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-100 dark:hover:bg-gray-800" />
 
                 <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>

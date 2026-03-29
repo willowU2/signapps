@@ -188,7 +188,7 @@ export function TemplateLibrary() {
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row">
         <Input
-          placeholder="Search templates…"
+          placeholder="Rechercher..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="sm:max-w-xs"

@@ -44,7 +44,7 @@ export function ArchiveSearch() {
             <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by name, type, or date range..."
+              placeholder="Rechercher..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}

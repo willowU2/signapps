@@ -8,6 +8,7 @@ import { driveApi, DriveNode } from '@/lib/api';
 import { fetchAndParseDocument } from '@/lib/file-parsers';
 import { useEntityStore } from '@/stores/entity-hub-store';
 import { FileText, Plus, MoreVertical, Search, Pencil, Trash2, User, ExternalLink, Share2 } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
@@ -39,6 +40,9 @@ import {
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { BUILTIN_DOC_TEMPLATES, getUserTemplates, deleteUserTemplate, type DocTemplate } from '@/lib/document-templates';
+import { AiGenerateDoc } from '@/components/interop/AiGenerateDoc';
+import { UnifiedContentLibrary } from '@/components/interop/UnifiedContentLibrary';
+import { DocumentTags, TagFilterBar, getDocumentTags } from '@/components/docs/document-tags';
 
 export default function DocsDashboard() {
     const router = useRouter();
@@ -61,6 +65,9 @@ export default function DocsDashboard() {
     // Template state
     const [pendingTemplateContent, setPendingTemplateContent] = useState<string | null>(null);
     const [userTemplates, setUserTemplates] = useState<DocTemplate[]>([]);
+
+    // Tag filter state
+    const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
 
     const { selectedWorkspaceId } = useEntityStore();
 
@@ -188,7 +195,11 @@ export default function DocsDashboard() {
         toast.success('Modèle supprimé');
     };
 
-    const filteredDocs = docs.filter(d => !searchQuery.trim() || d.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    const filteredDocs = docs.filter(d => {
+        const matchesSearch = !searchQuery.trim() || d.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesTag = !activeTagFilter || getDocumentTags(d.id).includes(activeTagFilter);
+        return matchesSearch && matchesTag;
+    });
 
     const handleOpenDoc = (node: DriveNode) => {
         const targetId = node.target_id || node.id;
@@ -231,6 +242,10 @@ export default function DocsDashboard() {
                 <div className="max-w-6xl mx-auto w-full flex flex-col gap-6">
                     <div className="flex items-center justify-between">
                         <h2 className="text-lg font-medium text-foreground tracking-tight">Créer un document</h2>
+                        <div className="flex items-center gap-2">
+                            <AiGenerateDoc />
+                            <UnifiedContentLibrary />
+                        </div>
                     </div>
 
                     <div className="flex gap-4 sm:gap-6 overflow-x-auto pt-2 pb-4 snap-x smooth-scroll no-scrollbar -mt-2">
@@ -326,22 +341,24 @@ export default function DocsDashboard() {
                         />
                     </div>
                 </div>
-                
+
+                <div className="mb-6">
+                    <TagFilterBar activeTag={activeTagFilter} onFilterChange={setActiveTagFilter} />
+                </div>
+
                 {filteredDocs.length === 0 ? (
-                     <div className="flex flex-col items-center justify-center py-16 text-center rounded-xl bg-transparent">
-                        <FileText className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                        <h3 className="text-lg font-medium text-muted-foreground">
-                          {searchQuery ? 'Aucun document trouvé' : 'Créez votre premier document'}
-                        </h3>
-                        <p className="mt-1 text-sm text-muted-foreground/70">
-                          {searchQuery ? 'Essayez un autre terme de recherche' : 'Cliquez sur "Document vierge" ci-dessus pour commencer'}
-                        </p>
-                        {!searchQuery && (
-                          <Button className="mt-4" onClick={openCreateModal}>
-                            <Plus className="mr-2 h-4 w-4" /> Nouveau document
-                          </Button>
-                        )}
-                     </div>
+                    <EmptyState
+                        icon={FileText}
+                        context={searchQuery || activeTagFilter ? "search" : "empty"}
+                        title={searchQuery || activeTagFilter ? "Aucun résultat" : "Aucun document"}
+                        description={
+                            searchQuery
+                                ? `Aucun document ne correspond à "${searchQuery}".`
+                                : "Créez votre premier document pour commencer."
+                        }
+                        actionLabel={!searchQuery ? "Nouveau document" : undefined}
+                        onAction={!searchQuery ? openCreateModal : undefined}
+                    />
                 ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 w-full">
                         {filteredDocs.map((doc) => (
@@ -376,7 +393,7 @@ export default function DocsDashboard() {
                                     </div>
                                 </div>
                                 {/* Footer Info */}
-                                <div className="p-3 bg-card h-[72px] shrink-0 flex flex-col justify-center">
+                                <div className="p-3 bg-card shrink-0 flex flex-col justify-center min-h-[72px]">
                                     <div className="flex items-center justify-between gap-2 mb-1">
                                         <div className="flex items-center gap-2 min-w-0 flex-1">
                                             <div className="bg-blue-500/10 p-1.5 rounded-sm shrink-0">
@@ -403,10 +420,13 @@ export default function DocsDashboard() {
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
-                                    <div className="flex items-center gap-2 pl-8">
+                                    <div className="flex items-center gap-2 pl-8 mb-1">
                                         <span className="text-[11px] font-medium text-muted-foreground/70 truncate uppercase tracking-wider">
                                             Ouvert le {new Date(doc.updated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                                         </span>
+                                    </div>
+                                    <div className="pl-8">
+                                        <DocumentTags documentId={doc.id} compact onFilterByTag={setActiveTagFilter} />
                                     </div>
                                 </div>
                             </Card>
@@ -422,9 +442,18 @@ export default function DocsDashboard() {
                                     const targetId = doc.target_id || doc.id;
                                     const url = `${window.location.origin}/docs/editor?id=${targetId}&name=${encodeURIComponent(doc.name)}`;
                                     navigator.clipboard.writeText(url);
-                                    toast.success('Lien copie dans le presse-papiers');
+                                    toast.success('Lien copié dans le presse-papiers');
                                 }}>
                                     <Share2 className="h-3.5 w-3.5 mr-2" /> Copier le lien
+                                </ContextMenuItem>
+                                <ContextMenuItem onClick={() => {
+                                    const targetId = doc.target_id || doc.id;
+                                    const url = `${window.location.origin}/docs/editor?id=${targetId}&name=${encodeURIComponent(doc.name)}`;
+                                    const text = `📄 ${doc.name}\n${url}`;
+                                    navigator.clipboard.writeText(text);
+                                    toast.success('Prêt pour partage social');
+                                }}>
+                                    <Share2 className="h-3.5 w-3.5 mr-2" /> Partager sur Social
                                 </ContextMenuItem>
                                 <ContextMenuSeparator />
                                 <ContextMenuItem variant="destructive" onClick={() => setDeleteTargetId(doc.id)}>

@@ -384,7 +384,7 @@ export function ChatWindow({ channelId, channelName, isDm, isPrivate }: ChatWind
                                     autoFocus
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Search in this channel..."
+                                    placeholder="Rechercher..."
                                     className="border-0 bg-transparent focus-visible:ring-0 h-8 text-sm p-0"
                                 />
                                 {isSearching && <SpinnerInfinity size={18} color="currentColor" secondaryColor="rgba(128,128,128,0.2)" speed={120} className="text-primary shrink-0" />}

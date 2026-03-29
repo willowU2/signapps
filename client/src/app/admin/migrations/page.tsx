@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -39,28 +39,25 @@ const STATUS_CONFIG = {
 
 export default function MigrationStatusPage() {
   usePageTitle('Migrations');
-  const [data, setData] = useState<ServiceMigrations[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const fetchMigrations = async () => {
-    setLoading(true);
-    const results: ServiceMigrations[] = [];
-
-    for (const svc of SERVICES_WITH_DB) {
-      try {
-        const client = getClient(svc.service);
-        const res = await client.get<Migration[]>('/migrations/status');
-        results.push({ service: svc.name, migrations: res.data || [] });
-      } catch {
-        results.push({ service: svc.name, migrations: [], error: 'Service indisponible' });
+  const { data = [], isLoading: loading, refetch } = useQuery<ServiceMigrations[]>({
+    queryKey: ['admin-migrations'],
+    queryFn: async () => {
+      const results: ServiceMigrations[] = [];
+      for (const svc of SERVICES_WITH_DB) {
+        try {
+          const client = getClient(svc.service);
+          const res = await client.get<Migration[]>('/migrations/status');
+          results.push({ service: svc.name, migrations: res.data || [] });
+        } catch {
+          results.push({ service: svc.name, migrations: [], error: 'Service indisponible' });
+        }
       }
-    }
-
-    setData(results);
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchMigrations(); }, []);
+      return results;
+    },
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
 
   const totalApplied = data.reduce((sum, s) => sum + s.migrations.filter(m => m.status === 'applied').length, 0);
   const totalPending = data.reduce((sum, s) => sum + s.migrations.filter(m => m.status === 'pending').length, 0);
@@ -76,7 +73,7 @@ export default function MigrationStatusPage() {
               <p className="text-sm text-muted-foreground">État des migrations de base de données par service</p>
             </div>
           </div>
-          <Button variant="outline" onClick={fetchMigrations} disabled={loading}>
+          <Button variant="outline" onClick={() => refetch()} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Rafraîchir
           </Button>

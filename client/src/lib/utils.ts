@@ -6,6 +6,29 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// COH-044 — Unified number formatting (fr-FR)
+const NUM_FR = new Intl.NumberFormat('fr-FR');
+const CURRENCY_FR = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
+const PCT_FR = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1, minimumFractionDigits: 0 });
+
+/** COH-044: "1 234" */
+export function formatNumber(n: number | null | undefined): string {
+  if (n == null || isNaN(n)) return '—';
+  return NUM_FR.format(n);
+}
+
+/** COH-047: "1 234,56 €" — French currency format */
+export function formatCurrency(n: number | null | undefined): string {
+  if (n == null || isNaN(n)) return '—';
+  return CURRENCY_FR.format(n);
+}
+
+/** COH-048: "12,5 %" */
+export function formatPercent(n: number | null | undefined): string {
+  if (n == null || isNaN(n)) return '—';
+  return `${PCT_FR.format(n)} %`;
+}
+
 const WEB_PORT_PRIORITY = [80, 443, 8080, 8443, 3000, 8000, 5000, 9000];
 
 export function getContainerUrl(

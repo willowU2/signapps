@@ -234,7 +234,7 @@ export default function DesignShapesLibrary({ fabricCanvasRef }: DesignShapesLib
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search shapes & icons..."
+          placeholder="Rechercher..."
           className="h-8 text-xs pl-8"
         />
       </div>

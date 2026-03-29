@@ -1,12 +1,10 @@
 'use client';
 
-import { SpinnerInfinity } from 'spinners-react';
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { LoadingButton } from '@/components/ui/loading-button';
 import { useAuthStore } from '@/lib/store';
 import { usersApi } from '@/lib/api/identity';
 import { toast } from 'sonner';
@@ -89,10 +87,9 @@ export function ProfileSettings() {
               placeholder="ex: jane@example.com" 
             />
           </div>
-          <Button onClick={handleSaveProfile} disabled={savingProfile}>
-            {savingProfile && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+          <LoadingButton onClick={handleSaveProfile} loading={savingProfile} loadingText="Enregistrement...">
             Enregistrer les modifications
-          </Button>
+          </LoadingButton>
         </CardContent>
       </Card>
 
@@ -118,10 +115,9 @@ export function ProfileSettings() {
               onChange={(e) => setNewPassword(e.target.value)} 
             />
           </div>
-          <Button onClick={handleUpdatePassword} variant="secondary" disabled={savingPassword}>
-            {savingPassword && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+          <LoadingButton onClick={handleUpdatePassword} variant="secondary" loading={savingPassword} loadingText="Mise à jour...">
             Mettre à jour le mot de passe
-          </Button>
+          </LoadingButton>
         </CardContent>
       </Card>
     </div>

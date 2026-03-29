@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Users, Search, Download, Activity, Clock, FileText, Mail, Calendar } from 'lucide-react';
+import { Download, Activity, FileText, Mail, Calendar } from 'lucide-react';
 import { getClient, ServiceName } from '@/lib/api/factory';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { PageHeader } from '@/components/ui/page-header';
+import { SearchInput } from '@/components/ui/search-input';
+import { DateDisplay } from '@/components/ui/date-display';
 
 interface UserActivity {
   user_id: string;
@@ -64,19 +66,17 @@ export default function UserActivityPage() {
   return (
     <AppLayout>
       <div className="w-full space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Activity className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-2xl font-bold">Activité utilisateurs</h1>
-              <p className="text-sm text-muted-foreground">Rapport d'activité par utilisateur</p>
-            </div>
-          </div>
-          <Button variant="outline" onClick={exportCsv}>
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
-        </div>
+        <PageHeader
+          title="Activité utilisateurs"
+          description="Rapport d'activité par utilisateur"
+          icon={<Activity className="h-5 w-5" />}
+          actions={
+            <Button variant="outline" onClick={exportCsv}>
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+          }
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card>
@@ -99,10 +99,12 @@ export default function UserActivityPage() {
           </Card>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Rechercher un utilisateur..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
-        </div>
+        <SearchInput
+          value={search}
+          onValueChange={setSearch}
+          placeholder="Rechercher un utilisateur..."
+          containerClassName="max-w-sm"
+        />
 
         <Card>
           <CardContent className="p-0">
@@ -119,7 +121,7 @@ export default function UserActivityPage() {
                 </thead>
                 <tbody className="divide-y">
                   {filtered.map((u) => (
-                    <tr key={u.user_id} className="hover:bg-accent/40">
+                    <tr key={u.user_id} className="h-12 hover:bg-muted/50 transition-colors">
                       <td className="px-4 py-2">
                         <div>
                           <p className="font-medium">{u.username}</p>
@@ -127,7 +129,7 @@ export default function UserActivityPage() {
                         </div>
                       </td>
                       <td className="px-4 py-2 text-xs text-muted-foreground">
-                        {new Date(u.last_active).toLocaleString('fr-FR')}
+                        <DateDisplay date={u.last_active} withTime />
                       </td>
                       <td className="px-4 py-2 text-right font-mono">{u.actions_today}</td>
                       <td className="px-4 py-2 text-right font-mono">{u.actions_week}</td>

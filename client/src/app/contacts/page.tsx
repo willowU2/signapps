@@ -24,7 +24,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound, Download, ArrowUpDown, Upload, GitMerge, Gift, Settings2, MapPin, Clock, Building2, History, Tag, X, FileDown, Mail, Printer, Phone } from "lucide-react"
+import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound, Download, ArrowUpDown, Upload, GitMerge, Gift, Settings2, MapPin, Clock, Building2, History, Tag, X, FileDown, Mail, Printer, Phone, TrendingUp } from "lucide-react"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   ContextMenu,
@@ -46,6 +47,8 @@ import { ContactMap } from "@/components/contacts/contact-map"
 import { ContactHistory, type ContactActivity } from "@/components/contacts/contact-history"
 import { CompanyRelations } from "@/components/contacts/company-relations"
 import { ContactEmailPanel } from "@/components/contacts/contact-email-panel"
+import { Customer360View } from "@/components/interop/Customer360View"
+import { autoCreateLeadFromContact, mergeContactReferences } from "@/lib/api/interop"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -65,7 +68,7 @@ interface Contact {
   customFields?: { fieldId: string; value: string }[]
 }
 
-type ActiveTab = "all" | "favorites" | "groups" | "merge" | "birthdays" | "map" | "history" | "company" | "fields"
+type ActiveTab = "all" | "favorites" | "groups" | "merge" | "birthdays" | "map" | "history" | "company" | "fields" | "360"
 
 // ─── Seed (shown only when API is unavailable) ───────────────────────────────
 
@@ -99,6 +102,7 @@ export default function ContactsPage() {
   const [showBulkTag, setShowBulkTag] = useState(false)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [emailPanelContactId, setEmailPanelContactId] = useState<string | null>(null)
+  const [inlineEdit, setInlineEdit] = useState<{ contactId: string; field: 'name' | 'email' | 'phone'; value: string } | null>(null)
 
   const { data: contacts = SEED_CONTACTS, isLoading, isError, refetch } = useQuery<Contact[]>({
     queryKey: ['contacts'],
@@ -185,6 +189,8 @@ export default function ContactsPage() {
       group: form.group,
     }
 
+    const isNew = !editingId
+
     try {
       const client = getClient(ServiceName.CONTACTS)
       if (editingId) {
@@ -200,6 +206,17 @@ export default function ContactsPage() {
           ? prev.map(c => c.id === editingId ? payload : c)
           : [...prev, payload]
       )
+    }
+
+    // Feature 15: Contact import → auto-create CRM lead (only for new contacts)
+    if (isNew && payload.tags?.includes("prospect")) {
+      autoCreateLeadFromContact({
+        id: payload.id,
+        name: payload.name,
+        email: payload.email,
+        company: payload.company,
+      })
+      toast.info("Lead CRM créé automatiquement pour ce prospect.")
     }
 
     resetForm()
@@ -241,6 +258,40 @@ export default function ContactsPage() {
     setIsCreating(false)
   }
 
+  const startInlineEdit = (contact: Contact, field: 'name' | 'email' | 'phone') => {
+    setInlineEdit({ contactId: contact.id, field, value: contact[field] ?? '' })
+  }
+
+  const saveInlineEdit = async () => {
+    if (!inlineEdit) return
+    const { contactId, field, value } = inlineEdit
+    const contact = contacts.find(c => c.id === contactId)
+    if (!contact) { setInlineEdit(null); return }
+
+    // Don't save if unchanged
+    if ((contact[field] ?? '') === value) { setInlineEdit(null); return }
+
+    // Validate: name and email are required
+    if (field === 'name' && !value.trim()) { toast.error('Le nom est obligatoire'); return }
+    if (field === 'email' && !value.trim()) { toast.error("L'email est obligatoire"); return }
+
+    const updated = { ...contact, [field]: value.trim() || undefined }
+    setInlineEdit(null)
+
+    try {
+      const client = getClient(ServiceName.CONTACTS)
+      await client.put(`/contacts/${contactId}`, updated)
+      loadContacts()
+    } catch {
+      queryClient.setQueryData<Contact[]>(['contacts'], (prev = []) =>
+        prev.map(c => c.id === contactId ? updated : c)
+      )
+    }
+    toast.success(`${field === 'name' ? 'Nom' : field === 'email' ? 'Email' : 'Telephone'} mis a jour`)
+  }
+
+  const cancelInlineEdit = () => setInlineEdit(null)
+
   const handleTagsChange = (value: string) => {
     setForm(f => ({ ...f, tags: value.split(",").map(t => t.trim()).filter(Boolean) }))
   }
@@ -274,6 +325,9 @@ export default function ContactsPage() {
   }
 
   const handleMerge = (keepId: string, removeId: string, merged: MergeableContact) => {
+    // Feature 19: Contact merge → update CRM and billing references
+    const keepContact = contacts.find(c => c.id === keepId)
+    mergeContactReferences(keepId, removeId, keepContact?.email ?? merged.email)
     queryClient.setQueryData<Contact[]>(['contacts'], (prev = []) =>
       prev.filter(c => c.id !== removeId).map(c => c.id === keepId ? { ...c, ...merged } : c)
     )
@@ -520,27 +574,27 @@ ${header}
             <CardContent>
               <form onSubmit={handleSave} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-1">
-                  <Label htmlFor="c-name">Nom *</Label>
+                  <Label htmlFor="c-name">Nom <span className="text-destructive">*</span></Label>
                   <Input id="c-name" required autoFocus placeholder="Alice Martin" value={form.name ?? ""} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="c-email">Email *</Label>
+                  <Label htmlFor="c-email">Email <span className="text-destructive">*</span></Label>
                   <Input id="c-email" type="email" required placeholder="alice@example.com" value={form.email ?? ""} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="c-phone">Téléphone</Label>
+                  <Label htmlFor="c-phone">Téléphone <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
                   <Input id="c-phone" placeholder="+33 6 ..." value={form.phone ?? ""} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="c-company">Entreprise</Label>
+                  <Label htmlFor="c-company">Entreprise <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
                   <Input id="c-company" placeholder="Acme Corp" value={form.company ?? ""} onChange={e => setForm(f => ({ ...f, company: e.target.value }))} />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="c-group">Groupe</Label>
+                  <Label htmlFor="c-group">Groupe <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
                   <Input id="c-group" placeholder="Clients" value={form.group ?? ""} onChange={e => setForm(f => ({ ...f, group: e.target.value }))} />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="c-tags">Tags (virgule)</Label>
+                  <Label htmlFor="c-tags">Tags <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
                   <Input id="c-tags" placeholder="client, vip" value={(form.tags ?? []).join(", ")} onChange={e => handleTagsChange(e.target.value)} />
                 </div>
                 <div className="sm:col-span-2 lg:col-span-3 flex gap-2 justify-end">
@@ -571,6 +625,7 @@ ${header}
                 <TabsTrigger value="history" className="text-xs sm:text-sm"><History className="h-3 w-3 mr-1" />Historique</TabsTrigger>
                 <TabsTrigger value="company" className="text-xs sm:text-sm"><Building2 className="h-3 w-3 mr-1" />Entreprises</TabsTrigger>
                 <TabsTrigger value="fields" className="text-xs sm:text-sm"><Settings2 className="h-3 w-3 mr-1" />Champs</TabsTrigger>
+                <TabsTrigger value="360" className="text-xs sm:text-sm"><TrendingUp className="h-3 w-3 mr-1" />Vue 360°</TabsTrigger>
               </TabsList>
             </div>
             {(activeTab === "all" || activeTab === "favorites") && (
@@ -657,23 +712,21 @@ ${header}
                   <TableBody>
                     {sortedFiltered.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} className="py-16 text-center">
-                          <div className="flex flex-col items-center gap-3">
-                            <Users className="h-10 w-10 text-muted-foreground/30" />
-                            <div>
-                              <p className="font-medium text-muted-foreground">
-                                {search ? 'Aucun contact trouvé' : tab === 'favorites' ? 'Aucun favori' : 'Ajoutez votre premier contact'}
-                              </p>
-                              <p className="mt-0.5 text-sm text-muted-foreground/60">
-                                {search ? 'Essayez un autre terme de recherche' : 'Cliquez sur "Nouveau Contact" pour commencer'}
-                              </p>
-                            </div>
-                            {!search && tab === 'all' && (
-                              <Button size="sm" onClick={() => { resetForm(); setIsCreating(true); }}>
-                                <Plus className="mr-2 h-4 w-4" /> Nouveau contact
-                              </Button>
-                            )}
-                          </div>
+                        <TableCell colSpan={7} className="py-4">
+                          <EmptyState
+                            icon={Users}
+                            context={search ? "search" : "empty"}
+                            title={search ? "Aucun résultat" : tab === "favorites" ? "Aucun favori" : "Aucun contact"}
+                            description={
+                              search
+                                ? `Aucun contact ne correspond à "${search}".`
+                                : tab === "favorites"
+                                ? "Marquez des contacts comme favoris pour les retrouver ici."
+                                : "Commencez par ajouter votre premier contact."
+                            }
+                            actionLabel={!search && tab === "all" ? "Nouveau contact" : undefined}
+                            onAction={!search && tab === "all" ? () => { resetForm(); setIsCreating(true); } : undefined}
+                          />
                         </TableCell>
                       </TableRow>
                     )}
@@ -689,9 +742,70 @@ ${header}
                               aria-label={`Selectionner ${c.name}`}
                             />
                           </TableCell>
-                          <TableCell className="font-medium">{c.name}</TableCell>
-                          <TableCell className="text-muted-foreground">{c.email}</TableCell>
-                          <TableCell className="hidden md:table-cell text-muted-foreground">{c.phone ?? "—"}</TableCell>
+                          <TableCell className="font-medium">
+                            {inlineEdit?.contactId === c.id && inlineEdit.field === 'name' ? (
+                              <Input
+                                autoFocus
+                                className="h-7 text-sm font-medium"
+                                value={inlineEdit.value}
+                                onChange={e => setInlineEdit({ ...inlineEdit, value: e.target.value })}
+                                onBlur={saveInlineEdit}
+                                onKeyDown={e => { if (e.key === 'Enter') saveInlineEdit(); if (e.key === 'Escape') cancelInlineEdit(); }}
+                                onClick={e => e.stopPropagation()}
+                              />
+                            ) : (
+                              <span
+                                className="cursor-text hover:bg-muted/50 px-1 py-0.5 rounded -mx-1 transition-colors"
+                                onClick={e => { e.stopPropagation(); startInlineEdit(c, 'name') }}
+                                title="Cliquer pour modifier"
+                              >
+                                {c.name}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {inlineEdit?.contactId === c.id && inlineEdit.field === 'email' ? (
+                              <Input
+                                autoFocus
+                                type="email"
+                                className="h-7 text-sm"
+                                value={inlineEdit.value}
+                                onChange={e => setInlineEdit({ ...inlineEdit, value: e.target.value })}
+                                onBlur={saveInlineEdit}
+                                onKeyDown={e => { if (e.key === 'Enter') saveInlineEdit(); if (e.key === 'Escape') cancelInlineEdit(); }}
+                                onClick={e => e.stopPropagation()}
+                              />
+                            ) : (
+                              <span
+                                className="cursor-text hover:bg-muted/50 px-1 py-0.5 rounded -mx-1 transition-colors"
+                                onClick={e => { e.stopPropagation(); startInlineEdit(c, 'email') }}
+                                title="Cliquer pour modifier"
+                              >
+                                {c.email}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-muted-foreground">
+                            {inlineEdit?.contactId === c.id && inlineEdit.field === 'phone' ? (
+                              <Input
+                                autoFocus
+                                className="h-7 text-sm"
+                                value={inlineEdit.value}
+                                onChange={e => setInlineEdit({ ...inlineEdit, value: e.target.value })}
+                                onBlur={saveInlineEdit}
+                                onKeyDown={e => { if (e.key === 'Enter') saveInlineEdit(); if (e.key === 'Escape') cancelInlineEdit(); }}
+                                onClick={e => e.stopPropagation()}
+                              />
+                            ) : (
+                              <span
+                                className="cursor-text hover:bg-muted/50 px-1 py-0.5 rounded -mx-1 transition-colors"
+                                onClick={e => { e.stopPropagation(); startInlineEdit(c, 'phone') }}
+                                title="Cliquer pour modifier"
+                              >
+                                {c.phone ?? "\u2014"}
+                              </span>
+                            )}
+                          </TableCell>
                           <TableCell className="hidden lg:table-cell text-muted-foreground">{c.company ?? "—"}</TableCell>
                           <TableCell className="hidden lg:table-cell">
                             <div className="flex gap-1 flex-wrap">
@@ -885,6 +999,47 @@ ${header}
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Feature 30: Unified customer 360° view */}
+          <TabsContent value="360">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    Vue client 360°
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Toutes les informations croisées : deals CRM, factures, emails, agenda, tâches.
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                {sortedFiltered.slice(0, 20).map(c => (
+                  <Customer360View
+                    key={c.id}
+                    contact={{
+                      id: c.id,
+                      name: c.name,
+                      email: c.email,
+                      phone: c.phone,
+                      company: c.company,
+                      birthday: c.birthday,
+                      tags: c.tags,
+                    }}
+                  />
+                ))}
+                {sortedFiltered.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-8">Aucun contact à afficher.</p>
+                )}
+                {sortedFiltered.length > 20 && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    {sortedFiltered.length - 20} contacts supplémentaires — affinez la recherche.
+                  </p>
+                )}
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
 

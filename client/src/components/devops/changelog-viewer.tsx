@@ -130,7 +130,7 @@ export function ChangelogViewer() {
     date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading changelog...</div>;
+    return <div className="text-center py-8">Chargement...</div>;
   }
 
   return (

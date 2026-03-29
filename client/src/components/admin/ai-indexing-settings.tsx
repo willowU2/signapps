@@ -211,7 +211,7 @@ export function AiIndexingSettings() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center h-24">Loading sync rules...</TableCell>
+                <TableCell colSpan={6} className="text-center h-24">Chargement...</TableCell>
               </TableRow>
             ) : rules.length === 0 && editingId !== "new" ? (
               <TableRow>

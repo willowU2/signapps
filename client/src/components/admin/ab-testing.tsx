@@ -144,7 +144,7 @@ export function ABTesting() {
   };
 
   if (isLoading) {
-    return <div className="text-center text-gray-500">Loading experiments...</div>;
+    return <div className="text-center text-gray-500">Chargement...</div>;
   }
 
   const runningCount = experiments.filter((e) => e.status === "running").length;

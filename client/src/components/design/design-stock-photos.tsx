@@ -94,7 +94,7 @@ export default function DesignStockPhotos({ fabricCanvasRef }: DesignStockPhotos
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search photos..."
+          placeholder="Rechercher..."
           className="h-8 text-xs pl-8"
         />
       </div>

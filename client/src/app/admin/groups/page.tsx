@@ -16,6 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function GroupsPage() {
   usePageTitle('Groupes');
@@ -48,18 +49,17 @@ export default function GroupsPage() {
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Groupes Utilisateurs</h1>
-          <p className="text-muted-foreground mt-2">
-            Gérez les groupes RBAC pour contrôler les accès et les permissions.
-          </p>
-        </div>
-        <Button onClick={handleCreate} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nouveau Groupe
-        </Button>
-      </div>
+      <PageHeader
+        title="Groupes utilisateurs"
+        description="Gérez les groupes RBAC pour contrôler les accès et les permissions."
+        icon={<Users className="h-5 w-5" />}
+        actions={
+          <Button onClick={handleCreate}>
+            <Plus className="h-4 w-4" />
+            Nouveau groupe
+          </Button>
+        }
+      />
 
       <div className="border rounded-md bg-card overflow-x-auto">
         <Table>
@@ -92,7 +92,7 @@ export default function GroupsPage() {
               </TableRow>
             ) : (
               groups?.map((group: Group) => (
-                <TableRow key={group.id} className="group">
+                <TableRow key={group.id} className="group h-12 hover:bg-muted/50 transition-colors">
                   <TableCell className="font-medium whitespace-nowrap">
                     {group.name}
                   </TableCell>

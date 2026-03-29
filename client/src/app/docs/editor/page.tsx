@@ -11,6 +11,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { trackDocVisit } from '@/components/ui/quick-switcher';
+import { DocShareSocial } from '@/components/interop/DocShareSocial';
+import { AiDocActions } from '@/components/interop/AiDocSummarize';
+import { AiDocTranslate } from '@/components/interop/AiDocTranslate';
+import { DocAutoSaveDrive, DocExportDrive } from '@/components/interop/DocAutoSaveDrive';
+import { DocCollabIndicator } from '@/components/interop/DocCollabIndicator';
 
 function EditorSkeleton() {
     return (
@@ -55,13 +60,28 @@ function EditorContent() {
         }
     }, [id, name]);
 
+    const getDocText = () => {
+        const el = document.querySelector('.ProseMirror') as HTMLElement | null;
+        return el ? (el.innerText || el.textContent || '') : '';
+    };
+
     return (
         <EditorLayout documentId={id} documentName={name || 'Sans titre'} icon={<FileText className="w-5 h-5 text-blue-600" />}>
             <div className="flex flex-col h-full">
-                <div className="px-4 pt-3 pb-1 border-b bg-background/50 shrink-0">
+                <div className="px-4 pt-3 pb-1 border-b bg-background/50 shrink-0 flex items-center justify-between gap-2 flex-wrap">
                     <Link href="/docs" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
                         <ArrowLeft className="h-4 w-4" /> Documents
                     </Link>
+                    {id !== 'new' && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <DocCollabIndicator docId={id} currentUserId={user?.id} />
+                            <DocShareSocial docId={id} docName={name || 'Document'} />
+                            <AiDocTranslate getText={getDocText} />
+                            <DocAutoSaveDrive docId={id} docName={name || 'Document'} getContent={getDocText} />
+                            <DocExportDrive docName={name || 'Document'} getContent={getDocText} />
+                            <AiDocActions docTitle={name || 'Document'} getText={getDocText} />
+                        </div>
+                    )}
                 </div>
                 <div className="flex-1 overflow-hidden">
                     <Editor documentId={id} documentName={name || undefined} className="h-full" bucket={name ? 'drive' : undefined} fileName={name || undefined} userName={userName} />

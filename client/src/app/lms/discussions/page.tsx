@@ -162,7 +162,7 @@ export default function LMSDiscussionsPage() {
           <div className="space-y-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search lessons..." className="pl-9 text-sm" />
+              <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..." className="pl-9 text-sm" />
             </div>
             {threads.filter(t => !search || t.lessonTitle.toLowerCase().includes(search.toLowerCase())).map(t => (
               <Card key={t.id} className={cn('cursor-pointer hover:shadow-md transition-shadow', selectedThread === t.id && 'border-primary')} onClick={() => setSelectedThread(t.id)}>

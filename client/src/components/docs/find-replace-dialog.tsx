@@ -140,7 +140,7 @@ export function FindReplaceDialog({ editor, open, onOpenChange }: FindReplaceDia
                         <div className="flex gap-2">
                             <Input
                                 id="find-input"
-                                placeholder="Search text..."
+                                placeholder="Rechercher..."
                                 value={findText}
                                 onChange={(e) => setFindText(e.target.value)}
                                 onKeyDown={(e) => {

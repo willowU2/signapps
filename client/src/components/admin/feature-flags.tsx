@@ -169,7 +169,7 @@ export function FeatureFlags() {
   };
 
   if (isLoading) {
-    return <div className="text-center text-gray-500">Loading flags...</div>;
+    return <div className="text-center text-gray-500">Chargement...</div>;
   }
 
   return (

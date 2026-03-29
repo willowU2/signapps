@@ -17,6 +17,9 @@ import {
   Filter,
 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { PageHeader } from '@/components/ui/page-header';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { DateDisplay } from '@/components/ui/date-display';
 
 // ─── Mock delivery log ──────────────────────────────────────────────────────
 
@@ -150,9 +153,7 @@ function DeliveryLog() {
                   {entry.duration_ms !== null && (
                     <span className="text-xs text-muted-foreground">{entry.duration_ms}ms</span>
                   )}
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(entry.timestamp).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                  </span>
+                  <DateDisplay date={entry.timestamp} withTime className="text-muted-foreground" />
                 </div>
               </button>
               {expandedId === entry.id && (
@@ -190,15 +191,11 @@ export default function WebhooksPage() {
   return (
     <AppLayout>
       <div className="space-y-6 p-6">
-        <div className="flex items-center gap-3">
-          <Webhook className="h-6 w-6 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Webhook Management</h1>
-            <p className="text-sm text-muted-foreground">
-              Configurez et surveillez vos webhooks et leurs livraisons.
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          title="Gestion des webhooks"
+          description="Configurez et surveillez vos webhooks et leurs livraisons."
+          icon={<Webhook className="h-5 w-5" />}
+        />
         <WebhookManager />
         <DeliveryLog />
       </div>

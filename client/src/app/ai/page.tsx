@@ -76,6 +76,8 @@ import { ModelManagement } from '@/components/ai/model-management';
 import { ToolCallDisplay, ToolCallInfo } from '@/components/ai/tool-call-display';
 import { toast } from 'sonner';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { AiGenerateDoc } from '@/components/interop/AiGenerateDoc';
+import { UnifiedContentLibrary } from '@/components/interop/UnifiedContentLibrary';
 
 // Types for conversations
 interface Message {
@@ -1121,10 +1123,14 @@ export default function AIPage() {
                       <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p className="text-lg font-medium">Bienvenue dans l&apos;assistant IA</p>
                       <p className="text-sm mt-2">Selectionnez une conversation ou commencez-en une nouvelle</p>
-                      <Button variant="outline" className="mt-4" onClick={createNewChat}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Nouvelle conversation
-                      </Button>
+                      <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
+                        <Button variant="outline" onClick={createNewChat}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Nouvelle conversation
+                        </Button>
+                        <AiGenerateDoc />
+                        <UnifiedContentLibrary />
+                      </div>
                     </div>
                   ) : (
                     messages.map((message) => (

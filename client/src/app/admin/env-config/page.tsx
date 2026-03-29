@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -36,28 +36,25 @@ const SHARED_KEYS = ['DATABASE_URL', 'REDIS_URL', 'JWT_SECRET', 'RUST_LOG', 'COR
 
 export default function EnvConfigPage() {
   usePageTitle('Configuration');
-  const [data, setData] = useState<ServiceEnv[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const fetchEnvs = async () => {
-    setLoading(true);
-    const results: ServiceEnv[] = [];
-
-    for (const svc of SERVICES) {
-      try {
-        const client = getClient(svc.service);
-        const res = await client.get<{ env: EnvVar[] }>('/config/env');
-        results.push({ service: svc.name, vars: res.data?.env || [] });
-      } catch {
-        results.push({ service: svc.name, vars: [], error: 'Indisponible' });
+  const { data = [], isLoading: loading, refetch } = useQuery<ServiceEnv[]>({
+    queryKey: ['admin-env-config'],
+    queryFn: async () => {
+      const results: ServiceEnv[] = [];
+      for (const svc of SERVICES) {
+        try {
+          const client = getClient(svc.service);
+          const res = await client.get<{ env: EnvVar[] }>('/config/env');
+          results.push({ service: svc.name, vars: res.data?.env || [] });
+        } catch {
+          results.push({ service: svc.name, vars: [], error: 'Indisponible' });
+        }
       }
-    }
-
-    setData(results);
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchEnvs(); }, []);
+      return results;
+    },
+    staleTime: 5 * 60_000, // static config: 5m
+    retry: false,
+  });
 
   // Diff: find inconsistencies in shared keys
   const diffs: { key: string; values: { service: string; value: string }[] }[] = [];
@@ -84,7 +81,7 @@ export default function EnvConfigPage() {
               <p className="text-sm text-muted-foreground">Comparaison des variables d'environnement entre services</p>
             </div>
           </div>
-          <Button variant="outline" onClick={fetchEnvs} disabled={loading}>
+          <Button variant="outline" onClick={() => refetch()} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Rafraîchir
           </Button>

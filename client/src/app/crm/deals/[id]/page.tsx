@@ -23,6 +23,7 @@ import {
   dealsApi, type Deal, type DealStage,
   computeLeadScore, STAGE_OPTIONS, STAGE_LABELS,
 } from "@/lib/api/crm"
+import { DealDetailPanel } from "@/components/interop/DealDetailPanel"
 import { toast } from "sonner"
 
 const STAGE_BADGE: Record<DealStage, "default" | "secondary" | "outline" | "destructive"> = {
@@ -229,6 +230,18 @@ export default function DealDetailPage() {
 
         {/* Calendar integration */}
         <CalendarActivities dealId={id} />
+
+        {/* Features 2, 6, 13, 16, 21, 28: Deal interop panel */}
+        <Card className="border-border/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              Interopérabilité — Facturation, Documents, Notes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DealDetailPanel deal={deal} onDealUpdate={setDeal} />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Delete confirmation */}

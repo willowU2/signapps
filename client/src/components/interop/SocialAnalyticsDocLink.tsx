@@ -33,8 +33,8 @@ export function SocialAnalyticsDocLink() {
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ['social-posts-with-docs'],
     queryFn: async () => {
-      const res = await (socialApi as any).getPosts?.({ status: 'published', limit: 50 });
-      const rawPosts: SocialPost[] = res?.data?.posts ?? res?.data ?? [];
+      const res = await socialApi.posts.list({ status: 'published', limit: 50 });
+      const rawPosts: SocialPost[] = res?.data?.items ?? (res?.data as any)?.posts ?? [];
       return rawPosts.map((p) => ({
         ...p,
         docLink: extractDocLink(p.content),

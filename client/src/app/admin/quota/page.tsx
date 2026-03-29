@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,8 @@ import { quotasApi, type QuotaUsage, type SetQuotaRequest } from '@/lib/api/stor
 import { getUsers, type User } from '@/lib/api-admin';
 import { toast } from 'sonner';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { LoadingButton } from '@/components/ui/loading-button';
+import { extractApiError } from '@/lib/errors';
 
 interface UserQuota {
   user: User;
@@ -70,7 +73,7 @@ function EditQuotaDialog({
       toast.success(`Quota mis à jour pour ${user.username}`);
       onSaved();
       onOpenChange(false);
-    } catch { toast.error('Échec de la mise à jour du quota'); }
+    } catch (err) { toast.error(extractApiError(err)); }
     finally { setSaving(false); }
   };
 
@@ -85,23 +88,24 @@ function EditQuotaDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Max Storage (GB)</Label>
+            <Label>Stockage max (Go) <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
             <Input
               type="number"
               min="0.1"
               step="0.5"
-              placeholder="e.g. 10"
+              placeholder="ex. 10"
               value={storageGB}
+              autoFocus
               onChange={e => setStorageGB(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">Leave blank to keep current limit</p>
+            <p className="text-xs text-muted-foreground">Laisser vide pour conserver la limite actuelle</p>
           </div>
           <div className="space-y-1.5">
-            <Label>Max Files</Label>
+            <Label>Fichiers max <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
             <Input
               type="number"
               min="1"
-              placeholder="e.g. 10000"
+              placeholder="ex. 10000"
               value={maxFiles}
               onChange={e => setMaxFiles(e.target.value)}
             />
@@ -109,7 +113,7 @@ function EditQuotaDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
-          <Button onClick={handleSave} disabled={saving}>Enregistrer</Button>
+          <LoadingButton loading={saving} onClick={handleSave}>Enregistrer</LoadingButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -120,16 +124,15 @@ function EditQuotaDialog({
 
 export default function QuotaPage() {
   usePageTitle('Quotas');
-  const [userQuotas, setUserQuotas] = useState<UserQuota[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [editUser, setEditUser] = useState<User | null>(null);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
+  const { data: userQuotas = [], isLoading: loading, refetch } = useQuery<UserQuota[]>({
+    queryKey: ['admin-quotas'],
+    queryFn: async () => {
       const users = await getUsers();
-      const quotas = await Promise.all(
+      return Promise.all(
         users.map(async (u) => {
           try {
             const res = await quotasApi.getUserQuota(u.id);
@@ -139,22 +142,16 @@ export default function QuotaPage() {
           }
         })
       );
-      setUserQuotas(quotas);
-    } catch {
-      toast.error('Impossible de charger les données de quota');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchData(); }, []);
+    },
+    staleTime: 30_000,
+  });
 
   const handleRecalculate = async (userId: string) => {
     try {
       await quotasApi.recalculate(userId);
       toast.success('Quota recalculé');
-      fetchData();
-    } catch { toast.error('Échec du recalcul'); }
+      queryClient.invalidateQueries({ queryKey: ['admin-quotas'] });
+    } catch (err) { toast.error(extractApiError(err)); }
   };
 
   const filtered = userQuotas.filter(uq =>
@@ -175,7 +172,7 @@ export default function QuotaPage() {
             <HardDrive className="h-6 w-6 text-primary" />
             <h1 className="text-3xl font-bold tracking-tight">Storage Quota</h1>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
@@ -201,7 +198,7 @@ export default function QuotaPage() {
             <div className="flex items-center gap-2">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search users…"
+                placeholder="Rechercher..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="h-8 w-64"
@@ -211,7 +208,7 @@ export default function QuotaPage() {
           </CardHeader>
           <CardContent className="p-0">
             {loading ? (
-              <div className="py-12 text-center text-muted-foreground">Loading quota data…</div>
+              <div className="py-12 text-center text-muted-foreground">Chargement des quotas…</div>
             ) : filtered.length === 0 ? (
               <div className="py-12 text-center text-muted-foreground">No users found</div>
             ) : (
@@ -271,7 +268,7 @@ export default function QuotaPage() {
           user={editUser}
           open={!!editUser}
           onOpenChange={(v) => !v && setEditUser(null)}
-          onSaved={fetchData}
+          onSaved={() => queryClient.invalidateQueries({ queryKey: ['admin-quotas'] })}
         />
       )}
     </AppLayout>

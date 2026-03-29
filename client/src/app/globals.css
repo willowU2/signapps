@@ -277,6 +277,23 @@
   .card-grid {
     @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
   }
+
+  /* COH-045 — Standardized card text truncation (2 lines) */
+  .line-clamp-card {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* COH-051 — Mobile table: stacked card view */
+  .mobile-table-row {
+    @apply flex flex-col gap-1 p-3 border rounded-lg bg-card;
+  }
+  .mobile-table-label {
+    @apply text-xs font-medium uppercase tracking-wide text-muted-foreground;
+  }
 }
 
 @keyframes fadeIn {

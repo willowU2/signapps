@@ -27,3 +27,11 @@ export { WidgetActiveTasks } from "./widget-active-tasks";
 export { WidgetActivityHeatmap } from "./widget-activity-heatmap";
 export { WidgetFavorites } from "./widget-favorites";
 export { WidgetCalendarPreview } from "./widget-calendar-preview";
+
+// Interoperability widgets
+export { WidgetMyDay } from "./widget-my-day";
+export { WidgetActivityTimeline } from "./widget-activity-timeline";
+export { WidgetUpcomingDeadlines } from "./widget-upcoming-deadlines";
+export { WidgetKpiCards } from "./widget-kpi-cards";
+export { WidgetNotificationCenter } from "./widget-notification-center";
+export { WidgetProjectProgress } from "./widget-project-progress";

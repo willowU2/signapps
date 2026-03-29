@@ -242,7 +242,7 @@ export default function ITAssetsPage() {
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search name, serial, location…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-8" />
+                <Input placeholder="Rechercher..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-8" />
               </div>
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -292,7 +292,7 @@ export default function ITAssetsPage() {
                     </TableHeader>
                     <TableBody>
                       {isLoading ? (
-                        <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">Loading assets…</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">Chargement...</TableCell></TableRow>
                       ) : sortedAssets.length === 0 ? (
                         <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                           {assets.length === 0 ? "No hardware found. Add your first asset." : "No assets match the current filters."}

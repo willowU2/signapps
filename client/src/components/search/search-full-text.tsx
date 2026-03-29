@@ -22,16 +22,6 @@ interface FullTextMatch {
   }>;
 }
 
-function useDebounce<T>(value: T, delay: number) {
-  const [d, setD] = useState(value);
-  const { useEffect } = require('react');
-  useEffect(() => {
-    const t = setTimeout(() => setD(value), delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return d;
-}
-
 export function FullTextSearchPanel() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<FullTextMatch[]>([]);

@@ -40,6 +40,7 @@ interface FormResponse {
 import { formsApi } from "@/lib/api/forms"
 import { toast } from "sonner"
 import { EntityLinks } from "@/components/crosslinks/EntityLinks"
+import { FormResponseToContact, FormResponseToSheet } from "@/components/interop/forms-contacts-bridge"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -316,12 +317,17 @@ export default function FormsPage() {
                             <div className="space-y-2">
                                 {responses.map(r => (
                                     <Card key={r.id} className="border-border/50">
-                                        <CardContent className="py-3 flex justify-between items-center">
+                                        <CardContent className="py-3 flex justify-between items-center gap-2">
                                             <div>
                                                 <p className="text-sm font-medium">{r.form_title}</p>
                                                 <p className="text-xs text-muted-foreground">{new Date(r.submitted_at).toLocaleString("fr-FR")}</p>
                                             </div>
-                                            <Button size="sm" variant="outline"><Eye className="h-3 w-3 mr-1" /> Voir</Button>
+                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                {/* Ideas 1+2: Create contact or push to Sheets */}
+                                                <FormResponseToContact response={r} />
+                                                <FormResponseToSheet response={r} />
+                                                <Button size="sm" variant="outline"><Eye className="h-3 w-3 mr-1" /> Voir</Button>
+                                            </div>
                                         </CardContent>
                                     </Card>
                                 ))}
