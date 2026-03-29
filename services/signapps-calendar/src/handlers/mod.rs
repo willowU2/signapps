@@ -2,6 +2,7 @@
 
 pub mod caldav;
 pub mod calendars;
+pub mod categories;
 pub mod events;
 pub mod external_sync;
 pub mod floor_plans;

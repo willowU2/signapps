@@ -117,8 +117,9 @@ async fn main() -> anyhow::Result<()> {
 fn build_router(state: AppState) -> Router {
     use axum::routing::{any, delete, get, post, put};
     use handlers::{
-        caldav, calendars, events, external_sync, floor_plans, icalendar, notifications, ooo,
-        polls, push, recurrence, resources, shares, tasks, timezones, websocket,
+        caldav, calendars, categories, events, external_sync, floor_plans, icalendar,
+        notifications, ooo, polls, push, recurrence, resources, shares, tasks, timezones,
+        websocket,
     };
 
     // Public routes (no auth required)
@@ -264,6 +265,9 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/polls/:id", get(polls::get_poll))
         .route("/api/v1/polls/:id/vote", post(polls::vote_poll))
         .route("/api/v1/polls/:id/confirm", post(polls::confirm_poll))
+        // Category routes
+        .route("/api/v1/categories", get(categories::list_categories).post(categories::create_category))
+        .route("/api/v1/categories/:id", put(categories::update_category).delete(categories::delete_category))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
