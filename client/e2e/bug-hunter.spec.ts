@@ -201,9 +201,11 @@ test.describe('Bug Hunter — Click Everything', () => {
 
     // Navigate to studio
     await page.goto(`${BASE}/ai/studio`);
-    await page.waitForTimeout(2000);
-    const tabs = await page.locator('button[role="tab"]').count();
-    console.log(`[AI STUDIO] Tabs: ${tabs}`);
+    await page.waitForTimeout(3000);
+    await dismissDialogs(page);
+    const studioBody = await page.textContent('body');
+    const hasStudio = studioBody?.includes('Studio') || studioBody?.includes('Image') || studioBody?.includes('Video') || (studioBody?.length ?? 0) > 500;
+    console.log(`[AI STUDIO] Has content: ${hasStudio}, Length: ${studioBody?.length}`);
   });
 
   // ─── STORAGE ───────────────────────────────────
