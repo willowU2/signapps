@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { driveApi, DriveNode } from '@/lib/api';
 import { fetchAndParseDocument } from '@/lib/file-parsers';
 import { useEntityStore } from '@/stores/entity-hub-store';
-import { FileText, Plus, MoreVertical, Search, Pencil, Trash2, User } from 'lucide-react';
+import { FileText, Plus, MoreVertical, Search, Pencil, Trash2, User, ExternalLink, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
@@ -31,6 +31,13 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    ContextMenu,
+    ContextMenuContent,
+    ContextMenuItem,
+    ContextMenuSeparator,
+    ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 import { BUILTIN_DOC_TEMPLATES, getUserTemplates, deleteUserTemplate, type DocTemplate } from '@/lib/document-templates';
 
 export default function DocsDashboard() {
@@ -338,8 +345,9 @@ export default function DocsDashboard() {
                 ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 w-full">
                         {filteredDocs.map((doc) => (
-                            <Card 
-                                key={doc.id}
+                            <ContextMenu key={doc.id}>
+                            <ContextMenuTrigger asChild>
+                            <Card
                                 onClick={() => handleOpenDoc(doc)}
                                 className="group cursor-pointer flex flex-col bg-background overflow-hidden border border-border/60 hover:border-muted-foreground/30 hover:shadow-md hover:-translate-y-1 transition-all duration-300 h-[220px]"
                             >
@@ -402,6 +410,28 @@ export default function DocsDashboard() {
                                     </div>
                                 </div>
                             </Card>
+                            </ContextMenuTrigger>
+                            <ContextMenuContent>
+                                <ContextMenuItem onClick={() => handleOpenDoc(doc)}>
+                                    <ExternalLink className="h-3.5 w-3.5 mr-2" /> Ouvrir
+                                </ContextMenuItem>
+                                <ContextMenuItem onClick={() => { setRenameValue(doc.name); setRenameTarget(doc); }}>
+                                    <Pencil className="h-3.5 w-3.5 mr-2" /> Renommer
+                                </ContextMenuItem>
+                                <ContextMenuItem onClick={() => {
+                                    const targetId = doc.target_id || doc.id;
+                                    const url = `${window.location.origin}/docs/editor?id=${targetId}&name=${encodeURIComponent(doc.name)}`;
+                                    navigator.clipboard.writeText(url);
+                                    toast.success('Lien copie dans le presse-papiers');
+                                }}>
+                                    <Share2 className="h-3.5 w-3.5 mr-2" /> Copier le lien
+                                </ContextMenuItem>
+                                <ContextMenuSeparator />
+                                <ContextMenuItem variant="destructive" onClick={() => setDeleteTargetId(doc.id)}>
+                                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Supprimer
+                                </ContextMenuItem>
+                            </ContextMenuContent>
+                            </ContextMenu>
                         ))}
                     </div>
                 )}

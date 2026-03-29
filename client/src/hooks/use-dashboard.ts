@@ -86,9 +86,9 @@ export function useDashboardData() {
       };
     },
     // Increase staleTime so we don't re-fetch on every tab switch
-    staleTime: 30_000,
-    // Slow down the polling interval — 30s is fine for a dashboard overview
-    refetchInterval: 30_000,
+    staleTime: 60_000,
+    // Auto-refresh every 60 seconds for live dashboard data
+    refetchInterval: 60_000,
     // Don't refetch automatically when the window regains focus if data is fresh
     refetchOnWindowFocus: false,
   });

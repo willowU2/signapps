@@ -24,8 +24,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound, Download, ArrowUpDown, Upload, GitMerge, Gift, Settings2, MapPin, Clock, Building2, History, Tag, X, FileDown, Mail, Printer } from "lucide-react"
+import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound, Download, ArrowUpDown, Upload, GitMerge, Gift, Settings2, MapPin, Clock, Building2, History, Tag, X, FileDown, Mail, Printer, Phone } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
 import { toast } from "sonner"
 import { getClient, ServiceName } from "@/lib/api/factory"
 import { contactsApi } from "@/lib/api/contacts"
@@ -672,6 +679,8 @@ ${header}
                     )}
                     {sortedFiltered.map((c, rowIndex) => (
                       <React.Fragment key={c.id}>
+                        <ContextMenu>
+                        <ContextMenuTrigger asChild>
                         <TableRow className={cn("transition-colors hover:bg-muted/50 cursor-pointer", selectedIds.has(c.id) ? "bg-primary/5" : "", emailPanelContactId === c.id ? "border-b-0 bg-primary/5" : "", focusedRow === rowIndex ? "bg-primary/10 ring-1 ring-primary/30 ring-inset" : "")} data-focused={focusedRow === rowIndex}>
                           <TableCell>
                             <Checkbox
@@ -714,6 +723,30 @@ ${header}
                             </div>
                           </TableCell>
                         </TableRow>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent>
+                            <ContextMenuItem onClick={() => handleEdit(c)}>
+                                <Pencil className="h-3.5 w-3.5 mr-2" /> Modifier
+                            </ContextMenuItem>
+                            {c.email && (
+                                <ContextMenuItem onClick={() => setEmailPanelContactId(c.id)}>
+                                    <Mail className="h-3.5 w-3.5 mr-2" /> Envoyer un email
+                                </ContextMenuItem>
+                            )}
+                            {c.phone && (
+                                <ContextMenuItem onClick={() => window.open(`tel:${c.phone}`)}>
+                                    <Phone className="h-3.5 w-3.5 mr-2" /> Appeler
+                                </ContextMenuItem>
+                            )}
+                            <ContextMenuItem onClick={() => toggleFavorite(c)}>
+                                <Star className="h-3.5 w-3.5 mr-2" /> {c.favorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                            </ContextMenuItem>
+                            <ContextMenuSeparator />
+                            <ContextMenuItem variant="destructive" onClick={() => setDeleteTarget(c.id)}>
+                                <Trash2 className="h-3.5 w-3.5 mr-2" /> Supprimer
+                            </ContextMenuItem>
+                        </ContextMenuContent>
+                        </ContextMenu>
                         {emailPanelContactId === c.id && c.email && (
                           <TableRow className="bg-primary/5 hover:bg-primary/5">
                             <TableCell colSpan={7} className="p-4">

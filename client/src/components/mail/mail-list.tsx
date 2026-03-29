@@ -2,7 +2,7 @@ import { ComponentProps, useRef, useState, useEffect, useCallback } from "react"
 import { formatDistanceToNow } from "date-fns"
 
 import { cn } from "@/lib/utils"
-import { Archive, Clock, Trash2, Square, Star, Loader2, ShieldAlert, Inbox } from "lucide-react"
+import { Archive, Clock, Trash2, Square, Star, Loader2, ShieldAlert, Inbox, Reply, Forward } from "lucide-react"
 import { Mail } from "@/lib/data/mail"
 import { SpamBadge } from "./spam-filter-settings"
 import {
@@ -11,6 +11,13 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    ContextMenu,
+    ContextMenuContent,
+    ContextMenuItem,
+    ContextMenuSeparator,
+    ContextMenuTrigger,
+} from "@/components/ui/context-menu"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { VirtualList } from "@/components/ui/virtual-list"
 import { useSwipeAction } from "@/hooks/use-swipe-action"
@@ -53,6 +60,8 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
     })
 
     return (
+        <ContextMenu>
+        <ContextMenuTrigger asChild>
         <div
             role="button"
             tabIndex={0}
@@ -115,6 +124,27 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
                 </SnoozeDatePicker>
             </div>
         </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+            <ContextMenuItem onClick={() => onSelect(item.id)}>
+                <Reply className="h-3.5 w-3.5 mr-2" /> Repondre
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => onSelect(item.id)}>
+                <Forward className="h-3.5 w-3.5 mr-2" /> Transferer
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={() => onArchive?.(item.id)}>
+                <Archive className="h-3.5 w-3.5 mr-2" /> Archiver
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => onSnooze?.(item.id, "Tomorrow")}>
+                <Clock className="h-3.5 w-3.5 mr-2" /> Reporter a demain
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem variant="destructive" onClick={() => onDelete?.(item.id)}>
+                <Trash2 className="h-3.5 w-3.5 mr-2" /> Supprimer
+            </ContextMenuItem>
+        </ContextMenuContent>
+        </ContextMenu>
     )
 }
 
