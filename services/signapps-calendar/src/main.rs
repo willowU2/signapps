@@ -117,7 +117,7 @@ async fn main() -> anyhow::Result<()> {
 fn build_router(state: AppState) -> Router {
     use axum::routing::{any, delete, get, post, put};
     use handlers::{
-        caldav, calendars, categories, events, external_sync, floor_plans, icalendar,
+        caldav, calendars, categories, events, external_sync, floor_plans, icalendar, leave,
         notifications, ooo, polls, push, recurrence, resources, shares, tasks, timezones,
         websocket,
     };
@@ -268,6 +268,13 @@ fn build_router(state: AppState) -> Router {
         // Category routes
         .route("/api/v1/categories", get(categories::list_categories).post(categories::create_category))
         .route("/api/v1/categories/:id", put(categories::update_category).delete(categories::delete_category))
+        // Leave management routes
+        .route("/api/v1/events/:id/approve", put(leave::approve_leave))
+        .route("/api/v1/events/:id/reject", put(leave::reject_leave))
+        .route("/api/v1/leave/balances", get(leave::get_balances))
+        .route("/api/v1/leave/balances/predict", get(leave::predict_balance))
+        .route("/api/v1/leave/team-conflicts", get(leave::team_conflicts))
+        .route("/api/v1/leave/delegate", post(leave::delegate_tasks))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

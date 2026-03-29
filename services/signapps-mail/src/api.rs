@@ -7,9 +7,10 @@ use axum::{
 };
 use chrono::Utc;
 use lettre::{
+    address::Envelope,
     message::{Mailbox, MultiPart, SinglePart},
     transport::smtp::authentication::Credentials,
-    AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
+    Address, AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
 };
 use serde::{Deserialize, Serialize};
 use signapps_common::Claims;
@@ -376,8 +377,9 @@ async fn sync_account_now(
 
     // Trigger sync in background
     let pool = state.pool.clone();
+    let event_bus = state.event_bus.clone();
     tokio::spawn(async move {
-        if let Err(e) = crate::sync_service::sync_account(&pool, &account).await {
+        if let Err(e) = crate::sync_service::sync_account(&pool, &account, &event_bus).await {
             tracing::error!("Sync failed for account {}: {:?}", account.email_address, e);
         }
     });
@@ -834,21 +836,68 @@ async fn send_via_smtp(
         .ok_or("SMTP server not configured")?;
 
     let from: Mailbox = account.email_address.parse()?;
-    let to: Mailbox = payload.recipient.parse()?;
 
-    let mut message_builder = Message::builder()
-        .from(from)
-        .to(to)
-        .subject(&payload.subject);
+    // Parse To addresses for both the message header and the SMTP envelope
+    let mut to_mailboxes: Vec<Mailbox> = Vec::new();
+    for addr in payload.recipient.split(',') {
+        if let Ok(mb) = addr.trim().parse::<Mailbox>() {
+            to_mailboxes.push(mb);
+        }
+    }
+    if to_mailboxes.is_empty() {
+        return Err("No valid To recipients".into());
+    }
 
-    // Add CC
+    let mut message_builder = Message::builder().from(from.clone());
+    for mb in &to_mailboxes {
+        message_builder = message_builder.to(mb.clone());
+    }
+    message_builder = message_builder.subject(&payload.subject);
+
+    // Parse CC addresses — add to message header AND SMTP envelope (via lettre's auto-derivation)
     if let Some(ref cc) = payload.cc {
         for addr in cc.split(',') {
-            if let Ok(mailbox) = addr.trim().parse::<Mailbox>() {
-                message_builder = message_builder.cc(mailbox);
+            if let Ok(mb) = addr.trim().parse::<Mailbox>() {
+                message_builder = message_builder.cc(mb);
             }
         }
     }
+
+    // Bug 8: BCC recipients — add via .bcc() so lettre includes them in the SMTP envelope
+    // but drops the Bcc header from the outgoing message (lettre's default: drop_bcc = true).
+    // This prevents BCC recipients from being visible to To/Cc recipients.
+    if let Some(ref bcc) = payload.bcc {
+        for addr in bcc.split(',') {
+            if let Ok(mb) = addr.trim().parse::<Mailbox>() {
+                message_builder = message_builder.bcc(mb);
+            }
+        }
+    }
+
+    // Build envelope explicitly: from + To + Cc + Bcc (all delivery recipients)
+    // We construct this manually to make the BCC-only-in-envelope semantics explicit.
+    let envelope_from: Address = account.email_address.parse()?;
+    let mut envelope_to: Vec<Address> = Vec::new();
+    for mb in &to_mailboxes {
+        envelope_to.push(mb.email.clone());
+    }
+    if let Some(ref cc) = payload.cc {
+        for addr in cc.split(',') {
+            if let Ok(mb) = addr.trim().parse::<Mailbox>() {
+                envelope_to.push(mb.email.clone());
+            }
+        }
+    }
+    if let Some(ref bcc) = payload.bcc {
+        for addr in bcc.split(',') {
+            if let Ok(mb) = addr.trim().parse::<Mailbox>() {
+                envelope_to.push(mb.email.clone());
+            }
+        }
+    }
+    let envelope = Envelope::new(Some(envelope_from), envelope_to)
+        .map_err(|e| format!("Invalid SMTP envelope: {}", e))?;
+    message_builder = message_builder.envelope(envelope);
 
     // Build body
     let email = if let Some(ref html) = payload.body_html {
@@ -1191,8 +1240,6 @@ async fn search_emails(
     Query(query): Query<SearchQuery>,
 ) -> impl IntoResponse {
     let limit = query.limit.unwrap_or(50).min(200);
-    let search_term = format!("%{}%", query.q);
-
     let emails = sqlx::query_as::<_, Email>(
         r#"
         SELECT e.* FROM mail.emails e
@@ -1200,10 +1247,8 @@ async fn search_emails(
         WHERE a.user_id = $1
         AND ($2::UUID IS NULL OR e.account_id = $2)
         AND (
-            e.subject ILIKE $3
-            OR e.sender ILIKE $3
-            OR e.recipient ILIKE $3
-            OR e.body_text ILIKE $3
+            e.search_vector @@ plainto_tsquery('french', $3)
+            OR e.subject ILIKE '%' || $3 || '%'
         )
         ORDER BY COALESCE(e.received_at, e.created_at) DESC
         LIMIT $4
@@ -1211,7 +1256,7 @@ async fn search_emails(
     )
     .bind(claims.sub)
     .bind(query.account_id)
-    .bind(&search_term)
+    .bind(&query.q)
     .bind(limit)
     .fetch_all(&state.pool)
     .await
@@ -1301,4 +1346,67 @@ async fn get_stats(
         starred_count: starred_count.0,
         draft_count: draft_count.0,
     })
+}
+
+// ============================================================================
+// Scheduled send background job (Idea 21)
+// ============================================================================
+
+/// Process emails whose `scheduled_send_at` has arrived. Called every 30s from main.rs.
+pub async fn process_scheduled_emails(
+    pool: &sqlx::PgPool,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let due_emails = sqlx::query_as::<_, Email>(
+        "SELECT * FROM mail.emails \
+         WHERE scheduled_send_at IS NOT NULL \
+           AND scheduled_send_at <= now() \
+           AND COALESCE(is_draft, false) = true \
+           AND COALESCE(is_sent, false) = false",
+    )
+    .fetch_all(pool)
+    .await?;
+
+    for email in due_emails {
+        let account = sqlx::query_as::<_, MailAccount>("SELECT * FROM mail.accounts WHERE id = $1")
+            .bind(email.account_id)
+            .fetch_optional(pool)
+            .await?;
+
+        if let Some(account) = account {
+            // Build a SendEmailRequest from the stored Email row
+            let payload = SendEmailRequest {
+                account_id: email.account_id,
+                recipient: email.recipient.clone(),
+                cc: email.cc.clone(),
+                bcc: email.bcc.clone(),
+                subject: email.subject.clone().unwrap_or_default(),
+                body_text: email.body_text.clone(),
+                body_html: email.body_html.clone(),
+                in_reply_to: email.in_reply_to.clone(),
+                is_draft: Some(false),
+                scheduled_send_at: None,
+            };
+
+            match send_via_smtp(&account, &payload).await {
+                Ok(_) => {
+                    sqlx::query(
+                        "UPDATE mail.emails \
+                         SET is_sent = true, is_draft = false, scheduled_send_at = NULL, \
+                             sent_at = NOW(), updated_at = NOW() \
+                         WHERE id = $1",
+                    )
+                    .bind(email.id)
+                    .execute(pool)
+                    .await?;
+                    tracing::info!(email_id = %email.id, "Scheduled email sent successfully");
+                },
+                Err(e) => {
+                    tracing::error!(email_id = %email.id, "Scheduled send failed: {}", e);
+                    // Leave the email as-is so it will be retried on the next tick
+                },
+            }
+        }
+    }
+
+    Ok(())
 }
