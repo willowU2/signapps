@@ -25,12 +25,15 @@ import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard';
 import { RouteProgressBar } from '@/components/layout/route-progress-bar';
 import { PasswordExpiryBanner } from '@/components/auth/password-expiry-banner';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
+<<<<<<< Updated upstream
 import { PwaInstallPrompt } from '@/components/pwa/pwa-install-prompt';
 import { useServiceWorker } from '@/hooks/use-service-worker';
 import { DragDropOverlay } from '@/components/drag-drop-overlay';
 import { GlobalPolling } from '@/components/global-polling';
 import { ThemeInitializer } from '@/components/theme-initializer';
 import { QuickDocumentSwitcher } from '@/components/layout/quick-switcher';
+=======
+>>>>>>> Stashed changes
 
 function LoadingFallback() {
   return (
@@ -94,6 +97,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <AuthProvider>
               <TenantProvider>
                 <PreferencesProvider>
+<<<<<<< Updated upstream
                   <AccessibilityProvider>
                     <PermissionsProvider>
                       <RouteProgressBar />
@@ -116,6 +120,25 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       <OnboardingWizard />
                     </PermissionsProvider>
                   </AccessibilityProvider>
+=======
+                  <PermissionsProvider>
+                    <RouteProgressBar />
+                    {!pathname?.startsWith('/login') && <PasswordExpiryBanner />}
+                    {children}
+                    {!pathname?.startsWith('/login') && (
+                      <>
+                        <CommandBar />
+                        <Sidebar />
+                        <RightSidebar />
+                        <MobileBottomNav />
+                      </>
+                    )}
+                    <GlobalModals />
+                    <GlobalHooks />
+                    <OnboardingWizard />
+                    <ChangelogDialog />
+                  </PermissionsProvider>
+>>>>>>> Stashed changes
                 </PreferencesProvider>
               </TenantProvider>
             </AuthProvider>
