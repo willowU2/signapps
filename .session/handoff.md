@@ -11,7 +11,7 @@ created_for: "Prochaine instance d'AgentIQ"
 ## Résumé Exécutif
 
 1. Session `d8f33af2` démarrée le 2026-03-28T22:26:52.170Z
-2. Terminée proprement le 2026-03-29T07:41:27.933Z
+2. Terminée proprement le 2026-03-29T07:50:08.588Z
 3. Travail : (non renseigné)
 
 ---
@@ -77,7 +77,7 @@ Fichiers à lire en priorité :
 |----------|--------|
 | Session ID | d8f33af2-5cfb-4842-97b9-dee49ae6bc13 |
 | Démarrée | 2026-03-28T22:26:52.170Z |
-| Terminée | 2026-03-29T07:41:27.933Z |
+| Terminée | 2026-03-29T07:50:08.588Z |
 | Crashes enregistrés | 0 |
 | Checkpoints | 0 |
 
