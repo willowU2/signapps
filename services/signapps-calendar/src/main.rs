@@ -117,9 +117,9 @@ async fn main() -> anyhow::Result<()> {
 fn build_router(state: AppState) -> Router {
     use axum::routing::{any, delete, get, post, put};
     use handlers::{
-        caldav, calendars, categories, events, external_sync, floor_plans, icalendar, leave,
-        notifications, ooo, polls, push, recurrence, resources, shares, tasks, timezones,
-        websocket,
+        approval, caldav, calendars, categories, events, external_sync, floor_plans, icalendar,
+        layers, leave, meeting_suggestions, notifications, ooo, polls, presence, push, recurrence,
+        resources, shares, tasks, timesheets, timezones, websocket,
     };
 
     // Public routes (no auth required)
@@ -207,7 +207,7 @@ fn build_router(state: AppState) -> Router {
         // Meeting time suggestions (IDEA-105)
         .route(
             "/api/v1/calendar/meeting-suggestions",
-            post(handlers::meeting_suggestions::suggest_meeting_times),
+            post(meeting_suggestions::suggest_meeting_times),
         )
         // iCalendar import/export routes
         .route("/api/v1/calendars/:calendar_id/export", get(icalendar::export_calendar))
@@ -275,6 +275,35 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/leave/balances/predict", get(leave::predict_balance))
         .route("/api/v1/leave/team-conflicts", get(leave::team_conflicts))
         .route("/api/v1/leave/delegate", post(leave::delegate_tasks))
+        // Presence management routes
+        .route("/api/v1/presence/rules", get(presence::list_rules).post(presence::create_rule))
+        .route(
+            "/api/v1/presence/rules/:id",
+            put(presence::update_rule).delete(presence::delete_rule),
+        )
+        .route("/api/v1/presence/validate", post(presence::validate_action))
+        .route("/api/v1/presence/team-status", get(presence::team_status))
+        .route("/api/v1/presence/headcount", get(presence::headcount))
+        // Timesheet routes
+        .route("/api/v1/timesheets", get(timesheets::list_timesheets))
+        .route("/api/v1/timesheets/:id", put(timesheets::update_timesheet))
+        .route("/api/v1/timesheets/validate", post(timesheets::validate_week))
+        .route("/api/v1/timesheets/export", post(timesheets::export_timesheets))
+        .route("/api/v1/timesheets/generate", post(timesheets::generate_timesheets))
+        // Approval workflow routes
+        .route(
+            "/api/v1/approval-workflows",
+            get(approval::list_workflows).post(approval::create_workflow),
+        )
+        .route(
+            "/api/v1/approval-workflows/:id",
+            put(approval::update_workflow).delete(approval::delete_workflow),
+        )
+        // Layer config routes
+        .route(
+            "/api/v1/layers/config",
+            get(layers::get_layer_config).put(layers::save_layer_config),
+        )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
