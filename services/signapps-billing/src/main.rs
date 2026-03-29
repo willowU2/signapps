@@ -533,10 +533,12 @@ async fn main() -> anyhow::Result<()> {
         "DATABASE_URL",
         "postgres://signapps:password@localhost:5432/signapps",
     );
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-        tracing::warn!("JWT_SECRET not set, using insecure dev default");
-        "dev_secret_change_in_production_32chars".to_string()
-    });
+    let jwt_secret = std::env::var("JWT_SECRET")
+        .expect("JWT_SECRET environment variable must be set (minimum 32 characters)");
+    assert!(
+        jwt_secret.len() >= 32,
+        "JWT_SECRET must be at least 32 characters long"
+    );
 
     let pool = PgPoolOptions::new()
         .max_connections(10)
@@ -558,7 +560,9 @@ async fn main() -> anyhow::Result<()> {
     let addr = format!("0.0.0.0:{}", port);
     tracing::info!("signapps-billing listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app)
+        .with_graceful_shutdown(signapps_common::graceful_shutdown())
+        .await?;
 
     Ok(())
 }

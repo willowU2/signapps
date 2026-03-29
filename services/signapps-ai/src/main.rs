@@ -15,7 +15,7 @@ use signapps_runtime::{HardwareProfile, ModelManager};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tower::ServiceBuilder;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::{AllowOrigin, CorsLayer};
 
 mod embeddings;
 mod gateway;
@@ -82,7 +82,12 @@ async fn main() -> anyhow::Result<()> {
     // Load configuration
     let database_url =
         std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/signapps".into());
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
+    let jwt_secret = std::env::var("JWT_SECRET")
+        .expect("JWT_SECRET environment variable must be set (minimum 32 characters)");
+    assert!(
+        jwt_secret.len() >= 32,
+        "JWT_SECRET must be at least 32 characters long"
+    );
     let embeddings_url =
         std::env::var("EMBEDDINGS_URL").unwrap_or_else(|_| "http://localhost:8080".into());
 
@@ -331,7 +336,7 @@ async fn main() -> anyhow::Result<()> {
     // Build router
     let app = create_router(state);
 
-    // Start server
+    // Start server with graceful shutdown
     let port: u16 = std::env::var("SERVER_PORT")
         .unwrap_or_else(|_| "3005".into())
         .parse()
@@ -341,7 +346,9 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("Listening on {}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app)
+        .with_graceful_shutdown(signapps_common::graceful_shutdown())
+        .await?;
 
     Ok(())
 }
@@ -409,9 +416,27 @@ fn create_router(state: AppState) -> Router {
 
     // CORS configuration
     let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+        .allow_origin(AllowOrigin::list([
+            "http://localhost:3000".parse().unwrap(),
+            "http://127.0.0.1:3000".parse().unwrap(),
+        ]))
+        .allow_credentials(true)
+        .allow_methods([
+            axum::http::Method::GET,
+            axum::http::Method::POST,
+            axum::http::Method::PUT,
+            axum::http::Method::PATCH,
+            axum::http::Method::DELETE,
+            axum::http::Method::OPTIONS,
+        ])
+        .allow_headers([
+            axum::http::header::CONTENT_TYPE,
+            axum::http::header::AUTHORIZATION,
+            axum::http::header::ACCEPT,
+            axum::http::header::ORIGIN,
+            axum::http::HeaderName::from_static("x-workspace-id"),
+            axum::http::HeaderName::from_static("x-request-id"),
+        ]);
 
     // Root-level health check (outside /api/v1 nest so it's reachable at /health)
     let root_health = Router::new().route("/health", get(health::health_check));

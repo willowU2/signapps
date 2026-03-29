@@ -235,7 +235,9 @@ async fn main() -> std::io::Result<()> {
     tracing::info!("   API: http://localhost:{}/api/v1/tunnels", config.port);
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app)
+        .with_graceful_shutdown(signapps_common::graceful_shutdown())
+        .await?;
 
     Ok(())
 }

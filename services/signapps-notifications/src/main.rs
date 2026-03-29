@@ -349,7 +349,9 @@ async fn main() -> anyhow::Result<()> {
     let addr = format!("0.0.0.0:{}", port);
     tracing::info!("signapps-notifications listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app)
+        .with_graceful_shutdown(signapps_common::graceful_shutdown())
+        .await?;
 
     Ok(())
 }
