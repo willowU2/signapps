@@ -134,7 +134,7 @@ export default function ResourcesPublicPage() {
                 toast.success(
                     <span>
                         Ressource réservée !{" "}
-                        <a href="/calendar" className="underline font-medium inline-flex items-center gap-1">
+                        <a href="/cal" className="underline font-medium inline-flex items-center gap-1">
                             Voir dans le calendrier <ExternalLink className="h-3 w-3" />
                         </a>
                     </span>

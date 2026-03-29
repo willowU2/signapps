@@ -28,8 +28,3 @@ export type { OnCallAssignment, OnCallPlannerProps } from './on-call-planner';
 export { ClockIn } from './clock-in';
 export type { ClockInProps } from './clock-in';
 
-export { LeaveRequest } from './leave-request';
-export type { LeaveRequestProps, LeaveRequestFormData } from './leave-request';
-
-export { LeaveCalendar } from './leave-calendar';
-export type { LeaveCalendarProps } from './leave-calendar';
