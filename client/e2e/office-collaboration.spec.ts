@@ -35,12 +35,13 @@ test.describe('Document Comments', () => {
           // Comment input should appear
           const commentInput = page.locator('[data-testid="comment-input"], .comment-form textarea, input[placeholder*="comment"]');
           const hasInput = await commentInput.isVisible().catch(() => false);
-          expect(true).toBeTruthy();
+          expect(hasInput).toBeTruthy();
         } else {
           // Try keyboard shortcut Ctrl+Alt+M
           await page.keyboard.press('Control+Alt+m');
           await page.waitForTimeout(500);
-          expect(true).toBeTruthy();
+          const pageContent = await page.textContent('body');
+          expect(pageContent?.length).toBeGreaterThan(0);
         }
       }
     });
@@ -77,7 +78,7 @@ test.describe('Document Comments', () => {
 
         const sidebar = page.locator('[data-testid="comments-sidebar"], .comments-panel, aside:has-text("comment")');
         const hasSidebar = await sidebar.isVisible().catch(() => false);
-        expect(true).toBeTruthy();
+        expect(hasSidebar).toBeTruthy();
       }
     });
 
@@ -97,7 +98,8 @@ test.describe('Document Comments', () => {
         const filterBtn = page.getByRole('button', { name: /filter|filtrer|resolved|résolus/i });
         if (await filterBtn.isVisible()) {
           await filterBtn.click();
-          expect(true).toBeTruthy();
+          // Sidebar should still be visible after filtering
+          await expect(sidebar).toBeVisible();
         }
       }
     });
@@ -131,7 +133,7 @@ test.describe('Document Comments', () => {
 
           // Comment should be marked as resolved
           const isResolved = await commentThread.locator('.resolved, [data-resolved="true"]').isVisible().catch(() => false);
-          expect(true).toBeTruthy();
+          expect(isResolved).toBeTruthy();
         }
       }
     });
@@ -149,7 +151,9 @@ test.describe('Document Comments', () => {
             await confirmBtn.click();
           }
 
-          expect(true).toBeTruthy();
+          // Thread should no longer be visible after deletion
+          const threadStillVisible = await commentThread.isVisible().catch(() => false);
+          expect(threadStillVisible).toBeFalsy();
         }
       }
     });
@@ -175,7 +179,7 @@ test.describe('Track Changes', () => {
         // Indicator should show track changes is active
         const indicator = page.locator('[data-testid="track-changes-active"], .track-changes-indicator, text=/tracking|suivi actif/i');
         const isActive = await indicator.isVisible().catch(() => false);
-        expect(true).toBeTruthy();
+        expect(isActive).toBeTruthy();
       }
     });
   });
@@ -196,7 +200,7 @@ test.describe('Track Changes', () => {
         // Check for insertion mark
         const insertion = page.locator('.insertion, [data-change-type="insert"], ins, .text-green-600');
         const hasInsertion = await insertion.isVisible().catch(() => false);
-        expect(true).toBeTruthy();
+        expect(hasInsertion).toBeTruthy();
       }
     });
 
@@ -217,7 +221,7 @@ test.describe('Track Changes', () => {
         // Check for deletion mark
         const deletion = page.locator('.deletion, [data-change-type="delete"], del, .line-through');
         const hasDeletion = await deletion.isVisible().catch(() => false);
-        expect(true).toBeTruthy();
+        expect(hasDeletion).toBeTruthy();
       }
     });
   });
@@ -231,7 +235,9 @@ test.describe('Track Changes', () => {
         const acceptBtn = page.getByRole('button', { name: /accept|accepter/i });
         if (await acceptBtn.isVisible()) {
           await acceptBtn.click();
-          expect(true).toBeTruthy();
+          // Change markup should be removed after accepting
+          const changeStillVisible = await change.isVisible().catch(() => false);
+          expect(changeStillVisible).toBeFalsy();
         }
       }
     });
@@ -244,7 +250,9 @@ test.describe('Track Changes', () => {
         const rejectBtn = page.getByRole('button', { name: /reject|rejeter|refuser/i });
         if (await rejectBtn.isVisible()) {
           await rejectBtn.click();
-          expect(true).toBeTruthy();
+          // Change markup should be removed after rejecting
+          const changeStillVisible = await change.isVisible().catch(() => false);
+          expect(changeStillVisible).toBeFalsy();
         }
       }
     });
@@ -260,7 +268,9 @@ test.describe('Track Changes', () => {
           await confirmBtn.click();
         }
 
-        expect(true).toBeTruthy();
+        // No tracked changes should remain after accepting all
+        const remainingChanges = await page.locator('[data-testid="tracked-change"], .tracked-change, .insertion, .deletion').count();
+        expect(remainingChanges).toBe(0);
       }
     });
 
@@ -274,7 +284,9 @@ test.describe('Track Changes', () => {
           await confirmBtn.click();
         }
 
-        expect(true).toBeTruthy();
+        // No tracked changes should remain after rejecting all
+        const remainingChanges = await page.locator('[data-testid="tracked-change"], .tracked-change, .insertion, .deletion').count();
+        expect(remainingChanges).toBe(0);
       }
     });
   });
@@ -287,7 +299,7 @@ test.describe('Track Changes', () => {
 
         const sidebar = page.locator('[data-testid="changes-sidebar"], .changes-panel');
         const hasSidebar = await sidebar.isVisible().catch(() => false);
-        expect(true).toBeTruthy();
+        expect(hasSidebar).toBeTruthy();
       }
     });
 
@@ -313,7 +325,7 @@ test.describe('Real-time Collaboration', () => {
 
         const presenceBar = page.locator('[data-testid="presence-bar"], .collaborators, .presence-indicators');
         const hasPresence = await presenceBar.isVisible().catch(() => false);
-        expect(true).toBeTruthy();
+        expect(hasPresence).toBeTruthy();
       }
     });
 
@@ -327,7 +339,7 @@ test.describe('Real-time Collaboration', () => {
         // Current user avatar should be visible
         const avatar = page.locator('[data-testid="user-avatar"], .avatar, img[alt*="user"]');
         const hasAvatar = await avatar.isVisible().catch(() => false);
-        expect(true).toBeTruthy();
+        expect(hasAvatar).toBeTruthy();
       }
     });
   });
@@ -342,7 +354,7 @@ test.describe('Real-time Collaboration', () => {
 
         const statusIndicator = page.locator('[data-testid="sync-status"], .connection-status, text=/connected|connecté|synced/i');
         const hasStatus = await statusIndicator.isVisible().catch(() => false);
-        expect(true).toBeTruthy();
+        expect(hasStatus).toBeTruthy();
       }
     });
   });
@@ -366,7 +378,7 @@ test.describe('Real-time Collaboration', () => {
           // Look for saved indicator
           const savedIndicator = page.locator('text=/saved|enregistré|synced|synchronisé/i');
           const isSaved = await savedIndicator.isVisible().catch(() => false);
-          expect(true).toBeTruthy();
+          expect(isSaved).toBeTruthy();
         }
       }
     });

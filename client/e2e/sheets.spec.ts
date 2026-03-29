@@ -200,7 +200,7 @@ test.describe('Spreadsheet', () => {
         // Look for sheet tabs
         const sheetTabs = page.locator('[data-testid="sheet-tabs"], .sheet-tabs, [role="tablist"]');
         const hasSheetTabs = await sheetTabs.isVisible().catch(() => false);
-        expect(true).toBeTruthy(); // Soft check
+        expect(hasSheetTabs).toBeTruthy();
       }
     });
 
