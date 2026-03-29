@@ -9,7 +9,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use chrono::{DateTime, Datelike, NaiveDate, NaiveTime, Utc, Weekday};
+use chrono::{DateTime, Datelike, NaiveDate, NaiveTime, TimeZone, Utc, Weekday};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
@@ -653,23 +653,99 @@ pub async fn simulate_shift_change(
     })?
     .ok_or(StatusCode::NOT_FOUND)?;
 
-    let (first_name, last_name, _org_node_id) = employee;
+    let (first_name, last_name, org_node_id) = employee;
     let employee_name = format!("{} {}", first_name, last_name);
 
-    // Calculate impact
-    let affected_slots = Vec::new();
-    let gaps_created = 0;
-    let gaps_resolved = 0;
-    let warnings = Vec::new();
+    // Calculate shift change impact by comparing coverage before and after the change.
+    // We look at the original shift's date, fetch org node coverage slots, and count
+    // how many gaps the removal of the original shift would create (and how many the
+    // new shift resolves).
+    let original_date = req.original_shift.start.date_naive();
+    let coverage_slots = get_effective_slots(&state, ctx.tenant_id, org_node_id).await?;
 
-    // FIXME(workforce): Calculate shift change impact from scheduling service
-    // This would involve checking current assignments and recalculating coverage
+    let date_range_orig = DateRange {
+        start: original_date,
+        end: original_date,
+    };
+    let assignments_before =
+        get_assignments(&state, ctx.tenant_id, org_node_id, &date_range_orig).await?;
+
+    let mut affected_slots_vec: Vec<AffectedSlot> = Vec::new();
+    let mut gaps_created: i32 = 0;
+    let mut gaps_resolved: i32 = 0;
+    let mut warnings: Vec<String> = Vec::new();
+
+    let weekday = original_date.weekday();
+    let day_index = weekday_to_index(weekday);
+
+    let orig_start_time = req.original_shift.start.time();
+    let orig_end_time = req.original_shift.end.time();
+
+    for slot in coverage_slots.iter().filter(|s| s.day_of_week == day_index) {
+        let slot_start = NaiveTime::parse_from_str(&slot.start_time, "%H:%M")
+            .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+        let slot_end = NaiveTime::parse_from_str(&slot.end_time, "%H:%M")
+            .unwrap_or(NaiveTime::from_hms_opt(23, 59, 59).unwrap());
+
+        // Does the original shift cover this slot?
+        let orig_covers_slot =
+            orig_start_time <= slot_start && orig_end_time >= slot_end;
+
+        let coverage_before = count_assignments_for_slot(&assignments_before, original_date, slot);
+
+        // Coverage after removing the original shift
+        let coverage_after_removal = if orig_covers_slot {
+            (coverage_before - 1).max(0)
+        } else {
+            coverage_before
+        };
+
+        // Does the new shift (if any) cover this slot?
+        let new_covers_slot = req.new_shift.as_ref().map_or(false, |ns| {
+            let ns_start = ns.start.time();
+            let ns_end = ns.end.time();
+            ns_start <= slot_start && ns_end >= slot_end
+        });
+
+        let coverage_after = if new_covers_slot {
+            coverage_after_removal + 1
+        } else {
+            coverage_after_removal
+        };
+
+        // Track gap creation / resolution
+        let was_gap = coverage_before < slot.min_employees;
+        let is_gap = coverage_after < slot.min_employees;
+
+        if !was_gap && is_gap {
+            gaps_created += 1;
+            warnings.push(format!(
+                "Removing original shift creates a gap for slot {} on {}",
+                slot.label
+                    .as_ref()
+                    .unwrap_or(&format!("{}-{}", slot.start_time, slot.end_time)),
+                original_date
+            ));
+        } else if was_gap && !is_gap {
+            gaps_resolved += 1;
+        }
+
+        if coverage_before != coverage_after {
+            affected_slots_vec.push(AffectedSlot {
+                date: original_date,
+                time_range: format!("{}-{}", slot.start_time, slot.end_time),
+                coverage_before,
+                coverage_after,
+                required: slot.min_employees,
+            });
+        }
+    }
 
     let coverage_impact = CoverageImpact {
         gaps_created,
         gaps_resolved,
         net_impact: gaps_resolved - gaps_created,
-        affected_slots,
+        affected_slots: affected_slots_vec,
     };
 
     let can_approve = gaps_created == 0;
@@ -831,16 +907,139 @@ struct Assignment {
     functions: Vec<String>,
 }
 
-/// Get assignments for a node and date range
+/// Scheduler response wrapper for list endpoints
+#[derive(Debug, Deserialize)]
+struct SchedulerTimeItemsResponse {
+    items: Vec<SchedulerShiftItem>,
+}
+
+/// Minimal time-item shape returned by signapps-scheduler
+#[derive(Debug, Deserialize)]
+struct SchedulerShiftItem {
+    #[serde(rename = "ownerId")]
+    owner_id: Uuid,
+    #[serde(rename = "startTime")]
+    start_time: Option<DateTime<Utc>>,
+    #[serde(rename = "endTime")]
+    end_time: Option<DateTime<Utc>>,
+}
+
+/// Get assignments for a node and date range by calling the scheduler service.
+///
+/// Resolves employees for `org_node_id`, fetches their `user_id`s, then queries
+/// `GET /api/v1/time-items` with `types=shift` and the date window.
 async fn get_assignments(
-    _state: &AppState,
-    _tenant_id: Uuid,
-    _org_node_id: Uuid,
-    _date_range: &DateRange,
+    state: &AppState,
+    tenant_id: Uuid,
+    org_node_id: Uuid,
+    date_range: &DateRange,
 ) -> Result<Vec<Assignment>, StatusCode> {
-    // FIXME(workforce): Query shift_assignments via scheduling API
-    // For now, return empty (meaning no assignments)
-    Ok(vec![])
+    // 1. Look up employees for this org node and collect their linked user_ids
+    let rows: Vec<(Uuid, Option<Uuid>)> = sqlx::query_as(
+        "SELECT id, user_id FROM workforce_employees \
+         WHERE tenant_id = $1 AND org_node_id = $2 AND status = 'active'",
+    )
+    .bind(tenant_id)
+    .bind(org_node_id)
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("get_assignments: DB query failed: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    // Map user_id → employee_id so we can reconstruct Assignment.employee_id
+    let user_to_employee: std::collections::HashMap<Uuid, Uuid> = rows
+        .iter()
+        .filter_map(|(emp_id, user_id)| user_id.map(|uid| (uid, *emp_id)))
+        .collect();
+
+    if user_to_employee.is_empty() {
+        return Ok(vec![]);
+    }
+
+    let user_ids: Vec<Uuid> = user_to_employee.keys().cloned().collect();
+
+    // 2. Build the query string for the scheduler
+    let start_dt = Utc
+        .from_utc_datetime(&date_range.start.and_hms_opt(0, 0, 0).unwrap_or_default());
+    let end_dt = Utc
+        .from_utc_datetime(&date_range.end.and_hms_opt(23, 59, 59).unwrap_or_default());
+
+    // Encode user_ids as repeated query params: userIds[]=uuid&userIds[]=...
+    let mut query_params = format!(
+        "types=shift&start={}&end={}",
+        urlencoding_simple(&start_dt.to_rfc3339()),
+        urlencoding_simple(&end_dt.to_rfc3339()),
+    );
+    for uid in &user_ids {
+        query_params.push_str(&format!("&userIds[]={}", uid));
+    }
+
+    let url = format!(
+        "{}/time-items?{}",
+        state.scheduler_base_url, query_params
+    );
+
+    let resp = state
+        .http_client
+        .get(&url)
+        .header("X-Internal-Service", "signapps-workforce")
+        .send()
+        .await;
+
+    match resp {
+        Err(e) => {
+            tracing::warn!(
+                "get_assignments: scheduler unreachable, degrading to empty: {}",
+                e
+            );
+            return Ok(vec![]);
+        },
+        Ok(r) if !r.status().is_success() => {
+            tracing::warn!(
+                "get_assignments: scheduler returned {}, degrading to empty",
+                r.status()
+            );
+            return Ok(vec![]);
+        },
+        Ok(r) => {
+            let body: SchedulerTimeItemsResponse = match r.json().await {
+                Ok(b) => b,
+                Err(e) => {
+                    tracing::warn!(
+                        "get_assignments: failed to parse scheduler response: {}",
+                        e
+                    );
+                    return Ok(vec![]);
+                },
+            };
+
+            let assignments = body
+                .items
+                .into_iter()
+                .filter_map(|item| {
+                    let start = item.start_time?;
+                    let end = item.end_time?;
+                    let employee_id = *user_to_employee.get(&item.owner_id)?;
+                    Some(Assignment {
+                        employee_id,
+                        date: start.date_naive(),
+                        start_time: start.time(),
+                        end_time: end.time(),
+                        functions: vec![],
+                    })
+                })
+                .collect();
+
+            Ok(assignments)
+        },
+    }
+}
+
+/// Percent-encode a string (minimal: encode `:`, `/`, `+`)
+fn urlencoding_simple(s: &str) -> String {
+    s.replace(':', "%3A").replace('+', "%2B")
 }
 
 /// Count assignments that cover a specific slot
@@ -860,16 +1059,97 @@ fn count_assignments_for_slot(
         .count() as i32
 }
 
-/// Check if employee is assigned to a slot
+/// Check if an employee is assigned to a specific slot on a given date.
+///
+/// Looks up the employee's linked `user_id`, then queries the scheduler for
+/// their shifts on that date, and checks if any shift covers the slot window.
 async fn is_employee_assigned(
-    _state: &AppState,
-    _tenant_id: Uuid,
-    _employee_id: Uuid,
-    _date: NaiveDate,
-    _slot: &CoverageSlot,
+    state: &AppState,
+    tenant_id: Uuid,
+    employee_id: Uuid,
+    date: NaiveDate,
+    slot: &CoverageSlot,
 ) -> Result<bool, StatusCode> {
-    // FIXME(workforce): Query employee assignments via scheduling API
-    Ok(false)
+    // Resolve the employee's linked user_id
+    let user_id: Option<Uuid> = sqlx::query_scalar(
+        "SELECT user_id FROM workforce_employees WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(employee_id)
+    .bind(tenant_id)
+    .fetch_optional(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("is_employee_assigned: DB query failed: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?
+    .flatten();
+
+    let Some(uid) = user_id else {
+        // Employee has no linked platform user — cannot check scheduler
+        return Ok(false);
+    };
+
+    let start_dt = Utc.from_utc_datetime(&date.and_hms_opt(0, 0, 0).unwrap_or_default());
+    let end_dt = Utc.from_utc_datetime(&date.and_hms_opt(23, 59, 59).unwrap_or_default());
+
+    let query_params = format!(
+        "types=shift&start={}&end={}&userIds[]={}&limit=50",
+        urlencoding_simple(&start_dt.to_rfc3339()),
+        urlencoding_simple(&end_dt.to_rfc3339()),
+        uid,
+    );
+    let url = format!("{}/time-items?{}", state.scheduler_base_url, query_params);
+
+    let resp = state
+        .http_client
+        .get(&url)
+        .header("X-Internal-Service", "signapps-workforce")
+        .send()
+        .await;
+
+    let items = match resp {
+        Err(e) => {
+            tracing::warn!(
+                "is_employee_assigned: scheduler unreachable, assuming not assigned: {}",
+                e
+            );
+            return Ok(false);
+        },
+        Ok(r) if !r.status().is_success() => {
+            tracing::warn!(
+                "is_employee_assigned: scheduler returned {}, assuming not assigned",
+                r.status()
+            );
+            return Ok(false);
+        },
+        Ok(r) => match r.json::<SchedulerTimeItemsResponse>().await {
+            Ok(body) => body.items,
+            Err(e) => {
+                tracing::warn!(
+                    "is_employee_assigned: failed to parse scheduler response: {}",
+                    e
+                );
+                return Ok(false);
+            },
+        },
+    };
+
+    let slot_start = NaiveTime::parse_from_str(&slot.start_time, "%H:%M")
+        .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+    let slot_end = NaiveTime::parse_from_str(&slot.end_time, "%H:%M")
+        .unwrap_or(NaiveTime::from_hms_opt(23, 59, 59).unwrap());
+
+    let assigned = items.iter().any(|item| {
+        if let (Some(s), Some(e)) = (item.start_time, item.end_time) {
+            let shift_start = s.time();
+            let shift_end = e.time();
+            s.date_naive() == date && shift_start <= slot_start && shift_end >= slot_end
+        } else {
+            false
+        }
+    });
+
+    Ok(assigned)
 }
 
 /// Find replacement employees
@@ -878,7 +1158,7 @@ async fn find_replacements(
     tenant_id: Uuid,
     org_node_id: Uuid,
     required_functions: &[String],
-    _date_range: &DateRange,
+    date_range: &DateRange,
     exclude_employee_id: Uuid,
 ) -> Result<Vec<SuggestedReplacement>, StatusCode> {
     // Find employees with matching functions who are available
@@ -915,15 +1195,18 @@ async fn find_replacements(
             .collect();
 
         if !matching_functions.is_empty() || required_functions.is_empty() {
-            // FIXME(workforce): Cross-check availability with calendar/scheduling
-            let availability_score = 0.8; // Placeholder
+            // Cross-check availability with calendar/scheduling service.
+            // We query existing shifts for this employee over the date range;
+            // the availability score is 1.0 minus the fraction of days with conflicts.
+            let (availability_score, conflicts) =
+                compute_availability_score(state, &id, date_range).await;
 
             replacements.push(SuggestedReplacement {
                 employee_id: id,
                 employee_name: format!("{} {}", first_name, last_name),
                 functions: matching_functions,
                 availability_score,
-                conflicts: vec![],
+                conflicts,
             });
         }
     }
@@ -936,6 +1219,105 @@ async fn find_replacements(
     });
 
     Ok(replacements)
+}
+
+/// Query the scheduler for an employee's existing shifts in `date_range` and
+/// compute an availability score (1.0 = fully free, 0.0 = every day has a shift).
+///
+/// Also returns a list of human-readable conflict strings for each busy day.
+/// Gracefully returns (0.8, []) if the scheduler is unreachable.
+async fn compute_availability_score(
+    state: &AppState,
+    employee_id: &Uuid,
+    date_range: &DateRange,
+) -> (f64, Vec<String>) {
+    // Look up the employee's linked user_id
+    let user_id: Option<Uuid> = match sqlx::query_scalar::<_, Option<Uuid>>(
+        "SELECT user_id FROM workforce_employees WHERE id = $1",
+    )
+    .bind(employee_id)
+    .fetch_optional(&*state.pool)
+    .await
+    {
+        Ok(Some(opt)) => opt,
+        _ => return (0.8, vec![]), // DB failure → neutral score
+    };
+
+    let Some(uid) = user_id else {
+        return (0.8, vec![]);
+    };
+
+    let start_dt = Utc.from_utc_datetime(
+        &date_range.start.and_hms_opt(0, 0, 0).unwrap_or_default(),
+    );
+    let end_dt = Utc.from_utc_datetime(
+        &date_range.end.and_hms_opt(23, 59, 59).unwrap_or_default(),
+    );
+
+    let query_params = format!(
+        "types=shift&start={}&end={}&userIds[]={}&limit=200",
+        urlencoding_simple(&start_dt.to_rfc3339()),
+        urlencoding_simple(&end_dt.to_rfc3339()),
+        uid,
+    );
+    let url = format!("{}/time-items?{}", state.scheduler_base_url, query_params);
+
+    let items = match state
+        .http_client
+        .get(&url)
+        .header("X-Internal-Service", "signapps-workforce")
+        .send()
+        .await
+    {
+        Err(e) => {
+            tracing::warn!(
+                "compute_availability_score: scheduler unreachable for employee {}: {}",
+                employee_id,
+                e
+            );
+            return (0.8, vec![]);
+        },
+        Ok(r) if !r.status().is_success() => {
+            tracing::warn!(
+                "compute_availability_score: scheduler returned {} for employee {}",
+                r.status(),
+                employee_id
+            );
+            return (0.8, vec![]);
+        },
+        Ok(r) => match r.json::<SchedulerTimeItemsResponse>().await {
+            Ok(body) => body.items,
+            Err(e) => {
+                tracing::warn!(
+                    "compute_availability_score: parse error for employee {}: {}",
+                    employee_id,
+                    e
+                );
+                return (0.8, vec![]);
+            },
+        },
+    };
+
+    if items.is_empty() {
+        return (1.0, vec![]);
+    }
+
+    // Collect distinct busy dates
+    let busy_dates: std::collections::BTreeSet<NaiveDate> = items
+        .iter()
+        .filter_map(|item| item.start_time.map(|dt| dt.date_naive()))
+        .collect();
+
+    let total_days = (date_range.end - date_range.start).num_days().max(1) as f64;
+    let busy_count = busy_dates.len() as f64;
+    let availability_score = ((total_days - busy_count) / total_days).clamp(0.0, 1.0);
+
+    let conflicts: Vec<String> = busy_dates
+        .iter()
+        .map(|d| format!("Already assigned on {}", d))
+        .collect();
+
+    (availability_score, conflicts)
 }
 
 /// Calculate gap severity

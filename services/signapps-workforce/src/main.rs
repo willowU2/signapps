@@ -26,6 +26,10 @@ use signapps_db::DatabasePool;
 pub struct AppState {
     pub pool: DatabasePool,
     pub jwt_config: JwtConfig,
+    /// HTTP client for internal cross-service calls (e.g. to signapps-scheduler)
+    pub http_client: reqwest::Client,
+    /// Base URL of the scheduler service (env: SCHEDULER_URL, default: http://localhost:3007/api/v1)
+    pub scheduler_base_url: String,
 }
 
 impl AuthState for AppState {
@@ -55,8 +59,21 @@ async fn main() -> Result<()> {
         refresh_expiration: 86400 * 7,
     };
 
+    // Inter-service HTTP client for scheduler cross-calls
+    let http_client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .expect("Failed to build reqwest client");
+    let scheduler_base_url = std::env::var("SCHEDULER_URL")
+        .unwrap_or_else(|_| "http://localhost:3007/api/v1".to_string());
+
     // Create application state
-    let state = AppState { pool, jwt_config };
+    let state = AppState {
+        pool,
+        jwt_config,
+        http_client,
+        scheduler_base_url,
+    };
 
     // Build router
     let app = create_router(state);
