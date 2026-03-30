@@ -1,6 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
-    http::{HeaderMap, HeaderValue, StatusCode},
+    http::StatusCode,
     response::{IntoResponse, Redirect, Response},
     Extension, Json,
 };
@@ -8,7 +8,6 @@ use chrono::Utc;
 use serde::Deserialize;
 use serde_json::json;
 use signapps_common::Claims;
-use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -18,13 +17,11 @@ use crate::AppState;
 // ---------------------------------------------------------------------------
 
 fn base_url() -> String {
-    std::env::var("PUBLIC_BASE_URL")
-        .unwrap_or_else(|_| "http://localhost:3019".to_string())
+    std::env::var("PUBLIC_BASE_URL").unwrap_or_else(|_| "http://localhost:3019".to_string())
 }
 
 fn frontend_url() -> String {
-    std::env::var("FRONTEND_URL")
-        .unwrap_or_else(|_| "http://localhost:3000".to_string())
+    std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:3000".to_string())
 }
 
 fn encode(s: &str) -> String {
@@ -90,7 +87,7 @@ pub async fn oauth_authorize(
                 encode(&state_token),
                 encode(code_challenge),
             )
-        }
+        },
         "linkedin" => {
             let client_id = std::env::var("LINKEDIN_CLIENT_ID").unwrap_or_default();
             let redirect_uri = format!("{}/api/v1/social/oauth/linkedin/callback", base);
@@ -102,7 +99,7 @@ pub async fn oauth_authorize(
                 encode(scopes),
                 encode(&state_token),
             )
-        }
+        },
         "facebook" => {
             let client_id = std::env::var("FACEBOOK_CLIENT_ID").unwrap_or_default();
             let redirect_uri = format!("{}/api/v1/social/oauth/facebook/callback", base);
@@ -114,7 +111,7 @@ pub async fn oauth_authorize(
                 encode(scopes),
                 encode(&state_token),
             )
-        }
+        },
         "instagram" => {
             let client_id = std::env::var("FACEBOOK_CLIENT_ID").unwrap_or_default();
             let redirect_uri = format!("{}/api/v1/social/oauth/instagram/callback", base);
@@ -126,7 +123,7 @@ pub async fn oauth_authorize(
                 encode(scopes),
                 encode(&state_token),
             )
-        }
+        },
         "mastodon" => {
             let instance = match &query.instance {
                 Some(i) if !i.is_empty() => i.clone(),
@@ -136,7 +133,7 @@ pub async fn oauth_authorize(
                         Json(json!({ "error": "instance parameter required for Mastodon" })),
                     )
                         .into_response();
-                }
+                },
             };
             // Normalize: strip https:// if present
             let instance = instance
@@ -156,7 +153,7 @@ pub async fn oauth_authorize(
                 encode(scopes),
                 encode(&state_token),
             )
-        }
+        },
         "bluesky" => {
             // Bluesky uses app passwords, not OAuth2. Return a special indicator.
             return (
@@ -167,17 +164,21 @@ pub async fn oauth_authorize(
                 })),
             )
                 .into_response();
-        }
+        },
         _ => {
             return (
                 StatusCode::BAD_REQUEST,
                 Json(json!({ "error": format!("Unsupported platform: {}", platform) })),
             )
                 .into_response();
-        }
+        },
     };
 
-    (StatusCode::OK, Json(json!({ "redirect_url": redirect_url, "state": state_token }))).into_response()
+    (
+        StatusCode::OK,
+        Json(json!({ "redirect_url": redirect_url, "state": state_token })),
+    )
+        .into_response()
 }
 
 // ---------------------------------------------------------------------------
@@ -224,7 +225,7 @@ pub async fn oauth_callback(
                 encode(&platform),
             ))
             .into_response();
-        }
+        },
     };
 
     let state_token = match &params.state {
@@ -236,7 +237,7 @@ pub async fn oauth_callback(
                 encode(&platform),
             ))
             .into_response();
-        }
+        },
     };
 
     // Verify and consume state token
@@ -254,14 +255,17 @@ pub async fn oauth_callback(
     let (user_id, _) = match row {
         Ok(Some(r)) => r,
         Ok(None) => {
-            tracing::warn!("OAuth callback: invalid or expired state token for {}", platform);
+            tracing::warn!(
+                "OAuth callback: invalid or expired state token for {}",
+                platform
+            );
             return Redirect::temporary(&format!(
                 "{}/social/accounts?oauth_error=invalid_state&platform={}",
                 frontend,
                 encode(&platform),
             ))
             .into_response();
-        }
+        },
         Err(e) => {
             tracing::error!("OAuth callback state query: {e}");
             return Redirect::temporary(&format!(
@@ -270,7 +274,7 @@ pub async fn oauth_callback(
                 encode(&platform),
             ))
             .into_response();
-        }
+        },
     };
 
     // Exchange code for tokens
@@ -328,7 +332,7 @@ pub async fn oauth_callback(
                         id,
                     ))
                     .into_response()
-                }
+                },
                 Err(e) => {
                     tracing::error!("OAuth upsert account: {e}");
                     Redirect::temporary(&format!(
@@ -337,9 +341,9 @@ pub async fn oauth_callback(
                         encode(&platform),
                     ))
                     .into_response()
-                }
+                },
             }
-        }
+        },
         Err(e) => {
             tracing::error!("OAuth token exchange for {}: {}", platform, e);
             Redirect::temporary(&format!(
@@ -348,7 +352,7 @@ pub async fn oauth_callback(
                 encode(&platform),
             ))
             .into_response()
-        }
+        },
     }
 }
 
@@ -423,7 +427,7 @@ async fn exchange_code_for_tokens(
                 avatar_url: user["profile_image_url"].as_str().map(String::from),
                 platform_config: None,
             })
-        }
+        },
 
         "linkedin" => {
             let client_id = std::env::var("LINKEDIN_CLIENT_ID")?;
@@ -482,7 +486,7 @@ async fn exchange_code_for_tokens(
                 avatar_url: None,
                 platform_config: author_urn.map(|urn| json!({ "author_urn": urn })),
             })
-        }
+        },
 
         "facebook" => {
             let client_id = std::env::var("FACEBOOK_CLIENT_ID")?;
@@ -546,7 +550,7 @@ async fn exchange_code_for_tokens(
                 avatar_url: None,
                 platform_config: page_id.map(|id| json!({ "page_id": id })),
             })
-        }
+        },
 
         "instagram" => {
             // Instagram uses the same Facebook OAuth flow
@@ -586,25 +590,25 @@ async fn exchange_code_for_tokens(
                 .json::<serde_json::Value>()
                 .await?;
 
-            let (ig_user_id, ig_token, page_name) =
-                if let Some(pages) = me_resp["data"].as_array() {
-                    let mut found = (None, access_token.clone(), None);
-                    for page in pages {
-                        if let Some(ig_acct) = page["instagram_business_account"].as_object() {
-                            let ig_id = ig_acct["id"].as_str().map(String::from);
-                            let page_token = page["access_token"]
-                                .as_str()
-                                .unwrap_or(&access_token)
-                                .to_string();
-                            let name = page["name"].as_str().map(String::from);
-                            found = (ig_id, page_token, name);
-                            break;
-                        }
+            let (ig_user_id, ig_token, page_name) = if let Some(pages) = me_resp["data"].as_array()
+            {
+                let mut found = (None, access_token.clone(), None);
+                for page in pages {
+                    if let Some(ig_acct) = page["instagram_business_account"].as_object() {
+                        let ig_id = ig_acct["id"].as_str().map(String::from);
+                        let page_token = page["access_token"]
+                            .as_str()
+                            .unwrap_or(&access_token)
+                            .to_string();
+                        let name = page["name"].as_str().map(String::from);
+                        found = (ig_id, page_token, name);
+                        break;
                     }
-                    found
-                } else {
-                    (None, access_token, None)
-                };
+                }
+                found
+            } else {
+                (None, access_token, None)
+            };
 
             Ok(TokenData {
                 access_token: ig_token,
@@ -616,7 +620,7 @@ async fn exchange_code_for_tokens(
                 avatar_url: None,
                 platform_config: ig_user_id.map(|id| json!({ "user_id": id })),
             })
-        }
+        },
 
         "mastodon" => {
             // Instance URL is encoded in the state or we read MASTODON_INSTANCE env
@@ -647,7 +651,10 @@ async fn exchange_code_for_tokens(
 
             // Fetch account info
             let acct_resp = client
-                .get(format!("https://{}/api/v1/accounts/verify_credentials", instance))
+                .get(format!(
+                    "https://{}/api/v1/accounts/verify_credentials",
+                    instance
+                ))
                 .bearer_auth(&access_token)
                 .send()
                 .await?
@@ -664,9 +671,12 @@ async fn exchange_code_for_tokens(
                 avatar_url: acct_resp["avatar"].as_str().map(String::from),
                 platform_config: Some(json!({ "instance_url": format!("https://{}", instance) })),
             })
-        }
+        },
 
-        other => Err(anyhow::anyhow!("Unsupported platform for token exchange: {}", other)),
+        other => Err(anyhow::anyhow!(
+            "Unsupported platform for token exchange: {}",
+            other
+        )),
     }
 }
 

@@ -13,12 +13,18 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { Label } from '@/components/ui/label';
-import { Trash2, RefreshCw, Plus, AlertCircle, CheckCircle } from 'lucide-react';
+import { Trash2, RefreshCw, AlertCircle, CheckCircle, ChevronDown } from 'lucide-react';
 import { useSocialStore } from '@/stores/social-store';
 import { PLATFORM_COLORS, PLATFORM_LABELS } from './platform-utils';
 import type { SocialAccount } from '@/lib/api/social';
 import { socialApi } from '@/lib/api/social';
+import { OAuthConnect } from './oauth-connect';
 
 type Platform = SocialAccount['platform'];
 
@@ -36,7 +42,8 @@ interface PlatformConfig {
   fields: FieldDef[];
 }
 
-const SUPPORTED_PLATFORMS: PlatformConfig[] = [
+// Manual entry config — kept as "Advanced" option for power users / API tokens
+const MANUAL_PLATFORMS: PlatformConfig[] = [
   {
     platform: 'mastodon',
     description: 'Enter your instance URL and authorize via OAuth',
@@ -131,6 +138,10 @@ const SUPPORTED_PLATFORMS: PlatformConfig[] = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Manual connect dialog
+// ---------------------------------------------------------------------------
+
 interface ConnectDialogProps {
   config: PlatformConfig;
   onClose: () => void;
@@ -186,10 +197,15 @@ function ConnectDialog({ config, onClose, onConnect }: ConnectDialogProps) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
+
 export function AccountConnector() {
   const { accounts, fetchAccounts, addAccount, removeAccount } = useSocialStore();
   const [connectingConfig, setConnectingConfig] = useState<PlatformConfig | null>(null);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   useEffect(() => {
     fetchAccounts();
@@ -205,22 +221,35 @@ export function AccountConnector() {
     }
   };
 
-  const connectedByPlatform = SUPPORTED_PLATFORMS.map((sp) => ({
-    ...sp,
-    connected: accounts.filter((a) => a.platform === sp.platform),
-  }));
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Connecté Accounts</h2>
-        <p className="text-sm text-muted-foreground">{accounts.length} account{accounts.length !== 1 ? 's' : ''}</p>
+        <div>
+          <h2 className="text-xl font-semibold">Comptes connectés</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Connectez vos réseaux sociaux via OAuth sécurisé
+          </p>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {accounts.length} compte{accounts.length !== 1 ? 's' : ''}
+        </p>
       </div>
 
-      {/* Connecté accounts list */}
+      {/* OAuth connect grid — primary UX */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          Connecter via OAuth
+        </h3>
+        <OAuthConnect accounts={accounts} onConnected={fetchAccounts} />
+      </div>
+
+      {/* Connected accounts list */}
       {accounts.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Active</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Comptes actifs
+          </h3>
           <div className="space-y-2">
             {accounts.map((account) => (
               <Card key={account.id}>
@@ -239,7 +268,9 @@ export function AccountConnector() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium">{account.displayName}</span>
-                        <span className="text-muted-foreground text-sm">@{account.username}</span>
+                        <span className="text-muted-foreground text-sm">
+                          {account.username ? `@${account.username}` : ''}
+                        </span>
                         <Badge
                           variant="outline"
                           className="text-xs capitalize"
@@ -270,7 +301,9 @@ export function AccountConnector() {
                           onClick={() => handleRefreshToken(account.id)}
                           disabled={refreshingId === account.id}
                         >
-                          <RefreshCw className={`h-3.5 w-3.5 mr-1 ${refreshingId === account.id ? 'animate-spin' : ''}`} />
+                          <RefreshCw
+                            className={`h-3.5 w-3.5 mr-1 ${refreshingId === account.id ? 'animate-spin' : ''}`}
+                          />
                           Refresh
                         </Button>
                       )}
@@ -291,44 +324,58 @@ export function AccountConnector() {
         </div>
       )}
 
-      {/* Add accounts */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Add Account</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-          {connectedByPlatform.map(({ platform, description, fields, connected }) => (
-            <Card key={platform}>
-              <CardContent className="py-4 px-4">
-                <div className="flex items-start gap-3">
-                  <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold shrink-0"
-                    style={{ backgroundColor: PLATFORM_COLORS[platform] ?? '#6b7280' }}
-                  >
-                    {platform.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="font-medium">{PLATFORM_LABELS[platform]}</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
-                    {connected.length > 0 && (
-                      <p className="text-xs text-green-500 mt-1">{connected.length} account{connected.length !== 1 ? 's' : ''} connected</p>
-                    )}
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-3"
-                  onClick={() => setConnectingConfig({ platform, description, fields })}
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1" />
-                  Connect {PLATFORM_LABELS[platform]}
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+      {/* Advanced: manual token entry */}
+      <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+        <CollapsibleTrigger asChild>
+          <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${advancedOpen ? 'rotate-180' : ''}`}
+            />
+            Saisie manuelle de token (avancé)
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {MANUAL_PLATFORMS.map(({ platform, description, fields }) => {
+              const connected = accounts.filter((a) => a.platform === platform);
+              return (
+                <Card key={platform}>
+                  <CardContent className="py-4 px-4">
+                    <div className="flex items-start gap-3">
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold shrink-0"
+                        style={{ backgroundColor: PLATFORM_COLORS[platform] ?? '#6b7280' }}
+                      >
+                        {platform.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium">{PLATFORM_LABELS[platform]}</span>
+                        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+                        {connected.length > 0 && (
+                          <p className="text-xs text-green-500 mt-1">
+                            {connected.length} compte{connected.length !== 1 ? 's' : ''} connecté
+                            {connected.length !== 1 ? 's' : ''}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-3"
+                      onClick={() => setConnectingConfig({ platform, description, fields })}
+                    >
+                      Connecter {PLATFORM_LABELS[platform]}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
-      {/* Connect Dialog */}
+      {/* Manual connect dialog */}
       <Dialog open={!!connectingConfig} onOpenChange={(open) => !open && setConnectingConfig(null)}>
         {connectingConfig && (
           <ConnectDialog
