@@ -47,9 +47,7 @@ test.describe('Sheets XLSX Import', () => {
     }
     // Also try Escape
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(200);
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(200);
 
     await page.screenshot({ path: 'e2e/screenshots/sheets-02-after-import.png' });
 

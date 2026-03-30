@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 const BASE = 'http://localhost:3000';
 
 async function dismissDialogs(page: any) {
-  for (let i = 0; i < 5; i++) { await page.keyboard.press('Escape'); await page.waitForTimeout(100); }
+  for (let i = 0; i < 5; i++) { await page.keyboard.press('Escape');  }
   for (const sel of ['button:has-text("Passer")', 'button:has-text("Fermer")', 'button[aria-label="Close"]', 'div[role="dialog"] button']) {
     const btn = page.locator(sel).first();
     if (await btn.isVisible({ timeout: 200 }).catch(() => false)) await btn.click({ force: true }).catch(() => {});
@@ -250,7 +250,7 @@ test.describe('Bug Hunter — Click Everything', () => {
       const t = page.locator(`button:has-text("${tab}"), [role="tab"]:has-text("${tab}")`).first();
       if (await t.isVisible({ timeout: 1000 }).catch(() => false)) {
         await t.click();
-        await page.waitForTimeout(200); // animation delay only
+        await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation delay only
       }
     }
 

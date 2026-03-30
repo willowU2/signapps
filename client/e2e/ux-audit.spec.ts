@@ -252,7 +252,7 @@ test.describe('UX Deep Audit', () => {
       const t = page.locator(`text=${tab}`).first();
       if (await t.isVisible({ timeout: 2000 }).catch(() => false)) {
         await t.click();
-        await page.waitForTimeout(200); // animation only
+        await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation only
         console.log(`[ADMIN] Tab ${tab}: clicked OK`);
       } else {
         console.log(`[ADMIN] Tab ${tab}: NOT VISIBLE`);

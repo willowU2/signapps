@@ -14,6 +14,7 @@ use axum::{extract::State, Json};
 use crate::{models::ConfigResponse, AppState};
 
 /// Get meet service configuration
+#[tracing::instrument(skip_all)]
 pub async fn get_config(State(state): State<AppState>) -> Json<ConfigResponse> {
     Json(ConfigResponse {
         livekit_url: state.livekit_config.server_url.clone(),

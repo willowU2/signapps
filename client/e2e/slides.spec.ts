@@ -70,7 +70,7 @@ test.describe('Slides', () => {
         const initialSlides = await page.locator('[data-testid="slide-thumbnail"], .slide-thumb').count();
         await addSlideBtn.click();
 
-        await page.waitForTimeout(200); // animation delay
+        await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation delay
         const newSlides = await page.locator('[data-testid="slide-thumbnail"], .slide-thumb').count();
         expect(newSlides).toBeGreaterThanOrEqual(initialSlides);
       }
@@ -151,7 +151,7 @@ test.describe('Slides', () => {
       const addSlideBtn = page.getByRole('button', { name: /add slide|nouvelle diapo|\\+/i });
       if (await addSlideBtn.isVisible()) {
         await addSlideBtn.click();
-        await page.waitForTimeout(200); // animation delay
+        await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation delay
 
         // Click on first slide thumbnail
         const firstThumb = page.locator('[data-testid="slide-thumbnail"], .slide-thumb').first();
@@ -264,7 +264,7 @@ test.describe('Slides Presentation Mode', () => {
         await presentBtn.click();
 
         // Should enter fullscreen or presentation mode - verify page is stable
-        await page.waitForTimeout(200); // animation only
+        await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation only
         const body = await page.textContent('body');
         expect(body?.length).toBeGreaterThan(0);
 

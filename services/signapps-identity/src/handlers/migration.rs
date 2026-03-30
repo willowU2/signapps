@@ -736,16 +736,19 @@ impl MigrationStore {
     }
 
     /// Return a clone of the current job, if any.
+#[tracing::instrument(skip_all)]
     pub async fn get(&self) -> Option<MigrationJob> {
         self.inner.read().await.clone()
     }
 
     /// Overwrite the current job record.
+#[tracing::instrument(skip_all)]
     pub async fn set(&self, job: MigrationJob) {
         *self.inner.write().await = Some(job);
     }
 
     /// Clear the current job record.
+#[tracing::instrument(skip_all)]
     pub async fn clear(&self) {
         *self.inner.write().await = None;
     }

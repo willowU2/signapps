@@ -45,9 +45,7 @@ test.describe('Sheets Tab Switching', () => {
 
     // Close any modals
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(200);
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(200);
 
     // Take screenshot of first sheet
     await page.screenshot({ path: 'e2e/screenshots/tab-sheet1.png' });

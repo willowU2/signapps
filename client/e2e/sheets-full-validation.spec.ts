@@ -39,9 +39,7 @@ test.describe('Full Excel Validation', () => {
 
     // Close modals
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(200);
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(200);
 
     logs.forEach(l => console.log(l));
 

@@ -50,7 +50,7 @@ fn test_create_invoice_request_shape() {
         payload.get("amount_cents").is_some(),
         "amount_cents is required"
     );
-    assert_eq!(payload["amount_cents"].as_i64().unwrap(), 9900);
+    assert_eq!(payload["amount_cents"].as_i64().expect("test assertion"), 9900);
     assert_eq!(payload["currency"], "EUR");
 }
 
@@ -86,8 +86,8 @@ fn test_create_invoice_response_shape() {
     );
 
     // Verify computed total_ttc = amount_cents / 100
-    let amount_cents = invoice["amount_cents"].as_i64().unwrap();
-    let total_ttc = invoice["total_ttc"].as_f64().unwrap();
+    let amount_cents = invoice["amount_cents"].as_i64().expect("test assertion");
+    let total_ttc = invoice["total_ttc"].as_f64().expect("test assertion");
     assert!((total_ttc - amount_cents as f64 / 100.0).abs() < 0.001);
 }
 
@@ -131,7 +131,7 @@ async fn test_list_invoices_requires_auth() {
 #[test]
 fn test_get_invoice_response_shape() {
     let invoice = invoice_fixture();
-    let id = invoice["id"].as_str().unwrap();
+    let id = invoice["id"].as_str().expect("test assertion");
 
     assert!(!id.is_empty(), "invoice id must not be empty");
     assert_eq!(invoice["status"], "draft");
@@ -157,7 +157,7 @@ fn test_update_invoice_request_shape() {
         update_payload.get("status").is_some(),
         "status update required"
     );
-    let status = update_payload["status"].as_str().unwrap();
+    let status = update_payload["status"].as_str().expect("test assertion");
     // Valid statuses for the billing service
     let valid_statuses = ["draft", "sent", "paid", "overdue", "cancelled", "void"];
     assert!(
@@ -202,7 +202,7 @@ fn test_create_line_item_request_shape() {
     assert!(payload.get("unit_price_cents").is_some());
 
     let qty = payload["quantity"].as_i64().unwrap_or(1);
-    let unit = payload["unit_price_cents"].as_i64().unwrap();
+    let unit = payload["unit_price_cents"].as_i64().expect("test assertion");
     let total = qty * unit;
     assert_eq!(total, 100000, "8 x 12500 = 100000 cents");
 }
@@ -226,9 +226,9 @@ fn test_line_item_response_shape() {
     assert!(line_item.get("total_cents").is_some());
 
     // total_cents must equal quantity * unit_price_cents
-    let qty = line_item["quantity"].as_i64().unwrap();
-    let unit = line_item["unit_price_cents"].as_i64().unwrap();
-    let total = line_item["total_cents"].as_i64().unwrap();
+    let qty = line_item["quantity"].as_i64().expect("test assertion");
+    let unit = line_item["unit_price_cents"].as_i64().expect("test assertion");
+    let total = line_item["total_cents"].as_i64().expect("test assertion");
     assert_eq!(
         total,
         qty * unit,

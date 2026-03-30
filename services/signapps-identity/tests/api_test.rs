@@ -29,8 +29,8 @@ fn test_login_request_shape() {
         payload.get("password").is_some(),
         "login requires 'password'"
     );
-    assert!(!payload["username"].as_str().unwrap().is_empty());
-    assert!(!payload["password"].as_str().unwrap().is_empty());
+    assert!(!payload["username"].as_str().expect("test assertion").is_empty());
+    assert!(!payload["password"].as_str().expect("test assertion").is_empty());
 }
 
 /// Validates the successful login response shape.
@@ -61,7 +61,7 @@ fn test_login_response_shape() {
     );
     assert_eq!(mock_response["token_type"], "Bearer");
 
-    let expires_in = mock_response["expires_in"].as_i64().unwrap();
+    let expires_in = mock_response["expires_in"].as_i64().expect("test assertion");
     assert!(expires_in > 0, "expires_in must be positive");
     assert_eq!(expires_in, 900, "access token TTL should be 900s (15 min)");
 }
@@ -88,7 +88,7 @@ fn test_login_validates_empty_username() {
         "password": "admin123"
     });
 
-    let username = payload["username"].as_str().unwrap();
+    let username = payload["username"].as_str().expect("test assertion");
     // The handler validates: length(min = 1)
     assert!(username.is_empty(), "empty username should fail validation");
 }
@@ -234,12 +234,12 @@ fn test_register_request_shape() {
     );
 
     // Validate username length (3-64 chars)
-    let username = payload["username"].as_str().unwrap();
+    let username = payload["username"].as_str().expect("test assertion");
     assert!(username.len() >= 3, "username must be at least 3 chars");
     assert!(username.len() <= 64, "username must be at most 64 chars");
 
     // Validate password length (8-128 chars)
-    let password = payload["password"].as_str().unwrap();
+    let password = payload["password"].as_str().expect("test assertion");
     assert!(password.len() >= 8, "password must be at least 8 chars");
 }
 
@@ -300,7 +300,7 @@ fn test_data_export_job_response_shape() {
     assert!(mock_job.get("requested_at").is_some());
     assert!(mock_job.get("download_url").is_some());
 
-    let status = mock_job["status"].as_str().unwrap();
+    let status = mock_job["status"].as_str().expect("test assertion");
     let valid_statuses = ["pending", "processing", "completed", "failed"];
     assert!(
         valid_statuses.contains(&status),

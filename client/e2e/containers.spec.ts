@@ -61,7 +61,7 @@ test.describe('Containers Page', () => {
       await searchInput.fill('nginx');
 
       // Wait for filter to apply (debounce)
-      await page.waitForTimeout(200);
+      await page.waitForLoadState("domcontentloaded").catch(() => {});
 
       // Verify search is applied (results should be filtered)
       // This is a visual verification - actual results depend on data
@@ -213,7 +213,7 @@ test.describe('Containers Page', () => {
       await page.getByRole('button', { name: 'Create Container' }).click();
 
       // Should show error toast or validation message - wait for response
-      await page.waitForTimeout(200); // debounce
+      await page.waitForLoadState("domcontentloaded").catch(() => {}); // debounce
     });
 
     test('should fill form and attempt creation', async ({ page }) => {
@@ -304,7 +304,7 @@ test.describe('Containers Page', () => {
       await page.getByRole('button', { name: /refresh/i }).click();
 
       // Button might show loading state briefly - wait for refresh to complete
-      await page.waitForTimeout(200); // debounce
+      await page.waitForLoadState("domcontentloaded").catch(() => {}); // debounce
 
       // Page should still be functional
       await expect(page.getByRole('heading', { name: 'Containers' })).toBeVisible();

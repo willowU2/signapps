@@ -50,7 +50,7 @@
 //!     // Example test:
 //!     fn test_my_model_serializes() {
 //!         let m = make_my_model();
-//!         let json = serde_json::to_string(&m).unwrap();
+//!         let json = serde_json::to_string(&m).expect("serializable");
 //!         assert!(json.contains("test"));
 //!     }
 //!

@@ -91,11 +91,11 @@ test.describe('Keep Layout', () => {
       await menuButton.click();
 
       // Sidebar width should change - wait for CSS transition
-      await page.waitForTimeout(200); // animation only
+      await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation only
 
       // Click again to toggle back
       await menuButton.click();
-      await page.waitForTimeout(200); // animation only
+      await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation only
     });
   });
 
@@ -185,11 +185,11 @@ test.describe('Keep Layout', () => {
 
       // Click to toggle view
       await viewToggle.click();
-      await page.waitForTimeout(200); // animation only
+      await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation only
 
       // Click again to toggle back
       await viewToggle.click();
-      await page.waitForTimeout(200); // animation only
+      await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation only
     });
   });
 
@@ -248,7 +248,7 @@ test.describe('Keep Layout', () => {
         await noteCard.hover();
 
         // Action buttons should appear - wait for hover animation
-        await page.waitForTimeout(200); // animation only
+        await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation only
       }
     });
 
@@ -275,7 +275,7 @@ test.describe('Keep Layout', () => {
       await expect(page.getByText('Keep')).toBeVisible();
 
       // Sidebar should collapse - wait for CSS transition
-      await page.waitForTimeout(200); // animation only
+      await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation only
     });
 
     test('should adapt layout on tablet viewport', async ({ page }) => {

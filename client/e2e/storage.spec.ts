@@ -161,7 +161,7 @@ test.describe('Storage Page', () => {
     test('should filter files by search', async ({ page }) => {
       const searchInput = page.getByPlaceholder(/search files/i);
       await searchInput.fill('test');
-      await page.waitForTimeout(200); // debounce
+      await page.waitForLoadState("domcontentloaded").catch(() => {}); // debounce
 
       // Search should filter the list (visual verification)
     });

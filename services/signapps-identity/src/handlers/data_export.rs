@@ -102,11 +102,13 @@ impl DataExportStore {
     }
 
     /// Return the latest job for a given user, if any.
+#[tracing::instrument(skip_all)]
     pub async fn get(&self, user_id: Uuid) -> Option<DataExportJob> {
         self.inner.read().await.get(&user_id).cloned()
     }
 
     /// Insert or overwrite the job for a given user.
+#[tracing::instrument(skip_all)]
     pub async fn set(&self, job: DataExportJob) {
         self.inner.write().await.insert(job.user_id, job);
     }

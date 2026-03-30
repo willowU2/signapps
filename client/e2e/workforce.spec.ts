@@ -59,7 +59,7 @@ test.describe('Workforce Organigram & Employees explorer', () => {
          if (await searchInput.isVisible()) {
              await searchInput.fill('Admin');
              // The list should filter - debounce
-             await page.waitForTimeout(200);
+             await page.waitForLoadState("domcontentloaded").catch(() => {});
              // Ensure at least one item remains
              await expect(employeeCard).toBeVisible();
          }

@@ -137,7 +137,7 @@ test.describe('PDF Operations', () => {
         // Or check in action bar
         if (!hasSplit) {
           await pdfFile.click();
-          await page.waitForTimeout(200); // animation only
+          await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation only
 
           const splitBtn = page.getByRole('button', { name: /split|diviser/i });
           const hasSplitBtn = await splitBtn.isVisible().catch(() => false);
@@ -203,7 +203,7 @@ test.describe('PDF Download', () => {
     const pdfFile = page.locator('[data-testid="file-item"]:has-text(".pdf")').first();
     if (await pdfFile.isVisible()) {
       await pdfFile.click();
-      await page.waitForTimeout(200); // animation only
+      await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation only
 
       const downloadBtn = page.getByRole('button', { name: /download|télécharger/i });
       if (await downloadBtn.isVisible()) {

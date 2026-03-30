@@ -41,7 +41,7 @@ test.describe('SignApps - Sprints 38 to 45 Feature Validation', () => {
     await expect(networkCard).toBeVisible();
     
     // Wait for the difference algorithm to kick in (5 seconds)
-    // await page.waitForTimeout(5500); 
+    // (removed: was waitForTimeout(5500)) 
     // const speedText = networkCard.locator('.text-2xl');
     // await expect(speedText.textContent()).resolves.toMatch(/MB\/s|KB\/s|0 B\/s/);
   });

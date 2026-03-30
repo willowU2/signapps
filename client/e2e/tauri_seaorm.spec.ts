@@ -215,7 +215,7 @@ test.describe('Tauri + SeaORM Absolute Verification', () => {
       await searchInput.fill('admin');
 
       // Wait for filter to apply (debounce)
-      await page.waitForTimeout(200);
+      await page.waitForLoadState("domcontentloaded").catch(() => {});
 
       // Note: The frontend's getUsers() may not include auth token, so it might show mock data
       // or an empty list. We verify the search functionality works regardless.

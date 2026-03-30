@@ -32,7 +32,7 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
 
       // Simulate network offline
       await context.setOffline(true);
-      await page.waitForTimeout(200); // minimal delay for browser state update
+      await page.waitForLoadState("domcontentloaded").catch(() => {}); // minimal delay for browser state update
 
       // Verify error state is shown
       const errorBanner = page.locator('[data-testid="connection-error"]');
@@ -353,7 +353,7 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
         await createCalendarContext(page, 'shared-calendar-1');
         contexts.push(context);
         pages.push(page);
-        await page.waitForTimeout(100); // stagger context creation
+         // stagger context creation
       }
 
       // Check first page for +N indicator

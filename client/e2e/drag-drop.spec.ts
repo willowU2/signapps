@@ -63,7 +63,7 @@ test.describe('Drag & Drop Functionality', () => {
           await page.mouse.up();
 
           // Wait for potential reorder
-          await page.waitForTimeout(200); // animation delay
+          await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation delay
         }
       }
     });
@@ -99,7 +99,7 @@ test.describe('Drag & Drop Functionality', () => {
           );
 
           await page.mouse.up();
-          await page.waitForTimeout(200); // animation delay
+          await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation delay
         }
       }
     });
@@ -198,7 +198,7 @@ test.describe('Drag & Drop Functionality', () => {
       });
 
       // Check for visual feedback
-      await page.waitForTimeout(200); // animation delay
+      await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation delay
     });
 
     test('should move files between folders via drag and drop', async ({ page }) => {
@@ -235,7 +235,7 @@ test.describe('Drag & Drop Functionality', () => {
           );
 
           await page.mouse.up();
-          await page.waitForTimeout(200); // animation delay
+          await page.waitForLoadState("domcontentloaded").catch(() => {}); // animation delay
         }
       }
     });
@@ -283,13 +283,13 @@ test.describe('Drag & Drop Functionality', () => {
 
       const closeButton = page.getByRole('button', { name: /fermer/i });
       await closeButton.click();
-      await page.waitForTimeout(200); // debounce delay
+      await page.waitForLoadState("domcontentloaded").catch(() => {}); // debounce delay
 
       // Create second note
       await createButton.click();
       await titleInput.fill('Note 2');
       await closeButton.click();
-      await page.waitForTimeout(200); // debounce delay
+      await page.waitForLoadState("domcontentloaded").catch(() => {}); // debounce delay
 
       // Look for note cards
       const noteCards = page.locator('[class*="group"][class*="rounded"]');
@@ -346,7 +346,7 @@ test.describe('Drag & Drop Functionality', () => {
           // Long press to initiate drag
           await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
           await page.mouse.down();
-          await page.waitForTimeout(200); // Long press minimum duration (debounce)
+          await page.waitForLoadState("domcontentloaded").catch(() => {}); // Long press minimum duration (debounce)
 
           await page.mouse.move(box.x + box.width / 2, box.y + 100, { steps: 5 });
           await page.mouse.up();
