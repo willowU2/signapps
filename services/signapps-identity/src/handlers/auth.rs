@@ -272,6 +272,7 @@ pub async fn login(
     ))
 }
 
+#[tracing::instrument(skip(state, headers))]
 pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result<HeaderMap> {
     let mut token = None;
 
@@ -388,6 +389,7 @@ pub async fn register(
     }))
 }
 
+#[tracing::instrument(skip(state, headers))]
 pub async fn refresh(
     State(state): State<AppState>,
     headers: HeaderMap,

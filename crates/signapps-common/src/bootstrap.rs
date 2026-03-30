@@ -48,6 +48,10 @@ use opentelemetry_sdk::{trace as sdktrace, Resource};
 ///
 /// The default filter is: `info,signapps=debug,sqlx=warn,tower_http=debug`
 /// Override with `RUST_LOG` environment variable.
+///
+/// Log format is controlled by `RUST_LOG_FORMAT`:
+/// - `json` → JSON output (recommended for production / log aggregators)
+/// - `pretty` or unset → human-readable pretty output (default for development)
 pub fn init_tracing(service_name: &str) {
     let default_filter = format!(
         "info,signapps=debug,{}=debug,sqlx=warn,tower_http=debug",
@@ -57,9 +61,23 @@ pub fn init_tracing(service_name: &str) {
     let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| default_filter.into());
 
-    let fmt_layer = tracing_subscriber::fmt::layer();
+    let log_format = std::env::var("RUST_LOG_FORMAT").unwrap_or_default();
+    let use_json = log_format.eq_ignore_ascii_case("json");
 
-    if let Ok(endpoint) = std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT") {
+    // We use Option<L> layers so all 4 combinations share the same monomorphized type.
+    // Only one of json_layer / text_layer is Some at a time.
+    let json_layer = if use_json {
+        Some(tracing_subscriber::fmt::layer().json())
+    } else {
+        None
+    };
+    let text_layer = if use_json {
+        None
+    } else {
+        Some(tracing_subscriber::fmt::layer())
+    };
+
+    let otel_layer = std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT").ok().map(|endpoint| {
         let tracer = opentelemetry_otlp::new_pipeline()
             .tracing()
             .with_exporter(
@@ -73,19 +91,15 @@ pub fn init_tracing(service_name: &str) {
             .install_batch(opentelemetry_sdk::runtime::Tokio)
             .expect("Failed to initialize OTLP tracer");
 
-        let otel_layer = tracing_opentelemetry::layer().with_tracer(tracer);
+        tracing_opentelemetry::layer().with_tracer(tracer)
+    });
 
-        tracing_subscriber::registry()
-            .with(env_filter)
-            .with(fmt_layer)
-            .with(otel_layer)
-            .init();
-    } else {
-        tracing_subscriber::registry()
-            .with(env_filter)
-            .with(fmt_layer)
-            .init();
-    }
+    tracing_subscriber::registry()
+        .with(env_filter)
+        .with(json_layer)
+        .with(text_layer)
+        .with(otel_layer)
+        .init();
 }
 
 /// Initialize tracing with a custom filter.

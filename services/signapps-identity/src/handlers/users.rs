@@ -169,6 +169,7 @@ pub async fn get(
 }
 
 /// Create new user (admin only).
+#[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
 pub async fn create(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -15,6 +15,7 @@ use signapps_db::{
     repositories::LeaveBalanceRepository,
     EventRepository,
 };
+use tracing::instrument;
 use uuid::Uuid;
 
 use crate::{AppState, CalendarError};
@@ -78,6 +79,7 @@ pub struct PredictResult {
 ///
 /// Set the event status to `approved`, record the approver, and shift the
 /// leave balance from pending to used.
+#[instrument(skip(state), fields(user_id = %claims.sub, event_id = %id))]
 pub async fn approve_leave(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -163,6 +165,7 @@ pub async fn approve_leave(
 ///
 /// Set the event status to `rejected`, record the approver and comment, and
 /// decrement the pending balance.
+#[instrument(skip(state, body), fields(user_id = %claims.sub, event_id = %id))]
 pub async fn reject_leave(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -240,6 +243,7 @@ pub async fn reject_leave(
 /// `GET /api/v1/leave/balances`
 ///
 /// Return all leave balances for the current user for the current year.
+#[instrument(skip(state), fields(user_id = %claims.sub))]
 pub async fn get_balances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -265,6 +269,7 @@ pub async fn get_balances(
 /// `GET /api/v1/leave/balances/predict?days=5&leave_type=annual`
 ///
 /// Compute: `total_days - used_days - pending_days - requested_days`.
+#[instrument(skip(state, params), fields(user_id = %claims.sub))]
 pub async fn predict_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -300,6 +305,7 @@ pub async fn predict_balance(
 /// `GET /api/v1/leave/team-conflicts?start=2026-01-01&end=2026-01-31`
 ///
 /// Find all leave events overlapping the given date range (organisation-wide).
+#[instrument(skip(state, params, _claims))]
 pub async fn team_conflicts(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -351,6 +357,7 @@ pub async fn team_conflicts(
 /// For each `{ task_id, assign_to }` in the request body, update the
 /// `assigned_to` field of that event (task) to the designated user.
 /// Returns the count of successfully updated records.
+#[instrument(skip(state, body, _claims))]
 pub async fn delegate_tasks(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
