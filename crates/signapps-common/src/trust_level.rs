@@ -9,6 +9,7 @@ use axum::{extract::Request, http::StatusCode, middleware::Next, response::Respo
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
 )]
 #[repr(u8)]
+/// Enum representing TrustLevel variants.
 pub enum TrustLevel {
     Guest = 0,
     User = 1,

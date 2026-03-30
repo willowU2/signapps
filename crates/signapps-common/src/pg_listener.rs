@@ -3,6 +3,7 @@ use sqlx::PgPool;
 use tokio::sync::broadcast;
 
 #[derive(Debug, Clone, Deserialize)]
+/// Represents a pg event.
 pub struct PgEvent {
     pub table: Option<String>,
     pub action: Option<String>,

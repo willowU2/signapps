@@ -9,6 +9,7 @@ use serde_json::json;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
+/// Error type for Calendar operations.
 pub enum CalendarError {
     #[error("Not found")]
     NotFound,

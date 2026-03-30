@@ -23,6 +23,8 @@ export interface RemoteConnection {
     port: number;
     username?: string;
     parameters?: Record<string, unknown>;
+    recording_enabled?: boolean;
+    recording_path?: string;
     created_at?: string;
     updated_at?: string;
 }
@@ -48,6 +50,7 @@ export interface UpdateConnectionRequest {
     password?: string;
     private_key?: string;
     parameters?: Record<string, unknown>;
+    recording_enabled?: boolean;
 }
 
 // ============================================================================

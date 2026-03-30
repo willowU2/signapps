@@ -6,6 +6,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 #[derive(Debug)]
+/// Represents a calendar crawler;.
 pub struct CalendarCrawler;
 
 #[async_trait]

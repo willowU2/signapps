@@ -78,6 +78,7 @@ pub struct MeetingHistory {
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateRoom operation.
 pub struct CreateRoomRequest {
     pub name: String,
     pub description: Option<String>,
@@ -90,6 +91,7 @@ pub struct CreateRoomRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for UpdateRoom operation.
 pub struct UpdateRoomRequest {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -102,6 +104,7 @@ pub struct UpdateRoomRequest {
 }
 
 #[derive(Debug, Serialize)]
+/// Response payload for Room operation.
 pub struct RoomResponse {
     pub id: Uuid,
     pub name: String,
@@ -121,12 +124,14 @@ pub struct RoomResponse {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for JoinRoom operation.
 pub struct JoinRoomRequest {
     pub password: Option<String>,
     pub display_name: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
+/// Response payload for Token operation.
 pub struct TokenResponse {
     pub token: String,
     pub livekit_url: String,
@@ -134,6 +139,7 @@ pub struct TokenResponse {
 }
 
 #[derive(Debug, Serialize)]
+/// Response payload for Participant operation.
 pub struct ParticipantResponse {
     pub id: Uuid,
     pub user_id: Option<Uuid>,
@@ -146,12 +152,14 @@ pub struct ParticipantResponse {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for Mute operation.
 pub struct MuteRequest {
     pub audio: Option<bool>,
     pub video: Option<bool>,
 }
 
 #[derive(Debug, Serialize)]
+/// Response payload for Recording operation.
 pub struct RecordingResponse {
     pub id: Uuid,
     pub room_id: Uuid,
@@ -164,6 +172,7 @@ pub struct RecordingResponse {
 }
 
 #[derive(Debug, Serialize)]
+/// Response payload for MeetingHistory operation.
 pub struct MeetingHistoryResponse {
     pub id: Uuid,
     pub room_name: String,
@@ -175,6 +184,7 @@ pub struct MeetingHistoryResponse {
 }
 
 #[derive(Debug, Serialize)]
+/// Response payload for Config operation.
 pub struct ConfigResponse {
     pub livekit_url: String,
     pub max_participants_per_room: i32,

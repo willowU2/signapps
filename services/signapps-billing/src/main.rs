@@ -25,6 +25,7 @@ use uuid::Uuid;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// Represents a plan.
 pub struct Plan {
     pub id: Uuid,
     pub name: String,
@@ -37,6 +38,7 @@ pub struct Plan {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// Represents a invoice.
 pub struct Invoice {
     pub id: Uuid,
     pub tenant_id: Option<Uuid>,
@@ -53,6 +55,7 @@ pub struct Invoice {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// Represents a line item.
 pub struct LineItem {
     pub id: Uuid,
     pub invoice_id: Uuid,
@@ -65,6 +68,7 @@ pub struct LineItem {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// Represents a payment.
 pub struct Payment {
     pub id: Uuid,
     pub invoice_id: Uuid,
@@ -81,6 +85,7 @@ pub struct Payment {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateInvoice operation.
 pub struct CreateInvoiceRequest {
     pub tenant_id: Option<Uuid>,
     pub plan_id: Option<Uuid>,
@@ -92,6 +97,7 @@ pub struct CreateInvoiceRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateLineItem operation.
 pub struct CreateLineItemRequest {
     pub description: String,
     pub quantity: Option<i32>,
@@ -100,6 +106,7 @@ pub struct CreateLineItemRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreatePayment operation.
 pub struct CreatePaymentRequest {
     pub amount_cents: i32,
     pub currency: Option<String>,
@@ -113,6 +120,7 @@ pub struct CreatePaymentRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Clone)]
+/// Application state for  service.
 pub struct AppState {
     pub pool: Pool<Postgres>,
     pub jwt_config: JwtConfig,
@@ -130,6 +138,7 @@ impl AuthState for AppState {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize)]
+/// Response payload for Invoice operation.
 pub struct InvoiceResponse {
     pub id: Uuid,
     pub tenant_id: Option<Uuid>,
@@ -186,6 +195,7 @@ impl From<Invoice> for InvoiceResponse {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Serialize)]
+/// Response payload for Usage operation.
 pub struct UsageResponse {
     pub storage_used_bytes: i64,
     pub storage_limit_bytes: i64,

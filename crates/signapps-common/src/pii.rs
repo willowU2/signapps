@@ -4,6 +4,7 @@ use aes_gcm::{
     Aes256Gcm, Key, Nonce,
 };
 
+/// Represents a pii cipher.
 pub struct PiiCipher {
     cipher: Aes256Gcm,
 }

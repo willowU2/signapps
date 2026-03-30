@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use tracing::{error, warn, info};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Enum representing SecurityEventType variants.
 pub enum SecurityEventType {
     FailedLogin,
     PermissionDenied,
@@ -24,6 +25,7 @@ pub enum SecurityEventType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Enum representing Severity variants.
 pub enum Severity {
     Info,
     Warning,
@@ -31,6 +33,7 @@ pub enum Severity {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Represents a security event.
 pub struct SecurityEvent {
     pub event_type: SecurityEventType,
     pub severity: Severity,

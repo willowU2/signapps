@@ -3,6 +3,7 @@
 //! Validates passwords against configurable rules.
 
 #[derive(Debug, Clone)]
+/// Represents a password policy.
 pub struct PasswordPolicy {
     pub min_length: usize,
     pub require_uppercase: bool,
@@ -26,6 +27,7 @@ impl Default for PasswordPolicy {
 }
 
 #[derive(Debug)]
+/// Represents a policy violation.
 pub struct PolicyViolation {
     pub code: &'static str,
     pub message: String,

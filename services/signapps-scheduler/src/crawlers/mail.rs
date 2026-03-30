@@ -6,6 +6,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 #[derive(Debug)]
+/// Represents a mail crawler;.
 pub struct MailCrawler;
 
 #[async_trait]

@@ -4,6 +4,7 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
+/// Represents a pxe profile.
 pub struct PxeProfile {
     pub id: Uuid,
     pub name: String,
@@ -17,6 +18,7 @@ pub struct PxeProfile {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+/// Request payload for CreatePxeProfile operation.
 pub struct CreatePxeProfileRequest {
     pub name: String,
     pub description: Option<String>,
@@ -27,6 +29,7 @@ pub struct CreatePxeProfileRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
+/// Represents a pxe asset.
 pub struct PxeAsset {
     pub id: Uuid,
     pub mac_address: String,
@@ -42,6 +45,7 @@ pub struct PxeAsset {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+/// Request payload for RegisterPxeAsset operation.
 pub struct RegisterPxeAssetRequest {
     pub mac_address: String,
     pub hostname: Option<String>,
@@ -49,6 +53,7 @@ pub struct RegisterPxeAssetRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+/// Request payload for UpdatePxeProfile operation.
 pub struct UpdatePxeProfileRequest {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -59,6 +64,7 @@ pub struct UpdatePxeProfileRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+/// Request payload for UpdatePxeAsset operation.
 pub struct UpdatePxeAssetRequest {
     pub hostname: Option<String>,
     pub status: Option<String>,

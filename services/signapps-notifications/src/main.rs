@@ -24,6 +24,7 @@ use uuid::Uuid;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// Represents a notification.
 pub struct Notification {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -44,6 +45,7 @@ pub struct Notification {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering and pagination.
 pub struct ListNotificationsQuery {
     pub user_id: Option<Uuid>,
     pub unread_only: Option<bool>,
@@ -51,6 +53,7 @@ pub struct ListNotificationsQuery {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateNotification operation.
 pub struct CreateNotificationRequest {
     pub user_id: Uuid,
     #[serde(rename = "type")]
@@ -63,6 +66,7 @@ pub struct CreateNotificationRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering and pagination.
 pub struct ReadAllQuery {
     pub user_id: Option<Uuid>,
 }
@@ -72,6 +76,7 @@ pub struct ReadAllQuery {
 // ---------------------------------------------------------------------------
 
 #[derive(Clone)]
+/// Application state for  service.
 pub struct AppState {
     pub pool: Pool<Postgres>,
     pub jwt_config: JwtConfig,

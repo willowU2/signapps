@@ -11,6 +11,7 @@ use uuid::Uuid;
 type AppCache = Arc<RwLock<HashMap<Uuid, Vec<StoreApp>>>>;
 
 #[derive(Clone)]
+/// Represents a store manager.
 pub struct StoreManager {
     pool: DatabasePool,
     http: reqwest::Client,

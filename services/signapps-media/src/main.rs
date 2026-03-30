@@ -41,6 +41,7 @@ pub struct JobEntry {
 pub type JobStore = Arc<DashMap<Uuid, JobEntry>>;
 
 #[derive(Clone)]
+/// Application state for  service.
 pub struct AppState {
     pub pool: PgPool,
     pub config: MediaConfig,
@@ -52,6 +53,7 @@ pub struct AppState {
 }
 
 #[derive(Clone, Debug)]
+/// Configuration for Media.
 pub struct MediaConfig {
     // OCR
     pub ocr_url: String,

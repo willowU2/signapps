@@ -60,6 +60,7 @@ pub trait TtsBackend: Send + Sync {
 }
 
 #[derive(Debug, Serialize)]
+/// Request payload for Tts operation.
 pub struct TtsRequest {
     pub text: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -74,6 +75,7 @@ pub struct TtsRequest {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "lowercase")]
+/// Enum representing AudioFormat variants.
 pub enum AudioFormat {
     #[default]
     Wav,
@@ -83,6 +85,7 @@ pub enum AudioFormat {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+/// Represents a voice.
 pub struct Voice {
     pub id: String,
     pub name: String,
@@ -95,6 +98,7 @@ pub struct Voice {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "lowercase")]
+/// Enum representing VoiceQuality variants.
 pub enum VoiceQuality {
     Low,
     Medium,
@@ -102,6 +106,7 @@ pub enum VoiceQuality {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+/// Represents a tts result.
 pub struct TtsResult {
     pub audio_data: Vec<u8>,
     pub format: AudioFormat,
@@ -161,6 +166,7 @@ pub fn default_piper_voices() -> Vec<Voice> {
 }
 
 #[derive(Debug, thiserror::Error)]
+/// Error type for Tts operations.
 pub enum TtsError {
     #[error("HTTP error: {0}")]
     HttpError(#[from] reqwest::Error),

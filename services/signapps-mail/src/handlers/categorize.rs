@@ -20,6 +20,7 @@ use signapps_common::Claims;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
+/// Enum representing EmailCategory variants.
 pub enum EmailCategory {
     Factures,
     Newsletters,

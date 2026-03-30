@@ -28,6 +28,7 @@ use handlers::websocket::websocket_handler;
 use signapps_common::AiIndexerClient;
 
 #[derive(Clone)]
+/// Application state for  service.
 pub struct AppState {
     pub pool: signapps_db::DatabasePool,
     pub cache: Arc<CacheService>,

@@ -16,6 +16,7 @@ pub struct RuleCondition {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type")]
+/// Enum representing RuleAction variants.
 pub enum RuleAction {
     #[serde(rename = "move_to")]
     MoveTo { folder: String },

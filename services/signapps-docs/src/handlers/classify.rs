@@ -37,6 +37,7 @@ pub struct ClassifyResponse {
 
 #[derive(Debug, Serialize, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+/// Enum representing DocumentCategory variants.
 pub enum DocumentCategory {
     Invoice,
     Contract,
@@ -52,6 +53,7 @@ pub enum DocumentCategory {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
+/// Enum representing ClassificationMethod variants.
 pub enum ClassificationMethod {
     Keyword,
     #[allow(dead_code)]

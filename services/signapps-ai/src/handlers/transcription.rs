@@ -25,6 +25,7 @@ pub struct TranscriptionResponse {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
+/// Enum representing TranscriptionSource variants.
 pub enum TranscriptionSource {
     Whisper,
     Fallback,

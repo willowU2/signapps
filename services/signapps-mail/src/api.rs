@@ -380,6 +380,7 @@ where
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateAccount operation.
 pub struct CreateAccountRequest {
     pub email_address: String,
     pub display_name: Option<String>,
@@ -394,6 +395,7 @@ pub struct CreateAccountRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for UpdateAccount operation.
 pub struct UpdateAccountRequest {
     pub display_name: Option<String>,
     pub imap_server: Option<String>,
@@ -774,6 +776,7 @@ async fn test_imap_connection(
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering and pagination.
 pub struct FolderQuery {
     pub account_id: Option<Uuid>,
 }
@@ -848,6 +851,7 @@ async fn get_folder(
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering and pagination.
 pub struct EmailQuery {
     pub account_id: Option<Uuid>,
     pub folder_id: Option<Uuid>,
@@ -929,6 +933,7 @@ async fn get_email(
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for SendEmail operation.
 pub struct SendEmailRequest {
     pub account_id: Uuid,
     pub recipient: String,
@@ -1211,6 +1216,7 @@ async fn send_via_smtp(
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for UpdateEmail operation.
 pub struct UpdateEmailRequest {
     pub is_read: Option<bool>,
     pub is_starred: Option<bool>,
@@ -1372,6 +1378,7 @@ async fn list_labels(
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateLabel operation.
 pub struct CreateLabelRequest {
     pub account_id: Uuid,
     pub name: String,
@@ -1422,6 +1429,7 @@ async fn create_label(
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for UpdateLabel operation.
 pub struct UpdateLabelRequest {
     pub name: Option<String>,
     pub color: Option<String>,
@@ -1494,6 +1502,7 @@ async fn delete_label(
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering and pagination.
 pub struct SearchQuery {
     pub q: String,
     pub account_id: Option<Uuid>,
@@ -1536,6 +1545,7 @@ async fn search_emails(
 // ============================================================================
 
 #[derive(Serialize)]
+/// Represents a mail stats.
 pub struct MailStats {
     pub total_accounts: i64,
     pub total_emails: i64,
@@ -1683,6 +1693,7 @@ pub async fn process_scheduled_emails(
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Request payload for SendNewsletter operation.
 pub struct SendNewsletterRequest {
     pub account_id: Uuid,
     pub subject: String,

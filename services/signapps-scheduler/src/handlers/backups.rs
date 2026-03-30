@@ -25,6 +25,7 @@ use signapps_db::repositories::JobRepository;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+/// Enum representing BackupType variants.
 pub enum BackupType {
     Full,
     Incremental,
@@ -34,6 +35,7 @@ pub enum BackupType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+/// Enum representing BackupStatus variants.
 pub enum BackupStatus {
     Pending,
     Running,

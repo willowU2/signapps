@@ -42,6 +42,7 @@ use utoipa_swagger_ui::SwaggerUi;
         (name = "auth",   description = "Authentication and authorisation"),
     ),
 )]
+/// Represents a api doc;.
 pub struct ApiDoc;
 
 /// Returns an Axum [`Router`] that serves the Swagger UI at `/api/docs`.

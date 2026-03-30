@@ -289,6 +289,7 @@ pub async fn delete_asset(
 // ============================================================================
 
 #[derive(Deserialize)]
+/// Query parameters for filtering and pagination.
 pub struct IpxeQuery {
     pub mac: String,
 }

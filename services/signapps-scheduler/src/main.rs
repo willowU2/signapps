@@ -29,6 +29,7 @@ use signapps_common::{JwtConfig, Result};
 use signapps_db::DatabasePool;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+/// Represents a notification message.
 pub struct NotificationMessage {
     pub user_id: uuid::Uuid,
     pub title: String,

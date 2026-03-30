@@ -35,6 +35,7 @@ use uuid::Uuid;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a channel.
 pub struct Channel {
     pub id: Uuid,
     pub name: String,
@@ -46,6 +47,7 @@ pub struct Channel {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Represents a chat message.
 pub struct ChatMessage {
     pub id: Uuid,
     pub channel_id: Uuid,
@@ -98,6 +100,7 @@ impl From<MessageRow> for ChatMessage {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Represents a attachment.
 pub struct Attachment {
     pub url: String,
     pub filename: String,
@@ -106,6 +109,7 @@ pub struct Attachment {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Represents a direct message room.
 pub struct DirectMessageRoom {
     pub id: Uuid,
     pub participants: Vec<DmParticipant>,
@@ -114,12 +118,14 @@ pub struct DirectMessageRoom {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Represents a dm participant.
 pub struct DmParticipant {
     pub user_id: Uuid,
     pub username: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Represents a presence entry.
 pub struct PresenceEntry {
     pub user_id: Uuid,
     pub status: String, // "online" | "away" | "busy" | "offline"
@@ -127,6 +133,7 @@ pub struct PresenceEntry {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Represents a read status.
 pub struct ReadStatus {
     pub channel_id: Uuid,
     pub user_id: Uuid,
@@ -139,6 +146,7 @@ pub struct ReadStatus {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateChannel operation.
 pub struct CreateChannelRequest {
     pub name: String,
     pub topic: Option<String>,
@@ -146,32 +154,38 @@ pub struct CreateChannelRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for SendMessage operation.
 pub struct SendMessageRequest {
     pub content: String,
     pub parent_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for AddReaction operation.
 pub struct AddReactionRequest {
     pub emoji: String,
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateDm operation.
 pub struct CreateDmRequest {
     pub participant_ids: Vec<Uuid>,
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for SetPresence operation.
 pub struct SetPresenceRequest {
     pub status: String,
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering and pagination.
 pub struct SearchQuery {
     pub q: String,
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering and pagination.
 pub struct ExportQuery {
     pub format: Option<String>, // "json" or "csv"
 }
@@ -189,6 +203,7 @@ pub struct WsEvent {
 // ---------------------------------------------------------------------------
 
 #[derive(Clone)]
+/// Application state for  service.
 pub struct AppState {
     /// PostgreSQL pool — used for channels and messages persistence.
     pub pool: Pool<Postgres>,

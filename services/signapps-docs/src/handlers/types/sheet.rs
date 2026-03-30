@@ -9,6 +9,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 #[derive(serde::Serialize, serde::Deserialize)]
+/// Request payload for CreateSheet operation.
 pub struct CreateSheetRequest {
     pub name: String,
     #[serde(default)]
@@ -18,6 +19,7 @@ pub struct CreateSheetRequest {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+/// Response payload for Sheet operation.
 pub struct SheetResponse {
     pub id: String,
     pub name: String,
@@ -28,6 +30,7 @@ pub struct SheetResponse {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+/// Response payload for Rows operation.
 pub struct RowsResponse {
     pub rows: Vec<Vec<String>>,
 }

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a hardware asset.
 pub struct HardwareAsset {
     pub id: DefaultUuidField,
     pub name: String,
@@ -24,6 +25,7 @@ pub struct HardwareAsset {
 pub type DefaultUuidField = Uuid;
 
 #[derive(Debug, Deserialize)]
+/// Represents a create hardware req.
 pub struct CreateHardwareReq {
     pub name: String,
     #[serde(rename = "type")]
@@ -38,6 +40,7 @@ pub struct CreateHardwareReq {
 }
 
 #[derive(Debug, Deserialize)]
+/// Represents a update hardware req.
 pub struct UpdateHardwareReq {
     pub name: Option<String>,
     pub status: Option<String>,

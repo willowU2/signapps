@@ -9,6 +9,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 #[derive(serde::Serialize, serde::Deserialize)]
+/// Request payload for CreateBoard operation.
 pub struct CreateBoardRequest {
     pub name: String,
     #[serde(default)]
@@ -16,6 +17,7 @@ pub struct CreateBoardRequest {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+/// Response payload for Board operation.
 pub struct BoardResponse {
     pub id: String,
     pub name: String,
@@ -25,6 +27,7 @@ pub struct BoardResponse {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+/// Represents a card.
 pub struct Card {
     pub id: String,
     pub title: String,
@@ -32,6 +35,7 @@ pub struct Card {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+/// Represents a column.
 pub struct Column {
     pub id: String,
     pub title: String,
@@ -39,6 +43,7 @@ pub struct Column {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+/// Response payload for Columns operation.
 pub struct ColumnsResponse {
     pub columns: Vec<Column>,
 }

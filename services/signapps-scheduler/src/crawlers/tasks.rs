@@ -6,6 +6,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 #[derive(Debug)]
+/// Represents a task crawler;.
 pub struct TaskCrawler;
 
 #[async_trait]

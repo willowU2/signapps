@@ -6,6 +6,7 @@ use uuid::Uuid;
 // ── Database model ──────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+/// Represents a app source.
 pub struct AppSource {
     pub id: Uuid,
     pub name: String,
@@ -20,6 +21,7 @@ pub struct AppSource {
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+/// Represents a app install group.
 pub struct AppInstallGroup {
     pub id: Uuid,
     pub app_id: String,
@@ -36,6 +38,7 @@ pub struct AppInstallGroup {
 // ── Store app (metadata shown in the catalog) ───────────────────
 
 #[derive(Debug, Clone, Serialize)]
+/// Represents a store app.
 pub struct StoreApp {
     pub id: String,
     pub name: String,
@@ -60,6 +63,7 @@ fn is_zero(v: &usize) -> bool {
 }
 
 #[derive(Debug, Clone, Serialize)]
+/// Represents a source info.
 pub struct SourceInfo {
     pub source_id: Uuid,
     pub source_name: String,
@@ -75,6 +79,7 @@ pub struct AppStoreIndex {
 }
 
 #[derive(Debug, Deserialize)]
+/// Represents a app store meta.
 pub struct AppStoreMeta {
     pub id: Option<String>,
     pub name: Option<String>,
@@ -92,11 +97,13 @@ pub struct AppStoreMeta {
 // ── Compose / docker-compose parsed types ───────────────────────
 
 #[derive(Debug, Clone, Deserialize)]
+/// Represents a compose spec.
 pub struct ComposeSpec {
     pub services: Option<HashMap<String, ComposeService>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
+/// ComposeService implementation.
 pub struct ComposeService {
     pub image: Option<String>,
     pub container_name: Option<String>,
@@ -125,6 +132,7 @@ pub enum ComposeLabels {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
+/// Enum representing ComposeEnv variants.
 pub enum ComposeEnv {
     List(Vec<String>),
     Map(HashMap<String, serde_json::Value>),
@@ -132,6 +140,7 @@ pub enum ComposeEnv {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
+/// Enum representing ComposeVolume variants.
 pub enum ComposeVolume {
     Short(String),
     Long {
@@ -146,6 +155,7 @@ pub enum ComposeVolume {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
+/// Enum representing ComposeCommand variants.
 pub enum ComposeCommand {
     String(String),
     List(Vec<String>),
@@ -154,11 +164,13 @@ pub enum ComposeCommand {
 // ── Parsed config (ready for install form) ──────────────────────
 
 #[derive(Debug, Clone, Serialize)]
+/// Configuration for ParsedApp.
 pub struct ParsedAppConfig {
     pub services: Vec<ParsedService>,
 }
 
 #[derive(Debug, Clone, Serialize)]
+/// ParsedService implementation.
 pub struct ParsedService {
     pub service_name: String,
     pub image: String,
@@ -174,12 +186,14 @@ pub struct ParsedService {
 }
 
 #[derive(Debug, Clone, Serialize)]
+/// Represents a env var.
 pub struct EnvVar {
     pub key: String,
     pub default: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
+/// Represents a app port.
 pub struct AppPort {
     pub host: u16,
     pub container: u16,
@@ -187,6 +201,7 @@ pub struct AppPort {
 }
 
 #[derive(Debug, Clone, Serialize)]
+/// Represents a app volume.
 pub struct AppVolume {
     pub source: String,
     pub target: String,
@@ -219,6 +234,7 @@ pub struct MultiServiceInstallRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// ServiceOverride implementation.
 pub struct ServiceOverride {
     pub service_name: String,
     pub container_name: String,
@@ -229,6 +245,7 @@ pub struct ServiceOverride {
 }
 
 #[derive(Debug, Deserialize)]
+/// Represents a port override.
 pub struct PortOverride {
     pub host: u16,
     pub container: u16,
@@ -236,24 +253,28 @@ pub struct PortOverride {
 }
 
 #[derive(Debug, Deserialize)]
+/// Represents a volume override.
 pub struct VolumeOverride {
     pub source: String,
     pub target: String,
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for AddSource operation.
 pub struct AddSourceRequest {
     pub name: String,
     pub url: String,
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering and pagination.
 pub struct ListAppsQuery {
     pub search: Option<String>,
     pub category: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
+/// Represents a app details.
 pub struct AppDetails {
     #[serde(flatten)]
     pub app: StoreApp,
@@ -261,11 +282,13 @@ pub struct AppDetails {
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering and pagination.
 pub struct CheckPortsQuery {
     pub ports: String,
 }
 
 #[derive(Debug, Serialize)]
+/// Represents a port conflict.
 pub struct PortConflict {
     pub port: u16,
     pub in_use: bool,
@@ -273,6 +296,7 @@ pub struct PortConflict {
 }
 
 #[derive(Debug, Serialize)]
+/// Represents a source validation.
 pub struct SourceValidation {
     pub valid: bool,
     pub app_count: Option<usize>,

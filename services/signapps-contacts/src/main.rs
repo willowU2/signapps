@@ -28,6 +28,7 @@ use uuid::Uuid;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Represents a contact.
 pub struct Contact {
     pub id: Uuid,
     pub owner_id: Uuid,
@@ -43,6 +44,7 @@ pub struct Contact {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Represents a contact group.
 pub struct ContactGroup {
     pub id: Uuid,
     pub owner_id: Uuid,
@@ -54,6 +56,7 @@ pub struct ContactGroup {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateContact operation.
 pub struct CreateContactRequest {
     pub first_name: String,
     pub last_name: String,
@@ -65,6 +68,7 @@ pub struct CreateContactRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for UpdateContact operation.
 pub struct UpdateContactRequest {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
@@ -80,6 +84,7 @@ pub struct UpdateContactRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Clone)]
+/// Application state for  service.
 pub struct AppState {
     pub jwt_config: JwtConfig,
     pub contacts: Arc<Mutex<Vec<Contact>>>,

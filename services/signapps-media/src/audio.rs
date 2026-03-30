@@ -169,6 +169,7 @@ pub fn encode_wav_f32(
 
 #[derive(Debug, thiserror::Error)]
 #[allow(dead_code)]
+/// Error type for Audio operations.
 pub enum AudioError {
     #[error("Decode error: {0}")]
     DecodeError(String),

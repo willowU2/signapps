@@ -3,6 +3,7 @@ use serde::Serialize;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize)]
+/// Request payload for DirectIndex operation.
 pub struct DirectIndexRequest {
     pub content: String,
     pub filename: String,
@@ -13,6 +14,7 @@ pub struct DirectIndexRequest {
 }
 
 #[derive(Clone)]
+/// AiServiceClient implementation.
 pub struct AiServiceClient {
     client: Client,
     base_url: String,

@@ -1,8 +1,10 @@
+mod dhcp_proxy;
 mod handlers;
+mod images;
 mod models;
 mod tftp;
 
-use axum::{routing::get, Router};
+use axum::{routing::{get, post, delete}, Router};
 use signapps_common::auth::JwtConfig;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{
@@ -14,6 +16,7 @@ use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
 #[derive(Clone)]
+/// Application state for  service.
 pub struct AppState {
     pub db: DatabasePool,
     pub jwt_config: JwtConfig,
@@ -36,14 +39,12 @@ pub async fn health_check() -> axum::Json<serde_json::Value> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Initialize using bootstrap helpers
     init_tracing("signapps_pxe");
     load_env();
 
     let config = ServiceConfig::from_env("signapps-pxe", 3016);
     config.log_startup();
 
-    // JWT configuration (custom: audience="signapps" for all services)
     let jwt_config = JwtConfig {
         secret: config.jwt_secret.clone(),
         issuer: "signapps".to_string(),
@@ -52,7 +53,6 @@ async fn main() -> anyhow::Result<()> {
         refresh_expiration: 604800,
     };
 
-    // Database
     let db_pool = signapps_db::create_pool(&config.database_url).await?;
     let app_state = AppState {
         db: db_pool,
@@ -62,11 +62,20 @@ async fn main() -> anyhow::Result<()> {
     // Ensure HTTP boot directory exists
     let http_boot_dir = "data/pxe/httpboot";
     tokio::fs::create_dir_all(http_boot_dir).await?;
+    tokio::fs::create_dir_all("data/pxe/tftpboot/images").await?;
 
-    // Spawn TFTP server in the background
+    // Spawn TFTP server
     tokio::spawn(async move {
         if let Err(e) = tftp::start_tftp_server("data/pxe/tftpboot", 69).await {
             tracing::error!("TFTP Server failed: {}", e);
+        }
+    });
+
+    // Spawn ProxyDHCP server (PX1)
+    let proxy_config = dhcp_proxy::ProxyDhcpConfig::default();
+    tokio::spawn(async move {
+        if let Err(e) = dhcp_proxy::start_proxy_dhcp(proxy_config).await {
+            tracing::warn!("ProxyDHCP server not started (may need elevated privileges): {}", e);
         }
     });
 
@@ -85,6 +94,11 @@ async fn main() -> anyhow::Result<()> {
                 .put(handlers::update_profile)
                 .delete(handlers::delete_profile),
         )
+        // PX5: Profile post-deploy hooks
+        .route(
+            "/api/v1/pxe/profiles/:id/hooks",
+            get(images::get_profile_hooks).put(images::update_profile_hooks),
+        )
         // Assets
         .route(
             "/api/v1/pxe/assets",
@@ -98,6 +112,25 @@ async fn main() -> anyhow::Result<()> {
         )
         // Boot script
         .route("/api/v1/pxe/boot.ipxe", get(handlers::generate_ipxe_script))
+        // PX2: Image management
+        .route(
+            "/api/v1/pxe/images",
+            get(images::list_images).post(images::upload_image),
+        )
+        .route(
+            "/api/v1/pxe/images/:id",
+            delete(images::delete_image),
+        )
+        // PX3: Template generation
+        .route("/api/v1/pxe/templates/generate", post(images::generate_template))
+        // PX4: Deployment progress
+        .route("/api/v1/pxe/deployments", get(images::list_deployments))
+        .route(
+            "/api/v1/pxe/deployments/:mac/progress",
+            post(images::update_deployment_progress),
+        )
+        // PX6: Golden image capture
+        .route("/api/v1/pxe/images/capture", post(images::capture_golden_image))
         .layer(axum::middleware::from_fn_with_state(
             app_state.clone(),
             optional_auth_middleware::<AppState>,
@@ -108,6 +141,5 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn(request_id_middleware))
         .with_state(app_state);
 
-    // Start server using bootstrap helper
     signapps_common::bootstrap::run_server(app, &config).await
 }

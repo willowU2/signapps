@@ -18,6 +18,7 @@ use crate::AppState;
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CardDavSync operation.
 pub struct CardDavSyncRequest {
     /// Full URL of the CardDAV addressbook, e.g.
     /// "https://icloud.com/.well-known/carddav" or
@@ -29,6 +30,7 @@ pub struct CardDavSyncRequest {
 }
 
 #[derive(Debug, Serialize)]
+/// Represents a card dav sync result.
 pub struct CardDavSyncResult {
     pub synced: usize,
     pub skipped: usize,

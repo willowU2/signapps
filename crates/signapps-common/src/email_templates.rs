@@ -34,6 +34,7 @@ impl EmailTemplate {
     }
 }
 
+/// Represents a rendered email.
 pub struct RenderedEmail {
     pub subject: String,
     pub html_body: String,

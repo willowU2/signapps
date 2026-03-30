@@ -12,6 +12,7 @@ use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
 #[derive(Clone)]
+/// Application state for  service.
 pub struct AppState {
     pub db: DatabasePool,
     pub jwt_config: JwtConfig,

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
+/// Represents a mail account.
 pub struct MailAccount {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -44,6 +45,7 @@ pub struct MailAccount {
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
+/// Represents a mail folder.
 pub struct MailFolder {
     pub id: Uuid,
     pub account_id: Uuid,
@@ -60,6 +62,7 @@ pub struct MailFolder {
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
+/// Represents a email.
 pub struct Email {
     pub id: Uuid,
     pub account_id: Uuid,
@@ -104,6 +107,7 @@ pub struct Email {
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
+/// Represents a attachment.
 pub struct Attachment {
     pub id: Uuid,
     pub email_id: Uuid,
@@ -118,6 +122,7 @@ pub struct Attachment {
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
+/// Represents a mail label.
 pub struct MailLabel {
     pub id: Uuid,
     pub account_id: Uuid,
@@ -127,6 +132,7 @@ pub struct MailLabel {
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
+/// Represents a mail rule.
 pub struct MailRule {
     pub id: Uuid,
     pub account_id: Uuid,

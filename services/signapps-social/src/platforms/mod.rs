@@ -14,6 +14,7 @@ pub mod twitter;
 pub mod youtube;
 
 #[derive(Debug, thiserror::Error)]
+/// Error type for Platform operations.
 pub enum PlatformError {
     #[error("Platform not configured: {0}")]
     NotConfigured(String),

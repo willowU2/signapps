@@ -11,6 +11,7 @@ use yrs::{ReadTxn, Transact};
 use crate::AppState;
 
 #[derive(Serialize, Deserialize)]
+/// Request payload for CreateChannel operation.
 pub struct CreateChannelRequest {
     pub name: String,
     #[serde(default)]
@@ -20,6 +21,7 @@ pub struct CreateChannelRequest {
 }
 
 #[derive(Serialize, Deserialize)]
+/// Response payload for Channel operation.
 pub struct ChannelResponse {
     pub id: String,
     pub name: String,
@@ -103,6 +105,7 @@ pub async fn create_channel(
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize)]
+/// Represents a channel row.
 pub struct ChannelRow {
     pub id: Uuid,
     pub name: String,
@@ -203,6 +206,7 @@ pub async fn get_channel(
 }
 
 #[derive(Serialize, Deserialize)]
+/// Request payload for UpdateChannel operation.
 pub struct UpdateChannelRequest {
     pub name: Option<String>,
     pub topic: Option<String>,
@@ -376,6 +380,7 @@ pub async fn delete_channel(
 // ============================================================================
 
 #[derive(Serialize, Deserialize)]
+/// Represents a channel member.
 pub struct ChannelMember {
     pub user_id: String,
     pub username: String,
@@ -384,6 +389,7 @@ pub struct ChannelMember {
 }
 
 #[derive(Serialize, Deserialize)]
+/// Request payload for AddMember operation.
 pub struct AddMemberRequest {
     pub user_id: Uuid,
     #[serde(default = "default_role")]
@@ -519,6 +525,7 @@ pub async fn remove_channel_member(
 // ============================================================================
 
 #[derive(Serialize, Deserialize)]
+/// Represents a direct message.
 pub struct DirectMessage {
     pub id: String,
     pub participants: Vec<DmParticipant>,
@@ -527,12 +534,14 @@ pub struct DirectMessage {
 }
 
 #[derive(Serialize, Deserialize)]
+/// Represents a dm participant.
 pub struct DmParticipant {
     pub user_id: String,
     pub username: String,
 }
 
 #[derive(Serialize, Deserialize)]
+/// Request payload for CreateDm operation.
 pub struct CreateDmRequest {
     pub participant_ids: Vec<Uuid>,
 }
@@ -687,6 +696,7 @@ pub async fn delete_direct_message(
 // ============================================================================
 
 #[derive(Serialize, Deserialize)]
+/// Represents a channel read status.
 pub struct ChannelReadStatus {
     pub channel_id: String,
     pub user_id: String,

@@ -12,8 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { MonitorSmartphone, Shield, Server, Plug, Settings, History, Lock, Eye, Terminal, X, Trash2, RefreshCw, Edit } from 'lucide-react';
+import { MonitorSmartphone, Shield, Server, Plug, Settings, History, Lock, Eye, Terminal, X, Trash2, RefreshCw, Edit, Video, VideoOff } from 'lucide-react';
 import { remoteApi, RemoteConnection, CreateConnectionRequest, UpdateConnectionRequest } from "@/lib/api/remote"
+import { GuacamoleDisplay, ConnectionStatus } from "@/components/remote/guacamole-display"
 import { toast } from "sonner"
 import {
     AlertDialog,
@@ -40,6 +41,8 @@ export default function RemoteAccessDashboard() {
     const [deleteConnectionId, setDeleteConnectionId] = useState<string | null>(null)
     const wsRef = useRef<WebSocket | null>(null)
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
+    const [wsUrl, setWsUrl] = useState<string | null>(null)
+    const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected")
 
     // Form state for new connection
     const [newConnection, setNewConnection] = useState<CreateConnectionRequest>({
@@ -149,30 +152,9 @@ export default function RemoteAccessDashboard() {
 
     const handleConnect = (conn: RemoteConnection) => {
         setActiveConnection(conn)
+        setWsUrl(remoteApi.getWebSocketUrl(conn.id))
+        setConnectionStatus("connecting")
         setViewerOpen(true)
-
-        // Connect via WebSocket
-        const wsUrl = remoteApi.getWebSocketUrl(conn.id)
-        const ws = new WebSocket(wsUrl)
-        wsRef.current = ws
-
-        ws.onopen = () => {
-            toast.success(`Connect  ${conn.name}`)
-        }
-
-        ws.onmessage = (_event) => {
-            // Handle Guacamole protocol messages
-            // In a real implementation, we would parse and render Guacamole instructions on canvas
-        }
-
-        ws.onerror = (error) => {
-            console.warn('WebSocket error:', error)
-            toast.error('Erreur de connexion')
-        }
-
-        ws.onclose = () => {
-            // Connection closed
-        }
     }
 
     const handleDisconnect = () => {
@@ -180,9 +162,11 @@ export default function RemoteAccessDashboard() {
             wsRef.current.close()
             wsRef.current = null
         }
+        setWsUrl(null)
+        setConnectionStatus("disconnected")
         setViewerOpen(false)
         setActiveConnection(null)
-        toast.info('Dconnect')
+        toast.info('Deconnecte')
     }
 
     const getProtocolPort = (protocol: string): number => {
@@ -511,6 +495,28 @@ export default function RemoteAccessDashboard() {
                                 onChange={(e) => setEditConnection(prev => ({ ...prev, password: e.target.value }))}
                             />
                         </div>
+                        <div className="flex items-center justify-between rounded-lg border p-3">
+                            <div className="flex items-center gap-2">
+                                {editConnection.recording_enabled ? (
+                                    <Video className="h-4 w-4 text-red-500" />
+                                ) : (
+                                    <VideoOff className="h-4 w-4 text-muted-foreground" />
+                                )}
+                                <div>
+                                    <p className="text-sm font-medium">Enregistrement de session</p>
+                                    <p className="text-xs text-muted-foreground">Enregistre toutes les instructions Guacamole pour rejouer ulterieurement</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={editConnection.recording_enabled}
+                                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${editConnection.recording_enabled ? 'bg-red-500' : 'bg-input'}`}
+                                onClick={() => setEditConnection(prev => ({ ...prev, recording_enabled: !prev.recording_enabled }))}
+                            >
+                                <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${editConnection.recording_enabled ? 'translate-x-5' : 'translate-x-1'}`} />
+                            </button>
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
@@ -539,7 +545,7 @@ export default function RemoteAccessDashboard() {
                                 </div>
                                 <div>
                                     <h3 className="font-semibold">{activeConnection?.name}</h3>
-                                    <p className="text-xs text-muted-foreground">{activeConnection?.hostname}:{activeConnection?.port} ({activeConnection?.protocol?.toUpperCase()})</p>
+                                    <p className="text-xs text-muted-foreground">{activeConnection?.hostname}:{activeConnection?.port} ({activeConnection?.protocol?.toUpperCase()}) — {connectionStatus}</p>
                                 </div>
                             </div>
                             <Button variant="destructive" size="sm" onClick={handleDisconnect}>
@@ -547,19 +553,22 @@ export default function RemoteAccessDashboard() {
                                 Dconnecter
                             </Button>
                         </div>
-                        <div className="flex-1 bg-black flex items-center justify-center">
-                            <canvas
-                                ref={canvasRef}
-                                className="max-w-full max-h-full"
-                                style={{ imageRendering: 'pixelated' }}
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center text-white/50">
-                                <div className="text-center">
-                                    <MonitorSmartphone className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                                    <p>Connexion au serveur distant...</p>
-                                    <p className="text-sm mt-2 opacity-75">Le rendu Guacamole sera affich ici</p>
+                        <div className="flex-1 overflow-hidden">
+                            {wsUrl && activeConnection ? (
+                                <GuacamoleDisplay
+                                    wsUrl={wsUrl}
+                                    protocol={activeConnection.protocol}
+                                    onStatusChange={setConnectionStatus}
+                                    onDisconnect={handleDisconnect}
+                                />
+                            ) : (
+                                <div className="h-full bg-black flex items-center justify-center text-white/50">
+                                    <div className="text-center">
+                                        <MonitorSmartphone className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                                        <p>Connexion au serveur distant...</p>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </DialogContent>

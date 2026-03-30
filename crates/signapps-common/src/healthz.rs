@@ -36,6 +36,7 @@ pub fn uptime_seconds() -> u64 {
 }
 
 #[derive(Debug, Serialize)]
+/// Response payload for Health operation.
 pub struct HealthResponse {
     pub status: &'static str,
     pub service: String,

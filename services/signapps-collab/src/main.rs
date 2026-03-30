@@ -21,6 +21,7 @@ use handlers::websocket::websocket_handler;
 use signapps_common::AiIndexerClient;
 
 #[derive(Clone)]
+/// Application state for  service.
 pub struct AppState {
     pub pool: DatabasePool,
     pub jwt_config: JwtConfig,

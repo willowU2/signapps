@@ -8,6 +8,7 @@ use uuid::Uuid;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a social account.
 pub struct SocialAccount {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -28,6 +29,7 @@ pub struct SocialAccount {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateAccount operation.
 pub struct CreateAccountRequest {
     pub platform: String,
     pub platform_user_id: Option<String>,
@@ -41,6 +43,7 @@ pub struct CreateAccountRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for UpdateAccount operation.
 pub struct UpdateAccountRequest {
     pub username: Option<String>,
     pub display_name: Option<String>,
@@ -54,6 +57,7 @@ pub struct UpdateAccountRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a post.
 pub struct Post {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -71,6 +75,7 @@ pub struct Post {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreatePost operation.
 pub struct CreatePostRequest {
     pub content: String,
     pub media_urls: Option<JsonValue>,
@@ -82,6 +87,7 @@ pub struct CreatePostRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for UpdatePost operation.
 pub struct UpdatePostRequest {
     pub content: Option<String>,
     pub media_urls: Option<JsonValue>,
@@ -92,12 +98,14 @@ pub struct UpdatePostRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for SchedulePost operation.
 pub struct SchedulePostRequest {
     pub scheduled_at: DateTime<Utc>,
     pub account_ids: Vec<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a post target.
 pub struct PostTarget {
     pub id: Uuid,
     pub post_id: Uuid,
@@ -115,6 +123,7 @@ pub struct PostTarget {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a inbox item.
 pub struct InboxItem {
     pub id: Uuid,
     pub account_id: Uuid,
@@ -132,6 +141,7 @@ pub struct InboxItem {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for Reply operation.
 pub struct ReplyRequest {
     pub content: String,
 }
@@ -141,6 +151,7 @@ pub struct ReplyRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a account analytics row.
 pub struct AccountAnalyticsRow {
     pub id: Uuid,
     pub account_id: Uuid,
@@ -156,6 +167,7 @@ pub struct AccountAnalyticsRow {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a post analytics row.
 pub struct PostAnalyticsRow {
     pub id: Uuid,
     pub post_target_id: Uuid,
@@ -174,6 +186,7 @@ pub struct PostAnalyticsRow {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a rss feed.
 pub struct RssFeed {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -189,6 +202,7 @@ pub struct RssFeed {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateRssFeed operation.
 pub struct CreateRssFeedRequest {
     pub feed_url: String,
     pub name: Option<String>,
@@ -202,6 +216,7 @@ pub struct CreateRssFeedRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a post template.
 pub struct PostTemplate {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -213,6 +228,7 @@ pub struct PostTemplate {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateTemplate operation.
 pub struct CreateTemplateRequest {
     pub name: String,
     pub content: String,
@@ -225,6 +241,7 @@ pub struct CreateTemplateRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Deserialize)]
+/// Request payload for AiGenerate operation.
 pub struct AiGenerateRequest {
     pub topic: String,
     pub tone: Option<String>,
@@ -233,12 +250,14 @@ pub struct AiGenerateRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for AiHashtags operation.
 pub struct AiHashtagsRequest {
     pub content: String,
     pub platform: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for AiBestTime operation.
 pub struct AiBestTimeRequest {
     pub account_id: Uuid,
     pub platform: Option<String>,
@@ -249,6 +268,7 @@ pub struct AiBestTimeRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a signature.
 pub struct Signature {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -260,6 +280,7 @@ pub struct Signature {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateSignature operation.
 pub struct CreateSignatureRequest {
     pub name: String,
     pub content: String,
@@ -267,6 +288,7 @@ pub struct CreateSignatureRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for UpdateSignature operation.
 pub struct UpdateSignatureRequest {
     pub name: Option<String>,
     pub content: Option<String>,
@@ -278,6 +300,7 @@ pub struct UpdateSignatureRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a media item.
 pub struct MediaItem {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -296,6 +319,7 @@ pub struct MediaItem {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateMedia operation.
 pub struct CreateMediaRequest {
     pub filename: String,
     pub original_name: Option<String>,
@@ -313,6 +337,7 @@ pub struct CreateMediaRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a short url.
 pub struct ShortUrl {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -324,6 +349,7 @@ pub struct ShortUrl {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateShortUrl operation.
 pub struct CreateShortUrlRequest {
     pub original_url: String,
     pub post_id: Option<Uuid>,
@@ -334,6 +360,7 @@ pub struct CreateShortUrlRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a webhook.
 pub struct Webhook {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -350,6 +377,7 @@ pub struct Webhook {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateWebhook operation.
 pub struct CreateWebhookRequest {
     pub name: String,
     pub url: String,
@@ -359,6 +387,7 @@ pub struct CreateWebhookRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for UpdateWebhook operation.
 pub struct UpdateWebhookRequest {
     pub name: Option<String>,
     pub url: Option<String>,
@@ -372,6 +401,7 @@ pub struct UpdateWebhookRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a workspace.
 pub struct Workspace {
     pub id: Uuid,
     pub owner_id: Uuid,
@@ -384,6 +414,7 @@ pub struct Workspace {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateWorkspace operation.
 pub struct CreateWorkspaceRequest {
     pub name: String,
     pub slug: String,
@@ -392,6 +423,7 @@ pub struct CreateWorkspaceRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a workspace member.
 pub struct WorkspaceMember {
     pub id: Uuid,
     pub workspace_id: Uuid,
@@ -402,6 +434,7 @@ pub struct WorkspaceMember {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for InviteMember operation.
 pub struct InviteMemberRequest {
     pub user_id: Uuid,
     pub role: Option<String>,
@@ -412,6 +445,7 @@ pub struct InviteMemberRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a post comment.
 pub struct PostComment {
     pub id: Uuid,
     pub post_id: Uuid,
@@ -423,6 +457,7 @@ pub struct PostComment {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreatePostComment operation.
 pub struct CreatePostCommentRequest {
     pub content: String,
     pub parent_comment_id: Option<Uuid>,
@@ -433,6 +468,7 @@ pub struct CreatePostCommentRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a time slot.
 pub struct TimeSlot {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -445,6 +481,7 @@ pub struct TimeSlot {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateTimeSlot operation.
 pub struct CreateTimeSlotRequest {
     pub account_id: Option<Uuid>,
     pub day_of_week: i32,
@@ -457,6 +494,7 @@ pub struct CreateTimeSlotRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a content set.
 pub struct ContentSet {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -473,6 +511,7 @@ pub struct ContentSet {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateContentSet operation.
 pub struct CreateContentSetRequest {
     pub name: String,
     pub description: Option<String>,
@@ -489,6 +528,7 @@ pub struct CreateContentSetRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Represents a api key.
 pub struct ApiKey {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -505,6 +545,7 @@ pub struct ApiKey {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateApiKey operation.
 pub struct CreateApiKeyRequest {
     pub name: String,
     pub scopes: Option<JsonValue>,
@@ -517,12 +558,14 @@ pub struct CreateApiKeyRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Represents a platform post.
 pub struct PlatformPost {
     pub platform_post_id: String,
     pub platform_url: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Represents a account analytics.
 pub struct AccountAnalytics {
     pub followers: i32,
     pub following: i32,

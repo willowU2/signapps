@@ -29,6 +29,7 @@ pub struct DryRunResult {
 }
 
 #[derive(Debug, Serialize)]
+/// Represents a dry run op.
 pub struct DryRunOp {
     pub action: String,
     pub target: String,

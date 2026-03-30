@@ -4,6 +4,7 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
+/// Represents a remote connection.
 pub struct RemoteConnection {
     pub id: Uuid,
     pub hardware_id: Option<Uuid>,
@@ -24,6 +25,7 @@ pub struct RemoteConnection {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+/// Request payload for CreateConnection operation.
 pub struct CreateConnectionRequest {
     pub hardware_id: Option<Uuid>,
     pub name: String,
@@ -37,6 +39,7 @@ pub struct CreateConnectionRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+/// Request payload for UpdateConnection operation.
 pub struct UpdateConnectionRequest {
     pub name: Option<String>,
     pub protocol: Option<String>,
@@ -50,6 +53,7 @@ pub struct UpdateConnectionRequest {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[allow(dead_code)]
+/// Represents a guacamole instruction.
 pub struct GuacamoleInstruction {
     pub opcode: String,
     pub args: Vec<String>,

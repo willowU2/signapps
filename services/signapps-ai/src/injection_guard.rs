@@ -35,12 +35,14 @@ static INJECTION_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
 });
 
 #[derive(Debug, Clone)]
+/// Enum representing InjectionResult variants.
 pub enum InjectionResult {
     Clean,
     Detected { pattern: String, severity: Severity },
 }
 
 #[derive(Debug, Clone, Copy)]
+/// Enum representing Severity variants.
 pub enum Severity {
     Low,
     Medium,

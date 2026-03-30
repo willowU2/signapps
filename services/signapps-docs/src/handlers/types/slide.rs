@@ -9,6 +9,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 #[derive(serde::Serialize, serde::Deserialize)]
+/// Request payload for CreatePresentation operation.
 pub struct CreatePresentationRequest {
     pub name: String,
     #[serde(default)]
@@ -16,6 +17,7 @@ pub struct CreatePresentationRequest {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+/// Response payload for Presentation operation.
 pub struct PresentationResponse {
     pub id: String,
     pub name: String,
@@ -26,6 +28,7 @@ pub struct PresentationResponse {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+/// Represents a slide.
 pub struct Slide {
     pub id: String,
     pub index: u32,
@@ -34,6 +37,7 @@ pub struct Slide {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+/// Response payload for Slides operation.
 pub struct SlidesResponse {
     pub slides: Vec<Slide>,
 }

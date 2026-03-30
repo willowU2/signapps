@@ -75,6 +75,7 @@ pub trait SttBackend: Send + Sync {
 }
 
 #[derive(Debug, Serialize)]
+/// Request payload for Transcribe operation.
 pub struct TranscribeRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub language: Option<String>,
@@ -92,6 +93,7 @@ pub struct TranscribeRequest {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "lowercase")]
+/// Enum representing TranscribeTask variants.
 pub enum TranscribeTask {
     #[default]
     Transcribe,
@@ -99,6 +101,7 @@ pub enum TranscribeTask {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+/// Represents a transcribe result.
 pub struct TranscribeResult {
     pub text: String,
     pub language: String,
@@ -114,6 +117,7 @@ pub struct TranscribeResult {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+/// Represents a segment.
 pub struct Segment {
     pub id: u32,
     pub start: f32,
@@ -126,6 +130,7 @@ pub struct Segment {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+/// Represents a word.
 pub struct Word {
     pub word: String,
     pub start: f32,
@@ -136,6 +141,7 @@ pub struct Word {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+/// Represents a speaker.
 pub struct Speaker {
     pub id: String,
     pub label: String,
@@ -143,6 +149,7 @@ pub struct Speaker {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+/// Represents a stt model.
 pub struct SttModel {
     pub id: String,
     pub name: String,
@@ -153,6 +160,7 @@ pub struct SttModel {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+/// Represents a transcribe chunk.
 pub struct TranscribeChunk {
     pub segment_id: u32,
     pub text: String,
@@ -163,6 +171,7 @@ pub struct TranscribeChunk {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[allow(dead_code)]
+/// Represents a language detection.
 pub struct LanguageDetection {
     pub detected_language: String,
     pub language_probability: f32,
@@ -171,6 +180,7 @@ pub struct LanguageDetection {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[allow(dead_code)]
+/// Represents a language probability.
 pub struct LanguageProbability {
     pub language: String,
     pub probability: f32,
@@ -235,6 +245,7 @@ pub fn default_whisper_models() -> Vec<SttModel> {
 }
 
 #[derive(Debug, thiserror::Error)]
+/// Error type for Stt operations.
 pub enum SttError {
     #[error("HTTP error: {0}")]
     HttpError(#[from] reqwest::Error),

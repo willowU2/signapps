@@ -14,6 +14,7 @@ use crate::AppState;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Copy)]
+/// Enum representing OAuthProvider variants.
 pub enum OAuthProvider {
     Google,
     Microsoft,
@@ -128,11 +129,13 @@ pub fn oauth_client() -> BasicClient {
 // ---------------------------------------------------------------------------
 
 #[derive(Serialize)]
+/// Response payload for AuthUrl operation.
 pub struct AuthUrlResponse {
     pub url: String,
 }
 
 #[derive(Deserialize)]
+/// Request payload for AuthCallback operation.
 pub struct AuthCallbackRequest {
     pub code: String,
     pub user_id: uuid::Uuid,

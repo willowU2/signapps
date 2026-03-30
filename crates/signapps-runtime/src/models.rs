@@ -772,6 +772,7 @@ impl std::fmt::Debug for ModelManager {
 }
 
 #[derive(Debug, thiserror::Error)]
+/// Error type for Model operations.
 pub enum ModelError {
     #[error("Model not found: {0}")]
     NotFound(String),

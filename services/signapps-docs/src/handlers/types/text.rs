@@ -5,11 +5,13 @@ use uuid::Uuid;
 use crate::AppState;
 
 #[derive(serde::Serialize, serde::Deserialize)]
+/// Request payload for CreateTextDocument operation.
 pub struct CreateTextDocumentRequest {
     pub name: String,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+/// Response payload for Document operation.
 pub struct DocumentResponse {
     pub id: String,
     pub name: String,

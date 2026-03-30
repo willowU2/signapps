@@ -17,7 +17,7 @@ import {
   Server, MonitorSmartphone, Cpu, Network, Printer,
   Plus, Trash, Edit, Target, ShieldCheck, Wrench, Archive,
   Search, Filter, HardDrive, ArrowUpDown, QrCode, ScanLine,
-  Layers, TrendingDown, BarChart2,
+  Layers, TrendingDown, BarChart2, Radar,
 } from "lucide-react"
 import { itAssetsApi, HardwareAsset, CreateHardwareRequest, UpdateHardwareRequest } from "@/lib/api/it-assets"
 import { EntityLinks } from "@/components/crosslinks/EntityLinks"
@@ -33,6 +33,8 @@ import { AssetAssignment } from "@/components/it-assets/asset-assignment"
 import { AssetCategories } from "@/components/it-assets/asset-categories"
 import { AssetIncidentTickets } from "@/components/it-assets/asset-incident-ticket"
 import { AssetNbvReport } from "@/components/it-assets/asset-nbv-report"
+import { AssetRemoteActions } from "@/components/it-assets/asset-remote-actions"
+import { AssetMonitorInfo } from "@/components/it-assets/asset-monitor-info"
 import Link from "next/link"
 import { usePageTitle } from '@/hooks/use-page-title';
 
@@ -83,6 +85,8 @@ function getStatusMeta(status?: string) {
 function AssetDetailPanel({ asset }: { asset: HardwareAsset }) {
   return (
     <div className="space-y-4">
+      <AssetRemoteActions asset={asset} />
+      <AssetMonitorInfo hardwareId={asset.id} />
       <AssetAssignment asset={asset} />
       <AssetMaintenance assetId={asset.id} assetName={asset.name} />
       <AssetWarranty assetId={asset.id} assetName={asset.name} />
@@ -203,6 +207,9 @@ export default function ITAssetsPage() {
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" asChild>
               <Link href="/it-assets/scan"><ScanLine className="h-4 w-4 mr-1" />QR Scan</Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/it-assets/network"><Radar className="h-4 w-4 mr-1" />Decouverte</Link>
             </Button>
             <Button onClick={openCreate} className="shadow-lg shadow-primary/20">
               <Plus className="h-4 w-4 mr-2" />Add Asset

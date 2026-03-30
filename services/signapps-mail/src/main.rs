@@ -17,6 +17,7 @@ use tower_http::{
 };
 
 #[derive(Clone)]
+/// Application state for  service.
 pub struct AppState {
     pub pool: Pool<Postgres>,
     pub jwt_config: JwtConfig,

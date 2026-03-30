@@ -20,6 +20,7 @@ use crate::AppState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
+/// Application state for Job service.
 pub enum JobState {
     Queued,
     Processing,

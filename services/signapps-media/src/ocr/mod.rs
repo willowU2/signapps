@@ -63,6 +63,7 @@ pub trait OcrBackend: Send + Sync {
 }
 
 #[derive(Debug, Serialize)]
+/// Request payload for Ocr operation.
 pub struct OcrRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub languages: Option<Vec<String>>,
@@ -73,6 +74,7 @@ pub struct OcrRequest {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+/// Represents a ocr result.
 pub struct OcrResult {
     pub text: String,
     pub confidence: f32,
@@ -81,6 +83,7 @@ pub struct OcrResult {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+/// Represents a ocr page.
 pub struct OcrPage {
     pub page_number: u32,
     pub text: String,
@@ -92,6 +95,7 @@ pub struct OcrPage {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+/// Represents a text block.
 pub struct TextBlock {
     pub text: String,
     pub confidence: f32,
@@ -100,6 +104,7 @@ pub struct TextBlock {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+/// Represents a bounding box.
 pub struct BoundingBox {
     pub x1: f32,
     pub y1: f32,
@@ -109,6 +114,7 @@ pub struct BoundingBox {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "lowercase")]
+/// Enum representing BlockType variants.
 pub enum BlockType {
     Text,
     Title,
@@ -122,12 +128,14 @@ pub enum BlockType {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+/// Represents a table.
 pub struct Table {
     pub rows: Vec<Vec<String>>,
     pub bbox: BoundingBox,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+/// Represents a ocr metadata.
 pub struct OcrMetadata {
     pub provider: String,
     pub model: String,
@@ -137,6 +145,7 @@ pub struct OcrMetadata {
 }
 
 #[derive(Debug, thiserror::Error)]
+/// Error type for Ocr operations.
 pub enum OcrError {
     #[error("HTTP error: {0}")]
     HttpError(#[from] reqwest::Error),

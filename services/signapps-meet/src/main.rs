@@ -13,6 +13,7 @@ mod livekit;
 mod models;
 
 #[derive(Clone)]
+/// Application state for  service.
 pub struct AppState {
     pub pool: Pool<Postgres>,
     pub jwt_config: JwtConfig,
@@ -20,6 +21,7 @@ pub struct AppState {
 }
 
 #[derive(Clone)]
+/// Configuration for LiveKit.
 pub struct LiveKitConfig {
     pub api_key: String,
     pub api_secret: String,

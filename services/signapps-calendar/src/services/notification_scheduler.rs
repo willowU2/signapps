@@ -8,6 +8,7 @@ use uuid::Uuid;
 use signapps_db::models::{NotificationChannel, NotificationType};
 
 #[allow(dead_code)]
+/// Configuration for Scheduler.
 pub struct SchedulerConfig {
     pub check_interval: TokioDuration,
     #[allow(dead_code)]
@@ -32,6 +33,7 @@ impl SchedulerConfig {
     }
 }
 
+/// Represents a notification scheduler.
 pub struct NotificationScheduler {
     #[allow(dead_code)]
     pool: PgPool,

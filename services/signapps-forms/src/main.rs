@@ -55,6 +55,7 @@ fn new_webhook_store() -> WebhookStore {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateForm operation.
 pub struct CreateFormRequest {
     pub title: String,
     pub description: Option<String>,
@@ -62,6 +63,7 @@ pub struct CreateFormRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for CreateField operation.
 pub struct CreateFieldRequest {
     pub field_type: FieldType,
     pub label: String,
@@ -72,6 +74,7 @@ pub struct CreateFieldRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for UpdateForm operation.
 pub struct UpdateFormRequest {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -79,6 +82,7 @@ pub struct UpdateFormRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for SubmitResponse operation.
 pub struct SubmitResponseRequest {
     pub respondent: Option<String>,
     pub answers: Vec<Answer>,
@@ -89,6 +93,7 @@ pub struct SubmitResponseRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Clone)]
+/// Application state for  service.
 pub struct AppState {
     pub jwt_config: JwtConfig,
     pub pool: sqlx::PgPool,
