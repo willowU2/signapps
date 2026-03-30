@@ -144,9 +144,9 @@ export function RightSidebar() {
             </div>
           )}
 
-          {/* App launcher mode */}
+          {/* App launcher mode — scrollable */}
           {panelMode === "apps" && (
-            <div className="p-3 space-y-1">
+            <div className="p-3 space-y-1 max-h-[calc(100vh-4rem)] overflow-y-auto">
               {/* Search */}
               <div className="relative mb-3">
                 <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />

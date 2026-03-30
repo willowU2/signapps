@@ -184,25 +184,40 @@ export const useNotesStore = create<NotesState>()(
   )
 );
 
-// Pinned Apps State
+// Pinned Apps State with folder support
 export interface AppPin {
   href: string;
-  icon: string; // lucide icon name
+  icon: string;
   label: string;
   color: string;
+  folderId?: string; // null = root level
+}
+
+export interface PinFolder {
+  id: string;
+  name: string;
+  parentId?: string; // null = root, string = nested in parent folder
+  collapsed?: boolean;
 }
 
 interface PinnedAppsState {
   pinnedApps: AppPin[];
+  folders: PinFolder[];
   pinApp: (app: AppPin) => void;
   unpinApp: (href: string) => void;
   reorderPinnedApps: (apps: AppPin[]) => void;
+  moveToFolder: (href: string, folderId: string | undefined) => void;
+  createFolder: (name: string, parentId?: string) => void;
+  renameFolder: (id: string, name: string) => void;
+  deleteFolder: (id: string) => void;
+  toggleFolder: (id: string) => void;
 }
 
 export const usePinnedAppsStore = create<PinnedAppsState>()(
   persist(
     (set) => ({
       pinnedApps: [],
+      folders: [],
       pinApp: (app) =>
         set((state) => {
           if (state.pinnedApps.some((p) => p.href === app.href)) return state;
@@ -213,6 +228,33 @@ export const usePinnedAppsStore = create<PinnedAppsState>()(
           pinnedApps: state.pinnedApps.filter((p) => p.href !== href),
         })),
       reorderPinnedApps: (apps) => set({ pinnedApps: apps }),
+      moveToFolder: (href, folderId) =>
+        set((state) => ({
+          pinnedApps: state.pinnedApps.map((p) =>
+            p.href === href ? { ...p, folderId } : p
+          ),
+        })),
+      createFolder: (name, parentId) =>
+        set((state) => ({
+          folders: [...state.folders, { id: crypto.randomUUID(), name, parentId }],
+        })),
+      renameFolder: (id, name) =>
+        set((state) => ({
+          folders: state.folders.map((f) => (f.id === id ? { ...f, name } : f)),
+        })),
+      deleteFolder: (id) =>
+        set((state) => ({
+          folders: state.folders.filter((f) => f.id !== id && f.parentId !== id),
+          pinnedApps: state.pinnedApps.map((p) =>
+            p.folderId === id ? { ...p, folderId: undefined } : p
+          ),
+        })),
+      toggleFolder: (id) =>
+        set((state) => ({
+          folders: state.folders.map((f) =>
+            f.id === id ? { ...f, collapsed: !f.collapsed } : f
+          ),
+        })),
     }),
     { name: 'signapps_pinned_apps' }
   )

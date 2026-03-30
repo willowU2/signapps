@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { useUIStore, useLabelsStore, usePinnedAppsStore, type AppPin } from '@/lib/store';
+import { useUIStore, useLabelsStore, usePinnedAppsStore, type AppPin, type PinFolder } from '@/lib/store';
 import { useSidebarBadges } from '@/hooks/use-sidebar-badges';
 import {
   LayoutDashboard, Mail, CheckSquare, HardDrive, Calendar,
@@ -59,7 +59,10 @@ export function Sidebar() {
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const { labels, addLabel, removeLabel } = useLabelsStore();
   const { data: badges } = useSidebarBadges();
-  const { pinnedApps, pinApp, unpinApp, reorderPinnedApps } = usePinnedAppsStore();
+  const { pinnedApps, pinApp, unpinApp, reorderPinnedApps, folders, createFolder, deleteFolder, toggleFolder, moveToFolder, renameFolder } = usePinnedAppsStore();
+  const [newFolderName, setNewFolderName] = useState('');
+  const [renamingFolder, setRenamingFolder] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   const [nouveauOpen, setNouveauOpen] = useState(false);
   const [addLabelOpen, setAddLabelOpen] = useState(false);
@@ -320,21 +323,158 @@ export function Sidebar() {
           {/* Essential items */}
           {essentialNavItems.map((item) => renderNavLink(item))}
 
-          {/* Pinned section */}
-          {pinnedApps.length > 0 && (
+          {/* Pinned section with folders */}
+          {(pinnedApps.length > 0 || folders.length > 0) && (
             <>
               {!sidebarCollapsed && (
                 <div className="mx-4 mt-3 mb-1 border-t border-sidebar-border pt-3">
-                  <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Épinglés</p>
+                  <div className="flex items-center justify-between px-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Épinglés</p>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Nouveau dossier">
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent side="right" className="w-48 p-2 space-y-2">
+                        <p className="text-xs font-semibold">Nouveau dossier</p>
+                        <Input
+                          placeholder="Nom du dossier"
+                          value={newFolderName}
+                          onChange={(e) => setNewFolderName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && newFolderName.trim()) {
+                              createFolder(newFolderName.trim());
+                              setNewFolderName('');
+                            }
+                          }}
+                          className="h-7 text-xs"
+                        />
+                        <Button size="sm" className="w-full text-xs h-7" onClick={() => { if (newFolderName.trim()) { createFolder(newFolderName.trim()); setNewFolderName(''); } }}>
+                          Créer
+                        </Button>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
               )}
               {sidebarCollapsed && <div className="mx-4 mt-2 mb-1 border-t border-sidebar-border" />}
-              {pinnedApps.map((app, i) => renderPinnedItem(app, i))}
+
+              {/* Root-level pinned items (no folder) */}
+              {pinnedApps.filter(a => !a.folderId).map((app, i) => renderPinnedItem(app, i))}
+
+              {/* Folders */}
+              {folders.filter(f => !f.parentId).map((folder) => {
+                const folderApps = pinnedApps.filter(a => a.folderId === folder.id);
+                const subFolders = folders.filter(f => f.parentId === folder.id);
+
+                if (sidebarCollapsed) {
+                  return folderApps.map((app, i) => renderPinnedItem(app, i));
+                }
+
+                return (
+                  <div key={folder.id} className="mx-2">
+                    {/* Folder header */}
+                    <div
+                      className="group flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted cursor-pointer"
+                      onClick={() => toggleFolder(folder.id)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        try {
+                          const data = JSON.parse(e.dataTransfer.getData('application/json'));
+                          if (data.href) { pinApp(data); moveToFolder(data.href, folder.id); }
+                        } catch {}
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                    >
+                      <LucideIcons.ChevronRight className={cn("h-3 w-3 transition-transform", !folder.collapsed && "rotate-90")} />
+                      <LucideIcons.Folder className="h-3.5 w-3.5 text-amber-500" />
+                      {renamingFolder === folder.id ? (
+                        <input
+                          autoFocus
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { renameFolder(folder.id, renameValue); setRenamingFolder(null); } if (e.key === 'Escape') setRenamingFolder(null); }}
+                          onBlur={() => { renameFolder(folder.id, renameValue); setRenamingFolder(null); }}
+                          className="flex-1 bg-transparent text-xs outline-none border-b border-primary"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <span className="flex-1 truncate">{folder.name}</span>
+                      )}
+                      <span className="text-[9px] text-muted-foreground/50">{folderApps.length}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setRenamingFolder(folder.id); setRenameValue(folder.name); }}
+                        className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-all hover:text-foreground group-hover:opacity-100"
+                        title="Renommer"
+                      >
+                        <PenLine className="h-2.5 w-2.5" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteFolder(folder.id); }}
+                        className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                        title="Supprimer le dossier"
+                      >
+                        <X className="h-2.5 w-2.5" />
+                      </button>
+                    </div>
+
+                    {/* Folder contents */}
+                    {!folder.collapsed && (
+                      <div className="ml-3 border-l border-sidebar-border/50 pl-1">
+                        {folderApps.map((app, i) => renderPinnedItem(app, i))}
+
+                        {/* Sub-folders */}
+                        {subFolders.map((sub) => {
+                          const subApps = pinnedApps.filter(a => a.folderId === sub.id);
+                          return (
+                            <div key={sub.id}>
+                              <div
+                                className="group flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted cursor-pointer"
+                                onClick={() => toggleFolder(sub.id)}
+                                onDrop={(e) => {
+                                  e.preventDefault();
+                                  try {
+                                    const data = JSON.parse(e.dataTransfer.getData('application/json'));
+                                    if (data.href) { pinApp(data); moveToFolder(data.href, sub.id); }
+                                  } catch {}
+                                }}
+                                onDragOver={(e) => e.preventDefault()}
+                              >
+                                <LucideIcons.ChevronRight className={cn("h-2.5 w-2.5 transition-transform", !sub.collapsed && "rotate-90")} />
+                                <LucideIcons.FolderOpen className="h-3 w-3 text-amber-400" />
+                                <span className="flex-1 truncate">{sub.name}</span>
+                                <span className="text-[8px] text-muted-foreground/50">{subApps.length}</span>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); deleteFolder(sub.id); }}
+                                  className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive"
+                                >
+                                  <X className="h-2 w-2" />
+                                </button>
+                              </div>
+                              {!sub.collapsed && (
+                                <div className="ml-2 border-l border-sidebar-border/30 pl-1">
+                                  {subApps.map((app, i) => renderPinnedItem(app, i))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+
+                        {/* Add sub-folder hint */}
+                        {folderApps.length === 0 && subFolders.length === 0 && (
+                          <p className="px-2 py-1 text-[9px] text-muted-foreground/40">Glissez des apps ici</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </>
           )}
 
           {/* Drop hint when sidebar has no pins */}
-          {pinnedApps.length === 0 && !sidebarCollapsed && (
+          {pinnedApps.length === 0 && folders.length === 0 && !sidebarCollapsed && (
             <div className="mx-4 mt-3 border-t border-sidebar-border pt-3">
               <p className="px-2 text-[10px] text-muted-foreground/50 leading-relaxed">
                 Glissez une app depuis le dashboard pour l&apos;épingler ici
