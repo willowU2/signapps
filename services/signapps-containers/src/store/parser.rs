@@ -46,8 +46,8 @@ pub fn resolve_store_templates(value: &str, service_name: &str) -> String {
     let mut result = value.to_string();
 
     // Replace {Passwords.*} patterns with random passwords
-    let password_re =
-        regex::Regex::new(r"\{Passwords\.(SignAppsString|CosmosString)\.[^}]+\}").unwrap();
+    let password_re = regex::Regex::new(r"\{Passwords\.(SignAppsString|CosmosString)\.[^}]+\}")
+        .expect("valid password template regex");
     result = password_re
         .replace_all(&result, |_caps: &regex::Captures| generate_password(16))
         .to_string();
@@ -82,7 +82,8 @@ pub fn resolve_store_templates(value: &str, service_name: &str) -> String {
     }
 
     // Remove any remaining {Context.*} references
-    let context_re = regex::Regex::new(r"\{Context\.[^}]+\}").unwrap();
+    let context_re =
+        regex::Regex::new(r"\{Context\.[^}]+\}").expect("valid context template regex");
     result = context_re.replace_all(&result, "").to_string();
 
     result
@@ -101,14 +102,15 @@ fn resolve_for_display(value: &str) -> String {
     let mut result = value.to_string();
 
     // Replace {Passwords.*} patterns with random passwords (external format)
-    let password_re =
-        regex::Regex::new(r"\{Passwords\.(SignAppsString|CosmosString)\.[^}]+\}").unwrap();
+    let password_re = regex::Regex::new(r"\{Passwords\.(SignAppsString|CosmosString)\.[^}]+\}")
+        .expect("valid password template regex");
     result = password_re
         .replace_all(&result, |_caps: &regex::Captures| generate_password(16))
         .to_string();
 
     // Remove any {Context.*} references (not applicable locally)
-    let context_re = regex::Regex::new(r"\{Context\.[^}]+\}").unwrap();
+    let context_re =
+        regex::Regex::new(r"\{Context\.[^}]+\}").expect("valid context template regex");
     result = context_re.replace_all(&result, "").to_string();
 
     result
@@ -127,14 +129,15 @@ fn resolve_volume_for_display(source: &str) -> String {
     let mut result = source.to_string();
 
     // Replace {Passwords.*} patterns with random passwords (external format)
-    let password_re =
-        regex::Regex::new(r"\{Passwords\.(SignAppsString|CosmosString)\.[^}]+\}").unwrap();
+    let password_re = regex::Regex::new(r"\{Passwords\.(SignAppsString|CosmosString)\.[^}]+\}")
+        .expect("valid password template regex");
     result = password_re
         .replace_all(&result, |_caps: &regex::Captures| generate_password(16))
         .to_string();
 
     // Replace {Context.*} with {ServiceName}-based named volumes
-    let context_re = regex::Regex::new(r"\{Context\.([^}]+)\}").unwrap();
+    let context_re =
+        regex::Regex::new(r"\{Context\.([^}]+)\}").expect("valid context template regex");
     result = context_re
         .replace_all(&result, |caps: &regex::Captures| {
             let key = caps.get(1).map(|m| m.as_str()).unwrap_or("data");
@@ -166,14 +169,15 @@ pub fn resolve_volume_for_install(source: &str, service_name: &str, app_data_pat
     let mut result = source.to_string();
 
     // Passwords replacement (though unlikely in volume source, we keep it consistent)
-    let password_re =
-        regex::Regex::new(r"\{Passwords\.(SignAppsString|CosmosString)\.[^}]+\}").unwrap();
+    let password_re = regex::Regex::new(r"\{Passwords\.(SignAppsString|CosmosString)\.[^}]+\}")
+        .expect("valid password template regex");
     result = password_re
         .replace_all(&result, |_caps: &regex::Captures| generate_password(16))
         .to_string();
 
     // Replace {Context.*} with absolute host path mounts
-    let context_re = regex::Regex::new(r"\{Context\.([^}]+)\}").unwrap();
+    let context_re =
+        regex::Regex::new(r"\{Context\.([^}]+)\}").expect("valid context template regex");
     result = context_re
         .replace_all(&result, |caps: &regex::Captures| {
             let key = caps.get(1).map(|m| m.as_str()).unwrap_or("data");
