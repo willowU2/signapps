@@ -19,6 +19,8 @@ import { usePageTitle } from '@/hooks/use-page-title';
 import { PageHeader } from '@/components/ui/page-header';
 import { SearchInput } from '@/components/ui/search-input';
 import { DateDisplay } from '@/components/ui/date-display';
+import { auditApi } from '@/lib/api/crosslinks';
+import type { AuditLogEntry as ApiAuditLogEntry } from '@/types/crosslinks';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -197,7 +199,37 @@ function generateSampleEntries(): AuditEntry[] {
   ];
 }
 
-function loadEntries(): AuditEntry[] {
+/** Map an API AuditLogEntry to the local AuditEntry shape for display */
+function normalizeApiEntry(e: ApiAuditLogEntry): AuditEntry {
+  // Best-effort mapping of API action to local action enum
+  const actionMap: Record<string, AuditEntry['action']> = {
+    create: 'create',
+    update: 'edit',
+    edit: 'edit',
+    delete: 'delete',
+    login: 'login',
+    logout: 'logout',
+    settings_change: 'settings_change',
+    settings: 'settings_change',
+  };
+  const rawAction = (e.action ?? '').toLowerCase();
+  const action: AuditEntry['action'] = actionMap[rawAction] ?? 'edit';
+
+  const actor = e.actor_id ?? (e.metadata?.actor_email as string | undefined) ?? 'system';
+  const target = e.entity_type + (e.entity_id ? `:${e.entity_id}` : '');
+  const details = e.actor_ip ? `IP ${e.actor_ip}` : undefined;
+
+  return {
+    id: e.id,
+    timestamp: e.created_at,
+    user: actor,
+    action,
+    target,
+    details,
+  };
+}
+
+function loadLocalFallback(): AuditEntry[] {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -206,7 +238,7 @@ function loadEntries(): AuditEntry[] {
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch {
-    // Corrupted — regenerate
+    // Corrupted
   }
   const sample = generateSampleEntries();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sample));
@@ -225,13 +257,35 @@ function saveEntries(entries: AuditEntry[]) {
 export default function AuditLogPage() {
   usePageTitle('Audit');
   const [entries, setEntries] = useState<AuditEntry[]>([]);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
+  const fetchEntries = async () => {
+    setLoading(true);
+    try {
+      const res = await auditApi.query({ limit: 200 });
+      const normalized = res.data.map(normalizeApiEntry);
+      if (normalized.length > 0) {
+        setEntries(normalized);
+        saveEntries(normalized);
+      } else {
+        // API returned empty — fall back to localStorage
+        setEntries(loadLocalFallback());
+      }
+    } catch {
+      // API unavailable — fall back to localStorage
+      setEntries(loadLocalFallback());
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    setEntries(loadEntries());
+    fetchEntries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Derived filtered list
@@ -262,8 +316,8 @@ export default function AuditLogPage() {
     });
   }, [entries, search, actionFilter, dateFrom, dateTo]);
 
-  const refresh = () => {
-    setEntries(loadEntries());
+  const refresh = async () => {
+    await fetchEntries();
     toast.success('Journal d\'audit rechargé');
   };
 
@@ -316,7 +370,7 @@ export default function AuditLogPage() {
     const fresh = generateSampleEntries();
     saveEntries(fresh);
     setEntries(fresh);
-    toast.success('Journal d\'audit réinitialisé');
+    toast.success('Journal d\'audit réinitialisé (données locales)');
   };
 
   const hasFilters = search || actionFilter !== 'all' || dateFrom || dateTo;
@@ -423,8 +477,10 @@ export default function AuditLogPage() {
 
         {/* Results count */}
         <div className="flex items-center gap-2">
-          <Badge variant="outline">{filtered.length} / {entries.length} entrees</Badge>
-          {hasFilters && (
+          <Badge variant="outline">
+            {loading ? 'Chargement...' : `${filtered.length} / ${entries.length} entrees`}
+          </Badge>
+          {hasFilters && !loading && (
             <span className="text-xs text-muted-foreground">Filtres actifs</span>
           )}
         </div>

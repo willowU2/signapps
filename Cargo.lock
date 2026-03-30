@@ -9879,6 +9879,7 @@ dependencies = [
  "serde",
  "serde_json",
  "signapps-common",
+ "signapps-db",
  "thiserror 1.0.69",
  "tokio",
  "tower-http 0.5.2",

@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { CheckSquare, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { calendarApi, tasksApi } from "@/lib/api/calendar";
 
 interface SimpleTask {
   id: string;
@@ -28,27 +29,32 @@ const PRIORITY_COLOR: Record<number, string> = {
   3: "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400",
 };
 
-async function fetchTasksDueOn(date: Date): Promise<SimpleTask[]> {
-  const dateStr = date.toISOString().slice(0, 10);
+function localStorageFallbackTasks(dateStr: string): SimpleTask[] {
+  if (typeof window === "undefined") return [];
   try {
-    const API = process.env.NEXT_PUBLIC_CALENDAR_API || "http://localhost:3011/api/v1";
-    const calsRes = await fetch(`${API}/calendars`, { credentials: "include" });
-    if (!calsRes.ok) throw new Error("no calendars");
-    const cals = await calsRes.json();
-    const calId = (cals.data ?? cals)?.[0]?.id;
-    if (!calId) return fallbackTasks(dateStr);
-    const res = await fetch(`${API}/calendars/${calId}/tasks?due_date=${dateStr}&status=open,in_progress`, { credentials: "include" });
-    if (!res.ok) return fallbackTasks(dateStr);
-    const data = await res.json();
-    return data.data ?? data ?? [];
+    const stored: SimpleTask[] = JSON.parse(localStorage.getItem("email-tasks") || "[]");
+    return stored.filter(t => t.due_date?.slice(0, 10) === dateStr && t.status !== "completed");
   } catch {
-    return fallbackTasks(dateStr);
+    return [];
   }
 }
 
-function fallbackTasks(dateStr: string): SimpleTask[] {
-  const stored: SimpleTask[] = JSON.parse(localStorage.getItem("email-tasks") || "[]");
-  return stored.filter(t => t.due_date?.slice(0, 10) === dateStr && t.status !== "completed");
+async function fetchTasksDueOn(date: Date): Promise<SimpleTask[]> {
+  const dateStr = date.toISOString().slice(0, 10);
+  try {
+    const { data: calendarsRaw } = await calendarApi.listCalendars();
+    const calendarsArr = Array.isArray(calendarsRaw) ? calendarsRaw : (calendarsRaw as any)?.data ?? [];
+    const calId = calendarsArr[0]?.id;
+    if (!calId) return localStorageFallbackTasks(dateStr);
+    const { data: tasksRaw } = await tasksApi.listTasks(calId);
+    const tasksArr: SimpleTask[] = Array.isArray(tasksRaw) ? tasksRaw : (tasksRaw as any)?.data ?? [];
+    const filtered = tasksArr.filter(
+      t => t.due_date?.slice(0, 10) === dateStr && t.status !== "completed"
+    );
+    return filtered.length > 0 ? filtered : localStorageFallbackTasks(dateStr);
+  } catch {
+    return localStorageFallbackTasks(dateStr);
+  }
 }
 
 interface Props {
@@ -102,18 +108,18 @@ export function AttendeePendingTasks({ email, className }: { email: string; clas
   const [tasks, setTasks] = useState<SimpleTask[]>([]);
 
   useEffect(() => {
-    const API = process.env.NEXT_PUBLIC_CALENDAR_API || "http://localhost:3011/api/v1";
     (async () => {
       try {
-        const calsRes = await fetch(`${API}/calendars`, { credentials: "include" });
-        if (!calsRes.ok) return;
-        const cals = await calsRes.json();
-        const calId = (cals.data ?? cals)?.[0]?.id;
+        const { data: calendarsRaw } = await calendarApi.listCalendars();
+        const calendarsArr = Array.isArray(calendarsRaw) ? calendarsRaw : (calendarsRaw as any)?.data ?? [];
+        const calId = calendarsArr[0]?.id;
         if (!calId) return;
-        const res = await fetch(`${API}/calendars/${calId}/tasks?assigned_email=${encodeURIComponent(email)}&status=open,in_progress`, { credentials: "include" });
-        if (!res.ok) return;
-        const data = await res.json();
-        setTasks((data.data ?? data ?? []).slice(0, 5));
+        const { data: tasksRaw } = await tasksApi.listTasks(calId);
+        const all: SimpleTask[] = Array.isArray(tasksRaw) ? tasksRaw : (tasksRaw as any)?.data ?? [];
+        const filtered = all
+          .filter(t => t.assigned_to === email && t.status !== "completed")
+          .slice(0, 5);
+        setTasks(filtered);
       } catch { /* silent */ }
     })();
   }, [email]);

@@ -16,6 +16,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
+use signapps_common::pg_events::{NewEvent, PgEventBus};
 use signapps_common::{Claims, JwtConfig};
 use std::sync::{Arc, Mutex};
 use tower_http::cors::{AllowOrigin, CorsLayer};
@@ -83,6 +84,7 @@ pub struct AppState {
     pub jwt_config: JwtConfig,
     pub contacts: Arc<Mutex<Vec<Contact>>>,
     pub groups: Arc<Mutex<Vec<ContactGroup>>>,
+    pub event_bus: PgEventBus,
 }
 
 impl AuthState for AppState {
@@ -125,6 +127,18 @@ async fn create_contact(
         .unwrap_or_else(|e| e.into_inner())
         .push(contact.clone());
     tracing::info!(id = %contact.id, "Contact created");
+    let _ = state
+        .event_bus
+        .publish(NewEvent {
+            event_type: "contacts.created".into(),
+            aggregate_id: Some(contact.id),
+            payload: serde_json::json!({
+                "owner_id": claims.sub,
+                "first_name": contact.first_name,
+                "last_name": contact.last_name,
+            }),
+        })
+        .await;
     (StatusCode::CREATED, Json(contact))
 }
 
@@ -284,10 +298,18 @@ async fn main() -> anyhow::Result<()> {
         refresh_expiration: 86400 * 7,
     };
 
+    let pool = signapps_db::create_pool(&config.database_url)
+        .await
+        .expect("Failed to connect to Postgres");
+    tracing::info!("Database pool created for event publishing");
+
+    let event_bus = PgEventBus::new(pool.inner().clone(), "signapps-contacts".to_string());
+
     let state = AppState {
         jwt_config,
         contacts: Arc::new(Mutex::new(Vec::new())),
         groups: Arc::new(Mutex::new(Vec::new())),
+        event_bus,
     };
 
     tracing::info!("In-memory store initialized (skeleton — no DB yet)");

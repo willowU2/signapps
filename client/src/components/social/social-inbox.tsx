@@ -16,14 +16,14 @@ import { PLATFORM_COLORS } from './platform-utils';
 import { ChannelSidebar } from './channel-sidebar';
 import { formatDistanceToNow } from 'date-fns';
 
-function InboxBadge({ type }: { type: InboxItem['type'] }) {
+function InboxBadge({ type }: { type: string | undefined }) {
   const map: Record<string, string> = {
     comment: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
     mention: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
     dm: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
   };
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${map[type] ?? ''}`}>
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${type ? (map[type] ?? '') : ''}`}>
       {type}
     </span>
   );
@@ -105,7 +105,7 @@ export function SocialInbox() {
     });
   };
 
-  const platforms = [...new Set(inboxItems.map((i) => i.platform))];
+  const platforms = [...new Set(inboxItems.map((i) => i.platform).filter((p): p is string => !!p))];
 
   // Filter inbox items by selected channels
   const filteredInboxItems = selectedChannelIds.length > 0
@@ -193,9 +193,9 @@ export function SocialInbox() {
                 ) : (
                   <div
                     className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-bold"
-                    style={{ backgroundColor: PLATFORM_COLORS[item.platform] ?? '#6b7280' }}
+                    style={{ backgroundColor: PLATFORM_COLORS[item.platform ?? ''] ?? '#6b7280' }}
                   >
-                    {item.authorName.charAt(0)}
+                    {item.authorName?.charAt(0)}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -226,20 +226,20 @@ export function SocialInbox() {
                 ) : (
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-                    style={{ backgroundColor: PLATFORM_COLORS[selectedItem.platform] ?? '#6b7280' }}
+                    style={{ backgroundColor: PLATFORM_COLORS[selectedItem.platform ?? ''] ?? '#6b7280' }}
                   >
-                    {selectedItem.authorName.charAt(0)}
+                    {selectedItem.authorName?.charAt(0)}
                   </div>
                 )}
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold">{selectedItem.authorName}</span>
-                    <span className="text-muted-foreground text-sm">@{selectedItem.authorUsername}</span>
+                    <span className="text-muted-foreground text-sm">@{selectedItem.authorName}</span>
                     <InboxBadge type={selectedItem.type} />
                     <Badge
                       variant="outline"
                       className="text-xs capitalize"
-                      style={{ borderColor: PLATFORM_COLORS[selectedItem.platform] }}
+                      style={{ borderColor: PLATFORM_COLORS[selectedItem.platform ?? ''] }}
                     >
                       {selectedItem.platform}
                     </Badge>

@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { checkAllServicesHealth, ServiceName, type HealthCheckResult } from '@/lib/api/factory';
 import { getClient } from '@/lib/api/factory';
+import { notificationsApi } from '@/lib/api/notifications';
 
 const notifClient = () => getClient(ServiceName.NOTIFICATIONS);
 
@@ -58,9 +59,26 @@ export function CrossModuleNotificationCenter() {
       const { data } = await notifClient().get<CrossNotification[]>('/cross-module');
       setNotifs(data);
     } catch {
-      // Load from localStorage
-      const local = JSON.parse(localStorage.getItem('cross-notifs') || '[]');
-      setNotifs(local);
+      // Try notificationsApi as secondary source
+      try {
+        const { data } = await notificationsApi.list();
+        const mapped: CrossNotification[] = (Array.isArray(data) ? data : (data as any)?.data ?? []).map(
+          (n: any) => ({
+            id: n.id,
+            module: n.source ?? 'system',
+            title: n.title,
+            body: n.body,
+            read: n.read,
+            url: n.url,
+            created_at: n.created_at,
+          })
+        );
+        setNotifs(mapped);
+      } catch {
+        // Final fallback: localStorage
+        const local = JSON.parse(localStorage.getItem('cross-notifs') || '[]');
+        setNotifs(local);
+      }
     } finally {
       setLoading(false);
     }

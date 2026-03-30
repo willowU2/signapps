@@ -77,8 +77,8 @@ export function PermissionsProvider({ children }: PermissionsProviderProps) {
     }
 
     try {
-      // Determine role level
-      const roleLevel = user.role as RoleLevel;
+      // Determine role level — UserRole and RoleLevel are incompatible enums, cast via number
+      const roleLevel = (user.role as number) as RoleLevel;
       const isAdmin = roleLevel >= 2;
       const isSuperAdmin = roleLevel >= 3;
 
@@ -112,7 +112,7 @@ export function PermissionsProvider({ children }: PermissionsProviderProps) {
       // Fallback to basic user permissions
       setPermissions({
         userId: user.id,
-        roleLevel: user.role as RoleLevel,
+        roleLevel: (user.role as number) as RoleLevel,
         roleName: getRoleName(user.role),
         isAdmin: user.role >= 2,
         isSuperAdmin: user.role >= 3,

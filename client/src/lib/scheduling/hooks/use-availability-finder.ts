@@ -71,7 +71,7 @@ async function fetchAvailabilityData(
   end: Date
 ): Promise<{ events: ScheduleBlock[]; members: TeamMember[] }> {
   // Fetch users
-  const usersRes = await usersApi.list(1, 100);
+  const usersRes = await usersApi.list(0, 100);
   const members: TeamMember[] = usersRes.data.users
     .filter((u) => participantIds.includes(u.id))
     .map((u) => ({

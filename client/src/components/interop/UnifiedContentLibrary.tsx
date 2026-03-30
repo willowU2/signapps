@@ -162,7 +162,7 @@ export function UnifiedContentLibrary() {
                       {p.status}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {p.published_at ? formatDistanceToNow(new Date(p.published_at), { addSuffix: true }) : ''}
+                      {p.publishedAt ? formatDistanceToNow(new Date(p.publishedAt), { addSuffix: true }) : ''}
                     </span>
                   </div>
                 </div>

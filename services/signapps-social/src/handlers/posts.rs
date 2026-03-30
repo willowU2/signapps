@@ -5,6 +5,7 @@ use axum::{
     Extension, Json,
 };
 use chrono::Utc;
+use signapps_common::pg_events::NewEvent;
 use signapps_common::Claims;
 use uuid::Uuid;
 
@@ -252,10 +253,20 @@ pub async fn publish_post(
     .execute(&state.pool)
     .await
     {
-        Ok(r) if r.rows_affected() > 0 => (
-            StatusCode::ACCEPTED,
-            Json(serde_json::json!({ "message": "Post queued for immediate publishing" })),
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            let _ = state
+                .event_bus
+                .publish(NewEvent {
+                    event_type: "social.post.published".into(),
+                    aggregate_id: Some(id),
+                    payload: serde_json::json!({ "user_id": claims.sub }),
+                })
+                .await;
+            (
+                StatusCode::ACCEPTED,
+                Json(serde_json::json!({ "message": "Post queued for immediate publishing" })),
+            )
+        },
         Ok(_) => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Post not found or already published" })),

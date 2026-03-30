@@ -140,7 +140,7 @@ export function WorkspaceSharing({
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const response = await usersApi.list(1, 10);
+        const response = await usersApi.list(0, 10);
         const ud = response.data as any;
         const users = ud?.users || (Array.isArray(ud) ? ud : []);
         const filtered = users.filter(

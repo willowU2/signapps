@@ -91,7 +91,7 @@ export function SocialAnalyticsDocLink() {
                     <MousePointer className="h-3 w-3" />
                     {(post as any).engagementCount ?? 0} interactions
                   </span>
-                  <span>{post.published_at ? formatDistanceToNow(new Date(post.published_at), { addSuffix: true }) : ''}</span>
+                  <span>{post.publishedAt ? formatDistanceToNow(new Date(post.publishedAt), { addSuffix: true }) : ''}</span>
                 </div>
                 {post.docLink && (
                   <a href={post.docLink} className="flex items-center gap-1 text-xs text-primary hover:underline">

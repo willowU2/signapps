@@ -85,7 +85,7 @@ export function useUrlShortener(content: string) {
           map[su.originalUrl] = {
             original: su.originalUrl,
             short: su.shortUrl || `${getServiceBaseUrl(ServiceName.SOCIAL)}/s/${su.shortCode}`,
-            clicks: su.clicks,
+            clicks: su.clickCount,
           };
         }
         setShortenedMap(map);
@@ -116,11 +116,11 @@ export function useUrlShortener(content: string) {
 
       setShortening(true);
       try {
-        const res = await socialApi.shortUrls.create({ original_url: url });
+        const res = await socialApi.shortUrls.create({ originalUrl: url });
         const entry: ShortenedEntry = {
           original: url,
           short: res.data.shortUrl || `${getServiceBaseUrl(ServiceName.SOCIAL)}/s/${res.data.shortCode}`,
-          clicks: res.data.clicks,
+          clicks: res.data.clickCount,
         };
         setShortenedMap((prev) => ({ ...prev, [url]: entry }));
         return entry;
@@ -141,11 +141,11 @@ export function useUrlShortener(content: string) {
     try {
       for (const url of detectedUrls) {
         if (!currentMap[url]) {
-          const res = await socialApi.shortUrls.create({ original_url: url });
+          const res = await socialApi.shortUrls.create({ originalUrl: url });
           currentMap[url] = {
             original: url,
             short: res.data.shortUrl || `${getServiceBaseUrl(ServiceName.SOCIAL)}/s/${res.data.shortCode}`,
-            clicks: res.data.clicks,
+            clicks: res.data.clickCount,
           };
         }
       }

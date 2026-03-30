@@ -16,13 +16,22 @@ use serde::{Deserialize, Serialize};
 use signapps_common::Claims;
 use uuid::Uuid;
 
+use crate::handlers::aliases::{
+    create_alias, delete_alias, list_aliases, set_default_alias, update_alias,
+};
+use crate::handlers::categorize::{categorize_inbox, save_categorize_settings};
+use crate::handlers::delegation::{create_delegation, list_delegations, revoke_delegation};
 use crate::handlers::pgp::{delete_pgp_config, get_pgp_config, upsert_pgp_config};
+use crate::handlers::recurring::{
+    create_recurring, delete_recurring, list_recurring, update_recurring,
+};
 use crate::handlers::rules::{create_rule, delete_rule, get_rule, list_rules, update_rule};
 use crate::handlers::signatures::{get_signature, upsert_signature};
 use crate::handlers::spam::{classify_email, get_spam_settings, train_spam, update_spam_settings};
 use crate::handlers::templates::{
     create_template, delete_template, get_template, list_templates, update_template,
 };
+use crate::handlers::tracking::{list_tracking, tracking_stats};
 use crate::models::{Attachment, Email, MailAccount, MailFolder, MailLabel};
 use crate::AppState;
 
@@ -117,6 +126,68 @@ pub fn router() -> Router<AppState> {
         .route(
             "/api/v1/mail/priority-score/batch",
             axum::routing::post(crate::handlers::priority::score_batch),
+        )
+        // AI Inbox Categorization (Ideas #31 & #33)
+        .route(
+            "/api/v1/mail/emails/categorize",
+            axum::routing::post(categorize_inbox),
+        )
+        .route(
+            "/api/v1/mail/emails/categorize/settings",
+            axum::routing::post(save_categorize_settings),
+        )
+        // Newsletter send (IDEA-039)
+        .route(
+            "/api/v1/mail/newsletters/send",
+            axum::routing::post(send_newsletter),
+        )
+        // OAuth provider routes (M7)
+        .route("/oauth/google/login", axum::routing::get(crate::auth::oauth_google_login))
+        .route(
+            "/oauth/google/callback",
+            axum::routing::post(crate::auth::oauth_google_callback),
+        )
+        .route(
+            "/oauth/microsoft/login",
+            axum::routing::get(crate::auth::oauth_microsoft_login),
+        )
+        .route(
+            "/oauth/microsoft/callback",
+            axum::routing::post(crate::auth::oauth_microsoft_callback),
+        )
+        // Recurring emails (IDEA-263)
+        .route(
+            "/api/v1/mail/emails/recurring",
+            get(list_recurring).post(create_recurring),
+        )
+        .route(
+            "/api/v1/mail/emails/recurring/:id",
+            patch(update_recurring).delete(delete_recurring),
+        )
+        // Read tracking (IDEA-265) — authenticated endpoints
+        .route("/api/v1/mail/emails/tracking", get(list_tracking))
+        .route("/api/v1/mail/emails/tracking/stats", get(tracking_stats))
+        // Email aliases (IDEA-261)
+        .route(
+            "/api/v1/mail/accounts/:id/aliases",
+            get(list_aliases).post(create_alias),
+        )
+        .route(
+            "/api/v1/mail/accounts/:id/aliases/:alias_id",
+            patch(update_alias).delete(delete_alias),
+        )
+        .route(
+            "/api/v1/mail/accounts/:id/aliases/:alias_id/set-default",
+            post(set_default_alias),
+        )
+        // Email delegation (IDEA-264)
+        .route(
+            "/api/v1/mail/accounts/:id/delegations",
+            get(list_delegations).post(create_delegation),
+        )
+        .route(
+            "/api/v1/mail/accounts/:id/delegations/:delegation_id",
+            axum::routing::delete(revoke_delegation),
         )
 }
 
@@ -758,6 +829,17 @@ async fn send_email(
     // Generate message ID
     let message_id = format!("<{}@signapps.local>", Uuid::new_v4());
 
+    // Inject a read-tracking pixel into HTML emails (IDEA-265).
+    // A pre-allocated UUID lets us create the email_opens row in the same TX.
+    let tracking_id = Uuid::new_v4();
+    let tracked_body_html: Option<String> = payload.body_html.as_ref().map(|html| {
+        let pixel = format!(
+            r#"<img src="/api/v1/mail/track/{}" width="1" height="1" style="display:none" alt="">"#,
+            tracking_id
+        );
+        format!("{}{}", html, pixel)
+    });
+
     // Insert email record
     let email = sqlx::query_as::<_, Email>(
         r#"
@@ -778,7 +860,7 @@ async fn send_email(
     .bind(&payload.bcc)
     .bind(&payload.subject)
     .bind(&payload.body_text)
-    .bind(&payload.body_html)
+    .bind(&tracked_body_html)
     .bind(&snippet)
     .bind(is_draft)
     .bind(!is_draft)
@@ -794,6 +876,22 @@ async fn send_email(
             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to save email").into_response();
         },
     };
+
+    // Insert a tracking record for HTML emails (fire-and-forget — never blocks send).
+    if tracked_body_html.is_some() {
+        let _ = sqlx::query(
+            r#"INSERT INTO mail.email_opens
+               (tracking_id, email_id, account_id, user_id)
+               VALUES ($1, $2, $3, $4)
+               ON CONFLICT (tracking_id) DO NOTHING"#,
+        )
+        .bind(tracking_id)
+        .bind(email.id)
+        .bind(account.id)
+        .bind(claims.sub)
+        .execute(&state.pool)
+        .await;
+    }
 
     // Actually send via SMTP if not a draft
     if !is_draft {
@@ -829,6 +927,8 @@ async fn send_email(
 async fn send_via_smtp(
     account: &MailAccount,
     payload: &SendEmailRequest,
+    /// Optional override for body_html (e.g. with tracking pixel already injected).
+    body_html_override: Option<&str>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let smtp_server = account
         .smtp_server
@@ -1409,4 +1509,91 @@ pub async fn process_scheduled_emails(
     }
 
     Ok(())
+}
+
+// ============================================================================
+// Newsletter send (IDEA-039, M5)
+// ============================================================================
+
+#[derive(Debug, Deserialize)]
+pub struct SendNewsletterRequest {
+    pub account_id: Uuid,
+    pub subject: String,
+    pub html_body: String,
+    pub recipient_list: Vec<String>,
+}
+
+#[derive(Serialize)]
+struct SendNewsletterResponse {
+    sent: usize,
+    failed: usize,
+}
+
+async fn send_newsletter(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(payload): Json<SendNewsletterRequest>,
+) -> impl IntoResponse {
+    if payload.subject.is_empty() {
+        return (StatusCode::UNPROCESSABLE_ENTITY, "Subject is required").into_response();
+    }
+    if payload.recipient_list.is_empty() {
+        return (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "recipient_list must not be empty",
+        )
+            .into_response();
+    }
+
+    // Fetch the sending account (must belong to the authenticated user)
+    let account = match sqlx::query_as::<_, MailAccount>(
+        "SELECT * FROM mail.accounts WHERE id = $1 AND user_id = $2",
+    )
+    .bind(payload.account_id)
+    .bind(claims.sub)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(acc)) => acc,
+        Ok(None) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
+        Err(e) => {
+            tracing::error!("Newsletter: failed to fetch account: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        },
+    };
+
+    let mut sent = 0usize;
+    let mut failed = 0usize;
+
+    for recipient in &payload.recipient_list {
+        let smtp_payload = SendEmailRequest {
+            account_id: payload.account_id,
+            recipient: recipient.clone(),
+            cc: None,
+            bcc: None,
+            subject: payload.subject.clone(),
+            body_text: None,
+            body_html: Some(payload.html_body.clone()),
+            in_reply_to: None,
+            is_draft: Some(false),
+            scheduled_send_at: None,
+        };
+
+        match send_via_smtp(&account, &smtp_payload).await {
+            Ok(_) => {
+                sent += 1;
+                tracing::info!(to = %recipient, subject = %payload.subject, "Newsletter sent");
+            },
+            Err(e) => {
+                failed += 1;
+                tracing::error!(to = %recipient, "Newsletter SMTP failed: {:?}", e);
+            },
+        }
+    }
+
+    (
+        StatusCode::OK,
+        Json(SendNewsletterResponse { sent, failed }),
+    )
+        .into_response()
 }

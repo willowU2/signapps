@@ -6,6 +6,7 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
+use signapps_common::pg_events::NewEvent;
 use signapps_common::Claims;
 use signapps_db::{models::*, TaskRepository};
 use std::collections::HashMap;
@@ -182,6 +183,15 @@ pub async fn complete_task(
     repo.complete(id)
         .await
         .map_err(|_| CalendarError::InternalError)?;
+
+    let _ = state
+        .event_bus
+        .publish(NewEvent {
+            event_type: "calendar.task.completed".into(),
+            aggregate_id: Some(id),
+            payload: serde_json::json!({ "task_id": id }),
+        })
+        .await;
 
     Ok(StatusCode::OK)
 }

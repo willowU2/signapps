@@ -59,7 +59,7 @@ export function UserActivity() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const usersRes = await usersApi.list(1, 500);
+      const usersRes = await usersApi.list(0, 500);
       const ud = usersRes.data as any; const users: User[] = Array.isArray(ud) ? ud : (ud?.users || []);
 
       // Fetch audit counts per user

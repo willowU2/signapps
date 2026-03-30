@@ -217,7 +217,7 @@ async function buildAIResponse(
         platform: selectedPlatform,
       });
       const postContent = res.data.content;
-      const hashtags = res.data.hashtags?.length > 0 ? res.data.hashtags : fallbackHashtags(topic);
+      const hashtags: string[] = (res.data.hashtags && res.data.hashtags.length > 0) ? res.data.hashtags : fallbackHashtags(topic);
 
       return {
         ...base,

@@ -131,10 +131,10 @@ export interface LdapConfig {
 
 // Users API
 export const usersApi = {
-    // Backend returns User[] array directly — no pagination wrapper
+    // Backend returns paginated wrapper — see UserListResponse
     // Query params: offset, limit (not page)
     list: (offset?: number, limit?: number) =>
-        identityClient.get<User[]>('/users', { params: { offset, limit } }),
+        identityClient.get<UserListResponse>('/users', { params: { offset, limit } }),
     get: (id: string) => identityClient.get<User>(`/users/${id}`),
     create: (data: CreateUserRequest) => identityClient.post<User>('/users', data),
     update: (id: string, data: UpdateUserRequest) =>

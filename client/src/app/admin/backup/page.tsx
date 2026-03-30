@@ -121,33 +121,71 @@ export default function BackupAdminPage() {
     setHistory(updatedHistory);
     saveBackupHistory(updatedHistory);
 
-    toast.info('Backup started...');
+    toast.info('Backup démarré...');
 
-    // Simulate backup process (in real deployment, this would call the API)
     const startTime = Date.now();
-    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
-    const duration = Math.round((Date.now() - startTime) / 1000);
+    let completedEntry: BackupEntry;
 
-    // Simulate success (95%) or failure (5%)
-    const success = Math.random() > 0.05;
-    const completedEntry: BackupEntry = {
-      ...entry,
-      status: success ? 'success' : 'failed',
-      duration,
-      size: success ? `${(Math.random() * 500 + 50).toFixed(1)} MB` : undefined,
-      error: success ? undefined : 'Connection timeout to backup target',
-    };
+    try {
+      // Call real backup endpoint
+      const apiBase = process.env.NEXT_PUBLIC_IDENTITY_URL || 'http://localhost:3001/api/v1';
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+
+      const res = await fetch(`${apiBase}/admin/backup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ destination: dest }),
+      });
+
+      const duration = Math.round((Date.now() - startTime) / 1000);
+
+      if (res.status === 404) {
+        // Endpoint not deployed yet
+        completedEntry = {
+          ...entry,
+          status: 'failed',
+          duration,
+          error: 'Endpoint non disponible — backup manuel requis',
+        };
+        toast.error('Endpoint non disponible — backup manuel requis');
+      } else if (!res.ok) {
+        const errText = await res.text().catch(() => res.statusText);
+        completedEntry = {
+          ...entry,
+          status: 'failed',
+          duration,
+          error: `Erreur serveur: ${res.status} ${errText}`.slice(0, 120),
+        };
+        toast.error(`Backup échoué: ${res.status}`);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        completedEntry = {
+          ...entry,
+          status: 'success',
+          duration,
+          size: data.size ?? undefined,
+        };
+        toast.success(`Backup terminé en ${formatDuration(duration)}`);
+      }
+    } catch {
+      // Network-level failure (server unreachable)
+      const duration = Math.round((Date.now() - startTime) / 1000);
+      completedEntry = {
+        ...entry,
+        status: 'failed',
+        duration,
+        error: 'Endpoint non disponible — backup manuel requis',
+      };
+      toast.error('Endpoint non disponible — backup manuel requis');
+    }
 
     const finalHistory = [completedEntry, ...history];
     setHistory(finalHistory);
     saveBackupHistory(finalHistory);
     setRunning(false);
-
-    if (success) {
-      toast.success(`Backup completed in ${formatDuration(duration)}`);
-    } else {
-      toast.error('Backup failed: Connection timeout');
-    }
   };
 
   const handleDeleteEntry = (id: string) => {

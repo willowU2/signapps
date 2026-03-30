@@ -50,7 +50,7 @@ export function EventNotesDocSave({ eventId, eventTitle, notes, className }: Pro
       docs.push({ eventId, docId: saved_id, title: `Notes : ${eventTitle}`, notes, created_at: new Date().toISOString() });
       localStorage.setItem("interop:event_docs", JSON.stringify(docs));
 
-      interopStore.addLink({ sourceType: "event", sourceId: eventId, sourceTitle: eventTitle, targetType: "mail", targetId: saved_id, targetTitle: `Notes : ${eventTitle}`, relation: "notes_doc" });
+      interopStore.addLink({ sourceType: "event", sourceId: eventId, sourceTitle: eventTitle, targetType: "document", targetId: saved_id, targetTitle: `Notes : ${eventTitle}`, relation: "notes_doc" });
       setSaved(true);
       toast.success("Notes enregistrées comme document");
     } catch {

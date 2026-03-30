@@ -236,7 +236,7 @@ export function SocialAnalytics() {
                 </thead>
                 <tbody className="divide-y">
                   {topPosts.map((post) => {
-                    const account = accounts.find((a) => post.accounts.includes(a.id));
+                    const account = accounts.find((a) => (post.accounts ?? []).includes(a.id));
                     return (
                       <tr key={post.id} className="hover:bg-muted/30 transition-colors">
                         <td className="py-2 pr-4 max-w-xs">

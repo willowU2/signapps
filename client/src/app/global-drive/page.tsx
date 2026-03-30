@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,7 +42,6 @@ import {
   ListIcon,
   PlusIcon,
   UploadIcon,
-  SearchIcon,
   DownloadIcon,
   PencilIcon,
   Trash2Icon,
@@ -52,16 +51,17 @@ import {
   ArrowUpIcon,
   ChevronDown,
   EyeIcon,
+  Loader2Icon,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { DriveSearchDocs } from '@/components/interop/DriveSearchDocs';
-import { DriveBulkDownload } from '@/components/interop/DriveBulkDownload';
 import { DocFromTemplate } from '@/components/interop/DocFromTemplate';
 import { UnifiedContentLibrary } from '@/components/interop/UnifiedContentLibrary';
 import { DriveShareEmail } from '@/components/interop/DriveShareEmail';
-import { DriveNode } from '@/lib/api/drive';
+import { driveApi, DriveNode } from '@/lib/api/drive';
+import { storageApi } from '@/lib/api/storage';
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface FileItem {
@@ -75,29 +75,37 @@ interface FileItem {
   parentId: string | null;
 }
 
-// ─── Sample Data ────────────────────────────────────────────────────
-const INITIAL_FILES: FileItem[] = [
-  { id: '1', name: 'Documents', type: 'folder', items: 12, modified: '2026-03-25', owner: 'admin', parentId: null },
-  { id: '2', name: 'Images', type: 'folder', items: 45, modified: '2026-03-24', owner: 'admin', parentId: null },
-  { id: '3', name: 'Projets', type: 'folder', items: 8, modified: '2026-03-27', owner: 'admin', parentId: null },
-  { id: '4', name: 'Rapport Q1 2026.pdf', type: 'pdf', size: '2.4 MB', modified: '2026-03-20', owner: 'admin', parentId: null },
-  { id: '5', name: 'Budget 2026.xlsx', type: 'xlsx', size: '156 KB', modified: '2026-03-18', owner: 'admin', parentId: null },
-  { id: '6', name: 'Pr\u00e9sentation clients.pptx', type: 'pptx', size: '8.1 MB', modified: '2026-03-15', owner: 'user1', parentId: null },
-  { id: '7', name: 'Logo SignApps.png', type: 'png', size: '340 KB', modified: '2026-03-10', owner: 'admin', parentId: null },
-  { id: '8', name: 'Notes r\u00e9union.md', type: 'md', size: '12 KB', modified: '2026-03-27', owner: 'admin', parentId: null },
-  { id: '9', name: 'Architecture.docx', type: 'docx', size: '1.2 MB', modified: '2026-03-22', owner: 'user1', parentId: null },
-  { id: '10', name: 'D\u00e9mo produit.mp4', type: 'mp4', size: '45 MB', modified: '2026-03-12', owner: 'admin', parentId: null },
-  // Subfolder items
-  { id: '11', name: 'Contrats', type: 'folder', items: 5, modified: '2026-03-20', owner: 'admin', parentId: '1' },
-  { id: '12', name: 'Factures 2026', type: 'folder', items: 23, modified: '2026-03-25', owner: 'admin', parentId: '1' },
-  { id: '13', name: 'Proc\u00e9dures internes.pdf', type: 'pdf', size: '890 KB', modified: '2026-03-18', owner: 'admin', parentId: '1' },
-  { id: '14', name: 'Mod\u00e8le contrat.docx', type: 'docx', size: '245 KB', modified: '2026-03-15', owner: 'user1', parentId: '1' },
-  { id: '15', name: 'Banner site.png', type: 'png', size: '1.8 MB', modified: '2026-03-22', owner: 'admin', parentId: '2' },
-  { id: '16', name: 'Ic\u00f4nes UI.svg', type: 'svg', size: '56 KB', modified: '2026-03-20', owner: 'admin', parentId: '2' },
-  { id: '17', name: 'Photo \u00e9quipe.jpg', type: 'jpg', size: '3.2 MB', modified: '2026-03-19', owner: 'user1', parentId: '2' },
-  { id: '18', name: 'Roadmap Q2.xlsx', type: 'xlsx', size: '98 KB', modified: '2026-03-26', owner: 'admin', parentId: '3' },
-  { id: '19', name: 'Specs techniques.md', type: 'md', size: '24 KB', modified: '2026-03-27', owner: 'admin', parentId: '3' },
-];
+// ─── API Mapper ─────────────────────────────────────────────────────
+function driveNodeToFileItem(node: DriveNode): FileItem {
+  const ext = node.name.split('.').pop()?.toLowerCase() ?? '';
+  const validExtTypes: FileItem['type'][] = ['pdf', 'xlsx', 'pptx', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'md', 'txt', 'docx', 'mp4', 'zip'];
+  let type: FileItem['type'] = 'unknown';
+  if (node.node_type === 'folder') {
+    type = 'folder';
+  } else if ((validExtTypes as string[]).includes(ext)) {
+    type = ext as FileItem['type'];
+  } else if (node.node_type === 'document') {
+    type = 'docx';
+  } else if (node.node_type === 'spreadsheet') {
+    type = 'xlsx';
+  } else if (node.node_type === 'presentation') {
+    type = 'pptx';
+  }
+  const sizeKB = node.size ? node.size / 1024 : null;
+  const sizeStr = sizeKB
+    ? sizeKB >= 1024
+      ? `${(sizeKB / 1024).toFixed(1)} MB`
+      : `${sizeKB.toFixed(0)} KB`
+    : undefined;
+  return {
+    id: node.id,
+    name: node.name,
+    type,
+    size: sizeStr,
+    modified: node.updated_at,
+    parentId: node.parent_id,
+  };
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────
 function getFileIcon(type: FileItem['type'], className: string = 'size-10') {
@@ -198,7 +206,12 @@ function parseSizeMB(size?: string): number {
 // ─── Main Component ─────────────────────────────────────────────────
 export default function GlobalDrivePage() {
   usePageTitle('Drive global');
-  const [files, setFiles] = useState<FileItem[]>(INITIAL_FILES);
+  // files holds the nodes for the current folder only (fetched from API)
+  const [files, setFiles] = useState<FileItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  // breadcrumbPath tracks the navigation stack as [{id, name}]
+  const [breadcrumbPath, setBreadcrumbPath] = useState<{ id: string | null; name: string }[]>([{ id: null, name: 'Accueil' }]);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -212,60 +225,73 @@ export default function GlobalDrivePage() {
   const [showRename, setShowRename] = useState(false);
   const [renameTarget, setRenameTarget] = useState<FileItem | null>(null);
   const [renameName, setRenameName] = useState('');
-  const [showUpload, setShowUpload] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
 
-  // ── Navigation ──────────────────────────────────────────────────
-  const getBreadcrumbPath = useCallback((): { id: string | null; name: string }[] => {
-    const path: { id: string | null; name: string }[] = [{ id: null, name: 'Accueil' }];
-    let folderId = currentFolderId;
-    const segments: { id: string; name: string }[] = [];
-
-    while (folderId) {
-      const folder = files.find((f) => f.id === folderId);
-      if (folder) {
-        segments.unshift({ id: folder.id, name: folder.name });
-        folderId = folder.parentId;
-      } else {
-        break;
-      }
+  // ── API fetch on folder change ────────────────────────────────────
+  const fetchNodes = useCallback(async (folderId: string | null) => {
+    setLoading(true);
+    setError(null);
+    setSelectedItems(new Set());
+    try {
+      const nodes = await driveApi.listNodes(folderId);
+      setFiles(nodes.map(driveNodeToFileItem));
+    } catch {
+      setError('Impossible de charger les fichiers. Vérifiez votre connexion.');
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    return [...path, ...segments];
-  }, [currentFolderId, files]);
+  useEffect(() => {
+    fetchNodes(currentFolderId);
+  }, [currentFolderId, fetchNodes]);
+
+  // ── Navigation ──────────────────────────────────────────────────
+  // breadcrumbPath is maintained as a stack in state; computed from navigation
 
   const currentFiles = sortFiles(
-    files
-      .filter((f) => f.parentId === currentFolderId)
-      .filter((f) =>
-        searchQuery
-          ? f.name.toLowerCase().includes(searchQuery.toLowerCase())
-          : true
-      ),
+    files.filter((f) =>
+      searchQuery
+        ? f.name.toLowerCase().includes(searchQuery.toLowerCase())
+        : true
+    ),
     sortField,
     sortOrder
   );
 
-  const navigateToFolder = (folderId: string | null) => {
+  const navigateToFolder = (folderId: string | null, folderName?: string) => {
     setCurrentFolderId(folderId);
-    setSelectedItems(new Set());
+    setSearchQuery('');
+    if (folderId === null) {
+      // Go home
+      setBreadcrumbPath([{ id: null, name: 'Accueil' }]);
+    } else if (folderName) {
+      // Navigate into a subfolder
+      setBreadcrumbPath((prev) => [...prev, { id: folderId, name: folderName }]);
+    }
+  };
+
+  const navigateToBreadcrumb = (index: number) => {
+    const segment = breadcrumbPath[index];
+    setBreadcrumbPath(breadcrumbPath.slice(0, index + 1));
+    setCurrentFolderId(segment.id);
     setSearchQuery('');
   };
 
   const handleDoubleClick = (item: FileItem) => {
     if (item.type === 'folder') {
-      navigateToFolder(item.id);
+      navigateToFolder(item.id, item.name);
     } else {
       setPreviewFile(item);
     }
   };
 
   const goUp = () => {
-    if (currentFolderId) {
-      const currentFolder = files.find((f) => f.id === currentFolderId);
-      navigateToFolder(currentFolder?.parentId ?? null);
+    if (breadcrumbPath.length > 1) {
+      const parentIndex = breadcrumbPath.length - 2;
+      navigateToBreadcrumb(parentIndex);
     }
   };
 
@@ -317,88 +343,108 @@ export default function GlobalDrivePage() {
     const names = currentFiles
       .filter((f) => selectedItems.has(f.id))
       .map((f) => f.name);
-    toast.success(`Telechargement de ${names.length} element(s)...`);
+    toast.success(`Téléchargement de ${names.length} élément(s)...`);
     clearSelection();
   };
 
   const bulkMove = () => {
-    toast.info(`Deplacement de ${selectedItems.size} element(s)...`);
+    toast.info(`Déplacement de ${selectedItems.size} élément(s)...`);
     clearSelection();
   };
 
-  const bulkDelete = () => {
-    const idsToRemove = new Set<string>();
-    const collectIds = (id: string) => {
-      idsToRemove.add(id);
-      files.filter((f) => f.parentId === id).forEach((f) => collectIds(f.id));
-    };
-    selectedItems.forEach((id) => collectIds(id));
-    setFiles((prev) => prev.filter((f) => !idsToRemove.has(f.id)));
-    toast.success(`${selectedItems.size} element(s) supprime(s)`);
-    clearSelection();
+  const bulkDelete = async () => {
+    const ids = Array.from(selectedItems);
+    const count = ids.length;
+    try {
+      await Promise.all(ids.map((id) => driveApi.deleteNode(id)));
+      toast.success(`${count} élément(s) supprimé(s)`);
+      clearSelection();
+      fetchNodes(currentFolderId);
+    } catch {
+      toast.error('Erreur lors de la suppression');
+    }
   };
 
   // ── CRUD Operations ─────────────────────────────────────────────
-  const createFolder = () => {
+  const createFolder = async () => {
     if (!newFolderName.trim()) return;
-    const folder: FileItem = {
-      id: Date.now().toString(),
-      name: newFolderName.trim(),
-      type: 'folder',
-      items: 0,
-      modified: new Date().toISOString().split('T')[0],
-      owner: 'admin',
-      parentId: currentFolderId,
-    };
-    setFiles((prev) => [...prev, folder]);
-    setNewFolderName('');
-    setShowNewFolder(false);
-    toast.success(`Dossier "${folder.name}" cr\u00e9\u00e9`);
+    try {
+      await driveApi.createNode({
+        parent_id: currentFolderId,
+        name: newFolderName.trim(),
+        node_type: 'folder',
+        target_id: null,
+      });
+      setNewFolderName('');
+      setShowNewFolder(false);
+      toast.success(`Dossier "${newFolderName.trim()}" créé`);
+      fetchNodes(currentFolderId);
+    } catch {
+      toast.error('Erreur lors de la création du dossier');
+    }
   };
 
-  const simulateUpload = () => {
-    const sampleUploads = [
-      { name: 'Document import\u00e9.pdf', type: 'pdf' as const, size: '1.3 MB' },
-      { name: 'Photo.jpg', type: 'jpg' as const, size: '2.8 MB' },
-    ];
-    const upload = sampleUploads[Math.floor(Math.random() * sampleUploads.length)];
-    const newFile: FileItem = {
-      id: Date.now().toString(),
-      name: upload.name,
-      type: upload.type,
-      size: upload.size,
-      modified: new Date().toISOString().split('T')[0],
-      owner: 'admin',
-      parentId: currentFolderId,
-    };
-    setFiles((prev) => [...prev, newFile]);
-    setShowUpload(false);
-    toast.success(`"${upload.name}" import\u00e9 avec succ\u00e8s`);
+  const uploadFileRef = useRef<HTMLInputElement>(null);
+
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
+    const toastId = toast.loading(`Import de ${files.length} fichier(s)...`);
+    let successCount = 0;
+    for (const file of files) {
+      try {
+        const uploadRes = await storageApi.uploadFile('drive', file);
+        if (uploadRes.data && uploadRes.data.length > 0) {
+          const target = uploadRes.data[0];
+          await driveApi.createNode({
+            parent_id: currentFolderId,
+            name: target.key,
+            node_type: 'file',
+            target_id: target.id,
+            size: target.size,
+            mime_type: target.content_type,
+          });
+          successCount++;
+        }
+      } catch {
+        toast.error(`Erreur pour ${file.name}`);
+      }
+    }
+    if (successCount > 0) {
+      toast.success(`${successCount} fichier(s) importé(s)`, { id: toastId });
+      fetchNodes(currentFolderId);
+    } else {
+      toast.dismiss(toastId);
+    }
+    // Reset input
+    if (uploadFileRef.current) uploadFileRef.current.value = '';
   };
 
-  const renameItem = () => {
+  const renameItem = async () => {
     if (!renameTarget || !renameName.trim()) return;
-    setFiles((prev) =>
-      prev.map((f) => (f.id === renameTarget.id ? { ...f, name: renameName.trim() } : f))
-    );
-    toast.success(`Renomm\u00e9 en "${renameName.trim()}"`);
-    setShowRename(false);
-    setRenameTarget(null);
+    try {
+      await driveApi.updateNode(renameTarget.id, { name: renameName.trim() });
+      toast.success(`Renommé en "${renameName.trim()}"`);
+      setShowRename(false);
+      setRenameTarget(null);
+      fetchNodes(currentFolderId);
+    } catch {
+      toast.error('Erreur lors du renommage');
+    }
   };
 
-  const deleteItem = () => {
+  const deleteItem = async () => {
     if (!deleteTarget) return;
-    // Recursively delete folder contents
-    const idsToDelete = new Set<string>();
-    const collectIds = (id: string) => {
-      idsToDelete.add(id);
-      files.filter((f) => f.parentId === id).forEach((f) => collectIds(f.id));
-    };
-    collectIds(deleteTarget.id);
-    setFiles((prev) => prev.filter((f) => !idsToDelete.has(f.id)));
-    toast.success(`"${deleteTarget.name}" supprim\u00e9`);
-    setShowDelete(false);
-    setDeleteTarget(null);
+    try {
+      await driveApi.deleteNode(deleteTarget.id);
+      toast.success(`"${deleteTarget.name}" supprimé`);
+      setShowDelete(false);
+      setDeleteTarget(null);
+      fetchNodes(currentFolderId);
+    } catch {
+      toast.error('Erreur lors de la suppression');
+    }
   };
 
   const openRenameDialog = (item: FileItem) => {
@@ -416,9 +462,6 @@ export default function GlobalDrivePage() {
   const totalFiles = files.filter((f) => f.type !== 'folder').length;
   const totalFolders = files.filter((f) => f.type === 'folder').length;
 
-  // ── Breadcrumb path ─────────────────────────────────────────────
-  const breadcrumbPath = getBreadcrumbPath();
-
   // ── Toggle sort ─────────────────────────────────────────────────
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -431,6 +474,15 @@ export default function GlobalDrivePage() {
 
   return (
     <div className="space-y-6">
+      {/* Hidden file input for real uploads */}
+      <input
+        ref={uploadFileRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={handleFileInputChange}
+      />
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -439,7 +491,7 @@ export default function GlobalDrivePage() {
             Drive
           </h1>
           <p className="text-muted-foreground mt-1">
-            {totalFolders} dossiers, {totalFiles} fichiers
+            {loading ? 'Chargement...' : `${totalFolders} dossier${totalFolders !== 1 ? 's' : ''}, ${totalFiles} fichier${totalFiles !== 1 ? 's' : ''}`}
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -447,7 +499,7 @@ export default function GlobalDrivePage() {
             <PlusIcon className="size-4" />
             Nouveau dossier
           </Button>
-          <Button onClick={() => setShowUpload(true)} className="gap-2">
+          <Button onClick={() => uploadFileRef.current?.click()} className="gap-2">
             <UploadIcon className="size-4" />
             Importer
           </Button>
@@ -472,7 +524,7 @@ export default function GlobalDrivePage() {
                       href="#"
                       onClick={(e) => {
                         e.preventDefault();
-                        navigateToFolder(segment.id);
+                        navigateToBreadcrumb(idx);
                       }}
                     >
                       {segment.name}
@@ -585,24 +637,44 @@ export default function GlobalDrivePage() {
         </div>
       )}
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <Loader2Icon className="size-10 text-muted-foreground/60 mb-4 animate-spin" />
+          <p className="text-sm text-muted-foreground">Chargement des fichiers...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {!loading && error && (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <FolderIcon className="size-16 text-destructive/40 mb-4" />
+          <h3 className="text-lg font-medium text-destructive">Erreur de chargement</h3>
+          <p className="text-sm text-muted-foreground mt-1">{error}</p>
+          <Button variant="outline" className="mt-4" onClick={() => fetchNodes(currentFolderId)}>
+            Réessayer
+          </Button>
+        </div>
+      )}
+
       {/* Empty State */}
-      {currentFiles.length === 0 && (
+      {!loading && !error && currentFiles.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <FolderIcon className="size-16 text-muted-foreground/40 mb-4" />
           <h3 className="text-lg font-medium">
-            {searchQuery ? 'Aucun r\u00e9sultat' : 'Dossier vide'}
+            {searchQuery ? 'Aucun résultat' : 'Dossier vide'}
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
             {searchQuery
-              ? `Aucun fichier ne correspond \u00e0 "${searchQuery}"`
-              : 'Cr\u00e9ez un dossier ou importez des fichiers pour commencer.'
+              ? `Aucun fichier ne correspond à "${searchQuery}"`
+              : 'Créez un dossier ou importez des fichiers pour commencer.'
             }
           </p>
         </div>
       )}
 
       {/* Grid View */}
-      {viewMode === 'grid' && currentFiles.length > 0 && (
+      {!loading && !error && viewMode === 'grid' && currentFiles.length > 0 && (
         <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {currentFiles.map((item) => (
             <ContextMenu key={item.id}>
@@ -654,7 +726,7 @@ export default function GlobalDrivePage() {
               </ContextMenuTrigger>
               <ContextMenuContent>
                 {item.type === 'folder' ? (
-                  <ContextMenuItem onClick={() => navigateToFolder(item.id)}>
+                  <ContextMenuItem onClick={() => navigateToFolder(item.id, item.name)}>
                     <FolderIcon className="size-4 mr-2" />
                     Ouvrir
                   </ContextMenuItem>
@@ -669,7 +741,6 @@ export default function GlobalDrivePage() {
                   Télécharger
                 </ContextMenuItem>
                 <ContextMenuItem onClick={() => {
-                  const node: DriveNode = { id: item.id, parent_id: item.parentId, name: item.name, node_type: item.type === 'folder' ? 'folder' : 'file', target_id: null, owner_id: '', size: null, mime_type: null, created_at: item.modified, updated_at: item.modified, deleted_at: null };
                   const url = `${window.location.origin}/global-drive?node=${item.id}`;
                   navigator.clipboard.writeText(url);
                   toast.success('Lien copié');
@@ -702,7 +773,7 @@ export default function GlobalDrivePage() {
       )}
 
       {/* List View */}
-      {viewMode === 'list' && currentFiles.length > 0 && (
+      {!loading && !error && viewMode === 'list' && currentFiles.length > 0 && (
         <Card>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -801,7 +872,7 @@ export default function GlobalDrivePage() {
                       </ContextMenuTrigger>
                       <ContextMenuContent>
                         {item.type === 'folder' ? (
-                          <ContextMenuItem onClick={() => navigateToFolder(item.id)}>
+                          <ContextMenuItem onClick={() => navigateToFolder(item.id, item.name)}>
                             <FolderIcon className="size-4 mr-2" />
                             Ouvrir
                           </ContextMenuItem>
@@ -869,40 +940,6 @@ export default function GlobalDrivePage() {
             </Button>
             <Button onClick={createFolder} disabled={!newFolderName.trim()}>
               Cr\u00e9er
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Upload Dialog ──────────────────────────────────────── */}
-      <Dialog open={showUpload} onOpenChange={setShowUpload}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Importer un fichier</DialogTitle>
-            <DialogDescription>
-              S\u00e9lectionnez un fichier \u00e0 importer dans l&apos;emplacement actuel.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <div
-              className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-10 text-center cursor-pointer hover:border-primary/50 transition-colors"
-              onClick={simulateUpload}
-            >
-              <UploadIcon className="size-10 text-muted-foreground" />
-              <div>
-                <p className="font-medium">Cliquez pour importer</p>
-                <p className="text-sm text-muted-foreground">
-                  ou glissez-d\u00e9posez vos fichiers ici
-                </p>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                PDF, DOCX, XLSX, PNG, JPG, MP4, etc. (max 100 Mo)
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowUpload(false)}>
-              Fermer
             </Button>
           </DialogFooter>
         </DialogContent>

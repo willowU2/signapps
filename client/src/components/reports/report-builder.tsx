@@ -95,7 +95,7 @@ const OPERATORS = [
 async function fetchReportData(source: DataSource, columns: string[]): Promise<ReportData[]> {
   switch (source) {
     case "users": {
-      const res = await usersApi.list(1, 50);
+      const res = await usersApi.list(0, 50);
       const rud = res.data as any;
       const users = rud?.users ?? (Array.isArray(rud) ? rud : []);
       return users.map((u: any) => {

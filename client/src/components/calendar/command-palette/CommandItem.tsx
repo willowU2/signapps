@@ -9,7 +9,15 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import type { Command } from '@/lib/scheduling/types/scheduling';
+interface Command {
+  id: string;
+  label: string;
+  category: string;
+  action: () => void;
+  shortcut?: string;
+  icon?: string;
+  description?: string;
+}
 
 // ============================================================================
 // Types

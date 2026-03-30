@@ -219,6 +219,7 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/users/me/export/download", get(handlers::data_export::download_export))
         // Activities
         .route("/api/v1/activities", get(handlers::activities::list_activities))
+        .route("/api/v1/activity/cross-module", get(handlers::activities::cross_module_activity))
         // Audit logs — SYNC-AUDIT-ROUTES
         .route(
             "/api/v1/audit-logs",

@@ -9,6 +9,7 @@ use signapps_common::bootstrap::{env_or, init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin,
 };
+use signapps_common::pg_events::PgEventBus;
 use signapps_common::{AiIndexerClient, AuthState, JwtConfig};
 use signapps_db::DatabasePool;
 use tower::ServiceBuilder;
@@ -32,6 +33,7 @@ pub struct AppState {
     pub jwt_config: JwtConfig,
     pub indexer: AiIndexerClient,
     pub cache: signapps_cache::CacheService,
+    pub event_bus: PgEventBus,
 }
 
 impl AuthState for AppState {
@@ -92,6 +94,9 @@ async fn main() -> anyhow::Result<()> {
         refresh_expiration: 604800,
     };
 
+    // Create event bus
+    let event_bus = PgEventBus::new(pool.inner().clone(), "signapps-storage".to_string());
+
     // Create application state
     let state = AppState {
         pool,
@@ -99,6 +104,7 @@ async fn main() -> anyhow::Result<()> {
         jwt_config,
         indexer: AiIndexerClient::from_env(),
         cache: signapps_cache::CacheService::default_config(),
+        event_bus,
     };
 
     // Start background jobs

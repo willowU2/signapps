@@ -20,6 +20,7 @@ use futures_util::{stream::StreamExt, SinkExt};
 use serde::{Deserialize, Serialize};
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::auth_middleware;
+use signapps_common::pg_events::{NewEvent, PgEventBus};
 use signapps_common::{AuthState, Claims, JwtConfig};
 use std::sync::Arc;
 use tokio::sync::broadcast;
@@ -158,6 +159,7 @@ pub struct AppState {
     pub read_status: Arc<DashMap<String, ReadStatus>>, // "{channel_id}:{user_id}" -> status
     pub broadcast_tx: broadcast::Sender<String>,
     pub jwt_config: JwtConfig,
+    pub event_bus: PgEventBus,
 }
 
 impl AuthState for AppState {
@@ -167,7 +169,7 @@ impl AuthState for AppState {
 }
 
 impl AppState {
-    fn new(jwt_config: JwtConfig) -> Self {
+    fn new(jwt_config: JwtConfig, event_bus: PgEventBus) -> Self {
         let (tx, _) = broadcast::channel::<String>(1024);
         Self {
             channels: Arc::new(DashMap::new()),
@@ -178,6 +180,7 @@ impl AppState {
             read_status: Arc::new(DashMap::new()),
             broadcast_tx: tx,
             jwt_config,
+            event_bus,
         }
     }
 }
@@ -361,6 +364,17 @@ async fn send_message(
     );
 
     tracing::info!(id = %msg.id, channel = %channel_id, "Message sent");
+    let _ = state
+        .event_bus
+        .publish(NewEvent {
+            event_type: "chat.message.created".into(),
+            aggregate_id: Some(msg.id),
+            payload: serde_json::json!({
+                "channel_id": channel_id,
+                "user_id": claims.sub,
+            }),
+        })
+        .await;
     (
         StatusCode::CREATED,
         Json(serde_json::to_value(&msg).unwrap_or_default()),
@@ -1008,8 +1022,15 @@ async fn main() -> anyhow::Result<()> {
     let config = ServiceConfig::from_env("signapps-chat", 3020);
     config.log_startup();
 
+    let pool = signapps_db::create_pool(&config.database_url)
+        .await
+        .expect("Failed to connect to Postgres");
+    tracing::info!("Database pool created for event publishing");
+
+    let event_bus = PgEventBus::new(pool.inner().clone(), "signapps-chat".to_string());
+
     let jwt_config = config.jwt_config();
-    let state = AppState::new(jwt_config);
+    let state = AppState::new(jwt_config, event_bus);
     tracing::info!("In-memory store initialized (skeleton -- no DB yet)");
 
     let app = create_router(state);

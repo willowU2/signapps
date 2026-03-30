@@ -1,11 +1,11 @@
+use crate::models::MailRule;
 use crate::AppState;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
 use serde::{Deserialize, Serialize};
 use signapps_common::Claims;
-use std::sync::Arc;
-use tokio::sync::RwLock;
 use uuid::Uuid;
 
+// Re-export condition/action types for in-process rule evaluation (still used by other modules)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RuleCondition {
     pub field: String,    // "from" | "subject" | "body"
@@ -28,101 +28,60 @@ pub enum RuleAction {
     MarkRead,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct MailRule {
-    pub id: Uuid,
-    pub account_id: Uuid,
-    pub name: String,
-    pub conditions: Vec<RuleCondition>,
-    pub actions: Vec<RuleAction>,
-    pub enabled: bool,
-}
-
-#[derive(Clone)]
-pub struct RuleStore {
-    rules: Arc<RwLock<Vec<MailRule>>>,
-}
-
-impl Default for RuleStore {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl RuleStore {
-    pub fn new() -> Self {
-        Self {
-            rules: Arc::new(RwLock::new(Vec::new())),
-        }
-    }
-
-    pub async fn get_all_rules(&self, account_id: Uuid) -> Vec<MailRule> {
-        self.rules
-            .read()
-            .await
-            .iter()
-            .filter(|r| r.account_id == account_id)
-            .cloned()
-            .collect()
-    }
-
-    pub async fn get_rule(&self, rule_id: Uuid) -> Option<MailRule> {
-        self.rules
-            .read()
-            .await
-            .iter()
-            .find(|r| r.id == rule_id)
-            .cloned()
-    }
-
-    pub async fn create_rule(&self, rule: MailRule) -> MailRule {
-        self.rules.write().await.push(rule.clone());
-        rule
-    }
-
-    pub async fn update_rule(&self, rule_id: Uuid, updated: MailRule) -> Option<MailRule> {
-        let mut rules = self.rules.write().await;
-        if let Some(pos) = rules.iter().position(|r| r.id == rule_id) {
-            rules[pos] = updated.clone();
-            Some(updated)
-        } else {
-            None
-        }
-    }
-
-    pub async fn delete_rule(&self, rule_id: Uuid) -> bool {
-        let mut rules = self.rules.write().await;
-        if let Some(pos) = rules.iter().position(|r| r.id == rule_id) {
-            rules.remove(pos);
-            true
-        } else {
-            false
-        }
-    }
-}
+// -------------------------------------------------------------------------
+// Bug 9: RuleStore (in-memory) removed. All CRUD now goes to mail.rules.
+// Schema (from migration 026_mail_schema.sql):
+//   id UUID, account_id UUID, name VARCHAR(255), priority INT,
+//   enabled BOOLEAN, conditions JSONB, actions JSONB,
+//   stop_processing BOOLEAN, created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ
+// -------------------------------------------------------------------------
 
 #[derive(Debug, Deserialize)]
 pub struct CreateRuleRequest {
     pub name: String,
-    pub conditions: Vec<RuleCondition>,
-    pub actions: Vec<RuleAction>,
+    pub conditions: serde_json::Value,
+    pub actions: serde_json::Value,
     pub enabled: Option<bool>,
+    pub priority: Option<i32>,
+    pub stop_processing: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateRuleRequest {
     pub name: Option<String>,
-    pub conditions: Option<Vec<RuleCondition>>,
-    pub actions: Option<Vec<RuleAction>>,
+    pub conditions: Option<serde_json::Value>,
+    pub actions: Option<serde_json::Value>,
     pub enabled: Option<bool>,
+    pub priority: Option<i32>,
+    pub stop_processing: Option<bool>,
 }
 
 pub async fn list_rules(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> impl IntoResponse {
-    let rules = state.rules.get_all_rules(claims.sub).await;
-    Json(rules).into_response()
+    // Fetch the account for this user (any active account) — rules are scoped to account_id
+    // which is linked to a user. We list all rules where the account belongs to the user.
+    let rules = sqlx::query_as::<_, MailRule>(
+        r#"
+        SELECT r.*
+        FROM mail.rules r
+        JOIN mail.accounts a ON a.id = r.account_id
+        WHERE a.user_id = $1
+        ORDER BY r.priority ASC, r.created_at ASC
+        "#,
+    )
+    .bind(claims.sub)
+    .fetch_all(&state.pool)
+    .await;
+
+    match rules {
+        Ok(r) => Json(r).into_response(),
+        Err(e) => {
+            tracing::error!("Failed to list rules: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response()
+        },
+    }
 }
 
 pub async fn get_rule(
@@ -130,9 +89,26 @@ pub async fn get_rule(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(rule_id): axum::extract::Path<Uuid>,
 ) -> impl IntoResponse {
-    match state.rules.get_rule(rule_id).await {
-        Some(rule) if rule.account_id == claims.sub => Json(rule).into_response(),
-        _ => (StatusCode::NOT_FOUND, "Rule not found").into_response(),
+    let rule = sqlx::query_as::<_, MailRule>(
+        r#"
+        SELECT r.*
+        FROM mail.rules r
+        JOIN mail.accounts a ON a.id = r.account_id
+        WHERE r.id = $1 AND a.user_id = $2
+        "#,
+    )
+    .bind(rule_id)
+    .bind(claims.sub)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match rule {
+        Ok(Some(r)) => Json(r).into_response(),
+        Ok(None) => (StatusCode::NOT_FOUND, "Rule not found").into_response(),
+        Err(e) => {
+            tracing::error!("Failed to get rule {}: {:?}", rule_id, e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response()
+        },
     }
 }
 
@@ -141,17 +117,47 @@ pub async fn create_rule(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateRuleRequest>,
 ) -> impl IntoResponse {
-    let rule = MailRule {
-        id: Uuid::new_v4(),
-        account_id: claims.sub,
-        name: payload.name,
-        conditions: payload.conditions,
-        actions: payload.actions,
-        enabled: payload.enabled.unwrap_or(true),
+    // Resolve account_id from user — use the first active account
+    let account_id: Option<Uuid> = sqlx::query_scalar(
+        "SELECT id FROM mail.accounts WHERE user_id = $1 AND status = 'active' ORDER BY created_at LIMIT 1",
+    )
+    .bind(claims.sub)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    let Some(account_id) = account_id else {
+        return (
+            StatusCode::BAD_REQUEST,
+            "No active mail account found for user",
+        )
+            .into_response();
     };
 
-    let created = state.rules.create_rule(rule).await;
-    (StatusCode::CREATED, Json(created)).into_response()
+    let rule = sqlx::query_as::<_, MailRule>(
+        r#"
+        INSERT INTO mail.rules (account_id, name, priority, enabled, conditions, actions, stop_processing)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING *
+        "#,
+    )
+    .bind(account_id)
+    .bind(&payload.name)
+    .bind(payload.priority.unwrap_or(0))
+    .bind(payload.enabled.unwrap_or(true))
+    .bind(&payload.conditions)
+    .bind(&payload.actions)
+    .bind(payload.stop_processing.unwrap_or(false))
+    .fetch_one(&state.pool)
+    .await;
+
+    match rule {
+        Ok(r) => (StatusCode::CREATED, Json(r)).into_response(),
+        Err(e) => {
+            tracing::error!("Failed to create rule: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to create rule").into_response()
+        },
+    }
 }
 
 pub async fn update_rule(
@@ -160,26 +166,50 @@ pub async fn update_rule(
     axum::extract::Path(rule_id): axum::extract::Path<Uuid>,
     Json(payload): Json<UpdateRuleRequest>,
 ) -> impl IntoResponse {
-    if let Some(current) = state.rules.get_rule(rule_id).await {
-        if current.account_id != claims.sub {
-            return (StatusCode::FORBIDDEN, "Not authorized").into_response();
-        }
+    // Verify ownership
+    let owned: Option<(Uuid,)> = sqlx::query_as(
+        "SELECT r.id FROM mail.rules r JOIN mail.accounts a ON a.id = r.account_id WHERE r.id = $1 AND a.user_id = $2",
+    )
+    .bind(rule_id)
+    .bind(claims.sub)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
 
-        let updated = MailRule {
-            id: current.id,
-            account_id: current.account_id,
-            name: payload.name.unwrap_or(current.name),
-            conditions: payload.conditions.unwrap_or(current.conditions),
-            actions: payload.actions.unwrap_or(current.actions),
-            enabled: payload.enabled.unwrap_or(current.enabled),
-        };
+    if owned.is_none() {
+        return (StatusCode::NOT_FOUND, "Rule not found").into_response();
+    }
 
-        match state.rules.update_rule(rule_id, updated.clone()).await {
-            Some(rule) => (StatusCode::OK, Json(rule)).into_response(),
-            None => (StatusCode::INTERNAL_SERVER_ERROR, "Update failed").into_response(),
-        }
-    } else {
-        (StatusCode::NOT_FOUND, "Rule not found").into_response()
+    let rule = sqlx::query_as::<_, MailRule>(
+        r#"
+        UPDATE mail.rules SET
+            name             = COALESCE($1, name),
+            conditions       = COALESCE($2, conditions),
+            actions          = COALESCE($3, actions),
+            enabled          = COALESCE($4, enabled),
+            priority         = COALESCE($5, priority),
+            stop_processing  = COALESCE($6, stop_processing),
+            updated_at       = NOW()
+        WHERE id = $7
+        RETURNING *
+        "#,
+    )
+    .bind(&payload.name)
+    .bind(&payload.conditions)
+    .bind(&payload.actions)
+    .bind(payload.enabled)
+    .bind(payload.priority)
+    .bind(payload.stop_processing)
+    .bind(rule_id)
+    .fetch_one(&state.pool)
+    .await;
+
+    match rule {
+        Ok(r) => (StatusCode::OK, Json(r)).into_response(),
+        Err(e) => {
+            tracing::error!("Failed to update rule {}: {:?}", rule_id, e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to update rule").into_response()
+        },
     }
 }
 
@@ -188,17 +218,25 @@ pub async fn delete_rule(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(rule_id): axum::extract::Path<Uuid>,
 ) -> impl IntoResponse {
-    if let Some(rule) = state.rules.get_rule(rule_id).await {
-        if rule.account_id != claims.sub {
-            return (StatusCode::FORBIDDEN, "Not authorized").into_response();
-        }
+    // Verify ownership and delete in one query
+    let result = sqlx::query(
+        r#"
+        DELETE FROM mail.rules
+        WHERE id = $1
+          AND account_id IN (SELECT id FROM mail.accounts WHERE user_id = $2)
+        "#,
+    )
+    .bind(rule_id)
+    .bind(claims.sub)
+    .execute(&state.pool)
+    .await;
 
-        if state.rules.delete_rule(rule_id).await {
-            StatusCode::NO_CONTENT.into_response()
-        } else {
-            (StatusCode::INTERNAL_SERVER_ERROR, "Delete failed").into_response()
-        }
-    } else {
-        (StatusCode::NOT_FOUND, "Rule not found").into_response()
+    match result {
+        Ok(r) if r.rows_affected() > 0 => StatusCode::NO_CONTENT.into_response(),
+        Ok(_) => (StatusCode::NOT_FOUND, "Rule not found").into_response(),
+        Err(e) => {
+            tracing::error!("Failed to delete rule {}: {:?}", rule_id, e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete rule").into_response()
+        },
     }
 }

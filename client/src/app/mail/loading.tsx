@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function MailLoading() {
   return (
-    <div className="flex h-screen bg-[#f2f6fc] dark:bg-[#111111]">
+    <div className="flex h-screen bg-muted dark:bg-[#111111]">
       {/* Sidebar skeleton */}
       <div className="w-[256px] shrink-0 flex flex-col gap-3 p-4">
         <Skeleton className="h-14 w-36 rounded-2xl" />

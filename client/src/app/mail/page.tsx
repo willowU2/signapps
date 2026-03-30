@@ -18,6 +18,12 @@ import {
     Sparkles,
     Search,
     X,
+    PanelLeftClose,
+    PanelLeftOpen,
+    Receipt,
+    Newspaper,
+    User,
+    FolderKanban,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -31,6 +37,7 @@ import { MailNav } from "@/components/mail/mail-nav"
 import { ComposeAiDialog } from "@/components/mail/compose-ai-dialog"
 import { ComposeRichDialog } from "@/components/mail/compose-rich-dialog"
 import { MailAddons } from "@/components/mail/mail-addons"
+import { AccountSwitcher } from "@/components/mail/account-switcher"
 
 import { WorkspaceHeader } from "@/components/mail/workspace-header"
 import type { Mail } from "@/lib/data/mail"
@@ -43,9 +50,46 @@ import {
     useMailSelectionActions,
     useMailDataActions,
 } from "@/lib/store/mail-store"
-import { mailApi, accountApi, searchApi, labelApi, type MailLabel } from "@/lib/api-mail"
+import { mailApi, accountApi, searchApi, labelApi, statsApi, folderApi, type MailLabel, type MailStats } from "@/lib/api-mail"
 import { cn } from "@/lib/utils"
 import { WorkspaceShell } from "@/components/layout/workspace-shell"
+
+// ── Density types ─────────────────────────────────────────────────────────────
+type Density = "compact" | "default" | "spacious"
+
+function getDensityClass(density: Density): string {
+    switch (density) {
+        case "compact": return "mail-density-compact"
+        case "spacious": return "mail-density-spacious"
+        default: return "mail-density-default"
+    }
+}
+
+// ── Advanced search parser ────────────────────────────────────────────────────
+interface ParsedSearch {
+    q: string
+    from?: string
+    to?: string
+    has_attachments?: boolean
+    is_unread?: boolean
+    after?: string
+}
+
+function parseSearchQuery(raw: string): ParsedSearch {
+    const result: ParsedSearch = { q: "" }
+    const tokens: string[] = []
+    const parts = raw.split(/\s+/)
+    for (const part of parts) {
+        if (part.startsWith("from:")) result.from = part.slice(5)
+        else if (part.startsWith("to:")) result.to = part.slice(3)
+        else if (part === "has:attachment" || part === "has:attachments") result.has_attachments = true
+        else if (part === "is:unread") result.is_unread = true
+        else if (part.startsWith("after:")) result.after = part.slice(6)
+        else tokens.push(part)
+    }
+    result.q = tokens.join(" ").trim()
+    return result
+}
 
 export default function MailPage() {
     usePageTitle('Mail')
@@ -63,39 +107,175 @@ export default function MailPage() {
     const [isSearching, setIsSearching] = useState(false)
     const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const mailContainerRef = useRef<HTMLDivElement>(null)
+    const searchInputRef = useRef<HTMLInputElement>(null)
     const [, startRefreshTransition] = useTransition()
 
     const [activeAccountId, setActiveAccountId] = useState<string | undefined>(undefined)
+    const [accounts, setAccounts] = useState<{ id: string; name: string; email: string; icon: string; provider: "gmail" | "outlook" | "custom" }[]>([])
     const [loadError, setLoadError] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 
     const [labels, setLabels] = useState<MailLabel[]>([])
     const [labelsLoading, setLabelsLoading] = useState(false)
 
+    // Idea 13: Collapsible sidebar
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+    // Idea 32: Smart folder active filter
+    const [smartFolderFilter, setSmartFolderFilter] = useState<string | null>(null)
+
+    // Idea 16: Density preference
+    const [density, setDensity] = useState<Density>(() => {
+        if (typeof window !== "undefined") {
+            return (localStorage.getItem("mail-density") as Density) || "default"
+        }
+        return "default"
+    })
+
+    // Idea 17: Active filter chips
+    const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set())
+
+    // Bug 3: Active folder state
+    const [activeFolder, setActiveFolder] = useState<'inbox' | 'sent' | 'drafts' | 'starred' | 'snoozed'>('inbox')
+
+    // Bug 4: Dynamic counts from API
+    const [mailStats, setMailStats] = useState<MailStats | null>(null)
+
     const mailList = searchResults !== null ? searchResults : storeMailList
+
+    // Idea 17: Apply filter chips to visible mail list
+    // Idea 32: Apply smart folder filter
+    const filteredMailList = React.useMemo(() => {
+        let list = mailList
+        // Smart folder keyword filter (Idea 32)
+        if (smartFolderFilter) {
+            list = list.filter(mail => {
+                const subj = mail.subject.toLowerCase()
+                const sender = mail.email.toLowerCase()
+                if (smartFolderFilter === 'factures') {
+                    return /facture|invoice|paiement|payment|reçu|receipt/.test(subj)
+                }
+                if (smartFolderFilter === 'newsletters') {
+                    return /newsletter|news@|digest@|weekly|noreply/.test(sender)
+                }
+                if (smartFolderFilter === 'projets') {
+                    return /projet|project|sprint|milestone|deadline/.test(subj)
+                }
+                if (smartFolderFilter === 'personnel') {
+                    const isBusiness = /facture|invoice|paiement|payment|reçu|receipt|newsletter|news@|digest@|weekly|noreply|projet|project|sprint|milestone|deadline/.test(subj + sender)
+                    return !isBusiness
+                }
+                return true
+            })
+        }
+        if (activeFilters.size === 0) return list
+        return list.filter(mail => {
+            if (activeFilters.has("unread") && mail.read) return false
+            if (activeFilters.has("attachment") && !(mail as any).attachments?.length) return false
+            if (activeFilters.has("starred") && !(mail as any).is_starred) return false
+            if (activeFilters.has("today")) {
+                const today = new Date()
+                const mailDate = new Date(mail.date)
+                if (
+                    mailDate.getDate() !== today.getDate() ||
+                    mailDate.getMonth() !== today.getMonth() ||
+                    mailDate.getFullYear() !== today.getFullYear()
+                ) return false
+            }
+            if (activeFilters.has("important") && !(mail as any).is_important) return false
+            return true
+        })
+    }, [mailList, activeFilters, smartFolderFilter])
+
+    const toggleFilter = (key: string) => {
+        setActiveFilters(prev => {
+            const next = new Set(prev)
+            if (next.has(key)) next.delete(key)
+            else next.add(key)
+            return next
+        })
+    }
+
+    // Idea 16: Persist density
+    const setDensityPref = (d: Density) => {
+        setDensity(d)
+        if (typeof window !== "undefined") localStorage.setItem("mail-density", d)
+    }
+
+    // Bug 3: Folder-aware email loader
+    const loadFolder = useCallback(async (folder: 'inbox' | 'sent' | 'drafts' | 'starred' | 'snoozed') => {
+        setIsLoading(true)
+        setLoadError(null)
+        try {
+            let query: Parameters<typeof mailApi.list>[0] = { limit: 50 }
+            if (folder === 'inbox') query.folder_type = 'inbox'
+            else if (folder === 'sent') query = { is_starred: undefined, limit: 50, folder_type: 'sent' }
+            else if (folder === 'drafts') query.folder_type = 'drafts'
+            else if (folder === 'starred') query.is_starred = true
+            else if (folder === 'snoozed') query.folder_type = 'inbox' // snoozed emails stay in inbox
+
+            const emails = await mailApi.list(query)
+            const uiMails: Mail[] = emails.map(email => ({
+                id: email.id,
+                name: email.sender_name || email.sender.split('@')[0],
+                email: email.sender,
+                subject: email.subject || '(Sans objet)',
+                text: email.body_text || email.snippet || '',
+                body_html: email.body_html,
+                date: email.received_at || email.created_at || new Date().toISOString(),
+                read: email.is_read ?? false,
+                labels: email.labels || [],
+                folder: (folder === 'starred' || folder === 'snoozed' ? 'inbox' : folder) as Mail['folder'],
+                account_id: email.account_id,
+                message_id: email.message_id,
+            }))
+            setMailList(uiMails)
+        } catch (err) {
+            console.debug('Failed to load folder:', err)
+            setLoadError("Le service mail est inaccessible. Vérifiez que le serveur est démarré.")
+            setMailList([])
+        } finally {
+            setIsLoading(false)
+        }
+    }, [setMailList])
+
+    // Bug 3: Handle folder click
+    const handleFolderChange = useCallback((folder: 'inbox' | 'sent' | 'drafts' | 'starred' | 'snoozed') => {
+        setActiveFolder(folder)
+        clearSelection()
+        setSearchQuery("")
+        setSearchResults(null)
+        setActiveFilters(new Set())
+        setSmartFolderFilter(null)
+        loadFolder(folder)
+    }, [loadFolder, clearSelection])
 
     const handleRefresh = useCallback(() => {
         startRefreshTransition(async () => {
             try {
-                const emails = await mailApi.list({ folder_type: 'inbox', limit: 50 })
+                const emails = await mailApi.list({ folder_type: activeFolder === 'starred' || activeFolder === 'snoozed' ? 'inbox' : activeFolder, limit: 50 })
                 const uiMails: Mail[] = emails.map(email => ({
                     id: email.id,
                     name: email.sender_name || email.sender.split('@')[0],
                     email: email.sender,
                     subject: email.subject || '(Sans objet)',
                     text: email.body_text || email.snippet || '',
+                    body_html: email.body_html,
                     date: email.received_at || email.created_at || new Date().toISOString(),
                     read: email.is_read ?? false,
                     labels: email.labels || [],
-                    folder: 'inbox' as const
+                    folder: 'inbox' as const,
+                    account_id: email.account_id,
+                    message_id: email.message_id,
                 }))
                 setMailList(uiMails)
             } catch { /* silent on pull-to-refresh failure */ }
         })
-    }, [setMailList, startRefreshTransition])
+    }, [setMailList, startRefreshTransition, activeFolder])
 
     usePullToRefresh({ onRefresh: handleRefresh, scrollContainerRef: mailContainerRef })
 
+    // Idea 30: Advanced search syntax with parser
     const handleSearch = useCallback((q: string) => {
         setSearchQuery(q)
         if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
@@ -106,7 +286,16 @@ export default function MailPage() {
         searchDebounceRef.current = setTimeout(async () => {
             setIsSearching(true)
             try {
-                const emails = await searchApi.search({ q: q.trim(), limit: 50 })
+                const parsed = parseSearchQuery(q.trim())
+                // Build API params from parsed tokens
+                const params: Parameters<typeof searchApi.search>[0] = { q: parsed.q || q.trim(), limit: 50 }
+                if (parsed.from) (params as any).from = parsed.from
+                if (parsed.to) (params as any).to = parsed.to
+                if (parsed.has_attachments) (params as any).has_attachments = true
+                if (parsed.is_unread !== undefined) (params as any).is_read = false
+                if (parsed.after) (params as any).after = parsed.after
+
+                const emails = await searchApi.search(params)
                 const uiMails: Mail[] = emails.map(email => ({
                     id: email.id,
                     name: email.sender_name || email.sender.split('@')[0],
@@ -147,21 +336,22 @@ export default function MailPage() {
         setLoadError(null)
         setIsLoading(true)
         try {
-            // Fetch accounts
-            const accounts = await accountApi.list()
-            const uiAccounts = accounts.map(a => ({
+            const rawAccounts = await accountApi.list()
+            const uiAccounts = rawAccounts.map(a => ({
                 id: a.id,
                 name: a.email_address.split('@')[0],
                 email: a.email_address,
                 icon: a.provider,
-                provider: a.provider
+                provider: a.provider as "gmail" | "outlook" | "custom"
             }))
+            setAccounts(uiAccounts)
             if (uiAccounts.length > 0) {
                 setActiveAccountId(uiAccounts[0].id)
             }
 
-            // Fetch emails from inbox — initial batch; MailList handles
-            // virtual pagination via IntersectionObserver infinite scroll.
+            // Bug 4: Fetch stats for dynamic counts
+            statsApi.get().then(stats => setMailStats(stats)).catch(() => {/* ignore */})
+
             const emails = await mailApi.list({ folder_type: 'inbox', limit: 50 })
             const uiMails: Mail[] = emails.map(email => ({
                 id: email.id,
@@ -169,10 +359,13 @@ export default function MailPage() {
                 email: email.sender,
                 subject: email.subject || '(Sans objet)',
                 text: email.body_text || email.snippet || '',
+                body_html: email.body_html,
                 date: email.received_at || email.created_at || new Date().toISOString(),
                 read: email.is_read ?? false,
                 labels: email.labels || [],
-                folder: 'inbox' as const
+                folder: 'inbox' as const,
+                account_id: email.account_id,
+                message_id: email.message_id,
             }))
             setMailList(uiMails)
         } catch (err) {
@@ -214,11 +407,29 @@ export default function MailPage() {
         }
     }
 
+    const refreshStats = useCallback(() => {
+        statsApi.get().then(stats => setMailStats(stats)).catch(() => {/* ignore */})
+    }, [])
+
     const handleArchive = async (id: string) => {
         try {
             await mailApi.update(id, { is_archived: true })
             removeMail(id)
-            toast.success("Conversation archivée.")
+            toast.success("Conversation archivée.", {
+                action: {
+                    label: 'Annuler',
+                    onClick: async () => {
+                        try {
+                            await mailApi.update(id, { is_archived: false })
+                            loadData()
+                            refreshStats()
+                        } catch {
+                            toast.error("Impossible d'annuler l'archivage.")
+                        }
+                    },
+                },
+            })
+            refreshStats()
         } catch {
             toast.error("Impossible d'archiver la conversation.")
         }
@@ -228,206 +439,496 @@ export default function MailPage() {
         try {
             await mailApi.update(id, { is_deleted: true })
             removeMail(id)
-            toast.success("Conversation déplacée vers la corbeille.")
+            toast.success("Conversation déplacée vers la corbeille.", {
+                action: {
+                    label: 'Annuler',
+                    onClick: async () => {
+                        try {
+                            await mailApi.update(id, { is_deleted: false })
+                            loadData()
+                            refreshStats()
+                        } catch {
+                            toast.error("Impossible de restaurer la conversation.")
+                        }
+                    },
+                },
+            })
+            refreshStats()
         } catch {
             toast.error("Impossible de supprimer la conversation.")
         }
     }
 
+    // Idea 23: Keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Skip if focus is in an input/textarea/contenteditable
+            const target = e.target as HTMLElement
+            if (
+                target.tagName === "INPUT" ||
+                target.tagName === "TEXTAREA" ||
+                target.isContentEditable
+            ) return
+
+            switch (e.key) {
+                case "c":
+                    e.preventDefault()
+                    setComposeRichOpen(true)
+                    break
+                case "r":
+                    if (selectedMail) {
+                        e.preventDefault()
+                        // Dispatch reply event to mail display
+                        window.dispatchEvent(new CustomEvent("mail:shortcut", { detail: { action: "reply" } }))
+                    }
+                    break
+                case "a":
+                    if (selectedMail) {
+                        e.preventDefault()
+                        window.dispatchEvent(new CustomEvent("mail:shortcut", { detail: { action: "replyAll" } }))
+                    }
+                    break
+                case "f":
+                    if (selectedMail) {
+                        e.preventDefault()
+                        window.dispatchEvent(new CustomEvent("mail:shortcut", { detail: { action: "forward" } }))
+                    }
+                    break
+                case "e":
+                    if (selectedId) {
+                        e.preventDefault()
+                        handleArchive(selectedId)
+                    }
+                    break
+                case "#":
+                case "Delete":
+                    if (selectedId) {
+                        e.preventDefault()
+                        handleDelete(selectedId)
+                    }
+                    break
+                case "j": {
+                    e.preventDefault()
+                    const idx = filteredMailList.findIndex(m => m.id === selectedId)
+                    if (idx < filteredMailList.length - 1) setSelectedId(filteredMailList[idx + 1].id)
+                    break
+                }
+                case "k": {
+                    e.preventDefault()
+                    const idx = filteredMailList.findIndex(m => m.id === selectedId)
+                    if (idx > 0) setSelectedId(filteredMailList[idx - 1].id)
+                    break
+                }
+                case "/":
+                    e.preventDefault()
+                    searchInputRef.current?.focus()
+                    break
+                case "Escape":
+                    if (selectedId) {
+                        e.preventDefault()
+                        clearSelection()
+                    }
+                    break
+            }
+        }
+        window.addEventListener("keydown", handleKeyDown)
+        return () => window.removeEventListener("keydown", handleKeyDown)
+    }, [selectedId, selectedMail, filteredMailList, setSelectedId, clearSelection, setComposeRichOpen])
+
+    // Idea 15: Split-pane — is wide screen?
+    const [isWide, setIsWide] = useState(false)
+    useEffect(() => {
+        const mq = window.matchMedia("(min-width: 1024px)")
+        const update = () => setIsWide(mq.matches)
+        update()
+        mq.addEventListener("change", update)
+        return () => mq.removeEventListener("change", update)
+    }, [])
+
+    const navLinks = [
+        {
+            title: "Boîte de réception",
+            label: mailStats ? String(mailStats.unread_count) : "…",
+            icon: Inbox,
+            variant: activeFolder === 'inbox' ? "default" : "ghost",
+            href: "/mail",
+            onClick: () => handleFolderChange('inbox'),
+        },
+        {
+            title: "Messages suivis",
+            label: mailStats ? String(mailStats.starred_count) : "",
+            icon: Star,
+            variant: activeFolder === 'starred' ? "default" : "ghost",
+            href: "/mail",
+            onClick: () => handleFolderChange('starred'),
+        },
+        {
+            title: "En attente",
+            label: "",
+            icon: Clock,
+            variant: activeFolder === 'snoozed' ? "default" : "ghost",
+            href: "/mail",
+            onClick: () => handleFolderChange('snoozed'),
+        },
+        {
+            title: "Messages envoyés",
+            label: "",
+            icon: Send,
+            variant: activeFolder === 'sent' ? "default" : "ghost",
+            href: "/mail",
+            onClick: () => handleFolderChange('sent'),
+        },
+        {
+            title: "Brouillons",
+            label: mailStats ? String(mailStats.draft_count) : "…",
+            icon: File,
+            variant: activeFolder === 'drafts' ? "default" : "ghost",
+            href: "/mail",
+            onClick: () => handleFolderChange('drafts'),
+        },
+    ] as const
+
+    // Filter chips config (Idea 17)
+    const filterChips = [
+        { key: "unread", label: "Non lu" },
+        { key: "attachment", label: "Avec pièces jointes" },
+        { key: "today", label: "Aujourd'hui" },
+        { key: "starred", label: "Étoilé" },
+        { key: "important", label: "Important" },
+    ]
+
     return (
         <TooltipProvider delayDuration={0}>
             <WorkspaceShell
-                className="bg-[#f2f6fc] dark:bg-[#111111] text-foreground font-sans"
+                className="bg-muted dark:bg-[#111111] text-foreground font-sans"
                 header={<WorkspaceHeader />}
                 sidebar={
-                    <div className="w-[256px] shrink-0 flex flex-col gap-2 px-4 pt-4 overflow-y-auto">
-                        {/* Compose Buttons */}
-                        <div className="flex flex-col gap-2">
-                            <Button
-                                className="w-fit gap-4 rounded-2xl h-14 shadow-lg font-medium bg-[#c2e7ff] hover:bg-[#a8d8f8] hover:shadow-xl text-[#001d35] transition-all duration-200 justify-start px-6 text-[15px] border-0"
-                                onClick={() => setComposeRichOpen(true)}
-                            >
-                                <Pencil className="h-6 w-6 text-[#1a73e8]" />
-                                Nouveau message
-                            </Button>
+                    <div
+                        className={cn(
+                            "shrink-0 flex flex-col gap-2 overflow-y-auto transition-all duration-200",
+                            sidebarCollapsed ? "w-14 px-1 pt-2 items-center" : "w-[256px] px-4 pt-4"
+                        )}
+                    >
+                        {/* Sidebar toggle */}
+                        <div className={cn("flex", sidebarCollapsed ? "justify-center" : "justify-end pr-1")}>
                             <Button
                                 variant="ghost"
-                                className="w-fit gap-2 rounded-xl h-9 text-sm text-muted-foreground hover:text-foreground justify-start px-4"
-                                onClick={() => setComposeAiOpen(true)}
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                onClick={() => setSidebarCollapsed(v => !v)}
+                                title={sidebarCollapsed ? "Développer le menu" : "Réduire le menu"}
                             >
-                                <Sparkles className="h-4 w-4 text-purple-500" />
-                                Rédiger avec l&apos;IA
+                                {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
                             </Button>
                         </div>
 
+                        {/* Idea 24: Account switcher at top */}
+                        {!sidebarCollapsed && accounts.length > 0 && (
+                            <AccountSwitcher isCollapsed={false} accounts={accounts} />
+                        )}
+                        {sidebarCollapsed && accounts.length > 0 && (
+                            <div className="flex flex-col items-center gap-1 py-1">
+                                {accounts.slice(0, 3).map(acc => (
+                                    <div
+                                        key={acc.id}
+                                        className={cn(
+                                            "h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer transition-colors",
+                                            acc.id === activeAccountId
+                                                ? "bg-primary text-primary-foreground"
+                                                : "bg-muted text-muted-foreground hover:bg-accent"
+                                        )}
+                                        title={acc.email}
+                                        onClick={() => setActiveAccountId(acc.id)}
+                                    >
+                                        {acc.name.charAt(0).toUpperCase()}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Compose Buttons */}
+                        {!sidebarCollapsed ? (
+                            <div className="flex flex-col gap-2">
+                                <Button
+                                    className="w-fit gap-4 rounded-2xl h-14 shadow-lg font-medium bg-primary/10 hover:bg-primary/20 hover:shadow-xl text-primary transition-all duration-200 justify-start px-6 text-[15px] border-0"
+                                    onClick={() => setComposeRichOpen(true)}
+                                >
+                                    <Pencil className="h-6 w-6 text-primary" />
+                                    Nouveau message
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    className="w-fit gap-2 rounded-xl h-9 text-sm text-muted-foreground hover:text-foreground justify-start px-4"
+                                    onClick={() => setComposeAiOpen(true)}
+                                >
+                                    <Sparkles className="h-4 w-4 text-purple-500" />
+                                    Rédiger avec l&apos;IA
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center gap-1">
+                                <Button
+                                    size="icon"
+                                    className="h-10 w-10 rounded-2xl shadow-md bg-primary/10 hover:bg-primary/20 text-primary border-0"
+                                    onClick={() => setComposeRichOpen(true)}
+                                    title="Nouveau message"
+                                >
+                                    <Pencil className="h-5 w-5" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-9 w-9 rounded-xl text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                                    onClick={() => setComposeAiOpen(true)}
+                                    title="Rédiger avec l'IA"
+                                >
+                                    <Sparkles className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
+
                         {/* Navigation Links */}
-                        <MailNav isCollapsed={false} links={[
-                            {
-                                title: "Boîte de réception",
-                                label: "2468",
-                                icon: Inbox,
-                                variant: "default",
-                                href: "/mail",
-                            },
-                            {
-                                title: "Messages suivis",
-                                label: "",
-                                icon: Star,
-                                variant: "ghost",
-                                href: "/mail",
-                            },
-                            {
-                                title: "En attente",
-                                label: "",
-                                icon: Clock,
-                                variant: "ghost",
-                                href: "/mail",
-                            },
-                            {
-                                title: "Messages envoyés",
-                                label: "",
-                                icon: Send,
-                                variant: "ghost",
-                                href: "/mail",
-                            },
-                            {
-                                title: "Brouillons",
-                                label: "21",
-                                icon: File,
-                                variant: "ghost",
-                                href: "/mail",
-                            },
-                        ]} />
+                        <MailNav isCollapsed={sidebarCollapsed} links={navLinks as any} />
 
-                        {/* More Options */}
-                        <div className="px-2 py-1">
-                            <button className="flex items-center gap-3 text-[14px] text-[#444746] dark:text-[#e3e3e3] hover:bg-[#e8eaed] dark:hover:bg-gray-800 rounded-r-full px-4 py-2 w-full transition-colors">
-                                <ChevronDown className="h-5 w-5" />
-                                Plus
-                            </button>
-                        </div>
+                        {/* More Options — only in expanded mode */}
+                        {!sidebarCollapsed && (
+                            <div className="px-2 py-1">
+                                <button className="flex items-center gap-3 text-[14px] text-muted-foreground hover:bg-muted dark:hover:bg-gray-800 rounded-r-full px-4 py-2 w-full transition-colors">
+                                    <ChevronDown className="h-5 w-5" />
+                                    Plus
+                                </button>
+                            </div>
+                        )}
 
-                        {/* Labels Section */}
-                        <div className="mt-3 border-t border-[#e0e0e0]/60 dark:border-gray-800/60 pt-4">
-                            <button
-                                onClick={toggleLabelsExpanded}
-                                className="flex items-center justify-between w-full px-4 py-1.5 group"
-                            >
-                                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5f6368] dark:text-[#9aa0a6]">
-                                    Libellés
-                                </span>
-                                <div className="flex items-center gap-1">
-                                    <Plus className="h-4 w-4 text-[#5f6368] dark:text-[#9aa0a6] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-[#e8eaed] dark:hover:bg-gray-700 rounded" />
-                                    {labelsExpanded ? (
-                                        <ChevronDown className="h-4 w-4 text-[#5f6368] dark:text-[#9aa0a6]" />
-                                    ) : (
-                                        <ChevronRight className="h-4 w-4 text-[#5f6368] dark:text-[#9aa0a6]" />
-                                    )}
-                                </div>
-                            </button>
-
-                            {labelsExpanded && (
-                                <nav className="mt-2 flex flex-col gap-0.5">
-                                    {labelsLoading ? (
-                                        <>
-                                            {Array.from({ length: 3 }).map((_, i) => (
-                                                <div key={i} className="flex items-center gap-3 px-6 py-2">
-                                                    <div className="h-4 w-4 rounded bg-[#e8eaed] dark:bg-gray-700 animate-pulse" />
-                                                    <div className="h-3 w-28 rounded bg-[#e8eaed] dark:bg-gray-700 animate-pulse" />
-                                                </div>
-                                            ))}
-                                        </>
-                                    ) : labels.length === 0 ? (
-                                        <p className="px-6 py-2 text-[13px] text-[#5f6368] dark:text-[#9aa0a6]">Aucun libellé</p>
-                                    ) : (
-                                        labels.map((label) => (
-                                            <button
-                                                key={label.id}
-                                                className="flex items-center gap-3 px-6 py-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] hover:bg-[#e8eaed] dark:hover:bg-gray-800 rounded-r-full transition-colors text-left"
-                                            >
-                                                <Tag className="h-4 w-4" style={label.color ? { color: label.color } : undefined} />
-                                                <span className="truncate">{label.name}</span>
-                                            </button>
-                                        ))
-                                    )}
+                        {/* Idea 32: Smart Folders — only in expanded mode */}
+                        {!sidebarCollapsed && (
+                            <div className="mt-3 border-t border-border/60 pt-4">
+                                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-4 mb-1">
+                                    Dossiers intelligents
+                                </p>
+                                <nav className="flex flex-col gap-0.5">
+                                    {[
+                                        { key: 'factures', label: 'Factures', Icon: Receipt },
+                                        { key: 'newsletters', label: 'Newsletters', Icon: Newspaper },
+                                        { key: 'personnel', label: 'Personnel', Icon: User },
+                                        { key: 'projets', label: 'Projets', Icon: FolderKanban },
+                                    ].map(({ key, label, Icon }) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => {
+                                                setSmartFolderFilter(f => f === key ? null : key)
+                                                clearSelection()
+                                            }}
+                                            className={cn(
+                                                "flex items-center gap-3 px-6 py-2 text-[13px] rounded-r-full transition-colors text-left",
+                                                smartFolderFilter === key
+                                                    ? "bg-primary/10 text-primary font-semibold"
+                                                    : "text-foreground/80 hover:bg-muted dark:hover:bg-gray-800"
+                                            )}
+                                        >
+                                            <Icon className="h-4 w-4 shrink-0" />
+                                            <span className="truncate">{label}</span>
+                                        </button>
+                                    ))}
                                 </nav>
-                            )}
-                        </div>
+                            </div>
+                        )}
+
+                        {/* Labels Section — only in expanded mode */}
+                        {!sidebarCollapsed && (
+                            <div className="mt-3 border-t border-border/60 pt-4">
+                                <button
+                                    onClick={toggleLabelsExpanded}
+                                    className="flex items-center justify-between w-full px-4 py-1.5 group"
+                                >
+                                    <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                        Libellés
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                        <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-muted rounded" />
+                                        {labelsExpanded ? (
+                                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                        ) : (
+                                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                        )}
+                                    </div>
+                                </button>
+
+                                {labelsExpanded && (
+                                    <nav className="mt-2 flex flex-col gap-0.5">
+                                        {labelsLoading ? (
+                                            <>
+                                                {Array.from({ length: 3 }).map((_, i) => (
+                                                    <div key={i} className="flex items-center gap-3 px-6 py-2">
+                                                        <div className="h-4 w-4 rounded bg-muted animate-pulse" />
+                                                        <div className="h-3 w-28 rounded bg-muted animate-pulse" />
+                                                    </div>
+                                                ))}
+                                            </>
+                                        ) : labels.length === 0 ? (
+                                            <p className="px-6 py-2 text-[13px] text-muted-foreground">Aucun libellé</p>
+                                        ) : (
+                                            labels.map((label) => (
+                                                <button
+                                                    key={label.id}
+                                                    className="flex items-center gap-3 px-6 py-2 text-[13px] text-foreground/80 hover:bg-muted dark:hover:bg-gray-800 rounded-r-full transition-colors text-left"
+                                                >
+                                                    {/* Idea 29: Colored dot next to label */}
+                                                    <span
+                                                        className="h-2.5 w-2.5 rounded-full shrink-0 flex-none"
+                                                        style={{ backgroundColor: label.color || "hsl(var(--muted-foreground))" }}
+                                                    />
+                                                    <Tag className="h-4 w-4" style={label.color ? { color: label.color } : undefined} />
+                                                    <span className="truncate">{label.name}</span>
+                                                </button>
+                                            ))
+                                        )}
+                                    </nav>
+                                )}
+                            </div>
+                        )}
                     </div>
                 }
             >
                 {/* Content Area (List + Display) */}
-                <div className="flex-1 flex flex-col bg-background dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0 relative">
-                    {/* Search bar */}
-                    <div className="px-4 py-2 border-b border-[#e0e0e0] dark:border-[#333] flex items-center gap-2">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                            <Input
-                                className="pl-9 pr-8 h-9 rounded-full bg-[#eaf1fb] dark:bg-[#303134] border-0 focus-visible:ring-1"
-                                placeholder="Rechercher dans les emails…"
-                                value={searchQuery}
-                                onChange={e => handleSearch(e.target.value)}
-                                disabled={isSearching}
-                            />
-                            {searchQuery && (
-                                <button
-                                    onClick={() => { setSearchQuery(""); setSearchResults(null); }}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                >
-                                    <X className="h-3.5 w-3.5" />
-                                </button>
-                            )}
+                <div
+                    className={cn(
+                        "flex-1 flex bg-background dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0 relative",
+                        // Idea 15: split-pane on wide screens when email is selected
+                        isWide && selectedId ? "flex-row" : "flex-col"
+                    )}
+                >
+                    {/* Left pane: search + list + filter chips */}
+                    <div
+                        className={cn(
+                            "flex flex-col",
+                            isWide && selectedId ? "w-[40%] border-r border-border/60 dark:border-gray-800/60" : "flex-1"
+                        )}
+                    >
+                        {/* Search bar + density switcher */}
+                        <div className="px-4 py-2 border-b border-border dark:border-[#333] flex items-center gap-2">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                                <Input
+                                    ref={searchInputRef}
+                                    className="pl-9 pr-8 h-9 rounded-full bg-muted dark:bg-[#303134] border-0 focus-visible:ring-1"
+                                    placeholder="Rechercher… (from: to: has:attachment is:unread after:YYYY-MM)"
+                                    value={searchQuery}
+                                    onChange={e => handleSearch(e.target.value)}
+                                    disabled={isSearching}
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => { setSearchQuery(""); setSearchResults(null); }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                )}
+                            </div>
+                            {/* Idea 16: Density switcher */}
+                            <div className="flex items-center gap-0.5 border border-border rounded-lg p-0.5 shrink-0">
+                                {(["compact", "default", "spacious"] as Density[]).map(d => (
+                                    <button
+                                        key={d}
+                                        onClick={() => setDensityPref(d)}
+                                        title={d === "compact" ? "Compact" : d === "spacious" ? "Spacieux" : "Normal"}
+                                        className={cn(
+                                            "px-2 py-1 rounded text-[11px] font-medium transition-colors",
+                                            density === d
+                                                ? "bg-primary text-primary-foreground"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                                        )}
+                                    >
+                                        {d === "compact" ? "S" : d === "default" ? "M" : "L"}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                    {isLoading ? (
-                        <div className="flex-1 flex flex-col gap-2 p-3">
-                            {Array.from({ length: 8 }).map((_, i) => (
-                                <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-border/40">
-                                    <Skeleton className="h-8 w-8 rounded-full shrink-0" />
-                                    <div className="flex-1 space-y-1.5">
-                                        <Skeleton className="h-3.5 w-1/3" />
-                                        <Skeleton className="h-3 w-2/3" />
-                                        <Skeleton className="h-3 w-full" />
-                                    </div>
-                                    <Skeleton className="h-3 w-10 shrink-0" />
-                                </div>
+
+                        {/* Idea 17: Filter chips */}
+                        <div className="px-3 py-2 border-b border-border/60 dark:border-gray-800/60 flex items-center gap-1.5 overflow-x-auto scrollbar-hide flex-shrink-0">
+                            {filterChips.map(chip => (
+                                <button
+                                    key={chip.key}
+                                    onClick={() => toggleFilter(chip.key)}
+                                    className={cn(
+                                        "px-3 py-1 rounded-full text-[12px] font-medium whitespace-nowrap transition-all border",
+                                        activeFilters.has(chip.key)
+                                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                            : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+                                    )}
+                                >
+                                    {chip.label}
+                                </button>
                             ))}
                         </div>
-                    ) : loadError ? (
-                        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                            <Inbox className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                            <h3 className="text-base font-medium text-muted-foreground mb-1">Service mail indisponible</h3>
-                            <p className="text-sm text-muted-foreground/70 max-w-sm mb-4">{loadError}</p>
-                            <Button variant="outline" size="sm" onClick={loadData}>Réessayer</Button>
-                        </div>
-                    ) : !selectedId ? (
-                        <MailList
-                            items={mailList}
-                            selectedId={selectedId}
-                            onSelect={setSelectedId}
-                            onSnooze={handleSnooze}
-                            onArchive={handleArchive}
-                            onDelete={handleDelete}
-                            isSearchActive={searchResults !== null}
-                        />
-                    ) : (
-                        <div className="flex flex-col h-full">
-                            <div className="p-2 border-b flex items-center bg-background dark:bg-[#1f1f1f] sticky top-0 z-10 w-full">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={clearSelection}
-                                    className="gap-2 rounded-full hover:bg-muted dark:hover:bg-gray-800"
-                                >
-                                    &larr; Retour
-                                </Button>
+
+                        {isLoading ? (
+                            <div className="flex-1 flex flex-col gap-2 p-3">
+                                {Array.from({ length: 8 }).map((_, i) => (
+                                    <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-border/40">
+                                        <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                                        <div className="flex-1 space-y-1.5">
+                                            <Skeleton className="h-3.5 w-1/3" />
+                                            <Skeleton className="h-3 w-2/3" />
+                                            <Skeleton className="h-3 w-full" />
+                                        </div>
+                                        <Skeleton className="h-3 w-10 shrink-0" />
+                                    </div>
+                                ))}
                             </div>
-                            <div className="flex-1 overflow-y-auto">
+                        ) : loadError ? (
+                            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                                <Inbox className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                                <h3 className="text-base font-medium text-muted-foreground mb-1">Service mail indisponible</h3>
+                                <p className="text-sm text-muted-foreground/70 max-w-sm mb-4">{loadError}</p>
+                                <Button variant="outline" size="sm" onClick={loadData}>Réessayer</Button>
+                            </div>
+                        ) : (
+                            /* Idea 16: density class wrapper */
+                            <div className={cn("flex-1 flex flex-col overflow-hidden", getDensityClass(density))}>
+                                <MailList
+                                    items={filteredMailList}
+                                    selectedId={selectedId}
+                                    onSelect={setSelectedId}
+                                    onSnooze={handleSnooze}
+                                    onArchive={handleArchive}
+                                    onDelete={handleDelete}
+                                    isSearchActive={searchResults !== null}
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right pane / full-screen view on narrow screens */}
+                    {selectedId && (
+                        <div
+                            className={cn(
+                                "flex flex-col",
+                                isWide ? "flex-1 overflow-y-auto" : "absolute inset-0 bg-background dark:bg-[#1f1f1f] z-10 flex flex-col"
+                            )}
+                        >
+                            {/* Back button — always shown for accessibility, hidden on wide split view */}
+                            {!isWide && (
+                                <div className="p-2 border-b flex items-center bg-background dark:bg-[#1f1f1f] sticky top-0 z-10 w-full">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={clearSelection}
+                                        className="gap-2 rounded-full hover:bg-muted dark:hover:bg-gray-800"
+                                    >
+                                        &larr; Retour
+                                    </Button>
+                                </div>
+                            )}
+                            <div className={cn("flex-1", !isWide && "overflow-y-auto")}>
                                 <MailDisplay
                                     mail={selectedMail}
                                     onSnooze={handleSnooze}
                                     onArchive={handleArchive}
                                     onDelete={handleDelete}
+                                    accountId={activeAccountId}
                                 />
                             </div>
                         </div>

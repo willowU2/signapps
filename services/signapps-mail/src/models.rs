@@ -53,6 +53,8 @@ pub struct MailFolder {
     pub unread_count: Option<i32>,
     pub total_count: Option<i32>,
     pub parent_id: Option<Uuid>,
+    /// Highest IMAP UID successfully synced for incremental sync (Idea 50)
+    pub last_synced_uid: Option<i64>,
     pub created_at: Option<DateTime<Utc>>,
     pub updated_at: Option<DateTime<Utc>>,
 }

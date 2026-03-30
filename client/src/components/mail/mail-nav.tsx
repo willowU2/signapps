@@ -40,7 +40,7 @@ export function MailNav({ isCollapsed, links }: NavProps) {
                                         buttonVariants({ variant: link.variant, size: "icon" }),
                                         "h-10 w-10 cursor-pointer rounded-full transition-all duration-200",
                                         link.variant === "default"
-                                            ? "bg-[#d3e3fd] text-[#041e49] dark:bg-[#004a77] dark:text-[#c2e7ff] hover:bg-[#b5cff8]"
+                                            ? "bg-primary/15 text-primary dark:bg-primary/25 hover:bg-primary/25"
                                             : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                                     )}
                                 >
@@ -65,8 +65,8 @@ export function MailNav({ isCollapsed, links }: NavProps) {
                                 buttonVariants({ variant: link.variant, size: "sm" }),
                                 "justify-start cursor-pointer transition-all duration-200 rounded-r-full h-8 px-4 font-medium mr-3",
                                 link.variant === "default"
-                                    ? "bg-[#d3e3fd] text-[#041e49] font-bold dark:bg-[#004a77] dark:text-[#c2e7ff] hover:bg-[#b5cff8]"
-                                    : "text-[#444746] dark:text-[#e3e3e3] font-normal hover:bg-[#f2f4f6]"
+                                    ? "bg-primary/15 text-primary font-bold dark:bg-primary/25 hover:bg-primary/25"
+                                    : "text-foreground/80 font-normal hover:bg-muted"
                             )}
                         >
                             <link.icon className="mr-2.5 h-4 w-4" />
@@ -76,8 +76,8 @@ export function MailNav({ isCollapsed, links }: NavProps) {
                                     className={cn(
                                         "ml-auto text-xs font-semibold px-2 py-0.5 rounded-full transition-colors",
                                         link.variant === "default"
-                                            ? "text-[#041e49] dark:text-[#c2e7ff]"
-                                            : "text-[#444746] dark:text-[#e3e3e3]"
+                                            ? "text-primary"
+                                            : "text-muted-foreground"
                                     )}
                                 >
                                     {link.label}

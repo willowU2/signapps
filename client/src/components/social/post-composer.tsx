@@ -185,7 +185,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
         }
         return copy;
       });
-      if (res.data.hashtags.length > 0) setHashtags(res.data.hashtags);
+      if (res.data.hashtags && res.data.hashtags.length > 0) setHashtags(res.data.hashtags);
     } catch {
       // silent -- backend not running yet
     } finally {
@@ -351,7 +351,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
     const baseContent = threadPosts.length === 1 ? threadPosts[0].content : content;
     const finalContent = appendSignatureToContent(baseContent);
 
-    const payload: Partial<import('@/lib/api/social').SocialPost> & { repeatInterval?: number } = {
+    const payload: import('@/stores/social-store').CreatePostRequest = {
       content: finalContent,
       accounts: selectedAccountIds,
       hashtags,

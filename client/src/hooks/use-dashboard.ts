@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
+import type { AxiosResponse } from 'axios';
 import { containersApi, metricsApi, storageApi, routesApi } from '@/lib/api';
+import type { SystemMetrics } from '@/lib/api/monitoring';
 import { getServiceBreaker } from '@/lib/circuit-breaker';
 import { ServiceName } from '@/lib/api/factory';
 
@@ -53,7 +55,8 @@ export function useDashboardData() {
 
       let cpu = 0, memory = 0, disk = 0, uptime = 0, networkRx = 0, networkTx = 0;
       if (metricsRes.status === 'fulfilled' && metricsRes.value.data) {
-        const m = metricsRes.value.data;
+        const data = metricsRes.value as AxiosResponse<SystemMetrics>;
+        const m = data.data;
         cpu = m.cpu_usage_percent || m.cpu || 0;
         memory = m.memory_usage_percent || m.memory || 0;
         disk = m.disk_usage_percent || m.disk || 0;

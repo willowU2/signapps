@@ -4,10 +4,12 @@ use axum::{
     extract::{Extension, Query, State},
     Json,
 };
-use serde::Deserialize;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use signapps_common::{Claims, Result};
 use signapps_db::models::activity::Activity;
 use signapps_db::repositories::activity_repository::ActivityRepository;
+use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -21,6 +23,20 @@ pub struct ActivitiesQuery {
     pub entity_type: Option<String>,
     pub entity_id: Option<Uuid>,
     pub mine: Option<bool>,
+}
+
+/// Activity entry from cross-module feed.
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct ActivityEntry {
+    pub id: Uuid,
+    pub actor_id: Uuid,
+    pub action: String,
+    pub entity_type: String,
+    pub entity_id: Uuid,
+    pub entity_title: Option<String>,
+    pub metadata: serde_json::Value,
+    pub workspace_id: Option<Uuid>,
+    pub created_at: DateTime<Utc>,
 }
 
 /// List activities based on query parameters
@@ -42,6 +58,33 @@ pub async fn list_activities(
     } else {
         repo.get_feed(query.workspace_id, limit, offset).await?
     };
+
+    Ok(Json(activities))
+}
+
+/// Cross-module activity feed endpoint.
+/// Returns activities from all modules for the user's workspace(s).
+#[tracing::instrument(skip(state))]
+pub async fn cross_module_activity(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Result<Json<Vec<ActivityEntry>>> {
+    let workspace_id = claims
+        .workspace_ids
+        .as_ref()
+        .and_then(|ids| ids.first())
+        .copied();
+
+    let activities = sqlx::query_as::<_, ActivityEntry>(
+        "SELECT id, actor_id, action, entity_type, entity_id, entity_title, metadata, workspace_id, created_at \
+         FROM platform.activities \
+         WHERE ($1::uuid IS NULL OR workspace_id = $1) \
+         ORDER BY created_at DESC LIMIT 50"
+    )
+    .bind(workspace_id)
+    .fetch_all(state.pool.inner())
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
     Ok(Json(activities))
 }

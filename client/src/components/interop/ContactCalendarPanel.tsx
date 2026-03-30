@@ -8,6 +8,7 @@ import { Calendar, Plus, Video } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { activitiesApi } from "@/lib/api/crm"
+import { calendarApi } from "@/lib/api/calendar"
 import { toast } from "sonner"
 import Link from "next/link"
 
@@ -29,7 +30,7 @@ interface Props {
   showScheduleButton?: boolean
 }
 
-function loadCalendarEvents(email?: string): CalendarEvent[] {
+function loadCalendarEventsFromStorage(email?: string): CalendarEvent[] {
   if (typeof window === "undefined" || !email) return []
   try {
     const all = JSON.parse(localStorage.getItem("calendar:events") ?? "[]") as CalendarEvent[]
@@ -43,9 +44,47 @@ function loadCalendarEvents(email?: string): CalendarEvent[] {
 
 export function ContactCalendarPanel({ contactId, contactEmail, contactName, dealId, showScheduleButton }: Props) {
   const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    setEvents(loadCalendarEvents(contactEmail))
+    if (!contactEmail) {
+      setIsLoading(false)
+      return
+    }
+    setIsLoading(true)
+    ;(async () => {
+      try {
+        const { data: calendars } = await calendarApi.listCalendars()
+        const calId = (Array.isArray(calendars) ? calendars : (calendars as any)?.data)?.[0]?.id
+        if (calId) {
+          const { data: rawEvents } = await calendarApi.listEvents(calId)
+          const eventsArr = Array.isArray(rawEvents) ? rawEvents : (rawEvents as any)?.data ?? []
+          // Filter events where attendees include contact email, mapping API Event shape to local CalendarEvent
+          const filtered: CalendarEvent[] = eventsArr
+            .filter((e: any) =>
+              e.attendees?.some((a: any) =>
+                (a.email ?? a).toLowerCase().includes(contactEmail.toLowerCase())
+              )
+            )
+            .map((e: any) => ({
+              id: e.id,
+              title: e.title,
+              start: e.start_time ?? e.start,
+              end: e.end_time ?? e.end,
+              attendees: e.attendees?.map((a: any) => a.email ?? a),
+              location: e.location,
+              meetLink: e.meetLink,
+            }))
+          setEvents(filtered)
+        } else {
+          setEvents(loadCalendarEventsFromStorage(contactEmail))
+        }
+      } catch {
+        setEvents(loadCalendarEventsFromStorage(contactEmail))
+      } finally {
+        setIsLoading(false)
+      }
+    })()
   }, [contactEmail])
 
   const handleLogActivity = (event: CalendarEvent) => {
@@ -69,7 +108,7 @@ export function ContactCalendarPanel({ contactId, contactEmail, contactName, dea
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-          <Calendar className="h-3 w-3" /> Événements ({events.length})
+          <Calendar className="h-3 w-3" /> Événements ({isLoading ? "…" : events.length})
         </p>
         {showScheduleButton && (
           <Button size="sm" variant="outline" asChild className="h-7 text-xs">
@@ -80,7 +119,9 @@ export function ContactCalendarPanel({ contactId, contactEmail, contactName, dea
         )}
       </div>
 
-      {events.length === 0 ? (
+      {isLoading ? (
+        <div className="h-8 animate-pulse bg-muted/40 rounded" />
+      ) : events.length === 0 ? (
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground italic">Aucun événement avec ce contact.</p>
           {showScheduleButton && (

@@ -9,47 +9,127 @@ use std::env;
 use crate::models::MailAccount;
 use crate::AppState;
 
-pub fn oauth_client() -> BasicClient {
-    let oauth_client_id = ClientId::new(
-        env::var("OAUTH_CLIENT_ID").unwrap_or_else(|_| "dummy_client_id".to_string()),
-    );
-    let oauth_client_secret = ClientSecret::new(
-        env::var("OAUTH_CLIENT_SECRET").unwrap_or_else(|_| "dummy_client_secret".to_string()),
-    );
-    let auth_url = AuthUrl::new("https://oauth.example.com/v2/auth".to_string())
-        .expect("Invalid authorization endpoint URL");
-    let token_url = TokenUrl::new("https://oauth.example.com/token".to_string())
-        .expect("Invalid token endpoint URL");
+// ---------------------------------------------------------------------------
+// Provider enum
+// ---------------------------------------------------------------------------
 
-    BasicClient::new(
-        oauth_client_id,
-        Some(oauth_client_secret),
-        auth_url,
-        Some(token_url),
-    )
-    .set_redirect_uri(
-        RedirectUrl::new("http://localhost:3000/mail/callback".to_string())
-            .expect("Invalid redirect URL"),
+#[derive(Debug, Clone, Copy)]
+pub enum OAuthProvider {
+    Google,
+    Microsoft,
+}
+
+impl OAuthProvider {
+    fn auth_url(&self) -> &'static str {
+        match self {
+            OAuthProvider::Google => "https://accounts.google.com/o/oauth2/v2/auth",
+            OAuthProvider::Microsoft => {
+                "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+            },
+        }
+    }
+
+    fn token_url(&self) -> &'static str {
+        match self {
+            OAuthProvider::Google => "https://oauth2.googleapis.com/token",
+            OAuthProvider::Microsoft => {
+                "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+            },
+        }
+    }
+
+    fn userinfo_url(&self) -> &'static str {
+        match self {
+            OAuthProvider::Google => "https://www.googleapis.com/oauth2/v2/userinfo",
+            OAuthProvider::Microsoft => "https://graph.microsoft.com/v1.0/me",
+        }
+    }
+
+    fn client_id_env(&self) -> &'static str {
+        match self {
+            OAuthProvider::Google => "GOOGLE_CLIENT_ID",
+            OAuthProvider::Microsoft => "MICROSOFT_CLIENT_ID",
+        }
+    }
+
+    fn client_secret_env(&self) -> &'static str {
+        match self {
+            OAuthProvider::Google => "GOOGLE_CLIENT_SECRET",
+            OAuthProvider::Microsoft => "MICROSOFT_CLIENT_SECRET",
+        }
+    }
+
+    fn redirect_uri(&self) -> &'static str {
+        match self {
+            OAuthProvider::Google => "http://localhost:3000/mail/callback/google",
+            OAuthProvider::Microsoft => "http://localhost:3000/mail/callback/microsoft",
+        }
+    }
+
+    fn scopes(&self) -> Vec<&'static str> {
+        match self {
+            OAuthProvider::Google => vec![
+                "https://mail.google.com/",
+                "https://www.googleapis.com/auth/userinfo.email",
+            ],
+            OAuthProvider::Microsoft => vec![
+                "https://graph.microsoft.com/Mail.ReadWrite",
+                "https://graph.microsoft.com/Mail.Send",
+                "https://graph.microsoft.com/User.Read",
+                "offline_access",
+            ],
+        }
+    }
+
+    fn imap_server(&self) -> &'static str {
+        match self {
+            OAuthProvider::Google => "imap.gmail.com",
+            OAuthProvider::Microsoft => "outlook.office365.com",
+        }
+    }
+
+    fn name(&self) -> &'static str {
+        match self {
+            OAuthProvider::Google => "google",
+            OAuthProvider::Microsoft => "microsoft",
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Build OAuth2 client for a given provider
+// ---------------------------------------------------------------------------
+
+pub fn oauth_client_for(provider: OAuthProvider) -> BasicClient {
+    let client_id = ClientId::new(
+        env::var(provider.client_id_env()).unwrap_or_else(|_| "dummy_client_id".to_string()),
+    );
+    let client_secret = ClientSecret::new(
+        env::var(provider.client_secret_env())
+            .unwrap_or_else(|_| "dummy_client_secret".to_string()),
+    );
+    let auth_url =
+        AuthUrl::new(provider.auth_url().to_string()).expect("Invalid authorization endpoint URL");
+    let token_url =
+        TokenUrl::new(provider.token_url().to_string()).expect("Invalid token endpoint URL");
+
+    BasicClient::new(client_id, Some(client_secret), auth_url, Some(token_url)).set_redirect_uri(
+        RedirectUrl::new(provider.redirect_uri().to_string()).expect("Invalid redirect URL"),
     )
 }
+
+/// Kept for backward compatibility with any existing callers.
+pub fn oauth_client() -> BasicClient {
+    oauth_client_for(OAuthProvider::Google)
+}
+
+// ---------------------------------------------------------------------------
+// DTOs
+// ---------------------------------------------------------------------------
 
 #[derive(Serialize)]
 pub struct AuthUrlResponse {
     pub url: String,
-}
-
-pub async fn oauth_login_url() -> impl IntoResponse {
-    let client = oauth_client();
-    let (authorize_url, _csrf_state) = client
-        .authorize_url(CsrfToken::new_random)
-        .add_scope(Scope::new("https://mail.example.com/".to_string()))
-        .add_extra_param("access_type", "offline")
-        .add_extra_param("prompt", "consent") // Force consent to get refresh token
-        .url();
-
-    Json(AuthUrlResponse {
-        url: authorize_url.to_string(),
-    })
 }
 
 #[derive(Deserialize)]
@@ -59,15 +139,81 @@ pub struct AuthCallbackRequest {
 }
 
 #[derive(Deserialize)]
-struct ProviderUserProfile {
+struct GoogleUserProfile {
     email: String,
 }
 
+#[derive(Deserialize)]
+struct MicrosoftUserProfile {
+    #[serde(rename = "userPrincipalName")]
+    user_principal_name: Option<String>,
+    mail: Option<String>,
+}
+
+// ---------------------------------------------------------------------------
+// Login URL handlers — /oauth/google/login  and  /oauth/microsoft/login
+// ---------------------------------------------------------------------------
+
+pub async fn oauth_google_login() -> impl IntoResponse {
+    oauth_login_url_for(OAuthProvider::Google).await
+}
+
+pub async fn oauth_microsoft_login() -> impl IntoResponse {
+    oauth_login_url_for(OAuthProvider::Microsoft).await
+}
+
+/// Legacy single-provider endpoint kept for backward compatibility.
+pub async fn oauth_login_url() -> impl IntoResponse {
+    oauth_login_url_for(OAuthProvider::Google).await
+}
+
+async fn oauth_login_url_for(provider: OAuthProvider) -> impl IntoResponse {
+    let client = oauth_client_for(provider);
+    let mut req = client.authorize_url(CsrfToken::new_random);
+    for scope in provider.scopes() {
+        req = req.add_scope(Scope::new(scope.to_string()));
+    }
+    req = req
+        .add_extra_param("access_type", "offline")
+        .add_extra_param("prompt", "consent");
+    let (authorize_url, _csrf_state) = req.url();
+    Json(AuthUrlResponse {
+        url: authorize_url.to_string(),
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Callback handlers — /oauth/google/callback  and  /oauth/microsoft/callback
+// ---------------------------------------------------------------------------
+
+pub async fn oauth_google_callback(
+    state: State<AppState>,
+    body: Json<AuthCallbackRequest>,
+) -> impl IntoResponse {
+    oauth_callback_for(state, body, OAuthProvider::Google).await
+}
+
+pub async fn oauth_microsoft_callback(
+    state: State<AppState>,
+    body: Json<AuthCallbackRequest>,
+) -> impl IntoResponse {
+    oauth_callback_for(state, body, OAuthProvider::Microsoft).await
+}
+
+/// Legacy single-provider callback (defaults to Google).
 pub async fn oauth_callback(
+    state: State<AppState>,
+    body: Json<AuthCallbackRequest>,
+) -> impl IntoResponse {
+    oauth_callback_for(state, body, OAuthProvider::Google).await
+}
+
+async fn oauth_callback_for(
     State(state): State<AppState>,
     Json(payload): Json<AuthCallbackRequest>,
+    provider: OAuthProvider,
 ) -> impl IntoResponse {
-    let client = oauth_client();
+    let client = oauth_client_for(provider);
     let token_result = client
         .exchange_code(AuthorizationCode::new(payload.code))
         .request_async(async_http_client)
@@ -76,7 +222,11 @@ pub async fn oauth_callback(
     let token = match token_result {
         Ok(t) => t,
         Err(e) => {
-            tracing::error!("OAuth token exchange failed: {:?}", e);
+            tracing::error!(
+                "OAuth token exchange failed ({:?}): {:?}",
+                provider.name(),
+                e
+            );
             return StatusCode::BAD_REQUEST.into_response();
         },
     };
@@ -90,23 +240,35 @@ pub async fn oauth_callback(
     // Fetch user profile to get their email address
     let http_client = reqwest::Client::new();
     let profile_resp = http_client
-        .get("https://api.example.com/oauth2/v2/userinfo")
+        .get(provider.userinfo_url())
         .bearer_auth(&access_token)
         .send()
         .await;
 
     let email = match profile_resp {
-        Ok(resp) => {
-            if let Ok(profile) = resp.json::<ProviderUserProfile>().await {
-                profile.email
-            } else {
-                return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-            }
+        Ok(resp) => match provider {
+            OAuthProvider::Google => {
+                if let Ok(profile) = resp.json::<GoogleUserProfile>().await {
+                    profile.email
+                } else {
+                    return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                }
+            },
+            OAuthProvider::Microsoft => {
+                if let Ok(profile) = resp.json::<MicrosoftUserProfile>().await {
+                    profile
+                        .mail
+                        .or(profile.user_principal_name)
+                        .unwrap_or_default()
+                } else {
+                    return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                }
+            },
         },
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     };
 
-    // Upsert the mail account in the database. Relying on the unique constraint (user_id, email_address).
+    // Upsert the mail account in the database.
     let account = sqlx::query_as::<_, MailAccount>(
         r#"
         INSERT INTO mail_accounts (
@@ -114,9 +276,9 @@ pub async fn oauth_callback(
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         ON CONFLICT (user_id, email_address) DO UPDATE SET
             oauth_token = EXCLUDED.oauth_token,
-            oauth_refresh_token = CASE 
-                WHEN EXCLUDED.oauth_refresh_token != '' THEN EXCLUDED.oauth_refresh_token 
-                ELSE mail_accounts.oauth_refresh_token 
+            oauth_refresh_token = CASE
+                WHEN EXCLUDED.oauth_refresh_token != '' THEN EXCLUDED.oauth_refresh_token
+                ELSE mail_accounts.oauth_refresh_token
             END,
             provider = EXCLUDED.provider,
             imap_server = EXCLUDED.imap_server,
@@ -127,8 +289,8 @@ pub async fn oauth_callback(
     )
     .bind(payload.user_id)
     .bind(&email)
-    .bind("oauth")
-    .bind("imap.gmail.com")
+    .bind(provider.name())
+    .bind(provider.imap_server())
     .bind(993)
     .bind(&access_token)
     .bind(&refresh_token)

@@ -10,6 +10,7 @@ use axum::{
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use signapps_common::pg_events::NewEvent;
 use signapps_common::{Error, Result};
 
 use crate::handlers::quotas;
@@ -429,6 +430,20 @@ pub async fn upload(
             serde_json::json!({ "bucket": target_bucket, "size": size, "sha256": hash }),
         )
         .await;
+
+        let _ = state
+            .event_bus
+            .publish(NewEvent {
+                event_type: "drive.file.uploaded".into(),
+                aggregate_id: Some(file_id),
+                payload: serde_json::json!({
+                    "bucket": target_bucket,
+                    "filename": filename,
+                    "size": size,
+                    "user_id": user_id,
+                }),
+            })
+            .await;
 
         uploads.push(UploadResponse {
             id: file_id,

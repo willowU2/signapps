@@ -10,6 +10,7 @@ use axum::{
 };
 use signapps_common::bootstrap::{env_or, env_required, init_tracing, load_env};
 use signapps_common::middleware::{auth_middleware, AuthState};
+use signapps_common::pg_events::PgEventBus;
 use signapps_common::JwtConfig;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tower_http::{
@@ -30,6 +31,7 @@ use handlers::{
 pub struct AppState {
     pub pool: Pool<Postgres>,
     pub jwt_config: JwtConfig,
+    pub event_bus: PgEventBus,
 }
 
 impl AuthState for AppState {
@@ -307,9 +309,12 @@ async fn main() {
         refresh_expiration: 86400 * 7,
     };
 
+    let event_bus = PgEventBus::new(pool.clone(), "signapps-social".to_string());
+
     let state = AppState {
         pool: pool.clone(),
         jwt_config,
+        event_bus,
     };
 
     // Start background publisher

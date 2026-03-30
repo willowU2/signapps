@@ -29,7 +29,7 @@ function AddFeedDialog({
   open: boolean;
   onClose: () => void;
   accountOptions: { id: string; label: string; platform: string }[];
-  onCreate: (data: Omit<RssFeed, 'id' | 'createdAt' | 'lastCheckedAt'>) => Promise<void>;
+  onCreate: (data: Partial<RssFeed> & Pick<RssFeed, 'name'>) => Promise<void>;
 }) {
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');

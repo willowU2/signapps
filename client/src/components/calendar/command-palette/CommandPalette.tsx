@@ -12,10 +12,20 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { usePreferencesStore } from '@/stores/calendar-store';
 import { CommandList, CommandListEmpty } from './CommandList';
-import { useCommands, useFilteredCommands } from '@/lib/scheduling/commands/registry';
-import type { Command } from '@/lib/scheduling/types/scheduling';
+
+// Simplified command interface (scheduling registry removed)
+interface Command {
+  id: string;
+  label: string;
+  category: string;
+  action: () => void;
+  shortcut?: string;
+}
+
+// Stub hooks until command registry is rebuilt in calendar context
+function useCommands(): Command[] { return []; }
+function useFilteredCommands(_query: string): Command[] { return []; }
 
 // ============================================================================
 // Types
@@ -117,8 +127,9 @@ function Footer() {
 // ============================================================================
 
 export function CommandPalette({ className }: CommandPaletteProps) {
-  const isCommandPaletteOpen = usePreferencesStore((state) => state.isCommandPaletteOpen);
-  const closeCommandPalette = usePreferencesStore((state) => state.closeCommandPalette);
+  // TODO: wire to calendar store command palette state
+  const [isCommandPaletteOpen, setOpen] = React.useState(false);
+  const closeCommandPalette = () => setOpen(false);
   const [query, setQuery] = React.useState('');
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);

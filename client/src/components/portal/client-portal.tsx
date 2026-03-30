@@ -39,7 +39,7 @@ export function ClientPortal() {
     const loadAll = async () => {
       try {
         // Load users as "projects" — each user represents an active account
-        const usersRes = await usersApi.list(1, 10).catch(() => null);
+        const usersRes = await usersApi.list(0, 10).catch(() => null);
         const pud = usersRes?.data as any;
         if (pud?.users || Array.isArray(pud)) {
           const userList = pud?.users || pud;

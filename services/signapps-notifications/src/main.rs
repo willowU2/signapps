@@ -13,7 +13,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use signapps_common::bootstrap::{env_or, init_tracing, load_env};
 use signapps_common::middleware::{auth_middleware, AuthState};
-use signapps_common::{Claims, JwtConfig};
+use signapps_common::{Claims, JwtConfig, PgEventBus, PlatformEvent};
 use sqlx::{postgres::PgPoolOptions, FromRow, Pool, Postgres};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
@@ -35,7 +35,7 @@ pub struct Notification {
     pub priority: String,
     pub is_read: bool,
     pub read_at: Option<DateTime<Utc>>,
-    pub metadata: serde_json::Value,
+    pub metadata: Option<serde_json::Value>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -251,6 +251,126 @@ async fn mark_all_read(
     ))
 }
 
+// ---------------------------------------------------------------------------
+// Platform event → notification mapping
+// ---------------------------------------------------------------------------
+
+async fn handle_platform_event(
+    pool: &sqlx::PgPool,
+    event: PlatformEvent,
+) -> Result<(), sqlx::Error> {
+    let (user_id, title, body, link) = match event.event_type.as_str() {
+        "mail.received" => {
+            let from = event.payload["from"].as_str().unwrap_or("inconnu");
+            let subject = event.payload["subject"].as_str().unwrap_or("(sans objet)");
+            (
+                event.aggregate_id,
+                "Nouveau mail".to_string(),
+                format!("De {}: {}", from, subject),
+                "/mail",
+            )
+        },
+        "calendar.event.created" => {
+            let title_str = event.payload["title"].as_str().unwrap_or("evenement");
+            (
+                event.aggregate_id,
+                "Nouvel evenement".to_string(),
+                title_str.to_string(),
+                "/calendar",
+            )
+        },
+        "calendar.task.completed" => {
+            let title_str = event.payload["title"].as_str().unwrap_or("tache");
+            (
+                event.aggregate_id,
+                "Tache terminee".to_string(),
+                title_str.to_string(),
+                "/tasks",
+            )
+        },
+        "billing.invoice.created" => (
+            event.aggregate_id,
+            "Nouvelle facture".to_string(),
+            "Une facture a ete creee".to_string(),
+            "/billing",
+        ),
+        "forms.response.submitted" => (
+            event.aggregate_id,
+            "Reponse formulaire".to_string(),
+            "Nouvelle reponse recue".to_string(),
+            "/forms",
+        ),
+        "social.post.published" => (
+            event.aggregate_id,
+            "Post publie".to_string(),
+            "Publication reussie".to_string(),
+            "/social",
+        ),
+        "chat.message.created" => {
+            let preview = event.payload["content_preview"]
+                .as_str()
+                .unwrap_or("message");
+            (
+                event.aggregate_id,
+                "Nouveau message".to_string(),
+                preview.to_string(),
+                "/chat",
+            )
+        },
+        "drive.file.uploaded" => {
+            let name = event.payload["name"].as_str().unwrap_or("fichier");
+            (
+                event.aggregate_id,
+                "Fichier uploade".to_string(),
+                name.to_string(),
+                "/drive",
+            )
+        },
+        "contacts.created" => {
+            let name = event.payload["name"].as_str().unwrap_or("contact");
+            (
+                event.aggregate_id,
+                "Nouveau contact".to_string(),
+                name.to_string(),
+                "/contacts",
+            )
+        },
+        _ => return Ok(()), // Skip unknown events
+    };
+
+    if let Some(uid) = user_id {
+        sqlx::query(
+            "INSERT INTO notifications.notifications \
+             (user_id, type, title, body, source, priority, metadata) \
+             VALUES ($1, 'event', $2, $3, 'platform', 'normal', $4)",
+        )
+        .bind(uid)
+        .bind(&title)
+        .bind(&body)
+        .bind(serde_json::json!({
+            "event_id": event.event_id.to_string(),
+            "event_type": event.event_type,
+            "aggregate_id": event.aggregate_id.map(|id| id.to_string()),
+            "link": link,
+        }))
+        .execute(pool)
+        .await?;
+
+        tracing::info!(
+            event_type = %event.event_type,
+            user_id = %uid,
+            "notification created from platform event"
+        );
+    } else {
+        tracing::debug!(
+            event_type = %event.event_type,
+            "skipping platform event — no aggregate_id to target a user"
+        );
+    }
+
+    Ok(())
+}
+
 async fn health() -> impl IntoResponse {
     Json(serde_json::json!({
         "status": "ok",
@@ -343,8 +463,26 @@ async fn main() -> anyhow::Result<()> {
         refresh_expiration: 604800,
     };
 
-    let state = AppState { pool, jwt_config };
+    let state = AppState {
+        pool: pool.clone(),
+        jwt_config,
+    };
     let app = create_router(state);
+
+    // Spawn platform-event listener
+    let listener_pool = pool.clone();
+    let event_bus = PgEventBus::new(listener_pool.clone(), "signapps-notifications".to_string());
+    tokio::spawn(async move {
+        if let Err(e) = event_bus
+            .listen("notifications-consumer", move |event| {
+                let p = listener_pool.clone();
+                Box::pin(async move { handle_platform_event(&p, event).await })
+            })
+            .await
+        {
+            tracing::error!("Event listener crashed: {}", e);
+        }
+    });
 
     let addr = format!("0.0.0.0:{}", port);
     tracing::info!("signapps-notifications listening on {}", addr);

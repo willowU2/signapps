@@ -5,12 +5,33 @@
  * Feature 28: Task status change → log in activity feed
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Mail, CheckSquare, CalendarDays, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { activitiesApi } from "@/lib/api/crosslinks";
 import { useInteropActivity } from "@/hooks/use-interop";
+import type { Activity } from "@/types/crosslinks";
 import type { ActivityEntry } from "@/lib/interop/store";
 
+// Icon map for API activity actions
+function getActionIcon(action: string): React.ReactNode {
+  if (action.includes("mail") || action.includes("email")) {
+    return action.includes("receiv") || action.includes("inbound")
+      ? <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+      : <Mail className="h-3.5 w-3.5 text-blue-500" />;
+  }
+  if (action.includes("task")) {
+    if (action.includes("complet")) return <CheckSquare className="h-3.5 w-3.5 text-emerald-600" />;
+    if (action.includes("status")) return <CheckSquare className="h-3.5 w-3.5 text-amber-500" />;
+    return <CheckSquare className="h-3.5 w-3.5 text-emerald-500" />;
+  }
+  if (action.includes("event") || action.includes("calendar")) {
+    return <CalendarDays className="h-3.5 w-3.5 text-purple-500" />;
+  }
+  return <Clock className="h-3.5 w-3.5 text-muted-foreground" />;
+}
+
+// Icon map for localStorage-backed activity types (fallback)
 const ICONS: Record<ActivityEntry["type"], React.ReactNode> = {
   mail_sent: <Mail className="h-3.5 w-3.5 text-blue-500" />,
   mail_received: <Mail className="h-3.5 w-3.5 text-muted-foreground" />,
@@ -22,14 +43,80 @@ const ICONS: Record<ActivityEntry["type"], React.ReactNode> = {
 
 interface Props {
   contactEmail: string;
+  contactId?: string;
   className?: string;
   maxItems?: number;
 }
 
-export function ContactActivityTimeline({ contactEmail, className, maxItems = 20 }: Props) {
-  const { activity } = useInteropActivity(contactEmail);
+interface DisplayEntry {
+  id: string;
+  icon: React.ReactNode;
+  title: string;
+  description?: string;
+  createdAt: string;
+}
 
-  const items = activity.slice(0, maxItems);
+export function ContactActivityTimeline({ contactEmail, contactId, className, maxItems = 20 }: Props) {
+  const [entries, setEntries] = useState<DisplayEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { activity: localActivity } = useInteropActivity(contactEmail);
+
+  useEffect(() => {
+    if (!contactId && !contactEmail) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    (async () => {
+      try {
+        const entityId = contactId ?? contactEmail;
+        const { data } = await activitiesApi.entityHistory("contact", entityId);
+        const apiEntries: DisplayEntry[] = (Array.isArray(data) ? data : (data as any)?.data ?? []).map(
+          (a: Activity) => ({
+            id: a.id,
+            icon: getActionIcon(a.action),
+            title: a.entity_title ?? a.action,
+            description: a.entity_type ? `${a.entity_type} · ${a.entity_id}` : undefined,
+            createdAt: a.created_at,
+          })
+        );
+        if (apiEntries.length > 0) {
+          setEntries(apiEntries);
+        } else {
+          // Fallback to localStorage-backed store
+          setEntries(
+            localActivity.map(a => ({
+              id: a.id,
+              icon: ICONS[a.type],
+              title: a.title,
+              description: a.description,
+              createdAt: a.createdAt,
+            }))
+          );
+        }
+      } catch {
+        // Fallback to localStorage-backed store
+        setEntries(
+          localActivity.map(a => ({
+            id: a.id,
+            icon: ICONS[a.type],
+            title: a.title,
+            description: a.description,
+            createdAt: a.createdAt,
+          }))
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contactId, contactEmail]);
+
+  const items = entries.slice(0, maxItems);
+
+  if (isLoading) {
+    return <div className={cn("h-16 animate-pulse bg-muted/40 rounded", className)} />;
+  }
 
   if (items.length === 0) {
     return (
@@ -46,7 +133,7 @@ export function ContactActivityTimeline({ contactEmail, className, maxItems = 20
           {/* Timeline line */}
           <div className="flex flex-col items-center">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/60 mt-0.5">
-              {ICONS[entry.type]}
+              {entry.icon}
             </div>
             {i < items.length - 1 && <div className="w-px flex-1 bg-border/60 my-0.5" />}
           </div>

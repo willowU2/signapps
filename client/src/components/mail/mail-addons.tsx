@@ -11,8 +11,8 @@ export function MailAddons() {
         <div className="w-14 shrink-0 bg-transparent flex flex-col items-center py-3 px-1 gap-1 z-10 mb-3">
             <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
-                    <div className="w-10 h-10 rounded-full hover:bg-[#e8eaed] dark:hover:bg-gray-800 cursor-pointer flex items-center justify-center transition-colors">
-                        <CalendarIcon className="w-5 h-5 text-[#1a73e8]" />
+                    <div className="w-10 h-10 rounded-full hover:bg-muted dark:hover:bg-gray-800 cursor-pointer flex items-center justify-center transition-colors">
+                        <CalendarIcon className="w-5 h-5 text-primary" />
                     </div>
                 </TooltipTrigger>
                 <TooltipContent side="left" className="rounded-lg px-3 py-1.5">
@@ -22,30 +22,30 @@ export function MailAddons() {
 
             <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
-                    <div className="w-10 h-10 rounded-full hover:bg-[#e8eaed] dark:hover:bg-gray-800 cursor-pointer flex items-center justify-center transition-colors">
-                        <Lightbulb className="w-5 h-5 text-[#fbbc04]" />
+                    <div className="w-10 h-10 rounded-full hover:bg-muted dark:hover:bg-gray-800 cursor-pointer flex items-center justify-center transition-colors">
+                        <Lightbulb className="w-5 h-5 text-amber-400" />
                     </div>
                 </TooltipTrigger>
                 <TooltipContent side="left" className="rounded-lg px-3 py-1.5">
-                    Keep
+                    Notes
                 </TooltipContent>
             </Tooltip>
 
             <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
-                    <div className="w-10 h-10 rounded-full hover:bg-[#e8eaed] dark:hover:bg-gray-800 cursor-pointer flex items-center justify-center transition-colors">
-                        <CheckCircle2 className="w-5 h-5 text-[#1a73e8]" />
+                    <div className="w-10 h-10 rounded-full hover:bg-muted dark:hover:bg-gray-800 cursor-pointer flex items-center justify-center transition-colors">
+                        <CheckCircle2 className="w-5 h-5 text-primary" />
                     </div>
                 </TooltipTrigger>
                 <TooltipContent side="left" className="rounded-lg px-3 py-1.5">
-                    Tasks
+                    Tâches
                 </TooltipContent>
             </Tooltip>
 
             <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
-                    <div className="w-10 h-10 rounded-full hover:bg-[#e8eaed] dark:hover:bg-gray-800 cursor-pointer flex items-center justify-center transition-colors">
-                        <Users className="w-5 h-5 text-[#1a73e8]" />
+                    <div className="w-10 h-10 rounded-full hover:bg-muted dark:hover:bg-gray-800 cursor-pointer flex items-center justify-center transition-colors">
+                        <Users className="w-5 h-5 text-primary" />
                     </div>
                 </TooltipTrigger>
                 <TooltipContent side="left" className="rounded-lg px-3 py-1.5">
@@ -53,12 +53,12 @@ export function MailAddons() {
                 </TooltipContent>
             </Tooltip>
 
-            <div className="w-6 h-px bg-[#dadce0] dark:bg-gray-700 my-3"></div>
+            <div className="w-6 h-px bg-border dark:bg-gray-700 my-3"></div>
 
             <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
-                    <div className="w-10 h-10 rounded-full hover:bg-[#e8eaed] dark:hover:bg-gray-800 cursor-pointer flex items-center justify-center transition-colors">
-                        <Plus className="w-5 h-5 text-[#5f6368]" />
+                    <div className="w-10 h-10 rounded-full hover:bg-muted dark:hover:bg-gray-800 cursor-pointer flex items-center justify-center transition-colors">
+                        <Plus className="w-5 h-5 text-muted-foreground" />
                     </div>
                 </TooltipTrigger>
                 <TooltipContent side="left" className="rounded-lg px-3 py-1.5">

@@ -47,7 +47,7 @@ function ContentSetDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (data: Omit<ContentSet, 'id' | 'createdAt'>) => void;
+  onSave: (data: Pick<ContentSet, 'name' | 'postIds'> & Partial<ContentSet>) => void;
   initial?: ContentSet;
   saving: boolean;
 }) {
@@ -144,10 +144,10 @@ export function ContentSetManager() {
     if (accounts.length === 0) fetchAccounts();
   }, [fetchContentSets, accounts.length, fetchAccounts]);
 
-  const handleCreate = async (data: Omit<ContentSet, 'id' | 'createdAt'>) => {
+  const handleCreate = async (data: Pick<ContentSet, 'name' | 'postIds'> & Partial<ContentSet>) => {
     try {
       setSaving(true);
-      await socialApi.contentSets.create(data);
+      await socialApi.contentSets.create({ content: '', ...data });
       toast.success('Content set created');
       setIsDialogOpen(false);
       setEditingSet(undefined);
@@ -159,13 +159,13 @@ export function ContentSetManager() {
     }
   };
 
-  const handleUpdate = async (data: Omit<ContentSet, 'id' | 'createdAt'>) => {
+  const handleUpdate = async (data: Pick<ContentSet, 'name' | 'postIds'> & Partial<ContentSet>) => {
     if (!editingSet) return;
     try {
       setSaving(true);
       // Use create as a workaround since API may not have update; delete + re-create
       await socialApi.contentSets.delete(editingSet.id);
-      await socialApi.contentSets.create(data);
+      await socialApi.contentSets.create({ content: '', ...data });
       toast.success('Content set updated');
       setIsDialogOpen(false);
       setEditingSet(undefined);

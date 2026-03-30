@@ -69,6 +69,7 @@ pub mod indexer;
 pub mod marketplace;
 pub mod middleware;
 pub mod openapi;
+pub mod pg_events;
 pub mod pg_listener;
 pub mod pii;
 pub mod plugins;
@@ -118,6 +119,7 @@ pub use middleware::{
     security_headers_middleware, AuthState, RequestClaimsExt, TenantContext,
 };
 pub use openapi::create_openapi_router;
+pub use pg_events::{NewEvent as PlatformNewEvent, PgEventBus, PlatformEvent};
 pub use plugins::{Plugin, PluginManifest, PluginRegistry};
 pub use qrcode_gen::generate_qr_svg;
 pub use reporting::{ReportConfig, ReportData, ReportEngine, ReportTemplate};

@@ -27,7 +27,7 @@ function CreateTemplateDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  onCreate: (data: Omit<PostTemplate, 'id' | 'createdAt'>) => Promise<void>;
+  onCreate: (data: Omit<PostTemplate, 'id' | 'createdAt' | 'userId'>) => Promise<void>;
 }) {
   const [name, setName] = useState('');
   const [content, setContent] = useState('');

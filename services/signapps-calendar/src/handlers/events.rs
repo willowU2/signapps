@@ -7,6 +7,7 @@ use axum::{
 };
 use chrono::{DateTime, TimeZone, Utc};
 use serde::Deserialize;
+use signapps_common::pg_events::NewEvent;
 use signapps_common::Claims;
 use signapps_db::{models::*, EventAttendeeRepository, EventRepository};
 use uuid::Uuid;
@@ -82,6 +83,19 @@ pub async fn create_event(
         &event.title,
     )
     .await;
+
+    let _ = state
+        .event_bus
+        .publish(NewEvent {
+            event_type: "calendar.event.created".into(),
+            aggregate_id: Some(event.id),
+            payload: serde_json::json!({
+                "calendar_id": calendar_id,
+                "title": event.title,
+                "user_id": claims.sub,
+            }),
+        })
+        .await;
 
     Ok((StatusCode::CREATED, Json(event)))
 }

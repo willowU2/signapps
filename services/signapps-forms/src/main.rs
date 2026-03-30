@@ -12,6 +12,7 @@ use axum::{
 use serde::Deserialize;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
+use signapps_common::pg_events::{NewEvent, PgEventBus};
 use signapps_common::Claims;
 use signapps_common::JwtConfig;
 use signapps_db::models::{Answer, CreateForm, FieldType, FormField, SubmitResponse, UpdateForm};
@@ -62,6 +63,7 @@ pub struct SubmitResponseRequest {
 pub struct AppState {
     pub jwt_config: JwtConfig,
     pub pool: sqlx::PgPool,
+    pub event_bus: PgEventBus,
 }
 
 impl AuthState for AppState {
@@ -331,6 +333,14 @@ async fn submit_response(
     match FormRepository::submit_response(&state.pool, submit_data).await {
         Ok(response) => {
             tracing::info!(id = %response.id, form_id = %id, "Response submitted");
+            let _ = state
+                .event_bus
+                .publish(NewEvent {
+                    event_type: "forms.response.submitted".into(),
+                    aggregate_id: Some(response.id),
+                    payload: serde_json::json!({ "form_id": id }),
+                })
+                .await;
             (
                 StatusCode::CREATED,
                 Json(serde_json::to_value(response).unwrap()),
@@ -462,7 +472,13 @@ async fn main() -> anyhow::Result<()> {
         refresh_expiration: 86400 * 7,
     };
 
-    let state = AppState { jwt_config, pool };
+    let event_bus = PgEventBus::new(pool.clone(), "signapps-forms".to_string());
+
+    let state = AppState {
+        jwt_config,
+        pool,
+        event_bus,
+    };
 
     tracing::info!("Database connected & service ready");
 

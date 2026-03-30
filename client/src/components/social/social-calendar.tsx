@@ -301,7 +301,7 @@ export function SocialCalendar() {
 
   const getAccountPlatform = useCallback(
     (post: SocialPost): SocialAccount['platform'] | undefined => {
-      const account = accounts.find((a) => post.accounts.includes(a.id));
+      const account = accounts.find((a) => (post.accounts ?? []).includes(a.id));
       return account?.platform;
     },
     [accounts]
@@ -310,7 +310,7 @@ export function SocialCalendar() {
   const channelFilteredPosts = useMemo(
     () =>
       selectedChannelIds.length > 0
-        ? posts.filter((p) => p.accounts.some((aid) => selectedChannelIds.includes(aid)))
+        ? posts.filter((p) => (p.accounts ?? []).some((aid) => selectedChannelIds.includes(aid)))
         : posts,
     [posts, selectedChannelIds]
   );
@@ -810,7 +810,7 @@ export function SocialCalendar() {
               </div>
             ) : (
               listPagePosts.map((post) => {
-                const account = accounts.find((a) => post.accounts.includes(a.id));
+                const account = accounts.find((a) => (post.accounts ?? []).includes(a.id));
                 return (
                   <div
                     key={post.id}
@@ -940,7 +940,7 @@ export function SocialCalendar() {
             <p className="text-sm text-muted-foreground">No posts scheduled for this day.</p>
           ) : (
             getPostsForDayRaw(selectedDay).map((post) => {
-              const account = accounts.find((a) => post.accounts.includes(a.id));
+              const account = accounts.find((a) => (post.accounts ?? []).includes(a.id));
               return (
                 <div key={post.id} className="flex items-start gap-3 p-2 rounded-lg border">
                   <div

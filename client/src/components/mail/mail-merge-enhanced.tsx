@@ -1,9 +1,10 @@
 "use client"
 
 // IDEA-040: Enhanced mail merge — better variable mapping UI from Sheets data
+// Idea 47: Import from Contacts
 
 import { useState, useCallback } from "react"
-import { Upload, Play, ArrowRight, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react"
+import { Upload, Play, ArrowRight, CheckCircle2, AlertCircle, RefreshCw, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,6 +19,8 @@ import {
 } from "@/components/ui/select"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { contactsApi } from "@/lib/api/contacts"
+import { mailApi } from "@/lib/api-mail"
 
 interface CsvRow {
     [key: string]: string
@@ -64,9 +67,10 @@ function applyMapping(template: string, row: CsvRow, mappings: VariableMapping[]
 
 interface EnhancedMailMergeProps {
     onSendAll?: (emails: Array<{ to: string; subject: string; body: string }>) => Promise<void>
+    accountId?: string
 }
 
-export function EnhancedMailMerge({ onSendAll }: EnhancedMailMergeProps) {
+export function EnhancedMailMerge({ onSendAll, accountId }: EnhancedMailMergeProps) {
     const [csvText, setCsvText] = useState("")
     const [csvHeaders, setCsvHeaders] = useState<string[]>([])
     const [csvRows, setCsvRows] = useState<CsvRow[]>([])
@@ -119,7 +123,6 @@ export function EnhancedMailMerge({ onSendAll }: EnhancedMailMergeProps) {
 
     const handleSend = async () => {
         if (!recipientColumn) { toast.error("Sélectionnez la colonne d'email du destinataire"); return }
-        if (!onSendAll) { toast.info("Connectez un gestionnaire d'envoi pour envoyer des emails"); return }
         setSending(true)
         try {
             const emails = csvRows.map((row) => ({
@@ -127,14 +130,74 @@ export function EnhancedMailMerge({ onSendAll }: EnhancedMailMergeProps) {
                 subject: applyMapping(subject, row, mappings),
                 body: applyMapping(body, row, mappings),
             })).filter((e) => e.to)
-            await onSendAll(emails)
+            if (onSendAll) {
+                await onSendAll(emails)
+            } else {
+                // Idea 47: Use mailApi.send() directly when no external handler is provided
+                const aid = accountId || 'default'
+                let sent = 0
+                for (const em of emails) {
+                    try {
+                        await mailApi.send({ account_id: aid, recipient: em.to, subject: em.subject, body_text: em.body })
+                        sent++
+                    } catch { /* continue to next */ }
+                }
+                toast.success(`${sent} email(s) envoyé(s) sur ${emails.length}.`)
+                return
+            }
             toast.success(`Sent ${emails.length} emails`)
-        } catch (err) {
+        } catch {
             toast.error("Échec de l'envoi")
         } finally {
             setSending(false)
         }
     }
+
+    // Idea 47: Import from Contacts API
+    const [importingContacts, setImportingContacts] = useState(false)
+    const handleImportContacts = useCallback(async () => {
+        setImportingContacts(true)
+        try {
+            const res = await contactsApi.list()
+            const contacts = (res as any).data ?? res
+            if (!Array.isArray(contacts) || contacts.length === 0) {
+                toast.info("Aucun contact trouvé.")
+                return
+            }
+            // Build CSV-like structure: first_name, last_name, email, company
+            const headers = ['first_name', 'last_name', 'email', 'company']
+            const rows: CsvRow[] = contacts
+                .filter((c: any) => c.email)
+                .map((c: any) => ({
+                    first_name: c.first_name || '',
+                    last_name: c.last_name || '',
+                    email: c.email || '',
+                    company: c.organization || c.company || '',
+                }))
+            if (rows.length === 0) {
+                toast.info("Aucun contact avec email trouvé.")
+                return
+            }
+            setCsvHeaders(headers)
+            setCsvRows(rows)
+            // Auto-map variables
+            const vars = detectTemplateVars(subject + " " + body)
+            const autoMappings: VariableMapping[] = vars.map((v) => {
+                const match = headers.find((h) =>
+                    h.toLowerCase() === v.toLowerCase() ||
+                    h.toLowerCase().replace(/[_\s]/g, "") === v.toLowerCase().replace(/[_\s]/g, "")
+                )
+                return { templateVar: v, csvColumn: match || "" }
+            })
+            setMappings(autoMappings)
+            setRecipientColumn('email')
+            toast.success(`${rows.length} contact(s) importé(s).`)
+        } catch {
+            toast.error("Impossible d'importer les contacts.")
+        } finally {
+            setImportingContacts(false)
+        }
+    }, [subject, body])
 
     const templateVars = detectTemplateVars(subject + " " + body)
     const unmapped = mappings.filter((m) => !m.csvColumn)
@@ -154,10 +217,17 @@ export function EnhancedMailMerge({ onSendAll }: EnhancedMailMergeProps) {
                     value={csvText}
                     onChange={(e) => setCsvText(e.target.value)}
                 />
-                <Button size="sm" variant="outline" onClick={handleCsvLoad} className="gap-1.5">
-                    <Upload className="h-3.5 w-3.5" />
-                    Parse CSV ({csvRows.length > 0 ? `${csvRows.length} rows loaded` : "no data"})
-                </Button>
+                <div className="flex gap-2 flex-wrap">
+                    <Button size="sm" variant="outline" onClick={handleCsvLoad} className="gap-1.5">
+                        <Upload className="h-3.5 w-3.5" />
+                        Parse CSV ({csvRows.length > 0 ? `${csvRows.length} rows loaded` : "no data"})
+                    </Button>
+                    {/* Idea 47: Import from Contacts */}
+                    <Button size="sm" variant="outline" onClick={handleImportContacts} disabled={importingContacts} className="gap-1.5 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
+                        <Users className="h-3.5 w-3.5" />
+                        {importingContacts ? 'Import…' : 'Importer depuis Contacts'}
+                    </Button>
+                </div>
             </div>
 
             {/* Step 2: Template */}

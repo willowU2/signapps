@@ -407,7 +407,7 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
                           <span className="text-sm font-medium text-muted-foreground">
-                            {(member.displayName || member.username).charAt(0).toUpperCase()}
+                            {(member.displayName ?? member.username ?? '?').charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
@@ -423,7 +423,7 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
                           <p className="text-xs text-muted-foreground">@{member.username}</p>
                         </div>
                         <div className="text-xs text-muted-foreground shrink-0">
-                          Joined {format(new Date(member.joinedAt), 'MMM d, yyyy')}
+                          {member.joinedAt ? `Joined ${format(new Date(member.joinedAt), 'MMM d, yyyy')}` : ''}
                         </div>
                         {isOwner && member.role !== 'owner' && (
                           <Button

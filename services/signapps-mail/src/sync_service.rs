@@ -1,20 +1,206 @@
+use crate::handlers::categorize::{categorize_email, ensure_label_and_apply};
 use crate::models::{MailAccount, MailFolder};
+use async_imap::extensions::idle::IdleResponse;
 use chrono::Utc;
 use futures_util::stream::StreamExt;
 use mailparse::parse_mail;
 use signapps_common::pg_events::{NewEvent, PgEventBus};
 use sqlx::{Pool, Postgres};
+use tokio::time::Duration;
 use uuid::Uuid;
 
 pub async fn start_sync_scheduler(pool: Pool<Postgres>, event_bus: PgEventBus) {
     tracing::info!("Starting IMAP sync scheduler...");
 
-    // Sync accounts every 60 seconds
+    // Sync accounts every 30 seconds (fallback for accounts without IDLE support)
     loop {
         if let Err(e) = sync_all_accounts(&pool, &event_bus).await {
             tracing::error!("Error during sync cycle: {:?}", e);
         }
-        tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
+        tokio::time::sleep(Duration::from_secs(30)).await;
+    }
+}
+
+/// Attempt IMAP IDLE on INBOX for a single account.  When the server signals a
+/// change the function triggers an incremental sync and then re-enters IDLE.
+/// If the server does not support IDLE the function exits, leaving the periodic
+/// polling loop in `start_sync_scheduler` as the sole sync mechanism.
+///
+/// Spawned once per active account by `start_idle_listeners`.
+pub async fn idle_inbox(pool: Pool<Postgres>, event_bus: PgEventBus, account: MailAccount) {
+    let imap_server = match account.imap_server.as_deref() {
+        Some(s) => s.to_string(),
+        None => {
+            tracing::warn!("IDLE: account {} has no IMAP server", account.email_address);
+            return;
+        },
+    };
+    let imap_port = account.imap_port.unwrap_or(993) as u16;
+    let password = match account.app_password.as_deref() {
+        Some(p) => p.to_string(),
+        None => {
+            tracing::warn!("IDLE: account {} has no password", account.email_address);
+            return;
+        },
+    };
+
+    loop {
+        // ---- connect --------------------------------------------------------
+        let tcp_stream =
+            match tokio::net::TcpStream::connect((&imap_server as &str, imap_port)).await {
+                Ok(s) => s,
+                Err(e) => {
+                    tracing::warn!(
+                        "IDLE: TCP connect failed for {}: {}",
+                        account.email_address,
+                        e
+                    );
+                    tokio::time::sleep(Duration::from_secs(60)).await;
+                    continue;
+                },
+            };
+
+        let tls_connector = match native_tls::TlsConnector::builder()
+            .danger_accept_invalid_certs(true)
+            .danger_accept_invalid_hostnames(true)
+            .build()
+        {
+            Ok(c) => tokio_native_tls::TlsConnector::from(c),
+            Err(e) => {
+                tracing::warn!("IDLE: TLS builder failed: {}", e);
+                return;
+            },
+        };
+
+        let tls_stream = match tls_connector.connect(&imap_server, tcp_stream).await {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::warn!(
+                    "IDLE: TLS handshake failed for {}: {}",
+                    account.email_address,
+                    e
+                );
+                tokio::time::sleep(Duration::from_secs(60)).await;
+                continue;
+            },
+        };
+
+        let client = async_imap::Client::new(tls_stream);
+        let mut session = match client
+            .login(&account.email_address, &password)
+            .await
+            .map_err(|e| e.0)
+        {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::warn!("IDLE: login failed for {}: {}", account.email_address, e);
+                tokio::time::sleep(Duration::from_secs(60)).await;
+                continue;
+            },
+        };
+
+        // ---- select INBOX (required before IDLE) ----------------------------
+        if let Err(e) = session.select("INBOX").await {
+            tracing::warn!(
+                "IDLE: SELECT INBOX failed for {}: {}",
+                account.email_address,
+                e
+            );
+            let _ = session.logout().await;
+            tokio::time::sleep(Duration::from_secs(60)).await;
+            continue;
+        }
+
+        // ---- enter IDLE -----------------------------------------------------
+        // `session.idle()` consumes the session and returns a Handle.
+        let mut handle = session.idle();
+        if let Err(e) = handle.init().await {
+            // Server does not support IDLE — fall back gracefully to polling.
+            tracing::warn!(
+                "IDLE not supported for {} ({}); polling loop remains active",
+                account.email_address,
+                e
+            );
+            if let Ok(mut s) = handle.done().await {
+                let _ = s.logout().await;
+            }
+            return; // Exit this task; start_sync_scheduler continues polling.
+        }
+
+        tracing::debug!("IDLE active on INBOX for {}", account.email_address);
+
+        // Wait up to 25 minutes for a server notification (RFC 2177: < 29 min).
+        let (wait_fut, _stop) = handle.wait_with_timeout(Duration::from_secs(25 * 60));
+        let idle_result = wait_fut.await;
+
+        // ---- exit IDLE and recover session ----------------------------------
+        let mut session = match handle.done().await {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::warn!("IDLE: DONE failed for {}: {}", account.email_address, e);
+                tokio::time::sleep(Duration::from_secs(10)).await;
+                continue;
+            },
+        };
+
+        match idle_result {
+            Ok(IdleResponse::NewData(_)) => {
+                tracing::debug!(
+                    "IDLE: server signalled change for {}, running incremental sync",
+                    account.email_address
+                );
+                if let Err(e) = session.select("INBOX").await {
+                    tracing::warn!("IDLE post-notification SELECT failed: {}", e);
+                } else if let Err(e) = sync_account(&pool, &account, &event_bus).await {
+                    tracing::warn!(
+                        "IDLE post-notification sync failed for {}: {}",
+                        account.email_address,
+                        e
+                    );
+                }
+            },
+            Ok(IdleResponse::Timeout) => {
+                tracing::debug!(
+                    "IDLE 25-min timeout for {}, re-entering IDLE",
+                    account.email_address
+                );
+            },
+            Ok(IdleResponse::ManualInterrupt) | Err(_) => {
+                tracing::debug!(
+                    "IDLE interrupted for {}, reconnecting",
+                    account.email_address
+                );
+            },
+        }
+
+        let _ = session.logout().await;
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+}
+
+/// Spawn one `idle_inbox` task per active account immediately after the first
+/// successful sync round.  Accounts whose servers don't support IDLE will
+/// silently fall back to the polling loop.
+pub async fn start_idle_listeners(pool: Pool<Postgres>, event_bus: PgEventBus) {
+    let accounts: Vec<MailAccount> =
+        match sqlx::query_as("SELECT * FROM mail.accounts WHERE status = 'active'")
+            .fetch_all(&pool)
+            .await
+        {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::warn!("start_idle_listeners: failed to load accounts: {}", e);
+                return;
+            },
+        };
+
+    tracing::info!("Starting IDLE listeners for {} account(s)", accounts.len());
+    for account in accounts {
+        let pool2 = pool.clone();
+        let bus2 = event_bus.clone();
+        tokio::spawn(async move {
+            idle_inbox(pool2, bus2, account).await;
+        });
     }
 }
 
@@ -317,7 +503,7 @@ pub async fn sync_account(
                         .bind(*uid as i64)
                         .bind(&message_id)
                         .bind(&in_reply_to)
-                        .bind(sender_email.unwrap_or(from.clone().unwrap_or_default()))
+                        .bind(sender_email.clone().unwrap_or(from.clone().unwrap_or_default()))
                         .bind(&sender_name)
                         .bind(&to)
                         .bind(&cc)
@@ -334,6 +520,26 @@ pub async fn sync_account(
 
                         if let Some((email_id,)) = inserted {
                             total_new_messages += 1;
+
+                            // Idea #33: Auto-label on incoming emails using keyword categorization
+                            {
+                                let category = categorize_email(
+                                    sender_email
+                                        .as_deref()
+                                        .unwrap_or_else(|| from.as_deref().unwrap_or("")),
+                                    subject.as_deref().unwrap_or(""),
+                                    body_text.as_deref().unwrap_or(""),
+                                );
+                                if let Err(e) =
+                                    ensure_label_and_apply(pool, email_id, &[], &category).await
+                                {
+                                    tracing::warn!(
+                                        "Auto-label failed for email {}: {:?}",
+                                        email_id,
+                                        e
+                                    );
+                                }
+                            }
 
                             // Track highest UID for incremental sync (Idea 50)
                             let uid_i64 = *uid as i64;

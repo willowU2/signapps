@@ -7,10 +7,10 @@
 
 export interface CrossLink {
   id: string;
-  sourceType: "mail" | "task" | "event";
+  sourceType: "mail" | "task" | "event" | "document";
   sourceId: string;
   sourceTitle: string;
-  targetType: "mail" | "task" | "event";
+  targetType: "mail" | "task" | "event" | "document";
   targetId: string;
   targetTitle: string;
   relation: string; // "created_from" | "linked" | "follow_up" | ...

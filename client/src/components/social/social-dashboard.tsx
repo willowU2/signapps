@@ -64,7 +64,7 @@ export function SocialDashboard() {
 
   // Filter posts by selected channels
   const filteredPosts = selectedChannelIds.length > 0
-    ? posts.filter((p) => p.accounts.some((aid) => selectedChannelIds.includes(aid)))
+    ? posts.filter((p) => (p.accounts ?? []).some((aid) => selectedChannelIds.includes(aid)))
     : posts;
 
   const recentPublished = filteredPosts
@@ -192,7 +192,7 @@ export function SocialDashboard() {
                 <p className="text-sm text-muted-foreground text-center py-4">Aucun post publié</p>
               ) : (
                 recentPublished.map((post) => {
-                  const platform = accounts.find((a) => post.accounts.includes(a.id))?.platform;
+                  const platform = accounts.find((a) => (post.accounts ?? []).includes(a.id))?.platform;
                   return (
                     <div key={post.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
                       <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
@@ -227,7 +227,7 @@ export function SocialDashboard() {
                 <p className="text-sm text-muted-foreground text-center py-4">Aucun post programmé</p>
               ) : (
                 upcomingScheduled.map((post) => {
-                  const platform = accounts.find((a) => post.accounts.includes(a.id))?.platform;
+                  const platform = accounts.find((a) => (post.accounts ?? []).includes(a.id))?.platform;
                   return (
                     <div key={post.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
                       <Clock className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />

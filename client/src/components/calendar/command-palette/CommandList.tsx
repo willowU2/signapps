@@ -10,7 +10,14 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { CommandItem } from './CommandItem';
-import type { Command } from '@/lib/scheduling/types/scheduling';
+interface Command {
+  id: string;
+  label: string;
+  category: string;
+  action: () => void;
+  shortcut?: string;
+  icon?: React.ReactNode;
+}
 
 // ============================================================================
 // Types

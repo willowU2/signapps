@@ -18,6 +18,12 @@ export type PostSignature = Signature;
 
 export interface CreatePostRequest extends Partial<SocialPost> {
   repeatInterval?: number; // number of days between recurring posts (0 = no repeat)
+  /** Frontend-only: thread posts for multi-post threads */
+  threadPosts?: import('@/lib/api/social').ThreadPost[];
+  /** Frontend-only: per-platform content overrides */
+  platformOverrides?: Record<string, { content: string; threadPosts?: import('@/lib/api/social').ThreadPost[] }>;
+  /** Frontend-only: simple per-platform content map */
+  platformContent?: Record<string, string>;
 }
 
 interface SocialState {
@@ -67,13 +73,13 @@ interface SocialState {
   updateAccount: (id: string, data: Partial<SocialAccount>) => Promise<void>;
   removeAccount: (id: string) => Promise<void>;
 
-  createRssFeed: (data: Omit<RssFeed, 'id' | 'createdAt' | 'lastCheckedAt'>) => Promise<void>;
+  createRssFeed: (data: Partial<RssFeed> & Pick<RssFeed, 'name'>) => Promise<void>;
   updateRssFeed: (id: string, data: Partial<RssFeed>) => Promise<void>;
   deleteRssFeed: (id: string) => Promise<void>;
   toggleRssFeed: (id: string, active: boolean) => Promise<void>;
   checkRssFeed: (id: string) => Promise<void>;
 
-  createTemplate: (data: Omit<PostTemplate, 'id' | 'createdAt'>) => Promise<void>;
+  createTemplate: (data: Omit<PostTemplate, 'id' | 'createdAt' | 'userId'>) => Promise<void>;
   updateTemplate: (id: string, data: Partial<PostTemplate>) => Promise<void>;
   deleteTemplate: (id: string) => Promise<void>;
 
@@ -125,7 +131,7 @@ export const useSocialStore = create<SocialState>()(
         set({ isLoadingPosts: true, error: null });
         try {
           const res = await socialApi.posts.list(params);
-          set({ posts: res.data.items, isLoadingPosts: false });
+          set({ posts: res.data, isLoadingPosts: false });
         } catch (e: unknown) {
           const msg = e instanceof Error ? e.message : 'Failed to fetch posts';
           set({ error: msg, isLoadingPosts: false });
@@ -135,8 +141,12 @@ export const useSocialStore = create<SocialState>()(
       fetchInbox: async (params) => {
         set({ isLoadingInbox: true, error: null });
         try {
-          const res = await socialApi.inbox.list(params);
-          set({ inboxItems: res.data.items, isLoadingInbox: false });
+          const res = await socialApi.inbox.list(params ? {
+            accountId: params.platform,
+            itemType: params.type,
+            unreadOnly: params.unreadOnly,
+          } : undefined);
+          set({ inboxItems: res.data, isLoadingInbox: false });
         } catch (e: unknown) {
           const msg = e instanceof Error ? e.message : 'Failed to fetch inbox';
           set({ error: msg, isLoadingInbox: false });
@@ -196,7 +206,7 @@ export const useSocialStore = create<SocialState>()(
       },
 
       createPost: async (data) => {
-        const res = await socialApi.posts.create(data);
+        const res = await socialApi.posts.create(data as Parameters<typeof socialApi.posts.create>[0]);
         set((state) => ({ posts: [res.data, ...state.posts] }));
         return res.data;
       },
@@ -257,7 +267,7 @@ export const useSocialStore = create<SocialState>()(
       },
 
       createRssFeed: async (data) => {
-        const res = await socialApi.rssFeeds.create(data);
+        const res = await socialApi.rssFeeds.create(data as Parameters<typeof socialApi.rssFeeds.create>[0]);
         set((state) => ({ rssFeeds: [...state.rssFeeds, res.data] }));
       },
 

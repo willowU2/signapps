@@ -2,7 +2,7 @@ import { ComponentProps, useRef, useState, useEffect, useCallback } from "react"
 import { formatDistanceToNow } from "date-fns"
 
 import { cn } from "@/lib/utils"
-import { Archive, Clock, Trash2, Square, Star, Loader2, ShieldAlert, Inbox, Reply, Forward, CheckSquare, CalendarPlus, Bell, FolderPlus, Mail as MailIcon, MailOpen } from "lucide-react"
+import { Archive, Clock, Trash2, Square, Star, Loader2, ShieldAlert, Inbox, Reply, Forward, CheckSquare, CalendarPlus, Bell, FolderPlus, Mail as MailIcon, MailOpen, RefreshCw } from "lucide-react"
 import { Mail } from "@/lib/data/mail"
 import { EmptyState } from "@/components/ui/empty-state"
 import { SpamBadge } from "./spam-filter-settings"
@@ -23,15 +23,44 @@ import { EmailToTaskDialog } from "@/components/mail/email-to-task-dialog"
 import { EmailToEventDialog } from "@/components/interop/EmailToEventDialog"
 import { EmailFollowUpDialog } from "@/components/interop/EmailFollowUpDialog"
 import { EmailThreadToProjectDialog } from "@/components/interop/EmailThreadToProject"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { VirtualList } from "@/components/ui/virtual-list"
 import { useSwipeAction } from "@/hooks/use-swipe-action"
 import { SnoozeDatePicker } from "./snooze-picker"
-// Avatars removed for Gmail layout
+// Avatars removed for density-aware layout
 
 const PAGE_SIZE = 20
-// Fixed row height matching the Gmail-style h-10 rows (40px)
+// Base row heights per density (controlled via CSS variables set by parent class)
 const MAIL_ROW_HEIGHT = 40
+
+// ─── Idea 37: Priority bar color ────────────────────────────────────────────
+function getPriorityColor(mail: Mail): string | null {
+    const priority = (mail as any).priority as number | undefined
+    if (priority === 5) return "#ef4444" // red — urgent
+    if (priority === 4) return "#f97316" // orange
+    if (priority === 3) return "#eab308" // yellow
+    if (priority === 2) return "#22c55e" // green
+    if (priority === 1) return "transparent"
+    // fallback: derive from subject keywords
+    const subj = mail.subject.toLowerCase()
+    if (/urgent|asap|critique|critique|bloquant/.test(subj)) return "#ef4444"
+    if (/important|priorité/.test(subj)) return "#f97316"
+    return null
+}
+
+// ─── Idea 38: Follow-up detection ───────────────────────────────────────────
+function daysSince(dateStr: string): number {
+    return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
+}
+
+// ─── Idea 40: Sentiment analysis ────────────────────────────────────────────
+function getSentiment(mail: Mail): "positive" | "negative" | "neutral" {
+    const text = (mail.subject + " " + mail.text).toLowerCase()
+    const positive = /merci|excellent|bravo|super|parfait|great|thanks|amazing|félicitation|wonderful/.test(text)
+    const negative = /urgent|problème|erreur|bug|plainte|déçu|complaint|issue|échec|failed|error/.test(text)
+    if (positive && !negative) return "positive"
+    if (negative) return "negative"
+    return "neutral"
+}
 
 interface MailListProps extends Omit<ComponentProps<"div">, "onSelect"> {
     items: Mail[]
@@ -62,9 +91,19 @@ interface MailRowProps {
     onMarkUnread?: (id: string) => void
     spamIds?: Set<string>
     starredIds?: Set<string>
+    allItems?: Mail[]
 }
 
-function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, onReportSpam, onStar, onMarkUnread, spamIds, starredIds }: MailRowProps) {
+function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, onReportSpam, onStar, onMarkUnread, spamIds, starredIds, allItems }: MailRowProps) {
+    // Idea 37: priority bar
+    const priorityColor = getPriorityColor(item)
+
+    // Idea 38: follow-up badge — sent mail older than 3 days with no reply
+    const hasReply = allItems?.some(m => (m as any).in_reply_to === ((item as any).message_id || item.id))
+    const showFollowUp = (item as any).is_sent && !hasReply && daysSince(item.date) > 3
+
+    // Idea 40: sentiment
+    const sentiment = getSentiment(item)
     const { handlers: swipeHandlers } = useSwipeAction({
         onSwipeLeft: () => onArchive?.(item.id),
         onSwipeRight: () => onDelete?.(item.id),
@@ -85,17 +124,33 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
         <div
             role="button"
             tabIndex={0}
+            draggable={true}
+            onDragStart={(e) => {
+                e.dataTransfer.effectAllowed = 'copy'
+                e.dataTransfer.setData(
+                    'application/signapps-email',
+                    JSON.stringify({ id: item.id, subject: item.subject, sender: item.email, date: item.date })
+                )
+            }}
             onClick={() => onSelect(item.id)}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect(item.id); }}
             className={cn(
-                "group relative flex items-center gap-2 px-1 py-0 h-10 text-left text-sm transition-all duration-150 outline-none w-full border-b border-border/60 dark:border-gray-800/60 select-none cursor-pointer hover:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] hover:z-10",
+                "group relative flex items-center gap-2 px-1 py-0 mail-row text-left text-sm transition-all duration-150 outline-none w-full border-b border-border/60 dark:border-gray-800/60 select-none cursor-pointer hover:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] hover:z-10",
                 selectedId === item.id
-                    ? "bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff]"
+                    ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground"
                     : "bg-background dark:bg-[#1f1f1f] hover:bg-muted/80 dark:hover:bg-[#202124]",
                 !item.read && "bg-background dark:bg-[#1f1f1f]"
             )}
             {...swipeHandlers}
         >
+            {/* Idea 37: priority bar — 3px left edge */}
+            {priorityColor && (
+                <span
+                    className="absolute left-0 top-0 bottom-0 w-[3px] rounded-r-sm"
+                    style={{ backgroundColor: priorityColor }}
+                    aria-hidden="true"
+                />
+            )}
             <div className="flex-shrink-0 flex items-center gap-2 px-3 text-gray-400 dark:text-muted-foreground">
                 <Square className="h-[18px] w-[18px] hover:text-muted-foreground dark:hover:text-gray-300 transition-colors" />
                 <button
@@ -115,22 +170,50 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
             <div className="flex items-center w-full overflow-hidden gap-2 pr-4">
                 <span className={cn(
                     "w-48 truncate flex-shrink-0 text-[14px]",
-                    !item.read ? "text-[#202124] dark:text-[#e3e3e3] font-bold" : "text-[#202124] dark:text-[#e3e3e3] font-medium"
+                    !item.read ? "text-foreground font-bold" : "text-foreground font-medium"
                 )}>
                     {item.name}
                 </span>
-                <div className="flex items-center truncate flex-1 text-[14px]">
+                <div className="flex items-center truncate flex-1 text-[14px] gap-1.5">
                     {spamIds?.has(item.id) && <span className="shrink-0 mr-1.5"><SpamBadge /></span>}
-                    <span className={cn("truncate", !item.read ? "font-bold text-[#202124] dark:text-[#e3e3e3]" : "font-medium text-[#202124] dark:text-[#e3e3e3]")}>
+                    <span className={cn("truncate", !item.read ? "font-bold text-foreground" : "font-medium text-foreground")}>
                         {item.subject}
                     </span>
-                    <span className="truncate text-[#5f6368] dark:text-[#9aa0a6] ml-2 font-normal hidden sm:inline-block">
+                    <span className="truncate text-muted-foreground ml-2 font-normal hidden sm:inline-block">
                         - {item.text.replace(/\s+/g, ' ')}
                     </span>
+                    {/* Idea 40: sentiment icon */}
+                    {sentiment === "positive" && (
+                        <span title="Sentiment positif" className="shrink-0 text-[11px] leading-none">🙂</span>
+                    )}
+                    {sentiment === "negative" && (
+                        <span title="Sentiment négatif" className="shrink-0 text-[11px] leading-none">😟</span>
+                    )}
+                    {/* Idea 38: follow-up badge */}
+                    {showFollowUp && (
+                        <span className="shrink-0 flex items-center gap-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/50 px-1.5 py-0.5 rounded-full">
+                            <RefreshCw className="h-2.5 w-2.5" />
+                            Relance ?
+                        </span>
+                    )}
+                    {/* Idea 29: label colored badges */}
+                    {item.labels?.slice(0, 2).map((lbl: any) => (
+                        <span
+                            key={typeof lbl === "string" ? lbl : lbl.id}
+                            className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium border"
+                            style={
+                                typeof lbl === "object" && lbl.color
+                                    ? { backgroundColor: `${lbl.color}20`, color: lbl.color, borderColor: `${lbl.color}40` }
+                                    : undefined
+                            }
+                        >
+                            {typeof lbl === "string" ? lbl : lbl.name}
+                        </span>
+                    ))}
                 </div>
                 <span className={cn(
                     "w-24 text-right flex-shrink-0 text-[12px]",
-                    !item.read ? "text-[#202124] dark:text-[#e3e3e3] font-bold" : "text-[#5f6368] dark:text-[#9aa0a6] font-medium group-hover:hidden"
+                    !item.read ? "text-foreground font-bold" : "text-muted-foreground font-medium group-hover:hidden"
                 )}>
                     {formatDistanceToNow(new Date(item.date))}
                 </span>
@@ -249,34 +332,38 @@ export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onD
 
     return (
         <div className="flex flex-col h-full bg-background/50">
-            <div className="px-4 py-3 border-b flex-shrink-0">
-                <Tabs defaultValue="primary" className="w-full">
-                    <TabsList className="w-full justify-start h-10 bg-transparent p-0 gap-6 border-b-0">
-                        <TabsTrigger value="primary" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none px-2 pb-2 pt-0 shadow-none border-b-2 border-transparent text-muted-foreground font-semibold">
-                            Primary
-                        </TabsTrigger>
-                        <TabsTrigger value="social" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none px-2 pb-2 pt-0 shadow-none border-b-2 border-transparent text-muted-foreground font-semibold">
-                            Social
-                        </TabsTrigger>
-                        <TabsTrigger value="promotions" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none px-2 pb-2 pt-0 shadow-none border-b-2 border-transparent text-muted-foreground font-semibold">
-                            Promotions
-                        </TabsTrigger>
-                    </TabsList>
-                </Tabs>
-            </div>
-
             {/* Virtualised email list — only visible rows are rendered */}
             {items.length === 0 ? (
-                <EmptyState
-                    icon={MailIcon}
-                    context={isSearchActive ? "search" : "empty"}
-                    title={isSearchActive ? "Aucun résultat" : "Votre boîte est vide"}
-                    description={
-                        isSearchActive
-                            ? "Aucun email ne correspond à votre recherche."
-                            : "Tous vos messages apparaîtront ici."
-                    }
-                />
+                isSearchActive ? (
+                    <EmptyState
+                        icon={MailIcon}
+                        context="search"
+                        title="Aucun résultat"
+                        description="Aucun email ne correspond à votre recherche."
+                    />
+                ) : (
+                    /* Idea 20: Custom SVG illustration for empty inbox */
+                    <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+                        <svg
+                            viewBox="0 0 120 100"
+                            className="w-32 h-28 text-primary/20 mb-6"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden="true"
+                        >
+                            {/* Envelope body */}
+                            <rect x="8" y="24" width="104" height="68" rx="6" fill="currentColor" opacity="0.15" />
+                            <rect x="8" y="24" width="104" height="68" rx="6" stroke="currentColor" strokeWidth="2.5" />
+                            {/* Envelope flap (open V) */}
+                            <polyline points="8,24 60,64 112,24" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" fill="none" />
+                            {/* Checkmark circle */}
+                            <circle cx="90" cy="22" r="16" fill="white" stroke="currentColor" strokeWidth="2.5" />
+                            <polyline points="82,22 88,28 98,16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <h3 className="text-lg font-semibold text-foreground mb-1">Vous êtes à jour !</h3>
+                        <p className="text-sm text-muted-foreground max-w-xs">Aucun message dans cette boîte. Profitez du calme.</p>
+                    </div>
+                )
             ) : (
                 <VirtualList
                     items={items}
@@ -300,6 +387,7 @@ export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onD
                             onMarkUnread={onMarkUnread}
                             spamIds={spamIds}
                             starredIds={starredIds}
+                            allItems={items}
                         />
                     )}
                 />

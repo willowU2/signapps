@@ -7,32 +7,31 @@
  */
 
 import { useState } from 'react';
-import { Eye, Pencil, X, FileText, Image, File } from 'lucide-react';
+import { Eye, Pencil, FileText, Image, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { DriveNode } from '@/lib/api/drive';
 import { useRouter } from 'next/navigation';
+import { FilePreviewer } from '@/components/drive/file-previewer';
 
 interface DriveFilePreviewProps {
   node: DriveNode;
   fileUrl?: string;
 }
 
-function getPreviewType(node: DriveNode): 'image' | 'pdf' | 'doc' | 'text' | 'unknown' {
+function getIconType(node: DriveNode): 'image' | 'doc' | 'file' {
   const mime = node.mime_type ?? '';
   if (mime.startsWith('image/')) return 'image';
-  if (mime === 'application/pdf') return 'pdf';
   if (node.node_type === 'document') return 'doc';
-  if (mime.startsWith('text/')) return 'text';
-  return 'unknown';
+  return 'file';
 }
 
 export function DriveFilePreview({ node, fileUrl }: DriveFilePreviewProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const type = getPreviewType(node);
+  const iconType = getIconType(node);
 
   const handleEdit = () => {
     if (node.node_type === 'document') {
@@ -53,47 +52,34 @@ export function DriveFilePreview({ node, fileUrl }: DriveFilePreviewProps) {
         <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
           <DialogHeader className="flex-row items-center justify-between space-y-0 pb-2">
             <DialogTitle className="flex items-center gap-2 text-sm truncate">
-              {type === 'image' ? <Image className="h-4 w-4" /> :
-               type === 'doc' ? <FileText className="h-4 w-4" /> :
+              {iconType === 'image' ? <Image className="h-4 w-4" /> :
+               iconType === 'doc'   ? <FileText className="h-4 w-4" /> :
                <File className="h-4 w-4" />}
               {node.name}
             </DialogTitle>
             <div className="flex items-center gap-1">
               <Button variant="outline" size="sm" className="gap-1.5" onClick={handleEdit}>
                 <Pencil className="h-3.5 w-3.5" />
-                {node.node_type === 'document' ? 'Éditer' : 'Ouvrir'}
+                {node.node_type === 'document' ? 'Editer' : 'Ouvrir'}
               </Button>
             </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-auto rounded-lg border bg-muted/10 min-h-[300px]">
-            {type === 'image' && fileUrl && (
-              <img src={fileUrl} alt={node.name} className="max-w-full h-auto mx-auto" />
-            )}
-            {type === 'pdf' && fileUrl && (
-              <iframe src={fileUrl} className="w-full h-[500px] border-none" title={node.name} />
-            )}
-            {type === 'doc' && (
-              <div className="p-6 text-center text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p className="text-sm">{node.name}</p>
-                <p className="text-xs mt-1">Ouvrez dans l'éditeur pour voir le contenu</p>
-                <Button size="sm" className="mt-3" onClick={handleEdit}>
-                  Ouvrir l'éditeur
-                </Button>
-              </div>
-            )}
-            {type === 'text' && fileUrl && (
-              <iframe src={fileUrl} className="w-full h-[500px] border-none bg-card" title={node.name} />
-            )}
-            {type === 'unknown' && (
+          <div className="flex-1 overflow-auto min-h-[300px]">
+            {fileUrl ? (
+              <FilePreviewer
+                url={fileUrl}
+                filename={node.name}
+                mimeType={node.mime_type}
+              />
+            ) : (
               <div className="p-6 text-center text-muted-foreground">
                 <File className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p className="text-sm">Aperçu non disponible pour ce type de fichier</p>
-                {fileUrl && (
-                  <a href={fileUrl} download className="mt-3 inline-block">
-                    <Button size="sm" variant="outline">Télécharger</Button>
-                  </a>
+                <p className="text-sm">URL de fichier non disponible</p>
+                {node.node_type === 'document' && (
+                  <Button size="sm" className="mt-3" onClick={handleEdit}>
+                    Ouvrir dans l&apos;editeur
+                  </Button>
                 )}
               </div>
             )}

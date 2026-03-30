@@ -67,7 +67,7 @@ export function TeamOverlay({
   useEffect(() => {
     const loadMembers = async () => {
       try {
-        const response = await usersApi.list(1, 50);
+        const response = await usersApi.list(0, 50);
         const ud = response.data as any;
         const users = ud?.users || (Array.isArray(ud) ? ud : []);
         const teamMembers: TeamMember[] = users.map((user: User, index: number) => ({

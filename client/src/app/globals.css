@@ -302,6 +302,30 @@
   .mobile-table-label {
     @apply text-xs font-medium uppercase tracking-wide text-muted-foreground;
   }
+
+  /* ── Mail density switcher (Idea 16) ── */
+  .mail-density-compact .mail-row {
+    height: 32px;
+    font-size: 12px;
+  }
+  .mail-density-default .mail-row {
+    height: 40px;
+    font-size: 14px;
+  }
+  .mail-density-spacious .mail-row {
+    height: 56px;
+    font-size: 14px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  /* ── Swipe action reveal colors (Idea 19) ── */
+  .swipe-reveal-left {
+    @apply bg-primary/90 text-primary-foreground;
+  }
+  .swipe-reveal-right {
+    @apply bg-destructive/90 text-white;
+  }
 }
 
 @keyframes fadeIn {

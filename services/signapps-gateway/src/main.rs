@@ -244,13 +244,25 @@ async fn main() -> anyhow::Result<()> {
     let docs_url = env_or("DOCS_SERVICE_URL", "http://127.0.0.1:3010");
     let storage_url = env_or("STORAGE_SERVICE_URL", "http://127.0.0.1:3004");
     let ai_url = env_or("AI_SERVICE_URL", "http://127.0.0.1:3005");
-    let calendar_url = env_or("CALENDAR_SERVICE_URL", "http://127.0.0.1:3007");
-    let forms_url = env_or("FORMS_SERVICE_URL", "http://127.0.0.1:3015");
-    let social_url = env_or("SOCIAL_SERVICE_URL", "http://127.0.0.1:3008");
-    let office_url = env_or("OFFICE_SERVICE_URL", "http://127.0.0.1:3014");
+    let calendar_url = env_or("CALENDAR_SERVICE_URL", "http://127.0.0.1:3011");
+    let forms_url = env_or("FORMS_SERVICE_URL", "http://127.0.0.1:3022");
+    let social_url = env_or("SOCIAL_SERVICE_URL", "http://127.0.0.1:3019");
+    let office_url = env_or("OFFICE_SERVICE_URL", "http://127.0.0.1:3018");
     let remote_url = env_or("REMOTE_SERVICE_URL", "http://127.0.0.1:3017");
     let mail_url = env_or("MAIL_SERVICE_URL", "http://127.0.0.1:3012");
     let proxy_url = env_or("PROXY_SERVICE_URL", "http://127.0.0.1:3003");
+    let chat_url = env_or("CHAT_SERVICE_URL", "http://127.0.0.1:3020");
+    let collab_url = env_or("COLLAB_SERVICE_URL", "http://127.0.0.1:3013");
+    let meet_url = env_or("MEET_SERVICE_URL", "http://127.0.0.1:3014");
+    let notifications_url = env_or("NOTIFICATIONS_SERVICE_URL", "http://127.0.0.1:8095");
+    let billing_url = env_or("BILLING_SERVICE_URL", "http://127.0.0.1:8096");
+    let workforce_url = env_or("WORKFORCE_SERVICE_URL", "http://127.0.0.1:3024");
+    let contacts_url = env_or("CONTACTS_SERVICE_URL", "http://127.0.0.1:3021");
+    let metrics_url = env_or("METRICS_SERVICE_URL", "http://127.0.0.1:3008");
+    let media_url = env_or("MEDIA_SERVICE_URL", "http://127.0.0.1:3009");
+    let scheduler_url = env_or("SCHEDULER_SERVICE_URL", "http://127.0.0.1:3007");
+    let securelink_url = env_or("SECURELINK_SERVICE_URL", "http://127.0.0.1:3006");
+    let it_assets_url = env_or("IT_ASSETS_SERVICE_URL", "http://127.0.0.1:3015");
 
     // Ordered: more-specific prefixes first
     let service_map = Arc::new(ServiceMap::new(vec![
@@ -272,6 +284,18 @@ async fn main() -> anyhow::Result<()> {
         ("/api/v1/remote", &remote_url),
         ("/api/v1/mail", &mail_url),
         ("/api/v1/proxy", &proxy_url),
+        ("/api/v1/chat", &chat_url),
+        ("/api/v1/collab", &collab_url),
+        ("/api/v1/meet", &meet_url),
+        ("/api/v1/notifications", &notifications_url),
+        ("/api/v1/billing", &billing_url),
+        ("/api/v1/workforce", &workforce_url),
+        ("/api/v1/contacts", &contacts_url),
+        ("/api/v1/metrics", &metrics_url),
+        ("/api/v1/media", &media_url),
+        ("/api/v1/scheduler", &scheduler_url),
+        ("/api/v1/securelink", &securelink_url),
+        ("/api/v1/it-assets", &it_assets_url),
         // Fallback: identity health
         ("/health", &identity_url),
     ]));
