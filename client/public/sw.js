@@ -1,4 +1,4 @@
-const CACHE_NAME = 'signapps-v1';
+const CACHE_NAME = 'signapps-v2';
 const STATIC_ASSETS = [
   '/',
   '/dashboard',
@@ -15,12 +15,14 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Network-first for API calls, cache-first for static assets
-  if (event.request.url.includes('/api/')) {
+  const url = event.request.url;
+  // Network-first for API calls and Next.js chunks (never serve stale JS)
+  if (url.includes('/api/') || url.includes('/_next/')) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))
     );
   } else {
+    // Cache-first only for static assets (icons, manifest)
     event.respondWith(
       caches.match(event.request).then(cached => cached || fetch(event.request))
     );
