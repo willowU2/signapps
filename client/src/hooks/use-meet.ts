@@ -64,7 +64,6 @@ export function useMeet(roomId: string, userId: string, userName: string) {
         wsRef.current = ws
 
         ws.onopen = () => {
-            console.warn('Connecté to signaling server')
             setIsConnecté(true)
             // Send join message
             sendSignal({ type: 'join', senderId: userId })
@@ -117,7 +116,6 @@ export function useMeet(roomId: string, userId: string, userName: string) {
         }
 
         pc.ontrack = (event) => {
-            console.warn("Received track from", peerId)
             const stream = event.streams[0]
             if (stream) {
                 setPeers(prev => {
@@ -143,7 +141,6 @@ export function useMeet(roomId: string, userId: string, userName: string) {
         switch (type) {
             case 'join': {
                 // New peer joined, create offer
-                console.warn("Peer joined:", senderId)
                 const pc = createPeerConnection(senderId)
                 const offer = await pc.createOffer()
                 await pc.setLocalDescription(offer)
@@ -157,7 +154,6 @@ export function useMeet(roomId: string, userId: string, userName: string) {
             }
             case 'offer': {
                 if (msg.targetId !== userId) return
-                console.warn("Received offer from:", senderId)
                 const pc = createPeerConnection(senderId)
                 await pc.setRemoteDescription(new RTCSessionDescription(payload))
                 const answer = await pc.createAnswer()
@@ -172,7 +168,6 @@ export function useMeet(roomId: string, userId: string, userName: string) {
             }
             case 'answer': {
                 if (msg.targetId !== userId) return
-                console.warn("Received answer from:", senderId)
                 const pc = peersRef.current.get(senderId)
                 if (pc) {
                     await pc.setRemoteDescription(new RTCSessionDescription(payload))

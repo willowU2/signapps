@@ -230,7 +230,6 @@ function createDefaultCommands(
       category: 'create',
       action: () => {
         // Will trigger QuickCreate with the item type
-        console.warn(`Create ${itemType.id}`);
       },
       keywords: ['new', 'nouveau', 'créer', 'create', itemType.id],
     });
@@ -305,7 +304,6 @@ function createDefaultCommands(
     category: 'search',
     action: () => {
       // Will open search modal
-      console.warn('Search items');
     },
     keywords: ['find', 'search', 'chercher', 'trouver'],
   });

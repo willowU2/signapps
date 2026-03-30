@@ -58,7 +58,6 @@ export function createSyncConnection(
 
       eventSource.onopen = () => {
         reconnectAttempts = 0;
-        console.warn("[Preferences Sync] Connecté");
       };
 
       eventSource.onmessage = (e) => {
@@ -123,8 +122,6 @@ export function useCrossDeviceSync(enabled = true) {
 
   const handleEvent = useCallback(
     (event: SyncEvent) => {
-      console.warn("[Preferences Sync] Received event:", event.type);
-
       switch (event.type) {
         case "update":
           if (event.section && event.data) {
@@ -239,8 +236,6 @@ export function useBroadcastSync() {
 
       // Ignore messages from this tab
       if (message.deviceId === deviceId) return;
-
-      console.warn("[Broadcast Sync] Received:", message.type);
 
       if (message.type === "update" && message.section && message.data) {
         usePreferencesStore.setState((state) => ({
