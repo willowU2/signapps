@@ -21,7 +21,7 @@ export function DictationMode() {
   const accumulatedRef = useRef('');
 
   const startDictation = useCallback(() => {
-    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRec = window.SpeechRecognition ?? window.webkitSpeechRecognition;
     if (!SpeechRec) { toast.error('Speech recognition not supported in this browser'); return; }
 
     const rec = new SpeechRec();

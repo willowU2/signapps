@@ -193,7 +193,7 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
             evented: !obj.locked,
             visible: obj.visible,
           });
-          (existing as any).moveTo?.(idx);
+          (existing as FabricCanvasObject & { moveTo?: (index: number) => void }).moveTo?.(idx);
         }
       });
 
@@ -251,7 +251,7 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
       if ((e.ctrlKey || e.metaKey) && e.key === "c") {
         const active = canvas.getActiveObject() as FabricCanvasObject | null;
         if (active) {
-          const cloned = await (active.clone as any)() as FabricCanvasObject;
+          const cloned = await active.clone() as FabricCanvasObject;
           (window as unknown as Record<string, FabricCanvasObject>).__designClipboard = cloned;
         }
       }
@@ -260,7 +260,7 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
       if ((e.ctrlKey || e.metaKey) && e.key === "v") {
         const clipped = (window as unknown as Record<string, FabricCanvasObject>).__designClipboard;
         if (clipped) {
-          const pasted = await (clipped.clone as any)() as FabricCanvasObject;
+          const pasted = await clipped.clone() as FabricCanvasObject;
           pasted.set({
             left: (pasted.left || 0) + 20,
             top: (pasted.top || 0) + 20,

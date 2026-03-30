@@ -380,15 +380,21 @@ pub async fn request_id_middleware(mut request: Request, next: Next) -> Response
         .map(|s| s.to_string())
         .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
-    request
-        .headers_mut()
-        .insert("x-request-id", request_id.parse().expect("UUID is always a valid header value"));
+    request.headers_mut().insert(
+        "x-request-id",
+        request_id
+            .parse()
+            .expect("UUID is always a valid header value"),
+    );
 
     let mut response = next.run(request).await;
 
-    response
-        .headers_mut()
-        .insert("x-request-id", request_id.parse().expect("UUID is always a valid header value"));
+    response.headers_mut().insert(
+        "x-request-id",
+        request_id
+            .parse()
+            .expect("UUID is always a valid header value"),
+    );
 
     response
 }

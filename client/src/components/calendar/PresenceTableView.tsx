@@ -422,7 +422,7 @@ export default function PresenceTableView() {
       ]);
 
       if (statusRes.status === "fulfilled" && statusRes.value?.data) {
-        const apiData = statusRes.value.data as any[];
+        const apiData = statusRes.value.data as unknown[];
         if (Array.isArray(apiData) && apiData.length > 0) {
           teamStatusData = apiData.map((item: any) => ({
             userId: item.user_id,
@@ -437,7 +437,7 @@ export default function PresenceTableView() {
       }
 
       if (headRes.status === "fulfilled" && headRes.value?.data) {
-        const hData = headRes.value.data as any[];
+        const hData = headRes.value.data as unknown[];
         if (Array.isArray(hData) && hData.length > 0) {
           headcountRaw = hData.map((p: any) => ({
             time: p.time,

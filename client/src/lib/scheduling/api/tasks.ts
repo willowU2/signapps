@@ -220,7 +220,7 @@ export function useUpdateTask() {
 
       await client.put(`/tasks/${id}`, payload);
       // Wait, we just invalidate after, no need to return exact node since mutation output can just be void
-      return { id, updates } as any; 
+      return { id, updates };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });

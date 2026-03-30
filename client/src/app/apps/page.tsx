@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Search, RefreshCw, Settings2, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { storeApi, containersApi } from '@/lib/api';
 import type { StoreApp } from '@/lib/api';
+import type { ContainerInfo, InstallResponse } from '@/lib/api/containers';
 import type { ContainerPortMapping } from '@/hooks/use-containers';
 import { getContainerUrl } from '@/lib/utils';
 import { CardGridSkeleton } from '@/components/ui/skeleton-loader';
@@ -59,8 +60,7 @@ export default function AppsPage() {
     try {
       const res = await containersApi.list();
       const map = new Map<string, InstalledContainer>();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      for (const c of (res.data || []) as any[]) {
+      for (const c of (res.data || []) as (ContainerInfo & { docker_info?: InstallResponse['docker_info'] })[]) {
         const appId = c.labels?.['signapps.app.id'];
         const imgBase = (c.image as string).split(':')[0].toLowerCase();
         const portMappings: ContainerPortMapping[] = (c.docker_info?.ports || [])

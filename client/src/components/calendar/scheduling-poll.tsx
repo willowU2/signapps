@@ -360,7 +360,7 @@ export function CreatePollDialog({ open, onOpenChange, onCreated }: CreatePollDi
 
         <DialogFooter className="gap-2">
           {step > 1 && (
-            <Button type="button" variant="outline" onClick={() => setStep((s) => (s - 1) as any)}>
+            <Button type="button" variant="outline" onClick={() => setStep((s) => (s - 1) as 1 | 2 | 3)}>
               Back
             </Button>
           )}
@@ -368,7 +368,7 @@ export function CreatePollDialog({ open, onOpenChange, onCreated }: CreatePollDi
             <Button
               type="button"
               disabled={step === 1 ? !canProceedStep1 : !canProceedStep2}
-              onClick={() => setStep((s) => (s + 1) as any)}
+              onClick={() => setStep((s) => (s + 1) as 1 | 2 | 3)}
             >
               Next
             </Button>

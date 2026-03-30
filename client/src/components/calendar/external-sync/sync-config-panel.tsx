@@ -40,6 +40,7 @@ import type {
   ConflictResolution,
   ExternalCalendar,
   ProviderConnection,
+  CreateSyncConfigRequest,
 } from '@/lib/calendar/external-sync/types';
 import {
   SYNC_DIRECTION_LABELS,
@@ -459,7 +460,7 @@ export function SyncConfigPanel({ className }: SyncConfigPanelProps) {
     if (editingConfig) {
       await updateSyncConfig(editingConfig.id, configData);
     } else {
-      await createSyncConfig(configData as any);
+      await createSyncConfig(configData as unknown as CreateSyncConfigRequest);
     }
     setDialogOpen(false);
   };

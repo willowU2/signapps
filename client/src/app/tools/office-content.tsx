@@ -699,7 +699,7 @@ function PresentationsTab() {
             </div>
             <div className="space-y-2">
               <Label>Export Format</Label>
-              <Select value={format} onValueChange={(v) => setFormat(v as any)}>
+              <Select value={format} onValueChange={(v) => setFormat(v as 'pptx' | 'pdf' | 'png' | 'svg')}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pptx">PPTX (PowerPoint)</SelectItem>

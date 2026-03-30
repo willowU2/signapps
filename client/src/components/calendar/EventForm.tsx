@@ -134,9 +134,9 @@ function LeaveSection({
     leaveApi
       .balances()
       .then((res) => {
-        const data = (res as any)?.data ?? res;
+        const data: unknown = (res as { data?: unknown })?.data ?? res;
         if (Array.isArray(data)) {
-          setBalances(data);
+          setBalances(data as LeaveBalance[]);
         } else {
           setBalances([]);
         }
@@ -154,8 +154,8 @@ function LeaveSection({
     leaveApi
       .predict(days, leaveType)
       .then((res) => {
-        const data = (res as any)?.data ?? res;
-        setPrediction(data ?? null);
+        const data: unknown = (res as { data?: unknown })?.data ?? res;
+        setPrediction((data as LeaveBalancePrediction) ?? null);
       })
       .catch(() => setPrediction(null))
       .finally(() => setLoadingPrediction(false));
@@ -169,11 +169,12 @@ function LeaveSection({
     leaveApi
       .teamConflicts(startTime, endTime)
       .then((res) => {
-        const data = (res as any)?.data ?? res;
+        const data: unknown = (res as { data?: unknown })?.data ?? res;
+        const dataObj = data as { conflicts?: TeamConflict[] };
         if (Array.isArray(data)) {
-          setTeamConflicts(data);
-        } else if (Array.isArray(data?.conflicts)) {
-          setTeamConflicts(data.conflicts);
+          setTeamConflicts(data as TeamConflict[]);
+        } else if (Array.isArray(dataObj?.conflicts)) {
+          setTeamConflicts(dataObj.conflicts);
         } else {
           setTeamConflicts([]);
         }
@@ -195,9 +196,10 @@ function LeaveSection({
         leave_type: leaveType,
       })
       .then((res) => {
-        const data = (res as any)?.data ?? res;
-        const viols: PresenceViolation[] = Array.isArray(data?.violations)
-          ? data.violations
+        const data: unknown = (res as { data?: unknown })?.data ?? res;
+        const dataObj = data as { violations?: PresenceViolation[] };
+        const viols: PresenceViolation[] = Array.isArray(dataObj?.violations)
+          ? dataObj.violations
           : [];
         setViolations(viols);
         onHardViolation(viols.some((v) => v.severity === "hard"));

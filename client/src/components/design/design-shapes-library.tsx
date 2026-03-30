@@ -44,9 +44,15 @@ import {
 } from "lucide-react";
 import type { DesignObject } from "./types";
 import { cn } from "@/lib/utils";
+import type * as fabric from "fabric";
+
+/** fabric.Object extended with the id property used in this codebase */
+interface FabricObjectWithId extends fabric.Object {
+  id?: string;
+}
 
 interface DesignShapesLibraryProps {
-  fabricCanvasRef: React.MutableRefObject<any | null>;
+  fabricCanvasRef: React.MutableRefObject<fabric.Canvas | null>;
 }
 
 interface ShapeDef {

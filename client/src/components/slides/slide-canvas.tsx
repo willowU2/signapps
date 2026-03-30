@@ -6,6 +6,13 @@ interface FabricObjectWithId extends fabric.Object {
     id?: string;
     text?: string;
     isEditing?: boolean;
+    /** fabric.IText selection/style methods present at runtime */
+    setSelectionStyles?: (styles: Record<string, unknown>, start: number, end: number) => void;
+    removeStyle?: (property: string) => void;
+    selectionStart?: number;
+    selectionEnd?: number;
+    /** moveTo is present on fabric objects within a canvas context */
+    moveTo?: (index: number) => void;
 }
 
 interface SlideCanvasProps {
@@ -194,7 +201,7 @@ export function SlideCanvas({
                             target.set({ text: (target.text ?? '') + currentGhostText });
 
                             // Style the ghosted part lightly
-                            (target as any).setSelectionStyles({ fill: '#9ca3af', fontStyle: 'italic' }, originalLen, (target.text ?? '').length);
+                            target.setSelectionStyles?.({ fill: '#9ca3af', fontStyle: 'italic' }, originalLen, (target.text ?? '').length);
                             c.requestRenderAll();
                         }
                     } catch (err) {
@@ -211,16 +218,16 @@ export function SlideCanvas({
 
                     // Remove all styling and solidify text
                     const len = (ghostedObject.text ?? '').length;
-                    (ghostedObject as any).removeStyle?.('fill');
-                    (ghostedObject as any).removeStyle?.('fontStyle');
+                    ghostedObject.removeStyle?.('fill');
+                    ghostedObject.removeStyle?.('fontStyle');
                     ghostedObject.set({
                         fill: '#000000', // Reset to black or original color ideally
                         fontStyle: 'normal'
                     });
 
                     // Move cursor to end explicitly
-                    (ghostedObject as any).selectionStart = len;
-                    (ghostedObject as any).selectionEnd = len;
+                    ghostedObject.selectionStart = len;
+                    ghostedObject.selectionEnd = len;
 
                     isUpdatingRef.current = true;
                     updateObject(ghostedObject.id!, ghostedObject.toObject());
@@ -293,7 +300,7 @@ export function SlideCanvas({
             const allObjs = [...canvas.getObjects()] as (FabricObjectWithId & { zIndex?: number })[];
             allObjs.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
             allObjs.forEach((obj, idx) => {
-                (obj as any).moveTo?.(idx);
+                obj.moveTo?.(idx);
             });
             
             canvas.requestRenderAll()

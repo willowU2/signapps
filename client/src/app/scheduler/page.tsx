@@ -119,8 +119,8 @@ export default function SchedulerPage() {
 
   const sortedJobs = useMemo(() => {
     return [...jobs].sort((a, b) => {
-      const aVal = (a as any)[sortField] ?? '';
-      const bVal = (b as any)[sortField] ?? '';
+      const aVal = a[sortField as keyof ScheduledJob] ?? '';
+      const bVal = b[sortField as keyof ScheduledJob] ?? '';
       const cmp = String(aVal).localeCompare(String(bVal), 'fr', { numeric: true });
       return sortDir === 'asc' ? cmp : -cmp;
     });

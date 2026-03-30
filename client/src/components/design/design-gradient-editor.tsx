@@ -8,6 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import type * as fabric from "fabric";
+
+/** Minimal typed interface for the fabric module's Gradient constructor */
+interface FabricModuleWithGradient {
+  Gradient: new (options: {
+    type: "linear" | "radial";
+    coords: Record<string, number>;
+    colorStops: { offset: number; color: string }[];
+  }) => fabric.Gradient<"linear" | "radial">;
+}
 
 interface GradientStop {
   id: string;
@@ -16,7 +26,7 @@ interface GradientStop {
 }
 
 interface GradientEditorProps {
-  fabricCanvasRef: React.MutableRefObject<any | null>;
+  fabricCanvasRef: React.MutableRefObject<fabric.Canvas | null>;
 }
 
 const DEFAULT_STOPS: GradientStop[] = [
@@ -42,18 +52,18 @@ export default function DesignGradientEditor({ fabricCanvasRef }: GradientEditor
   })();
 
   const buildFabricGradient = useCallback(
-    async (obj: any) => {
-      const fab = await import("fabric");
+    async (obj: fabric.Object) => {
+      const fab = await import("fabric") as unknown as FabricModuleWithGradient;
       const sortedStops = [...stops].sort((a, b) => a.offset - b.offset);
       const w = (obj.width ?? 100) * (obj.scaleX ?? 1);
       const h = (obj.height ?? 100) * (obj.scaleY ?? 1);
 
       const colorStops = sortedStops.map((s) => ({ offset: s.offset, color: s.color }));
 
-      let gradient: any;
+      let gradient: fabric.Gradient<"linear" | "radial">;
       if (gradientType === "linear") {
         const rad = (angle * Math.PI) / 180;
-        gradient = new (fab as any).Gradient({
+        gradient = new fab.Gradient({
           type: "linear",
           coords: {
             x1: w / 2 - (Math.cos(rad) * w) / 2,
@@ -64,7 +74,7 @@ export default function DesignGradientEditor({ fabricCanvasRef }: GradientEditor
           colorStops,
         });
       } else {
-        gradient = new (fab as any).Gradient({
+        gradient = new fab.Gradient({
           type: "radial",
           coords: { x1: w / 2, y1: h / 2, r1: 0, x2: w / 2, y2: h / 2, r2: Math.max(w, h) / 2 },
           colorStops,

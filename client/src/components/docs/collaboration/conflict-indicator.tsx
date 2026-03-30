@@ -62,9 +62,9 @@ export function ConflictIndicator({ className }: ConflictIndicatorProps) {
 
     // Make addConflict available globally for the collaboration system
     useEffect(() => {
-        (window as any).__signAppsAddConflict = addConflict;
+        window.__signAppsAddConflict = addConflict;
         return () => {
-            delete (window as any).__signAppsAddConflict;
+            delete window.__signAppsAddConflict;
         };
     }, []);
 
@@ -163,9 +163,9 @@ export function SyncHistoryPanel({ className, maxItems = 20 }: SyncHistoryProps)
 
     // Listen for sync events
     useEffect(() => {
-        const originalAddConflict = (window as any).__signAppsAddConflict;
+        const originalAddConflict = window.__signAppsAddConflict;
 
-        (window as any).__signAppsAddConflict = (
+        window.__signAppsAddConflict = (
             type: ConflictEvent['type'],
             affectedBy: string[],
             description: string
@@ -186,7 +186,7 @@ export function SyncHistoryPanel({ className, maxItems = 20 }: SyncHistoryProps)
         };
 
         return () => {
-            (window as any).__signAppsAddConflict = originalAddConflict;
+            window.__signAppsAddConflict = originalAddConflict;
         };
     }, [maxItems]);
 

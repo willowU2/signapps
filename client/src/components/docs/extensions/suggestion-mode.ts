@@ -100,13 +100,11 @@ export const SuggestionMode = Extension.create<SuggestionOptions>({
     addCommands() {
         return {
             enableSuggestionMode: () => ({ editor }) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (editor as any).storage.suggestionMode = { enabled: true };
+                (editor.storage as unknown as Record<string, unknown>).suggestionMode = { enabled: true };
                 return true;
             },
             disableSuggestionMode: () => ({ editor }) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (editor as any).storage.suggestionMode = { enabled: false };
+                (editor.storage as unknown as Record<string, unknown>).suggestionMode = { enabled: false };
                 return true;
             },
         };

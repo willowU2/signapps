@@ -392,6 +392,11 @@ export interface SearchQuery {
     q: string
     account_id?: string
     limit?: number
+    from?: string
+    to?: string
+    has_attachments?: boolean
+    is_read?: boolean
+    after?: string
 }
 
 export const searchApi = {

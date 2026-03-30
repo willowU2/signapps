@@ -72,7 +72,7 @@ export default function FloorPlanEditor() {
             if (isNew) {
                 // Remove the hypothetical id that was set initially, backend creates the UUID
                 const { id: _, ...createPayload } = planData as FloorPlanData;
-                await createPlan.mutateAsync(createPayload as any);
+                await createPlan.mutateAsync(createPayload);
             } else {
                 await updatePlan.mutateAsync({ id, updates: planData });
             }
@@ -150,7 +150,7 @@ export default function FloorPlanEditor() {
             id: `hbox-${Date.now()}`,
             resourceId: selectedGlobalResource,
             name: resourceMeta.name,
-            type: resourceMeta.type as any,
+            type: resourceMeta.type as FloorPlanResource['type'],
             path: '', // empty since it's a bound
             bounds: currentRect
         }

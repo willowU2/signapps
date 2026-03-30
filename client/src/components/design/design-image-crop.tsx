@@ -7,9 +7,20 @@ import { Crop, Check, X, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import type * as fabric from "fabric";
+
+/** fabric.FabricImage with the getElement() method present at runtime */
+interface FabricImageWithElement extends fabric.FabricImage {
+  getElement(): HTMLImageElement;
+}
+
+/** Minimal typed interface for accessing fabric.Rect constructor at runtime */
+interface FabricModuleWithRect {
+  Rect: new (options: Record<string, unknown>) => fabric.Rect;
+}
 
 interface ImageCropToolProps {
-  fabricCanvasRef: React.MutableRefObject<any | null>;
+  fabricCanvasRef: React.MutableRefObject<fabric.Canvas | null>;
 }
 
 interface AspectPreset {
@@ -67,7 +78,7 @@ export default function DesignImageCrop({ fabricCanvasRef }: ImageCropToolProps)
     const obj = canvas.getActiveObject();
     if (!obj || (obj.type !== "image" && obj.type !== "Image")) return;
 
-    const imgEl = (obj as any).getElement?.() as HTMLImageElement | undefined;
+    const imgEl = (obj as FabricImageWithElement).getElement();
     if (!imgEl) return;
 
     const natW = imgEl.naturalWidth || imgEl.width;
@@ -79,8 +90,8 @@ export default function DesignImageCrop({ fabricCanvasRef }: ImageCropToolProps)
     const sh = (cropRect.h / 100) * natH;
 
     // Use fabric clipPath
-    const fab = await import("fabric");
-    const clipRect = new (fab as any).Rect({
+    const fab = await import("fabric") as unknown as FabricModuleWithRect;
+    const clipRect = new fab.Rect({
       left: -(obj.width! * (obj.scaleX ?? 1)) / 2 + sx * ((obj.scaleX ?? 1)),
       top: -(obj.height! * (obj.scaleY ?? 1)) / 2 + sy * ((obj.scaleY ?? 1)),
       width: sw * ((obj.scaleX ?? 1)),

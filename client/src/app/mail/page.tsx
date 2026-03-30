@@ -179,8 +179,8 @@ export default function MailPage() {
         if (activeFilters.size === 0) return list
         return list.filter(mail => {
             if (activeFilters.has("unread") && mail.read) return false
-            if (activeFilters.has("attachment") && !(mail as any).attachments?.length) return false
-            if (activeFilters.has("starred") && !(mail as any).is_starred) return false
+            if (activeFilters.has("attachment") && !mail.attachments?.length) return false
+            if (activeFilters.has("starred") && !mail.is_starred) return false
             if (activeFilters.has("today")) {
                 const today = new Date()
                 const mailDate = new Date(mail.date)
@@ -190,7 +190,7 @@ export default function MailPage() {
                     mailDate.getFullYear() !== today.getFullYear()
                 ) return false
             }
-            if (activeFilters.has("important") && !(mail as any).is_important) return false
+            if (activeFilters.has("important") && !mail.is_important) return false
             return true
         })
     }, [mailList, activeFilters, smartFolderFilter])
@@ -311,11 +311,11 @@ export default function MailPage() {
                 const parsed = parseSearchQuery(q.trim())
                 // Build API params from parsed tokens
                 const params: Parameters<typeof searchApi.search>[0] = { q: parsed.q || q.trim(), limit: 50 }
-                if (parsed.from) (params as any).from = parsed.from
-                if (parsed.to) (params as any).to = parsed.to
-                if (parsed.has_attachments) (params as any).has_attachments = true
-                if (parsed.is_unread !== undefined) (params as any).is_read = false
-                if (parsed.after) (params as any).after = parsed.after
+                if (parsed.from) params.from = parsed.from
+                if (parsed.to) params.to = parsed.to
+                if (parsed.has_attachments) params.has_attachments = true
+                if (parsed.is_unread !== undefined) params.is_read = false
+                if (parsed.after) params.after = parsed.after
 
                 const emails = await searchApi.search(params)
                 const uiMails: Mail[] = emails.map(email => ({
@@ -608,7 +608,7 @@ export default function MailPage() {
             href: "/mail",
             onClick: () => handleFolderChange('drafts'),
         },
-    ] as const
+    ] satisfies { title: string; label: string; icon: React.ComponentType<{ className?: string }>; variant: "default" | "ghost"; href: string; onClick: () => void }[]
 
     // Filter chips config (Idea 17)
     const filterChips = [
@@ -710,7 +710,7 @@ export default function MailPage() {
                         )}
 
                         {/* Navigation Links */}
-                        <MailNav isCollapsed={sidebarCollapsed} links={navLinks as any} />
+                        <MailNav isCollapsed={sidebarCollapsed} links={navLinks} />
 
                         {/* More Options — only in expanded mode */}
                         {!sidebarCollapsed && (
@@ -856,7 +856,8 @@ export default function MailPage() {
                             date: calDropMailData.date,
                             read: true,
                             labels: [],
-                        } as any}
+                            folder: 'inbox' as const,
+                        }}
                     />
                 )}
                 {/* Content Area (List + Display) */}

@@ -68,8 +68,8 @@ export function TeamOverlay({
     const loadMembers = async () => {
       try {
         const response = await usersApi.list(0, 50);
-        const ud = response.data as any;
-        const users = ud?.users || (Array.isArray(ud) ? ud : []);
+        const ud = response.data;
+        const users = ud?.users ?? [];
         const teamMembers: TeamMember[] = users.map((user: User, index: number) => ({
           user,
           color: MEMBER_COLORS[index % MEMBER_COLORS.length],

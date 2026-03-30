@@ -30,7 +30,7 @@ export const authApi = {
             session_token: sessionToken,
             code,
         }),
-    mfaDisable: () => identityClient.post('/auth/mfa/disable'),
+    mfaDisable: (data?: { password?: string; code?: string }) => identityClient.post('/auth/mfa/disable', data),
     mfaStatus: () => identityClient.get('/auth/mfa/status'),
     // LDAP Configuration
 
@@ -41,7 +41,7 @@ export const authApi = {
         identityClient.post('/auth/ldap/test', config),
     syncLdap: () => identityClient.post('/auth/ldap/sync'),
     // MFA
-    mfaSetup: () => identityClient.post<{ secret: string; qr_code_url: string; backup_codes: string[] }>('/auth/mfa/setup'),
+    mfaSetup: () => identityClient.post<{ secret: string; qr_code: string; qr_code_url?: string; backup_codes: string[] }>('/auth/mfa/setup'),
     // Aliases used by settings page
     ldapGetConfig: () => identityClient.get<LdapConfig>('/auth/ldap/config'),
     ldapUpdateConfig: (config: LdapConfig) =>

@@ -8,12 +8,13 @@ function ensureString(v: unknown): string {
   if (typeof v === 'string') return v;
   if (typeof v === 'number' || typeof v === 'boolean') return String(v);
   if (typeof v === 'object') {
-    const o = v as any;
-    if (o instanceof Date) return o.toISOString().split('T')[0];
+    type ObjRecord = Record<string, unknown> & { toISOString?: () => string };
+    const o = v as ObjRecord;
+    if (o instanceof Date) return o.toISOString!().split('T')[0];
     if (typeof o.toISOString === 'function') return o.toISOString().split('T')[0];
     if ('result' in o) return ensureString(o.result);
     if ('text' in o) return String(o.text || '');
-    if ('richText' in o && Array.isArray(o.richText)) return o.richText.map((r: any) => r?.text || '').join('');
+    if ('richText' in o && Array.isArray(o.richText)) return (o.richText as { text?: string }[]).map((r) => r?.text || '').join('');
     if ('error' in o) return String(o.error || '');
     try { return JSON.stringify(v); } catch { return ''; }
   }

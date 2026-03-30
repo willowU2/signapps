@@ -126,7 +126,7 @@ export function useBlockSearch({
     };
 
     if ("requestIdleCallback" in window) {
-      (window as any).requestIdleCallback(search, { timeout: 100 });
+      (window as Window & { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => void }).requestIdleCallback(search, { timeout: 100 });
     } else {
       setTimeout(search, 0);
     }

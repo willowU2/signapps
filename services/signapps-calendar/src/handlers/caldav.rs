@@ -21,6 +21,7 @@ use signapps_db::{CalendarRepository, EventRepository};
 use uuid::Uuid;
 
 use crate::{services::icalendar as ical, AppState, CalendarError};
+use signapps_db::models::CreateEvent;
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -174,11 +175,14 @@ pub async fn get_event_ics(
     );
     headers.insert(
         header::ETAG,
-        etag.parse().expect("timestamp-based ETag is always a valid header value"),
+        etag.parse()
+            .expect("timestamp-based ETag is always a valid header value"),
     );
     headers.insert(
         header::HeaderName::from_static("dav"),
-        DAV_HEADER.parse().expect("DAV header value is a static valid string"),
+        DAV_HEADER
+            .parse()
+            .expect("DAV header value is a static valid string"),
     );
     Ok((StatusCode::OK, headers, ics))
 }
@@ -229,5 +233,177 @@ pub async fn report_calendar(
         StatusCode::MULTI_STATUS,
         [(header::CONTENT_TYPE, "application/xml; charset=utf-8")],
         body,
+    ))
+}
+
+// ── PUT event (create or update) ──────────────────────────────────────────────
+
+/// Handle PUT /caldav/calendars/{calendar_id}/events/{event_id}.ics
+///
+/// CalDAV clients use PUT to create new events or update existing ones.
+/// The request body is an iCalendar (.ics) payload.
+///
+/// Per RFC 4791 §5.3.2:
+///   - If the event does not exist → create it (201 Created)
+///   - If the event exists         → update it (204 No Content)
+pub async fn put_event_ics(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path((calendar_id, event_id)): Path<(Uuid, Uuid)>,
+    body: String,
+) -> Result<impl IntoResponse, CalendarError> {
+    let event_repo = EventRepository::new(&state.pool);
+    let calendar_repo = CalendarRepository::new(&state.pool);
+
+    // Verify the calendar exists and is accessible
+    calendar_repo
+        .find_by_id(calendar_id)
+        .await
+        .map_err(|_| CalendarError::InternalError)?
+        .ok_or(CalendarError::NotFound)?;
+
+    // Parse the incoming .ics payload
+    let ical_events = ical::import_calendar_from_ics(&body).map_err(|e| {
+        tracing::warn!(parse_error = %e, "CalDAV PUT: failed to parse ICS body");
+        CalendarError::InvalidInput(format!("Invalid ICS: {e}"))
+    })?;
+
+    let ical_event = ical_events
+        .into_iter()
+        .next()
+        .ok_or_else(|| CalendarError::InvalidInput("No VEVENT found in ICS".to_string()))?;
+
+    // Check if event already exists
+    let existing = event_repo
+        .find_by_id(event_id)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    if existing.is_some() {
+        // Update the existing event
+        let update = signapps_db::models::UpdateEvent {
+            title: Some(ical_event.title),
+            description: ical_event.description,
+            location: ical_event.location,
+            start_time: Some(ical_event.start_time),
+            end_time: Some(ical_event.end_time),
+            rrule: ical_event.rrule,
+            timezone: None,
+            is_all_day: None,
+            event_type: None,
+            scope: None,
+            status: None,
+            priority: None,
+            parent_event_id: None,
+            resource_id: None,
+            category_id: None,
+            leave_type: None,
+            presence_mode: None,
+            approval_by: None,
+            approval_comment: None,
+            energy_level: None,
+            cron_expression: None,
+            cron_target: None,
+            assigned_to: None,
+            project_id: None,
+            tags: None,
+        };
+        event_repo
+            .update(event_id, update)
+            .await
+            .map_err(|_| CalendarError::InternalError)?;
+
+        let etag = format!("\"{}\"", chrono::Utc::now().timestamp_millis());
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            header::ETAG,
+            etag.parse().expect("ETag is always a valid header value"),
+        );
+        headers.insert(
+            header::HeaderName::from_static("dav"),
+            DAV_HEADER.parse().expect("DAV header is always valid"),
+        );
+        Ok((StatusCode::NO_CONTENT, headers, String::new()))
+    } else {
+        // Create a new event with the given UUID as the external UID
+        let create = CreateEvent {
+            title: ical_event.title,
+            description: ical_event.description,
+            location: ical_event.location,
+            start_time: ical_event.start_time,
+            end_time: ical_event.end_time,
+            rrule: ical_event.rrule,
+            timezone: None,
+            is_all_day: Some(false),
+            event_type: None,
+            scope: None,
+            status: None,
+            priority: None,
+            parent_event_id: None,
+            resource_id: None,
+            category_id: None,
+            leave_type: None,
+            presence_mode: None,
+            approval_by: None,
+            approval_comment: None,
+            energy_level: None,
+            cron_expression: None,
+            cron_target: None,
+            assigned_to: None,
+            project_id: None,
+            tags: None,
+        };
+        event_repo
+            .create(calendar_id, create, claims.sub)
+            .await
+            .map_err(|_| CalendarError::InternalError)?;
+
+        let etag = format!("\"{}\"", chrono::Utc::now().timestamp_millis());
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            header::CONTENT_TYPE,
+            "text/calendar; charset=utf-8"
+                .parse()
+                .expect("valid content-type"),
+        );
+        headers.insert(
+            header::ETAG,
+            etag.parse().expect("ETag is always a valid header value"),
+        );
+        headers.insert(
+            header::HeaderName::from_static("dav"),
+            DAV_HEADER.parse().expect("DAV header is always valid"),
+        );
+        Ok((StatusCode::CREATED, headers, String::new()))
+    }
+}
+
+// ── DELETE event ───────────────────────────────────────────────────────────────
+
+/// Handle DELETE /caldav/calendars/{calendar_id}/events/{event_id}.ics
+///
+/// CalDAV clients use DELETE to remove events.
+pub async fn delete_event_ics(
+    State(state): State<AppState>,
+    Path((_calendar_id, event_id)): Path<(Uuid, Uuid)>,
+) -> Result<impl IntoResponse, CalendarError> {
+    let event_repo = EventRepository::new(&state.pool);
+
+    // Verify the event exists
+    event_repo
+        .find_by_id(event_id)
+        .await
+        .map_err(|_| CalendarError::InternalError)?
+        .ok_or(CalendarError::NotFound)?;
+
+    event_repo
+        .delete(event_id)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    Ok((
+        StatusCode::NO_CONTENT,
+        [(header::HeaderName::from_static("dav"), DAV_HEADER)],
+        String::new(),
     ))
 }

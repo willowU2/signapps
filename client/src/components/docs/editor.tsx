@@ -2427,7 +2427,7 @@ ${html}
                             value={docFontSize}
                             onChange={(e) => {
                                 const val = parseInt(e.target.value);
-                                setDocFontSize(isNaN(val) ? (e.target.value as any) : val);
+                                if (!isNaN(val)) setDocFontSize(val);
                             }}
                             onBlur={(e) => {
                                 const val = parseInt(e.target.value) || 11;

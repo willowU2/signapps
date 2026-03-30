@@ -4,6 +4,10 @@ import { ReactRenderer } from '@tiptap/react';
 import { computePosition, flip, shift, offset } from '@floating-ui/dom';
 import { CommandList } from './command-list';
 
+interface CommandListRef {
+    onKeyDown: (props: { event: KeyboardEvent }) => boolean;
+}
+
 export interface CommandItem {
     title: string;
     description: string;
@@ -98,7 +102,7 @@ export const getSuggestionOptions = (items: CommandItem[]) => ({
                     return true;
                 }
 
-                return (component?.ref as any)?.onKeyDown(props);
+                return (component?.ref as unknown as CommandListRef | null)?.onKeyDown(props);
             },
 
             onExit() {

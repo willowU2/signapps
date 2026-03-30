@@ -27,3 +27,8 @@ dotenvy = { workspace = true }
 tower-http = { workspace = true }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
+# EX3: Stripe integration
+reqwest = { workspace = true }
+hmac = "0.12"
+sha2 = "0.10"
+hex = { workspace = true }

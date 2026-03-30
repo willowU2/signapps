@@ -8,9 +8,31 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import type * as fabric from "fabric";
 
 interface LayerEffectsProps {
-  fabricCanvasRef: React.MutableRefObject<any | null>;
+  fabricCanvasRef: React.MutableRefObject<fabric.Canvas | null>;
+}
+
+/** Minimal typed interface for fabric.filters.Blur access at runtime */
+interface FabricFiltersModule {
+  filters: {
+    Blur: new (options: { blur: number }) => fabric.filters.BaseFilter<"Blur">;
+  };
+}
+
+/** fabric.Shadow at runtime exposes numeric properties not always in the declared type */
+interface FabricShadowRuntime {
+  color?: string;
+  blur?: number;
+  offsetX?: number;
+  offsetY?: number;
+}
+
+/** fabric.FabricObject extended with filter/applyFilters props available on image objects */
+interface FabricObjectWithFilters extends fabric.Object {
+  filters?: fabric.filters.BaseFilter<string>[];
+  applyFilters?: () => void;
 }
 
 interface EffectState {
@@ -61,8 +83,9 @@ export default function DesignLayerEffects({ fabricCanvasRef }: LayerEffectsProp
   const applyEffects = useCallback((next: EffectState) => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
-    const obj = canvas.getActiveObject();
-    if (!obj) return;
+    const rawObj = canvas.getActiveObject();
+    if (!rawObj) return;
+    const obj = rawObj as FabricObjectWithFilters;
 
     // Shadow
     if (next.shadowEnabled) {
@@ -81,11 +104,11 @@ export default function DesignLayerEffects({ fabricCanvasRef }: LayerEffectsProp
     if (typeof obj.filters !== "undefined") {
       // Remove existing blur and glow filters
       obj.filters = (obj.filters ?? []).filter(
-        (f: any) => f.type !== "Blur" && f.type !== "__glow__"
+        (f: fabric.filters.BaseFilter<string>) => f.type !== "Blur" && f.type !== "__glow__"
       );
       if (next.blurEnabled && next.blurAmount > 0) {
         import("fabric").then((fab) => {
-          const blur = new (fab as any).filters.Blur({ blur: next.blurAmount / 100 });
+          const blur = new (fab as unknown as FabricFiltersModule).filters.Blur({ blur: next.blurAmount / 100 });
           obj.filters = [...(obj.filters ?? []), blur];
           obj.applyFilters?.();
           canvas.requestRenderAll();
@@ -123,7 +146,7 @@ export default function DesignLayerEffects({ fabricCanvasRef }: LayerEffectsProp
     const handler = () => {
       const obj = canvas.getActiveObject();
       if (!obj) return;
-      const shadow = obj.shadow as any;
+      const shadow = obj.shadow as FabricShadowRuntime | null;
       setEffects({
         ...DEFAULT_EFFECTS,
         shadowEnabled: !!shadow,

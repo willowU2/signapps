@@ -310,9 +310,7 @@ pub fn middleware_stack(router: Router) -> Router {
             axum::http::header::AUTHORIZATION,
             axum::http::header::ACCEPT,
             axum::http::header::ORIGIN,
-            "x-workspace-id"
-                .parse()
-                .expect("valid header name"),
+            "x-workspace-id".parse().expect("valid header name"),
         ])
         .allow_credentials(true);
 

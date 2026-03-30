@@ -169,29 +169,31 @@ export function LeaveApprovalPanel({
         ]);
 
       if (balancesRes.status === "fulfilled") {
-        const data = (balancesRes.value as any)?.data ?? balancesRes.value;
-        setBalances(Array.isArray(data) ? data : []);
+        const data: unknown = (balancesRes.value as { data?: unknown })?.data ?? balancesRes.value;
+        setBalances(Array.isArray(data) ? (data as LeaveBalance[]) : []);
       }
       if (predRes.status === "fulfilled") {
-        const data = (predRes.value as any)?.data ?? predRes.value;
-        setPrediction(data ?? null);
+        const data: unknown = (predRes.value as { data?: unknown })?.data ?? predRes.value;
+        setPrediction((data as LeaveBalancePrediction) ?? null);
       }
       if (conflictsRes.status === "fulfilled") {
-        const data = (conflictsRes.value as any)?.data ?? conflictsRes.value;
+        const data: unknown = (conflictsRes.value as { data?: unknown })?.data ?? conflictsRes.value;
+        const dataObj = data as { conflicts?: TeamConflict[] };
         const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.conflicts)
-          ? data.conflicts
+          ? (data as TeamConflict[])
+          : Array.isArray(dataObj?.conflicts)
+          ? dataObj.conflicts
           : [];
         setTeamConflicts(list);
       }
       if (coverageRes.status === "fulfilled") {
-        const data = (coverageRes.value as any)?.data ?? coverageRes.value;
+        const data: unknown = (coverageRes.value as { data?: unknown })?.data ?? coverageRes.value;
         // Map headcount response to coverage check
         if (data && typeof data === "object") {
-          const teamSize: number = data.team_size ?? data.total ?? 0;
-          const available: number = data.available ?? data.present ?? 0;
-          const minRequired: number = data.min_required ?? Math.ceil(teamSize * 0.3);
+          const dataObj = data as { team_size?: number; total?: number; available?: number; present?: number; min_required?: number };
+          const teamSize: number = dataObj.team_size ?? dataObj.total ?? 0;
+          const available: number = dataObj.available ?? dataObj.present ?? 0;
+          const minRequired: number = dataObj.min_required ?? Math.ceil(teamSize * 0.3);
           const availableAfter = Math.max(0, available - 1);
           setCoverage({
             team_size: teamSize,

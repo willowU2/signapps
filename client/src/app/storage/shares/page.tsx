@@ -312,7 +312,7 @@ export default function SharesPage() {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Access Type</Label>
-                <Select value={editAccessType} onValueChange={(v) => setEditAccessType(v as any)}>
+                <Select value={editAccessType} onValueChange={(v) => setEditAccessType(v as 'view' | 'download' | 'edit')}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

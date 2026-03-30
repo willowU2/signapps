@@ -40,7 +40,7 @@ export function AudioToTask() {
   const recognitionRef = useRef<any>(null);
 
   const startRecording = useCallback(() => {
-    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRec = window.SpeechRecognition ?? window.webkitSpeechRecognition;
     if (!SpeechRec) { toast.error('Speech recognition not supported'); return; }
 
     const rec = new SpeechRec();

@@ -128,11 +128,11 @@ export function useSmartGuides(canvasRef: React.RefObject<fabric.Canvas | null>,
 
         const handleMouseUp = () => clearGuides()
 
-        canvas.on('object:moving', handleMoving as any)
+        canvas.on('object:moving', handleMoving as (e: fabric.TEvent) => void)
         canvas.on('mouse:up', handleMouseUp)
 
         return () => {
-            canvas.off('object:moving', handleMoving as any)
+            canvas.off('object:moving', handleMoving as (e: fabric.TEvent) => void)
             canvas.off('mouse:up', handleMouseUp)
             overlay?.remove()
             overlayRef.current = null

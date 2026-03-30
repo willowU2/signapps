@@ -270,6 +270,10 @@ export function CommandPalette() {
             <span>Assistant IA</span>
             <CommandShortcut>⌘A</CommandShortcut>
           </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => router.push('/search?mode=semantic'))}>
+            <Sparkles className="mr-2 h-4 w-4 text-purple-500" />
+            <span>Recherche intelligente (sémantique)</span>
+          </CommandItem>
         </CommandGroup>
 
         <CommandSeparator />

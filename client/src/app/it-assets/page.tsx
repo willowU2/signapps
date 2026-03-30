@@ -134,7 +134,7 @@ export default function ITAssetsPage() {
   }), [assets, searchQuery, filterType, filterStatus])
 
   const sortedAssets = useMemo(() => [...filteredAssets].sort((a, b) => {
-    const cmp = String((a as any)[sortField] ?? "").localeCompare(String((b as any)[sortField] ?? ""), "fr", { numeric: true })
+    const cmp = String(a[sortField as keyof HardwareAsset] ?? "").localeCompare(String(b[sortField as keyof HardwareAsset] ?? ""), "fr", { numeric: true })
     return sortDir === "asc" ? cmp : -cmp
   }), [filteredAssets, sortField, sortDir])
 

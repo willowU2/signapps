@@ -64,7 +64,8 @@ export default function ProfilePage() {
   const [mfaDisableDialog, setMfaDisableDialog] = useState(false);
   const [mfaSetupData, setMfaSetupData] = useState<{
     secret: string;
-    qr_code_url: string;
+    qr_code: string;
+    qr_code_url?: string;
     backup_codes: string[];
   } | null>(null);
   const [mfaCode, setMfaCode] = useState('');
@@ -184,7 +185,7 @@ export default function ProfilePage() {
         display_name: displayName,
         email,
         avatar_url: avatarUrl,
-      } as any);
+      });
 
       // Update local user state
       setUser({
@@ -217,7 +218,7 @@ export default function ProfilePage() {
     try {
       await usersApi.update(user!.id, {
         password: newPassword,
-      } as any);
+      });
 
       setCurrentPassword('');
       setNewPassword('');

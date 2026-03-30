@@ -60,7 +60,7 @@ function SortableField({ field, index, allFields, updateField, removeField, quiz
     }
 
     // PageBreak sentinel
-    if ((field as any).field_type === 'PageBreak') {
+    if (field.field_type === 'PageBreak') {
         return (
             <div ref={setNodeRef} style={style} {...attributes} {...listeners}
                 className="flex items-center gap-3 py-3 cursor-grab">
@@ -107,7 +107,7 @@ function SortableField({ field, index, allFields, updateField, removeField, quiz
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div className="space-y-2">
                         <Label className="text-xs text-muted-foreground">Type de champ</Label>
-                        <Select value={field.field_type} onValueChange={(val: any) => updateField(field.id, { field_type: val })}>
+                        <Select value={field.field_type} onValueChange={(val) => updateField(field.id, { field_type: val as FormField['field_type'] })}>
                             <SelectTrigger className="h-9">
                                 <SelectValue />
                             </SelectTrigger>
@@ -231,7 +231,7 @@ function SortableField({ field, index, allFields, updateField, removeField, quiz
                         {quizMode && (
                             <ScoringEditor
                                 field={field as FormField}
-                                onChange={(scores) => updateField(field.id, { scores } as any)}
+                                onChange={(scores) => updateField(field.id, { scores })}
                             />
                         )}
                     </div>
@@ -242,7 +242,7 @@ function SortableField({ field, index, allFields, updateField, removeField, quiz
                     <ConditionalLogicEditor
                         field={field as FormField}
                         allFields={allFields as FormField[]}
-                        onChange={(cond) => updateField(field.id, { show_if: cond } as any)}
+                        onChange={(cond) => updateField(field.id, { show_if: cond })}
                     />
                 </div>
 
@@ -309,7 +309,7 @@ export default function FormBuilderPage() {
         setError(null)
         try {
             const updatedFields = fields.map((f, i) => ({ ...f, order: i }))
-            await formsApi.update(formId, { fields: updatedFields as any })
+            await formsApi.update(formId, { fields: updatedFields as FormField[] })
             setFields(updatedFields)
             toast.success("Formulaire sauvegardé avec succès !")
         } catch (err) {
@@ -324,7 +324,7 @@ export default function FormBuilderPage() {
     const addField = (type: string) => {
         const newField: ExtendedFormField = {
             id: crypto.randomUUID(),
-            label: type === 'PageBreak' ? '' : `Nouveau champ ${fields.filter(f => (f as any).field_type !== 'PageBreak').length + 1}`,
+            label: type === 'PageBreak' ? '' : `Nouveau champ ${fields.filter(f => f.field_type !== 'PageBreak').length + 1}`,
             field_type: type as FormField['field_type'],
             required: false,
             order: fields.length,
@@ -342,7 +342,7 @@ export default function FormBuilderPage() {
     }
 
     useDndMonitor({
-        onDragEnd(event: any) {
+        onDragEnd(event: { active: { id: string; data: { current?: { type?: string } } }; over: { id: string } | null }) {
             const { active, over } = event
             if (active.data.current?.type === 'form-field' && over && active.id !== over.id) {
                 setFields((items) => {
@@ -494,7 +494,7 @@ export default function FormBuilderPage() {
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <p className="text-sm text-muted-foreground">{responses.length} réponse(s) collectée(s)</p>
-                                <ExportResponses fields={fields as FormField[]} responses={responses as any} />
+                                <ExportResponses fields={fields as FormField[]} responses={responses} />
                             </div>
                             <ResponseAnalytics formId={formId} fields={fields as FormField[]} />
                         </div>

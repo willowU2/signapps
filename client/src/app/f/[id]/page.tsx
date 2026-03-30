@@ -101,7 +101,7 @@ export default function PublicFormPage() {
     const fields = form?.fields ?? []
     const result: ExtendedFormField[][] = [[]]
     fields.forEach(f => {
-      if ((f as any).field_type === 'PageBreak') {
+      if (f.field_type === 'PageBreak') {
         result.push([])
       } else {
         result[result.length - 1].push(f as ExtendedFormField)
@@ -385,7 +385,7 @@ export default function PublicFormPage() {
             </div>
           )}
 
-          {(field as any).field_type === 'File' && (
+          {field.field_type === 'File' && (
             <FileUploadField
               fieldId={field.id}
               required={field.required}
@@ -393,7 +393,7 @@ export default function PublicFormPage() {
             />
           )}
 
-          {(field as any).field_type === 'Signature' && (
+          {field.field_type === 'Signature' && (
             <SignatureField
               fieldId={field.id}
               onChange={handleFieldChange}

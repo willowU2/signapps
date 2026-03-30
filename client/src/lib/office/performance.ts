@@ -74,8 +74,9 @@ export async function processInChunks<T, R>(
  */
 export function yieldToMain(): Promise<void> {
   return new Promise((resolve) => {
-    if ('scheduler' in globalThis && 'yield' in (globalThis as any).scheduler) {
-      (globalThis as any).scheduler.yield().then(resolve);
+    const g = globalThis as typeof globalThis & { scheduler?: { yield: () => Promise<void> } };
+    if ('scheduler' in globalThis && g.scheduler && 'yield' in g.scheduler) {
+      g.scheduler.yield().then(resolve);
     } else {
       setTimeout(resolve, 0);
     }
@@ -484,7 +485,7 @@ export function createLazyLoader(
  */
 export function preloadInIdle(urls: string[]): void {
   if ('requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(() => {
+    (window as Window & { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(() => {
       urls.forEach((url) => {
         const link = document.createElement('link');
         link.rel = 'prefetch';

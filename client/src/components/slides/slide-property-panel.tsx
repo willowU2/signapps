@@ -1,9 +1,25 @@
 import * as fabric from "fabric"
 import { Type, AlignLeft, AlignCenter, AlignRight, AlignJustify, Settings2, Hexagon, Image as ImageIcon, Bold, Italic, Underline, Strikethrough, List, ListOrdered, CheckSquare } from "lucide-react"
 
+/** fabric.Object extended with IText/shape/custom runtime properties accessed in this panel */
+interface FabricObjectWithProps extends fabric.Object {
+    id?: string;
+    text?: string;
+    fontFamily?: string;
+    fontWeight?: string;
+    fontStyle?: string;
+    underline?: boolean;
+    linethrough?: boolean;
+    fontSize?: number;
+    textAlign?: string;
+    rx?: number;
+    isSmartChip?: boolean;
+    chipType?: string;
+}
+
 interface SlidePropertyPanelProps {
     activeObject: fabric.Object | null
-    updateObjectRemotely: (id: string, updates: any) => void
+    updateObjectRemotely: (id: string, updates: Record<string, unknown>) => void
     canvasRef: React.MutableRefObject<fabric.Canvas | null>
 }
 
@@ -18,16 +34,15 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
     }
 
     const objType = activeObject.type
-    // @ts-ignore
-    const isSmartChip = !!activeObject.isSmartChip
-    // @ts-ignore
-    const chipType = activeObject.chipType
+    const activeObjWithProps = activeObject as FabricObjectWithProps
+    const isSmartChip = !!activeObjWithProps.isSmartChip
+    const chipType = activeObjWithProps.chipType
 
     const isText = activeObject.type === "i-text" || activeObject.type === "text"
     const isShape = activeObject.type === "rect" || activeObject.type === "circle" || activeObject.type === "triangle"
     const isImage = activeObject.type === "image"
 
-    const handlePropertyChange = (key: string, value: any) => {
+    const handlePropertyChange = (key: string, value: unknown) => {
         if (!canvasRef.current || !activeObject) return
         activeObject.set(key, value)
 
@@ -43,7 +58,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
     const toggleListStyle = (styleType: 'bullet' | 'number' | 'check') => {
         if (!canvasRef.current || !activeObject || !isText) return;
 
-        const currentText = (activeObject as any).text as string;
+        const currentText = activeObjWithProps.text ?? '';
         if (!currentText) return;
 
         const lines = currentText.split('\n');
@@ -109,8 +124,9 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
         canvasRef.current.requestRenderAll()
 
         // Push full state natively replacing the object over Yjs network
-        if ((group as any).id) {
-            updateObjectRemotely((group as any).id, (group as any).toObject())
+        const groupWithId = group as FabricObjectWithProps
+        if (groupWithId.id) {
+            updateObjectRemotely(groupWithId.id, (group as FabricObjectWithProps & { toObject(): Record<string, unknown> }).toObject())
         }
     }
 
@@ -164,7 +180,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Font Family</label>
                             <select
                                 className="w-full bg-muted border border-border text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block p-2 transition-shadow outline-none"
-                                value={(activeObject as any).fontFamily || "Inter"}
+                                value={activeObjWithProps.fontFamily || "Inter"}
                                 onChange={(e) => handlePropertyChange('fontFamily', e.target.value)}
                             >
                                 <option value="Inter, sans-serif">Inter</option>
@@ -180,29 +196,29 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide opacity-0 h-0">Styles</label>
                                 <div className="flex bg-muted p-1 rounded-lg border border-border">
                                     <button
-                                        onClick={() => handlePropertyChange('fontWeight', (activeObject as any).fontWeight === 'bold' ? 'normal' : 'bold')}
-                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).fontWeight === 'bold' ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
+                                        onClick={() => handlePropertyChange('fontWeight', activeObjWithProps.fontWeight === 'bold' ? 'normal' : 'bold')}
+                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${activeObjWithProps.fontWeight === 'bold' ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
                                         title="Bold"
                                     >
                                         <Bold className="w-4 h-4" />
                                     </button>
                                     <button
-                                        onClick={() => handlePropertyChange('fontStyle', (activeObject as any).fontStyle === 'italic' ? 'normal' : 'italic')}
-                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).fontStyle === 'italic' ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
+                                        onClick={() => handlePropertyChange('fontStyle', activeObjWithProps.fontStyle === 'italic' ? 'normal' : 'italic')}
+                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${activeObjWithProps.fontStyle === 'italic' ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
                                         title="Italic"
                                     >
                                         <Italic className="w-4 h-4 ml-1 mr-1" />
                                     </button>
                                     <button
-                                        onClick={() => handlePropertyChange('underline', !(activeObject as any).underline)}
-                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).underline ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
+                                        onClick={() => handlePropertyChange('underline', !activeObjWithProps.underline)}
+                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${activeObjWithProps.underline ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
                                         title="Underline"
                                     >
                                         <Underline className="w-4 h-4 ml-1 mr-1" />
                                     </button>
                                     <button
-                                        onClick={() => handlePropertyChange('linethrough', !(activeObject as any).linethrough)}
-                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).linethrough ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
+                                        onClick={() => handlePropertyChange('linethrough', !activeObjWithProps.linethrough)}
+                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${activeObjWithProps.linethrough ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
                                         title="Strikethrough"
                                     >
                                         <Strikethrough className="w-4 h-4 ml-1 mr-1" />
@@ -215,7 +231,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                                 <input
                                     type="number"
                                     className="w-full bg-muted border border-border text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block p-2 text-center outline-none"
-                                    value={(activeObject as any).fontSize || 20}
+                                    value={activeObjWithProps.fontSize || 20}
                                     onChange={(e) => handlePropertyChange('fontSize', parseInt(e.target.value))}
                                 />
                             </div>
@@ -226,7 +242,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                             <div className="flex gap-2 w-full">
                                 <div className="flex bg-muted p-1 rounded-lg border border-border flex-1">
                                     {['left', 'center', 'right', 'justify'].map((align) => {
-                                        const isActive = (activeObject as any).textAlign === align;
+                                        const isActive = activeObjWithProps.textAlign === align;
                                         const Icon = align === 'left' ? AlignLeft : align === 'center' ? AlignCenter : align === 'right' ? AlignRight : AlignJustify;
                                         return (
                                             <button
@@ -244,21 +260,21 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                                 <div className="flex bg-muted p-1 rounded-lg border border-border">
                                     <button
                                         onClick={() => toggleListStyle('bullet')}
-                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${((activeObject as any).text as string || '').startsWith('• ') ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
+                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${(activeObjWithProps.text || '').startsWith('• ') ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
                                         title="Bulleted List"
                                     >
                                         <List className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={() => toggleListStyle('check')}
-                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${(((activeObject as any).text as string || '').startsWith('☐ ') || ((activeObject as any).text as string || '').startsWith('✅ ')) ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
+                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${((activeObjWithProps.text || '').startsWith('☐ ') || (activeObjWithProps.text || '').startsWith('✅ ')) ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
                                         title="Checklist"
                                     >
                                         <CheckSquare className="w-4 h-4 ml-0.5 mr-0.5" />
                                     </button>
                                     <button
                                         onClick={() => toggleListStyle('number')}
-                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${/^\d+\./.test(((activeObject as any).text as string || '')) ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
+                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${/^\d+\./.test(activeObjWithProps.text || '') ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-muted-foreground'} `}
                                         title="Numbered List"
                                     >
                                         <ListOrdered className="w-4 h-4" />
@@ -322,7 +338,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                                     type="range"
                                     min="0" max="100"
                                     className="w-full accent-indigo-500"
-                                    value={(activeObject as any).rx || 0}
+                                    value={activeObjWithProps.rx || 0}
                                     onChange={(e) => {
                                         const val = parseInt(e.target.value)
                                         handlePropertyChange('rx', val)
@@ -361,7 +377,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                                 type="range"
                                 min="0" max="100"
                                 className="w-full accent-indigo-500"
-                                value={(activeObject as any).rx || 0}
+                                value={activeObjWithProps.rx || 0}
                                 onChange={(e) => {
                                     handlePropertyChange('rx', parseInt(e.target.value))
                                     handlePropertyChange('ry', parseInt(e.target.value))

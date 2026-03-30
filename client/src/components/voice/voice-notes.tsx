@@ -52,7 +52,7 @@ export function VoiceNotes() {
       mediaRecorderRef.current = mr;
 
       // Speech recognition for transcription
-      const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const SpeechRec = window.SpeechRecognition ?? window.webkitSpeechRecognition;
       if (SpeechRec) {
         const rec = new SpeechRec();
         rec.continuous = true;

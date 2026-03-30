@@ -305,6 +305,11 @@ fn create_router(state: AppState) -> Router {
     let tenant_routes = Router::new()
         // Tenant info
         .route("/api/v1/tenant", get(handlers::tenants::get_my_tenant))
+        // WL1: Branding for current tenant (used by frontend on startup)
+        .route("/api/v1/tenants/me/branding", get(handlers::branding::get_my_branding))
+        // WL3: Workspace feature flags per tenant
+        .route("/api/v1/workspace/features", get(handlers::workspace_features::get_workspace_features))
+        .route("/api/v1/workspaces/:wid/features", put(handlers::workspace_features::update_workspace_features))
         // Workspaces
         .route("/api/v1/workspaces", get(handlers::tenants::list_workspaces))
         .route("/api/v1/workspaces", post(handlers::tenants::create_workspace))
@@ -488,6 +493,10 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/admin/tenants/:id/css", get(handlers::tenant_css::get_css))
         .route("/api/v1/admin/tenants/:id/css", put(handlers::tenant_css::set_css))
         .route("/api/v1/admin/tenants/:id/css", delete(handlers::tenant_css::clear_css))
+        // WL1: Tenant branding (admin manages all tenants' branding)
+        .route("/api/v1/tenants/:id/branding", get(handlers::branding::get_branding))
+        .route("/api/v1/tenants/:id/branding", put(handlers::branding::update_branding))
+        .route("/api/v1/tenants/:id/branding", delete(handlers::branding::reset_branding))
         .layer(middleware::from_fn(require_admin))
         .layer(middleware::from_fn_with_state(
             state.clone(),

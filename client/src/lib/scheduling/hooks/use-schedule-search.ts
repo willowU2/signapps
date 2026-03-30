@@ -15,7 +15,7 @@ import {
   type SearchResult,
   type SearchResultItem,
 } from '../utils/search-service';
-import type { ScheduleBlock } from '../types/scheduling';
+import type { ScheduleBlock, BlockType, BlockStatus, Priority } from '../types/scheduling';
 import { timeItemsApi } from '../../api/scheduler';
 
 // ============================================================================
@@ -75,9 +75,9 @@ async function fetchRealBlocks(): Promise<ScheduleBlock[]> {
       start: new Date(item.start_time || item.deadline || new Date().toISOString()),
       end: item.end_time ? new Date(item.end_time) : undefined,
       allDay: item.all_day,
-      type: item.item_type as any,
-      status: item.status as any,
-      priority: item.priority as any,
+      type: item.item_type as BlockType,
+      status: item.status as BlockStatus,
+      priority: item.priority as Priority,
       tags: [], // Tags not yet exposed in TimeItem response model simply
       location: item.location_name ? { name: item.location_name, address: item.location_address || '' } : undefined,
       metadata: { organizerId: item.owner_id },

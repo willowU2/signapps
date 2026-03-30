@@ -25,6 +25,8 @@ export interface Mail {
     is_sent?: boolean
     priority?: number
     attachments?: MailAttachment[]
+    is_starred?: boolean
+    is_important?: boolean
 }
 
 export type MailFolder = 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk'

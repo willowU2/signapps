@@ -10,6 +10,8 @@ import { LoginAnomalyDetection } from '@/components/security/login-anomaly-detec
 import { BruteForceDashboard } from '@/components/security/brute-force-dashboard';
 import { CertificateManagement } from '@/components/security/certificate-management';
 import { SecurityScorecard } from '@/components/security/security-scorecard';
+import { IpAllowlistConfig } from '@/components/security/ip-allowlist-config';
+import { PasswordPolicyConfig } from '@/components/security/password-policy-config';
 import { Shield } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { usePageTitle } from '@/hooks/use-page-title';
@@ -40,6 +42,8 @@ export default function SecurityPage() {
             <TabsTrigger value="anomaly">Anomaly Detection</TabsTrigger>
             <TabsTrigger value="bruteforce">Brute Force</TabsTrigger>
             <TabsTrigger value="certs">Certificates</TabsTrigger>
+            <TabsTrigger value="ip-allowlist">IP Allowlist</TabsTrigger>
+            <TabsTrigger value="password-policy">Password Policy</TabsTrigger>
           </TabsList>
 
           <TabsContent value="scorecard"><SecurityScorecard /></TabsContent>
@@ -50,6 +54,8 @@ export default function SecurityPage() {
           <TabsContent value="anomaly"><LoginAnomalyDetection /></TabsContent>
           <TabsContent value="bruteforce"><BruteForceDashboard /></TabsContent>
           <TabsContent value="certs"><CertificateManagement /></TabsContent>
+          <TabsContent value="ip-allowlist"><IpAllowlistConfig /></TabsContent>
+          <TabsContent value="password-policy"><PasswordPolicyConfig /></TabsContent>
         </Tabs>
       </div>
     </AppLayout>

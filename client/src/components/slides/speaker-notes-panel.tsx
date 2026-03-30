@@ -44,8 +44,9 @@ export function SpeakerNotesPanel({
             return
         }
 
-        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-        const recognition = new SpeechRecognition()
+        const windowWithSpeech = window as typeof window & { SpeechRecognition?: new () => SpeechRecognition; webkitSpeechRecognition?: new () => SpeechRecognition }
+        const SpeechRecognitionCtor = windowWithSpeech.SpeechRecognition || windowWithSpeech.webkitSpeechRecognition
+        const recognition = new SpeechRecognitionCtor()
         recognition.lang = 'fr-FR'
         recognition.continuous = false
         recognition.interimResults = false
@@ -54,7 +55,7 @@ export function SpeakerNotesPanel({
         recognition.onend = () => setIsRecording(false)
         recognition.onerror = () => setIsRecording(false)
 
-        recognition.onresult = (event: any) => {
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
             const transcript = event.results[0][0].transcript
             setLocalNotes(prev => prev ? `${prev}\n${transcript}` : transcript)
         }

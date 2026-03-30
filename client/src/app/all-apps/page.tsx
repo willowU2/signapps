@@ -14,8 +14,7 @@ import SpotlightCard from '@/components/ui/spotlight-card';
 import { usePageTitle } from '@/hooks/use-page-title';
 
 function DynIcon({ name, className }: { name: string; className?: string }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const Icon = (LucideIcons as any)[name] as React.ComponentType<{ className?: string }> | undefined;
+  const Icon = (LucideIcons as Record<string, React.ComponentType<{ className?: string }> | undefined>)[name];
   if (!Icon) return <LucideIcons.Grid className={className} />;
   return <Icon className={className} />;
 }

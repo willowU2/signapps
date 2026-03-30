@@ -56,13 +56,11 @@ fn parse_rrule(rrule: &str) -> Result<ParsedRrule, String> {
     let until = parts.get("UNTIL").and_then(|v| {
         // Accept YYYYMMDD or YYYYMMDDTHHMMSSZ
         if v.len() == 8 {
-            NaiveDate::parse_from_str(v, "%Y%m%d")
-                .ok()
-                .map(|d| {
-                    d.and_hms_opt(23, 59, 59)
-                        .expect("23:59:59 is always a valid time")
-                        .and_utc()
-                })
+            NaiveDate::parse_from_str(v, "%Y%m%d").ok().map(|d| {
+                d.and_hms_opt(23, 59, 59)
+                    .expect("23:59:59 is always a valid time")
+                    .and_utc()
+            })
         } else {
             DateTime::parse_from_str(v, "%Y%m%dT%H%M%SZ")
                 .ok()

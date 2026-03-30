@@ -7,8 +7,8 @@ import { Plugin, PluginKey } from '@tiptap/pm/state';
 const renderMath = (tex: string, displayMode: boolean): string => {
     try {
         // Try katex if loaded in global scope
-        if (typeof (window as any).katex !== 'undefined') {
-            return (window as any).katex.renderToString(tex, { displayMode, throwOnError: false });
+        if (typeof window.katex !== 'undefined') {
+            return window.katex.renderToString(tex, { displayMode, throwOnError: false });
         }
     } catch { /* ignore */ }
     // Fallback: styled span

@@ -14,7 +14,7 @@ import {
   type AvailabilityResult,
   type CommonSlot,
 } from '../utils/availability-finder';
-import type { ScheduleBlock, TeamMember } from '../types/scheduling';
+import type { ScheduleBlock, TeamMember, BlockType, BlockStatus } from '../types/scheduling';
 import { usersApi } from '../../api/identity';
 import { timeItemsApi } from '../../api/scheduler';
 
@@ -95,8 +95,8 @@ async function fetchAvailabilityData(
     start: new Date(item.start_time || item.deadline || new Date().toISOString()),
     end: item.end_time ? new Date(item.end_time) : undefined,
     allDay: item.all_day,
-    type: item.item_type as any,
-    status: item.status as any,
+    type: item.item_type as BlockType,
+    status: item.status as BlockStatus,
     metadata: {
       organizerId: item.owner_id,
     },

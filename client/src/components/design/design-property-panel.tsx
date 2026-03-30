@@ -23,9 +23,27 @@ import {
   MoveDown,
 } from "lucide-react";
 import { FONT_FAMILIES } from "./types";
+import type * as fabric from "fabric";
+
+/** fabric.Object extended with text, shape, and id runtime properties accessed in this panel */
+interface FabricObjectWithProps extends fabric.Object {
+  id?: string;
+  fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: string;
+  fontStyle?: string;
+  underline?: boolean;
+  textAlign?: string;
+  lineHeight?: number;
+  charSpacing?: number;
+  rx?: number;
+  ry?: number;
+  filters?: fabric.filters.BaseFilter<string>[];
+  applyFilters?: () => void;
+}
 
 interface DesignPropertyPanelProps {
-  fabricCanvasRef: React.MutableRefObject<any | null>;
+  fabricCanvasRef: React.MutableRefObject<fabric.Canvas | null>;
 }
 
 interface ObjectProperties {
@@ -65,7 +83,7 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
       setProps(null);
       return;
     }
-    const obj = canvas.getActiveObject();
+    const obj = canvas.getActiveObject() as FabricObjectWithProps | null;
     if (!obj) {
       setProps(null);
       return;
@@ -125,8 +143,9 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
     obj.set(key, value);
     obj.setCoords();
     canvas.requestRenderAll();
-    if ((obj as any).id) {
-      updateObject((obj as any).id, { fabricData: obj.toObject(["id"]) });
+    const objWithId = obj as FabricObjectWithProps;
+    if (objWithId.id) {
+      updateObject(objWithId.id, { fabricData: obj.toObject(["id"]) });
     }
     refreshProps();
   }, [fabricCanvasRef, updateObject, refreshProps]);
@@ -136,8 +155,9 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
     if (!canvas) return;
     pushUndo();
     const active = canvas.getActiveObjects();
-    active.forEach((obj: any) => {
-      if (obj.id) removeObject(obj.id);
+    active.forEach((obj) => {
+      const objWithId = obj as FabricObjectWithProps;
+      if (objWithId.id) removeObject(objWithId.id);
       canvas.remove(obj);
     });
     canvas.discardActiveObject();

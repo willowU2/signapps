@@ -23,12 +23,14 @@ import {
   X,
   Clock,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import { getClient, ServiceName } from "@/lib/api/factory";
 import { storageApi } from "@/lib/api/storage";
 import { schedulerApi } from "@/lib/api";
 import { calendarApi } from "@/lib/api/calendar";
 import { fetchOmniSearch } from "@/lib/api/search";
+import { SemanticSearchGlobal } from "@/components/search/semantic-search-global";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -361,10 +363,14 @@ export default function SearchPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
+  const initialMode = searchParams.get("mode") || "standard";
 
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [activeTab, setActiveTab] = useState<ModuleType>("all");
+  const [searchMode, setSearchMode] = useState<'standard' | 'semantic'>(
+    initialMode === 'semantic' ? 'semantic' : 'standard'
+  );
 
   // Debounce search
   useEffect(() => {
@@ -484,8 +490,51 @@ export default function SearchPage() {
           </div>
         </div>
 
-        {/* Search input */}
-        <div className="relative">
+        {/* Mode toggle */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setSearchMode('standard')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              searchMode === 'standard'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Search className="h-3.5 w-3.5" />
+            Recherche standard
+          </button>
+          <button
+            onClick={() => setSearchMode('semantic')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              searchMode === 'semantic'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Recherche intelligente
+          </button>
+        </div>
+
+        {/* Semantic search panel */}
+        {searchMode === 'semantic' && (
+          <div className="rounded-xl border p-4">
+            <SemanticSearchGlobal
+              autoFocus
+              placeholder="Recherche intelligente par signification..."
+              onSelect={(result) => {
+                // Navigate based on result type derived from filename
+                const fn = result.filename?.toLowerCase() ?? '';
+                if (fn.includes('email') || fn.endsWith('.eml')) router.push('/mail');
+                else if (fn.endsWith('.vcf') || fn.includes('contact')) router.push('/contacts');
+                else router.push('/drive');
+              }}
+            />
+          </div>
+        )}
+
+        {/* Standard search input */}
+        {searchMode === 'standard' && <div className="relative">
           <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
           <Input
             className="pl-10 pr-10 h-12 text-lg"
@@ -510,10 +559,10 @@ export default function SearchPage() {
           {isFetching && (
             <Loader2 className="absolute right-12 top-3.5 h-5 w-5 animate-spin text-muted-foreground" />
           )}
-        </div>
+        </div>}
 
-        {/* Results */}
-        {debouncedQuery.trim().length < 2 ? (
+        {/* Standard mode results */}
+        {searchMode === 'standard' && (debouncedQuery.trim().length < 2 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <Search className="h-12 w-12 text-muted-foreground/30 mb-4" />
@@ -642,7 +691,7 @@ export default function SearchPage() {
               )}
             </TabsContent>
           </Tabs>
-        )}
+        ))}
       </div>
     </AppLayout>
   );

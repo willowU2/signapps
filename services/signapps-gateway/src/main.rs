@@ -3,12 +3,14 @@
 //! Routes all public traffic to the appropriate backend service using reqwest.
 //! Each service runs on its own port; the gateway forwards by path prefix.
 
+mod graphql;
+
 use axum::{
     body::Body,
     extract::{Request, State},
     http::{HeaderName, HeaderValue, StatusCode},
     response::{IntoResponse, Response},
-    routing::any,
+    routing::{any, get, post},
     Router,
 };
 use signapps_common::bootstrap::{env_or, init_tracing, load_env};
@@ -302,8 +304,14 @@ async fn main() -> anyhow::Result<()> {
 
     let gateway_port: u16 = env_or("GATEWAY_PORT", "3099").parse().unwrap_or(3099);
 
+    // DA3: GraphQL gateway state (service URLs for resolvers)
+    let graphql_state = Arc::new(graphql::ServiceUrls::from_env());
+
     let app = Router::new()
-        .route("/gateway/health", axum::routing::get(gateway_health))
+        .route("/gateway/health", get(gateway_health))
+        // DA3: Minimal GraphQL gateway endpoint
+        .route("/api/v1/graphql", post(graphql::graphql_handler).with_state(graphql_state.clone()))
+        .route("/api/v1/graphql/schema", get(graphql::graphql_schema))
         .fallback(any(proxy_handler))
         .with_state(service_map);
 

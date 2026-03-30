@@ -254,7 +254,9 @@ fn build_router(state: AppState) -> Router {
         .route("/caldav/principals/:user_id", any(caldav::propfind_principal))
         .route("/caldav/calendars/:calendar_id", any(caldav::propfind_calendar))
         .route("/caldav/calendars/:calendar_id/report", post(caldav::report_calendar))
-        .route("/caldav/calendars/:calendar_id/events/:event_id.ics", get(caldav::get_event_ics))
+        .route("/caldav/calendars/:calendar_id/events/:event_id.ics", get(caldav::get_event_ics)
+            .put(caldav::put_event_ics)
+            .delete(caldav::delete_event_ics))
         // Out-of-office settings
         .route("/api/v1/ooo", get(ooo::get_ooo))
         .route("/api/v1/ooo", put(ooo::set_ooo))

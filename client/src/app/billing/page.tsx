@@ -138,13 +138,13 @@ export default function BillingPage() {
         if (cancelled) return;
 
         if (invoicesResult.status === "fulfilled") {
-          setInvoices((invoicesResult.value as any).data ?? []);
+          setInvoices(invoicesResult.value.data ?? []);
         } else {
           setInvoices([]);
         }
 
         if (usageResult.status === "fulfilled") {
-          setUsage((usageResult.value as any).data ?? null);
+          setUsage(usageResult.value.data ?? null);
         }
 
         setLoading(false);

@@ -136,8 +136,8 @@ export default function ContactsPage() {
 
   const sortedFiltered = useMemo(() => {
     return [...filtered].sort((a, b) => {
-      const aVal = (a as any)[sortField] ?? ''
-      const bVal = (b as any)[sortField] ?? ''
+      const aVal = a[sortField as keyof Contact] ?? ''
+      const bVal = b[sortField as keyof Contact] ?? ''
       const cmp = String(aVal).localeCompare(String(bVal), 'fr', { numeric: true })
       return sortDir === 'asc' ? cmp : -cmp
     })

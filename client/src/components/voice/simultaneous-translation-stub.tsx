@@ -38,7 +38,7 @@ export function SimultaneousTranslationStub() {
 
   const SpeechRecognitionCtor =
     typeof window !== 'undefined'
-      ? (window.SpeechRecognition ?? (window as any).webkitSpeechRecognition ?? null)
+      ? window.SpeechRecognition ?? window.webkitSpeechRecognition ?? null
       : null;
 
   const isSupported = !!SpeechRecognitionCtor;

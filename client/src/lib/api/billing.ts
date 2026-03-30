@@ -144,6 +144,14 @@ export const billingApi = {
   getUsage: () =>
     billingClient.get<BillingUsage>('/usage'),
 
+  // EX3: Stripe Checkout — create a payment session for an invoice
+  createStripeCheckout: (invoiceId: string, options?: { successUrl?: string; cancelUrl?: string }) =>
+    billingClient.post<{ checkout_url: string; session_id: string }>('/billing/stripe/checkout', {
+      invoice_id: invoiceId,
+      success_url: options?.successUrl,
+      cancel_url: options?.cancelUrl,
+    }),
+
   // Health endpoint is at root /health (not under /api/v1)
   health: () =>
     axios.get(`${getServiceBaseUrl(ServiceName.BILLING)}/health`, { withCredentials: true }),

@@ -17,6 +17,30 @@ import {
     Hash, AlignLeft, X, Copy
 } from "lucide-react"
 import type { SlideLayout } from "./use-slides"
+import type * as fabric from "fabric"
+
+/** Fabric object extended with master-slide metadata properties */
+interface MasterFabricObject extends fabric.IText {
+    _masterFooter?: boolean;
+    _masterSlideNumber?: boolean;
+    _masterElement?: boolean;
+}
+
+/** Minimal fabric module interface used by applyMasterToCanvas */
+interface FabricModule {
+    IText: new (text: string, options?: Record<string, unknown>) => MasterFabricObject;
+}
+
+/** Minimal fabric canvas interface used by applyMasterToCanvas */
+interface FabricCanvas {
+    backgroundColor: string;
+    width: number;
+    height: number;
+    getObjects(): MasterFabricObject[];
+    add(obj: MasterFabricObject): void;
+    sendObjectToBack(obj: MasterFabricObject): void;
+    requestRenderAll(): void;
+}
 
 // --- Master Slide Data ---
 
@@ -579,17 +603,17 @@ export function MasterSlideEditor({
 // --- Utility: Apply master to a fabric canvas ---
 
 export function applyMasterToCanvas(
-    canvas: any,
+    canvas: FabricCanvas,
     master: MasterSlide,
     slideIndex: number,
-    fabricModule: any
+    fabricModule: FabricModule
 ) {
     // Set background
     canvas.backgroundColor = master.backgroundColor
 
     // Render footer if exists
     if (master.footerText) {
-        const footerObj = canvas.getObjects().find((o: any) => o._masterFooter)
+        const footerObj = canvas.getObjects().find((o: MasterFabricObject) => o._masterFooter)
         if (footerObj) {
             footerObj.set({ text: master.footerText })
         } else {
@@ -602,8 +626,8 @@ export function applyMasterToCanvas(
                 selectable: false,
                 evented: false,
             });
-            (footer as any)._masterFooter = true;
-            (footer as any)._masterElement = true;
+            footer._masterFooter = true;
+            footer._masterElement = true;
             canvas.add(footer)
             canvas.sendObjectToBack(footer)
         }
@@ -611,7 +635,7 @@ export function applyMasterToCanvas(
 
     // Render slide number if enabled
     if (master.showSlideNumber) {
-        const numObj = canvas.getObjects().find((o: any) => o._masterSlideNumber)
+        const numObj = canvas.getObjects().find((o: MasterFabricObject) => o._masterSlideNumber)
         if (numObj) {
             numObj.set({ text: String(slideIndex + 1) })
         } else {
@@ -624,8 +648,8 @@ export function applyMasterToCanvas(
                 selectable: false,
                 evented: false,
             });
-            (num as any)._masterSlideNumber = true;
-            (num as any)._masterElement = true;
+            num._masterSlideNumber = true;
+            num._masterElement = true;
             canvas.add(num)
             canvas.sendObjectToBack(num)
         }

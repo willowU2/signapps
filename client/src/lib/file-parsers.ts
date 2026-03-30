@@ -94,10 +94,11 @@ function safeResultToString(result: unknown): string {
     if (result instanceof Date) return result.toISOString().split('T')[0];
     // Duck-type Date check (cross-realm Date objects)
     if (typeof result === 'object' && result !== null) {
-        const r = result as any;
+        type UnknownRecord = Record<string, unknown>;
+        const r = result as UnknownRecord & { toISOString?: () => string };
         if (typeof r.toISOString === 'function') return r.toISOString().split('T')[0];
         if ('error' in r) return String(r.error || '');
-        if ('richText' in r && Array.isArray(r.richText)) return r.richText.map((t: any) => t?.text || '').join('');
+        if ('richText' in r && Array.isArray(r.richText)) return (r.richText as UnknownRecord[]).map((t) => String((t as UnknownRecord)?.text || '')).join('');
         if ('text' in r) return String(r.text || '');
         if ('result' in r) return safeResultToString(r.result); // recurse
         if ('formula' in r) return safeResultToString(r.result); // formula wrapper
@@ -116,8 +117,9 @@ function extractCellValue(cellValue: ExcelJS.CellValue): string {
     if (typeof cellValue === 'boolean') return String(cellValue);
     if (cellValue instanceof Date) return cellValue.toISOString().split('T')[0];
     // Duck-type Date for cross-realm objects
-    if (typeof cellValue === 'object' && cellValue !== null && typeof (cellValue as any).toISOString === 'function') {
-        return (cellValue as any).toISOString().split('T')[0];
+    type MaybeDateLike = { toISOString?: () => string };
+    if (typeof cellValue === 'object' && cellValue !== null && typeof (cellValue as MaybeDateLike).toISOString === 'function') {
+        return (cellValue as MaybeDateLike).toISOString!().split('T')[0];
     }
 
     // Object types — use type guards
@@ -418,7 +420,8 @@ function parseMergeRange(range: string): { minR: number; minC: number; maxR: num
 async function parseSpreadsheet(buffer: ArrayBuffer, ext: string): Promise<SpreadsheetParseResult> {
     const workbook = new ExcelJS.Workbook();
     if (ext === 'csv') {
-        await workbook.csv.read(new Blob([buffer]).stream() as any);
+        // ExcelJS csv.read: cast ReadableStream to NodeJS stream type expected by ExcelJS
+        await workbook.csv.read(new Blob([buffer]).stream() as unknown as Parameters<typeof workbook.csv.read>[0]);
     } else {
         await workbook.xlsx.load(buffer);
     }
@@ -437,7 +440,7 @@ async function parseSpreadsheet(buffer: ArrayBuffer, ext: string): Promise<Sprea
         const mergeDimensions = new Map<string, { rows: number; cols: number }>();
 
         try {
-            const merges: string[] = (worksheet.model as any)?.merges ?? [];
+            const merges: string[] = (worksheet.model as { merges?: string[] })?.merges ?? [];
             for (const mergeRange of merges) {
                 const parsed = parseMergeRange(mergeRange);
                 if (!parsed) continue;
@@ -481,11 +484,12 @@ async function parseSpreadsheet(buffer: ArrayBuffer, ext: string): Promise<Sprea
                     if (value === null || value === undefined) value = '';
                     else if (typeof value === 'number' || typeof value === 'boolean') value = String(value);
                     else if (typeof value === 'object') {
-                        const v = value as any;
+                        type CellObjectFallback = { toISOString?: () => string; result?: unknown; text?: unknown; richText?: { text?: string }[] };
+                        const v = value as CellObjectFallback;
                         if (v instanceof Date || v?.toISOString) value = (v.toISOString?.() || '').split('T')[0];
                         else if (v.result !== undefined) value = String(v.result ?? '');
                         else if (v.text !== undefined) value = String(v.text ?? '');
-                        else if (v.richText) value = v.richText.map((r: any) => r?.text || '').join('');
+                        else if (v.richText) value = v.richText.map((r) => r?.text || '').join('');
                         else try { value = JSON.stringify(v); } catch { value = ''; }
                     }
                     else value = String(value);
@@ -512,7 +516,7 @@ async function parseSpreadsheet(buffer: ArrayBuffer, ext: string): Promise<Sprea
 
                 // Data validation
                 const validation = extractValidation(
-                    (cell as any).dataValidation as ExcelJS.DataValidation | undefined
+                    (cell as ExcelJS.Cell & { dataValidation?: ExcelJS.DataValidation }).dataValidation
                 );
 
                 // Only store non-empty cells

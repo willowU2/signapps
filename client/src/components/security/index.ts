@@ -6,3 +6,5 @@ export { GeoFencingConfig } from './geo-fencing-config';
 export { LoginAnomalyDetection } from './login-anomaly-detection';
 export { BruteForceDashboard } from './brute-force-dashboard';
 export { CertificateManagement } from './certificate-management';
+export { IpAllowlistConfig } from './ip-allowlist-config';
+export { PasswordPolicyConfig } from './password-policy-config';

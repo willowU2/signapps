@@ -32,6 +32,7 @@ import {
 import { getClient, ServiceName } from "@/lib/api/factory";
 import { storageApi } from "@/lib/api/storage";
 import { calendarApi } from "@/lib/api/calendar";
+import type { Calendar } from "@/types/calendar";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -279,9 +280,9 @@ export default function ImportExportPage() {
               name: "Import",
               color: "#3B82F6",
             });
-            calendarId = (newCal.data as any)?.id;
+            calendarId = newCal.data.id;
           } else {
-            calendarId = (calendars[0] as any)?.id;
+            calendarId = calendars[0].id;
           }
 
           // Parse ICS manually and create events
@@ -447,7 +448,7 @@ export default function ImportExportPage() {
               const start = new Date(now.getFullYear() - 1, 0, 1);
               const end = new Date(now.getFullYear() + 1, 11, 31);
               const evRes = await calendarApi.listEvents(
-                (calendars[0] as any).id,
+                calendars[0].id,
                 start,
                 end
               );
@@ -456,7 +457,7 @@ export default function ImportExportPage() {
 
               // Build ICS
               let ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//SignApps//Export//FR\r\n";
-              for (const ev of events as any[]) {
+              for (const ev of events) {
                 const formatIcs = (d: string) =>
                   d.replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
                 ics += `BEGIN:VEVENT\r\n`;
@@ -486,10 +487,10 @@ export default function ImportExportPage() {
               const { schedulerApi } = await import("@/lib/api");
               const res = await schedulerApi.listJobs();
               const jobs = res.data || [];
-              count = (jobs as any[]).length;
+              count = jobs.length;
               const header =
                 "Nom,Description,Planification,Commande,Type Cible,Active,Dernier Statut";
-              const rows = (jobs as any[]).map(
+              const rows = jobs.map(
                 (j) =>
                   [
                     j.name || "",

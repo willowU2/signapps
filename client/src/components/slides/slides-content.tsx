@@ -9,6 +9,26 @@ import { storageApi } from "@/lib/api"
 import { toast } from "sonner"
 import pptxgen from "pptxgenjs"
 
+/** Serialized fabric object shape used in PPTX export */
+interface SerializedFabricObject {
+    type?: string;
+    left?: number;
+    top?: number;
+    width?: number;
+    height?: number;
+    scaleX?: number;
+    scaleY?: number;
+    fill?: string;
+    stroke?: string;
+    strokeWidth?: number;
+    text?: string;
+    fontSize?: number;
+    fontFamily?: string;
+    fontWeight?: string;
+    fontStyle?: string;
+    src?: string;
+}
+
 interface SlidesContentProps {
     documentId?: string
     documentName?: string
@@ -146,7 +166,7 @@ export function SlidesContent({ documentId, documentName, initialData }: SlidesC
                 Object.entries(slideObjects).forEach(([id, obj]) => {
                     if (!obj) return
 
-                    const o = obj as any
+                    const o = obj as SerializedFabricObject
                     const scaleX = o.scaleX || 1
                     const scaleY = o.scaleY || 1
                     const x = (o.left || 0) / 100

@@ -31,7 +31,7 @@ function toFrontendResource(r: BackendResource): Resource {
   return {
     id: r.id,
     name: r.name,
-    type: (r.resource_type as any) || 'room',
+    type: (r.resource_type as Resource['type']) || 'room',
     description: r.description || undefined,
     capacity: r.capacity || undefined,
     location: r.location || undefined,
@@ -201,7 +201,7 @@ export function useUpdateBooking() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Booking> }) => {
-      return { id, updates } as any;
+      return { id, updates };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.lists() });
