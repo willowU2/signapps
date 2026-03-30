@@ -195,10 +195,40 @@ Produire un rapport structuré :
 - **Issues mineures** (#[instrument], rustdoc) → corriger dans le même commit
 - **Issues advisory** (couverture) → signaler, ne pas bloquer
 
+## Garde-Fous (issus de l'analyse de 828 commits)
+
+Ces erreurs ont été détectées dans l'historique Git. NE PAS les reproduire :
+
+| # | Anti-pattern | Occurrences | Correction |
+|---|-------------|-------------|------------|
+| ❌ | Mega-commits (>30 fichiers) | 63 commits | Max 1-3 fichiers/commit, atomique |
+| ❌ | Fix immédiatement après feat | 19 instances | Build-check AVANT commit |
+| ❌ | `bg-white`/`text-gray-900` hardcodés | 800+ instances (3 vagues de fixes) | Tokens: `bg-card`, `text-foreground`, `border-border` |
+| ❌ | `as any` pour contourner les types | 262 casts | Corriger le type à la source |
+| ❌ | `waitForTimeout` dans les E2E | 11 commits de fix | `waitForLoadState`/`waitForSelector` |
+| ❌ | `expect(true).toBeTruthy()` | 22 assertions | Assertion sur contenu réel |
+| ❌ | CORS configuré manuellement par service | 5 passes de fix | Utiliser `bootstrap::middleware_stack()` |
+| ❌ | AppLayout wrapper dans les pages | 7 commits en 28min | Layout dans providers.tsx uniquement |
+| ❌ | `.unwrap()` en production | 422 restants | `?` + `AppError` ou `.context()` |
+| ❌ | Commit sans Conventional Commits | 22 commits | `feat:`, `fix:`, `docs:`, etc. |
+
+## Patterns Validés (ratio feat:fix > 3:1)
+
+| ✅ | Pattern | Exemple | Ratio |
+|----|---------|---------|-------|
+| ✅ | Backend-then-frontend par couche | Calendar unified | 4.9:1 |
+| ✅ | Un composant = un commit focalisé | AI Gateway (30 commits) | 2.5:1 |
+| ✅ | Phased development (DB→model→repo→handler→API→UI) | Calendar Feb 16 | Minimal fixes |
+| ✅ | Security audit dédié (single-purpose) | Tier 0+1 audit | 0 rework |
+
 ## Checklist Pré-Commit
 
+- [ ] **BUILD CHECK** : `cargo check` ou frontend compile AVANT commit
+- [ ] Max 1-3 fichiers modifiés (pas de mega-commit)
 - [ ] `grep println!/eprintln!/dbg!` → 0 résultats hors tests
-- [ ] `grep .unwrap()/.expect()` → 0 résultats hors tests
+- [ ] `grep .unwrap()/.expect()` → 0 nouveaux en production
+- [ ] `grep "bg-white\|text-gray-900\|border-gray-200"` → 0 dans fichiers modifiés
+- [ ] `grep "as any"` → 0 nouveaux (ou TODO avec vrai type)
 - [ ] `cargo clippy -- -D warnings` → clean
 - [ ] `cargo fmt -- --check` → clean
 - [ ] `cargo nextest run` → tous passent
@@ -206,6 +236,7 @@ Produire un rapport structuré :
 - [ ] Handlers REST ont `#[utoipa::path]`
 - [ ] Structs publiques ont `///` et `ToSchema`
 - [ ] Commit message = Conventional Commits
+- [ ] Pas d'`expect(true)` ni `waitForTimeout` dans les E2E
 
 ## Liens
 

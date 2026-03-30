@@ -495,9 +495,10 @@ Claude DOIT invoquer ces outils automatiquement. OBLIGATOIRE.
 
 **Enterprise Governance (prioritaires) :**
 - `claude_md_governance` — Audit et maintien du CLAUDE.md (structure, cohérence, directives)
-- `enterprise_code_review` — Revue auto des 5 piliers avant de déclarer "terminé"
+- `enterprise_code_review` — Revue auto des 5 piliers + garde-fous issus de 828 commits
 - `rust_enterprise_handler` — Template handler complet (tracing + utoipa + AppError + tests)
 - `observability_tracing` — Standards tracing, zéro-print, spans, métriques
+- `frontend_anti_patterns` — Prévention des 6 anti-patterns frontend (dark theme, layout, types, E2E, loops, mega-commits)
 
 **Implementation Patterns :**
 - `rust_api_endpoint` — Pattern CRUD Axum
