@@ -127,6 +127,20 @@ db-backup:
 db-seed:
     bash scripts/seed-demo-data.sh
 
+# ─────────────────────────── App Logos ────────────────────────
+
+# Fetch missing app logos (from store API + favicon APIs)
+fetch-logos:
+    cd client && python scripts/fetch-app-logos.py
+
+# Fetch ALL logos (force re-download)
+fetch-logos-all:
+    cd client && python scripts/fetch-app-logos.py --all
+
+# Fetch logo for a specific app
+fetch-logo app:
+    cd client && python scripts/fetch-app-logos.py --app {{app}}
+
 # ─────────────────────────── Documentation ───────────────────
 
 # Documentation Rust (interne uniquement)
