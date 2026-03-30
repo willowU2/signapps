@@ -333,7 +333,7 @@ impl TunnelClient {
                 ticker.tick().await;
                 let timestamp = std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap()
+                    .expect("system clock is after UNIX_EPOCH")
                     .as_millis() as u64;
 
                 if response_tx_ping

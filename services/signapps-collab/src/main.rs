@@ -90,8 +90,8 @@ async fn main() -> anyhow::Result<()> {
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::new()
             .allow_origin(AllowOrigin::list([
-                "http://localhost:3000".parse().unwrap(),
-                "http://127.0.0.1:3000".parse().unwrap(),
+                "http://localhost:3000".parse().expect("valid origin"),
+                "http://127.0.0.1:3000".parse().expect("valid origin"),
             ]))
             .allow_credentials(true)
             .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
@@ -105,7 +105,9 @@ async fn main() -> anyhow::Result<()> {
     // Run server
     tracing::info!("🤝 signapps-collab ready");
 
-    let addr: std::net::SocketAddr = format!("{}:{}", config.host, config.port).parse().unwrap();
+    let addr: std::net::SocketAddr = format!("{}:{}", config.host, config.port)
+        .parse()
+        .expect("server address is valid");
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!(
         "✅ signapps-collab ready at http://localhost:{}",

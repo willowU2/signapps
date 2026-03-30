@@ -229,7 +229,9 @@ async fn main() -> std::io::Result<()> {
     let app = create_router(state);
 
     // Start server
-    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", config.port).parse().unwrap();
+    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", config.port)
+        .parse()
+        .expect("server address is valid");
     tracing::info!("✅ SecureLink ready at http://localhost:{}", config.port);
     tracing::info!("   Health: http://localhost:{}/health", config.port);
     tracing::info!("   API: http://localhost:{}/api/v1/tunnels", config.port);
@@ -246,8 +248,8 @@ fn create_router(state: AppState) -> Router {
     // CORS configuration (allow all for local development)
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
-            "http://localhost:3000".parse().unwrap(),
-            "http://127.0.0.1:3000".parse().unwrap(),
+            "http://localhost:3000".parse().expect("valid origin"),
+            "http://127.0.0.1:3000".parse().expect("valid origin"),
         ]))
         .allow_credentials(true)
         .allow_methods([

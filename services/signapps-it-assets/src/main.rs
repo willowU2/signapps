@@ -22,8 +22,8 @@ async fn main() -> anyhow::Result<()> {
 
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
-            "http://localhost:3000".parse().unwrap(),
-            "http://127.0.0.1:3000".parse().unwrap(),
+            "http://localhost:3000".parse().expect("valid origin"),
+            "http://127.0.0.1:3000".parse().expect("valid origin"),
         ]))
         .allow_credentials(true)
         .allow_methods([

@@ -648,11 +648,15 @@ async fn add_reaction(
     // Check DM messages (still in-memory)
     for mut entry in state.dm_messages.iter_mut() {
         if let Some(msg) = entry.value_mut().iter_mut().find(|m| m.id == message_id) {
-            let reactions = msg.reactions.as_object_mut().unwrap();
-            let count = reactions
-                .entry(payload.emoji.clone())
-                .or_insert(serde_json::json!(0));
-            *count = serde_json::json!(count.as_u64().unwrap_or(0) + 1);
+            if !msg.reactions.is_object() {
+                msg.reactions = serde_json::json!({});
+            }
+            if let Some(reactions) = msg.reactions.as_object_mut() {
+                let count = reactions
+                    .entry(payload.emoji.clone())
+                    .or_insert(serde_json::json!(0));
+                *count = serde_json::json!(count.as_u64().unwrap_or(0) + 1);
+            }
             msg.updated_at = Utc::now().to_rfc3339();
             return (
                 StatusCode::CREATED,
@@ -1232,8 +1236,8 @@ fn create_router(state: AppState) -> Router {
         .layer(
             CorsLayer::new()
                 .allow_origin(AllowOrigin::list([
-                    "http://localhost:3000".parse().unwrap(),
-                    "http://127.0.0.1:3000".parse().unwrap(),
+                    "http://localhost:3000".parse().expect("valid origin"),
+                    "http://127.0.0.1:3000".parse().expect("valid origin"),
                 ]))
                 .allow_credentials(true)
                 .allow_methods([

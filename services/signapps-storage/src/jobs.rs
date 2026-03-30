@@ -21,12 +21,18 @@ pub async fn start_cron_scheduler(state: AppState) -> signapps_common::Result<()
             }
         })
     })
-    .unwrap();
+    .map_err(|e| {
+        signapps_common::Error::Internal(format!("Failed to create nightly job: {}", e))
+    })?;
 
-    sched.add(nightly_job).await.unwrap();
+    sched.add(nightly_job).await.map_err(|e| {
+        signapps_common::Error::Internal(format!("Failed to add nightly job: {}", e))
+    })?;
 
     // Start the scheduler in the background
-    sched.start().await.unwrap();
+    sched.start().await.map_err(|e| {
+        signapps_common::Error::Internal(format!("Failed to start scheduler: {}", e))
+    })?;
 
     Ok(())
 }

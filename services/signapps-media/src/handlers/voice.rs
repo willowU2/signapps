@@ -207,7 +207,7 @@ async fn process_speech_turn(
             serde_json::to_string(&ServerEvent::Transcript {
                 text: transcript.clone(),
             })
-            .unwrap(),
+            .unwrap_or_default(),
         ))
         .await;
 
@@ -220,7 +220,7 @@ async fn process_speech_turn(
                     serde_json::to_string(&ServerEvent::Error {
                         message: format!("LLM failed: {}", e),
                     })
-                    .unwrap(),
+                    .unwrap_or_default(),
                 ))
                 .await;
             return;
@@ -230,7 +230,7 @@ async fn process_speech_turn(
     if llm_response.trim().is_empty() {
         let _ = tx
             .send(Message::Text(
-                serde_json::to_string(&ServerEvent::Done).unwrap(),
+                serde_json::to_string(&ServerEvent::Done).unwrap_or_default(),
             ))
             .await;
         return;
@@ -239,7 +239,7 @@ async fn process_speech_turn(
     // Step 3: TTS
     let _ = tx
         .send(Message::Text(
-            serde_json::to_string(&ServerEvent::TtsStart).unwrap(),
+            serde_json::to_string(&ServerEvent::TtsStart).unwrap_or_default(),
         ))
         .await;
 
@@ -272,7 +272,7 @@ async fn process_speech_turn(
 
     let _ = tx
         .send(Message::Text(
-            serde_json::to_string(&ServerEvent::Done).unwrap(),
+            serde_json::to_string(&ServerEvent::Done).unwrap_or_default(),
         ))
         .await;
 }
@@ -319,7 +319,7 @@ async fn call_llm_streaming(
                 serde_json::to_string(&ServerEvent::LlmToken {
                     content: answer.clone(),
                 })
-                .unwrap(),
+                .unwrap_or_default(),
             ))
             .await;
     }

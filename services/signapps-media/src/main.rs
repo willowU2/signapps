@@ -269,7 +269,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(state);
 
     // Start server
-    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
+    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port)
+        .parse()
+        .expect("server address is valid");
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!("✅ signapps-media ready at http://localhost:{}", port);
     axum::serve(listener, app)

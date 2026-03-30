@@ -683,9 +683,9 @@ pub async fn simulate_shift_change(
 
     for slot in coverage_slots.iter().filter(|s| s.day_of_week == day_index) {
         let slot_start = NaiveTime::parse_from_str(&slot.start_time, "%H:%M")
-            .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+            .unwrap_or_else(|_| NaiveTime::from_hms_opt(0, 0, 0).expect("00:00:00 is valid"));
         let slot_end = NaiveTime::parse_from_str(&slot.end_time, "%H:%M")
-            .unwrap_or(NaiveTime::from_hms_opt(23, 59, 59).unwrap());
+            .unwrap_or_else(|_| NaiveTime::from_hms_opt(23, 59, 59).expect("23:59:59 is valid"));
 
         // Does the original shift cover this slot?
         let orig_covers_slot = orig_start_time <= slot_start && orig_end_time >= slot_end;
@@ -1041,9 +1041,9 @@ fn count_assignments_for_slot(
     slot: &CoverageSlot,
 ) -> i32 {
     let slot_start = NaiveTime::parse_from_str(&slot.start_time, "%H:%M")
-        .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+        .unwrap_or_else(|_| NaiveTime::from_hms_opt(0, 0, 0).expect("00:00:00 is valid"));
     let slot_end = NaiveTime::parse_from_str(&slot.end_time, "%H:%M")
-        .unwrap_or(NaiveTime::from_hms_opt(23, 59, 59).unwrap());
+        .unwrap_or_else(|_| NaiveTime::from_hms_opt(23, 59, 59).expect("23:59:59 is valid"));
 
     assignments
         .iter()
@@ -1127,9 +1127,9 @@ async fn is_employee_assigned(
     };
 
     let slot_start = NaiveTime::parse_from_str(&slot.start_time, "%H:%M")
-        .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+        .unwrap_or_else(|_| NaiveTime::from_hms_opt(0, 0, 0).expect("00:00:00 is valid"));
     let slot_end = NaiveTime::parse_from_str(&slot.end_time, "%H:%M")
-        .unwrap_or(NaiveTime::from_hms_opt(23, 59, 59).unwrap());
+        .unwrap_or_else(|_| NaiveTime::from_hms_opt(23, 59, 59).expect("23:59:59 is valid"));
 
     let assigned = items.iter().any(|item| {
         if let (Some(s), Some(e)) = (item.start_time, item.end_time) {
@@ -1207,7 +1207,7 @@ async fn find_replacements(
     replacements.sort_by(|a, b| {
         b.availability_score
             .partial_cmp(&a.availability_score)
-            .unwrap()
+            .unwrap_or(std::cmp::Ordering::Equal)
     });
 
     Ok(replacements)

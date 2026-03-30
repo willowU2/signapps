@@ -358,10 +358,11 @@ const RETRY_DELAYS_SECS: [u64; 5] = [1, 5, 30, 300, 1800];
 /// | 4           | 30 min       |
 fn compute_backoff_secs(retry_count: i32) -> u64 {
     let idx = retry_count.max(0) as usize;
-    RETRY_DELAYS_SECS
-        .get(idx)
-        .copied()
-        .unwrap_or(*RETRY_DELAYS_SECS.last().unwrap())
+    RETRY_DELAYS_SECS.get(idx).copied().unwrap_or(
+        *RETRY_DELAYS_SECS
+            .last()
+            .expect("RETRY_DELAYS_SECS is non-empty"),
+    )
 }
 
 #[cfg(test)]

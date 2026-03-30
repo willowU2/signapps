@@ -148,7 +148,7 @@ impl CacheService {
         // Store value with expiry metadata
         let expires_at = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
+            .expect("system clock is after UNIX_EPOCH")
             .as_secs()
             + ttl.as_secs();
         let entry = format!("{}:{}", expires_at, value);
@@ -169,7 +169,7 @@ impl CacheService {
             if let Ok(expires_at) = raw[..colon_pos].parse::<u64>() {
                 let now = std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap()
+                    .expect("system clock is after UNIX_EPOCH")
                     .as_secs();
                 if now >= expires_at {
                     // Expired, remove and return None

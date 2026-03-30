@@ -314,7 +314,7 @@ pub async fn disconnect_external(
                 .output()
                 .await;
 
-            if lazy_output.is_err() || !lazy_output.unwrap().status.success() {
+            if lazy_output.as_ref().map_or(true, |o| !o.status.success()) {
                 return Err(Error::Storage(format!("Failed to unmount: {}", stderr)));
             }
         }

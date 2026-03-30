@@ -78,7 +78,9 @@ async fn main() -> anyhow::Result<()> {
     let app = build_router(state);
 
     // Start server
-    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
+    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port)
+        .parse()
+        .expect("server address is valid");
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!("✅ signapps-meet ready at http://localhost:{}", port);
     axum::serve(listener, app)

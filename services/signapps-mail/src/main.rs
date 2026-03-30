@@ -140,8 +140,8 @@ async fn main() {
 
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
-            "http://localhost:3000".parse().unwrap(),
-            "http://127.0.0.1:3000".parse().unwrap(),
+            "http://localhost:3000".parse().expect("valid origin"),
+            "http://127.0.0.1:3000".parse().expect("valid origin"),
         ]))
         .allow_credentials(true)
         .allow_methods([
@@ -190,13 +190,17 @@ async fn main() {
         .with_state(state);
 
     // Start server
-    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port)
+        .parse()
+        .expect("server address is valid");
+    let listener = tokio::net::TcpListener::bind(addr)
+        .await
+        .expect("failed to bind TCP listener");
     tracing::info!("✅ signapps-mail ready at http://localhost:{}", port);
     axum::serve(listener, app)
         .with_graceful_shutdown(signapps_common::graceful_shutdown())
         .await
-        .unwrap();
+        .expect("server error");
 }
 
 // ─── Idea 35: Daily email summary ────────────────────────────────────────────

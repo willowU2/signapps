@@ -112,7 +112,10 @@ async fn list_forms(
     Extension(claims): Extension<Claims>,
 ) -> impl IntoResponse {
     match FormRepository::list_by_owner(&state.pool, claims.sub).await {
-        Ok(forms) => (StatusCode::OK, Json(serde_json::to_value(forms).unwrap())),
+        Ok(forms) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(forms).unwrap_or_default()),
+        ),
         Err(e) => {
             tracing::error!("Failed to list forms: {}", e);
             (
@@ -154,7 +157,7 @@ async fn create_form(
             tracing::info!(id = %form.id, "Form created");
             (
                 StatusCode::CREATED,
-                Json(serde_json::to_value(form).unwrap()),
+                Json(serde_json::to_value(form).unwrap_or_default()),
             )
         },
         Err(e) => {
@@ -169,7 +172,10 @@ async fn create_form(
 
 async fn get_form(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     match FormRepository::get_by_id(&state.pool, id).await {
-        Ok(Some(form)) => (StatusCode::OK, Json(serde_json::to_value(form).unwrap())),
+        Ok(Some(form)) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(form).unwrap_or_default()),
+        ),
         Ok(None) => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Form not found" })),
@@ -212,7 +218,10 @@ async fn update_form(
     };
 
     match FormRepository::update(&state.pool, id, update_data).await {
-        Ok(form) => (StatusCode::OK, Json(serde_json::to_value(form).unwrap())),
+        Ok(form) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(form).unwrap_or_default()),
+        ),
         Err(signapps_common::Error::NotFound(_)) => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Form not found" })),
@@ -380,7 +389,7 @@ async fn submit_response(
             dispatch_webhook(state.webhooks.clone(), id, event_payload);
             (
                 StatusCode::CREATED,
-                Json(serde_json::to_value(response).unwrap()),
+                Json(serde_json::to_value(response).unwrap_or_default()),
             )
         },
         Err(e) => {
@@ -397,7 +406,7 @@ async fn list_responses(State(state): State<AppState>, Path(id): Path<Uuid>) -> 
     match FormRepository::list_responses(&state.pool, id).await {
         Ok(responses) => (
             StatusCode::OK,
-            Json(serde_json::to_value(responses).unwrap()),
+            Json(serde_json::to_value(responses).unwrap_or_default()),
         ),
         Err(e) => {
             tracing::error!("Failed to list responses: {}", e);
@@ -525,8 +534,8 @@ async fn health_check() -> axum::Json<serde_json::Value> {
 fn create_router(state: AppState) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
-            "http://localhost:3000".parse().unwrap(),
-            "http://127.0.0.1:3000".parse().unwrap(),
+            "http://localhost:3000".parse().expect("valid origin"),
+            "http://127.0.0.1:3000".parse().expect("valid origin"),
         ]))
         .allow_credentials(true)
         .allow_methods([

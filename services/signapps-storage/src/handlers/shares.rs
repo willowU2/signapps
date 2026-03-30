@@ -475,8 +475,10 @@ fn map_share_to_api(share: signapps_db::models::storage_tier3::Share) -> ShareLi
         // created_at has DEFAULT NOW() in DB but no NOT NULL — fall back to epoch if somehow NULL
         created_at: share.created_at.unwrap_or_else(Utc::now),
         expires_at: share.expires_at,
-        password_protected: share.password_hash.is_some()
-            && !share.password_hash.as_ref().unwrap().is_empty(),
+        password_protected: share
+            .password_hash
+            .as_deref()
+            .is_some_and(|h| !h.is_empty()),
         max_downloads: share.max_downloads,
         // download_count has DEFAULT 0 in DB but no NOT NULL — fall back to 0 if somehow NULL
         download_count: share.download_count.unwrap_or(0),

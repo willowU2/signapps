@@ -398,11 +398,11 @@ pub async fn query_dns(
             let socket_addr: std::net::SocketAddr = if addr_str.contains(':') {
                 addr_str
                     .parse()
-                    .unwrap_or_else(|_| "8.8.8.8:53".parse().unwrap())
+                    .unwrap_or_else(|_| "8.8.8.8:53".parse().expect("8.8.8.8:53 is valid"))
             } else {
                 format!("{}:53", addr_str)
                     .parse()
-                    .unwrap_or_else(|_| "8.8.8.8:53".parse().unwrap())
+                    .unwrap_or_else(|_| "8.8.8.8:53".parse().expect("8.8.8.8:53 is valid"))
             };
             name_servers.push(hickory_resolver::config::NameServerConfig::new(
                 socket_addr,

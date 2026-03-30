@@ -219,7 +219,7 @@ pub async fn transcribe_stream(
                         "end": chunk.end,
                         "is_final": chunk.is_final
                     }))
-                    .unwrap();
+                    .expect("STT chunk serialization is infallible");
                 Some((Ok(event), s))
             },
             Some(Err(e)) => {
@@ -227,7 +227,7 @@ pub async fn transcribe_stream(
                     .json_data(serde_json::json!({
                         "error": e.to_string()
                     }))
-                    .unwrap();
+                    .expect("error event serialization is infallible");
                 Some((Ok(event), s))
             },
             None => None,
