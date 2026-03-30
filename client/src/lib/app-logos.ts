@@ -80,20 +80,28 @@ const APP_LOGO_MAP: Record<string, string> = {
   'uptimekuma': 'uptime-kuma',
 };
 
+/** Available logo sizes */
+export type LogoSize = 32 | 64 | 128;
+
 /**
- * Get logo for an app.
+ * Get logo for an app at a specific size.
  *
- * 1. Local match in /app-logos/{name}.png (200 logos)
+ * Available sizes: 32px (compact lists), 64px (cards, default), 128px (detail dialogs).
+ * All logos are pre-resized PNG with transparent background, centered on square canvas.
+ *
+ * Resolution:
+ * 1. Local match in /app-logos/{size}/{name}.png (200 logos x 3 sizes)
  * 2. Docker image name match
  * 3. Fuzzy match (contains)
- * 4. Google favicon fallback for unknown apps
+ * 4. Google favicon fallback
  */
-export function getAppLogo(appIdOrName: string, dockerImage?: string): string {
+export function getAppLogo(appIdOrName: string, dockerImage?: string, size: LogoSize = 64): string {
   const key = appIdOrName.toLowerCase().trim();
+  const sizeDir = size === 64 ? '' : `${size}/`;
 
   // Direct match
   if (APP_LOGO_MAP[key]) {
-    return `/app-logos/${APP_LOGO_MAP[key]}.png`;
+    return `/app-logos/${sizeDir}${APP_LOGO_MAP[key]}.png`;
   }
 
   // Strip Docker prefixes
@@ -101,25 +109,25 @@ export function getAppLogo(appIdOrName: string, dockerImage?: string): string {
     .replace(/^linuxserver\//, '').replace(/^lscr\.io\/linuxserver\//, '')
     .replace(/^ghcr\.io\/[^/]+\//, '').replace(/^docker\.io\//, '').replace(/^library\//, '');
   if (APP_LOGO_MAP[stripped]) {
-    return `/app-logos/${APP_LOGO_MAP[stripped]}.png`;
+    return `/app-logos/${sizeDir}${APP_LOGO_MAP[stripped]}.png`;
   }
 
   // Docker image base name
   if (dockerImage) {
     const imgBase = dockerImage.split(':')[0].split('/').pop()?.toLowerCase() || '';
     if (APP_LOGO_MAP[imgBase]) {
-      return `/app-logos/${APP_LOGO_MAP[imgBase]}.png`;
+      return `/app-logos/${sizeDir}${APP_LOGO_MAP[imgBase]}.png`;
     }
   }
 
   // Fuzzy match
   for (const [logoKey, filename] of Object.entries(APP_LOGO_MAP)) {
     if (key.includes(logoKey) || logoKey.includes(key)) {
-      return `/app-logos/${filename}.png`;
+      return `/app-logos/${sizeDir}${filename}.png`;
     }
   }
 
   // Fallback: Google favicon API
   const sanitized = key.replace(/[^a-z0-9-]/g, '');
-  return `https://www.google.com/s2/favicons?domain=${sanitized}.com&sz=128`;
+  return `https://www.google.com/s2/favicons?domain=${sanitized}.com&sz=${size}`;
 }

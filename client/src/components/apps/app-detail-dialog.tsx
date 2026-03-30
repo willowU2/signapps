@@ -65,7 +65,7 @@ export function AppDetailDialog({
           <div className="flex items-start gap-4">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
               {(() => {
-                const logo = app.icon && !imgError ? app.icon : getAppLogo(app.id || app.name, app.image);
+                const logo = app.icon && !imgError ? app.icon : getAppLogo(app.id || app.name, app.image, 128);
                 return logo ? (
                   <Image
                     src={logo}

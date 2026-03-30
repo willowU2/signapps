@@ -28,10 +28,10 @@ export function AppCard({ app, onInstall, onDetail, installedContainerId, contai
   const [imgError, setImgError] = useState(false);
   const [updating, setUpdating] = useState(false);
 
-  // Resolve logo: app.icon → local lookup → Google favicon → Package icon on error
+  // Resolve logo: app.icon → local 64px lookup → Google favicon → Package icon on error
   const resolvedIcon = imgError
     ? null
-    : app.icon || getAppLogo(app.id || app.name, app.image);
+    : app.icon || getAppLogo(app.id || app.name, app.image, 64);
 
   const handleUpdate = async () => {
     if (!installedContainerId) return;
