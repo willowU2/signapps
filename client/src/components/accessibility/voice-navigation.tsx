@@ -7,6 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
+type SpeechRecognitionCtor = new () => SpeechRecognition;
+type SpeechWindow = Window & {
+  SpeechRecognition?: SpeechRecognitionCtor;
+  webkitSpeechRecognition?: SpeechRecognitionCtor;
+};
+
 const VOICE_COMMANDS: Record<string, string> = {
   'go home': '/',
   'go to dashboard': '/dashboard',
@@ -35,10 +41,10 @@ export function VoiceNavigation() {
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [supported, setSupported] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
-    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRec = (window as SpeechWindow).SpeechRecognition || (window as SpeechWindow).webkitSpeechRecognition;
     setSupported(!!SpeechRec);
   }, []);
 
@@ -69,7 +75,7 @@ export function VoiceNavigation() {
   }, [router]);
 
   const startListening = useCallback(() => {
-    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRec = (window as SpeechWindow).SpeechRecognition || (window as SpeechWindow).webkitSpeechRecognition;
     if (!SpeechRec) return;
 
     const rec = new SpeechRec();
@@ -77,7 +83,7 @@ export function VoiceNavigation() {
     rec.interimResults = true;
     rec.lang = 'fr-FR';
 
-    rec.onresult = (e: any) => {
+    rec.onresult = (e: SpeechRecognitionEvent) => {
       const last = e.results[e.results.length - 1];
       const text = last[0].transcript;
       setTranscript(text);

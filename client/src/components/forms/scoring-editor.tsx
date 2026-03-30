@@ -3,14 +3,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { FormField } from "@/lib/api/forms"
 
+/** Extended field type that may carry scoring data for quiz fields */
+type ScoringField = FormField & { scores?: Record<string, number> }
+
 interface Props {
-  field: FormField
+  field: ScoringField
   onChange: (scores: Record<string, number>) => void
 }
 
 export function ScoringEditor({ field, onChange }: Props) {
   if (!field.options?.length) return null
-  const scores = (field as any).scores as Record<string, number> ?? {}
+  const scores: Record<string, number> = field.scores ?? {}
 
   return (
     <div className="space-y-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-3 mt-3">

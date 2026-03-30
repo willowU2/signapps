@@ -25,7 +25,7 @@ export function driveNodeUrl(nodeId: string): string {
 
 async function aiChat(prompt: string, systemPrompt: string): Promise<string> {
   const res = await aiApi.chat(prompt, { systemPrompt, language: 'fr' });
-  return res.data?.answer ?? (res.data as any)?.response ?? '';
+  return res.data?.answer ?? '';
 }
 
 export function useSummarizeDoc() {

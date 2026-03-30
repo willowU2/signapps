@@ -3,13 +3,19 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Task } from '@/lib/scheduling/types/scheduling';
 import { cn } from '@/lib/utils';
+
+/** API tasks may carry denormalized assignee fields not in the base type */
+type TaskWithAssignee = Task & {
+  assignee_name?: string;
+  assignee_avatar?: string;
+};
 import { Clock, CheckSquare } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 interface TaskCardProps {
-  task: Task;
+  task: TaskWithAssignee;
   isOverlay?: boolean;
   onClick?: () => void;
 }
@@ -112,11 +118,11 @@ export function TaskCard({ task, isOverlay = false, onClick }: TaskCardProps) {
           )}
 
           {/* Assignee avatar */}
-          {(task as any).assignee_name && (
-            <Avatar className="h-5 w-5" title={(task as any).assignee_name}>
-              <AvatarImage src={(task as any).assignee_avatar} />
+          {task.assignee_name && (
+            <Avatar className="h-5 w-5" title={task.assignee_name}>
+              <AvatarImage src={task.assignee_avatar} />
               <AvatarFallback className="text-[8px] bg-blue-100 text-blue-700">
-                {((task as any).assignee_name || '').slice(0, 2).toUpperCase()}
+                {(task.assignee_name || '').slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           )}

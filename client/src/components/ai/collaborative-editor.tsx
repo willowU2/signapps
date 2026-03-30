@@ -152,7 +152,7 @@ export function CollaborativeEditor({
                 document: ydoc,
                 provider: provider || undefined,
             }) : null,
-        ].filter(Boolean) as any[],
+        ].filter((ext): ext is NonNullable<typeof ext> => ext !== null),
         content: '',
         onUpdate: () => {
             // Auto-save logic could be added here
@@ -302,7 +302,7 @@ export function CollaborativeEditor({
                     title={docTitle}
                     onTitleChange={setDocTitle}
                     isSynced={isSynced}
-                    awarenessStates={awareness ? Array.from(awareness.getStates().values() as unknown as any[]) : []}
+                    awarenessStates={awareness ? Array.from(awareness.getStates().values()) as unknown[] : []}
                     menuBar={<EditorMenuBar editor={editor} />}
                 />
 

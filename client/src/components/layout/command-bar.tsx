@@ -243,11 +243,7 @@ export function CommandBar() {
                             <Command.Group heading="Recent Files" className="text-xs font-semibold text-muted-foreground px-2 py-2">
                                 {recentItems.slice(0, 5).map((item, idx) => {
                                     const block = item.block;
-                                    const title =
-                                        (block as any).data?.name ||
-                                        (block as any).data?.title ||
-                                        (block as any).data?.displayName ||
-                                        block.id;
+                                    const title = block.title || block.id;
                                     return (
                                         <Command.Item
                                             key={`recent-${block.id || idx}`}

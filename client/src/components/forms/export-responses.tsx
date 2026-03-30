@@ -9,13 +9,15 @@ interface Props {
   responses: FormResponse[]
 }
 
+type AnswerEntry = { field_id: string; value: unknown }
+
 function getAnswerValue(r: FormResponse, fieldId: string): string {
-  const answers = r.answers as any
+  const answers = r.answers
   if (Array.isArray(answers)) {
-    const a = answers.find((a: any) => a.field_id === fieldId)?.value
+    const a = (answers as AnswerEntry[]).find((entry) => entry.field_id === fieldId)?.value
     return Array.isArray(a) ? a.join(", ") : String(a ?? "")
   }
-  const v = answers?.[fieldId]
+  const v = (answers as Record<string, unknown>)?.[fieldId]
   return Array.isArray(v) ? v.join(", ") : String(v ?? "")
 }
 

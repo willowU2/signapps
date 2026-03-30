@@ -48,7 +48,7 @@ export function AnomalyDashboard() {
     try {
       // Fetch real data from metrics and alerts APIs in parallel
       const [metricsResult, alertsResult] = await Promise.allSettled([
-        (metricsApi as any).summary(),
+        metricsApi.summary(),
         alertsApi.listActive(),
       ]);
 

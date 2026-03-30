@@ -46,13 +46,13 @@ export function UserProvisioningAlert({
       ])
 
       const employees: Array<{ id: string; name: string; email?: string }> =
-        ((empRes as any).data?.employees ?? (empRes as any)?.employees ?? []).map((e: any) => ({
+        (empRes.data?.employees ?? []).map((e) => ({
           id: e.id,
           name: [e.first_name, e.last_name].filter(Boolean).join(" ") || e.email || e.id,
-          email: e.email || e.work_email,
+          email: e.email,
         }))
 
-      const users: User[] = (usersRes as any).data?.users ?? (usersRes as any)?.users ?? []
+      const users: User[] = usersRes.data?.users ?? []
       const userEmails = new Set(users.map((u) => (u.email ?? "").toLowerCase()).filter(Boolean))
 
       const gaps = employees

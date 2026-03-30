@@ -20,8 +20,7 @@ import { TasksWidget } from "@/components/tasks/tasks-widget";
 import { APP_REGISTRY, APP_CATEGORIES } from "@/lib/app-registry";
 
 function DynIcon({ name, className }: { name: string; className?: string }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const Icon = (LucideIcons as any)[name] as React.ComponentType<{ className?: string }> | undefined;
+  const Icon = (LucideIcons as Record<string, React.ComponentType<{ className?: string }> | undefined>)[name];
   if (!Icon) return <LucideIcons.Grid className={className} />;
   return <Icon className={className} />;
 }

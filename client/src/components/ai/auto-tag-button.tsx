@@ -33,7 +33,7 @@ export function AutoTagButton({ content, existingTags = [], onTagsGenerated, cla
         { systemPrompt: 'Tu génères des tags courts et pertinents. Retourne uniquement les tags séparés par des virgules.', language: 'fr' }
       );
 
-      const answer = res.data?.answer || (res.data as any)?.response || '';
+      const answer = res.data?.answer || '';
       const tags = answer
         .split(',')
         .map((t: string) => t.trim().toLowerCase().replace(/[^a-zà-ÿ0-9-]/g, ''))

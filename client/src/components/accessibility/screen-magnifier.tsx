@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { ZoomIn, ZoomOut, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+/** CSS zoom is non-standard but supported in Webkit/Blink — not in TS types */
+type ZoomableStyle = CSSStyleDeclaration & { zoom: string };
+
 interface MagnifierProps {
   zoom?: number;
 }
@@ -13,16 +16,17 @@ export function ScreenMagnifier({ zoom = 1.25 }: MagnifierProps) {
   const [currentZoom, setCurrentZoom] = useState(zoom);
 
   useEffect(() => {
+    const style = document.body.style as ZoomableStyle;
     if (enabled) {
       // Use CSS zoom for Webkit/Blink browsers, which natively scales the entire interface
       // Since it's an accessibility feature, global zoom is much better than a broken fake lens.
-      (document.body.style as any).zoom = currentZoom.toString();
+      style.zoom = currentZoom.toString();
     } else {
-      (document.body.style as any).zoom = '1';
+      style.zoom = '1';
     }
 
     return () => {
-      (document.body.style as any).zoom = '1';
+      style.zoom = '1';
     };
   }, [enabled, currentZoom]);
 

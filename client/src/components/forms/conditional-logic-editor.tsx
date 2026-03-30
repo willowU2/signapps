@@ -45,8 +45,11 @@ interface LegacyCondition {
   value: string
 }
 
+/** Extended field type that may carry conditional logic data */
+type ConditionalFormField = FormField & { show_if?: unknown }
+
 interface Props {
-  field: FormField
+  field: ConditionalFormField
   allFields: FormField[]
   totalPages?: number
   onChange: (group: ConditionGroup | undefined) => void
@@ -104,7 +107,7 @@ function migrateCondition(raw: unknown): ConditionGroup | undefined {
 // ---------------------------------------------------------------------------
 
 export function ConditionalLogicEditor({ field, allFields, totalPages = 1, onChange }: Props) {
-  const raw = (field as any).show_if as unknown
+  const raw: unknown = field.show_if
   const group: ConditionGroup | undefined = migrateCondition(raw)
 
   const eligible = allFields.filter(
@@ -284,9 +287,9 @@ export function ConditionalLogicEditor({ field, allFields, totalPages = 1, onCha
 
           {g.action.type === "skip_to_page" && totalPages > 1 && (
             <Select
-              value={String((g.action as any).page ?? 2)}
+              value={String(g.action.page ?? 2)}
               onValueChange={v =>
-                updateAction({ type: "skip_to_page", page: Number(v) } as any)
+                updateAction({ type: "skip_to_page", page: Number(v) })
               }
             >
               <SelectTrigger className="h-8 text-xs w-24">

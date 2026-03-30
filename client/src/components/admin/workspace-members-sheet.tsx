@@ -79,7 +79,7 @@ export function WorkspaceMembersSheet({ open, onOpenChange, workspace }: Workspa
     const loadUsers = async () => {
         try {
             const response = await usersApi.list()
-            const ud = response.data as any; setAllUsers(Array.isArray(ud) ? ud : (ud?.users || []))
+            setAllUsers(response.data?.users ?? [])
         } catch (error) {
             console.error("Failed to load users:", error)
         }
