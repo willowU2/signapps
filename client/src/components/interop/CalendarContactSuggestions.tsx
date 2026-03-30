@@ -38,7 +38,7 @@ export function useCalendarContactSuggestions() {
             for (const att of attendees) {
               if (!att.email) continue;
               if (!contactMap.has(att.email)) {
-                contactMap.set(att.email, { email: att.email, name: att.name ?? att.email.split("@")[0], lastEventTitle: ev.title, lastEventDate: ev.start_time });
+                contactMap.set(att.email, { email: att.email, name: (att.name ?? att.email.split("@")[0]), lastEventTitle: ev.title, lastEventDate: ev.start_time });
               }
             }
           }

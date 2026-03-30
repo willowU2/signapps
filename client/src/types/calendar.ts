@@ -29,6 +29,11 @@ export interface UpdateCalendar {
   is_shared?: boolean;
 }
 
+export interface EventAttendeeBasic {
+  email?: string;
+  name?: string;
+}
+
 export interface Event {
   id: string;
   calendar_id: string;
@@ -37,6 +42,10 @@ export interface Event {
   location?: string;
   start_time: string;  // ISO 8601
   end_time: string;    // ISO 8601
+  /** Alternative start field from some calendar providers (Google, etc.) */
+  start?: string | { dateTime?: string };
+  /** Alternative end field from some calendar providers (Google, etc.) */
+  end?: string | { dateTime?: string };
   rrule?: string;      // RFC 5545
   rrule_exceptions?: string[];
   timezone: string;
@@ -45,6 +54,8 @@ export interface Event {
   is_deleted: boolean;
   created_at: string;
   updated_at: string;
+  /** Attendees list — returned by some calendar API endpoints */
+  attendees?: EventAttendeeBasic[];
 }
 
 export interface CreateEvent {

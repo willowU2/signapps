@@ -207,8 +207,10 @@ export function ComposeRichDialog({
                     slotStart.setHours(hour, 0, 0, 0)
                     const slotEnd = new Date(slotStart.getTime() + 3600000)
                     const busy = Array.isArray(events) && events.some((ev) => {
-                        const evStart = new Date(ev.start_time || ev.start?.dateTime || ev.start)
-                        const evEnd = new Date(ev.end_time || ev.end?.dateTime || ev.end)
+                        const startVal = ev.start_time || (typeof ev.start === 'string' ? ev.start : (ev.start as { dateTime?: string } | undefined)?.dateTime) || ''
+                        const endVal = ev.end_time || (typeof ev.end === 'string' ? ev.end : (ev.end as { dateTime?: string } | undefined)?.dateTime) || ''
+                        const evStart = new Date(startVal)
+                        const evEnd = new Date(endVal)
                         return evStart < slotEnd && evEnd > slotStart
                     })
                     if (!busy && slots.length < 5) {
