@@ -52,6 +52,7 @@ pub struct CreateLinkRequest {
 // ---------------------------------------------------------------------------
 
 /// GET /api/v1/links?entity_type=X&entity_id=Y
+#[tracing::instrument(skip_all)]
 pub async fn find_links(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -82,6 +83,7 @@ pub async fn find_links(
 }
 
 /// POST /api/v1/links
+#[tracing::instrument(skip_all)]
 pub async fn create_link(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -117,6 +119,7 @@ pub async fn create_link(
 }
 
 /// DELETE /api/v1/links/:id
+#[tracing::instrument(skip_all)]
 pub async fn remove_link(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -109,6 +109,7 @@ fn parse_iso_week(week_str: &str) -> Result<NaiveDate, CalendarError> {
 ///
 /// List timesheet entries for the given user and ISO week.
 /// `user_id` defaults to the authenticated user. `week` defaults to current.
+#[tracing::instrument(skip_all)]
 pub async fn list_timesheets(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -141,6 +142,7 @@ pub async fn list_timesheets(
 /// `PUT /api/v1/timesheets/:id`
 ///
 /// Update hours and optional category for a timesheet entry (manual correction).
+#[tracing::instrument(skip_all)]
 pub async fn update_timesheet(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -176,6 +178,7 @@ pub async fn update_timesheet(
 /// `POST /api/v1/timesheets/validate`
 ///
 /// Mark all timesheet entries for the current user and given week as validated.
+#[tracing::instrument(skip_all)]
 pub async fn validate_week(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -204,6 +207,7 @@ pub async fn validate_week(
 /// Fetch all timesheet entries for the current user in the given date range,
 /// mark them as exported, and return them as a JSON array.
 /// CSV generation is handled on the frontend.
+#[tracing::instrument(skip_all)]
 pub async fn export_timesheets(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -253,6 +257,7 @@ pub async fn export_timesheets(
 /// in the specified date range, and create `timesheet_entries` with
 /// `auto_generated = true`. Hours are calculated from event duration.
 /// Already-generated entries for the same event are skipped.
+#[tracing::instrument(skip_all)]
 pub async fn generate_timesheets(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

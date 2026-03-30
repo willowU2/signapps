@@ -58,6 +58,7 @@ pub struct MeetingSuggestionsResponse {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// POST /api/v1/calendar/meeting-suggestions
+#[tracing::instrument(skip_all)]
 pub async fn suggest_meeting_times(
     State(state): State<AppState>,
     Json(req): Json<MeetingSuggestionsRequest>,

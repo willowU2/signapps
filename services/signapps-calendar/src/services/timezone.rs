@@ -76,7 +76,9 @@ mod tests {
 
     #[test]
     fn test_to_timezone_utc_to_paris() {
-        let utc = Utc.with_ymd_and_hms(2025, 6, 21, 12, 0, 0).expect("valid date constant");
+        let utc = Utc
+            .with_ymd_and_hms(2025, 6, 21, 12, 0, 0)
+            .expect("valid date constant");
         let paris = to_timezone(utc, "Europe/Paris");
         assert!(paris.is_some(), "Conversion to Europe/Paris should succeed");
         // In summer Paris is UTC+2
@@ -86,15 +88,20 @@ mod tests {
 
     #[test]
     fn test_to_timezone_invalid_tz_returns_none() {
-        let utc = Utc.with_ymd_and_hms(2025, 1, 1, 0, 0, 0).expect("valid date constant");
+        let utc = Utc
+            .with_ymd_and_hms(2025, 1, 1, 0, 0, 0)
+            .expect("valid date constant");
         let result = to_timezone(utc, "Not/ATimezone");
         assert!(result.is_none(), "Invalid timezone should return None");
     }
 
     #[test]
     fn test_from_timezone_converts_back_to_utc() {
-        let utc = Utc.with_ymd_and_hms(2025, 3, 15, 10, 30, 0).expect("valid date constant");
-        let paris = to_timezone(utc, "Europe/Paris").expect("conversion to Europe/Paris should succeed");
+        let utc = Utc
+            .with_ymd_and_hms(2025, 3, 15, 10, 30, 0)
+            .expect("valid date constant");
+        let paris =
+            to_timezone(utc, "Europe/Paris").expect("conversion to Europe/Paris should succeed");
         let back_to_utc = from_timezone(paris);
         assert_eq!(
             back_to_utc.timestamp(),
@@ -120,14 +127,21 @@ mod tests {
 
     #[test]
     fn test_format_in_timezone() {
-        let utc = Utc.with_ymd_and_hms(2025, 1, 15, 9, 0, 0).expect("valid date constant");
+        let utc = Utc
+            .with_ymd_and_hms(2025, 1, 15, 9, 0, 0)
+            .expect("valid date constant");
         let formatted = format_in_timezone(utc, "UTC", "%Y-%m-%d %H:%M");
-        assert_eq!(formatted.expect("formatting should succeed"), "2025-01-15 09:00");
+        assert_eq!(
+            formatted.expect("formatting should succeed"),
+            "2025-01-15 09:00"
+        );
     }
 
     #[test]
     fn test_format_in_timezone_invalid_tz_returns_error() {
-        let utc = Utc.with_ymd_and_hms(2025, 1, 1, 0, 0, 0).expect("valid date constant");
+        let utc = Utc
+            .with_ymd_and_hms(2025, 1, 1, 0, 0, 0)
+            .expect("valid date constant");
         let result = format_in_timezone(utc, "Bad/Zone", "%H:%M");
         assert!(result.is_err(), "Invalid timezone should return an error");
     }
@@ -152,7 +166,9 @@ mod tests {
     #[test]
     fn test_dst_detection_summer_new_york() {
         // July 4 2025 — New York is in EDT (DST active)
-        let summer = Utc.with_ymd_and_hms(2025, 7, 4, 12, 0, 0).expect("valid date constant");
+        let summer = Utc
+            .with_ymd_and_hms(2025, 7, 4, 12, 0, 0)
+            .expect("valid date constant");
         // DST detection is a best-effort check; we just verify it runs without panic
         let _ = is_dst("America/New_York", summer);
     }
@@ -160,7 +176,9 @@ mod tests {
     #[test]
     fn test_dst_detection_winter_new_york() {
         // January 15 2025 — New York is in EST (no DST)
-        let winter = Utc.with_ymd_and_hms(2025, 1, 15, 12, 0, 0).expect("valid date constant");
+        let winter = Utc
+            .with_ymd_and_hms(2025, 1, 15, 12, 0, 0)
+            .expect("valid date constant");
         let _ = is_dst("America/New_York", winter);
     }
 }

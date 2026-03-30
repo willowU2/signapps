@@ -73,6 +73,7 @@ fn resolve_event_type(source: &str, payload: &Value) -> String {
 /// Security: this endpoint requires authentication (protected_routes middleware).
 /// For unauthenticated public webhooks (e.g. Stripe), a separate signed endpoint
 /// is provided in the billing service.
+#[tracing::instrument(skip_all)]
 pub async fn receive_incoming_webhook(
     State(_state): State<AppState>,
     Path(source): Path<String>,
@@ -118,6 +119,7 @@ pub async fn receive_incoming_webhook(
 /// that provide their own signature verification (e.g. Stripe HMAC-SHA256).
 ///
 /// TODO: add per-source signature verification before enabling in production.
+#[tracing::instrument(skip_all)]
 pub async fn receive_public_webhook(
     State(_state): State<AppState>,
     Path(source): Path<String>,

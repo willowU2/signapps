@@ -308,6 +308,7 @@ async fn store_backup_codes_hashed(
 
 /// Verify a recovery code against stored hashes. Marks it as used on success.
 #[allow(dead_code)]
+#[tracing::instrument(skip_all)]
 pub async fn verify_and_consume_backup_code(
     pool: &signapps_db::DatabasePool,
     user_id: Uuid,

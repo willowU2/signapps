@@ -14,6 +14,7 @@ pub struct HealthResponse {
 }
 
 /// Health check endpoint.
+#[tracing::instrument(skip_all)]
 pub async fn health_check(
     axum::extract::State(state): axum::extract::State<AppState>,
 ) -> Json<HealthResponse> {

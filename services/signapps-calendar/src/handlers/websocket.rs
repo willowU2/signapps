@@ -32,6 +32,7 @@ pub struct CalendarSession {
 
 /// WebSocket handler for calendar real-time collaboration
 /// Endpoint: GET /api/v1/calendars/:calendar_id/ws
+#[tracing::instrument(skip_all)]
 pub async fn websocket_handler(
     Path(calendar_id): Path<Uuid>,
     ws: WebSocketUpgrade,
@@ -271,7 +272,8 @@ mod tests {
 
     #[test]
     fn test_cache_key_format() {
-        let calendar_id = Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").expect("valid UUID literal");
+        let calendar_id =
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").expect("valid UUID literal");
         let key = format!("calendar::{}", calendar_id);
         assert!(key.starts_with("calendar::"));
         assert!(key.contains("550e8400"));

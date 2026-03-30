@@ -41,6 +41,7 @@ pub struct RestoreRequest {
 // === Handlers ===
 
 /// List all backup profiles.
+#[tracing::instrument(skip_all)]
 pub async fn list_profiles(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -58,6 +59,7 @@ pub async fn list_profiles(
 }
 
 /// Get a single backup profile.
+#[tracing::instrument(skip_all)]
 pub async fn get_profile(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -72,6 +74,7 @@ pub async fn get_profile(
 }
 
 /// Create a new backup profile.
+#[tracing::instrument(skip_all)]
 pub async fn create_profile(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -102,6 +105,7 @@ pub async fn create_profile(
 }
 
 /// Update a backup profile.
+#[tracing::instrument(skip_all)]
 pub async fn update_profile(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -120,6 +124,7 @@ pub async fn update_profile(
 }
 
 /// Delete a backup profile.
+#[tracing::instrument(skip_all)]
 pub async fn delete_profile(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -138,6 +143,7 @@ pub async fn delete_profile(
 }
 
 /// Run a backup now.
+#[tracing::instrument(skip_all)]
 pub async fn run_backup(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -177,6 +183,7 @@ pub async fn run_backup(
 }
 
 /// List snapshots for a backup profile.
+#[tracing::instrument(skip_all)]
 pub async fn list_snapshots(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -201,6 +208,7 @@ pub async fn list_snapshots(
 }
 
 /// Restore a snapshot.
+#[tracing::instrument(skip_all)]
 pub async fn restore_snapshot(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -243,6 +251,7 @@ pub async fn restore_snapshot(
 }
 
 /// List backup runs for a profile.
+#[tracing::instrument(skip_all)]
 pub async fn list_runs(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

@@ -60,6 +60,7 @@ pub struct VolumePreview {
 }
 
 /// Preview a compose file without installing.
+#[tracing::instrument(skip_all)]
 pub async fn preview_compose(
     Json(req): Json<ImportComposeRequest>,
 ) -> Result<Json<ComposePreview>> {
@@ -71,6 +72,7 @@ pub async fn preview_compose(
 }
 
 /// Import and install containers from a raw compose file.
+#[tracing::instrument(skip_all)]
 pub async fn import_compose(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

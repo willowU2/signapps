@@ -62,6 +62,7 @@ pub struct AuditLogListResponse {
 // ---------------------------------------------------------------------------
 
 /// GET /api/v1/audit-logs
+#[tracing::instrument(skip_all)]
 pub async fn list_audit_logs(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -141,6 +142,7 @@ pub async fn list_audit_logs(
 }
 
 /// GET /api/v1/audit-logs/:id
+#[tracing::instrument(skip_all)]
 pub async fn get_audit_log(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -173,6 +175,7 @@ pub async fn get_audit_log(
 }
 
 /// GET /api/v1/audit-logs/export — CSV export
+#[tracing::instrument(skip_all)]
 pub async fn export_audit_logs(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -245,6 +248,7 @@ pub struct AuditQueryRequest {
     pub limit: Option<i64>,
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn query_audit(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
