@@ -497,7 +497,102 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/tenants/:id/branding", get(handlers::branding::get_branding))
         .route("/api/v1/tenants/:id/branding", put(handlers::branding::update_branding))
         .route("/api/v1/tenants/:id/branding", delete(handlers::branding::reset_branding))
+        // Database backup (admin-only)
+        .route("/api/v1/admin/backup", post(handlers::backup::create_backup))
+        .route("/api/v1/admin/backups", get(handlers::backup::list_backups))
         .layer(middleware::from_fn(require_admin))
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    // Supply Chain routes (protected)
+    let supply_chain_routes = Router::new()
+        .route(
+            "/api/v1/supply-chain/purchase-orders",
+            get(handlers::supply_chain::list_purchase_orders)
+                .post(handlers::supply_chain::create_purchase_order),
+        )
+        .route(
+            "/api/v1/supply-chain/purchase-orders/:id",
+            get(handlers::supply_chain::get_purchase_order)
+                .patch(handlers::supply_chain::patch_purchase_order)
+                .delete(handlers::supply_chain::delete_purchase_order),
+        )
+        .route(
+            "/api/v1/supply-chain/warehouses",
+            get(handlers::supply_chain::list_warehouses)
+                .post(handlers::supply_chain::create_warehouse),
+        )
+        .route(
+            "/api/v1/supply-chain/inventory",
+            get(handlers::supply_chain::list_inventory),
+        )
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    // LMS routes (protected)
+    let lms_routes = Router::new()
+        .route(
+            "/api/v1/lms/courses",
+            get(handlers::lms::list_courses).post(handlers::lms::create_course),
+        )
+        .route(
+            "/api/v1/lms/courses/:id",
+            get(handlers::lms::get_course).patch(handlers::lms::patch_course),
+        )
+        .route(
+            "/api/v1/lms/progress",
+            get(handlers::lms::list_progress).post(handlers::lms::track_progress),
+        )
+        .route(
+            "/api/v1/lms/discussions",
+            get(handlers::lms::list_discussions).post(handlers::lms::create_discussion),
+        )
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    // Comms routes (protected)
+    let comms_routes = Router::new()
+        .route(
+            "/api/v1/comms/announcements",
+            get(handlers::comms::list_announcements).post(handlers::comms::create_announcement),
+        )
+        .route(
+            "/api/v1/comms/polls",
+            get(handlers::comms::list_polls).post(handlers::comms::create_poll),
+        )
+        .route(
+            "/api/v1/comms/polls/:id",
+            patch(handlers::comms::patch_poll),
+        )
+        .route(
+            "/api/v1/comms/news-feed",
+            get(handlers::comms::list_news).post(handlers::comms::create_news),
+        )
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    // Accounting routes (protected)
+    let accounting_routes = Router::new()
+        .route(
+            "/api/v1/accounting/entries",
+            get(handlers::accounting::list_entries).post(handlers::accounting::create_entry),
+        )
+        .route(
+            "/api/v1/accounting/accounts",
+            get(handlers::accounting::list_accounts).post(handlers::accounting::create_account),
+        )
+        .route(
+            "/api/v1/accounting/reports",
+            get(handlers::accounting::get_reports),
+        )
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
@@ -509,6 +604,10 @@ fn create_router(state: AppState) -> Router {
         .merge(protected_routes)
         .merge(tenant_routes)
         .merge(admin_routes)
+        .merge(supply_chain_routes)
+        .merge(lms_routes)
+        .merge(comms_routes)
+        .merge(accounting_routes)
         .layer(middleware::from_fn(logging_middleware))
         .layer(middleware::from_fn(request_id_middleware))
         .layer(middleware::from_fn(security_headers_middleware))

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -54,7 +55,12 @@ const getOccupancy = (zone: Zone) => zone.capacity > 0 ? Math.round((zone.used /
 
 export default function WarehouseMapPage() {
   usePageTitle('Plan entrepot');
+  const { data: apiZones } = useQuery<Zone[]>({
+    queryKey: ['supply-chain-warehouse-map'],
+    queryFn: () => fetch('/api/supply-chain/warehouses').then(r => r.json()).catch(() => INITIAL_ZONES),
+  });
   const [zones, setZones] = useState<Zone[]>(INITIAL_ZONES);
+  useEffect(() => { if (apiZones && apiZones.length > 0) setZones(apiZones); }, [apiZones]);
   const [selected, setSelected] = useState<Zone | null>(null);
   const [search, setSearch] = useState('');
 

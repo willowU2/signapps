@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,7 +44,12 @@ const INITIAL: MentionNotification[] = [
 
 export default function MentionNotificationsPage() {
   usePageTitle('Mentions');
+  const { data: apiNotifs } = useQuery<MentionNotification[]>({
+    queryKey: ['comms-mention-notifications'],
+    queryFn: () => fetch('/api/comms/mention-notifications').then(r => r.json()).catch(() => INITIAL),
+  });
   const [notifs, setNotifs] = useState<MentionNotification[]>(INITIAL);
+  useEffect(() => { if (apiNotifs && apiNotifs.length > 0) setNotifs(apiNotifs); }, [apiNotifs]);
   const [settings, setSettings] = useState({ announcements: true, documents: true, polls: true, news: true, email: false, push: true });
   const [tab, setTab] = useState('all');
 

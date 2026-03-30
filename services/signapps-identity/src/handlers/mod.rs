@@ -1,12 +1,15 @@
 //! HTTP handlers for the Identity service.
 
+pub mod accounting;
 pub mod activities;
 pub mod admin_security;
 pub mod api_keys;
 pub mod audit_logs;
 pub mod auth;
+pub mod backup;
 pub mod branding;
 pub mod bulk_users;
+pub mod comms;
 pub mod compliance;
 pub mod data_export;
 pub mod entity_links;
@@ -16,6 +19,7 @@ pub mod guest_tokens;
 pub mod health;
 pub mod ip_allowlist;
 pub mod ldap;
+pub mod lms;
 pub mod mfa;
 pub mod migration;
 pub mod openapi;
@@ -26,6 +30,7 @@ pub mod roles;
 pub mod security_events;
 pub mod sessions;
 pub mod signatures;
+pub mod supply_chain;
 pub mod tenant_css;
 pub mod tenants;
 pub mod user_profile;

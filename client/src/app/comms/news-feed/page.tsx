@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -85,7 +86,12 @@ const categoryColors: Record<string, string> = {
 
 export default function NewsFeedPage() {
   usePageTitle("Fil d'actualite");
+  const { data: apiNews } = useQuery<NewsItem[]>({
+    queryKey: ['comms-news-feed'],
+    queryFn: () => fetch('/api/comms/news-feed').then(r => r.json()).catch(() => INITIAL_NEWS),
+  });
   const [news, setNews] = useState<NewsItem[]>(INITIAL_NEWS);
+  useEffect(() => { if (apiNews && apiNews.length > 0) setNews(apiNews); }, [apiNews]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: '', content: '', category: 'General' });
 
@@ -108,6 +114,10 @@ export default function NewsFeedPage() {
       author: 'You', authorInitials: 'ME', date: new Date(), category: form.category,
       reactions: { '👍': 0, '❤️': 0, '🎉': 0, '😄': 0 }, userReaction: null, comments: 0,
     };
+    fetch('/api/comms/news-feed', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: item.title, content: item.content, author: item.author, authorInitials: item.authorInitials, category: item.category, reactions: item.reactions, comments: 0 }),
+    }).catch(() => {});
     setNews([item, ...news]);
     setForm({ title: '', content: '', category: 'General' });
     setOpen(false);

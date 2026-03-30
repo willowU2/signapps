@@ -64,7 +64,15 @@ export function JournalEntry() {
 
   const handlePost = () => {
     if (!isBalanced || !draft.date || !draft.description) return;
-    setEntries(prev => [...prev, { ...draft, id: String(Date.now()), posted: true }]);
+    const newEntry = { ...draft, id: String(Date.now()), posted: true };
+    // Persist to API (fire-and-forget; local state is source of truth)
+    const totalDebit = draft.lines.reduce((s, l) => s + (Number(l.debit) || 0), 0);
+    const totalCredit = draft.lines.reduce((s, l) => s + (Number(l.credit) || 0), 0);
+    fetch('/api/accounting/entries', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: draft.date, reference: draft.reference, description: draft.description, lines: draft.lines, debit: totalDebit, credit: totalCredit }),
+    }).catch(() => {});
+    setEntries(prev => [...prev, newEntry]);
     setDraft({ id: "", date: new Date().toISOString().split("T")[0], reference: "", description: "", lines: [newLine(), newLine()], posted: false });
     setShowForm(false);
   };

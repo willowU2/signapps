@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,7 +52,12 @@ const SECTION_TYPES = [
 
 export default function NewsletterPage() {
   usePageTitle('Newsletter');
+  const { data: apiNewsletters } = useQuery<Newsletter[]>({
+    queryKey: ['comms-newsletter'],
+    queryFn: () => fetch('/api/comms/newsletter').then(r => r.json()).catch(() => INITIAL),
+  });
   const [newsletters, setNewsletters] = useState<Newsletter[]>(INITIAL);
+  useEffect(() => { if (apiNewsletters && apiNewsletters.length > 0) setNewsletters(apiNewsletters); }, [apiNewsletters]);
   const [editing, setEditing] = useState<Newsletter | null>(null);
   const [subject, setSubject] = useState('');
   const [sections, setSections] = useState<NewsletterSection[]>([{ id: '1', type: 'heading', content: '' }]);

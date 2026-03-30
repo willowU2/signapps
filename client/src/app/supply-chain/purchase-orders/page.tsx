@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,7 +42,12 @@ const nextPONumber = (pos: PO[]) => `PO-2026-0${(43 + pos.filter(p => !['PO-2026
 
 export default function PurchaseOrdersPage() {
   usePageTitle('Bons de commande');
+  const { data: apiPos } = useQuery<PO[]>({
+    queryKey: ['supply-chain-purchase-orders'],
+    queryFn: () => fetch('/api/supply-chain/purchase-orders').then(r => r.json()).catch(() => INITIAL_POS),
+  });
   const [pos, setPos] = useState<PO[]>(INITIAL_POS);
+  useEffect(() => { if (apiPos && apiPos.length > 0) setPos(apiPos); }, [apiPos]);
   const [open, setOpen] = useState(false);
   const [viewing, setViewing] = useState<PO | null>(null);
   const [form, setForm] = useState({ supplier: '', notes: '' });
@@ -54,18 +60,38 @@ export default function PurchaseOrdersPage() {
 
   const total = items.reduce((a, i) => a + i.quantity * i.unitPrice, 0);
 
-  const handleCreate = (status: 'draft' | 'pending') => {
+  const handleCreate = async (status: 'draft' | 'pending') => {
     if (!form.supplier.trim() || items.every(i => !i.description.trim())) { toast.error('Supplier and items required'); return; }
-    const po: PO = { id: Date.now().toString(), number: nextPONumber(pos), supplier: form.supplier, status, items, notes: form.notes, createdAt: new Date(), updatedAt: new Date(), requestedBy: 'You', total };
-    setPos([po, ...pos]);
+    const number = nextPONumber(pos);
+    const payload = { number, supplier: form.supplier, status, items, notes: form.notes, requestedBy: 'You', total };
+    try {
+      const res = await fetch('/api/supply-chain/purchase-orders', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      });
+      const r = await res.json();
+      const po: PO = { id: r.id ?? Date.now().toString(), number, supplier: form.supplier, status, items, notes: form.notes, createdAt: new Date(r.created_at ?? Date.now()), updatedAt: new Date(r.updated_at ?? Date.now()), requestedBy: 'You', total };
+      setPos([po, ...pos]);
+    } catch {
+      const po: PO = { id: Date.now().toString(), number, supplier: form.supplier, status, items, notes: form.notes, createdAt: new Date(), updatedAt: new Date(), requestedBy: 'You', total };
+      setPos([po, ...pos]);
+    }
     setForm({ supplier: '', notes: '' }); setItems([{ id: '1', description: '', quantity: 1, unitPrice: 0 }]);
     setOpen(false);
-    toast.success(`PO ${po.number} ${status === 'draft' ? 'saved as draft' : 'submitted for approval'}!`);
+    toast.success(`PO ${number} ${status === 'draft' ? 'saved as draft' : 'submitted for approval'}!`);
   };
 
-  const approve = (id: string) => { setPos(prev => prev.map(p => p.id === id ? { ...p, status: 'approved', updatedAt: new Date() } : p)); toast.success('PO approved!'); };
-  const reject = (id: string) => { setPos(prev => prev.map(p => p.id === id ? { ...p, status: 'rejected', updatedAt: new Date() } : p)); toast.success('PO rejected'); };
-  const markReceived = (id: string) => { setPos(prev => prev.map(p => p.id === id ? { ...p, status: 'received', updatedAt: new Date() } : p)); toast.success('PO marked as received'); };
+  const patchStatus = async (id: string, status: PO['status']) => {
+    setPos(prev => prev.map(p => p.id === id ? { ...p, status, updatedAt: new Date() } : p));
+    try {
+      await fetch(`/api/supply-chain/purchase-orders/${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
+      });
+    } catch { /* optimistic update already applied */ }
+  };
+
+  const approve = (id: string) => { patchStatus(id, 'approved'); toast.success('PO approved!'); };
+  const reject = (id: string) => { patchStatus(id, 'rejected'); toast.success('PO rejected'); };
+  const markReceived = (id: string) => { patchStatus(id, 'received'); toast.success('PO marked as received'); };
 
   const filtered = activeTab === 'all' ? pos : pos.filter(p => p.status === activeTab);
 

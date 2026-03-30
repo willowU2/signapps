@@ -42,6 +42,7 @@ import { AccountSwitcher } from "@/components/mail/account-switcher"
 import { EmailToEventDialog } from "@/components/interop/EmailToEventDialog"
 
 import { WorkspaceHeader } from "@/components/mail/workspace-header"
+import { UnifiedInbox } from "@/components/mail/unified-inbox"
 import type { Mail } from "@/lib/data/mail"
 import {
     useMailList,
@@ -123,6 +124,11 @@ export default function MailPage() {
 
     // Idea 13: Collapsible sidebar
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+    // Unified inbox view — default when multiple accounts
+    const [unifiedView, setUnifiedView] = useState(false)
+    // Auto-switch to unified when accounts load and count > 1
+    const [unifiedAutoSwitched, setUnifiedAutoSwitched] = useState(false)
 
     // C2: Drag email → calendar event drop zone
     const [calDropOver, setCalDropOver] = useState(false)
@@ -369,6 +375,11 @@ export default function MailPage() {
             setAccounts(uiAccounts)
             if (uiAccounts.length > 0) {
                 setActiveAccountId(uiAccounts[0].id)
+            }
+            // Auto-enable unified view when multiple accounts exist (only on first load)
+            if (uiAccounts.length > 1 && !unifiedAutoSwitched) {
+                setUnifiedView(true)
+                setUnifiedAutoSwitched(true)
             }
 
             // Bug 4: Fetch stats for dynamic counts
@@ -861,8 +872,35 @@ export default function MailPage() {
                         }}
                     />
                 )}
-                {/* Content Area (List + Display) */}
-                <div
+                {/* Unified inbox toggle — shown when multiple accounts */}
+                {accounts.length > 1 && (
+                    <div className="flex items-center gap-2 px-2 pb-1">
+                        <button
+                            onClick={() => setUnifiedView(v => !v)}
+                            className={cn(
+                                "flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium border transition-all",
+                                unifiedView
+                                    ? "bg-primary text-primary-foreground border-primary"
+                                    : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+                            )}
+                        >
+                            {unifiedView ? "Vue unifiée" : "Par compte"}
+                        </button>
+                        <span className="text-xs text-muted-foreground">
+                            {unifiedView ? "Toutes les boîtes fusionnées" : `${accounts.length} comptes`}
+                        </span>
+                    </div>
+                )}
+
+                {/* Unified inbox panel (when unified view is active) */}
+                {unifiedView && accounts.length > 1 && (
+                    <div className="flex-1 bg-background dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0">
+                        <UnifiedInbox />
+                    </div>
+                )}
+
+                {/* Content Area (List + Display) — hidden when unified view is active */}
+                {(!unifiedView || accounts.length <= 1) && <div
                     className={cn(
                         "flex-1 flex bg-background dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0 relative",
                         // Idea 15: split-pane on wide screens when email is selected
@@ -1011,7 +1049,8 @@ export default function MailPage() {
                             </div>
                         </div>
                     )}
-                </div>
+                </div>}
+
             </WorkspaceShell>
 
             <ComposeAiDialog open={composeAiOpen} onOpenChange={setComposeAiOpen} accountId={activeAccountId} />

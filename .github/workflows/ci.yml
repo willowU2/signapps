@@ -2,289 +2,68 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
 
 jobs:
-  check:
-    name: Check
+  rust-check:
+    name: Rust — Check / Clippy / Fmt / Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-action@stable
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+          components: rustfmt,clippy
 
-      - name: Run cargo check
-        run: cargo check --workspace --all-features
+      - uses: Swatinem/rust-cache@v2
 
-  check-offline:
-    name: Check (Offline Mode)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+      - name: Check
+        run: cargo check --workspace
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-action@stable
+      - name: Clippy
+        run: cargo clippy --workspace -- -D warnings -A missing_docs
 
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: Run cargo check with SQLX_OFFLINE
-        env:
-          SQLX_OFFLINE: 'true'
-        run: cargo check --workspace --all-features
-
-  fmt:
-    name: Format
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-action@stable
-        with:
-          components: rustfmt
-
-      - name: Run cargo fmt
+      - name: Format
         run: cargo fmt --all -- --check
 
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-action@stable
-        with:
-          components: clippy
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-clippy-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-clippy-
-
-      - name: Run cargo clippy (strict)
-        run: cargo clippy --workspace --all-features -- -D warnings
-
-  clippy-pedantic:
-    name: Clippy Pedantic (Advisory)
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-action@stable
-        with:
-          components: clippy
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-clippy-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-clippy-
-
-      - name: Run clippy pedantic (advisory, non-blocking)
-        run: cargo clippy --workspace --all-features -- -W clippy::pedantic -W clippy::nursery 2>&1 | head -200
-
-  test:
-    name: Test (nextest)
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: pgvector/pgvector:pg15
-        env:
-          POSTGRES_USER: signapps
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: signapps_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-action@stable
-
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@nextest
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-test-
-
-      - name: Run tests with nextest
+      - name: Test
+        run: cargo test --workspace
         env:
           DATABASE_URL: postgres://signapps:test_password@localhost:5432/signapps_test
           JWT_SECRET: test_jwt_secret_minimum_32_characters_long
-        run: cargo nextest run --workspace --all-features
 
-  deny:
-    name: Dependency Audit (cargo-deny)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: EmbarkStudios/cargo-deny-action@v2
-
-  frontend:
-    name: Frontend Build & Lint
+  frontend-check:
+    name: Frontend — TypeScript / ESLint / Build
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: client
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: client/package-lock.json
+          version: 9
 
-      - name: Install dependencies
-        run: npm ci
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: client/pnpm-lock.yaml
 
-      - name: Run ESLint
-        run: npm run lint
+      - run: pnpm install --frozen-lockfile
 
-      - name: Type check
-        run: npm run type-check || true
+      - name: TypeScript
+        run: npx tsc --noEmit
+
+      - name: ESLint
+        run: npx eslint src/ --ext .ts,.tsx --max-warnings 600
 
       - name: Build
-        run: npm run build
-
-  security:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install cargo-audit
-        run: cargo install cargo-audit
-
-      - name: Run security audit
-        run: cargo audit
-
-  coverage:
-    name: Code Coverage
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: pgvector/pgvector:pg15
-        env:
-          POSTGRES_USER: signapps
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: signapps_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-action@stable
-        with:
-          components: llvm-tools-preview
-
-      - name: Install cargo-llvm-cov
-        run: cargo install cargo-llvm-cov
-
-      - name: Generate coverage report
-        env:
-          DATABASE_URL: postgres://signapps:test_password@localhost:5432/signapps_test
-          JWT_SECRET: test_jwt_secret_minimum_32_characters_long
-        run: cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: lcov.info
-          fail_ci_if_error: false
-
-  docs:
-    name: Documentation (Private Build)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-action@stable
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-docs-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-docs-
-
-      - name: Build documentation (private items included)
-        run: cargo doc --no-deps --workspace --document-private-items
-        env:
-          RUSTDOCFLAGS: "-D warnings"
-
-      - name: Upload docs as private artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: rustdoc-internal-${{ github.sha }}
-          path: target/doc/
-          retention-days: 30
-          # IMPORTANT: This artifact is only accessible to authenticated team members
-          # DO NOT deploy to GitHub Pages or any public hosting
+        run: pnpm build

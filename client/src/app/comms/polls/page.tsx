@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,7 +52,14 @@ const INITIAL_POLLS: Poll[] = [
 
 export default function PollsPage() {
   usePageTitle('Sondages');
+  const { data: apiPolls } = useQuery<Poll[]>({
+    queryKey: ['comms-polls'],
+    queryFn: () => fetch('/api/comms/polls').then(r => r.json()).catch(() => INITIAL_POLLS),
+  });
   const [polls, setPolls] = useState<Poll[]>(INITIAL_POLLS);
+
+  // Seed local state from API once data arrives (keeps interactions working)
+  useEffect(() => { if (apiPolls && apiPolls.length > 0) setPolls(apiPolls); }, [apiPolls]);
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['', '', '']);
@@ -61,15 +69,37 @@ export default function PollsPage() {
       if (p.id !== pollId || p.voted || p.status === 'closed') return p;
       return { ...p, voted: optionId, totalVotes: p.totalVotes + 1, options: p.options.map(o => o.id === optionId ? { ...o, votes: o.votes + 1 } : o) };
     }));
+    const poll = polls.find(p => p.id === pollId);
+    if (poll) {
+      const updatedOptions = poll.options.map(o => o.id === optionId ? { ...o, votes: o.votes + 1 } : o);
+      fetch(`/api/comms/polls/${pollId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ voted: optionId, options: updatedOptions, totalVotes: poll.totalVotes + 1 }),
+      }).catch(() => {});
+    }
     toast.success('Vote enregistré !');
   };
 
-  const closePoll = (id: string) => { setPolls(prev => prev.map(p => p.id === id ? { ...p, status: 'closed', closedAt: new Date() } : p)); toast.success('Sondage fermé'); };
+  const closePoll = (id: string) => {
+    setPolls(prev => prev.map(p => p.id === id ? { ...p, status: 'closed', closedAt: new Date() } : p));
+    fetch(`/api/comms/polls/${id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'closed' }),
+    }).catch(() => {});
+    toast.success('Sondage fermé');
+  };
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     const validOptions = options.filter(o => o.trim());
     if (!question.trim() || validOptions.length < 2) { toast.error('Question et au moins 2 options requises'); return; }
+    const pollData = {
+      question, status: 'active', totalVotes: 0, voted: null, createdAt: new Date().toISOString(),
+      options: validOptions.map((text, i) => ({ id: String(i), text, votes: 0 })),
+    };
+    fetch('/api/comms/polls', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pollData),
+    }).catch(() => {});
     const poll: Poll = {
       id: Date.now().toString(), question, status: 'active', totalVotes: 0, voted: null, createdAt: new Date(),
       options: validOptions.map((text, i) => ({ id: String(i), text, votes: 0 })),

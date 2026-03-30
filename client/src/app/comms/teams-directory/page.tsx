@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,11 +42,15 @@ const CATEGORIES = ['All', 'Technical', 'Product', 'Business', 'Operations'];
 
 export default function TeamsDirectoryPage() {
   usePageTitle('Annuaire equipes');
+  const { data: teams = TEAMS } = useQuery<TeamChannel[]>({
+    queryKey: ['comms-teams-directory'],
+    queryFn: () => fetch('/api/comms/teams-directory').then(r => r.json()).catch(() => TEAMS),
+  });
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [typeFilter, setTypeFilter] = useState<'all' | 'public' | 'private'>('all');
 
-  const filtered = TEAMS.filter(t => {
+  const filtered = teams.filter(t => {
     const matchSearch = !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.description.toLowerCase().includes(search.toLowerCase()) || t.tags.some(tag => tag.includes(search.toLowerCase()));
     const matchCat = category === 'All' || t.category === category;
     const matchType = typeFilter === 'all' || t.type === typeFilter;
@@ -110,7 +115,7 @@ export default function TeamsDirectoryPage() {
           <Card className="border-dashed"><CardContent className="flex flex-col items-center py-12 text-muted-foreground"><Users className="h-8 w-8 mb-2 opacity-30" /><p>No teams match your search</p></CardContent></Card>
         )}
 
-        <div className="text-xs text-muted-foreground text-right">{filtered.length} of {TEAMS.length} teams shown</div>
+        <div className="text-xs text-muted-foreground text-right">{filtered.length} of {teams.length} teams shown</div>
       </div>
     </AppLayout>
   );

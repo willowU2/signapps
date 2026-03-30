@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,11 +45,15 @@ const levelColors = { Beginner: 'bg-green-100 text-green-800 dark:bg-green-900/3
 
 export default function CourseCatalogPage() {
   usePageTitle('Catalogue formations');
+  const { data: courses = COURSES } = useQuery<Course[]>({
+    queryKey: ['lms-catalog'],
+    queryFn: () => fetch('/api/lms/courses').then(r => r.json()).catch(() => COURSES),
+  });
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [level, setLevel] = useState('All');
 
-  const filtered = COURSES.filter(c => {
+  const filtered = courses.filter(c => {
     const matchSearch = !search || c.title.toLowerCase().includes(search.toLowerCase()) || c.description.toLowerCase().includes(search.toLowerCase()) || c.tags.some(t => t.includes(search.toLowerCase()));
     const matchCat = category === 'All' || c.category === category;
     const matchLevel = level === 'All' || c.level === level;

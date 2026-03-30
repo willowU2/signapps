@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,7 +40,12 @@ const INITIAL_SLIDES: Slide[] = [
 
 export default function DigitalSignagePage() {
   usePageTitle('Affichage dynamique');
+  const { data: apiSlides } = useQuery<Slide[]>({
+    queryKey: ['comms-digital-signage'],
+    queryFn: () => fetch('/api/comms/digital-signage').then(r => r.json()).catch(() => INITIAL_SLIDES),
+  });
   const [slides, setSlides] = useState<Slide[]>(INITIAL_SLIDES);
+  useEffect(() => { if (apiSlides && apiSlides.length > 0) setSlides(apiSlides); }, [apiSlides]);
   const [open, setOpen] = useState(false);
   const [preview, setPreview] = useState<Slide | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);

@@ -22,9 +22,11 @@ export function AgendaView() {
 
     (async () => {
       try {
-        const res = await calendarApi.listEvents?.({
-          start: currentDate.toISOString(),
-        }).catch(() => null);
+        const cals = await calendarApi.listCalendars().catch(() => null);
+        const calId = cals?.data?.[0]?.id;
+        const res = calId
+          ? await calendarApi.listEvents(calId, currentDate).catch(() => null)
+          : null;
 
         if (!cancelled) {
           const data = res?.data;
@@ -134,9 +136,11 @@ export function AgendaView() {
                       </div>
                     )}
 
+                    {/* @ts-expect-error event_type is an optional extended field */}
                     {event.event_type && event.event_type !== 'event' && (
                       <div className="mt-2">
                         <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                          {/* @ts-expect-error event_type is an optional extended field */}
                           {event.event_type}
                         </span>
                       </div>

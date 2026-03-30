@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,7 +44,12 @@ const statusConfig = {
 
 export default function SuggestionsPage() {
   usePageTitle('Suggestions');
+  const { data: apiSuggestions } = useQuery<Suggestion[]>({
+    queryKey: ['comms-suggestions'],
+    queryFn: () => fetch('/api/comms/suggestions').then(r => r.json()).catch(() => INITIAL),
+  });
   const [suggestions, setSuggestions] = useState<Suggestion[]>(INITIAL);
+  useEffect(() => { if (apiSuggestions && apiSuggestions.length > 0) setSuggestions(apiSuggestions); }, [apiSuggestions]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', category: 'General' });
   const [activeTab, setActiveTab] = useState('all');

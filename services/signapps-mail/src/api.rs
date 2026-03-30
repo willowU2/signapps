@@ -191,6 +191,12 @@ pub fn router() -> Router<AppState> {
         )
         // MG4: MBOX import
         .route("/api/v1/mail/import/mbox", post(import_mbox))
+        // Analytics (IDEA-analytics)
+        .route("/api/v1/mail/analytics", get(mail_analytics))
+        // Thread grouping (IDEA-threads)
+        .route("/api/v1/mail/threads", get(list_threads))
+        // Undo-send: cancel a pending scheduled email
+        .route("/api/v1/mail/emails/:id/cancel-send", post(cancel_send))
 }
 
 // =============================================================================
@@ -1010,13 +1016,25 @@ async fn send_email(
         format!("{}{}", html, pixel)
     });
 
+    // For non-draft emails, use a 10-second send buffer to allow undo-send.
+    // The scheduled-send background job (runs every 30s) picks them up and
+    // sends via SMTP. Users can cancel within ~10-30 seconds via cancel-send.
+    let effective_scheduled_send_at = if !is_draft {
+        payload
+            .scheduled_send_at
+            .or_else(|| Some(Utc::now() + chrono::Duration::seconds(10)))
+    } else {
+        payload.scheduled_send_at
+    };
+
     // Insert email record
     let email = sqlx::query_as::<_, Email>(
         r#"
         INSERT INTO mail.emails (
             account_id, folder_id, message_id, sender, sender_name, recipient, cc, bcc,
-            subject, body_text, body_html, snippet, is_draft, is_sent, sent_at, in_reply_to
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+            subject, body_text, body_html, snippet, is_draft, is_sent, sent_at, in_reply_to,
+            scheduled_send_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         RETURNING *
         "#,
     )
@@ -1032,10 +1050,11 @@ async fn send_email(
     .bind(&payload.body_text)
     .bind(&tracked_body_html)
     .bind(&snippet)
-    .bind(is_draft)
-    .bind(!is_draft)
-    .bind(if is_draft { None } else { Some(Utc::now()) })
+    .bind(true) // always stored as draft until the background job sends it
+    .bind(false) // not yet sent
+    .bind(None::<chrono::DateTime<Utc>>) // sent_at set by background job
     .bind(&payload.in_reply_to)
+    .bind(effective_scheduled_send_at)
     .fetch_one(&state.pool)
     .await;
 
@@ -1063,24 +1082,9 @@ async fn send_email(
         .await;
     }
 
-    // Actually send via SMTP if not a draft
-    if !is_draft {
-        if let Err(e) = send_via_smtp(&account, &payload, tracked_body_html.as_deref()).await {
-            tracing::error!("SMTP send failed: {:?}", e);
-            // Mark as failed
-            let _ = sqlx::query(
-                "UPDATE mail.emails SET is_sent = false, is_draft = true WHERE id = $1",
-            )
-            .bind(email.id)
-            .execute(&state.pool)
-            .await;
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to send: {}", e),
-            )
-                .into_response();
-        }
-    }
+    // Non-draft emails are buffered via scheduled_send_at and dispatched
+    // by the background job (process_scheduled_emails).  This gives the user
+    // a ~10-30 second window to cancel via POST .../cancel-send.
 
     log_mail_activity(
         &state.pool,
@@ -1775,4 +1779,211 @@ async fn send_newsletter(
         Json(SendNewsletterResponse { sent, failed }),
     )
         .into_response()
+}
+
+// ============================================================================
+// Mail Analytics (IDEA-analytics)
+// ============================================================================
+
+/// GET /api/v1/mail/analytics
+///
+/// Returns 30-day send/receive/read stats and top senders for the authenticated user.
+async fn mail_analytics(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> impl IntoResponse {
+    // Get user's account IDs
+    let accounts: Vec<Uuid> = sqlx::query_scalar("SELECT id FROM mail.accounts WHERE user_id = $1")
+        .bind(claims.sub)
+        .fetch_all(&state.pool)
+        .await
+        .unwrap_or_default();
+
+    if accounts.is_empty() {
+        return Json(serde_json::json!({
+            "sent_30d": 0,
+            "received_30d": 0,
+            "read_rate": 0,
+            "top_senders": []
+        }))
+        .into_response();
+    }
+
+    // Sent last 30 days
+    let sent: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM mail.emails \
+         WHERE account_id = ANY($1) AND is_sent = true \
+           AND created_at > now() - interval '30 days'",
+    )
+    .bind(&accounts)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    // Received last 30 days
+    let received: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM mail.emails \
+         WHERE account_id = ANY($1) AND is_sent = false \
+           AND created_at > now() - interval '30 days'",
+    )
+    .bind(&accounts)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    // Read count
+    let read: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM mail.emails \
+         WHERE account_id = ANY($1) AND is_sent = false AND is_read = true \
+           AND created_at > now() - interval '30 days'",
+    )
+    .bind(&accounts)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    let read_rate = if received > 0 {
+        (read as f64 / received as f64 * 100.0).round()
+    } else {
+        0.0
+    };
+
+    // Top 5 senders
+    let top_senders: Vec<(String, i64)> = sqlx::query_as(
+        "SELECT sender, COUNT(*) as cnt FROM mail.emails \
+         WHERE account_id = ANY($1) AND is_sent = false \
+           AND created_at > now() - interval '30 days' \
+         GROUP BY sender ORDER BY cnt DESC LIMIT 5",
+    )
+    .bind(&accounts)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    Json(serde_json::json!({
+        "sent_30d": sent,
+        "received_30d": received,
+        "read_rate": read_rate,
+        "top_senders": top_senders
+            .iter()
+            .map(|(s, c)| serde_json::json!({"sender": s, "count": c}))
+            .collect::<Vec<_>>(),
+    }))
+    .into_response()
+}
+
+// ============================================================================
+// Mail Thread Grouping (IDEA-threads)
+// ============================================================================
+
+#[derive(Debug, Deserialize)]
+/// Query parameters for thread listing.
+pub struct ThreadQuery {
+    pub folder_id: Option<Uuid>,
+    pub account_id: Option<Uuid>,
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+}
+
+/// GET /api/v1/mail/threads?folder_id=X
+///
+/// Returns emails grouped by thread_id, one row per thread (the latest message).
+/// Ordered by most-recent message descending.
+async fn list_threads(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Query(query): Query<ThreadQuery>,
+) -> impl IntoResponse {
+    let limit = query.limit.unwrap_or(50).min(200);
+    let offset = query.offset.unwrap_or(0);
+
+    let threads = sqlx::query_as::<_, Email>(
+        r#"
+        SELECT DISTINCT ON (COALESCE(e.thread_id, e.id)) e.*
+        FROM mail.emails e
+        JOIN mail.accounts a ON a.id = e.account_id
+        WHERE a.user_id = $1
+          AND ($2::UUID IS NULL OR e.account_id = $2)
+          AND ($3::UUID IS NULL OR e.folder_id = $3)
+          AND COALESCE(e.is_deleted, false) = false
+        ORDER BY COALESCE(e.thread_id, e.id), COALESCE(e.received_at, e.created_at) DESC
+        LIMIT $4 OFFSET $5
+        "#,
+    )
+    .bind(claims.sub)
+    .bind(query.account_id)
+    .bind(query.folder_id)
+    .bind(limit)
+    .bind(offset)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    Json(threads).into_response()
+}
+
+// ============================================================================
+// Undo-send: cancel a pending scheduled email (IDEA-undo-send)
+// ============================================================================
+
+/// POST /api/v1/mail/emails/:id/cancel-send
+///
+/// Cancels a pending send by clearing `scheduled_send_at` and reverting to draft.
+/// Only works while the email is still in the send buffer (scheduled_send_at IS NOT NULL).
+async fn cancel_send(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    // Verify ownership and that it is still buffered (not yet sent)
+    let email = match sqlx::query_as::<_, Email>(
+        r#"
+        SELECT e.* FROM mail.emails e
+        JOIN mail.accounts a ON a.id = e.account_id
+        WHERE e.id = $1 AND a.user_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(claims.sub)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(e)) => e,
+        Ok(None) => return (StatusCode::NOT_FOUND, "Email not found").into_response(),
+        Err(e) => {
+            tracing::error!("cancel_send: DB error fetching email: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        },
+    };
+
+    if email.scheduled_send_at.is_none() {
+        return (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "Email is not in the send buffer (already sent or not scheduled)",
+        )
+            .into_response();
+    }
+
+    match sqlx::query(
+        "UPDATE mail.emails \
+         SET scheduled_send_at = NULL, is_draft = true, is_sent = false, updated_at = NOW() \
+         WHERE id = $1",
+    )
+    .bind(id)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(_) => {
+            tracing::info!(email_id = %id, user = %claims.sub, "Send cancelled — reverted to draft");
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({ "status": "cancelled", "id": id })),
+            )
+                .into_response()
+        },
+        Err(e) => {
+            tracing::error!("cancel_send: DB update failed: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response()
+        },
+    }
 }

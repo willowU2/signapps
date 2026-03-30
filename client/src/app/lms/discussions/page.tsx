@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,7 +53,12 @@ const INITIAL_THREADS: LessonThread[] = [
 
 export default function LMSDiscussionsPage() {
   usePageTitle('Discussions');
+  const { data: apiThreads } = useQuery<LessonThread[]>({
+    queryKey: ['lms-discussions'],
+    queryFn: () => fetch('/api/lms/discussions').then(r => r.json()).catch(() => INITIAL_THREADS),
+  });
   const [threads, setThreads] = useState<LessonThread[]>(INITIAL_THREADS);
+  useEffect(() => { if (apiThreads && apiThreads.length > 0) setThreads(apiThreads); }, [apiThreads]);
   const [search, setSearch] = useState('');
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
