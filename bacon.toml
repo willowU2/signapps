@@ -1,0 +1,37 @@
+# bacon.toml — Live feedback during development
+# Run: bacon (default job = check)
+# See: https://dystroy.org/bacon/
+
+default_job = "check"
+
+[jobs.check]
+command = ["cargo", "check", "--workspace", "--all-features", "--color", "always"]
+need_stdout = false
+
+[jobs.clippy]
+command = ["cargo", "clippy", "--workspace", "--all-features", "--color", "always", "--", "-D", "warnings"]
+need_stdout = false
+
+[jobs.test]
+command = ["cargo", "nextest", "run", "--workspace", "--color", "always"]
+need_stdout = true
+
+[jobs.fmt]
+command = ["cargo", "fmt", "--all", "--", "--check"]
+need_stdout = false
+on_success = "back"
+
+[jobs.doc]
+command = ["cargo", "doc", "--no-deps", "--workspace", "--color", "always"]
+need_stdout = false
+
+[jobs.deny]
+command = ["cargo", "deny", "check"]
+need_stdout = true
+
+[keybindings]
+c = "job:check"
+l = "job:clippy"
+t = "job:test"
+f = "job:fmt"
+d = "job:doc"

@@ -356,3 +356,89 @@ See `.env.example` for the full list including native model paths.
 
 - **Frontend port**: Le serveur de développement frontend doit TOUJOURS être lancé sur le port 3000
 - **Authentification Locale**: Pour se connecter rapidement (bypass login manuel ou bugs de session), utilisez l'URL `http://localhost:3000/login?auto=admin`. Il est souvent nécessaire de charger cette URL une première fois, d'attendre environ 2 secondes, puis de la recharger une deuxième fois pour que la session soit bien validée.
+
+## Tooling Enterprise (Self-Driving Codebase)
+
+### Commandes rapides (justfile)
+
+```bash
+just                    # Liste toutes les recettes
+just check              # cargo check workspace
+just lint               # clippy -D warnings
+just test               # cargo nextest (3-5x plus rapide)
+just coverage           # llvm-cov → lcov.info
+just coverage-html      # Rapport HTML dans target/llvm-cov/html/
+just mutants            # Mutation testing (vérifie pertinence des tests)
+just deny               # Audit licences + vulnérabilités
+just ci                 # Pipeline CI complète locale
+just ci-quick           # Check + lint rapide
+just watch              # bacon (feedback live)
+just changelog          # Générer CHANGELOG.md
+just db-start           # Lancer PostgreSQL Docker
+just db-migrate         # Appliquer les migrations
+just run identity       # Lancer un service
+just status             # Health check services
+```
+
+### Feedback live (bacon)
+
+```bash
+bacon                   # Default: cargo check en continu
+bacon clippy            # Lint en continu
+bacon test              # Tests en continu
+# Raccourcis: c=check, l=clippy, t=test, f=fmt, d=doc
+```
+
+### Tests
+
+```bash
+just test               # Nextest (parallèle, rapide)
+just test-crate signapps-db   # Un crate seul
+just coverage-html      # Couverture HTML
+just mutants-crate signapps-common  # Mutation testing ciblé
+```
+
+### Règles Rust strictes
+
+1. **Pas de `.unwrap()`** en code de production — utiliser `?`, `.map_err()`, ou `anyhow::Context`
+2. **`Result<T, AppError>`** pour tous les handlers — jamais de panic
+3. **`thiserror`** pour les erreurs de librairie, **`anyhow`** pour les erreurs applicatives
+4. **Pas de `clone()` inutile** — préférer les références et lifetimes
+5. **Imports groupés** par std/external/crate (rustfmt.toml enforce)
+6. **100 chars max** par ligne (rustfmt.toml)
+7. **Complexité cognitive < 30** par fonction (clippy.toml)
+8. **< 150 lignes** par fonction (clippy.toml)
+9. **< 8 paramètres** par fonction (clippy.toml)
+10. **Conventional Commits** obligatoires : `feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `chore:`, `ci:`
+
+### Structure pour nouvelle fonctionnalité
+
+```
+# Backend — Nouveau handler
+1. Migration SQL dans migrations/NNN_<feature>.sql
+2. Modèle dans crates/signapps-db/src/models/<feature>.rs
+3. Repository dans crates/signapps-db/src/repositories/<feature>_repository.rs
+4. Handler dans services/signapps-<service>/src/handlers/<feature>.rs
+5. Routes dans services/signapps-<service>/src/main.rs
+6. Tests dans le même fichier (#[cfg(test)] mod tests)
+
+# Frontend — Nouveau composant
+1. Composant dans client/src/components/<domain>/<Component>.tsx
+2. Types dans client/src/types/<domain>.ts
+3. API dans client/src/lib/api/<domain>.ts
+4. Page dans client/src/app/<route>/page.tsx
+5. Store Zustand si état partagé dans client/src/stores/<domain>-store.ts
+```
+
+### CI Pipeline (10 jobs)
+
+1. `check` — cargo check --workspace --all-features
+2. `check-offline` — SQLX_OFFLINE=true (sans DB)
+3. `fmt` — cargo fmt --check
+4. `clippy` — -D warnings (bloquant)
+5. `clippy-pedantic` — pedantic + nursery (advisory, non-bloquant)
+6. `test` — cargo nextest (avec PostgreSQL pgvector)
+7. `deny` — cargo-deny (licences + vulnérabilités)
+8. `security` — cargo audit
+9. `frontend` — ESLint + type-check + build
+10. `coverage` — llvm-cov → Codecov

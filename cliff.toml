@@ -1,0 +1,55 @@
+# git-cliff — Changelog generator from Conventional Commits
+# Run: git cliff -o CHANGELOG.md
+# See: https://git-cliff.org/
+
+[changelog]
+header = """
+# Changelog
+
+Tous les changements notables de ce projet sont documentés dans ce fichier.
+Format basé sur [Conventional Commits](https://www.conventionalcommits.org/).\n
+"""
+body = """
+{%- macro remote_url() -%}
+  https://github.com/signapps/signapps-platform
+{%- endmacro -%}
+
+{% if version -%}
+    ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else -%}
+    ## [Non publié]
+{% endif -%}
+
+{% for group, commits in commits | group_by(attribute="group") %}
+    ### {{ group | upper_first }}
+    {% for commit in commits %}
+        - {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message | upper_first }} \
+          ([{{ commit.id | truncate(length=7, end="") }}]({{ self::remote_url() }}/commit/{{ commit.id }}))\
+          {% if commit.breaking %} **BREAKING**{% endif %}
+    {%- endfor %}
+{% endfor %}\n
+"""
+footer = ""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+commit_parsers = [
+    { message = "^feat", group = "Fonctionnalités" },
+    { message = "^fix", group = "Corrections" },
+    { message = "^perf", group = "Performances" },
+    { message = "^refactor", group = "Refactoring" },
+    { message = "^doc", group = "Documentation" },
+    { message = "^test", group = "Tests" },
+    { message = "^style", group = "Style" },
+    { message = "^chore", group = "Maintenance" },
+    { message = "^ci", group = "CI/CD" },
+    { message = "^build", group = "Build" },
+    { body = ".*security", group = "Sécurité" },
+]
+protect_breaking_commits = false
+filter_commits = false
+tag_pattern = "v[0-9].*"
+sort_commits = "newest"
