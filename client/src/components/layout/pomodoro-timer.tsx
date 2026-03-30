@@ -137,7 +137,7 @@ export function PomodoroTimer() {
   if (!mounted) return null;
 
   return (
-    <div className="fixed bottom-20 right-6 z-50 flex flex-col items-end gap-2">
+    <div className="fixed bottom-24 right-6 z-50 flex flex-col items-center gap-2">
       {/* Expanded panel */}
       {open && (
         <div className="w-56 rounded-xl border border-border bg-card shadow-xl p-4 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
