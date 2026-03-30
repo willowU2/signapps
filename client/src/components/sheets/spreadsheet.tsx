@@ -38,6 +38,8 @@ import {
 import { toast } from "sonner"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { AutoSaveIndicator, type SaveStatus } from '@/components/ui/auto-save-indicator'
+import { HistoryPanel, useHistoryEntries } from '@/components/docs/history-panel'
+import { History } from 'lucide-react'
 
 const ALIGN_CYCLE: ('left' | 'center' | 'right')[] = ['left', 'center', 'right']
 const VALIGN_CYCLE: ('top' | 'middle' | 'bottom')[] = ['top', 'middle', 'bottom']
@@ -537,7 +539,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         deleteCell, deleteCellRange, getCellRange, setCellRange,
         insertRow, deleteRow, insertColumn, deleteColumn,
         sortColumn, mergeCells, unmergeCells,
-        isConnecté, undo, redo, canUndo, canRedo,
+        isConnecté, collaborators, undo, redo, canUndo, canRedo,
         sheets, activeSheetIndex, setActiveSheetIndex,
         addSheet, removeSheet, renameSheet, setSheetColor,
         getCrossSheetValue, transact, globalGridVersion
@@ -549,6 +551,30 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     // Save status indicator
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved')
     const lastSavedDataRef = useRef<string>('')
+
+    // RT4: Real-time modification history
+    const { entries: historyEntries, addEntry: addHistoryEntry } = useHistoryEntries()
+    const [showHistory, setShowHistory] = useState(false)
+    const lastUpdateRef = useRef<number>(0)
+
+    // Track Yjs updates as history entries
+    useEffect(() => {
+        if (!doc) return
+        const handleUpdate = (_update: Uint8Array, origin: any) => {
+            const now = Date.now()
+            // Throttle: max one entry per 2s per origin
+            if (now - lastUpdateRef.current < 2000) return
+            lastUpdateRef.current = now
+            // Try to get author from origin (WebsocketProvider sets origin to the provider)
+            const authorName = (origin?.awareness?.getLocalState()?.user?.name) ||
+                (collaborators[0]?.name) || 'Moi'
+            const authorColor = (origin?.awareness?.getLocalState()?.user?.color) ||
+                (collaborators[0]?.color) || '#94a3b8'
+            addHistoryEntry(authorName, authorColor, 'Modification de la feuille')
+        }
+        doc.on('update', handleUpdate)
+        return () => { doc.off('update', handleUpdate) }
+    }, [doc, addHistoryEntry, collaborators])
 
     const hasFetchedRef = useRef(false)
     const hasSanitizedRef = useRef(false)
@@ -2616,6 +2642,34 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                             <Sparkles className={cn("w-3.5 h-3.5", showAiDialog ? "animate-pulse" : "")} /> Tools IA
                         </button>
                     </div>
+                    {/* RT4: History button */}
+                    <button
+                        onClick={() => setShowHistory(s => !s)}
+                        className={cn("flex items-center gap-1 px-2 py-1 rounded text-[12px] font-medium transition-colors", showHistory ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]" : "hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] text-[#5f6368]")}
+                        title="Historique des modifications"
+                    >
+                        <History className="w-3.5 h-3.5" />
+                    </button>
+                    {/* RT2: Collaborator presence avatars */}
+                    {collaborators.length > 0 && (
+                        <div className="flex items-center -space-x-2 ml-2 shrink-0" title="Utilisateurs connectés">
+                            {collaborators.slice(0, 5).map((u) => (
+                                <div
+                                    key={u.clientId}
+                                    className="h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold text-white ring-2 ring-background shrink-0"
+                                    style={{ backgroundColor: u.color }}
+                                    title={u.name}
+                                >
+                                    {u.name.slice(0, 2).toUpperCase()}
+                                </div>
+                            ))}
+                            {collaborators.length > 5 && (
+                                <div className="h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold bg-muted ring-2 ring-background shrink-0">
+                                    +{collaborators.length - 5}
+                                </div>
+                            )}
+                        </div>
+                    )}
             </Toolbar>
 
             {/* ===== FORMULA BAR ===== */}
@@ -2630,6 +2684,18 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 </div>
                 <input ref={formulaBarRef} className="flex-1 outline-none text-[13px] bg-transparent font-mono text-[#202124] dark:text-[#e8eaed] placeholder:text-[#9aa0a6] placeholder:font-sans" placeholder={activeCell ? "Saisir une formule ou un texte..." : ""} value={activeCell ? editValue : ''} onChange={(e) => { setEditValue(e.target.value); if (activeCell) setCell(activeCell.r, activeCell.c, e.target.value) }} onFocus={() => { if (activeCell) setIsEditing(true) }} disabled={!activeCell} />
             </div>
+            )}
+
+            {/* RT4: History panel (absolute overlay on the right) */}
+            {showHistory && (
+                <div className="absolute top-0 right-0 z-40 h-full" style={{ top: 88 }}>
+                    <HistoryPanel
+                        open={showHistory}
+                        onClose={() => setShowHistory(false)}
+                        entries={historyEntries}
+                        className="shadow-xl border-l"
+                    />
+                </div>
             )}
 
             {/* ===== GRID (Virtualized) ===== */}

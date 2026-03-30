@@ -8,8 +8,13 @@ type DrawingTool = "pen" | "rectangle" | "circle" | "text" | "eraser";
 const COLORS = ["#000000", "#FF0000", "#00AA00", "#0000FF", "#FFAA00", "#FF00FF"];
 const STROKE_WIDTHS = [2, 4, 8, 12, 16];
 
-export const WhiteboardCanvas: React.FC = () => {
-  const canvasRef = useRef<SVGSVGElement>(null);
+interface WhiteboardCanvasProps {
+  svgRef?: React.RefObject<SVGSVGElement | null>;
+}
+
+export const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ svgRef: externalRef }) => {
+  const internalRef = useRef<SVGSVGElement>(null);
+  const canvasRef = (externalRef as React.RefObject<SVGSVGElement>) || internalRef;
   const [tool, setTool] = useState<DrawingTool>("pen");
   const [color, setColor] = useState<string>(COLORS[0]);
   const [strokeWidth, setStrokeWidth] = useState<number>(STROKE_WIDTHS[1]);

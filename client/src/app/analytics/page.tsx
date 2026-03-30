@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
-import { Calendar, Target, Clock, AlertTriangle, BarChart3 } from 'lucide-react';
+import { Calendar, Target, Clock, AlertTriangle, BarChart3, FileDown, ExternalLink } from 'lucide-react';
 import FunnelChart from '@/components/analytics/funnel-chart';
 import CohortHeatmap from '@/components/analytics/cohort-heatmap';
 import { ABTestViewer } from '@/components/analytics/ab-test-viewer';
@@ -19,13 +19,35 @@ import { UserJourneyMap } from '@/components/analytics/user-journey-map';
 import { RevenueAnalytics } from '@/components/analytics/revenue-analytics';
 import { CustomKPIDashboard } from '@/components/analytics/custom-kpi-dashboard';
 import ScheduledReports from '@/components/analytics/scheduled-reports';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { toast } from 'sonner';
 
 export default function AnalyticsPage() {
   usePageTitle('Analytique');
   const searchParams = useSearchParams();
+  const router = useRouter();
   const tab = searchParams.get('tab') || 'overview';
+
+  const exportPDF = () => {
+    // Inject print stylesheet and trigger browser print-to-PDF
+    const style = document.createElement('style');
+    style.id = 'analytics-print-style';
+    style.textContent = `
+      @media print {
+        .no-print, header, nav, aside, [data-sidebar], [data-radix-popper-content-wrapper] { display: none !important; }
+        body { background: white !important; color: black !important; }
+        .print-page { page-break-after: always; }
+        canvas { max-width: 100% !important; }
+      }
+    `;
+    document.head.appendChild(style);
+    toast.info('Ouverture de la boîte de dialogue d\'impression…');
+    setTimeout(() => {
+      window.print();
+      document.head.removeChild(style);
+    }, 300);
+  };
 
   const { data: workload, isLoading: workloadLoading, isError: workloadError } = useQuery({
     queryKey: ['metrics', 'workload'],
@@ -64,9 +86,25 @@ export default function AnalyticsPage() {
   return (
     <AppLayout>
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Analytics</h1>
-          <p className="text-muted-foreground mt-1">Supervisez votre charge de travail et métriques avancées.</p>
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Analytics</h1>
+            <p className="text-muted-foreground mt-1">Supervisez votre charge de travail et métriques avancées.</p>
+          </div>
+          <div className="flex gap-2 no-print">
+            <button
+              onClick={() => router.push('/analytics/custom')}
+              className="inline-flex items-center gap-1.5 text-xs border border-border/60 rounded-md px-3 py-1.5 hover:bg-muted transition-colors"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />Dashboard BI
+            </button>
+            <button
+              onClick={exportPDF}
+              className="inline-flex items-center gap-1.5 text-xs bg-primary text-primary-foreground rounded-md px-3 py-1.5 hover:bg-primary/90 transition-colors"
+            >
+              <FileDown className="h-3.5 w-3.5" />Exporter en PDF
+            </button>
+          </div>
         </div>
 
         <Tabs defaultValue={tab}>

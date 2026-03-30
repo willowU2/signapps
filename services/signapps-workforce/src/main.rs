@@ -141,6 +141,7 @@ fn create_router(state: AppState) -> Router {
     let employee_routes = Router::new()
         .route("/", get(handlers::employees::list_employees))
         .route("/", post(handlers::employees::create_employee))
+        .route("/import", post(handlers::employees::import_employees))
         .route("/{id}", get(handlers::employees::get_employee))
         .route("/{id}", put(handlers::employees::update_employee))
         .route("/{id}", delete(handlers::employees::delete_employee))
@@ -239,6 +240,19 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
+    // HR2: Attendance routes
+    let attendance_routes = Router::new()
+        .route("/clock-in", post(handlers::attendance::clock_in))
+        .route("/clock-out", post(handlers::attendance::clock_out))
+        .route("/", get(handlers::attendance::list_attendance))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
     // Validation routes
     let validation_routes = Router::new()
         .route("/coverage", post(handlers::validation::validate_coverage))
@@ -264,6 +278,7 @@ fn create_router(state: AppState) -> Router {
     Router::new()
         .nest("/api/v1/workforce/org", org_routes)
         .nest("/api/v1/workforce/employees", employee_routes)
+        .nest("/api/v1/workforce/attendance", attendance_routes)
         .nest("/api/v1/workforce/functions", function_routes)
         .nest(
             "/api/v1/workforce/coverage/templates",

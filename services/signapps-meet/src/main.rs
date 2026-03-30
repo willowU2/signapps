@@ -99,7 +99,8 @@ async fn meet_health() -> axum::Json<serde_json::Value> {
 fn build_router(state: AppState) -> Router {
     use axum::routing::{delete, get, patch, post};
     use handlers::{
-        participants, recordings, rooms, tokens, video_messages, voicemails, waiting_room,
+        participants, recordings, rooms, tokens, transcription, video_messages, voicemails,
+        waiting_room,
     };
 
     // Public routes
@@ -138,6 +139,11 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/meet/voicemails", get(voicemails::list_voicemails))
         .route("/api/v1/meet/voicemails/:id", delete(voicemails::delete_voicemail))
         .route("/api/v1/meet/voicemails/:id/read", patch(voicemails::mark_voicemail_read))
+        // Transcription — event-driven auto-transcription of recordings
+        .route(
+            "/api/v1/meet/events/session-ended",
+            post(transcription::handle_session_ended),
+        )
         // Video messages
         .route(
             "/api/v1/meet/video-messages",

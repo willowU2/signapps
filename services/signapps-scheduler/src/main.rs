@@ -472,6 +472,14 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
+    // IF1: Health stream SSE (public — no auth needed for monitoring dashboards)
+    let health_stream_routes = Router::new()
+        .route(
+            "/health-stream",
+            get(handlers::health_stream::health_stream),
+        )
+        .with_state(state.clone());
+
     // DevOps routes (changelog, pipelines, deployments)
     let devops_routes = Router::new()
         .route("/changelog", get(handlers::devops::list_changelog))
@@ -521,6 +529,7 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/notifications", notifications_routes)
         .nest("/api/v1/metrics", metrics_routes)
         .nest("/api/v1/devops", devops_routes)
+        .nest("/api/v1/scheduler", health_stream_routes)
         .nest("/health", health_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)

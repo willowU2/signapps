@@ -131,10 +131,31 @@ export interface UpsertEsgQuarterlyRequest {
 }
 
 // ============================================================================
+// Types — User event tracking (POST /api/v1/metrics/track)
+// ============================================================================
+
+export interface UserEventPayload {
+  event: string;
+  properties?: Record<string, unknown>;
+  user_id?: string;
+  timestamp?: string;
+}
+
+export interface UserEventsBatchPayload {
+  events: UserEventPayload[];
+}
+
+// ============================================================================
 // metricsApi
 // ============================================================================
 
 export const metricsApi = {
+  // User event tracking
+  track: (payload: UserEventPayload) =>
+    metricsClient.post('/metrics/track', payload),
+
+  trackBatch: (payload: UserEventsBatchPayload) =>
+    metricsClient.post('/metrics/track/batch', payload),
   // Admin analytics — requires admin role
   analyticsOverview: () =>
     metricsClient.get<AnalyticsOverview>('/admin/analytics/overview'),

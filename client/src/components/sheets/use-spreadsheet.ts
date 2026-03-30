@@ -8,10 +8,21 @@ import { CellData, CellStyle, CellValidation, SheetInfo, COLS, MAX_ROW } from '.
 
 export type { CellStyle, CellData, CellValidation, SheetInfo }
 
+// RT2: User presence type for collab awareness
+export interface CollabUser {
+    name: string
+    color: string
+    clientId: number
+}
+
+const AVATAR_COLORS = ['#f87171','#fbbf24','#34d399','#60a5fa','#a78bfa','#f472b6','#38bdf8','#fb923c']
+
 export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Record<string, CellData>) {
     const [doc] = useState(() => new Y.Doc())
     const [data, setData] = useState<Record<string, CellData>>({})
     const [isConnecté, setIsConnecté] = useState(false)
+    // RT2: collaborators presence
+    const [collaborators, setCollaborators] = useState<CollabUser[]>([])
     const undoManagerRef = useRef<Y.UndoManager | null>(null)
     const [canUndo, setCanUndo] = useState(false)
     const [canRedo, setCanRedo] = useState(false)
@@ -24,18 +35,37 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
 
     // WebSocket + IndexedDB providers (once)
     useEffect(() => {
-        // Collaboration WebSocket server URL - disabled by default until y-websocket server is deployed
+        // RT1: Connect Sheets to signapps-collab (port 3013)
         const collabServerEnabled = process.env.NEXT_PUBLIC_COLLAB_ENABLED === 'true'
-        const baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010'
-        const wsUrl = `${baseUrl}/${docId}`
+        const baseWsUrl = process.env.NEXT_PUBLIC_COLLAB_WS_URL || 'ws://localhost:3013'
+        const wsUrl = `${baseWsUrl}/api/v1/collab/ws/${docId}`
         const wsProvider = new WebsocketProvider(wsUrl, docId, doc, { connect: false })
         const idbProvider = new IndexeddbPersistence(docId, doc)
 
+        // RT2: Set local user awareness
+        const myColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)]
+        wsProvider.awareness.setLocalStateField('user', {
+            name: (typeof window !== 'undefined' && (window as any).__signAppsUser?.name) || 'Utilisateur',
+            color: myColor,
+        })
+
+        // RT2: Listen to awareness changes to track collaborators
+        const handleAwareness = () => {
+            const states = Array.from(wsProvider.awareness.getStates().entries())
+            const remote: CollabUser[] = states
+                .filter(([id]) => id !== wsProvider.awareness.clientID)
+                .map(([id, state]: [number, any]) => ({
+                    name: state.user?.name || 'Anonyme',
+                    color: state.user?.color || '#94a3b8',
+                    clientId: id,
+                }))
+            setCollaborators(remote)
+        }
+        wsProvider.awareness.on('change', handleAwareness)
+
         // Only attempt to connect if collaboration server is explicitly enabled
         if (collabServerEnabled) {
-            fetch(baseUrl.replace('ws://', 'http://').replace('wss://', 'https://'), { method: 'HEAD', mode: 'no-cors' })
-                .then(() => wsProvider.connect())
-                .catch(() => { })
+            wsProvider.connect()
         }
 
         wsProvider.on('status', (event: any) => {
@@ -48,6 +78,8 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
 
         return () => {
             doc.off('update', bumpVersion)
+            wsProvider.awareness.off('change', handleAwareness)
+            wsProvider.awareness.setLocalState(null)
             wsProvider.destroy()
             idbProvider.destroy()
         }
@@ -427,7 +459,7 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
         deleteCell, deleteCellRange, getCellRange, setCellRange,
         insertRow, deleteRow, insertColumn, deleteColumn,
         sortColumn, mergeCells, unmergeCells,
-        isConnecté, undo, redo, canUndo, canRedo,
+        isConnecté, collaborators, undo, redo, canUndo, canRedo,
         sheets, activeSheetIndex, setActiveSheetIndex,
         addSheet, removeSheet, renameSheet, setSheetColor,
         getCrossSheetValue,

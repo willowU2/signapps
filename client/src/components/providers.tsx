@@ -32,6 +32,8 @@ import { GlobalPolling } from '@/components/global-polling';
 import { ThemeInitializer } from '@/components/theme-initializer';
 import { QuickDocumentSwitcher } from '@/components/layout/quick-switcher';
 import { FirstRunDialog } from '@/components/first-run-dialog';
+import { OfflineBanner } from '@/components/layout/offline-banner';
+import { PomodoroTimer } from '@/components/layout/pomodoro-timer';
 
 function LoadingFallback() {
   return (
@@ -116,6 +118,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       <DragDropOverlay />
                       <OnboardingWizard />
                       <FirstRunDialog />
+                      <OfflineBanner />
+                      <PomodoroTimer />
                     </PermissionsProvider>
                   </AccessibilityProvider>
                 </PreferencesProvider>

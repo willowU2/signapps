@@ -4,6 +4,7 @@ pub mod backups;
 pub mod calendars;
 pub mod devops;
 pub mod events;
+pub mod health_stream;
 pub mod jobs;
 pub mod metrics;
 pub mod notifications;

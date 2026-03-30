@@ -6,6 +6,7 @@
 //! - coverage: Coverage templates and rules
 //! - validation: Gap analysis and leave simulation
 
+pub mod attendance;
 pub mod coverage;
 pub mod employees;
 pub mod learning;

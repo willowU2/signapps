@@ -5,11 +5,33 @@
 
 // ── Docs Templates ──────────────────────────────────────────────────────────
 
+export type TemplateDepartment =
+  | 'general'
+  | 'rh'
+  | 'finance'
+  | 'commercial'
+  | 'technique'
+  | 'juridique'
+  | 'marketing'
+  | 'direction';
+
+export const DEPARTMENT_LABELS: Record<TemplateDepartment, string> = {
+  general: 'Général',
+  rh: 'RH',
+  finance: 'Finance',
+  commercial: 'Commercial',
+  technique: 'Technique',
+  juridique: 'Juridique',
+  marketing: 'Marketing',
+  direction: 'Direction',
+};
+
 export interface DocTemplate {
   id: string;
   title: string;
   description: string;
   category: 'builtin' | 'user';
+  department: TemplateDepartment;
   type: 'document' | 'spreadsheet' | 'presentation';
   content: string; // HTML for docs, JSON for sheets/slides
   createdAt: string;
@@ -21,6 +43,7 @@ export const BUILTIN_DOC_TEMPLATES: DocTemplate[] = [
     title: 'Compte-rendu de r\u00e9union',
     description: 'Mod\u00e8le de compte-rendu structur\u00e9',
     category: 'builtin',
+    department: 'general' as TemplateDepartment,
     type: 'document',
     content: `<h1>Compte-rendu de r\u00e9union</h1>
 <p><strong>Date :</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
@@ -62,6 +85,7 @@ export const BUILTIN_DOC_TEMPLATES: DocTemplate[] = [
     title: 'Proposition commerciale',
     description: 'Mod\u00e8le de proposition professionnelle',
     category: 'builtin',
+    department: 'commercial' as TemplateDepartment,
     type: 'document',
     content: `<h1>Proposition Commerciale</h1>
 <p style="text-align: center"><em>Confidentiel</em></p>
@@ -109,6 +133,7 @@ export const BUILTIN_DOC_TEMPLATES: DocTemplate[] = [
     title: 'Note de service',
     description: 'Communication interne officielle',
     category: 'builtin',
+    department: 'direction' as TemplateDepartment,
     type: 'document',
     content: `<p style="text-align: right"><strong>[Nom de l'entreprise]</strong></p>
 <p style="text-align: right">[Adresse]</p>
@@ -142,6 +167,7 @@ export const BUILTIN_SHEET_TEMPLATES: DocTemplate[] = [
     title: 'Budget mensuel',
     description: 'Suivi des revenus et d\u00e9penses',
     category: 'builtin',
+    department: 'finance' as TemplateDepartment,
     type: 'spreadsheet',
     content: JSON.stringify({
       '0_0': 'Cat\u00e9gorie', '1_0': 'Budget pr\u00e9vu', '2_0': 'D\u00e9penses r\u00e9elles', '3_0': '\u00c9cart',
@@ -167,6 +193,7 @@ export const BUILTIN_SHEET_TEMPLATES: DocTemplate[] = [
     title: 'Suivi de projet',
     description: 'Gestion des t\u00e2ches et jalons',
     category: 'builtin',
+    department: 'technique' as TemplateDepartment,
     type: 'spreadsheet',
     content: JSON.stringify({
       '0_0': 'T\u00e2che', '1_0': 'Responsable', '2_0': 'Statut', '3_0': 'Priorit\u00e9', '4_0': 'D\u00e9but', '5_0': 'Fin', '6_0': 'Progression',
@@ -186,6 +213,7 @@ export const BUILTIN_SHEET_TEMPLATES: DocTemplate[] = [
     title: 'Facture',
     description: 'Mod\u00e8le de facture professionnelle',
     category: 'builtin',
+    department: 'finance' as TemplateDepartment,
     type: 'spreadsheet',
     content: JSON.stringify({
       '0_0': 'FACTURE', '3_0': 'N\u00b0 FA-2024-001',
@@ -216,6 +244,7 @@ export const BUILTIN_SLIDE_TEMPLATES: DocTemplate[] = [
     title: 'Pr\u00e9sentation d\'entreprise',
     description: 'Pr\u00e9senter votre soci\u00e9t\u00e9',
     category: 'builtin',
+    department: 'direction' as TemplateDepartment,
     type: 'presentation',
     content: JSON.stringify({
       slides: [
@@ -244,6 +273,7 @@ export const BUILTIN_SLIDE_TEMPLATES: DocTemplate[] = [
     title: 'Rapport trimestriel',
     description: 'Bilan et r\u00e9sultats du trimestre',
     category: 'builtin',
+    department: 'direction' as TemplateDepartment,
     type: 'presentation',
     content: JSON.stringify({
       slides: [
@@ -272,6 +302,7 @@ export const BUILTIN_SLIDE_TEMPLATES: DocTemplate[] = [
     title: 'Pitch deck',
     description: 'Pr\u00e9sentation pour investisseurs',
     category: 'builtin',
+    department: 'commercial' as TemplateDepartment,
     type: 'presentation',
     content: JSON.stringify({
       slides: [

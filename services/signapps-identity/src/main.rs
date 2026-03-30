@@ -6,6 +6,7 @@
 mod auth;
 mod handlers;
 mod ldap;
+mod webhook_dispatcher;
 
 use axum::{
     middleware,
@@ -60,6 +61,22 @@ async fn main() -> anyhow::Result<()> {
         access_expiration: 900,
         refresh_expiration: 604800,
     };
+
+    // Spawn webhook event dispatcher background task (WH1)
+    {
+        let dispatcher_pool = pool.clone();
+        tokio::spawn(async move {
+            webhook_dispatcher::run(dispatcher_pool).await;
+        });
+    }
+
+    // Spawn daily data retention purge job (CO3)
+    {
+        let purge_pool = pool.clone();
+        tokio::spawn(async move {
+            handlers::retention_purge::run_daily(purge_pool).await;
+        });
+    }
 
     // Create application state
     let state = AppState {
@@ -267,6 +284,18 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/guest-tokens", post(handlers::guest_tokens::create_guest_token))
         .route("/api/v1/guest-tokens", get(handlers::guest_tokens::list_guest_tokens))
         .route("/api/v1/guest-tokens/:id", delete(handlers::guest_tokens::revoke_guest_token))
+        // CO1/CO2/CO4: Compliance endpoints
+        .route("/api/v1/compliance/dpia", post(handlers::compliance::save_dpia))
+        .route("/api/v1/compliance/dpia", get(handlers::compliance::list_dpias))
+        .route("/api/v1/compliance/dsar", post(handlers::compliance::create_dsar))
+        .route("/api/v1/compliance/dsar", get(handlers::compliance::list_dsars))
+        .route("/api/v1/compliance/dsar/:id", patch(handlers::compliance::update_dsar))
+        .route("/api/v1/compliance/retention-policies", put(handlers::compliance::save_retention_policies))
+        .route("/api/v1/compliance/retention-policies", get(handlers::compliance::get_retention_policies))
+        .route("/api/v1/compliance/consent", put(handlers::compliance::save_consent))
+        .route("/api/v1/compliance/consent", get(handlers::compliance::get_consent))
+        .route("/api/v1/compliance/cookie-banner", put(handlers::compliance::save_cookie_banner))
+        .route("/api/v1/compliance/cookie-banner", get(handlers::compliance::get_cookie_banner))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

@@ -74,17 +74,15 @@ export function useSlides(docId: string = 'slides-demo') {
     const initializedRef = useRef(false)
 
     useEffect(() => {
-        // Collaboration WebSocket server URL - disabled by default until y-websocket server is deployed
+        // RT1: Connect Slides to signapps-collab (port 3013)
         const collabServerEnabled = process.env.NEXT_PUBLIC_COLLAB_ENABLED === 'true'
-        const baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010'
-        const wsUrl = `${baseUrl}/${docId}`
+        const baseWsUrl = process.env.NEXT_PUBLIC_COLLAB_WS_URL || 'ws://localhost:3013'
+        const wsUrl = `${baseWsUrl}/api/v1/collab/ws/${docId}`
         const webrtcProvider = new WebsocketProvider(wsUrl, docId, doc, { connect: false })
 
         // Only attempt to connect if collaboration server is explicitly enabled
         if (collabServerEnabled) {
-            fetch(baseUrl.replace('ws://', 'http://').replace('wss://', 'https://'), { method: 'HEAD', mode: 'no-cors' })
-                .then(() => webrtcProvider.connect())
-                .catch(() => console.debug(`[useSlides] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`))
+            webrtcProvider.connect()
         } else {
             console.debug('[useSlides] Running in local-only mode (NEXT_PUBLIC_COLLAB_ENABLED not set)')
         }

@@ -42,16 +42,18 @@ export function getShortcutsList(pathname: string = "/"): KeyboardShortcut[] {
   const shortcuts: KeyboardShortcut[] = [
     { keys: "Ctrl+K", description: "Palette de commandes", category: "global" },
     { keys: "Ctrl+/", description: "Aide raccourcis", category: "global" },
+    { keys: "?", description: "Aide raccourcis", category: "global" },
     { keys: "Ctrl+N", description: "Nouveau", category: "global" },
     { keys: "Ctrl+Shift+B", description: "Barre latérale", category: "global" },
     { keys: "Escape", description: "Fermer modale", category: "global" },
     { keys: "G → D", description: "Aller au Dashboard", category: "navigation" },
     { keys: "G → M", description: "Aller à Mail", category: "navigation" },
-    { keys: "G → C", description: "Aller aux Contacts", category: "navigation" },
+    { keys: "G → C", description: "Aller au Calendrier", category: "navigation" },
     { keys: "G → T", description: "Aller aux Tâches", category: "navigation" },
     { keys: "G → F", description: "Aller à Drive", category: "navigation" },
-    { keys: "G → A", description: "Aller au Calendrier", category: "navigation" },
-    { keys: "G → S", description: "Aller aux Settings", category: "navigation" },
+    { keys: "G → S", description: "Aller au Social", category: "navigation" },
+    { keys: "G → B", description: "Aller à Billing", category: "navigation" },
+    { keys: "G → A", description: "Aller aux Settings", category: "navigation" },
   ];
 
   if (pathname.startsWith("/mail")) {
@@ -92,11 +94,12 @@ export function useKeyboardShortcuts() {
     const navMap: Record<string, string> = {
       d: "/dashboard",
       m: "/mail",
-      c: "/contacts",
+      c: "/cal",
       t: "/tasks",
       f: "/drive",
-      a: "/cal",
-      s: "/settings",
+      s: "/social",
+      b: "/billing",
+      a: "/settings",
     };
 
     function handleKeyDown(e: KeyboardEvent) {

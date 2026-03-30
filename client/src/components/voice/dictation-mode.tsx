@@ -5,13 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Mic, MicOff, RotateCcw, Copy, Edit3 } from 'lucide-react';
+import { Mic, MicOff, RotateCcw, Copy, Edit3, Mail, Loader2, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { aiApi } from '@/lib/api/ai';
+import { useRouter } from 'next/navigation';
 
 export function DictationMode() {
+  const router = useRouter();
   const [active, setActive] = useState(false);
   const [text, setText] = useState('');
   const [interim, setInterim] = useState('');
+  const [aiEmail, setAiEmail] = useState('');
+  const [reformulating, setReformulating] = useState(false);
   const recognitionRef = useRef<any>(null);
   const accumulatedRef = useRef('');
 
@@ -70,7 +75,37 @@ export function DictationMode() {
     setText('');
     accumulatedRef.current = '';
     setInterim('');
+    setAiEmail('');
   };
+
+  const reformulateAsEmail = useCallback(async () => {
+    if (!text.trim()) { toast.error('Dictez d\'abord un texte'); return; }
+    setReformulating(true);
+    setAiEmail('');
+    try {
+      const res = await aiApi.chat(
+        `Reformule ce texte dicté en un email professionnel en français. Garde le même sens mais utilise un ton professionnel et une structure email standard (objet implicite, formule de politesse, corps, signature). Ne génère que le corps de l'email, sans métadonnées.\n\nTexte dicté :\n${text}`,
+        {
+          systemPrompt: 'Tu es un assistant de rédaction professionnelle. Tu reformules les dictées brutes en emails professionnels en français.',
+          includesSources: false,
+          enableTools: false,
+        }
+      );
+      setAiEmail(res.data.answer);
+      toast.success('Email reformulé par l\'IA');
+    } catch {
+      toast.error('Erreur IA — reformulation échouée');
+    } finally {
+      setReformulating(false);
+    }
+  }, [text]);
+
+  const openCompose = useCallback(() => {
+    if (!aiEmail) return;
+    const body = encodeURIComponent(aiEmail);
+    router.push(`/mail?compose=true&body=${body}`);
+    toast.success('Ouverture de la composition d\'email');
+  }, [aiEmail, router]);
 
   return (
     <Card>
@@ -112,7 +147,7 @@ export function DictationMode() {
           )}
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <Button
             variant={active ? 'destructive' : 'default'}
             onClick={active ? stopDictation : startDictation}
@@ -121,10 +156,39 @@ export function DictationMode() {
             {active ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
             {active ? 'Stop Dictation' : 'Start Dictating'}
           </Button>
-          <span className="text-xs text-muted-foreground">
+          <Button
+            variant="outline"
+            onClick={reformulateAsEmail}
+            disabled={!text.trim() || reformulating}
+            className="gap-2"
+          >
+            {reformulating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+            Dicter un email
+          </Button>
+          <span className="text-xs text-muted-foreground ml-auto">
             {text.split(/\s+/).filter(Boolean).length} words
           </span>
         </div>
+
+        {/* AI-reformulated email preview */}
+        {aiEmail && (
+          <div className="mt-3 p-3 border rounded-lg bg-blue-50/50 dark:bg-blue-950/20 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5" />Email reformulé par IA
+              </span>
+              <Button size="sm" onClick={openCompose} className="gap-1.5 h-7 text-xs">
+                <Mail className="h-3 w-3" />Envoyer
+              </Button>
+            </div>
+            <Textarea
+              value={aiEmail}
+              onChange={e => setAiEmail(e.target.value)}
+              rows={6}
+              className="text-sm resize-none bg-transparent border-blue-200 dark:border-blue-800"
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

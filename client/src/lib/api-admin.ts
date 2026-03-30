@@ -60,3 +60,52 @@ export async function getSystemMetrics(): Promise<SystemMetrics> {
         throw new Error("Impossible de charger les métriques");
     }
 }
+
+// ─── IF2: Slow query monitoring ───────────────────────────────────────────────
+
+export interface SlowQuery {
+    pid: number;
+    datname: string | null;
+    usename: string | null;
+    application_name: string | null;
+    state: string | null;
+    duration_seconds: number;
+    query: string | null;
+    query_start: string | null;
+}
+
+export interface SlowQueriesResponse {
+    queries: SlowQuery[];
+    threshold_seconds: number;
+    pg_stat_statements_available: boolean;
+}
+
+export async function getSlowQueries(): Promise<SlowQueriesResponse> {
+    try {
+        const client = getClient(ServiceName.METRICS);
+        const res = await client.get('/metrics/slow-queries');
+        return res.data;
+    } catch {
+        return { queries: [], threshold_seconds: 1, pg_stat_statements_available: false };
+    }
+}
+
+// ─── IF3: DB pool stats ───────────────────────────────────────────────────────
+
+export interface PoolStats {
+    size: number;
+    idle: number;
+    active: number;
+    max: number;
+    at_capacity: boolean;
+}
+
+export async function getPoolStats(): Promise<PoolStats | null> {
+    try {
+        const client = getClient(ServiceName.METRICS);
+        const res = await client.get('/metrics/pool-stats');
+        return res.data;
+    } catch {
+        return null;
+    }
+}

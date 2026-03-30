@@ -2278,6 +2278,12 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     onToggleSmartGuides={() => setSmartGuidesEnabled(s => !s)}
                     isDrawingMode={isDrawingMode}
                     onToggleDrawingMode={toggleDrawingMode}
+                    collaborators={Object.entries(mergedCollaborators)
+                        .map(([id, state]: [string, any]) => ({
+                            name: state?.user?.name || 'Anonyme',
+                            color: state?.user?.color || '#94a3b8',
+                            clientId: Number(id),
+                        }))}
                 />
             )}
 

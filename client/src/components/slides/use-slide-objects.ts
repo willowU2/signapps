@@ -12,16 +12,15 @@ export function useSlideObjects(docId: string, slideId: string) {
         // For performance in a real app, a Y.Doc Provider Context should wrap the whole app.
 
         const doc = new Y.Doc()
-        // Collaboration WebSocket server URL - disabled by default until y-websocket server is deployed
+        // RT1: Connect Slides objects to signapps-collab (port 3013)
         const collabServerEnabled = process.env.NEXT_PUBLIC_COLLAB_ENABLED === 'true'
-        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4444'
+        const baseWsUrl = process.env.NEXT_PUBLIC_COLLAB_WS_URL || 'ws://localhost:3013'
+        const wsUrl = `${baseWsUrl}/api/v1/collab/ws/${docId}`
         const provider = new WebsocketProvider(wsUrl, docId, doc, { connect: false })
 
         // Only attempt to connect if collaboration server is explicitly enabled
         if (collabServerEnabled) {
-            fetch(wsUrl.replace('ws://', 'http://').replace('wss://', 'https://'), { method: 'HEAD', mode: 'no-cors' })
-                .then(() => provider.connect())
-                .catch(() => {})
+            provider.connect()
         }
 
         const slideObjectsMap = doc.getMap<string>(`objects-${slideId}`)

@@ -77,22 +77,24 @@ pub fn init_tracing(service_name: &str) {
         Some(tracing_subscriber::fmt::layer())
     };
 
-    let otel_layer = std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT").ok().map(|endpoint| {
-        let tracer = opentelemetry_otlp::new_pipeline()
-            .tracing()
-            .with_exporter(
-                opentelemetry_otlp::new_exporter()
-                    .http()
-                    .with_endpoint(endpoint),
-            )
-            .with_trace_config(sdktrace::config().with_resource(Resource::new(vec![
-                KeyValue::new("service.name", service_name.to_string()),
-            ])))
-            .install_batch(opentelemetry_sdk::runtime::Tokio)
-            .expect("Failed to initialize OTLP tracer");
+    let otel_layer = std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT")
+        .ok()
+        .map(|endpoint| {
+            let tracer = opentelemetry_otlp::new_pipeline()
+                .tracing()
+                .with_exporter(
+                    opentelemetry_otlp::new_exporter()
+                        .http()
+                        .with_endpoint(endpoint),
+                )
+                .with_trace_config(sdktrace::config().with_resource(Resource::new(vec![
+                    KeyValue::new("service.name", service_name.to_string()),
+                ])))
+                .install_batch(opentelemetry_sdk::runtime::Tokio)
+                .expect("Failed to initialize OTLP tracer");
 
-        tracing_opentelemetry::layer().with_tracer(tracer)
-    });
+            tracing_opentelemetry::layer().with_tracer(tracer)
+        });
 
     tracing_subscriber::registry()
         .with(env_filter)

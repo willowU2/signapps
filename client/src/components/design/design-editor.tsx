@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useDesignStore } from "@/stores/design-store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -41,7 +41,22 @@ export default function DesignEditor() {
     currentDesign,
     rightPanel,
     selectedObjectIds,
+    saveDesign,
   } = useDesignStore();
+
+  // DW1: Auto-save debounced 3s on design changes
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!currentDesign) return;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => {
+      saveDesign();
+    }, 3000);
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentDesign]);
 
   const [leftTab, setLeftTab] = useState("layers");
   const [rightTab, setRightTab] = useState("properties");

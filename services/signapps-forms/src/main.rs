@@ -9,7 +9,7 @@ use axum::{
     routing::{get, post},
     Extension, Json, Router,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::pg_events::{NewEvent, PgEventBus};
@@ -20,6 +20,35 @@ use signapps_db::repositories::FormRepository;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 use uuid::Uuid;
+
+// ---------------------------------------------------------------------------
+// FM3 — Webhook config types
+// ---------------------------------------------------------------------------
+
+/// Request body for setting a webhook URL on a form.
+#[derive(Debug, Deserialize)]
+pub struct SetWebhookRequest {
+    /// The URL to POST to when a response is submitted.
+    /// Pass `null` or omit to remove the webhook.
+    pub url: Option<String>,
+    /// Optional secret included in the `X-Webhook-Secret` header.
+    pub secret: Option<String>,
+}
+
+/// Stored webhook configuration (serialised to DB as JSON in form metadata).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebhookConfig {
+    pub url: String,
+    pub secret: Option<String>,
+}
+
+// In-memory webhook store: form_id → config
+type WebhookStore =
+    std::sync::Arc<tokio::sync::RwLock<std::collections::HashMap<Uuid, WebhookConfig>>>;
+
+fn new_webhook_store() -> WebhookStore {
+    std::sync::Arc::new(tokio::sync::RwLock::new(std::collections::HashMap::new()))
+}
 
 // ---------------------------------------------------------------------------
 // Request DTOs
@@ -64,6 +93,8 @@ pub struct AppState {
     pub jwt_config: JwtConfig,
     pub pool: sqlx::PgPool,
     pub event_bus: PgEventBus,
+    /// FM3: in-memory webhook config store (form_id → WebhookConfig)
+    pub webhooks: WebhookStore,
 }
 
 impl AuthState for AppState {
@@ -333,14 +364,20 @@ async fn submit_response(
     match FormRepository::submit_response(&state.pool, submit_data).await {
         Ok(response) => {
             tracing::info!(id = %response.id, form_id = %id, "Response submitted");
+            let event_payload = serde_json::json!({
+                "form_id": id,
+                "response_id": response.id,
+            });
             let _ = state
                 .event_bus
                 .publish(NewEvent {
                     event_type: "forms.response.submitted".into(),
                     aggregate_id: Some(response.id),
-                    payload: serde_json::json!({ "form_id": id }),
+                    payload: event_payload.clone(),
                 })
                 .await;
+            // FM3: dispatch webhook if configured
+            dispatch_webhook(state.webhooks.clone(), id, event_payload);
             (
                 StatusCode::CREATED,
                 Json(serde_json::to_value(response).unwrap()),
@@ -370,6 +407,106 @@ async fn list_responses(State(state): State<AppState>, Path(id): Path<Uuid>) -> 
             )
         },
     }
+}
+
+// ---------------------------------------------------------------------------
+// FM3 — Webhook handlers
+// ---------------------------------------------------------------------------
+
+/// POST /api/v1/forms/:id/webhook
+///
+/// Set (or clear) a webhook URL for the given form.
+/// When a response is submitted, the service will POST to this URL.
+async fn set_webhook(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<SetWebhookRequest>,
+) -> impl IntoResponse {
+    match payload.url {
+        Some(url) if !url.is_empty() => {
+            let config = WebhookConfig {
+                url,
+                secret: payload.secret,
+            };
+            state.webhooks.write().await.insert(id, config.clone());
+            tracing::info!(form_id = %id, url = %config.url, "Webhook set");
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({
+                    "form_id": id,
+                    "webhook_url": config.url,
+                    "has_secret": config.secret.is_some()
+                })),
+            )
+        },
+        _ => {
+            state.webhooks.write().await.remove(&id);
+            tracing::info!(form_id = %id, "Webhook removed");
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({ "form_id": id, "webhook_url": null })),
+            )
+        },
+    }
+}
+
+/// GET /api/v1/forms/:id/webhook
+///
+/// Returns the current webhook configuration for the given form (secret redacted).
+async fn get_webhook(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    match state.webhooks.read().await.get(&id) {
+        Some(cfg) => (
+            StatusCode::OK,
+            Json(serde_json::json!({
+                "form_id": id,
+                "webhook_url": cfg.url,
+                "has_secret": cfg.secret.is_some()
+            })),
+        ),
+        None => (
+            StatusCode::OK,
+            Json(serde_json::json!({ "form_id": id, "webhook_url": null })),
+        ),
+    }
+}
+
+/// Fire the webhook for a form (called after a response is submitted).
+/// Non-blocking: spawns a task, never fails the caller.
+fn dispatch_webhook(webhooks: WebhookStore, form_id: Uuid, payload: serde_json::Value) {
+    tokio::spawn(async move {
+        let config = {
+            let lock = webhooks.read().await;
+            lock.get(&form_id).cloned()
+        };
+        let Some(cfg) = config else { return };
+
+        let client = reqwest::Client::new();
+        let mut req = client
+            .post(&cfg.url)
+            .header("Content-Type", "application/json")
+            .header("X-SignApps-Event", "forms.response.submitted");
+
+        if let Some(secret) = &cfg.secret {
+            req = req.header("X-Webhook-Secret", secret.as_str());
+        }
+
+        match req.json(&payload).send().await {
+            Ok(r) if r.status().is_success() => {
+                tracing::info!(form_id = %form_id, url = %cfg.url, "Webhook delivered");
+            },
+            Ok(r) => {
+                tracing::warn!(form_id = %form_id, status = %r.status(), "Webhook returned non-2xx");
+            },
+            Err(e) => {
+                tracing::error!(form_id = %form_id, "Webhook delivery failed: {e}");
+            },
+        }
+    });
 }
 
 async fn health_check() -> axum::Json<serde_json::Value> {
@@ -424,6 +561,11 @@ fn create_router(state: AppState) -> Router {
             axum::routing::patch(unpublish_form),
         )
         .route("/api/v1/forms/:id/responses", get(list_responses))
+        // FM3: Webhook management
+        .route(
+            "/api/v1/forms/:id/webhook",
+            get(get_webhook).post(set_webhook),
+        )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
@@ -478,6 +620,7 @@ async fn main() -> anyhow::Result<()> {
         jwt_config,
         pool,
         event_bus,
+        webhooks: new_webhook_store(),
     };
 
     tracing::info!("Database connected & service ready");

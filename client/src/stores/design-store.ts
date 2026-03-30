@@ -227,8 +227,35 @@ export const useDesignStore = create<DesignState>()(
         docsClient.put(`/designs/${id}`, { name }).catch(() => {});
       },
 
-      loadDesign: (id) => {
+      loadDesign: async (id) => {
         if (typeof window === 'undefined') return;
+        // DW1: Try Drive API first, fallback to localStorage
+        try {
+          const res = await docsClient.get<any>(`/designs/${id}`);
+          if (res.data) {
+            const design: Design = {
+              id: res.data.id,
+              name: res.data.name ?? res.data.title ?? 'Untitled',
+              format: res.data.format ?? { width: 1920, height: 1080, label: 'Présentation', unit: 'px' },
+              pages: res.data.pages ?? [createDefaultPage()],
+              createdAt: res.data.created_at ?? res.data.createdAt ?? new Date().toISOString(),
+              updatedAt: res.data.updated_at ?? res.data.updatedAt ?? new Date().toISOString(),
+            };
+            // Also cache locally
+            localStorage.setItem(`design-${id}`, JSON.stringify(design));
+            set({
+              currentDesign: design,
+              currentPageIndex: 0,
+              selectedObjectIds: [],
+              undoStack: [],
+              redoStack: [],
+            });
+            return;
+          }
+        } catch {
+          // Drive API unavailable — fall through to localStorage
+        }
+        // Fallback: localStorage
         const raw = localStorage.getItem(`design-${id}`);
         if (raw) {
           const design: Design = JSON.parse(raw);
@@ -247,6 +274,7 @@ export const useDesignStore = create<DesignState>()(
         if (!state.currentDesign || typeof window === 'undefined') return;
         const now = new Date().toISOString();
         const updated = { ...state.currentDesign, updatedAt: now };
+        // DW1: Save to localStorage AND Drive API
         localStorage.setItem(`design-${updated.id}`, JSON.stringify(updated));
         set((s) => ({
           currentDesign: updated,

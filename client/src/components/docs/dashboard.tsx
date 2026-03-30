@@ -39,7 +39,7 @@ import {
     ContextMenuSeparator,
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { BUILTIN_DOC_TEMPLATES, getUserTemplates, deleteUserTemplate, type DocTemplate } from '@/lib/document-templates';
+import { BUILTIN_DOC_TEMPLATES, getUserTemplates, deleteUserTemplate, DEPARTMENT_LABELS, type DocTemplate, type TemplateDepartment } from '@/lib/document-templates';
 import { AiGenerateDoc } from '@/components/interop/AiGenerateDoc';
 import { UnifiedContentLibrary } from '@/components/interop/UnifiedContentLibrary';
 import { DocumentTags, TagFilterBar, getDocumentTags } from '@/components/docs/document-tags';
@@ -65,6 +65,7 @@ export default function DocsDashboard() {
     // Template state
     const [pendingTemplateContent, setPendingTemplateContent] = useState<string | null>(null);
     const [userTemplates, setUserTemplates] = useState<DocTemplate[]>([]);
+    const [deptFilter, setDeptFilter] = useState<TemplateDepartment | 'all'>('all');
 
     // Tag filter state
     const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
@@ -233,7 +234,9 @@ export default function DocsDashboard() {
         );
     }
 
-    const builtinTemplates = BUILTIN_DOC_TEMPLATES;
+    const builtinTemplates = deptFilter === 'all'
+        ? BUILTIN_DOC_TEMPLATES
+        : BUILTIN_DOC_TEMPLATES.filter(t => t.department === deptFilter);
 
     return (
         <div className="flex-1 flex flex-col h-full bg-background overflow-y-auto w-full">
@@ -246,6 +249,23 @@ export default function DocsDashboard() {
                             <AiGenerateDoc />
                             <UnifiedContentLibrary />
                         </div>
+                    </div>
+
+                    {/* Department filter */}
+                    <div className="flex gap-1 flex-wrap -mt-2">
+                        {(['all', ...Object.keys(DEPARTMENT_LABELS)] as Array<'all' | TemplateDepartment>).map(dept => (
+                            <button
+                                key={dept}
+                                onClick={() => setDeptFilter(dept)}
+                                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                                    deptFilter === dept
+                                        ? 'bg-primary text-primary-foreground border-primary'
+                                        : 'border-border/50 hover:border-primary/50 text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                {dept === 'all' ? 'Tous' : DEPARTMENT_LABELS[dept]}
+                            </button>
+                        ))}
                     </div>
 
                     <div className="flex gap-4 sm:gap-6 overflow-x-auto pt-2 pb-4 snap-x smooth-scroll no-scrollbar -mt-2">

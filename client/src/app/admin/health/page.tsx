@@ -135,6 +135,29 @@ function ServiceCard({ result }: { result: ServiceHealthResult }) {
 
 const REFRESH_INTERVAL_MS = 30_000;
 
+// ─── IF1: SSE health-stream integration ───────────────────────────────────────
+
+interface SseServiceStatus { name: string; port: number; healthy: boolean }
+interface SseSnapshot { services: SseServiceStatus[]; all_healthy: boolean; timestamp: string }
+
+function useSseHealth(onSnapshot: (snap: SseSnapshot) => void) {
+  useEffect(() => {
+    if (typeof EventSource === 'undefined') return;
+    const es = new EventSource('http://localhost:3007/api/v1/scheduler/health-stream');
+    es.addEventListener('health', (e: MessageEvent) => {
+      try {
+        const snap: SseSnapshot = JSON.parse(e.data);
+        onSnapshot(snap);
+      } catch { /* ignore parse errors */ }
+    });
+    es.onerror = () => {
+      // SSE unavailable — silently fall back to polling
+    };
+    return () => es.close();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+}
+
 export default function HealthPage() {
   usePageTitle('Sante systeme');
   const [results, setResults] = useState<ServiceHealthResult[]>(() =>
@@ -142,6 +165,7 @@ export default function HealthPage() {
   );
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [sseConnected, setSseConnected] = useState(false);
 
   const runChecks = useCallback(async () => {
     setRefreshing(true);
@@ -154,7 +178,26 @@ export default function HealthPage() {
     setRefreshing(false);
   }, []);
 
-  // Initial check + auto-refresh every 30 s
+  // IF1: Apply SSE snapshot — merges server-side checks into the local results
+  const handleSseSnapshot = useCallback((snap: SseSnapshot) => {
+    setSseConnected(true);
+    setLastRefresh(new Date());
+    setResults((prev) =>
+      prev.map((r) => {
+        const match = snap.services.find((s) => s.name === r.name || s.port === r.port);
+        if (!match) return r;
+        return {
+          ...r,
+          status: match.healthy ? ('healthy' as HealthStatus) : ('unhealthy' as HealthStatus),
+          checkedAt: new Date(),
+        };
+      }),
+    );
+  }, []);
+
+  useSseHealth(handleSseSnapshot);
+
+  // Initial check + auto-refresh every 30 s (used as fallback when SSE is unavailable)
   useEffect(() => {
     runChecks();
     const interval = setInterval(runChecks, REFRESH_INTERVAL_MS);
@@ -175,8 +218,17 @@ export default function HealthPage() {
               <Activity className="h-7 w-7" />
               Service Health
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
               Live status for all SignApps backend services — auto-refreshes every 30 seconds
+              {sseConnected && (
+                <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400 font-medium">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                  </span>
+                  SSE live
+                </span>
+              )}
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">

@@ -116,7 +116,11 @@ fn create_router(state: AppState) -> Router {
         .route("/memory", get(handlers::get_memory_metrics))
         .route("/disk", get(handlers::get_disk_metrics))
         .route("/network", get(handlers::get_network_metrics))
-        .route("/stream", get(handlers::metrics_stream));
+        .route("/stream", get(handlers::metrics_stream))
+        // IF2: Slow query monitoring
+        .route("/slow-queries", get(handlers::slow_queries::list_slow_queries))
+        // IF3: DB pool stats
+        .route("/pool-stats", get(handlers::pool_stats::get_pool_stats));
 
     // Alert routes
     let alert_routes = Router::new()

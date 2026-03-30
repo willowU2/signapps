@@ -16,6 +16,8 @@ const COMMANDS: VoiceCommand[] = [
   { pattern: /rechercher?\s+(.+)/i, action: "search", params: ["query"] },
   { pattern: /aller?\s+(?:au?x?\s+)?(.+)/i, action: "navigate", params: ["destination"] },
   { pattern: /ouvrir?\s+(.+)/i, action: "open", params: ["target"] },
+  { pattern: /dicter?\s+(?:un?\s+)?email/i, action: "email.dictate", params: [] },
+  { pattern: /wiki|base\s+de\s+connaissance/i, action: "navigate", params: ["destination"] },
 ];
 
 export interface ParsedCommand {

@@ -534,6 +534,37 @@ ${header}
               </Button>
               <input type="file" accept=".vcf" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleImportVcf(f); }} />
             </label>
+            {/* MG3: CSV import */}
+            <label className="cursor-pointer">
+              <Button variant="outline" asChild>
+                <span>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Importer CSV
+                </span>
+              </Button>
+              <input
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={async e => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  const formData = new FormData();
+                  formData.append('file', f);
+                  try {
+                    const client = getClient(ServiceName.CONTACTS);
+                    const res = await client.post<{ imported: number; skipped: number; failed: number }>(
+                      '/contacts/import/csv',
+                      formData,
+                    );
+                    toast.success(`Import CSV: ${res.data.imported} importés, ${res.data.skipped} ignorés, ${res.data.failed} échecs`);
+                    loadContacts();
+                  } catch {
+                    toast.error("Échec de l'import CSV");
+                  }
+                }}
+              />
+            </label>
             <Button onClick={() => { resetForm(); setIsCreating(v => !v) }} className="shadow-lg shadow-primary/20">
               <Plus className="h-4 w-4 mr-2" />
               {isCreating && !editingId ? "Annuler" : "Nouveau Contact"}

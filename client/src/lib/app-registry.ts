@@ -57,6 +57,9 @@ export const APP_REGISTRY: AppEntry[] = [
   { id: 'scheduler',   href: '/scheduler',  icon: 'Clock',       label: 'Scheduler',   description: 'T\u00e2ches planifi\u00e9es et cron jobs',     category: 'Administration',  color: 'text-amber-500' },
   { id: 'workflows',   href: '/admin/workflows', icon: 'Zap',    label: 'Workflows',   description: 'R\u00e8gles d\'automatisation',        category: 'Administration',  color: 'text-amber-400' },
 
+  // Productivité — Wiki
+  { id: 'wiki',        href: '/wiki',       icon: 'BookOpen',    label: 'Wiki',        description: 'Base de connaissances interne',      category: 'Productivité',    color: 'text-amber-600' },
+
   // Avancé
   { id: 'office',      href: '/office',     icon: 'FileBox',     label: 'Office',      description: 'Conversion de documents Office',     category: 'Avancé',          color: 'text-blue-600' },
   { id: 'ai',          href: '/ai',         icon: 'Brain',       label: 'Intelligence', description: 'IA et automatisation',              category: 'Avancé',          color: 'text-violet-500' },

@@ -55,6 +55,7 @@ import {
 import { mailApi, accountApi, searchApi, labelApi, statsApi, folderApi, type MailLabel, type MailStats } from "@/lib/api-mail"
 import { cn } from "@/lib/utils"
 import { WorkspaceShell } from "@/components/layout/workspace-shell"
+import { getMailCache, setMailCache } from "@/lib/mail/mail-cache"
 
 // ── Density types ─────────────────────────────────────────────────────────────
 type Density = "compact" | "default" | "spacious"
@@ -209,10 +210,14 @@ export default function MailPage() {
         if (typeof window !== "undefined") localStorage.setItem("mail-density", d)
     }
 
-    // Bug 3: Folder-aware email loader
+    // PW2: track whether current list was loaded from cache
+    const [fromCache, setFromCache] = useState(false)
+
+    // Bug 3: Folder-aware email loader with PW2 IndexedDB cache
     const loadFolder = useCallback(async (folder: 'inbox' | 'sent' | 'drafts' | 'starred' | 'snoozed') => {
         setIsLoading(true)
         setLoadError(null)
+        setFromCache(false)
         try {
             let query: Parameters<typeof mailApi.list>[0] = { limit: 50 }
             if (folder === 'inbox') query.folder_type = 'inbox'
@@ -237,10 +242,20 @@ export default function MailPage() {
                 message_id: email.message_id,
             }))
             setMailList(uiMails)
+            // PW2: persist to IndexedDB cache after successful fetch
+            setMailCache(folder, uiMails).catch(() => {})
         } catch (err) {
             console.debug('Failed to load folder:', err)
-            setLoadError("Le service mail est inaccessible. Vérifiez que le serveur est démarré.")
-            setMailList([])
+            // PW2: offline fallback — load from IndexedDB cache
+            const cached = await getMailCache(folder)
+            if (cached && cached.length > 0) {
+                setMailList(cached)
+                setFromCache(true)
+                setLoadError(null)
+            } else {
+                setLoadError("Le service mail est inaccessible. Vérifiez que le serveur est démarré.")
+                setMailList([])
+            }
         } finally {
             setIsLoading(false)
         }
@@ -942,6 +957,13 @@ export default function MailPage() {
                         ) : (
                             /* Idea 16: density class wrapper */
                             <div className={cn("flex-1 flex flex-col overflow-hidden", getDensityClass(density))}>
+                                {/* PW2: cached indicator */}
+                                {fromCache && (
+                                    <div className="px-3 py-1 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                                        <span>Cache hors-ligne</span>
+                                        <span className="text-muted-foreground">— reconnectez-vous pour actualiser</span>
+                                    </div>
+                                )}
                                 <MailList
                                     items={filteredMailList}
                                     selectedId={selectedId}

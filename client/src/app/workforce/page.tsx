@@ -34,6 +34,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OrgTreeList } from '@/components/workforce/org-tree-list';
+import { OrgChartDnd } from '@/components/workforce/org-chart-dnd';
+import { ClockIn } from '@/components/workforce/clock-in';
 import { EmployeeList } from '@/components/workforce/employee-list';
 import { ValidationDashboard } from '@/components/workforce/validation-dashboard';
 import { OrgNodeSheet } from '@/components/workforce/org-node-sheet';
@@ -54,7 +56,59 @@ const EMPTY_COVERAGE_PATTERN: WeeklyPattern = {
   sunday: [],
 };
 
-type ActiveTab = 'org-tree' | 'employees' | 'validation' | 'coverage';
+type ActiveTab = 'org-tree' | 'org-chart' | 'employees' | 'validation' | 'coverage';
+
+// ---------------------------------------------------------------------------
+// HR2: Inline clock-in/out button for the header
+// ---------------------------------------------------------------------------
+function ClockInButton() {
+  const [isCheckedIn, setIsCheckedIn] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+
+  const handleClockInOut = async () => {
+    setLoading(true);
+    try {
+      const endpoint = isCheckedIn
+        ? '/api/v1/workforce/attendance/clock-out'
+        : '/api/v1/workforce/attendance/clock-in';
+      // employee_id is a placeholder — in production, derive from authenticated user
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employee_id: '00000000-0000-0000-0000-000000000000' }),
+      });
+      if (res.ok) {
+        setIsCheckedIn(v => !v);
+        toast.success(isCheckedIn ? 'Pointage de sortie enregistré' : 'Pointage d\'entrée enregistré');
+      } else {
+        toast.error('Erreur lors du pointage');
+      }
+    } catch {
+      toast.error('Impossible de pointer');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Button
+      size="sm"
+      variant={isCheckedIn ? 'destructive' : 'default'}
+      onClick={handleClockInOut}
+      disabled={loading}
+      className="gap-1.5"
+    >
+      {loading ? (
+        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+      ) : isCheckedIn ? (
+        <Calendar className="h-3.5 w-3.5" />
+      ) : (
+        <Calendar className="h-3.5 w-3.5" />
+      )}
+      {isCheckedIn ? 'Pointer sortie' : 'Pointer entrée'}
+    </Button>
+  );
+}
 
 export default function WorkforcePage() {
   usePageTitle('Effectifs');
@@ -171,10 +225,39 @@ export default function WorkforcePage() {
               <Download className="mr-2 h-4 w-4" />
               Exporter CSV
             </Button>
-            <Button variant="outline" size="sm">
+            {/* HR1: CSV import */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.csv';
+                input.onchange = async (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  if (!file) return;
+                  const formData = new FormData();
+                  formData.append('file', file);
+                  try {
+                    const res = await fetch('/api/v1/workforce/employees/import', {
+                      method: 'POST',
+                      body: formData,
+                    });
+                    const json = await res.json();
+                    toast.success(`Import terminé: ${json.imported} importés, ${json.skipped} ignorés, ${json.failed} échecs`);
+                  } catch {
+                    toast.error('Échec de l\'import CSV');
+                  }
+                };
+                input.click();
+              }}
+            >
               <Upload className="mr-2 h-4 w-4" />
-              Importer
+              Importer CSV
             </Button>
+
+            {/* HR2: Clock-in/out inline button */}
+            <ClockInButton />
           </div>
         </div>
 
@@ -270,6 +353,10 @@ export default function WorkforcePage() {
                 <TabsTrigger value="org-tree" className="gap-2">
                   <Network className="h-4 w-4" />
                   <span className="hidden sm:inline">Structure</span>
+                </TabsTrigger>
+                <TabsTrigger value="org-chart" className="gap-2">
+                  <LayoutGrid className="h-4 w-4" />
+                  <span className="hidden sm:inline">Org Chart</span>
                 </TabsTrigger>
                 <TabsTrigger value="employees" className="gap-2">
                   <Users className="h-4 w-4" />
@@ -382,6 +469,11 @@ export default function WorkforcePage() {
                   )}
                 </div>
               </div>
+            </TabsContent>
+
+            {/* HR3: Interactive drag & drop org chart */}
+            <TabsContent value="org-chart" className="flex-1 overflow-auto p-4">
+              <OrgChartDnd onSelectNode={handleSelectNode} />
             </TabsContent>
 
             <TabsContent value="validation" className="flex-1 overflow-auto p-4">

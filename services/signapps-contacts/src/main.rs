@@ -5,7 +5,7 @@ mod carddav;
 mod carddav_sync;
 
 use axum::{
-    extract::{Path, State},
+    extract::{Multipart, Path, State},
     http::StatusCode,
     middleware,
     response::IntoResponse,
@@ -210,6 +210,164 @@ async fn delete_contact(State(state): State<AppState>, Path(id): Path<Uuid>) -> 
     }
 }
 
+/// POST /api/v1/contacts/import/csv
+///
+/// Accepts a multipart form upload with a CSV file field named "file".
+/// Expected columns (case-insensitive header row): name, email, phone, company
+/// or: first_name, last_name, email, phone, company, job_title
+///
+/// Returns a JSON summary: { imported, skipped, failed }
+async fn import_contacts_csv(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    mut multipart: Multipart,
+) -> impl IntoResponse {
+    let mut csv_bytes: Vec<u8> = Vec::new();
+
+    // Extract the file field from the multipart body
+    while let Ok(Some(field)) = multipart.next_field().await {
+        let name = field.name().unwrap_or("").to_string();
+        if name == "file" {
+            match field.bytes().await {
+                Ok(b) => {
+                    csv_bytes = b.to_vec();
+                    break;
+                },
+                Err(e) => {
+                    tracing::error!("Failed to read CSV field: {e}");
+                    return (
+                        StatusCode::BAD_REQUEST,
+                        Json(serde_json::json!({ "error": "Failed to read uploaded file" })),
+                    );
+                },
+            }
+        }
+    }
+
+    if csv_bytes.is_empty() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": "No file field found in multipart body" })),
+        );
+    }
+
+    // Parse CSV
+    let content = match std::str::from_utf8(&csv_bytes) {
+        Ok(s) => s.to_string(),
+        Err(_) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({ "error": "CSV file must be UTF-8 encoded" })),
+            )
+        },
+    };
+
+    let mut imported = 0u32;
+    let mut skipped = 0u32;
+    let mut failed = 0u32;
+    let now = Utc::now().to_rfc3339();
+
+    let mut lines = content.lines();
+
+    // Parse header row
+    let header_line = match lines.next() {
+        Some(h) => h,
+        None => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({ "error": "CSV file is empty" })),
+            )
+        },
+    };
+
+    let headers: Vec<String> = header_line
+        .split(',')
+        .map(|h| h.trim().to_lowercase().replace('"', ""))
+        .collect();
+
+    // Map header names to column indexes
+    let col = |name: &str| -> Option<usize> { headers.iter().position(|h| h == name) };
+
+    let idx_first_name = col("first_name");
+    let idx_last_name = col("last_name");
+    let idx_name = col("name"); // "Name, Surname" or "Full Name"
+    let idx_email = col("email");
+    let idx_phone = col("phone");
+    let idx_company = col("company").or_else(|| col("organization"));
+    let idx_job_title = col("job_title").or_else(|| col("title"));
+
+    let parse_col = |row: &[&str], idx: Option<usize>| -> Option<String> {
+        idx.and_then(|i| row.get(i))
+            .map(|v| v.trim().replace('"', ""))
+            .filter(|v| !v.is_empty())
+    };
+
+    for line in lines {
+        if line.trim().is_empty() {
+            skipped += 1;
+            continue;
+        }
+        let cols: Vec<&str> = line.split(',').collect();
+
+        let (first_name, last_name) = if let (Some(f), Some(l)) = (
+            parse_col(&cols, idx_first_name),
+            parse_col(&cols, idx_last_name),
+        ) {
+            (f, l)
+        } else if let Some(full) = parse_col(&cols, idx_name) {
+            let parts: Vec<&str> = full.splitn(2, ' ').collect();
+            let first = parts.first().copied().unwrap_or("").to_string();
+            let last = parts.get(1).copied().unwrap_or("").to_string();
+            (first, last)
+        } else {
+            skipped += 1;
+            continue;
+        };
+
+        if first_name.is_empty() && last_name.is_empty() {
+            skipped += 1;
+            continue;
+        }
+
+        let contact = Contact {
+            id: Uuid::new_v4(),
+            owner_id: claims.sub,
+            first_name,
+            last_name,
+            email: parse_col(&cols, idx_email),
+            phone: parse_col(&cols, idx_phone),
+            organization: parse_col(&cols, idx_company),
+            job_title: parse_col(&cols, idx_job_title),
+            group_ids: vec![],
+            created_at: now.clone(),
+            updated_at: now.clone(),
+        };
+
+        match state.contacts.lock() {
+            Ok(mut lock) => {
+                lock.push(contact);
+                imported += 1;
+            },
+            Err(_) => {
+                failed += 1;
+            },
+        }
+    }
+
+    tracing::info!(
+        owner = %claims.sub,
+        imported,
+        skipped,
+        failed,
+        "CSV contacts import completed"
+    );
+
+    (
+        StatusCode::OK,
+        Json(serde_json::json!({ "imported": imported, "skipped": skipped, "failed": failed })),
+    )
+}
+
 async fn list_groups(State(state): State<AppState>) -> impl IntoResponse {
     let groups = state.groups.lock().unwrap_or_else(|e| e.into_inner());
     Json(groups.clone())
@@ -256,6 +414,7 @@ fn create_router(state: AppState) -> Router {
     let protected_routes = Router::new()
         .route("/api/v1/contacts", get(list_contacts).post(create_contact))
         .route("/api/v1/contacts/groups", get(list_groups))
+        .route("/api/v1/contacts/import/csv", post(import_contacts_csv))
         .route("/api/v1/contacts/export/vcf", get(carddav::export_vcf))
         .route("/api/v1/contacts/import/vcf", post(carddav::import_vcf))
         .route(

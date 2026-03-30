@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
     ArrowLeft, Plus, Save, Trash2, GripVertical, Eye, Type, List, CheckSquare,
     Calendar, Hash, Mail, Image as ImageIcon, CircleDot, ChevronUp, ChevronDown,
-    PenLine, Layers, BarChart3, Settings
+    PenLine, Layers, BarChart3, Settings, Palette
 } from "lucide-react"
 import { toast } from "sonner"
 import { useBreadcrumbStore } from "@/lib/store/breadcrumb-store"
@@ -27,6 +27,7 @@ import { ConditionalLogicEditor } from "@/components/forms/conditional-logic-edi
 import { ScoringEditor } from "@/components/forms/scoring-editor"
 import { ResponseAnalytics } from "@/components/forms/response-analytics"
 import { ExportResponses } from "@/components/forms/export-responses"
+import { FormBrandingPanel } from "@/components/forms/form-branding-panel"
 import { useQuery } from "@tanstack/react-query"
 
 // Extended FormField type to handle new properties
@@ -394,6 +395,10 @@ export default function FormBuilderPage() {
                             <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
                             Analyses {responses.length > 0 && `(${responses.length})`}
                         </TabsTrigger>
+                        <TabsTrigger value="branding">
+                            <Palette className="h-3.5 w-3.5 mr-1.5" />
+                            Apparence
+                        </TabsTrigger>
                         <TabsTrigger value="settings">
                             <Settings className="h-3.5 w-3.5 mr-1.5" />
                             Paramètres
@@ -493,6 +498,11 @@ export default function FormBuilderPage() {
                             </div>
                             <ResponseAnalytics formId={formId} fields={fields as FormField[]} />
                         </div>
+                    </TabsContent>
+
+                    {/* FM2: Branding Tab */}
+                    <TabsContent value="branding" className="mt-4">
+                        <FormBrandingPanel formId={formId} />
                     </TabsContent>
 
                     {/* Settings Tab */}

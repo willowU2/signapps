@@ -517,3 +517,45 @@ export interface TenantCssResponse {
     tenant_id: string;
     css_override?: string;
 }
+
+// ============================================================================
+// Compliance API — CO1/CO2/CO4
+// ============================================================================
+
+export const complianceApi = {
+    // DPIA
+    saveDpia: (data: Record<string, unknown>) =>
+        identityClient.post('/compliance/dpia', data),
+    listDpias: () =>
+        identityClient.get<unknown[]>('/compliance/dpia'),
+
+    // DSAR
+    createDsar: (data: {
+        type: string;
+        subject_name: string;
+        subject_email: string;
+        description?: string;
+    }) => identityClient.post('/compliance/dsar', data),
+    listDsars: () =>
+        identityClient.get<{ data: unknown[] }>('/compliance/dsar'),
+    updateDsar: (id: string, data: { status: string; notes?: string }) =>
+        identityClient.patch(`/compliance/dsar/${id}`, data),
+
+    // Retention policies
+    saveRetentionPolicies: (policies: unknown) =>
+        identityClient.put('/compliance/retention-policies', { policies }),
+    getRetentionPolicies: () =>
+        identityClient.get<{ data: unknown[] }>('/compliance/retention-policies'),
+
+    // Consent (CO4)
+    saveConsent: (consent: unknown) =>
+        identityClient.put('/compliance/consent', { consent }),
+    getConsent: () =>
+        identityClient.get<{ config: unknown }>('/compliance/consent'),
+
+    // Cookie banner
+    saveCookieBanner: (config: unknown) =>
+        identityClient.put('/compliance/cookie-banner', { config }),
+    getCookieBanner: () =>
+        identityClient.get<{ config: unknown }>('/compliance/cookie-banner'),
+};

@@ -463,10 +463,10 @@ const Editor = ({
     const pendingVoiceBlocksRef = useRef<string[]>([]);
 
     useEffect(() => {
-        // Collaboration WebSocket server URL - disabled by default until y-websocket server is deployed
+        // RT1: Connect Docs to signapps-collab (port 3013)
         const collabServerEnabled = process.env.NEXT_PUBLIC_COLLAB_ENABLED === 'true';
-        const baseUrl = process.env.NEXT_PUBLIC_DOCS_WS_URL || 'ws://localhost:3010';
-        const wsUrl = `${baseUrl}/${documentId}`;
+        const baseWsUrl = process.env.NEXT_PUBLIC_COLLAB_WS_URL || 'ws://localhost:3013';
+        const wsUrl = `${baseWsUrl}/api/v1/collab/ws/${documentId}`;
 
         const wsProvider = new WebsocketProvider(wsUrl, documentId, ydoc, {
             connect: false

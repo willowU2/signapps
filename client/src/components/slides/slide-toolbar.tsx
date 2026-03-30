@@ -16,8 +16,16 @@ import { TransitionPicker } from "./transition-picker"
 import type { SlideLayout } from "./use-slides"
 import type { SlideTransition } from "./slide-animations"
 
+// RT2: Collaborator presence type
+export interface CollabUser {
+    name: string
+    color: string
+    clientId: number
+}
+
 interface SlideToolbarProps {
     isConnecté: boolean
+    collaborators?: CollabUser[]
     onAddMagicLayout: () => void
     onAddText: () => void
     onAddShape: () => void
@@ -69,6 +77,7 @@ interface SlideToolbarProps {
 
 export function SlideToolbar({
     isConnecté,
+    collaborators = [],
     onAddMagicLayout,
     onAddText,
     onAddShape,
@@ -231,7 +240,27 @@ export function SlideToolbar({
             </ToolbarGroup>
 
             {/* Actions Toolbar */}
-            <ToolbarGroup className="ml-auto">
+            <ToolbarGroup className="ml-auto gap-1">
+                {/* RT2: Collaborator presence avatars */}
+                {collaborators.length > 0 && (
+                    <div className="flex items-center -space-x-2 mr-1" title="Utilisateurs connectés">
+                        {collaborators.slice(0, 5).map((u) => (
+                            <div
+                                key={u.clientId}
+                                className="h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold text-white ring-2 ring-background shrink-0"
+                                style={{ backgroundColor: u.color }}
+                                title={u.name}
+                            >
+                                {u.name.slice(0, 2).toUpperCase()}
+                            </div>
+                        ))}
+                        {collaborators.length > 5 && (
+                            <div className="h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold bg-muted ring-2 ring-background shrink-0">
+                                +{collaborators.length - 5}
+                            </div>
+                        )}
+                    </div>
+                )}
                 {onStartLivePresentation && (
                     <ToolbarButton onClick={onStartLivePresentation} title="Presentation en direct">
                         <MonitorPlay className="w-4 h-4" />
