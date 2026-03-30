@@ -16,6 +16,7 @@
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { useEntityStore } from '@/stores/entity-hub-store';
+import { isServiceDown, markServiceDown, markServiceUp } from '@/lib/service-health';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SERVICE CONFIGURATION
@@ -306,14 +307,44 @@ export function getClient(service: ServiceName): AxiosInstance {
     withCredentials: true,
   });
 
-  // Request interceptor
-  client.interceptors.request.use(addAuthHeader);
+  // Request interceptor — skip known-down services (circuit breaker)
+  client.interceptors.request.use((config) => {
+    const url = `${config.baseURL || ''}`;
+    if (url && isServiceDown(url)) {
+      // Silently cancel — no network call, no console error
+      return Promise.reject(new axios.Cancel(`Service offline: ${url}`));
+    }
+    return addAuthHeader(config);
+  });
 
-  // Response interceptor — attach human-readable message then handle auth errors
+  // Response interceptor — track service health + attach human-readable message + handle auth
   client.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      // Mark service healthy on any successful response
+      const url = response.config.baseURL || '';
+      if (url) markServiceUp(url);
+      return response;
+    },
     (error: AxiosError) => {
-      // Attach a user-friendly message to every error so callers can use it
+      // Silently swallow cancelled requests (circuit breaker short-circuit)
+      if (axios.isCancel(error)) {
+        return Promise.reject(error);
+      }
+
+      const url = error.config?.baseURL || '';
+      const isNetworkError =
+        !error.response &&
+        (error.code === 'ERR_NETWORK' ||
+          error.code === 'ECONNREFUSED' ||
+          error.message?.includes('Network Error'));
+
+      if (isNetworkError && url) {
+        markServiceDown(url);
+        // Don't attach humanMessage or log — network errors for offline services are expected
+        return Promise.reject(error);
+      }
+
+      // Attach a user-friendly message to every other error so callers can use it
       if (error && !isSilentAuthPath(error.config?.url)) {
         (error as AxiosError & { humanMessage?: string }).humanMessage =
           getHumanErrorMessage(error);
