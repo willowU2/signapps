@@ -53,6 +53,12 @@ just mutants-crate signapps-common   # Un crate ciblé
 just test-e2e                     # Playwright
 cd client && npx playwright test --reporter=list
 
+# ─── Documentation ──────────────────────────────────────
+just docs                         # cargo doc --no-deps --workspace
+just docs-private                 # cargo doc --document-private-items
+just changelog                    # Générer CHANGELOG.md
+just changelog-preview            # Preview sans écrire
+
 # ─── Quality pipeline locale ────────────────────────────
 just ci                           # fmt + lint + test + audit + deny
 just ci-quick                     # check + lint seulement
@@ -201,6 +207,47 @@ pub struct Event {
 
 Générer la doc : `cargo doc --no-deps --workspace --open`
 
+### Conventional Commits — Obligation stricte
+
+Chaque commit DOIT suivre le format Conventional Commits. C'est la source du CHANGELOG automatique via git-cliff.
+
+```
+<type>[scope optionnel]: <description>
+
+[corps optionnel]
+
+[footer optionnel]
+```
+
+| Type | Usage |
+|------|-------|
+| `feat` | Nouvelle fonctionnalité |
+| `fix` | Correction de bug |
+| `perf` | Amélioration de performance |
+| `refactor` | Refactoring sans changement de comportement |
+| `docs` | Documentation uniquement |
+| `test` | Ajout/modification de tests |
+| `chore` | Maintenance (deps, config, CI) |
+| `ci` | Pipeline CI/CD |
+| `style` | Formatage, pas de changement logique |
+| `build` | Système de build |
+
+**Exemples :**
+```bash
+git commit -m "feat(calendar): add leave approval workflow"
+git commit -m "fix(identity): handle expired JWT gracefully"
+git commit -m "docs: update CLAUDE.md with observability rules"
+git commit -m "feat!: rename Event to CalendarEvent"  # Breaking change
+```
+
+### Confidentialité — Politique stricte
+
+- **AUCUNE** publication sur crates.io, npm public, Docker Hub public
+- **AUCUN** déploiement de documentation sur GitHub Pages ou site public
+- Les artefacts CI (rustdoc, coverage) sont des artifacts privés GitHub uniquement
+- Le CHANGELOG.md sert aux notes de release internes uniquement
+- Le code, la documentation et les artefacts sont la propriété exclusive de l'entreprise
+
 ---
 
 ## Review Checklist
@@ -242,6 +289,14 @@ Avant de déclarer une tâche terminée, valider **chaque point** :
 - [ ] Message au format Conventional Commits : `feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `chore:`, `ci:`
 - [ ] Scope optionnel : `feat(calendar): add leave approval workflow`
 - [ ] Breaking changes signalés : `feat!: rename Event to CalendarEvent`
+
+### 6. Documentation
+
+- [ ] `cargo doc --no-deps --workspace` compile sans warnings
+- [ ] Structs/enums/traits publics ont `///` avec description
+- [ ] Fonctions publiques d'API documentent `# Errors` si elles retournent Result
+- [ ] Commit message au format Conventional Commits
+- [ ] `just changelog-preview` pour vérifier le changelog
 
 ---
 
@@ -351,7 +406,7 @@ Chaque service Rust suit la même structure :
 | `sqlx-cli` | — | `sqlx migrate run` | Migrations DB |
 | `utoipa` | Cargo.toml | compile-time | OpenAPI Code-First |
 
-### CI Pipeline (10 jobs parallèles)
+### CI Pipeline (11 jobs parallèles)
 
 | # | Job | Bloquant | Description |
 |---|-----|----------|-------------|
@@ -365,6 +420,7 @@ Chaque service Rust suit la même structure :
 | 8 | `security` | oui | `cargo audit` |
 | 9 | `frontend` | oui | ESLint + type-check + build |
 | 10 | `coverage` | **non** | llvm-cov → Codecov |
+| 11 | `docs` | oui | rustdoc --document-private-items → artifact privé |
 
 ### Git Hooks (pre-commit)
 

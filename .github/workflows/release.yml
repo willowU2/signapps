@@ -1,3 +1,4 @@
+# SECURITY: All artifacts are PRIVATE. DO NOT enable GitHub Pages or public hosting.
 name: Release
 
 on:

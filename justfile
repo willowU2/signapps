@@ -127,6 +127,22 @@ db-backup:
 db-seed:
     bash scripts/seed-demo-data.sh
 
+# ─────────────────────────── Documentation ───────────────────
+
+# Documentation Rust (interne uniquement)
+docs:
+    cargo doc --no-deps --workspace
+    @echo "Documentation: target/doc/signapps_common/index.html"
+
+# Documentation avec items privés
+docs-private:
+    cargo doc --no-deps --workspace --document-private-items
+    @echo "Documentation privée: target/doc/signapps_common/index.html"
+
+# Vérifier que la doc compile sans warnings
+docs-check:
+    RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --workspace
+
 # ─────────────────────────── Changelog ───────────────────────
 
 # Générer le changelog
@@ -140,7 +156,7 @@ changelog-preview:
 # ─────────────────────────── CI Local ────────────────────────
 
 # Pipeline CI complète (locale)
-ci: fmt-check lint test audit deny
+ci: fmt-check lint test audit deny docs-check
     @echo "CI passed"
 
 # Pipeline CI rapide (check + lint)
