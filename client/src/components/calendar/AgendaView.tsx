@@ -1,94 +1,118 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { format, isSameDay } from "date-fns";
-import { Event } from "@/types/calendar";
+import React, { useMemo, useState, useEffect } from "react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import type { Event } from "@/types/calendar";
 import { useCalendarStore } from "@/stores/calendar-store";
+import { calendarApi } from "@/lib/api/calendar";
 
-interface AgendaViewProps {
-  events: Event[];
-  onEventClick: (eventId: string) => void;
-}
+/**
+ * AgendaView — chronological list of upcoming events.
+ * Self-contained: fetches its own data from the calendar API.
+ */
+export function AgendaView() {
+  const { currentDate } = useCalendarStore();
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export function AgendaView({ events, onEventClick }: AgendaViewProps) {
-  const { currentDate, selectedEventId } = useCalendarStore();
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
 
-  // Group events by date starting from currentDate
+    (async () => {
+      try {
+        const res = await calendarApi.listEvents?.({
+          start: currentDate.toISOString(),
+        }).catch(() => null);
+
+        if (!cancelled) {
+          const data = res?.data;
+          setEvents(Array.isArray(data) ? data : []);
+        }
+      } catch {
+        if (!cancelled) setEvents([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [currentDate]);
+
+  // Group events by date
   const groupedEvents = useMemo(() => {
     const grouped = new Map<string, Event[]>();
+    const safeEvents = Array.isArray(events) ? events : [];
 
-    // Sort events by start time
-    const sorted = [...events].sort((a, b) =>
+    const sorted = [...safeEvents].sort((a, b) =>
       new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
     );
 
     sorted.forEach((event) => {
       const eventDate = new Date(event.start_time);
-      if (eventDate >= currentDate) {
-        const dateKey = eventDate.toDateString();
-        if (!grouped.has(dateKey)) {
-          grouped.set(dateKey, []);
-        }
-        grouped.get(dateKey)!.push(event);
+      const dateKey = eventDate.toDateString();
+      if (!grouped.has(dateKey)) {
+        grouped.set(dateKey, []);
       }
+      grouped.get(dateKey)!.push(event);
     });
 
-    // Sort dates
     return new Map(
       [...grouped.entries()].sort((a, b) =>
         new Date(a[0]).getTime() - new Date(b[0]).getTime()
       )
     );
-  }, [events, currentDate]);
+  }, [events]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-muted-foreground">
+        Chargement...
+      </div>
+    );
+  }
 
   if (groupedEvents.size === 0) {
     return (
       <div className="text-center text-muted-foreground py-12">
-        <p>No upcoming events</p>
+        <p className="text-lg">Aucun événement à venir</p>
+        <p className="text-sm mt-2">Les événements apparaîtront ici une fois créés.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 overflow-y-auto h-full">
       {Array.from(groupedEvents.entries()).map(([dateStr, dayEvents]) => {
         const date = new Date(dateStr);
 
         return (
           <div key={dateStr}>
-            {/* Date header */}
-            <div className="sticky top-0 bg-background py-2 border-b">
+            <div className="sticky top-0 bg-background py-2 border-b border-border">
               <h3 className="font-semibold text-lg">
-                {format(date, "EEEE, MMMM d, yyyy")}
+                {format(date, "EEEE d MMMM yyyy", { locale: fr })}
               </h3>
               <p className="text-sm text-muted-foreground">
-                {dayEvents.length} event{dayEvents.length !== 1 ? "s" : ""}
+                {dayEvents.length} événement{dayEvents.length !== 1 ? "s" : ""}
               </p>
             </div>
 
-            {/* Events for this day */}
             <div className="space-y-3 py-4">
               {dayEvents.map((event) => {
                 const startTime = new Date(event.start_time);
                 const endTime = new Date(event.end_time);
-                const isSelected = selectedEventId === event.id;
 
                 return (
                   <div
                     key={event.id}
-                    onClick={() => onEventClick(event.id)}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition ${
-                      isSelected
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-border hover:border-border hover:bg-muted"
-                    }`}
+                    className="p-4 rounded-lg border border-border hover:bg-muted cursor-pointer transition"
                   >
-                    {/* Time and title */}
                     <div className="flex items-baseline justify-between mb-2">
                       <h4 className="font-semibold text-base">{event.title}</h4>
                       {event.is_all_day ? (
-                        <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                          All day
+                        <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
+                          Journée entière
                         </span>
                       ) : (
                         <span className="text-sm text-muted-foreground">
@@ -97,7 +121,6 @@ export function AgendaView({ events, onEventClick }: AgendaViewProps) {
                       )}
                     </div>
 
-                    {/* Details */}
                     {event.description && (
                       <p className="text-sm text-muted-foreground mb-2">
                         {event.description}
@@ -111,10 +134,11 @@ export function AgendaView({ events, onEventClick }: AgendaViewProps) {
                       </div>
                     )}
 
-                    {/* Recurring indicator */}
-                    {event.rrule && (
-                      <div className="mt-2 text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded w-fit">
-                        Recurring: {event.rrule.split(";")[0].replace("FREQ=", "")}
+                    {event.event_type && event.event_type !== 'event' && (
+                      <div className="mt-2">
+                        <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                          {event.event_type}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -127,3 +151,5 @@ export function AgendaView({ events, onEventClick }: AgendaViewProps) {
     </div>
   );
 }
+
+export default AgendaView;
