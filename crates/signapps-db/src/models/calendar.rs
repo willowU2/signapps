@@ -8,6 +8,7 @@ use uuid::Uuid;
 // ============================================================================
 // Calendar Model
 // ============================================================================
+/// A personal or shared calendar belonging to a user.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Calendar {
     pub id: Uuid,
@@ -22,6 +23,7 @@ pub struct Calendar {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to create a new calendar.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateCalendar {
     pub name: String,
@@ -31,6 +33,7 @@ pub struct CreateCalendar {
     pub is_shared: Option<bool>,
 }
 
+/// Request to update an existing calendar.
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateCalendar {
     pub name: Option<String>,
@@ -43,6 +46,7 @@ pub struct UpdateCalendar {
 // ============================================================================
 // Calendar Member (Sharing)
 // ============================================================================
+/// A user who has been granted access to a shared calendar with a specific role.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct CalendarMember {
     pub id: Uuid,
@@ -53,18 +57,21 @@ pub struct CalendarMember {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to add a user to a calendar with a given role.
 #[derive(Debug, Clone, Deserialize)]
 pub struct AddCalendarMember {
     pub user_id: Uuid,
     pub role: String,
 }
 
+/// A calendar together with its full member list.
 #[derive(Debug, Clone, Serialize)]
 pub struct CalendarWithMembers {
     pub calendar: Calendar,
     pub members: Vec<CalendarMemberWithUser>,
 }
 
+/// A calendar member row joined with basic user profile data.
 #[derive(Debug, Clone, FromRow, Serialize)]
 pub struct CalendarMemberWithUser {
     pub id: Uuid,
@@ -77,6 +84,7 @@ pub struct CalendarMemberWithUser {
 // ============================================================================
 // Event Model
 // ============================================================================
+/// A calendar event with optional recurrence rules, type metadata, and attendee support.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Event {
     pub id: Uuid,
@@ -114,6 +122,7 @@ pub struct Event {
     pub tags: Option<Vec<String>>,
 }
 
+/// Request to create a new calendar event.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateEvent {
     pub title: String,
@@ -144,6 +153,7 @@ pub struct CreateEvent {
     pub tags: Option<Vec<String>>,
 }
 
+/// Request to update an existing calendar event.
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateEvent {
     pub title: Option<String>,
@@ -177,6 +187,7 @@ pub struct UpdateEvent {
 // ============================================================================
 // Event with Attendees & Resources
 // ============================================================================
+/// An event bundled with its attendees, booked resources, and custom metadata.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EventWithDetails {
     pub event: Event,
@@ -188,6 +199,7 @@ pub struct EventWithDetails {
 // ============================================================================
 // Event Attendee (RSVP)
 // ============================================================================
+/// An attendee (user or external email) invited to a calendar event with an RSVP status.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct EventAttendee {
     pub id: Uuid,
@@ -200,12 +212,14 @@ pub struct EventAttendee {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to add an attendee to an event.
 #[derive(Debug, Clone, Deserialize)]
 pub struct AddEventAttendee {
     pub user_id: Option<Uuid>,
     pub email: Option<String>,
 }
 
+/// Request to update an attendee's RSVP status.
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateAttendeeRsvp {
     pub rsvp_status: String,
@@ -214,6 +228,7 @@ pub struct UpdateAttendeeRsvp {
 // ============================================================================
 // Event Metadata
 // ============================================================================
+/// A key-value metadata entry attached to a calendar event.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct EventMetadata {
     pub id: Uuid,
@@ -226,6 +241,7 @@ pub struct EventMetadata {
 // ============================================================================
 // Resource
 // ============================================================================
+/// A bookable resource such as a room, piece of equipment, or vehicle.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Resource {
     pub id: Uuid,
@@ -240,6 +256,7 @@ pub struct Resource {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to create a new bookable resource.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateResource {
     pub name: String,
@@ -252,6 +269,7 @@ pub struct CreateResource {
 // ============================================================================
 // Event Resource (booking)
 // ============================================================================
+/// A link between a calendar event and a booked resource.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct EventResource {
     pub id: Uuid,
@@ -263,6 +281,7 @@ pub struct EventResource {
 // ============================================================================
 // Task (Hierarchical with parent_id)
 // ============================================================================
+/// A hierarchical task associated with a calendar, optionally assigned to a user.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Task {
     pub id: Uuid,
@@ -281,6 +300,7 @@ pub struct Task {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to create a new task.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateTask {
     pub parent_task_id: Option<Uuid>,
@@ -292,6 +312,7 @@ pub struct CreateTask {
     pub assigned_to: Option<Uuid>,
 }
 
+/// Request to update an existing task.
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateTask {
     pub title: Option<String>,
@@ -306,6 +327,7 @@ pub struct UpdateTask {
 // ============================================================================
 // Task Tree (with children)
 // ============================================================================
+/// A task node in a recursive tree structure, containing child tasks and attachments.
 #[derive(Debug, Clone, Serialize)]
 pub struct TaskNode {
     pub task: Task,
@@ -316,6 +338,7 @@ pub struct TaskNode {
 // ============================================================================
 // Task Attachment
 // ============================================================================
+/// A file attached to a task, referenced by URL.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TaskAttachment {
     pub id: Uuid,
@@ -329,6 +352,7 @@ pub struct TaskAttachment {
 // ============================================================================
 // Reminder
 // ============================================================================
+/// A scheduled reminder for an event or task, delivered via notification, email, or SMS.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Reminder {
     pub id: Uuid,
@@ -342,6 +366,7 @@ pub struct Reminder {
     pub created_at: DateTime<Utc>,
 }
 
+/// Request to create a reminder for an event or task.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateReminder {
     pub event_id: Option<Uuid>,
@@ -354,6 +379,7 @@ pub struct CreateReminder {
 // ============================================================================
 // Activity Log (Audit Trail)
 // ============================================================================
+/// An audit trail entry recording a change to a calendar entity.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct ActivityLog {
     pub id: Uuid,
@@ -369,6 +395,7 @@ pub struct ActivityLog {
 // ============================================================================
 // FloorPlan Models
 // ============================================================================
+/// A floor plan layout used for visualising and booking physical resources.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct FloorPlan {
     pub id: Uuid,
@@ -382,6 +409,7 @@ pub struct FloorPlan {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to create a new floor plan.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateFloorPlan {
     pub name: String,
@@ -393,6 +421,7 @@ pub struct CreateFloorPlan {
     pub svg_content: Option<String>,
 }
 
+/// Request to update an existing floor plan.
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateFloorPlan {
     pub name: Option<String>,
@@ -407,6 +436,7 @@ pub struct UpdateFloorPlan {
 // ============================================================================
 // Category
 // ============================================================================
+/// A color-coded category used to classify calendar events and tasks.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Category {
     pub id: Uuid,
@@ -420,6 +450,7 @@ pub struct Category {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
+/// Request to create a new event/task category.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateCategory {
     pub name: String,
@@ -432,6 +463,7 @@ pub struct CreateCategory {
 // ============================================================================
 // PresenceRule
 // ============================================================================
+/// An organisational rule governing on-site vs. remote presence requirements for a team.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct PresenceRule {
     pub id: Uuid,
@@ -445,6 +477,7 @@ pub struct PresenceRule {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
+/// Request to create a new presence rule for an organisation or team.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreatePresenceRule {
     pub org_id: Uuid,
@@ -457,6 +490,7 @@ pub struct CreatePresenceRule {
 // ============================================================================
 // LeaveBalance
 // ============================================================================
+/// A user's annual leave balance tracking total, used, and pending days per leave type.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct LeaveBalance {
     pub id: Uuid,
@@ -472,6 +506,7 @@ pub struct LeaveBalance {
 // ============================================================================
 // TimesheetEntry
 // ============================================================================
+/// A timesheet entry recording hours worked by a user on a given date.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TimesheetEntry {
     pub id: Uuid,
@@ -491,6 +526,7 @@ pub struct TimesheetEntry {
 // ============================================================================
 // ApprovalWorkflow
 // ============================================================================
+/// An approval workflow triggered by configurable calendar events (e.g. leave requests).
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct ApprovalWorkflow {
     pub id: Uuid,
@@ -503,6 +539,7 @@ pub struct ApprovalWorkflow {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
+/// Request to create a new approval workflow.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateApprovalWorkflow {
     pub org_id: Uuid,

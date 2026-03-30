@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+/// A polymorphic directed relation between two entities of arbitrary types.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct EntityReference {
     pub id: Uuid,
@@ -16,6 +17,7 @@ pub struct EntityReference {
     pub deleted_at: Option<DateTime<Utc>>,
 }
 
+/// Request to create a new entity reference relation.
 #[derive(Debug, Deserialize)]
 pub struct CreateEntityReference {
     pub source_type: String,

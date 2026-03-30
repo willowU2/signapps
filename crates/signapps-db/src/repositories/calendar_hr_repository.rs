@@ -12,6 +12,7 @@ use uuid::Uuid;
 // ============================================================================
 // CategoryRepository
 // ============================================================================
+/// Repository for event and task category CRUD operations.
 pub struct CategoryRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -96,6 +97,7 @@ impl<'a> CategoryRepository<'a> {
 // ============================================================================
 // PresenceRuleRepository
 // ============================================================================
+/// Repository for presence rule CRUD operations.
 pub struct PresenceRuleRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -190,6 +192,7 @@ impl<'a> PresenceRuleRepository<'a> {
 // ============================================================================
 // LeaveBalanceRepository
 // ============================================================================
+/// Repository for annual leave balance CRUD operations.
 pub struct LeaveBalanceRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -312,6 +315,7 @@ impl<'a> LeaveBalanceRepository<'a> {
 // ============================================================================
 // TimesheetRepository
 // ============================================================================
+/// Repository for timesheet entry CRUD operations.
 pub struct TimesheetRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -459,6 +463,7 @@ impl<'a> TimesheetRepository<'a> {
 // ============================================================================
 // ApprovalWorkflowRepository
 // ============================================================================
+/// Repository for approval workflow CRUD operations.
 pub struct ApprovalWorkflowRepository<'a> {
     pool: &'a DatabasePool,
 }

@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 use crate::models::storage_tier3::Share;
 
+/// Repository for storage share link CRUD operations.
 pub struct StorageTier3Repository;
 
 impl StorageTier3Repository {

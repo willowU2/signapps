@@ -4,6 +4,7 @@ use crate::models::storage_tier2::{
 use sqlx::PgPool;
 use uuid::Uuid;
 
+/// Repository for file tags and version management.
 pub struct StorageTier2Repository;
 
 impl StorageTier2Repository {

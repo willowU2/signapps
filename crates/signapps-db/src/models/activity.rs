@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+/// A user activity event recording an action taken on an entity.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Activity {
     pub id: Uuid,

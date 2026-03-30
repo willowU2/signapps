@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use signapps_common::Result;
 use uuid::Uuid;
 
+/// Aggregated workload metrics summarising task counts by status.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WorkloadMetrics {
     pub total_tasks: i64,
@@ -13,12 +14,14 @@ pub struct WorkloadMetrics {
     pub blocked: i64,
 }
 
+/// Aggregated resource utilisation metrics showing bookings and hours.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ResourceMetrics {
     pub total_bookings: i64,
     pub hours_booked: f64,
 }
 
+/// Repository for querying scheduling and resource utilisation metrics.
 pub struct MetricsRepository<'a> {
     pool: &'a DatabasePool,
 }

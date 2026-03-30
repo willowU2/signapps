@@ -2,6 +2,7 @@ use crate::models::signature::*;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+/// Repository for signature envelopes, steps, and transition records.
 pub struct SignatureRepository {
     pool: PgPool,
 }

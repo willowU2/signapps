@@ -63,7 +63,7 @@ pub struct UserPreferences {
     pub updated_at: DateTime<Utc>,
 }
 
-/// Request to create or update user preferences.
+/// Partial update payload for user preferences fields.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserPreferencesUpdate {
     pub theme: Option<String>,
@@ -95,7 +95,7 @@ pub struct UserPreferencesUpdate {
     pub extra: Option<serde_json::Value>,
 }
 
-/// Sync request from client.
+/// Client request to synchronise user preferences with the server.
 #[derive(Debug, Clone, Deserialize)]
 pub struct PreferencesSyncRequest {
     pub preferences: UserPreferencesUpdate,
@@ -105,7 +105,7 @@ pub struct PreferencesSyncRequest {
     pub force_overwrite: bool,
 }
 
-/// Sync response to client.
+/// Response to a preferences sync request, returning the merged server state.
 #[derive(Debug, Clone, Serialize)]
 pub struct PreferencesSyncResponse {
     pub preferences: UserPreferences,
@@ -114,7 +114,7 @@ pub struct PreferencesSyncResponse {
     pub conflict_resolution: Option<String>,
 }
 
-/// Patch request for a specific section.
+/// Request to patch a specific section of user preferences.
 #[derive(Debug, Clone, Deserialize)]
 pub struct PreferencesPatchRequest {
     pub section: String,
@@ -123,7 +123,7 @@ pub struct PreferencesPatchRequest {
     pub device_id: String,
 }
 
-/// Conflict information.
+/// Details about a preferences sync conflict, including differing server and client versions.
 #[derive(Debug, Clone, Serialize)]
 pub struct ConflictInfo {
     pub has_conflict: bool,

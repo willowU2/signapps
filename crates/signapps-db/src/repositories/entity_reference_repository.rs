@@ -2,6 +2,7 @@ use crate::models::entity_reference::EntityReference;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+/// Repository for managing polymorphic entity relations.
 pub struct EntityReferenceRepository {
     pool: PgPool,
 }

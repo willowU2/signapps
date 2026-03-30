@@ -16,6 +16,7 @@ use uuid::Uuid;
 // TimeItem Repository
 // ============================================================================
 
+/// Repository for time item CRUD and query operations.
 pub struct TimeItemRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -518,6 +519,7 @@ impl<'a> TimeItemRepository<'a> {
 // TimeItem User Repository (Participants)
 // ============================================================================
 
+/// Repository for managing user participants on time items.
 pub struct TimeItemUserRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -600,6 +602,7 @@ impl<'a> TimeItemUserRepository<'a> {
 // TimeItem Group Repository
 // ============================================================================
 
+/// Repository for managing group participants on time items.
 pub struct TimeItemGroupRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -663,6 +666,7 @@ impl<'a> TimeItemGroupRepository<'a> {
 // TimeItem Dependency Repository
 // ============================================================================
 
+/// Repository for managing scheduling dependencies between time items.
 pub struct TimeItemDependencyRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -737,6 +741,7 @@ impl<'a> TimeItemDependencyRepository<'a> {
 // Recurrence Rule Repository
 // ============================================================================
 
+/// Repository for recurrence rule CRUD operations.
 pub struct RecurrenceRuleRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -831,6 +836,7 @@ impl<'a> RecurrenceRuleRepository<'a> {
 // Scheduling Resource Repository
 // ============================================================================
 
+/// Repository for scheduling resource CRUD operations.
 pub struct SchedulingResourceRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -934,6 +940,7 @@ impl<'a> SchedulingResourceRepository<'a> {
 // Scheduling Template Repository
 // ============================================================================
 
+/// Repository for scheduling template CRUD operations.
 pub struct SchedulingTemplateRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -1028,6 +1035,7 @@ impl<'a> SchedulingTemplateRepository<'a> {
 // Scheduling Preferences Repository
 // ============================================================================
 
+/// Repository for user scheduling preferences CRUD operations.
 pub struct SchedulingPreferencesRepository<'a> {
     pool: &'a DatabasePool,
 }

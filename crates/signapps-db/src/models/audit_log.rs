@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+/// An immutable audit log record capturing before/after data for a change made by an actor.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct AuditLogEntry {
     pub id: Uuid,

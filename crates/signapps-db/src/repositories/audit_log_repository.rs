@@ -2,6 +2,7 @@ use crate::models::audit_log::AuditLogEntry;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+/// Repository for persisting and querying immutable audit log entries.
 pub struct AuditLogRepository {
     pool: PgPool,
 }

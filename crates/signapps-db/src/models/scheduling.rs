@@ -9,6 +9,7 @@ use uuid::Uuid;
 // Enums
 // ============================================================================
 
+/// The variant of a scheduling time item (task, event, booking, etc.).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -36,6 +37,7 @@ impl std::fmt::Display for TimeItemType {
     }
 }
 
+/// The audience scope of a time item (personal, external, or team).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -55,6 +57,7 @@ impl std::fmt::Display for Scope {
     }
 }
 
+/// The visibility level of a time item, from private to fully public.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -67,6 +70,7 @@ pub enum Visibility {
     Public,
 }
 
+/// The lifecycle status of a time item.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -79,6 +83,7 @@ pub enum TimeItemStatus {
     Confirmed,
 }
 
+/// The priority level of a time item.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -89,6 +94,7 @@ pub enum Priority {
     Urgent,
 }
 
+/// The cognitive focus intensity required for a time item.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -99,6 +105,7 @@ pub enum FocusLevel {
     Break,
 }
 
+/// The physical or mental energy level needed to complete a time item.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -108,6 +115,7 @@ pub enum EnergyRequired {
     Low,
 }
 
+/// Preferred time-of-day slot for scheduling a time item.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -118,6 +126,7 @@ pub enum TimeOfDay {
     Evening,
 }
 
+/// The repeat frequency of a recurrence rule.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -129,6 +138,7 @@ pub enum RecurrenceFrequency {
     Custom,
 }
 
+/// The type of scheduling dependency between two time items.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -139,6 +149,7 @@ pub enum DependencyType {
     StartToFinish,
 }
 
+/// The role of a participant in a shared time item.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -149,6 +160,7 @@ pub enum ParticipantRole {
     Viewer,
 }
 
+/// The RSVP response status of a participant for a time item.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -163,6 +175,7 @@ pub enum RsvpStatus {
 // TimeItem Model
 // ============================================================================
 
+/// A unified scheduling item representing any schedulable unit (task, event, booking, shift, etc.).
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TimeItem {
     pub id: Uuid,
@@ -208,6 +221,7 @@ pub struct TimeItem {
     pub deleted_at: Option<DateTime<Utc>>,
 }
 
+/// Request to create a new time item.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateTimeItem {
@@ -242,6 +256,7 @@ pub struct CreateTimeItem {
     pub metadata: Option<serde_json::Value>,
 }
 
+/// Request to update an existing time item.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateTimeItem {
@@ -275,6 +290,7 @@ pub struct UpdateTimeItem {
     pub metadata: Option<serde_json::Value>,
 }
 
+/// Location data for a time item including name, address, and URL.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LocationInput {
@@ -283,6 +299,7 @@ pub struct LocationInput {
     pub url: Option<String>,
 }
 
+/// Request to reschedule a time item by changing its start/end time.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MoveTimeItem {
@@ -295,6 +312,7 @@ pub struct MoveTimeItem {
 // TimeItem Query
 // ============================================================================
 
+/// Query filters for listing time items with pagination and sorting.
 #[derive(Debug, Clone, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct TimeItemsQuery {
@@ -318,6 +336,7 @@ pub struct TimeItemsQuery {
     pub sort_order: Option<String>,
 }
 
+/// Paginated response containing a list of time items and total count.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TimeItemsResponse {
@@ -331,6 +350,7 @@ pub struct TimeItemsResponse {
 // TimeItem User (Participants)
 // ============================================================================
 
+/// A user participant associated with a time item, including their role and RSVP.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TimeItemUser {
     pub id: Uuid,
@@ -342,6 +362,7 @@ pub struct TimeItemUser {
     pub created_at: DateTime<Utc>,
 }
 
+/// Request to add a user participant to a time item.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AddTimeItemUser {
@@ -353,6 +374,7 @@ pub struct AddTimeItemUser {
 // TimeItem Group
 // ============================================================================
 
+/// A group participant associated with a time item and its access role.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TimeItemGroup {
     pub id: Uuid,
@@ -362,6 +384,7 @@ pub struct TimeItemGroup {
     pub created_at: DateTime<Utc>,
 }
 
+/// Request to add a group participant to a time item.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AddTimeItemGroup {
@@ -373,6 +396,7 @@ pub struct AddTimeItemGroup {
 // Share TimeItem
 // ============================================================================
 
+/// Request to share a time item with a set of users and/or groups.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ShareTimeItem {
@@ -384,6 +408,7 @@ pub struct ShareTimeItem {
 // TimeItem Dependency
 // ============================================================================
 
+/// A scheduling dependency between two time items defining their ordering constraint.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TimeItemDependency {
     pub id: Uuid,
@@ -394,6 +419,7 @@ pub struct TimeItemDependency {
     pub created_at: DateTime<Utc>,
 }
 
+/// Request to add a dependency between two time items.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AddDependency {
@@ -407,6 +433,7 @@ pub struct AddDependency {
 // Recurrence Rule
 // ============================================================================
 
+/// A recurrence rule defining how a time item repeats over time.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct RecurrenceRule {
     pub id: Uuid,
@@ -424,6 +451,7 @@ pub struct RecurrenceRule {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Input for creating or updating a recurrence rule.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RecurrenceRuleInput {
@@ -441,6 +469,7 @@ pub struct RecurrenceRuleInput {
 // Scheduling Resource
 // ============================================================================
 
+/// A tenant-scoped bookable resource (room, equipment, etc.) used in scheduling.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct SchedulingResource {
     pub id: Uuid,
@@ -456,6 +485,7 @@ pub struct SchedulingResource {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to create a new scheduling resource.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateSchedulingResource {
@@ -471,6 +501,7 @@ pub struct CreateSchedulingResource {
 // Template
 // ============================================================================
 
+/// A reusable scheduling template containing a set of pre-defined time items.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct SchedulingTemplate {
     pub id: Uuid,
@@ -485,6 +516,7 @@ pub struct SchedulingTemplate {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to create a new scheduling template.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateSchedulingTemplate {
@@ -498,6 +530,7 @@ pub struct CreateSchedulingTemplate {
 // User Scheduling Preferences
 // ============================================================================
 
+/// Per-user scheduling preferences including Pomodoro settings, working hours, and defaults.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SchedulingPreferences {
@@ -526,6 +559,7 @@ pub struct SchedulingPreferences {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to update a user's scheduling preferences.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateSchedulingPreferences {
@@ -554,6 +588,7 @@ pub struct UpdateSchedulingPreferences {
 // TimeItem with Relations
 // ============================================================================
 
+/// A time item hydrated with all related participants, groups, dependencies, and recurrence.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TimeItemWithRelations {

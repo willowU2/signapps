@@ -9,6 +9,7 @@ use uuid::Uuid;
 // Tenant Model (Enterprise/Organization)
 // ============================================================================
 
+/// A top-level tenant (organisation) with plan limits and branding settings.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Tenant {
     pub id: Uuid,
@@ -26,6 +27,7 @@ pub struct Tenant {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to create a new tenant.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateTenant {
     pub name: String,
@@ -35,6 +37,7 @@ pub struct CreateTenant {
     pub plan: Option<String>,
 }
 
+/// Request to update an existing tenant's settings or plan.
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateTenant {
     pub name: Option<String>,
@@ -52,6 +55,7 @@ pub struct UpdateTenant {
 // Workspace Model (Group within a Tenant)
 // ============================================================================
 
+/// A workspace grouping users and projects within a tenant.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Workspace {
     pub id: Uuid,
@@ -67,6 +71,7 @@ pub struct Workspace {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to create a new workspace within a tenant.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateWorkspace {
     pub name: String,
@@ -76,6 +81,7 @@ pub struct CreateWorkspace {
     pub is_default: Option<bool>,
 }
 
+/// Request to update an existing workspace.
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateWorkspace {
     pub name: Option<String>,
@@ -90,6 +96,7 @@ pub struct UpdateWorkspace {
 // Workspace Member
 // ============================================================================
 
+/// A member of a workspace with an assigned role.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct WorkspaceMember {
     pub id: Uuid,
@@ -99,6 +106,7 @@ pub struct WorkspaceMember {
     pub joined_at: DateTime<Utc>,
 }
 
+/// A workspace member row joined with user profile details.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct WorkspaceMemberWithUser {
     pub id: Uuid,
@@ -112,6 +120,7 @@ pub struct WorkspaceMemberWithUser {
     pub joined_at: DateTime<Utc>,
 }
 
+/// Request to add a user to a workspace with an optional role.
 #[derive(Debug, Clone, Deserialize)]
 pub struct AddWorkspaceMember {
     pub user_id: Uuid,
@@ -122,6 +131,7 @@ pub struct AddWorkspaceMember {
 // Project Model
 // ============================================================================
 
+/// A project within a tenant and optional workspace, tracking tasks and progress.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Project {
     pub id: Uuid,
@@ -143,6 +153,7 @@ pub struct Project {
     pub deleted_at: Option<DateTime<Utc>>,
 }
 
+/// Request to create a new project.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateProject {
     pub workspace_id: Option<Uuid>,
@@ -156,6 +167,7 @@ pub struct CreateProject {
     pub template_id: Option<Uuid>,
 }
 
+/// Request to update an existing project.
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateProject {
     pub workspace_id: Option<Uuid>,
@@ -173,6 +185,7 @@ pub struct UpdateProject {
 // Project Member
 // ============================================================================
 
+/// A member of a project with an assigned role.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct ProjectMember {
     pub id: Uuid,
@@ -186,6 +199,7 @@ pub struct ProjectMember {
 // Project with Tasks count
 // ============================================================================
 
+/// A project row joined with aggregated task completion statistics.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct ProjectWithStats {
     pub id: Uuid,
@@ -207,6 +221,7 @@ pub struct ProjectWithStats {
 // Resource Type (configurable per tenant)
 // ============================================================================
 
+/// A tenant-configurable resource type (e.g. room, equipment, vehicle).
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct ResourceType {
     pub id: Uuid,
@@ -218,6 +233,7 @@ pub struct ResourceType {
     pub created_at: DateTime<Utc>,
 }
 
+/// Request to create a new resource type for a tenant.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateResourceType {
     pub name: String,
@@ -230,6 +246,7 @@ pub struct CreateResourceType {
 // Enhanced Resource (with tenant support)
 // ============================================================================
 
+/// A tenant-scoped bookable resource with availability rules and approval settings.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TenantResource {
     pub id: Uuid,
@@ -255,6 +272,7 @@ pub struct TenantResource {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to create a new tenant resource.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateTenantResource {
     pub resource_type_id: Option<Uuid>,
@@ -270,6 +288,7 @@ pub struct CreateTenantResource {
     pub approver_ids: Option<Vec<Uuid>>,
 }
 
+/// Request to update an existing tenant resource.
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateTenantResource {
     pub name: Option<String>,
@@ -291,6 +310,7 @@ pub struct UpdateTenantResource {
 // Reservation (Booking with approval workflow)
 // ============================================================================
 
+/// A resource booking request with an optional approval workflow.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Reservation {
     pub id: Uuid,
@@ -307,6 +327,7 @@ pub struct Reservation {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to create a resource reservation linked to an optional event.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateReservation {
     pub resource_id: Uuid,
@@ -314,6 +335,7 @@ pub struct CreateReservation {
     pub notes: Option<String>,
 }
 
+/// Request to approve or reject a resource reservation.
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateReservationStatus {
     pub status: String,
@@ -324,6 +346,7 @@ pub struct UpdateReservationStatus {
 // Template Model
 // ============================================================================
 
+/// A reusable content template for projects, tasks, events, or checklists.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Template {
     pub id: Uuid,
@@ -343,6 +366,7 @@ pub struct Template {
     pub deleted_at: Option<DateTime<Utc>>,
 }
 
+/// Request to create a new content template.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateTemplate {
     pub workspace_id: Option<Uuid>,
@@ -355,6 +379,7 @@ pub struct CreateTemplate {
     pub is_public: Option<bool>,
 }
 
+/// Request to update an existing content template.
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateTemplate {
     pub name: Option<String>,
@@ -369,6 +394,7 @@ pub struct UpdateTemplate {
 // Label Model
 // ============================================================================
 
+/// A colour-coded label used to tag entities within a workspace.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Label {
     pub id: Uuid,
@@ -379,6 +405,7 @@ pub struct Label {
     pub created_at: DateTime<Utc>,
 }
 
+/// Request to create a new label within a workspace.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateLabel {
     pub workspace_id: Option<Uuid>,
@@ -390,6 +417,7 @@ pub struct CreateLabel {
 // Entity Label (polymorphic)
 // ============================================================================
 
+/// A polymorphic association attaching a label to an event, task, or project.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct EntityLabel {
     pub id: Uuid,
@@ -403,6 +431,7 @@ pub struct EntityLabel {
 // Enhanced Task (with project support)
 // ============================================================================
 
+/// A task scoped to a tenant, optionally linked to a project, event, and template.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TenantTask {
     pub id: Uuid,
@@ -426,6 +455,7 @@ pub struct TenantTask {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to create a new tenant task.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateTenantTask {
     pub calendar_id: Uuid,
@@ -445,6 +475,7 @@ pub struct CreateTenantTask {
 // Enhanced Calendar (with tenant support)
 // ============================================================================
 
+/// A calendar scoped to a tenant, supporting personal, group, enterprise, and resource types.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TenantCalendar {
     pub id: Uuid,
@@ -464,6 +495,7 @@ pub struct TenantCalendar {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to create a new tenant calendar.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateTenantCalendar {
     pub workspace_id: Option<Uuid>,

@@ -48,7 +48,7 @@ pub struct User {
     pub avatar_url: Option<String>,
 }
 
-/// Create user request.
+/// Request to create a new user account.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateUser {
     pub username: String,
@@ -78,7 +78,7 @@ impl Default for CreateUser {
     }
 }
 
-/// Update user request.
+/// Request to update an existing user's profile or role.
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct UpdateUser {
     pub email: Option<String>,

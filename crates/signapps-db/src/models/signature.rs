@@ -4,6 +4,7 @@ use sqlx::FromRow;
 use std::str::FromStr;
 use uuid::Uuid;
 
+/// The lifecycle status of a signature envelope.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum EnvelopeStatus {
@@ -65,6 +66,7 @@ impl FromStr for EnvelopeStatus {
     }
 }
 
+/// The status of an individual signing step within an envelope.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum StepStatus {
@@ -121,6 +123,7 @@ impl FromStr for StepStatus {
     }
 }
 
+/// The action a signer is required to perform for their envelope step.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum StepAction {
@@ -133,6 +136,7 @@ pub enum StepAction {
 
 // --- Structs ---
 
+/// A document signature envelope managing the signing workflow for a document.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct SignatureEnvelope {
     pub id: Uuid,
@@ -147,6 +151,7 @@ pub struct SignatureEnvelope {
     pub deleted_at: Option<DateTime<Utc>>,
 }
 
+/// A single ordered signing step within a signature envelope for one signer.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct EnvelopeStep {
     pub id: Uuid,
@@ -166,6 +171,7 @@ pub struct EnvelopeStep {
     pub updated_at: DateTime<Utc>,
 }
 
+/// An audit record of a status transition on a signature envelope.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct EnvelopeTransition {
     pub id: Uuid,
@@ -179,6 +185,7 @@ pub struct EnvelopeTransition {
     pub created_at: DateTime<Utc>,
 }
 
+/// Request to create a new signature envelope for a document.
 #[derive(Debug, Deserialize)]
 pub struct CreateEnvelope {
     pub title: String,
@@ -187,6 +194,7 @@ pub struct CreateEnvelope {
     pub metadata: Option<serde_json::Value>,
 }
 
+/// Request to add a signing step to an envelope.
 #[derive(Debug, Deserialize)]
 pub struct CreateStep {
     pub signer_email: Vec<u8>,

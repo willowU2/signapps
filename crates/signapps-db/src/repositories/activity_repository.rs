@@ -2,6 +2,7 @@ use crate::models::activity::Activity;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+/// Repository for recording and querying user activity events.
 pub struct ActivityRepository {
     pool: PgPool,
 }

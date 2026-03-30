@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+/// The input type of a form field.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FieldType {
     Text,
@@ -15,6 +16,7 @@ pub enum FieldType {
     Number,
 }
 
+/// A single field definition within a form, including its type, label, and options.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FormField {
     pub id: Uuid,
@@ -26,6 +28,7 @@ pub struct FormField {
     pub placeholder: Option<String>,
 }
 
+/// A form with a title, description, and a list of field definitions.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Form {
     pub id: Uuid,
@@ -38,12 +41,14 @@ pub struct Form {
     pub updated_at: DateTime<Utc>,
 }
 
+/// A single field answer within a form submission.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Answer {
     pub field_id: Uuid,
     pub value: serde_json::Value,
 }
 
+/// A submitted form response containing all field answers.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct FormResponse {
     pub id: Uuid,
@@ -53,6 +58,7 @@ pub struct FormResponse {
     pub submitted_at: DateTime<Utc>,
 }
 
+/// Request to create a new form with its fields.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateForm {
     pub title: String,
@@ -61,6 +67,7 @@ pub struct CreateForm {
     pub fields: Vec<FormField>,
 }
 
+/// Request to update an existing form's title, description, fields, or publication status.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateForm {
     pub title: Option<String>,
@@ -69,6 +76,7 @@ pub struct UpdateForm {
     pub is_published: Option<bool>,
 }
 
+/// Request to submit a filled-in form response.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SubmitResponse {
     pub form_id: Uuid,

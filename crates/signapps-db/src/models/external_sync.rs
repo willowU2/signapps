@@ -12,6 +12,7 @@ use uuid::Uuid;
 // Provider Connection (OAuth tokens)
 // ============================================================================
 
+/// An external calendar provider supported for OAuth synchronisation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
@@ -47,6 +48,7 @@ impl std::str::FromStr for CalendarProvider {
     }
 }
 
+/// The current synchronisation state of a provider connection.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
@@ -57,6 +59,7 @@ pub enum SyncStatus {
     Paused,
 }
 
+/// An OAuth connection to an external calendar provider storing tokens and sync state.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct ProviderConnection {
     pub id: Uuid,
@@ -77,6 +80,7 @@ pub struct ProviderConnection {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to create a new provider OAuth connection.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateProviderConnection {
     pub provider: String,
@@ -89,6 +93,7 @@ pub struct CreateProviderConnection {
     pub caldav_username: Option<String>,
 }
 
+/// Request to update tokens or sync state for an existing provider connection.
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateProviderConnection {
     pub access_token: Option<String>,
@@ -104,6 +109,7 @@ pub struct UpdateProviderConnection {
 // External Calendar (discovered from provider)
 // ============================================================================
 
+/// A calendar discovered from an external provider and associated with a connection.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct ExternalCalendar {
     pub id: Uuid,
@@ -122,6 +128,7 @@ pub struct ExternalCalendar {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to register a discovered external calendar.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateExternalCalendar {
     pub external_id: String,
@@ -133,6 +140,7 @@ pub struct CreateExternalCalendar {
     pub is_readonly: Option<bool>,
 }
 
+/// Request to update an external calendar's settings or sync token.
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateExternalCalendar {
     pub name: Option<String>,
@@ -147,6 +155,7 @@ pub struct UpdateExternalCalendar {
 // Sync Configuration
 // ============================================================================
 
+/// The direction in which calendar events are synchronised between local and external.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -156,6 +165,7 @@ pub enum SyncDirection {
     Bidirectional,
 }
 
+/// Strategy for resolving sync conflicts between a local and external event.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -166,6 +176,7 @@ pub enum ConflictResolution {
     Ask,
 }
 
+/// Configuration linking a local calendar to an external calendar for automatic sync.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct SyncConfig {
     pub id: Uuid,
@@ -187,6 +198,7 @@ pub struct SyncConfig {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Request to create a sync configuration between a local and external calendar.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateSyncConfig {
     pub local_calendar_id: Uuid,
@@ -202,6 +214,7 @@ pub struct CreateSyncConfig {
     pub auto_sync_interval_minutes: Option<i32>,
 }
 
+/// Request to update an existing sync configuration.
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateSyncConfig {
     pub sync_direction: Option<String>,
@@ -220,6 +233,7 @@ pub struct UpdateSyncConfig {
 // Sync Log (history)
 // ============================================================================
 
+/// A historical record of a single sync run for a given sync configuration.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct SyncLog {
     pub id: Uuid,
@@ -238,6 +252,7 @@ pub struct SyncLog {
     pub error_details: Option<serde_json::Value>,
 }
 
+/// Request to persist a sync log entry after a sync run.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateSyncLog {
     pub direction: String,
@@ -255,6 +270,7 @@ pub struct CreateSyncLog {
 // Sync Conflict
 // ============================================================================
 
+/// A detected conflict between a local event and its external counterpart during sync.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct SyncConflict {
     pub id: Uuid,
@@ -273,6 +289,7 @@ pub struct SyncConflict {
     pub created_at: DateTime<Utc>,
 }
 
+/// Request to record a new sync conflict.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateSyncConflict {
     pub local_event_id: Option<Uuid>,
@@ -284,6 +301,7 @@ pub struct CreateSyncConflict {
     pub external_updated_at: Option<DateTime<Utc>>,
 }
 
+/// Request to mark a sync conflict as resolved with a chosen resolution strategy.
 #[derive(Debug, Clone, Deserialize)]
 pub struct ResolveConflict {
     pub resolution: String, // local, remote, merged, skipped
@@ -293,6 +311,7 @@ pub struct ResolveConflict {
 // Event Mapping
 // ============================================================================
 
+/// A mapping between a local event ID and its corresponding external event ID for sync tracking.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct EventMapping {
     pub id: Uuid,
@@ -306,6 +325,7 @@ pub struct EventMapping {
     pub external_checksum: Option<String>,
 }
 
+/// Request to create a new local-to-external event mapping.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateEventMapping {
     pub local_event_id: Uuid,
@@ -320,6 +340,7 @@ pub struct CreateEventMapping {
 // OAuth State (CSRF protection)
 // ============================================================================
 
+/// A short-lived OAuth state token used for CSRF protection during the OAuth flow.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct OAuthState {
     pub id: Uuid,
@@ -331,6 +352,7 @@ pub struct OAuthState {
     pub expires_at: DateTime<Utc>,
 }
 
+/// Request to persist a new OAuth state token before redirecting the user.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateOAuthState {
     pub state: String,
@@ -342,6 +364,7 @@ pub struct CreateOAuthState {
 // API Response types
 // ============================================================================
 
+/// API response for a provider connection, omitting sensitive token fields.
 #[derive(Debug, Clone, Serialize)]
 pub struct ProviderConnectionResponse {
     pub id: Uuid,
@@ -371,12 +394,14 @@ impl From<ProviderConnection> for ProviderConnectionResponse {
     }
 }
 
+/// Response containing an OAuth authorisation URL and its associated state token.
 #[derive(Debug, Clone, Serialize)]
 pub struct OAuthUrlResponse {
     pub url: String,
     pub state: String,
 }
 
+/// Callback payload received from the external OAuth provider after user authorisation.
 #[derive(Debug, Clone, Deserialize)]
 pub struct OAuthCallbackRequest {
     pub code: String,

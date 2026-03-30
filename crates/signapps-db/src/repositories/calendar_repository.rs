@@ -8,6 +8,7 @@ use uuid::Uuid;
 // ============================================================================
 // Calendar Repository
 // ============================================================================
+/// Repository for calendar CRUD and membership operations.
 pub struct CalendarRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -120,6 +121,7 @@ impl<'a> CalendarRepository<'a> {
 // ============================================================================
 // Calendar Member Repository (Sharing)
 // ============================================================================
+/// Repository for managing calendar sharing and member roles.
 pub struct CalendarMemberRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -203,6 +205,7 @@ impl<'a> CalendarMemberRepository<'a> {
 // ============================================================================
 // Event Repository
 // ============================================================================
+/// Repository for calendar event CRUD operations.
 pub struct EventRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -401,6 +404,7 @@ impl<'a> EventRepository<'a> {
 // ============================================================================
 // Event Attendee Repository
 // ============================================================================
+/// Repository for event attendee and RSVP operations.
 pub struct EventAttendeeRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -474,6 +478,7 @@ impl<'a> EventAttendeeRepository<'a> {
 // ============================================================================
 // Task Repository
 // ============================================================================
+/// Repository for hierarchical task CRUD operations.
 pub struct TaskRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -717,6 +722,7 @@ impl<'a> TaskRepository<'a> {
 // ============================================================================
 // Resource Repository
 // ============================================================================
+/// Repository for bookable resource CRUD operations.
 pub struct ResourceRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -825,6 +831,7 @@ impl<'a> ResourceRepository<'a> {
 // ============================================================================
 // Floor Plan Repository
 // ============================================================================
+/// Repository for floor plan CRUD operations.
 pub struct FloorPlanRepository<'a> {
     pool: &'a DatabasePool,
 }

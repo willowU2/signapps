@@ -9,6 +9,7 @@ use uuid::Uuid;
 // ============================================================================
 // Provider Connection Repository
 // ============================================================================
+/// Repository for OAuth provider connection CRUD operations.
 pub struct ProviderConnectionRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -180,6 +181,7 @@ impl<'a> ProviderConnectionRepository<'a> {
 // ============================================================================
 // External Calendar Repository
 // ============================================================================
+/// Repository for external calendar CRUD operations.
 pub struct ExternalCalendarRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -287,6 +289,7 @@ impl<'a> ExternalCalendarRepository<'a> {
 // ============================================================================
 // Sync Config Repository
 // ============================================================================
+/// Repository for sync configuration CRUD operations.
 pub struct SyncConfigRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -431,6 +434,7 @@ impl<'a> SyncConfigRepository<'a> {
 // ============================================================================
 // Sync Log Repository
 // ============================================================================
+/// Repository for sync log history CRUD operations.
 pub struct SyncLogRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -506,6 +510,7 @@ impl<'a> SyncLogRepository<'a> {
 // ============================================================================
 // Sync Conflict Repository
 // ============================================================================
+/// Repository for sync conflict detection and resolution operations.
 pub struct SyncConflictRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -607,6 +612,7 @@ impl<'a> SyncConflictRepository<'a> {
 // ============================================================================
 // OAuth State Repository
 // ============================================================================
+/// Repository for OAuth CSRF state token operations.
 pub struct OAuthStateRepository<'a> {
     pool: &'a DatabasePool,
 }
@@ -664,6 +670,7 @@ impl<'a> OAuthStateRepository<'a> {
 // ============================================================================
 // Event Mapping Repository
 // ============================================================================
+/// Repository for local-to-external event ID mapping operations.
 pub struct EventMappingRepository<'a> {
     pool: &'a DatabasePool,
 }
