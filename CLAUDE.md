@@ -405,13 +405,23 @@ Claude DOIT invoquer ces outils automatiquement. OBLIGATOIRE.
 
 ### Local Skills (`.agents/skills/`)
 
-- `rust_api_endpoint` — Créer un endpoint Rust
+**Enterprise Governance (prioritaires) :**
+- `claude_md_governance` — Audit et maintien du CLAUDE.md (structure, cohérence, directives)
+- `enterprise_code_review` — Revue auto des 5 piliers avant de déclarer "terminé"
+- `rust_enterprise_handler` — Template handler complet (tracing + utoipa + AppError + tests)
+- `observability_tracing` — Standards tracing, zéro-print, spans, métriques
+
+**Implementation Patterns :**
+- `rust_api_endpoint` — Pattern CRUD Axum
+- `rust_db_repository` — Repository pattern sqlx
+- `rust_error_handling` — thiserror/anyhow patterns
+- `rust_tracing_logging` — Configuration tracing
 - `nextjs_component` — Créer un composant Next.js
 - `db_migrations` — Migrations avec sqlx
 - `rust_debugging_workflow` — Debug patterns
 - `playwright_e2e_testing` — Tests E2E
 
-### Priorité : Superpowers > BMAD > Local Skills
+### Priorité : Enterprise Governance > Superpowers > BMAD > Implementation Patterns
 
 ---
 
