@@ -40,6 +40,7 @@ pub struct UpdateAiThreadRequest {
 // Handlers
 // ---------------------------------------------------------------------------
 
+#[tracing::instrument(skip_all)]
 pub async fn list_ai_threads(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -66,6 +67,7 @@ pub async fn list_ai_threads(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn create_ai_thread(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -100,6 +102,7 @@ pub async fn create_ai_thread(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn get_ai_thread(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -130,6 +133,7 @@ pub async fn get_ai_thread(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn update_ai_thread(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -189,6 +193,7 @@ pub async fn update_ai_thread(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn delete_ai_thread(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

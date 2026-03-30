@@ -184,6 +184,7 @@ pub struct RuleQueryParams {
 // ============================================================================
 
 /// List all coverage templates
+#[tracing::instrument(skip_all)]
 pub async fn list_templates(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -208,6 +209,7 @@ pub async fn list_templates(
 }
 
 /// Create a coverage template
+#[tracing::instrument(skip_all)]
 pub async fn create_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -268,6 +270,7 @@ pub async fn create_template(
 }
 
 /// Get a single template
+#[tracing::instrument(skip_all)]
 pub async fn get_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -291,6 +294,7 @@ pub async fn get_template(
 }
 
 /// Update a template
+#[tracing::instrument(skip_all)]
 pub async fn update_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -362,6 +366,7 @@ pub async fn update_template(
 }
 
 /// Delete a template
+#[tracing::instrument(skip_all)]
 pub async fn delete_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -404,6 +409,7 @@ pub async fn delete_template(
 }
 
 /// Duplicate a template
+#[tracing::instrument(skip_all)]
 pub async fn duplicate_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -457,6 +463,7 @@ pub async fn duplicate_template(
 // ============================================================================
 
 /// List all coverage rules
+#[tracing::instrument(skip_all)]
 pub async fn list_rules(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -501,6 +508,7 @@ pub async fn list_rules(
 }
 
 /// Create a coverage rule
+#[tracing::instrument(skip_all)]
 pub async fn create_rule(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -593,6 +601,7 @@ pub async fn create_rule(
 }
 
 /// Get a single rule
+#[tracing::instrument(skip_all)]
 pub async fn get_rule(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -615,6 +624,7 @@ pub async fn get_rule(
 }
 
 /// Update a rule
+#[tracing::instrument(skip_all)]
 pub async fn update_rule(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -677,6 +687,7 @@ pub async fn update_rule(
 }
 
 /// Delete a rule
+#[tracing::instrument(skip_all)]
 pub async fn delete_rule(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -702,6 +713,7 @@ pub async fn delete_rule(
 }
 
 /// Get rules by org node
+#[tracing::instrument(skip_all)]
 pub async fn get_rules_by_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -738,6 +750,7 @@ pub async fn get_rules_by_node(
 }
 
 /// Get effective coverage for a node (with inheritance)
+#[tracing::instrument(skip_all)]
 pub async fn get_effective_coverage(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,

@@ -257,6 +257,7 @@ pub struct ConflictQueryParams {
 // ============================================================================
 
 /// Validate coverage for an organization node
+#[tracing::instrument(skip_all)]
 pub async fn validate_coverage(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -380,6 +381,7 @@ pub async fn validate_coverage(
 }
 
 /// Analyze gaps across organization
+#[tracing::instrument(skip_all)]
 pub async fn analyze_gaps(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -488,6 +490,7 @@ pub async fn analyze_gaps(
 }
 
 /// Simulate leave request impact
+#[tracing::instrument(skip_all)]
 pub async fn simulate_leave(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -629,6 +632,7 @@ pub async fn simulate_leave(
 }
 
 /// Simulate shift change impact
+#[tracing::instrument(skip_all)]
 pub async fn simulate_shift_change(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -761,6 +765,7 @@ pub async fn simulate_shift_change(
 }
 
 /// Get all scheduling conflicts
+#[tracing::instrument(skip_all)]
 pub async fn get_conflicts(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,

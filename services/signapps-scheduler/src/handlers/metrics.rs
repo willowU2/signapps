@@ -17,6 +17,7 @@ pub struct MetricsQuery {
 }
 
 /// Retrieve workload metrics for the authenticated user
+#[tracing::instrument(skip_all)]
 pub async fn get_workload(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -33,6 +34,7 @@ pub async fn get_workload(
 }
 
 /// Retrieve resource metrics for the authenticated user
+#[tracing::instrument(skip_all)]
 pub async fn get_resources(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

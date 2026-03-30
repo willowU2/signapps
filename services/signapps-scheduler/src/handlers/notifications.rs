@@ -9,6 +9,7 @@ use tokio_stream::{wrappers::BroadcastStream, StreamExt};
 
 use crate::AppState;
 
+#[tracing::instrument(skip_all)]
 pub async fn sse_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

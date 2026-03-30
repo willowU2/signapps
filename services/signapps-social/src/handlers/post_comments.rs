@@ -10,6 +10,7 @@ use crate::models::{CreatePostCommentRequest, PostComment};
 use crate::AppState;
 use signapps_common::Claims;
 
+#[tracing::instrument(skip_all)]
 pub async fn list_comments(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -30,6 +31,7 @@ pub async fn list_comments(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn create_comment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -56,6 +58,7 @@ pub async fn create_comment(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn delete_comment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

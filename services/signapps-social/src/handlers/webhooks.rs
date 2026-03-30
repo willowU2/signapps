@@ -10,6 +10,7 @@ use crate::models::{CreateWebhookRequest, UpdateWebhookRequest, Webhook};
 use crate::AppState;
 use signapps_common::Claims;
 
+#[tracing::instrument(skip_all)]
 pub async fn list_webhooks(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -29,6 +30,7 @@ pub async fn list_webhooks(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn create_webhook(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -61,6 +63,7 @@ pub async fn create_webhook(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn update_webhook(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -108,6 +111,7 @@ pub async fn update_webhook(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn delete_webhook(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -127,6 +131,7 @@ pub async fn delete_webhook(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn test_webhook(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

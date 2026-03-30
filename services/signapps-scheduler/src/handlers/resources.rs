@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 
+#[tracing::instrument(skip_all)]
 pub async fn list_resources(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -21,6 +22,7 @@ pub async fn list_resources(
     })))
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn get_resource(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,

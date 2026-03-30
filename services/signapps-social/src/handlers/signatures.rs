@@ -10,6 +10,7 @@ use crate::models::{CreateSignatureRequest, Signature, UpdateSignatureRequest};
 use crate::AppState;
 use signapps_common::Claims;
 
+#[tracing::instrument(skip_all)]
 pub async fn list_signatures(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -29,6 +30,7 @@ pub async fn list_signatures(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn create_signature(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -54,6 +56,7 @@ pub async fn create_signature(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn update_signature(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -103,6 +106,7 @@ pub async fn update_signature(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn delete_signature(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -65,6 +65,7 @@ pub struct AttendanceQueryParams {
 ///
 /// Opens a new attendance record for the given employee.
 /// Returns `409 Conflict` if the employee is already clocked in.
+#[tracing::instrument(skip_all)]
 pub async fn clock_in(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -118,6 +119,7 @@ pub async fn clock_in(
 ///
 /// Closes the most recent open attendance record for the given employee.
 /// Returns `404` if the employee is not currently clocked in.
+#[tracing::instrument(skip_all)]
 pub async fn clock_out(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -156,6 +158,7 @@ pub async fn clock_out(
 /// GET /api/v1/workforce/attendance
 ///
 /// Returns attendance records for the tenant, optionally filtered by employee.
+#[tracing::instrument(skip_all)]
 pub async fn list_attendance(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,

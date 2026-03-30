@@ -110,6 +110,7 @@ pub struct TriggerBackupRequest {
 // ---------------------------------------------------------------------------
 
 /// GET /api/v1/admin/backups — list backup history (most recent first).
+#[tracing::instrument(skip_all)]
 pub async fn list_backups(State(store): State<SharedBackupStore>) -> Result<Json<Vec<BackupJob>>> {
     let store = store.lock().expect("backup store lock poisoned");
     let mut jobs: Vec<BackupJob> = store.jobs.values().cloned().collect();
@@ -120,6 +121,7 @@ pub async fn list_backups(State(store): State<SharedBackupStore>) -> Result<Json
 /// POST /api/v1/admin/backups — trigger a manual backup.
 ///
 /// Spawns pg_dump in background, saves to BACKUP_DIR.
+#[tracing::instrument(skip_all)]
 pub async fn trigger_backup(
     State(store): State<SharedBackupStore>,
     Json(req): Json<TriggerBackupRequest>,
@@ -180,6 +182,7 @@ pub async fn trigger_backup(
 }
 
 /// GET /api/v1/admin/backups/:id — get backup details.
+#[tracing::instrument(skip_all)]
 pub async fn get_backup(
     State(store): State<SharedBackupStore>,
     Path(id): Path<Uuid>,
@@ -196,6 +199,7 @@ pub async fn get_backup(
 /// DELETE /api/v1/admin/backups/:id — delete a backup record.
 ///
 /// Deletes backup record and associated file from disk.
+#[tracing::instrument(skip_all)]
 pub async fn delete_backup(
     State(store): State<SharedBackupStore>,
     Path(id): Path<Uuid>,
@@ -222,6 +226,7 @@ pub async fn delete_backup(
 ///
 /// After persisting the new config, re-registers (or creates) the `signapps-backup`
 /// cron job in the scheduler so the new expression takes effect immediately.
+#[tracing::instrument(skip_all)]
 pub async fn update_backup_config(
     State(store): State<SharedBackupStore>,
     Json(config): Json<BackupConfig>,
@@ -286,6 +291,7 @@ pub async fn update_backup_config(
 }
 
 /// GET /api/v1/admin/backups/config — retrieve current backup configuration.
+#[tracing::instrument(skip_all)]
 pub async fn get_backup_config(
     State(store): State<SharedBackupStore>,
 ) -> Result<Json<BackupConfig>> {

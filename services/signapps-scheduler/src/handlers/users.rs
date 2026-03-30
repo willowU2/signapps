@@ -9,6 +9,7 @@ use signapps_common::Claims;
 
 use crate::AppState;
 
+#[tracing::instrument(skip_all)]
 pub async fn list_users(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,

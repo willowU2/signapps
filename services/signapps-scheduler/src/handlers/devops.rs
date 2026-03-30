@@ -91,6 +91,7 @@ pub struct CreateDeploymentRequest {
 // ============================================================================
 
 /// GET /api/v1/devops/changelog
+#[tracing::instrument(skip_all)]
 pub async fn list_changelog(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -112,6 +113,7 @@ pub async fn list_changelog(
 }
 
 /// POST /api/v1/devops/changelog
+#[tracing::instrument(skip_all)]
 pub async fn create_changelog(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -153,6 +155,7 @@ pub async fn create_changelog(
 // ============================================================================
 
 /// GET /api/v1/devops/pipelines
+#[tracing::instrument(skip_all)]
 pub async fn list_pipelines(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -174,6 +177,7 @@ pub async fn list_pipelines(
 }
 
 /// POST /api/v1/devops/pipelines
+#[tracing::instrument(skip_all)]
 pub async fn create_pipeline(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -208,6 +212,7 @@ pub async fn create_pipeline(
 }
 
 /// PUT /api/v1/devops/pipelines/:id
+#[tracing::instrument(skip_all)]
 pub async fn update_pipeline(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -242,6 +247,7 @@ pub async fn update_pipeline(
 // ============================================================================
 
 /// GET /api/v1/devops/deployments
+#[tracing::instrument(skip_all)]
 pub async fn list_deployments(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -263,6 +269,7 @@ pub async fn list_deployments(
 }
 
 /// POST /api/v1/devops/deployments
+#[tracing::instrument(skip_all)]
 pub async fn create_deployment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

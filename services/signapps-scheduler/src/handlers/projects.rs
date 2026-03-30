@@ -20,6 +20,7 @@ pub struct ProjectListQuery {
     pub offset: Option<i64>,
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -46,6 +47,7 @@ pub async fn list(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -61,6 +63,7 @@ pub async fn create(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn get_by_id(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -82,6 +85,7 @@ pub async fn get_by_id(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -98,6 +102,7 @@ pub async fn update(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn delete(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

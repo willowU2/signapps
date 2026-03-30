@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 
+#[tracing::instrument(skip_all)]
 pub async fn list_workspaces(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -24,6 +25,7 @@ pub async fn list_workspaces(
     })))
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn get_workspace(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,

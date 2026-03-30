@@ -17,6 +17,7 @@ pub struct MediaQuery {
     pub sort: Option<String>,
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn list_media(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -64,6 +65,7 @@ pub async fn list_media(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn create_media(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -96,6 +98,7 @@ pub async fn create_media(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn delete_media(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

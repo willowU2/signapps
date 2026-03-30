@@ -20,6 +20,7 @@ pub struct DateRangeParams {
     pub end: Option<DateTime<Utc>>,
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn list_events(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -45,6 +46,7 @@ pub async fn list_events(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn get_event(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -62,6 +64,7 @@ pub async fn get_event(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn create_event(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -80,6 +83,7 @@ pub async fn create_event(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn update_event(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -97,6 +101,7 @@ pub async fn update_event(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn delete_event(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -113,6 +118,7 @@ pub async fn delete_event(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn list_attendees(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -129,6 +135,7 @@ pub async fn list_attendees(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn add_attendee(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -151,6 +158,7 @@ pub struct UpdateRsvpPayload {
     pub rsvp_status: String,
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn update_rsvp(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -168,6 +176,7 @@ pub async fn update_rsvp(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn remove_attendee(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

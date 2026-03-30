@@ -55,6 +55,7 @@ pub struct UpdateProgressRequest {
 // ============================================================================
 
 /// GET /api/v1/learning/courses
+#[tracing::instrument(skip_all)]
 pub async fn list_courses(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -118,6 +119,7 @@ pub async fn list_courses(
 }
 
 /// GET /api/v1/learning/courses/:id
+#[tracing::instrument(skip_all)]
 pub async fn get_course(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -157,6 +159,7 @@ pub async fn get_course(
 }
 
 /// PUT /api/v1/learning/courses/:id/progress
+#[tracing::instrument(skip_all)]
 pub async fn update_progress(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

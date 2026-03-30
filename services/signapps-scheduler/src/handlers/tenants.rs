@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 
+#[tracing::instrument(skip_all)]
 pub async fn list_tenants(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -30,6 +31,7 @@ pub async fn list_tenants(
     Ok(Json(json!({ "data": tenants })))
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn get_tenant(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -17,6 +17,7 @@ pub struct InboxQuery {
     pub item_type: Option<String>,
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn list_inbox(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -56,6 +57,7 @@ pub async fn list_inbox(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn mark_read(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -89,6 +91,7 @@ pub async fn mark_read(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn reply_inbox(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

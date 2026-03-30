@@ -19,12 +19,14 @@ use crate::AppState;
 use signapps_common::Result;
 
 /// Get current DNS configuration.
+#[tracing::instrument(skip_all)]
 pub async fn get_dns_config(State(state): State<AppState>) -> Result<Json<DnsServiceConfig>> {
     let config = state.dns_config.read().await;
     Ok(Json(config.clone()))
 }
 
 /// Update DNS configuration.
+#[tracing::instrument(skip_all)]
 pub async fn update_dns_config(
     State(state): State<AppState>,
     Json(request): Json<UpdateDnsConfigRequest>,
@@ -78,12 +80,14 @@ pub struct UpdateDnsConfigRequest {
 }
 
 /// Get all DNS blocklists.
+#[tracing::instrument(skip_all)]
 pub async fn list_blocklists(State(state): State<AppState>) -> Result<Json<Vec<DnsBlocklist>>> {
     let blocklists = state.blocklists.read().await;
     Ok(Json(blocklists.clone()))
 }
 
 /// Get a specific blocklist.
+#[tracing::instrument(skip_all)]
 pub async fn get_blocklist(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -110,6 +114,7 @@ fn default_true() -> bool {
 }
 
 /// Add a new blocklist.
+#[tracing::instrument(skip_all)]
 pub async fn add_blocklist(
     State(state): State<AppState>,
     Json(request): Json<CreateBlocklistRequest>,
@@ -144,6 +149,7 @@ pub async fn add_blocklist(
 
 /// Update a blocklist.
 #[allow(dead_code)]
+#[tracing::instrument(skip_all)]
 pub async fn update_blocklist(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -174,6 +180,7 @@ pub struct UpdateBlocklistRequest {
 }
 
 /// Delete a blocklist.
+#[tracing::instrument(skip_all)]
 pub async fn delete_blocklist(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -191,6 +198,7 @@ pub async fn delete_blocklist(
 }
 
 /// Refresh a blocklist (re-download).
+#[tracing::instrument(skip_all)]
 pub async fn refresh_blocklist(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -225,12 +233,14 @@ pub struct RefreshBlocklistResponse {
 }
 
 /// Get DNS statistics.
+#[tracing::instrument(skip_all)]
 pub async fn get_dns_stats(State(state): State<AppState>) -> Result<Json<DnsStats>> {
     let stats = state.dns_stats.read().await;
     Ok(Json(stats.clone()))
 }
 
 /// Reset DNS statistics.
+#[tracing::instrument(skip_all)]
 pub async fn reset_dns_stats(State(state): State<AppState>) -> Result<Json<ResetStatsResponse>> {
     let mut stats = state.dns_stats.write().await;
     *stats = DnsStats::default();
@@ -249,6 +259,7 @@ pub struct ResetStatsResponse {
 }
 
 /// Get custom DNS records.
+#[tracing::instrument(skip_all)]
 pub async fn list_dns_records(State(state): State<AppState>) -> Result<Json<Vec<DnsRecord>>> {
     let config = state.dns_config.read().await;
     Ok(Json(config.custom_records.clone()))
@@ -269,6 +280,7 @@ fn default_ttl() -> u32 {
 }
 
 /// Add a custom DNS record.
+#[tracing::instrument(skip_all)]
 pub async fn add_dns_record(
     State(state): State<AppState>,
     Json(request): Json<AddDnsRecordRequest>,
@@ -316,6 +328,7 @@ pub async fn add_dns_record(
 }
 
 /// Delete a custom DNS record.
+#[tracing::instrument(skip_all)]
 pub async fn delete_dns_record(
     State(state): State<AppState>,
     Json(request): Json<DeleteDnsRecordRequest>,
@@ -369,6 +382,7 @@ fn is_valid_dns_server(server: &str) -> bool {
 /// Uses the upstream resolvers configured in `DnsConfig`. Performs a real
 /// `A`/`AAAA` lookup via `hickory-resolver` for those record types and falls
 /// back to `std::net::ToSocketAddrs` for others.
+#[tracing::instrument(skip_all)]
 pub async fn query_dns(
     State(state): State<AppState>,
     Json(request): Json<DnsQueryRequest>,
@@ -506,6 +520,7 @@ pub struct DnsQueryResponse {
 }
 
 /// Flush DNS cache.
+#[tracing::instrument(skip_all)]
 pub async fn flush_dns_cache(State(_state): State<AppState>) -> Result<Json<FlushCacheResponse>> {
     // In a real implementation, this would clear the DNS cache
     tracing::info!("DNS cache flushed");

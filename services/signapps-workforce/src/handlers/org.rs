@@ -123,6 +123,7 @@ pub struct TreeQueryParams {
 // ============================================================================
 
 /// Get the full organizational tree
+#[tracing::instrument(skip_all)]
 pub async fn get_tree(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -191,6 +192,7 @@ pub async fn get_tree(
 }
 
 /// Create a new organization node
+#[tracing::instrument(skip_all)]
 pub async fn create_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -267,6 +269,7 @@ pub async fn create_node(
 }
 
 /// Get a single organization node
+#[tracing::instrument(skip_all)]
 pub async fn get_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -291,6 +294,7 @@ pub async fn get_node(
 }
 
 /// Update an organization node
+#[tracing::instrument(skip_all)]
 pub async fn update_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -343,6 +347,7 @@ pub async fn update_node(
 }
 
 /// Delete an organization node
+#[tracing::instrument(skip_all)]
 pub async fn delete_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -432,6 +437,7 @@ pub async fn delete_node(
 }
 
 /// Move a node to a new parent
+#[tracing::instrument(skip_all)]
 pub async fn move_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -512,6 +518,7 @@ pub async fn move_node(
 }
 
 /// Get direct children of a node
+#[tracing::instrument(skip_all)]
 pub async fn get_children(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -538,6 +545,7 @@ pub async fn get_children(
 }
 
 /// Get all descendants of a node (using closure table)
+#[tracing::instrument(skip_all)]
 pub async fn get_descendants(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -565,6 +573,7 @@ pub async fn get_descendants(
 }
 
 /// Get all ancestors of a node (path to root)
+#[tracing::instrument(skip_all)]
 pub async fn get_ancestors(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -592,6 +601,7 @@ pub async fn get_ancestors(
 }
 
 /// List all node types for tenant
+#[tracing::instrument(skip_all)]
 pub async fn list_node_types(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -616,6 +626,7 @@ pub async fn list_node_types(
 }
 
 /// Create a new node type
+#[tracing::instrument(skip_all)]
 pub async fn create_node_type(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -661,6 +672,7 @@ pub async fn create_node_type(
 }
 
 /// Delete a node type
+#[tracing::instrument(skip_all)]
 pub async fn delete_node_type(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,

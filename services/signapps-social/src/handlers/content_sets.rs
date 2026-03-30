@@ -10,6 +10,7 @@ use crate::models::{ContentSet, CreateContentSetRequest};
 use crate::AppState;
 use signapps_common::Claims;
 
+#[tracing::instrument(skip_all)]
 pub async fn list_content_sets(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -29,6 +30,7 @@ pub async fn list_content_sets(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn create_content_set(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -70,6 +72,7 @@ pub async fn create_content_set(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn delete_content_set(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

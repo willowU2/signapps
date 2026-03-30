@@ -48,6 +48,7 @@ async fn log_time_item_activity(
 // ============================================================================
 
 /// List time items with filters.
+#[tracing::instrument(skip_all)]
 pub async fn list_time_items(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -66,6 +67,7 @@ pub async fn list_time_items(
 }
 
 /// Get a single time item by ID.
+#[tracing::instrument(skip_all)]
 pub async fn get_time_item(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -85,6 +87,7 @@ pub async fn get_time_item(
 }
 
 /// Create a new time item.
+#[tracing::instrument(skip_all)]
 pub async fn create_time_item(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -117,6 +120,7 @@ pub async fn create_time_item(
 }
 
 /// Update a time item.
+#[tracing::instrument(skip_all)]
 pub async fn update_time_item(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -147,6 +151,7 @@ pub async fn update_time_item(
 }
 
 /// Move a time item (change time).
+#[tracing::instrument(skip_all)]
 pub async fn move_time_item(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -169,6 +174,7 @@ pub async fn move_time_item(
 }
 
 /// Delete a time item (soft delete).
+#[tracing::instrument(skip_all)]
 pub async fn delete_time_item(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -203,6 +209,7 @@ pub struct UpdateStatusInput {
     pub status: String,
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn update_time_item_status(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -233,6 +240,7 @@ pub struct QueryUsersEventsInput {
 }
 
 /// Fetch events for multiple users to compute availability.
+#[tracing::instrument(skip_all)]
 pub async fn query_users_events(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -258,6 +266,7 @@ pub async fn query_users_events(
 // ============================================================================
 
 /// List children of a time item.
+#[tracing::instrument(skip_all)]
 pub async fn list_children(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -280,6 +289,7 @@ pub async fn list_children(
 // ============================================================================
 
 /// List users for a time item.
+#[tracing::instrument(skip_all)]
 pub async fn list_time_item_users(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -298,6 +308,7 @@ pub async fn list_time_item_users(
 }
 
 /// Add a user to a time item.
+#[tracing::instrument(skip_all)]
 pub async fn add_time_item_user(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -353,6 +364,7 @@ pub async fn add_time_item_user(
 }
 
 /// Remove a user from a time item.
+#[tracing::instrument(skip_all)]
 pub async fn remove_time_item_user(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -376,6 +388,7 @@ pub struct UpdateRsvpInput {
     pub status: String,
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn update_rsvp(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -399,6 +412,7 @@ pub async fn update_rsvp(
 // ============================================================================
 
 /// List groups for a time item.
+#[tracing::instrument(skip_all)]
 pub async fn list_time_item_groups(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -417,6 +431,7 @@ pub async fn list_time_item_groups(
 }
 
 /// Add a group to a time item.
+#[tracing::instrument(skip_all)]
 pub async fn add_time_item_group(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -436,6 +451,7 @@ pub async fn add_time_item_group(
 }
 
 /// Remove a group from a time item.
+#[tracing::instrument(skip_all)]
 pub async fn remove_time_item_group(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -454,6 +470,7 @@ pub async fn remove_time_item_group(
 }
 
 /// Share a time item with multiple users and groups.
+#[tracing::instrument(skip_all)]
 pub async fn share_time_item(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -490,6 +507,7 @@ pub async fn share_time_item(
 // ============================================================================
 
 /// List dependencies for a time item.
+#[tracing::instrument(skip_all)]
 pub async fn list_dependencies(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -508,6 +526,7 @@ pub async fn list_dependencies(
 }
 
 /// Add a dependency.
+#[tracing::instrument(skip_all)]
 pub async fn add_dependency(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -527,6 +546,7 @@ pub async fn add_dependency(
 }
 
 /// Remove a dependency.
+#[tracing::instrument(skip_all)]
 pub async fn remove_dependency(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -549,6 +569,7 @@ pub async fn remove_dependency(
 // ============================================================================
 
 /// Get recurrence rule for a time item.
+#[tracing::instrument(skip_all)]
 pub async fn get_recurrence(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -568,6 +589,7 @@ pub async fn get_recurrence(
 }
 
 /// Delete recurrence rule.
+#[tracing::instrument(skip_all)]
 pub async fn delete_recurrence(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -590,6 +612,7 @@ pub async fn delete_recurrence(
 // ============================================================================
 
 /// List scheduling resources.
+#[tracing::instrument(skip_all)]
 pub async fn list_scheduling_resources(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -607,6 +630,7 @@ pub async fn list_scheduling_resources(
 }
 
 /// Get a scheduling resource.
+#[tracing::instrument(skip_all)]
 pub async fn get_scheduling_resource(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -626,6 +650,7 @@ pub async fn get_scheduling_resource(
 }
 
 /// Create a scheduling resource.
+#[tracing::instrument(skip_all)]
 pub async fn create_scheduling_resource(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -644,6 +669,7 @@ pub async fn create_scheduling_resource(
 }
 
 /// Delete a scheduling resource.
+#[tracing::instrument(skip_all)]
 pub async fn delete_scheduling_resource(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -666,6 +692,7 @@ pub async fn delete_scheduling_resource(
 // ============================================================================
 
 /// List scheduling templates.
+#[tracing::instrument(skip_all)]
 pub async fn list_templates(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -683,6 +710,7 @@ pub async fn list_templates(
 }
 
 /// Get a scheduling template.
+#[tracing::instrument(skip_all)]
 pub async fn get_template(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -702,6 +730,7 @@ pub async fn get_template(
 }
 
 /// Create a scheduling template.
+#[tracing::instrument(skip_all)]
 pub async fn create_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -720,6 +749,7 @@ pub async fn create_template(
 }
 
 /// Delete a scheduling template.
+#[tracing::instrument(skip_all)]
 pub async fn delete_template(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -742,6 +772,7 @@ pub async fn delete_template(
 // ============================================================================
 
 /// Get user scheduling preferences.
+#[tracing::instrument(skip_all)]
 pub async fn get_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -759,6 +790,7 @@ pub async fn get_preferences(
 }
 
 /// Update user scheduling preferences.
+#[tracing::instrument(skip_all)]
 pub async fn update_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
