@@ -20,7 +20,6 @@ fn get_workspace_id_from_headers(headers: &HeaderMap) -> Option<Uuid> {
 
 /// List the contents of a specific folder (or the root if parent_id is missing/null)
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_nodes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -35,7 +34,7 @@ pub async fn list_nodes(
         // Query children of specific folder where user is owner or has permissions
         sqlx::query_as::<_, DriveNode>(
             r#"
-            SELECT n.id, n.parent_id, n.name, n.node_type,
+            SELECT n.id, n.parent_id, n.name, n.node_type::text,
                    n.target_id, n.workspace_id, n.owner_id, n.size, n.mime_type,
                    n.created_at, n.updated_at, n.deleted_at
             FROM drive.nodes n
@@ -56,7 +55,7 @@ pub async fn list_nodes(
         // Query root nodes
         sqlx::query_as::<_, DriveNode>(
             r#"
-            SELECT n.id, n.parent_id, n.name, n.node_type,
+            SELECT n.id, n.parent_id, n.name, n.node_type::text,
                    n.target_id, n.workspace_id, n.owner_id, n.size, n.mime_type,
                    n.created_at, n.updated_at, n.deleted_at
             FROM drive.nodes n
@@ -78,7 +77,6 @@ pub async fn list_nodes(
 }
 
 /// Create a new folder or link an existing file/document
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_node(
     State(state): State<AppState>,
@@ -103,8 +101,8 @@ pub async fn create_node(
     let node = sqlx::query_as::<_, DriveNode>(
         r#"
         INSERT INTO drive.nodes (parent_id, name, node_type, target_id, workspace_id, owner_id, size, mime_type)
-        VALUES ($1, $2, $3::drive.node_type, $4, $5, $6, $7, $8)
-        RETURNING id, parent_id, name, node_type, target_id, workspace_id, owner_id, size, mime_type, created_at, updated_at, deleted_at
+        VALUES ($1, $2, $3::text::drive.node_type, $4, $5, $6, $7, $8)
+        RETURNING id, parent_id, name, node_type::text, target_id, workspace_id, owner_id, size, mime_type, created_at, updated_at, deleted_at
         "#
     )
     .bind(payload.parent_id)
@@ -123,7 +121,6 @@ pub async fn create_node(
 }
 
 /// Rename or move a node
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_node(
     State(state): State<AppState>,
@@ -154,7 +151,7 @@ pub async fn update_node(
     query.push_bind(id);
     query.push(" AND owner_id = ");
     query.push_bind(user_id); // Basic ownership check
-    query.push(" RETURNING id, parent_id, name, node_type, target_id, workspace_id, owner_id, size, mime_type, created_at, updated_at, deleted_at");
+    query.push(" RETURNING id, parent_id, name, node_type::text, target_id, workspace_id, owner_id, size, mime_type, created_at, updated_at, deleted_at");
 
     let node = query
         .build_query_as::<DriveNode>()
@@ -166,7 +163,6 @@ pub async fn update_node(
 }
 
 /// Soft delete a node
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_node(
     State(state): State<AppState>,
