@@ -244,6 +244,8 @@ Format basé sur [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Documentation
 
+- Add INTERNAL_ONBOARDING.md and SECURITY_POLICY.md for private governance ([b2adc15](https://github.com/signapps/signapps-platform/commit/b2adc154f3deba6f87a8a5faba0742d79ab73e62))
+- Restructure CLAUDE.md as Enterprise Platform governance guide ([74e8f72](https://github.com/signapps/signapps-platform/commit/74e8f727fae229538b76bdf940fbb96a07345572))
 - Unified calendar implementation plan (25 tasks, 10 sub-projects) ([3065606](https://github.com/signapps/signapps-platform/commit/3065606022545c985bde1ea4a2374972a9e2ae93))
 - Unified calendar design spec ([5562c7a](https://github.com/signapps/signapps-platform/commit/5562c7aecdadae61ab2927905e35a3d1ed84e17f))
 - Update CLAUDE.md with AI multimodal gateway architecture and env vars ([60ead22](https://github.com/signapps/signapps-platform/commit/60ead221e82afcd10b75b4d215e450e2bef0e9a4))
@@ -271,6 +273,11 @@ Format basé sur [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Fonctionnalités
 
+- **docs:** Cargo-rdme, #![warn(missing_docs)], rustdoc strict sections ([2b93624](https://github.com/signapps/signapps-platform/commit/2b93624702cca7deaad7e8009d9c317b62129a09))
+- **ci:** Add private documentation build + update governance rules ([948dfa9](https://github.com/signapps/signapps-platform/commit/948dfa9f1a6eaca171e187437048f30e19762cd8))
+- **observability:** Add #[instrument] to 5 critical handler files + pretty/json mode ([532e024](https://github.com/signapps/signapps-platform/commit/532e024811db79d0f936e370b3793fceef2484c5))
+- Add 4 enterprise governance skills + update CLAUDE.md references ([a9ac6c5](https://github.com/signapps/signapps-platform/commit/a9ac6c5cddd47d57dce7a97599efb5af2a7c43de))
+- Self-driving codebase — bacon, nextest, mutants, git-cliff, justfile ([b2dabb9](https://github.com/signapps/signapps-platform/commit/b2dabb9deb6a273259f5e2200d8e83c77b5cd6a3))
 - Full platform stabilization — mail, chat, AI, cross-service integrations ([8a6f2da](https://github.com/signapps/signapps-platform/commit/8a6f2da4822c2efc214de9db71ef314b54d5293b))
 - Add LeaveDelegationDialog for automatic task reassignment during leave ([2426210](https://github.com/signapps/signapps-platform/commit/242621016eba05761d600719ec966f3b5a1d8b21))
 - Add LeaveApprovalPanel with cascade workflow and coverage check ([6c62620](https://github.com/signapps/signapps-platform/commit/6c62620aa07128e4730e2b655f7c22cc13d991d4))
