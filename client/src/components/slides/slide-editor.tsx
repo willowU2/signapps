@@ -465,7 +465,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
             let finalTranscript = ""
 
-            recognitionRef.current.onresult = (event: Parameters<NonNullable<SpeechRecognition["onresult"]>>[0]) => {
+            recognitionRef.current.onresult = (event: Event & { results: SpeechRecognitionResultList; resultIndex: number }) => {
                 let interimTranscript = ""
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript
