@@ -24,12 +24,6 @@ where
 // ---------------------------------------------------------
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tags",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_tags(
     State(state): State<AppState>,
@@ -43,12 +37,6 @@ pub async fn list_tags(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/tags",
-    responses((status = 201, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_tag(
     State(state): State<AppState>,
@@ -63,12 +51,6 @@ pub async fn create_tag(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/tags",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_tag(
     State(state): State<AppState>,
@@ -84,12 +66,6 @@ pub async fn update_tag(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/tags",
-    responses((status = 204, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_tag(
     State(state): State<AppState>,
@@ -112,12 +88,6 @@ pub async fn delete_tag(
 // ---------------------------------------------------------
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tags",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_file_tags(
     State(state): State<AppState>,
@@ -132,12 +102,6 @@ pub async fn list_file_tags(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/tags",
-    responses((status = 201, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn add_file_tag(
     State(state): State<AppState>,
@@ -151,12 +115,6 @@ pub async fn add_file_tag(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/tags",
-    responses((status = 204, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_file_tag(
     State(state): State<AppState>,

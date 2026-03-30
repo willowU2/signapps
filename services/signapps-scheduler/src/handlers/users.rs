@@ -10,12 +10,6 @@ use signapps_common::Claims;
 use crate::AppState;
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/users",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_users(
     State(_state): State<AppState>,

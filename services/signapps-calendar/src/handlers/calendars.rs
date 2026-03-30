@@ -20,12 +20,6 @@ pub struct UpdateRoleRequest {
 
 /// Create a new calendar.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/calendars",
-    responses((status = 201, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_calendar(
     State(state): State<AppState>,
@@ -43,12 +37,6 @@ pub async fn create_calendar(
 
 /// Get all calendars for current user (owned + shared).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/calendars",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_calendars(
     State(state): State<AppState>,
@@ -65,12 +53,6 @@ pub async fn list_calendars(
 
 /// Get calendar by ID.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/calendars",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_calendar(
     State(state): State<AppState>,
@@ -88,12 +70,6 @@ pub async fn get_calendar(
 
 /// Update a calendar.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/calendars",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_calendar(
     State(state): State<AppState>,
@@ -111,12 +87,6 @@ pub async fn update_calendar(
 
 /// Delete a calendar.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/calendars",
-    responses((status = 204, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_calendar(
     State(state): State<AppState>,
@@ -132,12 +102,6 @@ pub async fn delete_calendar(
 
 /// Get all members of a calendar.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/calendars",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_members(
     State(state): State<AppState>,
@@ -154,12 +118,6 @@ pub async fn list_members(
 
 /// Add a member to a calendar (share).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/calendars",
-    responses((status = 201, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn add_member(
     State(state): State<AppState>,
@@ -177,12 +135,6 @@ pub async fn add_member(
 
 /// Remove a member from a calendar.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/calendars",
-    responses((status = 204, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_member(
     State(state): State<AppState>,
@@ -198,12 +150,6 @@ pub async fn remove_member(
 
 /// Update member role.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/calendars",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_member_role(
     State(state): State<AppState>,

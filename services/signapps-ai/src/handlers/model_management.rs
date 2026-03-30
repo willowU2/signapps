@@ -50,12 +50,6 @@ pub struct HardwareResponse {
 
 /// List downloaded/ready models.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/model_management",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_local_models(
     State(state): State<AppState>,
@@ -81,12 +75,6 @@ pub async fn list_local_models(
 
 /// List all available models (including not-yet-downloaded).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/model_management",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_available_models(
     State(state): State<AppState>,
@@ -102,12 +90,6 @@ pub async fn list_available_models(
 
 /// Dynamically search HuggingFace for models.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/model_management",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn search_models(
     State(state): State<AppState>,
@@ -133,12 +115,6 @@ pub async fn search_models(
 
 /// Download a model (async — spawns background task and returns immediately).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/model_management",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn download_model(
     State(state): State<AppState>,
@@ -184,12 +160,6 @@ pub async fn download_model(
 
 /// Get status of a single model.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/model_management",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_model_status(
     State(state): State<AppState>,
@@ -210,12 +180,6 @@ pub async fn get_model_status(
 
 /// Delete a downloaded model.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/model_management",
-    responses((status = 204, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_model(
     State(state): State<AppState>,
@@ -241,12 +205,6 @@ pub async fn delete_model(
 
 /// Get detected hardware profile.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/model_management",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_hardware(
     State(state): State<AppState>,

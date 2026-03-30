@@ -47,12 +47,6 @@ pub struct ConversationDetail {
 
 /// List conversations for the authenticated user.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/conversations",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_conversations(
     State(state): State<AppState>,
@@ -72,12 +66,6 @@ pub async fn list_conversations(
 
 /// Get a single conversation with its messages.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/conversations",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_conversation(
     State(state): State<AppState>,
@@ -100,12 +88,6 @@ pub async fn get_conversation(
 
 /// Delete a conversation and all its messages.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/conversations",
-    responses((status = 204, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_conversation(
     State(state): State<AppState>,

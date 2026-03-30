@@ -91,12 +91,6 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
 
 // ─── PM1: Agent reports available patches ────────────────────────────────────
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/patches",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn report_available_patches(
     State(pool): State<DatabasePool>,
@@ -139,12 +133,6 @@ pub async fn report_available_patches(
 
 // ─── PM2: Admin lists all patches across fleet ───────────────────────────────
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/patches",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_patches(
     State(pool): State<DatabasePool>,
@@ -161,12 +149,6 @@ pub async fn list_patches(
 
 // ─── PM3: Approve patch ───────────────────────────────────────────────────────
 
-#[utoipa::path(
-    put,
-    path = "/api/v1/patches",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn approve_patch(
     State(pool): State<DatabasePool>,
@@ -191,12 +173,6 @@ pub async fn approve_patch(
 }
 
 /// Reject (deny) a patch — sets status back to 'rejected'
-#[utoipa::path(
-    put,
-    path = "/api/v1/patches",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn reject_patch(
     State(pool): State<DatabasePool>,
@@ -219,12 +195,6 @@ pub async fn reject_patch(
 
 // ─── PM4: Deploy patch ────────────────────────────────────────────────────────
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/patches",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn deploy_patch(
     State(pool): State<DatabasePool>,
@@ -252,12 +222,6 @@ pub async fn deploy_patch(
 
 // ─── PM5: Compliance stats ────────────────────────────────────────────────────
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/patches",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn patch_compliance(
     State(pool): State<DatabasePool>,

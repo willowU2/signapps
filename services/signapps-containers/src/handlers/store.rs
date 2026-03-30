@@ -18,12 +18,6 @@ use super::containers::ContainerResponse;
 
 /// List all apps from the store catalog.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/store",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_apps(
     State(state): State<AppState>,
@@ -38,12 +32,6 @@ pub async fn list_apps(
 
 /// Get app details including parsed compose config.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/store",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_app_details(
     State(state): State<AppState>,
@@ -66,12 +54,6 @@ pub async fn get_app_details(
 
 /// Install an app (single-service, backwards-compatible).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/store",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn install_app(
     State(state): State<AppState>,
@@ -418,12 +400,6 @@ pub async fn install_app(
 /// Install a multi-service app.
 /// Creates an install group, spawns background install, returns install_id.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/store",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn install_multi(
     State(state): State<AppState>,
@@ -559,12 +535,6 @@ fn validate_db_name(name: &str) -> Result<()> {
 
 /// Provision a dedicated PostgreSQL database for an app, including the vector extension.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/store",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn provision_app_database(
     pool: &signapps_db::DatabasePool,
@@ -1133,12 +1103,6 @@ async fn rollback(docker: &crate::docker::DockerClient, docker_ids: &[String], n
 
 /// SSE endpoint for install progress.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/store",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn install_progress(
     State(state): State<AppState>,
@@ -1188,12 +1152,6 @@ pub async fn install_progress(
 
 /// Check port conflicts with running containers.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/store",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn check_ports(
     State(state): State<AppState>,
@@ -1234,12 +1192,6 @@ pub async fn check_ports(
 
 /// Validate a source URL.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/store",
-    responses((status = 201, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn validate_source(
     State(state): State<AppState>,
@@ -1251,12 +1203,6 @@ pub async fn validate_source(
 
 /// List all sources.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/store",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_sources(State(state): State<AppState>) -> Result<Json<Vec<AppSource>>> {
     let sources = state
@@ -1269,12 +1215,6 @@ pub async fn list_sources(State(state): State<AppState>) -> Result<Json<Vec<AppS
 
 /// Add a new source (admin only).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/store",
-    responses((status = 201, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn add_source(
     State(state): State<AppState>,
@@ -1300,12 +1240,6 @@ pub async fn add_source(
 
 /// Delete a source (admin only).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/store",
-    responses((status = 204, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_source(
     State(state): State<AppState>,
@@ -1321,12 +1255,6 @@ pub async fn delete_source(
 
 /// Refresh a single source (admin only).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/store",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn refresh_source(
     State(state): State<AppState>,
@@ -1344,12 +1272,6 @@ pub async fn refresh_source(
 
 /// Refresh all sources (admin only).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/store",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn refresh_all(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     state.store.refresh_sources().await;

@@ -61,12 +61,6 @@ pub struct UpdateRuleRequest {
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/rules",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_rules(
     State(state): State<AppState>,
@@ -97,12 +91,6 @@ pub async fn list_rules(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/rules",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_rule(
     State(state): State<AppState>,
@@ -133,12 +121,6 @@ pub async fn get_rule(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/rules",
-    responses((status = 201, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_rule(
     State(state): State<AppState>,
@@ -189,12 +171,6 @@ pub async fn create_rule(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/rules",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_rule(
     State(state): State<AppState>,
@@ -250,12 +226,6 @@ pub async fn update_rule(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/rules",
-    responses((status = 204, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_rule(
     State(state): State<AppState>,

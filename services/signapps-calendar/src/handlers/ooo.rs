@@ -57,12 +57,6 @@ fn row_to_ooo(r: OooRow) -> OooSettings {
 
 /// GET /api/v1/ooo — Get out-of-office settings for the current user.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/ooo",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_ooo(
     State(state): State<AppState>,
@@ -96,12 +90,6 @@ pub async fn get_ooo(
 
 /// PUT /api/v1/ooo — Create or replace out-of-office settings.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/ooo",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn set_ooo(
     State(state): State<AppState>,
@@ -142,12 +130,6 @@ pub async fn set_ooo(
 
 /// DELETE /api/v1/ooo — Clear out-of-office settings.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/ooo",
-    responses((status = 204, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_ooo(
     State(state): State<AppState>,

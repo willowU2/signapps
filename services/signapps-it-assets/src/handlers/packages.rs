@@ -88,12 +88,6 @@ pub struct PendingInstall {
 // SD1: Package CRUD
 // ============================================================================
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/packages",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_packages(
     State(pool): State<DatabasePool>,
@@ -108,12 +102,6 @@ pub async fn list_packages(
     Ok(Json(packages))
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/packages",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_package(
     State(pool): State<DatabasePool>,
@@ -131,12 +119,6 @@ pub async fn get_package(
     Ok(Json(pkg))
 }
 
-#[utoipa::path(
-    post,
-    path = "/api/v1/packages",
-    responses((status = 201, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_package(
     State(pool): State<DatabasePool>,
@@ -165,12 +147,6 @@ pub async fn create_package(
     Ok((StatusCode::CREATED, Json(pkg)))
 }
 
-#[utoipa::path(
-    put,
-    path = "/api/v1/packages",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_package(
     State(pool): State<DatabasePool>,
@@ -207,12 +183,6 @@ pub async fn update_package(
     Ok(Json(pkg))
 }
 
-#[utoipa::path(
-    delete,
-    path = "/api/v1/packages",
-    responses((status = 204, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_package(
     State(pool): State<DatabasePool>,
@@ -234,12 +204,6 @@ pub async fn delete_package(
 // SD2: Schedule deployment to machines
 // ============================================================================
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/packages",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn deploy_package(
     State(pool): State<DatabasePool>,
@@ -282,12 +246,6 @@ pub async fn deploy_package(
 // SD3: Agent polls for pending packages
 // ============================================================================
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/packages",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_agent_pending_packages(
     State(pool): State<DatabasePool>,
@@ -355,12 +313,6 @@ pub struct UpdateDeploymentStatusRequest {
     pub output: Option<String>,
 }
 
-#[utoipa::path(
-    put,
-    path = "/api/v1/packages",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_deployment_status(
     State(pool): State<DatabasePool>,

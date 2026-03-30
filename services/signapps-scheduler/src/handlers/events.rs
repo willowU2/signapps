@@ -22,12 +22,6 @@ pub struct DateRangeParams {
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/events",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_events(
     State(state): State<AppState>,
@@ -55,12 +49,6 @@ pub async fn list_events(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/events",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_event(
     State(state): State<AppState>,
@@ -80,12 +68,6 @@ pub async fn get_event(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/events",
-    responses((status = 201, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_event(
     State(state): State<AppState>,
@@ -106,12 +88,6 @@ pub async fn create_event(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/events",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_event(
     State(state): State<AppState>,
@@ -131,12 +107,6 @@ pub async fn update_event(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/events",
-    responses((status = 204, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_event(
     State(state): State<AppState>,
@@ -155,12 +125,6 @@ pub async fn delete_event(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/events",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_attendees(
     State(state): State<AppState>,
@@ -179,12 +143,6 @@ pub async fn list_attendees(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/events",
-    responses((status = 201, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn add_attendee(
     State(state): State<AppState>,
@@ -210,12 +168,6 @@ pub struct UpdateRsvpPayload {
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/events",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_rsvp(
     State(state): State<AppState>,
@@ -235,12 +187,6 @@ pub async fn update_rsvp(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/events",
-    responses((status = 204, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_attendee(
     State(state): State<AppState>,

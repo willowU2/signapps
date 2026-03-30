@@ -115,12 +115,6 @@ fn extract_jwt(headers: &HeaderMap) -> Option<String> {
 
 /// Chat with RAG (non-streaming).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/chat",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn chat(
     State(state): State<AppState>,
@@ -167,12 +161,6 @@ pub async fn chat(
 
 /// Chat with RAG + tool calling (streaming via SSE).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/chat",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn chat_stream(
     State(state): State<AppState>,

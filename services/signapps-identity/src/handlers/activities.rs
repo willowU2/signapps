@@ -43,12 +43,6 @@ pub struct ActivityEntry {
 
 /// List activities based on query parameters
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/activities",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_activities(
     State(state): State<AppState>,
@@ -74,12 +68,6 @@ pub async fn list_activities(
 /// Cross-module activity feed endpoint.
 /// Returns activities from all modules for the user's workspace(s).
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/activities",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn cross_module_activity(
     State(state): State<AppState>,

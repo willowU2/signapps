@@ -102,12 +102,6 @@ pub struct SaveSlackConfigRequest {
 /// Slack sends a URL-encoded POST. We decode it, parse the subcommand,
 /// execute via internal APIs, and return a Slack-formatted response.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/slack",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn slack_webhook(
     State(_state): State<AppState>,
@@ -194,12 +188,6 @@ fn handle_help() -> SlackResponse {
 
 /// Save Slack integration config (admin only — middleware enforces this).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/slack",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn save_slack_config(
     State(_state): State<AppState>,
@@ -230,12 +218,6 @@ pub async fn save_slack_config(
 
 /// Get current Slack config (admin only).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/slack",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_slack_config(
     State(_state): State<AppState>,
@@ -262,12 +244,6 @@ pub async fn get_slack_config(
 ///
 /// This is not an HTTP handler — it's called from the event bus listener.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/slack",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn notify_slack(webhook_url: &str, message: &str) -> anyhow::Result<()> {
     let client = reqwest::Client::new();

@@ -35,12 +35,6 @@ pub struct MetricRow {
     pub collected_at: DateTime<Utc>,
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_metrics(
     State(pool): State<DatabasePool>,
@@ -109,12 +103,6 @@ pub struct AlertRow {
     pub value: Option<f32>,
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_alert_rules(
     State(pool): State<DatabasePool>,
@@ -128,12 +116,6 @@ pub async fn list_alert_rules(
     Ok(Json(rows))
 }
 
-#[utoipa::path(
-    post,
-    path = "/api/v1/monitoring",
-    responses((status = 201, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_alert_rule(
     State(pool): State<DatabasePool>,
@@ -158,12 +140,6 @@ pub async fn create_alert_rule(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
-#[utoipa::path(
-    delete,
-    path = "/api/v1/monitoring",
-    responses((status = 204, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_alert_rule(
     State(pool): State<DatabasePool>,
@@ -180,12 +156,6 @@ pub async fn delete_alert_rule(
     Ok(StatusCode::NO_CONTENT)
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_alerts(
     State(pool): State<DatabasePool>,
@@ -199,12 +169,6 @@ pub async fn list_alerts(
     Ok(Json(rows))
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn resolve_alert(
     State(pool): State<DatabasePool>,
@@ -265,12 +229,6 @@ pub struct LogQuery {
     pub limit: Option<i64>,
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn ingest_event_logs(
     State(pool): State<DatabasePool>,
@@ -306,12 +264,6 @@ pub async fn ingest_event_logs(
     Ok(StatusCode::NO_CONTENT)
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_event_logs(
     State(pool): State<DatabasePool>,
@@ -378,12 +330,6 @@ pub struct MachineRow {
     pub last_heartbeat: Option<DateTime<Utc>>,
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn fleet_overview(
     State(pool): State<DatabasePool>,
@@ -502,12 +448,6 @@ pub struct UpdateComponentReq {
     pub details: Option<String>,
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_components(
     State(pool): State<DatabasePool>,
@@ -523,12 +463,6 @@ pub async fn list_components(
     Ok(Json(rows))
 }
 
-#[utoipa::path(
-    post,
-    path = "/api/v1/monitoring",
-    responses((status = 201, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_component(
     State(pool): State<DatabasePool>,
@@ -552,12 +486,6 @@ pub async fn create_component(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
-#[utoipa::path(
-    put,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_component(
     State(pool): State<DatabasePool>,
@@ -586,12 +514,6 @@ pub async fn update_component(
     Ok(Json(row))
 }
 
-#[utoipa::path(
-    delete,
-    path = "/api/v1/monitoring",
-    responses((status = 204, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_component(
     State(pool): State<DatabasePool>,
@@ -660,12 +582,6 @@ pub struct UpdateLicenseReq {
     pub notes: Option<String>,
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_licenses(
     State(pool): State<DatabasePool>,
@@ -709,12 +625,6 @@ pub async fn list_licenses(
     Ok(Json(result))
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_license(
     State(pool): State<DatabasePool>,
@@ -731,12 +641,6 @@ pub async fn get_license(
     Ok(Json(row))
 }
 
-#[utoipa::path(
-    post,
-    path = "/api/v1/monitoring",
-    responses((status = 201, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_license(
     State(pool): State<DatabasePool>,
@@ -763,12 +667,6 @@ pub async fn create_license(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
-#[utoipa::path(
-    put,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_license(
     State(pool): State<DatabasePool>,
@@ -807,12 +705,6 @@ pub async fn update_license(
     Ok(Json(row))
 }
 
-#[utoipa::path(
-    delete,
-    path = "/api/v1/monitoring",
-    responses((status = 204, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_license(
     State(pool): State<DatabasePool>,
@@ -867,12 +759,6 @@ pub struct UpdateNetworkInterfaceReq {
     pub is_active: Option<bool>,
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_network_interfaces(
     State(pool): State<DatabasePool>,
@@ -894,12 +780,6 @@ pub async fn list_network_interfaces(
     Ok(Json(rows))
 }
 
-#[utoipa::path(
-    post,
-    path = "/api/v1/monitoring",
-    responses((status = 201, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_network_interface(
     State(pool): State<DatabasePool>,
@@ -929,12 +809,6 @@ pub async fn create_network_interface(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
-#[utoipa::path(
-    put,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_network_interface(
     State(pool): State<DatabasePool>,
@@ -970,12 +844,6 @@ pub async fn update_network_interface(
     Ok(Json(row))
 }
 
-#[utoipa::path(
-    delete,
-    path = "/api/v1/monitoring",
-    responses((status = 204, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_network_interface(
     State(pool): State<DatabasePool>,
@@ -1025,12 +893,6 @@ pub struct UpdateMaintenanceWindowReq {
     pub description: Option<String>,
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_maintenance_windows(
     State(pool): State<DatabasePool>,
@@ -1044,12 +906,6 @@ pub async fn list_maintenance_windows(
     Ok(Json(rows))
 }
 
-#[utoipa::path(
-    post,
-    path = "/api/v1/monitoring",
-    responses((status = 201, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_maintenance_window(
     State(pool): State<DatabasePool>,
@@ -1073,12 +929,6 @@ pub async fn create_maintenance_window(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
-#[utoipa::path(
-    put,
-    path = "/api/v1/monitoring",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_maintenance_window(
     State(pool): State<DatabasePool>,
@@ -1111,12 +961,6 @@ pub async fn update_maintenance_window(
     Ok(Json(row))
 }
 
-#[utoipa::path(
-    delete,
-    path = "/api/v1/monitoring",
-    responses((status = 204, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_maintenance_window(
     State(pool): State<DatabasePool>,

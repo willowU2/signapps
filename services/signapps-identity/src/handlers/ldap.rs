@@ -65,12 +65,6 @@ pub struct SyncResultResponse {
 
 /// Get current LDAP configuration.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/ldap",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_config(State(state): State<AppState>) -> Result<Json<LdapConfigResponse>> {
     let config = LdapRepository::get_config(&state.pool)
@@ -82,12 +76,6 @@ pub async fn get_config(State(state): State<AppState>) -> Result<Json<LdapConfig
 
 /// Create or update LDAP configuration.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/ldap",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_config(
     State(state): State<AppState>,
@@ -120,12 +108,6 @@ pub async fn create_config(
 
 /// Update LDAP configuration.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/ldap",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_config(
     State(state): State<AppState>,
@@ -172,12 +154,6 @@ pub async fn update_config(
 
 /// Test LDAP connection.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/ldap",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn test_connection(State(state): State<AppState>) -> Result<Json<LdapTestResult>> {
     let config = LdapRepository::get_config(&state.pool)
@@ -200,12 +176,6 @@ pub async fn test_connection(State(state): State<AppState>) -> Result<Json<LdapT
 
 /// List AD groups.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/ldap",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_groups(State(state): State<AppState>) -> Result<Json<Vec<LdapGroup>>> {
     let config = LdapRepository::get_config(&state.pool)
@@ -224,12 +194,6 @@ pub async fn list_groups(State(state): State<AppState>) -> Result<Json<Vec<LdapG
 
 /// Sync users from AD.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/ldap",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn sync_users(State(state): State<AppState>) -> Result<Json<SyncResultResponse>> {
     let config = LdapRepository::get_config(&state.pool)

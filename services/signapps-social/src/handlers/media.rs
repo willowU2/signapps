@@ -19,12 +19,6 @@ pub struct MediaQuery {
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/media",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_media(
     State(state): State<AppState>,
@@ -74,12 +68,6 @@ pub async fn list_media(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/media",
-    responses((status = 201, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_media(
     State(state): State<AppState>,
@@ -114,12 +102,6 @@ pub async fn create_media(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/media",
-    responses((status = 204, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_media(
     State(state): State<AppState>,

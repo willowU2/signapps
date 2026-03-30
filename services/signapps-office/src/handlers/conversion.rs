@@ -104,12 +104,6 @@ pub struct ConversionInfoResponse {
 
 /// Get conversion service info
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/conversion",
-    responses((status = 200, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn info() -> Json<ConversionInfoResponse> {
     Json(ConversionInfoResponse {
@@ -122,12 +116,6 @@ pub async fn info() -> Json<ConversionInfoResponse> {
 
 /// Convert document from JSON body
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/conversion",
-    responses((status = 200, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn convert_json(
     State(state): State<AppState>,
@@ -276,12 +264,6 @@ pub async fn convert_json(
 
 /// Convert document from multipart upload
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/conversion",
-    responses((status = 200, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn convert_upload(
     State(state): State<AppState>,
@@ -477,12 +459,6 @@ pub struct BatchConversionResponse {
 
 /// Convert multiple documents in batch
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/conversion",
-    responses((status = 200, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn convert_batch(
     State(state): State<AppState>,

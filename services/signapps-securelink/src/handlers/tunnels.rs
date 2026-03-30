@@ -17,12 +17,6 @@ use signapps_common::Result;
 
 /// List all configured tunnels.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tunnels",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_tunnels(State(state): State<AppState>) -> Result<Json<Vec<Tunnel>>> {
     let tunnels = state.tunnel_client.list_tunnels().await;
@@ -31,12 +25,6 @@ pub async fn list_tunnels(State(state): State<AppState>) -> Result<Json<Vec<Tunn
 
 /// Get a specific tunnel by ID.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tunnels",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_tunnel(
     State(state): State<AppState>,
@@ -52,12 +40,6 @@ pub async fn get_tunnel(
 
 /// Create a new tunnel.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/tunnels",
-    responses((status = 201, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_tunnel(
     State(state): State<AppState>,
@@ -104,12 +86,6 @@ pub async fn create_tunnel(
 /// Update an existing tunnel.
 #[allow(dead_code)]
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/tunnels",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_tunnel(
     State(state): State<AppState>,
@@ -142,12 +118,6 @@ pub async fn update_tunnel(
 
 /// Delete a tunnel.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/tunnels",
-    responses((status = 204, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_tunnel(
     State(state): State<AppState>,
@@ -170,12 +140,6 @@ pub async fn delete_tunnel(
 
 /// Get the status of a specific tunnel.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tunnels",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_tunnel_status(
     State(state): State<AppState>,
@@ -198,12 +162,6 @@ pub async fn get_tunnel_status(
 
 /// Reconnect a tunnel.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tunnels",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn reconnect_tunnel(
     State(state): State<AppState>,
@@ -262,12 +220,6 @@ pub struct BulkTunnelAction {
 
 /// Perform bulk action on tunnels.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tunnels",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn bulk_tunnel_action(
     State(state): State<AppState>,
@@ -338,12 +290,6 @@ pub struct QuickConnectRequest {
 
 /// Quick connect: create a tunnel with minimal config using the first available relay.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tunnels",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn quick_connect(
     State(state): State<AppState>,
@@ -406,12 +352,6 @@ pub struct DashboardStatsResponse {
 
 /// Get dashboard stats.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tunnels",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn dashboard_stats(
     State(state): State<AppState>,
@@ -461,12 +401,6 @@ pub use crate::TrafficPoint;
 
 /// Get rolling traffic history (last 60 minutes, one point per minute).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tunnels",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn dashboard_traffic(State(state): State<AppState>) -> Result<Json<Vec<TrafficPoint>>> {
     let history = state.traffic_history.read().await;

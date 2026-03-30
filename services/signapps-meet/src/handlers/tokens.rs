@@ -24,12 +24,6 @@ pub struct TokenQuery {
 
 /// Get a token for joining any room (by room code or ID)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tokens",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_token(
     State(state): State<AppState>,
@@ -116,12 +110,6 @@ pub async fn get_token(
 
 /// Get a token for a specific room by ID
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tokens",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_room_token(
     State(state): State<AppState>,

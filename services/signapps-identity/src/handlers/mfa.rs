@@ -57,12 +57,6 @@ pub struct MfaDisableRequest {
 /// Generates a new TOTP secret and returns it with a QR code.
 /// The user must verify a code before MFA is enabled.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/mfa",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn setup(
     State(state): State<AppState>,
@@ -130,12 +124,6 @@ pub async fn setup(
 ///
 /// This must be called after setup to confirm MFA is working.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/mfa",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn verify(
     State(state): State<AppState>,
@@ -203,12 +191,6 @@ pub async fn verify(
 
 /// Disable MFA for current user.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/mfa",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn disable(
     State(state): State<AppState>,
@@ -268,12 +250,6 @@ pub async fn disable(
 
 /// Get MFA status for current user.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/mfa",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn status(
     State(state): State<AppState>,
@@ -342,12 +318,6 @@ async fn store_backup_codes_hashed(
 /// Verify a recovery code against stored hashes. Marks it as used on success.
 #[allow(dead_code)]
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/mfa",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn verify_and_consume_backup_code(
     pool: &signapps_db::DatabasePool,

@@ -27,12 +27,6 @@ use crate::{AppState, CalendarError};
 /// The org_id is derived from a `X-Workspace-Id` header carried in the JWT
 /// claims or falls back to the user's own UUID as a single-tenant sentinel.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/approval",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_workflows(
     State(state): State<AppState>,
@@ -60,12 +54,6 @@ pub async fn list_workflows(
 ///
 /// Create a new approval workflow.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/approval",
-    responses((status = 201, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_workflow(
     State(state): State<AppState>,
@@ -98,12 +86,6 @@ pub async fn create_workflow(
 ///
 /// Update an existing approval workflow.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/approval",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_workflow(
     State(state): State<AppState>,
@@ -137,12 +119,6 @@ pub async fn update_workflow(
 ///
 /// Delete an approval workflow by ID.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/approval",
-    responses((status = 204, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_workflow(
     State(state): State<AppState>,

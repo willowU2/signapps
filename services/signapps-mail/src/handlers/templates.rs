@@ -62,12 +62,6 @@ pub struct UpdateTemplateRequest {
 
 /// GET /api/v1/mail/templates?account_id=...
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/templates",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_templates(
     State(state): State<AppState>,
@@ -107,12 +101,6 @@ pub async fn list_templates(
 
 /// GET /api/v1/mail/templates/:id
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/templates",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_template(
     State(state): State<AppState>,
@@ -131,12 +119,6 @@ pub async fn get_template(
 
 /// POST /api/v1/mail/templates
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/templates",
-    responses((status = 201, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_template(
     State(state): State<AppState>,
@@ -170,12 +152,6 @@ pub async fn create_template(
 
 /// PUT /api/v1/mail/templates/:id
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/templates",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_template(
     State(state): State<AppState>,
@@ -212,12 +188,6 @@ pub async fn update_template(
 
 /// DELETE /api/v1/mail/templates/:id
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/templates",
-    responses((status = 204, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_template(
     State(state): State<AppState>,

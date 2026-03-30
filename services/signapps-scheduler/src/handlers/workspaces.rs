@@ -11,12 +11,6 @@ use uuid::Uuid;
 use crate::AppState;
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/workspaces",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_workspaces(
     State(_state): State<AppState>,
@@ -33,12 +27,6 @@ pub async fn list_workspaces(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/workspaces",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_workspace(
     State(_state): State<AppState>,

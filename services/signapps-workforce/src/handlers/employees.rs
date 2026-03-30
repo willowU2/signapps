@@ -213,12 +213,6 @@ pub struct SearchQueryParams {
 
 /// List all employees
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/employees",
-    responses((status = 200, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_employees(
     State(state): State<AppState>,
@@ -273,12 +267,6 @@ pub async fn list_employees(
 
 /// Create a new employee
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/employees",
-    responses((status = 201, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_employee(
     State(state): State<AppState>,
@@ -355,12 +343,6 @@ pub async fn create_employee(
 
 /// Get a single employee
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/employees",
-    responses((status = 200, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_employee(
     State(state): State<AppState>,
@@ -442,12 +424,6 @@ pub async fn get_employee(
 
 /// Update an employee
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/employees",
-    responses((status = 200, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_employee(
     State(state): State<AppState>,
@@ -512,12 +488,6 @@ pub async fn update_employee(
 
 /// Delete an employee (soft delete by setting status to terminated)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/employees",
-    responses((status = 204, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_employee(
     State(state): State<AppState>,
@@ -554,12 +524,6 @@ pub async fn delete_employee(
 
 /// Link employee to a user account
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/employees",
-    responses((status = 200, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn link_user(
     State(state): State<AppState>,
@@ -595,12 +559,6 @@ pub async fn link_user(
 
 /// Unlink employee from user account
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/employees",
-    responses((status = 200, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn unlink_user(
     State(state): State<AppState>,
@@ -634,12 +592,6 @@ pub async fn unlink_user(
 
 /// Get employee functions
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/employees",
-    responses((status = 200, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_functions(
     State(state): State<AppState>,
@@ -687,12 +639,6 @@ pub async fn get_functions(
 
 /// Update employee functions
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/employees",
-    responses((status = 200, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_functions(
     State(state): State<AppState>,
@@ -733,12 +679,6 @@ pub async fn update_functions(
 
 /// List employees by org node (including descendants)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/employees",
-    responses((status = 200, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_by_org_node(
     State(state): State<AppState>,
@@ -790,12 +730,6 @@ pub async fn list_by_org_node(
 
 /// Search employees by name or employee number
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/employees",
-    responses((status = 200, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn search_employees(
     State(state): State<AppState>,
@@ -841,12 +775,6 @@ pub async fn search_employees(
 
 /// List all function definitions
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/employees",
-    responses((status = 200, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_function_definitions(
     State(state): State<AppState>,
@@ -873,12 +801,6 @@ pub async fn list_function_definitions(
 
 /// Create a function definition
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/employees",
-    responses((status = 201, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_function_definition(
     State(state): State<AppState>,
@@ -924,12 +846,6 @@ pub async fn create_function_definition(
 
 /// Update a function definition
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/employees",
-    responses((status = 200, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_function_definition(
     State(state): State<AppState>,
@@ -978,12 +894,6 @@ pub async fn update_function_definition(
 
 /// Delete a function definition
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/employees",
-    responses((status = 204, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_function_definition(
     State(state): State<AppState>,
@@ -1031,12 +941,6 @@ pub struct ImportResult {
 /// Employees are created and linked to an org node if `department` matches
 /// an existing org node name for this tenant.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/employees",
-    responses((status = 201, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn import_employees(
     State(state): State<AppState>,

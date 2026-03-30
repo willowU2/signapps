@@ -35,12 +35,6 @@ pub struct PatchUserProfileExt {
 
 /// GET /api/v1/users/me/profile — Get extended profile fields.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/user_profile",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_profile(
     State(state): State<AppState>,
@@ -66,12 +60,6 @@ pub async fn get_profile(
 
 /// PATCH /api/v1/users/me/profile — Update extended profile fields.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/user_profile",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn patch_profile(
     State(state): State<AppState>,
@@ -129,12 +117,6 @@ pub struct UpsertRecentDocRequest {
 
 /// GET /api/v1/users/me/recent-docs
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/user_profile",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_recent_docs(
     State(state): State<AppState>,
@@ -168,12 +150,6 @@ pub async fn list_recent_docs(
 
 /// POST /api/v1/users/me/recent-docs — Upsert a recently opened document.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/user_profile",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn upsert_recent_doc(
     State(state): State<AppState>,
@@ -250,12 +226,6 @@ pub struct AddHistoryRequest {
 
 /// GET /api/v1/users/me/history
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/user_profile",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_history(
     State(state): State<AppState>,
@@ -301,12 +271,6 @@ pub async fn list_history(
 
 /// POST /api/v1/users/me/history — Append a history entry.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    post,
-    path = "/api/v1/user_profile",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn add_history(
     State(state): State<AppState>,
@@ -356,12 +320,6 @@ pub async fn add_history(
 
 /// POST /api/v1/users/me/streak/checkin — Record today's check-in and update streak.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/user_profile",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn streak_checkin(
     State(state): State<AppState>,

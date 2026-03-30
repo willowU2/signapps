@@ -118,12 +118,6 @@ fn parse_iso_week(week_str: &str) -> Result<NaiveDate, CalendarError> {
 /// List timesheet entries for the given user and ISO week.
 /// `user_id` defaults to the authenticated user. `week` defaults to current.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/timesheets",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_timesheets(
     State(state): State<AppState>,
@@ -158,12 +152,6 @@ pub async fn list_timesheets(
 ///
 /// Update hours and optional category for a timesheet entry (manual correction).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/timesheets",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_timesheet(
     State(state): State<AppState>,
@@ -201,12 +189,6 @@ pub async fn update_timesheet(
 ///
 /// Mark all timesheet entries for the current user and given week as validated.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/timesheets",
-    responses((status = 201, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn validate_week(
     State(state): State<AppState>,
@@ -237,12 +219,6 @@ pub async fn validate_week(
 /// mark them as exported, and return them as a JSON array.
 /// CSV generation is handled on the frontend.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/timesheets",
-    responses((status = 201, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn export_timesheets(
     State(state): State<AppState>,
@@ -294,12 +270,6 @@ pub async fn export_timesheets(
 /// `auto_generated = true`. Hours are calculated from event duration.
 /// Already-generated entries for the same event are skipped.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/timesheets",
-    responses((status = 201, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn generate_timesheets(
     State(state): State<AppState>,

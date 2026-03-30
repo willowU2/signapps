@@ -73,12 +73,6 @@ pub struct UpdateUserSignatureRequest {
 
 /// `GET /api/v1/user-signatures` — List all signatures for the authenticated user.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/user_signatures",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_user_signatures(
     State(state): State<AppState>,
@@ -103,12 +97,6 @@ pub async fn list_user_signatures(
 
 /// `POST /api/v1/user-signatures` — Create a new signature.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/user_signatures",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_user_signature(
     State(state): State<AppState>,
@@ -158,12 +146,6 @@ pub async fn create_user_signature(
 
 /// `GET /api/v1/user-signatures/:id` — Get a single signature.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/user_signatures",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_user_signature(
     State(state): State<AppState>,
@@ -190,12 +172,6 @@ pub async fn get_user_signature(
 
 /// `PUT /api/v1/user-signatures/:id` — Update a signature.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/user_signatures",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_user_signature(
     State(state): State<AppState>,
@@ -249,12 +225,6 @@ pub async fn update_user_signature(
 
 /// `DELETE /api/v1/user-signatures/:id` — Delete a signature.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/user_signatures",
-    responses((status = 204, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_user_signature(
     State(state): State<AppState>,

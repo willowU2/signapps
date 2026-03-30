@@ -39,12 +39,6 @@ fn verify_password(password: &str, hash: &str) -> bool {
 
 /// List all rooms (active and scheduled)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/rooms",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_rooms(
     State(state): State<AppState>,
@@ -102,12 +96,6 @@ pub async fn list_rooms(
 
 /// Create a new room
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/rooms",
-    responses((status = 201, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_room(
     State(state): State<AppState>,
@@ -166,12 +154,6 @@ pub async fn create_room(
 
 /// Get a specific room by ID
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/rooms",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_room(
     State(state): State<AppState>,
@@ -213,12 +195,6 @@ pub async fn get_room(
 
 /// Update a room
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/rooms",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_room(
     State(state): State<AppState>,
@@ -303,12 +279,6 @@ pub async fn update_room(
 
 /// Delete a room
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/rooms",
-    responses((status = 204, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_room(
     State(state): State<AppState>,
@@ -338,12 +308,6 @@ pub async fn delete_room(
 
 /// End a room (mark as ended and kick all participants)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/rooms",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn end_room(
     State(state): State<AppState>,
@@ -451,12 +415,6 @@ pub async fn end_room(
 
 /// List meeting history
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/rooms",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_history(
     State(state): State<AppState>,

@@ -133,12 +133,6 @@ const TRASH_RETENTION_DAYS: i64 = 30;
 
 /// Move files to trash (soft delete).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/trash",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn move_to_trash(
     State(state): State<AppState>,
@@ -245,12 +239,6 @@ async fn move_single_to_trash(
 
 /// List items in trash.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/trash",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_trash(
     State(state): State<AppState>,
@@ -320,12 +308,6 @@ pub async fn list_trash(
 
 /// Get trash statistics.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/trash",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_trash_stats(
     State(state): State<AppState>,
@@ -356,12 +338,6 @@ pub async fn get_trash_stats(
 
 /// Restore items from trash.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/trash",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn restore_from_trash(
     State(state): State<AppState>,
@@ -493,12 +469,6 @@ async fn restore_single_item(
 
 /// Permanently delete items from trash.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/trash",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn empty_trash(
     State(state): State<AppState>,
@@ -583,12 +553,6 @@ async fn delete_trash_item(state: &AppState, id: Uuid, user_id: Uuid) -> Result<
 
 /// Get a specific trash item.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/trash",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_trash_item(
     State(state): State<AppState>,
@@ -631,12 +595,6 @@ pub async fn get_trash_item(
 
 /// Permanently delete a single trash item.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/trash",
-    responses((status = 204, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_trash_item_handler(
     State(state): State<AppState>,

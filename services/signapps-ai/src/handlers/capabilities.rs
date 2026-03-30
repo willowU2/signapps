@@ -36,12 +36,6 @@ fn parse_capability(s: &str) -> Result<Capability, (StatusCode, String)> {
 
 /// List all registered capabilities with backend information.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/capabilities",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_capabilities(
     State(state): State<AppState>,
@@ -57,12 +51,6 @@ pub async fn list_capabilities(
 
 /// Get quality advice for a specific capability (local vs cloud comparison).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/capabilities",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_capability_advice(
     State(state): State<AppState>,

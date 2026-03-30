@@ -13,12 +13,6 @@ use uuid::Uuid;
 use crate::AppState;
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/calendars",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_calendars(
     State(state): State<AppState>,
@@ -37,12 +31,6 @@ pub async fn list_calendars(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/calendars",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_calendar(
     State(state): State<AppState>,
@@ -62,12 +50,6 @@ pub async fn get_calendar(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/calendars",
-    responses((status = 201, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_calendar(
     State(state): State<AppState>,
@@ -87,12 +69,6 @@ pub async fn create_calendar(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/calendars",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_calendar(
     State(state): State<AppState>,
@@ -112,12 +88,6 @@ pub async fn update_calendar(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/calendars",
-    responses((status = 204, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_calendar(
     State(state): State<AppState>,

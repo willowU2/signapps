@@ -22,12 +22,6 @@ use crate::AppState;
 
 /// WebSocket upgrade handler for voice pipeline.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/voice",
-    responses((status = 200, description = "Success")),
-    tag = "Media"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn voice_ws(
     ws: WebSocketUpgrade,

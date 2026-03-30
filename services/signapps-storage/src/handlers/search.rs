@@ -201,12 +201,6 @@ fn row_to_search_result(row: &PgRow) -> SearchResult {
 ///  - Pagination via LIMIT / OFFSET
 ///  - Facets computed separately for buckets and file-type categories.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/search",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn search(
     State(state): State<AppState>,
@@ -461,12 +455,6 @@ fn build_size_range_facets(rows: &[PgRow]) -> Vec<SizeRangeFacet> {
 /// Returns up to `limit` files (default 10, max 50) whose key contains the
 /// query string (case-insensitive).  Searches all buckets for the user.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/search",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn quick_search(
     State(state): State<AppState>,
@@ -524,12 +512,6 @@ pub struct RecentFilesQuery {
 
 /// Get the 20 most recently updated files for the current user.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/search",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn recent_files(
     State(state): State<AppState>,
@@ -578,12 +560,6 @@ pub async fn recent_files(
 /// Matches the last path component (filename) using ILIKE, returns distinct
 /// filenames sorted alphabetically.  Useful for autocomplete dropdowns.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/search",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn suggest(
     State(state): State<AppState>,
@@ -701,12 +677,6 @@ pub struct OmniSearchResponse {
 
 /// Omni-search: Search across ALL entities (Docs, Mail, Files) via global index
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/search",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn omni_search(
     State(state): State<AppState>,

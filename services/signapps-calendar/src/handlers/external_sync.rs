@@ -68,12 +68,6 @@ pub struct ResolveAllConflictsRequest {
 
 /// List all provider connections for the current user.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external_sync",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_connections(
     State(state): State<AppState>,
@@ -95,12 +89,6 @@ pub async fn list_connections(
 
 /// Get a specific connection.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external_sync",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_connection(
     State(state): State<AppState>,
@@ -122,12 +110,6 @@ pub async fn get_connection(
 
 /// Initialize OAuth flow for a provider.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external_sync",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn init_oauth(
     State(state): State<AppState>,
@@ -162,12 +144,6 @@ pub async fn init_oauth(
 
 /// Handle OAuth callback.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external_sync",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn handle_oauth_callback(
     State(state): State<AppState>,
@@ -216,12 +192,6 @@ pub async fn handle_oauth_callback(
 
 /// Refresh connection tokens.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/external_sync",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn refresh_connection(
     State(state): State<AppState>,
@@ -263,12 +233,6 @@ pub async fn refresh_connection(
 
 /// Disconnect a provider.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external_sync",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn disconnect_provider(
     State(state): State<AppState>,
@@ -299,12 +263,6 @@ pub async fn disconnect_provider(
 
 /// List external calendars for a connection.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external_sync",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_external_calendars(
     State(state): State<AppState>,
@@ -334,12 +292,6 @@ pub async fn list_external_calendars(
 
 /// Discover calendars from provider (fetch from external API).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external_sync",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn discover_calendars(
     State(state): State<AppState>,
@@ -382,12 +334,6 @@ pub async fn discover_calendars(
 
 /// List sync configs for the current user.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external_sync",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_sync_configs(
     State(state): State<AppState>,
@@ -404,12 +350,6 @@ pub async fn list_sync_configs(
 
 /// Create a sync config.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/external_sync",
-    responses((status = 201, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_sync_config(
     State(state): State<AppState>,
@@ -427,12 +367,6 @@ pub async fn create_sync_config(
 
 /// Update a sync config.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/external_sync",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_sync_config(
     State(state): State<AppState>,
@@ -461,12 +395,6 @@ pub async fn update_sync_config(
 
 /// Delete a sync config.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/external_sync",
-    responses((status = 204, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_sync_config(
     State(state): State<AppState>,
@@ -493,12 +421,6 @@ pub async fn delete_sync_config(
 
 /// Trigger manual sync — spawns a background task and returns immediately.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external_sync",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn trigger_sync(
     State(state): State<AppState>,
@@ -870,12 +792,6 @@ async fn fetch_microsoft_calendar_events(
 
 /// List sync logs for a config.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external_sync",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_sync_logs(
     State(state): State<AppState>,
@@ -910,12 +826,6 @@ pub async fn list_sync_logs(
 
 /// List unresolved conflicts for a config.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external_sync",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_conflicts(
     State(state): State<AppState>,
@@ -945,12 +855,6 @@ pub async fn list_conflicts(
 
 /// Resolve a single conflict.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external_sync",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn resolve_conflict(
     State(state): State<AppState>,
@@ -981,12 +885,6 @@ pub async fn resolve_conflict(
 
 /// Resolve all conflicts for a config.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external_sync",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn resolve_all_conflicts(
     State(state): State<AppState>,

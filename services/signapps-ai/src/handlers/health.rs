@@ -24,12 +24,6 @@ pub struct ComponentsHealth {
 
 /// Health check endpoint.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/health",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
     let vectors_healthy = state.vectors.get_stats(None).await.is_ok();

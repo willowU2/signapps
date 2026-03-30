@@ -23,12 +23,6 @@ fn generate_short_code() -> String {
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/short_urls",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_short_urls(
     State(state): State<AppState>,
@@ -50,12 +44,6 @@ pub async fn list_short_urls(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/short_urls",
-    responses((status = 201, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_short_url(
     State(state): State<AppState>,
@@ -84,12 +72,6 @@ pub async fn create_short_url(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/short_urls",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn track_click(
     State(state): State<AppState>,
@@ -116,12 +98,6 @@ pub async fn track_click(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/short_urls",
-    responses((status = 204, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_short_url(
     State(state): State<AppState>,

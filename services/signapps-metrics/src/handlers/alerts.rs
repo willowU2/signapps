@@ -204,12 +204,6 @@ static ALERT_EVENTS: Lazy<RwLock<Vec<AlertEvent>>> = Lazy::new(|| RwLock::new(Ve
 
 /// List all alert configurations.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/alerts",
-    responses((status = 200, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_alerts(
     State(_state): State<AppState>,
@@ -244,12 +238,6 @@ pub async fn list_alerts(
 
 /// Get a single alert configuration.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/alerts",
-    responses((status = 200, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_alert(
     State(_state): State<AppState>,
@@ -269,12 +257,6 @@ pub async fn get_alert(
 
 /// Create a new alert configuration.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/alerts",
-    responses((status = 201, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_alert(
     State(_state): State<AppState>,
@@ -321,12 +303,6 @@ pub async fn create_alert(
 
 /// Update an alert configuration.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/alerts",
-    responses((status = 200, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_alert(
     State(_state): State<AppState>,
@@ -397,12 +373,6 @@ pub async fn update_alert(
 
 /// Delete an alert configuration.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/alerts",
-    responses((status = 204, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_alert(
     State(_state): State<AppState>,
@@ -423,12 +393,6 @@ pub async fn delete_alert(
 
 /// Get active alerts (alerts that are currently firing).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/alerts",
-    responses((status = 200, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_active_alerts(
     State(state): State<AppState>,
@@ -594,12 +558,6 @@ pub async fn get_active_alerts(
 
 /// List all alert events (history).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/alerts",
-    responses((status = 200, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_alert_events(
     State(_state): State<AppState>,
@@ -634,12 +592,6 @@ pub async fn list_alert_events(
 
 /// Acknowledge an alert.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/alerts",
-    responses((status = 200, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn acknowledge_alert(
     State(_state): State<AppState>,

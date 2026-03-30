@@ -180,12 +180,6 @@ fn classify_by_keywords(title: &str, content: &str) -> Option<(DocumentCategory,
 
 /// POST /api/v1/docs/classify
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/classify",
-    responses((status = 200, description = "Success")),
-    tag = "Docs"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn classify_document(
     State(_state): State<AppState>,

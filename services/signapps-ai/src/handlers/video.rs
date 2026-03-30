@@ -158,12 +158,6 @@ async fn store_video(state: &AppState, video_bytes: &[u8]) -> Result<String, (St
 /// - `width` / `height` — video dimensions (optional)
 /// - `model` — model name override (optional)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/video",
-    responses((status = 201, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn generate_video(
     State(state): State<AppState>,
@@ -212,12 +206,6 @@ pub async fn generate_video(
 /// - `duration_seconds` — video duration (optional)
 /// - `model` — model name override (optional)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/video",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn img_to_video(
     State(state): State<AppState>,
@@ -309,12 +297,6 @@ pub async fn img_to_video(
 /// - `video` — the video file (required)
 /// - `prompt` — optional analysis prompt
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/video",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn analyze_video(
     mut multipart: Multipart,
@@ -384,12 +366,6 @@ pub async fn analyze_video(
 /// - `max_frames` — maximum number of frames to extract (optional, default 10)
 /// - `interval_seconds` — interval between frames in seconds (optional)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/video",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn extract_frames(
     mut multipart: Multipart,
@@ -492,12 +468,6 @@ pub async fn extract_frames(
 /// Accepts `multipart/form-data` with:
 /// - `video` — the video file (required)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/video",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn transcribe_video(
     mut multipart: Multipart,
@@ -555,12 +525,6 @@ pub async fn transcribe_video(
 
 /// List available video generation models.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/video",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_models() -> Result<Json<VideoModelsResponse>, (StatusCode, String)> {
     let worker = create_videogen_worker().map_err(|e| (StatusCode::SERVICE_UNAVAILABLE, e))?;

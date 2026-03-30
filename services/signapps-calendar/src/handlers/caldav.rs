@@ -32,12 +32,6 @@ const CALDAV_NS: &str = "urn:ietf:params:xml:ns:caldav";
 
 /// Handle OPTIONS for CalDAV discovery.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/caldav",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn options_handler() -> impl IntoResponse {
     (
@@ -57,12 +51,6 @@ pub async fn options_handler() -> impl IntoResponse {
 
 /// Return principal resource info for a user.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/caldav",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn propfind_principal(
     State(_state): State<AppState>,
@@ -105,12 +93,6 @@ pub async fn propfind_principal(
 
 /// Return calendar collection properties.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/caldav",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn propfind_calendar(
     State(state): State<AppState>,
@@ -164,12 +146,6 @@ pub async fn propfind_calendar(
 
 /// Serve a single event as an iCalendar (.ics) object.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/caldav",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_event_ics(
     State(state): State<AppState>,
@@ -224,12 +200,6 @@ pub async fn get_event_ics(
 /// Minimal calendar-query / sync-collection REPORT.
 /// Returns all event hrefs for the calendar so clients can sync.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/caldav",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn report_calendar(
     State(state): State<AppState>,
@@ -287,12 +257,6 @@ pub async fn report_calendar(
 ///   - If the event does not exist → create it (201 Created)
 ///   - If the event exists         → update it (204 No Content)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/caldav",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn put_event_ics(
     State(state): State<AppState>,
@@ -432,12 +396,6 @@ pub async fn put_event_ics(
 ///
 /// CalDAV clients use DELETE to remove events.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/caldav",
-    responses((status = 204, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_event_ics(
     State(state): State<AppState>,

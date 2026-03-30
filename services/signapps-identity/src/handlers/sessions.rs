@@ -29,12 +29,6 @@ pub struct SessionItem {
 
 /// GET /api/v1/auth/sessions — List current user's active sessions.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/sessions",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
@@ -77,12 +71,6 @@ pub async fn list(
 
 /// DELETE /api/v1/auth/sessions/:id — Revoke a specific session.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/sessions",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn revoke(
     State(state): State<AppState>,
@@ -105,12 +93,6 @@ pub async fn revoke(
 
 /// DELETE /api/v1/auth/sessions — Revoke all sessions except current.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/sessions",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn revoke_all(
     State(state): State<AppState>,

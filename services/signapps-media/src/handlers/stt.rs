@@ -68,12 +68,6 @@ pub struct SpeakerResponse {
 
 /// Transcribe audio file
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/stt",
-    responses((status = 200, description = "Success")),
-    tag = "Media"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn transcribe(
     State(state): State<Arc<AppState>>,
@@ -177,12 +171,6 @@ pub async fn transcribe(
 
 /// Transcribe with streaming results (Server-Sent Events)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/stt",
-    responses((status = 200, description = "Success")),
-    tag = "Media"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn transcribe_stream(
     State(state): State<Arc<AppState>>,
@@ -264,12 +252,6 @@ pub async fn transcribe_stream(
 
 /// List available models
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/stt",
-    responses((status = 200, description = "Success")),
-    tag = "Media"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_models(
     State(state): State<Arc<AppState>>,

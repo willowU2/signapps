@@ -185,12 +185,6 @@ async fn update_quota_impl(
 
 /// GET /quotas/me — current user's quota usage.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/quotas",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_my_quota(
     State(state): State<AppState>,
@@ -201,12 +195,6 @@ pub async fn get_my_quota(
 
 /// GET /quotas/users/:user_id — admin: fetch any user's quota usage.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/quotas",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_user_quota(
     State(state): State<AppState>,
@@ -217,12 +205,6 @@ pub async fn get_user_quota(
 
 /// PUT /quotas/users/:user_id — admin: set quota limits for a user.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/quotas",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn set_user_quota(
     State(state): State<AppState>,
@@ -246,12 +228,6 @@ pub async fn set_user_quota(
 
 /// DELETE /quotas/users/:user_id — admin: remove quota row (user reverts to defaults).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/quotas",
-    responses((status = 204, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_user_quota(
     State(state): State<AppState>,
@@ -271,12 +247,6 @@ pub async fn delete_user_quota(
 
 /// GET /quotas/me/alerts — active quota alerts for the current user.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/quotas",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_quota_alerts(
     State(state): State<AppState>,
@@ -318,12 +288,6 @@ pub async fn get_quota_alerts(
 
 /// POST /quotas/users/:user_id/recalculate — admin: recalculate usage from storage.files.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/quotas",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn recalculate_usage(
     State(state): State<AppState>,
@@ -336,12 +300,6 @@ pub async fn recalculate_usage(
 
 /// GET /quotas/over-limit — admin: list users who have exceeded their quota.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/quotas",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_users_over_quota(State(state): State<AppState>) -> Result<Json<Vec<QuotaUsage>>> {
     let repo = QuotaRepository::new(&state.pool);
@@ -354,12 +312,6 @@ pub async fn get_users_over_quota(State(state): State<AppState>) -> Result<Json<
 
 /// Check whether an upload of `file_size` bytes would exceed the user's quota.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/quotas",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn check_quota(state: &AppState, user_id: Uuid, file_size: i64) -> Result<()> {
     let repo = QuotaRepository::new(&state.pool);
@@ -390,12 +342,6 @@ pub async fn check_quota(state: &AppState, user_id: Uuid, file_size: i64) -> Res
 
 /// Record a successful upload: insert file row and atomically increment quota.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/quotas",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn record_upload(
     state: &AppState,
@@ -463,12 +409,6 @@ pub async fn record_upload(
 /// Record a successful upload with SHA-256 hash: insert file row, update
 /// `drive.nodes.sha256_hash`, and atomically increment quota.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/quotas",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn record_upload_with_hash(
     state: &AppState,
@@ -553,12 +493,6 @@ pub async fn record_upload_with_hash(
 
 /// Record a deletion: remove file row and atomically decrement quota.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/quotas",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn record_delete(
     state: &AppState,
@@ -606,12 +540,6 @@ pub async fn record_delete(
 
 /// Record a move (rename): update the file path without changing quota counters.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/quotas",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn record_move(
     state: &AppState,
@@ -642,12 +570,6 @@ pub async fn record_move(
 
 /// Record a copy: insert destination file row and increment quota by the source size.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/quotas",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn record_copy(
     state: &AppState,

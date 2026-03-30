@@ -154,12 +154,6 @@ fn naive_bayes_classify(
 
 /// POST /api/v1/mail/spam/classify
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/spam",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn classify_email(
     State(state): State<AppState>,
@@ -256,12 +250,6 @@ pub async fn classify_email(
 
 /// POST /api/v1/mail/spam/train
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/spam",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn train_spam(
     State(state): State<AppState>,
@@ -376,12 +364,6 @@ pub async fn train_spam(
 
 /// GET /api/v1/mail/spam/settings/:account_id
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/spam",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_spam_settings(
     State(state): State<AppState>,
@@ -422,12 +404,6 @@ pub async fn get_spam_settings(
 
 /// PATCH /api/v1/mail/spam/settings/:account_id
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/spam",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_spam_settings(
     State(state): State<AppState>,

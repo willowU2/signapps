@@ -174,12 +174,6 @@ fn label_for_score(score: u8) -> &'static str {
 
 /// POST /api/v1/mail/emails/:id/priority-score
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/priority",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn score_single(
     State(_state): State<AppState>,
@@ -197,12 +191,6 @@ pub async fn score_single(
 
 /// POST /api/v1/mail/priority-score/batch
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/priority",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn score_batch(
     State(_state): State<AppState>,

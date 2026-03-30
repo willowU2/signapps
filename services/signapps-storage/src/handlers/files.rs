@@ -251,12 +251,6 @@ pub struct DeleteFilesRequest {
 
 /// List files in a bucket.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/files",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
@@ -269,12 +263,6 @@ pub async fn list(
 
 /// Get file info.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/files",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_info(
     State(state): State<AppState>,
@@ -286,12 +274,6 @@ pub async fn get_info(
 
 /// Download a file.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/files",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn download(
     State(state): State<AppState>,
@@ -326,12 +308,6 @@ const MAX_UPLOAD_SIZE: usize = 500 * 1024 * 1024;
 
 /// Upload a file via multipart form.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/files",
-    responses((status = 201, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn upload(
     State(state): State<AppState>,
@@ -495,12 +471,6 @@ pub async fn upload(
 
 /// Upload a file with explicit key.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/files",
-    responses((status = 201, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn upload_with_key(
     State(state): State<AppState>,
@@ -625,12 +595,6 @@ pub async fn upload_with_key(
 
 /// Delete a file.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/files",
-    responses((status = 204, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(
     State(state): State<AppState>,
@@ -664,12 +628,6 @@ pub async fn delete(
 
 /// Delete multiple files.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/files",
-    responses((status = 204, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_many(
     State(state): State<AppState>,
@@ -699,12 +657,6 @@ pub async fn delete_many(
 
 /// Copy a file.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/files",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn copy(
     State(state): State<AppState>,
@@ -772,12 +724,6 @@ pub async fn copy(
 
 /// Move a file.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/files",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn move_file(
     State(state): State<AppState>,

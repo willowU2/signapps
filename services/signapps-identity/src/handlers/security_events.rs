@@ -37,12 +37,6 @@ pub struct SecurityEventsQuery {
 
 /// GET /api/v1/admin/security/events — List security events.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/security_events",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
@@ -72,12 +66,6 @@ pub async fn list(
 
 /// GET /api/v1/admin/security/events/summary — Aggregated counts by type.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/security_events",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn summary(State(state): State<AppState>) -> Result<Json<Vec<EventSummary>>> {
     let rows = sqlx::query_as::<_, EventSummary>(

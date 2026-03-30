@@ -19,12 +19,6 @@ pub struct MetricsQuery {
 
 /// Retrieve workload metrics for the authenticated user
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/metrics",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_workload(
     State(state): State<AppState>,
@@ -43,12 +37,6 @@ pub async fn get_workload(
 
 /// Retrieve resource metrics for the authenticated user
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/metrics",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_resources(
     State(state): State<AppState>,

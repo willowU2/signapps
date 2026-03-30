@@ -62,12 +62,6 @@ pub struct MeetingSuggestionsResponse {
 
 /// POST /api/v1/calendar/meeting-suggestions
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/meeting_suggestions",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn suggest_meeting_times(
     State(state): State<AppState>,

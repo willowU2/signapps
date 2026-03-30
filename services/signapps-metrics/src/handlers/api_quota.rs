@@ -66,12 +66,6 @@ pub struct QuotaListQuery {
 /// descending.  Uses `platform.api_usage` if available, otherwise returns
 /// an empty list (table may not be present in all deployments).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/api_quota",
-    responses((status = 200, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_api_quotas(
     State(state): State<AppState>,
@@ -150,12 +144,6 @@ pub async fn list_api_quotas(
 ///
 /// Returns API quota stats for a single user.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/api_quota",
-    responses((status = 200, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_user_api_quota(
     State(state): State<AppState>,

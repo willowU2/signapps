@@ -25,12 +25,6 @@ fn hash_key(key: &str) -> String {
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/api_keys",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_api_keys(
     State(state): State<AppState>,
@@ -52,12 +46,6 @@ pub async fn list_api_keys(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/api_keys",
-    responses((status = 201, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_api_key(
     State(state): State<AppState>,
@@ -112,12 +100,6 @@ pub async fn create_api_key(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/api_keys",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn revoke_api_key(
     State(state): State<AppState>,

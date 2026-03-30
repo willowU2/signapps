@@ -19,12 +19,6 @@ pub struct InboxQuery {
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/inbox",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_inbox(
     State(state): State<AppState>,
@@ -66,12 +60,6 @@ pub async fn list_inbox(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/inbox",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn mark_read(
     State(state): State<AppState>,
@@ -107,12 +95,6 @@ pub async fn mark_read(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/inbox",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn reply_inbox(
     State(state): State<AppState>,

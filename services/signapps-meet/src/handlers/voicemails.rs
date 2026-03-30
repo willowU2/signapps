@@ -33,12 +33,6 @@ pub struct Voicemail {
 // ---------------------------------------------------------------------------
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/voicemails",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_voicemails(
     State(state): State<AppState>,
@@ -68,12 +62,6 @@ pub async fn list_voicemails(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/voicemails",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn mark_voicemail_read(
     State(state): State<AppState>,
@@ -105,12 +93,6 @@ pub async fn mark_voicemail_read(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/voicemails",
-    responses((status = 204, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_voicemail(
     State(state): State<AppState>,

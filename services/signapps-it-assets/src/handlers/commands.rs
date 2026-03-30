@@ -46,12 +46,6 @@ const ALLOWED_COMMANDS: &[&str] = &["reboot", "shutdown", "lock", "run_script", 
 
 /// POST /api/v1/it-assets/agent/commands/queue
 /// Admin queues a command for a managed machine.
-#[utoipa::path(
-    get,
-    path = "/api/v1/commands",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn queue_agent_command(
     State(pool): State<DatabasePool>,
@@ -105,12 +99,6 @@ pub async fn queue_agent_command(
 
 /// GET /api/v1/it-assets/agent/commands/pending/:agent_id
 /// Agent polls for pending commands.
-#[utoipa::path(
-    get,
-    path = "/api/v1/commands",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_pending_commands(
     State(pool): State<DatabasePool>,
@@ -160,12 +148,6 @@ pub async fn get_pending_commands(
 
 /// PUT /api/v1/it-assets/agent/commands/:id/status
 /// Agent reports completion of a command.
-#[utoipa::path(
-    put,
-    path = "/api/v1/commands",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_command_status(
     State(pool): State<DatabasePool>,
@@ -206,12 +188,6 @@ pub async fn update_command_status(
 
 /// GET /api/v1/it-assets/hardware/:id/commands
 /// List all commands for a hardware asset (admin view).
-#[utoipa::path(
-    get,
-    path = "/api/v1/commands",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_hardware_commands(
     State(pool): State<DatabasePool>,

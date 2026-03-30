@@ -41,12 +41,6 @@ pub struct CreateVideoMessageRequest {
 // ---------------------------------------------------------------------------
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/video_messages",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_video_messages(
     State(state): State<AppState>,
@@ -76,12 +70,6 @@ pub async fn list_video_messages(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/video_messages",
-    responses((status = 201, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_video_message(
     State(state): State<AppState>,
@@ -121,12 +109,6 @@ pub async fn create_video_message(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/video_messages",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn mark_video_message_read(
     State(state): State<AppState>,
@@ -161,12 +143,6 @@ pub async fn mark_video_message_read(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/video_messages",
-    responses((status = 204, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_video_message(
     State(state): State<AppState>,

@@ -31,12 +31,6 @@ pub struct ImportResult {
 /// Export calendar to iCalendar format (RFC 5545)
 #[tracing::instrument(skip_all)]
 #[allow(clippy::type_complexity)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/icalendar",
-    responses((status = 201, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn export_calendar(
     State(state): State<AppState>,
@@ -99,12 +93,6 @@ pub async fn export_calendar(
 /// Get calendar as iCalendar feed (public URL like standard Calendar apps)
 #[tracing::instrument(skip_all)]
 #[allow(clippy::type_complexity)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/icalendar",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_calendar_feed(
     State(state): State<AppState>,
@@ -161,12 +149,6 @@ pub async fn get_calendar_feed(
 /// Import calendar from iCalendar format (RFC 5545)
 #[allow(dead_code)]
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/icalendar",
-    responses((status = 201, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn import_calendar(
     State(state): State<AppState>,
@@ -272,12 +254,6 @@ pub struct CalendarSession {
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/icalendar",
-    responses((status = 201, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn validate_icalendar(
     Json(payload): Json<ValidateICalendarRequest>,

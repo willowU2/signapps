@@ -34,12 +34,6 @@ pub struct ModelsQuery {
 
 /// List available models (optionally for a specific provider).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/models",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_models(
     State(state): State<AppState>,

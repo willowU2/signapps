@@ -13,12 +13,6 @@ use crate::{AppState, CalendarError};
 
 /// List categories visible to the current user.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/categories",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_categories(
     State(state): State<AppState>,
@@ -35,12 +29,6 @@ pub async fn list_categories(
 
 /// Create a new category.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/categories",
-    responses((status = 201, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_category(
     State(state): State<AppState>,
@@ -58,12 +46,6 @@ pub async fn create_category(
 
 /// Update an existing category.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/categories",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_category(
     State(state): State<AppState>,
@@ -82,12 +64,6 @@ pub async fn update_category(
 
 /// Delete a category.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/categories",
-    responses((status = 204, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_category(
     State(state): State<AppState>,

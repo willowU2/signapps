@@ -13,12 +13,6 @@ use crate::{AppState, CalendarError};
 
 /// Share calendar with a user
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/shares",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn share_calendar(
     State(state): State<AppState>,
@@ -44,12 +38,6 @@ pub async fn share_calendar(
 
 /// Unshare calendar (remove member)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/shares",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn unshare_calendar(
     State(state): State<AppState>,
@@ -71,12 +59,6 @@ pub struct UpdatePermissionRequest {
 
 /// Update member permission
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/shares",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_permission(
     State(state): State<AppState>,
@@ -100,12 +82,6 @@ pub async fn update_permission(
 
 /// Get all members with access
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/shares",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_members(
     State(state): State<AppState>,
@@ -130,12 +106,6 @@ pub struct PermissionResponse {
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/shares",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn check_permission(
     State(_state): State<AppState>,

@@ -40,12 +40,6 @@ pub struct QuotaUsagePercent {
 
 /// Get current user's quota.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/quotas",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_my_quota(
     State(state): State<AppState>,
@@ -81,12 +75,6 @@ pub async fn get_my_quota(
 
 /// Get a user's quota (admin only).
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/quotas",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_user_quota(
     State(state): State<AppState>,
@@ -122,12 +110,6 @@ pub async fn get_user_quota(
 
 /// Update a user's quota (admin only).
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/quotas",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_user_quota(
     State(state): State<AppState>,

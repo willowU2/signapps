@@ -24,12 +24,6 @@ pub struct IpAllowlistEntry {
 
 /// GET /api/v1/admin/security/ip-allowlist — Get tenant's IP allowlist.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/ip_allowlist",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get(
     State(state): State<AppState>,
@@ -55,12 +49,6 @@ pub async fn get(
 
 /// PUT /api/v1/admin/security/ip-allowlist — Replace tenant's IP allowlist.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/ip_allowlist",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,

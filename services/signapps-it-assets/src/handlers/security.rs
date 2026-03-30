@@ -41,12 +41,6 @@ pub struct AntivirusStatusRow {
     pub reported_at: DateTime<Utc>,
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/security",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn report_antivirus(
     State(pool): State<DatabasePool>,
@@ -89,12 +83,6 @@ pub async fn report_antivirus(
     Ok(StatusCode::NO_CONTENT)
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/security",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_antivirus_status(
     State(pool): State<DatabasePool>,
@@ -122,12 +110,6 @@ pub struct AvFleetSummary {
     pub unknown: i64,
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/security",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn av_fleet_summary(
     State(pool): State<DatabasePool>,
@@ -200,12 +182,6 @@ pub struct EncryptionStatusRow {
     pub reported_at: DateTime<Utc>,
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/security",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn report_encryption(
     State(pool): State<DatabasePool>,
@@ -245,12 +221,6 @@ pub async fn report_encryption(
     Ok(StatusCode::NO_CONTENT)
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/security",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_encryption_status(
     State(pool): State<DatabasePool>,
@@ -277,12 +247,6 @@ pub struct EncryptionFleetSummary {
     pub compliance_pct: f64,
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/security",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn encryption_fleet_summary(
     State(pool): State<DatabasePool>,

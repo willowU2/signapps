@@ -211,12 +211,6 @@ fn default_true() -> bool {
 /// authenticated user, categorizes them via keyword heuristics, optionally
 /// updates their `labels` field in the DB, and returns the results.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/categorize",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn categorize_inbox(
     State(state): State<AppState>,
@@ -309,12 +303,6 @@ pub struct CategorySettings {
 /// Saves per-account categorization preferences into the `metadata` JSONB
 /// column of `mail.accounts`. Creates the column value if it doesn't exist yet.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/categorize",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn save_categorize_settings(
     State(state): State<AppState>,
@@ -389,12 +377,6 @@ pub async fn save_categorize_settings(
 /// the category label exists in `mail.labels` for that account, then append
 /// the label name to `mail.emails.labels[]`.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/categorize",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn ensure_label_and_apply(
     pool: &sqlx::PgPool,

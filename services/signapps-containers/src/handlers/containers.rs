@@ -99,12 +99,6 @@ pub struct LogsQuery {
 /// List containers from database with Docker info enrichment.
 /// Admin (role >= 2) sees all containers, regular users see only their own.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
@@ -214,12 +208,6 @@ pub async fn list(
 /// List containers for a specific user (admin only).
 /// Filters by user_id path parameter.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_by_user(
     State(state): State<AppState>,
@@ -291,12 +279,6 @@ pub async fn list_by_user(
 /// List all Docker containers directly (including system containers).
 #[allow(dead_code)]
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_docker(
     State(state): State<AppState>,
@@ -312,12 +294,6 @@ pub async fn list_docker(
 
 /// Get container by ID.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get(
     State(state): State<AppState>,
@@ -374,12 +350,6 @@ pub async fn get(
 
 /// Create a new container.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    post,
-    path = "/api/v1/containers",
-    responses((status = 201, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
@@ -462,12 +432,6 @@ pub async fn create(
 /// Start a container.
 /// If the container has no docker_id but has a saved config, create it first.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn start(
     State(state): State<AppState>,
@@ -520,12 +484,6 @@ pub async fn start(
 
 /// Stop a container.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn stop(
     State(state): State<AppState>,
@@ -555,12 +513,6 @@ pub async fn stop(
 
 /// Restart a container.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn restart(
     State(state): State<AppState>,
@@ -638,12 +590,6 @@ async fn deprovision_app_database(pool: &signapps_db::DatabasePool, app_id: &str
 
 /// Delete a container.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/containers",
-    responses((status = 204, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(
     State(state): State<AppState>,
@@ -707,12 +653,6 @@ pub async fn delete(
 
 /// Update a container (pull latest image and recreate).
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
@@ -797,12 +737,6 @@ pub async fn update(
 
 /// Get container logs.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn logs(
     State(state): State<AppState>,
@@ -839,12 +773,6 @@ pub async fn logs(
 
 /// Get container stats.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn stats(
     State(state): State<AppState>,
@@ -880,12 +808,6 @@ pub async fn stats(
 
 /// Start a Docker container directly by docker_id.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn start_docker(
     State(state): State<AppState>,
@@ -917,12 +839,6 @@ pub async fn start_docker(
 
 /// Restart a Docker container directly by docker_id.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn restart_docker(
     State(state): State<AppState>,
@@ -954,12 +870,6 @@ pub async fn restart_docker(
 
 /// Get logs from a Docker container directly by docker_id.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn logs_docker(
     State(state): State<AppState>,
@@ -972,12 +882,6 @@ pub async fn logs_docker(
 
 /// Get stats from a Docker container directly by docker_id.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn stats_docker(
     State(state): State<AppState>,
@@ -989,12 +893,6 @@ pub async fn stats_docker(
 
 /// Inspect a Docker container directly by docker_id (for unmanaged containers).
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn inspect_docker(
     State(state): State<AppState>,
@@ -1006,12 +904,6 @@ pub async fn inspect_docker(
 
 /// Stop a Docker container directly by docker_id.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/containers",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn stop_docker(
     State(state): State<AppState>,
@@ -1045,12 +937,6 @@ pub async fn stop_docker(
 
 /// Remove a Docker container directly by docker_id.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/containers",
-    responses((status = 204, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_docker(
     State(state): State<AppState>,

@@ -122,12 +122,6 @@ pub struct NonCompliantMachine {
 // GP1: List policies (flat)
 // ============================================================================
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/policies",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_policies(
     State(pool): State<DatabasePool>,
@@ -147,12 +141,6 @@ pub async fn list_policies(
 }
 
 // GP1: List policies as tree (parent → children)
-#[utoipa::path(
-    get,
-    path = "/api/v1/policies",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_policies_tree(
     State(pool): State<DatabasePool>,
@@ -197,12 +185,6 @@ fn build_tree(policies: Vec<Policy>, parent_id: Option<Uuid>) -> Vec<PolicyWithC
 // CRUD
 // ============================================================================
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/policies",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_policy(
     State(pool): State<DatabasePool>,
@@ -220,12 +202,6 @@ pub async fn get_policy(
     Ok(Json(policy))
 }
 
-#[utoipa::path(
-    post,
-    path = "/api/v1/policies",
-    responses((status = 201, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_policy(
     State(pool): State<DatabasePool>,
@@ -255,12 +231,6 @@ pub async fn create_policy(
     Ok((StatusCode::CREATED, Json(policy)))
 }
 
-#[utoipa::path(
-    put,
-    path = "/api/v1/policies",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_policy(
     State(pool): State<DatabasePool>,
@@ -304,12 +274,6 @@ pub async fn update_policy(
     Ok(Json(policy))
 }
 
-#[utoipa::path(
-    delete,
-    path = "/api/v1/policies",
-    responses((status = 204, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_policy(
     State(pool): State<DatabasePool>,
@@ -331,12 +295,6 @@ pub async fn delete_policy(
 // GP2: Assignment
 // ============================================================================
 
-#[utoipa::path(
-    put,
-    path = "/api/v1/policies",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn assign_policy(
     State(pool): State<DatabasePool>,
@@ -375,12 +333,6 @@ pub async fn assign_policy(
     }
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/policies",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_assignments(
     State(pool): State<DatabasePool>,
@@ -401,12 +353,6 @@ pub async fn list_assignments(
 // GP2: Merged policies for agent (with inheritance)
 // ============================================================================
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/policies",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_agent_policies(
     State(pool): State<DatabasePool>,
@@ -493,12 +439,6 @@ async fn get_ancestor_chain(
 // GP4: Compliance reporting from agent
 // ============================================================================
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/policies",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn report_compliance(
     State(pool): State<DatabasePool>,
@@ -526,12 +466,6 @@ pub async fn report_compliance(
 }
 
 // GP4: Compliance dashboard summary
-#[utoipa::path(
-    get,
-    path = "/api/v1/policies",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn compliance_summary(
     State(pool): State<DatabasePool>,

@@ -11,12 +11,6 @@ use crate::AppState;
 use signapps_common::Claims;
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/post_comments",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_comments(
     State(state): State<AppState>,
@@ -39,12 +33,6 @@ pub async fn list_comments(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/post_comments",
-    responses((status = 201, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_comment(
     State(state): State<AppState>,
@@ -73,12 +61,6 @@ pub async fn create_comment(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/post_comments",
-    responses((status = 204, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_comment(
     State(state): State<AppState>,

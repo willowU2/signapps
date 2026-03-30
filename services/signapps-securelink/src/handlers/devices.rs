@@ -44,12 +44,6 @@ pub struct CertificateBundle {
 
 /// List all devices.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/devices",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_devices(
     State(state): State<AppState>,
@@ -60,12 +54,6 @@ pub async fn list_devices(
 
 /// Get a device by ID.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/devices",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_device(
     State(state): State<AppState>,
@@ -78,12 +66,6 @@ pub async fn get_device(
 
 /// Enroll a new device.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/devices",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn enroll_device(
     State(state): State<AppState>,
@@ -115,12 +97,6 @@ pub async fn enroll_device(
 
 /// Get device configuration.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/devices",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_device_config(
     State(state): State<AppState>,
@@ -139,12 +115,6 @@ pub async fn get_device_config(
 
 /// Block a device.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/devices",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn block_device(
     State(state): State<AppState>,
@@ -156,12 +126,6 @@ pub async fn block_device(
 
 /// Unblock a device.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/devices",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn unblock_device(
     State(state): State<AppState>,
@@ -173,12 +137,6 @@ pub async fn unblock_device(
 
 /// Delete a device.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/devices",
-    responses((status = 204, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_device(
     State(state): State<AppState>,
@@ -196,12 +154,6 @@ pub struct HeartbeatRequest {
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/devices",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn device_heartbeat(
     State(state): State<AppState>,

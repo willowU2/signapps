@@ -8,12 +8,6 @@ use crate::AppState;
 
 /// List all Docker networks.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/networks",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_networks(State(state): State<AppState>) -> Result<Json<Vec<NetworkInfo>>> {
     let networks = state.docker.list_networks().await?;
@@ -22,12 +16,6 @@ pub async fn list_networks(State(state): State<AppState>) -> Result<Json<Vec<Net
 
 /// List all Docker volumes.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/networks",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_volumes(State(state): State<AppState>) -> Result<Json<Vec<VolumeInfo>>> {
     let volumes = state.docker.list_volumes().await?;

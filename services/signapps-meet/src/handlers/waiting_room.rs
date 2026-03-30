@@ -54,12 +54,6 @@ impl From<WaitingRoomEntry> for WaitingRoomResponse {
 
 /// List users in the waiting room for a given room (host only)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/waiting_room",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_waiting(
     State(state): State<AppState>,
@@ -98,12 +92,6 @@ pub async fn list_waiting(
 
 /// Admit a user from the waiting room (host only)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/waiting_room",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn admit_user(
     State(state): State<AppState>,
@@ -147,12 +135,6 @@ pub async fn admit_user(
 
 /// Deny a user from the waiting room (host only)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/waiting_room",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn deny_user(
     State(state): State<AppState>,
@@ -203,12 +185,6 @@ pub struct JoinWaitingRoomRequest {
 
 /// Join the waiting room (called by the participant)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/waiting_room",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn join_waiting_room(
     State(state): State<AppState>,

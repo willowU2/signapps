@@ -28,12 +28,6 @@ pub struct JobStatus {
 
 /// Get job status from the in-memory job store
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/jobs",
-    responses((status = 200, description = "Success")),
-    tag = "Media"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_job_status(
     State(state): State<Arc<AppState>>,

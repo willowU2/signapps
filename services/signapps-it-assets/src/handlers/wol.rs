@@ -40,12 +40,6 @@ fn build_magic_packet(mac: &str) -> Result<Vec<u8>, String> {
 
 /// POST /api/v1/it-assets/hardware/:id/wake
 /// Looks up the primary MAC address and sends a WoL magic packet via UDP broadcast.
-#[utoipa::path(
-    get,
-    path = "/api/v1/wol",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn wake_on_lan(
     State(pool): State<DatabasePool>,

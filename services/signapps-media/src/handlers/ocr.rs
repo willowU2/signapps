@@ -46,12 +46,6 @@ pub struct MetadataResponse {
 
 /// Extract text from an image
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/ocr",
-    responses((status = 200, description = "Success")),
-    tag = "Media"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn extract_text(
     State(state): State<Arc<AppState>>,
@@ -135,12 +129,6 @@ pub async fn extract_text(
 
 /// Process a multi-page document
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/ocr",
-    responses((status = 200, description = "Success")),
-    tag = "Media"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn process_document(
     State(state): State<Arc<AppState>>,
@@ -228,12 +216,6 @@ pub struct BatchOcrResponse {
 
 /// Batch process multiple files (async job)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/ocr",
-    responses((status = 200, description = "Success")),
-    tag = "Media"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn batch_process(
     State(state): State<Arc<AppState>>,

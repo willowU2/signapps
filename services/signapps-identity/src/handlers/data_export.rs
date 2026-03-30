@@ -107,12 +107,6 @@ impl DataExportStore {
 
     /// Return the latest job for a given user, if any.
     #[tracing::instrument(skip_all)]
-    #[utoipa::path(
-        get,
-        path = "/api/v1/data_export",
-        responses((status = 200, description = "Success")),
-        tag = "Identity"
-    )]
     #[tracing::instrument(skip_all)]
     pub async fn get(&self, user_id: Uuid) -> Option<DataExportJob> {
         self.inner.read().await.get(&user_id).cloned()
@@ -120,12 +114,6 @@ impl DataExportStore {
 
     /// Insert or overwrite the job for a given user.
     #[tracing::instrument(skip_all)]
-    #[utoipa::path(
-        get,
-        path = "/api/v1/data_export",
-        responses((status = 200, description = "Success")),
-        tag = "Identity"
-    )]
     #[tracing::instrument(skip_all)]
     pub async fn set(&self, job: DataExportJob) {
         self.inner.write().await.insert(job.user_id, job);
@@ -143,12 +131,6 @@ impl DataExportStore {
 /// Once created the job is immediately processed synchronously (foundation
 /// version — no background worker yet) and marked `Completed`.
 #[tracing::instrument(skip(state, claims))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/data_export",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn request_export(
     State(state): State<AppState>,
@@ -216,12 +198,6 @@ pub async fn request_export(
 /// Returns the status of the authenticated user's latest export job.
 /// Returns `404 Not Found` if no export has ever been requested.
 #[tracing::instrument(skip(state, claims))]
-#[utoipa::path(
-    post,
-    path = "/api/v1/data_export",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn export_status(
     State(state): State<AppState>,
@@ -241,12 +217,6 @@ pub async fn export_status(
 /// Returns `404 Not Found` if no completed export exists.
 /// Returns `409 Conflict` if the latest job has not yet completed.
 #[tracing::instrument(skip(state, claims))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/data_export",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn download_export(
     State(state): State<AppState>,

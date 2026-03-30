@@ -1202,6 +1202,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     left: 200,
                     top: 200,
                     lockScalingY: true, // Prevent breaking the pill shape
+                    // @ts-expect-error custom fabric property
                     isSmartChip: true,
                     chipType: type
                 })
@@ -1303,6 +1304,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     const group = new fabricModule.Group(groupObjects, {
                         left: startX,
                         top: startY,
+                            // @ts-expect-error custom fabric property
                             isWorkflowBlock: true,
                         workflowType: type
                     })
@@ -1381,6 +1383,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     const group = new fabricModule.Group(groupObjects, {
                         left: startX,
                         top: startY,
+                        // @ts-expect-error custom fabric property
                         isTableBlock: true,
                         subTargetCheck: true // Required for editing items inside a group
                     })

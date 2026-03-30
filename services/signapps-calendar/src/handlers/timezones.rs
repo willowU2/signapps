@@ -26,12 +26,6 @@ pub struct TimezoneInfo {
 
 /// List available timezones
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/timezones",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_timezones(Query(query): Query<TimezoneListQuery>) -> Json<Vec<TimezoneInfo>> {
     let mut timezones = services::list_timezones()
@@ -64,12 +58,6 @@ pub struct ValidateTimezoneResponse {
 
 /// Validate timezone string
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/timezones",
-    responses((status = 201, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn validate_timezone(
     Json(payload): Json<ValidateTimezoneRequest>,
@@ -96,12 +84,6 @@ pub struct ConvertTimezoneResponse {
 
 /// Convert datetime between timezones
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/timezones",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn convert_timezone(
     Json(payload): Json<ConvertTimezoneRequest>,
@@ -141,12 +123,6 @@ pub struct SetUserTimezoneRequest {
 
 /// GET /api/v1/timezones/me — get user's preferred timezone
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/timezones",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_user_timezone(
     State(state): State<AppState>,
@@ -184,12 +160,6 @@ pub async fn get_user_timezone(
 
 /// PUT /api/v1/timezones/me — set user's preferred timezone
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/timezones",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn set_user_timezone(
     State(state): State<AppState>,

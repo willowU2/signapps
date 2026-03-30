@@ -47,12 +47,6 @@ fn validate_collection_name(name: &str) -> Result<()> {
 
 /// List all collections.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/collections",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_collections(
     State(state): State<AppState>,
@@ -63,12 +57,6 @@ pub async fn list_collections(
 
 /// Get a single collection.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/collections",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_collection(
     State(state): State<AppState>,
@@ -80,12 +68,6 @@ pub async fn get_collection(
 
 /// Create a new collection.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/collections",
-    responses((status = 201, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_collection(
     State(state): State<AppState>,
@@ -101,12 +83,6 @@ pub async fn create_collection(
 
 /// Delete a collection.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/collections",
-    responses((status = 204, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_collection(
     State(state): State<AppState>,
@@ -123,12 +99,6 @@ pub async fn delete_collection(
 
 /// Get detailed stats for a collection.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/collections",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_collection_stats(
     State(state): State<AppState>,

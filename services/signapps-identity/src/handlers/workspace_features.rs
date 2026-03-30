@@ -91,12 +91,6 @@ pub struct UpdateFeaturesRequest {
 /// Returns the feature configuration for the current user's active workspace.
 /// Merges tenant-level features with global defaults.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/workspace_features",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_workspace_features(
     State(state): State<AppState>,
@@ -134,12 +128,6 @@ pub async fn get_workspace_features(
 /// Update the feature flags for a specific workspace (admin only).
 /// Accepts a partial JSON object — only specified keys are updated.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/workspace_features",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_workspace_features(
     State(state): State<AppState>,

@@ -63,12 +63,6 @@ pub struct DpiaRecord {
 
 /// `POST /api/v1/compliance/dpia` — save a new DPIA record.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/compliance",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn save_dpia(
     State(state): State<AppState>,
@@ -84,12 +78,6 @@ pub async fn save_dpia(
 
 /// `GET /api/v1/compliance/dpia` — list all DPIA records.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/compliance",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_dpias(State(state): State<AppState>) -> Result<Json<Vec<DpiaRecord>>> {
     let rows = list_records(&state.pool, "dpia").await?;
@@ -174,12 +162,6 @@ pub struct UpdateDsarRequest {
 
 /// `POST /api/v1/compliance/dsar` — create a new DSAR request.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    post,
-    path = "/api/v1/compliance",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_dsar(
     State(state): State<AppState>,
@@ -209,12 +191,6 @@ pub async fn create_dsar(
 
 /// `GET /api/v1/compliance/dsar` — list all DSAR requests.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/compliance",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_dsars(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     let rows = list_records(&state.pool, "dsar").await?;
@@ -227,12 +203,6 @@ pub async fn list_dsars(State(state): State<AppState>) -> Result<Json<serde_json
 
 /// `PATCH /api/v1/compliance/dsar/:id` — update DSAR status (CO2: triggers event on approval).
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/compliance",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_dsar(
     State(state): State<AppState>,
@@ -366,12 +336,6 @@ pub struct RetentionPoliciesResponse {
 
 /// `PUT /api/v1/compliance/retention-policies` — save retention policies blob.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/compliance",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn save_retention_policies(
     State(state): State<AppState>,
@@ -397,12 +361,6 @@ pub async fn save_retention_policies(
 
 /// `GET /api/v1/compliance/retention-policies` — get retention policies blob.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/compliance",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_retention_policies(
     State(state): State<AppState>,
@@ -422,12 +380,6 @@ pub struct SaveConsentRequest {
 
 /// `PUT /api/v1/compliance/consent` — save consent choices.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/compliance",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn save_consent(
     State(state): State<AppState>,
@@ -445,12 +397,6 @@ pub async fn save_consent(
 
 /// `GET /api/v1/compliance/consent` — get current consent configuration.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/compliance",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_consent(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     let rows = list_records(&state.pool, "consent").await?;
@@ -465,12 +411,6 @@ pub async fn get_consent(State(state): State<AppState>) -> Result<Json<serde_jso
 
 /// `PUT /api/v1/compliance/cookie-banner` — save cookie banner configuration.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/compliance",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn save_cookie_banner(
     State(state): State<AppState>,
@@ -484,12 +424,6 @@ pub async fn save_cookie_banner(
 
 /// `GET /api/v1/compliance/cookie-banner` — get cookie banner configuration.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/compliance",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_cookie_banner(State(state): State<AppState>) -> Result<Json<Value>> {
     let rows = list_records(&state.pool, "cookie-banner").await?;

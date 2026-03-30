@@ -8,12 +8,6 @@ use uuid::Uuid;
 
 use crate::models::{CreateHardwareReq, HardwareAsset, UpdateHardwareReq};
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/hardware",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_hardware(
     State(pool): State<DatabasePool>,
@@ -27,12 +21,6 @@ pub async fn list_hardware(
     Ok(Json(assets))
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/hardware",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_hardware(
     State(pool): State<DatabasePool>,
@@ -48,12 +36,6 @@ pub async fn get_hardware(
     Ok(Json(asset))
 }
 
-#[utoipa::path(
-    post,
-    path = "/api/v1/hardware",
-    responses((status = 201, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_hardware(
     State(pool): State<DatabasePool>,
@@ -82,12 +64,6 @@ pub async fn create_hardware(
     Ok((StatusCode::CREATED, Json(asset)))
 }
 
-#[utoipa::path(
-    put,
-    path = "/api/v1/hardware",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_hardware(
     State(pool): State<DatabasePool>,
@@ -128,12 +104,6 @@ pub async fn update_hardware(
     Ok(Json(asset))
 }
 
-#[utoipa::path(
-    delete,
-    path = "/api/v1/hardware",
-    responses((status = 204, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_hardware(
     State(pool): State<DatabasePool>,

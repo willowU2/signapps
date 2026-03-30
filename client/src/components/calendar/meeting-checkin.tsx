@@ -106,12 +106,15 @@ export function MeetingCheckin() {
           const meta: Record<string, AttendanceStatus> =
             (event.metadata?.checkin as Record<string, AttendanceStatus> | undefined) ?? {}
 
-          const attendees: AttendeeStatus[] = attendeesRaw.map((a) => ({
-            id: a.id ?? a.user_id ?? a.email,
-            name: a.display_name ?? a.name ?? a.email ?? 'Inconnu',
-            email: a.email ?? '',
-            status: meta[a.id ?? a.user_id ?? a.email] ?? 'pending',
-          }))
+          const attendees: AttendeeStatus[] = attendeesRaw.map((a: Record<string, string | undefined>) => {
+            const key = a.id ?? a.user_id ?? a.email ?? 'unknown';
+            return {
+              id: key,
+              name: a.display_name ?? a.name ?? a.email ?? 'Inconnu',
+              email: a.email ?? '',
+              status: meta[key] ?? 'pending',
+            };
+          })
 
           return {
             event,

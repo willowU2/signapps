@@ -210,12 +210,6 @@ fn extract_user_agent(headers: &HeaderMap) -> Option<String> {
 
 /// `POST /api/v1/signatures` — Create a new signature envelope.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    post,
-    path = "/api/v1/signatures",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_envelope(
     State(state): State<AppState>,
@@ -249,12 +243,6 @@ pub async fn create_envelope(
 
 /// `GET /api/v1/signatures` — List envelopes owned by the authenticated user.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/signatures",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_envelopes(
     State(state): State<AppState>,
@@ -278,12 +266,6 @@ pub async fn list_envelopes(
 
 /// `GET /api/v1/signatures/:id` — Get a single envelope by ID.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/signatures",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_envelope(
     State(state): State<AppState>,
@@ -308,12 +290,6 @@ pub async fn get_envelope(
 
 /// `POST /api/v1/signatures/:id/send` — Transition envelope from draft to sent.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    post,
-    path = "/api/v1/signatures",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn send_envelope(
     State(state): State<AppState>,
@@ -345,12 +321,6 @@ pub async fn send_envelope(
 
 /// `POST /api/v1/signatures/:id/void` — Void an envelope.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/signatures",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn void_envelope(
     State(state): State<AppState>,
@@ -391,12 +361,6 @@ pub async fn void_envelope(
 
 /// `POST /api/v1/signatures/:id/steps` — Add a step to an envelope.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    post,
-    path = "/api/v1/signatures",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn add_step(
     State(state): State<AppState>,
@@ -442,12 +406,6 @@ pub async fn add_step(
 
 /// `GET /api/v1/signatures/:id/steps` — List all steps for an envelope.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/signatures",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_steps(
     State(state): State<AppState>,
@@ -476,12 +434,6 @@ pub async fn list_steps(
 
 /// `POST /api/v1/signatures/:id/steps/:step_id/sign` — Sign a step.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/signatures",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn sign_step(
     State(state): State<AppState>,
@@ -522,12 +474,6 @@ pub async fn sign_step(
 
 /// `POST /api/v1/signatures/:id/steps/:step_id/decline` — Decline a step.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/signatures",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn decline_step(
     State(state): State<AppState>,
@@ -572,12 +518,6 @@ pub async fn decline_step(
 
 /// `GET /api/v1/signatures/:id/transitions` — Get full transition history for an envelope.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/signatures",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_transitions(
     State(state): State<AppState>,

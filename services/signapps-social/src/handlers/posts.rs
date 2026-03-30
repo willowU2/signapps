@@ -15,12 +15,6 @@ use crate::{
 };
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/posts",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_posts(
     State(state): State<AppState>,
@@ -50,12 +44,6 @@ pub async fn list_posts(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/posts",
-    responses((status = 201, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_post(
     State(state): State<AppState>,
@@ -124,12 +112,6 @@ pub async fn create_post(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/posts",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_post(
     State(state): State<AppState>,
@@ -162,12 +144,6 @@ pub async fn get_post(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/posts",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_post(
     State(state): State<AppState>,
@@ -248,12 +224,6 @@ pub async fn update_post(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/posts",
-    responses((status = 204, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_post(
     State(state): State<AppState>,
@@ -278,12 +248,6 @@ pub async fn delete_post(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/posts",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn publish_post(
     State(state): State<AppState>,
@@ -330,12 +294,6 @@ pub async fn publish_post(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/posts",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn schedule_post(
     State(state): State<AppState>,

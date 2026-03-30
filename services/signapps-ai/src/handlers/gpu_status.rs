@@ -20,12 +20,6 @@ pub struct GpuStatusResponse {
 
 /// Get current GPU status including loaded models and VRAM usage.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/gpu_status",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_gpu_status(
     State(state): State<AppState>,
@@ -53,12 +47,6 @@ pub async fn get_gpu_status(
 
 /// List load profiles for all hardware tiers.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/gpu_status",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_profiles() -> Json<Vec<LoadProfile>> {
     let tiers = [
@@ -75,12 +63,6 @@ pub async fn list_profiles() -> Json<Vec<LoadProfile>> {
 
 /// Get recommended models based on detected hardware.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/gpu_status",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_recommended_models(
     State(state): State<AppState>,

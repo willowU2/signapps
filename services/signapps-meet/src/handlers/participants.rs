@@ -15,12 +15,6 @@ use crate::{
 
 /// List participants in a room
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/participants",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_participants(
     State(state): State<AppState>,
@@ -65,12 +59,6 @@ pub async fn list_participants(
 
 /// Kick a participant from a room
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/participants",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn kick_participant(
     State(state): State<AppState>,
@@ -135,12 +123,6 @@ pub async fn kick_participant(
 
 /// Mute/unmute a participant
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/participants",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn mute_participant(
     State(state): State<AppState>,

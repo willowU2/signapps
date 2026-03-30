@@ -45,12 +45,6 @@ pub struct ImageSearchResultItem {
 /// - `limit` — optional result count, default 10
 /// - `collections` — optional comma-separated collection names
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/search_image",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn search_by_image(
     State(state): State<AppState>,

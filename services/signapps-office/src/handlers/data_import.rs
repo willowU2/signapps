@@ -47,12 +47,6 @@ pub struct EventRecord {
 // ============================================================================
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/data_import",
-    responses((status = 201, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn import_info() -> Json<serde_json::Value> {
     Json(serde_json::json!({
@@ -68,12 +62,6 @@ pub async fn import_info() -> Json<serde_json::Value> {
 
 /// POST /api/v1/data/import — Upload a file and get parsed data back.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/data_import",
-    responses((status = 201, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn import_data(
     mut multipart: Multipart,

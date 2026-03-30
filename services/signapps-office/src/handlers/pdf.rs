@@ -23,12 +23,6 @@ pub struct PdfInfoResponse {
 
 /// Get PDF operations info
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/pdf",
-    responses((status = 200, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn pdf_info() -> Json<PdfInfoResponse> {
     Json(PdfInfoResponse {
@@ -40,12 +34,6 @@ pub async fn pdf_info() -> Json<PdfInfoResponse> {
 
 /// Extract text from a PDF
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/pdf",
-    responses((status = 200, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn extract_pdf_text(mut multipart: Multipart) -> Response {
     let mut pdf_data: Option<Vec<u8>> = None;
@@ -95,12 +83,6 @@ pub async fn extract_pdf_text(mut multipart: Multipart) -> Response {
 
 /// Get PDF document info
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/pdf",
-    responses((status = 200, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_pdf_document_info(mut multipart: Multipart) -> Response {
     let mut pdf_data: Option<Vec<u8>> = None;
@@ -146,12 +128,6 @@ pub async fn get_pdf_document_info(mut multipart: Multipart) -> Response {
 
 /// Get page dimensions for all pages
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/pdf",
-    responses((status = 200, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_pdf_pages(mut multipart: Multipart) -> Response {
     let mut pdf_data: Option<Vec<u8>> = None;
@@ -210,12 +186,6 @@ pub struct MergeRequest {
 
 /// Merge multiple PDFs from multipart upload
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/pdf",
-    responses((status = 200, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn merge_pdf_files(mut multipart: Multipart) -> Response {
     let mut pdf_files: Vec<Vec<u8>> = Vec::new();
@@ -277,12 +247,6 @@ pub struct SplitRequest {
 
 /// Split a PDF by page ranges
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/pdf",
-    responses((status = 200, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn split_pdf_file(mut multipart: Multipart) -> Response {
     let mut pdf_data: Option<Vec<u8>> = None;

@@ -210,12 +210,6 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
 
 // ─── EA1: Register agent ──────────────────────────────────────────────────────
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/agent",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn register_agent(
     State(pool): State<DatabasePool>,
@@ -284,12 +278,6 @@ pub async fn register_agent(
 
 // ─── EA1: Heartbeat ───────────────────────────────────────────────────────────
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/agent",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn agent_heartbeat(
     State(pool): State<DatabasePool>,
@@ -361,12 +349,6 @@ pub async fn agent_heartbeat(
 
 // ─── EA1 + EA5: Get agent config ──────────────────────────────────────────────
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/agent",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_agent_config(
     State(pool): State<DatabasePool>,
@@ -407,12 +389,6 @@ pub async fn get_agent_config(
 
 // ─── EA2: Hardware inventory ──────────────────────────────────────────────────
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/agent",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn report_hardware_inventory(
     State(pool): State<DatabasePool>,
@@ -467,12 +443,6 @@ pub async fn report_hardware_inventory(
 
 // ─── EA3: Software inventory ──────────────────────────────────────────────────
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/agent",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn report_software_inventory(
     State(pool): State<DatabasePool>,
@@ -517,12 +487,6 @@ pub async fn report_software_inventory(
 
 // ─── EA4: Script queue ────────────────────────────────────────────────────────
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/agent",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn queue_script(
     State(pool): State<DatabasePool>,
@@ -546,12 +510,6 @@ pub async fn queue_script(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/agent",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_pending_scripts(
     State(pool): State<DatabasePool>,
@@ -574,12 +532,6 @@ pub async fn get_pending_scripts(
     Ok(Json(rows))
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/agent",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn report_script_result(
     State(pool): State<DatabasePool>,
@@ -624,12 +576,6 @@ pub async fn report_script_result(
 
 // ─── EA6: Enrollment tokens ───────────────────────────────────────────────────
 
-#[utoipa::path(
-    post,
-    path = "/api/v1/agent",
-    responses((status = 201, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_enrollment_token(
     State(pool): State<DatabasePool>,

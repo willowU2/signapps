@@ -55,12 +55,6 @@ pub struct CreateDelegationRequest {
 
 /// GET /api/v1/mail/accounts/:id/delegations
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/delegation",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_delegations(
     State(state): State<AppState>,
@@ -99,12 +93,6 @@ pub async fn list_delegations(
 
 /// POST /api/v1/mail/accounts/:id/delegations
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/delegation",
-    responses((status = 201, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_delegation(
     State(state): State<AppState>,
@@ -166,12 +154,6 @@ pub async fn create_delegation(
 
 /// DELETE /api/v1/mail/accounts/:id/delegations/:delegation_id
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/delegation",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn revoke_delegation(
     State(state): State<AppState>,

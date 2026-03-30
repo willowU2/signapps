@@ -2,12 +2,6 @@ use axum::Json;
 use serde_json::json;
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/health",
-    responses((status = 200, description = "Success")),
-    tag = "Docs"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn health_handler() -> Json<serde_json::Value> {
     Json(json!({

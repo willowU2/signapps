@@ -44,12 +44,6 @@ impl From<Certificate> for CertificateResponse {
 
 /// List all certificates.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/certificates",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_certificates(
     State(state): State<AppState>,
@@ -65,12 +59,6 @@ pub async fn list_certificates(
 
 /// Upload a certificate manually.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/certificates",
-    responses((status = 201, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn upload_certificate(
     State(state): State<AppState>,
@@ -109,12 +97,6 @@ pub struct RequestCertificateBody {
 
 /// Request a certificate via ACME (Let's Encrypt).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/certificates",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn request_certificate(
     State(_state): State<AppState>,
@@ -144,12 +126,6 @@ pub async fn request_certificate(
 
 /// Renew an existing certificate.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/certificates",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn renew_certificate(
     State(state): State<AppState>,
@@ -177,12 +153,6 @@ pub async fn renew_certificate(
 
 /// Delete a certificate.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/certificates",
-    responses((status = 204, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_certificate(
     State(state): State<AppState>,

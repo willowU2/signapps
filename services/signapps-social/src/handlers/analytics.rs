@@ -23,12 +23,6 @@ pub struct TopPostsQuery {
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/analytics",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn overview(
     State(state): State<AppState>,
@@ -111,12 +105,6 @@ pub async fn overview(
 
 /// GET /social/analytics/followers?days=30
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/analytics",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn followers_timeline(
     State(state): State<AppState>,
@@ -163,12 +151,6 @@ pub async fn followers_timeline(
 
 /// GET /social/analytics/by-platform
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/analytics",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn by_platform(
     State(state): State<AppState>,
@@ -215,12 +197,6 @@ pub async fn by_platform(
 
 /// GET /social/analytics/top-posts?limit=10
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/analytics",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn top_posts(
     State(state): State<AppState>,
@@ -255,12 +231,6 @@ pub async fn top_posts(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/analytics",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn post_analytics(
     State(state): State<AppState>,

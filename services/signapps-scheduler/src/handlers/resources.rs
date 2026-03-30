@@ -11,12 +11,6 @@ use uuid::Uuid;
 use crate::AppState;
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/resources",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_resources(
     State(_state): State<AppState>,
@@ -30,12 +24,6 @@ pub async fn list_resources(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/resources",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_resource(
     State(_state): State<AppState>,

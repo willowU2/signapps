@@ -83,12 +83,6 @@ pub struct JobSubmitResponse {
 /// Accepts the same body as `/api/v1/convert` plus a `format` field.
 /// Returns `{ job_id }` immediately; the conversion runs in the background.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/jobs",
-    responses((status = 201, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn submit_convert_job(
     State(state): State<AppState>,
@@ -126,12 +120,6 @@ pub async fn submit_convert_job(
 
 /// GET /api/v1/office/jobs/:id
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/jobs",
-    responses((status = 200, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_job_status(
     State(state): State<AppState>,

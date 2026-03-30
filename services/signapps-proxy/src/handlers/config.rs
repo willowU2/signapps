@@ -8,12 +8,6 @@ use crate::AppState;
 
 /// Get current proxy configuration summary.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/config",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_proxy_config(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     let repo = RouteRepository::new(&state.pool);
@@ -34,12 +28,6 @@ pub async fn get_proxy_config(State(state): State<AppState>) -> Result<Json<serd
 
 /// Get proxy overview stats.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/config",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_proxy_overview(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     let repo = RouteRepository::new(&state.pool);
@@ -66,12 +54,6 @@ pub async fn get_proxy_overview(State(state): State<AppState>) -> Result<Json<se
 
 /// Force route cache refresh.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/config",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn refresh_config(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     state.route_cache.force_refresh();

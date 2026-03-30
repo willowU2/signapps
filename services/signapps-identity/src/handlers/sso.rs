@@ -96,12 +96,6 @@ pub struct OidcCallbackQuery {
 
 /// `GET /api/v1/auth/sso/saml/metadata` — Return SP metadata XML.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/sso",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn saml_metadata(State(state): State<AppState>) -> Response {
     // Load the configured SP entity ID from env (or use a sensible default).
@@ -163,12 +157,6 @@ pub struct AcsPayload {
 /// response signature and extract the NameID + attributes.  For this stub we
 /// parse the Base64 payload and extract the email attribute if present.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/sso",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn saml_acs(
     State(state): State<AppState>,
@@ -221,12 +209,6 @@ pub async fn saml_acs(
 
 /// `GET /api/v1/auth/sso/oidc/authorize` — Redirect to OIDC IdP.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/sso",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn oidc_authorize(
     State(state): State<AppState>,
@@ -277,12 +259,6 @@ pub async fn oidc_authorize(
 
 /// `GET /api/v1/auth/sso/oidc/callback` — Handle OIDC authorization code callback.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/sso",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn oidc_callback(
     State(state): State<AppState>,
@@ -311,12 +287,6 @@ pub async fn oidc_callback(
 
 /// `GET /api/v1/admin/sso/config` — Get SSO configs for the current tenant.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/sso",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_config(
     State(state): State<AppState>,
@@ -380,12 +350,6 @@ pub async fn get_config(
 
 /// `PUT /api/v1/admin/sso/config` — Upsert SSO config for the current tenant.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/sso",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn upsert_config(
     State(state): State<AppState>,
@@ -527,12 +491,6 @@ pub struct UpsertPasswordPolicyRequest {
 
 /// `GET /api/v1/admin/security/password-policy` — Get tenant password policy.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/sso",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_password_policy(
     State(state): State<AppState>,
@@ -587,12 +545,6 @@ pub async fn get_password_policy(
 
 /// `PUT /api/v1/admin/security/password-policy` — Upsert tenant password policy.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/sso",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn upsert_password_policy(
     State(state): State<AppState>,
@@ -742,12 +694,6 @@ async fn find_or_create_sso_user(
 /// Validate a password against the tenant policy.
 /// Returns `Ok(())` if valid, `Err(String)` with a message otherwise.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/sso",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn validate_password_against_policy(
     state: &AppState,

@@ -50,12 +50,6 @@ pub struct ReportInfo {
 // ============================================================================
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/report",
-    responses((status = 200, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn report_info() -> Json<ReportInfo> {
     Json(ReportInfo {
@@ -74,12 +68,6 @@ pub async fn report_info() -> Json<ReportInfo> {
 // ============================================================================
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/report",
-    responses((status = 201, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn generate_report(
     Json(payload): Json<ReportRequest>,

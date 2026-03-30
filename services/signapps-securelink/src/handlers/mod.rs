@@ -37,7 +37,6 @@ pub struct DnsHealth {
 
 /// Health check endpoint (standalone mode - no database).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(get, path = "/api/v1/mod", responses((status = 200, description = "Success")), tag = "Securelink")]
 #[tracing::instrument(skip_all)]
 pub async fn health_check_standalone(
     axum::extract::State(state): axum::extract::State<crate::AppState>,

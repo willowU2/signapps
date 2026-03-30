@@ -26,12 +26,6 @@ struct ErrorResponse {
 
 /// Get current user preferences
 #[tracing::instrument(skip(state, claims))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/preferences",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_preferences(
     State(state): State<AppState>,
@@ -63,12 +57,6 @@ pub async fn get_preferences(
 
 /// Sync preferences (full update)
 #[tracing::instrument(skip(state, claims, body))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/preferences",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn sync_preferences(
     State(state): State<AppState>,
@@ -127,12 +115,6 @@ pub async fn sync_preferences(
 
 /// Patch a specific section of preferences
 #[tracing::instrument(skip(state, claims, body))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/preferences",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn patch_preferences(
     State(state): State<AppState>,
@@ -183,12 +165,6 @@ pub struct ConflictQuery {
 }
 
 #[tracing::instrument(skip(state, claims))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/preferences",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn check_conflicts(
     State(state): State<AppState>,
@@ -225,12 +201,6 @@ pub async fn check_conflicts(
 
 /// Reset preferences to defaults
 #[tracing::instrument(skip(state, claims))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/preferences",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn reset_preferences(
     State(state): State<AppState>,
@@ -262,12 +232,6 @@ pub async fn reset_preferences(
 
 /// Export preferences as JSON
 #[tracing::instrument(skip(state, claims))]
-#[utoipa::path(
-    post,
-    path = "/api/v1/preferences",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn export_preferences(
     State(state): State<AppState>,
@@ -306,12 +270,6 @@ pub async fn export_preferences(
 
 /// Import preferences from JSON
 #[tracing::instrument(skip(state, claims, body))]
-#[utoipa::path(
-    post,
-    path = "/api/v1/preferences",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn import_preferences(
     State(state): State<AppState>,

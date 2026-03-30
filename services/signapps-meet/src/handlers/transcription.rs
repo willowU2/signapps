@@ -47,12 +47,6 @@ pub struct TranscriptionJob {
 /// a transcription job is created and the AI transcription pipeline is
 /// triggered asynchronously.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/transcription",
-    responses((status = 200, description = "Success")),
-    tag = "Meet"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn handle_session_ended(
     State(state): State<AppState>,

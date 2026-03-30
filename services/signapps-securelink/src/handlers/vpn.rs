@@ -28,12 +28,6 @@ pub struct InitVpnResponse {
 
 /// Initialize VPN CA.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/vpn",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn init_vpn(
     State(state): State<AppState>,
@@ -50,12 +44,6 @@ pub async fn init_vpn(
 
 /// Get VPN network status.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/vpn",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_vpn_status(
     State(state): State<AppState>,
@@ -66,12 +54,6 @@ pub async fn get_vpn_status(
 
 /// Get CA certificate.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/vpn",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_ca_certificate(
     State(state): State<AppState>,
@@ -89,12 +71,6 @@ pub struct CaCertificateResponse {
 
 /// Regenerate all device configurations.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/vpn",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn regenerate_configs(
     State(state): State<AppState>,
@@ -119,12 +95,6 @@ pub struct RegenerateResponse {
 
 /// Health check for VPN service.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/vpn",
-    responses((status = 200, description = "Success")),
-    tag = "Securelink"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn health_check(
     State(state): State<AppState>,

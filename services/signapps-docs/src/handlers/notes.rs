@@ -46,12 +46,6 @@ pub struct UpdateNoteRequest {
 
 /// GET /api/v1/keep/notes
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/notes",
-    responses((status = 200, description = "Success")),
-    tag = "Docs"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_notes(
     State(state): State<AppState>,
@@ -76,12 +70,6 @@ pub async fn list_notes(
 
 /// POST /api/v1/keep/notes
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/notes",
-    responses((status = 201, description = "Success")),
-    tag = "Docs"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_note(
     State(state): State<AppState>,
@@ -111,12 +99,6 @@ pub async fn create_note(
 
 /// PUT /api/v1/keep/notes/:id
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/notes",
-    responses((status = 200, description = "Success")),
-    tag = "Docs"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_note(
     State(state): State<AppState>,
@@ -150,12 +132,6 @@ pub async fn update_note(
 
 /// DELETE /api/v1/keep/notes/:id
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/notes",
-    responses((status = 204, description = "Success")),
-    tag = "Docs"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_note(
     State(state): State<AppState>,

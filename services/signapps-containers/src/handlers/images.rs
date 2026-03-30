@@ -30,12 +30,6 @@ pub struct PullResponse {
 
 /// List all Docker images.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/images",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<ImageInfo>>> {
     let images = state.docker.list_images().await?;
@@ -44,12 +38,6 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<ImageInfo>>>
 
 /// Pull a Docker image.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/images",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn pull(
     State(state): State<AppState>,
@@ -66,12 +54,6 @@ pub async fn pull(
 
 /// Delete a Docker image.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/images/{id}",
-    responses((status = 204, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<String>) -> Result<StatusCode> {
     state.docker.remove_image(&id, false).await?;
@@ -80,12 +62,6 @@ pub async fn delete(State(state): State<AppState>, Path(id): Path<String>) -> Re
 
 /// Force delete a Docker image.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/images",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn force_delete(
     State(state): State<AppState>,

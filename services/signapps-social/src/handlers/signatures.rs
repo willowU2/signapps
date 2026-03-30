@@ -11,12 +11,6 @@ use crate::AppState;
 use signapps_common::Claims;
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/signatures",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_signatures(
     State(state): State<AppState>,
@@ -38,12 +32,6 @@ pub async fn list_signatures(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/signatures",
-    responses((status = 201, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_signature(
     State(state): State<AppState>,
@@ -71,12 +59,6 @@ pub async fn create_signature(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/signatures",
-    responses((status = 200, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_signature(
     State(state): State<AppState>,
@@ -128,12 +110,6 @@ pub async fn update_signature(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/signatures",
-    responses((status = 204, description = "Success")),
-    tag = "Social"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_signature(
     State(state): State<AppState>,

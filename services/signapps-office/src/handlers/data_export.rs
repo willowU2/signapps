@@ -43,12 +43,6 @@ pub struct ExportInfo {
 // ============================================================================
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/data_export",
-    responses((status = 201, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn export_info() -> Json<ExportInfo> {
     Json(ExportInfo {
@@ -68,12 +62,6 @@ pub async fn export_info() -> Json<ExportInfo> {
 
 /// POST /api/v1/data/export — Export data to a chosen format.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/data_export",
-    responses((status = 201, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn export_data(
     Json(payload): Json<ExportRequest>,

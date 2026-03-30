@@ -97,12 +97,6 @@ pub struct UpdateTenantRequest {
 
 /// List all tenants (super-admin only).
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tenants",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_tenants(
     State(state): State<AppState>,
@@ -119,12 +113,6 @@ pub async fn list_tenants(
 
 /// Get tenant by ID.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tenants",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_tenant(
     State(state): State<AppState>,
@@ -139,12 +127,6 @@ pub async fn get_tenant(
 
 /// Get current user's tenant.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tenants",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_my_tenant(
     State(state): State<AppState>,
@@ -159,12 +141,6 @@ pub async fn get_my_tenant(
 
 /// Create a new tenant (super-admin only).
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    post,
-    path = "/api/v1/tenants",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_tenant(
     State(state): State<AppState>,
@@ -212,12 +188,6 @@ pub async fn create_tenant(
 
 /// Update a tenant (super-admin or tenant admin).
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/tenants",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_tenant(
     State(state): State<AppState>,
@@ -264,12 +234,6 @@ pub async fn update_tenant(
 
 /// Delete (deactivate) a tenant (super-admin only).
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/tenants",
-    responses((status = 204, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_tenant(
     State(state): State<AppState>,
@@ -399,12 +363,6 @@ pub struct UpdateMemberRoleRequest {
 
 /// List workspaces for current tenant.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tenants",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_workspaces(
     State(state): State<AppState>,
@@ -426,12 +384,6 @@ pub async fn list_workspaces(
 
 /// List workspaces the current user is a member of.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tenants",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_my_workspaces(
     State(state): State<AppState>,
@@ -448,12 +400,6 @@ pub async fn list_my_workspaces(
 
 /// Get workspace by ID.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tenants",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_workspace(
     State(state): State<AppState>,
@@ -468,12 +414,6 @@ pub async fn get_workspace(
 
 /// Create a new workspace.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    post,
-    path = "/api/v1/tenants",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_workspace(
     State(state): State<AppState>,
@@ -531,12 +471,6 @@ pub async fn create_workspace(
 
 /// Update a workspace.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/tenants",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_workspace(
     State(state): State<AppState>,
@@ -569,12 +503,6 @@ pub async fn update_workspace(
 
 /// Delete a workspace.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/tenants",
-    responses((status = 204, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_workspace(
     State(state): State<AppState>,
@@ -600,12 +528,6 @@ pub async fn delete_workspace(
 
 /// List workspace members.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tenants",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_workspace_members(
     State(state): State<AppState>,
@@ -627,12 +549,6 @@ pub async fn list_workspace_members(
 
 /// Add member to workspace.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    post,
-    path = "/api/v1/tenants",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn add_workspace_member(
     State(state): State<AppState>,
@@ -657,12 +573,6 @@ pub async fn add_workspace_member(
 
 /// Update workspace member role.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/tenants",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_workspace_member_role(
     State(state): State<AppState>,
@@ -687,12 +597,6 @@ pub async fn update_workspace_member_role(
 
 /// Remove member from workspace.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/tenants",
-    responses((status = 204, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_workspace_member(
     State(state): State<AppState>,

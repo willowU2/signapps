@@ -99,12 +99,6 @@ pub struct CreateTemplateRequest {
 
 /// GET /api/v1/docs/templates — list built-in + custom templates
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/templates",
-    responses((status = 200, description = "Success")),
-    tag = "Docs"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_templates(State(state): State<AppState>) -> Json<Vec<TemplateSummary>> {
     let mut summaries: Vec<TemplateSummary> = DEFAULT_TEMPLATES
@@ -141,12 +135,6 @@ pub async fn list_templates(State(state): State<AppState>) -> Json<Vec<TemplateS
 
 /// GET /api/v1/docs/templates/:id — get full template content (built-in or custom)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/templates",
-    responses((status = 200, description = "Success")),
-    tag = "Docs"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_template(
     State(state): State<AppState>,
@@ -210,12 +198,6 @@ pub async fn get_template(
 
 /// POST /api/v1/docs/templates — create a custom template (persisted in DB)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/templates",
-    responses((status = 201, description = "Success")),
-    tag = "Docs"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_template(
     State(state): State<AppState>,
@@ -274,12 +256,6 @@ pub async fn create_template(
 
 /// DELETE /api/v1/docs/templates/:id — delete a custom template
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/templates",
-    responses((status = 204, description = "Success")),
-    tag = "Docs"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_template(
     State(state): State<AppState>,

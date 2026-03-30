@@ -10,12 +10,6 @@ use tokio_stream::{wrappers::BroadcastStream, StreamExt};
 use crate::AppState;
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/notifications",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn sse_handler(
     State(state): State<AppState>,

@@ -90,12 +90,6 @@ async fn collect_snapshot() -> HealthSnapshot {
 /// No auth required so monitoring dashboards can connect without a token,
 /// but you can layer auth middleware on the route registration if needed.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/health_stream",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn health_stream(
     State(_state): State<AppState>,

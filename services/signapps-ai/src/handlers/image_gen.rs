@@ -114,12 +114,6 @@ async fn store_image(state: &AppState, image_bytes: &[u8]) -> Result<String, (St
 /// - `model` — model name override (optional)
 /// - `style` — prepended to prompt as a style prefix (optional)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/image_gen",
-    responses((status = 201, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn generate_image(
     State(state): State<AppState>,
@@ -190,12 +184,6 @@ pub async fn generate_image(
 /// - `prompt` — text description of the fill (required)
 /// - `model` — model name override (optional)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/image_gen",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn inpaint_image(
     State(state): State<AppState>,
@@ -332,12 +320,6 @@ pub async fn inpaint_image(
 /// - `strength` — denoising strength 0.0..1.0 (optional, default 0.75)
 /// - `model` — model name override (optional)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/image_gen",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn img2img(
     State(state): State<AppState>,
@@ -454,12 +436,6 @@ pub async fn img2img(
 /// - `image` — the image file to upscale (required)
 /// - `scale` — scale factor, e.g. 2 or 4 (optional, default 2)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/image_gen",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn upscale_image(
     State(state): State<AppState>,
@@ -550,12 +526,6 @@ pub async fn upscale_image(
 
 /// List available image generation models.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/image_gen",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_image_models() -> Result<Json<ImageModelsResponse>, (StatusCode, String)> {
     let worker = create_imagegen_worker().map_err(|e| (StatusCode::SERVICE_UNAVAILABLE, e))?;

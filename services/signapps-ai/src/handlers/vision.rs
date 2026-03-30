@@ -65,12 +65,6 @@ fn create_vision_worker() -> Result<Box<dyn VisionWorker + Send + Sync>, String>
 /// - `image` — the image file (required)
 /// - `prompt` — optional text prompt guiding the description
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/vision",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn describe_image(
     mut multipart: Multipart,
@@ -133,12 +127,6 @@ pub async fn describe_image(
 /// - `image` — the image file (required)
 /// - `question` — the question to answer (required)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/vision",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn visual_qa(
     mut multipart: Multipart,
@@ -214,12 +202,6 @@ pub async fn visual_qa(
 /// Accepts `multipart/form-data` with:
 /// - `images` — one or more image files (each as a separate `images` field)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/vision",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn batch_describe(
     mut multipart: Multipart,

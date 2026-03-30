@@ -50,12 +50,6 @@ const SLOW_THRESHOLD_SECS: f64 = 1.0;
 
 /// Return the top-10 currently running queries sorted by duration descending.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/slow_queries",
-    responses((status = 200, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_slow_queries(State(state): State<AppState>) -> Result<Json<SlowQueriesResponse>> {
     // First, try to check if pg_stat_statements is available (informational).

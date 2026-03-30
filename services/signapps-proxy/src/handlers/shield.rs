@@ -32,12 +32,6 @@ pub struct BlockResponse {
 
 /// Get shield statistics.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/shield",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<ShieldStats>> {
     let stats = state.shield.get_stats().await?;
@@ -46,12 +40,6 @@ pub async fn get_stats(State(state): State<AppState>) -> Result<Json<ShieldStats
 
 /// Reset shield statistics.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/shield",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn reset_stats(State(state): State<AppState>) -> Result<StatusCode> {
     state.shield.reset_stats().await?;
@@ -61,12 +49,6 @@ pub async fn reset_stats(State(state): State<AppState>) -> Result<StatusCode> {
 
 /// Block an IP for a route.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/shield",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn block_ip(
     State(state): State<AppState>,
@@ -90,12 +72,6 @@ pub async fn block_ip(
 
 /// Unblock an IP for a route.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/shield",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn unblock_ip(
     State(state): State<AppState>,
@@ -110,12 +86,6 @@ pub async fn unblock_ip(
 
 /// Check if an IP is blocked.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/shield",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn check_blocked(
     State(state): State<AppState>,

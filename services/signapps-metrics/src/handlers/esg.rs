@@ -52,12 +52,6 @@ pub struct UpsertEsgQuarterlyRequest {
 
 /// GET /api/v1/esg/scores
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/esg",
-    responses((status = 200, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_esg_scores(
     State(state): State<AppState>,
@@ -80,12 +74,6 @@ pub async fn get_esg_scores(
 
 /// PUT /api/v1/esg/scores
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/esg",
-    responses((status = 200, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn upsert_esg_score(
     State(state): State<AppState>,
@@ -123,12 +111,6 @@ pub async fn upsert_esg_score(
 
 /// GET /api/v1/esg/quarterly
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/esg",
-    responses((status = 200, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_esg_quarterly(
     State(state): State<AppState>,
@@ -151,12 +133,6 @@ pub async fn get_esg_quarterly(
 
 /// PUT /api/v1/esg/quarterly
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/esg",
-    responses((status = 200, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn upsert_esg_quarterly(
     State(state): State<AppState>,

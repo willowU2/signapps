@@ -36,12 +36,6 @@ pub struct SynthesizeResponse {
 
 /// Synthesize speech from text
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tts",
-    responses((status = 200, description = "Success")),
-    tag = "Media"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn synthesize(
     State(state): State<Arc<AppState>>,
@@ -98,12 +92,6 @@ pub async fn synthesize(
 
 /// Synthesize speech with streaming
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tts",
-    responses((status = 200, description = "Success")),
-    tag = "Media"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn synthesize_stream(
     State(state): State<Arc<AppState>>,
@@ -142,12 +130,6 @@ pub async fn synthesize_stream(
 
 /// List available voices
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tts",
-    responses((status = 200, description = "Success")),
-    tag = "Media"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_voices(
     State(state): State<Arc<AppState>>,

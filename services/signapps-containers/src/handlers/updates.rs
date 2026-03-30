@@ -55,12 +55,6 @@ pub struct UpdatesStatusResponse {
 
 /// Check if an update is available for a specific container.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/updates",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn check_update(
     State(state): State<AppState>,
@@ -88,12 +82,6 @@ pub async fn check_update(
 
 /// Toggle auto-update for a container.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/updates",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn set_auto_update(
     State(state): State<AppState>,
@@ -128,12 +116,6 @@ pub async fn set_auto_update(
 
 /// Get update status for all containers.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/updates",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn updates_status(State(state): State<AppState>) -> Result<Json<UpdatesStatusResponse>> {
     let repo = ContainerRepository::new(&state.pool);
@@ -159,12 +141,6 @@ pub async fn updates_status(State(state): State<AppState>) -> Result<Json<Update
 /// Background auto-update task. Checks all containers with auto_update=true
 /// and updates them if a newer image is available.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/updates",
-    responses((status = 201, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn run_auto_update_task(
     docker: crate::docker::DockerClient,

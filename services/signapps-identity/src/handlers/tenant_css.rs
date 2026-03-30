@@ -27,12 +27,6 @@ pub struct SetTenantCssRequest {
 
 /// GET /api/v1/admin/tenants/:id/css — Get CSS override for a tenant.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tenant_css",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_css(
     State(state): State<AppState>,
@@ -56,12 +50,6 @@ pub async fn get_css(
 
 /// PUT /api/v1/admin/tenants/:id/css — Set (or clear) CSS override for a tenant.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/tenant_css",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn set_css(
     State(state): State<AppState>,
@@ -88,12 +76,6 @@ pub async fn set_css(
 
 /// DELETE /api/v1/admin/tenants/:id/css — Clear CSS override for a tenant.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/tenant_css/{id}",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn clear_css(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let result = sqlx::query("UPDATE identity.tenants SET css_override = NULL WHERE id = $1")

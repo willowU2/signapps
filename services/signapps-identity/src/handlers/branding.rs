@@ -123,12 +123,6 @@ async fn fetch_branding(
 
 /// GET /api/v1/tenants/:id/branding — Get branding config for a specific tenant (admin).
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/branding",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_branding(
     State(state): State<AppState>,
@@ -148,12 +142,6 @@ pub async fn get_branding(
 /// This endpoint is intentionally accessible without admin privileges so the
 /// frontend can load branding on the login page.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/branding",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_my_branding(
     State(state): State<AppState>,
@@ -170,12 +158,6 @@ pub async fn get_my_branding(
 
 /// PUT /api/v1/tenants/:id/branding — Set branding config for a tenant (admin only).
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/branding",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_branding(
     State(state): State<AppState>,
@@ -240,12 +222,6 @@ pub async fn update_branding(
 
 /// DELETE /api/v1/tenants/:id/branding — Reset branding to defaults (admin only).
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/branding",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn reset_branding(
     State(state): State<AppState>,

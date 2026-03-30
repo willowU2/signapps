@@ -83,12 +83,6 @@ pub struct PushSendResultItem {
 /// GET /api/v1/notifications/push/vapid-key
 /// Get VAPID public key for frontend registration
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/push",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_vapid_key() -> Result<Json<VapidKeyResponse>, CalendarError> {
     let public_key = get_vapid_public_key()
@@ -100,12 +94,6 @@ pub async fn get_vapid_key() -> Result<Json<VapidKeyResponse>, CalendarError> {
 /// POST /api/v1/notifications/push/send
 /// Send a push notification to user's subscriptions
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/push",
-    responses((status = 201, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn send_push(
     State(state): State<AppState>,

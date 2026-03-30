@@ -85,12 +85,6 @@ pub struct UpdateRecurringRequest {
 
 /// POST /api/v1/mail/emails/recurring
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/recurring",
-    responses((status = 201, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_recurring(
     State(state): State<AppState>,
@@ -150,12 +144,6 @@ pub async fn create_recurring(
 
 /// GET /api/v1/mail/emails/recurring
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/recurring",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_recurring(
     State(state): State<AppState>,
@@ -179,12 +167,6 @@ pub async fn list_recurring(
 
 /// PATCH /api/v1/mail/emails/recurring/:id
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/recurring",
-    responses((status = 200, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_recurring(
     State(state): State<AppState>,
@@ -235,12 +217,6 @@ pub async fn update_recurring(
 
 /// DELETE /api/v1/mail/emails/recurring/:id
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/recurring",
-    responses((status = 204, description = "Success")),
-    tag = "Mail"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_recurring(
     State(state): State<AppState>,

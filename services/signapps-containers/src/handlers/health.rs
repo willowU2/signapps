@@ -16,12 +16,6 @@ pub struct HealthResponse {
 
 /// Health check endpoint.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/health",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn health_check(
     axum::extract::State(state): axum::extract::State<AppState>,

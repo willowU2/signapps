@@ -23,12 +23,6 @@ pub struct RoleResponse {
 
 /// List all roles.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/roles",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<RoleResponse>>> {
     let repo = GroupRepository::new(&state.pool);
@@ -50,12 +44,6 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<RoleResponse
 
 /// Create new role.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/roles",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
@@ -75,12 +63,6 @@ pub async fn create(
 
 /// Update role (non-system roles only).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/roles",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
@@ -109,12 +91,6 @@ pub async fn update(
 
 /// Delete role.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/roles/{id}",
-    responses((status = 204, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let repo = GroupRepository::new(&state.pool);

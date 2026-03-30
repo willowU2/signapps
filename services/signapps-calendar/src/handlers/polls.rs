@@ -170,12 +170,6 @@ async fn fetch_slots(state: &AppState, poll_id: Uuid) -> Result<Vec<PollSlot>, C
 
 /// GET /api/v1/polls — List polls created by the current user.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/polls",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_polls(
     State(state): State<AppState>,
@@ -198,12 +192,6 @@ pub async fn list_polls(
 
 /// POST /api/v1/polls — Create a new scheduling poll with slots.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    post,
-    path = "/api/v1/polls",
-    responses((status = 201, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_poll(
     State(state): State<AppState>,
@@ -269,12 +257,6 @@ pub async fn create_poll(
 
 /// GET /api/v1/polls/:id — Get a poll with all slots and votes (public by poll ID).
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/polls",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_poll(
     State(state): State<AppState>,
@@ -301,12 +283,6 @@ pub async fn get_poll(
 
 /// POST /api/v1/polls/:id/vote — Submit votes for multiple slots at once.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/polls",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn vote_poll(
     State(state): State<AppState>,
@@ -386,12 +362,6 @@ pub async fn vote_poll(
 
 /// POST /api/v1/polls/:id/confirm — Close poll and pick winning slot; optionally create event.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/polls",
-    responses((status = 200, description = "Success")),
-    tag = "Calendar"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn confirm_poll(
     State(state): State<AppState>,

@@ -52,12 +52,6 @@ pub struct UpdateExperimentRequest {
 // ---------------------------------------------------------------------------
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/experiments",
-    responses((status = 200, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_experiments(
     State(state): State<AppState>,
@@ -78,12 +72,6 @@ pub async fn list_experiments(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/experiments",
-    responses((status = 201, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_experiment(
     State(state): State<AppState>,
@@ -127,12 +115,6 @@ pub async fn create_experiment(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/experiments",
-    responses((status = 200, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_experiment(
     State(state): State<AppState>,
@@ -179,12 +161,6 @@ pub async fn update_experiment(
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/experiments",
-    responses((status = 204, description = "Success")),
-    tag = "Metrics"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_experiment(
     State(state): State<AppState>,

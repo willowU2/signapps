@@ -70,12 +70,6 @@ pub struct AttendanceQueryParams {
 /// Opens a new attendance record for the given employee.
 /// Returns `409 Conflict` if the employee is already clocked in.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/attendance",
-    responses((status = 200, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn clock_in(
     State(state): State<AppState>,
@@ -131,12 +125,6 @@ pub async fn clock_in(
 /// Closes the most recent open attendance record for the given employee.
 /// Returns `404` if the employee is not currently clocked in.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/attendance",
-    responses((status = 200, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn clock_out(
     State(state): State<AppState>,
@@ -177,12 +165,6 @@ pub async fn clock_out(
 ///
 /// Returns attendance records for the tenant, optionally filtered by employee.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/attendance",
-    responses((status = 200, description = "Success")),
-    tag = "Workforce"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_attendance(
     State(state): State<AppState>,

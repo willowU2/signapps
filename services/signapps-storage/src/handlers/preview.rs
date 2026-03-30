@@ -91,12 +91,6 @@ pub enum PreviewType {
 
 /// Get thumbnail for a file.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/preview",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_thumbnail(
     State(state): State<AppState>,
@@ -664,12 +658,6 @@ struct PreviewNotAvailable {
 /// - Text files (`text/*`): first 1 000 characters returned as `text/plain`.
 /// - Everything else: JSON `{"previewable":false,"message":"preview not available"}`.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/preview",
-    responses((status = 201, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn generate_preview(
     State(state): State<AppState>,
@@ -745,12 +733,6 @@ pub async fn generate_preview(
 
 /// Get preview for a file.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/preview",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_preview(
     State(state): State<AppState>,
@@ -901,12 +883,6 @@ pub async fn get_preview(
 
 /// Get preview info for a file.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/preview",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_preview_info(
     State(state): State<AppState>,
@@ -1018,12 +994,6 @@ pub struct ArchiveListResponse {
 
 /// Get archive listing (ZIP files).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/preview",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_archive_listing(
     State(state): State<AppState>,
@@ -1099,12 +1069,6 @@ pub struct DocumentMetadata {
 
 /// Get document metadata.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/preview",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_document_metadata(
     State(state): State<AppState>,

@@ -50,12 +50,6 @@ pub struct ImportMetadata {
 
 /// Get import service info
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/import",
-    responses((status = 200, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn info() -> Json<ImportInfoResponse> {
     Json(ImportInfoResponse {
@@ -67,12 +61,6 @@ pub async fn info() -> Json<ImportInfoResponse> {
 
 /// Import document from multipart upload
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/import",
-    responses((status = 201, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn import_upload(
     State(state): State<AppState>,
@@ -134,12 +122,6 @@ pub struct ImportJsonRequest {
 }
 
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/import",
-    responses((status = 201, description = "Success")),
-    tag = "Office"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn import_json(
     State(state): State<AppState>,

@@ -63,12 +63,6 @@ struct ImportCalendarEvent {
 ///  3. POST each item to the respective internal services
 ///  4. Update job progress in the store as work progresses
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/migration",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn run_google_migration(store: MigrationStore, cfg: MigrationWorkerConfig) {
     let client = reqwest::Client::new();
@@ -341,12 +335,6 @@ fn parse_google_events(body: &serde_json::Value) -> Vec<ImportCalendarEvent> {
 ///  2. Fetch calendar events via MS Graph (`/v1.0/me/events`)
 ///  3. POST each item to the respective internal services
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/migration",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn run_microsoft_migration(store: MigrationStore, cfg: MigrationWorkerConfig) {
     let client = reqwest::Client::new();
@@ -756,12 +744,6 @@ impl MigrationStore {
 
     /// Return a clone of the current job, if any.
     #[tracing::instrument(skip_all)]
-    #[utoipa::path(
-        get,
-        path = "/api/v1/migration",
-        responses((status = 200, description = "Success")),
-        tag = "Identity"
-    )]
     #[tracing::instrument(skip_all)]
     pub async fn get(&self) -> Option<MigrationJob> {
         self.inner.read().await.clone()
@@ -769,12 +751,6 @@ impl MigrationStore {
 
     /// Overwrite the current job record.
     #[tracing::instrument(skip_all)]
-    #[utoipa::path(
-        get,
-        path = "/api/v1/migration",
-        responses((status = 200, description = "Success")),
-        tag = "Identity"
-    )]
     #[tracing::instrument(skip_all)]
     pub async fn set(&self, job: MigrationJob) {
         *self.inner.write().await = Some(job);
@@ -782,12 +758,6 @@ impl MigrationStore {
 
     /// Clear the current job record.
     #[tracing::instrument(skip_all)]
-    #[utoipa::path(
-        get,
-        path = "/api/v1/migration",
-        responses((status = 200, description = "Success")),
-        tag = "Identity"
-    )]
     #[tracing::instrument(skip_all)]
     pub async fn clear(&self) {
         *self.inner.write().await = None;
@@ -807,12 +777,6 @@ impl MigrationStore {
 /// The request body may include an `oauth_token` field (used by the worker).
 /// Returns `409 Conflict` if a job is already running or pending.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/migration",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn start_migration(
     State(state): State<AppState>,
@@ -877,12 +841,6 @@ pub async fn start_migration(
 ///
 /// Returns the current migration job, or `404` if none exists.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/migration",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_migration_status(State(state): State<AppState>) -> Result<Json<MigrationJob>> {
     match state.migration.get().await {
@@ -896,12 +854,6 @@ pub async fn get_migration_status(State(state): State<AppState>) -> Result<Json<
 /// Cancels the current migration job if it is Pending or Running.
 /// Returns `409 Conflict` if the job cannot be cancelled in its current state.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/migration",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn cancel_migration(State(state): State<AppState>) -> Result<Json<MigrationJob>> {
     let mut job = state

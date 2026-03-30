@@ -130,12 +130,6 @@ static EXTERNAL_STORAGES: Lazy<RwLock<Vec<ExternalStorage>>> =
 
 /// List all external storage (USB, NAS, etc.).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_external(State(_state): State<AppState>) -> Result<Json<Vec<ExternalStorage>>> {
     let mut storages = Vec::new();
@@ -180,12 +174,6 @@ pub async fn list_external(State(_state): State<AppState>) -> Result<Json<Vec<Ex
 
 /// Connect external storage (NFS, SMB, S3).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn connect_external(
     State(_state): State<AppState>,
@@ -294,12 +282,6 @@ pub async fn connect_external(
 
 /// Disconnect external storage.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/external",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn disconnect_external(
     State(_state): State<AppState>,

@@ -70,13 +70,13 @@ export default function PatchesPage() {
 
   const { data: patches = [], isLoading: patchesLoading, refetch } = useQuery({
     queryKey: ["patches"],
-    queryFn: () => itAssetsApi.listPatches(),
+    queryFn: () => itAssetsApi.listPatches().then(r => r.data),
     refetchInterval: 60_000,
   })
 
   const { data: compliance, isLoading: complianceLoading } = useQuery({
     queryKey: ["patch-compliance"],
-    queryFn: () => itAssetsApi.patchCompliance(),
+    queryFn: () => itAssetsApi.patchCompliance().then(r => r.data),
     refetchInterval: 60_000,
   })
 

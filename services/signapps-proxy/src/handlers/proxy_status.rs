@@ -27,12 +27,6 @@ pub struct ListenerStatus {
 
 /// Get proxy engine status.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/proxy_status",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_proxy_status(State(state): State<AppState>) -> Json<ProxyStatusResponse> {
     let proxy_enabled = std::env::var("PROXY_ENABLED")

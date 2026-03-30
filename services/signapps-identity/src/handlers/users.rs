@@ -148,12 +148,6 @@ impl From<signapps_db::models::User> for UserResponse {
 
 /// List all users with pagination (admin only).
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/users",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
@@ -171,12 +165,6 @@ pub async fn list(
 
 /// Get user by ID (admin only).
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/users",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get(
     State(state): State<AppState>,
@@ -191,12 +179,6 @@ pub async fn get(
 
 /// Create new user (admin only).
 #[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
-#[utoipa::path(
-    post,
-    path = "/api/v1/users",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
@@ -315,12 +297,6 @@ pub async fn create(
 
 /// Update user (admin only).
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/users",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
@@ -378,12 +354,6 @@ pub async fn update(
 
 /// Delete user (admin only).
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/users",
-    responses((status = 204, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(
     State(state): State<AppState>,
@@ -420,12 +390,6 @@ pub async fn delete(
 
 /// Get current user profile.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/users",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_me(
     State(state): State<AppState>,
@@ -440,12 +404,6 @@ pub async fn get_me(
 
 /// Update current user profile.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/users",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_me(
     State(state): State<AppState>,
@@ -507,12 +465,6 @@ pub async fn update_me(
 
 /// Set user's default tenant (admin only).
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/users",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn set_tenant(
     State(state): State<AppState>,

@@ -54,12 +54,6 @@ fn create_docparse_worker() -> Box<dyn DocParseWorker + Send + Sync> {
 /// Accepts `multipart/form-data` with:
 /// - `document` — the document file (required)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/doc_parse",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn parse_document(
     mut multipart: Multipart,
@@ -126,12 +120,6 @@ pub async fn parse_document(
 /// Accepts `multipart/form-data` with:
 /// - `document` — the document file (required)
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/doc_parse",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn extract_tables(
     mut multipart: Multipart,

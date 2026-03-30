@@ -215,12 +215,6 @@ fn guess_os(open_ports: &[u16]) -> Option<String> {
 
 /// POST /api/v1/it-assets/network/scan
 /// Perform an ARP/ping sweep on a subnet and store results.
-#[utoipa::path(
-    get,
-    path = "/api/v1/network",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn scan_network(
     State(pool): State<DatabasePool>,
@@ -296,12 +290,6 @@ pub async fn scan_network(
 
 /// GET /api/v1/it-assets/network/discoveries
 /// List all network discoveries.
-#[utoipa::path(
-    get,
-    path = "/api/v1/network",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_discoveries(
     State(pool): State<DatabasePool>,
@@ -323,12 +311,6 @@ pub async fn list_discoveries(
 
 /// POST /api/v1/it-assets/network/discoveries/:id/add-to-inventory
 /// Add a discovered host to the IT hardware inventory.
-#[utoipa::path(
-    post,
-    path = "/api/v1/network",
-    responses((status = 201, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn add_discovery_to_inventory(
     State(pool): State<DatabasePool>,
@@ -386,12 +368,6 @@ pub async fn add_discovery_to_inventory(
 
 /// POST /api/v1/it-assets/network/port-scan (ND4)
 /// TCP port scan on a specific IP.
-#[utoipa::path(
-    get,
-    path = "/api/v1/network",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn port_scan(
     State(_pool): State<DatabasePool>,
@@ -444,12 +420,6 @@ pub async fn port_scan(
 
 /// GET /api/v1/it-assets/network/snmp/:ip (ND2)
 /// Query common SNMP OIDs for a given IP.
-#[utoipa::path(
-    get,
-    path = "/api/v1/network",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn query_snmp(
     State(pool): State<DatabasePool>,

@@ -25,12 +25,6 @@ static ACTIVE_CONNECTIONS: AtomicUsize = AtomicUsize::new(0);
 /// WebSocket handler for collaborative document editing
 /// Endpoint: GET /api/v1/collab/ws/:doc_id?token=JWT_TOKEN
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/websocket/{doc_id}",
-    responses((status = 200, description = "Success")),
-    tag = "Collab"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn websocket_handler(
     Path(doc_id): Path<String>,

@@ -30,12 +30,6 @@ pub struct BucketResponse {
 
 /// List all buckets.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/buckets",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<BucketInfo>>> {
     let buckets = state.storage.list_buckets().await?;
@@ -44,12 +38,6 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<BucketInfo>>
 
 /// Get bucket info with stats.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/buckets",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get(
     State(state): State<AppState>,
@@ -71,12 +59,6 @@ pub async fn get(
 
 /// Create a new bucket.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/buckets",
-    responses((status = 201, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
@@ -117,12 +99,6 @@ pub async fn create(
 
 /// Delete a bucket.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/buckets/{name}",
-    responses((status = 204, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(State(state): State<AppState>, Path(name): Path<String>) -> Result<StatusCode> {
     // Check bucket exists

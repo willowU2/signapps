@@ -71,12 +71,6 @@ fn hash_key(key: &str) -> String {
 
 /// POST /api/v1/api-keys — Create a new API key.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    post,
-    path = "/api/v1/api_keys",
-    responses((status = 201, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
@@ -126,12 +120,6 @@ pub async fn create(
 
 /// GET /api/v1/api-keys — List user's API keys.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/api_keys",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
@@ -178,12 +166,6 @@ pub async fn list(
 
 /// DELETE /api/v1/api-keys/:id — Revoke an API key.
 #[tracing::instrument(skip(state))]
-#[utoipa::path(
-    put,
-    path = "/api/v1/api_keys",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn revoke(
     State(state): State<AppState>,
@@ -216,12 +198,6 @@ pub struct PatchApiKeyRequest {
 
 /// PATCH /api/v1/api-keys/:id — Rename or toggle an API key.
 #[tracing::instrument(skip(state, payload))]
-#[utoipa::path(
-    get,
-    path = "/api/v1/api_keys",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn patch(
     State(state): State<AppState>,

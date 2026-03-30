@@ -67,12 +67,6 @@ pub struct VolumePreview {
 
 /// Preview a compose file without installing.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/compose",
-    responses((status = 200, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn preview_compose(
     Json(req): Json<ImportComposeRequest>,
@@ -86,12 +80,6 @@ pub async fn preview_compose(
 
 /// Import and install containers from a raw compose file.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/compose",
-    responses((status = 201, description = "Success")),
-    tag = "Containers"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn import_compose(
     State(state): State<AppState>,

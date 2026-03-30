@@ -9,12 +9,6 @@ use serde_json::json;
 
 /// `GET /api/v1/openapi.json` — Returns the OpenAPI 3.1 spec for the Identity service.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/openapi",
-    responses((status = 200, description = "Success")),
-    tag = "Identity"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn openapi_spec() -> impl IntoResponse {
     let spec = json!({

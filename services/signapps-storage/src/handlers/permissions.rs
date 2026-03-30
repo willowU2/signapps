@@ -108,12 +108,6 @@ fn validate_mode(mode: u32) -> Result<()> {
 
 /// Get file permissions.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/permissions",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_permissions(
     State(_state): State<AppState>,
@@ -139,12 +133,6 @@ pub async fn get_permissions(
 
 /// Set file permissions.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/permissions",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn set_permissions(
     State(_state): State<AppState>,
@@ -174,12 +162,6 @@ pub async fn set_permissions(
 
 /// Reset file permissions to default.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/permissions",
-    responses((status = 200, description = "Success")),
-    tag = "Storage"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn reset_permissions(
     State(_state): State<AppState>,

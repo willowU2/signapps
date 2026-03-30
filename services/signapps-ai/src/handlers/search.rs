@@ -47,12 +47,6 @@ pub struct SearchResponse {
 
 /// Semantic search endpoint.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/search",
-    responses((status = 200, description = "Success")),
-    tag = "Ai"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn search(
     State(state): State<AppState>,

@@ -43,12 +43,6 @@ impl From<Route> for RouteResponse {
 
 /// List all routes.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/routes",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_routes(State(state): State<AppState>) -> Result<Json<Vec<RouteResponse>>> {
     let repo = RouteRepository::new(&state.pool);
@@ -61,12 +55,6 @@ pub async fn list_routes(State(state): State<AppState>) -> Result<Json<Vec<Route
 
 /// Get route by ID.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/routes",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_route(
     State(state): State<AppState>,
@@ -84,12 +72,6 @@ pub async fn get_route(
 
 /// Create a new route.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    post,
-    path = "/api/v1/routes",
-    responses((status = 201, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_route(
     State(state): State<AppState>,
@@ -118,12 +100,6 @@ pub async fn create_route(
 
 /// Update a route.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/routes",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_route(
     State(state): State<AppState>,
@@ -167,12 +143,6 @@ pub async fn update_route(
 
 /// Delete a route.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/routes",
-    responses((status = 204, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_route(
     State(state): State<AppState>,
@@ -198,12 +168,6 @@ pub async fn delete_route(
 
 /// Enable a route.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/routes",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn enable_route(
     State(state): State<AppState>,
@@ -223,12 +187,6 @@ pub async fn enable_route(
 
 /// Disable a route.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/routes",
-    responses((status = 200, description = "Success")),
-    tag = "Proxy"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn disable_route(
     State(state): State<AppState>,

@@ -117,12 +117,6 @@ pub struct TriggerBackupRequest {
 
 /// GET /api/v1/admin/backups — list backup history (most recent first).
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/backups",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_backups(State(store): State<SharedBackupStore>) -> Result<Json<Vec<BackupJob>>> {
     let store = store.lock().expect("backup store lock poisoned");
@@ -135,12 +129,6 @@ pub async fn list_backups(State(store): State<SharedBackupStore>) -> Result<Json
 ///
 /// Spawns pg_dump in background, saves to BACKUP_DIR.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/backups",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn trigger_backup(
     State(store): State<SharedBackupStore>,
@@ -203,12 +191,6 @@ pub async fn trigger_backup(
 
 /// GET /api/v1/admin/backups/:id — get backup details.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/backups",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_backup(
     State(store): State<SharedBackupStore>,
@@ -227,12 +209,6 @@ pub async fn get_backup(
 ///
 /// Deletes backup record and associated file from disk.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    delete,
-    path = "/api/v1/backups",
-    responses((status = 204, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_backup(
     State(store): State<SharedBackupStore>,
@@ -261,12 +237,6 @@ pub async fn delete_backup(
 /// After persisting the new config, re-registers (or creates) the `signapps-backup`
 /// cron job in the scheduler so the new expression takes effect immediately.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    put,
-    path = "/api/v1/backups",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_backup_config(
     State(store): State<SharedBackupStore>,
@@ -333,12 +303,6 @@ pub async fn update_backup_config(
 
 /// GET /api/v1/admin/backups/config — retrieve current backup configuration.
 #[tracing::instrument(skip_all)]
-#[utoipa::path(
-    get,
-    path = "/api/v1/backups",
-    responses((status = 200, description = "Success")),
-    tag = "Scheduler"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_backup_config(
     State(store): State<SharedBackupStore>,

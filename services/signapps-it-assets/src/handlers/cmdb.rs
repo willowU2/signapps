@@ -49,12 +49,6 @@ pub struct UpdateCiReq {
     pub metadata: Option<Value>,
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/cmdb",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_cis(
     State(pool): State<DatabasePool>,
@@ -68,12 +62,6 @@ pub async fn list_cis(
     Ok(Json(rows))
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/cmdb",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_ci(
     State(pool): State<DatabasePool>,
@@ -90,12 +78,6 @@ pub async fn get_ci(
     Ok(Json(row))
 }
 
-#[utoipa::path(
-    post,
-    path = "/api/v1/cmdb",
-    responses((status = 201, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_ci(
     State(pool): State<DatabasePool>,
@@ -124,12 +106,6 @@ pub async fn create_ci(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
-#[utoipa::path(
-    put,
-    path = "/api/v1/cmdb",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_ci(
     State(pool): State<DatabasePool>,
@@ -162,12 +138,6 @@ pub async fn update_ci(
     Ok(Json(row))
 }
 
-#[utoipa::path(
-    delete,
-    path = "/api/v1/cmdb",
-    responses((status = 204, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_ci(
     State(pool): State<DatabasePool>,
@@ -204,12 +174,6 @@ pub struct CreateCiRelReq {
     pub relationship_type: String,
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/cmdb",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_ci_relationships(
     State(pool): State<DatabasePool>,
@@ -225,12 +189,6 @@ pub async fn list_ci_relationships(
     Ok(Json(rows))
 }
 
-#[utoipa::path(
-    post,
-    path = "/api/v1/cmdb",
-    responses((status = 201, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_ci_relationship(
     State(pool): State<DatabasePool>,
@@ -252,12 +210,6 @@ pub async fn create_ci_relationship(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
-#[utoipa::path(
-    delete,
-    path = "/api/v1/cmdb",
-    responses((status = 204, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_ci_relationship(
     State(pool): State<DatabasePool>,
@@ -275,12 +227,6 @@ pub async fn delete_ci_relationship(
 }
 
 // Impact analysis — fetch all CIs that depend (directly or indirectly) on a given CI
-#[utoipa::path(
-    get,
-    path = "/api/v1/cmdb",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn ci_impact(
     State(pool): State<DatabasePool>,
@@ -346,12 +292,6 @@ pub struct UpdateChangeStatusReq {
     pub actor_id: Option<Uuid>,
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/cmdb",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn list_change_requests(
     State(pool): State<DatabasePool>,
@@ -365,12 +305,6 @@ pub async fn list_change_requests(
     Ok(Json(rows))
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/cmdb",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn get_change_request(
     State(pool): State<DatabasePool>,
@@ -387,12 +321,6 @@ pub async fn get_change_request(
     Ok(Json(row))
 }
 
-#[utoipa::path(
-    post,
-    path = "/api/v1/cmdb",
-    responses((status = 201, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn create_change_request(
     State(pool): State<DatabasePool>,
@@ -431,12 +359,6 @@ pub async fn create_change_request(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
-#[utoipa::path(
-    put,
-    path = "/api/v1/cmdb",
-    responses((status = 200, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn update_change_status(
     State(pool): State<DatabasePool>,
@@ -487,12 +409,6 @@ pub struct LdapImportResult {
     pub message: String,
 }
 
-#[utoipa::path(
-    post,
-    path = "/api/v1/cmdb",
-    responses((status = 201, description = "Success")),
-    tag = "ItAssets"
-)]
 #[tracing::instrument(skip_all)]
 pub async fn import_ldap(
     Json(payload): Json<LdapImportReq>,
