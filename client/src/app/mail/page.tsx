@@ -24,6 +24,7 @@ import {
     Newspaper,
     User,
     FolderKanban,
+    CalendarPlus,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -38,6 +39,7 @@ import { ComposeAiDialog } from "@/components/mail/compose-ai-dialog"
 import { ComposeRichDialog } from "@/components/mail/compose-rich-dialog"
 import { MailAddons } from "@/components/mail/mail-addons"
 import { AccountSwitcher } from "@/components/mail/account-switcher"
+import { EmailToEventDialog } from "@/components/interop/EmailToEventDialog"
 
 import { WorkspaceHeader } from "@/components/mail/workspace-header"
 import type { Mail } from "@/lib/data/mail"
@@ -120,6 +122,11 @@ export default function MailPage() {
 
     // Idea 13: Collapsible sidebar
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+    // C2: Drag email → calendar event drop zone
+    const [calDropOver, setCalDropOver] = useState(false)
+    const [calDropMailData, setCalDropMailData] = useState<{ id: string; subject: string; sender: string; date: string } | null>(null)
+    const [calDropEventOpen, setCalDropEventOpen] = useState(false)
 
     // Idea 32: Smart folder active filter
     const [smartFolderFilter, setSmartFolderFilter] = useState<string | null>(null)
@@ -787,9 +794,56 @@ export default function MailPage() {
                                 )}
                             </div>
                         )}
+
+                        {/* C2: Calendar drop zone */}
+                        <div className="mt-auto px-4 pb-4 pt-2">
+                            <div
+                                onDragOver={(e) => { e.preventDefault(); setCalDropOver(true) }}
+                                onDragLeave={() => setCalDropOver(false)}
+                                onDrop={(e) => {
+                                    e.preventDefault()
+                                    setCalDropOver(false)
+                                    const raw = e.dataTransfer.getData('application/signapps-email')
+                                    if (!raw) return
+                                    try {
+                                        const data = JSON.parse(raw)
+                                        setCalDropMailData(data)
+                                        setCalDropEventOpen(true)
+                                    } catch { /* ignore */ }
+                                }}
+                                className={cn(
+                                    "flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed transition-colors py-3 px-2 text-center",
+                                    calDropOver
+                                        ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                                        : "border-border/60 text-muted-foreground"
+                                )}
+                            >
+                                <CalendarPlus className="h-5 w-5" />
+                                <span className="text-[11px] font-medium leading-tight">
+                                    Glisser un email<br />pour créer un événement
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 }
             >
+                {/* C2: EmailToEventDialog triggered from drag-drop */}
+                {calDropMailData && (
+                    <EmailToEventDialog
+                        open={calDropEventOpen}
+                        onOpenChange={(v) => { setCalDropEventOpen(v); if (!v) setCalDropMailData(null) }}
+                        mail={{
+                            id: calDropMailData.id,
+                            name: calDropMailData.sender,
+                            email: calDropMailData.sender,
+                            subject: calDropMailData.subject,
+                            text: '',
+                            date: calDropMailData.date,
+                            read: true,
+                            labels: [],
+                        } as any}
+                    />
+                )}
                 {/* Content Area (List + Display) */}
                 <div
                     className={cn(

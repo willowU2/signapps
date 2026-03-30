@@ -1,7 +1,8 @@
 //! SignApps Chat Service
 //! Real-time messaging with channels, messages, reactions, threads, pins,
 //! DMs, presence, search, file attachments and export.
-//! In-memory skeleton — no database.
+//! Channels and messages are persisted in PostgreSQL (chat schema).
+//! DMs, presence, and read-status remain in-memory (no user-facing persistence yet).
 
 use axum::{
     extract::{
@@ -22,6 +23,7 @@ use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::auth_middleware;
 use signapps_common::pg_events::{NewEvent, PgEventBus};
 use signapps_common::{AuthState, Claims, JwtConfig};
+use sqlx::{Pool, Postgres};
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tower_http::cors::{AllowOrigin, CorsLayer};
@@ -32,15 +34,15 @@ use uuid::Uuid;
 // Domain types
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Channel {
     pub id: Uuid,
     pub name: String,
     pub topic: Option<String>,
     pub is_private: bool,
     pub created_by: Uuid,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<Utc>,
+    pub updated_at: chrono::DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,6 +58,43 @@ pub struct ChatMessage {
     pub is_pinned: bool,
     pub created_at: String,
     pub updated_at: String,
+}
+
+/// sqlx row shape for chat.messages (attachment stored as JSONB)
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct MessageRow {
+    pub id: Uuid,
+    pub channel_id: Uuid,
+    pub user_id: Uuid,
+    pub username: String,
+    pub content: String,
+    pub parent_id: Option<Uuid>,
+    pub reactions: serde_json::Value,
+    pub attachment: Option<serde_json::Value>,
+    pub is_pinned: bool,
+    pub created_at: chrono::DateTime<Utc>,
+    pub updated_at: chrono::DateTime<Utc>,
+}
+
+impl From<MessageRow> for ChatMessage {
+    fn from(r: MessageRow) -> Self {
+        let attachment = r
+            .attachment
+            .and_then(|v| serde_json::from_value::<Attachment>(v).ok());
+        Self {
+            id: r.id,
+            channel_id: r.channel_id,
+            user_id: r.user_id,
+            username: r.username,
+            content: r.content,
+            parent_id: r.parent_id,
+            reactions: r.reactions,
+            attachment,
+            is_pinned: r.is_pinned,
+            created_at: r.created_at.to_rfc3339(),
+            updated_at: r.updated_at.to_rfc3339(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -146,13 +185,14 @@ pub struct WsEvent {
 }
 
 // ---------------------------------------------------------------------------
-// Application state (in-memory)
+// Application state
 // ---------------------------------------------------------------------------
 
 #[derive(Clone)]
 pub struct AppState {
-    pub channels: Arc<DashMap<Uuid, Channel>>,
-    pub messages: Arc<DashMap<Uuid, Vec<ChatMessage>>>, // channel_id -> messages
+    /// PostgreSQL pool — used for channels and messages persistence.
+    pub pool: Pool<Postgres>,
+    // In-memory stores (DMs, presence, read-status not yet persisted)
     pub dm_rooms: Arc<DashMap<Uuid, DirectMessageRoom>>,
     pub dm_messages: Arc<DashMap<Uuid, Vec<ChatMessage>>>,
     pub presence: Arc<DashMap<Uuid, PresenceEntry>>,
@@ -169,11 +209,10 @@ impl AuthState for AppState {
 }
 
 impl AppState {
-    fn new(jwt_config: JwtConfig, event_bus: PgEventBus) -> Self {
+    fn new(pool: Pool<Postgres>, jwt_config: JwtConfig, event_bus: PgEventBus) -> Self {
         let (tx, _) = broadcast::channel::<String>(1024);
         Self {
-            channels: Arc::new(DashMap::new()),
-            messages: Arc::new(DashMap::new()),
+            pool,
             dm_rooms: Arc::new(DashMap::new()),
             dm_messages: Arc::new(DashMap::new()),
             presence: Arc::new(DashMap::new()),
@@ -212,24 +251,55 @@ async fn health_check() -> axum::Json<serde_json::Value> {
 }
 
 // ---------------------------------------------------------------------------
-// Handlers — Channels
+// Handlers — Channels (DB-backed)
 // ---------------------------------------------------------------------------
 
 async fn list_channels(State(state): State<AppState>) -> impl IntoResponse {
-    let channels: Vec<Channel> = state.channels.iter().map(|e| e.value().clone()).collect();
-    Json(channels)
+    match sqlx::query_as::<_, Channel>(
+        "SELECT id, name, topic, is_private, created_by, created_at, updated_at \
+         FROM chat.channels ORDER BY created_at ASC",
+    )
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(channels) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(channels).unwrap_or_default()),
+        ),
+        Err(e) => {
+            tracing::error!("list_channels DB error: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+        },
+    }
 }
 
 async fn get_channel(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
-    match state.channels.get(&id) {
-        Some(channel) => (
+    match sqlx::query_as::<_, Channel>(
+        "SELECT id, name, topic, is_private, created_by, created_at, updated_at \
+         FROM chat.channels WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(channel)) => (
             StatusCode::OK,
-            Json(serde_json::to_value(channel.clone()).unwrap_or_default()),
+            Json(serde_json::to_value(channel).unwrap_or_default()),
         ),
-        None => (
+        Ok(None) => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Channel not found" })),
         ),
+        Err(e) => {
+            tracing::error!("get_channel DB error: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+        },
     }
 }
 
@@ -238,20 +308,35 @@ async fn create_channel(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateChannelRequest>,
 ) -> impl IntoResponse {
-    let now = Utc::now().to_rfc3339();
-    let channel = Channel {
-        id: Uuid::new_v4(),
-        name: payload.name,
-        topic: payload.topic,
-        is_private: payload.is_private.unwrap_or(false),
-        created_by: claims.sub,
-        created_at: now.clone(),
-        updated_at: now,
-    };
-    state.channels.insert(channel.id, channel.clone());
-    state.messages.insert(channel.id, Vec::new());
-    tracing::info!(id = %channel.id, name = %channel.name, "Channel created");
-    (StatusCode::CREATED, Json(channel))
+    match sqlx::query_as::<_, Channel>(
+        r#"
+        INSERT INTO chat.channels (name, topic, is_private, created_by)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, name, topic, is_private, created_by, created_at, updated_at
+        "#,
+    )
+    .bind(&payload.name)
+    .bind(&payload.topic)
+    .bind(payload.is_private.unwrap_or(false))
+    .bind(claims.sub)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(channel) => {
+            tracing::info!(id = %channel.id, name = %channel.name, "Channel created");
+            (
+                StatusCode::CREATED,
+                Json(serde_json::to_value(channel).unwrap_or_default()),
+            )
+        },
+        Err(e) => {
+            tracing::error!("create_channel DB error: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Failed to create channel" })),
+            )
+        },
+    }
 }
 
 async fn update_channel(
@@ -260,27 +345,42 @@ async fn update_channel(
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateChannelRequest>,
 ) -> impl IntoResponse {
-    match state.channels.get_mut(&id) {
-        Some(mut channel) => {
-            channel.name = payload.name;
-            if let Some(topic) = payload.topic {
-                channel.topic = Some(topic);
-            }
-            if let Some(is_private) = payload.is_private {
-                channel.is_private = is_private;
-            }
-            channel.updated_at = Utc::now().to_rfc3339();
-            let updated = channel.clone();
+    match sqlx::query_as::<_, Channel>(
+        r#"
+        UPDATE chat.channels
+        SET name = $1,
+            topic = COALESCE($2, topic),
+            is_private = COALESCE($3, is_private),
+            updated_at = NOW()
+        WHERE id = $4
+        RETURNING id, name, topic, is_private, created_by, created_at, updated_at
+        "#,
+    )
+    .bind(&payload.name)
+    .bind(&payload.topic)
+    .bind(payload.is_private)
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(channel)) => {
             tracing::info!(id = %id, "Channel updated");
             (
                 StatusCode::OK,
-                Json(serde_json::to_value(updated).unwrap_or_default()),
+                Json(serde_json::to_value(channel).unwrap_or_default()),
             )
         },
-        None => (
+        Ok(None) => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Channel not found" })),
         ),
+        Err(e) => {
+            tracing::error!("update_channel DB error: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+        },
     }
 }
 
@@ -289,36 +389,82 @@ async fn delete_channel(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    match state.channels.remove(&id) {
-        Some(_) => {
-            state.messages.remove(&id);
+    match sqlx::query("DELETE FROM chat.channels WHERE id = $1")
+        .bind(id)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(r) if r.rows_affected() > 0 => {
             tracing::info!(id = %id, "Channel deleted");
             (StatusCode::NO_CONTENT, Json(serde_json::json!({})))
         },
-        None => (
+        Ok(_) => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Channel not found" })),
         ),
+        Err(e) => {
+            tracing::error!("delete_channel DB error: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+        },
     }
 }
 
 // ---------------------------------------------------------------------------
-// Handlers — Messages
+// Handlers — Messages (DB-backed)
 // ---------------------------------------------------------------------------
 
 async fn list_messages(
     State(state): State<AppState>,
     Path(channel_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    match state.messages.get(&channel_id) {
-        Some(msgs) => (
-            StatusCode::OK,
-            Json(serde_json::to_value(&*msgs).unwrap_or_default()),
-        ),
-        None => (
-            StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": "Channel not found" })),
-        ),
+    // Verify channel exists
+    match sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM chat.channels WHERE id = $1)")
+        .bind(channel_id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(false) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": "Channel not found" })),
+            )
+        },
+        Err(e) => {
+            tracing::error!("list_messages channel check error: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            );
+        },
+        Ok(true) => {},
+    }
+
+    match sqlx::query_as::<_, MessageRow>(
+        "SELECT id, channel_id, user_id, username, content, parent_id, \
+                reactions, attachment, is_pinned, created_at, updated_at \
+         FROM chat.messages WHERE channel_id = $1 ORDER BY created_at ASC",
+    )
+    .bind(channel_id)
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(rows) => {
+            let msgs: Vec<ChatMessage> = rows.into_iter().map(ChatMessage::from).collect();
+            (
+                StatusCode::OK,
+                Json(serde_json::to_value(msgs).unwrap_or_default()),
+            )
+        },
+        Err(e) => {
+            tracing::error!("list_messages DB error: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+        },
     }
 }
 
@@ -328,57 +474,76 @@ async fn send_message(
     Path(channel_id): Path<Uuid>,
     Json(payload): Json<SendMessageRequest>,
 ) -> impl IntoResponse {
-    if !state.channels.contains_key(&channel_id) {
-        return (
-            StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": "Channel not found" })),
-        );
+    // Verify channel exists
+    match sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM chat.channels WHERE id = $1)")
+        .bind(channel_id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(false) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": "Channel not found" })),
+            )
+        },
+        Err(e) => {
+            tracing::error!("send_message channel check error: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            );
+        },
+        Ok(true) => {},
     }
 
-    let now = Utc::now().to_rfc3339();
-    let msg = ChatMessage {
-        id: Uuid::new_v4(),
-        channel_id,
-        user_id: claims.sub,
-        username: claims.username.clone(),
-        content: payload.content,
-        parent_id: payload.parent_id,
-        reactions: serde_json::json!({}),
-        attachment: None,
-        is_pinned: false,
-        created_at: now.clone(),
-        updated_at: now,
-    };
-
-    state
-        .messages
-        .entry(channel_id)
-        .or_default()
-        .push(msg.clone());
-
-    // Update unread counts for all users (simplified: increment a global counter)
-    broadcast(
-        &state,
-        "new_message",
-        serde_json::to_value(&msg).unwrap_or_default(),
-    );
-
-    tracing::info!(id = %msg.id, channel = %channel_id, "Message sent");
-    let _ = state
-        .event_bus
-        .publish(NewEvent {
-            event_type: "chat.message.created".into(),
-            aggregate_id: Some(msg.id),
-            payload: serde_json::json!({
-                "channel_id": channel_id,
-                "user_id": claims.sub,
-            }),
-        })
-        .await;
-    (
-        StatusCode::CREATED,
-        Json(serde_json::to_value(&msg).unwrap_or_default()),
+    match sqlx::query_as::<_, MessageRow>(
+        r#"
+        INSERT INTO chat.messages (channel_id, user_id, username, content, parent_id)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, channel_id, user_id, username, content, parent_id,
+                  reactions, attachment, is_pinned, created_at, updated_at
+        "#,
     )
+    .bind(channel_id)
+    .bind(claims.sub)
+    .bind(&claims.username)
+    .bind(&payload.content)
+    .bind(payload.parent_id)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(row) => {
+            let msg = ChatMessage::from(row);
+            tracing::info!(id = %msg.id, channel = %channel_id, "Message sent");
+            broadcast(
+                &state,
+                "new_message",
+                serde_json::to_value(&msg).unwrap_or_default(),
+            );
+            let _ = state
+                .event_bus
+                .publish(NewEvent {
+                    event_type: "chat.message.created".into(),
+                    aggregate_id: Some(msg.id),
+                    payload: serde_json::json!({
+                        "channel_id": channel_id,
+                        "user_id": claims.sub,
+                    }),
+                })
+                .await;
+            (
+                StatusCode::CREATED,
+                Json(serde_json::to_value(&msg).unwrap_or_default()),
+            )
+        },
+        Err(e) => {
+            tracing::error!("send_message DB error: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Failed to save message" })),
+            )
+        },
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -408,7 +573,6 @@ async fn upload_file(
     }
 
     // In a real implementation this would upload to signapps-storage
-    // For now return a placeholder URL
     let attachment = Attachment {
         url: format!("/api/v1/channels/{}/files/{}", channel_id, Uuid::new_v4()),
         filename,
@@ -423,7 +587,7 @@ async fn upload_file(
 }
 
 // ---------------------------------------------------------------------------
-// Handlers — Reactions (IDEA-131)
+// Handlers — Reactions (IDEA-131, DB-backed)
 // ---------------------------------------------------------------------------
 
 async fn add_reaction(
@@ -432,15 +596,28 @@ async fn add_reaction(
     Path(message_id): Path<Uuid>,
     Json(payload): Json<AddReactionRequest>,
 ) -> impl IntoResponse {
-    for mut entry in state.messages.iter_mut() {
-        if let Some(msg) = entry.value_mut().iter_mut().find(|m| m.id == message_id) {
-            let reactions = msg.reactions.as_object_mut().unwrap();
-            let count = reactions
-                .entry(payload.emoji.clone())
-                .or_insert(serde_json::json!(0));
-            *count = serde_json::json!(count.as_u64().unwrap_or(0) + 1);
-            msg.updated_at = Utc::now().to_rfc3339();
+    // Try channel messages first
+    let result = sqlx::query_as::<_, MessageRow>(
+        r#"
+        UPDATE chat.messages
+        SET reactions = jsonb_set(
+            reactions,
+            ARRAY[$1],
+            to_jsonb(COALESCE((reactions->$1)::int, 0) + 1)
+        ),
+        updated_at = NOW()
+        WHERE id = $2
+        RETURNING id, channel_id, user_id, username, content, parent_id,
+                  reactions, attachment, is_pinned, created_at, updated_at
+        "#,
+    )
+    .bind(&payload.emoji)
+    .bind(message_id)
+    .fetch_optional(&state.pool)
+    .await;
 
+    match result {
+        Ok(Some(row)) => {
             broadcast(
                 &state,
                 "reaction_added",
@@ -448,17 +625,27 @@ async fn add_reaction(
                     "message_id": message_id,
                     "emoji": payload.emoji,
                     "user_id": claims.sub,
-                    "count": reactions[&payload.emoji],
+                    "count": row.reactions.get(&payload.emoji),
                 }),
             );
-
             return (
                 StatusCode::CREATED,
                 Json(serde_json::json!({ "status": "ok" })),
             );
-        }
+        },
+        Ok(None) => {
+            // Message not in DB channel messages — fall through to DM in-memory
+        },
+        Err(e) => {
+            tracing::error!("add_reaction DB error: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            );
+        },
     }
-    // Also check DM messages
+
+    // Check DM messages (still in-memory)
     for mut entry in state.dm_messages.iter_mut() {
         if let Some(msg) = entry.value_mut().iter_mut().find(|m| m.id == message_id) {
             let reactions = msg.reactions.as_object_mut().unwrap();
@@ -481,7 +668,7 @@ async fn add_reaction(
 }
 
 // ---------------------------------------------------------------------------
-// Handlers — Pin messages (IDEA-132)
+// Handlers — Pin messages (IDEA-132, DB-backed)
 // ---------------------------------------------------------------------------
 
 async fn pin_message(
@@ -489,30 +676,41 @@ async fn pin_message(
     Extension(_claims): Extension<Claims>,
     Path((channel_id, message_id)): Path<(Uuid, Uuid)>,
 ) -> impl IntoResponse {
-    for mut entry in state.messages.iter_mut() {
-        if *entry.key() == channel_id {
-            if let Some(msg) = entry.value_mut().iter_mut().find(|m| m.id == message_id) {
-                msg.is_pinned = true;
-                msg.updated_at = Utc::now().to_rfc3339();
-                broadcast(
-                    &state,
-                    "message_pinned",
-                    serde_json::json!({
-                        "channel_id": channel_id,
-                        "message_id": message_id,
-                    }),
-                );
-                return (
-                    StatusCode::OK,
-                    Json(serde_json::json!({ "status": "pinned" })),
-                );
-            }
-        }
-    }
-    (
-        StatusCode::NOT_FOUND,
-        Json(serde_json::json!({ "error": "Message not found" })),
+    match sqlx::query(
+        "UPDATE chat.messages SET is_pinned = true, updated_at = NOW() \
+         WHERE id = $1 AND channel_id = $2",
     )
+    .bind(message_id)
+    .bind(channel_id)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(r) if r.rows_affected() > 0 => {
+            broadcast(
+                &state,
+                "message_pinned",
+                serde_json::json!({
+                    "channel_id": channel_id,
+                    "message_id": message_id,
+                }),
+            );
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({ "status": "pinned" })),
+            )
+        },
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Message not found" })),
+        ),
+        Err(e) => {
+            tracing::error!("pin_message DB error: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+        },
+    }
 }
 
 async fn unpin_message(
@@ -520,45 +718,66 @@ async fn unpin_message(
     Extension(_claims): Extension<Claims>,
     Path((channel_id, message_id)): Path<(Uuid, Uuid)>,
 ) -> impl IntoResponse {
-    for mut entry in state.messages.iter_mut() {
-        if *entry.key() == channel_id {
-            if let Some(msg) = entry.value_mut().iter_mut().find(|m| m.id == message_id) {
-                msg.is_pinned = false;
-                msg.updated_at = Utc::now().to_rfc3339();
-                return (
-                    StatusCode::OK,
-                    Json(serde_json::json!({ "status": "unpinned" })),
-                );
-            }
-        }
-    }
-    (
-        StatusCode::NOT_FOUND,
-        Json(serde_json::json!({ "error": "Message not found" })),
+    match sqlx::query(
+        "UPDATE chat.messages SET is_pinned = false, updated_at = NOW() \
+         WHERE id = $1 AND channel_id = $2",
     )
+    .bind(message_id)
+    .bind(channel_id)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(serde_json::json!({ "status": "unpinned" })),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Message not found" })),
+        ),
+        Err(e) => {
+            tracing::error!("unpin_message DB error: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+        },
+    }
 }
 
 async fn list_pinned(
     State(state): State<AppState>,
     Path(channel_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    match state.messages.get(&channel_id) {
-        Some(msgs) => {
-            let pinned: Vec<&ChatMessage> = msgs.iter().filter(|m| m.is_pinned).collect();
+    match sqlx::query_as::<_, MessageRow>(
+        "SELECT id, channel_id, user_id, username, content, parent_id, \
+                reactions, attachment, is_pinned, created_at, updated_at \
+         FROM chat.messages WHERE channel_id = $1 AND is_pinned = true \
+         ORDER BY created_at ASC",
+    )
+    .bind(channel_id)
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(rows) => {
+            let msgs: Vec<ChatMessage> = rows.into_iter().map(ChatMessage::from).collect();
             (
                 StatusCode::OK,
-                Json(serde_json::to_value(pinned).unwrap_or_default()),
+                Json(serde_json::to_value(msgs).unwrap_or_default()),
             )
         },
-        None => (
-            StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": "Channel not found" })),
-        ),
+        Err(e) => {
+            tracing::error!("list_pinned DB error: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+        },
     }
 }
 
 // ---------------------------------------------------------------------------
-// Handlers — Direct Messages (IDEA-137)
+// Handlers — Direct Messages (IDEA-137, in-memory)
 // ---------------------------------------------------------------------------
 
 async fn list_dms(
@@ -753,7 +972,7 @@ async fn set_presence(
 }
 
 // ---------------------------------------------------------------------------
-// Handlers — Search (IDEA-138)
+// Handlers — Search (IDEA-138, DB-backed)
 // ---------------------------------------------------------------------------
 
 async fn search_messages(
@@ -761,27 +980,38 @@ async fn search_messages(
     Path(channel_id): Path<Uuid>,
     Query(params): Query<SearchQuery>,
 ) -> impl IntoResponse {
-    let query = params.q.to_lowercase();
-    match state.messages.get(&channel_id) {
-        Some(msgs) => {
-            let results: Vec<&ChatMessage> = msgs
-                .iter()
-                .filter(|m| m.content.to_lowercase().contains(&query))
-                .collect();
+    match sqlx::query_as::<_, MessageRow>(
+        "SELECT id, channel_id, user_id, username, content, parent_id, \
+                reactions, attachment, is_pinned, created_at, updated_at \
+         FROM chat.messages \
+         WHERE channel_id = $1 AND content ILIKE $2 \
+         ORDER BY created_at DESC \
+         LIMIT 100",
+    )
+    .bind(channel_id)
+    .bind(format!("%{}%", params.q))
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(rows) => {
+            let msgs: Vec<ChatMessage> = rows.into_iter().map(ChatMessage::from).collect();
             (
                 StatusCode::OK,
-                Json(serde_json::to_value(results).unwrap_or_default()),
+                Json(serde_json::to_value(msgs).unwrap_or_default()),
             )
         },
-        None => (
-            StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": "Channel not found" })),
-        ),
+        Err(e) => {
+            tracing::error!("search_messages DB error: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+        },
     }
 }
 
 // ---------------------------------------------------------------------------
-// Handlers — Read status / Unread counts (IDEA-140)
+// Handlers — Read status / Unread counts (IDEA-140, in-memory)
 // ---------------------------------------------------------------------------
 
 async fn get_read_status(
@@ -796,15 +1026,18 @@ async fn get_read_status(
             Json(serde_json::to_value(s.clone()).unwrap_or_default()),
         ),
         None => {
-            let msg_count = state
-                .messages
-                .get(&channel_id)
-                .map(|m| m.len() as u64)
-                .unwrap_or(0);
+            // Count unread from DB
+            let msg_count: i64 =
+                sqlx::query_scalar("SELECT COUNT(*) FROM chat.messages WHERE channel_id = $1")
+                    .bind(channel_id)
+                    .fetch_one(&state.pool)
+                    .await
+                    .unwrap_or(0);
+
             let status = ReadStatus {
                 channel_id,
                 user_id: claims.sub,
-                unread_count: msg_count,
+                unread_count: msg_count as u64,
                 last_read_at: Utc::now().to_rfc3339(),
             };
             (
@@ -848,7 +1081,7 @@ async fn get_all_unread(
 }
 
 // ---------------------------------------------------------------------------
-// Handlers — Export channel history (IDEA-142)
+// Handlers — Export channel history (IDEA-142, DB-backed)
 // ---------------------------------------------------------------------------
 
 async fn export_channel(
@@ -858,36 +1091,50 @@ async fn export_channel(
     Query(params): Query<ExportQuery>,
 ) -> impl IntoResponse {
     let format = params.format.as_deref().unwrap_or("json");
-    match state.messages.get(&channel_id) {
-        None => (
-            StatusCode::NOT_FOUND,
-            [(axum::http::header::CONTENT_TYPE, "application/json")],
-            serde_json::json!({ "error": "Channel not found" }).to_string(),
-        ),
-        Some(msgs) => {
-            if format == "csv" {
-                let mut csv = String::from("id,username,content,created_at\n");
-                for m in msgs.iter() {
-                    let content = m.content.replace('"', "\"\"");
-                    csv.push_str(&format!(
-                        "{},{},\"{}\",{}\n",
-                        m.id, m.username, content, m.created_at
-                    ));
-                }
-                (
-                    StatusCode::OK,
-                    [(axum::http::header::CONTENT_TYPE, "text/csv")],
-                    csv,
-                )
-            } else {
-                let json = serde_json::to_string(&*msgs).unwrap_or_default();
-                (
-                    StatusCode::OK,
-                    [(axum::http::header::CONTENT_TYPE, "application/json")],
-                    json,
-                )
-            }
+
+    let rows = match sqlx::query_as::<_, MessageRow>(
+        "SELECT id, channel_id, user_id, username, content, parent_id, \
+                reactions, attachment, is_pinned, created_at, updated_at \
+         FROM chat.messages WHERE channel_id = $1 ORDER BY created_at ASC",
+    )
+    .bind(channel_id)
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("export_channel DB error: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                [(axum::http::header::CONTENT_TYPE, "application/json")],
+                serde_json::json!({ "error": "Database error" }).to_string(),
+            );
         },
+    };
+
+    let msgs: Vec<ChatMessage> = rows.into_iter().map(ChatMessage::from).collect();
+
+    if format == "csv" {
+        let mut csv = String::from("id,username,content,created_at\n");
+        for m in &msgs {
+            let content = m.content.replace('"', "\"\"");
+            csv.push_str(&format!(
+                "{},{},\"{}\",{}\n",
+                m.id, m.username, content, m.created_at
+            ));
+        }
+        (
+            StatusCode::OK,
+            [(axum::http::header::CONTENT_TYPE, "text/csv")],
+            csv,
+        )
+    } else {
+        let json = serde_json::to_string(&msgs).unwrap_or_default();
+        (
+            StatusCode::OK,
+            [(axum::http::header::CONTENT_TYPE, "application/json")],
+            json,
+        )
     }
 }
 
@@ -1022,16 +1269,16 @@ async fn main() -> anyhow::Result<()> {
     let config = ServiceConfig::from_env("signapps-chat", 3020);
     config.log_startup();
 
-    let pool = signapps_db::create_pool(&config.database_url)
+    let db_pool = signapps_db::create_pool(&config.database_url)
         .await
         .expect("Failed to connect to Postgres");
-    tracing::info!("Database pool created for event publishing");
+    tracing::info!("Database pool created");
 
-    let event_bus = PgEventBus::new(pool.inner().clone(), "signapps-chat".to_string());
+    let event_bus = PgEventBus::new(db_pool.inner().clone(), "signapps-chat".to_string());
 
     let jwt_config = config.jwt_config();
-    let state = AppState::new(jwt_config, event_bus);
-    tracing::info!("In-memory store initialized (skeleton -- no DB yet)");
+    let state = AppState::new(db_pool.inner().clone(), jwt_config, event_bus);
+    tracing::info!("Chat service initialized with PostgreSQL persistence");
 
     let app = create_router(state);
 

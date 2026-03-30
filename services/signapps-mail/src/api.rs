@@ -895,7 +895,7 @@ async fn send_email(
 
     // Actually send via SMTP if not a draft
     if !is_draft {
-        if let Err(e) = send_via_smtp(&account, &payload).await {
+        if let Err(e) = send_via_smtp(&account, &payload, tracked_body_html.as_deref()).await {
             tracing::error!("SMTP send failed: {:?}", e);
             // Mark as failed
             let _ = sqlx::query(
@@ -924,10 +924,10 @@ async fn send_email(
     (StatusCode::CREATED, Json(email)).into_response()
 }
 
+// `body_html_override`: when Some, used instead of payload.body_html (e.g. with tracking pixel).
 async fn send_via_smtp(
     account: &MailAccount,
     payload: &SendEmailRequest,
-    /// Optional override for body_html (e.g. with tracking pixel already injected).
     body_html_override: Option<&str>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let smtp_server = account
@@ -999,13 +999,14 @@ async fn send_via_smtp(
         .map_err(|e| format!("Invalid SMTP envelope: {}", e))?;
     message_builder = message_builder.envelope(envelope);
 
-    // Build body
-    let email = if let Some(ref html) = payload.body_html {
+    // Build body — use the override (with tracking pixel) when available.
+    let effective_html = body_html_override.or(payload.body_html.as_deref());
+    let email = if let Some(html) = effective_html {
         let text = payload.body_text.clone().unwrap_or_default();
         message_builder.multipart(
             MultiPart::alternative()
                 .singlepart(SinglePart::plain(text))
-                .singlepart(SinglePart::html(html.clone())),
+                .singlepart(SinglePart::html(html.to_string())),
         )?
     } else {
         let text = payload.body_text.clone().unwrap_or_default();
@@ -1487,7 +1488,7 @@ pub async fn process_scheduled_emails(
                 scheduled_send_at: None,
             };
 
-            match send_via_smtp(&account, &payload).await {
+            match send_via_smtp(&account, &payload, None).await {
                 Ok(_) => {
                     sqlx::query(
                         "UPDATE mail.emails \
@@ -1579,7 +1580,7 @@ async fn send_newsletter(
             scheduled_send_at: None,
         };
 
-        match send_via_smtp(&account, &smtp_payload).await {
+        match send_via_smtp(&account, &smtp_payload, None).await {
             Ok(_) => {
                 sent += 1;
                 tracing::info!(to = %recipient, subject = %payload.subject, "Newsletter sent");

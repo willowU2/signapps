@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { FileUpload, getReadableFileSize } from "@/components/application/file-upload/file-upload-base";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface UploadedFile {
     id: string;
@@ -37,6 +38,7 @@ export const FileUploadProgressBar = ({
     isDisabled,
     customUploadStrategy
 }: FileUploadProgressBarProps) => {
+    const router = useRouter();
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
     
     // Store logic-specific references
@@ -82,7 +84,12 @@ export const FileUploadProgressBar = ({
                 if (xhr.status >= 200 && xhr.status < 300) {
                     completed = true;
                     onSuccess();
-                    toast.success(`Uploaded: ${file.name}`);
+                    toast.success(`Fichier uploade: ${file.name}`, {
+                        action: {
+                            label: 'Ouvrir',
+                            onClick: () => router.push('/drive'),
+                        },
+                    });
                 } else {
                     onError(`Échec du téléversement (${xhr.status})`);
                     toast.error(`Failed to upload: ${file.name}`);

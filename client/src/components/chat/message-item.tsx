@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MessageSquare, Smile, MoreHorizontal, Forward, Edit2, Trash2, Pin, PinOff } from "lucide-react";
+import { MessageSquare, Smile, MoreHorizontal, Forward, Edit2, Trash2, Pin, PinOff, CheckSquare } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,6 +10,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ChatToTaskDialog } from "./chat-to-task-dialog";
 import { cn } from "@/lib/utils";
 import { useUsersMap } from "@/lib/store/chat-store";
 import { ChatAttachment as Attachment } from "@/lib/api/chat";
@@ -55,6 +56,7 @@ export function MessageItem({
 }: MessageItemProps) {
     const usersMap = useUsersMap();
     const [isHovered, setIsHovered] = useState(false);
+    const [taskDialogOpen, setTaskDialogOpen] = useState(false);
 
     const date = new Date(message.timestamp);
     const timeString = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -65,6 +67,12 @@ export function MessageItem({
     const isVoice = message.attachment?.content_type?.startsWith("audio/");
 
     return (
+        <>
+        <ChatToTaskDialog
+            open={taskDialogOpen}
+            onOpenChange={setTaskDialogOpen}
+            message={{ content: message.content, author: message.senderName, channel: "chat" }}
+        />
         <div
             className={cn(
                 "group relative flex gap-3 px-2 py-1.5 transition-colors hover:bg-muted/30 rounded-lg",
@@ -139,6 +147,12 @@ export function MessageItem({
                                 <DropdownMenuItem>
                                     <Forward className="mr-2 h-4 w-4" />
                                     Forward message
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                {/* CH5: Create task from message */}
+                                <DropdownMenuItem onClick={() => setTaskDialogOpen(true)}>
+                                    <CheckSquare className="mr-2 h-4 w-4 text-emerald-500" />
+                                    Créer une tâche
                                 </DropdownMenuItem>
                                 {isMe && (
                                     <>
@@ -235,5 +249,6 @@ export function MessageItem({
                 )}
             </div>
         </div>
+        </>
     );
 }

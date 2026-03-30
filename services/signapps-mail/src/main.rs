@@ -4,7 +4,7 @@ pub mod handlers;
 pub mod models;
 pub mod sync_service;
 
-use chrono::Timelike;
+use chrono::{Datelike, Timelike, Weekday};
 use signapps_common::bootstrap::{env_or, env_required, init_tracing, load_env};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::pg_events::{PgEventBus, PlatformEvent};
@@ -88,15 +88,24 @@ async fn main() {
     });
 
     // Idea 35: Daily email summary notification (runs every hour, acts 07:00–08:00 UTC)
+    // AI3: Weekly digest on Monday at 08:00 UTC
     let summary_pool = pool.clone();
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_secs(3600));
         loop {
             interval.tick().await;
-            let hour = chrono::Utc::now().hour();
+            let now = chrono::Utc::now();
+            let hour = now.hour();
+            // Daily summary at 07:00 UTC
             if hour == 7 {
                 if let Err(e) = generate_daily_summaries(&summary_pool).await {
                     tracing::error!("Daily summary failed: {}", e);
+                }
+            }
+            // Weekly digest on Monday at 08:00 UTC
+            if now.weekday() == Weekday::Mon && hour == 8 {
+                if let Err(e) = generate_weekly_digests(&summary_pool).await {
+                    tracing::error!("Weekly digest failed: {}", e);
                 }
             }
         }
@@ -498,6 +507,140 @@ async fn handle_cross_event(pool: &sqlx::PgPool, event: PlatformEvent) -> Result
         _ => {
             // Unknown event type — ignore silently
         },
+    }
+
+    Ok(())
+}
+
+// ─── AI3: Weekly digest ───────────────────────────────────────────────────────
+
+#[derive(Debug, sqlx::FromRow)]
+#[allow(dead_code)]
+struct WeeklyMailRow {
+    user_id: uuid::Uuid,
+    total_received: i64,
+    unread_count: i64,
+}
+
+#[derive(Debug, sqlx::FromRow)]
+#[allow(dead_code)]
+struct WeeklyEventRow {
+    event_type: String,
+    cnt: i64,
+}
+
+/// Generate a cross-module weekly digest for every active user:
+/// emails received this week, tasks completed, deals moved, meetings held.
+/// Cross-queries `platform.events` for the last 7 days.
+async fn generate_weekly_digests(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> {
+    // All users with active mail accounts
+    let users: Vec<uuid::Uuid> = sqlx::query_scalar(
+        "SELECT DISTINCT user_id FROM mail.accounts WHERE is_active = true OR is_active IS NULL",
+    )
+    .fetch_all(pool)
+    .await?;
+
+    tracing::info!(count = users.len(), "Running weekly digests");
+
+    for user_id in users {
+        // ── Mail stats for last 7 days ────────────────────────────────────────
+        let mail_row: Option<WeeklyMailRow> = sqlx::query_as(
+            r#"
+            SELECT
+                a.user_id,
+                COUNT(e.id)                                       AS total_received,
+                COUNT(e.id) FILTER (WHERE NOT COALESCE(e.is_read, false)) AS unread_count
+            FROM mail.emails e
+            JOIN mail.accounts a ON a.id = e.account_id
+            WHERE a.user_id = $1
+              AND COALESCE(e.is_sent, false) = false
+              AND COALESCE(e.is_deleted, false) = false
+              AND COALESCE(e.received_at, e.created_at) >= NOW() - INTERVAL '7 days'
+            GROUP BY a.user_id
+            "#,
+        )
+        .bind(user_id)
+        .fetch_optional(pool)
+        .await?;
+
+        let (emails_received, emails_unread) = mail_row
+            .map(|r| (r.total_received, r.unread_count))
+            .unwrap_or((0, 0));
+
+        // ── Cross-service events from platform.events (last 7 days) ──────────
+        let event_counts: Vec<WeeklyEventRow> = sqlx::query_as(
+            r#"
+            SELECT event_type, COUNT(*) AS cnt
+            FROM platform.events
+            WHERE created_at >= NOW() - INTERVAL '7 days'
+              AND (
+                payload->>'user_id' = $1::text
+                OR payload->>'actor_id' = $1::text
+                OR payload->>'assignee_id' = $1::text
+              )
+              AND event_type IN (
+                'task.completed',
+                'crm.deal.stage_changed',
+                'calendar.meeting.ended'
+              )
+            GROUP BY event_type
+            "#,
+        )
+        .bind(user_id)
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default(); // Don't fail if platform.events doesn't exist yet
+
+        let tasks_completed = event_counts
+            .iter()
+            .find(|r| r.event_type == "task.completed")
+            .map(|r| r.cnt)
+            .unwrap_or(0);
+        let deals_moved = event_counts
+            .iter()
+            .find(|r| r.event_type == "crm.deal.stage_changed")
+            .map(|r| r.cnt)
+            .unwrap_or(0);
+        let meetings_held = event_counts
+            .iter()
+            .find(|r| r.event_type == "calendar.meeting.ended")
+            .map(|r| r.cnt)
+            .unwrap_or(0);
+
+        // Skip users with no notable activity this week
+        if emails_received == 0 && tasks_completed == 0 && deals_moved == 0 && meetings_held == 0 {
+            continue;
+        }
+
+        let message = format!(
+            "Semaine écoulée — {} email(s) reçus ({} non lus), {} tâche(s) terminées, {} deal(s) avancés, {} réunion(s).",
+            emails_received, emails_unread, tasks_completed, deals_moved, meetings_held,
+        );
+
+        let result = sqlx::query(
+            r#"
+            INSERT INTO notifications.notifications
+                (user_id, type, title, body, source, priority, metadata)
+            VALUES ($1, 'info', 'Bilan hebdomadaire SignApps', $2, 'signapps-mail', 'normal', $3)
+            "#,
+        )
+        .bind(user_id)
+        .bind(&message)
+        .bind(serde_json::json!({
+            "period": "weekly",
+            "emails_received": emails_received,
+            "emails_unread": emails_unread,
+            "tasks_completed": tasks_completed,
+            "deals_moved": deals_moved,
+            "meetings_held": meetings_held,
+        }))
+        .execute(pool)
+        .await;
+
+        match result {
+            Ok(_) => tracing::info!(user = %user_id, "Weekly digest sent"),
+            Err(e) => tracing::error!(user = %user_id, "Failed to insert weekly digest: {}", e),
+        }
     }
 
     Ok(())

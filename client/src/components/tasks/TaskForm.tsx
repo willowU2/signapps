@@ -49,6 +49,7 @@ export function TaskForm({
   parentTaskId,
   onTaskCreated,
 }: TaskFormProps) {
+  const router = useRouter();
   const { createTask } = useEntityStore();
 
   const [formData, setFormData] = useState({
@@ -89,7 +90,12 @@ export function TaskForm({
       };
 
       await createTask(createData);
-      toast.success("Tâche créée avec succès");
+      toast.success("Tâche créée avec succès", {
+        action: {
+          label: 'Voir',
+          onClick: () => router.push('/tasks'),
+        },
+      });
       onOpenChange(false);
       setFormData({ title: "", description: "", priority: "1", due_date: "", assignee_id: null, reminder_enabled: false });
       onTaskCreated?.();

@@ -28,6 +28,15 @@ function getIconType(node: DriveNode): 'image' | 'doc' | 'file' {
   return 'file';
 }
 
+function getPreviewType(node: DriveNode): 'image' | 'pdf' | 'doc' | 'text' | 'unknown' {
+  const mime = node.mime_type ?? '';
+  if (mime.startsWith('image/')) return 'image';
+  if (mime === 'application/pdf') return 'pdf';
+  if (node.node_type === 'document') return 'doc';
+  if (mime.startsWith('text/')) return 'text';
+  return 'unknown';
+}
+
 export function DriveFilePreview({ node, fileUrl }: DriveFilePreviewProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();

@@ -165,13 +165,23 @@ export default function LoginPage() {
   useEffect(() => {
     if (process.env.NODE_ENV === 'development' && autoParam === 'admin') {
       const savedToken = localStorage.getItem('access_token');
-      // Only auto-login if not already authenticated (no token)
-      if (!savedToken) {
-        onSubmit({ username: 'admin', password: 'admin' });
-      } else {
-        // If already logged in, redirect straight to dashboard
+      if (savedToken) {
         router.push(redirectAfterLogin || '/dashboard');
+        return;
       }
+      // Direct API call to avoid useCallback timing issues
+      (async () => {
+        try {
+          const response = await authApi.login({ username: 'admin', password: 'admin', remember_me: true });
+          if (response.data.access_token && response.data.refresh_token) {
+            localStorage.setItem('access_token', response.data.access_token);
+            localStorage.setItem('refresh_token', response.data.refresh_token);
+            window.location.href = redirectAfterLogin || '/dashboard';
+          }
+        } catch (e) {
+          console.error('Auto-login failed:', e);
+        }
+      })();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoParam]);

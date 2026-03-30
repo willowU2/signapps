@@ -229,13 +229,14 @@ pub async fn categorize_inbox(
     }
 
     // Fetch last 50 unread emails across all user accounts
-    let rows: Vec<(
+    type EmailRow = (
         Uuid,
         Option<String>,
         Option<String>,
         Option<String>,
         Option<String>,
-    )> = sqlx::query_as(
+    );
+    let rows: Vec<EmailRow> = sqlx::query_as(
         r#"
             SELECT e.id, e.sender, e.subject, e.snippet, e.sender_name
             FROM   mail.emails e
