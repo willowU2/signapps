@@ -14,9 +14,12 @@ import { cn } from '@/lib/utils';
  * are mutations queued in the offline sync queue.
  */
 export function OfflineBanner() {
+  const [mounted, setMounted] = useState(false);
   const { isOnline, queueSize } = useOnlineStatus();
   const [showReconnected, setShowReconnected] = useState(false);
   const [wasOffline, setWasOffline] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!isOnline) {
@@ -31,7 +34,7 @@ export function OfflineBanner() {
     }
   }, [isOnline, wasOffline]);
 
-  if (isOnline && !showReconnected) return null;
+  if (!mounted || (isOnline && !showReconnected)) return null;
 
   return (
     <div

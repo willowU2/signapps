@@ -63,11 +63,18 @@ function formatTime(seconds: number): string {
  *   - Completed pomodoros dot counter
  */
 export function PomodoroTimer() {
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>('work');
   const [secondsLeft, setSecondsLeft] = useState(WORK_SECONDS);
   const [running, setRunning] = useState(false);
-  const [completed, setCompleted] = useState(loadCompleted);
+  const [completed, setCompleted] = useState(0);
+
+  // Hydration guard — only render on client
+  useEffect(() => {
+    setMounted(true);
+    setCompleted(loadCompleted());
+  }, []);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -126,6 +133,8 @@ export function PomodoroTimer() {
   // Circumference for SVG progress ring
   const radius = 22;
   const circ = 2 * Math.PI * radius;
+
+  if (!mounted) return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
