@@ -227,13 +227,13 @@ mod tests {
     #[test]
     fn test_csv_roundtrip() {
         let csv_data = b"Name,Value,Active\nAlice,100,true\nBob,200,false";
-        let spreadsheet = csv_to_spreadsheet(csv_data, Some(','), true).unwrap();
+        let spreadsheet = csv_to_spreadsheet(csv_data, Some(','), true).expect("csv_to_spreadsheet should succeed");
 
         assert_eq!(spreadsheet.sheets.len(), 1);
         assert_eq!(spreadsheet.sheets[0].rows.len(), 3);
 
-        let exported = spreadsheet_to_csv(&spreadsheet, Some(','), None).unwrap();
-        let exported_str = String::from_utf8(exported).unwrap();
+        let exported = spreadsheet_to_csv(&spreadsheet, Some(','), None).expect("spreadsheet_to_csv should succeed");
+        let exported_str = String::from_utf8(exported).expect("exported CSV should be valid UTF-8");
 
         assert!(exported_str.contains("Alice"));
         assert!(exported_str.contains("100"));

@@ -543,7 +543,7 @@ mod tests {
         let html = "<html><body><p>Hello World</p></body></html>";
         let result = html_to_docx(html);
         assert!(result.is_ok());
-        assert!(!result.unwrap().is_empty());
+        assert!(!result.expect("docx conversion should succeed").is_empty());
     }
 
     #[test]

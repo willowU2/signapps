@@ -315,7 +315,7 @@ mod tests {
         let html = "<html><body><p>Hello World</p></body></html>";
         let result = html_to_pdf(html);
         assert!(result.is_ok());
-        let bytes = result.unwrap();
+        let bytes = result.expect("pdf conversion should succeed");
         assert!(!bytes.is_empty());
         // Check PDF magic bytes
         assert_eq!(&bytes[0..4], b"%PDF");

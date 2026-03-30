@@ -285,7 +285,7 @@ mod tests {
         // Leave
         let left = manager.on_user_leave(user_id);
         assert!(left.is_some());
-        assert_eq!(left.unwrap().status, PresenceStatus::Leave);
+        assert_eq!(left.expect("user should have left").status, PresenceStatus::Leave);
         assert!(manager.get_user_presence(user_id).is_none());
     }
 
@@ -300,13 +300,13 @@ mod tests {
 
         // Start editing
         manager.on_editing_start(user_id, item_id);
-        let presence = manager.get_user_presence(user_id).unwrap();
+        let presence = manager.get_user_presence(user_id).expect("user should be present");
         assert_eq!(presence.status, PresenceStatus::Editing);
         assert_eq!(presence.editing_item_id, Some(item_id));
 
         // Stop editing
         manager.on_editing_end(user_id);
-        let presence = manager.get_user_presence(user_id).unwrap();
+        let presence = manager.get_user_presence(user_id).expect("user should be present");
         assert_eq!(presence.status, PresenceStatus::Viewing);
         assert_eq!(presence.editing_item_id, None);
     }
@@ -343,7 +343,7 @@ mod tests {
 
         // User not idle yet
         manager.mark_idle_users();
-        let presence = manager.get_user_presence(user_id).unwrap();
+        let presence = manager.get_user_presence(user_id).expect("user should be present");
         assert_ne!(presence.status, PresenceStatus::Idle);
 
         // Simulate time passage by checking is still "viewing"

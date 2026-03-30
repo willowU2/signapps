@@ -159,7 +159,7 @@ mod tests {
         ]);
 
         let spreadsheet = Spreadsheet::new().with_sheet(sheet);
-        let json = spreadsheet_to_json(&spreadsheet).unwrap();
+        let json = spreadsheet_to_json(&spreadsheet).expect("spreadsheet_to_json should succeed");
 
         assert_eq!(json["name"], "Data");
         assert!(json["data"].is_array());
@@ -171,10 +171,10 @@ mod tests {
             .with_sheet(Sheet::new("Sheet1"))
             .with_sheet(Sheet::new("Sheet2"));
 
-        let json = spreadsheet_to_json(&spreadsheet).unwrap();
+        let json = spreadsheet_to_json(&spreadsheet).expect("spreadsheet_to_json should succeed");
 
         assert!(json["sheets"].is_array());
-        assert_eq!(json["sheets"].as_array().unwrap().len(), 2);
+        assert_eq!(json["sheets"].as_array().expect("sheets should be an array").len(), 2);
     }
 
     #[test]

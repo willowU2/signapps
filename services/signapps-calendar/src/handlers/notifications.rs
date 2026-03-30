@@ -313,7 +313,7 @@ mod tests {
             reminder_times: Some(vec![15, 60, 1440]),
         };
 
-        let json = serde_json::to_string(&req).unwrap();
+        let json = serde_json::to_string(&req).expect("serialization should succeed");
         assert!(json.contains("email_enabled"));
         assert!(json.contains("instant"));
     }
@@ -334,7 +334,7 @@ mod tests {
             limit: 20,
         };
 
-        let json = serde_json::to_string(&response).unwrap();
+        let json = serde_json::to_string(&response).expect("serialization should succeed");
         assert!(json.contains("notifications"));
         assert!(json.contains("total"));
     }

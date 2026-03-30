@@ -387,21 +387,21 @@ mod tests {
     #[test]
     fn test_simple_paragraph() {
         let json = r#"{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Hello World"}]}]}"#;
-        let html = tiptap_to_html(json).unwrap();
+        let html = tiptap_to_html(json).expect("tiptap_to_html should succeed");
         assert!(html.contains("<p>Hello World</p>"));
     }
 
     #[test]
     fn test_bold_text() {
         let json = r#"{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"bold"}],"text":"Bold"}]}]}"#;
-        let html = tiptap_to_html(json).unwrap();
+        let html = tiptap_to_html(json).expect("tiptap_to_html should succeed");
         assert!(html.contains("<strong>Bold</strong>"));
     }
 
     #[test]
     fn test_heading() {
         let json = r#"{"type":"doc","content":[{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Title"}]}]}"#;
-        let html = tiptap_to_html(json).unwrap();
+        let html = tiptap_to_html(json).expect("tiptap_to_html should succeed");
         assert!(html.contains("<h2>Title</h2>"));
     }
 }

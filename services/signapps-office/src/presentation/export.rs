@@ -161,7 +161,7 @@ mod tests {
         let result = presentation_to_pptx(&presentation);
         assert!(result.is_ok());
 
-        let bytes = result.unwrap();
+        let bytes = result.expect("presentation_to_pptx should succeed");
         // PPTX files are ZIP archives starting with PK
         assert!(bytes.len() > 4);
         assert_eq!(&bytes[0..2], b"PK");
@@ -183,7 +183,7 @@ mod tests {
         let result = parse_json_to_presentation(&json);
         assert!(result.is_ok());
 
-        let presentation = result.unwrap();
+        let presentation = result.expect("parse_json_to_presentation should succeed");
         assert_eq!(presentation.title, "Test Presentation");
         assert_eq!(presentation.slides.len(), 1);
     }
@@ -197,7 +197,7 @@ mod tests {
             "top": 50.0
         });
 
-        let result = parse_fabric_object(&obj).unwrap();
+        let result = parse_fabric_object(&obj).expect("parse_fabric_object should succeed");
         assert!(matches!(result, Some(SlideContent::Title(_))));
     }
 }

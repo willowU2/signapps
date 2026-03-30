@@ -34,7 +34,7 @@ mod tests {
     #[test]
     fn test_simple_markdown() {
         let md = "# Hello World\n\nThis is a paragraph.";
-        let html = markdown_to_html(md).unwrap();
+        let html = markdown_to_html(md).expect("markdown_to_html should succeed");
         assert!(html.contains("<h1>Hello World</h1>"));
         assert!(html.contains("<p>This is a paragraph.</p>"));
     }
@@ -42,7 +42,7 @@ mod tests {
     #[test]
     fn test_bold_italic() {
         let md = "**bold** and *italic*";
-        let html = markdown_to_html(md).unwrap();
+        let html = markdown_to_html(md).expect("markdown_to_html should succeed");
         assert!(html.contains("<strong>bold</strong>"));
         assert!(html.contains("<em>italic</em>"));
     }
@@ -50,7 +50,7 @@ mod tests {
     #[test]
     fn test_task_list() {
         let md = "- [x] Done\n- [ ] Todo";
-        let html = markdown_to_html(md).unwrap();
+        let html = markdown_to_html(md).expect("markdown_to_html should succeed");
         assert!(html.contains("checked"));
     }
 }

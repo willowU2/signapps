@@ -237,7 +237,7 @@ mod tests {
             subscription_id: None,
         };
 
-        let json = serde_json::to_string(&req).unwrap();
+        let json = serde_json::to_string(&req).expect("serialization should succeed");
         assert!(json.contains("Test"));
         assert!(json.contains("event_reminder"));
     }
@@ -253,7 +253,7 @@ mod tests {
             "recipient": "self"
         }"#;
 
-        let req: SendPushRequest = serde_json::from_str(frontend_json).unwrap();
+        let req: SendPushRequest = serde_json::from_str(frontend_json).expect("valid test JSON");
         assert_eq!(req.title, "Test Title");
         assert_eq!(req.body, "Test message body"); // "message" mapped to "body"
         assert_eq!(req.notification_type, Some("event_reminder".to_string())); // "type" mapped
@@ -266,7 +266,7 @@ mod tests {
             public_key: "test_public_key".to_string(),
         };
 
-        let json = serde_json::to_string(&resp).unwrap();
+        let json = serde_json::to_string(&resp).expect("serialization should succeed");
         assert!(json.contains("test_public_key"));
     }
 
@@ -292,7 +292,7 @@ mod tests {
             ],
         };
 
-        let json = serde_json::to_string(&result).unwrap();
+        let json = serde_json::to_string(&result).expect("serialization should succeed");
         assert!(json.contains("successful"));
         assert!(json.contains("failed"));
     }

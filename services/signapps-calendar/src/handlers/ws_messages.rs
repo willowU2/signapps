@@ -56,7 +56,7 @@ mod tests {
             timestamp: 1234567890,
         };
 
-        let json = serde_json::to_string(&msg).unwrap();
+        let json = serde_json::to_string(&msg).expect("serialization should succeed");
         assert!(json.contains("join"));
         assert!(json.contains("Alice"));
     }

@@ -905,7 +905,7 @@ mod tests {
         let result = generate_pptx(&presentation);
         assert!(result.is_ok());
 
-        let bytes = result.unwrap();
+        let bytes = result.expect("generate_pptx should succeed");
         // PPTX files are ZIP archives starting with PK
         assert!(bytes.len() > 4);
         assert_eq!(&bytes[0..2], b"PK");

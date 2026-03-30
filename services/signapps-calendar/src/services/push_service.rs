@@ -195,7 +195,7 @@ mod tests {
             data: Some(json!({"event_id": "123"})),
         };
 
-        let json = serde_json::to_string(&payload).unwrap();
+        let json = serde_json::to_string(&payload).expect("serialization should succeed");
         assert!(json.contains("Test"));
         assert!(json.contains("event_id"));
     }
@@ -213,7 +213,7 @@ mod tests {
         }
         "#;
 
-        let payload: PushSubscriptionPayload = serde_json::from_str(json).unwrap();
+        let payload: PushSubscriptionPayload = serde_json::from_str(json).expect("valid test JSON");
         assert_eq!(payload.keys.p256dh, "key1");
     }
 

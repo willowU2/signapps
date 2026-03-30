@@ -106,10 +106,10 @@ mod tests {
     #[test]
     fn test_text_to_tiptap() {
         let text = "Hello\nWorld";
-        let result = text_to_tiptap(text.as_bytes()).unwrap();
+        let result = text_to_tiptap(text.as_bytes()).expect("text_to_tiptap should succeed");
 
         assert_eq!(result["type"], "doc");
-        let content = result["content"].as_array().unwrap();
+        let content = result["content"].as_array().expect("content should be an array");
         assert_eq!(content.len(), 2);
         assert_eq!(content[0]["type"], "paragraph");
     }

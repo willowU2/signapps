@@ -245,7 +245,7 @@ mod tests {
         let result = spreadsheet_to_xlsx(&spreadsheet);
 
         assert!(result.is_ok());
-        let bytes = result.unwrap();
+        let bytes = result.expect("spreadsheet_to_xlsx should succeed");
         // XLSX files start with PK (ZIP signature)
         assert!(bytes.len() > 4);
         assert_eq!(&bytes[0..2], b"PK");

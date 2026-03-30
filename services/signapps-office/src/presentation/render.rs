@@ -314,7 +314,7 @@ mod tests {
         let result = slide_to_svg(&slide, 1);
         assert!(result.is_ok());
 
-        let svg = result.unwrap();
+        let svg = result.expect("slide_to_svg should succeed");
         assert!(svg.contains("Test Slide"));
         assert!(svg.contains("#f0f0f0"));
         assert!(svg.contains("1920"));
@@ -333,7 +333,7 @@ mod tests {
         let result = slide_to_png(&slide, 1);
         assert!(result.is_ok());
 
-        let png = result.unwrap();
+        let png = result.expect("slide_to_png should succeed");
         // PNG magic bytes
         assert!(png.len() > 8);
         assert_eq!(

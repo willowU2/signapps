@@ -312,10 +312,10 @@ mod tests {
     #[test]
     fn test_simple_markdown() {
         let md = "# Hello World\n\nThis is a paragraph.";
-        let result = markdown_to_tiptap(md.as_bytes()).unwrap();
+        let result = markdown_to_tiptap(md.as_bytes()).expect("markdown_to_tiptap should succeed");
 
         assert_eq!(result["type"], "doc");
-        let content = result["content"].as_array().unwrap();
+        let content = result["content"].as_array().expect("content should be an array");
         assert_eq!(content[0]["type"], "heading");
         assert_eq!(content[0]["attrs"]["level"], 1);
     }
@@ -323,11 +323,11 @@ mod tests {
     #[test]
     fn test_bold_italic() {
         let md = "**bold** and *italic*";
-        let result = markdown_to_tiptap(md.as_bytes()).unwrap();
+        let result = markdown_to_tiptap(md.as_bytes()).expect("markdown_to_tiptap should succeed");
 
-        let content = result["content"].as_array().unwrap();
+        let content = result["content"].as_array().expect("content should be an array");
         let para = &content[0];
-        let inline = para["content"].as_array().unwrap();
+        let inline = para["content"].as_array().expect("paragraph content should be an array");
 
         // Check bold
         assert_eq!(inline[0]["text"], "bold");
@@ -337,9 +337,9 @@ mod tests {
     #[test]
     fn test_code_block() {
         let md = "```rust\nfn main() {}\n```";
-        let result = markdown_to_tiptap(md.as_bytes()).unwrap();
+        let result = markdown_to_tiptap(md.as_bytes()).expect("markdown_to_tiptap should succeed");
 
-        let content = result["content"].as_array().unwrap();
+        let content = result["content"].as_array().expect("content should be an array");
         assert_eq!(content[0]["type"], "codeBlock");
         assert_eq!(content[0]["attrs"]["language"], "rust");
     }

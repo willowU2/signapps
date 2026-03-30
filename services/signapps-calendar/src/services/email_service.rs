@@ -305,7 +305,7 @@ mod tests {
 
         let result = service.render_template(template, &context);
         assert!(result.is_ok());
-        assert!(result.unwrap().contains("Alice"));
+        assert!(result.expect("template rendering should succeed").contains("Alice"));
     }
 
     #[test]

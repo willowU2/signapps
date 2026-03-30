@@ -538,7 +538,7 @@ mod tests {
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
         let mut buffer = Vec::new();
-        doc.save_to(&mut Cursor::new(&mut buffer)).unwrap();
+        doc.save_to(&mut Cursor::new(&mut buffer)).expect("PDF serialization should succeed");
         buffer
     }
 
@@ -547,7 +547,7 @@ mod tests {
         let pdf = create_test_pdf();
         let result = get_pdf_info(&pdf);
         assert!(result.is_ok());
-        let info = result.unwrap();
+        let info = result.expect("get_pdf_info should succeed");
         assert_eq!(info.version, "1.4");
     }
 

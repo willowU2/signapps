@@ -275,7 +275,7 @@ mod tests {
         let result = spreadsheet_to_ods(&spreadsheet);
 
         assert!(result.is_ok());
-        let bytes = result.unwrap();
+        let bytes = result.expect("spreadsheet_to_ods should succeed");
         // ODS files are ZIP archives starting with PK
         assert!(bytes.len() > 4);
         assert_eq!(&bytes[0..2], b"PK");

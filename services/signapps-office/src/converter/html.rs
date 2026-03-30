@@ -333,7 +333,7 @@ mod tests {
     #[test]
     fn test_html_to_text() {
         let html = "<html><body><p>Hello</p><p>World</p></body></html>";
-        let text = html_to_text(html).unwrap();
+        let text = html_to_text(html).expect("html_to_text should succeed");
         assert!(text.contains("Hello"));
         assert!(text.contains("World"));
     }
