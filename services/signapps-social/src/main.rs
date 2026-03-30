@@ -19,7 +19,7 @@ use tower_http::{
 };
 
 use handlers::{
-    accounts, ai_threads, analytics, api_keys, automation, content_sets, inbox, media,
+    accounts, ai_threads, analytics, api_keys, automation, content_sets, inbox, media, oauth,
     post_comments, posts, short_urls, signatures, time_slots, webhooks, workspaces,
 };
 
@@ -71,9 +71,19 @@ fn create_router(state: AppState) -> Router {
 
     let public_routes = Router::new()
         .route("/health", get(|| async { axum::http::StatusCode::OK }))
-        .route("/s/:code", get(short_urls::track_click));
+        .route("/s/:code", get(short_urls::track_click))
+        // OAuth callbacks are public — the platform redirects to these after login
+        .route(
+            "/api/v1/social/oauth/:platform/callback",
+            get(oauth::oauth_callback),
+        );
 
     let protected_routes = Router::new()
+        // OAuth authorize (protected — needs user JWT to store state with user_id)
+        .route(
+            "/api/v1/social/oauth/:platform/authorize",
+            get(oauth::oauth_authorize),
+        )
         // Accounts
         .route(
             "/api/v1/social/accounts",

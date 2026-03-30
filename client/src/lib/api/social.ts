@@ -368,6 +368,18 @@ export const socialApi = {
     refreshToken: (id: string) => s.post(`/accounts/${id}/refresh-token`),
   },
 
+  oauth: {
+    /**
+     * Get the OAuth redirect URL for a given platform.
+     * For Mastodon, pass `instance` query param (e.g. "mastodon.social").
+     */
+    authorize: (platform: string, params?: { instance?: string }) =>
+      s.get<{ redirect_url: string; state: string }>(
+        `/oauth/${platform}/authorize`,
+        { params },
+      ),
+  },
+
   posts: {
     // Backend returns SocialPost[] array directly (no pagination wrapper)
     list: (params?: { status?: string; accountId?: string; page?: number; limit?: number }) =>
