@@ -61,7 +61,8 @@ test.describe('Omni-Search (Command Palette) Verification', () => {
     const input = page.getByPlaceholder(/Rechercher une application/i);
     await input.fill('analyser les logs serveurs');
 
-    await page.waitForTimeout(500);
+    // Wait for autopilot suggestions to render (debounce)
+    await page.waitForTimeout(200);
 
     // Verify the Autopilot group appears
     const autopilotHeader = page.getByText('SignApps Autopilot', { exact: true });

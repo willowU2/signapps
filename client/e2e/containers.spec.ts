@@ -60,8 +60,8 @@ test.describe('Containers Page', () => {
       // Type in search
       await searchInput.fill('nginx');
 
-      // Wait for filter to apply
-      await page.waitForTimeout(300);
+      // Wait for filter to apply (debounce)
+      await page.waitForTimeout(200);
 
       // Verify search is applied (results should be filtered)
       // This is a visual verification - actual results depend on data
@@ -69,7 +69,8 @@ test.describe('Containers Page', () => {
 
     test('should display container cards or empty state', async ({ page }) => {
       // Wait for loading to complete
-      await page.waitForTimeout(1000);
+      await page.locator('[class*="Card"], text=No containers found').first()
+        .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       // Either containers are displayed or empty message
       const hasContainers = await page.locator('[class*="Card"]').count() > 0;
@@ -80,7 +81,8 @@ test.describe('Containers Page', () => {
 
     test('should show container details in list', async ({ page }) => {
       // Wait for loading
-      await page.waitForTimeout(1000);
+      await page.locator('[class*="Card"]').first()
+        .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       // Check if any container cards exist
       const containerCards = page.locator('[class*="Card"]');
@@ -210,9 +212,8 @@ test.describe('Containers Page', () => {
       // Try to create without filling required fields
       await page.getByRole('button', { name: 'Create Container' }).click();
 
-      // Should show error toast or validation message
-      // The actual error handling depends on implementation
-      await page.waitForTimeout(500);
+      // Should show error toast or validation message - wait for response
+      await page.waitForTimeout(200); // debounce
     });
 
     test('should fill form and attempt creation', async ({ page }) => {
@@ -225,14 +226,16 @@ test.describe('Containers Page', () => {
       // Click create (this will attempt API call)
       await page.getByRole('button', { name: 'Create Container' }).click();
 
-      // Wait for response - either success or error
-      await page.waitForTimeout(2000);
+      // Wait for response - either success or error toast
+      await page.locator('[role="status"], [role="alert"], [data-testid*="toast"]').first()
+        .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     });
   });
 
   test.describe('Container Actions', () => {
     test('should have start/stop buttons on container cards', async ({ page }) => {
-      await page.waitForTimeout(1000);
+      await page.locator('[class*="Card"]').first()
+        .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       const containerCards = page.locator('[class*="Card"]');
       const count = await containerCards.count();
@@ -250,7 +253,8 @@ test.describe('Containers Page', () => {
     });
 
     test('should have logs button on container cards', async ({ page }) => {
-      await page.waitForTimeout(1000);
+      await page.locator('[class*="Card"]').first()
+        .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       const containerCards = page.locator('[class*="Card"]');
       const count = await containerCards.count();
@@ -262,7 +266,8 @@ test.describe('Containers Page', () => {
     });
 
     test('should have dropdown menu with more actions', async ({ page }) => {
-      await page.waitForTimeout(1000);
+      await page.locator('[class*="Card"]').first()
+        .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       const containerCards = page.locator('[class*="Card"]');
       const count = await containerCards.count();
@@ -279,7 +284,8 @@ test.describe('Containers Page', () => {
     });
 
     test('should open logs dialog', async ({ page }) => {
-      await page.waitForTimeout(1000);
+      await page.locator('[class*="Card"]').first()
+        .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       const containerCards = page.locator('[class*="Card"]');
       const count = await containerCards.count();
@@ -297,8 +303,8 @@ test.describe('Containers Page', () => {
       // Click refresh button
       await page.getByRole('button', { name: /refresh/i }).click();
 
-      // Button might show loading state briefly
-      await page.waitForTimeout(500);
+      // Button might show loading state briefly - wait for refresh to complete
+      await page.waitForTimeout(200); // debounce
 
       // Page should still be functional
       await expect(page.getByRole('heading', { name: 'Containers' })).toBeVisible();

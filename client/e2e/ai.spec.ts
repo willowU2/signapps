@@ -48,7 +48,7 @@ test.describe('AI Pages', () => {
 
     test('should show capability dashboard section', async ({ page }) => {
       // Capability cards should appear (or loading/error state)
-      await page.waitForTimeout(1000);
+      await page.locator('[class*="Card"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
       const cards = page.locator('[class*="Card"]');
       const count = await cards.count();
       expect(count).toBeGreaterThan(0);
@@ -182,7 +182,7 @@ test.describe('AI Pages', () => {
     });
 
     test('should show loading or profile data', async ({ page }) => {
-      await page.waitForTimeout(1500);
+      await page.locator('[role="combobox"], .spinner, [class*="Spinner"], .text-destructive').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       // Either profiles loaded, loading spinner, or error/empty message
       const hasProfiles = await page.locator('[role="combobox"]').count() > 0;
@@ -198,7 +198,7 @@ test.describe('AI Pages', () => {
       await refreshButton.click();
 
       // Page should remain stable after clicking refresh
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle').catch(() => {});
       await expect(page.getByRole('heading', { name: 'AI Settings' })).toBeVisible();
     });
   });

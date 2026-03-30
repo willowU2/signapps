@@ -7,7 +7,7 @@ const XLSX_PATH = path.resolve(__dirname, '../../Calcul Marge 2019 - 2032.xlsx')
 test.describe('Sheets Tab Switching', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('http://localhost:3000/login?auto=admin');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await page.goto('http://localhost:3000/login?auto=admin');
     await page.waitForURL(/\/(dashboard|sheets)/, { timeout: 10000 });
   });
@@ -27,9 +27,8 @@ test.describe('Sheets Tab Switching', () => {
     const sheetId = randomUUID();
     await page.goto(`http://localhost:3000/sheets/editor?id=${sheetId}&name=TabTest2`);
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(5000);
 
-    // Import file
+    // Wait for editor to be ready
     const fileInput = page.locator('input[type="file"][accept*=".xlsx"]');
     await expect(fileInput).toBeAttached({ timeout: 10000 });
     await fileInput.setInputFiles(XLSX_PATH);
@@ -43,9 +42,9 @@ test.describe('Sheets Tab Switching', () => {
 
     // Close any modals
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(200);
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(200);
 
     // Take screenshot of first sheet
     await page.screenshot({ path: 'e2e/screenshots/tab-sheet1.png' });
@@ -74,21 +73,24 @@ test.describe('Sheets Tab Switching', () => {
     // Click OBJECTIFS tab
     const objectifsTab = page.locator('div:has-text("OBJECTIFS")').last();
     await objectifsTab.click({ force: true });
-    await page.waitForTimeout(3000);
+    await page.locator('div[class*="border-r"][class*="border-b"]').first()
+      .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     await page.screenshot({ path: 'e2e/screenshots/tab-objectifs.png' });
     const sheet3 = await countCells('OBJECTIFS (after switch)');
 
     // Click DATES tab
     const datesTab = page.locator('div:has-text("DATES")').last();
     await datesTab.click({ force: true });
-    await page.waitForTimeout(3000);
+    await page.locator('div[class*="border-r"][class*="border-b"]').first()
+      .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     await page.screenshot({ path: 'e2e/screenshots/tab-dates.png' });
     const sheet4 = await countCells('DATES (after switch)');
 
     // Click back to SAISIEJOUR
     const saisieTab = page.locator('div:has-text("SAISIEJOUR")').last();
     await saisieTab.click({ force: true });
-    await page.waitForTimeout(3000);
+    await page.locator('div[class*="border-r"][class*="border-b"]').first()
+      .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     const sheet1again = await countCells('SAISIEJOUR (back)');
 
     // Assertions

@@ -3,14 +3,14 @@ import { test, expect } from '@playwright/test';
 test.describe('Mail System E2E', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('http://localhost:3000/login?auto=admin');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await page.goto('http://localhost:3000/login?auto=admin');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
   });
 
   test('should display mail page with accounts', async ({ page }) => {
     await page.goto('http://localhost:3000/mail');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     // Verify page loads
     const content = await page.textContent('body');
@@ -22,17 +22,19 @@ test.describe('Mail System E2E', () => {
     console.log('[MAIL] Has inbox:', hasInbox, 'Has compose:', hasCompose);
 
     await page.screenshot({ path: 'e2e/screenshots/mail-inbox.png' });
+    expect(content?.length).toBeGreaterThan(100);
   });
 
   test('mail settings: add local account', async ({ page }) => {
     await page.goto('http://localhost:3000/mail/settings');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     const content = await page.textContent('body');
     const hasSettings = content?.includes('Compte') || content?.includes('Account') || content?.includes('IMAP');
     console.log('[MAIL SETTINGS] Has settings:', hasSettings);
 
     await page.screenshot({ path: 'e2e/screenshots/mail-settings.png' });
+    expect(content?.length).toBeGreaterThan(100);
   });
 
   test('verify mail API is accessible', async ({ page }) => {

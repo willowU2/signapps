@@ -33,12 +33,12 @@ setup('authenticate', async ({ page }) => {
     const btn = page.locator(selector).first();
     if (await btn.isVisible({ timeout: 500 }).catch(() => false)) {
       await btn.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(200);
     }
   }
   // Final escape to close anything remaining
   await page.keyboard.press('Escape');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(200);
 
   // Fill in login credentials using IDs (language-independent)
   const usernameInput = page.locator('#username');

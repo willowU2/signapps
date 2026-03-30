@@ -56,7 +56,7 @@ test.describe('SignApps Autopilot', () => {
     // 4. CLEANUP: Delete the test container via the UI
     try {
       // The container list might re-render after the action
-      await page.waitForTimeout(1000);
+      await page.locator('button', { hasText: containerName }).waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
       const moreButton = containerCard.locator('button').filter({ has: page.locator('svg') }).last();
       await moreButton.click({ timeout: 5000 });
       

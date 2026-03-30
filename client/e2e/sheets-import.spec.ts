@@ -7,7 +7,7 @@ const XLSX_PATH = path.resolve(__dirname, '../../Calcul Marge 2019 - 2032.xlsx')
 test.describe('Sheets XLSX Import', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('http://localhost:3000/login?auto=admin');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await page.goto('http://localhost:3000/login?auto=admin');
     await page.waitForURL(/\/(dashboard|sheets)/, { timeout: 10000 });
   });
@@ -19,7 +19,6 @@ test.describe('Sheets XLSX Import', () => {
     const sheetId = randomUUID();
     await page.goto(`http://localhost:3000/sheets/editor?id=${sheetId}&name=CalcMargeTest`);
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(5000);
 
     // Verify editor is loaded (should have a grid)
     await page.screenshot({ path: 'e2e/screenshots/sheets-01-editor.png' });
@@ -40,13 +39,13 @@ test.describe('Sheets XLSX Import', () => {
     const closeBtn = page.locator('button:has-text("Actualiser"), button:has-text("Fermer"), button:has-text("OK"), [data-slot="dialog-close"]');
     if (await closeBtn.first().isVisible({ timeout: 2000 }).catch(() => false)) {
       await closeBtn.first().click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle').catch(() => {});
     }
     // Also try Escape
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(200);
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(200);
 
     await page.screenshot({ path: 'e2e/screenshots/sheets-02-after-import.png' });
 
@@ -110,7 +109,9 @@ test.describe('Sheets XLSX Import', () => {
       }
     });
 
-    await page.waitForTimeout(5000);
+    // Wait for final state
+    await page.locator('div[class*="border-r"][class*="border-b"]').first()
+      .waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
     await page.screenshot({ path: 'e2e/screenshots/sheets-03-final.png' });
 
     console.log(`Found sheets: ${foundSheets.length}/${sheetNames.length}`);

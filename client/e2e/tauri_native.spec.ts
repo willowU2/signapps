@@ -78,7 +78,7 @@ test.describe('Tauri Native Binary E2E (Windows WebView2 CDP)', () => {
     });
     
     // Wait for the route to change and page to load
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('domcontentloaded').catch(() => {});
     
     const title = await page.title();
     console.log('Tauri App Title:', title);

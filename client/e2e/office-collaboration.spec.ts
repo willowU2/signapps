@@ -39,7 +39,7 @@ test.describe('Document Comments', () => {
         } else {
           // Try keyboard shortcut Ctrl+Alt+M
           await page.keyboard.press('Control+Alt+m');
-          await page.waitForTimeout(500);
+          await page.locator('[data-testid="comment-input"], .comment-form').waitFor({ state: 'visible', timeout: 2000 }).catch(() => {});
           const pageContent = await page.textContent('body');
           expect(pageContent?.length).toBeGreaterThan(0);
         }
@@ -321,7 +321,7 @@ test.describe('Real-time Collaboration', () => {
       const docItem = page.locator('[data-testid="document-item"]').first();
       if (await docItem.isVisible()) {
         await docItem.click();
-        await page.waitForTimeout(2000);
+        await page.waitForSelector('.tiptap, .ProseMirror', { timeout: 10000 }).catch(() => {});
 
         const presenceBar = page.locator('[data-testid="presence-bar"], .collaborators, .presence-indicators');
         const hasPresence = await presenceBar.isVisible().catch(() => false);
@@ -334,7 +334,7 @@ test.describe('Real-time Collaboration', () => {
       const docItem = page.locator('[data-testid="document-item"]').first();
       if (await docItem.isVisible()) {
         await docItem.click();
-        await page.waitForTimeout(2000);
+        await page.waitForSelector('.tiptap, .ProseMirror', { timeout: 10000 }).catch(() => {});
 
         // Current user avatar should be visible
         const avatar = page.locator('[data-testid="user-avatar"], .avatar, img[alt*="user"]');
@@ -350,7 +350,7 @@ test.describe('Real-time Collaboration', () => {
       const docItem = page.locator('[data-testid="document-item"]').first();
       if (await docItem.isVisible()) {
         await docItem.click();
-        await page.waitForTimeout(2000);
+        await page.waitForSelector('.tiptap, .ProseMirror', { timeout: 10000 }).catch(() => {});
 
         const statusIndicator = page.locator('[data-testid="sync-status"], .connection-status, text=/connected|connecté|synced/i');
         const hasStatus = await statusIndicator.isVisible().catch(() => false);
@@ -372,8 +372,9 @@ test.describe('Real-time Collaboration', () => {
           await editor.click();
           await page.keyboard.type('Auto-save test content');
 
-          // Wait for auto-save
-          await page.waitForTimeout(3000);
+          // Wait for auto-save indicator to appear
+          await page.locator('text=/saved|enregistré|synced|synchronisé/i')
+            .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
           // Look for saved indicator
           const savedIndicator = page.locator('text=/saved|enregistré|synced|synchronisé/i');

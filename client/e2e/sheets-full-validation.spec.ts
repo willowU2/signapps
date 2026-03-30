@@ -7,7 +7,7 @@ const XLSX_PATH = path.resolve(__dirname, '../../Calcul Marge 2019 - 2032.xlsx')
 test.describe('Full Excel Validation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('http://localhost:3000/login?auto=admin');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await page.goto('http://localhost:3000/login?auto=admin');
     await page.waitForURL(/\/(dashboard|sheets)/, { timeout: 10000 });
   });
@@ -26,8 +26,8 @@ test.describe('Full Excel Validation', () => {
     const sid = randomUUID();
     await page.goto(`http://localhost:3000/sheets/editor?id=${sid}&name=FullTest`);
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
 
+    // Wait for editor to be ready
     const fi = page.locator('input[type="file"][accept*=".xlsx"]');
     await expect(fi).toBeAttached({ timeout: 5000 });
     await fi.setInputFiles(XLSX_PATH);
@@ -35,9 +35,9 @@ test.describe('Full Excel Validation', () => {
 
     // Close modals
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(200);
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(200);
 
     logs.forEach(l => console.log(l));
 
@@ -90,7 +90,8 @@ test.describe('Full Excel Validation', () => {
     // 4. SWITCH TO OBJECTIFS AND VERIFY
     const objTab = page.locator('div').filter({ hasText: /^OBJECTIFS$/ }).last();
     await objTab.click({ force: true });
-    await page.waitForTimeout(3000);
+    await page.locator('div[class*="border-r"][class*="border-b"]').first()
+      .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     await page.screenshot({ path: 'e2e/screenshots/full-objectifs.png' });
 
     const objData = await page.evaluate(() => {
@@ -115,7 +116,8 @@ test.describe('Full Excel Validation', () => {
     // 5. SWITCH TO DATES AND VERIFY
     const datesTab = page.locator('div').filter({ hasText: /^DATES$/ }).last();
     await datesTab.click({ force: true });
-    await page.waitForTimeout(3000);
+    await page.locator('div[class*="border-r"][class*="border-b"]').first()
+      .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     await page.screenshot({ path: 'e2e/screenshots/full-dates.png' });
 
     const datesData = await page.evaluate(() => {
@@ -140,7 +142,8 @@ test.describe('Full Excel Validation', () => {
     // 6. SWITCH TO DONNEES PERIODIQUES AND VERIFY
     const dpTab = page.locator('div').filter({ hasText: /^DONNEES PERIODIQUES$/ }).last();
     await dpTab.click({ force: true });
-    await page.waitForTimeout(3000);
+    await page.locator('div[class*="border-r"][class*="border-b"]').first()
+      .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     await page.screenshot({ path: 'e2e/screenshots/full-donnees.png' });
 
     const dpData = await page.evaluate(() => {
@@ -160,7 +163,8 @@ test.describe('Full Excel Validation', () => {
     // 7. BACK TO SAISIEJOUR - verify it still works
     const saisieTab = page.locator('div').filter({ hasText: /^SAISIEJOUR$/ }).last();
     await saisieTab.click({ force: true });
-    await page.waitForTimeout(2000);
+    await page.locator('div[class*="border-r"][class*="border-b"]').first()
+      .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
     const backData = await page.evaluate(() => {
       const cells = document.querySelectorAll('div[class*="border-r"][class*="border-b"]');

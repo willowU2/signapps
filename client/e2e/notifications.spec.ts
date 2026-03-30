@@ -195,7 +195,7 @@ test.describe('Notification System (Phase 8)', () => {
           if (await option.isVisible()) {
             await option.click();
             // Verify table updated
-            await page.waitForTimeout(500);
+            await page.locator('table, [role="table"], [data-testid="notification-list"]').first().waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
           }
         }
       }
@@ -213,7 +213,7 @@ test.describe('Notification System (Phase 8)', () => {
           const sentOption = page.locator('text=Sent');
           if (await sentOption.isVisible()) {
             await sentOption.click();
-            await page.waitForTimeout(500);
+            await page.locator('table, [role="table"], [data-testid="notification-list"]').first().waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
           }
         }
       }
@@ -252,7 +252,7 @@ test.describe('Notification System (Phase 8)', () => {
 
         // Save event
         await page.locator('[data-testid="save-event-button"]').click();
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('networkidle').catch(() => {});
 
         // Navigate back to settings
         await page.goto('/settings/notifications');

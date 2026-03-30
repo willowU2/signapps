@@ -90,12 +90,12 @@ test.describe('Keep Layout', () => {
       const menuButton = page.getByRole('button').first();
       await menuButton.click();
 
-      // Sidebar width should change
-      await page.waitForTimeout(300); // Wait for animation
+      // Sidebar width should change - wait for CSS transition
+      await page.waitForTimeout(200); // animation only
 
       // Click again to toggle back
       await menuButton.click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(200); // animation only
     });
   });
 
@@ -185,11 +185,11 @@ test.describe('Keep Layout', () => {
 
       // Click to toggle view
       await viewToggle.click();
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(200); // animation only
 
       // Click again to toggle back
       await viewToggle.click();
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(200); // animation only
     });
   });
 
@@ -237,7 +237,8 @@ test.describe('Keep Layout', () => {
       const closeButton = page.getByRole('button', { name: /fermer/i });
       await closeButton.click();
 
-      await page.waitForTimeout(500);
+      // Wait for note to appear in list
+      await page.locator('[class*="group"]').first().waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
     });
 
     test('should show action buttons on hover', async ({ page }) => {
@@ -246,8 +247,8 @@ test.describe('Keep Layout', () => {
       if (await noteCard.isVisible({ timeout: 3000 })) {
         await noteCard.hover();
 
-        // Action buttons should appear
-        await page.waitForTimeout(300);
+        // Action buttons should appear - wait for hover animation
+        await page.waitForTimeout(200); // animation only
       }
     });
 
@@ -273,8 +274,8 @@ test.describe('Keep Layout', () => {
       // Header should still be visible
       await expect(page.getByText('Keep')).toBeVisible();
 
-      // Sidebar should collapse
-      await page.waitForTimeout(300);
+      // Sidebar should collapse - wait for CSS transition
+      await page.waitForTimeout(200); // animation only
     });
 
     test('should adapt layout on tablet viewport', async ({ page }) => {

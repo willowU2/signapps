@@ -284,7 +284,7 @@ test.describe('Full App Audit — page load verification', () => {
     if (await toggleBtn.isVisible()) {
       await toggleBtn.click();
       // After collapse the sidebar should be narrower (icon-only width ≤ 80px)
-      await page.waitForTimeout(400); // CSS transition
+      await page.waitForTimeout(200); // CSS transition animation
       const boxCollapsed = await sidebar.boundingBox();
       if (boxCollapsed) {
         expect(boxCollapsed.width).toBeLessThanOrEqual(80);
@@ -292,7 +292,7 @@ test.describe('Full App Audit — page load verification', () => {
 
       // Expand again
       await toggleBtn.click();
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(200); // CSS transition animation
       const boxExpanded = await sidebar.boundingBox();
       if (boxExpanded) {
         expect(boxExpanded.width).toBeGreaterThan(80);
@@ -395,10 +395,10 @@ test.describe('Full App Audit — page load verification', () => {
 
     if (await toggleBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await toggleBtn.click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(200); // CSS transition animation
       // Second click should close it
       await toggleBtn.click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(200); // CSS transition animation
     }
 
     // Page should still be alive regardless of toggle state

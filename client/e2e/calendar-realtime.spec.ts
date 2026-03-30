@@ -32,7 +32,7 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
 
       // Simulate network offline
       await context.setOffline(true);
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(200); // minimal delay for browser state update
 
       // Verify error state is shown
       const errorBanner = page.locator('[data-testid="connection-error"]');
@@ -84,7 +84,7 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
       await createCalendarContext(page2, 'shared-calendar-1');
 
       // Give presence system time to propagate
-      await page1.waitForTimeout(2000);
+      await page1.locator('[data-testid="presence-count"]').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       // Both users should see presence indicator with 2 users
       const presence1 = page1.locator('[data-testid="presence-count"]');
@@ -111,7 +111,7 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
       await page1.click('[data-testid="edit-button"]');
 
       // Wait for editing state to propagate
-      await page2.waitForTimeout(1000);
+      await page2.locator('[data-testid="presence-editing-count"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
 
       // User 2 should see "1 editing" in presence summary
       const editingSummary = page2.locator('[data-testid="presence-editing-count"]');
@@ -142,7 +142,7 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
       await context1.close();
 
       // Wait for presence update
-      await page2.waitForTimeout(1000);
+      await page2.locator('[data-testid="presence-count"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
 
       // User 1 should be removed from presence
       presence2 = page2.locator('[data-testid="presence-count"]');
@@ -178,8 +178,8 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
       // Perform activity (move mouse/click)
       await page.hover('[data-testid="calendar-view"]');
 
-      // Wait for status update
-      await page.waitForTimeout(500);
+      // Wait for status update to propagate
+      await page.locator('[data-testid="presence-user-status"]').waitFor({ state: 'visible', timeout: 2000 }).catch(() => {});
 
       // Status should now be viewing
       userStatus = page.locator('[data-testid="presence-user-status"]');
@@ -203,8 +203,8 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
       await page1.fill('[data-testid="event-time"]', '10:00 AM');
       await page1.click('[data-testid="save-event-button"]');
 
-      // Wait for sync
-      await page2.waitForTimeout(500);
+      // Wait for sync - event should appear on page 2
+      await page2.locator('text=Shared Event').waitFor({ state: 'visible', timeout: 3000 });
 
       // User 2 should see the event
       const eventCard = page2.locator('text=Shared Event');
@@ -237,8 +237,8 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
       // User 1 saves
       await page1.click('[data-testid="save-event-button"]');
 
-      // Wait for sync
-      await page2.waitForTimeout(500);
+      // Wait for sync to page 2
+      await page2.locator('[data-testid="event-title"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
 
       // User 2 should see title update in background
       const titleInForm = page2.locator('[data-testid="event-title"]');
@@ -248,7 +248,7 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
       await page2.click('[data-testid="save-event-button"]');
 
       // Wait for final sync
-      await page1.waitForTimeout(500);
+      await page1.locator('[data-testid="event-1"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
 
       // User 1 should see both changes applied (CRDT merge)
       await page1.click('[data-testid="event-1"]');
@@ -339,7 +339,7 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
         await createCalendarContext(page, 'shared-calendar-1');
         contexts.push(context);
         pages.push(page);
-        await page.waitForTimeout(100);
+        await page.waitForTimeout(100); // stagger context creation
       }
 
       // Check first page for +N indicator
@@ -379,7 +379,8 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
       await page1.click('[data-testid="event-1"]');
       await page1.click('[data-testid="edit-button"]');
 
-      await page2.waitForTimeout(500);
+      // Wait for indicator to appear on page 2
+      await page2.locator('[data-testid="item-editing-indicator-event-1"]').waitFor({ state: 'visible', timeout: 3000 });
 
       // ItemEditingIndicator should appear on User 2's screen
       const itemIndicator = page2.locator('[data-testid="item-editing-indicator-event-1"]');
@@ -402,7 +403,9 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
       // User 1 edits event
       await page1.click('[data-testid="event-1"]');
       await page1.click('[data-testid="edit-button"]');
-      await page1.waitForTimeout(500);
+
+      // Wait for indicator to be visible
+      await page2.locator('[data-testid="item-editing-indicator-event-1"]').waitFor({ state: 'visible', timeout: 3000 });
 
       // Indicator should be visible
       let itemIndicator = page2.locator('[data-testid="item-editing-indicator-event-1"]');
@@ -411,7 +414,8 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
       // User 1 closes edit form (cancel or save)
       await page1.click('[data-testid="close-button"]');
 
-      await page2.waitForTimeout(500);
+      // Wait for indicator to disappear
+      await page2.locator('[data-testid="item-editing-indicator-event-1"]').waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
 
       // Indicator should disappear
       itemIndicator = page2.locator('[data-testid="item-editing-indicator-event-1"]');

@@ -11,7 +11,7 @@ test.describe('Workforce Organigram & Employees explorer', () => {
 
     test('Scenario 3: Organigramme Explorer renders correctly', async ({ page }) => {
         // Since ReactFlow can take a moment to draw nodes
-        await page.waitForTimeout(1000);
+        await page.locator('.react-flow').first().waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
 
         // Expect a ReactFlow canvas to be present
         const flowCanvas = page.locator('.react-flow').first();
@@ -58,8 +58,8 @@ test.describe('Workforce Organigram & Employees explorer', () => {
          const searchInput = page.getByPlaceholder(/rechercher|search/i).first();
          if (await searchInput.isVisible()) {
              await searchInput.fill('Admin');
-             // The list should filter
-             await page.waitForTimeout(500);
+             // The list should filter - debounce
+             await page.waitForTimeout(200);
              // Ensure at least one item remains
              await expect(employeeCard).toBeVisible();
          }

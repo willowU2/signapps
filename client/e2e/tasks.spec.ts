@@ -108,7 +108,7 @@ test.describe('Tasks Layout', () => {
   test.describe('Task Tree', () => {
     test('should display task tree component when calendar selected', async ({ page }) => {
       // Wait for potential API call
-      await page.waitForTimeout(1000);
+      await page.locator('[class*="TaskTree"], .pb-20, [data-testid]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       // TaskTree should be in the content area
       const taskTree = page.locator('[class*="TaskTree"], .pb-20').first();
@@ -120,7 +120,7 @@ test.describe('Tasks Layout', () => {
 
     test('should allow adding a subtask from a task node', async ({ page }) => {
       // Wait for task tree to load
-      await page.waitForTimeout(1000);
+      await page.locator('.border-b').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
       
       const firstTask = page.locator('.border-b.border-\\[\\#f1f3f4\\]').first();
       
