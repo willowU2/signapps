@@ -178,7 +178,7 @@ function KanbanColumnComponent({
 // ─── Board ────────────────────────────────────────────────────────────────────
 
 interface CustomKanbanBoardProps {
-  projectId: string;
+  projectId?: string;
 }
 
 export function CustomKanbanBoard({ projectId }: CustomKanbanBoardProps) {

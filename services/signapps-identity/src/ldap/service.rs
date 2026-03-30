@@ -164,7 +164,8 @@ impl LdapService {
             return Ok(None);
         }
 
-        let entry = SearchEntry::construct(rs.into_iter().next().unwrap());
+        let entry =
+            SearchEntry::construct(rs.into_iter().next().expect("rs non-empty checked above"));
         let user_dn = entry.dn.clone();
 
         // Extract user info

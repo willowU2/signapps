@@ -40,7 +40,7 @@ import {
   VolumeX,
   CheckCircle2,
 } from 'lucide-react';
-import { usePreferencesStore } from '@/stores/calendar-store';
+import { usePreferencesStore } from '@/stores/scheduling/preferences-store';
 import type { TimeItem } from '@/lib/scheduling/types';
 
 // ============================================================================

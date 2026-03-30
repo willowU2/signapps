@@ -2039,8 +2039,9 @@ ${html}
             const name = documentName || 'Mon mod\èle';
             saveUserTemplate({
                 title: name,
-                description: `Mod\èle cr\é\é depuis "${name}"`,
+                description: `Modèle créé depuis "${name}"`,
                 type: 'document',
+                department: 'general',
                 content: html,
             });
             toast.success('Document sauvegard\é comme mod\èle');

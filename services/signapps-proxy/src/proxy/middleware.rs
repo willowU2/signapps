@@ -45,7 +45,7 @@ pub async fn check_shield(
                         .header("content-type", "text/plain")
                         .header("retry-after", "60")
                         .body(full_body(msg))
-                        .unwrap(),
+                        .expect("valid response builder"),
                 )
             }
         },

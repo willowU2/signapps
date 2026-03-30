@@ -38,8 +38,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ResourceCard, ResourceCardCompact } from './ResourceCard';
-import { BookingSheet } from './BookingSheet';
+import { ResourceCard, ResourceCardCompact } from '@/components/scheduling/resources/ResourceCard';
+import { BookingSheet } from '@/components/scheduling/resources/BookingSheet';
 import { FloorPlan } from './FloorPlan';
 import {
   useResources,
@@ -48,7 +48,7 @@ import {
   useUpdateBooking,
   useDeleteBooking,
   useFloorPlans,
-} from '@/lib/api/calendar';
+} from '@/lib/scheduling/api/resources';
 import type { Resource, Booking } from '@/lib/scheduling/types/scheduling';
 
 // ============================================================================

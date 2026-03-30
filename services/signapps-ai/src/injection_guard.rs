@@ -9,20 +9,28 @@ use std::sync::LazyLock;
 static INJECTION_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
     vec![
         // Direct instruction overrides
-        Regex::new(r"(?i)ignore\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?|rules?)").unwrap(),
-        Regex::new(r"(?i)disregard\s+(all\s+)?(previous|above|prior)").unwrap(),
-        Regex::new(r"(?i)forget\s+(all\s+)?(previous|your)\s+(instructions?|rules?|context)").unwrap(),
+        Regex::new(r"(?i)ignore\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?|rules?)")
+            .expect("valid injection guard regex"),
+        Regex::new(r"(?i)disregard\s+(all\s+)?(previous|above|prior)")
+            .expect("valid injection guard regex"),
+        Regex::new(r"(?i)forget\s+(all\s+)?(previous|your)\s+(instructions?|rules?|context)")
+            .expect("valid injection guard regex"),
         // System prompt extraction
-        Regex::new(r"(?i)(what|show|print|reveal|display|repeat)\s+(is\s+)?(your|the)\s+(system\s+)?(prompt|instructions?|rules?)").unwrap(),
-        Regex::new(r"(?i)output\s+(your\s+)?(system|initial)\s+(prompt|message|instructions?)").unwrap(),
+        Regex::new(r"(?i)(what|show|print|reveal|display|repeat)\s+(is\s+)?(your|the)\s+(system\s+)?(prompt|instructions?|rules?)")
+            .expect("valid injection guard regex"),
+        Regex::new(r"(?i)output\s+(your\s+)?(system|initial)\s+(prompt|message|instructions?)")
+            .expect("valid injection guard regex"),
         // Role manipulation
-        Regex::new(r"(?i)you\s+are\s+now\s+(a|an|the)\s+").unwrap(),
-        Regex::new(r"(?i)act\s+as\s+(if\s+you\s+are|a|an)\s+").unwrap(),
-        Regex::new(r"(?i)pretend\s+(to\s+be|you\s+are)\s+").unwrap(),
+        Regex::new(r"(?i)you\s+are\s+now\s+(a|an|the)\s+")
+            .expect("valid injection guard regex"),
+        Regex::new(r"(?i)act\s+as\s+(if\s+you\s+are|a|an)\s+")
+            .expect("valid injection guard regex"),
+        Regex::new(r"(?i)pretend\s+(to\s+be|you\s+are)\s+")
+            .expect("valid injection guard regex"),
         // Delimiter attacks
-        Regex::new(r"(?i)</?system>").unwrap(),
-        Regex::new(r"(?i)\[INST\]|\[/INST\]").unwrap(),
-        Regex::new(r"(?i)```system").unwrap(),
+        Regex::new(r"(?i)</?system>").expect("valid injection guard regex"),
+        Regex::new(r"(?i)\[INST\]|\[/INST\]").expect("valid injection guard regex"),
+        Regex::new(r"(?i)```system").expect("valid injection guard regex"),
     ]
 });
 

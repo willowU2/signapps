@@ -21,7 +21,7 @@ const FONT_SIZE_CODE: f32 = 10.0;
 /// Convert HTML to PDF
 pub fn html_to_pdf(html: &str) -> Result<Vec<u8>, ConversionError> {
     let document = Html::parse_document(html);
-    let body_selector = Selector::parse("body").unwrap();
+    let body_selector = Selector::parse("body").expect("valid CSS selector");
 
     let body = document
         .select(&body_selector)
@@ -164,7 +164,7 @@ fn process_element_to_pdf(
         },
         "ul" | "ol" => {
             let is_ordered = tag == "ol";
-            let li_selector = Selector::parse("li").unwrap();
+            let li_selector = Selector::parse("li").expect("valid CSS selector");
             let mut index = 1;
 
             for li in elem.select(&li_selector) {
@@ -206,9 +206,9 @@ fn process_element_to_pdf(
         },
         "table" => {
             // Simple table rendering
-            let tr_selector = Selector::parse("tr").unwrap();
-            let th_selector = Selector::parse("th").unwrap();
-            let td_selector = Selector::parse("td").unwrap();
+            let tr_selector = Selector::parse("tr").expect("valid CSS selector");
+            let th_selector = Selector::parse("th").expect("valid CSS selector");
+            let td_selector = Selector::parse("td").expect("valid CSS selector");
 
             for tr in elem.select(&tr_selector) {
                 let mut row_text = String::new();

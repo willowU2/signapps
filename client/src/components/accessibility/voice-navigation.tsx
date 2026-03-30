@@ -7,11 +7,26 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
-type SpeechRecognitionCtor = new () => SpeechRecognition;
-type SpeechWindow = Window & {
+interface ISpeechRecognitionEvent extends Event {
+  results: { length: number; [index: number]: { isFinal: boolean; [index: number]: { transcript: string } } };
+}
+
+interface ISpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: ((ev: ISpeechRecognitionEvent) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+}
+
+type SpeechRecognitionCtor = new () => ISpeechRecognition;
+interface SpeechWindow {
   SpeechRecognition?: SpeechRecognitionCtor;
   webkitSpeechRecognition?: SpeechRecognitionCtor;
-};
+}
 
 const VOICE_COMMANDS: Record<string, string> = {
   'go home': '/',
@@ -41,10 +56,10 @@ export function VoiceNavigation() {
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [supported, setSupported] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<ISpeechRecognition | null>(null);
 
   useEffect(() => {
-    const SpeechRec = (window as SpeechWindow).SpeechRecognition || (window as SpeechWindow).webkitSpeechRecognition;
+    const SpeechRec = (window as unknown as SpeechWindow).SpeechRecognition || (window as unknown as SpeechWindow).webkitSpeechRecognition;
     setSupported(!!SpeechRec);
   }, []);
 
@@ -75,7 +90,7 @@ export function VoiceNavigation() {
   }, [router]);
 
   const startListening = useCallback(() => {
-    const SpeechRec = (window as SpeechWindow).SpeechRecognition || (window as SpeechWindow).webkitSpeechRecognition;
+    const SpeechRec = (window as unknown as SpeechWindow).SpeechRecognition || (window as unknown as SpeechWindow).webkitSpeechRecognition;
     if (!SpeechRec) return;
 
     const rec = new SpeechRec();
@@ -83,7 +98,7 @@ export function VoiceNavigation() {
     rec.interimResults = true;
     rec.lang = 'fr-FR';
 
-    rec.onresult = (e: SpeechRecognitionEvent) => {
+    rec.onresult = (e: ISpeechRecognitionEvent) => {
       const last = e.results[e.results.length - 1];
       const text = last[0].transcript;
       setTranscript(text);

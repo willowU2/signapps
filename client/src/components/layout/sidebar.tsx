@@ -23,7 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 function DynIcon({ name, className }: { name: string; className?: string }) {
-  const Icon = (LucideIcons as Record<string, React.ComponentType<{ className?: string }> | undefined>)[name];
+  const Icon = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }> | undefined>)[name];
   if (!Icon) return <LucideIcons.Grid className={className} />;
   return <Icon className={className} />;
 }

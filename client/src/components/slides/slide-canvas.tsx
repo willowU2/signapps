@@ -158,7 +158,8 @@ export function SlideCanvas({
             let currentGhostText = "";
             let ghostedObject: FabricObjectWithId | null = null;
 
-            c.on('text:changed', (e: { target?: FabricObjectWithId }) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (c as any).on('text:changed', (e: { target?: FabricObjectWithId }) => {
                 const target = e.target;
                 if (!target || target.isEditing === false) return;
 

@@ -4,6 +4,11 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useShallow } from "zustand/react/shallow";
 import { Calendar, Event } from "@/types/calendar";
+import type { TimeItem, UpdateTimeItemInput, CreateTimeItemInput, Scope } from "@/lib/scheduling/types";
+import { schedulingApi } from "@/lib/scheduling/api/scheduling-api";
+
+// Re-export usePreferencesStore for convenience
+export { usePreferencesStore } from "@/stores/scheduling/preferences-store";
 
 export type ViewMode = "month" | "week" | "day" | "agenda" | "year";
 export type ViewType =
@@ -102,6 +107,15 @@ interface CalendarState {
   nextMonth: () => void;
   prevMonth: () => void;
   today: () => void;
+
+  // TimeItems (scheduling store mirror for view components)
+  timeItems: TimeItem[];
+  isLoadingTimeItems: boolean;
+  weekStartsOn: 0 | 1;
+  scope: Scope | null;
+  fetchTimeItems: (range: { start: Date; end: Date }) => Promise<void>;
+  updateTimeItem: (id: string, updates: UpdateTimeItemInput) => Promise<void>;
+  createTimeItem: (input: CreateTimeItemInput) => Promise<TimeItem>;
 }
 
 export const useCalendarStore = create<CalendarState>()(
@@ -245,6 +259,32 @@ export const useCalendarStore = create<CalendarState>()(
           return { currentDate: prev };
         }),
       today: () => set({ currentDate: new Date() }),
+
+      // ---- TimeItems (scheduling) ----
+      timeItems: [],
+      isLoadingTimeItems: false,
+      weekStartsOn: 1,
+      scope: null,
+      fetchTimeItems: async (range) => {
+        set({ isLoading: true });
+        try {
+          const response = await schedulingApi.getTimeItemsInRange(range.start.toISOString(), range.end.toISOString());
+          set({ timeItems: response, isLoading: false });
+        } catch {
+          set({ isLoading: false });
+        }
+      },
+      updateTimeItem: async (id, updates) => {
+        const item = await schedulingApi.updateTimeItem(id, updates);
+        set((state) => ({
+          timeItems: state.timeItems.map((t) => (t.id === id ? item : t)),
+        }));
+      },
+      createTimeItem: async (input) => {
+        const item = await schedulingApi.createTimeItem(input);
+        set((state) => ({ timeItems: [...state.timeItems, item] }));
+        return item;
+      },
     }),
     {
       name: "signapps-calendar",

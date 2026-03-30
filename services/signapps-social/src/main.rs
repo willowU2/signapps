@@ -47,8 +47,8 @@ impl AuthState for AppState {
 fn create_router(state: AppState) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
-            "http://localhost:3000".parse().unwrap(),
-            "http://127.0.0.1:3000".parse().unwrap(),
+            "http://localhost:3000".parse().expect("valid CORS origin"),
+            "http://127.0.0.1:3000".parse().expect("valid CORS origin"),
         ]))
         .allow_credentials(true)
         .allow_methods([
@@ -322,11 +322,15 @@ async fn main() {
 
     let app = create_router(state);
 
-    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port)
+        .parse()
+        .expect("valid socket address");
+    let listener = tokio::net::TcpListener::bind(addr)
+        .await
+        .expect("bind to socket address");
     tracing::info!("signapps-social ready at http://localhost:{}", port);
     axum::serve(listener, app)
         .with_graceful_shutdown(signapps_common::graceful_shutdown())
         .await
-        .unwrap();
+        .expect("server run");
 }

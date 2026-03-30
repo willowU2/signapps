@@ -4,9 +4,9 @@ const BASE = 'http://localhost:3000';
 
 async function login(page: any) {
   await page.goto(`${BASE}/login?auto=admin`);
-  await page.waitForTimeout(3000);
+  await page.waitForLoadState('networkidle').catch(() => {});
   await page.goto(`${BASE}/login?auto=admin`);
-  await page.waitForTimeout(3000);
+  await page.waitForLoadState('networkidle').catch(() => {});
   // If still on login, try manual login
   if (page.url().includes('/login')) {
     const user = page.locator('input[name="username"], input[id="username"], #username');
@@ -15,7 +15,7 @@ async function login(page: any) {
       const pass = page.locator('input[name="password"], input[id="password"], #password');
       await pass.fill('admin');
       await page.locator('button[type="submit"]').first().click();
-      await page.waitForTimeout(3000);
+      await page.waitForURL(/\/(dashboard|docs)/, { timeout: 10000 }).catch(() => {});
     }
   }
 }
@@ -27,13 +27,13 @@ test.describe('UX Deep Audit', () => {
   test('docs: create, open, edit document', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto(`${BASE}/docs`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     // Click "Feuille vierge" or blank doc
     const blank = page.locator('text=Document vierge, text=Feuille vierge, text=Blank').first();
     if (await blank.isVisible({ timeout: 3000 }).catch(() => false)) {
       await blank.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('networkidle').catch(() => {});
     }
 
     // Check if we're in the editor
@@ -48,7 +48,7 @@ test.describe('UX Deep Audit', () => {
   test('contacts: create, edit, delete contact', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto(`${BASE}/contacts`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     // Count initial contacts
     const initialCount = await page.locator('tr').count();
@@ -58,7 +58,7 @@ test.describe('UX Deep Audit', () => {
     const addBtn = page.locator('text=Nouveau Contact, button:has-text("Ajouter")').first();
     if (await addBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await addBtn.click();
-      await page.waitForTimeout(1000);
+      await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       // Fill form
       const nameInput = page.locator('input[placeholder*="nom"], input[name="name"], input[name="firstName"]').first();
@@ -71,7 +71,7 @@ test.describe('UX Deep Audit', () => {
       const submit = page.locator('button:has-text("Créer"), button:has-text("Ajouter"), button[type="submit"]').first();
       if (await submit.isVisible({ timeout: 2000 }).catch(() => false)) {
         await submit.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('networkidle').catch(() => {});
       }
     }
 
@@ -84,12 +84,12 @@ test.describe('UX Deep Audit', () => {
   test('mail: compose new message', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto(`${BASE}/mail`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     const compose = page.locator('text=Nouveau message, button:has-text("Compose")').first();
     if (await compose.isVisible({ timeout: 3000 }).catch(() => false)) {
       await compose.click();
-      await page.waitForTimeout(1000);
+      await page.locator('[role="dialog"], input[placeholder*="@"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     }
 
     await page.screenshot({ path: 'e2e/screenshots/ux-mail.png' });
@@ -101,7 +101,7 @@ test.describe('UX Deep Audit', () => {
   test('tasks: create project and task', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto(`${BASE}/tasks`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     await page.screenshot({ path: 'e2e/screenshots/ux-tasks.png' });
 
@@ -120,7 +120,7 @@ test.describe('UX Deep Audit', () => {
   test('calendar: create event', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto(`${BASE}/cal`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     await page.screenshot({ path: 'e2e/screenshots/ux-calendar.png' });
 
@@ -134,7 +134,7 @@ test.describe('UX Deep Audit', () => {
   test('chat: send a message', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto(`${BASE}/chat`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     await page.screenshot({ path: 'e2e/screenshots/ux-chat.png' });
 
@@ -146,7 +146,7 @@ test.describe('UX Deep Audit', () => {
       await input.fill('Test message E2E');
       // Try to send
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle').catch(() => {});
     }
   });
 
@@ -154,7 +154,7 @@ test.describe('UX Deep Audit', () => {
   test('containers: list and manage', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto(`${BASE}/containers`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     await page.screenshot({ path: 'e2e/screenshots/ux-containers.png' });
 
@@ -172,7 +172,7 @@ test.describe('UX Deep Audit', () => {
   test('scheduling: create reservation', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto(`${BASE}/scheduling`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     await page.screenshot({ path: 'e2e/screenshots/ux-scheduling.png' });
 
@@ -190,7 +190,7 @@ test.describe('UX Deep Audit', () => {
   test('storage: create bucket', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto(`${BASE}/storage`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     await page.screenshot({ path: 'e2e/screenshots/ux-storage.png' });
 
@@ -203,7 +203,7 @@ test.describe('UX Deep Audit', () => {
   test('ai: studio panels work', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto(`${BASE}/ai/studio`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     await page.screenshot({ path: 'e2e/screenshots/ux-ai-studio.png' });
 
@@ -220,7 +220,7 @@ test.describe('UX Deep Audit', () => {
   test('global-drive: navigate folders', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto(`${BASE}/global-drive`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     await page.screenshot({ path: 'e2e/screenshots/ux-drive.png' });
 
@@ -233,7 +233,7 @@ test.describe('UX Deep Audit', () => {
     const folder = page.locator('text=Documents').first();
     if (await folder.isVisible({ timeout: 2000 }).catch(() => false)) {
       await folder.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle').catch(() => {});
       console.log('[DRIVE] Navigated into Documents folder');
     }
   });
@@ -242,7 +242,7 @@ test.describe('UX Deep Audit', () => {
   test('admin: settings tabs work', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto(`${BASE}/admin/settings`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     await page.screenshot({ path: 'e2e/screenshots/ux-admin-settings.png' });
 
@@ -252,7 +252,7 @@ test.describe('UX Deep Audit', () => {
       const t = page.locator(`text=${tab}`).first();
       if (await t.isVisible({ timeout: 2000 }).catch(() => false)) {
         await t.click();
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(200); // animation only
         console.log(`[ADMIN] Tab ${tab}: clicked OK`);
       } else {
         console.log(`[ADMIN] Tab ${tab}: NOT VISIBLE`);

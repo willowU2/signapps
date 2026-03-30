@@ -16,7 +16,7 @@ pub fn html_to_docx_with_comments(
     comments: &[Comment],
 ) -> Result<Vec<u8>, ConversionError> {
     let document = Html::parse_document(html);
-    let body_selector = Selector::parse("body").unwrap();
+    let body_selector = Selector::parse("body").expect("valid CSS selector");
 
     let body = document
         .select(&body_selector)
@@ -125,7 +125,12 @@ fn process_element(docx: &mut Docx, elem: &scraper::ElementRef) -> Result<(), Co
 
     match tag {
         "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => {
-            let level = tag.chars().last().unwrap().to_digit(10).unwrap() as usize;
+            let level = tag
+                .chars()
+                .last()
+                .expect("heading tag has last char")
+                .to_digit(10)
+                .expect("heading tag ends with digit") as usize;
             let text = extract_text_content(elem);
             let para = create_heading_paragraph(&text, level);
             *docx = std::mem::take(docx).add_paragraph(para);
@@ -352,7 +357,7 @@ fn process_list(
     is_ordered: bool,
     indent_level: usize,
 ) -> Result<(), ConversionError> {
-    let li_selector = Selector::parse("li").unwrap();
+    let li_selector = Selector::parse("li").expect("valid CSS selector");
     let mut item_number = 1;
 
     for li in elem.select(&li_selector) {
@@ -377,8 +382,8 @@ fn process_list(
         *docx = std::mem::take(docx).add_paragraph(para);
 
         // Check for nested lists
-        let ul_selector = Selector::parse("ul").unwrap();
-        let ol_selector = Selector::parse("ol").unwrap();
+        let ul_selector = Selector::parse("ul").expect("valid CSS selector");
+        let ol_selector = Selector::parse("ol").expect("valid CSS selector");
 
         for nested in li.select(&ul_selector) {
             process_list(docx, &nested, false, indent_level + 1)?;
@@ -394,9 +399,9 @@ fn process_list(
 }
 
 fn create_table_from_element(elem: &scraper::ElementRef) -> Result<Table, ConversionError> {
-    let tr_selector = Selector::parse("tr").unwrap();
-    let th_selector = Selector::parse("th").unwrap();
-    let td_selector = Selector::parse("td").unwrap();
+    let tr_selector = Selector::parse("tr").expect("valid CSS selector");
+    let th_selector = Selector::parse("th").expect("valid CSS selector");
+    let td_selector = Selector::parse("td").expect("valid CSS selector");
 
     let mut rows: Vec<TableRow> = Vec::new();
 

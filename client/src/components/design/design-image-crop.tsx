@@ -110,7 +110,7 @@ export default function DesignImageCrop({ fabricCanvasRef }: ImageCropToolProps)
     if (!canvas) return;
     const obj = canvas.getActiveObject();
     if (!obj) return;
-    obj.clipPath = null;
+    obj.clipPath = undefined;
     obj.dirty = true;
     canvas.requestRenderAll();
     setCropRect({ x: 0, y: 0, w: 100, h: 100 });

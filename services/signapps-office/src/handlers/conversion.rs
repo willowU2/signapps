@@ -250,7 +250,7 @@ pub async fn convert_json(
         .header(header::CONTENT_LENGTH, result.data.len())
         .header("X-Cache-Hit", "false")
         .body(Body::from(result.data))
-        .unwrap())
+        .expect("valid response"))
 }
 
 /// Convert document from multipart upload
@@ -376,7 +376,7 @@ pub async fn convert_upload(
         .header(header::CONTENT_LENGTH, result.data.len())
         .header("X-Cache-Hit", "false")
         .body(Body::from(result.data))
-        .unwrap())
+        .expect("valid response"))
 }
 
 fn detect_format_from_filename(filename: &str) -> crate::converter::InputFormat {

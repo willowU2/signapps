@@ -44,7 +44,7 @@ impl ShieldService {
         // Sliding window rate limiting using atomic counters
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
+            .expect("system clock is after Unix epoch")
             .as_secs();
 
         let window_key = format!(

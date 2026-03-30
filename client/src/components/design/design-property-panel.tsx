@@ -170,13 +170,12 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
     const obj = canvas.getActiveObject();
     if (!obj) return;
     pushUndo();
-    obj.clone((cloned: any) => {
-      cloned.set({ left: (cloned.left || 0) + 20, top: (cloned.top || 0) + 20 });
-      cloned.id = crypto.randomUUID();
-      canvas.add(cloned);
-      canvas.setActiveObject(cloned);
-      canvas.requestRenderAll();
-    });
+    const cloned = await obj.clone(["id"]);
+    (cloned as FabricObjectWithProps).id = crypto.randomUUID();
+    cloned.set({ left: (cloned.left || 0) + 20, top: (cloned.top || 0) + 20 });
+    canvas.add(cloned);
+    canvas.setActiveObject(cloned);
+    canvas.requestRenderAll();
   };
 
   const handleFlipH = () => setProp("flipX", !props?.scaleX);
@@ -185,12 +184,12 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
   const handleBringForward = () => {
     const canvas = fabricCanvasRef.current;
     const obj = canvas?.getActiveObject();
-    if (obj) { canvas.bringObjectForward(obj); canvas.requestRenderAll(); }
+    if (canvas && obj) { canvas.bringObjectForward(obj); canvas.requestRenderAll(); }
   };
   const handleSendBackward = () => {
     const canvas = fabricCanvasRef.current;
     const obj = canvas?.getActiveObject();
-    if (obj) { canvas.sendObjectBackwards(obj); canvas.requestRenderAll(); }
+    if (canvas && obj) { canvas.sendObjectBackwards(obj); canvas.requestRenderAll(); }
   };
 
   if (!props || selectedObjectIds.length === 0) {

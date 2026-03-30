@@ -135,11 +135,15 @@ async fn main() {
         .with_state(state);
 
     // Start server
-    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port)
+        .parse()
+        .expect("valid socket address");
+    let listener = tokio::net::TcpListener::bind(addr)
+        .await
+        .expect("failed to bind TCP listener");
     tracing::info!("signapps-office ready at http://localhost:{}", port);
     axum::serve(listener, app)
         .with_graceful_shutdown(signapps_common::graceful_shutdown())
         .await
-        .unwrap();
+        .expect("server error");
 }

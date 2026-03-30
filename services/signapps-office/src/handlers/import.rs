@@ -86,8 +86,9 @@ pub async fn import_upload(
 
     // Determine format
     let format = query.format.unwrap_or_else(|| {
-        detected_format = Some(detect_format(&content, &filename));
-        detected_format.unwrap()
+        let fmt = detect_format(&content, &filename);
+        detected_format = Some(fmt);
+        fmt
     });
 
     // Import document

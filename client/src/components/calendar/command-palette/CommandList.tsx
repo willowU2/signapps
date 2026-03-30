@@ -16,7 +16,8 @@ interface Command {
   category: string;
   action: () => void;
   shortcut?: string;
-  icon?: React.ReactNode;
+  icon?: string;
+  description?: string;
 }
 
 // ============================================================================

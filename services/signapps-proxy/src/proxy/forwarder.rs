@@ -113,7 +113,7 @@ impl HttpForwarder {
             .status(StatusCode::MOVED_PERMANENTLY)
             .header("location", target)
             .body(empty_body())
-            .unwrap()
+            .expect("valid response builder")
     }
 }
 
@@ -134,5 +134,5 @@ pub fn bad_gateway(msg: &str) -> Response<BoxBody<Bytes, hyper::Error>> {
         .status(StatusCode::BAD_GATEWAY)
         .header("content-type", "text/plain")
         .body(full_body(msg.to_string()))
-        .unwrap()
+        .expect("valid response builder")
 }

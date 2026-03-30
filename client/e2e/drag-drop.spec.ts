@@ -14,7 +14,8 @@ test.describe('Drag & Drop Functionality', () => {
 
     test('should support drag handle on task items', async ({ page }) => {
       // Wait for task tree to potentially load
-      await page.waitForTimeout(2000);
+      await page.locator('[draggable="true"], [data-draggable], [class*="task"], [role="listitem"]').first()
+        .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       // Look for draggable elements
       const draggableItems = page.locator('[draggable="true"], [data-draggable]');
@@ -32,7 +33,7 @@ test.describe('Drag & Drop Functionality', () => {
 
     test('should reorder tasks via drag and drop', async ({ page }) => {
       // Wait for tasks to load
-      await page.waitForTimeout(2000);
+      await page.locator('[draggable="true"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       const taskItems = page.locator('[draggable="true"]');
       const count = await taskItems.count();
@@ -62,14 +63,14 @@ test.describe('Drag & Drop Functionality', () => {
           await page.mouse.up();
 
           // Wait for potential reorder
-          await page.waitForTimeout(500);
+          await page.waitForTimeout(200); // animation delay
         }
       }
     });
 
     test('should support nesting tasks via drag and drop', async ({ page }) => {
       // Wait for tasks
-      await page.waitForTimeout(2000);
+      await page.locator('[draggable="true"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       const taskItems = page.locator('[draggable="true"]');
       const count = await taskItems.count();
@@ -98,13 +99,13 @@ test.describe('Drag & Drop Functionality', () => {
           );
 
           await page.mouse.up();
-          await page.waitForTimeout(500);
+          await page.waitForTimeout(200); // animation delay
         }
       }
     });
 
     test('should show drop indicator during drag', async ({ page }) => {
-      await page.waitForTimeout(2000);
+      await page.locator('[draggable="true"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       const taskItems = page.locator('[draggable="true"]');
       const count = await taskItems.count();
@@ -135,7 +136,7 @@ test.describe('Drag & Drop Functionality', () => {
     });
 
     test('should cancel drag on escape key', async ({ page }) => {
-      await page.waitForTimeout(2000);
+      await page.locator('[draggable="true"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       const taskItems = page.locator('[draggable="true"]');
 
@@ -169,7 +170,7 @@ test.describe('Drag & Drop Functionality', () => {
 
     test('should support drag and drop file upload', async ({ page }) => {
       // Wait for storage page to load
-      await page.waitForTimeout(1000);
+      await page.locator('main, [class*="content"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       // Look for drop zone
       const dropZone = page.locator(
@@ -182,8 +183,6 @@ test.describe('Drag & Drop Functionality', () => {
     });
 
     test('should highlight drop zone on drag over', async ({ page }) => {
-      await page.waitForTimeout(1000);
-
       // Simulate dragover by evaluating JavaScript
       await page.evaluate(() => {
         const dropZone = document.querySelector(
@@ -199,11 +198,13 @@ test.describe('Drag & Drop Functionality', () => {
       });
 
       // Check for visual feedback
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(200); // animation delay
     });
 
     test('should move files between folders via drag and drop', async ({ page }) => {
-      await page.waitForTimeout(2000);
+      // Wait for file list to potentially populate
+      await page.locator('[draggable="true"], [class*="file-item"]').first()
+        .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       // Find file items
       const fileItems = page.locator('[draggable="true"], [class*="file-item"]');
@@ -234,13 +235,15 @@ test.describe('Drag & Drop Functionality', () => {
           );
 
           await page.mouse.up();
-          await page.waitForTimeout(500);
+          await page.waitForTimeout(200); // animation delay
         }
       }
     });
 
     test('should support multi-select drag', async ({ page }) => {
-      await page.waitForTimeout(2000);
+      // Wait for file items to load
+      await page.locator('[class*="file-item"], [class*="selectable"]').first()
+        .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       const fileItems = page.locator('[class*="file-item"], [class*="selectable"]');
 
@@ -280,13 +283,13 @@ test.describe('Drag & Drop Functionality', () => {
 
       const closeButton = page.getByRole('button', { name: /fermer/i });
       await closeButton.click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(200); // debounce delay
 
       // Create second note
       await createButton.click();
       await titleInput.fill('Note 2');
       await closeButton.click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(200); // debounce delay
 
       // Look for note cards
       const noteCards = page.locator('[class*="group"][class*="rounded"]');
@@ -326,7 +329,9 @@ test.describe('Drag & Drop Functionality', () => {
 
       await page.goto('/tasks');
       await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(1000);
+
+      // Wait for tasks
+      await page.locator('[draggable="true"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       const taskItems = page.locator('[draggable="true"]');
 
@@ -341,7 +346,7 @@ test.describe('Drag & Drop Functionality', () => {
           // Long press to initiate drag
           await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
           await page.mouse.down();
-          await page.waitForTimeout(500); // Long press duration
+          await page.waitForTimeout(200); // Long press minimum duration (debounce)
 
           await page.mouse.move(box.x + box.width / 2, box.y + 100, { steps: 5 });
           await page.mouse.up();
@@ -354,7 +359,10 @@ test.describe('Drag & Drop Functionality', () => {
     test('should support keyboard-based reordering', async ({ page }) => {
       await page.goto('/tasks');
       await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(1000);
+
+      // Wait for tasks
+      await page.locator('[draggable="true"], [role="listitem"]').first()
+        .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       const taskItems = page.locator('[draggable="true"], [role="listitem"]');
 

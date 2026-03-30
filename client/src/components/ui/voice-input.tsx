@@ -4,34 +4,33 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface SpeechRecognitionErrorEvent extends Event {
+interface ISpeechRecognitionErrorEvent extends Event {
   error: 'no-speech' | 'audio-capture' | 'not-allowed' | 'network' | 'aborted' | 'language-not-supported' | 'service-not-allowed' | 'bad-grammar';
   message: string;
 }
 
-interface SpeechRecognitionEvent extends Event {
+interface ISpeechRecognitionEvent extends Event {
   resultIndex: number;
   results: any; // SpeechRecognitionResultList
 }
 
-interface SpeechRecognition extends EventTarget {
+interface ISpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
   lang: string;
   start(): void;
   stop(): void;
   abort(): void;
-  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
-  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
-  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onresult: ((this: ISpeechRecognition, ev: ISpeechRecognitionEvent) => any) | null;
+  onerror: ((this: ISpeechRecognition, ev: ISpeechRecognitionErrorEvent) => any) | null;
+  onend: ((this: ISpeechRecognition, ev: Event) => any) | null;
+  onstart: ((this: ISpeechRecognition, ev: Event) => any) | null;
 }
 
-declare global {
-  interface Window {
-    SpeechRecognition: { new (): SpeechRecognition };
-    webkitSpeechRecognition: { new (): SpeechRecognition };
-  }
+type ISpeechRecognitionCtor = new () => ISpeechRecognition;
+interface SpeechWindow {
+  SpeechRecognition?: ISpeechRecognitionCtor;
+  webkitSpeechRecognition?: ISpeechRecognitionCtor;
 }
 
 interface VoiceInputProps {
@@ -53,7 +52,7 @@ export function VoiceInput({
 }: VoiceInputProps) {
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<ISpeechRecognition | null>(null);
 
   const active = controlledIsActive !== undefined ? controlledIsActive : isListening;
   
@@ -65,7 +64,8 @@ export function VoiceInput({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const w = window as unknown as SpeechWindow;
+      const SpeechRecognitionConstructor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
       if (!SpeechRecognitionConstructor) {
         setIsSupported(false);
         return;

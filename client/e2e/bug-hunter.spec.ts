@@ -8,7 +8,6 @@ async function dismissDialogs(page: any) {
     const btn = page.locator(sel).first();
     if (await btn.isVisible({ timeout: 200 }).catch(() => false)) await btn.click({ force: true }).catch(() => {});
   }
-  await page.waitForTimeout(200);
 }
 
 test.describe('Bug Hunter — Click Everything', () => {
@@ -21,7 +20,7 @@ test.describe('Bug Hunter — Click Everything', () => {
     page.on('pageerror', e => errors.push(e.message));
 
     await page.goto(`${BASE}/dashboard`);
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await dismissDialogs(page);
 
     // Check no error boundary
@@ -36,7 +35,7 @@ test.describe('Bug Hunter — Click Everything', () => {
     const refresh = page.locator('button:has-text("Refresh"), button:has-text("Actualiser")').first();
     if (await refresh.isVisible({ timeout: 2000 }).catch(() => false)) {
       await refresh.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle').catch(() => {});
     }
 
     console.log(`[DASHBOARD] Errors: ${errors.length}, Body: ${body?.length} chars`);
@@ -50,7 +49,7 @@ test.describe('Bug Hunter — Click Everything', () => {
     page.on('pageerror', e => errors.push(e.message));
 
     await page.goto(`${BASE}/docs`);
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await dismissDialogs(page);
 
     // Verify we're not stuck on login (auth should be pre-loaded via storageState)
@@ -62,14 +61,14 @@ test.describe('Bug Hunter — Click Everything', () => {
     const blank = page.locator('text=Document vierge, text=Blank document').first();
     if (await blank.isVisible({ timeout: 2000 }).catch(() => false)) {
       await blank.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle').catch(() => {});
       // If dialog appears, fill name and create
       const nameInput = page.locator('input[placeholder*="titre"], input[placeholder*="name"]').first();
       if (await nameInput.isVisible({ timeout: 1000 }).catch(() => false)) {
         await nameInput.fill('Test Bug Hunter');
         const createBtn = page.locator('button[type="submit"], button:has-text("Créer")').first();
         if (await createBtn.isVisible({ timeout: 1000 }).catch(() => false)) await createBtn.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('networkidle').catch(() => {});
       }
     }
   });
@@ -81,18 +80,18 @@ test.describe('Bug Hunter — Click Everything', () => {
     page.on('pageerror', e => errors.push(e.message));
 
     await page.goto(`${BASE}/sheets`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await dismissDialogs(page);
 
     const blank = page.locator('text=Feuille vierge').first();
     if (await blank.isVisible({ timeout: 2000 }).catch(() => false)) {
       await blank.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle').catch(() => {});
       const nameInput = page.locator('input[placeholder*="titre"]').first();
       if (await nameInput.isVisible({ timeout: 1000 }).catch(() => false)) {
         await nameInput.fill('Test Sheet');
         await page.locator('button[type="submit"]').first().click();
-        await page.waitForTimeout(3000);
+        await page.waitForLoadState('networkidle').catch(() => {});
       }
     }
 
@@ -108,7 +107,7 @@ test.describe('Bug Hunter — Click Everything', () => {
     page.on('pageerror', e => errors.push(e.message));
 
     await page.goto(`${BASE}/mail`);
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await dismissDialogs(page);
 
     // The compose button text is "Nouveau message" — match both FR and EN variants
@@ -116,7 +115,7 @@ test.describe('Bug Hunter — Click Everything', () => {
     const hasCompose = await compose.isVisible({ timeout: 2000 }).catch(() => false);
     if (hasCompose) {
       await compose.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle').catch(() => {});
     }
 
     console.log(`[MAIL] Compose: ${hasCompose}, Errors: ${errors.length}`);
@@ -129,7 +128,7 @@ test.describe('Bug Hunter — Click Everything', () => {
     page.on('pageerror', e => errors.push(e.message));
 
     await page.goto(`${BASE}/contacts`);
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await dismissDialogs(page);
 
     // Count rows — seed data should appear even when the API is down
@@ -147,7 +146,7 @@ test.describe('Bug Hunter — Click Everything', () => {
     // The /calendar page redirects to /cal which may not exist as a separate route.
     // Navigate to /calendar and let the redirect happen if applicable.
     await page.goto(`${BASE}/calendar`);
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await dismissDialogs(page);
 
     const body = await page.textContent('body');
@@ -163,7 +162,7 @@ test.describe('Bug Hunter — Click Everything', () => {
     page.on('pageerror', e => errors.push(e.message));
 
     await page.goto(`${BASE}/chat`);
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await dismissDialogs(page);
 
     // Chat page initially shows empty state with no message input (by design).
@@ -191,7 +190,7 @@ test.describe('Bug Hunter — Click Everything', () => {
     page.on('pageerror', e => errors.push(e.message));
 
     await page.goto(`${BASE}/ai`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await dismissDialogs(page);
 
     const body = await page.textContent('body');
@@ -201,7 +200,7 @@ test.describe('Bug Hunter — Click Everything', () => {
 
     // Navigate to studio
     await page.goto(`${BASE}/ai/studio`);
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await dismissDialogs(page);
     const studioBody = await page.textContent('body');
     const hasStudio = studioBody?.includes('Studio') || studioBody?.includes('Image') || studioBody?.includes('Video') || (studioBody?.length ?? 0) > 500;
@@ -215,7 +214,7 @@ test.describe('Bug Hunter — Click Everything', () => {
     page.on('pageerror', e => errors.push(e.message));
 
     await page.goto(`${BASE}/storage`);
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await dismissDialogs(page);
 
     const body = await page.textContent('body');
@@ -227,7 +226,7 @@ test.describe('Bug Hunter — Click Everything', () => {
   test('scheduling: calendar grid renders', async ({ page }) => {
     test.setTimeout(30000);
     await page.goto(`${BASE}/scheduling`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await dismissDialogs(page);
 
     const body = await page.textContent('body');
@@ -243,7 +242,7 @@ test.describe('Bug Hunter — Click Everything', () => {
     page.on('pageerror', e => errors.push(e.message));
 
     await page.goto(`${BASE}/admin/settings`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await dismissDialogs(page);
 
     // Click each tab
@@ -251,7 +250,7 @@ test.describe('Bug Hunter — Click Everything', () => {
       const t = page.locator(`button:has-text("${tab}"), [role="tab"]:has-text("${tab}")`).first();
       if (await t.isVisible({ timeout: 1000 }).catch(() => false)) {
         await t.click();
-        await page.waitForTimeout(300);
+        await page.waitForTimeout(200); // animation delay only
       }
     }
 
@@ -262,7 +261,7 @@ test.describe('Bug Hunter — Click Everything', () => {
   test('global-drive: files visible, folder navigation', async ({ page }) => {
     test.setTimeout(30000);
     await page.goto(`${BASE}/global-drive`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await dismissDialogs(page);
 
     const body = await page.textContent('body');
@@ -277,14 +276,14 @@ test.describe('Bug Hunter — Click Everything', () => {
     page.on('pageerror', e => errors.push(e.message));
 
     await page.goto(`${BASE}/keep`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await dismissDialogs(page);
 
     const input = page.locator('input[placeholder*="note"], textarea[placeholder*="note"], input[placeholder*="Prendre"]').first();
     if (await input.isVisible({ timeout: 2000 }).catch(() => false)) {
       await input.fill('Test note from bug hunter');
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle').catch(() => {});
     }
 
     console.log(`[KEEP] Errors: ${errors.length}`);
@@ -294,7 +293,7 @@ test.describe('Bug Hunter — Click Everything', () => {
   test('monitoring: live metrics display', async ({ page }) => {
     test.setTimeout(30000);
     await page.goto(`${BASE}/monitoring`);
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle').catch(() => {});
     await dismissDialogs(page);
 
     const body = await page.textContent('body');
@@ -307,7 +306,7 @@ test.describe('Bug Hunter — Click Everything', () => {
   test('status: all services checked', async ({ page }) => {
     test.setTimeout(30000);
     await page.goto(`${BASE}/status`);
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle').catch(() => {});
 
     const body = await page.textContent('body');
     const services = ['Identity', 'Storage', 'AI', 'Scheduler', 'Metrics'];

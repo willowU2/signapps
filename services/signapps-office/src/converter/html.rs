@@ -6,7 +6,7 @@ use scraper::{Html, Selector};
 /// Convert HTML to Markdown
 pub fn html_to_markdown(html: &str) -> Result<String, ConversionError> {
     let document = Html::parse_document(html);
-    let body_selector = Selector::parse("body").unwrap();
+    let body_selector = Selector::parse("body").expect("valid CSS selector");
 
     let body = document
         .select(&body_selector)
@@ -22,7 +22,7 @@ pub fn html_to_markdown(html: &str) -> Result<String, ConversionError> {
 /// Convert HTML to plain text
 pub fn html_to_text(html: &str) -> Result<String, ConversionError> {
     let document = Html::parse_document(html);
-    let body_selector = Selector::parse("body").unwrap();
+    let body_selector = Selector::parse("body").expect("valid CSS selector");
 
     let body = document.select(&body_selector).next();
 
@@ -271,9 +271,9 @@ fn table_to_markdown(table: &scraper::ElementRef) -> String {
     let mut max_cols = 0;
 
     // Extract all rows
-    let tr_selector = Selector::parse("tr").unwrap();
-    let th_selector = Selector::parse("th").unwrap();
-    let td_selector = Selector::parse("td").unwrap();
+    let tr_selector = Selector::parse("tr").expect("valid CSS selector");
+    let th_selector = Selector::parse("th").expect("valid CSS selector");
+    let td_selector = Selector::parse("td").expect("valid CSS selector");
 
     for tr in table.select(&tr_selector) {
         let mut row: Vec<String> = Vec::new();

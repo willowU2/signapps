@@ -22,12 +22,12 @@ fn strip_store_templates(text: &str) -> String {
 
     // Fix commas: remove leading commas after [ or { and trailing commas before ] or }
     // e.g. "[\n," → "[\n" and ",\n]" → "\n]"
-    let re_leading = regex::Regex::new(r"([\[\{])\s*,").unwrap();
+    let re_leading = regex::Regex::new(r"([\[\{])\s*,").expect("valid template-strip regex");
     let cleaned = re_leading.replace_all(&joined, "$1");
-    let re_trailing = regex::Regex::new(r",(\s*[\]\}])").unwrap();
+    let re_trailing = regex::Regex::new(r",(\s*[\]\}])").expect("valid template-strip regex");
     let cleaned = re_trailing.replace_all(&cleaned, "$1");
     // Also fix double commas
-    let re_double = regex::Regex::new(r",\s*,").unwrap();
+    let re_double = regex::Regex::new(r",\s*,").expect("valid template-strip regex");
     re_double.replace_all(&cleaned, ",").to_string()
 }
 

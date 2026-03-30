@@ -9,7 +9,7 @@ pub fn html_to_tiptap(content: &[u8]) -> Result<serde_json::Value, ImportError> 
         .map_err(|e| ImportError::ParseError(format!("Invalid UTF-8: {}", e)))?;
 
     let document = Html::parse_document(&text);
-    let body_selector = Selector::parse("body").unwrap();
+    let body_selector = Selector::parse("body").expect("valid CSS selector");
 
     let body = document
         .select(&body_selector)
@@ -62,7 +62,12 @@ fn element_to_tiptap(elem: &ElementRef) -> Result<Vec<serde_json::Value>, Import
     match tag {
         // Headings
         "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => {
-            let level: u8 = tag.chars().last().unwrap().to_digit(10).unwrap() as u8;
+            let level: u8 = tag
+                .chars()
+                .last()
+                .expect("heading tag has last char")
+                .to_digit(10)
+                .expect("heading tag ends with digit") as u8;
             let content = process_inline_content(elem)?;
             result.push(serde_json::json!({
                 "type": "heading",
@@ -406,12 +411,13 @@ fn process_inline_element(elem: &ElementRef) -> Result<Vec<serde_json::Value>, I
 }
 
 fn process_list_items(list: &ElementRef) -> Result<Vec<serde_json::Value>, ImportError> {
-    let li_selector = Selector::parse("li").unwrap();
+    let li_selector = Selector::parse("li").expect("valid CSS selector");
     let mut items = Vec::new();
 
     for li in list.select(&li_selector) {
         // Check if it's a task item
-        let checkbox_selector = Selector::parse("input[type=\"checkbox\"]").unwrap();
+        let checkbox_selector =
+            Selector::parse("input[type=\"checkbox\"]").expect("valid CSS selector");
         let checkbox = li.select(&checkbox_selector).next();
 
         if let Some(cb) = checkbox {
@@ -435,9 +441,9 @@ fn process_list_items(list: &ElementRef) -> Result<Vec<serde_json::Value>, Impor
 }
 
 fn process_table(table: &ElementRef) -> Result<Vec<serde_json::Value>, ImportError> {
-    let tr_selector = Selector::parse("tr").unwrap();
-    let th_selector = Selector::parse("th").unwrap();
-    let td_selector = Selector::parse("td").unwrap();
+    let tr_selector = Selector::parse("tr").expect("valid CSS selector");
+    let th_selector = Selector::parse("th").expect("valid CSS selector");
+    let td_selector = Selector::parse("td").expect("valid CSS selector");
 
     let mut rows = Vec::new();
 

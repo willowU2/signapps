@@ -86,7 +86,7 @@ pub async fn generate_report(
             format!("attachment; filename=\"{base_name}.pdf\""),
         )
         .body(Body::from(pdf_bytes))
-        .unwrap())
+        .expect("valid response"))
 }
 
 // ============================================================================

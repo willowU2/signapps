@@ -29,7 +29,6 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCalendarStore } from '@/stores/calendar-store';
-import { useCalendarStore } from '@/stores/calendar-store';
 import type { RecurrenceRule, Priority, TimeItemType } from '@/lib/scheduling/types';
 
 // ============================================================================
@@ -394,7 +393,7 @@ export function QuickCreate({
         title: parseResult.title,
         startTime: start.toISOString(),
         endTime: end.toISOString(),
-        scope: scope === 'all' ? 'moi' : scope,
+        scope: scope ?? 'moi',
         priority: parseResult.priority,
         location: parseResult.location ? { type: 'text', value: parseResult.location } : undefined,
         // Pass recurrence without the internal 'id' field for API

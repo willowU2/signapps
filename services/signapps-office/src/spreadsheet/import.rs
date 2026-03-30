@@ -123,7 +123,7 @@ fn format_excel_datetime(dt: f64) -> String {
     let fraction = dt.fract();
 
     // Calculate date (simplified)
-    let base_date = chrono::NaiveDate::from_ymd_opt(1899, 12, 30).unwrap();
+    let base_date = chrono::NaiveDate::from_ymd_opt(1899, 12, 30).expect("valid Excel epoch date");
     if let Some(date) = base_date.checked_add_signed(chrono::Duration::days(days)) {
         // Calculate time
         let seconds_in_day = (fraction * 86400.0) as u32;

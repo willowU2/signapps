@@ -39,7 +39,7 @@ pub async fn handle_websocket_upgrade(
             return Ok(Response::builder()
                 .status(StatusCode::BAD_GATEWAY)
                 .body(full_body("Invalid WebSocket target"))
-                .unwrap());
+                .expect("valid response builder"));
         },
     };
 
@@ -61,7 +61,7 @@ pub async fn handle_websocket_upgrade(
             return Ok(Response::builder()
                 .status(StatusCode::BAD_GATEWAY)
                 .body(full_body("Failed to build WebSocket target URI"))
-                .unwrap());
+                .expect("valid response builder"));
         },
     };
 
@@ -93,7 +93,9 @@ pub async fn handle_websocket_upgrade(
                     resp_builder = resp_builder.header(key, value);
                 }
                 let resp_body = full_body("");
-                let response = resp_builder.body(resp_body).unwrap();
+                let response = resp_builder
+                    .body(resp_body)
+                    .expect("valid websocket upgrade response builder");
 
                 // Spawn the bidirectional pipe as a background task
                 tokio::spawn(async move {
@@ -146,6 +148,6 @@ pub async fn handle_websocket_upgrade(
         Err(_) => Ok(Response::builder()
             .status(StatusCode::BAD_GATEWAY)
             .body(full_body("WebSocket backend unreachable"))
-            .unwrap()),
+            .expect("valid response builder")),
     }
 }

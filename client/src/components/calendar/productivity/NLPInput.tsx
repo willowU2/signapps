@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Sparkles, Calendar, Clock, User, MapPin, Tag, AlertCircle, Check, X } from 'lucide-react';
-import { schedulingApi, type ParsedNaturalLanguage } from '@/lib/api/calendar';
+import { schedulingApi, type ParsedNaturalLanguage } from '@/lib/scheduling/api/scheduling-api';
 import type { CreateTimeItemInput, TimeItemType, Priority } from '@/lib/scheduling/types';
 
 // ============================================================================

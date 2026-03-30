@@ -163,7 +163,7 @@ async fn handle_http_request(
             return Ok(Response::builder()
                 .status(StatusCode::BAD_REQUEST)
                 .body(full_body("Missing Host header"))
-                .unwrap());
+                .expect("valid response builder"));
         },
     };
 
@@ -175,7 +175,7 @@ async fn handle_http_request(
                 .status(StatusCode::NOT_FOUND)
                 .header("content-type", "text/plain")
                 .body(full_body(format!("No route for host: {}", host)))
-                .unwrap());
+                .expect("valid response builder"));
         },
     };
 
@@ -186,7 +186,7 @@ async fn handle_http_request(
             .status(StatusCode::MOVED_PERMANENTLY)
             .header("location", redirect_url)
             .body(full_body(""))
-            .unwrap());
+            .expect("valid response builder"));
     }
 
     // SmartShield rate limiting check
@@ -255,7 +255,7 @@ fn handle_acme_challenge(
                     .status(StatusCode::OK)
                     .header("content-type", "text/plain")
                     .body(full_body(proof))
-                    .unwrap(),
+                    .expect("valid response builder"),
             )
         },
         None => {
@@ -264,7 +264,7 @@ fn handle_acme_challenge(
                 Response::builder()
                     .status(StatusCode::NOT_FOUND)
                     .body(full_body("Challenge not found"))
-                    .unwrap(),
+                    .expect("valid response builder"),
             )
         },
     }

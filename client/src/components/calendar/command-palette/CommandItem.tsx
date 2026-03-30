@@ -34,7 +34,7 @@ interface CommandItemProps {
 // Icon Component
 // ============================================================================
 
-function CommandIcon({ icon, className }: { icon: string; className?: string }) {
+function CommandIcon({ icon, className }: { icon: string | undefined; className?: string }) {
   // Map icon names to Lucide icons
   // This is a simple implementation - could be expanded with a full icon registry
   const iconMap: Record<string, string> = {
@@ -56,7 +56,7 @@ function CommandIcon({ icon, className }: { icon: string; className?: string }) 
 
   return (
     <span className={cn('text-base', className)}>
-      {iconMap[icon] || '•'}
+      {(icon && iconMap[icon]) || '•'}
     </span>
   );
 }

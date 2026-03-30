@@ -275,8 +275,8 @@ fn create_router(state: AppState) -> Router {
     // CORS configuration
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
-            "http://localhost:3000".parse().unwrap(),
-            "http://127.0.0.1:3000".parse().unwrap(),
+            "http://localhost:3000".parse().expect("valid CORS origin"),
+            "http://127.0.0.1:3000".parse().expect("valid CORS origin"),
         ]))
         .allow_credentials(true)
         .allow_methods([

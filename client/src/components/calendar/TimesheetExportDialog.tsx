@@ -676,7 +676,7 @@ export function TimesheetExportDialog({
             disabled={
               isExporting ||
               !isValidRange() ||
-              (preview?.totalEntries === 0 ?? false)
+              ((preview?.totalEntries ?? 1) === 0)
             }
             className="gap-2"
           >

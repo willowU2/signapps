@@ -305,7 +305,9 @@ async fn main() -> anyhow::Result<()> {
 
     let storage_root = std::env::var("STORAGE_ROOT").unwrap_or_else(|_| "./data/storage".into());
     let builder = opendal::services::Fs::default().root(&storage_root);
-    let storage = opendal::Operator::new(builder).unwrap().finish();
+    let storage = opendal::Operator::new(builder)
+        .expect("valid opendal filesystem operator")
+        .finish();
 
     // Initialize tool calling system
     let service_endpoints = ServiceEndpoints::from_env();
@@ -417,8 +419,8 @@ fn create_router(state: AppState) -> Router {
     // CORS configuration
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
-            "http://localhost:3000".parse().unwrap(),
-            "http://127.0.0.1:3000".parse().unwrap(),
+            "http://localhost:3000".parse().expect("valid CORS origin"),
+            "http://127.0.0.1:3000".parse().expect("valid CORS origin"),
         ]))
         .allow_credentials(true)
         .allow_methods([

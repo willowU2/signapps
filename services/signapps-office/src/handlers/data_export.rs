@@ -117,7 +117,7 @@ fn export_csv(
             format!("attachment; filename=\"{filename}.csv\""),
         )
         .body(Body::from(out))
-        .unwrap())
+        .expect("valid response"))
 }
 
 fn export_json(
@@ -147,7 +147,7 @@ fn export_json(
             format!("attachment; filename=\"{filename}.json\""),
         )
         .body(Body::from(json_str))
-        .unwrap())
+        .expect("valid response"))
 }
 
 fn export_xlsx(
@@ -190,7 +190,7 @@ fn export_xlsx(
             format!("attachment; filename=\"{filename}.xlsx\""),
         )
         .body(Body::from(buf))
-        .unwrap())
+        .expect("valid response"))
 }
 
 fn export_pdf(
@@ -266,5 +266,5 @@ fn export_pdf(
             format!("attachment; filename=\"{filename}.pdf\""),
         )
         .body(Body::from(buf))
-        .unwrap())
+        .expect("valid response"))
 }
