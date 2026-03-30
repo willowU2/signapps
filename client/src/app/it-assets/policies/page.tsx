@@ -316,23 +316,23 @@ export default function PoliciesPage() {
 
   const { data: treeData, isLoading: treeLoading } = useQuery({
     queryKey: ["policies-tree"],
-    queryFn: () => client.get<PolicyWithChildren[]>("/it-assets/policies/tree"),
+    queryFn: () => client.get<PolicyWithChildren[]>("/it-assets/policies/tree").then(r => r.data),
   })
 
   const { data: flatData } = useQuery({
     queryKey: ["policies"],
-    queryFn: () => client.get<Policy[]>("/it-assets/policies"),
+    queryFn: () => client.get<Policy[]>("/it-assets/policies").then(r => r.data),
   })
 
   const { data: compliance, isLoading: complianceLoading } = useQuery({
     queryKey: ["policies-compliance"],
-    queryFn: () => client.get<ComplianceSummary>("/it-assets/policies/compliance"),
+    queryFn: () => client.get<ComplianceSummary>("/it-assets/policies/compliance").then(r => r.data),
   })
 
   // ─── Mutations ─────────────────────────────────────────────────────────────
 
   const createMutation = useMutation({
-    mutationFn: (data: typeof form) => client.post("/it-assets/policies", data),
+    mutationFn: (data: typeof form) => client.post("/it-assets/policies", data).then(r => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["policies"] })
       queryClient.invalidateQueries({ queryKey: ["policies-tree"] })
@@ -344,7 +344,7 @@ export default function PoliciesPage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<typeof form> }) =>
-      client.put(`/it-assets/policies/${id}`, data),
+      client.put(`/it-assets/policies/${id}`, data).then(r => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["policies"] })
       queryClient.invalidateQueries({ queryKey: ["policies-tree"] })
@@ -355,7 +355,7 @@ export default function PoliciesPage() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => client.delete(`/it-assets/policies/${id}`),
+    mutationFn: (id: string) => client.delete(`/it-assets/policies/${id}`).then(r => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["policies"] })
       queryClient.invalidateQueries({ queryKey: ["policies-tree"] })
@@ -387,14 +387,16 @@ export default function PoliciesPage() {
   }
 
   const handleSave = () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { parent_id, ...rest } = form
     const payload = {
-      ...form,
-      parent_id: form.parent_id || undefined,
+      ...rest,
+      ...(parent_id ? { parent_id } : {}),
     }
     if (editingPolicy) {
       updateMutation.mutate({ id: editingPolicy.id, data: payload })
     } else {
-      createMutation.mutate(payload)
+      createMutation.mutate(form)
     }
   }
 

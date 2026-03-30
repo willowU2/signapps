@@ -91,7 +91,12 @@ pub async fn create_ci(
     .bind(&payload.ci_type)
     .bind(payload.status.as_deref().unwrap_or("active"))
     .bind(payload.owner_id)
-    .bind(payload.metadata.as_ref().unwrap_or(&Value::Object(Default::default())))
+    .bind(
+        payload
+            .metadata
+            .as_ref()
+            .unwrap_or(&Value::Object(Default::default())),
+    )
     .fetch_one(pool.inner())
     .await
     .map_err(internal_err)?;

@@ -351,14 +351,11 @@ pub async fn get_agent_config(
     State(pool): State<DatabasePool>,
     Path(agent_id): Path<Uuid>,
 ) -> Result<Json<AgentFullConfig>, (StatusCode, String)> {
-    let hw = sqlx::query!(
-        "SELECT id FROM it.hardware WHERE agent_id = $1",
-        agent_id
-    )
-    .fetch_optional(pool.inner())
-    .await
-    .map_err(internal_err)?
-    .ok_or((StatusCode::NOT_FOUND, "Agent not registered".to_string()))?;
+    let hw = sqlx::query!("SELECT id FROM it.hardware WHERE agent_id = $1", agent_id)
+        .fetch_optional(pool.inner())
+        .await
+        .map_err(internal_err)?
+        .ok_or((StatusCode::NOT_FOUND, "Agent not registered".to_string()))?;
 
     let hardware_id = hw.id;
 
@@ -511,14 +508,11 @@ pub async fn get_pending_scripts(
     State(pool): State<DatabasePool>,
     Path(agent_id): Path<Uuid>,
 ) -> Result<Json<Vec<ScriptQueueRow>>, (StatusCode, String)> {
-    let hw = sqlx::query!(
-        "SELECT id FROM it.hardware WHERE agent_id = $1",
-        agent_id
-    )
-    .fetch_optional(pool.inner())
-    .await
-    .map_err(internal_err)?
-    .ok_or((StatusCode::NOT_FOUND, "Agent not registered".to_string()))?;
+    let hw = sqlx::query!("SELECT id FROM it.hardware WHERE agent_id = $1", agent_id)
+        .fetch_optional(pool.inner())
+        .await
+        .map_err(internal_err)?
+        .ok_or((StatusCode::NOT_FOUND, "Agent not registered".to_string()))?;
 
     let rows = sqlx::query_as::<_, ScriptQueueRow>(
         "SELECT * FROM it.script_queue WHERE hardware_id = $1 AND status = 'pending' ORDER BY queued_at ASC"

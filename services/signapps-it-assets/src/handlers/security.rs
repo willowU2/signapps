@@ -45,11 +45,14 @@ pub async fn report_antivirus(
     State(pool): State<DatabasePool>,
     Json(payload): Json<ReportAntivirusReq>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let hw = sqlx::query!("SELECT id FROM it.hardware WHERE agent_id = $1", payload.agent_id)
-        .fetch_optional(pool.inner())
-        .await
-        .map_err(internal_err)?
-        .ok_or((StatusCode::NOT_FOUND, "Agent not registered".to_string()))?;
+    let hw = sqlx::query!(
+        "SELECT id FROM it.hardware WHERE agent_id = $1",
+        payload.agent_id
+    )
+    .fetch_optional(pool.inner())
+    .await
+    .map_err(internal_err)?
+    .ok_or((StatusCode::NOT_FOUND, "Agent not registered".to_string()))?;
 
     sqlx::query(
         r#"
@@ -180,11 +183,14 @@ pub async fn report_encryption(
     State(pool): State<DatabasePool>,
     Json(payload): Json<ReportEncryptionReq>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let hw = sqlx::query!("SELECT id FROM it.hardware WHERE agent_id = $1", payload.agent_id)
-        .fetch_optional(pool.inner())
-        .await
-        .map_err(internal_err)?
-        .ok_or((StatusCode::NOT_FOUND, "Agent not registered".to_string()))?;
+    let hw = sqlx::query!(
+        "SELECT id FROM it.hardware WHERE agent_id = $1",
+        payload.agent_id
+    )
+    .fetch_optional(pool.inner())
+    .await
+    .map_err(internal_err)?
+    .ok_or((StatusCode::NOT_FOUND, "Agent not registered".to_string()))?;
 
     let hardware_id = hw.id;
 
@@ -290,7 +296,11 @@ pub async fn encryption_fleet_summary(
     .map_err(internal_err)?
     .unwrap_or(0);
 
-    let pct = if total > 0 { fully as f64 / total as f64 * 100.0 } else { 100.0 };
+    let pct = if total > 0 {
+        fully as f64 / total as f64 * 100.0
+    } else {
+        100.0
+    };
 
     Ok(Json(EncryptionFleetSummary {
         total_machines: total,

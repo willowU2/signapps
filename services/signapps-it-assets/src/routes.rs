@@ -1,59 +1,55 @@
-use axum::{routing::{get, post, put, delete}, Json, Router};
+use axum::{
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use signapps_db::DatabasePool;
 
-use crate::handlers::{
-    create_hardware, delete_hardware, get_hardware, list_hardware, update_hardware,
-};
 use crate::handlers::agent::{
-    register_agent, agent_heartbeat, get_agent_config,
-    report_hardware_inventory, report_software_inventory,
-    queue_script, get_pending_scripts, report_script_result,
-    create_enrollment_token,
+    agent_heartbeat, create_enrollment_token, get_agent_config, get_pending_scripts, queue_script,
+    register_agent, report_hardware_inventory, report_script_result, report_software_inventory,
 };
 use crate::handlers::cmdb::{
-    ci_impact, create_change_request, create_ci, create_ci_relationship,
-    delete_ci, delete_ci_relationship, get_change_request, get_ci,
-    import_ldap, list_change_requests, list_ci_relationships, list_cis,
-    update_change_status, update_ci,
+    ci_impact, create_change_request, create_ci, create_ci_relationship, delete_ci,
+    delete_ci_relationship, get_change_request, get_ci, import_ldap, list_change_requests,
+    list_ci_relationships, list_cis, update_change_status, update_ci,
 };
-use crate::handlers::monitoring::{
-    get_metrics,
-    create_alert_rule, delete_alert_rule, list_alert_rules, list_alerts, resolve_alert,
-    get_event_logs, ingest_event_logs,
-    fleet_overview,
-    create_component, delete_component, list_components, update_component,
-    create_license, delete_license, get_license, list_licenses, update_license,
-    create_network_interface, delete_network_interface, list_network_interfaces,
-    update_network_interface,
-    create_maintenance_window, delete_maintenance_window, list_maintenance_windows,
-    update_maintenance_window,
-};
-use crate::handlers::patches::{
-    report_available_patches, list_patches, approve_patch, reject_patch,
-    deploy_patch, patch_compliance,
-};
-use crate::handlers::policies::{
-    list_policies, list_policies_tree, get_policy, create_policy, update_policy, delete_policy,
-    assign_policy, list_assignments,
-    get_agent_policies, report_compliance, compliance_summary,
-};
-use crate::handlers::packages::{
-    list_packages, get_package, create_package, update_package, delete_package,
-    deploy_package, get_agent_pending_packages, update_deployment_status,
-};
-use crate::handlers::security::{
-    av_fleet_summary, encryption_fleet_summary, get_antivirus_status,
-    get_encryption_status, report_antivirus, report_encryption,
-};
-use crate::handlers::wol::wake_on_lan;
 use crate::handlers::commands::{
-    queue_agent_command, get_pending_commands, update_command_status, list_hardware_commands,
+    get_pending_commands, list_hardware_commands, queue_agent_command, update_command_status,
 };
 use crate::handlers::files::{
-    push_file_to_machine, agent_upload_file, agent_download_file, list_hardware_files,
+    agent_download_file, agent_upload_file, list_hardware_files, push_file_to_machine,
+};
+use crate::handlers::monitoring::{
+    create_alert_rule, create_component, create_license, create_maintenance_window,
+    create_network_interface, delete_alert_rule, delete_component, delete_license,
+    delete_maintenance_window, delete_network_interface, fleet_overview, get_event_logs,
+    get_license, get_metrics, ingest_event_logs, list_alert_rules, list_alerts, list_components,
+    list_licenses, list_maintenance_windows, list_network_interfaces, resolve_alert,
+    update_component, update_license, update_maintenance_window, update_network_interface,
 };
 use crate::handlers::network::{
-    scan_network, list_discoveries, add_discovery_to_inventory, port_scan, query_snmp,
+    add_discovery_to_inventory, list_discoveries, port_scan, query_snmp, scan_network,
+};
+use crate::handlers::packages::{
+    create_package, delete_package, deploy_package, get_agent_pending_packages, get_package,
+    list_packages, update_deployment_status, update_package,
+};
+use crate::handlers::patches::{
+    approve_patch, deploy_patch, list_patches, patch_compliance, reject_patch,
+    report_available_patches,
+};
+use crate::handlers::policies::{
+    assign_policy, compliance_summary, create_policy, delete_policy, get_agent_policies,
+    get_policy, list_assignments, list_policies, list_policies_tree, report_compliance,
+    update_policy,
+};
+use crate::handlers::security::{
+    av_fleet_summary, encryption_fleet_summary, get_antivirus_status, get_encryption_status,
+    report_antivirus, report_encryption,
+};
+use crate::handlers::wol::wake_on_lan;
+use crate::handlers::{
+    create_hardware, delete_hardware, get_hardware, list_hardware, update_hardware,
 };
 
 async fn health() -> Json<serde_json::Value> {

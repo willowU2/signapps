@@ -176,7 +176,10 @@ pub async fn resolve_alert(
     .await
     .map_err(internal_err)?;
     if result.rows_affected() == 0 {
-        return Err((StatusCode::NOT_FOUND, "Alert not found or already resolved".to_string()));
+        return Err((
+            StatusCode::NOT_FOUND,
+            "Alert not found or already resolved".to_string(),
+        ));
     }
     Ok(StatusCode::NO_CONTENT)
 }
@@ -224,11 +227,14 @@ pub async fn ingest_event_logs(
     State(pool): State<DatabasePool>,
     Json(payload): Json<IngestLogsReq>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let hw = sqlx::query!("SELECT id FROM it.hardware WHERE agent_id = $1", payload.agent_id)
-        .fetch_optional(pool.inner())
-        .await
-        .map_err(internal_err)?
-        .ok_or((StatusCode::NOT_FOUND, "Agent not registered".to_string()))?;
+    let hw = sqlx::query!(
+        "SELECT id FROM it.hardware WHERE agent_id = $1",
+        payload.agent_id
+    )
+    .fetch_optional(pool.inner())
+    .await
+    .map_err(internal_err)?
+    .ok_or((StatusCode::NOT_FOUND, "Agent not registered".to_string()))?;
 
     let hardware_id = hw.id;
     for entry in payload.logs {
@@ -319,12 +325,11 @@ pub struct MachineRow {
 pub async fn fleet_overview(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<FleetOverview>, (StatusCode, String)> {
-    let total: i64 =
-        sqlx::query_scalar!("SELECT COUNT(*) FROM it.hardware")
-            .fetch_one(pool.inner())
-            .await
-            .map_err(internal_err)?
-            .unwrap_or(0);
+    let total: i64 = sqlx::query_scalar!("SELECT COUNT(*) FROM it.hardware")
+        .fetch_one(pool.inner())
+        .await
+        .map_err(internal_err)?
+        .unwrap_or(0);
 
     // Online = heartbeat within last 5 minutes
     let online: i64 = sqlx::query_scalar!(
@@ -353,7 +358,13 @@ pub async fn fleet_overview(
     .await
     .map_err(internal_err)?;
 
-    let by_os = os_rows.into_iter().map(|r| OsCount { os_type: r.os_type, count: r.count }).collect();
+    let by_os = os_rows
+        .into_iter()
+        .map(|r| OsCount {
+            os_type: r.os_type,
+            count: r.count,
+        })
+        .collect();
 
     // By status
     let status_rows = sqlx::query!(
@@ -363,7 +374,13 @@ pub async fn fleet_overview(
     .await
     .map_err(internal_err)?;
 
-    let by_status = status_rows.into_iter().map(|r| StatusCount { status: r.status, count: r.count }).collect();
+    let by_status = status_rows
+        .into_iter()
+        .map(|r| StatusCount {
+            status: r.status,
+            count: r.count,
+        })
+        .collect();
 
     // Recently offline
     let recently_offline = sqlx::query_as::<_, MachineRow>(
@@ -571,22 +588,25 @@ pub async fn list_licenses(
     .await
     .map_err(internal_err)?;
 
-    let result = rows.into_iter().map(|r| LicenseWithUsage {
-        license: LicenseRow {
-            id: r.id,
-            software_name: r.software_name,
-            license_key: r.license_key,
-            license_type: r.license_type,
-            seats_total: r.seats_total,
-            vendor: r.vendor,
-            purchase_date: r.purchase_date,
-            expiry_date: r.expiry_date,
-            notes: r.notes,
-            created_at: r.created_at.unwrap_or_default(),
-            updated_at: r.updated_at.unwrap_or_default(),
-        },
-        seats_used: r.seats_used,
-    }).collect();
+    let result = rows
+        .into_iter()
+        .map(|r| LicenseWithUsage {
+            license: LicenseRow {
+                id: r.id,
+                software_name: r.software_name,
+                license_key: r.license_key,
+                license_type: r.license_type,
+                seats_total: r.seats_total,
+                vendor: r.vendor,
+                purchase_date: r.purchase_date,
+                expiry_date: r.expiry_date,
+                notes: r.notes,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
+            },
+            seats_used: r.seats_used,
+        })
+        .collect();
 
     Ok(Json(result))
 }
@@ -909,7 +929,10 @@ pub async fn update_maintenance_window(
     .fetch_optional(pool.inner())
     .await
     .map_err(internal_err)?
-    .ok_or((StatusCode::NOT_FOUND, "Maintenance window not found".to_string()))?;
+    .ok_or((
+        StatusCode::NOT_FOUND,
+        "Maintenance window not found".to_string(),
+    ))?;
     Ok(Json(row))
 }
 
@@ -923,7 +946,10 @@ pub async fn delete_maintenance_window(
         .await
         .map_err(internal_err)?;
     if result.rows_affected() == 0 {
-        return Err((StatusCode::NOT_FOUND, "Maintenance window not found".to_string()));
+        return Err((
+            StatusCode::NOT_FOUND,
+            "Maintenance window not found".to_string(),
+        ));
     }
     Ok(StatusCode::NO_CONTENT)
 }

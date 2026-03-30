@@ -136,7 +136,7 @@ pub async fn list_patches(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<PatchRow>>, (StatusCode, String)> {
     let rows = sqlx::query_as::<_, PatchRow>(
-        "SELECT * FROM it.available_patches ORDER BY detected_at DESC LIMIT 1000"
+        "SELECT * FROM it.available_patches ORDER BY detected_at DESC LIMIT 1000",
     )
     .fetch_all(pool.inner())
     .await
@@ -160,7 +160,10 @@ pub async fn approve_patch(
     .map_err(internal_err)?;
 
     if result.rows_affected() == 0 {
-        return Err((StatusCode::NOT_FOUND, "Patch not found or not in pending state".to_string()));
+        return Err((
+            StatusCode::NOT_FOUND,
+            "Patch not found or not in pending state".to_string(),
+        ));
     }
 
     Ok(StatusCode::NO_CONTENT)
@@ -203,7 +206,10 @@ pub async fn deploy_patch(
     .map_err(internal_err)?;
 
     if result.rows_affected() == 0 {
-        return Err((StatusCode::NOT_FOUND, "Patch not found or not yet approved".to_string()));
+        return Err((
+            StatusCode::NOT_FOUND,
+            "Patch not found or not yet approved".to_string(),
+        ));
     }
 
     Ok(StatusCode::NO_CONTENT)
@@ -214,13 +220,11 @@ pub async fn deploy_patch(
 pub async fn patch_compliance(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<ComplianceStats>, (StatusCode, String)> {
-    let total_machines: i64 = sqlx::query_scalar!(
-        "SELECT COUNT(DISTINCT id) FROM it.hardware"
-    )
-    .fetch_one(pool.inner())
-    .await
-    .map_err(internal_err)?
-    .unwrap_or(0);
+    let total_machines: i64 = sqlx::query_scalar!("SELECT COUNT(DISTINCT id) FROM it.hardware")
+        .fetch_one(pool.inner())
+        .await
+        .map_err(internal_err)?
+        .unwrap_or(0);
 
     let pending_machines: i64 = sqlx::query_scalar!(
         "SELECT COUNT(DISTINCT hardware_id) FROM it.available_patches WHERE status IN ('pending', 'approved', 'deployed')"

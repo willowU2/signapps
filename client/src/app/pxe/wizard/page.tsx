@@ -191,19 +191,19 @@ export default function PxeWizardPage() {
 
   const { data: images, isLoading: imagesLoading } = useQuery({
     queryKey: ["pxe-images"],
-    queryFn: () => client.get<PxeImage[]>("/pxe/images"),
+    queryFn: () => client.get<PxeImage[]>("/pxe/images").then(r => r.data),
   })
 
   const { data: deployments, isLoading: deploymentsLoading } = useQuery({
     queryKey: ["pxe-deployments"],
-    queryFn: () => client.get<PxeDeployment[]>("/pxe/deployments"),
+    queryFn: () => client.get<PxeDeployment[]>("/pxe/deployments").then(r => r.data),
     refetchInterval: 5000, // poll every 5s for live progress
   })
 
   // ─── Image deletion ─────────────────────────────────────────────────────────
 
   const deleteImageMutation = useMutation({
-    mutationFn: (id: string) => client.delete(`/pxe/images/${id}`),
+    mutationFn: (id: string) => client.delete(`/pxe/images/${id}`).then(r => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pxe-images"] })
       toast.success("Image supprimée")
@@ -233,7 +233,7 @@ export default function PxeWizardPage() {
       const result = await client.post<{ os_type: string; format: string; content: string }>(
         "/pxe/templates/generate",
         payload
-      )
+      ).then(r => r.data)
       setGeneratedTemplate(result.content)
       setGeneratedFormat(result.format)
       setCurrentStep("review")

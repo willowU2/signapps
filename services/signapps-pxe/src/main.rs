@@ -4,7 +4,10 @@ mod images;
 mod models;
 mod tftp;
 
-use axum::{routing::{get, post, delete}, Router};
+use axum::{
+    routing::{delete, get, post},
+    Router,
+};
 use signapps_common::auth::JwtConfig;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{
@@ -75,7 +78,10 @@ async fn main() -> anyhow::Result<()> {
     let proxy_config = dhcp_proxy::ProxyDhcpConfig::default();
     tokio::spawn(async move {
         if let Err(e) = dhcp_proxy::start_proxy_dhcp(proxy_config).await {
-            tracing::warn!("ProxyDHCP server not started (may need elevated privileges): {}", e);
+            tracing::warn!(
+                "ProxyDHCP server not started (may need elevated privileges): {}",
+                e
+            );
         }
     });
 

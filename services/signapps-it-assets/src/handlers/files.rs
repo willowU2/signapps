@@ -33,7 +33,7 @@ pub struct FileTransfer {
 pub struct PushFileReq {
     pub hardware_id: Uuid,
     pub filename: String,
-    pub target_path: String,          // path on remote machine
+    pub target_path: String,            // path on remote machine
     pub content_base64: Option<String>, // file content (base64 for small files)
     pub size_bytes: Option<i64>,
     pub mime_type: Option<String>,
@@ -44,17 +44,9 @@ pub struct PushFileReq {
 pub struct AgentUploadReq {
     pub agent_id: Uuid,
     pub filename: String,
-    pub content_base64: String,       // base64-encoded file content
+    pub content_base64: String, // base64-encoded file content
     pub size_bytes: Option<i64>,
     pub mime_type: Option<String>,
-}
-
-#[derive(Debug, Serialize)]
-/// Represents a push file resp.
-pub struct PushFileResp {
-    pub transfer_id: Uuid,
-    pub status: String,
-    pub message: String,
 }
 
 /// POST /api/v1/it-assets/agent/files/push
@@ -125,16 +117,14 @@ pub async fn agent_upload_file(
         Some((id,)) => id,
         None => {
             return Err((StatusCode::NOT_FOUND, "Agent not registered".to_string()));
-        }
+        },
     };
 
     // Decode and calculate size
     let content_bytes = general_purpose_decode(&payload.content_base64)
         .map_err(|e| (StatusCode::BAD_REQUEST, format!("Base64 invalide: {}", e)))?;
 
-    let size_bytes = payload
-        .size_bytes
-        .unwrap_or(content_bytes.len() as i64);
+    let size_bytes = payload.size_bytes.unwrap_or(content_bytes.len() as i64);
 
     // In production: write to object storage; for MVP use a temp path
     let storage_path = format!("/tmp/file_transfers/{}", Uuid::new_v4());

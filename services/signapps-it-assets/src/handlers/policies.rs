@@ -160,13 +160,19 @@ pub async fn list_policies_tree(
 
 fn build_tree(policies: Vec<Policy>, parent_id: Option<Uuid>) -> Vec<PolicyWithChildren> {
     let mut result = Vec::new();
-    let (children_src, remaining): (Vec<Policy>, Vec<Policy>) = policies
-        .into_iter()
-        .partition(|p| p.parent_id == parent_id);
+    let (children_src, remaining): (Vec<Policy>, Vec<Policy>) =
+        policies.into_iter().partition(|p| p.parent_id == parent_id);
 
     for policy in children_src {
         let id = policy.id;
-        let children = build_tree(remaining.iter().filter(|p| p.parent_id == Some(id)).cloned().collect(), Some(id));
+        let children = build_tree(
+            remaining
+                .iter()
+                .filter(|p| p.parent_id == Some(id))
+                .cloned()
+                .collect(),
+            Some(id),
+        );
         // We need remaining without consumed children — rebuild from original
         result.push(PolicyWithChildren { policy, children });
     }
@@ -197,7 +203,9 @@ pub async fn create_policy(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreatePolicyRequest>,
 ) -> Result<(StatusCode, Json<Policy>), (StatusCode, String)> {
-    let settings = payload.settings.unwrap_or(Value::Object(serde_json::Map::new()));
+    let settings = payload
+        .settings
+        .unwrap_or(Value::Object(serde_json::Map::new()));
     let policy = sqlx::query_as::<_, Policy>(
         r#"
         INSERT INTO it.policies (name, description, category, settings, parent_id, priority, mode)
@@ -288,7 +296,10 @@ pub async fn assign_policy(
 ) -> Result<(StatusCode, Json<PolicyAssignment>), (StatusCode, String)> {
     // Validate target_type
     if !["group", "machine"].contains(&payload.target_type.as_str()) {
-        return Err((StatusCode::BAD_REQUEST, "target_type must be 'group' or 'machine'".to_string()));
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "target_type must be 'group' or 'machine'".to_string(),
+        ));
     }
 
     let assignment = sqlx::query_as::<_, PolicyAssignment>(
@@ -308,7 +319,10 @@ pub async fn assign_policy(
 
     match assignment {
         Some(a) => Ok((StatusCode::CREATED, Json(a))),
-        None => Err((StatusCode::CONFLICT, "Assignment already exists".to_string())),
+        None => Err((
+            StatusCode::CONFLICT,
+            "Assignment already exists".to_string(),
+        )),
     }
 }
 
@@ -405,7 +419,7 @@ async fn get_ancestor_chain(
             Some(p) => {
                 current_parent = p.parent_id;
                 ancestors.insert(0, p); // prepend so ancestors come first
-            }
+            },
             None => break,
         }
     }
@@ -420,7 +434,9 @@ pub async fn report_compliance(
     State(pool): State<DatabasePool>,
     Json(payload): Json<ComplianceReport>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let details = payload.details.unwrap_or(Value::Object(serde_json::Map::new()));
+    let details = payload
+        .details
+        .unwrap_or(Value::Object(serde_json::Map::new()));
 
     sqlx::query(
         r#"
@@ -461,7 +477,11 @@ pub async fn compliance_summary(
 
     let (compliant_count, non_compliant_count) = row;
     let total = compliant_count + non_compliant_count;
-    let pct = if total > 0 { compliant_count as f64 / total as f64 * 100.0 } else { 100.0 };
+    let pct = if total > 0 {
+        compliant_count as f64 / total as f64 * 100.0
+    } else {
+        100.0
+    };
 
     let non_compliant_machines = sqlx::query_as::<_, NonCompliantMachine>(
         r#"

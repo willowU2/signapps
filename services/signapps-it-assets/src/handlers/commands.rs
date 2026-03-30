@@ -31,14 +31,14 @@ pub struct AgentCommand {
 /// Represents a queue command req.
 pub struct QueueCommandReq {
     pub hardware_id: Uuid,
-    pub command: String,              // 'reboot', 'shutdown', 'lock', 'run_script'
+    pub command: String, // 'reboot', 'shutdown', 'lock', 'run_script'
     pub parameters: Option<Value>,
 }
 
 #[derive(Debug, Deserialize)]
 /// Represents a update command status req.
 pub struct UpdateCommandStatusReq {
-    pub status: String,               // 'acknowledged', 'done', 'failed'
+    pub status: String, // 'acknowledged', 'done', 'failed'
     pub result: Option<Value>,
 }
 
@@ -68,7 +68,9 @@ pub async fn queue_agent_command(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
         .ok_or((StatusCode::NOT_FOUND, "Hardware not found".to_string()))?;
 
-    let params = payload.parameters.unwrap_or_else(|| Value::Object(Default::default()));
+    let params = payload
+        .parameters
+        .unwrap_or_else(|| Value::Object(Default::default()));
 
     let cmd = sqlx::query_as::<_, AgentCommand>(
         r#"

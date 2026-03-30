@@ -97,29 +97,26 @@ pub async fn upload_image(
         let field_name = field.name().unwrap_or("").to_string();
         match field_name.as_str() {
             "file" => {
-                original_filename = field
-                    .file_name()
-                    .unwrap_or("image.bin")
-                    .to_string();
+                original_filename = field.file_name().unwrap_or("image.bin").to_string();
                 file_bytes = Some(
                     field
                         .bytes()
                         .await
                         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?,
                 );
-            }
+            },
             "name" => {
                 name = field
                     .text()
                     .await
                     .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
-            }
+            },
             "os_type" => {
                 os_type = field
                     .text()
                     .await
                     .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
-            }
+            },
             "os_version" => {
                 os_version = Some(
                     field
@@ -127,13 +124,13 @@ pub async fn upload_image(
                         .await
                         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?,
                 );
-            }
+            },
             "image_type" => {
                 image_type = field
                     .text()
                     .await
                     .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
-            }
+            },
             "description" => {
                 description = Some(
                     field
@@ -141,12 +138,15 @@ pub async fn upload_image(
                         .await
                         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?,
                 );
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 
-    let bytes = file_bytes.ok_or((StatusCode::BAD_REQUEST, "No file field in multipart".to_string()))?;
+    let bytes = file_bytes.ok_or((
+        StatusCode::BAD_REQUEST,
+        "No file field in multipart".to_string(),
+    ))?;
     if name.is_empty() {
         name = original_filename.clone();
     }
@@ -166,9 +166,12 @@ pub async fn upload_image(
     let file_path = PathBuf::from(IMAGES_DIR).join(&stored_name);
     let file_path_str = file_path.to_string_lossy().to_string();
 
-    tokio::fs::write(&file_path, &bytes)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to write file: {}", e)))?;
+    tokio::fs::write(&file_path, &bytes).await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to write file: {}", e),
+        )
+    })?;
 
     // Insert metadata
     let image = sqlx::query_as::<_, PxeImage>(
@@ -228,7 +231,7 @@ pub async fn delete_image(
 #[derive(Debug, Deserialize)]
 /// Request payload for GenerateTemplate operation.
 pub struct GenerateTemplateRequest {
-    pub os_type: String,          // "rhel" | "debian" | "ubuntu" | "windows"
+    pub os_type: String, // "rhel" | "debian" | "ubuntu" | "windows"
     pub hostname: String,
     pub domain: Option<String>,
     pub disk_layout: Option<String>, // "auto" | "lvm" | "custom"
@@ -260,19 +263,18 @@ pub async fn generate_template(
     let (format, content) = match req.os_type.to_lowercase().as_str() {
         "rhel" | "centos" | "fedora" | "rocky" | "alma" => {
             ("kickstart".to_string(), generate_kickstart(&req))
-        }
-        "debian" | "ubuntu" => {
-            ("preseed".to_string(), generate_preseed(&req))
-        }
-        "windows" => {
-            ("unattend.xml".to_string(), generate_unattend(&req))
-        }
+        },
+        "debian" | "ubuntu" => ("preseed".to_string(), generate_preseed(&req)),
+        "windows" => ("unattend.xml".to_string(), generate_unattend(&req)),
         _ => {
             return Err((
                 StatusCode::BAD_REQUEST,
-                format!("Unsupported os_type: {}. Use rhel, centos, debian, ubuntu, or windows", req.os_type),
+                format!(
+                    "Unsupported os_type: {}. Use rhel, centos, debian, ubuntu, or windows",
+                    req.os_type
+                ),
             ));
-        }
+        },
     };
 
     Ok(Json(GeneratedTemplate {
@@ -290,29 +292,47 @@ fn generate_kickstart(req: &GenerateTemplateRequest) -> String {
     let domain = req.domain.as_deref().unwrap_or("localdomain");
 
     let disk_section = match disk_layout {
-        "lvm" => r#"clearpart --all --initlabel
+        "lvm" => {
+            r#"clearpart --all --initlabel
 part /boot --fstype=xfs --size=1024
 part pv.01 --size=1 --grow
 volgroup vg_main pv.01
 logvol / --fstype=xfs --vgname=vg_main --size=10240 --name=lv_root
-logvol swap --vgname=vg_main --recommended --name=lv_swap"#,
-        _ => r#"clearpart --all --initlabel
-autopart --type=plain"#,
+logvol swap --vgname=vg_main --recommended --name=lv_swap"#
+        },
+        _ => {
+            r#"clearpart --all --initlabel
+autopart --type=plain"#
+        },
     };
 
-    let packages = req.packages.as_ref()
+    let packages = req
+        .packages
+        .as_ref()
         .map(|pkgs| pkgs.join("\n"))
         .unwrap_or_else(|| "@core\nopenssh-server".to_string());
 
-    let users_section = req.users.as_ref()
+    let users_section = req
+        .users
+        .as_ref()
         .map(|users| {
-            users.iter().map(|u| {
-                let sudo = if u.sudo.unwrap_or(false) { " --groups=wheel" } else { "" };
-                let passwd = u.password_hash.as_deref()
-                    .map(|h| format!(" --iscrypted --password={}", h))
-                    .unwrap_or_default();
-                format!("user --name={}{}{}", u.username, passwd, sudo)
-            }).collect::<Vec<_>>().join("\n")
+            users
+                .iter()
+                .map(|u| {
+                    let sudo = if u.sudo.unwrap_or(false) {
+                        " --groups=wheel"
+                    } else {
+                        ""
+                    };
+                    let passwd = u
+                        .password_hash
+                        .as_deref()
+                        .map(|h| format!(" --iscrypted --password={}", h))
+                        .unwrap_or_default();
+                    format!("user --name={}{}{}", u.username, passwd, sudo)
+                })
+                .collect::<Vec<_>>()
+                .join("\n")
         })
         .unwrap_or_default();
 
@@ -362,21 +382,28 @@ fn generate_preseed(req: &GenerateTemplateRequest) -> String {
     let hostname = &req.hostname;
     let domain = req.domain.as_deref().unwrap_or("localdomain");
 
-    let packages = req.packages.as_ref()
+    let packages = req
+        .packages
+        .as_ref()
         .map(|pkgs| pkgs.join(" "))
         .unwrap_or_else(|| "openssh-server curl wget".to_string());
 
-    let first_user = req.users.as_ref()
-        .and_then(|u| u.first().cloned());
+    let first_user = req.users.as_ref().and_then(|u| u.first().cloned());
 
     let (user_fullname, username, user_passwd) = if let Some(u) = first_user {
         (
             u.username.clone(),
             u.username.clone(),
-            u.password_hash.clone().unwrap_or_else(|| "changeme".to_string()),
+            u.password_hash
+                .clone()
+                .unwrap_or_else(|| "changeme".to_string()),
         )
     } else {
-        ("Admin".to_string(), "admin".to_string(), "changeme".to_string())
+        (
+            "Admin".to_string(),
+            "admin".to_string(),
+            "changeme".to_string(),
+        )
     };
 
     format!(
@@ -446,10 +473,12 @@ fn generate_unattend(req: &GenerateTemplateRequest) -> String {
     let timezone = req.timezone.as_deref().unwrap_or("UTC");
     let locale = req.locale.as_deref().unwrap_or("en-US");
 
-    let first_user = req.users.as_ref()
-        .and_then(|u| u.first().cloned());
+    let first_user = req.users.as_ref().and_then(|u| u.first().cloned());
     let (username, password) = if let Some(u) = first_user {
-        (u.username, u.password_hash.unwrap_or_else(|| "P@ssw0rd!".to_string()))
+        (
+            u.username,
+            u.password_hash.unwrap_or_else(|| "P@ssw0rd!".to_string()),
+        )
     } else {
         ("Administrator".to_string(), "P@ssw0rd!".to_string())
     };
@@ -579,10 +608,18 @@ pub async fn update_deployment_progress(
     Json(payload): Json<DeploymentProgressRequest>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     let progress = payload.progress.clamp(0, 100);
-    let status = payload.status.as_deref().unwrap_or(if progress == 100 { "completed" } else { "deploying" });
+    let status = payload.status.as_deref().unwrap_or(if progress == 100 {
+        "completed"
+    } else {
+        "deploying"
+    });
 
     let now = Utc::now();
-    let started_at = if status == "deploying" && progress == 1 { Some(now) } else { None };
+    let started_at = if status == "deploying" && progress == 1 {
+        Some(now)
+    } else {
+        None
+    };
     let completed_at = if progress == 100 { Some(now) } else { None };
 
     // Upsert: create or update the deployment record for this MAC
@@ -652,13 +689,12 @@ pub async fn get_profile_hooks(
     State(state): State<AppState>,
     Path(profile_id): Path<Uuid>,
 ) -> Result<Json<PostDeployHooks>, (StatusCode, String)> {
-    let row: Option<(serde_json::Value,)> = sqlx::query_as(
-        "SELECT description FROM pxe.profiles WHERE id = $1",
-    )
-    .bind(profile_id)
-    .fetch_optional(state.db.inner())
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let row: Option<(serde_json::Value,)> =
+        sqlx::query_as("SELECT description FROM pxe.profiles WHERE id = $1")
+            .bind(profile_id)
+            .fetch_optional(state.db.inner())
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     // We store hooks as JSON in description (or dedicated column if added)
     // For now return empty hooks if not set
@@ -682,14 +718,13 @@ pub async fn update_profile_hooks(
     let hooks_json = serde_json::to_string(&hooks)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    let result = sqlx::query(
-        "UPDATE pxe.profiles SET description = $1, updated_at = NOW() WHERE id = $2",
-    )
-    .bind(format!("__hooks__:{}", hooks_json))
-    .bind(profile_id)
-    .execute(state.db.inner())
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let result =
+        sqlx::query("UPDATE pxe.profiles SET description = $1, updated_at = NOW() WHERE id = $2")
+            .bind(format!("__hooks__:{}", hooks_json))
+            .bind(profile_id)
+            .execute(state.db.inner())
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     if result.rows_affected() == 0 {
         return Err((StatusCode::NOT_FOUND, "Profile not found".to_string()));

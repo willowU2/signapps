@@ -35,8 +35,8 @@ pub struct CreatePackageRequest {
     pub name: String,
     pub version: String,
     pub publisher: Option<String>,
-    pub platform: String,          // "windows" | "linux" | "macos"
-    pub installer_type: String,    // "msi" | "exe" | "deb" | "rpm" | "pkg"
+    pub platform: String,       // "windows" | "linux" | "macos"
+    pub installer_type: String, // "msi" | "exe" | "deb" | "rpm" | "pkg"
     pub silent_args: Option<String>,
     pub file_path: Option<String>,
     pub file_hash: Option<String>,
@@ -205,11 +205,12 @@ pub async fn deploy_package(
     Json(payload): Json<DeployRequest>,
 ) -> Result<(StatusCode, Json<Vec<Deployment>>), (StatusCode, String)> {
     // Verify package exists
-    let exists: Option<(Uuid,)> = sqlx::query_as("SELECT id FROM it.software_packages WHERE id = $1")
-        .bind(id)
-        .fetch_optional(pool.inner())
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let exists: Option<(Uuid,)> =
+        sqlx::query_as("SELECT id FROM it.software_packages WHERE id = $1")
+            .bind(id)
+            .fetch_optional(pool.inner())
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     if exists.is_none() {
         return Err((StatusCode::NOT_FOUND, "Package not found".to_string()));
     }
@@ -311,7 +312,11 @@ pub async fn update_deployment_status(
     Json(payload): Json<UpdateDeploymentStatusRequest>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     let now = Utc::now();
-    let started_at = if payload.status == "running" { Some(now) } else { None };
+    let started_at = if payload.status == "running" {
+        Some(now)
+    } else {
+        None
+    };
     let completed_at = if payload.status == "completed" || payload.status == "failed" {
         Some(now)
     } else {

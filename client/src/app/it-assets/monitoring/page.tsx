@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Activity, Cpu, MemoryStick, HardDrive, AlertTriangle, CheckCircle } from "lucide-react"
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts"
 import { itAssetsApi, HardwareAsset, AgentMetric, ITAlert } from "@/lib/api/it-assets"
 import { usePageTitle } from "@/hooks/use-page-title"
@@ -145,7 +145,7 @@ export default function MonitoringPage() {
                     <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
                     <XAxis dataKey="time" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={(v: number) => `${v}%`} />
+                    <Tooltip formatter={(v) => [`${v}%`]} />
                     <Line type="monotone" dataKey="cpu" stroke="#3b82f6" dot={false} strokeWidth={2} connectNulls />
                   </LineChart>
                 </ResponsiveContainer>
@@ -165,7 +165,7 @@ export default function MonitoringPage() {
                     <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
                     <XAxis dataKey="time" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={(v: number) => `${v}%`} />
+                    <Tooltip formatter={(v) => [`${v}%`]} />
                     <Line type="monotone" dataKey="memory" stroke="#10b981" dot={false} strokeWidth={2} connectNulls />
                   </LineChart>
                 </ResponsiveContainer>
@@ -185,7 +185,7 @@ export default function MonitoringPage() {
                     <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
                     <XAxis dataKey="time" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={(v: number) => `${v}%`} />
+                    <Tooltip formatter={(v) => [`${v}%`]} />
                     <Line type="monotone" dataKey="disk" stroke="#f97316" dot={false} strokeWidth={2} connectNulls />
                   </LineChart>
                 </ResponsiveContainer>

@@ -55,10 +55,8 @@ pub async fn start_proxy_dhcp(config: ProxyDhcpConfig) -> anyhow::Result<()> {
     let bind_addr = config.bind_addr;
     let boot_filename = config.boot_filename.clone();
 
-    tokio::task::spawn_blocking(move || {
-        run_proxy_dhcp_loop(bind_addr, tftp_ip, &boot_filename)
-    })
-    .await?
+    tokio::task::spawn_blocking(move || run_proxy_dhcp_loop(bind_addr, tftp_ip, &boot_filename))
+        .await?
 }
 
 fn run_proxy_dhcp_loop(
@@ -68,7 +66,10 @@ fn run_proxy_dhcp_loop(
 ) -> anyhow::Result<()> {
     let socket = UdpSocket::bind(bind_addr)?;
     socket.set_broadcast(true)?;
-    info!("ProxyDHCP server listening on {} (TFTP: {}, file: {})", bind_addr, tftp_ip, boot_filename);
+    info!(
+        "ProxyDHCP server listening on {} (TFTP: {}, file: {})",
+        bind_addr, tftp_ip, boot_filename
+    );
 
     let mut buf = [0u8; 1024];
 
@@ -79,10 +80,10 @@ fn run_proxy_dhcp_loop(
                 if let Err(e) = handle_dhcp_packet(&socket, packet, src, tftp_ip, boot_filename) {
                     warn!("ProxyDHCP packet handling error from {}: {}", src, e);
                 }
-            }
+            },
             Err(e) => {
                 error!("ProxyDHCP recv error: {}", e);
-            }
+            },
         }
     }
 }
@@ -126,12 +127,25 @@ fn handle_dhcp_packet(
 
     info!(
         "ProxyDHCP: PXE {} from {:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}",
-        if msg_type == DHCPDISCOVER { "DISCOVER" } else { "REQUEST" },
-        chaddr[0], chaddr[1], chaddr[2], chaddr[3], chaddr[4], chaddr[5]
+        if msg_type == DHCPDISCOVER {
+            "DISCOVER"
+        } else {
+            "REQUEST"
+        },
+        chaddr[0],
+        chaddr[1],
+        chaddr[2],
+        chaddr[3],
+        chaddr[4],
+        chaddr[5]
     );
 
     // Build DHCPOFFER (or DHCPACK for REQUEST)
-    let reply_type = if msg_type == DHCPDISCOVER { DHCPOFFER } else { DHCPACK };
+    let reply_type = if msg_type == DHCPDISCOVER {
+        DHCPOFFER
+    } else {
+        DHCPACK
+    };
     let reply = build_pxe_offer(xid, chaddr, tftp_ip, boot_filename, reply_type)?;
 
     // Send to broadcast or unicast depending on flags
@@ -197,10 +211,10 @@ fn build_pxe_offer(
     let mut pkt = vec![0u8; 236];
 
     // Fixed DHCP header
-    pkt[0] = BOOTREPLY;         // op
-    pkt[1] = 1;                 // htype: Ethernet
-    pkt[2] = 6;                 // hlen: MAC length
-    pkt[3] = 0;                 // hops
+    pkt[0] = BOOTREPLY; // op
+    pkt[1] = 1; // htype: Ethernet
+    pkt[2] = 6; // hlen: MAC length
+    pkt[3] = 0; // hops
 
     // Transaction ID
     pkt[4..8].copy_from_slice(xid);

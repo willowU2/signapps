@@ -3,7 +3,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use signapps_db::DatabasePool;
 use std::net::UdpSocket;
 use uuid::Uuid;
@@ -66,14 +66,14 @@ pub async fn wake_on_lan(
         None => {
             return Err((
                 StatusCode::UNPROCESSABLE_ENTITY,
-                "No MAC address registered for this hardware. Add a network interface first.".to_string(),
+                "No MAC address registered for this hardware. Add a network interface first."
+                    .to_string(),
             ))
-        }
+        },
     };
 
     // Build magic packet
-    let packet = build_magic_packet(&mac)
-        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e))?;
+    let packet = build_magic_packet(&mac).map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e))?;
 
     // Send via UDP broadcast on port 9
     let result = tokio::task::spawn_blocking(move || -> Result<(), String> {
@@ -93,9 +93,13 @@ pub async fn wake_on_lan(
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
 
-    drop(result);
+    let _ = result;
 
-    tracing::info!("Sent WoL magic packet to MAC {} for hardware {}", mac, hardware_id);
+    tracing::info!(
+        "Sent WoL magic packet to MAC {} for hardware {}",
+        mac,
+        hardware_id
+    );
 
     Ok(Json(WolResponse {
         ok: true,

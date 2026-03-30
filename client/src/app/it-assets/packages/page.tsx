@@ -128,18 +128,18 @@ export default function PackagesPage() {
 
   const { data: packages, isLoading: packagesLoading } = useQuery({
     queryKey: ["software-packages"],
-    queryFn: () => client.get<SoftwarePackage[]>("/it-assets/packages"),
+    queryFn: () => client.get<SoftwarePackage[]>("/it-assets/packages").then(r => r.data),
   })
 
   const { data: hardware } = useQuery({
     queryKey: ["hardware"],
-    queryFn: () => itAssetsApi.listHardware(),
+    queryFn: () => itAssetsApi.listHardware().then(r => r.data),
   })
 
   // ─── Mutations ─────────────────────────────────────────────────────────────
 
   const createMutation = useMutation({
-    mutationFn: (data: CreatePackageForm) => client.post("/it-assets/packages", data),
+    mutationFn: (data: CreatePackageForm) => client.post("/it-assets/packages", data).then(r => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["software-packages"] })
       setDialogOpen(false)
@@ -150,7 +150,7 @@ export default function PackagesPage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CreatePackageForm> }) =>
-      client.put(`/it-assets/packages/${id}`, data),
+      client.put(`/it-assets/packages/${id}`, data).then(r => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["software-packages"] })
       setDialogOpen(false)
@@ -160,7 +160,7 @@ export default function PackagesPage() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => client.delete(`/it-assets/packages/${id}`),
+    mutationFn: (id: string) => client.delete(`/it-assets/packages/${id}`).then(r => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["software-packages"] })
       toast.success("Paquet supprimé")
@@ -173,7 +173,7 @@ export default function PackagesPage() {
       client.post<Deployment[]>(`/it-assets/packages/${id}/deploy`, {
         hardware_ids: hardwareIds,
         scheduled_at: scheduledAt || undefined,
-      }),
+      }).then(r => r.data),
     onSuccess: (data) => {
       setDeployDialogOpen(false)
       setSelectedMachines([])

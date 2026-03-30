@@ -125,7 +125,7 @@ export default function FleetPage() {
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={false}
                   >
                     {fleet.by_os.map((_, i) => (
                       <Cell key={i} fill={OS_COLORS[i % OS_COLORS.length]} />

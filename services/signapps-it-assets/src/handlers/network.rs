@@ -79,7 +79,8 @@ pub struct PortScanResult {
 #[derive(Debug, Deserialize)]
 /// Represents a add to inventory req.
 pub struct AddToInventoryReq {
-    pub discovery_id: Uuid,
+    #[allow(dead_code)]
+    pub discovery_id: Option<Uuid>,
     pub name: String,
     pub asset_type: Option<String>,
 }
@@ -221,30 +222,29 @@ pub async fn scan_network(
     let timeout_ms = payload.timeout_ms.unwrap_or(500).min(5000);
 
     // Parse CIDR to get host list
-    let hosts = parse_cidr_hosts(&payload.subnet)
-        .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
+    let hosts = parse_cidr_hosts(&payload.subnet).map_err(|e| (StatusCode::BAD_REQUEST, e))?;
 
     let total_hosts = hosts.len();
     let subnet = payload.subnet.clone();
 
     // Run probes in a blocking thread pool (CPU-bound TCP connects)
-    let discoveries: Vec<DiscoveryEntry> =
-        tokio::task::spawn_blocking(move || {
-            hosts
-                .into_iter()
-                .filter_map(|ip| probe_host(ip, timeout_ms))
-                .collect()
-        })
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let discoveries: Vec<DiscoveryEntry> = tokio::task::spawn_blocking(move || {
+        hosts
+            .into_iter()
+            .filter_map(|ip| probe_host(ip, timeout_ms))
+            .collect()
+    })
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     let hosts_found = discoveries.len();
 
     // Persist results to DB
     for entry in &discoveries {
-        let ip_parsed: ipnetwork::IpNetwork = entry.ip.parse().map_err(|e: ipnetwork::IpNetworkError| {
-            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
-        })?;
+        let ip_parsed: ipnetwork::IpNetwork =
+            entry.ip.parse().map_err(|e: ipnetwork::IpNetworkError| {
+                (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+            })?;
         let ports_i32: Vec<i32> = entry.open_ports.iter().map(|&p| p as i32).collect();
 
         sqlx::query(
@@ -325,7 +325,9 @@ pub async fn add_discovery_to_inventory(
 
     let (ip, _hostname) = row.ok_or((StatusCode::NOT_FOUND, "Discovery not found".to_string()))?;
 
-    let asset_type = payload.asset_type.unwrap_or_else(|| "workstation".to_string());
+    let asset_type = payload
+        .asset_type
+        .unwrap_or_else(|| "workstation".to_string());
 
     // Create a hardware asset
     let hw_row: (Uuid,) = sqlx::query_as(
@@ -367,8 +369,12 @@ pub async fn port_scan(
     State(_pool): State<DatabasePool>,
     Json(payload): Json<PortScanReq>,
 ) -> Result<Json<PortScanResult>, (StatusCode, String)> {
-    let ip: IpAddr = IpAddr::from_str(&payload.ip)
-        .map_err(|_| (StatusCode::BAD_REQUEST, format!("Invalid IP: {}", payload.ip)))?;
+    let ip: IpAddr = IpAddr::from_str(&payload.ip).map_err(|_| {
+        (
+            StatusCode::BAD_REQUEST,
+            format!("Invalid IP: {}", payload.ip),
+        )
+    })?;
 
     if payload.ports.is_empty() || payload.ports.len() > 100 {
         return Err((
