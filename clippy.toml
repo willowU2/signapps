@@ -29,3 +29,20 @@ msrv = "1.75.0"
 allowed-wildcard-imports = [
     "crate::prelude::*",
 ]
+
+# ─── unwrap_used tracking ────────────────────────────────────────────────────
+# Goal: eliminate `.unwrap()` callsites in favour of `?` or `.context("…")`.
+# Currently ~412 callsites exist across the workspace (inventoried 2026-03-30).
+#
+# Enforcement roadmap:
+#   Phase 1 (now)     — Warn per-crate by adding `#![warn(clippy::unwrap_used)]`
+#                       to new crates and lib.rs files as they are touched.
+#   Phase 2 (ongoing) — Fix callsites crate-by-crate; promote to error crate
+#                       by crate once clean.
+#   Phase 3 (target)  — Workspace-level deny via `disallowed-methods` below.
+#
+# Uncomment once Phase 3 is reached:
+# disallowed-methods = [
+#   { path = "std::result::Result::unwrap", reason = "Use ? or .context() instead" },
+#   { path = "std::option::Option::unwrap", reason = "Use .ok_or_else() or .expect() with a message" },
+# ]
