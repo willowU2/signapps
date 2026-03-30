@@ -38,8 +38,7 @@ export function VoiceSearch({ onResult, className = '' }: VoiceSearchProps) {
   const [listening, setListening] = useState(false);
   const getSpeechRecognitionCtor = (): SpeechRecognitionCtor | null => {
     if (typeof window === 'undefined') return null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null;
+    return (window.SpeechRecognition ?? window.webkitSpeechRecognition) as SpeechRecognitionCtor | undefined ?? null;
   };
 
   const [supported] = useState(() => !!getSpeechRecognitionCtor());

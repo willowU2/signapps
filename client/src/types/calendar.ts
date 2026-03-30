@@ -56,6 +56,8 @@ export interface Event {
   updated_at: string;
   /** Attendees list — returned by some calendar API endpoints */
   attendees?: EventAttendeeBasic[];
+  /** Arbitrary metadata stored on the event (check-in status, room info, etc.) */
+  metadata?: Record<string, unknown>;
 }
 
 export interface CreateEvent {

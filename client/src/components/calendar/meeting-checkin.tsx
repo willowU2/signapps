@@ -96,14 +96,15 @@ export function MeetingCheckin() {
 
       const enriched: CheckinEvent[] = await Promise.all(
         events.map(async (event) => {
-          let attendeesRaw: any[] = []
+          type AttendeeRaw = { user_id?: string; email?: string; rsvp_status?: string; id?: string; display_name?: string; name?: string }
+          let attendeesRaw: AttendeeRaw[] = []
           try {
             const res = await calendarApi.listAttendees(event.id)
-            attendeesRaw = (res.data as any[]) ?? []
+            attendeesRaw = (res.data as AttendeeRaw[]) ?? []
           } catch {}
 
           const meta: Record<string, AttendanceStatus> =
-            (event as any).metadata?.checkin ?? {}
+            (event.metadata?.checkin as Record<string, AttendanceStatus> | undefined) ?? {}
 
           const attendees: AttendeeStatus[] = attendeesRaw.map((a) => ({
             id: a.id ?? a.user_id ?? a.email,
@@ -144,8 +145,8 @@ export function MeetingCheckin() {
       const checkin = checkins.find((c) => c.event.id === eventId)
       if (!checkin) return
 
-      const currentMeta = (checkin.event as any).metadata ?? {}
-      const currentCheckin = currentMeta.checkin ?? {}
+      const currentMeta = checkin.event.metadata ?? {}
+      const currentCheckin = (currentMeta.checkin as Record<string, unknown> | undefined) ?? {}
 
       await calendarApi.put(`/events/${eventId}`, {
         metadata: {

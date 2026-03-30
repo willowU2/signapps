@@ -61,7 +61,7 @@ function MeetingPrepCard({ prep, onGenerateAi }: { prep: MeetingPrepData; onGene
   const [expanded, setExpanded] = useState(false)
   const { event } = prep
 
-  const attendees: string[] = (event as any).attendees?.map((a: any) => a.email ?? a.name) ?? []
+  const attendees: string[] = event.attendees?.map((a) => a.email ?? a.name ?? '') ?? []
 
   return (
     <Card>
@@ -217,7 +217,7 @@ export function MeetingPrep() {
             let attachedDocs: AttachedDoc[] = []
             try {
               const links = await linksApi.find('event', event.id)
-              attachedDocs = ((links.data as any[]) ?? []).map((l) => ({
+              attachedDocs = ((links.data as Array<{ id: string; url?: string; title?: string; target_id?: string }>) ?? []).map((l) => ({
                 id: l.id,
                 name: l.target_id ?? l.id,
               }))
@@ -253,7 +253,7 @@ export function MeetingPrep() {
       const prep = preps.find((p) => p.event.id === eventId)
       if (!prep) return
 
-      const attendees: string[] = (prep.event as any).attendees?.map((a: any) => a.email ?? a.name) ?? []
+      const attendees: string[] = prep.event.attendees?.map((a) => a.email ?? a.name ?? '') ?? []
       const prompt = `Tu es un assistant de préparation de réunion.
 Réunion: "${prep.event.title}"
 Date: ${formatDate(prep.event.start_time)} à ${formatTime(prep.event.start_time)}
@@ -263,7 +263,7 @@ Ordre du jour: ${prep.event.description ?? 'non précisé'}
 Génère 5 points concis à aborder lors de cette réunion. Réponds uniquement avec une liste JSON de strings.`
 
       const res = await aiApi.chat(prompt)
-      const answer: string = (res.data as any)?.answer ?? ''
+      const answer: string = (res.data as { answer?: string })?.answer ?? ''
 
       let points: string[] = []
       try {

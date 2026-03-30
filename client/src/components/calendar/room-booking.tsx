@@ -182,7 +182,7 @@ export function RoomBooking() {
     try {
       // Find or use the first calendar
       const cals = await calendarApi.listCalendars()
-      const calendarId = (cals.data as any[])?.[0]?.id
+      const calendarId = (cals.data as Array<{ id: string }>)?.[0]?.id
       if (!calendarId) throw new Error('Aucun calendrier disponible')
 
       const startDt = new Date(`${bookingDate}T${bookingStart}:00`)
@@ -194,7 +194,7 @@ export function RoomBooking() {
         end_time: endDt.toISOString(),
         location: bookingRoom.label,
         description: `Réservation salle: ${bookingRoom.label}`,
-      } as any)
+      })
 
       toast.success(`Salle "${bookingRoom.label}" réservée`)
       setBookingRoom(null)
