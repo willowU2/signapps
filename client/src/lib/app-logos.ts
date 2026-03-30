@@ -109,5 +109,7 @@ export function getAppLogo(appIdOrName: string, dockerImage?: string): string | 
     }
   }
 
-  return null;
+  // Fallback: Google favicon service (works for any domain)
+  const sanitized = key.replace(/[^a-z0-9-]/g, '');
+  return `https://www.google.com/s2/favicons?domain=${sanitized}.com&sz=128`;
 }
