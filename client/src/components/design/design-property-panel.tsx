@@ -99,7 +99,7 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
       angle: Math.round(obj.angle || 0),
       opacity: Math.round((obj.opacity || 1) * 100),
       fill: typeof obj.fill === "string" ? obj.fill : "#000000",
-      stroke: obj.stroke || "",
+      stroke: (typeof obj.stroke === "string" ? obj.stroke : "") || "",
       strokeWidth: obj.strokeWidth || 0,
       fontSize: obj.fontSize,
       fontFamily: obj.fontFamily,

@@ -455,9 +455,8 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
     useEffect(() => {
         // Initialize Web Speech API if supported
-        const windowWithSpeech = window as typeof window & { SpeechRecognition?: new () => SpeechRecognition; webkitSpeechRecognition?: new () => SpeechRecognition }
-        const SpeechRecognitionCtor = windowWithSpeech.SpeechRecognition
-            || windowWithSpeech.webkitSpeechRecognition;
+        const SpeechRecognitionCtor = window.SpeechRecognition
+            || window.webkitSpeechRecognition;
         if (SpeechRecognitionCtor) {
             recognitionRef.current = new SpeechRecognitionCtor()
             recognitionRef.current.continuous = true
@@ -466,7 +465,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
             let finalTranscript = ""
 
-            recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+            recognitionRef.current.onresult = (event: Parameters<NonNullable<SpeechRecognition["onresult"]>>[0]) => {
                 let interimTranscript = ""
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript

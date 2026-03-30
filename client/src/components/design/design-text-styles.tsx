@@ -3,9 +3,15 @@
 import { useDesignStore } from "@/stores/design-store";
 import { TEXT_STYLES } from "./types";
 import type { DesignObject } from "./types";
+import type * as fabric from "fabric";
+
+/** fabric.Textbox extended with the id property used in this codebase */
+interface FabricTextboxWithId extends fabric.Textbox {
+  id?: string;
+}
 
 interface DesignTextStylesProps {
-  fabricCanvasRef: React.MutableRefObject<any | null>;
+  fabricCanvasRef: React.MutableRefObject<fabric.Canvas | null>;
 }
 
 export default function DesignTextStyles({ fabricCanvasRef }: DesignTextStylesProps) {
@@ -17,23 +23,23 @@ export default function DesignTextStyles({ fabricCanvasRef }: DesignTextStylesPr
     if (!canvas) return;
 
     pushUndo();
-    const textbox = new fabricModule.Textbox("Your text here", {
+    const textboxOptions: Partial<fabric.TextboxProps> = {
       left: 100,
       top: 100,
       width: 400,
       fontSize: style.fontSize,
-      fontWeight: style.fontWeight,
+      fontWeight: style.fontWeight as fabric.TextboxProps["fontWeight"],
       fontFamily: style.fontFamily,
       fill: "#000000",
-      editable: true,
-    } as any);
-    (textbox as any).id = crypto.randomUUID();
+    };
+    const textbox = new fabricModule.Textbox("Your text here", textboxOptions);
+    (textbox as FabricTextboxWithId).id = crypto.randomUUID();
     canvas.add(textbox);
     canvas.setActiveObject(textbox);
     canvas.requestRenderAll();
 
     const newObj: DesignObject = {
-      id: (textbox as any).id,
+      id: (textbox as FabricTextboxWithId).id!,
       type: "text",
       name: style.name,
       fabricData: textbox.toObject(["id"]),
@@ -56,7 +62,7 @@ export default function DesignTextStyles({ fabricCanvasRef }: DesignTextStylesPr
             <span
               style={{
                 fontSize: Math.min(style.fontSize / 3, 22),
-                fontWeight: style.fontWeight as any,
+                fontWeight: style.fontWeight as React.CSSProperties["fontWeight"],
                 fontFamily: style.fontFamily,
               }}
               className="block truncate group-hover:text-primary transition-colors"

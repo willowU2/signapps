@@ -28,7 +28,7 @@ import * as LucideIcons from 'lucide-react';
 
 // Render a lucide icon by name string
 function AppIcon({ name, className }: { name: string; className?: string }) {
-  const Icon = (LucideIcons as Record<string, React.ComponentType<{ className?: string }> | undefined>)[name];
+  const Icon = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }> | undefined>)[name];
   if (!Icon) return <LucideIcons.Grid className={className} />;
   return <Icon className={className} />;
 }

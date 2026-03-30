@@ -208,13 +208,13 @@ export default function DesignShapesLibrary({ fabricCanvasRef }: DesignShapesLib
       stroke: "",
       strokeWidth: 0,
     });
-    (group as any).id = crypto.randomUUID();
+    (group as FabricObjectWithId).id = crypto.randomUUID();
     canvas.add(group);
     canvas.setActiveObject(group);
     canvas.requestRenderAll();
 
     const newObj: DesignObject = {
-      id: (group as any).id,
+      id: (group as FabricObjectWithId).id!,
       type: "shape",
       name: `Icon: ${iconName}`,
       fabricData: group.toObject(["id"]),

@@ -6,9 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, ImagePlus, Loader2 } from "lucide-react";
 import type { DesignObject } from "./types";
+import type * as fabric from "fabric";
+
+/** fabric.FabricImage extended with the id property used in this codebase */
+interface FabricImageWithId extends fabric.FabricImage {
+  id?: string;
+}
 
 interface DesignStockPhotosProps {
-  fabricCanvasRef: React.MutableRefObject<any | null>;
+  fabricCanvasRef: React.MutableRefObject<fabric.Canvas | null>;
 }
 
 // Curated placeholder images using picsum.photos (free, no API key needed)
@@ -63,13 +69,13 @@ export default function DesignStockPhotos({ fabricCanvasRef }: DesignStockPhotos
         left: 50,
         top: 50,
       });
-      (img as any).id = crypto.randomUUID();
+      (img as FabricImageWithId).id = crypto.randomUUID();
       canvas.add(img);
       canvas.setActiveObject(img);
       canvas.requestRenderAll();
 
       const newObj: DesignObject = {
-        id: (img as any).id,
+        id: (img as FabricImageWithId).id!,
         type: "image",
         name: "Stock Photo",
         fabricData: img.toObject(["id"]),

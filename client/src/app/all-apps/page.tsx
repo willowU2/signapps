@@ -14,7 +14,7 @@ import SpotlightCard from '@/components/ui/spotlight-card';
 import { usePageTitle } from '@/hooks/use-page-title';
 
 function DynIcon({ name, className }: { name: string; className?: string }) {
-  const Icon = (LucideIcons as Record<string, React.ComponentType<{ className?: string }> | undefined>)[name];
+  const Icon = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }> | undefined>)[name];
   if (!Icon) return <LucideIcons.Grid className={className} />;
   return <Icon className={className} />;
 }

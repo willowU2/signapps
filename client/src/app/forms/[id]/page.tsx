@@ -20,10 +20,10 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { useBreadcrumbStore } from "@/lib/store/breadcrumb-store"
-import { useDndMonitor } from '@dnd-kit/core'
+import { useDndMonitor, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ConditionalLogicEditor } from "@/components/forms/conditional-logic-editor"
+import { ConditionalLogicEditor, type ConditionGroup } from "@/components/forms/conditional-logic-editor"
 import { ScoringEditor } from "@/components/forms/scoring-editor"
 import { ResponseAnalytics } from "@/components/forms/response-analytics"
 import { ExportResponses } from "@/components/forms/export-responses"
@@ -32,7 +32,7 @@ import { useQuery } from "@tanstack/react-query"
 
 // Extended FormField type to handle new properties
 type ExtendedFormField = FormField & {
-    show_if?: { field_id: string; operator: string; value: string }
+    show_if?: ConditionGroup
     scores?: Record<string, number>
     page?: number
 }
@@ -342,7 +342,7 @@ export default function FormBuilderPage() {
     }
 
     useDndMonitor({
-        onDragEnd(event: { active: { id: string; data: { current?: { type?: string } } }; over: { id: string } | null }) {
+        onDragEnd(event: DragEndEvent) {
             const { active, over } = event
             if (active.data.current?.type === 'form-field' && over && active.id !== over.id) {
                 setFields((items) => {
