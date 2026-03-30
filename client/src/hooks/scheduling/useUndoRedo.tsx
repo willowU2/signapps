@@ -218,7 +218,6 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
       toast.error('Impossible de r\u00e9tablir cette action');
       console.error('Redo failed:', error);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canRedo, state.redoStack, mergedConfig]);
 
   // Helper: Create event action

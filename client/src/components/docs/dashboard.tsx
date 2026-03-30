@@ -123,7 +123,6 @@ export default function DocsDashboard() {
 
     useEffect(() => {
         fetchDocs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedWorkspaceId]);
 
     const handleDelete = async () => {

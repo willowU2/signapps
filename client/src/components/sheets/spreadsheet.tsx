@@ -1656,7 +1656,6 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         else if (top + h > g.scrollTop + viewportH) g.scrollTop = top + h - viewportH + 4
         if (left < g.scrollLeft + (freezeCols > 0 ? colOffsets[freezeCols] : 0)) g.scrollLeft = Math.max(0, left - (freezeCols > 0 ? colOffsets[freezeCols] : 0))
         else if (left + w > g.scrollLeft + viewportW) g.scrollLeft = left + w - viewportW + 4
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rowOffsets, colOffsets, viewportH, viewportW, freezeRows, freezeCols, getColWidth, getRowHeight])
 
     const moveCell = useCallback((dr: number, dc: number) => {

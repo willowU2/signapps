@@ -137,7 +137,6 @@ export function AnomalyAlertPanel() {
     fetchAndDetect();
     const interval = setInterval(fetchAndDetect, 30_000);
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const acknowledge = (id: string) => {

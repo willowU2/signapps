@@ -275,7 +275,6 @@ export function SlideCanvas({
             // Re-render
             canvas.requestRenderAll()
         })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pageConfig.orientation, pageConfig.backgroundColor, actualBg, fabricCanvasRef])
 
     // Sync from Yjs to Canvas

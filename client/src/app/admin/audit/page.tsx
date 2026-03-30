@@ -285,7 +285,6 @@ export default function AuditLogPage() {
 
   useEffect(() => {
     fetchEntries();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Derived filtered list

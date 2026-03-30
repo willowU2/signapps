@@ -346,7 +346,6 @@ export default function StoragePage() {
       setLoading(false);
     }
   // currentBucket not needed as dep — only used to reset on error path, not a trigger
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seedDefaultBuckets]);
 
   const fetchFiles = useCallback(async () => {

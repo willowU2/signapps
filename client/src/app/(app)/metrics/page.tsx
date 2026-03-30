@@ -155,7 +155,6 @@ function MonitoringTab() {
   const { data: metrics, isLoading, isError: metricsError } = useMetricsSummary(autoRefresh ? 5000 : undefined);
   const { data: disks = [], isLoading: disksLoading } = useDiskMetrics(autoRefresh ? 10000 : undefined);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (metricsError) toast.error('Impossible de charger les métriques système');
   }, [metricsError]);

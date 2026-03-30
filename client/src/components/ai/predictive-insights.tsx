@@ -225,7 +225,6 @@ Utilise des valeurs réalistes. Les noms doivent être des contacts réels si di
 
   useEffect(() => {
     generateInsights();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const displayedInsights = compact ? insights.slice(0, 2) : insights;

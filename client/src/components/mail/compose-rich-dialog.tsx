@@ -163,7 +163,6 @@ export function ComposeRichDialog({
         return () => {
             if (debounceRef.current) clearTimeout(debounceRef.current)
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [recipient])
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

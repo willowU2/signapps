@@ -329,7 +329,6 @@ function evaluateMath(expr: string): string {
     }
     try {
         if (/\/0(?!\.)/.test(expr.replace(/\s/g, ''))) return SHEET_ERRORS.DIV_ZERO;
-        // eslint-disable-next-line no-new-func
         const result = new Function('return ' + expr)();
         if (typeof result !== 'number' || isNaN(result) || !isFinite(result)) return SHEET_ERRORS.VALUE;
         return Math.round(result * 10000000000) / 10000000000 + "";

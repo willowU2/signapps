@@ -39,7 +39,6 @@ interface TranscriptionProps {
 }
 
 // Web Speech API — local interface definitions (webkit prefix not in TS DOM lib)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeechRecognitionInstance = {
   continuous: boolean;
   interimResults: boolean;
