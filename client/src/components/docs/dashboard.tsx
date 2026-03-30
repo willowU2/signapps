@@ -176,9 +176,13 @@ export default function DocsDashboard() {
             setIsCreateOpen(false);
             setPendingTemplateContent(null);
             router.push(`/docs/editor?id=${finalTargetId}&name=${encodeURIComponent(newNode.name)}`);
-        } catch (error: any) {
-            console.error("Impossible de créer document", error);
-            toast.error(error.response?.data?.message || "Erreur serveur lors de la création du document");
+        } catch (error: unknown) {
+            const msg = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || '';
+            if (msg.includes('duplicate key') || msg.includes('unique constraint')) {
+                toast.error(`Un document "${newDocName.trim()}" existe déjà. Choisissez un autre nom.`);
+            } else {
+                toast.error("Erreur lors de la création du document. Réessayez.");
+            }
             setIsCreating(false);
         }
     };
