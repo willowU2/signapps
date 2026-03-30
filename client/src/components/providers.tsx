@@ -21,7 +21,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GlobalModals } from '@/components/global-modals';
 import { GlobalHooks } from '@/components/global-hooks';
-import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard';
+const OnboardingWizard = dynamic(() => import('@/components/onboarding/onboarding-wizard').then(m => m.OnboardingWizard), { ssr: false });
 import { RouteProgressBar } from '@/components/layout/route-progress-bar';
 import { PasswordExpiryBanner } from '@/components/auth/password-expiry-banner';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
@@ -31,9 +31,10 @@ import { DragDropOverlay } from '@/components/drag-drop-overlay';
 import { GlobalPolling } from '@/components/global-polling';
 import { ThemeInitializer } from '@/components/theme-initializer';
 import { QuickDocumentSwitcher } from '@/components/layout/quick-switcher';
-import { FirstRunDialog } from '@/components/first-run-dialog';
-import { OfflineBanner } from '@/components/layout/offline-banner';
-import { PomodoroTimer } from '@/components/layout/pomodoro-timer';
+import dynamic from 'next/dynamic';
+const FirstRunDialog = dynamic(() => import('@/components/first-run-dialog').then(m => m.FirstRunDialog), { ssr: false });
+const OfflineBanner = dynamic(() => import('@/components/layout/offline-banner').then(m => m.OfflineBanner), { ssr: false });
+const PomodoroTimer = dynamic(() => import('@/components/layout/pomodoro-timer').then(m => m.PomodoroTimer), { ssr: false });
 
 function LoadingFallback() {
   return (
