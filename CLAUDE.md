@@ -1,70 +1,249 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guide de survie pour Claude Code dans ce dépôt. Sections scannables par ordre de priorité.
 
 ## Project Overview
 
-SignApps Platform is a microservices-based infrastructure management system. Backend in Rust (Axum/Tokio), frontend in Next.js 16 (React 19, TypeScript). All services communicate via REST APIs with JWT authentication.
+SignApps Platform — microservices Rust (Axum/Tokio) + frontend Next.js 16 (React 19, TypeScript). 40 workspace members, 33 services, 5 shared crates. REST APIs avec JWT. Tout tourne nativement (pas de Docker requis sauf PostgreSQL en dev).
 
-All dependencies run natively — no Docker required. Media processing (STT, TTS, OCR) uses native Rust engines (whisper-rs, piper-rs, ocrs). LLM inference supports native GGUF models via llama-cpp-2 alongside cloud providers.
+---
 
-## Build & Development Commands
-
-### Rust Backend
+## Build Commands
 
 ```bash
-# Check entire workspace
-cargo check --workspace --all-features
+# ─── Justfile (préféré) ──────────────────────────────────
+just check                # cargo check workspace
+just build                # cargo build debug
+just build-release        # cargo build --release (LTO)
+just build-svc identity   # Build un service
+just run identity         # Run un service
+just dev                  # Frontend dev server (port 3000)
+just db-start             # PostgreSQL Docker
+just db-migrate           # Appliquer migrations SQL
 
-# Build
-cargo build                              # debug build
-cargo build --release                    # release build (LTO enabled)
-cargo build -p signapps-identity         # single service
+# ─── Cargo aliases (.cargo/config.toml) ──────────────────
+cargo c                   # check
+cargo t                   # test
+cargo lint                # clippy -D warnings
+cargo fmtall              # fmt --all
+cargo precommit           # fmt + lint + test (chaîné)
 
-# Run a service
-cargo run -p signapps-identity
-cargo run -p signapps-containers
-cargo run -p signapps-storage
-# etc.
-
-# Tests
-cargo test --workspace --all-features    # all tests
-cargo test -p signapps-identity          # single crate tests
-cargo test -p signapps-db -- group       # filter tests by name
-
-# Linting & formatting
-cargo fmt --all                          # format all
-cargo fmt --all -- --check               # check formatting
-cargo clippy --workspace --all-features -- -D warnings   # lint (CI uses -D warnings)
-
-# Cargo aliases (defined in .cargo/config.toml)
-cargo c       # check
-cargo t       # test
-cargo lint    # clippy with -D warnings
-cargo fmt     # format all
+# ─── Frontend ────────────────────────────────────────────
+cd client && npm install && npm run dev    # port 3000
+cd client && npm run build                 # production build
 ```
 
-### Frontend (client/)
+## Test Commands
 
 ```bash
-cd client
-npm install
-npm run dev                   # dev server (hot reload)
-npm run build                 # production build
-npm run lint                  # ESLint
-npm run test:e2e              # Playwright E2E tests
-npm run test:e2e:ui           # Playwright with UI
-npm run test:e2e:chromium     # single browser
+# ─── Rust (nextest = parallèle, 3-5x plus rapide) ───────
+just test                         # Tous les tests
+just test-crate signapps-db       # Un crate
+cargo nextest run -p signapps-identity -- auth   # Filtre par nom
+
+# ─── Couverture ─────────────────────────────────────────
+just coverage                     # → lcov.info
+just coverage-html                # → target/llvm-cov/html/
+
+# ─── Mutation testing ────────────────────────────────────
+just mutants                      # Workspace entier
+just mutants-crate signapps-common   # Un crate ciblé
+
+# ─── Frontend E2E ────────────────────────────────────────
+just test-e2e                     # Playwright
+cd client && npx playwright test --reporter=list
+
+# ─── Quality pipeline locale ────────────────────────────
+just ci                           # fmt + lint + test + audit + deny
+just ci-quick                     # check + lint seulement
+
+# ─── Feedback live ──────────────────────────────────────
+bacon                 # check en continu (default)
+bacon clippy          # lint en continu
+bacon test            # tests en continu
+# Raccourcis clavier: c=check, l=clippy, t=test, f=fmt, d=doc
 ```
 
-### Infrastructure
+## Code Style
 
-```bash
-# PostgreSQL: install natively (auto-detected by services)
-# No Docker required — all services and dependencies run natively
-# AI models (STT, TTS, OCR, LLM, embeddings) are downloaded automatically on first use
-# Model cache: ./data/models/ (override with MODELS_DIR env var)
+### Rust — Règles non-négociables
+
+| Règle | Enforcement | Config |
+|-------|-------------|--------|
+| Edition 2021, MSRV 1.75 | Cargo.toml | `rust-version = "1.75"` |
+| Max 100 chars/ligne | rustfmt | `max_width = 100` |
+| Imports groupés std/external/crate | rustfmt | `group_imports = StdExternalCrate` |
+| Complexité cognitive < 30 | clippy | `cognitive-complexity-threshold = 30` |
+| < 150 lignes par fonction | clippy | `too-many-lines-threshold = 150` |
+| < 8 paramètres par fonction | clippy | `too-many-arguments-threshold = 8` |
+| Release: LTO + codegen-units=1 + panic=abort + strip | Cargo.toml | `[profile.release]` |
+
+### TypeScript/Frontend
+
+- Strict TypeScript, path alias `@/*` → `./src/*`
+- shadcn/ui components, Tailwind CSS 4 avec tokens sémantiques (`bg-card`, `text-foreground`, `border-border`, `bg-muted`)
+- Zustand stores (pas Redux), react-hook-form + zod, Axios avec JWT auto-refresh
+
+---
+
+## Gouvernance et Qualité
+
+### Zéro-Print Policy & Observabilité
+
+**INTERDIT** en code de production :
+```rust
+// ❌ JAMAIS
+println!("debug: {}", value);
+eprintln!("error: {}", err);
+dbg!(value);
+
+// ✅ TOUJOURS
+tracing::info!("processing request");
+tracing::warn!(user_id = %id, "rate limit approached");
+tracing::error!(?err, "database connection failed");
+tracing::debug!(payload = ?body, "incoming request");
 ```
+
+**Chaque fonction publique** d'un handler doit porter `#[instrument]` :
+```rust
+#[tracing::instrument(skip(pool, claims), fields(user_id = %claims.sub))]
+pub async fn create_event(
+    State(pool): State<PgPool>,
+    claims: Claims,
+    Json(input): Json<CreateEvent>,
+) -> Result<Json<Event>, AppError> {
+    // ...
+}
+```
+
+Les spans structurés permettent le tracing distribué. Les champs `skip` évitent de logger les données volumineuses (pool, tokens).
+
+### Gestion des Erreurs — Tolérance Zéro
+
+```rust
+// ❌ INTERDIT en production (OK uniquement dans #[cfg(test)])
+let value = result.unwrap();
+let value = result.expect("should exist");
+
+// ✅ Propagation avec contexte
+let value = result.map_err(|e| AppError::internal(format!("DB query failed: {e}")))?;
+let value = result.context("failed to fetch user")?;  // anyhow
+
+// ✅ Pattern matching explicite
+match result {
+    Ok(v) => v,
+    Err(e) => {
+        tracing::error!(?e, "operation failed");
+        return Err(AppError::internal("operation failed"));
+    }
+}
+```
+
+| Crate | Usage | Où |
+|-------|-------|-----|
+| `thiserror` | Erreurs typées avec `#[derive(Error)]` | Crates partagés (`signapps-common`, `signapps-db`) |
+| `anyhow` | Erreurs contextuelles avec `.context()` | Services (handlers, main.rs) |
+| `AppError` | RFC 7807 Problem Details pour les réponses HTTP | Tous les handlers |
+
+### Sécurité et Spécifications API (Code-First OpenAPI)
+
+Toute API REST DOIT avoir sa documentation OpenAPI dérivée du code :
+
+```rust
+// ✅ Chaque handler documenté avec utoipa
+#[utoipa::path(
+    post,
+    path = "/api/v1/events",
+    request_body = CreateEvent,
+    responses(
+        (status = 201, description = "Event created", body = Event),
+        (status = 400, description = "Invalid input", body = AppError),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Events"
+)]
+pub async fn create_event(/* ... */) -> Result<Json<Event>, AppError> { /* ... */ }
+
+// ✅ Chaque struct de requête/réponse dérive ToSchema
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
+pub struct CreateEvent {
+    /// Titre de l'événement
+    pub title: String,
+    /// Date de début (ISO 8601)
+    pub start_time: DateTime<Utc>,
+}
+```
+
+Le Swagger UI est exposé sur `/swagger-ui/` de chaque service (via `utoipa-swagger-ui`). Le schéma JSON est disponible sur `/api-docs/openapi.json`.
+
+### Documentation Vivante (rustdoc)
+
+Chaque structure de données publique DOIT être documentée :
+
+```rust
+// ✅ Documentation obligatoire pour les types publics
+/// Représente un événement dans le calendrier unifié.
+///
+/// Supporte les types: event, task, leave, shift, booking, milestone, blocker, cron.
+/// Les champs optionnels dépendent du `event_type`.
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
+pub struct Event {
+    /// Identifiant unique (UUID v4)
+    pub id: Uuid,
+    /// Calendrier propriétaire
+    pub calendar_id: Uuid,
+    /// Titre affiché à l'utilisateur
+    pub title: String,
+    // ...
+}
+```
+
+Générer la doc : `cargo doc --no-deps --workspace --open`
+
+---
+
+## Review Checklist
+
+Avant de déclarer une tâche terminée, valider **chaque point** :
+
+### 1. Tests
+
+- [ ] Tests unitaires présents (`#[cfg(test)] mod tests`)
+- [ ] Tests passent : `just test` ou `cargo nextest run`
+- [ ] Couverture vérifiée : `just coverage` (pas de régression)
+- [ ] Pour les changements critiques : `just mutants-crate <crate>` (mutation testing)
+
+### 2. Qualité
+
+- [ ] Clippy propre : `cargo clippy --workspace --all-features -- -D warnings`
+- [ ] Format vérifié : `cargo fmt --all -- --check`
+- [ ] Pas de `println!`, `eprintln!`, `dbg!` en code non-test
+- [ ] Pas de `.unwrap()` ou `.expect()` en code non-test
+- [ ] `#[instrument]` sur les fonctions publiques des handlers
+- [ ] `/// rustdoc` sur les structs/enums/traits publics
+
+### 3. Sécurité
+
+- [ ] `cargo audit` — pas de CVE connue
+- [ ] `cargo deny check` — licences conformes, pas de vulnérabilité
+- [ ] Pas de secrets hardcodés (le pre-commit hook les détecte)
+- [ ] Inputs validés côté handler (pas de SQL injection, pas de path traversal)
+
+### 4. API
+
+- [ ] Endpoints documentés avec `#[utoipa::path]`
+- [ ] Structs de requête/réponse dérivent `utoipa::ToSchema`
+- [ ] Erreurs retournées au format RFC 7807 (`AppError`)
+- [ ] Auth middleware appliqué sur les routes protégées
+
+### 5. Commit
+
+- [ ] Message au format Conventional Commits : `feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `chore:`, `ci:`
+- [ ] Scope optionnel : `feat(calendar): add leave approval workflow`
+- [ ] Breaking changes signalés : `feat!: rename Event to CalendarEvent`
+
+---
 
 ## Architecture
 
@@ -72,373 +251,189 @@ npm run test:e2e:chromium     # single browser
 
 ```
 crates/
-  signapps-common/    → Shared: JWT auth, middleware, error types, value objects
-  signapps-db/        → Database: models, repositories, migrations, PgPool, pgvector
-  signapps-cache/     → In-process TTL cache (moka) — replaces Redis
+  signapps-common/    → JWT auth, middleware, AppError, value objects
+  signapps-db/        → Models, repositories, migrations, PgPool, pgvector
+  signapps-cache/     → TTL cache (moka) — remplace Redis
   signapps-runtime/   → PostgreSQL lifecycle, hardware detection, model manager
+  signapps-service/   → Service bootstrap utilities
 services/
-  signapps-identity/      → Port 3001 – Auth, LDAP/AD, MFA, RBAC, groups
-  signapps-containers/    → Port 3002 – Docker container lifecycle (bollard)
-  signapps-proxy/         → Port 3003 – Reverse proxy, TLS/ACME, SmartShield
-  signapps-storage/       → Port 3004 – File storage (OpenDAL: local FS or S3)
-  signapps-ai/            → Port 3005 – AI Gateway: RAG, LLM, Vision, ImageGen, VideoGen, AudioGen, Reranking
-  signapps-securelink/    → Port 3006 – Web tunnels, DNS with ad-blocking
-  signapps-scheduler/     → Port 3007 – CRON job management
-  signapps-metrics/       → Port 3008 – System monitoring, Prometheus, alerts
-  signapps-media/         → Port 3009 – Native STT/TTS/OCR, voice WebSocket pipeline
-  signapps-docs/          → Port 3010 – Document editing (Tiptap collaborative)
-  signapps-calendar/      → Port 3011 – Calendar & scheduling
-  signapps-mail/          → Port 3012 – Email service
-  signapps-collab/        → Port 3013 – Real-time collaboration (CRDT)
-  signapps-meet/          → Port 3014 – Video conferencing
-  signapps-forms/         → Port 3015 – Form builder & submissions
+  signapps-identity/      → Port 3001 – Auth, LDAP/AD, MFA, RBAC
+  signapps-containers/    → Port 3002 – Docker (bollard)
+  signapps-proxy/         → Port 3003 – Reverse proxy, TLS/ACME
+  signapps-storage/       → Port 3004 – OpenDAL (FS/S3)
+  signapps-ai/            → Port 3005 – AI Gateway (10 capabilities)
+  signapps-securelink/    → Port 3006 – Web tunnels, DNS
+  signapps-metrics/       → Port 3008 – Monitoring, Prometheus
+  signapps-media/         → Port 3009 – Native STT/TTS/OCR
+  signapps-docs/          → Port 3010 – Tiptap collaborative editing
+  signapps-calendar/      → Port 3011 – Calendrier unifié (events, congés, présence, timesheets, CRON)
+  signapps-mail/          → Port 3012 – Email IMAP/SMTP
+  signapps-collab/        → Port 3013 – Real-time CRDT
+  signapps-meet/          → Port 3014 – Vidéoconférence
+  signapps-forms/         → Port 3015 – Form builder
   signapps-pxe/           → Port 3016 – PXE network boot
-  signapps-remote/        → Port 3017 – Remote desktop access
-  signapps-office/        → Port 3018 – Office suite (import/export/reports)
-  signapps-social/        → Port 3019 – Social media management
-  signapps-chat/          → Port 3020 – Team messaging & channels
-  signapps-workforce/     → Port 3019 – HR & workforce management (shares port with social via SERVER_PORT)
-  signapps-it-assets/     → Port 3015 – IT asset management (shares port with forms via SERVER_PORT)
-  signapps-contacts/      → Port 3014 – Contact management
+  signapps-remote/        → Port 3017 – Remote desktop
+  signapps-office/        → Port 3018 – Office import/export
+  signapps-social/        → Port 3019 – Social media
+  signapps-chat/          → Port 3020 – Messagerie
+  signapps-workforce/     → HR & workforce
+  signapps-it-assets/     → IT asset management
+  signapps-contacts/      → Contact management
   signapps-notifications/ → Port 8095 – Push notifications
-  signapps-billing/       → Port 8096 – Billing & invoicing
-  signapps-gateway/       → Port 3099 – API gateway (aggregator proxy)
-scripts/              → start-all.ps1/sh, stop, pg-backup, log rotation
-client/               → Next.js 16 frontend (App Router), port 3000
-migrations/           → PostgreSQL schema migrations (including pgvector)
+  signapps-billing/       → Port 8096 – Facturation
+  signapps-gateway/       → Port 3099 – API gateway aggregator
+client/               → Next.js 16 (App Router), port 3000
+migrations/           → PostgreSQL schema (pgvector inclus)
+scripts/              → start-all, stop, backup, seed, log rotation
 ```
-
-### System Dependencies (Native, no Docker)
-
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| Database | PostgreSQL (native) + pgvector extension | All data + vector similarity search |
-| Cache | moka (in-process, Rust) | Rate limiting, token blacklist |
-| Storage | OpenDAL (filesystem or S3) | File storage |
-| STT | whisper-rs (native) or HTTP backend | Speech-to-text transcription |
-| TTS | piper-rs (native) or HTTP backend | Text-to-speech synthesis |
-| OCR | ocrs + rten (native) or HTTP backend | Optical character recognition |
-| LLM | llama-cpp-2 (native GGUF) + cloud APIs | Language model inference |
-| Vision | llama.cpp multimodal / HTTP / cloud (GPT-4o) | Image analysis, VQA |
-| Image Gen | candle (SD/FLUX) / HTTP (ComfyUI) / cloud (DALL-E) | Text-to-image generation |
-| Video | HTTP / cloud (Gemini, Replicate) | Video understanding + generation |
-| Audio Gen | candle (MusicGen) / HTTP / cloud (Replicate) | Music + SFX generation |
-| Reranking | ONNX Runtime (bge-reranker) / HTTP (TEI) / cloud (Cohere) | Search result reranking |
-| MM Embeddings | ONNX Runtime (SigLIP) / HTTP / cloud (OpenAI) | Cross-modal search (text↔image) |
-| Hardware | sysinfo + GPU probes | Auto-detect GPU/VRAM for model selection |
 
 ### Service Pattern
 
-Every Rust service follows the same structure:
-- `main.rs` – Axum router setup, shared state injection, middleware stack
-- `handlers/` – Request handlers organized by domain (e.g., `containers.rs`, `images.rs`)
-- State is passed via Axum's `Extension` or `State` extractors
-- Auth middleware from `signapps-common` validates JWT and injects `Claims`
+Chaque service Rust suit la même structure :
+- `main.rs` – Router Axum, state injection, middleware stack, `#[instrument]` sur les handlers
+- `handlers/` – Request handlers par domaine
+- State via `Extension` ou `State` extractors
+- Auth middleware from `signapps-common` injecte `Claims`
+- Retourne `Result<_, AppError>` (RFC 7807)
 
 ### Shared Crate Conventions
 
-**signapps-common:**
-- `Claims` struct (sub: Uuid, username, role: i16) – extracted by auth middleware
-- `AppError` – RFC 7807 Problem Details error type; all handlers return `Result<_, AppError>`
-- Middleware: `auth_middleware` (JWT validation), `admin_middleware` (role check), request logging/ID
-- Value objects: `Email`, `Password`, `UserId`, `Username` with validation
+**signapps-common:** `Claims`, `AppError` (RFC 7807), middleware (auth, admin, logging), value objects (`Email`, `Password`, `UserId`)
 
-**signapps-db:**
-- Repository pattern: each entity has a `*Repository` with CRUD methods taking `&PgPool`
-- Models map 1:1 to PostgreSQL tables in the `identity` schema
-- `create_pool(url)` and `run_migrations(pool)` for initialization
-- `VectorRepository` for pgvector operations (384-dim text embeddings, HNSW index)
-- `MultimodalVectorRepository` for 1024-dim SigLIP multimodal embeddings
-- `ConversationRepository` for AI chat history persistence
-- `GeneratedMediaRepository` for tracking AI-generated media outputs
+**signapps-db:** Repository pattern (`*Repository` + `&PgPool`), models 1:1 PostgreSQL, `VectorRepository` (384d), `MultimodalVectorRepository` (1024d)
 
-**signapps-cache:**
-- `CacheService` wrapping `moka::future::Cache` (TTL cache) + `DashMap` (atomic counters)
-- Methods: `get/set/del/exists` (TTL-based), `incr/decr/get_counter` (atomic)
-- Used by proxy (SmartShield rate limiting) and identity (JWT blacklist)
+**signapps-cache:** `CacheService` (moka TTL + DashMap counters) — rate limiting, JWT blacklist
 
-**signapps-runtime:**
-- `RuntimeManager::ensure_database()` — auto-detects PostgreSQL (DATABASE_URL → pg_isready → TCP probe)
-- `HardwareProfile::detect()` — auto-detects GPU (NVIDIA/AMD/Intel/Apple), VRAM, CPU cores
-- `ModelManager` — downloads, caches, and manages AI models (STT/TTS/OCR/LLM/Embeddings)
-- Model cache: `data/models/{stt,tts,ocr,llm,embeddings}/` (configurable via `MODELS_DIR`)
-
-### Frontend Architecture
-
-- **State:** Zustand stores (no Redux)
-- **API:** Axios client with JWT auto-refresh (`client/src/lib/api.ts`), separate base URLs per service
-- **UI:** shadcn/ui components in `components/ui/`, Tailwind CSS 4
-- **Routing:** Next.js App Router – pages in `app/`, layouts handle auth guards
-- **Forms:** react-hook-form + zod validation
-- **Real-time:** xterm.js for container logs, EventSource/SSE for streaming
-
-### AI Gateway Architecture (signapps-ai)
-
-signapps-ai is a unified AI gateway with trait-based workers:
-
-```
-gateway/         → Router (Native>Http>Cloud), QualityAdvisor, capability registry
-workers/         → 10 capability workers, each with native/http/cloud backends
-  ├── llm/         LLM chat (Ollama, vLLM, OpenAI, Anthropic, Gemini, llama.cpp)
-  ├── vision/      Image analysis, VQA (vLLM multimodal, GPT-4o Vision)
-  ├── imagegen/    Text-to-image (ComfyUI/A1111, DALL-E 3, candle SD/FLUX)
-  ├── videogen/    Video generation (HTTP, Replicate)
-  ├── video_understand/  Video analysis (HTTP, Gemini 1.5 Pro)
-  ├── audiogen/    Music/SFX generation (HTTP, Replicate)
-  ├── reranker/    Search reranking (TEI, Cohere, ONNX bge-reranker)
-  ├── embeddings_mm/  Multimodal embeddings (SigLIP HTTP, OpenAI, ONNX native)
-  └── docparse/    Document parsing (ocrs native, Azure Doc Intelligence)
-rag/             → Multimodal RAG: dual-space indexer, RRF fusion search, circular pipeline
-memory/          → Conversation memory, context builder, auto-summarizer
-models/          → Multi-GPU model orchestrator with LRU eviction, hardware profiles
-```
-
-**Key patterns:**
-- `AiWorker` base trait + specialized traits (VisionWorker, ImageGenWorker, etc.)
-- `GatewayRouter` routes to best worker: Native > Http > Cloud (unless cloud quality >> local)
-- `ModelOrchestrator` manages VRAM across GPUs with LRU eviction
-- Dual-space pgvector: text 384d (nomic-embed) + multimodal 1024d (SigLIP)
-- Circular pipeline: generated outputs are auto-indexed back into RAG
-
-**Feature flags for native backends:**
-```
-native-reranker    → ONNX bge-reranker
-native-embedmm    → ONNX SigLIP
-native-vision     → llama.cpp multimodal
-native-imagegen   → candle Stable Diffusion / FLUX
-native-all        → all native backends
-gpu-rocm / gpu-cuda / gpu-metal / gpu-vulkan
-```
-
-### API URL Convention
-
-All services expose REST APIs at `/api/v1/...`. The frontend connects directly to each service port in dev mode.
-
-**Service ports (complete):**
-
-| Port | Service | Description |
-|------|---------|-------------|
-| 3000 | frontend | Next.js dev server |
-| 3001 | identity | Auth, LDAP/AD, MFA, RBAC |
-| 3002 | containers | Docker container lifecycle |
-| 3003 | proxy | Reverse proxy, TLS/ACME |
-| 3004 | storage | File storage (OpenDAL) |
-| 3005 | ai | AI Gateway (RAG, LLM, Vision, ImageGen) |
-| 3006 | securelink | Web tunnels, DNS |
-| 3007 | scheduler | CRON job management |
-| 3008 | metrics | System monitoring, Prometheus |
-| 3009 | media | STT/TTS/OCR processing |
-| 3010 | docs | Document editing (Tiptap) |
-| 3011 | calendar | Calendar & scheduling |
-| 3012 | mail | Email service |
-| 3013 | collab | Real-time collaboration |
-| 3014 | meet | Video conferencing |
-| 3015 | forms | Form builder & submissions |
-| 3016 | pxe | PXE network boot |
-| 3017 | remote | Remote desktop access |
-| 3018 | office | Office suite (import/export) |
-| 3019 | social | Social media management |
-| 3020 | chat | Team messaging & channels |
-| 3099 | gateway | API gateway (aggregator) |
-| 8095 | notifications | Push notifications |
-| 8096 | billing | Billing & invoicing |
-
-Note: `workforce` (3019), `it-assets` (3015), and `contacts` (3014) share ports with other services. Use `SERVER_PORT` env var to run them simultaneously on different ports.
-
-## Code Style
-
-### Rust
-- Edition 2021, MSRV 1.75
-- Max line width: 100 chars (rustfmt.toml)
-- Imports: grouped by std/external/crate, granularity=Crate
-- Clippy: cognitive-complexity-threshold=30, too-many-lines=150, too-many-args=8
-- Errors: use `thiserror` for library errors, `anyhow` for application errors
-- Release profile: LTO + single codegen unit + panic=abort + strip
-
-### TypeScript/Frontend
-- Strict TypeScript
-- Path alias: `@/*` maps to `./src/*`
-- ESLint with next config
-
-## Automatic Tool Usage
-
-Claude MUST automatically invoke the following tools when the situation matches. This is MANDATORY, not optional.
-
-### BMAD Workflows (via `_bmad/` system)
-
-| Situation | Action | Command |
-|-----------|--------|---------|
-| New major feature or project | Create Product Brief | `/bmad CB` |
-| Need detailed specifications | Create PRD | `/bmad CP` |
-| Architecture decisions needed | Create Architecture | `/bmad CA` |
-| Break down into implementable stories | Create Epics & Stories | `/bmad CE` |
-| Rapid development without ceremony | Quick Dev | `/bmad QD` |
-| Code review needed | Code Review | `/bmad CR` |
-| Brainstorming ideas needed | Brainstorm Project | `/bmad BP` |
-| Multi-agent collaboration | Party Mode | `/bmad party` |
-
-### Superpowers Plugin Skills
-
-| Situation | Skill to Invoke |
-|-----------|-----------------|
-| **Before** creating any new feature, component, or functionality | `superpowers:brainstorming` |
-| Encountering any bug, test failure, or unexpected behavior | `superpowers:systematic-debugging` |
-| Implementing any feature or bugfix | `superpowers:test-driven-development` |
-| Multi-step implementation task | `superpowers:writing-plans` |
-| 2+ independent tasks that can run in parallel | `superpowers:dispatching-parallel-agents` |
-| About to claim work is complete, fixed, or passing | `superpowers:verification-before-completion` |
-| After completing major feature implementation | `superpowers:requesting-code-review` |
-| Receiving code review feedback | `superpowers:receiving-code-review` |
-
-### Local Skills (`.agents/skills/`)
-
-These skills provide project-specific guidance. Read the relevant SKILL.md before implementing:
-
-- `agent_planning_workflow` - Architect role workflow before complex changes
-- `ai_self_refinement` - Auto-update conventions when detecting drift
-- `rust_api_endpoint` - Creating Rust API endpoints
-- `nextjs_component` - Creating Next.js components
-- `db_migrations` - Database migrations with sqlx
-- `rust_debugging_workflow` - Rust debugging patterns
-- `playwright_e2e_testing` - E2E testing setup
-
-### Priority Order
-
-1. **Superpowers** skills for methodology (brainstorming, TDD, debugging)
-2. **BMAD** workflows for structured project work (PRD, architecture, stories)
-3. **Local skills** for implementation patterns specific to this codebase
-
-## CI Pipeline
-
-GitHub Actions runs on push/PR to main and develop:
-1. `cargo check --workspace --all-features`
-2. `cargo fmt --all -- --check`
-3. `cargo clippy --workspace --all-features -- -D warnings`
-4. `cargo test --workspace --all-features` (requires PostgreSQL with pgvector)
-5. `cargo audit` (security)
-6. `cargo llvm-cov` (coverage → Codecov)
-
-## Key Environment Variables
-
-```
-DATABASE_URL=postgres://signapps:password@localhost:5432/signapps  # auto-detected if not set
-JWT_SECRET=<32+ chars>
-STORAGE_MODE=fs                          # "fs" (default) or "s3"
-STORAGE_FS_ROOT=./data/storage           # filesystem root (fs mode)
-LLM_PROVIDER=ollama|vllm|openai|anthropic|llamacpp
-OLLAMA_URL / VLLM_URL / OPENAI_API_KEY / ANTHROPIC_API_KEY
-LLAMACPP_MODEL=                          # native GGUF model (name or path)
-MODELS_DIR=./data/models                 # model cache directory
-GPU_BACKEND=auto                         # auto|cuda|rocm|metal|vulkan|cpu
-STT_URL=                                 # empty = native whisper-rs
-TTS_URL=                                 # empty = native piper-rs
-OCR_URL=                                 # empty = native ocrs
-AI_URL=http://localhost:3005/api/v1      # AI service URL for voice pipeline
-
-# AI Multimodal Gateway (signapps-ai)
-RERANKER_URL=                            # TEI reranking endpoint
-COHERE_API_KEY=                          # Cohere cloud reranker
-MULTIMODAL_EMBED_URL=                    # SigLIP/CLIP HTTP service
-VISION_URL=                              # vLLM/Ollama multimodal endpoint
-IMAGEGEN_URL=                            # ComfyUI/A1111 API endpoint
-VIDEOGEN_URL=                            # Video generation service
-VIDEO_UNDERSTAND_URL=                    # Video analysis service
-AUDIOGEN_URL=                            # Audio generation service
-REPLICATE_API_KEY=                       # Replicate (video gen, audio gen)
-GEMINI_API_KEY=                          # Gemini (video understanding)
-AZURE_DOC_ENDPOINT=                      # Azure Document Intelligence
-AZURE_DOC_KEY=                           # Azure Document Intelligence key
-```
-
-See `.env.example` for the full list including native model paths.
-
-## Préférences de développement
-
-- **Frontend port**: Le serveur de développement frontend doit TOUJOURS être lancé sur le port 3000
-- **Authentification Locale**: Pour se connecter rapidement (bypass login manuel ou bugs de session), utilisez l'URL `http://localhost:3000/login?auto=admin`. Il est souvent nécessaire de charger cette URL une première fois, d'attendre environ 2 secondes, puis de la recharger une deuxième fois pour que la session soit bien validée.
-
-## Tooling Enterprise (Self-Driving Codebase)
-
-### Commandes rapides (justfile)
-
-```bash
-just                    # Liste toutes les recettes
-just check              # cargo check workspace
-just lint               # clippy -D warnings
-just test               # cargo nextest (3-5x plus rapide)
-just coverage           # llvm-cov → lcov.info
-just coverage-html      # Rapport HTML dans target/llvm-cov/html/
-just mutants            # Mutation testing (vérifie pertinence des tests)
-just deny               # Audit licences + vulnérabilités
-just ci                 # Pipeline CI complète locale
-just ci-quick           # Check + lint rapide
-just watch              # bacon (feedback live)
-just changelog          # Générer CHANGELOG.md
-just db-start           # Lancer PostgreSQL Docker
-just db-migrate         # Appliquer les migrations
-just run identity       # Lancer un service
-just status             # Health check services
-```
-
-### Feedback live (bacon)
-
-```bash
-bacon                   # Default: cargo check en continu
-bacon clippy            # Lint en continu
-bacon test              # Tests en continu
-# Raccourcis: c=check, l=clippy, t=test, f=fmt, d=doc
-```
-
-### Tests
-
-```bash
-just test               # Nextest (parallèle, rapide)
-just test-crate signapps-db   # Un crate seul
-just coverage-html      # Couverture HTML
-just mutants-crate signapps-common  # Mutation testing ciblé
-```
-
-### Règles Rust strictes
-
-1. **Pas de `.unwrap()`** en code de production — utiliser `?`, `.map_err()`, ou `anyhow::Context`
-2. **`Result<T, AppError>`** pour tous les handlers — jamais de panic
-3. **`thiserror`** pour les erreurs de librairie, **`anyhow`** pour les erreurs applicatives
-4. **Pas de `clone()` inutile** — préférer les références et lifetimes
-5. **Imports groupés** par std/external/crate (rustfmt.toml enforce)
-6. **100 chars max** par ligne (rustfmt.toml)
-7. **Complexité cognitive < 30** par fonction (clippy.toml)
-8. **< 150 lignes** par fonction (clippy.toml)
-9. **< 8 paramètres** par fonction (clippy.toml)
-10. **Conventional Commits** obligatoires : `feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `chore:`, `ci:`
+**signapps-runtime:** `RuntimeManager::ensure_database()`, `HardwareProfile::detect()`, `ModelManager`
 
 ### Structure pour nouvelle fonctionnalité
 
 ```
 # Backend — Nouveau handler
-1. Migration SQL dans migrations/NNN_<feature>.sql
-2. Modèle dans crates/signapps-db/src/models/<feature>.rs
-3. Repository dans crates/signapps-db/src/repositories/<feature>_repository.rs
-4. Handler dans services/signapps-<service>/src/handlers/<feature>.rs
-5. Routes dans services/signapps-<service>/src/main.rs
-6. Tests dans le même fichier (#[cfg(test)] mod tests)
+1. Migration SQL : migrations/NNN_<feature>.sql
+2. Modèle Rust  : crates/signapps-db/src/models/<feature>.rs
+   → #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
+   → /// rustdoc sur chaque champ public
+3. Repository   : crates/signapps-db/src/repositories/<feature>_repository.rs
+4. Handler      : services/signapps-<service>/src/handlers/<feature>.rs
+   → #[utoipa::path] sur chaque endpoint
+   → #[instrument] sur chaque fn publique
+   → Result<_, AppError> comme retour
+5. Routes       : services/signapps-<service>/src/main.rs
+6. Tests        : #[cfg(test)] mod tests dans le même fichier
 
 # Frontend — Nouveau composant
-1. Composant dans client/src/components/<domain>/<Component>.tsx
-2. Types dans client/src/types/<domain>.ts
-3. API dans client/src/lib/api/<domain>.ts
-4. Page dans client/src/app/<route>/page.tsx
-5. Store Zustand si état partagé dans client/src/stores/<domain>-store.ts
+1. Composant : client/src/components/<domain>/<Component>.tsx
+2. Types     : client/src/types/<domain>.ts
+3. API       : client/src/lib/api/<domain>.ts
+4. Page      : client/src/app/<route>/page.tsx
+5. Store     : client/src/stores/<domain>-store.ts (si état partagé)
 ```
 
-### CI Pipeline (10 jobs)
+---
 
-1. `check` — cargo check --workspace --all-features
-2. `check-offline` — SQLX_OFFLINE=true (sans DB)
-3. `fmt` — cargo fmt --check
-4. `clippy` — -D warnings (bloquant)
-5. `clippy-pedantic` — pedantic + nursery (advisory, non-bloquant)
-6. `test` — cargo nextest (avec PostgreSQL pgvector)
-7. `deny` — cargo-deny (licences + vulnérabilités)
-8. `security` — cargo audit
-9. `frontend` — ESLint + type-check + build
-10. `coverage` — llvm-cov → Codecov
+## Tooling Avancé
+
+### Outils installés
+
+| Outil | Config | Commande | Rôle |
+|-------|--------|----------|------|
+| `bacon` | `bacon.toml` | `bacon` / `just watch` | Feedback live en continu |
+| `cargo-nextest` | `.config/nextest.toml` | `just test` | Tests parallèles rapides |
+| `cargo-llvm-cov` | CI | `just coverage` | Couverture de code |
+| `cargo-mutants` | — | `just mutants` | Mutation testing |
+| `cargo-deny` | `deny.toml` | `just deny` | Licences + vulnérabilités deps |
+| `cargo-audit` | — | `just audit` | CVE advisories |
+| `git-cliff` | `cliff.toml` | `just changelog` | CHANGELOG auto (Conventional Commits) |
+| `just` | `justfile` | `just --list` | 35+ recettes (build, test, ci, db) |
+| `clippy` | `clippy.toml` | `just lint` | Lint strict |
+| `rustfmt` | `rustfmt.toml` | `just fmt` | Formatage |
+| `sqlx-cli` | — | `sqlx migrate run` | Migrations DB |
+| `utoipa` | Cargo.toml | compile-time | OpenAPI Code-First |
+
+### CI Pipeline (10 jobs parallèles)
+
+| # | Job | Bloquant | Description |
+|---|-----|----------|-------------|
+| 1 | `check` | oui | `cargo check --workspace --all-features` |
+| 2 | `check-offline` | oui | SQLX_OFFLINE=true (compile sans DB) |
+| 3 | `fmt` | oui | `cargo fmt --check` |
+| 4 | `clippy` | oui | `-D warnings` |
+| 5 | `clippy-pedantic` | **non** | pedantic + nursery (advisory) |
+| 6 | `test` | oui | `cargo nextest` + PostgreSQL pgvector |
+| 7 | `deny` | oui | `cargo-deny` (licences + vulns) |
+| 8 | `security` | oui | `cargo audit` |
+| 9 | `frontend` | oui | ESLint + type-check + build |
+| 10 | `coverage` | **non** | llvm-cov → Codecov |
+
+### Git Hooks (pre-commit)
+
+- **Secrets detection** : bloque les commits contenant `password`, `api_key`, `token`, `bearer`, `AWS_ACCESS_KEY`, `private_key`
+- **cargo fmt check** : bloque si code non formaté
+- **clippy** : avertissement (warn-only, TSC_STRICT=1 pour bloquer)
+
+---
+
+## Automatic Tool Usage
+
+Claude DOIT invoquer ces outils automatiquement. OBLIGATOIRE.
+
+### Superpowers Plugin Skills
+
+| Situation | Skill |
+|-----------|-------|
+| Avant toute nouvelle feature | `superpowers:brainstorming` |
+| Bug, test failure, comportement inattendu | `superpowers:systematic-debugging` |
+| Implémenter feature ou bugfix | `superpowers:test-driven-development` |
+| Tâche multi-étapes | `superpowers:writing-plans` |
+| 2+ tâches indépendantes parallélisables | `superpowers:dispatching-parallel-agents` |
+| Avant de déclarer "terminé" | `superpowers:verification-before-completion` |
+| Après implémentation majeure | `superpowers:requesting-code-review` |
+| Recevoir feedback de review | `superpowers:receiving-code-review` |
+
+### BMAD Workflows
+
+| Situation | Commande |
+|-----------|---------|
+| Nouvelle feature majeure | `/bmad CB` (Product Brief) |
+| Spécifications détaillées | `/bmad CP` (PRD) |
+| Architecture à décider | `/bmad CA` |
+| Découper en stories | `/bmad CE` |
+| Dev rapide sans cérémonie | `/bmad QD` |
+| Code review | `/bmad CR` |
+| Brainstorming | `/bmad BP` |
+
+### Local Skills (`.agents/skills/`)
+
+- `rust_api_endpoint` — Créer un endpoint Rust
+- `nextjs_component` — Créer un composant Next.js
+- `db_migrations` — Migrations avec sqlx
+- `rust_debugging_workflow` — Debug patterns
+- `playwright_e2e_testing` — Tests E2E
+
+### Priorité : Superpowers > BMAD > Local Skills
+
+---
+
+## Key Environment Variables
+
+```bash
+DATABASE_URL=postgres://signapps:password@localhost:5432/signapps
+JWT_SECRET=<32+ chars>
+STORAGE_MODE=fs                    # "fs" ou "s3"
+STORAGE_FS_ROOT=./data/storage
+LLM_PROVIDER=ollama|vllm|openai|anthropic|llamacpp
+MODELS_DIR=./data/models           # cache modèles AI
+GPU_BACKEND=auto                   # auto|cuda|rocm|metal|vulkan|cpu
+RUST_LOG=info,signapps=debug,sqlx=warn
+```
+
+Voir `.env.example` pour la liste complète.
+
+## Préférences de développement
+
+- **Frontend port** : TOUJOURS port 3000
+- **Auto-login dev** : `http://localhost:3000/login?auto=admin`
+- **PostgreSQL** : `just db-start` (Docker) ou natif
+- **Conventional Commits** : obligatoires (`feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `chore:`, `ci:`)
+- **Changelog** : `just changelog` après chaque release
