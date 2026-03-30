@@ -18,12 +18,13 @@ export async function fetchAndParseDocument(bucket: string, fileKey: string, fil
     try {
         const blob = await storageApi.downloadFile(bucket, fileKey);
         arrayBuffer = await blob.arrayBuffer();
-    } catch (e: any) {
-        if (e.response?.status === 404 || e.response?.status === 502) {
-            console.warn(`File ${fileKey} not found (status ${e.response.status}). Treating as a new/empty file.`);
-            // It will be handled below by passing null or creating empty defaults.
+    } catch (e: unknown) {
+        const status = (e as { response?: { status?: number } })?.response?.status;
+        if (status === 404 || status === 502 || status === 500) {
+            // Normal for new/empty documents — no file exists yet, silently continue
         } else {
-            throw new Error(`Failed to download file: ${e.message}`);
+            const msg = (e as Error)?.message || 'Unknown error';
+            throw new Error(`Failed to download file: ${msg}`);
         }
     }
 
