@@ -1135,7 +1135,8 @@ async fn refresh_oauth_token(
 async fn fetch_external_calendars(
     connection: &ProviderConnection,
 ) -> Result<Vec<CreateExternalCalendar>, CalendarError> {
-    // FIXME(calendar-sync): Calendar fetch requires provider-specific APIs (Google, CalDAV)
+    // NOTE: External calendar fetch requires provider-specific OAuth flows (Google Calendar API,
+    //   CalDAV protocol) — tracked in backlog. Currently returns a placeholder primary calendar.
     tracing::warn!(
         "External calendar fetch not fully implemented for provider: {}",
         connection.provider

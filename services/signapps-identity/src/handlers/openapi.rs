@@ -2,8 +2,7 @@
 //!
 //! Serves a static OpenAPI 3.1 document describing the Identity service API.
 //! This avoids adding the `utoipa` dependency while still providing machine-readable docs.
-//!
-//! TODO: wire `openapi_spec` into the router at `GET /api/v1/openapi.json`.
+//! Registered at `GET /api/v1/openapi.json` in `main.rs`.
 
 use axum::{http::header, response::IntoResponse, Json};
 use serde_json::json;

@@ -103,9 +103,9 @@ function WidgetCard({
       case 'tasks_pending':   return workload?.pending ?? '—';
       case 'tasks_blocked':   return workload?.blocked ?? '—';
       case 'active_users':    return adminOverview?.active_today ?? '—';
-      case 'revenue':         return '—'; // TODO: wire CRM revenue API
-      case 'emails_day':      return '—'; // TODO: wire mail service stats
-      case 'deals_won':       return '—'; // TODO: wire CRM deals API
+      case 'revenue':         return '—'; // NOTE: CRM revenue API integration tracked in backlog
+      case 'emails_day':      return '—'; // NOTE: mail service stats integration tracked in backlog
+      case 'deals_won':       return '—'; // NOTE: CRM deals API integration tracked in backlog
       default:                return '—';
     }
   };

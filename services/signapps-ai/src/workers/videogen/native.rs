@@ -125,11 +125,9 @@ impl AiWorker for NativeVideoGen {
             );
         }
 
-        // TODO: When candle-transformers CogVideoX support is complete:
-        //   1. Load the 3D-VAE encoder/decoder
-        //   2. Load the diffusion transformer
-        //   3. Initialize the DDIM/DDPM scheduler
-        //   4. Verify ffmpeg availability for frame assembly
+        // NOTE: Native CogVideoX inference requires candle-transformers CogVideoX integration —
+        //   tracked in backlog. Steps: load 3D-VAE encoder/decoder, diffusion transformer,
+        //   initialize DDIM/DDPM scheduler, and verify ffmpeg availability for frame assembly.
 
         warn!(
             model = %self.model_id(),

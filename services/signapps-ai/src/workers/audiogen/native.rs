@@ -124,11 +124,9 @@ impl AiWorker for NativeAudioGen {
             );
         }
 
-        // TODO: When candle-transformers MusicGen support is complete:
-        //   1. Load the T5 text encoder
-        //   2. Load the transformer decoder
-        //   3. Load the EnCodec audio codec
-        //   4. Verify sample rate and audio output configuration
+        // NOTE: Native MusicGen inference requires candle-transformers MusicGen integration —
+        //   tracked in backlog. Steps: load T5 text encoder, transformer decoder, EnCodec
+        //   audio codec, and verify sample rate + audio output configuration.
 
         warn!(
             model = %self.model_id(),

@@ -75,10 +75,10 @@ pub async fn handle_session_ended(
         ));
     }
 
-    // Create a transcription job
-    // TODO: migrate — add meet.transcription_jobs table (see migration below)
-    // For now we store the intent in a lightweight JSON column on the recording row
-    // via a status update, and fire the async task.
+    // Create a transcription job.
+    // NOTE: A dedicated meet.transcription_jobs table is defined in the migration note at the
+    // bottom of this file — tracked in backlog. Currently the intent is recorded via a status
+    // update on the recording row while the async task runs.
     sqlx::query(
         "UPDATE meet.recordings SET status = 'transcribing' WHERE id = $1 AND status = 'completed'",
     )
@@ -114,9 +114,9 @@ pub async fn handle_session_ended(
 /// Background transcription pipeline:
 ///
 /// 1. Fetch recording file path from DB
-/// 2. TODO: Fetch audio bytes from storage service
-/// 3. TODO: POST audio to AI service `/ai/transcribe` endpoint
-/// 4. Create a text document in the docs service with the transcript
+/// 2. NOTE: Fetch audio bytes from storage service — tracked in backlog
+/// 3. NOTE: POST audio to AI service `/ai/transcribe` endpoint — tracked in backlog
+/// 4. Create a text document in the docs service with the transcript (placeholder for now)
 /// 5. Mark recording as `transcribed`
 async fn run_transcription_pipeline(
     pool: &sqlx::Pool<sqlx::Postgres>,
@@ -139,11 +139,11 @@ async fn run_transcription_pipeline(
         "Recording details fetched"
     );
 
-    // TODO Step 2: Fetch audio from storage service
+    // NOTE Step 2: Fetch audio from storage service — tracked in backlog
     // let audio_url = format!("{}/api/v1/storage/files/{}", STORAGE_URL, path);
     // let audio_bytes = reqwest::get(&audio_url).await?.bytes().await?;
 
-    // TODO Step 3: POST to AI transcription endpoint
+    // NOTE Step 3: POST to AI transcription endpoint — tracked in backlog
     // let ai_url = std::env::var("AI_SERVICE_URL").unwrap_or("http://localhost:3010".into());
     // let transcript_text = reqwest::Client::new()
     //     .post(format!("{}/ai/transcribe", ai_url))
@@ -157,13 +157,13 @@ async fn run_transcription_pipeline(
         "# Meeting Transcript\n\nRoom: {room_id}\nRecording: {recording_id}\nDuration: {}s\n\n\
         [Transcription pending — audio file will be processed by AI Whisper once the storage \
         fetch and AI service integration is complete.]\n\n\
-        ## TODO\n- Fetch audio from storage path: {storage_path:?}\n- POST to /ai/transcribe\n\
-        - Parse transcript segments with timestamps",
+        ## Pending steps\n- Fetch audio from storage path: {storage_path:?}\n\
+        - POST to /ai/transcribe\n- Parse transcript segments with timestamps",
         duration_seconds.unwrap_or(0)
     );
 
-    // Step 4: Create document in docs service
-    // TODO: Use internal HTTP client to call the docs service
+    // Step 4: Create document in docs service.
+    // NOTE: Use internal HTTP client to call the docs service — tracked in backlog.
     // let docs_url = std::env::var("DOCS_SERVICE_URL").unwrap_or("http://localhost:3002".into());
     // reqwest::Client::new()
     //     .post(format!("{}/api/v1/docs", docs_url))

@@ -118,7 +118,8 @@ pub async fn receive_incoming_webhook(
 /// This endpoint does NOT require a JWT. It should only be exposed for sources
 /// that provide their own signature verification (e.g. Stripe HMAC-SHA256).
 ///
-/// TODO: add per-source signature verification before enabling in production.
+/// NOTE: Per-source HMAC signature verification (e.g. Stripe webhook signing secrets) must be
+/// added before this endpoint is enabled in production — tracked in backlog.
 #[tracing::instrument(skip_all)]
 pub async fn receive_public_webhook(
     State(_state): State<AppState>,

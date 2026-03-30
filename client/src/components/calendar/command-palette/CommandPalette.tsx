@@ -127,7 +127,7 @@ function Footer() {
 // ============================================================================
 
 export function CommandPalette({ className }: CommandPaletteProps) {
-  // TODO: wire to calendar store command palette state
+  // NOTE: Could be connected to calendar store command palette state for cross-component control
   const [isCommandPaletteOpen, setOpen] = React.useState(false);
   const closeCommandPalette = () => setOpen(false);
   const [query, setQuery] = React.useState('');

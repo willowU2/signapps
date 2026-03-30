@@ -52,7 +52,7 @@ export function ContainerTerminal({
     const { WebLinksAddon } = await import('@xterm/addon-web-links');
 
     // Import xterm CSS - using require to avoid TypeScript module resolution issues
-    // @ts-ignore
+    // @ts-expect-error xterm CSS import has no type declaration; safe to ignore at runtime
     await import('xterm/css/xterm.css').catch(() => {});
 
     const terminal = new Terminal({

@@ -59,6 +59,18 @@ interface FabricObjectWithId extends fabric.Object {
     linethrough?: boolean;
     textAlign?: string;
     getObjects?: () => FabricObjectWithId[];
+    // Connector properties (for line objects linking two shapes)
+    connectedFrom?: string;
+    connectedTo?: string;
+    // Smart chip properties
+    isSmartChip?: boolean;
+    chipType?: string;
+    // Workflow block properties
+    isWorkflowBlock?: boolean;
+    workflowType?: string;
+    // Table block properties
+    isTableBlock?: boolean;
+    subTargetCheck?: boolean;
 }
 
 interface CopiedTextFormat {
@@ -1062,9 +1074,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                 selectable: true,
                 evented: true,
                 // Store references to connected objects
-                // @ts-ignore
                 connectedFrom: a.id,
-                // @ts-ignore
                 connectedTo: b.id,
             }) as FabricObjectWithId
             line.id = Math.random().toString(36).substr(2, 9)
@@ -1192,9 +1202,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     left: 200,
                     top: 200,
                     lockScalingY: true, // Prevent breaking the pill shape
-                    // @ts-ignore
                     isSmartChip: true,
-                    // @ts-ignore
                     chipType: type
                 })
 
@@ -1295,9 +1303,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     const group = new fabricModule.Group(groupObjects, {
                         left: startX,
                         top: startY,
-                        // @ts-ignore
-                        isWorkflowBlock: true,
-                        // @ts-ignore
+                            isWorkflowBlock: true,
                         workflowType: type
                     })
                     canvas.add(group)
@@ -1375,9 +1381,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     const group = new fabricModule.Group(groupObjects, {
                         left: startX,
                         top: startY,
-                        // @ts-ignore
                         isTableBlock: true,
-                        // @ts-ignore
                         subTargetCheck: true // Required for editing items inside a group
                     })
                     canvas.add(group)

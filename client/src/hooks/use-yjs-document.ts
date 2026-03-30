@@ -92,7 +92,7 @@ export function useYjsDocument(
                 docId,
                 ydoc,
                 {
-                    // @ts-expect-error y-websocket accepts boolean for awareness
+                    // @ts-expect-error y-websocket WebsocketProviderOptions type omits `awareness` boolean; accepted at runtime
                     awareness: enableAwareness,
                     resyncInterval: 5000,
                     connect: false, // Don't connect immediately to avoid console spam if offline

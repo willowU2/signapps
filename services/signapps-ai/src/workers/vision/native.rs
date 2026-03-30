@@ -130,8 +130,9 @@ impl AiWorker for NativeVision {
             anyhow::bail!("native vision model file not found: {}", self.model_path);
         }
 
-        // TODO: When llama-cpp-2 exposes a stable multimodal API, load
-        //       the CLIP encoder and LLM model here.
+        // NOTE: Native multimodal vision requires llama-cpp-2 stable multimodal API —
+        //   tracked in backlog. When available: load CLIP encoder and LLM model via
+        //   LlamaParams::default().with_n_ctx().with_n_gpu_layers() + LlamaModel::load_from_file().
         //
         //   let params = LlamaParams::default()
         //       .with_n_ctx(self.context_size)

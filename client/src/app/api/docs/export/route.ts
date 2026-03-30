@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-// @ts-ignore
+// @ts-expect-error html-to-docx has no published TypeScript types
 import htmlToDocx from 'html-to-docx';
 
 export async function POST(req: Request) {

@@ -69,7 +69,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
         ydoc,
         {
           connect: false,
-          // @ts-expect-error y-websocket accepts boolean for awareness
+          // @ts-expect-error y-websocket WebsocketProviderOptions type omits `awareness` boolean; accepted at runtime
           awareness: true,
           resyncInterval: 5000, // Resync every 5 seconds
         }
