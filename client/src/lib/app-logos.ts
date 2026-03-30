@@ -1,141 +1,111 @@
 /**
- * Official logo URLs for popular Docker/self-hosted apps.
+ * App logo resolver — serves logos from local /app-logos/ directory.
  *
- * Used as fallback when the app store doesn't provide an icon or the icon URL is broken.
- * Logos are sourced from official GitHub repos, Docker Hub, or CDNs.
+ * Logos are pre-downloaded in public/app-logos/ (no external requests at runtime).
+ * Mapping: app name/id → local file path.
  */
 
-const APP_LOGOS: Record<string, string> = {
-  // ── Productivity & Office ───────────────────────────────────────
-  nextcloud: 'https://raw.githubusercontent.com/nextcloud/promo/master/nextcloud-icon.svg',
-  onlyoffice: 'https://raw.githubusercontent.com/nicehash/NiceHashQuickMiner/main/images/onlyoffice.png',
-  collabora: 'https://www.collaboraoffice.com/wp-content/uploads/2022/03/cropped-collabora-productivity-nav-icon.png',
-  cryptpad: 'https://raw.githubusercontent.com/xwiki-labs/cryptpad/main/customize.dist/CryptPad_logo.svg',
-  etherpad: 'https://raw.githubusercontent.com/ether/etherpad-lite/develop/src/static/favicon.ico',
-  hedgedoc: 'https://raw.githubusercontent.com/hedgedoc/hedgedoc/develop/public/icons/android-chrome-512x512.png',
-  bookstack: 'https://raw.githubusercontent.com/BookStackApp/BookStack/development/public/icon.png',
-  wiki: 'https://raw.githubusercontent.com/requarks/wiki/main/assets/favicon.png',
-  'wiki.js': 'https://raw.githubusercontent.com/requarks/wiki/main/assets/favicon.png',
-  wikijs: 'https://raw.githubusercontent.com/requarks/wiki/main/assets/favicon.png',
-  outline: 'https://raw.githubusercontent.com/outline/outline/main/public/images/icon-512.png',
+/** Map app name/id/image to local logo filename (without extension) */
+const APP_LOGO_MAP: Record<string, string> = {
+  // Productivity & Office
+  nextcloud: 'nextcloud', onlyoffice: 'onlyoffice', collabora: 'collabora',
+  bookstack: 'bookstack', outline: 'outline', wiki: 'wikijs', 'wiki.js': 'wikijs', wikijs: 'wikijs',
+  cryptpad: 'cryptpad', etherpad: 'etherpad', hedgedoc: 'hedgedoc',
 
-  // ── Communication ──────────────────────────────────────────────
-  'rocket.chat': 'https://raw.githubusercontent.com/RocketChat/Rocket.Chat.Artwork/master/Logos/2020/png/logo-dark.png',
-  rocketchat: 'https://raw.githubusercontent.com/RocketChat/Rocket.Chat.Artwork/master/Logos/2020/png/logo-dark.png',
-  mattermost: 'https://raw.githubusercontent.com/nicehash/NiceHashQuickMiner/main/images/mattermost.png',
-  element: 'https://element.io/images/logo-mark-primary.svg',
-  matrix: 'https://matrix.org/images/matrix-logo.svg',
-  jitsi: 'https://raw.githubusercontent.com/jitsi/jitsi-meet/master/images/oig512.png',
+  // Communication
+  'rocket.chat': 'rocketchat', rocketchat: 'rocketchat', mattermost: 'mattermost',
+  element: 'element', jitsi: 'jitsi', zulip: 'zulip', slack: 'slack', discord: 'discord',
 
-  // ── Media & Entertainment ──────────────────────────────────────
-  jellyfin: 'https://raw.githubusercontent.com/jellyfin/jellyfin-ux/master/branding/SVG/icon-transparent.svg',
-  plex: 'https://www.plex.tv/wp-content/themes/flavor/assets/img/plex-logo.svg',
-  emby: 'https://emby.media/resources/logowhite_1881.png',
-  navidrome: 'https://raw.githubusercontent.com/navidrome/navidrome/master/resources/logo-192x192.png',
-  immich: 'https://raw.githubusercontent.com/immich-app/immich/main/docs/static/img/immich-logo.svg',
-  photoprism: 'https://raw.githubusercontent.com/photoprism/photoprism/develop/assets/static/icons/logo/logo-192x192.png',
+  // Media & Entertainment
+  jellyfin: 'jellyfin', plex: 'plex', emby: 'emby', immich: 'immich',
+  photoprism: 'photoprism', navidrome: 'navidrome', sonarr: 'sonarr', radarr: 'radarr',
+  overseerr: 'overseerr', audiobookshelf: 'audiobookshelf',
 
-  // ── Development & CI ───────────────────────────────────────────
-  gitea: 'https://raw.githubusercontent.com/go-gitea/gitea/main/public/assets/img/gitea.svg',
-  gitlab: 'https://about.gitlab.com/images/press/press-kit-icon.svg',
-  drone: 'https://raw.githubusercontent.com/harness/drone/master/web/public/logo.svg',
-  jenkins: 'https://www.jenkins.io/images/logos/jenkins/jenkins.svg',
-  'code-server': 'https://raw.githubusercontent.com/coder/code-server/main/src/browser/media/pwa-icon-512.png',
-  coder: 'https://raw.githubusercontent.com/coder/code-server/main/src/browser/media/pwa-icon-512.png',
-  portainer: 'https://raw.githubusercontent.com/portainer/portainer/develop/app/assets/ico/favicon.svg',
-  n8n: 'https://raw.githubusercontent.com/n8n-io/n8n/master/assets/n8n-logo.png',
+  // Development & CI
+  gitea: 'gitea', gitlab: 'gitlab', github: 'github', jenkins: 'jenkins',
+  portainer: 'portainer', n8n: 'n8n', coder: 'coder', 'code-server': 'coder', drone: 'drone',
 
-  // ── Monitoring & Infra ─────────────────────────────────────────
-  grafana: 'https://raw.githubusercontent.com/grafana/grafana/main/public/img/grafana_icon.svg',
-  prometheus: 'https://raw.githubusercontent.com/prometheus/docs/main/static/prometheus_logo_orange_circle.svg',
-  uptime: 'https://raw.githubusercontent.com/louislam/uptime-kuma/master/public/icon.svg',
-  'uptime-kuma': 'https://raw.githubusercontent.com/louislam/uptime-kuma/master/public/icon.svg',
-  traefik: 'https://raw.githubusercontent.com/traefik/traefik/master/docs/content/assets/img/traefik.logo.png',
-  nginx: 'https://raw.githubusercontent.com/nginxinc/docker-nginx/master/logo.svg',
-  caddy: 'https://caddyserver.com/resources/images/caddy-circle-lock.svg',
+  // No-code / Low-code
+  nocodb: 'nocodb', appsmith: 'appsmith', directus: 'directus', strapi: 'strapi', supabase: 'supabase',
 
-  // ── Databases ──────────────────────────────────────────────────
-  postgres: 'https://raw.githubusercontent.com/docker-library/docs/01c12653951b2fe592c1f93a13b4e289ada0e3a1/postgres/logo.png',
-  postgresql: 'https://raw.githubusercontent.com/docker-library/docs/01c12653951b2fe592c1f93a13b4e289ada0e3a1/postgres/logo.png',
-  mariadb: 'https://raw.githubusercontent.com/docker-library/docs/74e3b3d4d60f68f1a22bfb9c08b03e5f3bfbfafe/mariadb/logo.png',
-  mysql: 'https://raw.githubusercontent.com/docker-library/docs/c408469abbac35ad1e4a50a6618836420eb9502e/mysql/logo.png',
-  mongodb: 'https://raw.githubusercontent.com/docker-library/docs/01c12653951b2fe592c1f93a13b4e289ada0e3a1/mongo/logo.png',
-  redis: 'https://raw.githubusercontent.com/docker-library/docs/01c12653951b2fe592c1f93a13b4e289ada0e3a1/redis/logo.png',
+  // Monitoring & Infra
+  grafana: 'grafana', prometheus: 'prometheus', traefik: 'traefik', nginx: 'nginx', caddy: 'caddy',
+  netdata: 'netdata', sentry: 'sentry', plausible: 'plausible', umami: 'umami', matomo: 'matomo',
+  uptime: 'uptime-kuma', 'uptime-kuma': 'uptime-kuma',
 
-  // ── Storage & Files ────────────────────────────────────────────
-  minio: 'https://raw.githubusercontent.com/minio/minio/master/.github/logo.svg',
-  filebrowser: 'https://raw.githubusercontent.com/filebrowser/frontend/master/public/img/logo.svg',
-  seafile: 'https://raw.githubusercontent.com/haiwen/seafile/master/image/seafile-logo.png',
-  syncthing: 'https://raw.githubusercontent.com/syncthing/syncthing/main/assets/logo-128.png',
+  // Databases
+  postgres: 'postgresql', postgresql: 'postgresql', mariadb: 'mariadb', mysql: 'mysql',
+  mongodb: 'mongodb', redis: 'redis', elasticsearch: 'elasticsearch', meilisearch: 'meilisearch',
 
-  // ── Security & VPN ─────────────────────────────────────────────
-  vaultwarden: 'https://raw.githubusercontent.com/dani-garcia/vaultwarden/main/resources/vaultwarden-icon.svg',
-  bitwarden: 'https://raw.githubusercontent.com/bitwarden/brand/master/icons/icon.svg',
-  wireguard: 'https://www.wireguard.com/img/wireguard.svg',
-  pihole: 'https://raw.githubusercontent.com/pi-hole/web/master/img/logo.svg',
-  'pi-hole': 'https://raw.githubusercontent.com/pi-hole/web/master/img/logo.svg',
-  adguard: 'https://raw.githubusercontent.com/nicehash/NiceHashQuickMiner/main/images/adguard-home.png',
-  'adguard-home': 'https://raw.githubusercontent.com/nicehash/NiceHashQuickMiner/main/images/adguard-home.png',
-  authentik: 'https://raw.githubusercontent.com/goauthentik/authentik/main/web/icons/icon.png',
-  keycloak: 'https://raw.githubusercontent.com/keycloak/keycloak/main/themes/src/main/resources/theme/keycloak.v2/login/resources/img/keycloak-logo-text.svg',
+  // Storage
+  minio: 'minio', syncthing: 'syncthing', filebrowser: 'filebrowser', seafile: 'seafile',
+  duplicati: 'duplicati',
 
-  // ── Home Automation ────────────────────────────────────────────
-  'home-assistant': 'https://raw.githubusercontent.com/home-assistant/assets/master/logo/logo-small.png',
-  homeassistant: 'https://raw.githubusercontent.com/home-assistant/assets/master/logo/logo-small.png',
-  nodered: 'https://raw.githubusercontent.com/node-red/node-red/master/packages/node_modules/node-red/node-red-256.png',
-  'node-red': 'https://raw.githubusercontent.com/node-red/node-red/master/packages/node_modules/node-red/node-red-256.png',
-  mosquitto: 'https://mosquitto.org/images/mosquitto-text-side-28.png',
+  // Security & VPN
+  vaultwarden: 'bitwarden', bitwarden: 'bitwarden', wireguard: 'wireguard',
+  pihole: 'pihole', 'pi-hole': 'pihole', adguard: 'adguard', 'adguard-home': 'adguard',
+  authentik: 'authentik', keycloak: 'keycloak', tailscale: 'tailscale', crowdsec: 'crowdsec',
 
-  // ── Misc ───────────────────────────────────────────────────────
-  wordpress: 'https://s.w.org/style/images/about/WordPress-logotype-simplified.png',
-  ghost: 'https://raw.githubusercontent.com/TryGhost/Ghost/main/ghost/admin/public/assets/icons/icon-512x512.png',
-  freshrss: 'https://raw.githubusercontent.com/FreshRSS/FreshRSS/edge/p/themes/icons/FreshRSS-logo.svg',
-  homer: 'https://raw.githubusercontent.com/bastienwirtz/homer/main/public/logo.png',
-  homarr: 'https://raw.githubusercontent.com/ajnart/homarr/dev/public/imgs/logo/logo.svg',
-  dashy: 'https://raw.githubusercontent.com/Lissy93/dashy/master/public/web-icons/dashy-logo.png',
-  heimdall: 'https://raw.githubusercontent.com/linuxserver/Heimdall/master/public/img/heimdall-icon-small.png',
-  mailpit: 'https://raw.githubusercontent.com/axllent/mailpit/develop/server/ui-src/favicon.svg',
-  metube: 'https://raw.githubusercontent.com/alexta69/metube/master/favicon/android-chrome-512x512.png',
-  stirlingpdf: 'https://raw.githubusercontent.com/Stirling-Tools/Stirling-PDF/main/docs/stirling.png',
-  'stirling-pdf': 'https://raw.githubusercontent.com/Stirling-Tools/Stirling-PDF/main/docs/stirling.png',
-  paperless: 'https://raw.githubusercontent.com/paperless-ngx/paperless-ngx/dev/resources/logo/web/png/Black%20logo%20-%20no%20background.png',
-  'paperless-ngx': 'https://raw.githubusercontent.com/paperless-ngx/paperless-ngx/dev/resources/logo/web/png/Black%20logo%20-%20no%20background.png',
+  // Home Automation
+  'home-assistant': 'homeassistant', homeassistant: 'homeassistant',
+  nodered: 'nodered', 'node-red': 'nodered', frigate: 'frigate',
+
+  // CMS
+  wordpress: 'wordpress', ghost: 'ghost',
+
+  // Misc
+  freshrss: 'freshrss', dashy: 'dashy', homarr: 'homarr',
+  paperless: 'paperless', 'paperless-ngx': 'paperless',
+  stirlingpdf: 'stirlingpdf', 'stirling-pdf': 'stirlingpdf',
+  mealie: 'mealie', excalidraw: 'excalidraw', drawio: 'drawio', 'draw.io': 'drawio',
+  firefly: 'firefly', 'firefly-iii': 'firefly',
+  changedetection: 'changedetection', mailpit: 'mailpit', metube: 'metube',
+
+  // Infra
+  docker: 'docker', kubernetes: 'kubernetes', rancher: 'rancher',
+  harbor: 'harbor', vault: 'vault', consul: 'consul', terraform: 'terraform', ansible: 'ansible',
 };
 
 /**
- * Get the official logo URL for a given app.
+ * Get the local logo path for an app.
  *
- * Tries to match by:
- * 1. Exact app id/name match
- * 2. Docker image name (without registry/tag)
- * 3. Normalized lowercase match
- *
- * @returns URL string or null if no logo found
+ * Resolution:
+ * 1. Exact match by app id/name
+ * 2. Docker image base name
+ * 3. Fuzzy match (contains)
+ * 4. null (fallback to Package icon)
  */
 export function getAppLogo(appIdOrName: string, dockerImage?: string): string | null {
   const key = appIdOrName.toLowerCase().trim();
 
   // Direct match
-  if (APP_LOGOS[key]) return APP_LOGOS[key];
-
-  // Try without common prefixes
-  const stripped = key
-    .replace(/^linuxserver\//, '')
-    .replace(/^lscr\.io\//, '')
-    .replace(/^ghcr\.io\//, '')
-    .replace(/^docker\.io\//, '');
-  if (APP_LOGOS[stripped]) return APP_LOGOS[stripped];
-
-  // Try from Docker image
-  if (dockerImage) {
-    const imgBase = dockerImage.split(':')[0].split('/').pop()?.toLowerCase() || '';
-    if (APP_LOGOS[imgBase]) return APP_LOGOS[imgBase];
+  if (APP_LOGO_MAP[key]) {
+    return `/app-logos/${APP_LOGO_MAP[key]}.png`;
   }
 
-  // Fuzzy match — check if any key is contained in the app name
-  for (const [logoKey, url] of Object.entries(APP_LOGOS)) {
+  // Strip common Docker prefixes
+  const stripped = key
+    .replace(/^linuxserver\//, '')
+    .replace(/^lscr\.io\/linuxserver\//, '')
+    .replace(/^ghcr\.io\/[^/]+\//, '')
+    .replace(/^docker\.io\//, '')
+    .replace(/^library\//, '');
+  if (APP_LOGO_MAP[stripped]) {
+    return `/app-logos/${APP_LOGO_MAP[stripped]}.png`;
+  }
+
+  // Docker image base name
+  if (dockerImage) {
+    const imgBase = dockerImage.split(':')[0].split('/').pop()?.toLowerCase() || '';
+    if (APP_LOGO_MAP[imgBase]) {
+      return `/app-logos/${APP_LOGO_MAP[imgBase]}.png`;
+    }
+  }
+
+  // Fuzzy match
+  for (const [logoKey, filename] of Object.entries(APP_LOGO_MAP)) {
     if (key.includes(logoKey) || logoKey.includes(key)) {
-      return url;
+      return `/app-logos/${filename}.png`;
     }
   }
 
