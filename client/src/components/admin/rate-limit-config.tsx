@@ -95,7 +95,7 @@ export function RateLimitConfig() {
       setEditingId(null);
     } catch (error) {
       toast.error("Impossible d'enregistrer la règle de limitation");
-      console.debug(error);
+      console.warn(error);
     }
   };
 
@@ -107,7 +107,7 @@ export function RateLimitConfig() {
       toast.success("Règle supprimée");
     } catch (error) {
       toast.error("Impossible de supprimer la règle");
-      console.debug(error);
+      console.warn(error);
     }
   };
 
@@ -116,7 +116,7 @@ export function RateLimitConfig() {
       setRules(rules.map((r) => (r.id === id ? { ...r, isActive: !r.isActive } : r)));
     } catch (error) {
       toast.error("Impossible de modifier l'état de la règle");
-      console.debug(error);
+      console.warn(error);
     }
   };
 

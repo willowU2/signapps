@@ -85,7 +85,7 @@ test.describe('Storage Page', () => {
   test.describe('Dashboard Tab', () => {
     test('should display storage overview stats', async ({ page }) => {
       // Dashboard should show storage statistics
-      await page.waitForTimeout(1000);
+      await page.locator('[class*="Card"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       // Look for stats cards or overview content
       const statsContent = page.locator('[class*="Card"]');
@@ -94,7 +94,7 @@ test.describe('Storage Page', () => {
     });
 
     test('should display health gauge', async ({ page }) => {
-      await page.waitForTimeout(1000);
+      await page.locator('[class*="Card"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       // Health gauge or utilization display
       await expect(page.getByText(/utilisation/i)).toBeVisible().catch(() => {
@@ -139,7 +139,7 @@ test.describe('Storage Page', () => {
     });
 
     test('should display file list header', async ({ page }) => {
-      await page.waitForTimeout(1000);
+      await page.locator('text=Name').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       // File list should have column headers
       await expect(page.getByText('Name')).toBeVisible();
@@ -148,7 +148,8 @@ test.describe('Storage Page', () => {
     });
 
     test('should display files or empty message', async ({ page }) => {
-      await page.waitForTimeout(1500);
+      await page.locator('[class*="CardContent"] .divide-y > div, text=/no files found/i').first()
+        .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       // Either files are listed or empty message
       const hasFiles = await page.locator('[class*="CardContent"] .divide-y > div').count() > 0;
@@ -160,7 +161,7 @@ test.describe('Storage Page', () => {
     test('should filter files by search', async ({ page }) => {
       const searchInput = page.getByPlaceholder(/search files/i);
       await searchInput.fill('test');
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(200); // debounce
 
       // Search should filter the list (visual verification)
     });
@@ -288,7 +289,7 @@ test.describe('Storage Page', () => {
     });
 
     test('should display RAID overview', async ({ page }) => {
-      await page.waitForTimeout(1000);
+      await page.locator('[class*="Card"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       // RAID tab should show arrays or empty state
       const content = page.locator('[class*="Card"]');
@@ -304,7 +305,7 @@ test.describe('Storage Page', () => {
     });
 
     test('should display shares list', async ({ page }) => {
-      await page.waitForTimeout(1000);
+      await page.locator('main, [class*="Content"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
       // Should show shares or empty state
       const content = page.locator('main, [class*="Content"]');

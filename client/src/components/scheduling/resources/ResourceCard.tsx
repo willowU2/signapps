@@ -89,6 +89,7 @@ export function ResourceCard({
       {/* Image */}
       {resource.imageUrl && (
         <div className="h-32 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={resource.imageUrl}
             alt={resource.name}

@@ -67,10 +67,12 @@ export function TasksDueInCalendar({ date, className, maxItems = 5, onTaskClick 
   const [tasks, setTasks] = useState<SimpleTask[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const dateKey = date.toISOString().slice(0, 10);
   useEffect(() => {
     setLoading(true);
     fetchTasksDueOn(date).then(t => { setTasks(t); setLoading(false); });
-  }, [date.toISOString().slice(0, 10)]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateKey]);
 
   if (loading) return <div className="h-6 animate-pulse bg-muted/40 rounded" />;
   if (tasks.length === 0) return null;

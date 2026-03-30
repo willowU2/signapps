@@ -118,7 +118,7 @@ export function CronManager() {
       setEditingId(null);
     } catch (error) {
       toast.error("Impossible d'enregistrer la tâche cron");
-      console.debug(error);
+      console.warn(error);
     }
   };
 
@@ -130,7 +130,7 @@ export function CronManager() {
       toast.success("Tâche cron supprimée");
     } catch (error) {
       toast.error("Impossible de supprimer la tâche cron");
-      console.debug(error);
+      console.warn(error);
     }
   };
 
@@ -139,7 +139,7 @@ export function CronManager() {
       setJobs(jobs.map((j) => (j.id === id ? { ...j, isActive: !j.isActive } : j)));
     } catch (error) {
       toast.error("Impossible de modifier l'état de la tâche");
-      console.debug(error);
+      console.warn(error);
     }
   };
 

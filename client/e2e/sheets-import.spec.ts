@@ -32,8 +32,12 @@ test.describe('Sheets XLSX Import', () => {
     await fileInput.setInputFiles(XLSX_PATH);
     console.log('File set, waiting for import processing...');
 
-    // Wait for import - this is 100K+ cells, may take a while
-    await page.waitForTimeout(30000);
+    // Wait for import to complete: sheet tabs or grid cells become visible (100K+ cells)
+    await page.locator(
+      '[data-testid="import-complete"], div[class*="border-r"][class*="border-b"], [data-testid="sheet-tab"]'
+    ).first().waitFor({ state: 'visible', timeout: 90_000 });
+    await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
+    console.log('Import complete indicator detected');
 
     // Close any welcome/onboarding dialogs
     const closeBtn = page.locator('button:has-text("Actualiser"), button:has-text("Fermer"), button:has-text("OK"), [data-slot="dialog-close"]');

@@ -165,7 +165,7 @@ export const editorMenuConfig: DynamicMenuCategory[] = [
             const text = await navigator.clipboard.readText();
             e?.chain().focus().insertContent(text).run();
           } catch (err) {
-            console.debug('Failed to read clipboard: ', err);
+            console.warn('Failed to read clipboard: ', err);
           }
         }
       },
@@ -174,7 +174,7 @@ export const editorMenuConfig: DynamicMenuCategory[] = [
             const text = await navigator.clipboard.readText();
             e?.chain().focus().insertContent(text).run();
           } catch (err) {
-            console.debug('Failed to read clipboard: ', err);
+            console.warn('Failed to read clipboard: ', err);
           }
         }
       },

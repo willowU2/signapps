@@ -3,7 +3,7 @@
 import { SpinnerInfinity } from 'spinners-react';
 
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -273,7 +273,7 @@ export default function StoragePage() {
       toast.success("Renommé avec succès");
       fetchFiles();
     } catch (error) {
-      console.debug(error);
+      console.warn(error);
       toast.error("Échec du renommage");
     }
   };
@@ -291,7 +291,7 @@ export default function StoragePage() {
       toast.success("Déplacé avec succès");
       fetchFiles();
     } catch (error) {
-      console.debug(error);
+      console.warn(error);
       toast.error("Échec du déplacement");
     }
   };
@@ -308,7 +308,7 @@ export default function StoragePage() {
     router.push(`/storage?tab=${tab}`, { scroll: false });
   };
 
-  const DEFAULT_BUCKETS = ['documents', 'images', 'backups', 'keep', 'media'];
+  const DEFAULT_BUCKETS = useMemo(() => ['documents', 'images', 'backups', 'keep', 'media'], []);
 
   const seedDefaultBuckets = useCallback(async () => {
     const created: Bucket[] = [];
@@ -321,7 +321,7 @@ export default function StoragePage() {
       }
     }
     return created;
-  }, []);
+  }, [DEFAULT_BUCKETS]);
 
   const fetchBuckets = useCallback(async () => {
     try {
@@ -345,7 +345,9 @@ export default function StoragePage() {
       setCurrentBucket('');
       setLoading(false);
     }
-  }, [currentBucket, seedDefaultBuckets]);
+  // currentBucket not needed as dep — only used to reset on error path, not a trigger
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seedDefaultBuckets]);
 
   const fetchFiles = useCallback(async () => {
     setLoading(true);
@@ -440,12 +442,12 @@ export default function StoragePage() {
         setFiles([...folders, ...files]);
       }
     } catch (e) {
-      console.debug(e);
+      console.warn(e);
       setFiles([]);
     } finally {
       setLoading(false);
     }
-  }, [currentBucket, currentPath, driveView]);
+  }, [currentBucket, currentPath, driveView, buckets]);
 
   useEffect(() => {
     if (activeTab === 'files') {
@@ -474,7 +476,7 @@ export default function StoragePage() {
           }));
           setFiles(searchFiles);
         }).catch(err => {
-          console.debug("Échec de la recherche", err);
+          console.warn("Échec de la recherche", err);
           setFiles([]);
         });
       } else if (!search.trim() && activeTab === 'files') {
@@ -540,7 +542,7 @@ export default function StoragePage() {
       }
       fetchFiles();
     } catch (e) {
-      console.debug(e);
+      console.warn(e);
       toast.error("Échec de la suppression");
     }
   };

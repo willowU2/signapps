@@ -50,7 +50,7 @@ export function MoveToSheet({
       await onMove(selectedPath);
       onOpenChange(false);
     } catch (error) {
-      console.debug(error);
+      console.warn(error);
     } finally {
       setLoading(false);
     }

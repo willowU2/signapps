@@ -27,12 +27,12 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
           navigator.serviceWorker.controller
         ) {
           // New version available -- could show a toast here in the future
-          console.info("[SW] New service worker activated.");
+          console.warn("[SW] New service worker activated.");
         }
       });
     });
 
-    console.info("[SW] Service worker registered:", registration.scope);
+    console.warn("[SW] Service worker registered:", registration.scope);
     return registration;
   } catch (error) {
     console.error("[SW] Registration failed:", error);

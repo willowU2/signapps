@@ -94,7 +94,7 @@ export function VideoPlayerWithChapters() {
           </div>
         ) : (
           <div className="space-y-2">
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+            
             <video ref={videoRef} src={videoUrl} className="w-full rounded-lg bg-black max-h-64" onClick={togglePlay} />
 
             {/* Progress bar with chapter markers */}

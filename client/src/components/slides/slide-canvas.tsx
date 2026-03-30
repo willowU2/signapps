@@ -158,7 +158,7 @@ export function SlideCanvas({
             let currentGhostText = "";
             let ghostedObject: FabricObjectWithId | null = null;
 
-            (c as fabric.IText).on('text:changed', (e: { target?: FabricObjectWithId }) => {
+            (c as unknown as fabric.IText).on('text:changed' as never, (e: { target?: FabricObjectWithId }) => {
                 const target = e.target;
                 if (!target || target.isEditing === false) return;
 

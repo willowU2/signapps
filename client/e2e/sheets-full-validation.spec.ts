@@ -31,7 +31,11 @@ test.describe('Full Excel Validation', () => {
     const fi = page.locator('input[type="file"][accept*=".xlsx"]');
     await expect(fi).toBeAttached({ timeout: 5000 });
     await fi.setInputFiles(XLSX_PATH);
-    await page.waitForTimeout(60000);
+    // Wait for import to complete: sheet tabs or grid cells become visible
+    await page.locator(
+      '[data-testid="import-complete"], div[class*="border-r"][class*="border-b"], [data-testid="sheet-tab"]'
+    ).first().waitFor({ state: 'visible', timeout: 90_000 });
+    await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
 
     // Close modals
     await page.keyboard.press('Escape');

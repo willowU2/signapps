@@ -58,7 +58,7 @@ export function createSyncConnection(
 
       eventSource.onopen = () => {
         reconnectAttempts = 0;
-        console.log("[Preferences Sync] Connecté");
+        console.warn("[Preferences Sync] Connecté");
       };
 
       eventSource.onmessage = (e) => {
@@ -123,7 +123,7 @@ export function useCrossDeviceSync(enabled = true) {
 
   const handleEvent = useCallback(
     (event: SyncEvent) => {
-      console.log("[Preferences Sync] Received event:", event.type);
+      console.warn("[Preferences Sync] Received event:", event.type);
 
       switch (event.type) {
         case "update":
@@ -240,7 +240,7 @@ export function useBroadcastSync() {
       // Ignore messages from this tab
       if (message.deviceId === deviceId) return;
 
-      console.log("[Broadcast Sync] Received:", message.type);
+      console.warn("[Broadcast Sync] Received:", message.type);
 
       if (message.type === "update" && message.section && message.data) {
         usePreferencesStore.setState((state) => ({
@@ -290,8 +290,9 @@ export function useBroadcastSync() {
 /**
  * Hook to sync via localStorage events (fallback)
  */
-export function useStorageSync() {
+export function useStorageSync(enabled = true) {
   useEffect(() => {
+    if (!enabled) return;
     if (typeof window === "undefined") return;
 
     const handleStorage = (e: StorageEvent) => {
@@ -311,7 +312,7 @@ export function useStorageSync() {
 
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-  }, []);
+  }, [enabled]);
 }
 
 // ============================================================================
@@ -343,10 +344,9 @@ export function usePreferencesSync(config: SyncConfig = {}) {
   // Same-browser sync via BroadcastChannel
   useBroadcastSync();
 
-  // Fallback via localStorage events
-  if (storageFallback) {
-    useStorageSync();
-  }
+  // Fallback via localStorage events — called unconditionally; storageFallback
+  // controls behaviour inside the hook to satisfy rules-of-hooks
+  useStorageSync(storageFallback);
 
   return {
     isConnecté: sseSync.isConnecté,

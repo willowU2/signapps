@@ -113,7 +113,7 @@ export default function SchedulerPage() {
     },
   });
 
-  const jobs = schedulerData?.jobs ?? [];
+  const jobs = useMemo(() => schedulerData?.jobs ?? [], [schedulerData?.jobs]);
   const stats = schedulerData?.stats ?? null;
   const runningJobs = schedulerData?.runningJobs ?? [];
 

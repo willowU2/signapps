@@ -117,6 +117,7 @@ export function TotpSetup() {
           <div className="text-sm text-muted-foreground">
             <p className="font-medium mb-2">Step 1: Scan with your authenticator app</p>
             <div className="flex justify-center rounded-lg border border-border bg-card p-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={setupData.qr_code}
                 alt="TOTP QR Code"

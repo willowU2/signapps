@@ -52,6 +52,7 @@ export function SlidesContent({ documentId, documentName, initialData }: SlidesC
             loadInitialData(initialData)
             setIsInitialized(true)
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialData, isInitialized, slideState.isConnecté])
 
     const loadInitialData = async (data: SlidesFileFormat) => {
@@ -127,6 +128,7 @@ export function SlidesContent({ documentId, documentName, initialData }: SlidesC
             console.error("Erreur enregistrement slides", err)
             toast.error("Erreur d'enregistrement: " + err.message, { id: tId })
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [documentName, slideState])
 
     // Export to PPTX (multi-slide support)
@@ -218,7 +220,7 @@ export function SlidesContent({ documentId, documentName, initialData }: SlidesC
                                 x, y, w, h
                             })
                         } catch (err) {
-                            console.debug("Could not export image to PPTX", err)
+                            console.warn("Could not export image to PPTX", err)
                         }
                     }
                 })

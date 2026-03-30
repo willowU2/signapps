@@ -143,6 +143,7 @@ export function BrandingConfig() {
           className="border rounded-lg p-6 w-full max-w-xs"
           style={{ borderColor: preview.primaryColor }}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={logoUrl}
             alt="Logo preview"

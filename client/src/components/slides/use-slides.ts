@@ -84,7 +84,7 @@ export function useSlides(docId: string = 'slides-demo') {
         if (collabServerEnabled) {
             webrtcProvider.connect()
         } else {
-            console.debug('[useSlides] Running in local-only mode (NEXT_PUBLIC_COLLAB_ENABLED not set)')
+            console.warn('[useSlides] Running in local-only mode (NEXT_PUBLIC_COLLAB_ENABLED not set)')
         }
 
         setProvider(webrtcProvider)
@@ -197,7 +197,7 @@ export function useSlides(docId: string = 'slides-demo') {
                 try {
                     newObj[key] = JSON.parse(json)
                 } catch (e) {
-                    console.debug("Failed to parse object", e)
+                    console.warn("Failed to parse object", e)
                 }
             })
             setActiveObjects(newObj)
@@ -391,7 +391,7 @@ export function useSlides(docId: string = 'slides-demo') {
             try {
                 objects[key] = JSON.parse(json)
             } catch (e) {
-                console.debug("Failed to parse object", e)
+                console.warn("Failed to parse object", e)
             }
         })
         return objects

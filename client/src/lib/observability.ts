@@ -68,7 +68,7 @@ export function reportWebVitals() {
   if (typeof window === "undefined") return;
   const observer = new PerformanceObserver((list) => {
     list.getEntries().forEach((entry) => {
-      console.log(`[Perf] ${entry.name}: ${Math.round(entry.startTime)}ms`);
+      console.warn(`[Perf] ${entry.name}: ${Math.round(entry.startTime)}ms`);
     });
   });
   observer.observe({ entryTypes: ["largest-contentful-paint", "first-input", "layout-shift"] });

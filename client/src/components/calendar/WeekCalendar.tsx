@@ -31,7 +31,9 @@ export function WeekCalendar({ selectedCalendarId, onCreateEvent }: WeekCalendar
     useEffect(() => {
         if (!selectedCalendarId) return;
         fetchEvents(weekStart, weekEnd);
-    }, [selectedCalendarId, currentDate, fetchEvents]); // weekStart/End depend on currentDate
+    // weekStart/weekEnd are derived from currentDate which is already a dep
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedCalendarId, currentDate, fetchEvents]);
 
     const weekDays = useMemo(() => {
         return eachDayOfInterval({ start: weekStart, end: weekEnd });

@@ -147,7 +147,7 @@ export function NotificationPopover() {
         loadLocalNotifications();
       }
     } catch (err) {
-      console.debug('Failed to load notifications:', err);
+      console.warn('Failed to load notifications:', err);
       loadLocalNotifications();
     } finally {
       setIsLoading(false);

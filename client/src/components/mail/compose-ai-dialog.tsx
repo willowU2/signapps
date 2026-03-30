@@ -70,13 +70,14 @@ export function ComposeAiDialog({ open, onOpenChange, accountId }: ComposeAiDial
                     setDraftId(res.id)
                 }
             } catch (err) {
-                console.debug("Failed to auto-save draft", err)
+                console.warn("Failed to auto-save draft", err)
             } finally {
                 setIsSaving(false)
             }
         }, 1500)
 
         return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [recipient, subject, body, description, open, draftId])
 
     const handleGenerate = useCallback(async () => {

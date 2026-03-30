@@ -216,7 +216,7 @@ export function LayerPanel() {
         });
       }, 500);
     },
-    [layers]
+    [] // updatedLayers is passed as argument, not captured from closure
   );
 
   // Load categories once

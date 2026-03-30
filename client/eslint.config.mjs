@@ -2,6 +2,7 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import typescriptParser from "@typescript-eslint/parser";
 import reactHooks from "eslint-plugin-react-hooks";
+import nextPlugin from "@next/eslint-plugin-next";
 
 const eslintConfig = defineConfig([
   // Keep global ignores for generated/vendor files
@@ -18,6 +19,7 @@ const eslintConfig = defineConfig([
     plugins: {
       "@typescript-eslint": typescriptEslint,
       "react-hooks": reactHooks,
+      "@next/next": nextPlugin,
     },
     languageOptions: {
       parser: typescriptParser,
@@ -39,7 +41,18 @@ const eslintConfig = defineConfig([
 
       // ── Guard: no console.log in production code ───────────────────────────
       // Allow console.warn and console.error for legitimate diagnostics
-      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "no-console": ["error", { allow: ["warn", "error"] }],
+
+      // ── Guard: use Next.js <Image> instead of <img> ────────────────────────
+      "@next/next/no-img-element": "error",
+    },
+  },
+
+  // Scripts are CLI tools — console.log is intentional output
+  {
+    files: ["src/scripts/**/*.ts"],
+    rules: {
+      "no-console": "off",
     },
   },
 ]);

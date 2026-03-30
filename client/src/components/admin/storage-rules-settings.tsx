@@ -41,7 +41,7 @@ export function StorageRulesSettings() {
       setRules(data);
     } catch (error) {
       toast.error("Impossible de charger les règles de stockage");
-      console.debug(error);
+      console.warn(error);
     } finally {
       setIsLoading(false);
     }
@@ -93,7 +93,7 @@ export function StorageRulesSettings() {
       fetchRules();
     } catch (error) {
       toast.error("Impossible d'enregistrer la règle de stockage");
-      console.debug(error);
+      console.warn(error);
     }
   };
 
@@ -106,7 +106,7 @@ export function StorageRulesSettings() {
       fetchRules();
     } catch (error) {
       toast.error("Impossible de supprimer la règle");
-      console.debug(error);
+      console.warn(error);
     }
   };
 
@@ -122,7 +122,7 @@ export function StorageRulesSettings() {
       fetchRules();
     } catch (error) {
       toast.error("Impossible de modifier l'état de la règle");
-      console.debug(error);
+      console.warn(error);
     }
   };
 

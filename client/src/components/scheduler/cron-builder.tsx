@@ -296,6 +296,7 @@ function describeCron(cron: string): string {
 }
 
 export function CronBuilder({ value, onChange }: CronBuilderProps) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const initial = useMemo(() => parseCronToState(value), []);
   const [frequency, setFrequency] = useState<Frequency>(initial.frequency);
   const [hour, setHour] = useState(initial.hour);

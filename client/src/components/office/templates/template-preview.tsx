@@ -153,6 +153,7 @@ function PreviewImages({ images, thumbnailUrl }: PreviewImagesProps) {
   return (
     <div className="space-y-2">
       <div className="relative aspect-[4/3] bg-muted rounded-lg overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={allImages[currentIndex]}
           alt={`Aperçu ${currentIndex + 1}`}

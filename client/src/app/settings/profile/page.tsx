@@ -644,6 +644,7 @@ export default function ProfilePage() {
             <div className="space-y-4">
               {/* QR Code */}
               <div className="flex justify-center p-4 bg-background rounded-lg">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={mfaSetupData.qr_code_url}
                   alt="QR Code"

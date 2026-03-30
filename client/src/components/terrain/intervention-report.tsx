@@ -187,6 +187,7 @@ export function InterventionReport({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {formData.photos.map((photo) => (
               <div key={photo.id} className="relative group aspect-square rounded border overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo.url}
                   alt="Intervention photo"
@@ -214,6 +215,7 @@ export function InterventionReport({
         <div className="border-2 border-dashed rounded-lg p-8 text-center">
           {formData.signatureUrl ? (
             <div className="flex flex-col items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={formData.signatureUrl} alt="Signature" className="h-20 border rounded p-2" />
               <Button
                 variant="outline"

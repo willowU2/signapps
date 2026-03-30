@@ -112,6 +112,7 @@ export function SelfServicePortal() {
         <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-24" />
         <div className="px-6 pb-6">
           <div className="flex items-end gap-4 -mt-10 mb-6">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={user.avatar}
               alt={user.name}

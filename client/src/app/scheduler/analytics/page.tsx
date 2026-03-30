@@ -22,7 +22,7 @@ export default function JobVelocityPage() {
   useEffect(() => {
     const client = getClient(ServiceName.SCHEDULER);
     client.get<JobStats>('/jobs/stats')
-      .then(res => setStats(res.data || stats))
+      .then(res => setStats(prev => res.data || prev))
       .catch(() => {});
   }, []);
 

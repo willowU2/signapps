@@ -44,7 +44,7 @@ export function AiIndexingSettings() {
       const data = await storageSettingsApi.getSystemSetting("ai_index_all_default");
       setGlobalDefault(data.setting_value === "true");
     } catch (error) {
-      console.debug("Failed to load global setting", error);
+      console.warn("Failed to load global setting", error);
     } finally {
       setIsGlobalLoading(false);
     }
@@ -58,7 +58,7 @@ export function AiIndexingSettings() {
     } catch (error) {
       setGlobalDefault(!checked); // Revert on fail
       toast.error("Impossible de mettre à jour le paramètre global");
-      console.debug(error);
+      console.warn(error);
     }
   };
 
@@ -69,7 +69,7 @@ export function AiIndexingSettings() {
       setRules(data);
     } catch (error) {
       toast.error("Impossible de charger les règles d'indexation IA");
-      console.debug(error);
+      console.warn(error);
     } finally {
       setIsLoading(false);
     }
@@ -130,7 +130,7 @@ export function AiIndexingSettings() {
       fetchRules();
     } catch (error) {
       toast.error("Impossible d'enregistrer la règle d'indexation");
-      console.debug(error);
+      console.warn(error);
     }
   };
 
@@ -143,7 +143,7 @@ export function AiIndexingSettings() {
       fetchRules();
     } catch (error) {
       toast.error("Impossible de supprimer la règle");
-      console.debug(error);
+      console.warn(error);
     }
   };
 
@@ -160,7 +160,7 @@ export function AiIndexingSettings() {
       fetchRules();
     } catch (error) {
       toast.error("Impossible de modifier l'état de la règle");
-      console.debug(error);
+      console.warn(error);
     }
   };
 

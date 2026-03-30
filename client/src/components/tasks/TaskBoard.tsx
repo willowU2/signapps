@@ -42,6 +42,17 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
     { id: 'done', title: 'Terminé' },
   ], []);
 
+  // Filter by project when projectId is provided — must be before useMemo (rules-of-hooks)
+  const boardTasks = useMemo(
+    () => isLoading ? [] : (projectId ? tasks.filter(t => t.projectId === projectId) : tasks),
+    [isLoading, projectId, tasks]
+  );
+
+  const activeTask = useMemo(
+    () => boardTasks.find((t) => t.id === activeId),
+    [activeId, boardTasks]
+  );
+
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center p-8">
@@ -50,9 +61,6 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
       </div>
     );
   }
-
-  // Filter by project when projectId is provided
-  const boardTasks = projectId ? tasks.filter(t => t.projectId === projectId) : tasks;
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -84,11 +92,6 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
       updateTask.mutate({ id: activeTaskId, updates: { status: overTask.status } });
     }
   };
-
-  const activeTask = useMemo(
-    () => boardTasks.find((t) => t.id === activeId),
-    [activeId, boardTasks]
-  );
 
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);

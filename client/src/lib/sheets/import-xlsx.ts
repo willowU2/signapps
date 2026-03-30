@@ -64,7 +64,7 @@ export async function importXlsxToYjs(
 
   // Step 3: Build the complete sheet ID list
   const allEntries = sheetsMetaV2.toArray();
-  console.log(
+  console.warn(
     `[import-xlsx] Sheets created: ${allEntries.length}/${sheetNames.length}`,
     allEntries.map(s => `${s.name}(${s.id})`)
   );
@@ -121,7 +121,7 @@ export async function importXlsxToYjs(
       await new Promise(r => setTimeout(r, 0));
     }
   }
-  console.log(`[import-xlsx] Skipped ${skippedCells} trivial cells`);
+  console.warn(`[import-xlsx] Skipped ${skippedCells} trivial cells`);
 
   // Step 5: Store column widths and row heights per sheet in Yjs
   doc.transact(() => {
@@ -151,7 +151,7 @@ export async function importXlsxToYjs(
     }
   });
 
-  console.log(`[import-xlsx] Imported ${totalCells} cells across ${sheetNames.length} sheets`);
+  console.warn(`[import-xlsx] Imported ${totalCells} cells across ${sheetNames.length} sheets`);
 
   return {
     totalCells,

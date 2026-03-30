@@ -128,7 +128,9 @@ mod tests {
     #[test]
     fn test_create_tenant() {
         let mut manager = TenantManager::new();
-        let tenant = manager.create("ACME Corp", 100, 500).expect("tenant creation should succeed");
+        let tenant = manager
+            .create("ACME Corp", 100, 500)
+            .expect("tenant creation should succeed");
 
         assert_eq!(tenant.name, "ACME Corp");
         assert_eq!(tenant.max_users, 100);
@@ -139,20 +141,30 @@ mod tests {
     #[test]
     fn test_suspend_resume() {
         let mut manager = TenantManager::new();
-        let tenant = manager.create("Test Corp", 50, 100).expect("tenant creation should succeed");
+        let tenant = manager
+            .create("Test Corp", 50, 100)
+            .expect("tenant creation should succeed");
 
         manager.suspend(&tenant.id).expect("suspend should succeed");
-        assert!(!manager.is_active(&tenant.id).expect("is_active should succeed"));
+        assert!(!manager
+            .is_active(&tenant.id)
+            .expect("is_active should succeed"));
 
         manager.resume(&tenant.id).expect("resume should succeed");
-        assert!(manager.is_active(&tenant.id).expect("is_active should succeed"));
+        assert!(manager
+            .is_active(&tenant.id)
+            .expect("is_active should succeed"));
     }
 
     #[test]
     fn test_list_tenants() {
         let mut manager = TenantManager::new();
-        manager.create("Tenant 1", 50, 100).expect("tenant creation should succeed");
-        manager.create("Tenant 2", 100, 500).expect("tenant creation should succeed");
+        manager
+            .create("Tenant 1", 50, 100)
+            .expect("tenant creation should succeed");
+        manager
+            .create("Tenant 2", 100, 500)
+            .expect("tenant creation should succeed");
 
         assert_eq!(manager.list().len(), 2);
     }
@@ -166,10 +178,16 @@ mod tests {
     #[test]
     fn test_update_quotas() {
         let mut manager = TenantManager::new();
-        let tenant = manager.create("Test", 50, 100).expect("tenant creation should succeed");
+        let tenant = manager
+            .create("Test", 50, 100)
+            .expect("tenant creation should succeed");
 
-        manager.update_quotas(&tenant.id, 200, 1000).expect("quota update should succeed");
-        let updated = manager.get(&tenant.id).expect("tenant should be retrievable");
+        manager
+            .update_quotas(&tenant.id, 200, 1000)
+            .expect("quota update should succeed");
+        let updated = manager
+            .get(&tenant.id)
+            .expect("tenant should be retrievable");
 
         assert_eq!(updated.max_users, 200);
         assert_eq!(updated.max_storage, 1000);

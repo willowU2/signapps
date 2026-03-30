@@ -118,6 +118,8 @@ export function FollowupManager({ followups, onMarkDone }: FollowupManagerProps)
         },
       },
     ],
+    // handleMarkDone is stable enough here; only markingDone triggers UI changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [markingDone]
   );
 

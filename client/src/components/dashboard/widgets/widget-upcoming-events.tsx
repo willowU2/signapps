@@ -77,6 +77,18 @@ export function WidgetUpcomingEvents({ widget }: WidgetRenderProps) {
     staleTime: 60 * 1000,
   });
 
+  // Group events by date — must be before any early return (rules-of-hooks)
+  const groupedEvents = React.useMemo(() => {
+    if (!events) return new Map<string, EventItem[]>();
+    const groups = new Map<string, EventItem[]>();
+    events.forEach((event) => {
+      const dateKey = format(new Date(event.start_time), "yyyy-MM-dd");
+      const existing = groups.get(dateKey) || [];
+      groups.set(dateKey, [...existing, event]);
+    });
+    return groups;
+  }, [events]);
+
   if (isLoading) {
     return (
       <Card className="h-full">
@@ -102,18 +114,6 @@ export function WidgetUpcomingEvents({ widget }: WidgetRenderProps) {
       </Card>
     );
   }
-
-  // Group events by date
-  const groupedEvents = React.useMemo(() => {
-    if (!events) return new Map<string, EventItem[]>();
-    const groups = new Map<string, EventItem[]>();
-    events.forEach((event) => {
-      const dateKey = format(new Date(event.start_time), "yyyy-MM-dd");
-      const existing = groups.get(dateKey) || [];
-      groups.set(dateKey, [...existing, event]);
-    });
-    return groups;
-  }, [events]);
 
   return (
     <Card className="h-full flex flex-col">

@@ -88,7 +88,10 @@ export function ScopeSwitch({
   const scope = useSchedulingStore((state) => state.scope);
   const setScope = useSchedulingStore((state) => state.setScope);
 
-  const options = showAll ? [...scopeOptions, allOption] : scopeOptions;
+  const options = React.useMemo(
+    () => (showAll ? [...scopeOptions, allOption] : scopeOptions),
+    [showAll]
+  );
 
   // Keyboard shortcuts
   React.useEffect(() => {

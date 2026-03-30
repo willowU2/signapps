@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 // IDEA-060: Visual undo/redo history panel — list of actions with thumbnails, click to jump to state
@@ -65,6 +66,7 @@ export default function DesignHistoryPanel({ fabricCanvasRef }: DesignHistoryPan
       return updated;
     });
     setCurrentIndex(undoStack.length);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [undoStack.length]);
 
   const handleJumpTo = useCallback((entry: HistoryEntry) => {

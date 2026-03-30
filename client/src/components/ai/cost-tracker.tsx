@@ -26,7 +26,7 @@ export function AiCostTracker() {
   useEffect(() => {
     const client = getClient(ServiceName.AI);
     client.get<CostSummary>('/ai/costs')
-      .then(res => setData(res.data || data))
+      .then(res => setData(prev => res.data || prev))
       .catch(() => {});
   }, []);
 

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { SpinnerInfinity } from 'spinners-react';
@@ -519,6 +520,7 @@ export function AiChatBar() {
       setIsStreaming(false);
       abortControllerRef.current = null;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, isStreaming, attachments, conversationId, mediaGenMode]);
 
   const handleSuggestion = (suggestion: string) => {

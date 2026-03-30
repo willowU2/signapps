@@ -105,7 +105,17 @@ export function useGestureNavigation(
   config: GestureConfig = {}
 ): UseGestureNavigationResult {
   const gestureRef = React.useRef<HTMLDivElement>(null);
-  const mergedConfig = { ...DEFAULT_CONFIG, ...config };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const mergedConfig = React.useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [
+    config.swipeThreshold,
+    config.velocityThreshold,
+    config.longPressDuration,
+    config.pullToRefreshThreshold,
+    config.enableSwipe,
+    config.enablePinch,
+    config.enableLongPress,
+    config.enablePullToRefresh,
+  ]);
 
   // Gesture state
   const [state, setState] = React.useState<GestureState>({

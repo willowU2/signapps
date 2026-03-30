@@ -31,6 +31,7 @@ export function DriveSearchDocs() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const search = useCallback(
     debounce(async (q: string) => {
       if (!q.trim()) { setResults([]); return; }

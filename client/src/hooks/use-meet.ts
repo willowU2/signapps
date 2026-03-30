@@ -44,7 +44,7 @@ export function useMeet(roomId: string, userId: string, userName: string) {
                 setLocalStream(stream)
                 localStreamRef.current = stream
             } catch (err) {
-                console.debug("Failed to get local stream", err)
+                console.warn("Failed to get local stream", err)
             }
         }
         initStream()
@@ -64,7 +64,7 @@ export function useMeet(roomId: string, userId: string, userName: string) {
         wsRef.current = ws
 
         ws.onopen = () => {
-            console.debug('Connecté to signaling server')
+            console.warn('Connecté to signaling server')
             setIsConnecté(true)
             // Send join message
             sendSignal({ type: 'join', senderId: userId })
@@ -78,18 +78,20 @@ export function useMeet(roomId: string, userId: string, userName: string) {
 
                     handleSignal(msg)
                 } catch (e) {
-                    console.debug("Failed to parse signaling message", e)
+                    console.warn("Failed to parse signaling message", e)
                 }
             }
         }
 
+        const peersSnapshot = peersRef.current;
         return () => {
             ws.close()
-            // Cleanup peers
-            peersRef.current.forEach(pc => pc.close())
-            peersRef.current.clear()
+            // Cleanup peers — use snapshot captured at effect setup time
+            peersSnapshot.forEach(pc => pc.close())
+            peersSnapshot.clear()
         }
-    }, [roomId, userId, localStream]) // Re-run if stream changes? No, stream is stable usually.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [roomId, userId, localStream])
 
     const sendSignal = (msg: SignalingMessage) => {
         if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -115,7 +117,7 @@ export function useMeet(roomId: string, userId: string, userName: string) {
         }
 
         pc.ontrack = (event) => {
-            console.debug("Received track from", peerId)
+            console.warn("Received track from", peerId)
             const stream = event.streams[0]
             if (stream) {
                 setPeers(prev => {
@@ -141,7 +143,7 @@ export function useMeet(roomId: string, userId: string, userName: string) {
         switch (type) {
             case 'join': {
                 // New peer joined, create offer
-                console.debug("Peer joined:", senderId)
+                console.warn("Peer joined:", senderId)
                 const pc = createPeerConnection(senderId)
                 const offer = await pc.createOffer()
                 await pc.setLocalDescription(offer)
@@ -155,7 +157,7 @@ export function useMeet(roomId: string, userId: string, userName: string) {
             }
             case 'offer': {
                 if (msg.targetId !== userId) return
-                console.debug("Received offer from:", senderId)
+                console.warn("Received offer from:", senderId)
                 const pc = createPeerConnection(senderId)
                 await pc.setRemoteDescription(new RTCSessionDescription(payload))
                 const answer = await pc.createAnswer()
@@ -170,7 +172,7 @@ export function useMeet(roomId: string, userId: string, userName: string) {
             }
             case 'answer': {
                 if (msg.targetId !== userId) return
-                console.debug("Received answer from:", senderId)
+                console.warn("Received answer from:", senderId)
                 const pc = peersRef.current.get(senderId)
                 if (pc) {
                     await pc.setRemoteDescription(new RTCSessionDescription(payload))

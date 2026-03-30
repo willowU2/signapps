@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { SpinnerInfinity } from 'spinners-react';
@@ -326,6 +327,7 @@ export function TemplateGallery({
     fetchFeaturedTemplates(documentType);
     fetchRecentTemplates();
     fetchFavoriteTemplates();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentType]);
 
   const handleFavorite = useCallback(

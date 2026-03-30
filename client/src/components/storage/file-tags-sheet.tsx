@@ -46,6 +46,7 @@ export function FileTagsSheet({
     if (open && fileId) {
       loadData();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, fileId]);
 
   const loadData = async () => {

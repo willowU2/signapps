@@ -60,6 +60,7 @@ export function WorkspaceMembersSheet({ open, onOpenChange, workspace }: Workspa
             loadMembers()
             loadUsers()
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, workspace?.id])
 
     const loadMembers = async () => {

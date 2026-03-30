@@ -79,7 +79,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
       const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://');
       fetch(httpUrl, { method: 'HEAD' })
         .then(() => provider.connect())
-        .catch(() => console.debug(`[useCalendarWebSocket] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`));
+        .catch(() => console.warn(`[useCalendarWebSocket] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`));
 
       providerRef.current = provider;
 

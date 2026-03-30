@@ -377,6 +377,7 @@ export function ComposeRichDialog({
                 setIsSending(false);
             }
         },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [accountId, recipient, cc, bcc, subject, onOpenChange, encryptEnabled, recipientPublicKey, attachments]
     );
 

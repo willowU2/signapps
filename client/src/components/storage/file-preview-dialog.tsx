@@ -265,7 +265,7 @@ export function FilePreviewDialog({
         setContent(text);
       }
     } catch (err) {
-      console.debug("File preview error:", err);
+      console.warn("File preview error:", err);
       setError('Impossible de charger le fichier');
     } finally {
       setLoading(false);
@@ -383,6 +383,7 @@ export function FilePreviewDialog({
       case 'image':
         return blobUrl ? (
           <div className="flex items-center justify-center overflow-auto max-h-[70vh]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={blobUrl}
               alt={file.name}

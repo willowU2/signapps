@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 
 // IDEA-037: Inline attachment preview — image thumbnails, PDF first page in email body

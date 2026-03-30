@@ -151,19 +151,27 @@ mod tests {
 
         // Validate that crucial RBAC tags are captured for RAG filtering
         assert_eq!(
-            security_tags.get("source_type").unwrap().as_str().unwrap(),
+            security_tags
+                .get("source_type")
+                .expect("source_type tag must be present")
+                .as_str()
+                .expect("source_type must be a string"),
             "odoo_ticket"
         );
         assert_eq!(
             security_tags
                 .get("organization_id")
-                .unwrap()
+                .expect("organization_id tag must be present")
                 .as_str()
-                .unwrap(),
+                .expect("organization_id must be a string"),
             "org_abc123"
         );
         assert_eq!(
-            security_tags.get("owner_id").unwrap().as_str().unwrap(),
+            security_tags
+                .get("owner_id")
+                .expect("owner_id tag must be present")
+                .as_str()
+                .expect("owner_id must be a string"),
             "usr_xyz890"
         );
     }
@@ -195,13 +203,17 @@ mod tests {
         assert_eq!(
             security_tags
                 .get("organization_id")
-                .unwrap()
+                .expect("organization_id tag must be present for fallback fields")
                 .as_str()
-                .unwrap(),
+                .expect("organization_id must be a string"),
             "github_org_1"
         );
         assert_eq!(
-            security_tags.get("owner_id").unwrap().as_str().unwrap(),
+            security_tags
+                .get("owner_id")
+                .expect("owner_id tag must be present for fallback fields")
+                .as_str()
+                .expect("owner_id must be a string"),
             "dev_404"
         );
     }

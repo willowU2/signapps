@@ -52,6 +52,7 @@ export function EmailDelegation({ accountId }: EmailDelegationProps) {
 
   useEffect(() => {
     loadDelegations()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountId])
 
   async function loadDelegations() {

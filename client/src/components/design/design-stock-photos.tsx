@@ -139,6 +139,7 @@ export default function DesignStockPhotos({ fabricCanvasRef }: DesignStockPhotos
             disabled={loading === img.url}
             className="relative rounded-md overflow-hidden border border-border hover:border-primary/50 transition-all group aspect-[4/3]"
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={img.url}
               alt={`Stock photo ${img.id}`}

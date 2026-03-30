@@ -76,6 +76,7 @@ export function PermissionsSheet({
     if (open && fileKey) {
       fetchPermissions();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, fileKey]);
 
   const fetchPermissions = async () => {

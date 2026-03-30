@@ -69,19 +69,30 @@ mod tests {
     fn test_encrypt_decrypt_roundtrip() {
         let cipher = PiiCipher::from_hex_key(&test_key()).expect("valid test key");
         let plaintext = "user@example.com";
-        let encrypted = cipher.encrypt(plaintext).expect("encryption should succeed");
+        let encrypted = cipher
+            .encrypt(plaintext)
+            .expect("encryption should succeed");
         assert_ne!(encrypted, plaintext.as_bytes());
-        let decrypted = cipher.decrypt(&encrypted).expect("decryption should succeed");
+        let decrypted = cipher
+            .decrypt(&encrypted)
+            .expect("decryption should succeed");
         assert_eq!(decrypted, plaintext);
     }
 
     #[test]
     fn test_different_nonces() {
         let cipher = PiiCipher::from_hex_key(&test_key()).expect("valid test key");
-        let e1 = cipher.encrypt("same text").expect("encryption should succeed");
-        let e2 = cipher.encrypt("same text").expect("encryption should succeed");
+        let e1 = cipher
+            .encrypt("same text")
+            .expect("encryption should succeed");
+        let e2 = cipher
+            .encrypt("same text")
+            .expect("encryption should succeed");
         assert_ne!(e1, e2);
-        assert_eq!(cipher.decrypt(&e1).expect("decryption should succeed"), cipher.decrypt(&e2).expect("decryption should succeed"));
+        assert_eq!(
+            cipher.decrypt(&e1).expect("decryption should succeed"),
+            cipher.decrypt(&e2).expect("decryption should succeed")
+        );
     }
 
     #[test]

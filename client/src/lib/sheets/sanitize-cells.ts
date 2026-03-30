@@ -79,7 +79,7 @@ export function sanitizeGridMap(doc: Y.Doc, gridMapKey: string): number {
         gridMap.set(key, data);
       }
     });
-    console.log(`[sanitize-cells] Fixed ${fixed} cells in ${gridMapKey}`);
+    console.warn(`[sanitize-cells] Fixed ${fixed} cells in ${gridMapKey}`);
   }
 
   return fixed;

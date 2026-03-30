@@ -258,7 +258,10 @@ mod tests {
 
         let anomaly = detector.check_anomaly(user_id);
         assert!(anomaly.is_some());
-        assert_eq!(anomaly.expect("anomaly should be detected").anomaly_type, "unusual_ip");
+        assert_eq!(
+            anomaly.expect("anomaly should be detected").anomaly_type,
+            "unusual_ip"
+        );
     }
 
     #[test]

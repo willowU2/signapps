@@ -34,6 +34,7 @@ export function LogsDialog({ open, onOpenChange, containerId, containerName }: L
     return () => {
       setLogs([]);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, containerId]);
 
   useEffect(() => {

@@ -209,6 +209,7 @@ function usePomodoroTimer(settings: PomodoroSettings) {
         clearInterval(intervalRef.current);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, handlePhaseComplete]);
 
   const start = () => setIsRunning(true);

@@ -119,7 +119,7 @@ export function MarkdownPreview({ content }: MarkdownPreviewProps) {
     <div
       className="prose prose-sm dark:prose-invert max-w-none p-4 overflow-auto max-h-[70vh] text-foreground"
       // Safe: we built this HTML ourselves from escaped content
-      // eslint-disable-next-line react/no-danger
+      
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

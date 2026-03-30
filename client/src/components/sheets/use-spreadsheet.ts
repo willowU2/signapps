@@ -166,6 +166,7 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
             gridMap.unobserve(sync)
             um.destroy()
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [doc, activeMapKey])
 
     const getGridMap = useCallback(() => doc.getMap<CellData>(activeMapKey), [doc, activeMapKey])

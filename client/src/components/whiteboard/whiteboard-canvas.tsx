@@ -27,6 +27,7 @@ export const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ svgRef: exte
       x: e.clientX - (rect?.left || 0),
       y: e.clientY - (rect?.top || 0),
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const createShape = (startPos: { x: number; y: number }, endPos: { x: number; y: number }, isTemp: boolean) => {

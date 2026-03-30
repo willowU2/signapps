@@ -206,6 +206,7 @@ export function TeamTimeline({
         return !event && (!slot || slot.status === 'available');
       });
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hours, members, slots, events]);
 
   return (

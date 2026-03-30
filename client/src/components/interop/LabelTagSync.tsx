@@ -60,6 +60,7 @@ export function LabelTagSyncBadges({ emailId, labels, className }: Props) {
 
   useEffect(() => {
     setMappings(getMappings().filter(m => labels.includes(m.labelName)));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [labels]);
 
   if (labels.length === 0) return null;

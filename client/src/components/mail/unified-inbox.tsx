@@ -46,6 +46,7 @@ export function UnifiedInbox() {
 
   useEffect(() => {
     loadAccounts()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function loadAccounts() {

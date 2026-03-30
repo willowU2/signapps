@@ -110,7 +110,7 @@ async function writeKeepData(data: KeepData): Promise<void> {
   } catch {
     // Storage service down — data is still in localStorage
     storageAvailable = false;
-    console.debug('Keep: storage service unavailable, data saved to localStorage');
+    console.warn('Keep: storage service unavailable, data saved to localStorage');
   }
 }
 

@@ -72,6 +72,7 @@ export function DropZone({
         await uploadFile(upload);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [bucket, prefix]
   );
 

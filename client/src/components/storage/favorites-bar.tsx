@@ -73,6 +73,7 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
   // Fetch favorites on mount
   useEffect(() => {
     fetchFavorites();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchFavorites = async () => {

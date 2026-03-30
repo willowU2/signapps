@@ -494,7 +494,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
             }
 
             recognitionRef.current.onerror = (event: any) => {
-                console.debug("Speech recognition error", event.error)
+                console.warn("Speech recognition error", event.error)
                 setIsListening(false)
                 toast.error("Microphone issue: " + event.error)
             }
@@ -522,7 +522,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                 setIsListening(true)
                 toast.info("Microphone activé. Parlez maintenant.")
             } catch (err) {
-                console.debug("Could not start speech recognition", err)
+                console.warn("Could not start speech recognition", err)
             }
         }
     }, [isListening])
@@ -958,7 +958,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
             });
 
         } catch (error) {
-            console.debug("Layout generation failed", error);
+            console.warn("Layout generation failed", error);
             toast.error("Impossible de générer la mise en page. Le modèle IA a peut-être retourné un JSON invalide.", { id: toastId });
         }
     };
@@ -1116,7 +1116,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     canvas.add(img)
                     canvas.setActiveObject(img)
                 }).catch((err: unknown) => {
-                    console.debug("Failed to load image:", err)
+                    console.warn("Failed to load image:", err)
                     alert("Impossible de charger cette image. Vérifiez que l'URL est publique et que le serveur autorise le CORS.")
                 })
             }
@@ -1434,7 +1434,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                      const dataUrl = o.toDataURL?.()
                      if (dataUrl) slide.addImage({ data: dataUrl, x, y, w, h })
                  } catch (err) {
-                     console.debug("Could not export image to PPTX", err)
+                     console.warn("Could not export image to PPTX", err)
                  }
              }
         })
@@ -1527,7 +1527,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                 toast.success("Texte mis à jour avec succès !", { id: toastId });
 
             } catch (err) {
-                console.debug("AI Text Action failed", err);
+                console.warn("AI Text Action failed", err);
                 toast.error("Erreur lors de la génération IA.", { id: toastId });
             }
         };

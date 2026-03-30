@@ -285,7 +285,7 @@ export default function MonitoringPage() {
                     return newMetrics;
                 });
                 setMetrics(newMetrics);
-            }).catch(err => console.debug(err))
+            }).catch(err => console.warn(err))
         }
 
         fetchMetrics()

@@ -201,6 +201,7 @@ function BlockPreviewContent({ block }: { block: UniversalBlock }) {
           </Avatar>
         ) : block.thumbnailUrl ? (
           <div className="h-10 w-10 rounded bg-muted overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={block.thumbnailUrl}
               alt=""
@@ -387,6 +388,7 @@ export function BlockCard({
             </Avatar>
           ) : block.thumbnailUrl ? (
             <div className="h-10 w-10 rounded bg-muted overflow-hidden shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={block.thumbnailUrl}
                 alt=""

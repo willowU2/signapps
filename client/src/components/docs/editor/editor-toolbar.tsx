@@ -175,7 +175,8 @@ export function EditorToolbar({
         if (!editor) return 'Arial';
         const attrs = editor.getAttributes('textStyle');
         return attrs.fontFamily || 'Arial';
-    }, [editor?.state.selection]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editor, editor?.state.selection]);
 
     // Get current font size from editor
     const currentFontSize = useMemo(() => {
@@ -184,7 +185,8 @@ export function EditorToolbar({
         // Extract numeric value from fontSize (e.g., '14pt' -> '14')
         const size = attrs.fontSize?.replace(/[^\d]/g, '') || '11';
         return size;
-    }, [editor?.state.selection]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editor, editor?.state.selection]);
 
     // Handle font family change
     const handleFontFamilyChange = useCallback((fontFamily: string) => {
@@ -216,14 +218,16 @@ export function EditorToolbar({
         if (!editor) return '#000000';
         const color = editor.getAttributes('textStyle').color;
         return color || '#000000';
-    }, [editor?.state.selection]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editor, editor?.state.selection]);
 
     // Get current highlight color
     const currentHighlightColor = useMemo(() => {
         if (!editor) return null;
         const highlight = editor.getAttributes('highlight').color;
         return highlight || null;
-    }, [editor?.state.selection]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editor, editor?.state.selection]);
 
     // Handle text color change
     const handleTextColorChange = useCallback((color: string) => {

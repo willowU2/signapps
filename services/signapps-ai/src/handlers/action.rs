@@ -185,7 +185,7 @@ mod tests {
         let parsed_intent: std::result::Result<Value, _> = serde_json::from_str(raw_ai_response);
 
         assert!(parsed_intent.is_ok());
-        let intent_val = parsed_intent.unwrap();
+        let intent_val = parsed_intent.expect("valid JSON was confirmed by is_ok() above");
 
         assert_eq!(
             intent_val
@@ -241,7 +241,8 @@ mod tests {
         // Simulate an extraction but the AI isn't sure
         let raw_ai_response =
             r#"{ "intent": "restart_container", "target": "database", "confidence": 0.4 }"#;
-        let parsed_intent: Value = serde_json::from_str(raw_ai_response).unwrap();
+        let parsed_intent: Value =
+            serde_json::from_str(raw_ai_response).expect("test fixture is valid JSON");
         let confidence = parsed_intent
             .get("confidence")
             .and_then(|v| v.as_f64())

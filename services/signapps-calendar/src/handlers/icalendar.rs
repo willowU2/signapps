@@ -89,6 +89,7 @@ pub async fn export_calendar(
 
 /// Get calendar as iCalendar feed (public URL like standard Calendar apps)
 #[tracing::instrument(skip_all)]
+#[allow(clippy::type_complexity)]
 pub async fn get_calendar_feed(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,

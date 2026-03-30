@@ -164,7 +164,7 @@ export function TemplateLibrary() {
     return matchCat && matchSearch;
   });
 
-  const useTemplate = (template: PostTemplate) => {
+  const applyTemplate = (template: PostTemplate) => {
     // Navigate to compose with pre-filled content via URL params
     const params = new URLSearchParams({
       content: template.content + (template.hashtags.length ? '\n\n' + template.hashtags.map((h) => `#${h}`).join(' ') : ''),
@@ -249,7 +249,7 @@ export function TemplateLibrary() {
                   <Button
                     size="sm"
                     className="flex-1"
-                    onClick={() => useTemplate(template)}
+                    onClick={() => applyTemplate(template)}
                   >
                     Use Template
                     <ArrowRight className="h-3.5 w-3.5 ml-1" />

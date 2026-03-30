@@ -60,6 +60,7 @@ export function ResourceSelector({
     } else {
       setConflicts(new Map());
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startTime, endTime, localSelected, open]);
 
   const checkAvailabilityForSelected = async () => {

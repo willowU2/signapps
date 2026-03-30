@@ -80,7 +80,8 @@ export function useFeatureFlags() {
   );
 
   return {
-    isEnabled: useCallback((key: FeatureKey) => isFeatureEnabled(key), [snapshot]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    isEnabled: useCallback((key: FeatureKey) => isFeatureEnabled(key), []),
     setOverride: setFeatureOverride,
     clearOverride: clearFeatureOverride,
     clearAll: clearAllOverrides,

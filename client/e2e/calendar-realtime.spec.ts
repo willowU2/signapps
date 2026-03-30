@@ -57,10 +57,14 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
         });
       });
 
+      test.setTimeout(120_000);
+
       await page.goto('/calendar?id=test-calendar-1');
 
-      // Wait for 3 heartbeats (90 seconds)
-      await page.waitForTimeout(95000);
+      // Wait until at least 3 heartbeat frames have been sent (30s interval × 3 = ~90s max)
+      await expect(async () => {
+        expect(messages.length).toBeGreaterThanOrEqual(3);
+      }).toPass({ timeout: 100_000 });
 
       // Should have at least 3 messages (initial + 3 heartbeats)
       expect(messages.length).toBeGreaterThanOrEqual(3);
@@ -152,13 +156,18 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
     });
 
     test('should mark user as idle after 30 seconds of inactivity', async ({ page }) => {
+      test.setTimeout(60_000);
+
       await page.goto('/calendar?id=test-calendar-1');
 
       // Wait initial presence
       await page.waitForSelector('[data-testid="presence-indicator"]');
 
-      // Wait 35 seconds with no interaction
-      await page.waitForTimeout(35000);
+      // Poll until the status transitions to "idle" (after ~30s of inactivity)
+      await expect(async () => {
+        const userStatus = page.locator('[data-testid="presence-user-status"]');
+        await expect(userStatus).toContainText('Idle');
+      }).toPass({ timeout: 50_000 });
 
       // Check that user status is now "idle"
       const userStatus = page.locator('[data-testid="presence-user-status"]');
@@ -166,10 +175,15 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
     });
 
     test('should update status back to viewing on activity', async ({ page }) => {
+      test.setTimeout(60_000);
+
       await page.goto('/calendar?id=test-calendar-1');
 
-      // Wait for idle state
-      await page.waitForTimeout(35000);
+      // Wait for idle state via polling (triggered after ~30s of inactivity)
+      await expect(async () => {
+        const status = page.locator('[data-testid="presence-user-status"]');
+        await expect(status).toContainText('Idle');
+      }).toPass({ timeout: 50_000 });
 
       // Verify idle
       let userStatus = page.locator('[data-testid="presence-user-status"]');
@@ -463,8 +477,9 @@ test.describe('Calendar Real-time Collaboration (Phase 7)', () => {
 
       const startMemory = (performance as any).memory?.usedJSHeapSize || 0;
 
-      // Wait 5 seconds
-      await page.waitForTimeout(5000);
+      // Allow 5 seconds of runtime to accumulate presence updates, then sample memory
+      const deadline = Date.now() + 5000;
+      await page.waitForFunction((ts) => Date.now() >= ts, deadline, { timeout: 10_000 });
 
       const endMemory = (performance as any).memory?.usedJSHeapSize || 0;
 

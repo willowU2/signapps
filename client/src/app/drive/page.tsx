@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -81,7 +81,10 @@ export default function GlobalDrivePage() {
   // Confirm: delete
   const [deleteNodeId, setDeleteNodeId] = useState<string | null>(null);
 
-  const driveQueryKey = ['drive-nodes', currentFolder?.id ?? null];
+  const driveQueryKey = useMemo(
+    () => ['drive-nodes', currentFolder?.id ?? null] as const,
+    [currentFolder?.id]
+  );
 
   const { data: nodes = [], isLoading: loading } = useQuery<DriveNode[]>({
     queryKey: driveQueryKey,
@@ -93,7 +96,7 @@ export default function GlobalDrivePage() {
 
   const fetchNodes = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: driveQueryKey });
-  }, [queryClient, currentFolder?.id]);
+  }, [queryClient, driveQueryKey]);
 
   const filteredNodes = searchQuery.trim()
     ? nodes.filter(n => n.name.toLowerCase().includes(searchQuery.toLowerCase()))

@@ -120,7 +120,7 @@ export function useChat(channelId: string, userId: string, userName: string) {
                     setCachedMessages(channelId, apiMessages)
                 }
             } catch (e) {
-                console.debug('Failed to load messages for channel', channelId, e)
+                console.warn('Failed to load messages for channel', channelId, e)
                 // Keep cached messages (already set above) as fallback
             }
         }
@@ -182,7 +182,7 @@ export function useChat(channelId: string, userId: string, userName: string) {
                         ))
                     }
                 } catch (e) {
-                    console.debug('Failed to parse WS event', e)
+                    console.warn('Failed to parse WS event', e)
                 }
             }
 
@@ -244,7 +244,7 @@ export function useChat(channelId: string, userId: string, userName: string) {
         try {
             await chatApi.addReaction(msgId, { emoji })
         } catch (e) {
-            console.debug('Failed to add reaction', e)
+            console.warn('Failed to add reaction', e)
             setMessages(prev => prev.map(m => {
                 if (m.id !== msgId) return m
                 const reactions = { ...(m.reactions || {}) }

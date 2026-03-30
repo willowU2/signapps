@@ -303,7 +303,7 @@ export default function MonitoringPage() {
       minute: '2-digit',
       second: '2-digit',
     });
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    
     setHistory((prev) => {
       const newPoint: MetricPoint = {
         time: timeStr,
@@ -320,7 +320,7 @@ export default function MonitoringPage() {
 
   // Reset history when period changes
   useEffect(() => {
-    setHistory([]); // eslint-disable-line react-hooks/set-state-in-effect
+    setHistory([]); 
   }, [timePeriod]);
 
   const handleAcknowledgeAlert = (alertId: string) => {

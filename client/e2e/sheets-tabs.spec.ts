@@ -33,8 +33,11 @@ test.describe('Sheets Tab Switching', () => {
     await expect(fileInput).toBeAttached({ timeout: 10000 });
     await fileInput.setInputFiles(XLSX_PATH);
 
-    // Wait for import
-    await page.waitForTimeout(60000);
+    // Wait for import to complete: sheet tabs or grid cells become visible
+    await page.locator(
+      '[data-testid="import-complete"], div[class*="border-r"][class*="border-b"], [data-testid="sheet-tab"]'
+    ).first().waitFor({ state: 'visible', timeout: 90_000 });
+    await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
 
     // Print captured console logs
     console.log('=== Console logs during import ===');

@@ -160,6 +160,7 @@ export function FieldChecklist({
                         <div className="grid grid-cols-3 gap-2 mb-3">
                           {item.photos.map((photo, idx) => (
                             <div key={idx} className="aspect-square rounded border overflow-hidden">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={photo}
                                 alt={`Photo ${idx + 1}`}

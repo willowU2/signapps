@@ -15,8 +15,8 @@ export default function AdminDashboard() {
     const { data: healthData } = useServiceHealth()
 
     useEffect(() => {
-        getUsers().then(setUsers).catch(err => console.debug(err))
-        getSystemMetrics().then(setMetrics).catch(err => console.debug(err))
+        getUsers().then(setUsers).catch(err => console.warn(err))
+        getSystemMetrics().then(setMetrics).catch(err => console.warn(err))
     }, [])
 
     return (

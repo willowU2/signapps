@@ -36,7 +36,7 @@ export function AiRoutingSettings() {
                 const response = await aiApi.providers();
                 setProviders(response.data.providers || []);
             } catch (err) {
-                console.debug("Failed to load AI providers", err);
+                console.warn("Failed to load AI providers", err);
             } finally {
                 setLoadingProviders(false);
             }
@@ -99,7 +99,7 @@ function RoleConfigRow({
                     setModels(response.data.models || []);
                 }
             } catch (error) {
-                console.debug("Failed to fetch models for provider", currentConfig.providerId);
+                console.warn("Failed to fetch models for provider", currentConfig.providerId);
             } finally {
                 if (isMounted) setLoadingModels(false);
             }

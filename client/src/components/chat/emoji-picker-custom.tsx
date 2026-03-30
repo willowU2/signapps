@@ -158,6 +158,7 @@ export function EmojiPickerCustom({
                       )}
                       title={emoji.name}
                     >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={emoji.data}
                         alt={emoji.name}

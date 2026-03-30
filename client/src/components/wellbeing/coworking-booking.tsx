@@ -50,6 +50,7 @@ function CoworkingSpaceCard({
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       {space.image && (
         <div className="h-40 bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={space.image}
             alt={space.name}

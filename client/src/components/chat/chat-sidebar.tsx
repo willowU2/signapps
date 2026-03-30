@@ -110,10 +110,11 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
                 } catch {}
             }
         } catch (err) {
-            console.debug("Failed to load chat data", err)
+            console.warn("Failed to load chat data", err)
         } finally {
             setIsLoading(false)
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user?.id])
 
     useEffect(() => { loadData() }, [loadData])

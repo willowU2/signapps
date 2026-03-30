@@ -51,7 +51,7 @@ export function RenameSheet({
       await onRename(name.trim());
       onOpenChange(false);
     } catch (error) {
-      console.debug(error);
+      console.warn(error);
     } finally {
       setLoading(false);
     }

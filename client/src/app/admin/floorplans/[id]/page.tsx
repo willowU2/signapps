@@ -242,6 +242,7 @@ export default function FloorPlanEditor() {
                             ) : (
                                 <div className="space-y-2">
                                     <div className="h-32 bg-background border rounded-lg overflow-hidden flex items-center justify-center p-2 relative group">
+                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                          <img src={`data:image/svg+xml;utf8,${encodeURIComponent(planData.svgContent)}`} className="max-w-full max-h-full opacity-70" alt="Preview" />
                                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                              <Button variant="destructive" size="sm" onClick={() => setPlanData((prev: Partial<FloorPlanData>) => ({ ...prev, svgContent: '' }))}>
@@ -294,6 +295,7 @@ export default function FloorPlanEditor() {
                     <div className="flex-1 bg-black/[0.03] overflow-hidden relative touch-none select-none flex items-center justify-center p-8 cursor-crosshair">
                         {planData.svgContent ? (
                             <div className="relative shadow-2xl bg-card border border-border/50 rounded-lg overflow-hidden" style={{ width: planData.width, height: planData.height }}>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={`data:image/svg+xml;utf8,${encodeURIComponent(planData.svgContent)}`} className="w-full h-full object-cover pointer-events-none" />
                                 
                                 {/* Overlay hitboxes */}

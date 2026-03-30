@@ -245,7 +245,7 @@ export default function MailPage() {
             // PW2: persist to IndexedDB cache after successful fetch
             setMailCache(folder, uiMails).catch(() => {})
         } catch (err) {
-            console.debug('Failed to load folder:', err)
+            console.warn('Failed to load folder:', err)
             // PW2: offline fallback — load from IndexedDB cache
             const cached = await getMailCache(folder)
             if (cached && cached.length > 0) {
@@ -331,7 +331,7 @@ export default function MailPage() {
                 }))
                 setSearchResults(uiMails)
             } catch (err) {
-                console.debug('Échec de la recherche:', err)
+                console.warn('Échec de la recherche:', err)
                 setSearchResults([])
             } finally {
                 setIsSearching(false)
@@ -391,7 +391,7 @@ export default function MailPage() {
             }))
             setMailList(uiMails)
         } catch (err) {
-            console.debug('Failed to fetch mail data:', err)
+            console.warn('Failed to fetch mail data:', err)
             setLoadError("Le service mail est inaccessible. Vérifiez que le serveur est démarré.")
             setMailList([])
         } finally {
@@ -555,6 +555,7 @@ export default function MailPage() {
         }
         window.addEventListener("keydown", handleKeyDown)
         return () => window.removeEventListener("keydown", handleKeyDown)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedId, selectedMail, filteredMailList, setSelectedId, clearSelection, setComposeRichOpen])
 
     // Idea 15: Split-pane — is wide screen?

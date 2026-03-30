@@ -66,6 +66,7 @@ export function CrmTemplateVariables({ body, onBodyChange, contactEmail }: CrmTe
 
   useEffect(() => {
     setPreview(resolveVariables(body, contact))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [body, contact])
 
   async function fetchContact(email: string) {

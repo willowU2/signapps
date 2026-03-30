@@ -302,6 +302,7 @@ export function EntityPicker({
     };
 
     loadSelectedEntities();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIds, staticOptions, onLoad]);
 
   // Search effect

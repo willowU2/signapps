@@ -302,13 +302,13 @@ Regles :
         const valid = parsed.every(s => validIds.has(s.id) && typeof s.left === 'number' && typeof s.top === 'number')
 
         if (!valid) {
-            console.debug("AI layout response had invalid IDs or missing coordinates")
+            console.warn("AI layout response had invalid IDs or missing coordinates")
             return null
         }
 
         return parsed
     } catch (err) {
-        console.debug("AI layout generation failed:", err)
+        console.warn("AI layout generation failed:", err)
         return null
     }
 }

@@ -215,6 +215,7 @@ function ImportUsersDialog({
     } else {
       toast.error('Please upload a CSV file');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -621,6 +622,7 @@ function AuditLogTable({ users }: AuditLogTableProps) {
 
   useEffect(() => {
     fetchLogs();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   const fetchLogs = async () => {

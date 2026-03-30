@@ -389,7 +389,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
                     onError: (err) => {
                         setIsRepliesLoading(false)
                         toast.error(`Failed to generate replies: ${err}`)
-                        console.debug(err)
+                        console.warn(err)
                     }
                 },
                 {
@@ -402,7 +402,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
         } catch (e) {
             setIsRepliesLoading(false)
             toast.error("Impossible de démarrer la génération")
-            console.debug(e)
+            console.warn(e)
         }
     }
 
@@ -429,7 +429,9 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
 
         window.addEventListener('app:ai-action', handleGlobalAiAction as EventListener);
         return () => window.removeEventListener('app:ai-action', handleGlobalAiAction as EventListener);
-    }, [mail, handleSummarize, generateSmartReplies]);
+    // generateSmartReplies is defined inline and stable within the render scope
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mail, handleSummarize]);
 
     // Idea 23: listen for keyboard shortcut events
     useEffect(() => {

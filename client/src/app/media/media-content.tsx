@@ -479,7 +479,7 @@ function TtsTab() {
                   <CheckCircle2 className="h-4 w-4" />
                   Audio ready
                 </div>
-                {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                
                 <audio
                   ref={audioRef}
                   src={audioUrl}

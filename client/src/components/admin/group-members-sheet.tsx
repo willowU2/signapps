@@ -65,6 +65,7 @@ export function GroupMembersSheet({ open, onOpenChange, group, onMembersChange }
             loadMembers()
             loadUsers()
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, group?.id])
 
     const loadMembers = async () => {

@@ -46,6 +46,7 @@ export function TalentCardNode({ data }: TalentCardNodeProps) {
             <div className="px-4 pb-4 pt-0 text-center relative">
                 {/* Avatar */}
                 <div className="absolute -top-8 left-1/2 -translate-x-1/2 rounded-full border-4 border-card bg-card">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                         src={member.avatarUrl} 
                         alt={member.name}

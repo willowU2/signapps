@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -134,9 +134,15 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
   // The currently active platform tab when in per-platform mode
   const [activePlatformTab, setActivePlatformTab] = useState<string>('');
 
-  const connectedAccounts = accounts.filter((a) => a.status === 'connected');
-  const selectedAccounts = connectedAccounts.filter((a) => selectedAccountIds.includes(a.id));
-  const selectedPlatforms = [...new Set(selectedAccounts.map((a) => a.platform))];
+  const connectedAccounts = useMemo(() => accounts.filter((a) => a.status === 'connected'), [accounts]);
+  const selectedAccounts = useMemo(
+    () => connectedAccounts.filter((a) => selectedAccountIds.includes(a.id)),
+    [connectedAccounts, selectedAccountIds]
+  );
+  const selectedPlatforms = useMemo(
+    () => [...new Set(selectedAccounts.map((a) => a.platform))],
+    [selectedAccounts]
+  );
 
   // When switching to per-platform mode, populate per-platform threads from global threads
   const handleToggleComposeMode = useCallback(() => {
@@ -788,6 +794,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
             <div className="flex flex-wrap gap-2">
               {mediaUrls.map((url, i) => (
                 <div key={i} className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={url} alt="" className="h-16 w-16 object-cover rounded" />
                   <button
                     aria-label="Supprimer ce média"

@@ -82,7 +82,7 @@ export function useYjsDocument(
                     if (onOfflineLoad) {
                         onOfflineLoad();
                     }
-                    console.debug(`[useYjsDocument] Loaded offline data for ${docId}`);
+                    console.warn(`[useYjsDocument] Loaded offline data for ${docId}`);
                 });
             }
 
@@ -116,11 +116,11 @@ export function useYjsDocument(
                         wsProvider?.connect();
                     })
                     .catch(() => {
-                        console.debug(`[useYjsDocument] Collaboration server at ${wsUrl} is offline. Running in offline mode.`);
+                        console.warn(`[useYjsDocument] Collaboration server at ${wsUrl} is offline. Running in offline mode.`);
                         setConnectionStatus('disconnected');
                     });
             } else {
-                console.debug('[useYjsDocument] Running in offline mode (NEXT_PUBLIC_COLLAB_ENABLED not set)');
+                console.warn('[useYjsDocument] Running in offline mode (NEXT_PUBLIC_COLLAB_ENABLED not set)');
                 setConnectionStatus('disconnected');
             }
 
@@ -174,6 +174,7 @@ export function useYjsDocument(
                 onError(err);
             }
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [docId, wsUrl, enableAwareness, enableOffline, onSync, onOfflineLoad, onError, setConnectionStatus, setSynced, incrementPendingChanges, clearPendingChanges]);
 
     // Helper to update local awareness state (e.g., cursor position)

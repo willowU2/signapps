@@ -48,7 +48,7 @@ export function ShareSheet({ open, onOpenChange, item }: ShareSheetProps) {
       setShareUrl(response.data.url);
       toast.success("Lien de partage créé avec succès");
     } catch (error) {
-      console.debug(error);
+      console.warn(error);
       toast.error("Impossible de créer share link");
     } finally {
       setLoading(false);

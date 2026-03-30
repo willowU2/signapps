@@ -63,6 +63,7 @@ export function SheetEmbedView({ node, updateAttributes, selected }: NodeViewPro
 
   useEffect(() => {
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sheetId]);
 
   const openSheet = () => {

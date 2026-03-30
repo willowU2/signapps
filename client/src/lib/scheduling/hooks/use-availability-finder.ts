@@ -141,6 +141,13 @@ export function useAvailabilityFinder(
     preferredTimes,
   });
 
+  // Stable keys for array/date deps to avoid re-running on every render
+  const participantIdsKey = participantIds.join(',');
+  const startDateMs = startDate.getTime();
+  const preferredTimesKey = preferredTimes.join(',');
+  const workingHoursStart = workingHours?.start;
+  const workingHoursEnd = workingHours?.end;
+
   // Update params when options change
   React.useEffect(() => {
     setParams({
@@ -153,16 +160,17 @@ export function useAvailabilityFinder(
       bufferMinutes,
       preferredTimes,
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    participantIds.join(','),
+    participantIdsKey,
     duration,
-    startDate.getTime(),
+    startDateMs,
     daysToSearch,
-    workingHours?.start,
-    workingHours?.end,
+    workingHoursStart,
+    workingHoursEnd,
     includeWeekends,
     bufferMinutes,
-    preferredTimes.join(','),
+    preferredTimesKey,
   ]);
 
   // Build query

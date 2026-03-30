@@ -59,6 +59,7 @@ export function QuickNoteDialog({ open, onOpenChange }: QuickNoteDialogProps) {
             clearTimeout(timer);
             document.removeEventListener('mousedown', handleClickOutside);
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
 
     const handleSave = () => {

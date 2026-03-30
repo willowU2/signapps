@@ -172,6 +172,7 @@ export function useScheduleSearch(
   // Update suggestions when query changes
   React.useEffect(() => {
     getSuggestions();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   // Clear search

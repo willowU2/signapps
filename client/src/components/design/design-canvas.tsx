@@ -199,6 +199,7 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
 
       canvas.requestRenderAll();
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page?.objects, page?.background, fabricCanvasRef]);
 
   // Keyboard shortcuts

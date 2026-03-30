@@ -109,6 +109,7 @@ function DiffViewer({ open, onClose, versionA, versionB, fileId }: DiffViewerPro
         setDiffLoading(false);
       }
     })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, fileId, versionA.id, versionB.id]);
 
   const stats = useMemo(() => ({
@@ -185,6 +186,7 @@ export function VersionHistorySheet({
     if (open && fileId) {
       loadVersions();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, fileId]);
 
   const loadVersions = async () => {

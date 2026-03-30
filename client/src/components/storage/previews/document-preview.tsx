@@ -133,7 +133,7 @@ export function DocumentPreview({
             title="Office Document Preview"
             onError={() => {
               // Si le viewer ne peut pas charger (ex: localhost)
-              console.debug("Office Web Viewer ne peut pas accéder à une URL locale.");
+              console.warn("Office Web Viewer ne peut pas accéder à une URL locale.");
             }}
           />
         </div>

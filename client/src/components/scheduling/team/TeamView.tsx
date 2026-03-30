@@ -179,6 +179,7 @@ export function TeamView({ className }: TeamViewProps) {
 
       return true;
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [members, search, selectedStatuses, selectedDepartments, slots]);
 
   // Handlers

@@ -24,7 +24,7 @@ export default function MailAnalyticsPage() {
   useEffect(() => {
     const client = getClient(ServiceName.MAIL);
     client.get<MailStats>('/mail/analytics')
-      .then(res => setStats(res.data || stats))
+      .then(res => setStats(prev => res.data || prev))
       .catch(() => {});
   }, []);
 

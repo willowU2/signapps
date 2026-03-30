@@ -605,7 +605,8 @@ mod tests {
 
     #[test]
     fn test_password_hash() {
-        let password = Password::new("securepassword123").expect("valid password should be accepted");
+        let password =
+            Password::new("securepassword123").expect("valid password should be accepted");
         let hash = PasswordHash::from_password(&password).expect("password hashing should succeed");
 
         assert!(hash.verify(&password).expect("verification should succeed"));

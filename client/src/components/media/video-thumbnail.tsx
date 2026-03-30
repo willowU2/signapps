@@ -85,7 +85,7 @@ export function VideoThumbnailGenerator() {
         ) : (
           <div className="space-y-4">
             {/* Hidden video + canvas for extraction */}
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+            
             <video ref={videoRef} src={videoUrl} className="hidden"
               onLoadedMetadata={e => setDuration((e.target as HTMLVideoElement).duration)}
               preload="metadata" />

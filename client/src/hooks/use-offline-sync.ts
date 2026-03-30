@@ -109,6 +109,7 @@ export function useOfflineSync({
             // Persist queue to storage
             saveQueueToStorage();
         },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [maxQueueSize, incrementPendingChanges]
     );
 

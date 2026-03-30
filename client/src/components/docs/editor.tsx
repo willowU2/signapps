@@ -503,7 +503,7 @@ const Editor = ({
                         }
                     } catch (e: any) {
                         // Silently ignore if file doesn't exist yet (brand new document)
-                        console.debug("No previous document found to load:", e);
+                        console.warn("No previous document found to load:", e);
                     }
                 }
             }, 500); // reduced timeout for better UX
@@ -513,7 +513,7 @@ const Editor = ({
         if (collabServerEnabled) {
             wsProvider.connect();
         } else {
-            console.debug('[Editor] Running in local-only mode (NEXT_PUBLIC_COLLAB_ENABLED not set)');
+            console.warn('[Editor] Running in local-only mode (NEXT_PUBLIC_COLLAB_ENABLED not set)');
             // Set status to disconnected but allow local editing
             setStatus('disconnected');
             // We MUST load content manually here since 'connected' event won't fire!
@@ -540,6 +540,7 @@ const Editor = ({
             }
             wsProvider.destroy();
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [documentId, ydoc, bucket, fileName]);
 
     // Document Styles state
@@ -1086,7 +1087,7 @@ const Editor = ({
                     lastSavedHtmlRef.current = htmlString;
                     setSaveStatus('saved');
                 } catch (err) {
-                    console.debug("Auto-save preview failed:", err);
+                    console.warn("Auto-save preview failed:", err);
                     setSaveStatus('unsaved');
                 }
             }
@@ -1579,6 +1580,7 @@ ${html}
                 id: tId
             });
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [editor, documentName]);
 
     // Listen to global save event triggered by shortcut
@@ -2229,6 +2231,7 @@ ${html}
 
         // Focus back
         editor.view.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [editor, handleSummarize, handleTranslate, saveToDrive, exportHtmlDocument, userName, docBgColor]);
 
     const handleNewDocConfirm = async () => {

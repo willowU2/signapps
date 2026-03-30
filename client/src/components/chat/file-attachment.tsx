@@ -169,6 +169,7 @@ export function AttachmentPreview({ attachment }: AttachmentPreviewProps) {
     if (isImage) {
         return (
             <div className="mt-2 rounded-lg overflow-hidden border bg-muted/20 max-w-xs">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                     src={attachment.url}
                     alt={attachment.filename}

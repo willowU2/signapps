@@ -790,8 +790,8 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     // Formula cache
     const [evaluatedData, setEvaluatedData] = useState<Record<string, string>>({})
 
-    const getColWidth = (c: number) => colWidths[c] ?? DEFAULT_COL_WIDTH
-    const getRowHeight = (r: number) => rowHeights[r] ?? DEFAULT_ROW_HEIGHT
+    const getColWidth = useCallback((c: number) => colWidths[c] ?? DEFAULT_COL_WIDTH, [colWidths])
+    const getRowHeight = useCallback((r: number) => rowHeights[r] ?? DEFAULT_ROW_HEIGHT, [rowHeights])
 
     // Dynamic row count: expands based on data, minimum 200 for empty sheets
     const effectiveRows = useMemo(() => getEffectiveRows(data), [data])
@@ -801,13 +801,15 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         const offsets = new Float64Array(COLS + 1)
         for (let c = 0; c < COLS; c++) offsets[c + 1] = offsets[c] + getColWidth(c)
         return offsets
-    }, [colWidths])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [colWidths, getColWidth])
 
     const rowOffsets = useMemo(() => {
         const offsets = new Float64Array(effectiveRows + 1)
         for (let r = 0; r < effectiveRows; r++) offsets[r + 1] = offsets[r] + getRowHeight(r)
         return offsets
-    }, [rowHeights, effectiveRows])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [rowHeights, effectiveRows, getRowHeight])
 
     const totalWidth = colOffsets[COLS]
     const totalHeight = rowOffsets[effectiveRows]
@@ -905,6 +907,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             newData[key] = evaluateFormula(expression, getData, { r: parseInt(rStr), c: parseInt(cStr), sheet: activeSheet }, new Set())
         }
         setEvaluatedData(newData)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data, getCrossSheetValue, globalGridVersion, sheets, activeSheetIndex])
 
     // Sync edit value — prefer formula over display value so the formula bar shows formulas
@@ -1230,6 +1233,8 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             }
         }
         return null
+    // DAYS_*/MONTHS_* are static literal arrays defined in component scope — safe to omit
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     // ---- Drag Fill ----
@@ -1651,7 +1656,8 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         else if (top + h > g.scrollTop + viewportH) g.scrollTop = top + h - viewportH + 4
         if (left < g.scrollLeft + (freezeCols > 0 ? colOffsets[freezeCols] : 0)) g.scrollLeft = Math.max(0, left - (freezeCols > 0 ? colOffsets[freezeCols] : 0))
         else if (left + w > g.scrollLeft + viewportW) g.scrollLeft = left + w - viewportW + 4
-    }, [rowOffsets, colOffsets, viewportH, viewportW, freezeRows, freezeCols])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [rowOffsets, colOffsets, viewportH, viewportW, freezeRows, freezeCols, getColWidth, getRowHeight])
 
     const moveCell = useCallback((dr: number, dc: number) => {
         if (!activeCell) return

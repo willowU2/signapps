@@ -352,7 +352,10 @@ mod tests {
 
         let retrieved = engine.get_report(report_id).await;
         assert!(retrieved.is_some());
-        assert_eq!(retrieved.expect("report should be retrievable").id, report_id);
+        assert_eq!(
+            retrieved.expect("report should be retrievable").id,
+            report_id
+        );
     }
 
     #[tokio::test]
@@ -367,10 +370,16 @@ mod tests {
             enabled: true,
         };
 
-        engine.schedule(config.clone()).await.expect("schedule should succeed");
+        engine
+            .schedule(config.clone())
+            .await
+            .expect("schedule should succeed");
         assert_eq!(engine.list_schedules().await.len(), 1);
 
-        engine.unschedule(config.id).await.expect("unschedule should succeed");
+        engine
+            .unschedule(config.id)
+            .await
+            .expect("unschedule should succeed");
         assert_eq!(engine.list_schedules().await.len(), 0);
     }
 }

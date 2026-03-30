@@ -44,6 +44,7 @@ export function EmailAliases({ accountId, accountEmail }: EmailAliasesProps) {
 
   useEffect(() => {
     loadAliases()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountId])
 
   async function loadAliases() {

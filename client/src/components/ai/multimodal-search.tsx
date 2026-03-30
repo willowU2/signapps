@@ -253,6 +253,7 @@ export function MultimodalSearch({ onSearch }: MultimodalSearchProps) {
           {/* Image preview */}
           {imagePreview && (
             <div className="flex items-center gap-3 p-2 border rounded-lg bg-muted/30">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imagePreview}
                 alt="Apercu recherche visuelle"

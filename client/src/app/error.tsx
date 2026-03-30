@@ -15,7 +15,7 @@ export default function Error({
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    console.debug('Application error:', error);
+    console.warn('Application error:', error);
   }, [error]);
 
   const copyError = async () => {

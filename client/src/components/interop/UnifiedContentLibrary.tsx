@@ -177,6 +177,7 @@ export function UnifiedContentLibrary() {
                 {filteredMedia.map((m, i) => (
                   <a key={i} href={m.url} target="_blank" rel="noopener noreferrer"
                     className="aspect-square rounded-lg border overflow-hidden bg-muted/30 hover:opacity-80 transition-opacity">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={m.url} alt={m.name} className="w-full h-full object-cover"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   </a>
