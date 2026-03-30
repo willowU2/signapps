@@ -12,6 +12,7 @@ use signapps_db::repositories::GroupRepository;
 use uuid::Uuid;
 
 #[derive(Serialize)]
+/// Response for Role.
 pub struct RoleResponse {
     pub id: Uuid,
     pub name: String,

@@ -8,6 +8,7 @@ use crate::AppState;
 
 /// Proxy status response.
 #[derive(Debug, Serialize)]
+/// Response for ProxyStatus.
 pub struct ProxyStatusResponse {
     pub http_listener: ListenerStatus,
     pub https_listener: ListenerStatus,
@@ -18,6 +19,7 @@ pub struct ProxyStatusResponse {
 
 /// Listener status.
 #[derive(Debug, Serialize)]
+/// ListenerStatus data transfer object.
 pub struct ListenerStatus {
     pub port: u16,
     pub active: bool,

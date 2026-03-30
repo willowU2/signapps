@@ -33,6 +33,7 @@ use crate::AppState;
 ///
 /// All fields are optional — a tenant may choose to override only a subset.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+/// TenantBranding data transfer object.
 pub struct TenantBranding {
     /// URL to the tenant's logo image (PNG/SVG recommended, max 2 MB).
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -53,6 +54,7 @@ pub struct TenantBranding {
 
 /// Response wrapper that includes metadata.
 #[derive(Debug, Serialize)]
+/// Response for Branding.
 pub struct BrandingResponse {
     pub tenant_id: Uuid,
     pub branding: TenantBranding,
@@ -61,6 +63,7 @@ pub struct BrandingResponse {
 
 /// Request body for updating branding.
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for UpdateBranding.
 pub struct UpdateBrandingRequest {
     #[validate(url)]
     pub logo_url: Option<String>,

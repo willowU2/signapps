@@ -11,12 +11,14 @@ use signapps_common::Claims;
 // -------------------------------------------------------------------------
 
 #[derive(Debug, Serialize, Deserialize)]
+/// Response for Signature.
 pub struct SignatureResponse {
     pub signature_html: Option<String>,
     pub signature_text: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateSignature.
 pub struct UpdateSignatureRequest {
     pub signature_html: Option<String>,
     pub signature_text: Option<String>,

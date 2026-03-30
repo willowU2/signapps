@@ -11,6 +11,7 @@ use crate::AppState;
 
 /// Model info.
 #[derive(Debug, Serialize)]
+/// ModelInfo data transfer object.
 pub struct ModelInfo {
     pub id: String,
     pub object: String,
@@ -19,12 +20,14 @@ pub struct ModelInfo {
 
 /// Models list response.
 #[derive(Debug, Serialize)]
+/// Response for Models.
 pub struct ModelsResponse {
     pub models: Vec<ModelInfo>,
 }
 
 /// Query parameters for list_models.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ModelsQuery {
     pub provider: Option<String>,
 }

@@ -10,6 +10,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 #[derive(Debug, Serialize)]
+/// JobStatus data transfer object.
 pub struct JobStatus {
     pub id: String,
     pub status: String,

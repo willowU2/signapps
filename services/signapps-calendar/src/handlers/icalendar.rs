@@ -14,12 +14,14 @@ use crate::{services::icalendar as ical, AppState, CalendarError};
 
 #[derive(Debug, Deserialize)]
 #[allow(dead_code)]
+/// Request body for ImportCalendar.
 pub struct ImportCalendarRequest {
     pub ics_content: String,
     pub calendar_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+/// ImportResult data transfer object.
 pub struct ImportResult {
     pub imported: usize,
     pub skipped: usize,
@@ -224,12 +226,14 @@ pub async fn import_calendar(
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for ValidateICalendar.
 pub struct ValidateICalendarRequest {
     pub ics_content: String,
 }
 
 /// Validate iCalendar format
 #[derive(serde::Serialize)]
+/// Response for ValidateICalendar.
 pub struct ValidateICalendarResponse {
     pub valid: bool,
     pub event_count: usize,
@@ -238,6 +242,7 @@ pub struct ValidateICalendarResponse {
 
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
+/// CalendarSession data transfer object.
 pub struct CalendarSession {
     pub id: Uuid,
     pub calendar_id: Uuid,

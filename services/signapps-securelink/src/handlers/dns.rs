@@ -71,6 +71,7 @@ pub async fn update_dns_config(
 
 /// Request to update DNS configuration.
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateDnsConfig.
 pub struct UpdateDnsConfigRequest {
     pub enabled: Option<bool>,
     pub upstream: Option<Vec<String>>,
@@ -102,6 +103,7 @@ pub async fn get_blocklist(
 
 /// Request to create a blocklist.
 #[derive(Debug, Deserialize)]
+/// Request body for CreateBlocklist.
 pub struct CreateBlocklistRequest {
     pub name: String,
     pub url: String,
@@ -174,6 +176,7 @@ pub async fn update_blocklist(
 /// Request to update a blocklist.
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateBlocklist.
 pub struct UpdateBlocklistRequest {
     pub name: Option<String>,
     pub enabled: Option<bool>,
@@ -227,6 +230,7 @@ pub async fn refresh_blocklist(
 
 /// Response for blocklist refresh.
 #[derive(Debug, Serialize)]
+/// Response for RefreshBlocklist.
 pub struct RefreshBlocklistResponse {
     pub message: String,
     pub domain_count: u32,
@@ -254,6 +258,7 @@ pub async fn reset_dns_stats(State(state): State<AppState>) -> Result<Json<Reset
 
 /// Response for stats reset.
 #[derive(Debug, Serialize)]
+/// Response for ResetStats.
 pub struct ResetStatsResponse {
     pub message: String,
 }
@@ -267,6 +272,7 @@ pub async fn list_dns_records(State(state): State<AppState>) -> Result<Json<Vec<
 
 /// Request to add a DNS record.
 #[derive(Debug, Deserialize)]
+/// Request body for AddDnsRecord.
 pub struct AddDnsRecordRequest {
     pub name: String,
     pub record_type: String,
@@ -359,6 +365,7 @@ pub async fn delete_dns_record(
 
 /// Request to delete a DNS record.
 #[derive(Debug, Deserialize)]
+/// Request body for DeleteDnsRecord.
 pub struct DeleteDnsRecordRequest {
     pub name: String,
     pub record_type: String,
@@ -499,6 +506,7 @@ pub async fn query_dns(
 
 /// Request for DNS query.
 #[derive(Debug, Deserialize)]
+/// Request body for DnsQuery.
 pub struct DnsQueryRequest {
     pub domain: String,
     #[serde(default = "default_record_type")]
@@ -511,6 +519,7 @@ fn default_record_type() -> String {
 
 /// Response for DNS query.
 #[derive(Debug, Serialize)]
+/// Response for DnsQuery.
 pub struct DnsQueryResponse {
     pub domain: String,
     pub record_type: String,
@@ -533,6 +542,7 @@ pub async fn flush_dns_cache(State(_state): State<AppState>) -> Result<Json<Flus
 
 /// Response for cache flush.
 #[derive(Debug, Serialize)]
+/// Response for FlushCache.
 pub struct FlushCacheResponse {
     pub message: String,
     pub entries_cleared: usize,

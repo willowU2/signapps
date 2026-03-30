@@ -16,6 +16,7 @@ use signapps_common::Claims;
 // ============================================================================
 
 #[derive(Debug, Serialize, FromRow)]
+/// Course data transfer object.
 pub struct Course {
     pub id: Uuid,
     pub title: String,
@@ -26,6 +27,7 @@ pub struct Course {
 }
 
 #[derive(Debug, Serialize, FromRow)]
+/// CourseProgress data transfer object.
 pub struct CourseProgress {
     pub id: Uuid,
     pub course_id: Uuid,
@@ -37,6 +39,7 @@ pub struct CourseProgress {
 }
 
 #[derive(Debug, Serialize)]
+/// CourseWithProgress data transfer object.
 pub struct CourseWithProgress {
     #[serde(flatten)]
     pub course: Course,
@@ -44,6 +47,7 @@ pub struct CourseWithProgress {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateProgress.
 pub struct UpdateProgressRequest {
     pub module_completions: serde_json::Value,
     pub progress: i32,

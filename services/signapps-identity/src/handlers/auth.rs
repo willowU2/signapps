@@ -40,6 +40,7 @@ async fn audit_auth_event(
 
 /// Login request payload.
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for Login.
 pub struct LoginRequest {
     #[validate(length(min = 1, message = "Username is required"))]
     pub username: String,
@@ -50,6 +51,7 @@ pub struct LoginRequest {
 
 /// Login response with tokens.
 #[derive(Debug, Serialize)]
+/// Response for Login.
 pub struct LoginResponse {
     pub access_token: String,
     pub refresh_token: String,
@@ -59,6 +61,7 @@ pub struct LoginResponse {
 
 /// Registration request payload.
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for Register.
 pub struct RegisterRequest {
     #[validate(length(min = 3, max = 64, message = "Username must be 3-64 characters"))]
     pub username: String,
@@ -72,6 +75,7 @@ pub struct RegisterRequest {
 
 /// User information response.
 #[derive(Debug, Serialize)]
+/// Response for User.
 pub struct UserResponse {
     pub id: Uuid,
     pub username: String,
@@ -87,6 +91,7 @@ pub struct UserResponse {
 /// Refresh token request.
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
+/// Request body for Refresh.
 pub struct RefreshRequest {
     pub refresh_token: String,
 }
@@ -579,6 +584,7 @@ fn verify_totp(secret: &str, code: &str) -> Result<bool> {
 
 /// Password reset confirm request payload.
 #[derive(Debug, Deserialize)]
+/// Request body for PasswordResetConfirm.
 pub struct PasswordResetConfirmRequest {
     pub token: String,
     #[serde(rename = "new_password")]

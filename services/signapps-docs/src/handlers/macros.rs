@@ -16,6 +16,7 @@ use signapps_common::Claims;
 // ============================================================================
 
 #[derive(Debug, Serialize, FromRow)]
+/// Macro data transfer object.
 pub struct Macro {
     pub id: Uuid,
     pub document_id: Uuid,
@@ -27,12 +28,14 @@ pub struct Macro {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateMacro.
 pub struct CreateMacroRequest {
     pub name: String,
     pub code: String,
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateMacro.
 pub struct UpdateMacroRequest {
     pub name: Option<String>,
     pub code: Option<String>,

@@ -244,6 +244,7 @@ pub async fn disconnect_relay(
 
 /// Response for relay test.
 #[derive(Debug, Serialize)]
+/// Response for RelayTest.
 pub struct RelayTestResponse {
     pub relay_id: Uuid,
     pub relay_name: String,
@@ -252,6 +253,7 @@ pub struct RelayTestResponse {
 
 /// Response for connect request.
 #[derive(Debug, Serialize)]
+/// Response for Connect.
 pub struct ConnectResponse {
     pub message: String,
     pub relay_id: Uuid,
@@ -259,6 +261,7 @@ pub struct ConnectResponse {
 
 /// Response for disconnect request.
 #[derive(Debug, Serialize)]
+/// Response for Disconnect.
 pub struct DisconnectResponse {
     pub message: String,
     pub relay_id: Uuid,
@@ -298,6 +301,7 @@ pub async fn get_relay_stats(
 
 /// Statistics for a relay.
 #[derive(Debug, Serialize)]
+/// RelayStats data transfer object.
 pub struct RelayStats {
     pub relay_id: Uuid,
     pub relay_name: String,

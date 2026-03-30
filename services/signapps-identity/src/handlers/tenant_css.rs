@@ -12,12 +12,14 @@ use uuid::Uuid;
 use crate::AppState;
 
 #[derive(Debug, Serialize)]
+/// Response for TenantCss.
 pub struct TenantCssResponse {
     pub tenant_id: Uuid,
     pub css_override: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for SetTenantCss.
 pub struct SetTenantCssRequest {
     /// Raw CSS string. Pass null/empty to clear.
     pub css_override: Option<String>,

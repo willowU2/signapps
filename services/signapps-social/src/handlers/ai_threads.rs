@@ -15,6 +15,7 @@ use crate::AppState;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+/// AiThread data transfer object.
 pub struct AiThread {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -25,12 +26,14 @@ pub struct AiThread {
 }
 
 #[derive(Debug, serde::Deserialize)]
+/// Request body for CreateAiThread.
 pub struct CreateAiThreadRequest {
     pub title: String,
     pub messages: Option<serde_json::Value>,
 }
 
 #[derive(Debug, serde::Deserialize)]
+/// Request body for UpdateAiThread.
 pub struct UpdateAiThreadRequest {
     pub title: Option<String>,
     pub messages: Option<serde_json::Value>,

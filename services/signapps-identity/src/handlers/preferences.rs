@@ -155,6 +155,7 @@ pub async fn patch_preferences(
 
 /// Check for conflicts
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ConflictQuery {
     #[serde(rename = "clientTimestamp")]
     client_timestamp: String,

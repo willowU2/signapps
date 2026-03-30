@@ -13,6 +13,7 @@ use uuid::Uuid;
 use crate::{AppState, CalendarError};
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateRole.
 pub struct UpdateRoleRequest {
     pub role: String,
 }

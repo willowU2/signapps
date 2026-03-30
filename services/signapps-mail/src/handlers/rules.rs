@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 // Re-export condition/action types for in-process rule evaluation (still used by other modules)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+/// RuleCondition data transfer object.
 pub struct RuleCondition {
     pub field: String,    // "from" | "subject" | "body"
     pub operator: String, // "contains" | "equals" | "starts_with"
@@ -37,6 +38,7 @@ pub enum RuleAction {
 // -------------------------------------------------------------------------
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateRule.
 pub struct CreateRuleRequest {
     pub name: String,
     pub conditions: serde_json::Value,
@@ -47,6 +49,7 @@ pub struct CreateRuleRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateRule.
 pub struct UpdateRuleRequest {
     pub name: Option<String>,
     pub conditions: Option<serde_json::Value>,

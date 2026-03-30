@@ -50,6 +50,7 @@ pub enum ConnectionStatus {
 
 /// External storage information.
 #[derive(Debug, Clone, Serialize)]
+/// ExternalStorage data transfer object.
 pub struct ExternalStorage {
     pub id: Uuid,
     pub name: String,
@@ -69,6 +70,7 @@ pub struct ExternalStorage {
 
 /// Request to connect external storage.
 #[derive(Debug, Deserialize)]
+/// Request body for Connect.
 pub struct ConnectRequest {
     /// Human-readable name for this storage
     pub name: String,
@@ -90,6 +92,7 @@ pub struct ConnectRequest {
 
 /// Additional connection options.
 #[derive(Debug, Deserialize)]
+/// ConnectOptions data transfer object.
 pub struct ConnectOptions {
     /// Mount as read-only
     pub readonly: Option<bool>,
@@ -111,6 +114,7 @@ pub struct ConnectOptions {
 
 /// Response after connecting storage.
 #[derive(Debug, Serialize)]
+/// Response for Connect.
 pub struct ConnectResponse {
     pub success: bool,
     pub storage: Option<ExternalStorage>,

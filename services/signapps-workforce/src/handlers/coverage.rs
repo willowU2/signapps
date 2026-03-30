@@ -24,6 +24,7 @@ use signapps_common::{Claims, TenantContext};
 
 /// Coverage template (reusable weekly pattern)
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// CoverageTemplate data transfer object.
 pub struct CoverageTemplate {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -37,6 +38,7 @@ pub struct CoverageTemplate {
 
 /// Coverage rule (applied to an org node)
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// CoverageRule data transfer object.
 pub struct CoverageRule {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -91,6 +93,7 @@ impl CoverageRuleWithAncestor {
 
 /// Coverage slot definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// CoverageSlot data transfer object.
 pub struct CoverageSlot {
     pub day_of_week: i32,   // 0=Sunday, 6=Saturday
     pub start_time: String, // "HH:MM"
@@ -103,6 +106,7 @@ pub struct CoverageSlot {
 
 /// Weekly pattern structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// WeeklyPattern data transfer object.
 pub struct WeeklyPattern {
     pub monday: Vec<CoverageSlot>,
     pub tuesday: Vec<CoverageSlot>,
@@ -115,6 +119,7 @@ pub struct WeeklyPattern {
 
 /// Effective coverage for a node (computed)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// EffectiveCoverage data transfer object.
 pub struct EffectiveCoverage {
     pub org_node_id: Uuid,
     pub org_node_name: String,
@@ -126,6 +131,7 @@ pub struct EffectiveCoverage {
 
 /// Create template request
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for CreateTemplate.
 pub struct CreateTemplateRequest {
     #[validate(length(min = 1, max = 255))]
     pub name: String,
@@ -136,6 +142,7 @@ pub struct CreateTemplateRequest {
 
 /// Update template request
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for UpdateTemplate.
 pub struct UpdateTemplateRequest {
     #[validate(length(min = 1, max = 255))]
     pub name: Option<String>,
@@ -146,6 +153,7 @@ pub struct UpdateTemplateRequest {
 
 /// Create rule request
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for CreateRule.
 pub struct CreateRuleRequest {
     pub org_node_id: Uuid,
     pub template_id: Option<Uuid>,
@@ -159,6 +167,7 @@ pub struct CreateRuleRequest {
 
 /// Update rule request
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for UpdateRule.
 pub struct UpdateRuleRequest {
     pub template_id: Option<Uuid>,
     #[validate(length(min = 1, max = 255))]
@@ -172,6 +181,7 @@ pub struct UpdateRuleRequest {
 
 /// Query params for coverage rules
 #[derive(Debug, Deserialize, Default)]
+/// Query parameters for filtering results.
 pub struct RuleQueryParams {
     #[allow(dead_code)] // Scaffolded — will be wired when handler is implemented
     pub org_node_id: Option<Uuid>,

@@ -24,6 +24,7 @@ use crate::{AppState, CalendarError};
 
 /// Update notification preferences request
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Request body for UpdatePreferences.
 pub struct UpdatePreferencesRequest {
     pub email_enabled: Option<bool>,
     pub email_frequency: Option<String>,
@@ -38,6 +39,7 @@ pub struct UpdatePreferencesRequest {
 
 /// Paginated notification history response
 #[derive(Debug, Clone, Serialize)]
+/// Response for NotificationHistory.
 pub struct NotificationHistoryResponse {
     pub notifications: Vec<NotificationRecord>,
     pub total: i64,
@@ -47,6 +49,7 @@ pub struct NotificationHistoryResponse {
 
 /// Single notification record for history
 #[derive(Debug, Clone, Serialize)]
+/// NotificationRecord data transfer object.
 pub struct NotificationRecord {
     pub id: String,
     pub notification_type: String,
@@ -134,6 +137,7 @@ pub async fn update_preferences(
 /// POST /api/v1/notifications/subscriptions/push
 /// Register a Web Push API subscription
 #[derive(Debug, Clone, Deserialize)]
+/// Request body for PushSubscription.
 pub struct PushSubscriptionRequest {
     pub subscription: serde_json::Value, // Web Push API subscription object
     pub browser_name: Option<String>,
@@ -205,6 +209,7 @@ pub async fn unsubscribe_push(
 /// Get notification history with filtering and pagination
 #[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
+/// Query parameters for filtering results.
 pub struct NotificationHistoryQuery {
     pub notification_type: Option<String>,
     pub channel: Option<String>,

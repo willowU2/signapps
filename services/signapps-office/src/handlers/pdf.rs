@@ -14,6 +14,7 @@ use crate::pdf::{
 
 /// PDF info response
 #[derive(Debug, Serialize)]
+/// Response for PdfInfo.
 pub struct PdfInfoResponse {
     pub service: &'static str,
     pub version: &'static str,
@@ -173,6 +174,7 @@ pub async fn get_pdf_pages(mut multipart: Multipart) -> Response {
 /// Merge request for JSON-based merge
 #[derive(Debug, Deserialize)]
 #[allow(dead_code)]
+/// Request body for Merge.
 pub struct MergeRequest {
     /// Base64-encoded PDF files
     pub files: Vec<String>,
@@ -232,6 +234,7 @@ pub async fn merge_pdf_files(mut multipart: Multipart) -> Response {
 /// Split request
 #[derive(Debug, Deserialize)]
 #[allow(dead_code)]
+/// Request body for Split.
 pub struct SplitRequest {
     /// Page ranges to extract (1-based)
     pub ranges: Vec<(u32, u32)>,

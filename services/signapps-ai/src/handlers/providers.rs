@@ -9,6 +9,7 @@ use crate::AppState;
 
 /// Provider info for frontend.
 #[derive(Debug, Serialize)]
+/// ProviderInfo data transfer object.
 pub struct ProviderInfo {
     pub id: String,
     pub name: String,
@@ -20,6 +21,7 @@ pub struct ProviderInfo {
 
 /// List providers response.
 #[derive(Debug, Serialize)]
+/// Response for Providers.
 pub struct ProvidersResponse {
     pub providers: Vec<ProviderInfo>,
     pub active_provider: String,

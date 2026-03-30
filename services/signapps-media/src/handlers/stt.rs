@@ -14,6 +14,7 @@ use crate::{
 };
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct TranscribeParams {
     pub language: Option<String>,
     pub model: Option<String>,
@@ -23,6 +24,7 @@ pub struct TranscribeParams {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for Transcribe.
 pub struct TranscribeResponse {
     pub success: bool,
     pub text: String,
@@ -37,6 +39,7 @@ pub struct TranscribeResponse {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for Segment.
 pub struct SegmentResponse {
     pub id: u32,
     pub start: f32,
@@ -46,6 +49,7 @@ pub struct SegmentResponse {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for Word.
 pub struct WordResponse {
     pub word: String,
     pub start: f32,
@@ -55,6 +59,7 @@ pub struct WordResponse {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for Speaker.
 pub struct SpeakerResponse {
     pub id: String,
     pub label: String,

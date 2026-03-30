@@ -23,6 +23,7 @@ use crate::AppState;
 
 /// Quota usage summary returned to callers.
 #[derive(Debug, Serialize)]
+/// QuotaUsage data transfer object.
 pub struct QuotaUsage {
     pub user_id: Uuid,
     pub storage: UsageInfo,
@@ -32,6 +33,7 @@ pub struct QuotaUsage {
 
 /// Usage info for a single resource dimension.
 #[derive(Debug, Serialize)]
+/// UsageInfo data transfer object.
 pub struct UsageInfo {
     pub used: i64,
     pub limit: Option<i64>,
@@ -41,6 +43,7 @@ pub struct UsageInfo {
 
 /// Per-bucket usage (populated on demand; empty in basic path).
 #[derive(Debug, Serialize)]
+/// BucketUsage data transfer object.
 pub struct BucketUsage {
     pub bucket: String,
     pub used_bytes: i64,
@@ -49,6 +52,7 @@ pub struct BucketUsage {
 
 /// Quota alert.
 #[derive(Debug, Serialize)]
+/// QuotaAlert data transfer object.
 pub struct QuotaAlert {
     pub alert_type: QuotaAlertType,
     pub resource: String,
@@ -71,6 +75,7 @@ pub enum QuotaAlertType {
 
 /// Admin request to configure limits for a user.
 #[derive(Debug, Deserialize)]
+/// Request body for SetQuota.
 pub struct SetQuotaRequest {
     pub max_storage_bytes: Option<i64>,
     pub max_files: Option<i64>,

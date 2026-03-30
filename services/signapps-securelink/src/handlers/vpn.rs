@@ -13,12 +13,14 @@ use signapps_common::Result;
 
 /// VPN initialization request.
 #[derive(Debug, Deserialize)]
+/// Request body for InitVpn.
 pub struct InitVpnRequest {
     pub name: String,
 }
 
 /// VPN initialization response.
 #[derive(Debug, Serialize)]
+/// Response for InitVpn.
 pub struct InitVpnResponse {
     pub message: String,
     pub ca_certificate: String,
@@ -59,6 +61,7 @@ pub async fn get_ca_certificate(
 
 /// CA certificate response.
 #[derive(Debug, Serialize)]
+/// Response for CaCertificate.
 pub struct CaCertificateResponse {
     pub certificate: String,
 }
@@ -80,6 +83,7 @@ pub async fn regenerate_configs(
 
 /// Regenerate response.
 #[derive(Debug, Serialize)]
+/// Response for Regenerate.
 pub struct RegenerateResponse {
     pub message: String,
     pub device_count: usize,
@@ -106,6 +110,7 @@ pub async fn health_check(
 
 /// Health response.
 #[derive(Debug, Serialize)]
+/// Response for Health.
 pub struct HealthResponse {
     pub status: String,
     pub network_status: NetworkStatus,

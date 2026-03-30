@@ -12,6 +12,7 @@ use crate::AppState;
 use signapps_common::Claims;
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct MediaQuery {
     pub mime_type: Option<String>,
     pub sort: Option<String>,

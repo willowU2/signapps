@@ -60,6 +60,7 @@ const DEFAULT_TEMPLATES: &[BuiltinTemplate] = &[
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
+/// CustomTemplate data transfer object.
 pub struct CustomTemplate {
     pub id: Uuid,
     pub slug: String,
@@ -70,6 +71,7 @@ pub struct CustomTemplate {
 }
 
 #[derive(Serialize)]
+/// TemplateSummary data transfer object.
 pub struct TemplateSummary {
     pub id: String,
     pub name: String,
@@ -78,6 +80,7 @@ pub struct TemplateSummary {
 }
 
 #[derive(Serialize)]
+/// TemplateDetail data transfer object.
 pub struct TemplateDetail {
     pub id: String,
     pub name: String,
@@ -87,6 +90,7 @@ pub struct TemplateDetail {
 }
 
 #[derive(Deserialize)]
+/// Request body for CreateTemplate.
 pub struct CreateTemplateRequest {
     pub name: String,
     pub category: String,

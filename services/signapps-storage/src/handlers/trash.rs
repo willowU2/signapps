@@ -17,6 +17,7 @@ use crate::AppState;
 
 /// Trash item information.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// TrashItem data transfer object.
 pub struct TrashItem {
     pub id: Uuid,
     pub original_bucket: String,
@@ -32,6 +33,7 @@ pub struct TrashItem {
 
 /// Move to trash request.
 #[derive(Debug, Deserialize)]
+/// Request body for MoveToTrash.
 pub struct MoveToTrashRequest {
     pub bucket: String,
     pub keys: Vec<String>,
@@ -39,6 +41,7 @@ pub struct MoveToTrashRequest {
 
 /// Move to trash response.
 #[derive(Debug, Serialize)]
+/// Response for MoveToTrash.
 pub struct MoveToTrashResponse {
     pub moved: Vec<TrashItem>,
     pub failed: Vec<TrashFailure>,
@@ -46,6 +49,7 @@ pub struct MoveToTrashResponse {
 
 /// Trash operation failure.
 #[derive(Debug, Serialize)]
+/// TrashFailure data transfer object.
 pub struct TrashFailure {
     pub key: String,
     pub error: String,
@@ -53,6 +57,7 @@ pub struct TrashFailure {
 
 /// Restore from trash request.
 #[derive(Debug, Deserialize)]
+/// Request body for Restore.
 pub struct RestoreRequest {
     pub items: Vec<Uuid>,
     /// Restore to original location or new location
@@ -61,6 +66,7 @@ pub struct RestoreRequest {
 
 /// Restore destination.
 #[derive(Debug, Deserialize)]
+/// RestoreDestination data transfer object.
 pub struct RestoreDestination {
     pub bucket: String,
     pub prefix: Option<String>,
@@ -68,6 +74,7 @@ pub struct RestoreDestination {
 
 /// Restore response.
 #[derive(Debug, Serialize)]
+/// Response for Restore.
 pub struct RestoreResponse {
     pub restored: Vec<RestoredItem>,
     pub failed: Vec<RestoreFailure>,
@@ -75,6 +82,7 @@ pub struct RestoreResponse {
 
 /// Restored item info.
 #[derive(Debug, Serialize)]
+/// RestoredItem data transfer object.
 pub struct RestoredItem {
     pub id: Uuid,
     pub bucket: String,
@@ -83,6 +91,7 @@ pub struct RestoredItem {
 
 /// Restore failure.
 #[derive(Debug, Serialize)]
+/// RestoreFailure data transfer object.
 pub struct RestoreFailure {
     pub id: Uuid,
     pub error: String,
@@ -90,6 +99,7 @@ pub struct RestoreFailure {
 
 /// List trash query.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListTrashQuery {
     pub bucket: Option<String>,
     pub search: Option<String>,
@@ -101,6 +111,7 @@ pub struct ListTrashQuery {
 
 /// List trash response.
 #[derive(Debug, Serialize)]
+/// Response for ListTrash.
 pub struct ListTrashResponse {
     pub items: Vec<TrashItem>,
     pub total: i64,
@@ -109,6 +120,7 @@ pub struct ListTrashResponse {
 
 /// Trash stats.
 #[derive(Debug, Serialize)]
+/// TrashStats data transfer object.
 pub struct TrashStats {
     pub total_items: i64,
     pub total_size: i64,

@@ -106,6 +106,7 @@ pub async fn delete_resource(
 }
 
 #[derive(Debug, Serialize)]
+/// ResourceConflict data transfer object.
 pub struct ResourceConflict {
     pub resource_id: Uuid,
     pub conflicting_event_id: Uuid,
@@ -116,6 +117,7 @@ pub struct ResourceConflict {
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
+/// Request body for CheckAvailability.
 pub struct CheckAvailabilityRequest {
     pub resource_ids: Vec<Uuid>,
     pub start_time: DateTime<Utc>,
@@ -123,6 +125,7 @@ pub struct CheckAvailabilityRequest {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for Availability.
 pub struct AvailabilityResponse {
     pub available: bool,
     pub conflicts: Vec<ResourceConflict>,
@@ -148,6 +151,7 @@ pub async fn check_availability(
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
+/// Request body for BookResource.
 pub struct BookResourceRequest {
     pub event_id: Uuid,
     pub resource_ids: Vec<Uuid>,

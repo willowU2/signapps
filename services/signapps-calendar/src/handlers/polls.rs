@@ -17,6 +17,7 @@ use crate::{AppState, CalendarError};
 // ============================================================================
 
 #[derive(Debug, Serialize)]
+/// PollSlot data transfer object.
 pub struct PollSlot {
     pub id: Uuid,
     pub poll_id: Uuid,
@@ -27,6 +28,7 @@ pub struct PollSlot {
 }
 
 #[derive(Debug, Serialize)]
+/// PollVote data transfer object.
 pub struct PollVote {
     pub id: Uuid,
     pub voter_name: String,
@@ -35,6 +37,7 @@ pub struct PollVote {
 }
 
 #[derive(Debug, Serialize)]
+/// PollSummary data transfer object.
 pub struct PollSummary {
     pub id: Uuid,
     pub organizer_id: Uuid,
@@ -48,6 +51,7 @@ pub struct PollSummary {
 }
 
 #[derive(Debug, Serialize)]
+/// PollDetail data transfer object.
 pub struct PollDetail {
     #[serde(flatten)]
     pub poll: PollSummary,
@@ -59,6 +63,7 @@ pub struct PollDetail {
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// SlotInput data transfer object.
 pub struct SlotInput {
     pub slot_date: NaiveDate,
     pub start_time: NaiveTime,
@@ -66,6 +71,7 @@ pub struct SlotInput {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreatePoll.
 pub struct CreatePollRequest {
     pub title: String,
     pub description: Option<String>,
@@ -73,6 +79,7 @@ pub struct CreatePollRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// VoteInput data transfer object.
 pub struct VoteInput {
     pub voter_name: String,
     pub voter_email: String,
@@ -81,6 +88,7 @@ pub struct VoteInput {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for ConfirmPoll.
 pub struct ConfirmPollRequest {
     pub slot_id: Uuid,
     /// Optional: calendar_id to create the event in

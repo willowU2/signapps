@@ -26,6 +26,7 @@ use crate::AppState;
 // ── Models ────────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateGuestToken.
 pub struct CreateGuestTokenRequest {
     /// Resource type (e.g. "document", "calendar", "form")
     pub resource_type: String,
@@ -40,6 +41,7 @@ pub struct CreateGuestTokenRequest {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for GuestToken.
 pub struct GuestTokenResponse {
     pub id: Uuid,
     /// The raw token — shown only once at creation.
@@ -57,11 +59,13 @@ pub struct GuestTokenResponse {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for ValidateGuestToken.
 pub struct ValidateGuestTokenRequest {
     pub token: String,
 }
 
 #[derive(Debug, Serialize)]
+/// Response for ValidateGuestToken.
 pub struct ValidateGuestTokenResponse {
     pub valid: bool,
     pub resource_type: Option<String>,

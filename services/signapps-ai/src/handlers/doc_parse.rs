@@ -15,6 +15,7 @@ use crate::workers::{DocParseWorker, ParsedDocument, ParsedTable};
 
 /// Response for the table extraction endpoint.
 #[derive(Debug, Serialize)]
+/// Response for ExtractTables.
 pub struct ExtractTablesResponse {
     pub tables: Vec<ParsedTable>,
     pub count: usize,

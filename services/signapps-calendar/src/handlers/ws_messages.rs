@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 /// Presence status message sent to clients
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// PresenceMessage data transfer object.
 pub struct PresenceMessage {
     pub user_id: Uuid,
     pub username: String,
@@ -30,6 +31,7 @@ pub enum PresenceAction {
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
+/// Request body for Sync.
 pub struct SyncRequest {
     pub state_vector: Vec<u8>,
     pub request_id: String,
@@ -37,6 +39,7 @@ pub struct SyncRequest {
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Serialize)]
+/// Response for Sync.
 pub struct SyncResponse {
     pub update: Vec<u8>,
     pub request_id: String,

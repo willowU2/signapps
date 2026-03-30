@@ -48,6 +48,7 @@ impl ThumbnailSize {
 
 /// Thumbnail query parameters.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ThumbnailQuery {
     #[serde(default)]
     pub size: ThumbnailSize,
@@ -56,6 +57,7 @@ pub struct ThumbnailQuery {
 
 /// Preview query parameters.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct PreviewQuery {
     pub page: Option<u32>,
     pub width: Option<u32>,
@@ -64,6 +66,7 @@ pub struct PreviewQuery {
 
 /// Preview info response.
 #[derive(Debug, Serialize)]
+/// PreviewInfo data transfer object.
 pub struct PreviewInfo {
     pub previewable: bool,
     pub preview_type: PreviewType,
@@ -967,6 +970,7 @@ pub fn supports_streaming_preview(content_type: &str) -> bool {
 
 /// A file entry in an archive.
 #[derive(Debug, Serialize)]
+/// ArchiveFile data transfer object.
 pub struct ArchiveFile {
     pub name: String,
     pub size: u64,
@@ -976,6 +980,7 @@ pub struct ArchiveFile {
 
 /// Response with archive listing.
 #[derive(Debug, Serialize)]
+/// Response for ArchiveList.
 pub struct ArchiveListResponse {
     pub files: Vec<ArchiveFile>,
     pub total_size: u64,
@@ -1042,6 +1047,7 @@ pub async fn get_archive_listing(
 
 /// Document metadata response.
 #[derive(Debug, Serialize)]
+/// DocumentMetadata data transfer object.
 pub struct DocumentMetadata {
     pub filename: String,
     pub content_type: String,

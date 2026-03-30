@@ -15,6 +15,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 #[derive(Deserialize)]
+/// Query parameters for filtering results.
 pub struct DateRangeParams {
     pub start: Option<DateTime<Utc>>,
     pub end: Option<DateTime<Utc>>,
@@ -154,6 +155,7 @@ pub async fn add_attendee(
 }
 
 #[derive(Deserialize)]
+/// UpdateRsvpPayload data transfer object.
 pub struct UpdateRsvpPayload {
     pub rsvp_status: String,
 }

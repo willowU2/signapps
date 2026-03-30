@@ -15,12 +15,14 @@ use crate::AppState;
 
 /// List query parameters.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListQuery {
     pub limit: Option<i64>,
 }
 
 /// Array response with disks.
 #[derive(Debug, Serialize)]
+/// Response for Array.
 pub struct ArrayResponse {
     #[serde(flatten)]
     pub array: RaidArray,
@@ -30,6 +32,7 @@ pub struct ArrayResponse {
 
 /// Disk action request.
 #[derive(Debug, Deserialize)]
+/// Request body for DiskAction.
 pub struct DiskActionRequest {
     pub disk_path: String,
 }

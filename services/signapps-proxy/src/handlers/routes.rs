@@ -15,6 +15,7 @@ use crate::AppState;
 
 /// Route response with additional info.
 #[derive(Debug, Serialize)]
+/// Response for Route.
 pub struct RouteResponse {
     #[serde(flatten)]
     pub route: Route,

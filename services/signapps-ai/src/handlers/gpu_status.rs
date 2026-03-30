@@ -10,6 +10,7 @@ use crate::AppState;
 
 /// Response for the GPU status endpoint.
 #[derive(Debug, Serialize)]
+/// Response for GpuStatus.
 pub struct GpuStatusResponse {
     pub gpus: Vec<GpuState>,
     pub total_vram_mb: u64,

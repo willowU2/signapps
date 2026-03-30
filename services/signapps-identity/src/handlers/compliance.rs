@@ -36,6 +36,7 @@ struct ComplianceRow {
 // ── DPIA ─────────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Serialize, Deserialize)]
+/// Request body for SaveDpia.
 pub struct SaveDpiaRequest {
     pub project_name: String,
     pub data_controller: String,
@@ -48,6 +49,7 @@ pub struct SaveDpiaRequest {
 }
 
 #[derive(Debug, Serialize)]
+/// DpiaRecord data transfer object.
 pub struct DpiaRecord {
     pub id: Uuid,
     pub project_name: String,
@@ -124,6 +126,7 @@ fn dpia_from_row(row: ComplianceRow) -> Result<DpiaRecord> {
 // ── DSAR ─────────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateDsar.
 pub struct CreateDsarRequest {
     #[serde(rename = "type")]
     pub dsar_type: String,
@@ -133,6 +136,7 @@ pub struct CreateDsarRequest {
 }
 
 #[derive(Debug, Serialize, Clone)]
+/// DsarRecord data transfer object.
 pub struct DsarRecord {
     pub id: Uuid,
     pub reference: String,
@@ -148,6 +152,7 @@ pub struct DsarRecord {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateDsar.
 pub struct UpdateDsarRequest {
     pub status: String,
     pub notes: Option<String>,
@@ -312,11 +317,13 @@ fn dsar_from_row(row: ComplianceRow) -> Result<DsarRecord> {
 // ── Retention policies ────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
+/// Request body for RetentionPolicies.
 pub struct RetentionPoliciesRequest {
     pub policies: Value,
 }
 
 #[derive(Debug, Serialize)]
+/// Response for RetentionPolicies.
 pub struct RetentionPoliciesResponse {
     pub data: Value,
     pub updated_at: DateTime<Utc>,
@@ -359,6 +366,7 @@ pub async fn get_retention_policies(
 // ── Consent (CO4) ─────────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
+/// Request body for SaveConsent.
 pub struct SaveConsentRequest {
     pub consent: Value,
 }

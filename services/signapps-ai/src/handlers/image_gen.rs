@@ -23,6 +23,7 @@ use crate::AppState;
 
 /// Response for image generation endpoints.
 #[derive(Debug, Serialize)]
+/// Response for ImageGen.
 pub struct ImageGenResponse {
     pub image_url: String,
     pub seed_used: Option<i64>,
@@ -33,6 +34,7 @@ pub struct ImageGenResponse {
 
 /// Response for listing available models.
 #[derive(Debug, Serialize)]
+/// Response for ImageModels.
 pub struct ImageModelsResponse {
     pub models: Vec<ModelInfo>,
     pub count: usize,
@@ -44,6 +46,7 @@ pub struct ImageModelsResponse {
 
 /// JSON request body for the text-to-image endpoint.
 #[derive(Debug, Deserialize)]
+/// Request body for Generate.
 pub struct GenerateRequest {
     pub prompt: String,
     pub negative_prompt: Option<String>,

@@ -17,6 +17,7 @@ use signapps_db::repositories::LdapRepository;
 
 /// Request to create LDAP configuration.
 #[derive(Debug, Deserialize)]
+/// Request body for CreateLdapConfig.
 pub struct CreateLdapConfigRequest {
     pub server_url: String,
     pub bind_dn: String,
@@ -34,6 +35,7 @@ pub struct CreateLdapConfigRequest {
 
 /// Request to update LDAP configuration.
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateLdapConfig.
 pub struct UpdateLdapConfigRequest {
     pub enabled: Option<bool>,
     pub server_url: Option<String>,
@@ -52,6 +54,7 @@ pub struct UpdateLdapConfigRequest {
 
 /// Sync result response.
 #[derive(Debug, Serialize)]
+/// Response for SyncResult.
 pub struct SyncResultResponse {
     pub users_created: i32,
     pub users_updated: i32,

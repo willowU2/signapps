@@ -15,6 +15,7 @@ use crate::AppState;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+/// PgpConfig data transfer object.
 pub struct PgpConfig {
     pub id: Uuid,
     pub account_id: Uuid,
@@ -26,6 +27,7 @@ pub struct PgpConfig {
 }
 
 #[derive(Debug, serde::Deserialize)]
+/// Request body for UpsertPgpConfig.
 pub struct UpsertPgpConfigRequest {
     pub enabled: Option<bool>,
     pub public_key_pem: Option<String>,

@@ -16,6 +16,7 @@ use signapps_common::Claims;
 // ============================================================================
 
 #[derive(Debug, Serialize, FromRow)]
+/// Design data transfer object.
 pub struct Design {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -29,6 +30,7 @@ pub struct Design {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateDesign.
 pub struct CreateDesignRequest {
     pub name: String,
     #[serde(default = "default_width")]
@@ -42,6 +44,7 @@ pub struct CreateDesignRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateDesign.
 pub struct UpdateDesignRequest {
     pub name: Option<String>,
     pub format_width: Option<i32>,

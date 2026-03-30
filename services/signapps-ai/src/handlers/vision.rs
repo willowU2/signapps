@@ -15,6 +15,7 @@ use crate::workers::{VisionResult, VisionWorker};
 
 /// Response for the batch describe endpoint.
 #[derive(Debug, Serialize)]
+/// Response for BatchDescribe.
 pub struct BatchDescribeResponse {
     pub results: Vec<VisionResult>,
     pub count: usize,

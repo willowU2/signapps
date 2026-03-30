@@ -15,6 +15,7 @@ use crate::AppState;
 
 /// Certificate response.
 #[derive(Debug, Serialize)]
+/// Response for Certificate.
 pub struct CertificateResponse {
     pub id: Uuid,
     pub domain: String,
@@ -87,6 +88,7 @@ pub async fn upload_certificate(
 
 /// Request body for ACME certificate request.
 #[derive(Debug, Deserialize)]
+/// Request body for RequestCertificateBody.
 pub struct RequestCertificateBody {
     pub domain: String,
 }

@@ -17,6 +17,7 @@ use signapps_common::Claims;
 // ============================================================================
 
 #[derive(Debug, Serialize, FromRow)]
+/// ChangelogEntry data transfer object.
 pub struct ChangelogEntry {
     pub id: Uuid,
     pub version: String,
@@ -27,6 +28,7 @@ pub struct ChangelogEntry {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateChangelog.
 pub struct CreateChangelogRequest {
     pub version: String,
     pub change_type: Option<String>,
@@ -39,6 +41,7 @@ pub struct CreateChangelogRequest {
 // ============================================================================
 
 #[derive(Debug, Serialize, FromRow)]
+/// Pipeline data transfer object.
 pub struct Pipeline {
     pub id: Uuid,
     pub repo_name: String,
@@ -50,6 +53,7 @@ pub struct Pipeline {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreatePipeline.
 pub struct CreatePipelineRequest {
     pub repo_name: String,
     pub branch: Option<String>,
@@ -57,6 +61,7 @@ pub struct CreatePipelineRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdatePipeline.
 pub struct UpdatePipelineRequest {
     pub status: Option<String>,
     pub started_at: Option<DateTime<Utc>>,
@@ -68,6 +73,7 @@ pub struct UpdatePipelineRequest {
 // ============================================================================
 
 #[derive(Debug, Serialize, FromRow)]
+/// Deployment data transfer object.
 pub struct Deployment {
     pub id: Uuid,
     pub service_name: String,
@@ -79,6 +85,7 @@ pub struct Deployment {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateDeployment.
 pub struct CreateDeploymentRequest {
     pub service_name: String,
     pub version: String,

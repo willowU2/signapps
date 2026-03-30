@@ -14,6 +14,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 #[derive(Debug, Deserialize, Default)]
+/// Query parameters for filtering results.
 pub struct ProjectListQuery {
     pub workspace_id: Option<Uuid>,
     pub limit: Option<i64>,

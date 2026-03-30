@@ -24,6 +24,7 @@ use signapps_common::{Error, Result};
 /// Body sent by Slack for slash commands (application/x-www-form-urlencoded).
 /// Axum's `Form` extractor handles this automatically.
 #[derive(Debug, Deserialize)]
+/// SlashCommandPayload data transfer object.
 pub struct SlashCommandPayload {
     /// The slash command (e.g. "/signapps")
     pub command: Option<String>,
@@ -43,6 +44,7 @@ pub struct SlashCommandPayload {
 
 /// Slack response message format.
 #[derive(Debug, Serialize)]
+/// Response for Slack.
 pub struct SlackResponse {
     /// `in_channel` (visible to all) or `ephemeral` (visible only to user)
     pub response_type: &'static str,
@@ -73,6 +75,7 @@ impl SlackResponse {
 
 /// Slack integration configuration stored in the database (or env).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// SlackIntegrationConfig data transfer object.
 pub struct SlackIntegrationConfig {
     pub webhook_url: String,
     pub channel: String,
@@ -83,6 +86,7 @@ pub struct SlackIntegrationConfig {
 
 /// Request to save Slack config.
 #[derive(Debug, Deserialize)]
+/// Request body for SaveSlackConfig.
 pub struct SaveSlackConfigRequest {
     pub webhook_url: String,
     pub channel: Option<String>,

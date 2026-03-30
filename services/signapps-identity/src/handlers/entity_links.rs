@@ -21,6 +21,7 @@ use crate::AppState;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// EntityLink data transfer object.
 pub struct EntityLink {
     pub id: Uuid,
     pub source_type: String,
@@ -33,12 +34,14 @@ pub struct EntityLink {
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct FindLinksQuery {
     pub entity_type: String,
     pub entity_id: Uuid,
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateLink.
 pub struct CreateLinkRequest {
     pub source_type: String,
     pub source_id: Uuid,

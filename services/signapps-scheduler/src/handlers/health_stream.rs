@@ -16,6 +16,7 @@ use crate::AppState;
 
 /// Status of a single downstream service.
 #[derive(Debug, Clone, Serialize)]
+/// ServiceStatus data transfer object.
 pub struct ServiceStatus {
     pub name: String,
     pub port: u16,
@@ -25,6 +26,7 @@ pub struct ServiceStatus {
 
 /// Payload pushed via SSE.
 #[derive(Debug, Clone, Serialize)]
+/// HealthSnapshot data transfer object.
 pub struct HealthSnapshot {
     pub services: Vec<ServiceStatus>,
     pub all_healthy: bool,

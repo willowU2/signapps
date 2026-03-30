@@ -84,6 +84,7 @@ impl Operator {
 
 /// Alert configuration defining when an alert should trigger.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// AlertConfig data transfer object.
 pub struct AlertConfig {
     pub id: Uuid,
     pub name: String,
@@ -107,6 +108,7 @@ pub struct AlertConfig {
 
 /// An alert event that was triggered.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// AlertEvent data transfer object.
 pub struct AlertEvent {
     pub id: Uuid,
     pub config_id: Uuid,
@@ -125,6 +127,7 @@ pub struct AlertEvent {
 
 /// Request to create an alert configuration.
 #[derive(Debug, Deserialize)]
+/// Request body for CreateAlert.
 pub struct CreateAlertRequest {
     pub name: String,
     pub description: Option<String>,
@@ -152,6 +155,7 @@ fn default_enabled() -> bool {
 
 /// Request to update an alert configuration.
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateAlert.
 pub struct UpdateAlertRequest {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -168,6 +172,7 @@ pub struct UpdateAlertRequest {
 
 /// Request to acknowledge an alert.
 #[derive(Debug, Deserialize)]
+/// Request body for Acknowledge.
 pub struct AcknowledgeRequest {
     pub acknowledged_by: String,
     #[allow(dead_code)]
@@ -176,6 +181,7 @@ pub struct AcknowledgeRequest {
 
 /// Query parameters for listing alerts.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListAlertsQuery {
     pub severity: Option<AlertSeverity>,
     pub enabled: Option<bool>,
@@ -184,6 +190,7 @@ pub struct ListAlertsQuery {
 
 /// Query parameters for listing alert events.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListEventsQuery {
     pub status: Option<AlertStatus>,
     pub severity: Option<AlertSeverity>,

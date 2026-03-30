@@ -48,6 +48,7 @@ fn is_private_url(url: &str) -> bool {
 
 /// Webhook configuration response.
 #[derive(Debug, Clone, Serialize)]
+/// Response for Webhook.
 pub struct WebhookResponse {
     pub id: Uuid,
     pub name: String,
@@ -65,6 +66,7 @@ pub struct WebhookResponse {
 
 /// Request to create a new webhook.
 #[derive(Debug, Deserialize)]
+/// Request body for CreateWebhook.
 pub struct CreateWebhookRequest {
     pub name: String,
     pub url: String,
@@ -81,6 +83,7 @@ fn default_enabled() -> bool {
 
 /// Request to update an existing webhook.
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateWebhook.
 pub struct UpdateWebhookRequest {
     pub name: Option<String>,
     pub url: Option<String>,
@@ -92,6 +95,7 @@ pub struct UpdateWebhookRequest {
 
 /// Result of a webhook test.
 #[derive(Debug, Serialize)]
+/// WebhookTestResult data transfer object.
 pub struct WebhookTestResult {
     pub success: bool,
     pub status_code: Option<i32>,

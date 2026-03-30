@@ -16,6 +16,7 @@ use crate::{
 };
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct TokenQuery {
     pub room: Option<String>,
     pub display_name: Option<String>,

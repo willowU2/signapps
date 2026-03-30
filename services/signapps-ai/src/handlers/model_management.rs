@@ -11,26 +11,31 @@ use signapps_runtime::{HardwareProfile, ModelEntry};
 use crate::AppState;
 
 #[derive(Debug, Serialize)]
+/// Response for LocalModels.
 pub struct LocalModelsResponse {
     pub models: Vec<ModelEntry>,
 }
 
 #[derive(Debug, Serialize)]
+/// Response for AvailableModels.
 pub struct AvailableModelsResponse {
     pub models: Vec<ModelEntry>,
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct SearchQuery {
     pub q: String,
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for DownloadModel.
 pub struct DownloadModelRequest {
     pub model_id: String,
 }
 
 #[derive(Debug, Serialize)]
+/// Response for DownloadModel.
 pub struct DownloadModelResponse {
     pub model_id: String,
     pub status: String,
@@ -38,6 +43,7 @@ pub struct DownloadModelResponse {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for Hardware.
 pub struct HardwareResponse {
     pub hardware: HardwareProfile,
 }

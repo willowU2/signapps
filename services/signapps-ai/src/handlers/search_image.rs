@@ -19,6 +19,7 @@ use crate::AppState;
 
 /// Response from the image search endpoint.
 #[derive(Debug, Serialize)]
+/// Response for ImageSearch.
 pub struct ImageSearchResponse {
     pub results: Vec<ImageSearchResultItem>,
     pub count: usize,
@@ -26,6 +27,7 @@ pub struct ImageSearchResponse {
 
 /// A single image search result.
 #[derive(Debug, Serialize)]
+/// ImageSearchResultItem data transfer object.
 pub struct ImageSearchResultItem {
     pub document_id: Uuid,
     pub filename: String,

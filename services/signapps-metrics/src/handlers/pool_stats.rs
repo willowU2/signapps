@@ -14,6 +14,7 @@ use signapps_common::Result;
 
 /// Pool statistics response.
 #[derive(Debug, Serialize)]
+/// PoolStats data transfer object.
 pub struct PoolStats {
     /// Total connections currently held (active + idle).
     pub size: u32,

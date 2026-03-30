@@ -16,16 +16,19 @@ use crate::AppState;
 // === Responses ===
 
 #[derive(Debug, Serialize)]
+/// Response for ProfileList.
 pub struct ProfileListResponse {
     pub profiles: Vec<BackupProfile>,
 }
 
 #[derive(Debug, Serialize)]
+/// Response for RunList.
 pub struct RunListResponse {
     pub runs: Vec<BackupRun>,
 }
 
 #[derive(Debug, Serialize)]
+/// Response for SnapshotList.
 pub struct SnapshotListResponse {
     pub snapshots: Vec<crate::backup::restic::Snapshot>,
 }
@@ -33,6 +36,7 @@ pub struct SnapshotListResponse {
 // === Requests ===
 
 #[derive(Debug, Deserialize)]
+/// Request body for Restore.
 pub struct RestoreRequest {
     pub snapshot_id: String,
     pub target_path: Option<String>,

@@ -16,6 +16,7 @@ use crate::AppState;
 
 /// MFA setup response with secret and QR code.
 #[derive(Debug, Serialize)]
+/// Response for MfaSetup.
 pub struct MfaSetupResponse {
     /// Base32-encoded secret for manual entry
     pub secret: String,
@@ -27,6 +28,7 @@ pub struct MfaSetupResponse {
 
 /// MFA verification request.
 #[derive(Debug, Deserialize)]
+/// Request body for MfaVerify.
 pub struct MfaVerifyRequest {
     /// 6-digit TOTP code
     pub code: String,
@@ -34,6 +36,7 @@ pub struct MfaVerifyRequest {
 
 /// MFA verification response.
 #[derive(Debug, Serialize)]
+/// Response for MfaVerify.
 pub struct MfaVerifyResponse {
     pub success: bool,
     pub message: String,
@@ -41,6 +44,7 @@ pub struct MfaVerifyResponse {
 
 /// MFA disable request.
 #[derive(Debug, Deserialize)]
+/// Request body for MfaDisable.
 pub struct MfaDisableRequest {
     /// Current password for verification
     pub password: String,
@@ -258,6 +262,7 @@ pub async fn status(
 
 /// MFA status response.
 #[derive(Debug, Serialize)]
+/// Response for MfaStatus.
 pub struct MfaStatusResponse {
     pub enabled: bool,
 }

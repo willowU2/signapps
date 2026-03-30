@@ -15,6 +15,7 @@ use crate::AppState;
 
 /// Query parameters for listing conversations.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListParams {
     /// Maximum number of conversations to return (default 50).
     pub limit: Option<i64>,
@@ -22,6 +23,7 @@ pub struct ListParams {
 
 /// Query parameters for fetching messages.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct MessagesParams {
     /// Maximum number of messages to return (default 100).
     pub limit: Option<i64>,
@@ -29,6 +31,7 @@ pub struct MessagesParams {
 
 /// Response for listing conversations.
 #[derive(Debug, Serialize)]
+/// Response for Conversations.
 pub struct ConversationsResponse {
     pub conversations: Vec<Conversation>,
     pub count: usize,
@@ -36,6 +39,7 @@ pub struct ConversationsResponse {
 
 /// Response for a single conversation with its messages.
 #[derive(Debug, Serialize)]
+/// ConversationDetail data transfer object.
 pub struct ConversationDetail {
     pub conversation: Conversation,
     pub messages: Vec<ConversationMessage>,

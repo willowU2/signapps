@@ -17,6 +17,7 @@ use crate::AppState;
 // ============================================================================
 
 #[derive(Debug, Serialize)]
+/// UserProfileExt data transfer object.
 pub struct UserProfileExt {
     pub user_id: Uuid,
     pub onboarding_completed_at: Option<DateTime<Utc>>,
@@ -25,6 +26,7 @@ pub struct UserProfileExt {
 }
 
 #[derive(Debug, Deserialize)]
+/// PatchUserProfileExt data transfer object.
 pub struct PatchUserProfileExt {
     pub onboarding_completed_at: Option<DateTime<Utc>>,
     pub streak_count: Option<i32>,
@@ -92,6 +94,7 @@ pub async fn patch_profile(
 // ============================================================================
 
 #[derive(Debug, Serialize)]
+/// RecentDoc data transfer object.
 pub struct RecentDoc {
     pub id: Uuid,
     pub doc_id: String,
@@ -102,6 +105,7 @@ pub struct RecentDoc {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpsertRecentDoc.
 pub struct UpsertRecentDocRequest {
     pub doc_id: String,
     pub doc_name: String,
@@ -195,6 +199,7 @@ pub async fn upsert_recent_doc(
 // ============================================================================
 
 #[derive(Debug, Serialize)]
+/// HistoryEntry data transfer object.
 pub struct HistoryEntry {
     pub id: Uuid,
     pub action: String,
@@ -206,6 +211,7 @@ pub struct HistoryEntry {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for AddHistory.
 pub struct AddHistoryRequest {
     pub action: String,
     pub entity_type: Option<String>,

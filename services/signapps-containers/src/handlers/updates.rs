@@ -13,6 +13,7 @@ use crate::AppState;
 
 /// Check-update response.
 #[derive(Debug, Serialize)]
+/// Response for CheckUpdate.
 pub struct CheckUpdateResponse {
     pub update_available: bool,
     pub current_digest: Option<String>,
@@ -21,18 +22,21 @@ pub struct CheckUpdateResponse {
 
 /// Auto-update toggle request.
 #[derive(Debug, Deserialize)]
+/// Request body for SetAutoUpdate.
 pub struct SetAutoUpdateRequest {
     pub auto_update: bool,
 }
 
 /// Auto-update toggle response.
 #[derive(Debug, Serialize)]
+/// Response for AutoUpdate.
 pub struct AutoUpdateResponse {
     pub auto_update: bool,
 }
 
 /// Update status for a single container.
 #[derive(Debug, Serialize)]
+/// ContainerUpdateStatus data transfer object.
 pub struct ContainerUpdateStatus {
     pub id: Uuid,
     pub name: String,
@@ -44,6 +48,7 @@ pub struct ContainerUpdateStatus {
 
 /// Global update status response.
 #[derive(Debug, Serialize)]
+/// Response for UpdatesStatus.
 pub struct UpdatesStatusResponse {
     pub containers: Vec<ContainerUpdateStatus>,
 }

@@ -25,24 +25,28 @@ use crate::{AppState, CalendarError};
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Request body for InitOAuth.
 pub struct InitOAuthRequest {
     pub provider: String,
     pub redirect_uri: String,
 }
 
 #[derive(Debug, Serialize)]
+/// Response for InitOAuth.
 pub struct InitOAuthResponse {
     pub url: String,
     pub state: String,
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for OAuthCallback.
 pub struct OAuthCallbackRequest {
     pub code: String,
     pub state: String,
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListLogsQuery {
     #[serde(default = "default_limit")]
     pub limit: i64,
@@ -53,6 +57,7 @@ fn default_limit() -> i64 {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for ResolveAllConflicts.
 pub struct ResolveAllConflictsRequest {
     pub resolution: String,
 }

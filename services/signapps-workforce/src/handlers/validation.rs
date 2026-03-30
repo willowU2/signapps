@@ -24,6 +24,7 @@ use signapps_common::{Claims, TenantContext};
 
 /// TimeSpan for scheduling operations
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// TimeSpan data transfer object.
 pub struct TimeSpan {
     pub start: DateTime<Utc>,
     pub end: DateTime<Utc>,
@@ -51,6 +52,7 @@ impl TimeSpan {
 
 /// Coverage validation request
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for ValidateCoverage.
 pub struct ValidateCoverageRequest {
     pub org_node_id: Uuid,
     pub date_range: DateRange,
@@ -60,6 +62,7 @@ pub struct ValidateCoverageRequest {
 
 /// Date range for queries
 #[derive(Debug, Clone, Deserialize, Serialize)]
+/// DateRange data transfer object.
 pub struct DateRange {
     pub start: NaiveDate,
     pub end: NaiveDate,
@@ -67,6 +70,7 @@ pub struct DateRange {
 
 /// Coverage validation result
 #[derive(Debug, Serialize)]
+/// CoverageValidationResult data transfer object.
 pub struct CoverageValidationResult {
     pub org_node_id: Uuid,
     pub org_node_name: String,
@@ -78,6 +82,7 @@ pub struct CoverageValidationResult {
 
 /// Coverage gap (understaffed slot)
 #[derive(Debug, Clone, Serialize)]
+/// CoverageGap data transfer object.
 pub struct CoverageGap {
     pub date: NaiveDate,
     pub slot: CoverageSlot,
@@ -90,6 +95,7 @@ pub struct CoverageGap {
 
 /// Overstaffed slot
 #[derive(Debug, Clone, Serialize)]
+/// OverstaffedSlot data transfer object.
 pub struct OverstaffedSlot {
     pub date: NaiveDate,
     pub slot: CoverageSlot,
@@ -110,6 +116,7 @@ pub enum GapSeverity {
 
 /// Validation summary
 #[derive(Debug, Serialize)]
+/// ValidationSummary data transfer object.
 pub struct ValidationSummary {
     pub total_slots: i32,
     pub covered_slots: i32,
@@ -124,6 +131,7 @@ pub struct ValidationSummary {
 
 /// Gap analysis query params
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct GapAnalysisParams {
     pub org_node_id: Option<Uuid>,
     pub from: NaiveDate,
@@ -133,6 +141,7 @@ pub struct GapAnalysisParams {
 
 /// Leave simulation request
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for LeaveSimulation.
 pub struct LeaveSimulationRequest {
     pub employee_id: Uuid,
     pub leave_type: String,
@@ -141,6 +150,7 @@ pub struct LeaveSimulationRequest {
 
 /// Leave simulation result
 #[derive(Debug, Serialize)]
+/// LeaveSimulationResult data transfer object.
 pub struct LeaveSimulationResult {
     pub employee_id: Uuid,
     pub employee_name: String,
@@ -154,6 +164,7 @@ pub struct LeaveSimulationResult {
 
 /// Leave impact on coverage
 #[derive(Debug, Serialize)]
+/// LeaveImpact data transfer object.
 pub struct LeaveImpact {
     pub date: NaiveDate,
     pub org_node_id: Uuid,
@@ -167,6 +178,7 @@ pub struct LeaveImpact {
 
 /// Suggested replacement employee
 #[derive(Debug, Serialize)]
+/// SuggestedReplacement data transfer object.
 pub struct SuggestedReplacement {
     pub employee_id: Uuid,
     pub employee_name: String,
@@ -177,6 +189,7 @@ pub struct SuggestedReplacement {
 
 /// Shift change simulation request
 #[derive(Debug, Deserialize)]
+/// Request body for ShiftChangeSimulation.
 pub struct ShiftChangeSimulationRequest {
     pub employee_id: Uuid,
     pub original_shift: TimeSpan,
@@ -187,6 +200,7 @@ pub struct ShiftChangeSimulationRequest {
 
 /// Shift change simulation result
 #[derive(Debug, Serialize)]
+/// ShiftChangeSimulationResult data transfer object.
 pub struct ShiftChangeSimulationResult {
     pub employee_id: Uuid,
     pub employee_name: String,
@@ -199,6 +213,7 @@ pub struct ShiftChangeSimulationResult {
 
 /// Coverage impact summary
 #[derive(Debug, Serialize)]
+/// CoverageImpact data transfer object.
 pub struct CoverageImpact {
     pub gaps_created: i32,
     pub gaps_resolved: i32,
@@ -208,6 +223,7 @@ pub struct CoverageImpact {
 
 /// Affected slot detail
 #[derive(Debug, Serialize)]
+/// AffectedSlot data transfer object.
 pub struct AffectedSlot {
     pub date: NaiveDate,
     pub time_range: String,
@@ -218,6 +234,7 @@ pub struct AffectedSlot {
 
 /// Conflict in scheduling
 #[derive(Debug, Serialize)]
+/// SchedulingConflict data transfer object.
 pub struct SchedulingConflict {
     pub id: Uuid,
     pub conflict_type: ConflictType,
@@ -245,6 +262,7 @@ pub enum ConflictType {
 
 /// Conflict query params
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ConflictQueryParams {
     pub org_node_id: Option<Uuid>,
     pub from: Option<NaiveDate>,

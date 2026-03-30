@@ -14,6 +14,7 @@ use crate::AppState;
 
 /// Block IP request.
 #[derive(Debug, Deserialize)]
+/// Request body for BlockIp.
 pub struct BlockIpRequest {
     pub ip: String,
     pub duration_seconds: Option<i32>,
@@ -21,6 +22,7 @@ pub struct BlockIpRequest {
 
 /// Block response.
 #[derive(Debug, Serialize)]
+/// Response for Block.
 pub struct BlockResponse {
     pub route_id: Uuid,
     pub ip: String,

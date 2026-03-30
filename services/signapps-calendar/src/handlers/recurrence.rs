@@ -13,12 +13,14 @@ use uuid::Uuid;
 use crate::{services, AppState, CalendarError};
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct DateRangeQuery {
     pub start: DateTime<Utc>,
     pub end: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize)]
+/// ExpandedEvent data transfer object.
 pub struct ExpandedEvent {
     /// Original event with RRULE
     pub event: Event,
@@ -67,6 +69,7 @@ pub async fn get_event_instances(
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateException.
 pub struct CreateExceptionRequest {
     /// ISO 8601 datetime of the instance to cancel
     pub cancelled_at: DateTime<Utc>,
@@ -105,11 +108,13 @@ pub async fn create_exception(
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for ValidateRrule.
 pub struct ValidateRruleRequest {
     pub rrule: String,
 }
 
 #[derive(Debug, Serialize)]
+/// Response for ValidateRrule.
 pub struct ValidateRruleResponse {
     pub valid: bool,
     pub error: Option<String>,

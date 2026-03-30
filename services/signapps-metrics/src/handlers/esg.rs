@@ -10,6 +10,7 @@ use crate::AppState;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+/// EsgScore data transfer object.
 pub struct EsgScore {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -20,6 +21,7 @@ pub struct EsgScore {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+/// EsgQuarterly data transfer object.
 pub struct EsgQuarterly {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -29,6 +31,7 @@ pub struct EsgQuarterly {
 }
 
 #[derive(Debug, serde::Deserialize)]
+/// Request body for UpsertEsgScore.
 pub struct UpsertEsgScoreRequest {
     pub category: String,
     pub score: f64,
@@ -36,6 +39,7 @@ pub struct UpsertEsgScoreRequest {
 }
 
 #[derive(Debug, serde::Deserialize)]
+/// Request body for UpsertEsgQuarterly.
 pub struct UpsertEsgQuarterlyRequest {
     pub quarter: i32,
     pub year: i32,

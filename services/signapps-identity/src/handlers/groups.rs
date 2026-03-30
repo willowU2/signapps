@@ -12,6 +12,7 @@ use signapps_db::repositories::GroupRepository;
 use uuid::Uuid;
 
 #[derive(Serialize)]
+/// Response for Group.
 pub struct GroupResponse {
     pub id: Uuid,
     pub name: String,
@@ -21,6 +22,7 @@ pub struct GroupResponse {
 }
 
 #[derive(Serialize)]
+/// Response for GroupMember.
 pub struct GroupMemberResponse {
     pub user_id: Uuid,
     pub username: String,
@@ -31,12 +33,14 @@ pub struct GroupMemberResponse {
 }
 
 #[derive(Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListQuery {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
 }
 
 #[derive(Deserialize)]
+/// Request body for AddMember.
 pub struct AddMemberRequest {
     pub user_id: Uuid,
     pub role: Option<String>,

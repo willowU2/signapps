@@ -20,6 +20,7 @@ use crate::AppState;
 
 /// Configuration passed to the background worker for a migration job.
 #[derive(Debug, Clone)]
+/// MigrationWorkerConfig data transfer object.
 pub struct MigrationWorkerConfig {
     /// Unique job identifier (for progress updates).
     pub job_id: Uuid,
@@ -659,6 +660,7 @@ pub enum MigrationStatus {
 
 /// Fine-grained progress counters for a running migration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// MigrationProgress data transfer object.
 pub struct MigrationProgress {
     /// Total number of items scheduled for migration.
     pub total_items: u32,
@@ -683,6 +685,7 @@ impl Default for MigrationProgress {
 
 /// A single migration job record.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// MigrationJob data transfer object.
 pub struct MigrationJob {
     /// Unique identifier for this job.
     pub id: Uuid,
@@ -704,6 +707,7 @@ pub struct MigrationJob {
 
 /// Payload for POST /api/v1/admin/migration/start.
 #[derive(Debug, Deserialize)]
+/// Request body for StartMigration.
 pub struct StartMigrationRequest {
     /// The source system to migrate from.
     pub source: MigrationSource,
@@ -718,6 +722,7 @@ pub struct StartMigrationRequest {
 
 /// Thread-safe store for the current migration job (at most one at a time).
 #[derive(Debug, Clone)]
+/// MigrationStore data transfer object.
 pub struct MigrationStore {
     inner: std::sync::Arc<tokio::sync::RwLock<Option<MigrationJob>>>,
 }

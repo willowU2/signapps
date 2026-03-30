@@ -22,6 +22,7 @@ use crate::AppState;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// AuditLog data transfer object.
 pub struct AuditLog {
     pub id: Uuid,
     pub user_id: Option<Uuid>,
@@ -37,6 +38,7 @@ pub struct AuditLog {
 }
 
 #[derive(Debug, Deserialize)]
+/// AuditLogFilters data transfer object.
 pub struct AuditLogFilters {
     pub user_id: Option<Uuid>,
     pub username: Option<String>,
@@ -50,6 +52,7 @@ pub struct AuditLogFilters {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for AuditLogList.
 pub struct AuditLogListResponse {
     pub logs: Vec<AuditLog>,
     pub total: i64,
@@ -242,6 +245,7 @@ pub async fn export_audit_logs(
 
 /// POST /api/v1/audit — query endpoint (used by crosslinks.ts auditApi)
 #[derive(Debug, Deserialize)]
+/// Request body for AuditQuery.
 pub struct AuditQueryRequest {
     pub entity_type: Option<String>,
     pub entity_id: Option<Uuid>,

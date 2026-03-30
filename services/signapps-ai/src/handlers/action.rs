@@ -17,6 +17,7 @@ fn is_valid_target(target: &str) -> bool {
 
 /// Request to execute a natural language action.
 #[derive(Debug, Deserialize)]
+/// Request body for Action.
 pub struct ActionRequest {
     pub prompt: String,
     #[allow(dead_code)]
@@ -25,6 +26,7 @@ pub struct ActionRequest {
 
 /// Response from an executed action.
 #[derive(Debug, Serialize)]
+/// Response for Action.
 pub struct ActionResponse {
     pub success: bool,
     pub action_taken: String,

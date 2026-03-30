@@ -18,6 +18,7 @@ use crate::AppState;
 
 /// Chat request.
 #[derive(Debug, Deserialize)]
+/// Request body for Chat.
 pub struct ChatRequest {
     /// User question.
     pub question: String,
@@ -52,6 +53,7 @@ fn default_enable_tools() -> bool {
 
 /// Source reference.
 #[derive(Debug, Serialize)]
+/// SourceReference data transfer object.
 pub struct SourceReference {
     pub document_id: Uuid,
     pub filename: String,
@@ -61,6 +63,7 @@ pub struct SourceReference {
 
 /// Chat response.
 #[derive(Debug, Serialize)]
+/// Response for Chat.
 pub struct ChatResponse {
     pub answer: String,
     pub sources: Vec<SourceReference>,

@@ -25,6 +25,7 @@ use uuid::Uuid;
 // ============================================================================
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// Delegation data transfer object.
 pub struct Delegation {
     pub id: Uuid,
     pub account_id: Uuid,
@@ -40,6 +41,7 @@ pub struct Delegation {
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateDelegation.
 pub struct CreateDelegationRequest {
     /// UUID of the user to grant access to.
     pub delegate_id: Uuid,

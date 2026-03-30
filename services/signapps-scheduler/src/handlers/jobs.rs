@@ -90,6 +90,7 @@ pub async fn run_job(
 
 /// Run job response.
 #[derive(Debug, Serialize)]
+/// Response for RunJob.
 pub struct RunJobResponse {
     pub status: String,
     pub output: Option<String>,
@@ -99,6 +100,7 @@ pub struct RunJobResponse {
 
 /// Query params for job runs.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct JobRunsQuery {
     #[serde(default = "default_limit")]
     pub limit: i64,
@@ -149,6 +151,7 @@ pub async fn get_running(State(state): State<AppState>) -> Result<Json<Vec<Runni
 
 /// Cleanup old job runs.
 #[derive(Debug, Deserialize)]
+/// Request body for Cleanup.
 pub struct CleanupRequest {
     #[serde(default = "default_days")]
     pub days: i32,
@@ -171,6 +174,7 @@ pub async fn cleanup_runs(
 
 /// Cleanup response.
 #[derive(Debug, Serialize)]
+/// Response for Cleanup.
 pub struct CleanupResponse {
     pub deleted_runs: i64,
 }
@@ -191,6 +195,7 @@ pub async fn health_check(State(state): State<AppState>) -> Result<Json<HealthRe
 
 /// Health response.
 #[derive(Debug, Serialize)]
+/// Response for Health.
 pub struct HealthResponse {
     pub status: String,
     pub total_jobs: i64,

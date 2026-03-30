@@ -14,6 +14,7 @@ use signapps_db::models::Device;
 
 /// Request to enroll a new device.
 #[derive(Debug, Deserialize)]
+/// Request body for EnrollDevice.
 pub struct EnrollDeviceRequest {
     pub name: String,
     pub nickname: Option<String>,
@@ -25,6 +26,7 @@ pub struct EnrollDeviceRequest {
 
 /// Response after enrolling a device.
 #[derive(Debug, Serialize)]
+/// Response for EnrollDevice.
 pub struct EnrollDeviceResponse {
     pub device: Device,
     pub certificate: CertificateBundle,
@@ -33,6 +35,7 @@ pub struct EnrollDeviceResponse {
 
 /// Certificate bundle for device.
 #[derive(Debug, Serialize)]
+/// CertificateBundle data transfer object.
 pub struct CertificateBundle {
     pub ca: String,
     pub cert: String,
@@ -138,6 +141,7 @@ pub async fn delete_device(
 
 /// Update device heartbeat.
 #[derive(Debug, Deserialize)]
+/// Request body for Heartbeat.
 pub struct HeartbeatRequest {
     pub device_id: Uuid,
 }

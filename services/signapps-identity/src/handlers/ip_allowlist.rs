@@ -14,6 +14,7 @@ use crate::AppState;
 
 /// A single IP allowlist entry.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// IpAllowlistEntry data transfer object.
 pub struct IpAllowlistEntry {
     pub address: String,
     pub cidr: String,

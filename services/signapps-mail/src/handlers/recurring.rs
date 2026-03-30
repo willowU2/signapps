@@ -24,6 +24,7 @@ use uuid::Uuid;
 // ============================================================================
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// RecurringEmail data transfer object.
 pub struct RecurringEmail {
     pub id: Uuid,
     pub account_id: Uuid,
@@ -48,6 +49,7 @@ pub struct RecurringEmail {
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateRecurring.
 pub struct CreateRecurringRequest {
     pub account_id: Uuid,
     pub recipient: String,
@@ -63,6 +65,7 @@ pub struct CreateRecurringRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateRecurring.
 pub struct UpdateRecurringRequest {
     pub recipient: Option<String>,
     pub cc: Option<String>,

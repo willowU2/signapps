@@ -13,6 +13,7 @@ use crate::AppState;
 
 /// Security event row returned from the database.
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+/// SecurityEventRow data transfer object.
 pub struct SecurityEventRow {
     pub id: Uuid,
     pub event_type: String,
@@ -26,6 +27,7 @@ pub struct SecurityEventRow {
 
 /// Query parameters for listing security events.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct SecurityEventsQuery {
     pub event_type: Option<String>,
     pub severity: Option<String>,
@@ -79,6 +81,7 @@ pub async fn summary(State(state): State<AppState>) -> Result<Json<Vec<EventSumm
 }
 
 #[derive(Debug, serde::Serialize, sqlx::FromRow)]
+/// EventSummary data transfer object.
 pub struct EventSummary {
     pub event_type: String,
     pub severity: String,

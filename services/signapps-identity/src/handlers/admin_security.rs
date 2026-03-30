@@ -23,6 +23,7 @@ use crate::AppState;
 
 /// Organisation-wide security policies managed by admins.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// SecurityPolicies data transfer object.
 pub struct SecurityPolicies {
     /// Minimum password length in characters.
     pub password_min_length: u32,
@@ -63,6 +64,7 @@ impl Default for SecurityPolicies {
 
 /// Represents a currently active user session.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// ActiveSession data transfer object.
 pub struct ActiveSession {
     /// Unique session identifier (opaque token prefix).
     pub id: String,
@@ -86,6 +88,7 @@ pub struct ActiveSession {
 
 /// A record of a failed login attempt.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// LoginAttempt data transfer object.
 pub struct LoginAttempt {
     /// Unique identifier for this record.
     pub id: Uuid,
@@ -105,6 +108,7 @@ pub struct LoginAttempt {
 
 /// Thread-safe store for security policies.
 #[derive(Debug, Clone)]
+/// SecurityPoliciesStore data transfer object.
 pub struct SecurityPoliciesStore {
     inner: std::sync::Arc<tokio::sync::RwLock<SecurityPolicies>>,
 }
@@ -135,6 +139,7 @@ impl SecurityPoliciesStore {
 
 /// Thread-safe store for active sessions.
 #[derive(Debug, Clone)]
+/// ActiveSessionsStore data transfer object.
 pub struct ActiveSessionsStore {
     inner: std::sync::Arc<tokio::sync::Mutex<Vec<ActiveSession>>>,
 }
@@ -191,6 +196,7 @@ impl ActiveSessionsStore {
 
 /// Thread-safe store for recent failed login attempts.
 #[derive(Debug, Clone)]
+/// LoginAttemptsStore data transfer object.
 pub struct LoginAttemptsStore {
     inner: std::sync::Arc<tokio::sync::Mutex<Vec<LoginAttempt>>>,
 }
@@ -233,6 +239,7 @@ impl LoginAttemptsStore {
 
 /// Query parameters for listing login attempts.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct LoginAttemptsQuery {
     /// Maximum entries to return (default 50, max 200).
     pub limit: Option<usize>,

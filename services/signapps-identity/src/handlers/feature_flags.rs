@@ -15,6 +15,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 #[derive(Debug, Serialize)]
+/// FeatureFlag data transfer object.
 pub struct FeatureFlag {
     pub id: Uuid,
     pub name: String,
@@ -26,6 +27,7 @@ pub struct FeatureFlag {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateFeatureFlag.
 pub struct CreateFeatureFlagRequest {
     pub name: String,
     pub enabled: Option<bool>,
@@ -34,6 +36,7 @@ pub struct CreateFeatureFlagRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateFeatureFlag.
 pub struct UpdateFeatureFlagRequest {
     pub name: Option<String>,
     pub enabled: Option<bool>,

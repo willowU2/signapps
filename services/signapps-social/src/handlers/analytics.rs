@@ -11,11 +11,13 @@ use uuid::Uuid;
 use crate::AppState;
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct FollowerQuery {
     pub days: Option<i32>,
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct TopPostsQuery {
     pub limit: Option<i64>,
 }

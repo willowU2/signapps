@@ -11,6 +11,7 @@ use uuid::Uuid;
 use crate::{models::ReplyRequest, AppState};
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct InboxQuery {
     pub unread_only: Option<bool>,
     pub account_id: Option<Uuid>,

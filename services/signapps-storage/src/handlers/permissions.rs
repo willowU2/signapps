@@ -22,6 +22,7 @@ use crate::AppState;
 /// - 644 = rw-r--r-- (owner can read/write, others can read)
 /// - 700 = rwx------ (only owner can access)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// FilePermissions data transfer object.
 pub struct FilePermissions {
     pub bucket: String,
     pub key: String,
@@ -30,6 +31,7 @@ pub struct FilePermissions {
 
 /// Request to set file permissions.
 #[derive(Debug, Deserialize)]
+/// Request body for SetPermissions.
 pub struct SetPermissionsRequest {
     /// POSIX mode (755, 644, 700, etc.)
     pub mode: u32,
@@ -37,6 +39,7 @@ pub struct SetPermissionsRequest {
 
 /// Response with current permissions.
 #[derive(Debug, Serialize)]
+/// Response for Permissions.
 pub struct PermissionsResponse {
     pub bucket: String,
     pub key: String,

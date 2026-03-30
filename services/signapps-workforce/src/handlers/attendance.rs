@@ -22,6 +22,7 @@ use signapps_common::{Claims, TenantContext};
 // ============================================================================
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// AttendanceRecord data transfer object.
 pub struct AttendanceRecord {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -37,6 +38,7 @@ pub struct AttendanceRecord {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for ClockIn.
 pub struct ClockInRequest {
     /// UUID of the employee clocking in.
     pub employee_id: Uuid,
@@ -44,6 +46,7 @@ pub struct ClockInRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for ClockOut.
 pub struct ClockOutRequest {
     /// UUID of the employee clocking out.
     pub employee_id: Uuid,
@@ -51,6 +54,7 @@ pub struct ClockOutRequest {
 }
 
 #[derive(Debug, Deserialize, Default)]
+/// Query parameters for filtering results.
 pub struct AttendanceQueryParams {
     pub employee_id: Option<Uuid>,
     pub limit: Option<i64>,

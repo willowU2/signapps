@@ -6,6 +6,7 @@ use serde::Serialize;
 use crate::AppState;
 
 #[derive(Serialize)]
+/// Response for Health.
 pub struct HealthResponse {
     pub status: String,
     pub service: String,

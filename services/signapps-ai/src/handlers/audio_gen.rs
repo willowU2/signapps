@@ -16,6 +16,7 @@ use crate::AppState;
 
 /// Response for audio generation endpoints.
 #[derive(Debug, Serialize)]
+/// Response for AudioGen.
 pub struct AudioGenResponse {
     pub audio_url: String,
     pub duration_seconds: f32,
@@ -25,6 +26,7 @@ pub struct AudioGenResponse {
 
 /// Response for listing available models.
 #[derive(Debug, Serialize)]
+/// Response for AudioModels.
 pub struct AudioModelsResponse {
     pub models: Vec<ModelInfo>,
     pub count: usize,
@@ -36,6 +38,7 @@ pub struct AudioModelsResponse {
 
 /// JSON request body for the music generation endpoint.
 #[derive(Debug, Deserialize)]
+/// Request body for GenerateMusic.
 pub struct GenerateMusicRequest {
     pub prompt: String,
     pub duration_seconds: Option<f32>,
@@ -45,6 +48,7 @@ pub struct GenerateMusicRequest {
 
 /// JSON request body for the sound-effect generation endpoint.
 #[derive(Debug, Deserialize)]
+/// Request body for GenerateSfx.
 pub struct GenerateSfxRequest {
     pub prompt: String,
     pub duration_seconds: Option<f32>,

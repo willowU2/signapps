@@ -15,6 +15,7 @@ use crate::AppState;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+/// VideoMessage data transfer object.
 pub struct VideoMessage {
     pub id: Uuid,
     pub sender_id: Uuid,
@@ -27,6 +28,7 @@ pub struct VideoMessage {
 }
 
 #[derive(Debug, serde::Deserialize)]
+/// Request body for CreateVideoMessage.
 pub struct CreateVideoMessageRequest {
     pub recipient_id: Uuid,
     pub duration_seconds: Option<i32>,

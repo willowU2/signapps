@@ -19,6 +19,7 @@ use crate::AppState;
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Request body for AddAttachment.
 pub struct AddAttachmentRequest {
     pub file_url: String,
     pub file_name: Option<String>,
@@ -26,6 +27,7 @@ pub struct AddAttachmentRequest {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for TaskAttachment.
 pub struct TaskAttachmentResponse {
     pub id: Uuid,
     pub task_id: Uuid,

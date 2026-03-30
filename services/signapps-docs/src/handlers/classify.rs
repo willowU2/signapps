@@ -16,6 +16,7 @@ use crate::AppState;
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
+/// Request body for Classify.
 pub struct ClassifyRequest {
     /// Document ID (optional – used only for audit).
     pub document_id: Option<Uuid>,
@@ -26,6 +27,7 @@ pub struct ClassifyRequest {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for Classify.
 pub struct ClassifyResponse {
     pub document_id: Option<Uuid>,
     pub category: DocumentCategory,

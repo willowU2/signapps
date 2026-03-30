@@ -12,6 +12,7 @@ use crate::AppState;
 
 /// Create collection request.
 #[derive(Debug, Deserialize)]
+/// Request body for CreateCollection.
 pub struct CreateCollectionRequest {
     pub name: String,
     pub description: Option<String>,
@@ -19,6 +20,7 @@ pub struct CreateCollectionRequest {
 
 /// Collection list response.
 #[derive(Debug, Serialize)]
+/// Response for CollectionList.
 pub struct CollectionListResponse {
     pub collections: Vec<signapps_db::models::CollectionWithStats>,
 }

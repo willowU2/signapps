@@ -29,6 +29,7 @@ use crate::AppState;
 /// Keys are lowercase feature names (matching the frontend FEATURES map).
 /// Values are booleans indicating whether the feature is enabled.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+/// WorkspaceFeatures data transfer object.
 pub struct WorkspaceFeatures {
     #[serde(default = "default_true")]
     pub mail: bool,
@@ -69,12 +70,14 @@ fn default_true() -> bool {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for WorkspaceFeatures.
 pub struct WorkspaceFeaturesResponse {
     pub workspace_id: Uuid,
     pub features: WorkspaceFeatures,
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateFeatures.
 pub struct UpdateFeaturesRequest {
     pub features: serde_json::Value,
 }

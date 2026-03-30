@@ -19,6 +19,7 @@ use crate::AppState;
 
 /// High-level system overview for the admin dashboard.
 #[derive(Debug, Serialize)]
+/// AnalyticsOverview data transfer object.
 pub struct AnalyticsOverview {
     /// Total number of registered users.
     pub total_users: i64,
@@ -34,6 +35,7 @@ pub struct AnalyticsOverview {
 
 /// Per-user storage consumption entry.
 #[derive(Debug, Serialize)]
+/// StorageByUser data transfer object.
 pub struct StorageByUser {
     pub user_id: Uuid,
     pub email: String,
@@ -47,6 +49,7 @@ pub struct StorageByUser {
 
 /// One cell in the activity heatmap (hour × weekday).
 #[derive(Debug, Serialize)]
+/// ActivityPoint data transfer object.
 pub struct ActivityPoint {
     /// Hour of day (0–23, UTC).
     pub hour: u32,

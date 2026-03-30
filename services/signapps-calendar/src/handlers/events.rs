@@ -37,6 +37,7 @@ async fn log_event_activity(
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct DateRangeQuery {
     pub start: Option<DateTime<Utc>>,
     pub end: Option<DateTime<Utc>>,

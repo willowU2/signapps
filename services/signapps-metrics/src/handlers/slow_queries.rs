@@ -14,6 +14,7 @@ use signapps_common::Result;
 
 /// A single slow query record.
 #[derive(Debug, Serialize)]
+/// Query parameters for filtering results.
 pub struct SlowQuery {
     /// Backend PID.
     pub pid: i32,
@@ -35,6 +36,7 @@ pub struct SlowQuery {
 
 /// Response envelope.
 #[derive(Debug, Serialize)]
+/// Response for SlowQueries.
 pub struct SlowQueriesResponse {
     pub queries: Vec<SlowQuery>,
     /// Minimum duration threshold used for filtering (seconds).

@@ -20,6 +20,7 @@ use uuid::Uuid;
 // ============================================================================
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// EmailTemplate data transfer object.
 pub struct EmailTemplate {
     pub id: Uuid,
     pub account_id: Uuid,
@@ -36,6 +37,7 @@ pub struct EmailTemplate {
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateTemplate.
 pub struct CreateTemplateRequest {
     pub account_id: Uuid,
     pub name: String,
@@ -46,6 +48,7 @@ pub struct CreateTemplateRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateTemplate.
 pub struct UpdateTemplateRequest {
     pub name: Option<String>,
     pub subject: Option<String>,

@@ -20,6 +20,7 @@ use crate::AppState;
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
+/// Request body for ScoreEmail.
 pub struct ScoreEmailRequest {
     pub from: String,
     pub subject: String,
@@ -27,11 +28,13 @@ pub struct ScoreEmailRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for BatchScore.
 pub struct BatchScoreRequest {
     pub emails: Vec<BatchEmailItem>,
 }
 
 #[derive(Debug, Deserialize)]
+/// BatchEmailItem data transfer object.
 pub struct BatchEmailItem {
     pub id: Uuid,
     pub from: String,
@@ -40,6 +43,7 @@ pub struct BatchEmailItem {
 }
 
 #[derive(Debug, Serialize)]
+/// PriorityScore data transfer object.
 pub struct PriorityScore {
     pub score: u8,           // 1-5
     pub label: &'static str, // "low" | "normal" | "high" | "urgent" | "critical"
@@ -47,11 +51,13 @@ pub struct PriorityScore {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for BatchScore.
 pub struct BatchScoreResponse {
     pub results: Vec<BatchScoreResult>,
 }
 
 #[derive(Debug, Serialize)]
+/// BatchScoreResult data transfer object.
 pub struct BatchScoreResult {
     pub id: Uuid,
     pub score: u8,

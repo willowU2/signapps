@@ -14,6 +14,7 @@ use crate::AppState;
 
 /// Payload emitted by the event bus when a meet session ends.
 #[derive(Debug, Deserialize)]
+/// SessionEndedEvent data transfer object.
 pub struct SessionEndedEvent {
     pub room_id: Uuid,
     pub recording_id: Option<Uuid>,
@@ -26,6 +27,7 @@ pub struct SessionEndedEvent {
 /// Internal transcription job — stored in DB while processing.
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 #[allow(dead_code)]
+/// TranscriptionJob data transfer object.
 pub struct TranscriptionJob {
     pub id: Uuid,
     pub recording_id: Uuid,

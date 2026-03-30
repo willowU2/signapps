@@ -205,6 +205,7 @@ pub async fn delete_time_item(
 
 /// Update time item status.
 #[derive(serde::Deserialize)]
+/// UpdateStatusInput data transfer object.
 pub struct UpdateStatusInput {
     pub status: String,
 }
@@ -233,6 +234,7 @@ pub async fn update_time_item_status(
 // ============================================================================
 
 #[derive(serde::Deserialize)]
+/// Query parameters for filtering results.
 pub struct QueryUsersEventsInput {
     pub user_ids: Vec<Uuid>,
     pub start: DateTime<Utc>,
@@ -384,6 +386,7 @@ pub async fn remove_time_item_user(
 
 /// Update RSVP status.
 #[derive(serde::Deserialize)]
+/// UpdateRsvpInput data transfer object.
 pub struct UpdateRsvpInput {
     pub status: String,
 }

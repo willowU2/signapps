@@ -15,6 +15,7 @@ use crate::AppState;
 
 /// Search query parameters.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct SearchQuery {
     /// Search query string
     pub q: String,
@@ -68,6 +69,7 @@ pub enum SortOrder {
 
 /// Search result.
 #[derive(Debug, Serialize)]
+/// SearchResult data transfer object.
 pub struct SearchResult {
     pub bucket: String,
     pub key: String,
@@ -86,6 +88,7 @@ pub struct SearchResult {
 
 /// Search highlight.
 #[derive(Debug, Serialize)]
+/// SearchHighlight data transfer object.
 pub struct SearchHighlight {
     pub field: String,
     pub snippet: String,
@@ -93,6 +96,7 @@ pub struct SearchHighlight {
 
 /// File preview info.
 #[derive(Debug, Serialize)]
+/// FilePreview data transfer object.
 pub struct FilePreview {
     pub thumbnail_url: Option<String>,
     pub preview_text: Option<String>,
@@ -100,6 +104,7 @@ pub struct FilePreview {
 
 /// Search response.
 #[derive(Debug, Serialize)]
+/// Response for Search.
 pub struct SearchResponse {
     pub results: Vec<SearchResult>,
     pub total: i64,
@@ -110,6 +115,7 @@ pub struct SearchResponse {
 
 /// Search facets for filtering.
 #[derive(Debug, Serialize)]
+/// SearchFacets data transfer object.
 pub struct SearchFacets {
     pub buckets: Vec<FacetCount>,
     pub file_types: Vec<FacetCount>,
@@ -118,6 +124,7 @@ pub struct SearchFacets {
 
 /// Facet count.
 #[derive(Debug, Serialize)]
+/// FacetCount data transfer object.
 pub struct FacetCount {
     pub value: String,
     pub count: i64,
@@ -125,6 +132,7 @@ pub struct FacetCount {
 
 /// Size range facet.
 #[derive(Debug, Serialize)]
+/// SizeRangeFacet data transfer object.
 pub struct SizeRangeFacet {
     pub label: String,
     pub min: Option<i64>,
@@ -134,6 +142,7 @@ pub struct SizeRangeFacet {
 
 /// Quick search query (simpler version).
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct QuickSearchQuery {
     pub q: String,
     pub limit: Option<i32>,
@@ -141,6 +150,7 @@ pub struct QuickSearchQuery {
 
 /// Quick search result.
 #[derive(Debug, Serialize)]
+/// QuickSearchResult data transfer object.
 pub struct QuickSearchResult {
     pub bucket: String,
     pub key: String,
@@ -151,6 +161,7 @@ pub struct QuickSearchResult {
 
 /// Quick search response.
 #[derive(Debug, Serialize)]
+/// Response for QuickSearch.
 pub struct QuickSearchResponse {
     pub results: Vec<QuickSearchResult>,
     pub total: i64,
@@ -492,6 +503,7 @@ pub async fn quick_search(
 
 /// Recent files query (for the optional `limit` query param).
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct RecentFilesQuery {
     pub limit: Option<i32>,
 }
@@ -633,6 +645,7 @@ mod tests {
 
 /// Omni search query.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct OmniSearchQuery {
     pub q: String,
     pub limit: Option<i32>,
@@ -640,6 +653,7 @@ pub struct OmniSearchQuery {
 
 /// Omni search result item.
 #[derive(Debug, Serialize)]
+/// OmniSearchResult data transfer object.
 pub struct OmniSearchResult {
     pub id: uuid::Uuid,
     pub entity_type: String,
@@ -651,6 +665,7 @@ pub struct OmniSearchResult {
 
 /// Omni search response.
 #[derive(Debug, Serialize)]
+/// Response for OmniSearch.
 pub struct OmniSearchResponse {
     pub results: Vec<OmniSearchResult>,
     pub took_ms: u64,

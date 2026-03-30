@@ -40,6 +40,7 @@ pub enum ExportStatus {
 
 /// A single data export job record (one per user at a time).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// DataExportJob data transfer object.
 pub struct DataExportJob {
     /// Unique identifier for this export job.
     pub id: Uuid,
@@ -59,6 +60,7 @@ pub struct DataExportJob {
 
 /// The personal data payload returned on download.
 #[derive(Debug, Serialize)]
+/// PersonalDataExport data transfer object.
 pub struct PersonalDataExport {
     pub export_id: Uuid,
     pub exported_at: DateTime<Utc>,
@@ -67,6 +69,7 @@ pub struct PersonalDataExport {
 
 /// Subset of the user record that is included in the export.
 #[derive(Debug, Serialize)]
+/// ProfileData data transfer object.
 pub struct ProfileData {
     pub id: Uuid,
     pub username: String,
@@ -84,6 +87,7 @@ pub struct ProfileData {
 
 /// Thread-safe map from `user_id` to their latest `DataExportJob`.
 #[derive(Debug, Clone)]
+/// DataExportStore data transfer object.
 pub struct DataExportStore {
     inner: Arc<RwLock<HashMap<Uuid, DataExportJob>>>,
 }

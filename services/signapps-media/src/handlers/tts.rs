@@ -14,6 +14,7 @@ use crate::{
 };
 
 #[derive(Debug, Deserialize)]
+/// Request body for Synthesize.
 pub struct SynthesizeRequest {
     pub text: String,
     pub voice: Option<String>,
@@ -24,6 +25,7 @@ pub struct SynthesizeRequest {
 
 #[allow(dead_code)]
 #[derive(Debug, Serialize)]
+/// Response for Synthesize.
 pub struct SynthesizeResponse {
     pub success: bool,
     pub audio_base64: String,

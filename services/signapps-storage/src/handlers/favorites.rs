@@ -16,6 +16,7 @@ use crate::AppState;
 
 /// Favorite item.
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// Favorite data transfer object.
 pub struct Favorite {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -30,6 +31,7 @@ pub struct Favorite {
 
 /// Add favorite request.
 #[derive(Debug, Deserialize)]
+/// Request body for AddFavorite.
 pub struct AddFavoriteRequest {
     pub bucket: String,
     pub key: String,
@@ -40,6 +42,7 @@ pub struct AddFavoriteRequest {
 
 /// Update favorite request.
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateFavorite.
 pub struct UpdateFavoriteRequest {
     pub display_name: Option<String>,
     pub color: Option<String>,
@@ -48,12 +51,14 @@ pub struct UpdateFavoriteRequest {
 
 /// Reorder favorites request.
 #[derive(Debug, Deserialize)]
+/// Request body for ReorderFavorites.
 pub struct ReorderFavoritesRequest {
     pub order: Vec<Uuid>,
 }
 
 /// List favorites query.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListFavoritesQuery {
     pub bucket: Option<String>,
     pub folders_only: Option<bool>,
@@ -62,6 +67,7 @@ pub struct ListFavoritesQuery {
 
 /// List favorites response.
 #[derive(Debug, Serialize)]
+/// Response for ListFavorites.
 pub struct ListFavoritesResponse {
     pub favorites: Vec<FavoriteWithInfo>,
     pub total: i64,
@@ -69,6 +75,7 @@ pub struct ListFavoritesResponse {
 
 /// Favorite with file info.
 #[derive(Debug, Serialize)]
+/// FavoriteWithInfo data transfer object.
 pub struct FavoriteWithInfo {
     #[serde(flatten)]
     pub favorite: Favorite,

@@ -22,6 +22,7 @@ use crate::{AppState, CalendarError};
 
 /// Lightweight view of a CRON job event.
 #[derive(Debug, Serialize)]
+/// CronJob data transfer object.
 pub struct CronJob {
     pub id: Uuid,
     pub calendar_id: Uuid,
@@ -36,6 +37,7 @@ pub struct CronJob {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateCronJob.
 pub struct CreateCronJobRequest {
     pub calendar_id: Uuid,
     pub title: String,
@@ -45,6 +47,7 @@ pub struct CreateCronJobRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateCronJob.
 pub struct UpdateCronJobRequest {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -54,6 +57,7 @@ pub struct UpdateCronJobRequest {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for RunCronJob.
 pub struct RunCronJobResponse {
     pub id: Uuid,
     pub status: String,

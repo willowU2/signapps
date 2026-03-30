@@ -14,6 +14,7 @@ use crate::AppState;
 
 /// Storage Rule Model
 #[derive(Debug, Serialize, Deserialize, FromRow)]
+/// StorageRule data transfer object.
 pub struct StorageRule {
     pub id: Uuid,
     pub file_type: String,
@@ -25,6 +26,7 @@ pub struct StorageRule {
 
 /// Create/Update Storage Rule Request
 #[derive(Debug, Deserialize)]
+/// UpsertStorageRule data transfer object.
 pub struct UpsertStorageRule {
     pub file_type: String,
     pub mime_type_pattern: Option<String>,
@@ -35,6 +37,7 @@ pub struct UpsertStorageRule {
 
 /// AI Indexing Rule Model
 #[derive(Debug, Serialize, Deserialize, FromRow)]
+/// IndexingRule data transfer object.
 pub struct IndexingRule {
     pub id: Uuid,
     pub folder_path: String,
@@ -47,6 +50,7 @@ pub struct IndexingRule {
 
 /// Create/Update AI Indexing Rule Request
 #[derive(Debug, Deserialize)]
+/// UpsertIndexingRule data transfer object.
 pub struct UpsertIndexingRule {
     pub folder_path: String,
     pub bucket: String,
@@ -246,12 +250,14 @@ pub async fn delete_indexing_rule(
 
 /// System Setting Model
 #[derive(Debug, Serialize, Deserialize)]
+/// SystemSetting data transfer object.
 pub struct SystemSetting {
     pub setting_value: String,
 }
 
 /// Create/Update System Setting Request
 #[derive(Debug, Deserialize)]
+/// UpsertSystemSetting data transfer object.
 pub struct UpsertSystemSetting {
     pub setting_value: String,
 }

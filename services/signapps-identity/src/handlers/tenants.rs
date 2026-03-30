@@ -22,6 +22,7 @@ use crate::AppState;
 
 /// Query parameters for listing tenants.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListTenantsQuery {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
@@ -29,6 +30,7 @@ pub struct ListTenantsQuery {
 
 /// Tenant response DTO.
 #[derive(Debug, Serialize)]
+/// Response for Tenant.
 pub struct TenantResponse {
     pub id: Uuid,
     pub name: String,
@@ -63,6 +65,7 @@ impl From<signapps_db::models::Tenant> for TenantResponse {
 
 /// Create tenant request.
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for CreateTenant.
 pub struct CreateTenantRequest {
     #[validate(length(min = 2, max = 255))]
     pub name: String,
@@ -77,6 +80,7 @@ pub struct CreateTenantRequest {
 
 /// Update tenant request.
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for UpdateTenant.
 pub struct UpdateTenantRequest {
     #[validate(length(min = 2, max = 255))]
     pub name: Option<String>,
@@ -246,6 +250,7 @@ pub async fn delete_tenant(
 
 /// Query parameters for listing workspaces.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListWorkspacesQuery {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
@@ -253,6 +258,7 @@ pub struct ListWorkspacesQuery {
 
 /// Workspace response DTO.
 #[derive(Debug, Serialize)]
+/// Response for Workspace.
 pub struct WorkspaceResponse {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -281,6 +287,7 @@ impl From<signapps_db::models::Workspace> for WorkspaceResponse {
 
 /// Workspace member response DTO.
 #[derive(Debug, Serialize)]
+/// Response for WorkspaceMember.
 pub struct WorkspaceMemberResponse {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -309,6 +316,7 @@ impl From<signapps_db::models::WorkspaceMemberWithUser> for WorkspaceMemberRespo
 
 /// Create workspace request.
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for CreateWorkspace.
 pub struct CreateWorkspaceRequest {
     #[validate(length(min = 2, max = 255))]
     pub name: String,
@@ -321,6 +329,7 @@ pub struct CreateWorkspaceRequest {
 
 /// Update workspace request.
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for UpdateWorkspace.
 pub struct UpdateWorkspaceRequest {
     #[validate(length(min = 2, max = 255))]
     pub name: Option<String>,
@@ -333,6 +342,7 @@ pub struct UpdateWorkspaceRequest {
 
 /// Add member request.
 #[derive(Debug, Deserialize)]
+/// Request body for AddMember.
 pub struct AddMemberRequest {
     pub user_id: Uuid,
     pub role: Option<String>,
@@ -340,6 +350,7 @@ pub struct AddMemberRequest {
 
 /// Update member role request.
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateMemberRole.
 pub struct UpdateMemberRoleRequest {
     pub role: String,
 }

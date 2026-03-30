@@ -31,6 +31,7 @@ struct ApiUsageRow {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Serialize)]
+/// ApiQuotaEntry data transfer object.
 pub struct ApiQuotaEntry {
     pub user_id: Uuid,
     pub email: String,
@@ -49,6 +50,7 @@ pub struct ApiQuotaEntry {
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct QuotaListQuery {
     pub limit: Option<i64>,
     pub offset: Option<i64>,

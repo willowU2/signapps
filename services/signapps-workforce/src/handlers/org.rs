@@ -24,6 +24,7 @@ use signapps_common::{Claims, TenantContext};
 
 /// Organization node in the hierarchy
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// OrgNode data transfer object.
 pub struct OrgNode {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -41,6 +42,7 @@ pub struct OrgNode {
 
 /// Node type definition (customizable per tenant)
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// OrgNodeType data transfer object.
 pub struct OrgNodeType {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -56,6 +58,7 @@ pub struct OrgNodeType {
 
 /// Tree node with children (recursive structure)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// OrgTreeNode data transfer object.
 pub struct OrgTreeNode {
     #[serde(flatten)]
     pub node: OrgNode,
@@ -66,6 +69,7 @@ pub struct OrgTreeNode {
 
 /// Create node request
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for CreateNode.
 pub struct CreateNodeRequest {
     pub parent_id: Option<Uuid>,
     #[validate(length(min = 1, max = 50))]
@@ -80,6 +84,7 @@ pub struct CreateNodeRequest {
 
 /// Update node request
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for UpdateNode.
 pub struct UpdateNodeRequest {
     #[validate(length(min = 1, max = 255))]
     pub name: Option<String>,
@@ -92,12 +97,14 @@ pub struct UpdateNodeRequest {
 
 /// Move node request
 #[derive(Debug, Deserialize)]
+/// Request body for MoveNode.
 pub struct MoveNodeRequest {
     pub new_parent_id: Option<Uuid>,
 }
 
 /// Create node type request
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for CreateNodeType.
 pub struct CreateNodeTypeRequest {
     #[validate(length(min = 1, max = 50))]
     pub code: String,
@@ -112,6 +119,7 @@ pub struct CreateNodeTypeRequest {
 
 /// Query params for tree retrieval
 #[derive(Debug, Deserialize, Default)]
+/// Query parameters for filtering results.
 pub struct TreeQueryParams {
     pub include_inactive: Option<bool>,
     pub root_id: Option<Uuid>,

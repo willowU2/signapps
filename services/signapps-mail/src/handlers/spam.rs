@@ -15,6 +15,7 @@ use uuid::Uuid;
 // ============================================================================
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// SpamModel data transfer object.
 pub struct SpamModel {
     pub id: Uuid,
     pub account_id: Uuid,
@@ -25,6 +26,7 @@ pub struct SpamModel {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+/// SpamSettings data transfer object.
 pub struct SpamSettings {
     pub id: Uuid,
     pub account_id: Uuid,
@@ -41,6 +43,7 @@ pub struct SpamSettings {
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Request body for Classify.
 pub struct ClassifyRequest {
     pub account_id: Uuid,
     pub subject: Option<String>,
@@ -48,6 +51,7 @@ pub struct ClassifyRequest {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for Classify.
 pub struct ClassifyResponse {
     pub is_spam: bool,
     pub confidence: f64,
@@ -56,6 +60,7 @@ pub struct ClassifyResponse {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for Train.
 pub struct TrainRequest {
     pub account_id: Uuid,
     pub email_id: Uuid,
@@ -63,18 +68,21 @@ pub struct TrainRequest {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for Train.
 pub struct TrainResponse {
     pub status: String,
     pub words_updated: i64,
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateSpamSettings.
 pub struct UpdateSpamSettingsRequest {
     pub enabled: Option<bool>,
     pub threshold: Option<f64>,
 }
 
 #[derive(Debug, Serialize)]
+/// Response for SpamStats.
 pub struct SpamStatsResponse {
     pub enabled: bool,
     pub threshold: f64,

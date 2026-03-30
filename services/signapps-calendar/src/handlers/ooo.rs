@@ -13,6 +13,7 @@ use uuid::Uuid;
 use crate::{AppState, CalendarError};
 
 #[derive(Debug, Serialize)]
+/// OooSettings data transfer object.
 pub struct OooSettings {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -24,6 +25,7 @@ pub struct OooSettings {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for SetOoo.
 pub struct SetOooRequest {
     pub enabled: Option<bool>,
     pub ooo_start: Option<DateTime<Utc>>,

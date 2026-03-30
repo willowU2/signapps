@@ -13,6 +13,7 @@ use crate::AppState;
 
 /// Pull image request.
 #[derive(Debug, Deserialize)]
+/// Request body for Pull.
 pub struct PullRequest {
     /// Image name with optional tag (e.g., "nginx:latest")
     pub image: String,
@@ -20,6 +21,7 @@ pub struct PullRequest {
 
 /// Pull response.
 #[derive(Debug, Serialize)]
+/// Response for Pull.
 pub struct PullResponse {
     pub success: bool,
     pub image: String,

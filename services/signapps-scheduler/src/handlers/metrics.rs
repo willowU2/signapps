@@ -11,6 +11,7 @@ use signapps_db::repositories::{MetricsRepository, ResourceMetrics, WorkloadMetr
 use crate::AppState;
 
 #[derive(Deserialize)]
+/// Query parameters for filtering results.
 pub struct MetricsQuery {
     pub start_date: Option<DateTime<Utc>>,
     pub end_date: Option<DateTime<Utc>>,

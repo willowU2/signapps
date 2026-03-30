@@ -12,6 +12,7 @@ use std::collections::HashMap;
 // ============================================================================
 
 #[derive(Debug, Serialize, Deserialize)]
+/// ImportResult data transfer object.
 pub struct ImportResult {
     pub format: String,
     pub row_count: usize,
@@ -22,6 +23,7 @@ pub struct ImportResult {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+/// ContactRecord data transfer object.
 pub struct ContactRecord {
     pub name: String,
     pub email: Option<String>,
@@ -31,6 +33,7 @@ pub struct ContactRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+/// EventRecord data transfer object.
 pub struct EventRecord {
     pub summary: String,
     pub dtstart: Option<String>,

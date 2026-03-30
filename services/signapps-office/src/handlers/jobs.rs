@@ -28,6 +28,7 @@ pub enum JobState {
 }
 
 #[derive(Debug, Clone, Serialize)]
+/// JobStatus data transfer object.
 pub struct JobStatus {
     pub id: String,
     pub status: JobState,
@@ -57,6 +58,7 @@ pub fn new_job_store() -> JobStore {
 
 /// POST /api/v1/office/jobs/convert
 #[derive(Debug, Deserialize)]
+/// Request body for JobConvert.
 pub struct JobConvertRequest {
     /// Output format (docx, pdf, markdown, html, text)
     pub format: OutputFormat,
@@ -68,6 +70,7 @@ pub struct JobConvertRequest {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for JobSubmit.
 pub struct JobSubmitResponse {
     pub job_id: String,
 }

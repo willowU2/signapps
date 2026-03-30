@@ -16,6 +16,7 @@ use crate::AppState;
 
 /// Query parameters for listing containers.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListQuery {
     pub all: Option<bool>,
     pub limit: Option<i64>,
@@ -24,6 +25,7 @@ pub struct ListQuery {
 
 /// Container response with DB and Docker info.
 #[derive(Debug, Serialize)]
+/// Response for Container.
 pub struct ContainerResponse {
     pub id: Uuid,
     pub docker_id: Option<String>,
@@ -74,6 +76,7 @@ fn extract_store_meta(
 
 /// Container action response.
 #[derive(Debug, Serialize)]
+/// Response for Action.
 pub struct ActionResponse {
     pub success: bool,
     pub message: String,
@@ -81,12 +84,14 @@ pub struct ActionResponse {
 
 /// Stop container request.
 #[derive(Debug, Deserialize)]
+/// Request body for Stop.
 pub struct StopRequest {
     pub timeout_secs: Option<i64>,
 }
 
 /// Logs query parameters.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct LogsQuery {
     pub tail: Option<usize>,
 }

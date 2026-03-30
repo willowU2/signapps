@@ -13,6 +13,7 @@ use crate::AppState;
 
 /// Query parameters for import
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ImportQuery {
     /// Optional input format override (auto-detected if not provided)
     pub format: Option<ImportFormat>,
@@ -20,6 +21,7 @@ pub struct ImportQuery {
 
 /// Response for import info
 #[derive(Debug, Serialize)]
+/// Response for ImportInfo.
 pub struct ImportInfoResponse {
     pub supported_formats: Vec<&'static str>,
     pub max_file_size_mb: u32,
@@ -28,6 +30,7 @@ pub struct ImportInfoResponse {
 
 /// Response for imported document
 #[derive(Debug, Serialize)]
+/// Response for Import.
 pub struct ImportResponse {
     pub success: bool,
     pub detected_format: String,
@@ -37,6 +40,7 @@ pub struct ImportResponse {
 
 /// Import metadata
 #[derive(Debug, Serialize)]
+/// ImportMetadata data transfer object.
 pub struct ImportMetadata {
     pub word_count: usize,
     pub character_count: usize,
@@ -109,6 +113,7 @@ pub async fn import_upload(
 
 /// Import document from JSON body (for HTML/Markdown content)
 #[derive(Debug, Deserialize)]
+/// Request body for ImportJson.
 pub struct ImportJsonRequest {
     pub content: String,
     pub format: Option<ImportFormat>,

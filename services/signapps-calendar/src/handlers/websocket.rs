@@ -23,6 +23,7 @@ use crate::AppState;
 /// Calendar document session metadata
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
+/// CalendarSession data transfer object.
 pub struct CalendarSession {
     pub id: Uuid,
     pub calendar_id: Uuid,

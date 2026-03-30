@@ -40,6 +40,7 @@ static TRACKING_PIXEL: &[u8] = &[
 // ============================================================================
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// EmailOpen data transfer object.
 pub struct EmailOpen {
     pub id: Uuid,
     pub tracking_id: Uuid,
@@ -60,12 +61,14 @@ pub struct EmailOpen {
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct TrackingQuery {
     pub email_id: Option<Uuid>,
     pub account_id: Option<Uuid>,
 }
 
 #[derive(Debug, Serialize)]
+/// TrackingStats data transfer object.
 pub struct TrackingStats {
     pub total_tracked: i64,
     pub total_opened: i64,

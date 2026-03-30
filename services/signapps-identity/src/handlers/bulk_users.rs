@@ -17,6 +17,7 @@ use crate::AppState;
 
 /// One row parsed from the import CSV.
 #[derive(Debug, Clone)]
+/// CsvUserRow data transfer object.
 pub struct CsvUserRow {
     pub email: String,
     pub first_name: String,
@@ -38,6 +39,7 @@ pub enum BulkAction {
 
 /// Request body for POST /api/v1/admin/users/bulk-action.
 #[derive(Debug, Deserialize)]
+/// Request body for BulkAction.
 pub struct BulkActionRequest {
     pub user_ids: Vec<Uuid>,
     pub action: BulkAction,
@@ -45,6 +47,7 @@ pub struct BulkActionRequest {
 
 /// Result returned from a CSV import.
 #[derive(Debug, Serialize)]
+/// ImportResult data transfer object.
 pub struct ImportResult {
     pub total: u32,
     pub created: u32,
@@ -54,6 +57,7 @@ pub struct ImportResult {
 
 /// Result returned from a bulk action.
 #[derive(Debug, Serialize)]
+/// BulkActionResult data transfer object.
 pub struct BulkActionResult {
     pub affected: u32,
     pub action: BulkAction,

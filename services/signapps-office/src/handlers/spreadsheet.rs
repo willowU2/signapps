@@ -149,6 +149,7 @@ pub async fn spreadsheet_info() -> Json<serde_json::Value> {
 
 /// Query params for export format
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ExportParams {
     pub format: Option<String>,
 }
@@ -261,6 +262,7 @@ pub async fn export_ods_handler(Json(payload): Json<serde_json::Value>) -> Respo
 
 /// Import CSV from text content
 #[derive(Debug, Deserialize)]
+/// Request body for CsvImport.
 pub struct CsvImportRequest {
     pub content: String,
     pub delimiter: Option<String>,

@@ -14,6 +14,7 @@ use signapps_db::repositories::StorageTier3Repository;
 use uuid::Uuid;
 /// Share link information.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// ShareLink data transfer object.
 pub struct ShareLink {
     pub id: Uuid,
     pub bucket: String,
@@ -63,6 +64,7 @@ impl std::fmt::Display for ShareAccessType {
 
 /// Create share request.
 #[derive(Debug, Deserialize)]
+/// Request body for CreateShare.
 pub struct CreateShareRequest {
     pub bucket: String,
     pub key: String,
@@ -79,6 +81,7 @@ pub struct CreateShareRequest {
 
 /// Create share response.
 #[derive(Debug, Serialize)]
+/// Response for CreateShare.
 pub struct CreateShareResponse {
     pub id: Uuid,
     pub token: String,
@@ -88,6 +91,7 @@ pub struct CreateShareResponse {
 
 /// Update share request.
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateShare.
 pub struct UpdateShareRequest {
     pub expires_in_hours: Option<i64>,
     pub password: Option<String>,
@@ -98,6 +102,7 @@ pub struct UpdateShareRequest {
 
 /// List shares query.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListSharesQuery {
     pub bucket: Option<String>,
     pub key: Option<String>,
@@ -108,6 +113,7 @@ pub struct ListSharesQuery {
 
 /// List shares response.
 #[derive(Debug, Serialize)]
+/// Response for ListShares.
 pub struct ListSharesResponse {
     pub shares: Vec<ShareLink>,
     pub total: i64,
@@ -115,12 +121,14 @@ pub struct ListSharesResponse {
 
 /// Access share request (for password-protected shares).
 #[derive(Debug, Deserialize)]
+/// Request body for AccessShare.
 pub struct AccessShareRequest {
     pub password: Option<String>,
 }
 
 /// Access share response.
 #[derive(Debug, Serialize)]
+/// Response for AccessShare.
 pub struct AccessShareResponse {
     pub bucket: String,
     pub key: String,
@@ -390,6 +398,7 @@ pub async fn access_share(
 
 /// Query parameters for shared file download.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct DownloadSharedQuery {
     pub access_token: Option<String>,
     pub password: Option<String>,

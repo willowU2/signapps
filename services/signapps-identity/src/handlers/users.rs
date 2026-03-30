@@ -37,6 +37,7 @@ async fn log_user_activity(
 
 /// Query parameters for listing users.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListQuery {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
@@ -46,6 +47,7 @@ pub struct ListQuery {
 
 /// User response DTO.
 #[derive(Debug, Serialize)]
+/// Response for User.
 pub struct UserResponse {
     pub id: Uuid,
     pub username: String,
@@ -62,6 +64,7 @@ pub struct UserResponse {
 /// User list response with pagination info.
 #[allow(dead_code)]
 #[derive(Debug, Serialize)]
+/// Response for UserList.
 pub struct UserListResponse {
     pub users: Vec<UserResponse>,
     pub total: i64,
@@ -71,6 +74,7 @@ pub struct UserListResponse {
 
 /// Create user request (admin).
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for AdminCreateUser.
 pub struct AdminCreateUserRequest {
     #[validate(length(min = 3, max = 64))]
     pub username: String,
@@ -90,6 +94,7 @@ pub struct AdminCreateUserRequest {
 /// Update user request (admin).
 #[derive(Debug, Deserialize, Validate)]
 #[allow(dead_code)]
+/// Request body for AdminUpdateUser.
 pub struct AdminUpdateUserRequest {
     #[validate(email)]
     pub email: Option<String>,
@@ -104,6 +109,7 @@ pub struct AdminUpdateUserRequest {
 
 /// Update self request.
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for UpdateSelf.
 pub struct UpdateSelfRequest {
     #[validate(email)]
     pub email: Option<String>,
@@ -118,6 +124,7 @@ pub struct UpdateSelfRequest {
 
 /// Set user tenant request.
 #[derive(Debug, Deserialize)]
+/// Request body for SetTenant.
 pub struct SetTenantRequest {
     pub tenant_id: Uuid,
 }

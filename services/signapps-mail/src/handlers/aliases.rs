@@ -25,6 +25,7 @@ use uuid::Uuid;
 // ============================================================================
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// Alias data transfer object.
 pub struct Alias {
     pub id: Uuid,
     pub account_id: Uuid,
@@ -40,12 +41,14 @@ pub struct Alias {
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateAlias.
 pub struct CreateAliasRequest {
     pub alias_email: String,
     pub display_name: String,
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateAlias.
 pub struct UpdateAliasRequest {
     pub alias_email: Option<String>,
     pub display_name: Option<String>,

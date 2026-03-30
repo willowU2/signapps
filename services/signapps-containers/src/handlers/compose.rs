@@ -17,6 +17,7 @@ use super::containers::ContainerResponse;
 
 /// Import compose request body.
 #[derive(Debug, serde::Deserialize)]
+/// Request body for ImportCompose.
 pub struct ImportComposeRequest {
     /// Raw YAML or JSON content of the compose file.
     pub yaml: String,
@@ -26,12 +27,14 @@ pub struct ImportComposeRequest {
 
 /// Preview response showing parsed services before install.
 #[derive(Debug, serde::Serialize)]
+/// ComposePreview data transfer object.
 pub struct ComposePreview {
     pub services: Vec<ServicePreview>,
 }
 
 /// Preview of a single service parsed from compose.
 #[derive(Debug, serde::Serialize)]
+/// ServicePreview data transfer object.
 pub struct ServicePreview {
     pub service_name: String,
     pub image: String,
@@ -41,6 +44,7 @@ pub struct ServicePreview {
 }
 
 #[derive(Debug, serde::Serialize)]
+/// PortPreview data transfer object.
 pub struct PortPreview {
     pub host: u16,
     pub container: u16,
@@ -48,12 +52,14 @@ pub struct PortPreview {
 }
 
 #[derive(Debug, serde::Serialize)]
+/// EnvPreview data transfer object.
 pub struct EnvPreview {
     pub key: String,
     pub default: Option<String>,
 }
 
 #[derive(Debug, serde::Serialize)]
+/// VolumePreview data transfer object.
 pub struct VolumePreview {
     pub source: String,
     pub target: String,

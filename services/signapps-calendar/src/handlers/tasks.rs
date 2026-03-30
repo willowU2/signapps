@@ -135,6 +135,7 @@ pub async fn update_task(
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for MoveTask.
 pub struct MoveTaskRequest {
     pub new_parent_id: Option<Uuid>,
     pub position: Option<i32>,
@@ -226,6 +227,7 @@ pub async fn delete_task(
 }
 
 #[derive(Debug, Serialize)]
+/// TaskTreeNode data transfer object.
 pub struct TaskTreeNode {
     pub task: Task,
     pub children: Vec<TaskTreeNode>,
@@ -275,6 +277,7 @@ pub async fn get_task_tree(
 }
 
 #[derive(Debug, Serialize)]
+/// TaskTreeInfo data transfer object.
 pub struct TaskTreeInfo {
     pub total_tasks: usize,
     pub max_depth: usize,

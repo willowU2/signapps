@@ -16,6 +16,7 @@ use crate::AppState;
 
 /// Query parameters for listing activities.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ActivitiesQuery {
     pub workspace_id: Option<Uuid>,
     pub limit: Option<i64>,
@@ -27,6 +28,7 @@ pub struct ActivitiesQuery {
 
 /// Activity entry from cross-module feed.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// ActivityEntry data transfer object.
 pub struct ActivityEntry {
     pub id: Uuid,
     pub actor_id: Uuid,

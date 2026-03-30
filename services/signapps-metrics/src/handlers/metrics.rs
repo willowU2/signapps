@@ -103,6 +103,7 @@ pub async fn health_check(State(state): State<AppState>) -> Result<Json<HealthRe
 
 /// Health response.
 #[derive(Debug, Serialize)]
+/// Response for Health.
 pub struct HealthResponse {
     pub status: String,
     pub cpu_usage_percent: f32,
@@ -156,6 +157,7 @@ pub async fn get_summary(State(state): State<AppState>) -> Result<Json<SummaryMe
 
 /// Summary metrics.
 #[derive(Debug, Serialize)]
+/// SummaryMetrics data transfer object.
 pub struct SummaryMetrics {
     pub hostname: String,
     pub os_name: String,

@@ -4,6 +4,7 @@ use axum::Json;
 use serde::Serialize;
 
 #[derive(Serialize)]
+/// Response for Health.
 pub struct HealthResponse {
     pub status: String,
     pub service: String,

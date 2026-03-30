@@ -12,6 +12,7 @@ use crate::AppState;
 
 /// Search query parameters.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct SearchQuery {
     /// Search query text.
     pub q: String,
@@ -26,6 +27,7 @@ pub struct SearchQuery {
 
 /// Search result item.
 #[derive(Debug, Serialize)]
+/// SearchResultItem data transfer object.
 pub struct SearchResultItem {
     pub id: Uuid,
     pub document_id: Uuid,
@@ -36,6 +38,7 @@ pub struct SearchResultItem {
 
 /// Search response.
 #[derive(Debug, Serialize)]
+/// Response for Search.
 pub struct SearchResponse {
     pub query: String,
     pub results: Vec<SearchResultItem>,

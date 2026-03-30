@@ -14,6 +14,7 @@ use crate::AppState;
 
 /// Quota response.
 #[derive(Debug, Serialize)]
+/// Response for Quota.
 pub struct QuotaResponse {
     pub user_id: Uuid,
     pub max_containers: i32,
@@ -29,6 +30,7 @@ pub struct QuotaResponse {
 
 /// Usage percentages.
 #[derive(Debug, Serialize)]
+/// QuotaUsagePercent data transfer object.
 pub struct QuotaUsagePercent {
     pub containers: f64,
     pub cpu: f64,

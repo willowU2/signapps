@@ -27,6 +27,7 @@ use crate::AppState;
 
 /// Acknowledgement response sent back to the caller.
 #[derive(Debug, Serialize)]
+/// WebhookAck data transfer object.
 pub struct WebhookAck {
     pub status: &'static str,
     pub event_type: String,

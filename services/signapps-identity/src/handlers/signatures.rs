@@ -24,6 +24,7 @@ use crate::AppState;
 
 /// Query parameters for listing envelopes.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListQuery {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
@@ -31,6 +32,7 @@ pub struct ListQuery {
 
 /// Request body for creating a new envelope.
 #[derive(Debug, Deserialize)]
+/// Request body for CreateEnvelope.
 pub struct CreateEnvelopeRequest {
     pub title: String,
     pub document_id: Uuid,
@@ -40,6 +42,7 @@ pub struct CreateEnvelopeRequest {
 
 /// Request body for adding a step to an envelope.
 #[derive(Debug, Deserialize)]
+/// Request body for AddStep.
 pub struct AddStepRequest {
     /// Signer email (plain text — stored encrypted by the DB layer).
     pub signer_email: String,
@@ -53,6 +56,7 @@ pub struct AddStepRequest {
 
 /// Request body for signing a step.
 #[derive(Debug, Deserialize)]
+/// Request body for SignStep.
 pub struct SignStepRequest {
     /// Optional hash of the signature image/data.
     pub signature_hash: Option<String>,
@@ -60,18 +64,21 @@ pub struct SignStepRequest {
 
 /// Request body for declining a step.
 #[derive(Debug, Deserialize)]
+/// Request body for DeclineStep.
 pub struct DeclineStepRequest {
     pub reason: Option<String>,
 }
 
 /// Request body for voiding an envelope.
 #[derive(Debug, Deserialize)]
+/// Request body for VoidEnvelope.
 pub struct VoidEnvelopeRequest {
     pub reason: Option<String>,
 }
 
 /// Envelope response DTO.
 #[derive(Debug, Serialize)]
+/// Response for Envelope.
 pub struct EnvelopeResponse {
     pub id: Uuid,
     pub title: String,
@@ -104,6 +111,7 @@ impl From<SignatureEnvelope> for EnvelopeResponse {
 /// Note: signer_email and signer_name are stored as `bytea` (encrypted) in the DB.
 /// They are returned as UTF-8 strings when valid, or as an empty string on decode failure.
 #[derive(Debug, Serialize)]
+/// Response for Step.
 pub struct StepResponse {
     pub id: Uuid,
     pub envelope_id: Uuid,
@@ -146,6 +154,7 @@ impl From<EnvelopeStep> for StepResponse {
 
 /// Transition response DTO.
 #[derive(Debug, Serialize)]
+/// Response for Transition.
 pub struct TransitionResponse {
     pub id: Uuid,
     pub envelope_id: Uuid,

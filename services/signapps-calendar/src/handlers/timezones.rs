@@ -13,11 +13,13 @@ use signapps_common::Claims;
 use crate::{services, AppState};
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct TimezoneListQuery {
     pub search: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
+/// TimezoneInfo data transfer object.
 pub struct TimezoneInfo {
     pub name: String,
 }
@@ -42,11 +44,13 @@ pub async fn list_timezones(Query(query): Query<TimezoneListQuery>) -> Json<Vec<
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for ValidateTimezone.
 pub struct ValidateTimezoneRequest {
     pub timezone: String,
 }
 
 #[derive(Debug, Serialize)]
+/// Response for ValidateTimezone.
 pub struct ValidateTimezoneResponse {
     pub valid: bool,
 }
@@ -62,6 +66,7 @@ pub async fn validate_timezone(
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for ConvertTimezone.
 pub struct ConvertTimezoneRequest {
     pub datetime: DateTime<chrono::Utc>,
     pub from_timezone: String,
@@ -69,6 +74,7 @@ pub struct ConvertTimezoneRequest {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for ConvertTimezone.
 pub struct ConvertTimezoneResponse {
     pub original: String,
     pub converted: String,
@@ -101,11 +107,13 @@ pub async fn convert_timezone(
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Serialize)]
+/// Response for UserTimezone.
 pub struct UserTimezoneResponse {
     pub timezone: String,
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for SetUserTimezone.
 pub struct SetUserTimezoneRequest {
     pub timezone: String,
 }

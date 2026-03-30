@@ -15,6 +15,7 @@ use crate::{models::Room, AppState};
 
 /// A waiting room entry
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// WaitingRoomEntry data transfer object.
 pub struct WaitingRoomEntry {
     pub id: Uuid,
     pub room_id: Uuid,
@@ -26,6 +27,7 @@ pub struct WaitingRoomEntry {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for WaitingRoom.
 pub struct WaitingRoomResponse {
     pub id: Uuid,
     pub room_id: Uuid,
@@ -173,6 +175,7 @@ pub async fn deny_user(
 
 /// DTO for joining the waiting room (called by the participant themselves)
 #[derive(Debug, Deserialize)]
+/// Request body for JoinWaitingRoom.
 pub struct JoinWaitingRoomRequest {
     pub display_name: String,
 }

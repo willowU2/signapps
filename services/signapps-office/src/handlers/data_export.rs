@@ -17,6 +17,7 @@ use std::io::{BufWriter, Cursor};
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Request body for Export.
 pub struct ExportRequest {
     /// Output format: "csv" | "json" | "xlsx" | "pdf"
     pub format: String,
@@ -31,6 +32,7 @@ pub struct ExportRequest {
 }
 
 #[derive(Debug, Serialize)]
+/// ExportInfo data transfer object.
 pub struct ExportInfo {
     pub supported_formats: Vec<String>,
     pub description: String,

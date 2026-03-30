@@ -18,6 +18,7 @@ use serde::Serialize;
 
 /// Health check response
 #[derive(Serialize)]
+/// Response for Health.
 pub struct HealthResponse {
     pub status: &'static str,
     pub service: &'static str,

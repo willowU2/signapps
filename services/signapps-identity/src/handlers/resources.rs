@@ -25,6 +25,7 @@ use crate::AppState;
 
 /// Resource type response DTO.
 #[derive(Debug, Serialize)]
+/// Response for ResourceType.
 pub struct ResourceTypeResponse {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -51,6 +52,7 @@ impl From<signapps_db::models::ResourceType> for ResourceTypeResponse {
 
 /// Create resource type request.
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for CreateResourceType.
 pub struct CreateResourceTypeRequest {
     #[validate(length(min = 2, max = 64))]
     pub name: String,
@@ -115,6 +117,7 @@ pub async fn delete_resource_type(
 
 /// Query parameters for listing resources.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListResourcesQuery {
     pub resource_type: Option<String>,
     pub limit: Option<i64>,
@@ -123,6 +126,7 @@ pub struct ListResourcesQuery {
 
 /// Resource response DTO.
 #[derive(Debug, Serialize)]
+/// Response for Resource.
 pub struct ResourceResponse {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -165,6 +169,7 @@ impl From<signapps_db::models::TenantResource> for ResourceResponse {
 
 /// Create resource request.
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for CreateResource.
 pub struct CreateResourceRequest {
     pub resource_type_id: Option<Uuid>,
     #[validate(length(min = 2, max = 255))]
@@ -184,6 +189,7 @@ pub struct CreateResourceRequest {
 
 /// Update resource request.
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for UpdateResource.
 pub struct UpdateResourceRequest {
     #[validate(length(min = 2, max = 255))]
     pub name: Option<String>,
@@ -339,6 +345,7 @@ pub async fn delete_resource(
 
 /// Query parameters for listing reservations.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListReservationsQuery {
     pub resource_id: Option<Uuid>,
     pub status: Option<String>,
@@ -346,6 +353,7 @@ pub struct ListReservationsQuery {
 
 /// Reservation response DTO.
 #[derive(Debug, Serialize)]
+/// Response for Reservation.
 pub struct ReservationResponse {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -380,6 +388,7 @@ impl From<signapps_db::models::Reservation> for ReservationResponse {
 
 /// Create reservation request.
 #[derive(Debug, Deserialize)]
+/// Request body for CreateReservation.
 pub struct CreateReservationRequest {
     pub resource_id: Uuid,
     pub event_id: Option<Uuid>,
@@ -388,6 +397,7 @@ pub struct CreateReservationRequest {
 
 /// Update reservation status request.
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateReservationStatus.
 pub struct UpdateReservationStatusRequest {
     pub status: String, // approved, rejected, cancelled
     pub rejection_reason: Option<String>,

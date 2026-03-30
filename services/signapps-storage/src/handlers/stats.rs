@@ -9,6 +9,7 @@ use sysinfo::Disks;
 use crate::AppState;
 
 #[derive(Serialize)]
+/// Response for StorageStats.
 pub struct StorageStatsResponse {
     pub total_bytes: i64,
     pub used_bytes: i64,

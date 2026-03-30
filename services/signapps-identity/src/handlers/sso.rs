@@ -26,6 +26,7 @@ use crate::AppState;
 
 /// SSO configuration stored per tenant.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// SsoConfig data transfer object.
 pub struct SsoConfig {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -53,6 +54,7 @@ pub struct SsoConfig {
 
 /// Request to create/update SSO config.
 #[derive(Debug, Deserialize)]
+/// Request body for UpsertSsoConfig.
 pub struct UpsertSsoConfigRequest {
     pub protocol: String,
     pub enabled: Option<bool>,
@@ -74,6 +76,7 @@ pub struct UpsertSsoConfigRequest {
 
 /// Query params for OIDC authorize.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct AuthorizeQuery {
     pub tenant_id: Option<String>,
     pub redirect_uri: Option<String>,
@@ -81,6 +84,7 @@ pub struct AuthorizeQuery {
 
 /// Query params for OIDC callback.
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct OidcCallbackQuery {
     pub code: String,
     pub state: Option<String>,
@@ -138,6 +142,7 @@ pub async fn saml_metadata(State(state): State<AppState>) -> Response {
 
 /// POST payload for SAML ACS.
 #[derive(Debug, Deserialize)]
+/// AcsPayload data transfer object.
 pub struct AcsPayload {
     #[serde(rename = "SAMLResponse")]
     pub saml_response: Option<String>,
@@ -452,6 +457,7 @@ pub async fn upsert_config(
 
 /// Password policy DTO (tenant-level, persisted in DB).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// TenantPasswordPolicy data transfer object.
 pub struct TenantPasswordPolicy {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -466,6 +472,7 @@ pub struct TenantPasswordPolicy {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpsertPasswordPolicy.
 pub struct UpsertPasswordPolicyRequest {
     pub min_length: Option<i16>,
     pub require_uppercase: Option<bool>,

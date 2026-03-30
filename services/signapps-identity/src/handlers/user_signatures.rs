@@ -21,6 +21,7 @@ use crate::AppState;
 // ============================================================================
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// UserSignature data transfer object.
 pub struct UserSignature {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -40,6 +41,7 @@ pub struct UserSignature {
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateUserSignature.
 pub struct CreateUserSignatureRequest {
     pub name: String,
     /// "drawn" | "typed" | "image" | "stamp"
@@ -54,6 +56,7 @@ pub struct CreateUserSignatureRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateUserSignature.
 pub struct UpdateUserSignatureRequest {
     pub name: Option<String>,
     pub signature_type: Option<String>,

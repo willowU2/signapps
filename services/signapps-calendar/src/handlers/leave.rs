@@ -25,23 +25,27 @@ use crate::{AppState, CalendarError};
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// RejectBody data transfer object.
 pub struct RejectBody {
     pub comment: String,
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct PredictQuery {
     pub days: f64,
     pub leave_type: String,
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct TeamConflictsQuery {
     pub start: String,
     pub end: String,
 }
 
 #[derive(Debug, Deserialize)]
+/// DelegateBody data transfer object.
 pub struct DelegateBody {
     /// The leave event being delegated from (kept for context/logging).
     #[allow(dead_code)]
@@ -50,17 +54,20 @@ pub struct DelegateBody {
 }
 
 #[derive(Debug, Deserialize)]
+/// TaskAssignment data transfer object.
 pub struct TaskAssignment {
     pub task_id: Uuid,
     pub assign_to: Uuid,
 }
 
 #[derive(Debug, Serialize)]
+/// DelegateResult data transfer object.
 pub struct DelegateResult {
     pub success_count: usize,
 }
 
 #[derive(Debug, Serialize)]
+/// PredictResult data transfer object.
 pub struct PredictResult {
     pub leave_type: String,
     pub year: i32,

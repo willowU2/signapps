@@ -6,6 +6,7 @@ use serde::Serialize;
 use crate::AppState;
 
 #[derive(Serialize)]
+/// Response for Health.
 pub struct HealthResponse {
     pub status: String,
     pub service: String,
@@ -14,6 +15,7 @@ pub struct HealthResponse {
 }
 
 #[derive(Serialize)]
+/// ComponentsHealth data transfer object.
 pub struct ComponentsHealth {
     pub database: bool,
     pub cache: bool,

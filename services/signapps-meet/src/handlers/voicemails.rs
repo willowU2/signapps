@@ -15,6 +15,7 @@ use crate::AppState;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+/// Voicemail data transfer object.
 pub struct Voicemail {
     pub id: Uuid,
     pub user_id: Uuid,

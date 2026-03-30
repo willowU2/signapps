@@ -9,6 +9,7 @@ use std::sync::Arc;
 use crate::{ocr::OcrRequest, AppState};
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct OcrQueryParams {
     languages: Option<String>,
     detect_layout: Option<bool>,
@@ -16,6 +17,7 @@ pub struct OcrQueryParams {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for Ocr.
 pub struct OcrResponse {
     pub success: bool,
     pub text: String,
@@ -25,6 +27,7 @@ pub struct OcrResponse {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for Page.
 pub struct PageResponse {
     pub page_number: u32,
     pub text: String,
@@ -33,6 +36,7 @@ pub struct PageResponse {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for Metadata.
 pub struct MetadataResponse {
     pub provider: String,
     pub processing_time_ms: u64,
@@ -192,6 +196,7 @@ pub async fn process_document(
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
+/// Request body for BatchOcr.
 pub struct BatchOcrRequest {
     pub files: Vec<String>,
     pub languages: Option<Vec<String>>,
@@ -200,6 +205,7 @@ pub struct BatchOcrRequest {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for BatchOcr.
 pub struct BatchOcrResponse {
     pub job_id: String,
     pub status: String,

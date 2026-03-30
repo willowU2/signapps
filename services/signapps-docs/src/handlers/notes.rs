@@ -16,6 +16,7 @@ use signapps_common::Claims;
 // ============================================================================
 
 #[derive(Debug, Serialize, FromRow)]
+/// QuickNote data transfer object.
 pub struct QuickNote {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -25,6 +26,7 @@ pub struct QuickNote {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for CreateNote.
 pub struct CreateNoteRequest {
     pub title: String,
     #[serde(default)]
@@ -32,6 +34,7 @@ pub struct CreateNoteRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateNote.
 pub struct UpdateNoteRequest {
     pub title: Option<String>,
     pub content: Option<String>,

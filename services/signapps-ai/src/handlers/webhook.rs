@@ -11,6 +11,7 @@ use crate::AppState;
 
 /// Webhook ingest response.
 #[derive(Debug, serde::Serialize)]
+/// Response for Webhook.
 pub struct WebhookResponse {
     pub document_id: Uuid,
     pub chunks_indexed: usize,

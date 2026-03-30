@@ -19,6 +19,7 @@ use crate::AppState;
 
 /// API key creation request.
 #[derive(Debug, Deserialize)]
+/// Request body for CreateApiKey.
 pub struct CreateApiKeyRequest {
     pub name: String,
     pub scopes: Vec<String>,
@@ -27,6 +28,7 @@ pub struct CreateApiKeyRequest {
 
 /// API key creation response (includes the full key — shown only once).
 #[derive(Debug, Serialize)]
+/// Response for CreateApiKey.
 pub struct CreateApiKeyResponse {
     pub id: Uuid,
     pub name: String,
@@ -39,6 +41,7 @@ pub struct CreateApiKeyResponse {
 
 /// API key list item (no full key visible).
 #[derive(Debug, Serialize)]
+/// ApiKeyItem data transfer object.
 pub struct ApiKeyItem {
     pub id: Uuid,
     pub name: String,
@@ -184,6 +187,7 @@ pub async fn revoke(
 
 /// PATCH request body for updating an API key.
 #[derive(Debug, Deserialize)]
+/// Request body for PatchApiKey.
 pub struct PatchApiKeyRequest {
     pub name: Option<String>,
     pub is_active: Option<bool>,

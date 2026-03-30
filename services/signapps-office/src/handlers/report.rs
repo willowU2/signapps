@@ -18,6 +18,7 @@ use std::io::{BufWriter, Cursor};
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Request body for Report.
 pub struct ReportRequest {
     /// Report template: "activity" | "users" | "storage"
     pub template: String,
@@ -30,6 +31,7 @@ pub struct ReportRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// ReportSection data transfer object.
 pub struct ReportSection {
     pub heading: String,
     pub rows: Vec<Vec<String>>,
@@ -37,6 +39,7 @@ pub struct ReportSection {
 }
 
 #[derive(Debug, Serialize)]
+/// ReportInfo data transfer object.
 pub struct ReportInfo {
     pub supported_templates: Vec<String>,
     pub description: String,

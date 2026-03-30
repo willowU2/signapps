@@ -14,6 +14,7 @@ use signapps_common::Result;
 use crate::AppState;
 
 #[derive(Debug, Serialize)]
+/// Response for Transcription.
 pub struct TranscriptionResponse {
     pub text: String,
     pub language: Option<String>,

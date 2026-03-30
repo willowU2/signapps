@@ -20,12 +20,14 @@ use crate::{AppState, CalendarError};
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListRulesQuery {
     pub team_id: Option<Uuid>,
     pub org_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize)]
+/// ValidateActionBody data transfer object.
 pub struct ValidateActionBody {
     pub event_type: String,
     pub start_date: String,
@@ -34,6 +36,7 @@ pub struct ValidateActionBody {
 }
 
 #[derive(Debug, Serialize)]
+/// RuleViolation data transfer object.
 pub struct RuleViolation {
     pub rule_id: Uuid,
     pub rule_type: String,
@@ -42,11 +45,13 @@ pub struct RuleViolation {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for ValidateAction.
 pub struct ValidateActionResponse {
     pub violations: Vec<RuleViolation>,
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct TeamStatusQuery {
     pub date: String,
     #[allow(dead_code)]
@@ -54,6 +59,7 @@ pub struct TeamStatusQuery {
 }
 
 #[derive(Debug, Serialize)]
+/// UserPresenceStatus data transfer object.
 pub struct UserPresenceStatus {
     pub user_id: Uuid,
     pub display_name: String,
@@ -61,6 +67,7 @@ pub struct UserPresenceStatus {
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct HeadcountQuery {
     pub date: String,
     #[allow(dead_code)]
@@ -68,6 +75,7 @@ pub struct HeadcountQuery {
 }
 
 #[derive(Debug, Serialize)]
+/// HeadcountSlot data transfer object.
 pub struct HeadcountSlot {
     pub time: String,
     pub role: String,

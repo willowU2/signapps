@@ -17,6 +17,7 @@ use crate::AppState;
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
+/// Request body for MeetingSuggestions.
 pub struct MeetingSuggestionsRequest {
     /// Participant user IDs to check calendars for.
     pub participant_ids: Vec<Uuid>,
@@ -35,6 +36,7 @@ pub struct MeetingSuggestionsRequest {
 }
 
 #[derive(Debug, Serialize)]
+/// TimeSlot data transfer object.
 pub struct TimeSlot {
     pub start: DateTime<Utc>,
     pub end: DateTime<Utc>,
@@ -47,6 +49,7 @@ pub struct TimeSlot {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for MeetingSuggestions.
 pub struct MeetingSuggestionsResponse {
     pub slots: Vec<TimeSlot>,
     pub participants_checked: usize,

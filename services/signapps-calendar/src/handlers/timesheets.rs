@@ -21,6 +21,7 @@ use crate::{AppState, CalendarError};
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ListTimesheetsQuery {
     /// Optional user_id filter (admin override). Defaults to the current user.
     pub user_id: Option<Uuid>,
@@ -29,42 +30,49 @@ pub struct ListTimesheetsQuery {
 }
 
 #[derive(Debug, Deserialize)]
+/// UpdateTimesheetBody data transfer object.
 pub struct UpdateTimesheetBody {
     pub hours: f64,
     pub category_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize)]
+/// ValidateWeekBody data transfer object.
 pub struct ValidateWeekBody {
     /// ISO week string, e.g. `2026-W13`.
     pub week: String,
 }
 
 #[derive(Debug, Serialize)]
+/// ValidateWeekResult data transfer object.
 pub struct ValidateWeekResult {
     pub week: String,
     pub rows_validated: u64,
 }
 
 #[derive(Debug, Deserialize)]
+/// ExportTimesheetsBody data transfer object.
 pub struct ExportTimesheetsBody {
     pub start: String,
     pub end: String,
 }
 
 #[derive(Debug, Serialize)]
+/// ExportResult data transfer object.
 pub struct ExportResult {
     pub exported_count: u64,
     pub entries: Vec<TimesheetEntry>,
 }
 
 #[derive(Debug, Deserialize)]
+/// GenerateTimesheetsBody data transfer object.
 pub struct GenerateTimesheetsBody {
     pub start: String,
     pub end: String,
 }
 
 #[derive(Debug, Serialize)]
+/// GenerateResult data transfer object.
 pub struct GenerateResult {
     pub created: usize,
 }

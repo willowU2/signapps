@@ -184,6 +184,7 @@ pub async fn reconnect_tunnel(
 
 /// Response for tunnel status.
 #[derive(Debug, Serialize)]
+/// Response for TunnelStatus.
 pub struct TunnelStatusResponse {
     pub id: Uuid,
     pub name: String,
@@ -194,6 +195,7 @@ pub struct TunnelStatusResponse {
 
 /// Response for reconnect request.
 #[derive(Debug, Serialize)]
+/// Response for Reconnect.
 pub struct ReconnectResponse {
     pub message: String,
     pub tunnel_id: Uuid,
@@ -201,6 +203,7 @@ pub struct ReconnectResponse {
 
 /// Bulk action on tunnels.
 #[derive(Debug, Deserialize)]
+/// BulkTunnelAction data transfer object.
 pub struct BulkTunnelAction {
     /// List of tunnel IDs to act on.
     pub tunnel_ids: Vec<Uuid>,
@@ -264,6 +267,7 @@ pub async fn bulk_tunnel_action(
 
 /// Response for bulk action.
 #[derive(Debug, Serialize)]
+/// Response for BulkAction.
 pub struct BulkActionResponse {
     pub success_count: usize,
     pub failed_ids: Vec<Uuid>,
@@ -271,6 +275,7 @@ pub struct BulkActionResponse {
 
 /// Quick connect request.
 #[derive(Debug, Deserialize)]
+/// Request body for QuickConnect.
 pub struct QuickConnectRequest {
     pub local_addr: Option<String>,
 }
@@ -323,6 +328,7 @@ pub async fn quick_connect(
 
 /// Dashboard stats response.
 #[derive(Debug, Serialize)]
+/// Response for DashboardStats.
 pub struct DashboardStatsResponse {
     pub tunnels_active: usize,
     pub tunnels_total: usize,

@@ -19,6 +19,7 @@ use crate::{
 
 /// Request to send a push notification
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Request body for SendPush.
 pub struct SendPushRequest {
     /// Notification title
     pub title: String,
@@ -50,12 +51,14 @@ pub struct SendPushRequest {
 
 /// Response with VAPID public key
 #[derive(Debug, Clone, Serialize)]
+/// Response for VapidKey.
 pub struct VapidKeyResponse {
     pub public_key: String,
 }
 
 /// Batch push send result
 #[derive(Debug, Clone, Serialize)]
+/// BatchPushSendResult data transfer object.
 pub struct BatchPushSendResult {
     pub total: usize,
     pub successful: usize,
@@ -65,6 +68,7 @@ pub struct BatchPushSendResult {
 
 /// Individual push send result item
 #[derive(Debug, Clone, Serialize)]
+/// PushSendResultItem data transfer object.
 pub struct PushSendResultItem {
     pub subscription_id: String,
     pub success: bool,

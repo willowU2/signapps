@@ -14,6 +14,7 @@ use crate::AppState;
 
 /// Index document request.
 #[derive(Debug, Deserialize)]
+/// Request body for Index.
 pub struct IndexRequest {
     /// Document content to index.
     pub content: String,
@@ -31,6 +32,7 @@ pub struct IndexRequest {
 
 /// Internal request triggered by signapps-storage
 #[derive(Debug, Deserialize)]
+/// Request body for InternalIndex.
 pub struct InternalIndexRequest {
     pub bucket: String,
     pub key: String,
@@ -40,6 +42,7 @@ pub struct InternalIndexRequest {
 
 /// Direct index request for entity indexing (Tasks, Events)
 #[derive(Debug, Deserialize)]
+/// Request body for DirectIndex.
 pub struct DirectIndexRequest {
     pub content: String,
     pub filename: String,
@@ -51,6 +54,7 @@ pub struct DirectIndexRequest {
 
 /// Index response.
 #[derive(Debug, Serialize)]
+/// Response for Index.
 pub struct IndexResponse {
     pub document_id: Uuid,
     pub chunks_indexed: usize,
@@ -59,6 +63,7 @@ pub struct IndexResponse {
 
 /// Stats response.
 #[derive(Debug, Serialize)]
+/// Response for Stats.
 pub struct StatsResponse {
     pub documents_count: u64,
     pub chunks_count: u64,

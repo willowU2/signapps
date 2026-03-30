@@ -17,6 +17,7 @@ use crate::AppState;
 
 /// Session item returned to the client.
 #[derive(Debug, Serialize)]
+/// SessionItem data transfer object.
 pub struct SessionItem {
     pub id: Uuid,
     pub ip_address: Option<String>,

@@ -233,6 +233,7 @@ async fn trigger_ai_indexing(
 
 /// Upload response.
 #[derive(Debug, Serialize)]
+/// Response for Upload.
 pub struct UploadResponse {
     pub id: Uuid,
     pub bucket: String,
@@ -243,6 +244,7 @@ pub struct UploadResponse {
 
 /// Delete files request.
 #[derive(Debug, Deserialize)]
+/// Request body for DeleteFiles.
 pub struct DeleteFilesRequest {
     pub keys: Vec<String>,
 }

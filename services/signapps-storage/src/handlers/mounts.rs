@@ -31,6 +31,7 @@ fn is_valid_mount_option(opt: &str) -> bool {
 
 /// Mount point information.
 #[derive(Debug, Clone, Serialize)]
+/// MountPoint data transfer object.
 pub struct MountPoint {
     pub id: Uuid,
     pub device: String,
@@ -47,6 +48,7 @@ pub struct MountPoint {
 
 /// Request to mount a device.
 #[derive(Debug, Deserialize)]
+/// Request body for Mount.
 pub struct MountRequest {
     /// Device path (e.g., /dev/sdb1)
     pub device: String,
@@ -60,6 +62,7 @@ pub struct MountRequest {
 
 /// Response after a mount operation.
 #[derive(Debug, Serialize)]
+/// Response for Mount.
 pub struct MountResponse {
     pub success: bool,
     pub mount_point: Option<MountPoint>,

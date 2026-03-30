@@ -13,6 +13,7 @@ use serde::Serialize;
 
 /// Health check response for standalone mode.
 #[derive(Debug, Serialize)]
+/// Response for Health.
 pub struct HealthResponse {
     pub status: String,
     pub mode: String,
@@ -21,12 +22,14 @@ pub struct HealthResponse {
 }
 
 #[derive(Debug, Serialize)]
+/// TunnelHealth data transfer object.
 pub struct TunnelHealth {
     pub total: usize,
     pub connected: usize,
 }
 
 #[derive(Debug, Serialize)]
+/// DnsHealth data transfer object.
 pub struct DnsHealth {
     pub adblock_enabled: bool,
     pub blocklists_count: usize,

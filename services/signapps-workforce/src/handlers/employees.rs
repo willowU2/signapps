@@ -50,6 +50,7 @@ pub enum ContractType {
 
 /// Employee record
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// Employee data transfer object.
 pub struct Employee {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -73,6 +74,7 @@ pub struct Employee {
 
 /// Employee with additional computed fields
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// EmployeeWithDetails data transfer object.
 pub struct EmployeeWithDetails {
     #[serde(flatten)]
     pub employee: Employee,
@@ -83,6 +85,7 @@ pub struct EmployeeWithDetails {
 
 /// Function definition (job roles/positions)
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+/// FunctionDefinition data transfer object.
 pub struct FunctionDefinition {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -98,6 +101,7 @@ pub struct FunctionDefinition {
 
 /// Create employee request
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for CreateEmployee.
 pub struct CreateEmployeeRequest {
     pub user_id: Option<Uuid>,
     pub org_node_id: Uuid,
@@ -119,6 +123,7 @@ pub struct CreateEmployeeRequest {
 
 /// Update employee request
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for UpdateEmployee.
 pub struct UpdateEmployeeRequest {
     pub org_node_id: Option<Uuid>,
     pub employee_number: Option<String>,
@@ -140,18 +145,21 @@ pub struct UpdateEmployeeRequest {
 
 /// Link user request
 #[derive(Debug, Deserialize)]
+/// Request body for LinkUser.
 pub struct LinkUserRequest {
     pub user_id: Uuid,
 }
 
 /// Update functions request
 #[derive(Debug, Deserialize)]
+/// Request body for UpdateFunctions.
 pub struct UpdateFunctionsRequest {
     pub functions: Vec<String>,
 }
 
 /// Create function definition request
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for CreateFunctionDefinition.
 pub struct CreateFunctionDefinitionRequest {
     #[validate(length(min = 1, max = 50))]
     pub code: String,
@@ -165,6 +173,7 @@ pub struct CreateFunctionDefinitionRequest {
 
 /// Update function definition request
 #[derive(Debug, Deserialize, Validate)]
+/// Request body for UpdateFunctionDefinition.
 pub struct UpdateFunctionDefinitionRequest {
     #[validate(length(min = 1, max = 100))]
     pub name: Option<String>,
@@ -177,6 +186,7 @@ pub struct UpdateFunctionDefinitionRequest {
 
 /// Query params for employee listing
 #[derive(Debug, Deserialize, Default)]
+/// Query parameters for filtering results.
 pub struct EmployeeQueryParams {
     #[allow(dead_code)] // Scaffolded — will be wired when handler is implemented
     pub status: Option<String>,
@@ -191,6 +201,7 @@ pub struct EmployeeQueryParams {
 
 /// Search query params
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct SearchQueryParams {
     pub q: String,
     pub limit: Option<i64>,
@@ -899,6 +910,7 @@ pub async fn delete_function_definition(
 
 /// Result summary for a bulk import operation.
 #[derive(Debug, Serialize)]
+/// ImportResult data transfer object.
 pub struct ImportResult {
     pub imported: u32,
     pub skipped: u32,

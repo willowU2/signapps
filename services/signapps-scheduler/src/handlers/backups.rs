@@ -42,6 +42,7 @@ pub enum BackupStatus {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// BackupJob data transfer object.
 pub struct BackupJob {
     pub id: Uuid,
     pub backup_type: BackupType,
@@ -53,6 +54,7 @@ pub struct BackupJob {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// BackupConfig data transfer object.
 pub struct BackupConfig {
     pub enabled: bool,
     pub schedule_cron: String,
@@ -79,6 +81,7 @@ impl Default for BackupConfig {
 // In-memory store
 // ---------------------------------------------------------------------------
 
+/// BackupStore data transfer object.
 pub struct BackupStore {
     pub jobs: HashMap<Uuid, BackupJob>,
     pub config: BackupConfig,
@@ -101,6 +104,7 @@ pub fn new_backup_store(pool: signapps_db::DatabasePool) -> SharedBackupStore {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Deserialize)]
+/// Request body for TriggerBackup.
 pub struct TriggerBackupRequest {
     pub backup_type: Option<BackupType>,
 }

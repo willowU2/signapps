@@ -186,12 +186,14 @@ pub fn categorize_email(sender: &str, subject: &str, body_preview: &str) -> Emai
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Serialize)]
+/// CategorizationResult data transfer object.
 pub struct CategorizationResult {
     pub email_id: Uuid,
     pub category: String,
 }
 
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct CategorizeQuery {
     /// If true, persist the category as a label on each email (default: true).
     #[serde(default = "default_true")]
@@ -286,6 +288,7 @@ pub async fn categorize_inbox(
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize, Serialize)]
+/// CategorySettings data transfer object.
 pub struct CategorySettings {
     /// account_id to update; if omitted, applies to all user accounts
     pub account_id: Option<Uuid>,

@@ -50,6 +50,7 @@ pub async fn unshare_calendar(
 }
 
 #[derive(Debug, Deserialize)]
+/// Request body for UpdatePermission.
 pub struct UpdatePermissionRequest {
     pub role: String,
 }
@@ -93,6 +94,7 @@ pub async fn get_members(
 
 /// Check user permission for calendar
 #[derive(serde::Serialize)]
+/// Response for Permission.
 pub struct PermissionResponse {
     pub can_view: bool,
     pub can_edit: bool,

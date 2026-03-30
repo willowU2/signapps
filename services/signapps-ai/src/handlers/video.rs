@@ -25,6 +25,7 @@ use crate::AppState;
 
 /// Response for video generation endpoints.
 #[derive(Debug, Serialize)]
+/// Response for VideoGen.
 pub struct VideoGenResponse {
     pub video_url: String,
     pub duration_seconds: f32,
@@ -34,6 +35,7 @@ pub struct VideoGenResponse {
 
 /// Response for frame extraction.
 #[derive(Debug, Serialize)]
+/// FrameInfo data transfer object.
 pub struct FrameInfo {
     pub index: usize,
     pub timestamp_seconds: f32,
@@ -43,6 +45,7 @@ pub struct FrameInfo {
 
 /// Response for the extract-frames endpoint.
 #[derive(Debug, Serialize)]
+/// Response for ExtractFrames.
 pub struct ExtractFramesResponse {
     pub frames: Vec<FrameInfo>,
     pub count: usize,
@@ -50,6 +53,7 @@ pub struct ExtractFramesResponse {
 
 /// Response for listing available models.
 #[derive(Debug, Serialize)]
+/// Response for VideoModels.
 pub struct VideoModelsResponse {
     pub models: Vec<ModelInfo>,
     pub count: usize,
@@ -61,6 +65,7 @@ pub struct VideoModelsResponse {
 
 /// JSON request body for the text-to-video endpoint.
 #[derive(Debug, Deserialize)]
+/// Request body for GenerateVideo.
 pub struct GenerateVideoRequest {
     pub prompt: String,
     pub duration_seconds: Option<f32>,

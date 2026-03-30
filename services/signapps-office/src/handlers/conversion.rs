@@ -46,6 +46,7 @@ impl From<OutputFormat> for ConversionFormat {
 
 /// Query parameters for conversion
 #[derive(Debug, Deserialize)]
+/// Query parameters for filtering results.
 pub struct ConversionQuery {
     /// Output format (docx, pdf, markdown, html, text)
     pub format: OutputFormat,
@@ -55,6 +56,7 @@ pub struct ConversionQuery {
 
 /// Comment data for export
 #[derive(Debug, Clone, Deserialize, Serialize)]
+/// ExportComment data transfer object.
 pub struct ExportComment {
     pub id: String,
     pub author: String,
@@ -67,6 +69,7 @@ pub struct ExportComment {
 
 /// Comment reply for export
 #[derive(Debug, Clone, Deserialize, Serialize)]
+/// ExportCommentReply data transfer object.
 pub struct ExportCommentReply {
     pub author: String,
     pub content: String,
@@ -75,6 +78,7 @@ pub struct ExportCommentReply {
 
 /// Request body for JSON conversion
 #[derive(Debug, Deserialize, Serialize)]
+/// Request body for Conversion.
 pub struct ConversionRequest {
     /// Input format (tiptapjson, html, markdown)
     pub input_format: InputFormat,
@@ -90,6 +94,7 @@ pub struct ConversionRequest {
 
 /// Response for conversion info
 #[derive(Debug, Serialize)]
+/// Response for ConversionInfo.
 pub struct ConversionInfoResponse {
     pub supported_input_formats: Vec<&'static str>,
     pub supported_output_formats: Vec<&'static str>,
@@ -406,6 +411,7 @@ fn parse_input_format(s: &str) -> Result<crate::converter::InputFormat, Conversi
 
 /// Batch conversion request item
 #[derive(Debug, Deserialize)]
+/// BatchConversionItem data transfer object.
 pub struct BatchConversionItem {
     pub id: String,
     pub input_format: InputFormat,
@@ -415,12 +421,14 @@ pub struct BatchConversionItem {
 
 /// Batch conversion request
 #[derive(Debug, Deserialize)]
+/// Request body for BatchConversion.
 pub struct BatchConversionRequest {
     pub items: Vec<BatchConversionItem>,
 }
 
 /// Batch conversion response item
 #[derive(Debug, Serialize)]
+/// BatchConversionResultItem data transfer object.
 pub struct BatchConversionResultItem {
     pub id: String,
     pub success: bool,
@@ -438,6 +446,7 @@ pub struct BatchConversionResultItem {
 
 /// Batch conversion response
 #[derive(Debug, Serialize)]
+/// Response for BatchConversion.
 pub struct BatchConversionResponse {
     pub total: usize,
     pub successful: usize,

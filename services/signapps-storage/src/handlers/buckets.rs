@@ -13,12 +13,14 @@ use crate::AppState;
 
 /// Create bucket request.
 #[derive(Debug, Deserialize)]
+/// Request body for CreateBucket.
 pub struct CreateBucketRequest {
     pub name: String,
 }
 
 /// Bucket response with stats.
 #[derive(Debug, Serialize)]
+/// Response for Bucket.
 pub struct BucketResponse {
     pub name: String,
     pub creation_date: Option<String>,

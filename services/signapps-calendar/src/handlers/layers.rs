@@ -34,6 +34,7 @@ fn default_layer_config() -> JsonValue {
 // ============================================================================
 
 #[derive(Debug, Deserialize)]
+/// SaveLayerConfigBody data transfer object.
 pub struct SaveLayerConfigBody {
     /// The layer configuration JSON. Structure is opaque to the backend —
     /// the frontend owns the schema.
@@ -41,6 +42,7 @@ pub struct SaveLayerConfigBody {
 }
 
 #[derive(Debug, Serialize)]
+/// Response for LayerConfig.
 pub struct LayerConfigResponse {
     pub config: JsonValue,
 }

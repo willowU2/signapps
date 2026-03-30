@@ -15,6 +15,7 @@ use crate::AppState;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+/// Experiment data transfer object.
 pub struct Experiment {
     pub id: Uuid,
     pub name: String,
@@ -27,6 +28,7 @@ pub struct Experiment {
 }
 
 #[derive(Debug, serde::Deserialize)]
+/// Request body for CreateExperiment.
 pub struct CreateExperimentRequest {
     pub name: String,
     pub description: Option<String>,
@@ -36,6 +38,7 @@ pub struct CreateExperimentRequest {
 }
 
 #[derive(Debug, serde::Deserialize)]
+/// Request body for UpdateExperiment.
 pub struct UpdateExperimentRequest {
     pub name: Option<String>,
     pub description: Option<String>,
