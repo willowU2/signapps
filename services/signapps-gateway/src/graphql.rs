@@ -470,7 +470,7 @@ mod tests {
             data: Some(json!({ "me": { "id": "1", "username": "admin" } })),
             errors: None,
         };
-        let json = serde_json::to_string(&resp).unwrap();
+        let json = serde_json::to_string(&resp).expect("GraphQLResponse must serialize to JSON");
         assert!(json.contains("me"));
         assert!(
             !json.contains("errors"),

@@ -275,7 +275,7 @@ mod tests {
         assert_eq!(dto.max_storage_bytes, Some(5_000_000_000));
         assert!(dto.max_files.is_none());
         assert_eq!(dto.max_file_size_bytes, Some(104_857_600));
-        let buckets = dto.allowed_buckets.as_ref().unwrap();
+        let buckets = dto.allowed_buckets.as_ref().expect("allowed_buckets was set in the JSON fixture");
         assert_eq!(buckets[0], "uploads");
         assert_eq!(buckets[1], "media");
     }

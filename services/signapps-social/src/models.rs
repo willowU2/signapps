@@ -564,8 +564,8 @@ mod tests {
             platform_post_id: "abc456".to_string(),
             platform_url: None,
         };
-        let json = serde_json::to_string(&original).unwrap();
-        let decoded: PlatformPost = serde_json::from_str(&json).unwrap();
+        let json = serde_json::to_string(&original).expect("PlatformPost must serialize");
+        let decoded: PlatformPost = serde_json::from_str(&json).expect("PlatformPost must deserialize from its own JSON");
         assert_eq!(decoded.platform_post_id, original.platform_post_id);
         assert_eq!(decoded.platform_url, original.platform_url);
     }
@@ -595,8 +595,8 @@ mod tests {
             reach: 80,
             engagement: 5,
         };
-        let json = serde_json::to_string(&original).unwrap();
-        let decoded: AccountAnalytics = serde_json::from_str(&json).unwrap();
+        let json = serde_json::to_string(&original).expect("AccountAnalytics must serialize");
+        let decoded: AccountAnalytics = serde_json::from_str(&json).expect("AccountAnalytics must deserialize from its own JSON");
         assert_eq!(decoded.followers, 42);
         assert_eq!(decoded.following, 10);
         assert_eq!(decoded.posts_count, 7);
@@ -620,8 +620,8 @@ mod tests {
             created_at: now,
             updated_at: now,
         };
-        let json = serde_json::to_string(&post).unwrap();
-        let decoded: Post = serde_json::from_str(&json).unwrap();
+        let json = serde_json::to_string(&post).expect("Post must serialize");
+        let decoded: Post = serde_json::from_str(&json).expect("Post must deserialize from its own JSON");
         assert_eq!(decoded.content, "Hello world #test");
         assert_eq!(decoded.status, "draft");
     }
@@ -644,7 +644,7 @@ mod tests {
             received_at: now,
             created_at: now,
         };
-        let json = serde_json::to_string(&item).unwrap();
+        let json = serde_json::to_string(&item).expect("InboxItem must serialize");
         assert!(json.contains("comment"));
         assert!(json.contains("Alice"));
     }

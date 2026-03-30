@@ -544,7 +544,7 @@ mod tests {
     fn test_search_query_defaults() {
         let query: SearchQuery =
             serde_json::from_str(r#"{"text": "hello", "limit": 10, "include_multimodal": false}"#)
-                .unwrap();
+                .expect("test fixture is valid JSON");
 
         assert_eq!(query.text, "hello");
         assert_eq!(query.limit, 10);

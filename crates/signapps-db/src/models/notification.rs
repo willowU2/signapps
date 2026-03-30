@@ -389,7 +389,7 @@ mod tests {
         }
         "#;
 
-        let payload: PushSubscriptionPayload = serde_json::from_str(json).unwrap();
+        let payload: PushSubscriptionPayload = serde_json::from_str(json).expect("test fixture JSON must deserialize");
         assert_eq!(payload.keys.p256dh, "key1");
         assert_eq!(payload.keys.auth, "key2");
     }

@@ -486,7 +486,7 @@ mod tests {
         assert_eq!(response.sources.len(), 1);
         assert!(response.usage.is_some());
 
-        let usage = response.usage.unwrap();
+        let usage = response.usage.expect("usage was set above");
         assert_eq!(usage.total_tokens, 150);
     }
 

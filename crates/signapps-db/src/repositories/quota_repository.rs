@@ -311,7 +311,7 @@ mod tests {
             updated_at: Utc::now(),
         };
 
-        let stored = q.allowed_buckets.as_ref().unwrap();
+        let stored = q.allowed_buckets.as_ref().expect("allowed_buckets was set in constructor");
         assert_eq!(stored.len(), 2);
         assert!(stored.contains(&"documents".to_string()));
         assert!(stored.contains(&"images".to_string()));
@@ -338,7 +338,7 @@ mod tests {
         let uid = Uuid::new_v4();
         let original = make_quota(uid);
 
-        let json = serde_json::to_string(&original).unwrap();
+        let json = serde_json::to_string(&original).expect("StorageQuota must serialize to JSON");
         let decoded: StorageQuota =
             serde_json::from_str(&json).expect("StorageQuota must deserialise from its own JSON");
 
@@ -380,7 +380,7 @@ mod tests {
         assert_eq!(dto.max_storage_bytes, Some(5 * 1024 * 1024 * 1024));
         assert!(dto.max_files.is_none());
         assert_eq!(dto.max_file_size_bytes, Some(100 * 1024 * 1024));
-        let buckets = dto.allowed_buckets.as_ref().unwrap();
+        let buckets = dto.allowed_buckets.as_ref().expect("allowed_buckets was set in this dto");
         assert_eq!(buckets[0], "uploads");
     }
 

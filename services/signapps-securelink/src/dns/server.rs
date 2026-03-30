@@ -502,7 +502,7 @@ mod tests {
             0x00, 0x01, // QCLASS = IN
         ];
 
-        let query = DnsQuery::parse(&packet).unwrap();
+        let query = DnsQuery::parse(&packet).expect("valid DNS query packet must parse");
         assert_eq!(query.id, 0x1234);
         assert_eq!(query.name, "example.com");
         assert_eq!(query.qtype, 1);
@@ -517,7 +517,7 @@ mod tests {
             0x01,
         ];
 
-        let query = DnsQuery::parse(&packet).unwrap();
+        let query = DnsQuery::parse(&packet).expect("valid DNS query packet must parse for blocked response test");
         let response = DnsResponse::blocked(&query);
         let data = response.to_bytes();
 

@@ -217,7 +217,7 @@ mod tests {
 
         let token =
             generate_participant_token(&config, "test-room", "user-123", "Test User", false)
-                .unwrap();
+                .expect("participant token generation must succeed");
 
         assert!(!token.is_empty());
         // Token should have 3 parts separated by dots
@@ -233,7 +233,7 @@ mod tests {
         };
 
         let token = generate_participant_token(&config, "test-room", "host-123", "Host User", true)
-            .unwrap();
+            .expect("host token generation must succeed");
 
         assert!(!token.is_empty());
     }

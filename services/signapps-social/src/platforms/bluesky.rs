@@ -45,7 +45,7 @@ mod tests {
     fn test_at_uri_rkey_extraction() {
         // Simulate the rkey extraction logic used in publish()
         let at_uri = "at://did:plc:abc123/app.bsky.feed.post/3jzfcijpj2z2m";
-        let rkey = at_uri.rsplit('/').next().unwrap();
+        let rkey = at_uri.rsplit('/').next().expect("AT URI must contain at least one '/'");
         assert_eq!(rkey, "3jzfcijpj2z2m");
     }
 
@@ -54,7 +54,7 @@ mod tests {
         // Verify the URL construction from AT URI used in publish()
         let did = "did:plc:abc123";
         let at_uri = format!("at://{}/app.bsky.feed.post/rkey_abc", did);
-        let rkey = at_uri.rsplit('/').next().unwrap();
+        let rkey = at_uri.rsplit('/').next().expect("AT URI must contain at least one '/'");
         let platform_url = format!("https://bsky.app/profile/{}/post/{}", did, rkey);
         assert_eq!(
             platform_url,

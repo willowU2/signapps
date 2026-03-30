@@ -56,9 +56,9 @@ mod tests {
     #[tokio::test]
     async fn test_password_hash_and_verify() {
         let password = "test_password_123";
-        let hash = hash_password(password).await.unwrap();
+        let hash = hash_password(password).await.expect("hashing must succeed");
 
-        assert!(verify_password(password, &hash).await.unwrap());
-        assert!(!verify_password("wrong_password", &hash).await.unwrap());
+        assert!(verify_password(password, &hash).await.expect("verification must succeed"));
+        assert!(!verify_password("wrong_password", &hash).await.expect("verification with wrong password must succeed"));
     }
 }
