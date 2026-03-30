@@ -1,3 +1,6 @@
+// Enforce documentation on all public items
+#![warn(missing_docs)]
+
 //! # SignApps Common
 //!
 //! Shared utilities, types, and middleware for the SignApps Platform.

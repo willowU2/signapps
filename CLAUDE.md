@@ -183,16 +183,30 @@ pub struct CreateEvent {
 
 Le Swagger UI est exposé sur `/swagger-ui/` de chaque service (via `utoipa-swagger-ui`). Le schéma JSON est disponible sur `/api-docs/openapi.json`.
 
-### Documentation Vivante (rustdoc)
+### Documentation Vivante (rustdoc strict)
 
-Chaque structure de données publique DOIT être documentée :
+**`#![warn(missing_docs)]`** est activé dans les crates partagés (`signapps-common`, `signapps-db`). Tout item public non documenté génère un warning.
+
+Chaque structure de données publique DOIT être documentée avec les sections standard :
 
 ```rust
-// ✅ Documentation obligatoire pour les types publics
 /// Représente un événement dans le calendrier unifié.
 ///
 /// Supporte les types: event, task, leave, shift, booking, milestone, blocker, cron.
-/// Les champs optionnels dépendent du `event_type`.
+///
+/// # Examples
+///
+/// ```
+/// let event = Event { title: "Réunion".into(), ..Default::default() };
+/// ```
+///
+/// # Errors
+///
+/// Les méthodes de création retournent `AppError::BadRequest` si le titre est vide.
+///
+/// # Panics
+///
+/// Aucun panic possible — toutes les erreurs sont propagées via `Result`.
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct Event {
     /// Identifiant unique (UUID v4)
@@ -201,11 +215,27 @@ pub struct Event {
     pub calendar_id: Uuid,
     /// Titre affiché à l'utilisateur
     pub title: String,
-    // ...
 }
 ```
 
-Générer la doc : `cargo doc --no-deps --workspace --open`
+**Sections rustdoc obligatoires pour les fonctions publiques d'API :**
+
+| Section | Quand | Exemple |
+|---------|-------|---------|
+| `/// # Examples` | Toute fonction publique | Montrer un appel typique |
+| `/// # Errors` | Si retourne `Result` | Lister les cas d'erreur |
+| `/// # Panics` | Si panic possible (sinon écrire "Aucun panic") | Documenter les conditions |
+
+### Synchronisation README (cargo-rdme)
+
+Le README.md de chaque crate est généré depuis la doc `//!` du `lib.rs` :
+
+```bash
+cargo rdme -w                     # Met à jour les README de tous les crates
+cargo rdme -p signapps-common     # Un crate spécifique
+```
+
+Générer la doc complète : `just docs` ou `cargo doc --no-deps --workspace --open`
 
 ### Conventional Commits — Obligation stricte
 
@@ -294,7 +324,8 @@ Avant de déclarer une tâche terminée, valider **chaque point** :
 
 - [ ] `cargo doc --no-deps --workspace` compile sans warnings
 - [ ] Structs/enums/traits publics ont `///` avec description
-- [ ] Fonctions publiques d'API documentent `# Errors` si elles retournent Result
+- [ ] Fonctions publiques d'API documentent `/// # Examples`, `/// # Errors`, `/// # Panics`
+- [ ] `cargo rdme -w` exécuté si lib.rs modifié (sync README)
 - [ ] Commit message au format Conventional Commits
 - [ ] `just changelog-preview` pour vérifier le changelog
 
@@ -405,6 +436,7 @@ Chaque service Rust suit la même structure :
 | `rustfmt` | `rustfmt.toml` | `just fmt` | Formatage |
 | `sqlx-cli` | — | `sqlx migrate run` | Migrations DB |
 | `utoipa` | Cargo.toml | compile-time | OpenAPI Code-First |
+| `cargo-rdme` | — | `just rdme` | Sync README depuis lib.rs |
 
 ### CI Pipeline (11 jobs parallèles)
 

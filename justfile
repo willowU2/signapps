@@ -143,6 +143,10 @@ docs-private:
 docs-check:
     RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --workspace
 
+# Synchroniser les README depuis lib.rs (cargo-rdme)
+rdme:
+    cargo rdme -w || echo "cargo-rdme: install with 'cargo binstall cargo-rdme'"
+
 # ─────────────────────────── Changelog ───────────────────────
 
 # Générer le changelog

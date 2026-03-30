@@ -1,3 +1,6 @@
+// Enforce documentation on all public items
+#![warn(missing_docs)]
+
 //! # SignApps DB
 //!
 //! Database access layer for the SignApps Platform.
