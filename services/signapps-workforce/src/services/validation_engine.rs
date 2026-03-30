@@ -205,16 +205,28 @@ mod tests {
     #[test]
     fn test_timespan_overlap() {
         let span1 = TimeSpan::new(
-            "2024-01-01T09:00:00Z".parse().expect("hardcoded timestamp is valid RFC3339"),
-            "2024-01-01T17:00:00Z".parse().expect("hardcoded timestamp is valid RFC3339"),
+            "2024-01-01T09:00:00Z"
+                .parse()
+                .expect("hardcoded timestamp is valid RFC3339"),
+            "2024-01-01T17:00:00Z"
+                .parse()
+                .expect("hardcoded timestamp is valid RFC3339"),
         );
         let span2 = TimeSpan::new(
-            "2024-01-01T14:00:00Z".parse().expect("hardcoded timestamp is valid RFC3339"),
-            "2024-01-01T22:00:00Z".parse().expect("hardcoded timestamp is valid RFC3339"),
+            "2024-01-01T14:00:00Z"
+                .parse()
+                .expect("hardcoded timestamp is valid RFC3339"),
+            "2024-01-01T22:00:00Z"
+                .parse()
+                .expect("hardcoded timestamp is valid RFC3339"),
         );
         let span3 = TimeSpan::new(
-            "2024-01-01T18:00:00Z".parse().expect("hardcoded timestamp is valid RFC3339"),
-            "2024-01-01T22:00:00Z".parse().expect("hardcoded timestamp is valid RFC3339"),
+            "2024-01-01T18:00:00Z"
+                .parse()
+                .expect("hardcoded timestamp is valid RFC3339"),
+            "2024-01-01T22:00:00Z"
+                .parse()
+                .expect("hardcoded timestamp is valid RFC3339"),
         );
 
         assert!(span1.overlaps(&span2));

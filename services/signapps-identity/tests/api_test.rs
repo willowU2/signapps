@@ -29,8 +29,14 @@ fn test_login_request_shape() {
         payload.get("password").is_some(),
         "login requires 'password'"
     );
-    assert!(!payload["username"].as_str().expect("test assertion").is_empty());
-    assert!(!payload["password"].as_str().expect("test assertion").is_empty());
+    assert!(!payload["username"]
+        .as_str()
+        .expect("test assertion")
+        .is_empty());
+    assert!(!payload["password"]
+        .as_str()
+        .expect("test assertion")
+        .is_empty());
 }
 
 /// Validates the successful login response shape.
@@ -61,7 +67,9 @@ fn test_login_response_shape() {
     );
     assert_eq!(mock_response["token_type"], "Bearer");
 
-    let expires_in = mock_response["expires_in"].as_i64().expect("test assertion");
+    let expires_in = mock_response["expires_in"]
+        .as_i64()
+        .expect("test assertion");
     assert!(expires_in > 0, "expires_in must be positive");
     assert_eq!(expires_in, 900, "access token TTL should be 900s (15 min)");
 }

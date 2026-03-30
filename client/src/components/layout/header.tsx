@@ -119,7 +119,7 @@ export function Header() {
   };
 
   return (
-    <header className="h-16 flex shrink-0 items-center justify-between px-4 bg-card dark:bg-background border-b border-border z-50">
+    <header role="banner" aria-label="En-tete de l'application" className="h-16 flex shrink-0 items-center justify-between px-4 bg-card dark:bg-background border-b border-border z-50">
       {/* Left: hamburger + logo */}
       <div className="flex items-center gap-2 md:gap-4 md:min-w-[240px]">
         <Button
@@ -127,8 +127,9 @@ export function Header() {
           size="icon"
           onClick={toggleSidebar}
           className="rounded-full"
+          aria-label="Basculer le menu lateral"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-5 w-5" aria-hidden="true" />
         </Button>
         <button
           onClick={() => router.push('/dashboard')}

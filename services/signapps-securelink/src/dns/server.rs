@@ -517,7 +517,8 @@ mod tests {
             0x01,
         ];
 
-        let query = DnsQuery::parse(&packet).expect("valid DNS query packet must parse for blocked response test");
+        let query = DnsQuery::parse(&packet)
+            .expect("valid DNS query packet must parse for blocked response test");
         let response = DnsResponse::blocked(&query);
         let data = response.to_bytes();
 

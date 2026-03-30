@@ -255,6 +255,8 @@ export function Sidebar() {
       )}
 
       <aside
+        role="navigation"
+        aria-label="Navigation principale"
         className={cn(
           'fixed top-0 left-0 bottom-0 z-50 flex h-full flex-col bg-sidebar py-4 transition-all duration-200 border-r',
           isDragOver ? 'border-primary/60 shadow-[inset_0_0_0_2px_hsl(var(--primary)/0.4)]' : 'border-sidebar-border',

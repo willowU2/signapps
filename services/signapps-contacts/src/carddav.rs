@@ -229,7 +229,8 @@ mod tests {
     fn sample_contact() -> Contact {
         let now = Utc::now().to_rfc3339();
         Contact {
-            id: Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").expect("hardcoded UUID is valid"),
+            id: Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000")
+                .expect("hardcoded UUID is valid"),
             owner_id: Uuid::nil(),
             first_name: "Jean".to_string(),
             last_name: "Dupont".to_string(),

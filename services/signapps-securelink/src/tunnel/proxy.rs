@@ -300,7 +300,12 @@ mod tests {
         // Get endpoint
         let endpoint = proxy.get_endpoint("app").await;
         assert!(endpoint.is_some());
-        assert_eq!(endpoint.expect("endpoint was confirmed Some above").local_addr, "localhost:8080");
+        assert_eq!(
+            endpoint
+                .expect("endpoint was confirmed Some above")
+                .local_addr,
+            "localhost:8080"
+        );
 
         // List endpoints
         let endpoints = proxy.list_endpoints().await;

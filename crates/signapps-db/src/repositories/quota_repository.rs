@@ -311,7 +311,10 @@ mod tests {
             updated_at: Utc::now(),
         };
 
-        let stored = q.allowed_buckets.as_ref().expect("allowed_buckets was set in constructor");
+        let stored = q
+            .allowed_buckets
+            .as_ref()
+            .expect("allowed_buckets was set in constructor");
         assert_eq!(stored.len(), 2);
         assert!(stored.contains(&"documents".to_string()));
         assert!(stored.contains(&"images".to_string()));
@@ -380,7 +383,10 @@ mod tests {
         assert_eq!(dto.max_storage_bytes, Some(5 * 1024 * 1024 * 1024));
         assert!(dto.max_files.is_none());
         assert_eq!(dto.max_file_size_bytes, Some(100 * 1024 * 1024));
-        let buckets = dto.allowed_buckets.as_ref().expect("allowed_buckets was set in this dto");
+        let buckets = dto
+            .allowed_buckets
+            .as_ref()
+            .expect("allowed_buckets was set in this dto");
         assert_eq!(buckets[0], "uploads");
     }
 

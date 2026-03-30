@@ -122,12 +122,12 @@ impl SecurityPoliciesStore {
         }
     }
 
-#[tracing::instrument(skip_all)]
+    #[tracing::instrument(skip_all)]
     pub async fn get(&self) -> SecurityPolicies {
         self.inner.read().await.clone()
     }
 
-#[tracing::instrument(skip_all)]
+    #[tracing::instrument(skip_all)]
     pub async fn set(&self, policies: SecurityPolicies) {
         *self.inner.write().await = policies;
     }
@@ -153,14 +153,14 @@ impl ActiveSessionsStore {
     }
 
     /// Register a new active session.
-#[tracing::instrument(skip_all)]
+    #[tracing::instrument(skip_all)]
     pub async fn add(&self, session: ActiveSession) {
         let mut sessions = self.inner.lock().await;
         sessions.push(session);
     }
 
     /// List all sessions that have not yet expired.
-#[tracing::instrument(skip_all)]
+    #[tracing::instrument(skip_all)]
     pub async fn list_active(&self) -> Vec<ActiveSession> {
         let sessions = self.inner.lock().await;
         let now = Utc::now();
@@ -172,7 +172,7 @@ impl ActiveSessionsStore {
     }
 
     /// Remove a session by its ID. Returns true if found and removed.
-#[tracing::instrument(skip_all)]
+    #[tracing::instrument(skip_all)]
     pub async fn remove(&self, session_id: &str) -> bool {
         let mut sessions = self.inner.lock().await;
         let before = sessions.len();
@@ -181,7 +181,7 @@ impl ActiveSessionsStore {
     }
 
     /// Purge all expired sessions (housekeeping).
-#[tracing::instrument(skip_all)]
+    #[tracing::instrument(skip_all)]
     pub async fn purge_expired(&self) {
         let mut sessions = self.inner.lock().await;
         let now = Utc::now();
@@ -209,7 +209,7 @@ impl LoginAttemptsStore {
     }
 
     /// Record a failed login attempt.
-#[tracing::instrument(skip_all)]
+    #[tracing::instrument(skip_all)]
     pub async fn record(&self, attempt: LoginAttempt) {
         const MAX_ENTRIES: usize = 5_000;
         let mut attempts = self.inner.lock().await;
@@ -220,7 +220,7 @@ impl LoginAttemptsStore {
     }
 
     /// Return the most recent `limit` entries (newest first).
-#[tracing::instrument(skip_all)]
+    #[tracing::instrument(skip_all)]
     pub async fn recent(&self, limit: usize) -> Vec<LoginAttempt> {
         let attempts = self.inner.lock().await;
         attempts.iter().rev().take(limit).cloned().collect()

@@ -50,7 +50,10 @@ fn test_create_invoice_request_shape() {
         payload.get("amount_cents").is_some(),
         "amount_cents is required"
     );
-    assert_eq!(payload["amount_cents"].as_i64().expect("test assertion"), 9900);
+    assert_eq!(
+        payload["amount_cents"].as_i64().expect("test assertion"),
+        9900
+    );
     assert_eq!(payload["currency"], "EUR");
 }
 
@@ -202,7 +205,9 @@ fn test_create_line_item_request_shape() {
     assert!(payload.get("unit_price_cents").is_some());
 
     let qty = payload["quantity"].as_i64().unwrap_or(1);
-    let unit = payload["unit_price_cents"].as_i64().expect("test assertion");
+    let unit = payload["unit_price_cents"]
+        .as_i64()
+        .expect("test assertion");
     let total = qty * unit;
     assert_eq!(total, 100000, "8 x 12500 = 100000 cents");
 }
@@ -227,7 +232,9 @@ fn test_line_item_response_shape() {
 
     // total_cents must equal quantity * unit_price_cents
     let qty = line_item["quantity"].as_i64().expect("test assertion");
-    let unit = line_item["unit_price_cents"].as_i64().expect("test assertion");
+    let unit = line_item["unit_price_cents"]
+        .as_i64()
+        .expect("test assertion");
     let total = line_item["total_cents"].as_i64().expect("test assertion");
     assert_eq!(
         total,

@@ -448,7 +448,8 @@ mod tests {
 "#;
         let blocks = extract_json_blocks(text);
         assert_eq!(blocks.len(), 1);
-        let parsed: Value = serde_json::from_str(&blocks[0]).expect("extracted JSON block must be valid");
+        let parsed: Value =
+            serde_json::from_str(&blocks[0]).expect("extracted JSON block must be valid");
         assert!(parsed.get("tool_calls").is_some());
     }
 
@@ -471,6 +472,12 @@ mod tests {
     fn test_truncate_array() {
         let arr: Vec<Value> = (0..20).map(|i| Value::from(i)).collect();
         let result = truncate_result(Value::Array(arr));
-        assert_eq!(result.as_array().expect("result must be a JSON array").len(), MAX_ARRAY_ITEMS);
+        assert_eq!(
+            result
+                .as_array()
+                .expect("result must be a JSON array")
+                .len(),
+            MAX_ARRAY_ITEMS
+        );
     }
 }

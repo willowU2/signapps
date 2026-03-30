@@ -31,6 +31,10 @@ import { schedulerApi } from "@/lib/api";
 import { calendarApi } from "@/lib/api/calendar";
 import { fetchOmniSearch } from "@/lib/api/search";
 import { SemanticSearchGlobal } from "@/components/search/semantic-search-global";
+import { FacetedSearch, type FacetFilters, type FacetType } from "@/components/search/faceted-search";
+import { SavedSearches } from "@/components/search/saved-searches";
+import { VoiceSearch } from "@/components/search/voice-search";
+import { addRecentSearch } from "@/components/search/search-suggestions";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -371,6 +375,10 @@ export default function SearchPage() {
   const [searchMode, setSearchMode] = useState<'standard' | 'semantic'>(
     initialMode === 'semantic' ? 'semantic' : 'standard'
   );
+  const [facetFilters, setFacetFilters] = useState<FacetFilters>({
+    types: [], dateFrom: null, dateTo: null, author: '', tags: [],
+  });
+  const [showFacets, setShowFacets] = useState(false);
 
   // Debounce search
   useEffect(() => {
@@ -451,15 +459,40 @@ export default function SearchPage() {
     return c;
   }, [grouped, results]);
 
+  // Apply facet filters to results
+  const facetedResults = useMemo(() => {
+    return results.filter(r => {
+      if (facetFilters.types.length > 0) {
+        const typeMap: Record<string, string> = { emails: 'email', documents: 'document', contacts: 'contact', tasks: 'task', events: 'event' };
+        const ft = typeMap[r.module] ?? r.module;
+        if (!facetFilters.types.includes(ft as FacetType)) return false;
+      }
+      if (facetFilters.dateFrom && r.date) {
+        if (new Date(r.date) < facetFilters.dateFrom) return false;
+      }
+      if (facetFilters.dateTo && r.date) {
+        if (new Date(r.date) > facetFilters.dateTo) return false;
+      }
+      return true;
+    });
+  }, [results, facetFilters]);
+
   // Filtered results for active tab
   const displayResults = useMemo(() => {
-    if (activeTab === "all") return results;
-    return grouped[activeTab] || [];
-  }, [activeTab, results, grouped]);
+    const base = facetFilters.types.length > 0 || facetFilters.dateFrom || facetFilters.dateTo ? facetedResults : results;
+    if (activeTab === "all") return base;
+    return base.filter(r => r.module === activeTab);
+  }, [activeTab, results, facetedResults, facetFilters]);
 
   const handleNavigate = (result: SearchResult) => {
     router.push(result.url);
   };
+
+  const handleVoiceResult = useCallback((transcript: string) => {
+    setQuery(transcript);
+    setDebouncedQuery(transcript);
+    addRecentSearch(transcript);
+  }, []);
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return null;
@@ -534,32 +567,69 @@ export default function SearchPage() {
         )}
 
         {/* Standard search input */}
-        {searchMode === 'standard' && <div className="relative">
-          <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-          <Input
-            className="pl-10 pr-10 h-12 text-lg"
-            placeholder="Rechercher des documents, emails, contacts, evenements, taches, fichiers..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            autoFocus
-          />
-          {query && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1"
-              onClick={() => {
-                setQuery("");
-                setDebouncedQuery("");
-              }}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-          {isFetching && (
-            <Loader2 className="absolute right-12 top-3.5 h-5 w-5 animate-spin text-muted-foreground" />
-          )}
+        {searchMode === 'standard' && <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+            <Input
+              className="pl-10 pr-20 h-12 text-lg"
+              placeholder="Rechercher des documents, emails, contacts, evenements, taches, fichiers..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              autoFocus
+            />
+            {query && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-10 top-1"
+                onClick={() => {
+                  setQuery("");
+                  setDebouncedQuery("");
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+            {isFetching && (
+              <Loader2 className="absolute right-12 top-3.5 h-5 w-5 animate-spin text-muted-foreground" />
+            )}
+            <VoiceSearch onResult={handleVoiceResult} className="absolute right-1 top-1" />
+          </div>
+          <Button
+            variant={showFacets ? 'secondary' : 'outline'}
+            className="h-12 gap-2 shrink-0"
+            onClick={() => setShowFacets(v => !v)}
+          >
+            <Search className="h-4 w-4" />Filtres
+          </Button>
         </div>}
+
+        {/* Faceted filters panel */}
+        {searchMode === 'standard' && showFacets && (
+          <div className="p-4 border rounded-xl bg-card">
+            <FacetedSearch
+              facetCounts={{
+                document: grouped.documents?.length ?? 0,
+                email: grouped.emails?.length ?? 0,
+                contact: grouped.contacts?.length ?? 0,
+                task: grouped.tasks?.length ?? 0,
+                event: grouped.events?.length ?? 0,
+              }}
+              onChange={setFacetFilters}
+            />
+          </div>
+        )}
+
+        {/* Saved searches */}
+        {searchMode === 'standard' && (
+          <div className="p-4 border rounded-xl bg-card">
+            <SavedSearches
+              currentQuery={query}
+              currentFilters={facetFilters as unknown as Record<string, unknown>}
+              onRun={(s) => { setQuery(s.query); setDebouncedQuery(s.query); }}
+            />
+          </div>
+        )}
 
         {/* Standard mode results */}
         {searchMode === 'standard' && (debouncedQuery.trim().length < 2 ? (

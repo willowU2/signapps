@@ -49,6 +49,9 @@ import { AiAutoTagDrive } from '@/components/interop/AiAutoTagDrive';
 import { DriveFilePreview } from '@/components/interop/DriveFilePreview';
 import { DriveBulkDownload } from '@/components/interop/DriveBulkDownload';
 import { DocFromTemplate } from '@/components/interop/DocFromTemplate';
+import { SmartFolders } from '@/components/drive/smart-folders';
+import { DedupScanner } from '@/components/drive/dedup-scanner';
+import { SecureShareDialog } from '@/components/drive/secure-share';
 
 export default function GlobalDrivePage() {
   usePageTitle('Drive');
@@ -63,6 +66,11 @@ export default function GlobalDrivePage() {
 
   const [shareNode, setShareNode] = useState<DriveNode | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
+
+  const [secureShareNode, setSecureShareNode] = useState<DriveNode | null>(null);
+  const [secureShareOpen, setSecureShareOpen] = useState(false);
+
+  const [showDedupScanner, setShowDedupScanner] = useState(false);
 
   const [renameNode, setRenameNode] = useState<DriveNode | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -363,6 +371,18 @@ export default function GlobalDrivePage() {
             <Button variant="ghost" className="w-full justify-start gap-3 font-medium text-[#3c4043] dark:text-[#e8eaed] hover:bg-[#f1f3f4] dark:hover:bg-[#303134] rounded-r-full">
               <Users className="h-5 w-5" /> Partagés avec moi
             </Button>
+            <div className="px-2 pt-4 pb-2">
+              <SmartFolders onNodeClick={(node) => handleNavigate(node)} />
+            </div>
+            <div className="px-2 pt-2">
+              <button
+                onClick={() => setShowDedupScanner(v => !v)}
+                className="w-full text-left text-xs text-muted-foreground hover:text-foreground flex items-center gap-2 py-1.5 px-1 rounded transition-colors"
+              >
+                <span className="text-base">🔍</span>
+                {showDedupScanner ? 'Masquer' : 'Détecter les doublons'}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -425,6 +445,13 @@ export default function GlobalDrivePage() {
             </div>
           </div>
 
+          {/* Dedup Scanner Panel */}
+          {showDedupScanner && (
+            <div className="mx-6 mt-4 p-4 border rounded-xl bg-card shadow-sm">
+              <DedupScanner />
+            </div>
+          )}
+
           {/* Files / Folders List */}
           <div className="flex-1 overflow-y-auto p-6">
             {loading ? (
@@ -471,6 +498,7 @@ export default function GlobalDrivePage() {
                               <DropdownMenuItem onClick={() => handleNavigate(node)}>Ouvrir</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { setRenameNode(node); setRenameOpen(true); }}>Renommer</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { setShareNode(node); setShareOpen(true); }}>Partager</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => { setSecureShareNode(node); setSecureShareOpen(true); }}>Partager avec lien</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { setDetailNode(node); setDetailOpen(true); }}>Détails</DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="p-0">
@@ -548,6 +576,7 @@ export default function GlobalDrivePage() {
         </div>
       </div>
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} node={shareNode} />
+      <SecureShareDialog open={secureShareOpen} onOpenChange={setSecureShareOpen} node={secureShareNode} />
 
       {/* File detail sidebar — EntityLinks */}
       <Sheet open={detailOpen} onOpenChange={setDetailOpen}>

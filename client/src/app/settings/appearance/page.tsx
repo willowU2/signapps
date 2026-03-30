@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import {
   Palette, Type, Minimize2, RectangleHorizontal, Check, RotateCcw,
-  Sun, Moon, Monitor,
+  Sun, Moon, Monitor, Contrast, ZoomIn,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
@@ -24,6 +24,8 @@ interface ThemePreferences {
   fontSize: string;
   compactMode: boolean;
   borderRadius: string;
+  highContrast: boolean;
+  fontSizePx: number;
 }
 
 const STORAGE_KEY = 'signapps-theme-preferences';
@@ -33,6 +35,8 @@ const DEFAULT_PREFS: ThemePreferences = {
   fontSize: 'medium',
   compactMode: false,
   borderRadius: 'rounded',
+  highContrast: false,
+  fontSizePx: 15,
 };
 
 const COLOR_OPTIONS = [
@@ -76,9 +80,13 @@ function applyTheme(prefs: ThemePreferences) {
   COLOR_OPTIONS.forEach((c) => root.classList.remove(`theme-${c.id}`));
   root.classList.add(`theme-${prefs.primaryColor}`);
 
-  // Font size
+  // Font size (discrete)
   FONT_SIZE_OPTIONS.forEach((f) => root.classList.remove(`font-size-${f.id}`));
   root.classList.add(`font-size-${prefs.fontSize}`);
+
+  // AC4: Dynamic font size (px slider)
+  const px = Math.max(14, Math.min(20, prefs.fontSizePx));
+  root.style.setProperty('--font-size-base', `${px}px`);
 
   // Compact mode
   root.classList.toggle('compact-mode', prefs.compactMode);
@@ -86,6 +94,9 @@ function applyTheme(prefs: ThemePreferences) {
   // Border radius
   BORDER_RADIUS_OPTIONS.forEach((b) => root.classList.remove(`radius-${b.id}`));
   root.classList.add(`radius-${prefs.borderRadius}`);
+
+  // AC4: High contrast mode
+  root.classList.toggle('high-contrast', prefs.highContrast);
 }
 
 export default function SettingsAppearancePage() {
@@ -276,6 +287,75 @@ export default function SettingsAppearancePage() {
                 checked={prefs.compactMode}
                 onCheckedChange={(v) => updatePref('compactMode', v)}
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── AC4: High Contrast Mode ── */}
+        <Card className="card-lift">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Contrast className="w-5 h-5" />
+              Contraste eleve
+            </CardTitle>
+            <CardDescription>
+              Ameliore la lisibilite pour les personnes malvoyantes (WCAG AA).
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* High contrast toggle */}
+            <div className="flex items-center justify-between max-w-md">
+              <div className="space-y-0.5">
+                <Label htmlFor="high-contrast" className="text-base font-medium">
+                  Mode contraste eleve
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Interface fond noir / texte blanc avec couleurs vives.
+                </p>
+              </div>
+              <Switch
+                id="high-contrast"
+                checked={prefs.highContrast}
+                onCheckedChange={(v) => updatePref('highContrast', v)}
+                aria-describedby="high-contrast-desc"
+              />
+            </div>
+            <p id="high-contrast-desc" className="sr-only">
+              Active le mode contraste eleve pour ameliorer la lisibilite
+            </p>
+
+            {/* Font size slider */}
+            <div className="max-w-md space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="font-size-slider" className="text-base font-medium flex items-center gap-2">
+                  <ZoomIn className="w-4 h-4" />
+                  Taille du texte
+                </Label>
+                <Badge variant="outline">{prefs.fontSizePx}px</Badge>
+              </div>
+              <input
+                id="font-size-slider"
+                type="range"
+                min={14}
+                max={20}
+                step={1}
+                value={prefs.fontSizePx}
+                onChange={(e) => updatePref('fontSizePx', parseInt(e.target.value))}
+                className="w-full accent-primary"
+                aria-label={`Taille de police: ${prefs.fontSizePx}px`}
+                aria-valuemin={14}
+                aria-valuemax={20}
+                aria-valuenow={prefs.fontSizePx}
+                aria-valuetext={`${prefs.fontSizePx} pixels`}
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>14px (min)</span>
+                <span>17px (par defaut)</span>
+                <span>20px (max)</span>
+              </div>
+              <p className="text-sm text-muted-foreground" style={{ fontSize: `${prefs.fontSizePx}px` }}>
+                Apercu: Ceci est un exemple de texte a {prefs.fontSizePx}px.
+              </p>
             </div>
           </CardContent>
         </Card>

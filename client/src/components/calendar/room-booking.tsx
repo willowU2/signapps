@@ -1,224 +1,479 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+/**
+ * MR1 — Room booking with floor plan
+ *
+ * Loads floor plans from calendarApi, renders rooms as clickable SVG areas,
+ * shows availability (green/yellow/red), and creates a calendar event on booking.
+ */
+
+import React, { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, Clock, Users, MapPin, CheckCircle2, Loader2 } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Calendar, Clock, Users, MapPin, Loader2, Building2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { resourcesApi, reservationsApi } from '@/lib/api'
+import { calendarApi } from '@/lib/api'
 
-interface TimeSlot {
-  time: string
-  available: boolean
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface FloorPlanArea {
+  id: string
+  x: number
+  y: number
+  width: number
+  height: number
+  label: string
 }
 
-interface Room {
+interface FloorPlan {
   id: string
   name: string
-  capacity: number
-  location: string
-  amenities: string[]
-  availability: 'available' | 'booked' | 'maintenance'
-  nextAvailable?: string
-  todaySlots: TimeSlot[]
+  floor: string
+  svg_viewbox?: string
+  areas: FloorPlanArea[]
 }
 
-export function RoomBooking() {
-  const [rooms, setRooms] = useState<Room[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedSlots, setSelectedSlots] = useState<Record<string, string | null>>({})
-  const [expandedRoom, setExpandedRoom] = useState<string | null>(null)
+interface RoomEvent {
+  id: string
+  title: string
+  start: string
+  end: string
+}
 
+type RoomStatus = 'free' | 'booked' | 'partial'
+
+interface RoomAvailability {
+  room_id: string
+  status: RoomStatus
+  events: RoomEvent[]
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const STATUS_COLOR: Record<RoomStatus, string> = {
+  free: '#22c55e',
+  booked: '#ef4444',
+  partial: '#f59e0b',
+}
+
+const STATUS_LABEL: Record<RoomStatus, string> = {
+  free: 'Disponible',
+  booked: 'Occupée',
+  partial: 'Partielle',
+}
+
+function statusBadgeVariant(s: RoomStatus): 'default' | 'destructive' | 'secondary' {
+  if (s === 'free') return 'default'
+  if (s === 'booked') return 'destructive'
+  return 'secondary'
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
+export function RoomBooking() {
+  const [floorPlans, setFloorPlans] = useState<FloorPlan[]>([])
+  const [selectedPlan, setSelectedPlan] = useState<FloorPlan | null>(null)
+  const [availability, setAvailability] = useState<Record<string, RoomAvailability>>({})
+  const [loadingPlans, setLoadingPlans] = useState(true)
+  const [loadingAvail, setLoadingAvail] = useState(false)
+
+  // Booking dialog state
+  const [bookingRoom, setBookingRoom] = useState<FloorPlanArea | null>(null)
+  const [bookingTitle, setBookingTitle] = useState('')
+  const [bookingDate, setBookingDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [bookingStart, setBookingStart] = useState('09:00')
+  const [bookingEnd, setBookingEnd] = useState('10:00')
+  const [bookingLoading, setBookingLoading] = useState(false)
+
+  // Load floor plans
   useEffect(() => {
-    resourcesApi.list('room').then((res) => {
-      const resources = res.data ?? []
-      const mapped: Room[] = resources.map((r) => ({
-        id: r.id,
-        name: r.name,
-        capacity: r.capacity ?? 0,
-        location: [r.building, r.floor, r.location].filter(Boolean).join(', ') || 'N/A',
-        amenities: r.amenities ?? [],
-        availability: r.is_available ? 'available' : 'booked',
-        todaySlots: r.is_available
-          ? ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'].map((time) => ({
-              time,
-              available: true,
-            }))
-          : [],
-      }))
-      setRooms(mapped)
-      const initialSlots: Record<string, string | null> = {}
-      mapped.forEach((room) => {
-        initialSlots[room.id] = null
+    calendarApi
+      .get<FloorPlan[]>('/floor-plans')
+      .then((res) => {
+        const plans: FloorPlan[] = res.data ?? []
+        setFloorPlans(plans)
+        if (plans.length > 0) setSelectedPlan(plans[0])
       })
-      setSelectedSlots(initialSlots)
-    }).catch(() => {
-      toast.error('Failed to load rooms')
-    }).finally(() => {
-      setLoading(false)
-    })
+      .catch(() => toast.error('Impossible de charger les plans'))
+      .finally(() => setLoadingPlans(false))
   }, [])
 
-  const getAvailabilityBadge = (availability: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      available: 'default',
-      booked: 'secondary',
-      maintenance: 'destructive',
+  // Refresh availability for the current floor plan
+  const refreshAvailability = useCallback(
+    async (plan: FloorPlan) => {
+      if (!plan.areas?.length) return
+      setLoadingAvail(true)
+      try {
+        const now = new Date()
+        const endOfDay = new Date(now)
+        endOfDay.setHours(23, 59, 59, 999)
+
+        const roomIds = plan.areas.map((a) => a.id)
+        const results: Record<string, RoomAvailability> = {}
+
+        await Promise.all(
+          roomIds.map(async (rid) => {
+            try {
+              const res = await calendarApi.get<RoomEvent[]>('/events', {
+                params: {
+                  resource_id: rid,
+                  start: now.toISOString(),
+                  end: endOfDay.toISOString(),
+                },
+              })
+              const events: RoomEvent[] = res.data ?? []
+              let status: RoomStatus = 'free'
+              if (events.length > 0) {
+                const nowMs = now.getTime()
+                const isCurrentlyBooked = events.some(
+                  (e) => new Date(e.start).getTime() <= nowMs && new Date(e.end).getTime() >= nowMs
+                )
+                status = isCurrentlyBooked ? 'booked' : 'partial'
+              }
+              results[rid] = { room_id: rid, status, events }
+            } catch {
+              results[rid] = { room_id: rid, status: 'free', events: [] }
+            }
+          })
+        )
+        setAvailability(results)
+      } finally {
+        setLoadingAvail(false)
+      }
+    },
+    []
+  )
+
+  useEffect(() => {
+    if (selectedPlan) refreshAvailability(selectedPlan)
+  }, [selectedPlan, refreshAvailability])
+
+  const handleRoomClick = (area: FloorPlanArea) => {
+    setBookingRoom(area)
+    setBookingTitle('')
+    setBookingDate(new Date().toISOString().split('T')[0])
+    setBookingStart('09:00')
+    setBookingEnd('10:00')
+  }
+
+  const handleBook = async () => {
+    if (!bookingRoom || !bookingTitle.trim()) {
+      toast.error('Veuillez saisir un titre')
+      return
     }
+    setBookingLoading(true)
+    try {
+      // Find or use the first calendar
+      const cals = await calendarApi.listCalendars()
+      const calendarId = (cals.data as any[])?.[0]?.id
+      if (!calendarId) throw new Error('Aucun calendrier disponible')
+
+      const startDt = new Date(`${bookingDate}T${bookingStart}:00`)
+      const endDt = new Date(`${bookingDate}T${bookingEnd}:00`)
+
+      await calendarApi.createEvent(calendarId, {
+        title: bookingTitle,
+        start_time: startDt.toISOString(),
+        end_time: endDt.toISOString(),
+        location: bookingRoom.label,
+        description: `Réservation salle: ${bookingRoom.label}`,
+      } as any)
+
+      toast.success(`Salle "${bookingRoom.label}" réservée`)
+      setBookingRoom(null)
+      if (selectedPlan) refreshAvailability(selectedPlan)
+    } catch {
+      toast.error('Échec de la réservation')
+    } finally {
+      setBookingLoading(false)
+    }
+  }
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+
+  if (loadingPlans) {
     return (
-      <Badge variant={variants[availability] || 'default'} className="capitalize">
-        {availability}
-      </Badge>
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
     )
   }
 
-  const handleSlotSelect = (roomId: string, time: string) => {
-    setSelectedSlots((prev) => ({
-      ...prev,
-      [roomId]: prev[roomId] === time ? null : time,
-    }))
-  }
-
-  const handleBookRoom = async (roomId: string) => {
-    const selectedTime = selectedSlots[roomId]
-    if (!selectedTime) return
-    try {
-      await reservationsApi.create({ resource_id: roomId, notes: `Requested time: ${selectedTime}` })
-      toast.success(`Room booked for ${selectedTime}`)
-      setSelectedSlots((prev) => ({ ...prev, [roomId]: null }))
-      setRooms((prev) =>
-        prev.map((r) =>
-          r.id === roomId ? { ...r, availability: 'booked' as const, todaySlots: [] } : r
-        )
-      )
-    } catch {
-      toast.error('Failed to book room')
-    }
-  }
-
-  if (loading) {
+  if (floorPlans.length === 0) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="w-6 h-6 animate-spin" />
-      </div>
+      <Card>
+        <CardContent className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+          <Building2 className="w-10 h-10" />
+          <p>Aucun plan de salle disponible</p>
+        </CardContent>
+      </Card>
     )
   }
 
   return (
     <div className="space-y-4">
-      {rooms.map((room) => (
-        <Card key={room.id}>
+      {/* Floor selector */}
+      <div className="flex items-center gap-3">
+        <MapPin className="w-5 h-5 text-primary shrink-0" />
+        <Select
+          value={selectedPlan?.id ?? ''}
+          onValueChange={(id) => {
+            const plan = floorPlans.find((p) => p.id === id)
+            if (plan) setSelectedPlan(plan)
+          }}
+        >
+          <SelectTrigger className="w-64">
+            <SelectValue placeholder="Choisir un étage" />
+          </SelectTrigger>
+          <SelectContent>
+            {floorPlans.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.name} — {p.floor}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Legend */}
+        <div className="flex items-center gap-4 ml-auto text-sm">
+          {(['free', 'partial', 'booked'] as RoomStatus[]).map((s) => (
+            <span key={s} className="flex items-center gap-1.5">
+              <span
+                className="inline-block w-3 h-3 rounded-sm"
+                style={{ backgroundColor: STATUS_COLOR[s] }}
+              />
+              {STATUS_LABEL[s]}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Floor plan SVG */}
+      {selectedPlan && (
+        <Card>
           <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <MapPin className="w-5 h-5 text-primary" />
-                  <CardTitle>{room.name}</CardTitle>
-                  {getAvailabilityBadge(room.availability)}
-                </div>
-                <CardDescription>{room.location}</CardDescription>
-              </div>
-              <div className="text-right">
-                <div className="flex items-center gap-1 text-sm font-medium">
-                  <Users className="w-4 h-4" />
-                  {room.capacity} people
-                </div>
-              </div>
-            </div>
-
-            {/* Amenities */}
-            {room.amenities.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1">
-                {room.amenities.map((amenity) => (
-                  <Badge key={amenity} variant="outline" className="text-xs">
-                    {amenity}
-                  </Badge>
-                ))}
-              </div>
-            )}
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5" />
+              {selectedPlan.name}
+            </CardTitle>
           </CardHeader>
-
           <CardContent>
-            {/* Status Message */}
-            {room.availability === 'maintenance' && (
-              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg mb-4">
-                <p className="text-sm text-destructive font-medium">This room is under maintenance</p>
+            {loadingAvail && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Chargement disponibilité…
               </div>
             )}
 
-            {room.availability === 'booked' && room.nextAvailable && (
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>Next available:</strong> {room.nextAvailable}
-                </p>
-              </div>
-            )}
+            {selectedPlan.areas?.length > 0 ? (
+              <svg
+                viewBox={selectedPlan.svg_viewbox ?? '0 0 800 600'}
+                className="w-full border rounded-lg bg-muted/20"
+                style={{ maxHeight: 500 }}
+              >
+                {/* Background grid */}
+                <defs>
+                  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e5e7eb" strokeWidth="0.5" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
 
-            {/* Time Slots */}
-            {room.todaySlots.length > 0 && (
-              <>
-                <div className="mb-4">
-                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    Available Times Today
-                  </h4>
-                  <div className="grid grid-cols-3 gap-2">
-                    {room.todaySlots.map((slot) => (
-                      <button
-                        key={slot.time}
-                        onClick={() => slot.available && handleSlotSelect(room.id, slot.time)}
-                        disabled={!slot.available}
-                        className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
-                          selectedSlots[room.id] === slot.time
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : slot.available
-                              ? 'border-input hover:bg-muted cursor-pointer'
-                              : 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground'
-                        }`}
+                {selectedPlan.areas.map((area) => {
+                  const avail = availability[area.id]
+                  const status = avail?.status ?? 'free'
+                  const color = STATUS_COLOR[status]
+                  return (
+                    <g
+                      key={area.id}
+                      onClick={() => handleRoomClick(area)}
+                      className="cursor-pointer"
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`${area.label} — ${STATUS_LABEL[status]}`}
+                      onKeyDown={(e) => e.key === 'Enter' && handleRoomClick(area)}
+                    >
+                      <rect
+                        x={area.x}
+                        y={area.y}
+                        width={area.width}
+                        height={area.height}
+                        rx={4}
+                        fill={color}
+                        fillOpacity={0.25}
+                        stroke={color}
+                        strokeWidth={2}
+                        className="transition-all hover:fill-opacity-40"
+                      />
+                      <text
+                        x={area.x + area.width / 2}
+                        y={area.y + area.height / 2}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fontSize={12}
+                        fontWeight={600}
+                        fill={color}
                       >
-                        <div className="flex items-center justify-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {slot.time}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Book Button */}
-                <Button
-                  onClick={() => handleBookRoom(room.id)}
-                  disabled={!selectedSlots[room.id]}
-                  className="w-full"
-                >
-                  {selectedSlots[room.id] ? `Book for ${selectedSlots[room.id]}` : 'Select Time Slot'}
-                </Button>
-              </>
-            )}
-
-            {room.availability !== 'available' && room.todaySlots.length === 0 && (
-              <Button variant="outline" className="w-full" disabled>
-                Not Available Today
-              </Button>
-            )}
-
-            {/* Expand/Collapse Additional Info */}
-            {expandedRoom === room.id && (
-              <div className="mt-4 pt-4 border-t space-y-2">
-                <div className="text-sm">
-                  <p className="font-medium mb-2">Booking Details:</p>
-                  <ul className="space-y-1 text-muted-foreground text-xs">
-                    <li>• Bookings are available 30 days in advance</li>
-                    <li>• Minimum booking duration is 30 minutes</li>
-                    <li>• Please notify support if you need to cancel</li>
-                  </ul>
-                </div>
-              </div>
+                        {area.label}
+                      </text>
+                      {avail?.events?.length ? (
+                        <text
+                          x={area.x + area.width / 2}
+                          y={area.y + area.height / 2 + 16}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          fontSize={9}
+                          fill={color}
+                        >
+                          {avail.events.length} réunion{avail.events.length > 1 ? 's' : ''}
+                        </text>
+                      ) : null}
+                    </g>
+                  )
+                })}
+              </svg>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                Aucune salle définie pour ce plan
+              </p>
             )}
           </CardContent>
         </Card>
-      ))}
+      )}
+
+      {/* Room list */}
+      {selectedPlan && selectedPlan.areas?.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {selectedPlan.areas.map((area) => {
+            const avail = availability[area.id]
+            const status = avail?.status ?? 'free'
+            return (
+              <Card
+                key={area.id}
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => handleRoomClick(area)}
+              >
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{area.label}</p>
+                    {avail?.events?.length ? (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {avail.events[0].title}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground mt-0.5">Libre</p>
+                    )}
+                  </div>
+                  <Badge variant={statusBadgeVariant(status)}>{STATUS_LABEL[status]}</Badge>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Booking dialog */}
+      <Dialog open={!!bookingRoom} onOpenChange={(o) => !o && setBookingRoom(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Réserver — {bookingRoom?.label}
+            </DialogTitle>
+          </DialogHeader>
+
+          {bookingRoom && (
+            <>
+              {/* Current events */}
+              {availability[bookingRoom.id]?.events?.length ? (
+                <div className="rounded-lg border p-3 space-y-2 bg-muted/30">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Réunions du jour
+                  </p>
+                  {availability[bookingRoom.id].events.map((ev) => (
+                    <div key={ev.id} className="text-xs flex items-center gap-2 text-muted-foreground">
+                      <Clock className="w-3 h-3" />
+                      {new Date(ev.start).toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}
+                      {' – '}
+                      {new Date(ev.end).toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}
+                      <span className="truncate">{ev.title}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border p-3 text-sm text-green-600 bg-green-50 dark:bg-green-950/20">
+                  Salle libre pour aujourd'hui
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <Label>Titre de la réunion</Label>
+                  <Input
+                    placeholder="Ex: Réunion équipe produit"
+                    value={bookingTitle}
+                    onChange={(e) => setBookingTitle(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Date</Label>
+                  <Input
+                    type="date"
+                    value={bookingDate}
+                    onChange={(e) => setBookingDate(e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label>Début</Label>
+                    <Input
+                      type="time"
+                      value={bookingStart}
+                      onChange={(e) => setBookingStart(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Fin</Label>
+                    <Input
+                      type="time"
+                      value={bookingEnd}
+                      onChange={(e) => setBookingEnd(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBookingRoom(null)}>
+              Annuler
+            </Button>
+            <Button onClick={handleBook} disabled={bookingLoading || !bookingTitle.trim()}>
+              {bookingLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Réserver
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

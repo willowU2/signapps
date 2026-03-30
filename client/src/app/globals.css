@@ -557,9 +557,11 @@ body {
 }
 
 /* ───────────── Enhanced Focus Indicators (Accessibility) ───────────── */
-*:focus-visible {
-  outline: 2px solid var(--ring);
+/* AC2: WCAG keyboard focus indicator */
+:focus-visible {
+  outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* Ensure buttons and interactive elements have clear focus */
@@ -570,7 +572,7 @@ select:focus-visible,
 textarea:focus-visible,
 [role="button"]:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid var(--ring);
+  outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -591,4 +593,33 @@ textarea:focus-visible,
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+/* ───────────── AC4: High Contrast Mode ───────────── */
+html.high-contrast {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --primary: 210 100% 60%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 15%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 10%;
+  --muted-foreground: 0 0% 80%;
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 100%;
+  --border: 0 0% 40%;
+  --input: 0 0% 40%;
+  --ring: 210 100% 60%;
+  --accent: 0 0% 20%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 100% 60%;
+}
+
+html.high-contrast * {
+  border-color: hsl(0 0% 40%) !important;
+}
+
+/* AC4: Dynamic font size via CSS variable */
+html {
+  font-size: var(--font-size-base, 15px);
 }
