@@ -23,6 +23,7 @@ where
 // Global User Tags
 // ---------------------------------------------------------
 
+#[tracing::instrument(skip_all)]
 pub async fn list_tags(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -34,6 +35,7 @@ pub async fn list_tags(
     Ok(Json(tags))
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn create_tag(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -46,6 +48,7 @@ pub async fn create_tag(
     Ok((StatusCode::CREATED, Json(tag)))
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn update_tag(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -59,6 +62,7 @@ pub async fn update_tag(
     Ok(Json(tag))
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn delete_tag(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -79,6 +83,7 @@ pub async fn delete_tag(
 // File <-> Tags Association
 // ---------------------------------------------------------
 
+#[tracing::instrument(skip_all)]
 pub async fn list_file_tags(
     State(state): State<AppState>,
     Path(file_id): Path<Uuid>,
@@ -91,6 +96,7 @@ pub async fn list_file_tags(
     Ok(Json(tags))
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn add_file_tag(
     State(state): State<AppState>,
     Path((file_id, tag_id)): Path<(Uuid, Uuid)>,
@@ -102,6 +108,7 @@ pub async fn add_file_tag(
     Ok(StatusCode::CREATED)
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn remove_file_tag(
     State(state): State<AppState>,
     Path((file_id, tag_id)): Path<(Uuid, Uuid)>,

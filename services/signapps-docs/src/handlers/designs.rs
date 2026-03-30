@@ -62,6 +62,7 @@ fn default_height() -> i32 {
 // ============================================================================
 
 /// GET /api/v1/designs
+#[tracing::instrument(skip_all)]
 pub async fn list_designs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -85,6 +86,7 @@ pub async fn list_designs(
 }
 
 /// POST /api/v1/designs
+#[tracing::instrument(skip_all)]
 pub async fn create_design(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -131,6 +133,7 @@ pub async fn create_design(
 }
 
 /// GET /api/v1/designs/:id
+#[tracing::instrument(skip_all)]
 pub async fn get_design(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -156,6 +159,7 @@ pub async fn get_design(
 }
 
 /// PUT /api/v1/designs/:id
+#[tracing::instrument(skip_all)]
 pub async fn update_design(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -193,6 +197,7 @@ pub async fn update_design(
 }
 
 /// DELETE /api/v1/designs/:id
+#[tracing::instrument(skip_all)]
 pub async fn delete_design(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

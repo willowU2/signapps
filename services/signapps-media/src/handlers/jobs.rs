@@ -26,6 +26,7 @@ pub struct JobStatus {
 }
 
 /// Get job status from the in-memory job store
+#[tracing::instrument(skip_all)]
 pub async fn get_job_status(
     State(state): State<Arc<AppState>>,
     Path(job_id): Path<String>,

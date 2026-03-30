@@ -20,6 +20,7 @@ pub struct StorageStatsResponse {
 }
 
 /// Get aggregated storage statistics.
+#[tracing::instrument(skip_all)]
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StorageStatsResponse>> {
     let buckets = state.storage.list_buckets().await.unwrap_or_default();
     let buckets_count = buckets.len();

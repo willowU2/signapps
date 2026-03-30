@@ -43,6 +43,7 @@ pub struct EventRecord {
 // Info endpoint
 // ============================================================================
 
+#[tracing::instrument(skip_all)]
 pub async fn import_info() -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "supported_formats": ["csv", "json", "vcf", "ics"],
@@ -56,6 +57,7 @@ pub async fn import_info() -> Json<serde_json::Value> {
 // ============================================================================
 
 /// POST /api/v1/data/import — Upload a file and get parsed data back.
+#[tracing::instrument(skip_all)]
 pub async fn import_data(
     mut multipart: Multipart,
 ) -> Result<Json<ImportResult>, (StatusCode, String)> {

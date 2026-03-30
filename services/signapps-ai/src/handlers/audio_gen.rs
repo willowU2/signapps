@@ -115,7 +115,7 @@ async fn store_audio(state: &AppState, audio_bytes: &[u8]) -> Result<String, (St
 /// - `duration_seconds` — audio duration (optional)
 /// - `temperature` — generation temperature (optional)
 /// - `model` — model name override (optional)
-#[tracing::instrument(skip(state, body))]
+#[tracing::instrument(skip_all)]
 pub async fn generate_music(
     State(state): State<AppState>,
     Json(body): Json<GenerateMusicRequest>,
@@ -158,7 +158,7 @@ pub async fn generate_music(
 /// - `prompt` — text description of the sound effect (required)
 /// - `duration_seconds` — audio duration (optional)
 /// - `model` — model name override (optional)
-#[tracing::instrument(skip(state, body))]
+#[tracing::instrument(skip_all)]
 pub async fn generate_sfx(
     State(state): State<AppState>,
     Json(body): Json<GenerateSfxRequest>,
@@ -195,7 +195,7 @@ pub async fn generate_sfx(
 }
 
 /// List available audio generation models.
-#[tracing::instrument]
+#[tracing::instrument(skip_all)]
 pub async fn list_models() -> Result<Json<AudioModelsResponse>, (StatusCode, String)> {
     let worker = create_audiogen_worker().map_err(|e| (StatusCode::SERVICE_UNAVAILABLE, e))?;
 

@@ -34,6 +34,7 @@ pub struct RowsResponse {
 
 /// Create a new spreadsheet and persist its initial CRDT state to the
 /// database so the first WebSocket client receives a well-formed structure.
+#[tracing::instrument(skip_all)]
 pub async fn create_sheet(
     State(state): State<AppState>,
     Json(payload): Json<CreateSheetRequest>,
@@ -86,6 +87,7 @@ pub async fn create_sheet(
 }
 
 /// Get rows from spreadsheet
+#[tracing::instrument(skip_all)]
 pub async fn get_rows(
     State(_state): State<AppState>,
     Path(_doc_id): Path<String>,

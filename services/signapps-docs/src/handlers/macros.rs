@@ -43,6 +43,7 @@ pub struct UpdateMacroRequest {
 // ============================================================================
 
 /// GET /api/v1/docs/:doc_id/macros
+#[tracing::instrument(skip_all)]
 pub async fn list_macros(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -66,6 +67,7 @@ pub async fn list_macros(
 }
 
 /// POST /api/v1/docs/:doc_id/macros
+#[tracing::instrument(skip_all)]
 pub async fn create_macro(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -99,6 +101,7 @@ pub async fn create_macro(
 }
 
 /// PUT /api/v1/docs/:doc_id/macros/:macro_id
+#[tracing::instrument(skip_all)]
 pub async fn update_macro(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -129,6 +132,7 @@ pub async fn update_macro(
 }
 
 /// DELETE /api/v1/docs/:doc_id/macros/:macro_id
+#[tracing::instrument(skip_all)]
 pub async fn delete_macro(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

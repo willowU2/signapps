@@ -31,6 +31,7 @@ pub struct Voicemail {
 // Handlers
 // ---------------------------------------------------------------------------
 
+#[tracing::instrument(skip_all)]
 pub async fn list_voicemails(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -58,6 +59,7 @@ pub async fn list_voicemails(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn mark_voicemail_read(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -87,6 +89,7 @@ pub async fn mark_voicemail_read(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn delete_voicemail(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

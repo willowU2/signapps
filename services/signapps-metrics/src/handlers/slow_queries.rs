@@ -47,6 +47,7 @@ pub struct SlowQueriesResponse {
 const SLOW_THRESHOLD_SECS: f64 = 1.0;
 
 /// Return the top-10 currently running queries sorted by duration descending.
+#[tracing::instrument(skip_all)]
 pub async fn list_slow_queries(State(state): State<AppState>) -> Result<Json<SlowQueriesResponse>> {
     // First, try to check if pg_stat_statements is available (informational).
     let pg_stat_statements_available = sqlx::query_scalar::<_, bool>(

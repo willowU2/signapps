@@ -35,6 +35,7 @@ fn parse_capability(s: &str) -> Result<Capability, (StatusCode, String)> {
 }
 
 /// List all registered capabilities with backend information.
+#[tracing::instrument(skip_all)]
 pub async fn list_capabilities(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<CapabilityInfo>>, (StatusCode, String)> {
@@ -48,6 +49,7 @@ pub async fn list_capabilities(
 }
 
 /// Get quality advice for a specific capability (local vs cloud comparison).
+#[tracing::instrument(skip_all)]
 pub async fn get_capability_advice(
     State(state): State<AppState>,
     Path(cap_name): Path<String>,

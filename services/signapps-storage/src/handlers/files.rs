@@ -248,7 +248,7 @@ pub struct DeleteFilesRequest {
 }
 
 /// List files in a bucket.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
     Path(bucket): Path<String>,
@@ -259,7 +259,7 @@ pub async fn list(
 }
 
 /// Get file info.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn get_info(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -269,7 +269,7 @@ pub async fn get_info(
 }
 
 /// Download a file.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn download(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -302,7 +302,7 @@ pub async fn download(
 const MAX_UPLOAD_SIZE: usize = 500 * 1024 * 1024;
 
 /// Upload a file via multipart form.
-#[tracing::instrument(skip(state, multipart))]
+#[tracing::instrument(skip_all)]
 pub async fn upload(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
@@ -464,7 +464,7 @@ pub async fn upload(
 }
 
 /// Upload a file with explicit key.
-#[tracing::instrument(skip(state, body))]
+#[tracing::instrument(skip_all)]
 pub async fn upload_with_key(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
@@ -587,7 +587,7 @@ pub async fn upload_with_key(
 }
 
 /// Delete a file.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn delete(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
@@ -619,7 +619,7 @@ pub async fn delete(
 }
 
 /// Delete multiple files.
-#[tracing::instrument(skip(state, payload))]
+#[tracing::instrument(skip_all)]
 pub async fn delete_many(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
@@ -647,7 +647,7 @@ pub async fn delete_many(
 }
 
 /// Copy a file.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn copy(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
@@ -713,7 +713,7 @@ pub async fn copy(
 }
 
 /// Move a file.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn move_file(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,

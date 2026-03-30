@@ -33,7 +33,7 @@ pub struct ActionResponse {
 }
 
 /// Execute a natural language action using Claude Opus as an orchestrator.
-#[tracing::instrument(skip(state, headers))]
+#[tracing::instrument(skip_all)]
 pub async fn execute_action(
     State(state): State<AppState>,
     headers: HeaderMap,

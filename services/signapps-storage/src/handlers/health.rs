@@ -14,6 +14,7 @@ pub struct HealthResponse {
 }
 
 /// Health check endpoint.
+#[tracing::instrument(skip_all)]
 pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
     let storage_connected = state.storage.list_buckets().await.is_ok();
 

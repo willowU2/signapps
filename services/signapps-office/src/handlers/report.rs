@@ -46,6 +46,7 @@ pub struct ReportInfo {
 // Info endpoint
 // ============================================================================
 
+#[tracing::instrument(skip_all)]
 pub async fn report_info() -> Json<ReportInfo> {
     Json(ReportInfo {
         supported_templates: vec![
@@ -62,6 +63,7 @@ pub async fn report_info() -> Json<ReportInfo> {
 // Generate handler
 // ============================================================================
 
+#[tracing::instrument(skip_all)]
 pub async fn generate_report(
     Json(payload): Json<ReportRequest>,
 ) -> Result<Response, (StatusCode, String)> {

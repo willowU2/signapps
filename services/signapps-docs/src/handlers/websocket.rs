@@ -22,6 +22,7 @@ static ACTIVE_CONNECTIONS: AtomicUsize = AtomicUsize::new(0);
 
 /// Generic WebSocket handler for all document types
 /// Endpoint: GET /api/v1/docs/{type}/{doc_id}/ws
+#[tracing::instrument(skip_all)]
 pub async fn websocket_handler(
     Path((doc_type, doc_id)): Path<(String, String)>,
     ws: WebSocketUpgrade,

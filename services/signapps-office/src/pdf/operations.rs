@@ -538,7 +538,8 @@ mod tests {
         doc.trailer.set("Root", Object::Reference(catalog_id));
 
         let mut buffer = Vec::new();
-        doc.save_to(&mut Cursor::new(&mut buffer)).expect("PDF serialization should succeed");
+        doc.save_to(&mut Cursor::new(&mut buffer))
+            .expect("PDF serialization should succeed");
         buffer
     }
 

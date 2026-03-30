@@ -40,6 +40,7 @@ pub struct SlidesResponse {
 
 /// Create a new presentation and persist its initial CRDT state to the
 /// database so the first WebSocket client receives a well-formed structure.
+#[tracing::instrument(skip_all)]
 pub async fn create_presentation(
     State(state): State<AppState>,
     Json(payload): Json<CreatePresentationRequest>,
@@ -94,6 +95,7 @@ pub async fn create_presentation(
 }
 
 /// Get slides from presentation
+#[tracing::instrument(skip_all)]
 pub async fn get_slides(
     State(_state): State<AppState>,
     Path(_doc_id): Path<String>,

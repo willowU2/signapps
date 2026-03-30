@@ -175,6 +175,7 @@ fn classify_by_keywords(title: &str, content: &str) -> Option<(DocumentCategory,
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// POST /api/v1/docs/classify
+#[tracing::instrument(skip_all)]
 pub async fn classify_document(
     State(_state): State<AppState>,
     Json(req): Json<ClassifyRequest>,

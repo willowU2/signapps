@@ -38,6 +38,7 @@ fn verify_password(password: &str, hash: &str) -> bool {
 }
 
 /// List all rooms (active and scheduled)
+#[tracing::instrument(skip_all)]
 pub async fn list_rooms(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -93,6 +94,7 @@ pub async fn list_rooms(
 }
 
 /// Create a new room
+#[tracing::instrument(skip_all)]
 pub async fn create_room(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -149,6 +151,7 @@ pub async fn create_room(
 }
 
 /// Get a specific room by ID
+#[tracing::instrument(skip_all)]
 pub async fn get_room(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -188,6 +191,7 @@ pub async fn get_room(
 }
 
 /// Update a room
+#[tracing::instrument(skip_all)]
 pub async fn update_room(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -270,6 +274,7 @@ pub async fn update_room(
 }
 
 /// Delete a room
+#[tracing::instrument(skip_all)]
 pub async fn delete_room(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -297,6 +302,7 @@ pub async fn delete_room(
 }
 
 /// End a room (mark as ended and kick all participants)
+#[tracing::instrument(skip_all)]
 pub async fn end_room(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -402,6 +408,7 @@ pub async fn end_room(
 }
 
 /// List meeting history
+#[tracing::instrument(skip_all)]
 pub async fn list_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -38,6 +38,7 @@ pub struct CreateVideoMessageRequest {
 // Handlers
 // ---------------------------------------------------------------------------
 
+#[tracing::instrument(skip_all)]
 pub async fn list_video_messages(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -65,6 +66,7 @@ pub async fn list_video_messages(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn create_video_message(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -102,6 +104,7 @@ pub async fn create_video_message(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn mark_video_message_read(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -134,6 +137,7 @@ pub async fn mark_video_message_read(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn delete_video_message(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

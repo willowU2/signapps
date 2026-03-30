@@ -52,7 +52,7 @@ fn create_docparse_worker() -> Box<dyn DocParseWorker + Send + Sync> {
 ///
 /// Accepts `multipart/form-data` with:
 /// - `document` — the document file (required)
-#[tracing::instrument(skip(multipart))]
+#[tracing::instrument(skip_all)]
 pub async fn parse_document(
     mut multipart: Multipart,
 ) -> Result<Json<ParsedDocument>, (StatusCode, String)> {
@@ -117,7 +117,7 @@ pub async fn parse_document(
 ///
 /// Accepts `multipart/form-data` with:
 /// - `document` — the document file (required)
-#[tracing::instrument(skip(multipart))]
+#[tracing::instrument(skip_all)]
 pub async fn extract_tables(
     mut multipart: Multipart,
 ) -> Result<Json<ExtractTablesResponse>, (StatusCode, String)> {

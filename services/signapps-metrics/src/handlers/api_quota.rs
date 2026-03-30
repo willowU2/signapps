@@ -63,6 +63,7 @@ pub struct QuotaListQuery {
 /// Returns per-user API quota usage for the last 24 hours, ordered by usage
 /// descending.  Uses `platform.api_usage` if available, otherwise returns
 /// an empty list (table may not be present in all deployments).
+#[tracing::instrument(skip_all)]
 pub async fn list_api_quotas(
     State(state): State<AppState>,
     Query(q): Query<QuotaListQuery>,
@@ -139,6 +140,7 @@ pub async fn list_api_quotas(
 /// GET /api/v1/metrics/api-quota/:user_id
 ///
 /// Returns API quota stats for a single user.
+#[tracing::instrument(skip_all)]
 pub async fn get_user_api_quota(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,

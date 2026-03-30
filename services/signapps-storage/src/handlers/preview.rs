@@ -87,7 +87,7 @@ pub enum PreviewType {
 }
 
 /// Get thumbnail for a file.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn get_thumbnail(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -653,7 +653,7 @@ struct PreviewNotAvailable {
 /// - Images (`image/*`): resized to max 800 px width, returned as WebP.
 /// - Text files (`text/*`): first 1 000 characters returned as `text/plain`.
 /// - Everything else: JSON `{"previewable":false,"message":"preview not available"}`.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn generate_preview(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -727,7 +727,7 @@ pub async fn generate_preview(
 }
 
 /// Get preview for a file.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn get_preview(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -876,7 +876,7 @@ pub async fn get_preview(
 }
 
 /// Get preview info for a file.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn get_preview_info(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -984,7 +984,7 @@ pub struct ArchiveListResponse {
 }
 
 /// Get archive listing (ZIP files).
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn get_archive_listing(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -1057,7 +1057,7 @@ pub struct DocumentMetadata {
 }
 
 /// Get document metadata.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn get_document_metadata(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,

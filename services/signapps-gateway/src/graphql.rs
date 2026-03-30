@@ -33,6 +33,7 @@ use std::time::Duration;
 
 /// Incoming GraphQL request (POST body).
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct GraphQLRequest {
     pub query: String,
     #[serde(default)]
@@ -157,9 +158,7 @@ fn extract_fields(query: &str) -> Vec<String> {
                 depth += 1;
             },
             '}' => {
-                if depth > 0 {
-                    depth -= 1;
-                }
+                depth = depth.saturating_sub(1);
             },
             _ if depth == 0 => {
                 if ch == '\n' || ch == '\r' {

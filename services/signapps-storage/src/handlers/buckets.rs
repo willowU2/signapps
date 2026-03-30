@@ -27,14 +27,14 @@ pub struct BucketResponse {
 }
 
 /// List all buckets.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<BucketInfo>>> {
     let buckets = state.storage.list_buckets().await?;
     Ok(Json(buckets))
 }
 
 /// Get bucket info with stats.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn get(
     State(state): State<AppState>,
     Path(name): Path<String>,
@@ -54,7 +54,7 @@ pub async fn get(
 }
 
 /// Create a new bucket.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
     Json(payload): Json<CreateBucketRequest>,
@@ -93,7 +93,7 @@ pub async fn create(
 }
 
 /// Delete a bucket.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn delete(State(state): State<AppState>, Path(name): Path<String>) -> Result<StatusCode> {
     // Check bucket exists
     if !state.storage.bucket_exists(&name).await? {

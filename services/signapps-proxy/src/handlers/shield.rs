@@ -29,14 +29,14 @@ pub struct BlockResponse {
 }
 
 /// Get shield statistics.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<ShieldStats>> {
     let stats = state.shield.get_stats().await?;
     Ok(Json(stats))
 }
 
 /// Reset shield statistics.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn reset_stats(State(state): State<AppState>) -> Result<StatusCode> {
     state.shield.reset_stats().await?;
     tracing::info!("Shield statistics reset");
@@ -44,7 +44,7 @@ pub async fn reset_stats(State(state): State<AppState>) -> Result<StatusCode> {
 }
 
 /// Block an IP for a route.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn block_ip(
     State(state): State<AppState>,
     Path(route_id): Path<Uuid>,
@@ -66,7 +66,7 @@ pub async fn block_ip(
 }
 
 /// Unblock an IP for a route.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn unblock_ip(
     State(state): State<AppState>,
     Path((route_id, ip)): Path<(Uuid, String)>,
@@ -79,7 +79,7 @@ pub async fn unblock_ip(
 }
 
 /// Check if an IP is blocked.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn check_blocked(
     State(state): State<AppState>,
     Path((route_id, ip)): Path<(Uuid, String)>,

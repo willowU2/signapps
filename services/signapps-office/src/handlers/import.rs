@@ -45,6 +45,7 @@ pub struct ImportMetadata {
 }
 
 /// Get import service info
+#[tracing::instrument(skip_all)]
 pub async fn info() -> Json<ImportInfoResponse> {
     Json(ImportInfoResponse {
         supported_formats: vec!["docx", "markdown", "html", "txt"],
@@ -54,6 +55,7 @@ pub async fn info() -> Json<ImportInfoResponse> {
 }
 
 /// Import document from multipart upload
+#[tracing::instrument(skip_all)]
 pub async fn import_upload(
     State(state): State<AppState>,
     Query(query): Query<ImportQuery>,
@@ -112,6 +114,7 @@ pub struct ImportJsonRequest {
     pub format: Option<ImportFormat>,
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn import_json(
     State(state): State<AppState>,
     Json(request): Json<ImportJsonRequest>,

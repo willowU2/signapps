@@ -94,7 +94,7 @@ fn map_row_to_favorite(row: &sqlx::postgres::PgRow) -> Result<Favorite> {
 }
 
 /// Add a file or folder to favorites.
-#[tracing::instrument(skip(state, user_id))]
+#[tracing::instrument(skip_all)]
 pub async fn add_favorite(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -141,7 +141,7 @@ pub async fn add_favorite(
 }
 
 /// List favorites for current user.
-#[tracing::instrument(skip(state, user_id))]
+#[tracing::instrument(skip_all)]
 pub async fn list_favorites(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -213,7 +213,7 @@ pub async fn list_favorites(
 }
 
 /// Get a specific favorite.
-#[tracing::instrument(skip(state, user_id))]
+#[tracing::instrument(skip_all)]
 pub async fn get_favorite(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -267,7 +267,7 @@ pub async fn get_favorite(
 }
 
 /// Update a favorite.
-#[tracing::instrument(skip(state, user_id))]
+#[tracing::instrument(skip_all)]
 pub async fn update_favorite(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -300,7 +300,7 @@ pub async fn update_favorite(
 }
 
 /// Remove from favorites.
-#[tracing::instrument(skip(state, user_id))]
+#[tracing::instrument(skip_all)]
 pub async fn remove_favorite(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -321,7 +321,7 @@ pub async fn remove_favorite(
 }
 
 /// Remove favorite by path.
-#[tracing::instrument(skip(state, user_id))]
+#[tracing::instrument(skip_all)]
 pub async fn remove_favorite_by_path(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -347,7 +347,7 @@ pub async fn remove_favorite_by_path(
 }
 
 /// Reorder favorites.
-#[tracing::instrument(skip(state, user_id))]
+#[tracing::instrument(skip_all)]
 pub async fn reorder_favorites(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -371,7 +371,7 @@ pub async fn reorder_favorites(
 }
 
 /// Check if a path is favorited.
-#[tracing::instrument(skip(state, user_id))]
+#[tracing::instrument(skip_all)]
 pub async fn check_favorite(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,

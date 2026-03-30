@@ -42,7 +42,7 @@ impl From<Certificate> for CertificateResponse {
 }
 
 /// List all certificates.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn list_certificates(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<CertificateResponse>>> {
@@ -56,7 +56,7 @@ pub async fn list_certificates(
 }
 
 /// Upload a certificate manually.
-#[tracing::instrument(skip(state, payload))]
+#[tracing::instrument(skip_all)]
 pub async fn upload_certificate(
     State(state): State<AppState>,
     Json(payload): Json<CreateCertificate>,
@@ -92,7 +92,7 @@ pub struct RequestCertificateBody {
 }
 
 /// Request a certificate via ACME (Let's Encrypt).
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip_all)]
 pub async fn request_certificate(
     State(_state): State<AppState>,
     Json(payload): Json<RequestCertificateBody>,
@@ -120,7 +120,7 @@ pub async fn request_certificate(
 }
 
 /// Renew an existing certificate.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn renew_certificate(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -146,7 +146,7 @@ pub async fn renew_certificate(
 }
 
 /// Delete a certificate.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn delete_certificate(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

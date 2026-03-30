@@ -1619,6 +1619,7 @@ async fn get_stats(
 // ============================================================================
 
 /// Process emails whose `scheduled_send_at` has arrived. Called every 30s from main.rs.
+#[tracing::instrument(skip_all)]
 pub async fn process_scheduled_emails(
     pool: &sqlx::PgPool,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {

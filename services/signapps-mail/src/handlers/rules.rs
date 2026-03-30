@@ -56,6 +56,7 @@ pub struct UpdateRuleRequest {
     pub stop_processing: Option<bool>,
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn list_rules(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -84,6 +85,7 @@ pub async fn list_rules(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn get_rule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -112,6 +114,7 @@ pub async fn get_rule(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn create_rule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -160,6 +163,7 @@ pub async fn create_rule(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn update_rule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -213,6 +217,7 @@ pub async fn update_rule(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn delete_rule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

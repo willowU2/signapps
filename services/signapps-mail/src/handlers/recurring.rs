@@ -81,6 +81,7 @@ pub struct UpdateRecurringRequest {
 // ============================================================================
 
 /// POST /api/v1/mail/emails/recurring
+#[tracing::instrument(skip_all)]
 pub async fn create_recurring(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -138,6 +139,7 @@ pub async fn create_recurring(
 }
 
 /// GET /api/v1/mail/emails/recurring
+#[tracing::instrument(skip_all)]
 pub async fn list_recurring(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -159,6 +161,7 @@ pub async fn list_recurring(
 }
 
 /// PATCH /api/v1/mail/emails/recurring/:id
+#[tracing::instrument(skip_all)]
 pub async fn update_recurring(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -207,6 +210,7 @@ pub async fn update_recurring(
 }
 
 /// DELETE /api/v1/mail/emails/recurring/:id
+#[tracing::instrument(skip_all)]
 pub async fn delete_recurring(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

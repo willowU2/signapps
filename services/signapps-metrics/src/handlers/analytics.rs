@@ -64,6 +64,7 @@ pub struct ActivityPoint {
 ///
 /// Returns counts of total users, users active today, aggregate storage, number
 /// of known backend services, and current system uptime.
+#[tracing::instrument(skip_all)]
 pub async fn get_overview(State(state): State<AppState>) -> Result<Json<AnalyticsOverview>> {
     let pool = state.pool.inner();
 
@@ -109,6 +110,7 @@ pub async fn get_overview(State(state): State<AppState>) -> Result<Json<Analytic
 ///
 /// Returns the top 50 storage consumers, sorted by descending used bytes.
 /// Users without a quota record are omitted (they have consumed 0 bytes).
+#[tracing::instrument(skip_all)]
 pub async fn get_storage(State(state): State<AppState>) -> Result<Json<Vec<StorageByUser>>> {
     let pool = state.pool.inner();
 
@@ -157,6 +159,7 @@ pub async fn get_storage(State(state): State<AppState>) -> Result<Json<Vec<Stora
 /// Returns a 7 × 24 heatmap (weekday × hour) of login activity derived from
 /// `last_login` timestamps in the users table.  This is a lightweight proxy for
 /// request activity that requires no separate audit-log table.
+#[tracing::instrument(skip_all)]
 pub async fn get_activity(State(state): State<AppState>) -> Result<Json<Vec<ActivityPoint>>> {
     let pool = state.pool.inner();
 

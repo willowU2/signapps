@@ -109,7 +109,9 @@ mod tests {
         let result = text_to_tiptap(text.as_bytes()).expect("text_to_tiptap should succeed");
 
         assert_eq!(result["type"], "doc");
-        let content = result["content"].as_array().expect("content should be an array");
+        let content = result["content"]
+            .as_array()
+            .expect("content should be an array");
         assert_eq!(content.len(), 2);
         assert_eq!(content[0]["type"], "paragraph");
     }

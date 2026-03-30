@@ -110,7 +110,7 @@ async fn store_image(state: &AppState, image_bytes: &[u8]) -> Result<String, (St
 /// - `seed` — random seed for reproducibility (optional)
 /// - `model` — model name override (optional)
 /// - `style` — prepended to prompt as a style prefix (optional)
-#[tracing::instrument(skip(state, body))]
+#[tracing::instrument(skip_all)]
 pub async fn generate_image(
     State(state): State<AppState>,
     Json(body): Json<GenerateRequest>,
@@ -179,7 +179,7 @@ pub async fn generate_image(
 /// - `mask` — the mask image file (required; white = inpaint region)
 /// - `prompt` — text description of the fill (required)
 /// - `model` — model name override (optional)
-#[tracing::instrument(skip(state, multipart))]
+#[tracing::instrument(skip_all)]
 pub async fn inpaint_image(
     State(state): State<AppState>,
     mut multipart: Multipart,
@@ -314,7 +314,7 @@ pub async fn inpaint_image(
 /// - `prompt` — text description of the transformation (required)
 /// - `strength` — denoising strength 0.0..1.0 (optional, default 0.75)
 /// - `model` — model name override (optional)
-#[tracing::instrument(skip(state, multipart))]
+#[tracing::instrument(skip_all)]
 pub async fn img2img(
     State(state): State<AppState>,
     mut multipart: Multipart,
@@ -429,7 +429,7 @@ pub async fn img2img(
 /// Accepts `multipart/form-data` with:
 /// - `image` — the image file to upscale (required)
 /// - `scale` — scale factor, e.g. 2 or 4 (optional, default 2)
-#[tracing::instrument(skip(state, multipart))]
+#[tracing::instrument(skip_all)]
 pub async fn upscale_image(
     State(state): State<AppState>,
     mut multipart: Multipart,
@@ -518,7 +518,7 @@ pub async fn upscale_image(
 }
 
 /// List available image generation models.
-#[tracing::instrument]
+#[tracing::instrument(skip_all)]
 pub async fn list_image_models() -> Result<Json<ImageModelsResponse>, (StatusCode, String)> {
     let worker = create_imagegen_worker().map_err(|e| (StatusCode::SERVICE_UNAVAILABLE, e))?;
 

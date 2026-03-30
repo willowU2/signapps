@@ -278,7 +278,9 @@ mod tests {
         let result = parse_docx_xml(xml).expect("parse_docx_xml should succeed");
         assert_eq!(result["type"], "doc");
 
-        let content = result["content"].as_array().expect("content should be an array");
+        let content = result["content"]
+            .as_array()
+            .expect("content should be an array");
         assert!(!content.is_empty());
     }
 
@@ -300,7 +302,9 @@ mod tests {
         "#;
 
         let result = parse_docx_xml(xml).expect("parse_docx_xml should succeed");
-        let content = result["content"].as_array().expect("content should be an array");
+        let content = result["content"]
+            .as_array()
+            .expect("content should be an array");
         let para = &content[0];
 
         if let Some(inline) = para["content"].as_array() {

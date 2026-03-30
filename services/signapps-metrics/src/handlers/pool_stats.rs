@@ -28,6 +28,7 @@ pub struct PoolStats {
     pub at_capacity: bool,
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn get_pool_stats(State(state): State<AppState>) -> Result<Json<PoolStats>> {
     let pool = &*state.pool;
 

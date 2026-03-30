@@ -30,6 +30,7 @@ pub struct ChannelResponse {
 }
 
 /// Create a new chat channel
+#[tracing::instrument(skip_all)]
 pub async fn create_channel(
     State(state): State<AppState>,
     Json(payload): Json<CreateChannelRequest>,
@@ -112,6 +113,7 @@ pub struct ChannelRow {
 }
 
 /// List all chat channels
+#[tracing::instrument(skip_all)]
 pub async fn get_channels(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<ChannelResponse>>, (StatusCode, String)> {
@@ -156,6 +158,7 @@ pub async fn get_channels(
 }
 
 /// Get a specific channel by ID
+#[tracing::instrument(skip_all)]
 pub async fn get_channel(
     State(state): State<AppState>,
     Path(channel_id): Path<Uuid>,
@@ -207,6 +210,7 @@ pub struct UpdateChannelRequest {
 }
 
 /// Update a channel
+#[tracing::instrument(skip_all)]
 pub async fn update_channel(
     State(state): State<AppState>,
     Path(channel_id): Path<Uuid>,
@@ -297,6 +301,7 @@ pub async fn update_channel(
 }
 
 /// Delete a channel
+#[tracing::instrument(skip_all)]
 pub async fn delete_channel(
     State(state): State<AppState>,
     Path(channel_id): Path<Uuid>,
@@ -390,6 +395,7 @@ fn default_role() -> String {
 }
 
 /// Get channel members
+#[tracing::instrument(skip_all)]
 pub async fn get_channel_members(
     State(state): State<AppState>,
     Path(channel_id): Path<Uuid>,
@@ -422,6 +428,7 @@ pub async fn get_channel_members(
 }
 
 /// Add a member to a channel
+#[tracing::instrument(skip_all)]
 pub async fn add_channel_member(
     State(state): State<AppState>,
     Path(channel_id): Path<Uuid>,
@@ -486,6 +493,7 @@ pub async fn add_channel_member(
 }
 
 /// Remove a member from a channel
+#[tracing::instrument(skip_all)]
 pub async fn remove_channel_member(
     State(state): State<AppState>,
     Path((channel_id, user_id)): Path<(Uuid, Uuid)>,
@@ -530,6 +538,7 @@ pub struct CreateDmRequest {
 }
 
 /// Get direct messages for current user
+#[tracing::instrument(skip_all)]
 pub async fn get_direct_messages(
     State(state): State<AppState>,
     // NOTE: Requires auth middleware wiring in docs router
@@ -582,6 +591,7 @@ pub async fn get_direct_messages(
 }
 
 /// Create a direct message conversation
+#[tracing::instrument(skip_all)]
 pub async fn create_direct_message(
     State(state): State<AppState>,
     Json(payload): Json<CreateDmRequest>,
@@ -661,6 +671,7 @@ pub async fn create_direct_message(
 }
 
 /// Delete a direct message
+#[tracing::instrument(skip_all)]
 pub async fn delete_direct_message(
     State(_state): State<AppState>,
     Path(_dm_id): Path<Uuid>,
@@ -684,6 +695,7 @@ pub struct ChannelReadStatus {
 }
 
 /// Get read status for a channel (unread count)
+#[tracing::instrument(skip_all)]
 pub async fn get_channel_read_status(
     State(state): State<AppState>,
     Path(channel_id): Path<Uuid>,
@@ -720,6 +732,7 @@ pub async fn get_channel_read_status(
 }
 
 /// Mark channel as read (reset unread count)
+#[tracing::instrument(skip_all)]
 pub async fn mark_channel_read(
     State(state): State<AppState>,
     Path(channel_id): Path<Uuid>,
@@ -761,6 +774,7 @@ pub async fn mark_channel_read(
 
 /// Increment unread count for all channel members except sender
 /// (Called when a new message is sent)
+#[tracing::instrument(skip_all)]
 pub async fn increment_unread_count(
     State(state): State<AppState>,
     Path(channel_id): Path<Uuid>,
@@ -793,6 +807,7 @@ pub async fn increment_unread_count(
 }
 
 /// Get unread counts for all channels for a user
+#[tracing::instrument(skip_all)]
 pub async fn get_all_unread_counts(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,

@@ -599,7 +599,9 @@ mod tests {
         let result = html_to_tiptap(html.as_bytes()).expect("html_to_tiptap should succeed");
 
         assert_eq!(result["type"], "doc");
-        let content = result["content"].as_array().expect("content should be an array");
+        let content = result["content"]
+            .as_array()
+            .expect("content should be an array");
         assert_eq!(content[0]["type"], "paragraph");
     }
 
@@ -608,7 +610,9 @@ mod tests {
         let html = "<html><body><h1>Title</h1></body></html>";
         let result = html_to_tiptap(html.as_bytes()).expect("html_to_tiptap should succeed");
 
-        let content = result["content"].as_array().expect("content should be an array");
+        let content = result["content"]
+            .as_array()
+            .expect("content should be an array");
         assert_eq!(content[0]["type"], "heading");
         assert_eq!(content[0]["attrs"]["level"], 1);
     }
@@ -618,9 +622,13 @@ mod tests {
         let html = "<html><body><p><strong>bold</strong></p></body></html>";
         let result = html_to_tiptap(html.as_bytes()).expect("html_to_tiptap should succeed");
 
-        let content = result["content"].as_array().expect("content should be an array");
+        let content = result["content"]
+            .as_array()
+            .expect("content should be an array");
         let para = &content[0];
-        let inline = para["content"].as_array().expect("paragraph content should be an array");
+        let inline = para["content"]
+            .as_array()
+            .expect("paragraph content should be an array");
         assert_eq!(inline[0]["marks"][0]["type"], "bold");
     }
 }

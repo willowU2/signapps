@@ -152,7 +152,7 @@ async fn store_video(state: &AppState, video_bytes: &[u8]) -> Result<String, (St
 /// - `fps` — frames per second (optional)
 /// - `width` / `height` — video dimensions (optional)
 /// - `model` — model name override (optional)
-#[tracing::instrument(skip(state, body))]
+#[tracing::instrument(skip_all)]
 pub async fn generate_video(
     State(state): State<AppState>,
     Json(body): Json<GenerateVideoRequest>,
@@ -199,7 +199,7 @@ pub async fn generate_video(
 /// - `prompt` — optional text guidance
 /// - `duration_seconds` — video duration (optional)
 /// - `model` — model name override (optional)
-#[tracing::instrument(skip(state, multipart))]
+#[tracing::instrument(skip_all)]
 pub async fn img_to_video(
     State(state): State<AppState>,
     mut multipart: Multipart,
@@ -289,7 +289,7 @@ pub async fn img_to_video(
 /// Accepts `multipart/form-data` with:
 /// - `video` — the video file (required)
 /// - `prompt` — optional analysis prompt
-#[tracing::instrument(skip(multipart))]
+#[tracing::instrument(skip_all)]
 pub async fn analyze_video(
     mut multipart: Multipart,
 ) -> Result<Json<VideoAnalysis>, (StatusCode, String)> {
@@ -357,7 +357,7 @@ pub async fn analyze_video(
 /// - `video` — the video file (required)
 /// - `max_frames` — maximum number of frames to extract (optional, default 10)
 /// - `interval_seconds` — interval between frames in seconds (optional)
-#[tracing::instrument(skip(multipart))]
+#[tracing::instrument(skip_all)]
 pub async fn extract_frames(
     mut multipart: Multipart,
 ) -> Result<Json<ExtractFramesResponse>, (StatusCode, String)> {
@@ -458,7 +458,7 @@ pub async fn extract_frames(
 ///
 /// Accepts `multipart/form-data` with:
 /// - `video` — the video file (required)
-#[tracing::instrument(skip(multipart))]
+#[tracing::instrument(skip_all)]
 pub async fn transcribe_video(
     mut multipart: Multipart,
 ) -> Result<Json<VideoTranscript>, (StatusCode, String)> {
@@ -514,7 +514,7 @@ pub async fn transcribe_video(
 }
 
 /// List available video generation models.
-#[tracing::instrument]
+#[tracing::instrument(skip_all)]
 pub async fn list_models() -> Result<Json<VideoModelsResponse>, (StatusCode, String)> {
     let worker = create_videogen_worker().map_err(|e| (StatusCode::SERVICE_UNAVAILABLE, e))?;
 

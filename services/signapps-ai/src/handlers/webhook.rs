@@ -18,7 +18,7 @@ pub struct WebhookResponse {
 }
 
 /// Ingest arbitrary JSON from external services.
-#[tracing::instrument(skip(state, payload))]
+#[tracing::instrument(skip_all)]
 pub async fn ingest_webhook(
     State(state): State<AppState>,
     Path(source_type): Path<String>,

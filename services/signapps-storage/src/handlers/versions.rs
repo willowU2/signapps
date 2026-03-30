@@ -17,6 +17,7 @@ where
     (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn list_versions(
     State(state): State<AppState>,
     Path(file_id): Path<Uuid>,
@@ -29,6 +30,7 @@ pub async fn list_versions(
     Ok(Json(versions))
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn restore_version(
     State(state): State<AppState>,
     axum::Extension(_user_id): axum::Extension<Uuid>,

@@ -48,6 +48,7 @@ pub struct UpdateExperimentRequest {
 // Handlers
 // ---------------------------------------------------------------------------
 
+#[tracing::instrument(skip_all)]
 pub async fn list_experiments(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -66,6 +67,7 @@ pub async fn list_experiments(
     Ok((StatusCode::OK, Json(serde_json::json!(rows))))
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn create_experiment(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -107,6 +109,7 @@ pub async fn create_experiment(
     Ok((StatusCode::CREATED, Json(serde_json::json!(row))))
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn update_experiment(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -151,6 +154,7 @@ pub async fn update_experiment(
     Ok((StatusCode::OK, Json(serde_json::json!(row))))
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn delete_experiment(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

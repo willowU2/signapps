@@ -21,6 +21,7 @@ pub struct ComponentsHealth {
 }
 
 /// Health check endpoint.
+#[tracing::instrument(skip_all)]
 pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
     let vectors_healthy = state.vectors.get_stats(None).await.is_ok();
     let embeddings_healthy = state.embeddings.health_check().await.unwrap_or(false);

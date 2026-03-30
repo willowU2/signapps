@@ -67,14 +67,14 @@ pub struct MountResponse {
 }
 
 /// List all mount points.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip_all)]
 pub async fn list_mounts(State(_state): State<AppState>) -> Result<Json<Vec<MountPoint>>> {
     let mounts = get_system_mounts().await?;
     Ok(Json(mounts))
 }
 
 /// Mount a device.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip_all)]
 pub async fn mount(
     State(_state): State<AppState>,
     Json(payload): Json<MountRequest>,
@@ -182,7 +182,7 @@ pub async fn mount(
 }
 
 /// Unmount a filesystem.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip_all)]
 pub async fn unmount(
     State(_state): State<AppState>,
     Path(path): Path<String>,

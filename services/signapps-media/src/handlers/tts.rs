@@ -33,6 +33,7 @@ pub struct SynthesizeResponse {
 }
 
 /// Synthesize speech from text
+#[tracing::instrument(skip_all)]
 pub async fn synthesize(
     State(state): State<Arc<AppState>>,
     Json(request): Json<SynthesizeRequest>,
@@ -87,6 +88,7 @@ pub async fn synthesize(
 }
 
 /// Synthesize speech with streaming
+#[tracing::instrument(skip_all)]
 pub async fn synthesize_stream(
     State(state): State<Arc<AppState>>,
     Json(request): Json<SynthesizeRequest>,
@@ -123,6 +125,7 @@ pub async fn synthesize_stream(
 }
 
 /// List available voices
+#[tracing::instrument(skip_all)]
 pub async fn list_voices(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<Voice>>, (StatusCode, String)> {

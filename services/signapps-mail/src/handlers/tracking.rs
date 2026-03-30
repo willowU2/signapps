@@ -82,6 +82,7 @@ pub struct TrackingStats {
 ///
 /// Serves a 1×1 transparent GIF.  Logs the open event (upserts the open
 /// record so repeated opens increment `open_count`).
+#[tracing::instrument(skip_all)]
 pub async fn track_open(
     State(state): State<AppState>,
     Path(tracking_id): Path<Uuid>,
@@ -135,6 +136,7 @@ pub async fn track_open(
 }
 
 /// GET /api/v1/mail/emails/tracking?email_id=...&account_id=...
+#[tracing::instrument(skip_all)]
 pub async fn list_tracking(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -181,6 +183,7 @@ pub async fn list_tracking(
 }
 
 /// GET /api/v1/mail/emails/tracking/stats
+#[tracing::instrument(skip_all)]
 pub async fn tracking_stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

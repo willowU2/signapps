@@ -125,7 +125,7 @@ static EXTERNAL_STORAGES: Lazy<RwLock<Vec<ExternalStorage>>> =
     Lazy::new(|| RwLock::new(Vec::new()));
 
 /// List all external storage (USB, NAS, etc.).
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip_all)]
 pub async fn list_external(State(_state): State<AppState>) -> Result<Json<Vec<ExternalStorage>>> {
     let mut storages = Vec::new();
 
@@ -168,7 +168,7 @@ pub async fn list_external(State(_state): State<AppState>) -> Result<Json<Vec<Ex
 }
 
 /// Connect external storage (NFS, SMB, S3).
-#[tracing::instrument(skip(_state, payload))]
+#[tracing::instrument(skip_all)]
 pub async fn connect_external(
     State(_state): State<AppState>,
     Json(payload): Json<ConnectRequest>,
@@ -275,7 +275,7 @@ pub async fn connect_external(
 }
 
 /// Disconnect external storage.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip_all)]
 pub async fn disconnect_external(
     State(_state): State<AppState>,
     Path(id): Path<Uuid>,

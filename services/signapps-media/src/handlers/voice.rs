@@ -21,6 +21,7 @@ use tokio::sync::mpsc;
 use crate::AppState;
 
 /// WebSocket upgrade handler for voice pipeline.
+#[tracing::instrument(skip_all)]
 pub async fn voice_ws(
     ws: WebSocketUpgrade,
     State(state): State<Arc<AppState>>,

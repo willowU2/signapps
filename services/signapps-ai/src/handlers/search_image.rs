@@ -42,7 +42,7 @@ pub struct ImageSearchResultItem {
 /// - `image` — the image file (required)
 /// - `limit` — optional result count, default 10
 /// - `collections` — optional comma-separated collection names
-#[tracing::instrument(skip(state, multipart))]
+#[tracing::instrument(skip_all)]
 pub async fn search_by_image(
     State(state): State<AppState>,
     mut multipart: Multipart,

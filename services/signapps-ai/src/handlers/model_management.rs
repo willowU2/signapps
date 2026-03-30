@@ -43,6 +43,7 @@ pub struct HardwareResponse {
 }
 
 /// List downloaded/ready models.
+#[tracing::instrument(skip_all)]
 pub async fn list_local_models(
     State(state): State<AppState>,
 ) -> Result<Json<LocalModelsResponse>, (StatusCode, String)> {
@@ -66,6 +67,7 @@ pub async fn list_local_models(
 }
 
 /// List all available models (including not-yet-downloaded).
+#[tracing::instrument(skip_all)]
 pub async fn list_available_models(
     State(state): State<AppState>,
 ) -> Result<Json<AvailableModelsResponse>, (StatusCode, String)> {
@@ -79,6 +81,7 @@ pub async fn list_available_models(
 }
 
 /// Dynamically search HuggingFace for models.
+#[tracing::instrument(skip_all)]
 pub async fn search_models(
     State(state): State<AppState>,
     Query(query): Query<SearchQuery>,
@@ -102,6 +105,7 @@ pub async fn search_models(
 }
 
 /// Download a model (async — spawns background task and returns immediately).
+#[tracing::instrument(skip_all)]
 pub async fn download_model(
     State(state): State<AppState>,
     Json(request): Json<DownloadModelRequest>,
@@ -145,6 +149,7 @@ pub async fn download_model(
 }
 
 /// Get status of a single model.
+#[tracing::instrument(skip_all)]
 pub async fn get_model_status(
     State(state): State<AppState>,
     Path(model_id): Path<String>,
@@ -163,6 +168,7 @@ pub async fn get_model_status(
 }
 
 /// Delete a downloaded model.
+#[tracing::instrument(skip_all)]
 pub async fn delete_model(
     State(state): State<AppState>,
     Path(model_id): Path<String>,
@@ -186,6 +192,7 @@ pub async fn delete_model(
 }
 
 /// Get detected hardware profile.
+#[tracing::instrument(skip_all)]
 pub async fn get_hardware(
     State(state): State<AppState>,
 ) -> Result<Json<HardwareResponse>, (StatusCode, String)> {

@@ -34,6 +34,7 @@ pub enum TranscriptionSource {
 /// Accepts `multipart/form-data` with:
 /// - `audio`: audio blob (webm, ogg, wav, mp4, mp3)
 /// - `language`: optional ISO-639-1 language hint (e.g. "fr", "en")
+#[tracing::instrument(skip_all)]
 pub async fn transcribe_audio(
     State(_state): State<AppState>,
     mut multipart: Multipart,

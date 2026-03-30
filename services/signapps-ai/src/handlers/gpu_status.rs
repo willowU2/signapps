@@ -18,6 +18,7 @@ pub struct GpuStatusResponse {
 }
 
 /// Get current GPU status including loaded models and VRAM usage.
+#[tracing::instrument(skip_all)]
 pub async fn get_gpu_status(
     State(state): State<AppState>,
 ) -> Result<Json<GpuStatusResponse>, (StatusCode, String)> {
@@ -43,6 +44,7 @@ pub async fn get_gpu_status(
 }
 
 /// List load profiles for all hardware tiers.
+#[tracing::instrument(skip_all)]
 pub async fn list_profiles() -> Json<Vec<LoadProfile>> {
     let tiers = [
         HardwareTier::Cpu,
@@ -57,6 +59,7 @@ pub async fn list_profiles() -> Json<Vec<LoadProfile>> {
 }
 
 /// Get recommended models based on detected hardware.
+#[tracing::instrument(skip_all)]
 pub async fn get_recommended_models(
     State(state): State<AppState>,
 ) -> Result<Json<LoadProfile>, (StatusCode, String)> {

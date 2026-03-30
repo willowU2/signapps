@@ -30,7 +30,7 @@ pub struct ModelsQuery {
 }
 
 /// List available models (optionally for a specific provider).
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn list_models(
     State(state): State<AppState>,
     Query(query): Query<ModelsQuery>,

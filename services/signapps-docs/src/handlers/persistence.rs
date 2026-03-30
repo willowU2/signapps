@@ -3,6 +3,7 @@ use uuid::Uuid;
 use yrs::{updates::decoder::Decode, Doc, ReadTxn, StateVector, Transact};
 
 /// Save document state to PostgreSQL
+#[tracing::instrument(skip_all)]
 pub async fn save_document(
     pool: &sqlx::PgPool,
     doc_id: &str,
@@ -38,6 +39,7 @@ pub async fn save_document(
 }
 
 /// Load document state from PostgreSQL
+#[tracing::instrument(skip_all)]
 pub async fn load_document(pool: &sqlx::PgPool, doc_id: &str) -> Result<Option<Doc>, String> {
     let doc_uuid = Uuid::parse_str(doc_id).map_err(|e| format!("Invalid document ID: {}", e))?;
 

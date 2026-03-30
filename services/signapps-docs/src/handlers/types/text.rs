@@ -19,6 +19,7 @@ pub struct DocumentResponse {
 
 /// Create a new text document and persist its initial CRDT state to the
 /// database so the first WebSocket client receives a well-formed structure.
+#[tracing::instrument(skip_all)]
 pub async fn create_document(
     State(state): State<AppState>,
     Json(payload): Json<CreateTextDocumentRequest>,

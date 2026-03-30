@@ -41,6 +41,7 @@ pub struct MetadataResponse {
 }
 
 /// Extract text from an image
+#[tracing::instrument(skip_all)]
 pub async fn extract_text(
     State(state): State<Arc<AppState>>,
     Query(params): Query<OcrQueryParams>,
@@ -122,6 +123,7 @@ pub async fn extract_text(
 }
 
 /// Process a multi-page document
+#[tracing::instrument(skip_all)]
 pub async fn process_document(
     State(state): State<Arc<AppState>>,
     Query(params): Query<OcrQueryParams>,
@@ -205,6 +207,7 @@ pub struct BatchOcrResponse {
 }
 
 /// Batch process multiple files (async job)
+#[tracing::instrument(skip_all)]
 pub async fn batch_process(
     State(state): State<Arc<AppState>>,
     Json(request): Json<BatchOcrRequest>,

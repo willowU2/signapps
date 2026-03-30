@@ -62,6 +62,7 @@ pub struct SpeakerResponse {
 }
 
 /// Transcribe audio file
+#[tracing::instrument(skip_all)]
 pub async fn transcribe(
     State(state): State<Arc<AppState>>,
     Query(params): Query<TranscribeParams>,
@@ -163,6 +164,7 @@ pub async fn transcribe(
 }
 
 /// Transcribe with streaming results (Server-Sent Events)
+#[tracing::instrument(skip_all)]
 pub async fn transcribe_stream(
     State(state): State<Arc<AppState>>,
     Query(params): Query<TranscribeParams>,
@@ -242,6 +244,7 @@ pub async fn transcribe_stream(
 }
 
 /// List available models
+#[tracing::instrument(skip_all)]
 pub async fn list_models(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<SttModel>>, (StatusCode, String)> {

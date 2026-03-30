@@ -41,7 +41,7 @@ impl From<Route> for RouteResponse {
 }
 
 /// List all routes.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn list_routes(State(state): State<AppState>) -> Result<Json<Vec<RouteResponse>>> {
     let repo = RouteRepository::new(&state.pool);
     let routes = repo.list().await?;
@@ -52,7 +52,7 @@ pub async fn list_routes(State(state): State<AppState>) -> Result<Json<Vec<Route
 }
 
 /// Get route by ID.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn get_route(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -68,7 +68,7 @@ pub async fn get_route(
 }
 
 /// Create a new route.
-#[tracing::instrument(skip(state, payload))]
+#[tracing::instrument(skip_all)]
 pub async fn create_route(
     State(state): State<AppState>,
     Json(payload): Json<CreateRoute>,
@@ -95,7 +95,7 @@ pub async fn create_route(
 }
 
 /// Update a route.
-#[tracing::instrument(skip(state, payload))]
+#[tracing::instrument(skip_all)]
 pub async fn update_route(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -137,7 +137,7 @@ pub async fn update_route(
 }
 
 /// Delete a route.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn delete_route(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -161,7 +161,7 @@ pub async fn delete_route(
 }
 
 /// Enable a route.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn enable_route(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -179,7 +179,7 @@ pub async fn enable_route(
 }
 
 /// Disable a route.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip_all)]
 pub async fn disable_route(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

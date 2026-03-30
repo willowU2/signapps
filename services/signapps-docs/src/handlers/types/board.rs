@@ -45,6 +45,7 @@ pub struct ColumnsResponse {
 
 /// Create a new board (Kanban) and persist its initial CRDT state to the
 /// database so the first WebSocket client receives a well-formed structure.
+#[tracing::instrument(skip_all)]
 pub async fn create_board(
     State(state): State<AppState>,
     Json(payload): Json<CreateBoardRequest>,
@@ -98,6 +99,7 @@ pub async fn create_board(
 }
 
 /// Get columns from board
+#[tracing::instrument(skip_all)]
 pub async fn get_columns(
     State(_state): State<AppState>,
     Path(_doc_id): Path<String>,

@@ -47,6 +47,7 @@ pub struct UpsertEsgQuarterlyRequest {
 // ---------------------------------------------------------------------------
 
 /// GET /api/v1/esg/scores
+#[tracing::instrument(skip_all)]
 pub async fn get_esg_scores(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -67,6 +68,7 @@ pub async fn get_esg_scores(
 }
 
 /// PUT /api/v1/esg/scores
+#[tracing::instrument(skip_all)]
 pub async fn upsert_esg_score(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -102,6 +104,7 @@ pub async fn upsert_esg_score(
 // ---------------------------------------------------------------------------
 
 /// GET /api/v1/esg/quarterly
+#[tracing::instrument(skip_all)]
 pub async fn get_esg_quarterly(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -122,6 +125,7 @@ pub async fn get_esg_quarterly(
 }
 
 /// PUT /api/v1/esg/quarterly
+#[tracing::instrument(skip_all)]
 pub async fn upsert_esg_quarterly(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -44,6 +44,7 @@ pub struct TranscriptionJob {
 /// `meet.session.ended` event fires.  If the event contains a recording_id,
 /// a transcription job is created and the AI transcription pipeline is
 /// triggered asynchronously.
+#[tracing::instrument(skip_all)]
 pub async fn handle_session_ended(
     State(state): State<AppState>,
     Json(event): Json<SessionEndedEvent>,

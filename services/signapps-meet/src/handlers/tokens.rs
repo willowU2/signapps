@@ -22,6 +22,7 @@ pub struct TokenQuery {
 }
 
 /// Get a token for joining any room (by room code or ID)
+#[tracing::instrument(skip_all)]
 pub async fn get_token(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -106,6 +107,7 @@ pub async fn get_token(
 }
 
 /// Get a token for a specific room by ID
+#[tracing::instrument(skip_all)]
 pub async fn get_room_token(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

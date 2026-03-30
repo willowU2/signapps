@@ -19,7 +19,7 @@ fn get_workspace_id_from_headers(headers: &HeaderMap) -> Option<Uuid> {
 }
 
 /// List the contents of a specific folder (or the root if parent_id is missing/null)
-#[tracing::instrument(skip(state, claims, headers))]
+#[tracing::instrument(skip_all)]
 pub async fn list_nodes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -77,7 +77,7 @@ pub async fn list_nodes(
 }
 
 /// Create a new folder or link an existing file/document
-#[tracing::instrument(skip(state, claims, headers))]
+#[tracing::instrument(skip_all)]
 pub async fn create_node(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -121,7 +121,7 @@ pub async fn create_node(
 }
 
 /// Rename or move a node
-#[tracing::instrument(skip(state, claims))]
+#[tracing::instrument(skip_all)]
 pub async fn update_node(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -163,7 +163,7 @@ pub async fn update_node(
 }
 
 /// Soft delete a node
-#[tracing::instrument(skip(state, claims))]
+#[tracing::instrument(skip_all)]
 pub async fn delete_node(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

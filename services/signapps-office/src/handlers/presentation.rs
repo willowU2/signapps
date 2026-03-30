@@ -12,6 +12,7 @@ use crate::presentation::{
 };
 
 /// Export presentation JSON to PPTX
+#[tracing::instrument(skip_all)]
 pub async fn export_pptx(
     axum::extract::State(state): axum::extract::State<crate::AppState>,
     Json(payload): Json<serde_json::Value>,
@@ -86,6 +87,7 @@ pub async fn export_pptx(
 }
 
 /// Export presentation to PDF (all slides)
+#[tracing::instrument(skip_all)]
 pub async fn export_slides_pdf(
     axum::extract::State(state): axum::extract::State<crate::AppState>,
     Json(payload): Json<serde_json::Value>,
@@ -171,6 +173,7 @@ pub async fn export_slides_pdf(
 }
 
 /// Export single slide to PNG
+#[tracing::instrument(skip_all)]
 pub async fn export_slide_png(Json(payload): Json<serde_json::Value>) -> Response {
     let presentation = match parse_json_to_presentation(&payload) {
         Ok(p) => p,
@@ -232,6 +235,7 @@ pub async fn export_slide_png(Json(payload): Json<serde_json::Value>) -> Respons
 }
 
 /// Export single slide to SVG
+#[tracing::instrument(skip_all)]
 pub async fn export_slide_svg(Json(payload): Json<serde_json::Value>) -> Response {
     let presentation = match parse_json_to_presentation(&payload) {
         Ok(p) => p,
@@ -293,6 +297,7 @@ pub async fn export_slide_svg(Json(payload): Json<serde_json::Value>) -> Respons
 }
 
 /// Export all slides as PNG (returns JSON with base64 encoded images)
+#[tracing::instrument(skip_all)]
 pub async fn export_all_slides_png(Json(payload): Json<serde_json::Value>) -> Response {
     let presentation = match parse_json_to_presentation(&payload) {
         Ok(p) => p,
@@ -347,6 +352,7 @@ pub async fn export_all_slides_png(Json(payload): Json<serde_json::Value>) -> Re
 }
 
 /// Export all slides as SVG (returns JSON with SVG strings)
+#[tracing::instrument(skip_all)]
 pub async fn export_all_slides_svg(Json(payload): Json<serde_json::Value>) -> Response {
     let presentation = match parse_json_to_presentation(&payload) {
         Ok(p) => p,
@@ -401,6 +407,7 @@ pub async fn export_all_slides_svg(Json(payload): Json<serde_json::Value>) -> Re
 }
 
 /// Get presentation service info
+#[tracing::instrument(skip_all)]
 pub async fn presentation_info() -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "service": "SignApps Office - Presentations",

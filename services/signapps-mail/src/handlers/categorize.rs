@@ -207,6 +207,7 @@ fn default_true() -> bool {
 /// Fetches the last 50 unread emails across all accounts belonging to the
 /// authenticated user, categorizes them via keyword heuristics, optionally
 /// updates their `labels` field in the DB, and returns the results.
+#[tracing::instrument(skip_all)]
 pub async fn categorize_inbox(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -296,6 +297,7 @@ pub struct CategorySettings {
 ///
 /// Saves per-account categorization preferences into the `metadata` JSONB
 /// column of `mail.accounts`. Creates the column value if it doesn't exist yet.
+#[tracing::instrument(skip_all)]
 pub async fn save_categorize_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -368,6 +370,7 @@ pub async fn save_categorize_settings(
 /// Given an email and a category, look up the account for that email, ensure
 /// the category label exists in `mail.labels` for that account, then append
 /// the label name to `mail.emails.labels[]`.
+#[tracing::instrument(skip_all)]
 pub async fn ensure_label_and_apply(
     pool: &sqlx::PgPool,
     email_id: Uuid,
