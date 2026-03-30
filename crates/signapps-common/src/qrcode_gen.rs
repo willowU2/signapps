@@ -29,14 +29,14 @@ mod tests {
 
     #[test]
     fn test_generate_qr_svg() {
-        let svg = generate_qr_svg("https://example.com").unwrap();
+        let svg = generate_qr_svg("https://example.com").expect("valid URL should generate QR");
         assert!(svg.contains("<svg"));
         assert!(svg.contains("</svg>"));
     }
 
     #[test]
     fn test_generate_qr_empty_data() {
-        let svg = generate_qr_svg("").unwrap();
+        let svg = generate_qr_svg("").expect("empty data should still generate QR");
         assert!(svg.contains("<svg"));
     }
 }

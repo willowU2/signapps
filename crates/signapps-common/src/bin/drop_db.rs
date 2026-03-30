@@ -14,7 +14,7 @@ async fn main() {
         .acquire_timeout(Duration::from_secs(10))
         .connect(&database_url)
         .await
-        .unwrap();
+        .expect("failed to connect to database");
 
     let schemas = vec![
         "identity",

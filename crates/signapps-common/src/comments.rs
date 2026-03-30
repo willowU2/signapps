@@ -377,7 +377,7 @@ mod tests {
         // Add reaction
         assert!(store.add_reaction("document", "doc-1", comment.id, "👍", reactor));
         let comments = store.list_comments("document", "doc-1");
-        assert_eq!(comments[0].reactions.get("👍").unwrap().len(), 1);
+        assert_eq!(comments[0].reactions.get("👍").expect("reaction key present").len(), 1);
 
         // Toggle off
         assert!(store.add_reaction("document", "doc-1", comment.id, "👍", reactor));

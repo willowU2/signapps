@@ -148,9 +148,9 @@ mod tests {
         };
 
         let id = entry.id.clone();
-        store.add_entry(entry).unwrap();
+        store.add_entry(entry).expect("adding entry should succeed");
 
-        let retrieved = store.get_entry(&id).unwrap();
+        let retrieved = store.get_entry(&id).expect("entry should be retrievable");
         assert_eq!(retrieved.name, "Test Account");
     }
 
@@ -171,7 +171,7 @@ mod tests {
                 created_by: "creator".to_string(),
                 created_at: Utc::now(),
             };
-            store.add_entry(entry).unwrap();
+            store.add_entry(entry).expect("adding entry should succeed");
         }
 
         let entries = store.list_entries(team_id);
@@ -194,10 +194,10 @@ mod tests {
         };
 
         let id = entry.id.clone();
-        store.add_entry(entry).unwrap();
+        store.add_entry(entry).expect("adding entry should succeed");
         assert!(store.get_entry(&id).is_some());
 
-        store.delete_entry(&id).unwrap();
+        store.delete_entry(&id).expect("delete should succeed");
         assert!(store.get_entry(&id).is_none());
     }
 

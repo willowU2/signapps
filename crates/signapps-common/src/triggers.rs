@@ -116,7 +116,7 @@ mod tests {
             vec![],
             vec!["send_welcome_email".to_string()],
         );
-        engine.register(rule).unwrap();
+        engine.register(rule).expect("rule registration should succeed");
         let results = engine.evaluate("user_added");
         assert_eq!(results.len(), 1);
     }

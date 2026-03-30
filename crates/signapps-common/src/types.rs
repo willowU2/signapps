@@ -566,7 +566,7 @@ mod tests {
         assert_ne!(id1, id2);
 
         let uuid_str = "550e8400-e29b-41d4-a716-446655440000";
-        let id3: UserId = uuid_str.parse().unwrap();
+        let id3: UserId = uuid_str.parse().expect("valid UUID string should parse");
         assert_eq!(id3.to_string(), uuid_str);
     }
 
@@ -584,7 +584,7 @@ mod tests {
 
     #[test]
     fn test_email_normalization() {
-        let email = Email::new("TEST@EXAMPLE.COM").unwrap();
+        let email = Email::new("TEST@EXAMPLE.COM").expect("valid email should be accepted");
         assert_eq!(email.as_str(), "test@example.com");
     }
 
@@ -597,21 +597,21 @@ mod tests {
 
     #[test]
     fn test_password_strength() {
-        let weak = Password::new("password").unwrap();
-        let strong = Password::new("MyStr0ng!Pass").unwrap();
+        let weak = Password::new("password").expect("password should be accepted");
+        let strong = Password::new("MyStr0ng!Pass").expect("strong password should be accepted");
 
         assert!(weak.strength_score() < strong.strength_score());
     }
 
     #[test]
     fn test_password_hash() {
-        let password = Password::new("securepassword123").unwrap();
-        let hash = PasswordHash::from_password(&password).unwrap();
+        let password = Password::new("securepassword123").expect("valid password should be accepted");
+        let hash = PasswordHash::from_password(&password).expect("password hashing should succeed");
 
-        assert!(hash.verify(&password).unwrap());
+        assert!(hash.verify(&password).expect("verification should succeed"));
         assert!(!hash
-            .verify(&Password::new("wrongpassword1").unwrap())
-            .unwrap());
+            .verify(&Password::new("wrongpassword1").expect("valid password should be accepted"))
+            .expect("verification should succeed"));
     }
 
     #[test]

@@ -162,7 +162,7 @@ mod tests {
             downloads: 0,
         };
 
-        store.register(app).unwrap();
+        store.register(app).expect("register should succeed");
         assert!(store.install("user1", "app1").is_ok());
         assert_eq!(store.user_apps("user1").len(), 1);
 

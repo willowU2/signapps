@@ -680,9 +680,9 @@ mod tests {
             .route("/ping", get(|| async { "pong" }))
             .layer(middleware::from_fn(security_headers_middleware));
 
-        let request = Request::builder().uri("/ping").body(Body::empty()).unwrap();
+        let request = Request::builder().uri("/ping").body(Body::empty()).expect("valid request builder");
 
-        let response = app.oneshot(request).await.unwrap();
+        let response = app.oneshot(request).await.expect("handler should respond");
         let headers = response.headers();
 
         assert_eq!(

@@ -377,7 +377,7 @@ mod tests {
             .with_detail("User with ID 123 not found")
             .with_request_id("req-abc-123");
 
-        let json = serde_json::to_string_pretty(&problem).unwrap();
+        let json = serde_json::to_string_pretty(&problem).expect("ProblemDetails is serializable");
         assert!(json.contains("urn:signapps:error:not_found"));
         assert!(json.contains("NOT_FOUND"));
         assert!(json.contains("404"));

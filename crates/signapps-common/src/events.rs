@@ -19,7 +19,7 @@
 //! bus.publish(DomainEvent::UserCreated { id: Uuid::new_v4() });
 //!
 //! // Receive the event
-//! let event = rx.recv().await.unwrap();
+//! let event = rx.recv().await.expect("channel should be open");
 //! ```
 
 use chrono::{DateTime, Utc};

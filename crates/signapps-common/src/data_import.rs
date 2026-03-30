@@ -104,7 +104,7 @@ mod tests {
     #[test]
     fn test_csv() {
         let csv = "name,email\nAlice,alice@test.com\nBob,bob@test.com";
-        let records = parse_csv(csv).unwrap();
+        let records = parse_csv(csv).expect("valid CSV should parse");
         assert_eq!(records.len(), 2);
         assert_eq!(records[0]["name"], "Alice");
     }
@@ -112,7 +112,7 @@ mod tests {
     #[test]
     fn test_vcard() {
         let vcard = "BEGIN:VCARD\nFN:Alice\nEMAIL:alice@test.com\nEND:VCARD";
-        let contacts = parse_vcard(vcard).unwrap();
+        let contacts = parse_vcard(vcard).expect("valid vCard should parse");
         assert_eq!(contacts.len(), 1);
         assert_eq!(contacts[0]["name"], "Alice");
     }

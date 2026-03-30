@@ -67,21 +67,21 @@ mod tests {
 
     #[test]
     fn test_encrypt_decrypt_roundtrip() {
-        let cipher = PiiCipher::from_hex_key(&test_key()).unwrap();
+        let cipher = PiiCipher::from_hex_key(&test_key()).expect("valid test key");
         let plaintext = "user@example.com";
-        let encrypted = cipher.encrypt(plaintext).unwrap();
+        let encrypted = cipher.encrypt(plaintext).expect("encryption should succeed");
         assert_ne!(encrypted, plaintext.as_bytes());
-        let decrypted = cipher.decrypt(&encrypted).unwrap();
+        let decrypted = cipher.decrypt(&encrypted).expect("decryption should succeed");
         assert_eq!(decrypted, plaintext);
     }
 
     #[test]
     fn test_different_nonces() {
-        let cipher = PiiCipher::from_hex_key(&test_key()).unwrap();
-        let e1 = cipher.encrypt("same text").unwrap();
-        let e2 = cipher.encrypt("same text").unwrap();
+        let cipher = PiiCipher::from_hex_key(&test_key()).expect("valid test key");
+        let e1 = cipher.encrypt("same text").expect("encryption should succeed");
+        let e2 = cipher.encrypt("same text").expect("encryption should succeed");
         assert_ne!(e1, e2);
-        assert_eq!(cipher.decrypt(&e1).unwrap(), cipher.decrypt(&e2).unwrap());
+        assert_eq!(cipher.decrypt(&e1).expect("decryption should succeed"), cipher.decrypt(&e2).expect("decryption should succeed"));
     }
 
     #[test]
@@ -91,8 +91,8 @@ mod tests {
 
     #[test]
     fn test_tampered_ciphertext() {
-        let cipher = PiiCipher::from_hex_key(&test_key()).unwrap();
-        let mut encrypted = cipher.encrypt("secret").unwrap();
+        let cipher = PiiCipher::from_hex_key(&test_key()).expect("valid test key");
+        let mut encrypted = cipher.encrypt("secret").expect("encryption should succeed");
         encrypted[15] ^= 0xFF;
         assert!(cipher.decrypt(&encrypted).is_err());
     }

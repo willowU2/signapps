@@ -332,10 +332,10 @@ mod tests {
         let mut registry = PluginRegistry::new();
         registry
             .register(Box::new(TestPlugin::new("a", "A")))
-            .unwrap();
+            .expect("register should succeed");
         registry
             .register(Box::new(TestPlugin::new("b", "B")))
-            .unwrap();
+            .expect("register should succeed");
 
         let result = registry.init_all().await;
         assert!(result.is_ok());
@@ -346,10 +346,10 @@ mod tests {
         let mut registry = PluginRegistry::new();
         registry
             .register(Box::new(TestPlugin::new("ok", "OK")))
-            .unwrap();
+            .expect("register should succeed");
         registry
             .register(Box::new(TestPlugin::new("fail", "Fail").with_fail_init()))
-            .unwrap();
+            .expect("register should succeed");
 
         let result = registry.init_all().await;
         assert!(result.is_err());
@@ -361,10 +361,10 @@ mod tests {
         let mut registry = PluginRegistry::new();
         registry
             .register(Box::new(TestPlugin::new("a", "A")))
-            .unwrap();
+            .expect("register should succeed");
         registry
             .register(Box::new(TestPlugin::new("b", "B")))
-            .unwrap();
+            .expect("register should succeed");
 
         let result = registry.shutdown_all().await;
         assert!(result.is_ok());
@@ -375,12 +375,12 @@ mod tests {
         let mut registry = PluginRegistry::new();
         registry
             .register(Box::new(TestPlugin::new("ok", "OK")))
-            .unwrap();
+            .expect("register should succeed");
         registry
             .register(Box::new(
                 TestPlugin::new("fail", "Fail").with_fail_shutdown(),
             ))
-            .unwrap();
+            .expect("register should succeed");
 
         // shutdown_all should return an error but still attempt all plugins
         let result = registry.shutdown_all().await;
@@ -392,7 +392,7 @@ mod tests {
         let mut registry = PluginRegistry::new();
         registry
             .register(Box::new(TestPlugin::new("a", "A")))
-            .unwrap();
+            .expect("register should succeed");
 
         // Should not panic — just returns an empty router
         let _router = registry.routes();

@@ -241,7 +241,7 @@ mod tests {
 
         let behaviors = detector.get_user_behaviors(user_id);
         assert!(behaviors.is_some());
-        assert_eq!(behaviors.unwrap().len(), 1);
+        assert_eq!(behaviors.expect("behaviors should be present").len(), 1);
     }
 
     #[test]
@@ -258,7 +258,7 @@ mod tests {
 
         let anomaly = detector.check_anomaly(user_id);
         assert!(anomaly.is_some());
-        assert_eq!(anomaly.unwrap().anomaly_type, "unusual_ip");
+        assert_eq!(anomaly.expect("anomaly should be detected").anomaly_type, "unusual_ip");
     }
 
     #[test]

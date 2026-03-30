@@ -244,8 +244,8 @@ mod tests {
     use tempfile::TempDir;
 
     fn tmp_index() -> (TempDir, SearchIndex) {
-        let dir = TempDir::new().unwrap();
-        let idx = SearchIndex::new(dir.path()).unwrap();
+        let dir = TempDir::new().expect("temp dir creation should succeed");
+        let idx = SearchIndex::new(dir.path()).expect("search index creation should succeed");
         (dir, idx)
     }
 
@@ -253,8 +253,8 @@ mod tests {
     fn roundtrip_index_and_search() {
         let (_dir, idx) = tmp_index();
         idx.index_document("doc-1", "Budget Q1 2025", "Quarterly budget review", "docs")
-            .unwrap();
-        let hits = idx.search("budget", 10).unwrap();
+            .expect("indexing should succeed");
+        let hits = idx.search("budget", 10).expect("search should succeed");
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].id, "doc-1");
         assert_eq!(hits[0].service, "docs");
@@ -264,9 +264,9 @@ mod tests {
     fn delete_removes_document() {
         let (_dir, idx) = tmp_index();
         idx.index_document("doc-2", "Invoice March", "Payment due", "mail")
-            .unwrap();
-        idx.delete_document("doc-2").unwrap();
-        let hits = idx.search("invoice", 10).unwrap();
+            .expect("indexing should succeed");
+        idx.delete_document("doc-2").expect("delete should succeed");
+        let hits = idx.search("invoice", 10).expect("search should succeed");
         assert!(hits.is_empty());
     }
 }

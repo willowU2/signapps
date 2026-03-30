@@ -287,7 +287,7 @@ mod tests {
         let report = engine.generate(&ReportTemplate::WeeklyActivity).await;
         assert!(report.is_ok());
 
-        let report = report.unwrap();
+        let report = report.expect("report generation should succeed");
         assert_eq!(report.template, ReportTemplate::WeeklyActivity);
         assert!(!report.content.is_empty());
         assert!(!report.metrics.is_empty());
@@ -347,12 +347,12 @@ mod tests {
         let report = engine
             .generate(&ReportTemplate::MonthlyMetrics)
             .await
-            .unwrap();
+            .expect("report generation should succeed");
         let report_id = report.id;
 
         let retrieved = engine.get_report(report_id).await;
         assert!(retrieved.is_some());
-        assert_eq!(retrieved.unwrap().id, report_id);
+        assert_eq!(retrieved.expect("report should be retrievable").id, report_id);
     }
 
     #[tokio::test]
@@ -367,10 +367,10 @@ mod tests {
             enabled: true,
         };
 
-        engine.schedule(config.clone()).await.unwrap();
+        engine.schedule(config.clone()).await.expect("schedule should succeed");
         assert_eq!(engine.list_schedules().await.len(), 1);
 
-        engine.unschedule(config.id).await.unwrap();
+        engine.unschedule(config.id).await.expect("unschedule should succeed");
         assert_eq!(engine.list_schedules().await.len(), 0);
     }
 }
