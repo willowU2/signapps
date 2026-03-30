@@ -1,81 +1,94 @@
 /**
- * App logo resolver — serves logos from local /app-logos/ directory.
+ * App logo resolver — 200 logos served locally from /app-logos/.
+ * Fallback: Google favicon API for unknown apps.
  *
- * Logos are pre-downloaded in public/app-logos/ (no external requests at runtime).
- * Mapping: app name/id → local file path.
+ * Resolution:
+ * 1. app.icon from source → used directly if valid
+ * 2. getAppLogo() → local /app-logos/{name}.png
+ * 3. Google favicon → https://www.google.com/s2/favicons?domain={name}.com&sz=128
  */
 
-/** Map app name/id/image to local logo filename (without extension) */
+/** Map app id/name to local logo filename */
 const APP_LOGO_MAP: Record<string, string> = {
-  // Productivity & Office
-  nextcloud: 'nextcloud', onlyoffice: 'onlyoffice', collabora: 'collabora',
-  bookstack: 'bookstack', outline: 'outline', wiki: 'wikijs', 'wiki.js': 'wikijs', wikijs: 'wikijs',
-  cryptpad: 'cryptpad', etherpad: 'etherpad', hedgedoc: 'hedgedoc',
-
-  // Communication
-  'rocket.chat': 'rocketchat', rocketchat: 'rocketchat', mattermost: 'mattermost',
-  element: 'element', jitsi: 'jitsi', zulip: 'zulip', slack: 'slack', discord: 'discord',
-
-  // Media & Entertainment
-  jellyfin: 'jellyfin', plex: 'plex', emby: 'emby', immich: 'immich',
-  photoprism: 'photoprism', navidrome: 'navidrome', sonarr: 'sonarr', radarr: 'radarr',
-  overseerr: 'overseerr', audiobookshelf: 'audiobookshelf',
-
-  // Development & CI
-  gitea: 'gitea', gitlab: 'gitlab', github: 'github', jenkins: 'jenkins',
-  portainer: 'portainer', n8n: 'n8n', coder: 'coder', 'code-server': 'coder', drone: 'drone',
-
-  // No-code / Low-code
-  nocodb: 'nocodb', appsmith: 'appsmith', directus: 'directus', strapi: 'strapi', supabase: 'supabase',
-
-  // Monitoring & Infra
-  grafana: 'grafana', prometheus: 'prometheus', traefik: 'traefik', nginx: 'nginx', caddy: 'caddy',
-  netdata: 'netdata', sentry: 'sentry', plausible: 'plausible', umami: 'umami', matomo: 'matomo',
-  uptime: 'uptime-kuma', 'uptime-kuma': 'uptime-kuma',
-
-  // Databases
-  postgres: 'postgresql', postgresql: 'postgresql', mariadb: 'mariadb', mysql: 'mysql',
-  mongodb: 'mongodb', redis: 'redis', elasticsearch: 'elasticsearch', meilisearch: 'meilisearch',
-
-  // Storage
-  minio: 'minio', syncthing: 'syncthing', filebrowser: 'filebrowser', seafile: 'seafile',
-  duplicati: 'duplicati',
-
-  // Security & VPN
-  vaultwarden: 'bitwarden', bitwarden: 'bitwarden', wireguard: 'wireguard',
-  pihole: 'pihole', 'pi-hole': 'pihole', adguard: 'adguard', 'adguard-home': 'adguard',
-  authentik: 'authentik', keycloak: 'keycloak', tailscale: 'tailscale', crowdsec: 'crowdsec',
-
-  // Home Automation
-  'home-assistant': 'homeassistant', homeassistant: 'homeassistant',
-  nodered: 'nodered', 'node-red': 'nodered', frigate: 'frigate',
-
-  // CMS
-  wordpress: 'wordpress', ghost: 'ghost',
-
-  // Misc
-  freshrss: 'freshrss', dashy: 'dashy', homarr: 'homarr',
-  paperless: 'paperless', 'paperless-ngx': 'paperless',
-  stirlingpdf: 'stirlingpdf', 'stirling-pdf': 'stirlingpdf',
-  mealie: 'mealie', excalidraw: 'excalidraw', drawio: 'drawio', 'draw.io': 'drawio',
-  firefly: 'firefly', 'firefly-iii': 'firefly',
-  changedetection: 'changedetection', mailpit: 'mailpit', metube: 'metube',
-
-  // Infra
-  docker: 'docker', kubernetes: 'kubernetes', rancher: 'rancher',
-  harbor: 'harbor', vault: 'vault', consul: 'consul', terraform: 'terraform', ansible: 'ansible',
+  '2fauth': '2fauth', 'activepieces': 'activepieces', 'actual-server': 'actual-server',
+  'adguard': 'adguard', 'adminer': 'adminer', 'alist': 'alist', 'ansible': 'ansible',
+  'appsmith': 'appsmith', 'archivebox': 'archivebox', 'audiobookshelf': 'audiobookshelf',
+  'authentik': 'authentik', 'baserow': 'baserow', 'bazarr': 'bazarr', 'bitwarden': 'bitwarden',
+  'blender': 'blender', 'bookstack': 'bookstack', 'brave': 'brave', 'budibase': 'budibase',
+  'caddy': 'caddy', 'calcom': 'calcom', 'calibre': 'calibre', 'calibre-web': 'calibre-web',
+  'changedetection': 'changedetection', 'chatwoot': 'chatwoot', 'chrome': 'chrome',
+  'chromium': 'chromium', 'cloudflared': 'cloudflared', 'coder': 'coder', 'consul': 'consul',
+  'coolify': 'coolify', 'crowdsec': 'crowdsec', 'dashy': 'dashy', 'deluge': 'deluge',
+  'directus': 'directus', 'discord': 'discord', 'discourse': 'discourse', 'docker': 'docker',
+  'dockge': 'dockge', 'docmost': 'docmost', 'dozzle': 'dozzle', 'drawio': 'drawio',
+  'drone': 'drone', 'drupal': 'drupal', 'duplicati': 'duplicati', 'elasticsearch': 'elasticsearch',
+  'element': 'element', 'emby': 'emby', 'esphome': 'esphome', 'excalidraw': 'excalidraw',
+  'filebrowser': 'filebrowser', 'firefly': 'firefly', 'firefly-iii': 'firefly',
+  'firefox': 'firefox', 'flarum': 'flarum', 'flowise': 'flowise', 'forgejo': 'forgejo',
+  'freshrss': 'freshrss', 'frigate': 'frigate', 'ghost': 'ghost', 'ghostfolio': 'ghostfolio',
+  'gitea': 'gitea', 'github': 'github', 'gitlab': 'gitlab', 'glances': 'glances',
+  'gotify': 'gotify', 'grafana': 'grafana', 'grocy': 'grocy', 'guacamole': 'guacamole',
+  'handbrake': 'handbrake', 'harbor': 'harbor', 'healthchecks': 'healthchecks',
+  'hedgedoc': 'hedgedoc', 'heimdall': 'heimdall', 'homarr': 'homarr',
+  'homeassistant': 'homeassistant', 'homepage': 'homepage', 'homer': 'homer',
+  'hoppscotch': 'hoppscotch', 'huginn': 'huginn', 'immich': 'immich',
+  'invoice-ninja': 'invoice-ninja', 'it-tools': 'it-tools', 'jellyfin': 'jellyfin',
+  'jellyseerr': 'jellyseerr', 'jenkins': 'jenkins', 'jira': 'jira', 'jitsi': 'jitsi',
+  'joplin': 'joplin', 'kavita': 'kavita', 'keycloak': 'keycloak', 'kitchenowl': 'kitchenowl',
+  'komga': 'komga', 'kopia': 'kopia', 'kubernetes': 'kubernetes', 'lemmy': 'lemmy',
+  'libretranslate': 'libretranslate', 'linkwarden': 'linkwarden', 'listmonk': 'listmonk',
+  'lobe-chat': 'lobe-chat', 'mailpit': 'mailpit', 'mariadb': 'mariadb',
+  'mastodon': 'mastodon', 'matomo': 'matomo', 'mattermost': 'mattermost', 'mealie': 'mealie',
+  'mediawiki': 'mediawiki', 'meilisearch': 'meilisearch', 'memos': 'memos',
+  'metube': 'metube', 'minecraft-server': 'minecraft-server', 'minio': 'minio',
+  'miniflux': 'miniflux', 'mongodb': 'mongodb', 'monica': 'monica', 'moodle': 'moodle',
+  'mysql': 'mysql', 'n8n': 'n8n', 'navidrome': 'navidrome', 'netdata': 'netdata',
+  'nextcloud': 'nextcloud', 'nextcloud-ls': 'nextcloud-ls', 'nginx': 'nginx',
+  'nocodb': 'nocodb', 'node-red': 'node-red', 'nodered': 'nodered', 'ntfy': 'ntfy',
+  'nzbget': 'nzbget', 'obsidian': 'obsidian', 'octoprint': 'octoprint', 'odoo': 'odoo',
+  'ollama-amd': 'ollama-amd', 'ollama-cpu': 'ollama-cpu', 'ollama-nvidia': 'ollama-nvidia',
+  'onlyoffice': 'onlyoffice', 'open-webui': 'open-webui', 'outline': 'outline',
+  'overseerr': 'overseerr', 'owncloud': 'owncloud', 'paperless': 'paperless-ngx',
+  'paperless-ngx': 'paperless-ngx', 'passbolt': 'passbolt', 'penpot': 'penpot',
+  'phpmyadmin': 'phpmyadmin', 'photoprism': 'photoprism', 'pihole': 'pihole',
+  'pingvin-share': 'pingvin-share', 'piped': 'piped', 'plane': 'plane', 'planka': 'planka',
+  'plausible': 'plausible', 'plex': 'plex', 'pocketbase': 'pocketbase',
+  'portainer': 'portainer', 'postiz': 'postiz', 'postgresql': 'postgresql',
+  'privatebin': 'privatebin', 'prometheus': 'prometheus', 'prowlarr': 'prowlarr',
+  'pterodactyl-panel': 'pterodactyl-panel', 'qbittorrent': 'qbittorrent',
+  'rabbitmq': 'rabbitmq', 'radarr': 'radarr', 'rancher': 'rancher',
+  'reactive-resume': 'reactive-resume', 'readarr': 'readarr', 'readeck': 'readeck',
+  'redis': 'redis', 'redmine': 'redmine', 'rocket-chat': 'rocket-chat',
+  'rocketchat': 'rocketchat', 'sabnzbd': 'sabnzbd', 'scrutiny': 'scrutiny',
+  'searxng': 'searxng', 'semaphore': 'semaphore', 'sentry': 'sentry', 'slack': 'slack',
+  'sonarr': 'sonarr', 'sonarqube': 'sonarqube', 'speedtest-tracker': 'speedtest-tracker',
+  'stalwart-mail': 'stalwart-mail', 'stirlingpdf': 'stirlingpdf',
+  'stirling-pdf': 'stirlingpdf', 'strapi': 'strapi', 'supabase': 'supabase',
+  'syncthing': 'syncthing', 'tailscale': 'tailscale', 'tandoor': 'tandoor',
+  'tautulli': 'tautulli', 'terraform': 'terraform', 'traccar': 'traccar',
+  'traefik': 'traefik', 'transmission': 'transmission', 'trilium': 'trilium',
+  'umami': 'umami', 'unifi-network-application': 'unifi-network-application',
+  'uptime-kuma': 'uptime-kuma', 'vault': 'vault', 'vaultwarden': 'bitwarden',
+  'vikunja': 'vikunja', 'wallabag': 'wallabag', 'wallos': 'wallos',
+  'wg-easy': 'wg-easy', 'wikijs': 'wikijs', 'wireguard': 'wireguard',
+  'wordpress': 'wordpress', 'zigbee2mqtt': 'zigbee2mqtt',
+  // Aliases
+  'postgres': 'postgresql', 'wiki': 'wikijs', 'wiki.js': 'wikijs',
+  'pi-hole': 'pihole', 'code-server': 'coder', 'home-assistant': 'homeassistant',
+  'draw.io': 'drawio', 'rocket.chat': 'rocketchat', 'mongo': 'mongodb',
+  'adguard-home': 'adguard', 'adguardhome': 'adguard', 'uptime': 'uptime-kuma',
+  'uptimekuma': 'uptime-kuma',
 };
 
 /**
- * Get the local logo path for an app.
+ * Get logo for an app.
  *
- * Resolution:
- * 1. Exact match by app id/name
- * 2. Docker image base name
+ * 1. Local match in /app-logos/{name}.png (200 logos)
+ * 2. Docker image name match
  * 3. Fuzzy match (contains)
- * 4. null (fallback to Package icon)
+ * 4. Google favicon fallback for unknown apps
  */
-export function getAppLogo(appIdOrName: string, dockerImage?: string): string | null {
+export function getAppLogo(appIdOrName: string, dockerImage?: string): string {
   const key = appIdOrName.toLowerCase().trim();
 
   // Direct match
@@ -83,13 +96,10 @@ export function getAppLogo(appIdOrName: string, dockerImage?: string): string | 
     return `/app-logos/${APP_LOGO_MAP[key]}.png`;
   }
 
-  // Strip common Docker prefixes
+  // Strip Docker prefixes
   const stripped = key
-    .replace(/^linuxserver\//, '')
-    .replace(/^lscr\.io\/linuxserver\//, '')
-    .replace(/^ghcr\.io\/[^/]+\//, '')
-    .replace(/^docker\.io\//, '')
-    .replace(/^library\//, '');
+    .replace(/^linuxserver\//, '').replace(/^lscr\.io\/linuxserver\//, '')
+    .replace(/^ghcr\.io\/[^/]+\//, '').replace(/^docker\.io\//, '').replace(/^library\//, '');
   if (APP_LOGO_MAP[stripped]) {
     return `/app-logos/${APP_LOGO_MAP[stripped]}.png`;
   }
@@ -109,7 +119,7 @@ export function getAppLogo(appIdOrName: string, dockerImage?: string): string | 
     }
   }
 
-  // Fallback: Google favicon service (works for any domain)
+  // Fallback: Google favicon API
   const sanitized = key.replace(/[^a-z0-9-]/g, '');
   return `https://www.google.com/s2/favicons?domain=${sanitized}.com&sz=128`;
 }
