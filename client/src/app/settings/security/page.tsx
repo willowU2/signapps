@@ -210,7 +210,7 @@ export default function SecuritySettingsPage() {
                     <p className="text-sm font-medium">
                       1. Scannez ce QR code avec votre application
                     </p>
-                    <div className="w-48 h-48 bg-white rounded-lg flex items-center justify-center border overflow-hidden">
+                    <div className="w-48 h-48 bg-white dark:bg-white rounded-lg flex items-center justify-center border overflow-hidden">
                       {qrCode ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={qrCode} alt="QR Code TOTP" className="w-full h-full object-contain" />

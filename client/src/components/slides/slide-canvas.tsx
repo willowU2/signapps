@@ -158,8 +158,7 @@ export function SlideCanvas({
             let currentGhostText = "";
             let ghostedObject: FabricObjectWithId | null = null;
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (c as any).on('text:changed', (e: { target?: FabricObjectWithId }) => {
+            (c as fabric.IText).on('text:changed', (e: { target?: FabricObjectWithId }) => {
                 const target = e.target;
                 if (!target || target.isEditing === false) return;
 
@@ -206,7 +205,7 @@ export function SlideCanvas({
                             c.requestRenderAll();
                         }
                     } catch (err) {
-                        console.debug("Smart Compose error:", err);
+                        console.warn("Smart Compose error:", err);
                     }
                 }, 1200); // 1.2s pause triggers completion
             });
@@ -255,6 +254,9 @@ export function SlideCanvas({
             }
             fabricCanvasRef.current = null
         }
+    // actualBg and pageConfig.orientation intentionally omitted — canvas init runs once;
+    // the second useEffect below handles dimension/bg updates
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [updateObject, fabricCanvasRef, isUpdatingRef, onSelectionChange, showGrid, snapToGrid])
 
     // Update canvas dimensions and background when pageConfig changes
@@ -273,7 +275,8 @@ export function SlideCanvas({
             // Re-render
             canvas.requestRenderAll()
         })
-    }, [pageConfig.orientation, pageConfig.backgroundColor, fabricCanvasRef])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pageConfig.orientation, pageConfig.backgroundColor, actualBg, fabricCanvasRef])
 
     // Sync from Yjs to Canvas
     useEffect(() => {

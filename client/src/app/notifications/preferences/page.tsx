@@ -58,7 +58,7 @@ function Toggle({
         ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
     >
       <span
-        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0
+        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-zinc-200 shadow ring-0
           transition duration-200 ease-in-out
           ${checked ? "translate-x-5" : "translate-x-0"}`}
       />
