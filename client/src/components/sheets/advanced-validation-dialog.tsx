@@ -27,7 +27,7 @@ export function AdvancedValidationDialog({ current, onApply, onClose }: Advanced
     const [dateMax, setDateMax] = useState(current?.type === 'date_range' ? current.maxDate : '')
     const [regexPattern, setRegexPattern] = useState(current?.type === 'regex' ? current.pattern : '')
     const [formula, setFormula] = useState(current?.type === 'custom_formula' ? current.formula : '')
-    const [message, setMessage] = useState((current as any)?.message || '')
+    const [message, setMessage] = useState((current as { message?: string } | undefined)?.message || '')
 
     const handleApply = () => {
         let v: AdvancedValidation | undefined

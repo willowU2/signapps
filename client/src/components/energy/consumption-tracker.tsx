@@ -80,9 +80,8 @@ export function ConsumptionTracker({ data }: ConsumptionTrackerProps) {
                 unit=" kWh"
                 width={60}
               />
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <Tooltip
-                formatter={((v: unknown) => [`${v ?? 0} kWh`, "Consumption"]) as any}
+                formatter={(v: unknown) => [`${v ?? 0} kWh`, "Consumption"] as [string, string]}
                 contentStyle={{ fontSize: 12 }}
               />
               <Line

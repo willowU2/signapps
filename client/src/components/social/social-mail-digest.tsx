@@ -111,7 +111,7 @@ export function SocialMailDigest({ className }: SocialMailDigestProps) {
     try {
       // Retrieve a mail account to send from
       const accountsRes = await mailApi.listAccounts()
-      const accounts = (accountsRes as any).data ?? accountsRes ?? []
+      const accounts = accountsRes.data ?? []
       const accountId: string | undefined = Array.isArray(accounts) && accounts.length > 0
         ? accounts[0].id
         : undefined

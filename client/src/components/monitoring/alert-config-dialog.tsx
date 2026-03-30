@@ -34,7 +34,7 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
-import { AlertConfig, AlertAction, CreateAlertConfigRequest, alertsApi } from '@/lib/api';
+import { AlertConfig, AlertAction, CreateAlertConfigRequest, alertsApi, type MetricType as ApiMetricType } from '@/lib/api';
 
 interface AlertConfigDialogProps {
   open: boolean;
@@ -122,7 +122,7 @@ export function AlertConfigDialog({
       const payload: CreateAlertConfigRequest = {
         name: data.name,
         metric: data.metric,
-        metric_type: data.metric === 'network' ? 'network_in' : `${data.metric}_usage` as any,
+        metric_type: (data.metric === 'network' ? 'network_in' : `${data.metric}_usage`) as ApiMetricType,
         condition: data.condition,
         operator: data.condition === 'above' ? 'greater_than' : 'less_than',
         threshold: data.threshold,

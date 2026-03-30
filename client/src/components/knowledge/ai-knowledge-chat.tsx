@@ -112,7 +112,7 @@ export function AiKnowledgeChat({ collections = ['internal-docs'], compact = fal
       )}
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-3" ref={scrollRef as any}>
+      <ScrollArea className="flex-1 p-3" ref={scrollRef}>
         <div className="space-y-3">
           {messages.map(msg => (
             <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>

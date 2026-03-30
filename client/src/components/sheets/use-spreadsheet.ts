@@ -45,7 +45,7 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
         // RT2: Set local user awareness
         const myColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)]
         wsProvider.awareness.setLocalStateField('user', {
-            name: (typeof window !== 'undefined' && (window as any).__signAppsUser?.name) || 'Utilisateur',
+            name: (typeof window !== 'undefined' && (window as unknown as { __signAppsUser?: { name?: string } }).__signAppsUser?.name) || 'Utilisateur',
             color: myColor,
         })
 

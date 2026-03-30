@@ -17,7 +17,7 @@ interface ServiceStatus {
 }
 
 const SERVICES = [
-  { name: "Metrics Service", endpoint: (metricsApi as any).health },
+  { name: "Metrics Service", endpoint: metricsApi.health },
 ];
 
 export function UptimeMonitor() {

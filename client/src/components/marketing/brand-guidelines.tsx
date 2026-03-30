@@ -196,7 +196,7 @@ export function BrandGuidelines() {
                         className="text-center"
                         style={{
                           fontFamily: typeface.family,
-                          fontWeight: weight as any,
+                          fontWeight: weight as number | string,
                         }}
                       >
                         {weight}

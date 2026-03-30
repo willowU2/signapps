@@ -99,7 +99,7 @@ export function WatermarkConfig() {
                     field.onChange(value);
                     setPreview((prev) => ({
                       ...prev,
-                      position: value as any,
+                      position: value as WatermarkValues['position'],
                     }));
                   }}
                 >

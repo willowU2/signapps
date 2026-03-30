@@ -58,7 +58,7 @@ export function ChatToTaskDialog({ open, onOpenChange, message }: ChatToTaskDial
 
     try {
       const calendarsResponse = await calendarApi.listCalendars()
-      const calendars = (calendarsResponse as any).data || calendarsResponse || []
+      const calendars = calendarsResponse.data || []
 
       if (Array.isArray(calendars) && calendars.length > 0) {
         await tasksApi.createTask(calendars[0].id, {

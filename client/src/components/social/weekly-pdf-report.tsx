@@ -70,11 +70,12 @@ export function WeeklyPdfReport({ weekData = DEMO_WEEK, weekLabel }: WeeklyPdfRe
   const captureChartAsDataUrl = useCallback(async (ref: React.RefObject<HTMLDivElement | null>): Promise<string | null> => {
     if (!ref.current) return null;
     try {
-      // html2canvas is optional - return null if not available
-      const mod = await import(/* webpackIgnore: true */ 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.esm.js' as any).catch(() => null);
-      if (!mod) return null;
+      // html2canvas is optional CDN module — use Function constructor to bypass TS static import check
+      const dynamicImport = new Function('url', 'return import(/* webpackIgnore: true */ url)') as (url: string) => Promise<{ default?: (el: HTMLElement, opts?: Record<string, unknown>) => Promise<HTMLCanvasElement> }>;
+      const mod = await dynamicImport('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.esm.js').catch(() => null);
+      if (!mod?.default) return null;
       const html2canvas = mod.default;
-      const canvas = await html2canvas(ref.current, { scale: 2, backgroundColor: "#ffffff" });
+      const canvas = await html2canvas(ref.current!, { scale: 2, backgroundColor: "#ffffff" });
       return canvas.toDataURL("image/png");
     } catch {
       return null;

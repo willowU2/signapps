@@ -96,14 +96,15 @@ async function fetchReportData(source: DataSource, columns: string[]): Promise<R
   switch (source) {
     case "users": {
       const res = await usersApi.list(0, 50);
-      const rud = res.data as any;
-      const users = rud?.users ?? (Array.isArray(rud) ? rud : []);
-      return users.map((u: any) => {
+      type RawUser = { id?: string; email?: string; display_name?: string; username?: string; created_at?: string; last_login?: string };
+      const rud = res.data as { users?: RawUser[] } | RawUser[] | undefined;
+      const users: RawUser[] = (rud as { users?: RawUser[] })?.users ?? (Array.isArray(rud) ? (rud as RawUser[]) : []);
+      return users.map((u) => {
         const row: ReportData = {};
-        if (columns.includes("id")) row["id"] = u.id;
+        if (columns.includes("id")) row["id"] = u.id ?? "";
         if (columns.includes("email")) row["email"] = u.email ?? "";
-        if (columns.includes("name")) row["name"] = u.display_name || u.username;
-        if (columns.includes("created_at")) row["created_at"] = u.created_at;
+        if (columns.includes("name")) row["name"] = u.display_name || u.username || "";
+        if (columns.includes("created_at")) row["created_at"] = u.created_at ?? "";
         if (columns.includes("active")) row["active"] = u.last_login ? true : false;
         return row;
       });

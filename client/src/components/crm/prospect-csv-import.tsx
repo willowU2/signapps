@@ -107,7 +107,7 @@ export function ProspectCsvImport({ onImport }: Props) {
       return
     }
 
-    dealsApi.importMany(toImport as any)
+    dealsApi.importMany(toImport as Omit<import('@/lib/api/crm').Deal, 'id' | 'createdAt' | 'updatedAt'>[])
     toast.success(`${toImport.length} deal${toImport.length > 1 ? "s" : ""} importé${toImport.length > 1 ? "s" : ""} avec succès.`)
     setDone(true)
     onImport()

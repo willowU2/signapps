@@ -40,10 +40,11 @@ export function ClientPortal() {
       try {
         // Load users as "projects" — each user represents an active account
         const usersRes = await usersApi.list(0, 10).catch(() => null);
-        const pud = usersRes?.data as any;
-        if (pud?.users || Array.isArray(pud)) {
-          const userList = pud?.users || pud;
-          const mapped: Project[] = userList.slice(0, 5).map((u: any) => ({
+        type RawUser = { id: string; display_name?: string; username: string; last_login?: string; created_at: string };
+        const pud = usersRes?.data as { users?: RawUser[] } | RawUser[] | undefined;
+        const rawUsers = (pud as { users?: RawUser[] })?.users ?? (Array.isArray(pud) ? (pud as RawUser[]) : null);
+        if (rawUsers) {
+          const mapped: Project[] = rawUsers.slice(0, 5).map((u) => ({
             id: u.id,
             name: u.display_name || u.username,
             status: 'active' as const,

@@ -16,7 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { useWorkflowAutomations, type TriggerType, type ActionType } from '@/hooks/use-workflow-automations';
+import { useWorkflowAutomations, type TriggerType, type ActionType, type WorkflowCondition } from '@/hooks/use-workflow-automations';
 import { toast } from 'sonner';
 
 const TRIGGERS: { value: TriggerType; label: string; icon: string }[] = [
@@ -94,8 +94,8 @@ export function WorkflowBuilder({ onSave }: { onSave?: (id: string) => void }) {
       enabled: false,
       trigger: { type: triggerType, config: triggerType === 'schedule' ? { cron: schedule } : {} },
       conditions: hasBranch
-        ? [{ field: branchCondition.field, operator: branchCondition.operator as any, value: branchCondition.value }]
-        : conditions.map(c => ({ field: c.field, operator: c.operator as any, value: c.value })),
+        ? [{ field: branchCondition.field, operator: branchCondition.operator as WorkflowCondition['operator'], value: branchCondition.value }]
+        : conditions.map(c => ({ field: c.field, operator: c.operator as WorkflowCondition['operator'], value: c.value })),
       actions: actions.map((a, i) => ({ id: `a_${i}`, type: a.type, params: a.params })),
       ...(triggerType === 'schedule' ? { schedule } : {}),
     });

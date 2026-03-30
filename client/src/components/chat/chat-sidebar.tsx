@@ -194,7 +194,7 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
 
     const getPresenceStatus = (recipientId?: string): 'online' | 'away' | 'busy' | 'offline' => {
         if (!recipientId || !FEATURES.CHAT_PRESENCE) return 'offline'
-        return (presenceMap[recipientId]?.status as any) || 'offline'
+        return (presenceMap[recipientId]?.status as 'online' | 'away' | 'busy' | 'offline') || 'offline'
     }
 
     return (

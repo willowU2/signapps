@@ -240,7 +240,8 @@ export function FilePreviewDialog({
         const workbook = new ExcelJS.Workbook();
         const ext = file.name.split('.').pop()?.toLowerCase() || '';
         if (ext === 'csv') {
-            await workbook.csv.read(new Blob([arrayBuffer]).stream() as any);
+            // ExcelJS csv.read() expects a Node.js Stream; Web ReadableStream requires a cross-type cast
+            await workbook.csv.read(new Blob([arrayBuffer]).stream() as unknown as import('stream').Readable);
         } else {
             await workbook.xlsx.load(arrayBuffer);
         }

@@ -33,7 +33,7 @@ export default function PomodoroTimer() {
   // Initialize AudioContext
   useEffect(() => {
     if (typeof window !== 'undefined' && !audioContextRef.current) {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (AudioCtx) {
         audioContextRef.current = new AudioCtx();
       }

@@ -142,8 +142,8 @@ export function LiveTranscriptionOverlay({
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rec = new (SR as any)();
+    // Third-party Web Speech API — use unknown cast since SpeechRecognition global can conflict
+    const rec = new (SR as unknown as new () => { continuous: boolean; interimResults: boolean; lang: string; onstart: (() => void) | null; onresult: unknown; onerror: unknown; onend: (() => void) | null; start: () => void; stop: () => void })()
     rec.continuous = true;
     rec.interimResults = true;
     rec.lang = navigator.language || 'fr-FR';
@@ -183,8 +183,8 @@ export function LiveTranscriptionOverlay({
   };
 
   const stopSpeechApi = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (recognitionRef.current as any)?.stop();
+    const rec = recognitionRef.current as { stop?: () => void } | null;
+    rec?.stop?.();
     recognitionRef.current = null;
     setIsRecording(false);
     setInterim('');

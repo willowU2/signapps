@@ -2808,13 +2808,13 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                                     let rawValue: string = typeof cellData?.value === 'string' ? cellData.value : ''
                                     // Safety: if Yjs stored an object instead of string, convert it
                                     if (cellData?.value && typeof cellData.value !== 'string') {
-                                        const v = cellData.value as any
+                                        const v = cellData.value as unknown as Record<string, unknown> & { toISOString?: () => string; richText?: { text?: string }[] }
                                         try {
                                             if (v instanceof Date || typeof v.toISOString === 'function') rawValue = (v.toISOString?.() || '').split('T')[0]
                                             else if (typeof v === 'number' || typeof v === 'boolean') rawValue = String(v)
                                             else if (v.result !== undefined) rawValue = String(v.result ?? '')
                                             else if (v.text !== undefined) rawValue = String(v.text ?? '')
-                                            else if (v.richText) rawValue = v.richText.map((r: any) => r?.text || '').join('')
+                                            else if (v.richText) rawValue = v.richText.map((r) => r?.text || '').join('')
                                             else rawValue = JSON.stringify(v)
                                         } catch { rawValue = '' }
                                     }
@@ -3129,7 +3129,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 <AdvancedValidationDialog
                     current={data[`${activeCell.r},${activeCell.c}`]?.validation as AdvancedValidation | undefined}
                     onApply={(v) => {
-                        if (activeCell) setCellValidation(activeCell.r, activeCell.c, v as any)
+                        if (activeCell) setCellValidation(activeCell.r, activeCell.c, v as unknown as CellValidation)
                     }}
                     onClose={() => setShowAdvancedValidation(false)}
                 />

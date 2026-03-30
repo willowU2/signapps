@@ -164,7 +164,7 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
                 <select
                   value={formData.schedule || 'daily'}
                   onChange={(e) =>
-                    setFormData({ ...formData, schedule: e.target.value as any })
+                    setFormData({ ...formData, schedule: e.target.value as ReportConfig['schedule'] })
                   }
                   className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
