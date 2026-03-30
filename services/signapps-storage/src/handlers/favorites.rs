@@ -108,6 +108,7 @@ fn map_row_to_favorite(row: &sqlx::postgres::PgRow) -> Result<Favorite> {
     responses((status = 201, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn add_favorite(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -161,6 +162,7 @@ pub async fn add_favorite(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_favorites(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -239,6 +241,7 @@ pub async fn list_favorites(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_favorite(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -299,6 +302,7 @@ pub async fn get_favorite(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_favorite(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -338,6 +342,7 @@ pub async fn update_favorite(
     responses((status = 204, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn remove_favorite(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -365,6 +370,7 @@ pub async fn remove_favorite(
     responses((status = 204, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn remove_favorite_by_path(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -397,6 +403,7 @@ pub async fn remove_favorite_by_path(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn reorder_favorites(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -427,6 +434,7 @@ pub async fn reorder_favorites(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn check_favorite(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,

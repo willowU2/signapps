@@ -16,6 +16,7 @@ use signapps_db::DatabasePool;
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn run_daily(pool: DatabasePool) {
     tracing::info!("retention-purge: background job started (runs every 24h)");
     loop {

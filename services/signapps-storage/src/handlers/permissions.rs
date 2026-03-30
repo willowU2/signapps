@@ -114,6 +114,7 @@ fn validate_mode(mode: u32) -> Result<()> {
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_permissions(
     State(_state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -144,6 +145,7 @@ pub async fn get_permissions(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn set_permissions(
     State(_state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -178,6 +180,7 @@ pub async fn set_permissions(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn reset_permissions(
     State(_state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,

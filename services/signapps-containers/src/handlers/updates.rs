@@ -61,6 +61,7 @@ pub struct UpdatesStatusResponse {
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn check_update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -93,6 +94,7 @@ pub async fn check_update(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn set_auto_update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -132,6 +134,7 @@ pub async fn set_auto_update(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn updates_status(State(state): State<AppState>) -> Result<Json<UpdatesStatusResponse>> {
     let repo = ContainerRepository::new(&state.pool);
     let containers = repo.list(100, 0).await?;
@@ -162,6 +165,7 @@ pub async fn updates_status(State(state): State<AppState>) -> Result<Json<Update
     responses((status = 201, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn run_auto_update_task(
     docker: crate::docker::DockerClient,
     pool: signapps_db::DatabasePool,

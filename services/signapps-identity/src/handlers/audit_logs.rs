@@ -72,6 +72,7 @@ pub struct AuditLogListResponse {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_audit_logs(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -158,6 +159,7 @@ pub async fn list_audit_logs(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_audit_log(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -197,6 +199,7 @@ pub async fn get_audit_log(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn export_audit_logs(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -277,6 +280,7 @@ pub struct AuditQueryRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn query_audit(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

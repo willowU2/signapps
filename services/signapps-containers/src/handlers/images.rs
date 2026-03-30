@@ -36,6 +36,7 @@ pub struct PullResponse {
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<ImageInfo>>> {
     let images = state.docker.list_images().await?;
     Ok(Json(images))
@@ -49,6 +50,7 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<ImageInfo>>>
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn pull(
     State(state): State<AppState>,
     Json(payload): Json<PullRequest>,
@@ -70,6 +72,7 @@ pub async fn pull(
     responses((status = 204, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<String>) -> Result<StatusCode> {
     state.docker.remove_image(&id, false).await?;
     Ok(StatusCode::NO_CONTENT)
@@ -83,6 +86,7 @@ pub async fn delete(State(state): State<AppState>, Path(id): Path<String>) -> Re
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn force_delete(
     State(state): State<AppState>,
     Path(id): Path<String>,

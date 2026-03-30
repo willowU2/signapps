@@ -46,6 +46,7 @@ fn build_magic_packet(mac: &str) -> Result<Vec<u8>, String> {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn wake_on_lan(
     State(pool): State<DatabasePool>,
     Path(hardware_id): Path<Uuid>,

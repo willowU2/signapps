@@ -138,6 +138,7 @@ pub struct TreeQueryParams {
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_tree(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -213,6 +214,7 @@ pub async fn get_tree(
     responses((status = 201, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -296,6 +298,7 @@ pub async fn create_node(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -327,6 +330,7 @@ pub async fn get_node(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -386,6 +390,7 @@ pub async fn update_node(
     responses((status = 204, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -482,6 +487,7 @@ pub async fn delete_node(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn move_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -569,6 +575,7 @@ pub async fn move_node(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_children(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -602,6 +609,7 @@ pub async fn get_children(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_descendants(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -636,6 +644,7 @@ pub async fn get_descendants(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_ancestors(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -670,6 +679,7 @@ pub async fn get_ancestors(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_node_types(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -701,6 +711,7 @@ pub async fn list_node_types(
     responses((status = 201, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_node_type(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -753,6 +764,7 @@ pub async fn create_node_type(
     responses((status = 204, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_node_type(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,

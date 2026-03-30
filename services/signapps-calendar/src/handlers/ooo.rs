@@ -63,6 +63,7 @@ fn row_to_ooo(r: OooRow) -> OooSettings {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_ooo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -101,6 +102,7 @@ pub async fn get_ooo(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn set_ooo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -146,6 +148,7 @@ pub async fn set_ooo(
     responses((status = 204, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_ooo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

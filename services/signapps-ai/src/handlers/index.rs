@@ -79,6 +79,7 @@ pub struct StatsResponse {
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn index_document(
     State(state): State<AppState>,
     Json(payload): Json<IndexRequest>,
@@ -113,6 +114,7 @@ pub async fn index_document(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn index_internal_document(
     State(state): State<AppState>,
     Json(payload): Json<InternalIndexRequest>,
@@ -181,6 +183,7 @@ pub async fn index_internal_document(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn index_direct_document(
     State(state): State<AppState>,
     Path(document_id): Path<Uuid>,
@@ -224,6 +227,7 @@ pub async fn index_direct_document(
     responses((status = 204, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn remove_document(
     State(state): State<AppState>,
     Path(document_id): Path<Uuid>,
@@ -243,6 +247,7 @@ pub async fn remove_document(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StatsResponse>> {
     let stats = state.vectors.get_stats(None).await?;
 
@@ -274,6 +279,7 @@ pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StatsRespon
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn reindex_all(
     State(state): State<AppState>,
 ) -> std::result::Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {

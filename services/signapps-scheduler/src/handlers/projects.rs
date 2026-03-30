@@ -28,6 +28,7 @@ pub struct ProjectListQuery {
     responses((status = 200, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -61,6 +62,7 @@ pub async fn list(
     responses((status = 201, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -83,6 +85,7 @@ pub async fn create(
     responses((status = 200, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_by_id(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -111,6 +114,7 @@ pub async fn get_by_id(
     responses((status = 200, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -134,6 +138,7 @@ pub async fn update(
     responses((status = 204, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

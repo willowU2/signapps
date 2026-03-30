@@ -50,6 +50,7 @@ pub struct CertificateBundle {
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_devices(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<Device>>> {
@@ -65,6 +66,7 @@ pub async fn list_devices(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_device(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -82,6 +84,7 @@ pub async fn get_device(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn enroll_device(
     State(state): State<AppState>,
     Json(request): Json<EnrollDeviceRequest>,
@@ -118,6 +121,7 @@ pub async fn enroll_device(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_device_config(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -141,6 +145,7 @@ pub async fn get_device_config(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn block_device(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -157,6 +162,7 @@ pub async fn block_device(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn unblock_device(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -173,6 +179,7 @@ pub async fn unblock_device(
     responses((status = 204, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_device(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -195,6 +202,7 @@ pub struct HeartbeatRequest {
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn device_heartbeat(
     State(state): State<AppState>,
     Json(request): Json<HeartbeatRequest>,

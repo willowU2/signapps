@@ -89,6 +89,7 @@ pub struct PushSendResultItem {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_vapid_key() -> Result<Json<VapidKeyResponse>, CalendarError> {
     let public_key = get_vapid_public_key()
         .map_err(|_| CalendarError::internal("Failed to retrieve VAPID key"))?;
@@ -105,6 +106,7 @@ pub async fn get_vapid_key() -> Result<Json<VapidKeyResponse>, CalendarError> {
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn send_push(
     State(state): State<AppState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,

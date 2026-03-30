@@ -19,6 +19,7 @@ use crate::AppState;
     responses((status = 200, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_calendars(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -42,6 +43,7 @@ pub async fn list_calendars(
     responses((status = 200, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_calendar(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -66,6 +68,7 @@ pub async fn get_calendar(
     responses((status = 201, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_calendar(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -90,6 +93,7 @@ pub async fn create_calendar(
     responses((status = 200, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_calendar(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -114,6 +118,7 @@ pub async fn update_calendar(
     responses((status = 204, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_calendar(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

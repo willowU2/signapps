@@ -74,6 +74,7 @@ fn row_to_flag(r: FlagRow) -> FeatureFlag {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<FeatureFlag>>> {
     let rows = sqlx::query_as::<_, FlagRow>(
         "SELECT id, name, enabled, rollout_pct, description, created_at, updated_at
@@ -94,6 +95,7 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<FeatureFlag>
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
     Json(payload): Json<CreateFeatureFlagRequest>,
@@ -139,6 +141,7 @@ pub async fn create(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -187,6 +190,7 @@ pub async fn update(
     responses((status = 204, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let result = sqlx::query("DELETE FROM identity.feature_flags WHERE id = $1")
         .bind(id)

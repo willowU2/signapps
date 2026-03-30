@@ -74,6 +74,7 @@ pub struct ActivityPoint {
     responses((status = 200, description = "Success")),
     tag = "Metrics"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_overview(State(state): State<AppState>) -> Result<Json<AnalyticsOverview>> {
     let pool = state.pool.inner();
 
@@ -126,6 +127,7 @@ pub async fn get_overview(State(state): State<AppState>) -> Result<Json<Analytic
     responses((status = 200, description = "Success")),
     tag = "Metrics"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_storage(State(state): State<AppState>) -> Result<Json<Vec<StorageByUser>>> {
     let pool = state.pool.inner();
 
@@ -181,6 +183,7 @@ pub async fn get_storage(State(state): State<AppState>) -> Result<Json<Vec<Stora
     responses((status = 200, description = "Success")),
     tag = "Metrics"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_activity(State(state): State<AppState>) -> Result<Json<Vec<ActivityPoint>>> {
     let pool = state.pool.inner();
 

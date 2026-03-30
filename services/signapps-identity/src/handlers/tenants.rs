@@ -103,6 +103,7 @@ pub struct UpdateTenantRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_tenants(
     State(state): State<AppState>,
     Query(query): Query<ListTenantsQuery>,
@@ -124,6 +125,7 @@ pub async fn list_tenants(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_tenant(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -143,6 +145,7 @@ pub async fn get_tenant(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_my_tenant(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -162,6 +165,7 @@ pub async fn get_my_tenant(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_tenant(
     State(state): State<AppState>,
     Json(payload): Json<CreateTenantRequest>,
@@ -214,6 +218,7 @@ pub async fn create_tenant(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_tenant(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -265,6 +270,7 @@ pub async fn update_tenant(
     responses((status = 204, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_tenant(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -399,6 +405,7 @@ pub struct UpdateMemberRoleRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_workspaces(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -425,6 +432,7 @@ pub async fn list_workspaces(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_my_workspaces(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -446,6 +454,7 @@ pub async fn list_my_workspaces(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_workspace(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -465,6 +474,7 @@ pub async fn get_workspace(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_workspace(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -527,6 +537,7 @@ pub async fn create_workspace(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_workspace(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -564,6 +575,7 @@ pub async fn update_workspace(
     responses((status = 204, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_workspace(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -594,6 +606,7 @@ pub async fn delete_workspace(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_workspace_members(
     State(state): State<AppState>,
     Path(workspace_id): Path<Uuid>,
@@ -620,6 +633,7 @@ pub async fn list_workspace_members(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn add_workspace_member(
     State(state): State<AppState>,
     Path(workspace_id): Path<Uuid>,
@@ -649,6 +663,7 @@ pub async fn add_workspace_member(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_workspace_member_role(
     State(state): State<AppState>,
     Path((workspace_id, user_id)): Path<(Uuid, Uuid)>,
@@ -678,6 +693,7 @@ pub async fn update_workspace_member_role(
     responses((status = 204, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn remove_workspace_member(
     State(state): State<AppState>,
     Path((workspace_id, user_id)): Path<(Uuid, Uuid)>,

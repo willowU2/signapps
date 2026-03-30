@@ -71,6 +71,7 @@ fn create_vision_worker() -> Result<Box<dyn VisionWorker + Send + Sync>, String>
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn describe_image(
     mut multipart: Multipart,
 ) -> Result<Json<VisionResult>, (StatusCode, String)> {
@@ -138,6 +139,7 @@ pub async fn describe_image(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn visual_qa(
     mut multipart: Multipart,
 ) -> Result<Json<VisionResult>, (StatusCode, String)> {
@@ -218,6 +220,7 @@ pub async fn visual_qa(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn batch_describe(
     mut multipart: Multipart,
 ) -> Result<Json<BatchDescribeResponse>, (StatusCode, String)> {

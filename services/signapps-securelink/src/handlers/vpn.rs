@@ -34,6 +34,7 @@ pub struct InitVpnResponse {
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn init_vpn(
     State(state): State<AppState>,
     Json(request): Json<InitVpnRequest>,
@@ -55,6 +56,7 @@ pub async fn init_vpn(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_vpn_status(
     State(state): State<AppState>,
 ) -> Result<Json<NetworkStatus>> {
@@ -70,6 +72,7 @@ pub async fn get_vpn_status(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_ca_certificate(
     State(state): State<AppState>,
 ) -> Result<Json<CaCertificateResponse>> {
@@ -92,6 +95,7 @@ pub struct CaCertificateResponse {
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn regenerate_configs(
     State(state): State<AppState>,
 ) -> Result<Json<RegenerateResponse>> {
@@ -121,6 +125,7 @@ pub struct RegenerateResponse {
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn health_check(
     State(state): State<AppState>,
 ) -> Result<Json<HealthResponse>> {

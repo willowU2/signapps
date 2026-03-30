@@ -160,6 +160,7 @@ fn naive_bayes_classify(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn classify_email(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -261,6 +262,7 @@ pub async fn classify_email(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn train_spam(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -380,6 +382,7 @@ pub async fn train_spam(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_spam_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -425,6 +428,7 @@ pub async fn get_spam_settings(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_spam_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

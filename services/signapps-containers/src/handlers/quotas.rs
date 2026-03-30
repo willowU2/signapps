@@ -46,6 +46,7 @@ pub struct QuotaUsagePercent {
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_my_quota(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -86,6 +87,7 @@ pub async fn get_my_quota(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_user_quota(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,
@@ -126,6 +128,7 @@ pub async fn get_user_quota(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_user_quota(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,

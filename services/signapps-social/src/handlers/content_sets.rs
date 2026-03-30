@@ -17,6 +17,7 @@ use signapps_common::Claims;
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_content_sets(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -43,6 +44,7 @@ pub async fn list_content_sets(
     responses((status = 201, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_content_set(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -91,6 +93,7 @@ pub async fn create_content_set(
     responses((status = 204, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_content_set(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

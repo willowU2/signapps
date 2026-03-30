@@ -105,6 +105,7 @@ pub struct LogsQuery {
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -219,6 +220,7 @@ pub async fn list(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_by_user(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -295,6 +297,7 @@ pub async fn list_by_user(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_docker(
     State(state): State<AppState>,
     Query(query): Query<ListQuery>,
@@ -315,6 +318,7 @@ pub async fn list_docker(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -376,6 +380,7 @@ pub async fn get(
     responses((status = 201, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -463,6 +468,7 @@ pub async fn create(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn start(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -520,6 +526,7 @@ pub async fn start(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn stop(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -554,6 +561,7 @@ pub async fn stop(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn restart(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -636,6 +644,7 @@ async fn deprovision_app_database(pool: &signapps_db::DatabasePool, app_id: &str
     responses((status = 204, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -704,6 +713,7 @@ pub async fn delete(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -793,6 +803,7 @@ pub async fn update(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -834,6 +845,7 @@ pub async fn logs(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -874,6 +886,7 @@ pub async fn stats(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn start_docker(
     State(state): State<AppState>,
     Path(docker_id): Path<String>,
@@ -910,6 +923,7 @@ pub async fn start_docker(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn restart_docker(
     State(state): State<AppState>,
     Path(docker_id): Path<String>,
@@ -946,6 +960,7 @@ pub async fn restart_docker(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn logs_docker(
     State(state): State<AppState>,
     Path(docker_id): Path<String>,
@@ -963,6 +978,7 @@ pub async fn logs_docker(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn stats_docker(
     State(state): State<AppState>,
     Path(docker_id): Path<String>,
@@ -979,6 +995,7 @@ pub async fn stats_docker(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn inspect_docker(
     State(state): State<AppState>,
     Path(docker_id): Path<String>,
@@ -995,6 +1012,7 @@ pub async fn inspect_docker(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn stop_docker(
     State(state): State<AppState>,
     Path(docker_id): Path<String>,
@@ -1033,6 +1051,7 @@ pub async fn stop_docker(
     responses((status = 204, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn remove_docker(
     State(state): State<AppState>,
     Path(docker_id): Path<String>,

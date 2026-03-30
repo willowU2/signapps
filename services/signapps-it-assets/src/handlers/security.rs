@@ -47,6 +47,7 @@ pub struct AntivirusStatusRow {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn report_antivirus(
     State(pool): State<DatabasePool>,
     Json(payload): Json<ReportAntivirusReq>,
@@ -94,6 +95,7 @@ pub async fn report_antivirus(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_antivirus_status(
     State(pool): State<DatabasePool>,
     Path(hw_id): Path<Uuid>,
@@ -126,6 +128,7 @@ pub struct AvFleetSummary {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn av_fleet_summary(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<AvFleetSummary>, (StatusCode, String)> {
@@ -203,6 +206,7 @@ pub struct EncryptionStatusRow {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn report_encryption(
     State(pool): State<DatabasePool>,
     Json(payload): Json<ReportEncryptionReq>,
@@ -247,6 +251,7 @@ pub async fn report_encryption(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_encryption_status(
     State(pool): State<DatabasePool>,
     Path(hw_id): Path<Uuid>,
@@ -278,6 +283,7 @@ pub struct EncryptionFleetSummary {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn encryption_fleet_summary(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<EncryptionFleetSummary>, (StatusCode, String)> {

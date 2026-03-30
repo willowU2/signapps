@@ -26,6 +26,7 @@ fn get_workspace_id_from_headers(headers: &HeaderMap) -> Option<Uuid> {
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_nodes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -90,6 +91,7 @@ pub async fn list_nodes(
     responses((status = 201, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_node(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -140,6 +142,7 @@ pub async fn create_node(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_node(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -188,6 +191,7 @@ pub async fn update_node(
     responses((status = 204, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_node(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

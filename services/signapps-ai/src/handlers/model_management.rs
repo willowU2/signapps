@@ -56,6 +56,7 @@ pub struct HardwareResponse {
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_local_models(
     State(state): State<AppState>,
 ) -> Result<Json<LocalModelsResponse>, (StatusCode, String)> {
@@ -86,6 +87,7 @@ pub async fn list_local_models(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_available_models(
     State(state): State<AppState>,
 ) -> Result<Json<AvailableModelsResponse>, (StatusCode, String)> {
@@ -106,6 +108,7 @@ pub async fn list_available_models(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn search_models(
     State(state): State<AppState>,
     Query(query): Query<SearchQuery>,
@@ -136,6 +139,7 @@ pub async fn search_models(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn download_model(
     State(state): State<AppState>,
     Json(request): Json<DownloadModelRequest>,
@@ -186,6 +190,7 @@ pub async fn download_model(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_model_status(
     State(state): State<AppState>,
     Path(model_id): Path<String>,
@@ -211,6 +216,7 @@ pub async fn get_model_status(
     responses((status = 204, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_model(
     State(state): State<AppState>,
     Path(model_id): Path<String>,
@@ -241,6 +247,7 @@ pub async fn delete_model(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_hardware(
     State(state): State<AppState>,
 ) -> Result<Json<HardwareResponse>, (StatusCode, String)> {

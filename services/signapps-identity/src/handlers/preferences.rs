@@ -32,6 +32,7 @@ struct ErrorResponse {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -68,6 +69,7 @@ pub async fn get_preferences(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn sync_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -131,6 +133,7 @@ pub async fn sync_preferences(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn patch_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -186,6 +189,7 @@ pub struct ConflictQuery {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn check_conflicts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -227,6 +231,7 @@ pub async fn check_conflicts(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn reset_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -263,6 +268,7 @@ pub async fn reset_preferences(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn export_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -306,6 +312,7 @@ pub async fn export_preferences(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn import_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

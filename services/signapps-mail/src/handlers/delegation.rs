@@ -61,6 +61,7 @@ pub struct CreateDelegationRequest {
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_delegations(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -104,6 +105,7 @@ pub async fn list_delegations(
     responses((status = 201, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_delegation(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -170,6 +172,7 @@ pub async fn create_delegation(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn revoke_delegation(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

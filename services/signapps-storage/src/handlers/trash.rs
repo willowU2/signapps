@@ -139,6 +139,7 @@ const TRASH_RETENTION_DAYS: i64 = 30;
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn move_to_trash(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -250,6 +251,7 @@ async fn move_single_to_trash(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_trash(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -324,6 +326,7 @@ pub async fn list_trash(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_trash_stats(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -359,6 +362,7 @@ pub async fn get_trash_stats(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn restore_from_trash(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -495,6 +499,7 @@ async fn restore_single_item(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn empty_trash(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -584,6 +589,7 @@ async fn delete_trash_item(state: &AppState, id: Uuid, user_id: Uuid) -> Result<
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_trash_item(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -631,6 +637,7 @@ pub async fn get_trash_item(
     responses((status = 204, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_trash_item_handler(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,

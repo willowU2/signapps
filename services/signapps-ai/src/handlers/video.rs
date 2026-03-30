@@ -164,6 +164,7 @@ async fn store_video(state: &AppState, video_bytes: &[u8]) -> Result<String, (St
     responses((status = 201, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn generate_video(
     State(state): State<AppState>,
     Json(body): Json<GenerateVideoRequest>,
@@ -217,6 +218,7 @@ pub async fn generate_video(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn img_to_video(
     State(state): State<AppState>,
     mut multipart: Multipart,
@@ -313,6 +315,7 @@ pub async fn img_to_video(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn analyze_video(
     mut multipart: Multipart,
 ) -> Result<Json<VideoAnalysis>, (StatusCode, String)> {
@@ -387,6 +390,7 @@ pub async fn analyze_video(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn extract_frames(
     mut multipart: Multipart,
 ) -> Result<Json<ExtractFramesResponse>, (StatusCode, String)> {
@@ -494,6 +498,7 @@ pub async fn extract_frames(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn transcribe_video(
     mut multipart: Multipart,
 ) -> Result<Json<VideoTranscript>, (StatusCode, String)> {
@@ -556,6 +561,7 @@ pub async fn transcribe_video(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_models() -> Result<Json<VideoModelsResponse>, (StatusCode, String)> {
     let worker = create_videogen_worker().map_err(|e| (StatusCode::SERVICE_UNAVAILABLE, e))?;
 

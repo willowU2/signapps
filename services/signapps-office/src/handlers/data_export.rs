@@ -49,6 +49,7 @@ pub struct ExportInfo {
     responses((status = 201, description = "Success")),
     tag = "Office"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn export_info() -> Json<ExportInfo> {
     Json(ExportInfo {
         supported_formats: vec![
@@ -73,6 +74,7 @@ pub async fn export_info() -> Json<ExportInfo> {
     responses((status = 201, description = "Success")),
     tag = "Office"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn export_data(
     Json(payload): Json<ExportRequest>,
 ) -> Result<Response, (StatusCode, String)> {

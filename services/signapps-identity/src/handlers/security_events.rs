@@ -43,6 +43,7 @@ pub struct SecurityEventsQuery {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
     axum::extract::Query(query): axum::extract::Query<SecurityEventsQuery>,
@@ -77,6 +78,7 @@ pub async fn list(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn summary(State(state): State<AppState>) -> Result<Json<Vec<EventSummary>>> {
     let rows = sqlx::query_as::<_, EventSummary>(
         r#"SELECT event_type, severity, COUNT(*)::BIGINT as count

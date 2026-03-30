@@ -92,6 +92,7 @@ pub struct TrackingStats {
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn track_open(
     State(state): State<AppState>,
     Path(tracking_id): Path<Uuid>,
@@ -152,6 +153,7 @@ pub async fn track_open(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_tracking(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -205,6 +207,7 @@ pub async fn list_tracking(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn tracking_stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

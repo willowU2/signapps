@@ -79,6 +79,7 @@ pub struct UpdateUserSignatureRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_user_signatures(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -108,6 +109,7 @@ pub async fn list_user_signatures(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_user_signature(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -162,6 +164,7 @@ pub async fn create_user_signature(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_user_signature(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -193,6 +196,7 @@ pub async fn get_user_signature(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_user_signature(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -251,6 +255,7 @@ pub async fn update_user_signature(
     responses((status = 204, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_user_signature(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

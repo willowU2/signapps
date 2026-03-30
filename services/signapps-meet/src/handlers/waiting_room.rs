@@ -60,6 +60,7 @@ impl From<WaitingRoomEntry> for WaitingRoomResponse {
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_waiting(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -103,6 +104,7 @@ pub async fn list_waiting(
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn admit_user(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -151,6 +153,7 @@ pub async fn admit_user(
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn deny_user(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -206,6 +209,7 @@ pub struct JoinWaitingRoomRequest {
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn join_waiting_room(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -97,6 +97,7 @@ pub struct UpdateFeaturesRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_workspace_features(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -139,6 +140,7 @@ pub async fn get_workspace_features(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_workspace_features(
     State(state): State<AppState>,
     Path(workspace_id): Path<Uuid>,

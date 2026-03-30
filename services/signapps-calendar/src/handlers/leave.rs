@@ -93,6 +93,7 @@ pub struct PredictResult {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn approve_leave(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -185,6 +186,7 @@ pub async fn approve_leave(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn reject_leave(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -269,6 +271,7 @@ pub async fn reject_leave(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_balances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -301,6 +304,7 @@ pub async fn get_balances(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn predict_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -343,6 +347,7 @@ pub async fn predict_balance(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn team_conflicts(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -401,6 +406,7 @@ pub async fn team_conflicts(
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delegate_tasks(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

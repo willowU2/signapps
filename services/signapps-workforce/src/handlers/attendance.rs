@@ -76,6 +76,7 @@ pub struct AttendanceQueryParams {
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn clock_in(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -136,6 +137,7 @@ pub async fn clock_in(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn clock_out(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -181,6 +183,7 @@ pub async fn clock_out(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_attendance(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,

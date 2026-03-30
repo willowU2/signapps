@@ -53,6 +53,7 @@ pub struct TranscriptionJob {
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn handle_session_ended(
     State(state): State<AppState>,
     Json(event): Json<SessionEndedEvent>,

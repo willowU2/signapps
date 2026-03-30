@@ -73,6 +73,7 @@ pub struct VolumePreview {
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn preview_compose(
     Json(req): Json<ImportComposeRequest>,
 ) -> Result<Json<ComposePreview>> {
@@ -91,6 +92,7 @@ pub async fn preview_compose(
     responses((status = 201, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn import_compose(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

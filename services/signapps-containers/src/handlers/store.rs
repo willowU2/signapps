@@ -24,6 +24,7 @@ use super::containers::ContainerResponse;
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_apps(
     State(state): State<AppState>,
     Query(query): Query<ListAppsQuery>,
@@ -43,6 +44,7 @@ pub async fn list_apps(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_app_details(
     State(state): State<AppState>,
     Path((source_id, app_id)): Path<(Uuid, String)>,
@@ -70,6 +72,7 @@ pub async fn get_app_details(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn install_app(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -421,6 +424,7 @@ pub async fn install_app(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn install_multi(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -561,6 +565,7 @@ fn validate_db_name(name: &str) -> Result<()> {
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn provision_app_database(
     pool: &signapps_db::DatabasePool,
     app_id: &str,
@@ -1134,6 +1139,7 @@ async fn rollback(docker: &crate::docker::DockerClient, docker_ids: &[String], n
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn install_progress(
     State(state): State<AppState>,
     Path(install_id): Path<Uuid>,
@@ -1188,6 +1194,7 @@ pub async fn install_progress(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn check_ports(
     State(state): State<AppState>,
     Query(query): Query<CheckPortsQuery>,
@@ -1233,6 +1240,7 @@ pub async fn check_ports(
     responses((status = 201, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn validate_source(
     State(state): State<AppState>,
     Json(req): Json<AddSourceRequest>,
@@ -1249,6 +1257,7 @@ pub async fn validate_source(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_sources(State(state): State<AppState>) -> Result<Json<Vec<AppSource>>> {
     let sources = state
         .store
@@ -1266,6 +1275,7 @@ pub async fn list_sources(State(state): State<AppState>) -> Result<Json<Vec<AppS
     responses((status = 201, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn add_source(
     State(state): State<AppState>,
     Json(req): Json<AddSourceRequest>,
@@ -1296,6 +1306,7 @@ pub async fn add_source(
     responses((status = 204, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_source(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -1316,6 +1327,7 @@ pub async fn delete_source(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn refresh_source(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -1338,6 +1350,7 @@ pub async fn refresh_source(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn refresh_all(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     state.store.refresh_sources().await;
     Ok(Json(serde_json::json!({ "success": true })))

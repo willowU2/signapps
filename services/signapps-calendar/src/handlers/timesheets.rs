@@ -124,6 +124,7 @@ fn parse_iso_week(week_str: &str) -> Result<NaiveDate, CalendarError> {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_timesheets(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -163,6 +164,7 @@ pub async fn list_timesheets(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_timesheet(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -205,6 +207,7 @@ pub async fn update_timesheet(
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn validate_week(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -240,6 +243,7 @@ pub async fn validate_week(
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn export_timesheets(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -296,6 +300,7 @@ pub async fn export_timesheets(
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn generate_timesheets(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

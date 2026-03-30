@@ -50,6 +50,7 @@ pub struct UpdateAiThreadRequest {
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_ai_threads(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -83,6 +84,7 @@ pub async fn list_ai_threads(
     responses((status = 201, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_ai_thread(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -124,6 +126,7 @@ pub async fn create_ai_thread(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_ai_thread(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -161,6 +164,7 @@ pub async fn get_ai_thread(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_ai_thread(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -227,6 +231,7 @@ pub async fn update_ai_thread(
     responses((status = 204, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_ai_thread(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

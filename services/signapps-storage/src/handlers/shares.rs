@@ -148,6 +148,7 @@ pub struct AccessShareResponse {
     responses((status = 201, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_share(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -219,6 +220,7 @@ pub async fn create_share(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_shares(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -254,6 +256,7 @@ pub async fn list_shares(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_share(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -278,6 +281,7 @@ pub async fn get_share(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_share(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -325,6 +329,7 @@ pub async fn update_share(
     responses((status = 204, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_share(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -380,6 +385,7 @@ fn validate_public_share(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn access_share(
     State(state): State<AppState>,
     Path(token): Path<String>,
@@ -448,6 +454,7 @@ pub struct DownloadSharedQuery {
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn download_shared(
     State(state): State<AppState>,
     Path(token): Path<String>,

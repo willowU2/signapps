@@ -217,6 +217,7 @@ fn default_true() -> bool {
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn categorize_inbox(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -314,6 +315,7 @@ pub struct CategorySettings {
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn save_categorize_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -393,6 +395,7 @@ pub async fn save_categorize_settings(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn ensure_label_and_apply(
     pool: &sqlx::PgPool,
     email_id: Uuid,

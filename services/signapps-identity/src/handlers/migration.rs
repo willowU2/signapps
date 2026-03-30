@@ -69,6 +69,7 @@ struct ImportCalendarEvent {
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn run_google_migration(store: MigrationStore, cfg: MigrationWorkerConfig) {
     let client = reqwest::Client::new();
     let bearer = format!("Bearer {}", cfg.oauth_token);
@@ -346,6 +347,7 @@ fn parse_google_events(body: &serde_json::Value) -> Vec<ImportCalendarEvent> {
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn run_microsoft_migration(store: MigrationStore, cfg: MigrationWorkerConfig) {
     let client = reqwest::Client::new();
     let bearer = format!("Bearer {}", cfg.oauth_token);
@@ -760,6 +762,7 @@ impl MigrationStore {
         responses((status = 200, description = "Success")),
         tag = "Identity"
     )]
+    #[tracing::instrument(skip_all)]
     pub async fn get(&self) -> Option<MigrationJob> {
         self.inner.read().await.clone()
     }
@@ -772,6 +775,7 @@ impl MigrationStore {
         responses((status = 200, description = "Success")),
         tag = "Identity"
     )]
+    #[tracing::instrument(skip_all)]
     pub async fn set(&self, job: MigrationJob) {
         *self.inner.write().await = Some(job);
     }
@@ -784,6 +788,7 @@ impl MigrationStore {
         responses((status = 200, description = "Success")),
         tag = "Identity"
     )]
+    #[tracing::instrument(skip_all)]
     pub async fn clear(&self) {
         *self.inner.write().await = None;
     }
@@ -808,6 +813,7 @@ impl MigrationStore {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn start_migration(
     State(state): State<AppState>,
     Json(payload): Json<StartMigrationRequest>,
@@ -877,6 +883,7 @@ pub async fn start_migration(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_migration_status(State(state): State<AppState>) -> Result<Json<MigrationJob>> {
     match state.migration.get().await {
         Some(job) => Ok(Json(job)),
@@ -895,6 +902,7 @@ pub async fn get_migration_status(State(state): State<AppState>) -> Result<Json<
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn cancel_migration(State(state): State<AppState>) -> Result<Json<MigrationJob>> {
     let mut job = state
         .migration

@@ -97,6 +97,7 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn report_available_patches(
     State(pool): State<DatabasePool>,
     Json(payload): Json<ReportPatchesReq>,
@@ -144,6 +145,7 @@ pub async fn report_available_patches(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_patches(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<PatchRow>>, (StatusCode, String)> {
@@ -165,6 +167,7 @@ pub async fn list_patches(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn approve_patch(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -194,6 +197,7 @@ pub async fn approve_patch(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn reject_patch(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -221,6 +225,7 @@ pub async fn reject_patch(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn deploy_patch(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -253,6 +258,7 @@ pub async fn deploy_patch(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn patch_compliance(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<ComplianceStats>, (StatusCode, String)> {

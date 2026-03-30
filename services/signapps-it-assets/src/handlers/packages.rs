@@ -94,6 +94,7 @@ pub struct PendingInstall {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_packages(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<SoftwarePackage>>, (StatusCode, String)> {
@@ -113,6 +114,7 @@ pub async fn list_packages(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_package(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -135,6 +137,7 @@ pub async fn get_package(
     responses((status = 201, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_package(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreatePackageRequest>,
@@ -168,6 +171,7 @@ pub async fn create_package(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_package(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -209,6 +213,7 @@ pub async fn update_package(
     responses((status = 204, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_package(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -235,6 +240,7 @@ pub async fn delete_package(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn deploy_package(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -282,6 +288,7 @@ pub async fn deploy_package(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_agent_pending_packages(
     State(pool): State<DatabasePool>,
     Path(agent_id): Path<Uuid>,
@@ -354,6 +361,7 @@ pub struct UpdateDeploymentStatusRequest {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_deployment_status(
     State(pool): State<DatabasePool>,
     Path(deployment_id): Path<Uuid>,

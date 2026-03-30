@@ -33,6 +33,7 @@ pub struct SetTenantCssRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_css(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -61,6 +62,7 @@ pub async fn get_css(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn set_css(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -92,6 +94,7 @@ pub async fn set_css(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn clear_css(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let result = sqlx::query("UPDATE identity.tenants SET css_override = NULL WHERE id = $1")
         .bind(id)

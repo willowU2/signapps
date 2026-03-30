@@ -38,6 +38,7 @@ pub struct ExpandedEvent {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_event_instances(
     State(state): State<AppState>,
     Path(event_id): Path<Uuid>,
@@ -89,6 +90,7 @@ pub struct CreateExceptionRequest {
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_exception(
     State(state): State<AppState>,
     Path(event_id): Path<Uuid>,
@@ -140,6 +142,7 @@ pub struct ValidateRruleResponse {
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn validate_rrule(
     Json(payload): Json<ValidateRruleRequest>,
 ) -> Json<ValidateRruleResponse> {

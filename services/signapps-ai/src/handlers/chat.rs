@@ -121,6 +121,7 @@ fn extract_jwt(headers: &HeaderMap) -> Option<String> {
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn chat(
     State(state): State<AppState>,
     Json(payload): Json<ChatRequest>,
@@ -172,6 +173,7 @@ pub async fn chat(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn chat_stream(
     State(state): State<AppState>,
     headers: HeaderMap,

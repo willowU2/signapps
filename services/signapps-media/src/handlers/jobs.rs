@@ -34,6 +34,7 @@ pub struct JobStatus {
     responses((status = 200, description = "Success")),
     tag = "Media"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_job_status(
     State(state): State<Arc<AppState>>,
     Path(job_id): Path<String>,

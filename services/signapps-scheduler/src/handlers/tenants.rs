@@ -18,6 +18,7 @@ use crate::AppState;
     responses((status = 200, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_tenants(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -44,6 +45,7 @@ pub async fn list_tenants(
     responses((status = 200, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_tenant(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

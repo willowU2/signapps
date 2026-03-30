@@ -14,6 +14,7 @@ use crate::AppState;
     responses((status = 200, description = "Success")),
     tag = "Proxy"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_proxy_config(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     let repo = RouteRepository::new(&state.pool);
     let routes = repo.list_enabled().await?;
@@ -39,6 +40,7 @@ pub async fn get_proxy_config(State(state): State<AppState>) -> Result<Json<serd
     responses((status = 200, description = "Success")),
     tag = "Proxy"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_proxy_overview(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     let repo = RouteRepository::new(&state.pool);
     let routes = repo.list_enabled().await?;
@@ -70,6 +72,7 @@ pub async fn get_proxy_overview(State(state): State<AppState>) -> Result<Json<se
     responses((status = 200, description = "Success")),
     tag = "Proxy"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn refresh_config(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     state.route_cache.force_refresh();
 

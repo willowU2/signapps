@@ -191,6 +191,7 @@ async fn update_quota_impl(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_my_quota(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -206,6 +207,7 @@ pub async fn get_my_quota(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_user_quota(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,
@@ -221,6 +223,7 @@ pub async fn get_user_quota(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn set_user_quota(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,
@@ -249,6 +252,7 @@ pub async fn set_user_quota(
     responses((status = 204, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_user_quota(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,
@@ -273,6 +277,7 @@ pub async fn delete_user_quota(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_quota_alerts(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -319,6 +324,7 @@ pub async fn get_quota_alerts(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn recalculate_usage(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,
@@ -336,6 +342,7 @@ pub async fn recalculate_usage(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_users_over_quota(State(state): State<AppState>) -> Result<Json<Vec<QuotaUsage>>> {
     let repo = QuotaRepository::new(&state.pool);
     let rows = repo.list_over_quota().await?;
@@ -353,6 +360,7 @@ pub async fn get_users_over_quota(State(state): State<AppState>) -> Result<Json<
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn check_quota(state: &AppState, user_id: Uuid, file_size: i64) -> Result<()> {
     let repo = QuotaRepository::new(&state.pool);
     let Some(quota) = repo.get_quota(user_id).await? else {
@@ -388,6 +396,7 @@ pub async fn check_quota(state: &AppState, user_id: Uuid, file_size: i64) -> Res
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn record_upload(
     state: &AppState,
     user_id: Uuid,
@@ -460,6 +469,7 @@ pub async fn record_upload(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn record_upload_with_hash(
     state: &AppState,
     user_id: Uuid,
@@ -549,6 +559,7 @@ pub async fn record_upload_with_hash(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn record_delete(
     state: &AppState,
     user_id: Uuid,
@@ -601,6 +612,7 @@ pub async fn record_delete(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn record_move(
     state: &AppState,
     user_id: Uuid,
@@ -636,6 +648,7 @@ pub async fn record_move(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn record_copy(
     state: &AppState,
     user_id: Uuid,

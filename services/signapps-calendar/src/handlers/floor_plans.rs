@@ -16,6 +16,7 @@ use crate::{AppState, CalendarError};
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_floor_plan(
     State(state): State<AppState>,
     Json(payload): Json<CreateFloorPlan>,
@@ -37,6 +38,7 @@ pub async fn create_floor_plan(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_floor_plans(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<FloorPlan>>, CalendarError> {
@@ -57,6 +59,7 @@ pub async fn list_floor_plans(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_floor_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -82,6 +85,7 @@ pub async fn get_floor_plan(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_floor_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -104,6 +108,7 @@ pub async fn update_floor_plan(
     responses((status = 204, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_floor_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

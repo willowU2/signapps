@@ -53,6 +53,7 @@ pub struct ConversationDetail {
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_conversations(
     State(state): State<AppState>,
     Extension(claims): Extension<signapps_common::auth::Claims>,
@@ -77,6 +78,7 @@ pub async fn list_conversations(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_conversation(
     State(state): State<AppState>,
     Extension(claims): Extension<signapps_common::auth::Claims>,
@@ -104,6 +106,7 @@ pub async fn get_conversation(
     responses((status = 204, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_conversation(
     State(state): State<AppState>,
     Extension(claims): Extension<signapps_common::auth::Claims>,

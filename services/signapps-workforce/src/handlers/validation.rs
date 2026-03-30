@@ -282,6 +282,7 @@ pub struct ConflictQueryParams {
     responses((status = 201, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn validate_coverage(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -412,6 +413,7 @@ pub async fn validate_coverage(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn analyze_gaps(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -527,6 +529,7 @@ pub async fn analyze_gaps(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn simulate_leave(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -675,6 +678,7 @@ pub async fn simulate_leave(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn simulate_shift_change(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -814,6 +818,7 @@ pub async fn simulate_shift_change(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_conflicts(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,

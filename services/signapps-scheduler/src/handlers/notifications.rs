@@ -16,6 +16,7 @@ use crate::AppState;
     responses((status = 200, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn sse_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

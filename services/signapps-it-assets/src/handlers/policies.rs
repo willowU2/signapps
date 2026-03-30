@@ -128,6 +128,7 @@ pub struct NonCompliantMachine {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_policies(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<Policy>>, (StatusCode, String)> {
@@ -152,6 +153,7 @@ pub async fn list_policies(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_policies_tree(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<PolicyWithChildren>>, (StatusCode, String)> {
@@ -201,6 +203,7 @@ fn build_tree(policies: Vec<Policy>, parent_id: Option<Uuid>) -> Vec<PolicyWithC
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_policy(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -223,6 +226,7 @@ pub async fn get_policy(
     responses((status = 201, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_policy(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreatePolicyRequest>,
@@ -257,6 +261,7 @@ pub async fn create_policy(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_policy(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -305,6 +310,7 @@ pub async fn update_policy(
     responses((status = 204, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_policy(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -331,6 +337,7 @@ pub async fn delete_policy(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn assign_policy(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -374,6 +381,7 @@ pub async fn assign_policy(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_assignments(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -399,6 +407,7 @@ pub async fn list_assignments(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_agent_policies(
     State(pool): State<DatabasePool>,
     Path(agent_id): Path<Uuid>,
@@ -490,6 +499,7 @@ async fn get_ancestor_chain(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn report_compliance(
     State(pool): State<DatabasePool>,
     Json(payload): Json<ComplianceReport>,
@@ -522,6 +532,7 @@ pub async fn report_compliance(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn compliance_summary(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<ComplianceSummary>, (StatusCode, String)> {

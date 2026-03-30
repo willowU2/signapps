@@ -19,6 +19,7 @@ use crate::{AppState, CalendarError};
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn share_calendar(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -49,6 +50,7 @@ pub async fn share_calendar(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn unshare_calendar(
     State(state): State<AppState>,
     Path((calendar_id, user_id)): Path<(Uuid, Uuid)>,
@@ -75,6 +77,7 @@ pub struct UpdatePermissionRequest {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_permission(
     State(state): State<AppState>,
     Path((calendar_id, user_id)): Path<(Uuid, Uuid)>,
@@ -103,6 +106,7 @@ pub async fn update_permission(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_members(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -132,6 +136,7 @@ pub struct PermissionResponse {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn check_permission(
     State(_state): State<AppState>,
     Path((_calendar_id, _user_id)): Path<(Uuid, Uuid)>,

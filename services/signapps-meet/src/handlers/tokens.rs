@@ -30,6 +30,7 @@ pub struct TokenQuery {
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_token(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -121,6 +122,7 @@ pub async fn get_token(
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_room_token(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

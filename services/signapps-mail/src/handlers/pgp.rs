@@ -47,6 +47,7 @@ pub struct UpsertPgpConfigRequest {
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_pgp_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -100,6 +101,7 @@ pub async fn get_pgp_config(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn upsert_pgp_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -163,6 +165,7 @@ pub async fn upsert_pgp_config(
     responses((status = 204, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_pgp_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

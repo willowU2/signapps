@@ -39,6 +39,7 @@ pub struct Voicemail {
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_voicemails(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -73,6 +74,7 @@ pub async fn list_voicemails(
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn mark_voicemail_read(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -109,6 +111,7 @@ pub async fn mark_voicemail_read(
     responses((status = 204, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_voicemail(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

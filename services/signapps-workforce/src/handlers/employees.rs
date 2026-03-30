@@ -219,6 +219,7 @@ pub struct SearchQueryParams {
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_employees(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -278,6 +279,7 @@ pub async fn list_employees(
     responses((status = 201, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_employee(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -359,6 +361,7 @@ pub async fn create_employee(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_employee(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -445,6 +448,7 @@ pub async fn get_employee(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_employee(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -514,6 +518,7 @@ pub async fn update_employee(
     responses((status = 204, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_employee(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -555,6 +560,7 @@ pub async fn delete_employee(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn link_user(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -595,6 +601,7 @@ pub async fn link_user(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn unlink_user(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -633,6 +640,7 @@ pub async fn unlink_user(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_functions(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -685,6 +693,7 @@ pub async fn get_functions(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_functions(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -730,6 +739,7 @@ pub async fn update_functions(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_by_org_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -786,6 +796,7 @@ pub async fn list_by_org_node(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn search_employees(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -836,6 +847,7 @@ pub async fn search_employees(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_function_definitions(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -867,6 +879,7 @@ pub async fn list_function_definitions(
     responses((status = 201, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_function_definition(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -917,6 +930,7 @@ pub async fn create_function_definition(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_function_definition(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -970,6 +984,7 @@ pub async fn update_function_definition(
     responses((status = 204, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_function_definition(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -1022,6 +1037,7 @@ pub struct ImportResult {
     responses((status = 201, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn import_employees(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,

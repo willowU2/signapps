@@ -514,7 +514,7 @@ export default function RemoteAccessDashboard() {
                                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${editConnection.recording_enabled ? 'bg-red-500' : 'bg-input'}`}
                                 onClick={() => setEditConnection(prev => ({ ...prev, recording_enabled: !prev.recording_enabled }))}
                             >
-                                <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${editConnection.recording_enabled ? 'translate-x-5' : 'translate-x-1'}`} />
+                                <span className={`inline-block h-3 w-3 transform rounded-full bg-white dark:bg-zinc-200 transition-transform ${editConnection.recording_enabled ? 'translate-x-5' : 'translate-x-1'}`} />
                             </button>
                         </div>
                     </div>

@@ -71,6 +71,7 @@ pub struct SyncResultResponse {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_config(State(state): State<AppState>) -> Result<Json<LdapConfigResponse>> {
     let config = LdapRepository::get_config(&state.pool)
         .await?
@@ -87,6 +88,7 @@ pub async fn get_config(State(state): State<AppState>) -> Result<Json<LdapConfig
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_config(
     State(state): State<AppState>,
     Json(payload): Json<CreateLdapConfigRequest>,
@@ -124,6 +126,7 @@ pub async fn create_config(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_config(
     State(state): State<AppState>,
     Json(payload): Json<UpdateLdapConfigRequest>,
@@ -175,6 +178,7 @@ pub async fn update_config(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn test_connection(State(state): State<AppState>) -> Result<Json<LdapTestResult>> {
     let config = LdapRepository::get_config(&state.pool)
         .await?
@@ -202,6 +206,7 @@ pub async fn test_connection(State(state): State<AppState>) -> Result<Json<LdapT
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_groups(State(state): State<AppState>) -> Result<Json<Vec<LdapGroup>>> {
     let config = LdapRepository::get_config(&state.pool)
         .await?
@@ -225,6 +230,7 @@ pub async fn list_groups(State(state): State<AppState>) -> Result<Json<Vec<LdapG
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn sync_users(State(state): State<AppState>) -> Result<Json<SyncResultResponse>> {
     let config = LdapRepository::get_config(&state.pool)
         .await?

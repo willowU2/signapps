@@ -26,6 +26,7 @@ pub struct UpdateRoleRequest {
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_calendar(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -48,6 +49,7 @@ pub async fn create_calendar(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_calendars(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -69,6 +71,7 @@ pub async fn list_calendars(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_calendar(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -91,6 +94,7 @@ pub async fn get_calendar(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_calendar(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -113,6 +117,7 @@ pub async fn update_calendar(
     responses((status = 204, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_calendar(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -133,6 +138,7 @@ pub async fn delete_calendar(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_members(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -154,6 +160,7 @@ pub async fn list_members(
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn add_member(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -176,6 +183,7 @@ pub async fn add_member(
     responses((status = 204, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn remove_member(
     State(state): State<AppState>,
     Path((calendar_id, user_id)): Path<(Uuid, Uuid)>,
@@ -196,6 +204,7 @@ pub async fn remove_member(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_member_role(
     State(state): State<AppState>,
     Path((calendar_id, user_id)): Path<(Uuid, Uuid)>,

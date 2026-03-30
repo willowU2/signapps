@@ -72,6 +72,7 @@ pub struct QuotaListQuery {
     responses((status = 200, description = "Success")),
     tag = "Metrics"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_api_quotas(
     State(state): State<AppState>,
     Query(q): Query<QuotaListQuery>,
@@ -155,6 +156,7 @@ pub async fn list_api_quotas(
     responses((status = 200, description = "Success")),
     tag = "Metrics"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_user_api_quota(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,

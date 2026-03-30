@@ -63,6 +63,7 @@ pub struct MfaDisableRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn setup(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -135,6 +136,7 @@ pub async fn setup(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn verify(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -207,6 +209,7 @@ pub async fn verify(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn disable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -271,6 +274,7 @@ pub async fn disable(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -344,6 +348,7 @@ async fn store_backup_codes_hashed(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn verify_and_consume_backup_code(
     pool: &signapps_db::DatabasePool,
     user_id: Uuid,

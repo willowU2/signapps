@@ -51,6 +51,7 @@ pub struct DateRangeQuery {
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_event(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -117,6 +118,7 @@ pub async fn create_event(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_events(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -161,6 +163,7 @@ pub async fn list_events(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_event(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -183,6 +186,7 @@ pub async fn get_event(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_event(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -239,6 +243,7 @@ pub async fn update_event(
     responses((status = 204, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_event(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -273,6 +278,7 @@ pub async fn delete_event(
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn add_attendee(
     State(state): State<AppState>,
     Path(event_id): Path<Uuid>,
@@ -301,6 +307,7 @@ pub async fn add_attendee(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_attendees(
     State(state): State<AppState>,
     Path(event_id): Path<Uuid>,
@@ -324,6 +331,7 @@ pub async fn list_attendees(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_rsvp(
     State(state): State<AppState>,
     Path(attendee_id): Path<Uuid>,
@@ -354,6 +362,7 @@ pub async fn update_rsvp(
     responses((status = 204, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn remove_attendee(
     State(state): State<AppState>,
     Path(attendee_id): Path<Uuid>,

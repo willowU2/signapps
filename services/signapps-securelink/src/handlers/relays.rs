@@ -23,6 +23,7 @@ use signapps_common::Result;
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_relays(State(state): State<AppState>) -> Result<Json<Vec<Relay>>> {
     let relays = state.tunnel_client.list_relays().await;
     Ok(Json(relays))
@@ -36,6 +37,7 @@ pub async fn list_relays(State(state): State<AppState>) -> Result<Json<Vec<Relay
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_relay(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<Json<Relay>> {
     let relay = state
         .tunnel_client
@@ -53,6 +55,7 @@ pub async fn get_relay(State(state): State<AppState>, Path(id): Path<Uuid>) -> R
     responses((status = 201, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_relay(
     State(state): State<AppState>,
     Json(request): Json<CreateRelay>,
@@ -111,6 +114,7 @@ pub async fn create_relay(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_relay(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -165,6 +169,7 @@ pub async fn update_relay(
     responses((status = 204, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_relay(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -204,6 +209,7 @@ pub async fn delete_relay(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn test_relay(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -246,6 +252,7 @@ pub async fn test_relay(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn connect_relay(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -275,6 +282,7 @@ pub async fn connect_relay(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn disconnect_relay(
     State(_state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -323,6 +331,7 @@ pub struct DisconnectResponse {
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_relay_stats(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

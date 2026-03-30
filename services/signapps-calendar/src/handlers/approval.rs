@@ -33,6 +33,7 @@ use crate::{AppState, CalendarError};
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_workflows(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -65,6 +66,7 @@ pub async fn list_workflows(
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -102,6 +104,7 @@ pub async fn create_workflow(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_workflow(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -140,6 +143,7 @@ pub async fn update_workflow(
     responses((status = 204, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_workflow(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

@@ -113,6 +113,7 @@ impl DataExportStore {
         responses((status = 200, description = "Success")),
         tag = "Identity"
     )]
+    #[tracing::instrument(skip_all)]
     pub async fn get(&self, user_id: Uuid) -> Option<DataExportJob> {
         self.inner.read().await.get(&user_id).cloned()
     }
@@ -125,6 +126,7 @@ impl DataExportStore {
         responses((status = 200, description = "Success")),
         tag = "Identity"
     )]
+    #[tracing::instrument(skip_all)]
     pub async fn set(&self, job: DataExportJob) {
         self.inner.write().await.insert(job.user_id, job);
     }
@@ -147,6 +149,7 @@ impl DataExportStore {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn request_export(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -219,6 +222,7 @@ pub async fn request_export(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn export_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -243,6 +247,7 @@ pub async fn export_status(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn download_export(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

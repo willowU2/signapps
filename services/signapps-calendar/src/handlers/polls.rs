@@ -176,6 +176,7 @@ async fn fetch_slots(state: &AppState, poll_id: Uuid) -> Result<Vec<PollSlot>, C
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_polls(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -203,6 +204,7 @@ pub async fn list_polls(
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_poll(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -273,6 +275,7 @@ pub async fn create_poll(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_poll(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -304,6 +307,7 @@ pub async fn get_poll(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn vote_poll(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -388,6 +392,7 @@ pub async fn vote_poll(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn confirm_poll(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

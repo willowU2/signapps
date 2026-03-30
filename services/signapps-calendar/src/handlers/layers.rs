@@ -62,6 +62,7 @@ pub struct LayerConfigResponse {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_layer_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -100,6 +101,7 @@ pub async fn get_layer_config(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn save_layer_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

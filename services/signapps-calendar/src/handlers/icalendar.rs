@@ -37,6 +37,7 @@ pub struct ImportResult {
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn export_calendar(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -104,6 +105,7 @@ pub async fn export_calendar(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_calendar_feed(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -165,6 +167,7 @@ pub async fn get_calendar_feed(
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn import_calendar(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -275,6 +278,7 @@ pub struct CalendarSession {
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn validate_icalendar(
     Json(payload): Json<ValidateICalendarRequest>,
 ) -> Result<Json<ValidateICalendarResponse>, CalendarError> {

@@ -21,6 +21,7 @@ use crate::{
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_recordings(
     State(state): State<AppState>,
     Path(room_id): Path<Uuid>,
@@ -72,6 +73,7 @@ pub async fn list_recordings(
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn start_recording(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -153,6 +155,7 @@ pub async fn start_recording(
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_recording(
     State(state): State<AppState>,
     Path(recording_id): Path<Uuid>,
@@ -186,6 +189,7 @@ pub async fn get_recording(
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn stop_recording(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -256,6 +260,7 @@ pub async fn stop_recording(
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_active_recording(
     State(state): State<AppState>,
     Path(room_id): Path<Uuid>,
@@ -298,6 +303,7 @@ pub async fn get_active_recording(
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn stop_room_recording(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -364,6 +370,7 @@ pub async fn stop_room_recording(
     responses((status = 204, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_recording(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

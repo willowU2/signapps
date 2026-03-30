@@ -82,6 +82,7 @@ async fn owns_account(pool: &sqlx::PgPool, account_id: Uuid, user_id: Uuid) -> b
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_aliases(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -115,6 +116,7 @@ pub async fn list_aliases(
     responses((status = 201, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_alias(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -162,6 +164,7 @@ pub async fn create_alias(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_alias(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -205,6 +208,7 @@ pub async fn update_alias(
     responses((status = 204, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_alias(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -241,6 +245,7 @@ pub async fn delete_alias(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn set_default_alias(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

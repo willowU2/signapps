@@ -53,6 +53,7 @@ fn validate_collection_name(name: &str) -> Result<()> {
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_collections(
     State(state): State<AppState>,
 ) -> Result<Json<CollectionListResponse>> {
@@ -68,6 +69,7 @@ pub async fn list_collections(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_collection(
     State(state): State<AppState>,
     Path(name): Path<String>,
@@ -84,6 +86,7 @@ pub async fn get_collection(
     responses((status = 201, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_collection(
     State(state): State<AppState>,
     Json(payload): Json<CreateCollectionRequest>,
@@ -104,6 +107,7 @@ pub async fn create_collection(
     responses((status = 204, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_collection(
     State(state): State<AppState>,
     Path(name): Path<String>,
@@ -125,6 +129,7 @@ pub async fn delete_collection(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_collection_stats(
     State(state): State<AppState>,
     Path(name): Path<String>,

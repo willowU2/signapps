@@ -120,6 +120,7 @@ struct WebhookTestPayload {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<WebhookResponse>>> {
     let repo = GroupRepository::new(&state.pool);
     let webhooks = repo.list_webhooks().await?;
@@ -152,6 +153,7 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<WebhookRespo
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -185,6 +187,7 @@ pub async fn get(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
     Json(payload): Json<CreateWebhookRequest>,
@@ -239,6 +242,7 @@ pub async fn create(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -309,6 +313,7 @@ pub async fn update(
     responses((status = 204, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let repo = GroupRepository::new(&state.pool);
 
@@ -333,6 +338,7 @@ pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Resu
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn test(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

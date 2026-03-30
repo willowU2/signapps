@@ -58,6 +58,7 @@ pub struct UpsertEsgQuarterlyRequest {
     responses((status = 200, description = "Success")),
     tag = "Metrics"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_esg_scores(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -85,6 +86,7 @@ pub async fn get_esg_scores(
     responses((status = 200, description = "Success")),
     tag = "Metrics"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn upsert_esg_score(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -127,6 +129,7 @@ pub async fn upsert_esg_score(
     responses((status = 200, description = "Success")),
     tag = "Metrics"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_esg_quarterly(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -154,6 +157,7 @@ pub async fn get_esg_quarterly(
     responses((status = 200, description = "Success")),
     tag = "Metrics"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn upsert_esg_quarterly(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

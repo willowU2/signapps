@@ -53,6 +53,7 @@ pub struct SearchResponse {
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn search(
     State(state): State<AppState>,
     Extension(claims): Extension<signapps_common::auth::Claims>,

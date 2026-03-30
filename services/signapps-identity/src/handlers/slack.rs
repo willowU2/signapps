@@ -108,6 +108,7 @@ pub struct SaveSlackConfigRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn slack_webhook(
     State(_state): State<AppState>,
     axum::extract::Form(payload): axum::extract::Form<SlashCommandPayload>,
@@ -199,6 +200,7 @@ fn handle_help() -> SlackResponse {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn save_slack_config(
     State(_state): State<AppState>,
     Json(payload): Json<SaveSlackConfigRequest>,
@@ -234,6 +236,7 @@ pub async fn save_slack_config(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_slack_config(
     State(_state): State<AppState>,
 ) -> Result<Json<SlackIntegrationConfig>> {
@@ -265,6 +268,7 @@ pub async fn get_slack_config(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn notify_slack(webhook_url: &str, message: &str) -> anyhow::Result<()> {
     let client = reqwest::Client::new();
     let body = serde_json::json!({ "text": message });

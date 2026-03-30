@@ -74,6 +74,7 @@ pub struct ResolveAllConflictsRequest {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_connections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -100,6 +101,7 @@ pub async fn list_connections(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -126,6 +128,7 @@ pub async fn get_connection(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn init_oauth(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -165,6 +168,7 @@ pub async fn init_oauth(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn handle_oauth_callback(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -218,6 +222,7 @@ pub async fn handle_oauth_callback(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn refresh_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -264,6 +269,7 @@ pub async fn refresh_connection(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn disconnect_provider(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -299,6 +305,7 @@ pub async fn disconnect_provider(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_external_calendars(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -333,6 +340,7 @@ pub async fn list_external_calendars(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn discover_calendars(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -380,6 +388,7 @@ pub async fn discover_calendars(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_sync_configs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -401,6 +410,7 @@ pub async fn list_sync_configs(
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_sync_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -423,6 +433,7 @@ pub async fn create_sync_config(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_sync_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -456,6 +467,7 @@ pub async fn update_sync_config(
     responses((status = 204, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_sync_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -487,6 +499,7 @@ pub async fn delete_sync_config(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn trigger_sync(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -863,6 +876,7 @@ async fn fetch_microsoft_calendar_events(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_sync_logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -902,6 +916,7 @@ pub async fn list_sync_logs(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_conflicts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -936,6 +951,7 @@ pub async fn list_conflicts(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn resolve_conflict(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -971,6 +987,7 @@ pub async fn resolve_conflict(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn resolve_all_conflicts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

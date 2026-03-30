@@ -17,6 +17,7 @@ use signapps_common::Claims;
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_webhooks(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -43,6 +44,7 @@ pub async fn list_webhooks(
     responses((status = 201, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_webhook(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -82,6 +84,7 @@ pub async fn create_webhook(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_webhook(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -136,6 +139,7 @@ pub async fn update_webhook(
     responses((status = 204, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_webhook(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -162,6 +166,7 @@ pub async fn delete_webhook(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn test_webhook(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

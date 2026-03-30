@@ -67,6 +67,7 @@ pub struct UpdateRuleRequest {
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_rules(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -102,6 +103,7 @@ pub async fn list_rules(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_rule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -137,6 +139,7 @@ pub async fn get_rule(
     responses((status = 201, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_rule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -192,6 +195,7 @@ pub async fn create_rule(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_rule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -252,6 +256,7 @@ pub async fn update_rule(
     responses((status = 204, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_rule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

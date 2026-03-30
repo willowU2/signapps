@@ -91,6 +91,7 @@ pub struct UpdateRecurringRequest {
     responses((status = 201, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_recurring(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -155,6 +156,7 @@ pub async fn create_recurring(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_recurring(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -183,6 +185,7 @@ pub async fn list_recurring(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_recurring(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -238,6 +241,7 @@ pub async fn update_recurring(
     responses((status = 204, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_recurring(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

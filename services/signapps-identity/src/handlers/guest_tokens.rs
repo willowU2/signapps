@@ -102,6 +102,7 @@ fn hash_token(token: &str) -> String {
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_guest_token(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -176,6 +177,7 @@ pub async fn create_guest_token(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_guest_tokens(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -256,6 +258,7 @@ pub async fn list_guest_tokens(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn revoke_guest_token(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -287,6 +290,7 @@ pub async fn revoke_guest_token(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn validate_guest_token(
     State(state): State<AppState>,
     Json(payload): Json<ValidateGuestTokenRequest>,

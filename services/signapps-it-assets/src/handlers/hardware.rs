@@ -14,6 +14,7 @@ use crate::models::{CreateHardwareReq, HardwareAsset, UpdateHardwareReq};
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_hardware(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<HardwareAsset>>, (StatusCode, String)> {
@@ -32,6 +33,7 @@ pub async fn list_hardware(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_hardware(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -52,6 +54,7 @@ pub async fn get_hardware(
     responses((status = 201, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_hardware(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreateHardwareReq>,
@@ -85,6 +88,7 @@ pub async fn create_hardware(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_hardware(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -130,6 +134,7 @@ pub async fn update_hardware(
     responses((status = 204, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_hardware(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,

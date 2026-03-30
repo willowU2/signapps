@@ -42,6 +42,7 @@ fn parse_capability(s: &str) -> Result<Capability, (StatusCode, String)> {
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_capabilities(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<CapabilityInfo>>, (StatusCode, String)> {
@@ -62,6 +63,7 @@ pub async fn list_capabilities(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_capability_advice(
     State(state): State<AppState>,
     Path(cap_name): Path<String>,

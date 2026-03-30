@@ -56,6 +56,7 @@ pub struct ImportMetadata {
     responses((status = 200, description = "Success")),
     tag = "Office"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn info() -> Json<ImportInfoResponse> {
     Json(ImportInfoResponse {
         supported_formats: vec!["docx", "markdown", "html", "txt"],
@@ -72,6 +73,7 @@ pub async fn info() -> Json<ImportInfoResponse> {
     responses((status = 201, description = "Success")),
     tag = "Office"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn import_upload(
     State(state): State<AppState>,
     Query(query): Query<ImportQuery>,
@@ -138,6 +140,7 @@ pub struct ImportJsonRequest {
     responses((status = 201, description = "Success")),
     tag = "Office"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn import_json(
     State(state): State<AppState>,
     Json(request): Json<ImportJsonRequest>,

@@ -33,6 +33,7 @@ pub struct UpdateSignatureRequest {
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_signature(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -64,6 +65,7 @@ pub async fn get_signature(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn upsert_signature(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

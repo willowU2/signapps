@@ -216,6 +216,7 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn register_agent(
     State(pool): State<DatabasePool>,
     Json(payload): Json<RegisterAgentReq>,
@@ -289,6 +290,7 @@ pub async fn register_agent(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn agent_heartbeat(
     State(pool): State<DatabasePool>,
     Json(payload): Json<HeartbeatReq>,
@@ -365,6 +367,7 @@ pub async fn agent_heartbeat(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_agent_config(
     State(pool): State<DatabasePool>,
     Path(agent_id): Path<Uuid>,
@@ -410,6 +413,7 @@ pub async fn get_agent_config(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn report_hardware_inventory(
     State(pool): State<DatabasePool>,
     Json(payload): Json<HardwareInventoryReq>,
@@ -469,6 +473,7 @@ pub async fn report_hardware_inventory(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn report_software_inventory(
     State(pool): State<DatabasePool>,
     Json(payload): Json<SoftwareInventoryReq>,
@@ -518,6 +523,7 @@ pub async fn report_software_inventory(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn queue_script(
     State(pool): State<DatabasePool>,
     Json(payload): Json<QueueScriptReq>,
@@ -546,6 +552,7 @@ pub async fn queue_script(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_pending_scripts(
     State(pool): State<DatabasePool>,
     Path(agent_id): Path<Uuid>,
@@ -573,6 +580,7 @@ pub async fn get_pending_scripts(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn report_script_result(
     State(pool): State<DatabasePool>,
     Json(payload): Json<ScriptResultReq>,
@@ -622,6 +630,7 @@ pub async fn report_script_result(
     responses((status = 201, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_enrollment_token(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreateEnrollmentTokenReq>,

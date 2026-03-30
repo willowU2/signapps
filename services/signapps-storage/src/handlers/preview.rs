@@ -97,6 +97,7 @@ pub enum PreviewType {
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_thumbnail(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -669,6 +670,7 @@ struct PreviewNotAvailable {
     responses((status = 201, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn generate_preview(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -749,6 +751,7 @@ pub async fn generate_preview(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_preview(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -904,6 +907,7 @@ pub async fn get_preview(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_preview_info(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -1020,6 +1024,7 @@ pub struct ArchiveListResponse {
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_archive_listing(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -1100,6 +1105,7 @@ pub struct DocumentMetadata {
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_document_metadata(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,

@@ -154,6 +154,7 @@ impl From<signapps_db::models::User> for UserResponse {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
     Query(query): Query<ListQuery>,
@@ -176,6 +177,7 @@ pub async fn list(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -195,6 +197,7 @@ pub async fn get(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -318,6 +321,7 @@ pub async fn create(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -380,6 +384,7 @@ pub async fn update(
     responses((status = 204, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -421,6 +426,7 @@ pub async fn delete(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_me(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -440,6 +446,7 @@ pub async fn get_me(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_me(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -506,6 +513,7 @@ pub async fn update_me(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn set_tenant(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

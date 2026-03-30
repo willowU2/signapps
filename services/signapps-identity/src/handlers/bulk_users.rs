@@ -181,6 +181,7 @@ fn render_csv(rows: &[CsvUserRow]) -> String {
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn import_users(
     State(_state): State<AppState>,
     body: String,
@@ -236,6 +237,7 @@ pub async fn import_users(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn export_users(State(state): State<AppState>) -> impl IntoResponse {
     let rows = match fetch_all_users_as_csv_rows(&state).await {
         Ok(r) => r,
@@ -321,6 +323,7 @@ fn role_id_to_name(role: i16) -> String {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn bulk_action(
     State(_state): State<AppState>,
     Json(payload): Json<BulkActionRequest>,

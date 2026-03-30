@@ -21,6 +21,7 @@ use crate::{
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_posts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -55,6 +56,7 @@ pub async fn list_posts(
     responses((status = 201, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_post(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -128,6 +130,7 @@ pub async fn create_post(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_post(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -165,6 +168,7 @@ pub async fn get_post(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_post(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -250,6 +254,7 @@ pub async fn update_post(
     responses((status = 204, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_post(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -279,6 +284,7 @@ pub async fn delete_post(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn publish_post(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -330,6 +336,7 @@ pub async fn publish_post(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn schedule_post(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

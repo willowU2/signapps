@@ -221,6 +221,7 @@ fn guess_os(open_ports: &[u16]) -> Option<String> {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn scan_network(
     State(pool): State<DatabasePool>,
     Json(payload): Json<ScanSubnetReq>,
@@ -301,6 +302,7 @@ pub async fn scan_network(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_discoveries(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<NetworkDiscovery>>, (StatusCode, String)> {
@@ -327,6 +329,7 @@ pub async fn list_discoveries(
     responses((status = 201, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn add_discovery_to_inventory(
     State(pool): State<DatabasePool>,
     Path(discovery_id): Path<Uuid>,
@@ -389,6 +392,7 @@ pub async fn add_discovery_to_inventory(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn port_scan(
     State(_pool): State<DatabasePool>,
     Json(payload): Json<PortScanReq>,
@@ -446,6 +450,7 @@ pub async fn port_scan(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn query_snmp(
     State(pool): State<DatabasePool>,
     Path(ip): Path<String>,

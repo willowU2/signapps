@@ -29,6 +29,7 @@ fn generate_short_code() -> String {
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_short_urls(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -55,6 +56,7 @@ pub async fn list_short_urls(
     responses((status = 201, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_short_url(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -88,6 +90,7 @@ pub async fn create_short_url(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn track_click(
     State(state): State<AppState>,
     Path(code): Path<String>,
@@ -119,6 +122,7 @@ pub async fn track_click(
     responses((status = 204, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_short_url(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

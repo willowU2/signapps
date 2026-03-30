@@ -8,6 +8,7 @@ use serde_json::json;
     responses((status = 200, description = "Success")),
     tag = "Collab"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn health_handler() -> Json<serde_json::Value> {
     Json(json!({
         "status": "ok",

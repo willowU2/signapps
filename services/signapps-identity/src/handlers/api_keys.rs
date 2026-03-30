@@ -77,6 +77,7 @@ fn hash_key(key: &str) -> String {
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -131,6 +132,7 @@ pub async fn create(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -182,6 +184,7 @@ pub async fn list(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn revoke(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -219,6 +222,7 @@ pub struct PatchApiKeyRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn patch(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

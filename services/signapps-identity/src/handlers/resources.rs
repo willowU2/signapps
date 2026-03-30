@@ -69,6 +69,7 @@ pub struct CreateResourceTypeRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_resource_types(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -87,6 +88,7 @@ pub async fn list_resource_types(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_resource_type(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -120,6 +122,7 @@ pub async fn create_resource_type(
     responses((status = 204, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_resource_type(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -232,6 +235,7 @@ pub struct UpdateResourceRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_resources(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -262,6 +266,7 @@ pub async fn list_resources(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_resource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -280,6 +285,7 @@ pub async fn get_resource(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_resource(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -328,6 +334,7 @@ pub async fn create_resource(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_resource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -372,6 +379,7 @@ pub async fn update_resource(
     responses((status = 204, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_resource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -459,6 +467,7 @@ pub struct UpdateReservationStatusRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_reservations(
     State(state): State<AppState>,
     Query(query): Query<ListReservationsQuery>,
@@ -486,6 +495,7 @@ pub async fn list_reservations(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_pending_reservations(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -508,6 +518,7 @@ pub async fn list_pending_reservations(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_my_reservations(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -532,6 +543,7 @@ pub async fn list_my_reservations(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_reservation(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -550,6 +562,7 @@ pub async fn get_reservation(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_reservation(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -597,6 +610,7 @@ pub async fn create_reservation(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_reservation_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

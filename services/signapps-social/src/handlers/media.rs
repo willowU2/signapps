@@ -25,6 +25,7 @@ pub struct MediaQuery {
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_media(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -79,6 +80,7 @@ pub async fn list_media(
     responses((status = 201, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_media(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -118,6 +120,7 @@ pub async fn create_media(
     responses((status = 204, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_media(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -17,6 +17,7 @@ use signapps_common::Claims;
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_time_slots(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -45,6 +46,7 @@ pub async fn list_time_slots(
     responses((status = 201, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_time_slot(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -79,6 +81,7 @@ pub async fn create_time_slot(
     responses((status = 204, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_time_slot(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

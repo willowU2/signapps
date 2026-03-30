@@ -40,6 +40,7 @@ pub struct CalendarSession {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn websocket_handler(
     Path(calendar_id): Path<Uuid>,
     ws: WebSocketUpgrade,

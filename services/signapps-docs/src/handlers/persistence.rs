@@ -10,6 +10,7 @@ use yrs::{updates::decoder::Decode, Doc, ReadTxn, StateVector, Transact};
     responses((status = 200, description = "Success")),
     tag = "Docs"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn save_document(
     pool: &sqlx::PgPool,
     doc_id: &str,
@@ -52,6 +53,7 @@ pub async fn save_document(
     responses((status = 200, description = "Success")),
     tag = "Docs"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn load_document(pool: &sqlx::PgPool, doc_id: &str) -> Result<Option<Doc>, String> {
     let doc_uuid = Uuid::parse_str(doc_id).map_err(|e| format!("Invalid document ID: {}", e))?;
 

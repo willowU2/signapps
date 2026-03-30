@@ -216,6 +216,7 @@ fn extract_user_agent(headers: &HeaderMap) -> Option<String> {
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_envelope(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -254,6 +255,7 @@ pub async fn create_envelope(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_envelopes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -282,6 +284,7 @@ pub async fn list_envelopes(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_envelope(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -311,6 +314,7 @@ pub async fn get_envelope(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn send_envelope(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -347,6 +351,7 @@ pub async fn send_envelope(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn void_envelope(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -392,6 +397,7 @@ pub async fn void_envelope(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn add_step(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -442,6 +448,7 @@ pub async fn add_step(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_steps(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -475,6 +482,7 @@ pub async fn list_steps(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn sign_step(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -520,6 +528,7 @@ pub async fn sign_step(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn decline_step(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -569,6 +578,7 @@ pub async fn decline_step(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_transitions(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

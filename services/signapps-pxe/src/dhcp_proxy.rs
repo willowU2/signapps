@@ -37,7 +37,7 @@ impl Default for ProxyDhcpConfig {
         Self {
             tftp_server_ip: Ipv4Addr::new(0, 0, 0, 0),
             boot_filename: "pxelinux.0".to_string(),
-            bind_addr: "0.0.0.0:4011".parse().unwrap(),
+            bind_addr: "0.0.0.0:4011".parse().expect("valid bind address"),
         }
     }
 }

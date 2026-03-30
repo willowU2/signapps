@@ -17,6 +17,7 @@ use signapps_common::Claims;
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_workspaces(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -46,6 +47,7 @@ pub async fn list_workspaces(
     responses((status = 201, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_workspace(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -92,6 +94,7 @@ pub async fn create_workspace(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_workspace(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -121,6 +124,7 @@ pub async fn get_workspace(
     responses((status = 204, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_workspace(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -147,6 +151,7 @@ pub async fn delete_workspace(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_members(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -174,6 +179,7 @@ pub async fn list_members(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn invite_member(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -225,6 +231,7 @@ pub async fn invite_member(
     responses((status = 204, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn remove_member(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

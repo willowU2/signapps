@@ -19,6 +19,7 @@ use crate::{AppState, CalendarError};
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_categories(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -40,6 +41,7 @@ pub async fn list_categories(
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_category(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -62,6 +64,7 @@ pub async fn create_category(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_category(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -85,6 +88,7 @@ pub async fn update_category(
     responses((status = 204, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_category(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

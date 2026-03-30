@@ -52,6 +52,7 @@ const ALLOWED_COMMANDS: &[&str] = &["reboot", "shutdown", "lock", "run_script", 
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn queue_agent_command(
     State(pool): State<DatabasePool>,
     Json(payload): Json<QueueCommandReq>,
@@ -110,6 +111,7 @@ pub async fn queue_agent_command(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_pending_commands(
     State(pool): State<DatabasePool>,
     Path(agent_id): Path<Uuid>,
@@ -164,6 +166,7 @@ pub async fn get_pending_commands(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_command_status(
     State(pool): State<DatabasePool>,
     Path(command_id): Path<Uuid>,
@@ -209,6 +212,7 @@ pub async fn update_command_status(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_hardware_commands(
     State(pool): State<DatabasePool>,
     Path(hardware_id): Path<Uuid>,

@@ -201,6 +201,7 @@ pub struct RuleQueryParams {
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_templates(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -232,6 +233,7 @@ pub async fn list_templates(
     responses((status = 201, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -299,6 +301,7 @@ pub async fn create_template(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -329,6 +332,7 @@ pub async fn get_template(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -407,6 +411,7 @@ pub async fn update_template(
     responses((status = 204, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -456,6 +461,7 @@ pub async fn delete_template(
     responses((status = 201, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn duplicate_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -516,6 +522,7 @@ pub async fn duplicate_template(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_rules(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -567,6 +574,7 @@ pub async fn list_rules(
     responses((status = 201, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_rule(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -666,6 +674,7 @@ pub async fn create_rule(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_rule(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -695,6 +704,7 @@ pub async fn get_rule(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_rule(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -764,6 +774,7 @@ pub async fn update_rule(
     responses((status = 204, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_rule(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -796,6 +807,7 @@ pub async fn delete_rule(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_rules_by_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -839,6 +851,7 @@ pub async fn get_rules_by_node(
     responses((status = 200, description = "Success")),
     tag = "Workforce"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_effective_coverage(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,

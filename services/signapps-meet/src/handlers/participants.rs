@@ -21,6 +21,7 @@ use crate::{
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_participants(
     State(state): State<AppState>,
     Path(room_id): Path<Uuid>,
@@ -70,6 +71,7 @@ pub async fn list_participants(
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn kick_participant(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -139,6 +141,7 @@ pub async fn kick_participant(
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn mute_participant(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

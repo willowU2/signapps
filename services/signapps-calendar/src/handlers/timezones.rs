@@ -32,6 +32,7 @@ pub struct TimezoneInfo {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_timezones(Query(query): Query<TimezoneListQuery>) -> Json<Vec<TimezoneInfo>> {
     let mut timezones = services::list_timezones()
         .into_iter()
@@ -69,6 +70,7 @@ pub struct ValidateTimezoneResponse {
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn validate_timezone(
     Json(payload): Json<ValidateTimezoneRequest>,
 ) -> Json<ValidateTimezoneResponse> {
@@ -100,6 +102,7 @@ pub struct ConvertTimezoneResponse {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn convert_timezone(
     Json(payload): Json<ConvertTimezoneRequest>,
 ) -> Result<Json<ConvertTimezoneResponse>, String> {
@@ -144,6 +147,7 @@ pub struct SetUserTimezoneRequest {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_user_timezone(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -186,6 +190,7 @@ pub async fn get_user_timezone(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn set_user_timezone(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

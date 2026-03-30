@@ -23,6 +23,7 @@ use signapps_common::Result;
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_tunnels(State(state): State<AppState>) -> Result<Json<Vec<Tunnel>>> {
     let tunnels = state.tunnel_client.list_tunnels().await;
     Ok(Json(tunnels))
@@ -36,6 +37,7 @@ pub async fn list_tunnels(State(state): State<AppState>) -> Result<Json<Vec<Tunn
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_tunnel(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -56,6 +58,7 @@ pub async fn get_tunnel(
     responses((status = 201, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_tunnel(
     State(state): State<AppState>,
     Json(request): Json<CreateTunnel>,
@@ -107,6 +110,7 @@ pub async fn create_tunnel(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_tunnel(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -144,6 +148,7 @@ pub async fn update_tunnel(
     responses((status = 204, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_tunnel(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -171,6 +176,7 @@ pub async fn delete_tunnel(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_tunnel_status(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -198,6 +204,7 @@ pub async fn get_tunnel_status(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn reconnect_tunnel(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -261,6 +268,7 @@ pub struct BulkTunnelAction {
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn bulk_tunnel_action(
     State(state): State<AppState>,
     Json(request): Json<BulkTunnelAction>,
@@ -336,6 +344,7 @@ pub struct QuickConnectRequest {
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn quick_connect(
     State(state): State<AppState>,
     Json(request): Json<QuickConnectRequest>,
@@ -403,6 +412,7 @@ pub struct DashboardStatsResponse {
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn dashboard_stats(
     State(state): State<AppState>,
 ) -> Result<Json<DashboardStatsResponse>> {
@@ -457,6 +467,7 @@ pub use crate::TrafficPoint;
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn dashboard_traffic(State(state): State<AppState>) -> Result<Json<Vec<TrafficPoint>>> {
     let history = state.traffic_history.read().await;
     Ok(Json(history.iter().cloned().collect()))

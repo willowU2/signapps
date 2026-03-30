@@ -102,6 +102,7 @@ pub struct OidcCallbackQuery {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn saml_metadata(State(state): State<AppState>) -> Response {
     // Load the configured SP entity ID from env (or use a sensible default).
     let sp_entity_id = std::env::var("SAML_SP_ENTITY_ID")
@@ -168,6 +169,7 @@ pub struct AcsPayload {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn saml_acs(
     State(state): State<AppState>,
     Form(payload): Form<AcsPayload>,
@@ -225,6 +227,7 @@ pub async fn saml_acs(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn oidc_authorize(
     State(state): State<AppState>,
     Query(query): Query<AuthorizeQuery>,
@@ -280,6 +283,7 @@ pub async fn oidc_authorize(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn oidc_callback(
     State(state): State<AppState>,
     Query(query): Query<OidcCallbackQuery>,
@@ -313,6 +317,7 @@ pub async fn oidc_callback(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -381,6 +386,7 @@ pub async fn get_config(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn upsert_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -527,6 +533,7 @@ pub struct UpsertPasswordPolicyRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_password_policy(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -586,6 +593,7 @@ pub async fn get_password_policy(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn upsert_password_policy(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -740,6 +748,7 @@ async fn find_or_create_sso_user(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn validate_password_against_policy(
     state: &AppState,
     tenant_id: Uuid,

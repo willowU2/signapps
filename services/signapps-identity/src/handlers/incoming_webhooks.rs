@@ -81,6 +81,7 @@ fn resolve_event_type(source: &str, payload: &Value) -> String {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn receive_incoming_webhook(
     State(_state): State<AppState>,
     Path(source): Path<String>,
@@ -134,6 +135,7 @@ pub async fn receive_incoming_webhook(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn receive_public_webhook(
     State(_state): State<AppState>,
     Path(source): Path<String>,

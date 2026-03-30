@@ -22,6 +22,7 @@ use crate::{services, AppState, CalendarError};
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_task(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -71,6 +72,7 @@ pub async fn create_task(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_task(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -93,6 +95,7 @@ pub async fn get_task(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_root_tasks(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -114,6 +117,7 @@ pub async fn list_root_tasks(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_children(
     State(state): State<AppState>,
     Path(task_id): Path<Uuid>,
@@ -135,6 +139,7 @@ pub async fn list_children(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_task(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -179,6 +184,7 @@ pub struct MoveTaskRequest {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn move_task(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -225,6 +231,7 @@ pub async fn move_task(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn complete_task(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -254,6 +261,7 @@ pub async fn complete_task(
     responses((status = 204, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_task(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -289,6 +297,7 @@ pub struct TaskTreeNode {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_task_tree(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -346,6 +355,7 @@ pub struct TaskTreeInfo {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_task_tree_info(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,

@@ -40,6 +40,7 @@ pub struct ModelsQuery {
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_models(
     State(state): State<AppState>,
     Query(query): Query<ModelsQuery>,

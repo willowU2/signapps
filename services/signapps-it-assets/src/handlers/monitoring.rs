@@ -41,6 +41,7 @@ pub struct MetricRow {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_metrics(
     State(pool): State<DatabasePool>,
     Path(hw_id): Path<Uuid>,
@@ -114,6 +115,7 @@ pub struct AlertRow {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_alert_rules(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<AlertRule>>, (StatusCode, String)> {
@@ -132,6 +134,7 @@ pub async fn list_alert_rules(
     responses((status = 201, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_alert_rule(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreateAlertRuleReq>,
@@ -161,6 +164,7 @@ pub async fn create_alert_rule(
     responses((status = 204, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_alert_rule(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -182,6 +186,7 @@ pub async fn delete_alert_rule(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_alerts(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<AlertRow>>, (StatusCode, String)> {
@@ -200,6 +205,7 @@ pub async fn list_alerts(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn resolve_alert(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -265,6 +271,7 @@ pub struct LogQuery {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn ingest_event_logs(
     State(pool): State<DatabasePool>,
     Json(payload): Json<IngestLogsReq>,
@@ -305,6 +312,7 @@ pub async fn ingest_event_logs(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_event_logs(
     State(pool): State<DatabasePool>,
     Path(hw_id): Path<Uuid>,
@@ -376,6 +384,7 @@ pub struct MachineRow {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn fleet_overview(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<FleetOverview>, (StatusCode, String)> {
@@ -499,6 +508,7 @@ pub struct UpdateComponentReq {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_components(
     State(pool): State<DatabasePool>,
     Path(hw_id): Path<Uuid>,
@@ -519,6 +529,7 @@ pub async fn list_components(
     responses((status = 201, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_component(
     State(pool): State<DatabasePool>,
     Path(hw_id): Path<Uuid>,
@@ -547,6 +558,7 @@ pub async fn create_component(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_component(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -580,6 +592,7 @@ pub async fn update_component(
     responses((status = 204, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_component(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -653,6 +666,7 @@ pub struct UpdateLicenseReq {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_licenses(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<LicenseWithUsage>>, (StatusCode, String)> {
@@ -701,6 +715,7 @@ pub async fn list_licenses(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_license(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -722,6 +737,7 @@ pub async fn get_license(
     responses((status = 201, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_license(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreateLicenseReq>,
@@ -753,6 +769,7 @@ pub async fn create_license(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_license(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -796,6 +813,7 @@ pub async fn update_license(
     responses((status = 204, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_license(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -855,6 +873,7 @@ pub struct UpdateNetworkInterfaceReq {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_network_interfaces(
     State(pool): State<DatabasePool>,
     Path(hw_id): Path<Uuid>,
@@ -881,6 +900,7 @@ pub async fn list_network_interfaces(
     responses((status = 201, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_network_interface(
     State(pool): State<DatabasePool>,
     Path(hw_id): Path<Uuid>,
@@ -915,6 +935,7 @@ pub async fn create_network_interface(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_network_interface(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -955,6 +976,7 @@ pub async fn update_network_interface(
     responses((status = 204, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_network_interface(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -1009,6 +1031,7 @@ pub struct UpdateMaintenanceWindowReq {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_maintenance_windows(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<MaintenanceWindowRow>>, (StatusCode, String)> {
@@ -1027,6 +1050,7 @@ pub async fn list_maintenance_windows(
     responses((status = 201, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_maintenance_window(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreateMaintenanceWindowReq>,
@@ -1055,6 +1079,7 @@ pub async fn create_maintenance_window(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_maintenance_window(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -1092,6 +1117,7 @@ pub async fn update_maintenance_window(
     responses((status = 204, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_maintenance_window(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,

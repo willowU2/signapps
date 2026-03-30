@@ -104,6 +104,7 @@ pub struct RefreshRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn login(
     State(state): State<AppState>,
     Json(payload): Json<LoginRequest>,
@@ -290,6 +291,7 @@ pub async fn login(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result<HeaderMap> {
     let mut token = None;
 
@@ -352,6 +354,7 @@ pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn register(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
@@ -419,6 +422,7 @@ pub async fn register(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn refresh(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -524,6 +528,7 @@ pub async fn refresh(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn me(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -554,6 +559,7 @@ pub async fn me(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn bootstrap(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     // Check if any admin already exists (direct SQL — checks ALL users, not just first N)
     let has_admin: bool =
@@ -638,6 +644,7 @@ pub struct PasswordResetConfirmRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn password_reset(
     State(state): State<AppState>,
     Json(payload): Json<serde_json::Value>,
@@ -722,6 +729,7 @@ pub async fn password_reset(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn password_reset_confirm(
     State(state): State<AppState>,
     Json(payload): Json<PasswordResetConfirmRequest>,

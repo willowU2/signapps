@@ -26,6 +26,7 @@ use signapps_common::Result;
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_dns_config(State(state): State<AppState>) -> Result<Json<DnsServiceConfig>> {
     let config = state.dns_config.read().await;
     Ok(Json(config.clone()))
@@ -39,6 +40,7 @@ pub async fn get_dns_config(State(state): State<AppState>) -> Result<Json<DnsSer
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_dns_config(
     State(state): State<AppState>,
     Json(request): Json<UpdateDnsConfigRequest>,
@@ -100,6 +102,7 @@ pub struct UpdateDnsConfigRequest {
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_blocklists(State(state): State<AppState>) -> Result<Json<Vec<DnsBlocklist>>> {
     let blocklists = state.blocklists.read().await;
     Ok(Json(blocklists.clone()))
@@ -113,6 +116,7 @@ pub async fn list_blocklists(State(state): State<AppState>) -> Result<Json<Vec<D
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_blocklist(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -147,6 +151,7 @@ fn default_true() -> bool {
     responses((status = 201, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn add_blocklist(
     State(state): State<AppState>,
     Json(request): Json<CreateBlocklistRequest>,
@@ -188,6 +193,7 @@ pub async fn add_blocklist(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_blocklist(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -226,6 +232,7 @@ pub struct UpdateBlocklistRequest {
     responses((status = 204, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_blocklist(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -250,6 +257,7 @@ pub async fn delete_blocklist(
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn refresh_blocklist(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -292,6 +300,7 @@ pub struct RefreshBlocklistResponse {
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_dns_stats(State(state): State<AppState>) -> Result<Json<DnsStats>> {
     let stats = state.dns_stats.read().await;
     Ok(Json(stats.clone()))
@@ -305,6 +314,7 @@ pub async fn get_dns_stats(State(state): State<AppState>) -> Result<Json<DnsStat
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn reset_dns_stats(State(state): State<AppState>) -> Result<Json<ResetStatsResponse>> {
     let mut stats = state.dns_stats.write().await;
     *stats = DnsStats::default();
@@ -331,6 +341,7 @@ pub struct ResetStatsResponse {
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_dns_records(State(state): State<AppState>) -> Result<Json<Vec<DnsRecord>>> {
     let config = state.dns_config.read().await;
     Ok(Json(config.custom_records.clone()))
@@ -359,6 +370,7 @@ fn default_ttl() -> u32 {
     responses((status = 201, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn add_dns_record(
     State(state): State<AppState>,
     Json(request): Json<AddDnsRecordRequest>,
@@ -413,6 +425,7 @@ pub async fn add_dns_record(
     responses((status = 204, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_dns_record(
     State(state): State<AppState>,
     Json(request): Json<DeleteDnsRecordRequest>,
@@ -474,6 +487,7 @@ fn is_valid_dns_server(server: &str) -> bool {
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn query_dns(
     State(state): State<AppState>,
     Json(request): Json<DnsQueryRequest>,
@@ -620,6 +634,7 @@ pub struct DnsQueryResponse {
     responses((status = 200, description = "Success")),
     tag = "Securelink"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn flush_dns_cache(State(_state): State<AppState>) -> Result<Json<FlushCacheResponse>> {
     // In a real implementation, this would clear the DNS cache
     tracing::info!("DNS cache flushed");

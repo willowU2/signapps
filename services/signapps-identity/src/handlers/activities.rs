@@ -49,6 +49,7 @@ pub struct ActivityEntry {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_activities(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -79,6 +80,7 @@ pub async fn list_activities(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn cross_module_activity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

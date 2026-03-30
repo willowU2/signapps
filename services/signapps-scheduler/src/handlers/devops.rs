@@ -105,6 +105,7 @@ pub struct CreateDeploymentRequest {
     responses((status = 200, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_changelog(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -133,6 +134,7 @@ pub async fn list_changelog(
     responses((status = 201, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_changelog(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -181,6 +183,7 @@ pub async fn create_changelog(
     responses((status = 200, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_pipelines(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -209,6 +212,7 @@ pub async fn list_pipelines(
     responses((status = 201, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_pipeline(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -250,6 +254,7 @@ pub async fn create_pipeline(
     responses((status = 200, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_pipeline(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -291,6 +296,7 @@ pub async fn update_pipeline(
     responses((status = 200, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_deployments(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -319,6 +325,7 @@ pub async fn list_deployments(
     responses((status = 201, description = "Success")),
     tag = "Scheduler"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_deployment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

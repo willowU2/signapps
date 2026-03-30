@@ -35,6 +35,7 @@ pub struct SessionItem {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -82,6 +83,7 @@ pub async fn list(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn revoke(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -109,6 +111,7 @@ pub async fn revoke(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn revoke_all(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

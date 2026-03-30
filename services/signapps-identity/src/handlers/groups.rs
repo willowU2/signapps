@@ -54,6 +54,7 @@ pub struct AddMemberRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
     axum::extract::Query(query): axum::extract::Query<ListQuery>,
@@ -91,6 +92,7 @@ pub async fn list(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -120,6 +122,7 @@ pub async fn get(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
     Json(payload): Json<signapps_db::models::CreateGroup>,
@@ -144,6 +147,7 @@ pub async fn create(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -176,6 +180,7 @@ pub async fn update(
     responses((status = 204, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let repo = GroupRepository::new(&state.pool);
     repo.delete(id).await?;
@@ -190,6 +195,7 @@ pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Resu
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn add_member(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -213,6 +219,7 @@ pub async fn add_member(
     responses((status = 204, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn remove_member(
     State(state): State<AppState>,
     Path((group_id, user_id)): Path<(Uuid, Uuid)>,
@@ -230,6 +237,7 @@ pub async fn remove_member(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_members(
     State(state): State<AppState>,
     Path(group_id): Path<Uuid>,

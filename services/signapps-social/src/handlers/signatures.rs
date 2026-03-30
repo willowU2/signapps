@@ -17,6 +17,7 @@ use signapps_common::Claims;
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_signatures(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -43,6 +44,7 @@ pub async fn list_signatures(
     responses((status = 201, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_signature(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -75,6 +77,7 @@ pub async fn create_signature(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_signature(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -131,6 +134,7 @@ pub async fn update_signature(
     responses((status = 204, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_signature(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

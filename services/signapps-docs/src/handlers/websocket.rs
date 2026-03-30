@@ -29,6 +29,7 @@ static ACTIVE_CONNECTIONS: AtomicUsize = AtomicUsize::new(0);
     responses((status = 200, description = "Success")),
     tag = "Docs"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn websocket_handler(
     Path((doc_type, doc_id)): Path<(String, String)>,
     ws: WebSocketUpgrade,

@@ -62,6 +62,7 @@ pub struct CreateLinkRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn find_links(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -99,6 +100,7 @@ pub async fn find_links(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_link(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -141,6 +143,7 @@ pub async fn create_link(
     responses((status = 204, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn remove_link(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

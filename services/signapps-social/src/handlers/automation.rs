@@ -27,6 +27,7 @@ use crate::{
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_rss_feeds(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -58,6 +59,7 @@ pub async fn list_rss_feeds(
     responses((status = 201, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_rss_feed(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -110,6 +112,7 @@ pub async fn create_rss_feed(
     responses((status = 204, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_rss_feed(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -141,6 +144,7 @@ pub async fn delete_rss_feed(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_templates(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -171,6 +175,7 @@ pub async fn list_templates(
     responses((status = 201, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -213,6 +218,7 @@ pub async fn create_template(
     responses((status = 204, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -241,6 +247,7 @@ pub async fn delete_template(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -293,6 +300,7 @@ pub async fn update_template(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn check_rss_feed_now(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -335,6 +343,7 @@ pub async fn check_rss_feed_now(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn ai_smart_replies(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -410,6 +419,7 @@ pub async fn ai_smart_replies(
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn ai_generate(Json(payload): Json<AiGenerateRequest>) -> impl IntoResponse {
     // Delegate to signapps-ai when available; return a scaffold response for now
     let platform = payload.platform.as_deref().unwrap_or("general");
@@ -433,6 +443,7 @@ pub async fn ai_generate(Json(payload): Json<AiGenerateRequest>) -> impl IntoRes
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn ai_hashtags(Json(payload): Json<AiHashtagsRequest>) -> impl IntoResponse {
     let platform = payload.platform.as_deref().unwrap_or("general");
     // Placeholder — real implementation would call local LLM via signapps-ai
@@ -454,6 +465,7 @@ pub async fn ai_hashtags(Json(payload): Json<AiHashtagsRequest>) -> impl IntoRes
     responses((status = 200, description = "Success")),
     tag = "Social"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn ai_best_time(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

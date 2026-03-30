@@ -53,6 +53,7 @@ pub struct UpdateMacroRequest {
     responses((status = 200, description = "Success")),
     tag = "Docs"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_macros(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -83,6 +84,7 @@ pub async fn list_macros(
     responses((status = 201, description = "Success")),
     tag = "Docs"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_macro(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -123,6 +125,7 @@ pub async fn create_macro(
     responses((status = 200, description = "Success")),
     tag = "Docs"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_macro(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -160,6 +163,7 @@ pub async fn update_macro(
     responses((status = 204, description = "Success")),
     tag = "Docs"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_macro(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

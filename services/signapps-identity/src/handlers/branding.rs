@@ -129,6 +129,7 @@ async fn fetch_branding(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_branding(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -153,6 +154,7 @@ pub async fn get_branding(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_my_branding(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -174,6 +176,7 @@ pub async fn get_my_branding(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_branding(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -243,6 +246,7 @@ pub async fn update_branding(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn reset_branding(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

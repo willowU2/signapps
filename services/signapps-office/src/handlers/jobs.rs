@@ -89,6 +89,7 @@ pub struct JobSubmitResponse {
     responses((status = 201, description = "Success")),
     tag = "Office"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn submit_convert_job(
     State(state): State<AppState>,
     Json(req): Json<JobConvertRequest>,
@@ -131,6 +132,7 @@ pub async fn submit_convert_job(
     responses((status = 200, description = "Success")),
     tag = "Office"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_job_status(
     State(state): State<AppState>,
     Path(job_id): Path<String>,

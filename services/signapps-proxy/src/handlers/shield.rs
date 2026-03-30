@@ -38,6 +38,7 @@ pub struct BlockResponse {
     responses((status = 200, description = "Success")),
     tag = "Proxy"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<ShieldStats>> {
     let stats = state.shield.get_stats().await?;
     Ok(Json(stats))
@@ -51,6 +52,7 @@ pub async fn get_stats(State(state): State<AppState>) -> Result<Json<ShieldStats
     responses((status = 200, description = "Success")),
     tag = "Proxy"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn reset_stats(State(state): State<AppState>) -> Result<StatusCode> {
     state.shield.reset_stats().await?;
     tracing::info!("Shield statistics reset");
@@ -65,6 +67,7 @@ pub async fn reset_stats(State(state): State<AppState>) -> Result<StatusCode> {
     responses((status = 200, description = "Success")),
     tag = "Proxy"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn block_ip(
     State(state): State<AppState>,
     Path(route_id): Path<Uuid>,
@@ -93,6 +96,7 @@ pub async fn block_ip(
     responses((status = 200, description = "Success")),
     tag = "Proxy"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn unblock_ip(
     State(state): State<AppState>,
     Path((route_id, ip)): Path<(Uuid, String)>,
@@ -112,6 +116,7 @@ pub async fn unblock_ip(
     responses((status = 200, description = "Success")),
     tag = "Proxy"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn check_blocked(
     State(state): State<AppState>,
     Path((route_id, ip)): Path<(Uuid, String)>,

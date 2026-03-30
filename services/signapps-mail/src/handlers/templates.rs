@@ -68,6 +68,7 @@ pub struct UpdateTemplateRequest {
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_templates(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -112,6 +113,7 @@ pub async fn list_templates(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -135,6 +137,7 @@ pub async fn get_template(
     responses((status = 201, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_template(
     State(state): State<AppState>,
     Json(payload): Json<CreateTemplateRequest>,
@@ -173,6 +176,7 @@ pub async fn create_template(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -214,6 +218,7 @@ pub async fn update_template(
     responses((status = 204, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

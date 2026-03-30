@@ -43,6 +43,7 @@ pub enum TranscriptionSource {
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn transcribe_audio(
     State(_state): State<AppState>,
     mut multipart: Multipart,

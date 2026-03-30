@@ -30,6 +30,7 @@ pub struct IpAllowlistEntry {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -60,6 +61,7 @@ pub async fn get(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

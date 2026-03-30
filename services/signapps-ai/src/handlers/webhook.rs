@@ -26,6 +26,7 @@ pub struct WebhookResponse {
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn ingest_webhook(
     State(state): State<AppState>,
     Path(source_type): Path<String>,

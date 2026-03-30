@@ -57,6 +57,7 @@ pub struct AgentUploadReq {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn push_file_to_machine(
     State(pool): State<DatabasePool>,
     Json(payload): Json<PushFileReq>,
@@ -113,6 +114,7 @@ pub async fn push_file_to_machine(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn agent_upload_file(
     State(pool): State<DatabasePool>,
     Json(payload): Json<AgentUploadReq>,
@@ -177,6 +179,7 @@ pub async fn agent_upload_file(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn agent_download_file(
     State(pool): State<DatabasePool>,
     Path(file_id): Path<Uuid>,
@@ -215,6 +218,7 @@ pub async fn agent_download_file(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_hardware_files(
     State(pool): State<DatabasePool>,
     Path(hardware_id): Path<Uuid>,

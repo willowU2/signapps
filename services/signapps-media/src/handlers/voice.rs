@@ -28,6 +28,7 @@ use crate::AppState;
     responses((status = 200, description = "Success")),
     tag = "Media"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn voice_ws(
     ws: WebSocketUpgrade,
     State(state): State<Arc<AppState>>,

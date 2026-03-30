@@ -33,6 +33,7 @@ pub struct ListenerStatus {
     responses((status = 200, description = "Success")),
     tag = "Proxy"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_proxy_status(State(state): State<AppState>) -> Json<ProxyStatusResponse> {
     let proxy_enabled = std::env::var("PROXY_ENABLED")
         .unwrap_or_else(|_| "true".to_string())

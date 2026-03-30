@@ -96,6 +96,7 @@ pub struct HeadcountSlot {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_rules(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -128,6 +129,7 @@ pub async fn list_rules(
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_rule(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -163,6 +165,7 @@ pub async fn create_rule(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -199,6 +202,7 @@ pub async fn update_rule(
     responses((status = 204, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -235,6 +239,7 @@ pub async fn delete_rule(
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn validate_action(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -398,6 +403,7 @@ fn evaluate_rule(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn team_status(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -472,6 +478,7 @@ pub async fn team_status(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn headcount(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

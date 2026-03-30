@@ -120,6 +120,7 @@ async fn store_image(state: &AppState, image_bytes: &[u8]) -> Result<String, (St
     responses((status = 201, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn generate_image(
     State(state): State<AppState>,
     Json(body): Json<GenerateRequest>,
@@ -195,6 +196,7 @@ pub async fn generate_image(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn inpaint_image(
     State(state): State<AppState>,
     mut multipart: Multipart,
@@ -336,6 +338,7 @@ pub async fn inpaint_image(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn img2img(
     State(state): State<AppState>,
     mut multipart: Multipart,
@@ -457,6 +460,7 @@ pub async fn img2img(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn upscale_image(
     State(state): State<AppState>,
     mut multipart: Multipart,
@@ -552,6 +556,7 @@ pub async fn upscale_image(
     responses((status = 200, description = "Success")),
     tag = "Ai"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_image_models() -> Result<Json<ImageModelsResponse>, (StatusCode, String)> {
     let worker = create_imagegen_worker().map_err(|e| (StatusCode::SERVICE_UNAVAILABLE, e))?;
 

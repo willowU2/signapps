@@ -69,6 +69,7 @@ pub struct DpiaRecord {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn save_dpia(
     State(state): State<AppState>,
     Json(req): Json<SaveDpiaRequest>,
@@ -89,6 +90,7 @@ pub async fn save_dpia(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_dpias(State(state): State<AppState>) -> Result<Json<Vec<DpiaRecord>>> {
     let rows = list_records(&state.pool, "dpia").await?;
     let records: Vec<DpiaRecord> = rows
@@ -178,6 +180,7 @@ pub struct UpdateDsarRequest {
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_dsar(
     State(state): State<AppState>,
     Json(req): Json<CreateDsarRequest>,
@@ -212,6 +215,7 @@ pub async fn create_dsar(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_dsars(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     let rows = list_records(&state.pool, "dsar").await?;
     let records: Vec<DsarRecord> = rows
@@ -229,6 +233,7 @@ pub async fn list_dsars(State(state): State<AppState>) -> Result<Json<serde_json
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_dsar(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -367,6 +372,7 @@ pub struct RetentionPoliciesResponse {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn save_retention_policies(
     State(state): State<AppState>,
     Json(req): Json<RetentionPoliciesRequest>,
@@ -397,6 +403,7 @@ pub async fn save_retention_policies(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_retention_policies(
     State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>> {
@@ -421,6 +428,7 @@ pub struct SaveConsentRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn save_consent(
     State(state): State<AppState>,
     Json(req): Json<SaveConsentRequest>,
@@ -443,6 +451,7 @@ pub async fn save_consent(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_consent(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     let rows = list_records(&state.pool, "consent").await?;
     if let Some(row) = rows.into_iter().next() {
@@ -462,6 +471,7 @@ pub async fn get_consent(State(state): State<AppState>) -> Result<Json<serde_jso
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn save_cookie_banner(
     State(state): State<AppState>,
     Json(body): Json<Value>,
@@ -480,6 +490,7 @@ pub async fn save_cookie_banner(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_cookie_banner(State(state): State<AppState>) -> Result<Json<Value>> {
     let rows = list_records(&state.pool, "cookie-banner").await?;
     if let Some(row) = rows.into_iter().next() {

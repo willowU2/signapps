@@ -15,6 +15,7 @@ use serde_json::json;
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn openapi_spec() -> impl IntoResponse {
     let spec = json!({
         "openapi": "3.1.0",

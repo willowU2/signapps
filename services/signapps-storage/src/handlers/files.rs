@@ -257,6 +257,7 @@ pub struct DeleteFilesRequest {
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
     Path(bucket): Path<String>,
@@ -274,6 +275,7 @@ pub async fn list(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_info(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -290,6 +292,7 @@ pub async fn get_info(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn download(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -329,6 +332,7 @@ const MAX_UPLOAD_SIZE: usize = 500 * 1024 * 1024;
     responses((status = 201, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn upload(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
@@ -497,6 +501,7 @@ pub async fn upload(
     responses((status = 201, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn upload_with_key(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
@@ -626,6 +631,7 @@ pub async fn upload_with_key(
     responses((status = 204, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
@@ -664,6 +670,7 @@ pub async fn delete(
     responses((status = 204, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_many(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
@@ -698,6 +705,7 @@ pub async fn delete_many(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn copy(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
@@ -770,6 +778,7 @@ pub async fn copy(
     responses((status = 200, description = "Success")),
     tag = "Storage"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn move_file(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,

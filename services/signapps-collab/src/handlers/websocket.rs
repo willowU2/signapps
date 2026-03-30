@@ -31,6 +31,7 @@ static ACTIVE_CONNECTIONS: AtomicUsize = AtomicUsize::new(0);
     responses((status = 200, description = "Success")),
     tag = "Collab"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn websocket_handler(
     Path(doc_id): Path<String>,
     ws: WebSocketUpgrade,

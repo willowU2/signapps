@@ -133,6 +133,7 @@ impl SecurityPoliciesStore {
         responses((status = 200, description = "Success")),
         tag = "Identity"
     )]
+    #[tracing::instrument(skip_all)]
     pub async fn get(&self) -> SecurityPolicies {
         self.inner.read().await.clone()
     }
@@ -144,6 +145,7 @@ impl SecurityPoliciesStore {
         responses((status = 200, description = "Success")),
         tag = "Identity"
     )]
+    #[tracing::instrument(skip_all)]
     pub async fn set(&self, policies: SecurityPolicies) {
         *self.inner.write().await = policies;
     }
@@ -177,6 +179,7 @@ impl ActiveSessionsStore {
         responses((status = 201, description = "Success")),
         tag = "Identity"
     )]
+    #[tracing::instrument(skip_all)]
     pub async fn add(&self, session: ActiveSession) {
         let mut sessions = self.inner.lock().await;
         sessions.push(session);
@@ -190,6 +193,7 @@ impl ActiveSessionsStore {
         responses((status = 200, description = "Success")),
         tag = "Identity"
     )]
+    #[tracing::instrument(skip_all)]
     pub async fn list_active(&self) -> Vec<ActiveSession> {
         let sessions = self.inner.lock().await;
         let now = Utc::now();
@@ -208,6 +212,7 @@ impl ActiveSessionsStore {
         responses((status = 204, description = "Success")),
         tag = "Identity"
     )]
+    #[tracing::instrument(skip_all)]
     pub async fn remove(&self, session_id: &str) -> bool {
         let mut sessions = self.inner.lock().await;
         let before = sessions.len();
@@ -223,6 +228,7 @@ impl ActiveSessionsStore {
         responses((status = 204, description = "Success")),
         tag = "Identity"
     )]
+    #[tracing::instrument(skip_all)]
     pub async fn purge_expired(&self) {
         let mut sessions = self.inner.lock().await;
         let now = Utc::now();
@@ -258,6 +264,7 @@ impl LoginAttemptsStore {
         responses((status = 200, description = "Success")),
         tag = "Identity"
     )]
+    #[tracing::instrument(skip_all)]
     pub async fn record(&self, attempt: LoginAttempt) {
         const MAX_ENTRIES: usize = 5_000;
         let mut attempts = self.inner.lock().await;
@@ -275,6 +282,7 @@ impl LoginAttemptsStore {
         responses((status = 200, description = "Success")),
         tag = "Identity"
     )]
+    #[tracing::instrument(skip_all)]
     pub async fn recent(&self, limit: usize) -> Vec<LoginAttempt> {
         let attempts = self.inner.lock().await;
         attempts.iter().rev().take(limit).cloned().collect()
@@ -307,6 +315,7 @@ pub struct LoginAttemptsQuery {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_policies(State(state): State<AppState>) -> Result<Json<SecurityPolicies>> {
     let policies = state.security_policies.get().await;
     Ok(Json(policies))
@@ -322,6 +331,7 @@ pub async fn get_policies(State(state): State<AppState>) -> Result<Json<Security
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_policies(
     State(state): State<AppState>,
     Json(payload): Json<SecurityPolicies>,
@@ -353,6 +363,7 @@ pub async fn update_policies(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_sessions(State(state): State<AppState>) -> Result<Json<Vec<ActiveSession>>> {
     // Housekeep expired sessions before returning
     state.active_sessions.purge_expired().await;
@@ -373,6 +384,7 @@ pub async fn list_sessions(State(state): State<AppState>) -> Result<Json<Vec<Act
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn revoke_session(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -409,6 +421,7 @@ pub async fn revoke_session(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_login_attempts(
     State(state): State<AppState>,
     axum::extract::Query(query): axum::extract::Query<LoginAttemptsQuery>,

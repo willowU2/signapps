@@ -55,6 +55,7 @@ pub struct UpdateCiReq {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_cis(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<ConfigurationItem>>, (StatusCode, String)> {
@@ -73,6 +74,7 @@ pub async fn list_cis(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_ci(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -94,6 +96,7 @@ pub async fn get_ci(
     responses((status = 201, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_ci(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreateCiReq>,
@@ -127,6 +130,7 @@ pub async fn create_ci(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_ci(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -164,6 +168,7 @@ pub async fn update_ci(
     responses((status = 204, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_ci(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -205,6 +210,7 @@ pub struct CreateCiRelReq {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_ci_relationships(
     State(pool): State<DatabasePool>,
     Path(ci_id): Path<Uuid>,
@@ -225,6 +231,7 @@ pub async fn list_ci_relationships(
     responses((status = 201, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_ci_relationship(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreateCiRelReq>,
@@ -251,6 +258,7 @@ pub async fn create_ci_relationship(
     responses((status = 204, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_ci_relationship(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -273,6 +281,7 @@ pub async fn delete_ci_relationship(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn ci_impact(
     State(pool): State<DatabasePool>,
     Path(ci_id): Path<Uuid>,
@@ -343,6 +352,7 @@ pub struct UpdateChangeStatusReq {
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_change_requests(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<ChangeRequest>>, (StatusCode, String)> {
@@ -361,6 +371,7 @@ pub async fn list_change_requests(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_change_request(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -382,6 +393,7 @@ pub async fn get_change_request(
     responses((status = 201, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_change_request(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreateChangeReq>,
@@ -425,6 +437,7 @@ pub async fn create_change_request(
     responses((status = 200, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_change_status(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -480,6 +493,7 @@ pub struct LdapImportResult {
     responses((status = 201, description = "Success")),
     tag = "ItAssets"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn import_ldap(
     Json(payload): Json<LdapImportReq>,
 ) -> Result<Json<LdapImportResult>, (StatusCode, String)> {

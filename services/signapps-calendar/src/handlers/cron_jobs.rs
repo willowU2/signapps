@@ -79,6 +79,7 @@ pub struct RunCronJobResponse {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_cron_jobs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -159,6 +160,7 @@ pub async fn list_cron_jobs(
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_cron_job(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -229,6 +231,7 @@ pub async fn create_cron_job(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_cron_job(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -299,6 +302,7 @@ pub async fn update_cron_job(
     responses((status = 204, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_cron_job(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -331,6 +335,7 @@ pub async fn delete_cron_job(
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn run_cron_job(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

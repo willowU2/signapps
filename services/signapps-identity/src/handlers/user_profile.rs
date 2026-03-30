@@ -41,6 +41,7 @@ pub struct PatchUserProfileExt {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_profile(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -71,6 +72,7 @@ pub async fn get_profile(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn patch_profile(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -133,6 +135,7 @@ pub struct UpsertRecentDocRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_recent_docs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -171,6 +174,7 @@ pub async fn list_recent_docs(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn upsert_recent_doc(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -252,6 +256,7 @@ pub struct AddHistoryRequest {
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -302,6 +307,7 @@ pub async fn list_history(
     responses((status = 201, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn add_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -356,6 +362,7 @@ pub async fn add_history(
     responses((status = 200, description = "Success")),
     tag = "Identity"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn streak_checkin(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

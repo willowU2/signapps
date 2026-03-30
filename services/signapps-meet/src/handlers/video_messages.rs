@@ -47,6 +47,7 @@ pub struct CreateVideoMessageRequest {
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_video_messages(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -81,6 +82,7 @@ pub async fn list_video_messages(
     responses((status = 201, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_video_message(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -125,6 +127,7 @@ pub async fn create_video_message(
     responses((status = 200, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn mark_video_message_read(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -164,6 +167,7 @@ pub async fn mark_video_message_read(
     responses((status = 204, description = "Success")),
     tag = "Meet"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_video_message(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

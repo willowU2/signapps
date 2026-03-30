@@ -20,6 +20,7 @@ use crate::{AppState, CalendarError};
     responses((status = 201, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_resource(
     State(state): State<AppState>,
     Json(payload): Json<CreateResource>,
@@ -41,6 +42,7 @@ pub async fn create_resource(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_resources(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<Resource>>, CalendarError> {
@@ -61,6 +63,7 @@ pub async fn list_resources(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_resources_by_type(
     State(state): State<AppState>,
     Path(resource_type): Path<String>,
@@ -82,6 +85,7 @@ pub async fn list_resources_by_type(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_resource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -104,6 +108,7 @@ pub async fn get_resource(
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_resource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -129,6 +134,7 @@ pub async fn update_resource(
     responses((status = 204, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_resource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -175,6 +181,7 @@ pub struct AvailabilityResponse {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn check_availability(
     State(_state): State<AppState>,
     Json(_payload): Json<CheckAvailabilityRequest>,
@@ -207,6 +214,7 @@ pub struct BookResourceRequest {
     responses((status = 200, description = "Success")),
     tag = "Calendar"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn book_resources(
     State(_state): State<AppState>,
     Path(_resource_id): Path<Uuid>,

@@ -52,6 +52,7 @@ pub struct UpdateNoteRequest {
     responses((status = 200, description = "Success")),
     tag = "Docs"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_notes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -81,6 +82,7 @@ pub async fn list_notes(
     responses((status = 201, description = "Success")),
     tag = "Docs"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_note(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -115,6 +117,7 @@ pub async fn create_note(
     responses((status = 200, description = "Success")),
     tag = "Docs"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_note(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -153,6 +156,7 @@ pub async fn update_note(
     responses((status = 204, description = "Success")),
     tag = "Docs"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_note(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

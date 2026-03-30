@@ -180,6 +180,7 @@ fn label_for_score(score: u8) -> &'static str {
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn score_single(
     State(_state): State<AppState>,
     Path(_id): Path<Uuid>,
@@ -202,6 +203,7 @@ pub async fn score_single(
     responses((status = 200, description = "Success")),
     tag = "Mail"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn score_batch(
     State(_state): State<AppState>,
     Json(req): Json<BatchScoreRequest>,

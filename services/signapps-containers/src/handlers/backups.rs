@@ -52,6 +52,7 @@ pub struct RestoreRequest {
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_profiles(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -76,6 +77,7 @@ pub async fn list_profiles(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn get_profile(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -97,6 +99,7 @@ pub async fn get_profile(
     responses((status = 201, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn create_profile(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -134,6 +137,7 @@ pub async fn create_profile(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn update_profile(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -159,6 +163,7 @@ pub async fn update_profile(
     responses((status = 204, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn delete_profile(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -184,6 +189,7 @@ pub async fn delete_profile(
     responses((status = 201, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn run_backup(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -230,6 +236,7 @@ pub async fn run_backup(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_snapshots(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -261,6 +268,7 @@ pub async fn list_snapshots(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn restore_snapshot(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -310,6 +318,7 @@ pub async fn restore_snapshot(
     responses((status = 200, description = "Success")),
     tag = "Containers"
 )]
+#[tracing::instrument(skip_all)]
 pub async fn list_runs(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
