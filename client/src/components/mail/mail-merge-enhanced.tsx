@@ -159,7 +159,7 @@ export function EnhancedMailMerge({ onSendAll, accountId }: EnhancedMailMergePro
         setImportingContacts(true)
         try {
             const res = await contactsApi.list()
-            const contacts = (res as any).data ?? res
+            const contacts = Array.isArray(res.data) ? res.data : []
             if (!Array.isArray(contacts) || contacts.length === 0) {
                 toast.info("Aucun contact trouvé.")
                 return

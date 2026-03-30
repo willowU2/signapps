@@ -31,7 +31,7 @@ export function SmartCompose({ value, onChange, context, placeholder, rows = 6, 
         `Continue this email draft naturally with 1-2 short sentences. Only output the continuation, nothing else.\n\n${text}`,
         { systemPrompt: 'You complete email drafts professionally and concisely. Output ONLY the continuation text.', language: 'fr' }
       );
-      const answer = res.data?.answer || (res.data as any)?.response || '';
+      const answer = res.data?.answer || '';
       setSuggestion(answer.trim());
     } catch {
       setSuggestion('');

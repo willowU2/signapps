@@ -50,7 +50,7 @@ export function MailContextActions({ mail, children }: MailContextActionsProps) 
             <Bell className="mr-2 h-4 w-4 text-amber-500" />
             Rappel de suivi
           </ContextMenuItem>
-          {(mail as any).attachments?.length > 0 && (
+          {mail.attachments && mail.attachments.length > 0 && (
             <>
               <ContextMenuSeparator />
               <ContextMenuItem disabled>

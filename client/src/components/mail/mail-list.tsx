@@ -34,7 +34,7 @@ const MAIL_ROW_HEIGHT = 40
 
 // ─── Idea 37: Priority bar color ────────────────────────────────────────────
 function getPriorityColor(mail: Mail): string | null {
-    const priority = (mail as any).priority as number | undefined
+    const priority = mail.priority
     if (priority === 5) return "#ef4444" // red — urgent
     if (priority === 4) return "#f97316" // orange
     if (priority === 3) return "#eab308" // yellow
@@ -99,8 +99,8 @@ function MailRow({ item, selectedId, onSelect, onSnooze, onArchive, onDelete, on
     const priorityColor = getPriorityColor(item)
 
     // Idea 38: follow-up badge — sent mail older than 3 days with no reply
-    const hasReply = allItems?.some(m => (m as any).in_reply_to === ((item as any).message_id || item.id))
-    const showFollowUp = (item as any).is_sent && !hasReply && daysSince(item.date) > 3
+    const hasReply = allItems?.some(m => m.in_reply_to === (item.message_id || item.id))
+    const showFollowUp = item.is_sent && !hasReply && daysSince(item.date) > 3
 
     // Idea 40: sentiment
     const sentiment = getSentiment(item)

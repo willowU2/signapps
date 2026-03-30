@@ -16,8 +16,9 @@ import {
 export interface Attachment {
     id: string
     name: string
-    size: number
-    mimeType: string
+    size?: number
+    mimeType?: string
+    mime_type?: string
     url: string
 }
 
@@ -41,9 +42,10 @@ interface AttachmentThumbnailProps {
 
 function AttachmentThumbnail({ attachment, onDownload }: AttachmentThumbnailProps) {
     const [previewOpen, setPreviewOpen] = useState(false)
-    const isImage = attachment.mimeType.startsWith("image/")
-    const isPdf = attachment.mimeType === "application/pdf"
-    const Icon = getIcon(attachment.mimeType)
+    const effectiveMimeType = attachment.mimeType ?? attachment.mime_type ?? ""
+    const isImage = effectiveMimeType.startsWith("image/")
+    const isPdf = effectiveMimeType === "application/pdf"
+    const Icon = getIcon(effectiveMimeType)
 
     return (
         <>
@@ -98,7 +100,7 @@ function AttachmentThumbnail({ attachment, onDownload }: AttachmentThumbnailProp
                 {/* File info */}
                 <div className="w-full px-2 py-1.5">
                     <p className="text-[11px] font-medium truncate text-foreground">{attachment.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{formatBytes(attachment.size)}</p>
+                    <p className="text-[10px] text-muted-foreground">{attachment.size != null ? formatBytes(attachment.size) : ''}</p>
                 </div>
             </div>
 
@@ -109,7 +111,7 @@ function AttachmentThumbnail({ attachment, onDownload }: AttachmentThumbnailProp
                         <DialogTitle className="flex items-center gap-2">
                             <Icon className="h-4 w-4" />
                             {attachment.name}
-                            <span className="text-sm font-normal text-muted-foreground">({formatBytes(attachment.size)})</span>
+                            <span className="text-sm font-normal text-muted-foreground">{attachment.size != null ? `(${formatBytes(attachment.size)})` : ''}</span>
                         </DialogTitle>
                     </DialogHeader>
                     <div className="flex-1 overflow-auto min-h-[300px] flex items-center justify-center bg-muted/30 rounded-lg">

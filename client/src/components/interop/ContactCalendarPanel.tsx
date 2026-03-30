@@ -55,10 +55,9 @@ export function ContactCalendarPanel({ contactId, contactEmail, contactName, dea
     ;(async () => {
       try {
         const { data: calendars } = await calendarApi.listCalendars()
-        const calId = (Array.isArray(calendars) ? calendars : (calendars as any)?.data)?.[0]?.id
+        const calId = Array.isArray(calendars) ? calendars[0]?.id : undefined
         if (calId) {
-          const { data: rawEvents } = await calendarApi.listEvents(calId)
-          const eventsArr = Array.isArray(rawEvents) ? rawEvents : (rawEvents as any)?.data ?? []
+          const { data: eventsArr } = await calendarApi.listEvents(calId)
           // Filter events where attendees include contact email, mapping API Event shape to local CalendarEvent
           const filtered: CalendarEvent[] = eventsArr
             .filter((e: any) =>

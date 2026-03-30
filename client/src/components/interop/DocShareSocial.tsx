@@ -36,15 +36,15 @@ export function DocShareSocial({ docId, docName, docContent }: DocShareSocialPro
     setLoading(true);
     try {
       const accountsRes = await socialApi.accounts.list();
-      const accountIds: string[] = (accountsRes?.data ?? []).map((a: any) => a.id);
+      const accountIds: string[] = (accountsRes?.data ?? []).map((a) => a.id);
       if (!accountIds.length) {
         toast.error('Aucun compte social connecté');
         return;
       }
       await socialApi.posts.create({
         content: customText || defaultText,
-        account_ids: accountIds,
-      } as any);
+        accountIds,
+      });
       toast.success('Partagé sur les réseaux sociaux');
       setOpen(false);
     } catch {
@@ -62,12 +62,12 @@ export function DocShareSocial({ docId, docName, docContent }: DocShareSocialPro
     setLoading(true);
     try {
       const accountsRes = await socialApi.accounts.list();
-      const accountIds: string[] = (accountsRes?.data ?? []).map((a: any) => a.id);
+      const accountIds: string[] = (accountsRes?.data ?? []).map((a) => a.id);
       await socialApi.posts.create({
         content: customText || defaultText,
-        account_ids: accountIds,
-        scheduled_at: new Date(scheduleDate).toISOString(),
-      } as any);
+        accountIds,
+        scheduledAt: new Date(scheduleDate).toISOString(),
+      });
       toast.success('Publication planifiée');
       setOpen(false);
     } catch {

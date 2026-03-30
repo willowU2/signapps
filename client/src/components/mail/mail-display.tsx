@@ -187,9 +187,9 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
         const senderEmail = mail.email.toLowerCase()
         // Search contacts by email to find a matching contactId
         contactsApi.list().then((res) => {
-            const contacts = (res as any)?.data ?? res ?? []
+            const contacts = res?.data ?? []
             const match = Array.isArray(contacts)
-                ? contacts.find((c: any) => c.email?.toLowerCase() === senderEmail)
+                ? contacts.find((c) => c.email?.toLowerCase() === senderEmail)
                 : null
             if (!match) return
             // Scan all deals for ones linked to this contact
@@ -215,7 +215,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
         setTranslatedLang(null)
         try {
             const res = await aiMailApi.translate(body, targetLang)
-            const translated = (res as any)?.data?.answer ?? (res as any)?.answer ?? ""
+            const translated = res?.data?.answer ?? ""
             if (!translated) throw new Error("Réponse vide")
             setTranslatedText(translated)
             setTranslatedLang(targetLang)
@@ -247,7 +247,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
             const sendReply = async () => {
                 if (!mail) return
                 try {
-                    const effectiveAccountId = accountId || (mail as any).account_id
+                    const effectiveAccountId = accountId || mail.account_id
                     let recipient = mail.email
                     let subject = `Re: ${mail.subject}`
 
@@ -265,7 +265,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
                         recipient,
                         subject,
                         body_text: replyText,
-                        in_reply_to: (mail as any).message_id || mail.id,
+                        in_reply_to: mail.message_id || mail.id,
                     })
                     toast.success("Réponse envoyée !")
                 } catch {
@@ -720,7 +720,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
                             </div>
                             {mail.date && (
                                 <div className="shrink-0 flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                                    <span>{format(new Date(mail.date), "EEE d MMM HH:mm", { timeZone: "Europe/Paris" } as any)} (il y a {Math.max(1, Math.floor((new Date().getTime() - new Date(mail.date).getTime()) / (1000 * 3600 * 24)))} jours)</span>
+                                    <span>{new Date(mail.date).toLocaleString("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" })} (il y a {Math.max(1, Math.floor((new Date().getTime() - new Date(mail.date).getTime()) / (1000 * 3600 * 24)))} jours)</span>
                                 </div>
                             )}
                         </div>
@@ -877,15 +877,15 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
                     )}
 
                     {/* Inline attachment preview (IDEA-037) + Idea 43: Save to Drive */}
-                    {(mail as any).attachments?.length > 0 && (
+                    {mail.attachments && mail.attachments.length > 0 && (
                         <>
                         <AttachmentPreviewBar
-                            attachments={(mail as any).attachments as Attachment[]}
+                            attachments={mail.attachments}
                             onDownload={(att) => window.open(att.url, "_blank")}
-                            onDownloadAll={() => (mail as any).attachments?.forEach((a: Attachment) => window.open(a.url, "_blank"))}
+                            onDownloadAll={() => mail.attachments?.forEach((a) => window.open(a.url, "_blank"))}
                         />
                         <div className="px-8 pb-2 flex flex-wrap gap-2">
-                            {((mail as any).attachments as Attachment[]).map((att) => (
+                            {mail.attachments.map((att) => (
                                 <button
                                     key={att.id}
                                     type="button"
@@ -916,8 +916,8 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
 
                     {/* M6: Conversation thread view — shown when email is part of a thread */}
                     {(() => {
-                        const threadId = (mail as any).thread_id as string | undefined
-                        const inReplyTo = (mail as any).in_reply_to as string | undefined
+                        const threadId = mail.thread_id
+                        const inReplyTo = mail.in_reply_to
                         const hasThread = !!(threadId || inReplyTo)
                         if (!hasThread || !allMails || allMails.length === 0) return null
                         const threads = groupByThread(allMails)

@@ -26,7 +26,7 @@ function groupByThread(mails: Mail[]): ConversationThread[] {
     const map = new Map<string, Mail[]>()
     for (const mail of mails) {
         // Group by thread_id if available, else use first word of subject as fallback key
-        const key = (mail as any).thread_id || mail.subject.split(" ").slice(0, 3).join(" ").toLowerCase()
+        const key = mail.thread_id || mail.subject.split(" ").slice(0, 3).join(" ").toLowerCase()
         if (!map.has(key)) map.set(key, [])
         map.get(key)!.push(mail)
     }

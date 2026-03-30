@@ -42,12 +42,11 @@ function localStorageFallbackTasks(dateStr: string): SimpleTask[] {
 async function fetchTasksDueOn(date: Date): Promise<SimpleTask[]> {
   const dateStr = date.toISOString().slice(0, 10);
   try {
-    const { data: calendarsRaw } = await calendarApi.listCalendars();
-    const calendarsArr = Array.isArray(calendarsRaw) ? calendarsRaw : (calendarsRaw as any)?.data ?? [];
-    const calId = calendarsArr[0]?.id;
+    const { data: calendarsArr } = await calendarApi.listCalendars();
+    const calId = calendarsArr?.[0]?.id;
     if (!calId) return localStorageFallbackTasks(dateStr);
     const { data: tasksRaw } = await tasksApi.listTasks(calId);
-    const tasksArr: SimpleTask[] = Array.isArray(tasksRaw) ? tasksRaw : (tasksRaw as any)?.data ?? [];
+    const tasksArr: SimpleTask[] = Array.isArray(tasksRaw) ? tasksRaw : [];
     const filtered = tasksArr.filter(
       t => t.due_date?.slice(0, 10) === dateStr && t.status !== "completed"
     );
@@ -110,12 +109,11 @@ export function AttendeePendingTasks({ email, className }: { email: string; clas
   useEffect(() => {
     (async () => {
       try {
-        const { data: calendarsRaw } = await calendarApi.listCalendars();
-        const calendarsArr = Array.isArray(calendarsRaw) ? calendarsRaw : (calendarsRaw as any)?.data ?? [];
-        const calId = calendarsArr[0]?.id;
+        const { data: calendarsArr } = await calendarApi.listCalendars();
+        const calId = calendarsArr?.[0]?.id;
         if (!calId) return;
         const { data: tasksRaw } = await tasksApi.listTasks(calId);
-        const all: SimpleTask[] = Array.isArray(tasksRaw) ? tasksRaw : (tasksRaw as any)?.data ?? [];
+        const all: SimpleTask[] = Array.isArray(tasksRaw) ? tasksRaw : [];
         const filtered = all
           .filter(t => t.assigned_to === email && t.status !== "completed")
           .slice(0, 5);

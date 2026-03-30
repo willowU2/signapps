@@ -55,13 +55,11 @@ async function fetchTodayItems(): Promise<TodayItem[]> {
     })(),
     // Today's events
     (async () => {
-      const cals = await calendarApi.listCalendars();
-      const calendars = (cals as any).data ?? cals;
+      const { data: calendars } = await calendarApi.listCalendars();
       if (!Array.isArray(calendars) || calendars.length === 0) return;
       const start = new Date(); start.setHours(0, 0, 0, 0);
       const end = new Date(); end.setHours(23, 59, 59, 999);
-      const events = await calendarApi.listEvents(calendars[0].id, start, end);
-      const evList = (events as any).data ?? events;
+      const { data: evList } = await calendarApi.listEvents(calendars[0].id, start, end);
       (Array.isArray(evList) ? evList : []).forEach((e: any) => items.push({ id: e.id, type: "event", title: e.title, subtitle: e.location, time: e.start_time, href: "/cal" }));
     })(),
     // Locally stored tasks

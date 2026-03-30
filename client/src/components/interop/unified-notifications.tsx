@@ -62,14 +62,14 @@ export function CrossModuleNotificationCenter() {
       // Try notificationsApi as secondary source
       try {
         const { data } = await notificationsApi.list();
-        const mapped: CrossNotification[] = (Array.isArray(data) ? data : (data as any)?.data ?? []).map(
-          (n: any) => ({
+        const mapped: CrossNotification[] = (Array.isArray(data) ? data : []).map(
+          (n) => ({
             id: n.id,
             module: n.source ?? 'system',
             title: n.title,
             body: n.body,
             read: n.read,
-            url: n.url,
+            url: undefined,
             created_at: n.created_at,
           })
         );

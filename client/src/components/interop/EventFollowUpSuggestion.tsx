@@ -42,8 +42,7 @@ export function EventFollowUpSuggestion({ event, mode, onDismiss }: Props) {
         ? (event.end ?? event.start).toISOString().slice(0, 10)
         : event.start.toISOString().slice(0, 10);
 
-      const cals = await calendarApi.listCalendars();
-      const calendars = (cals as any).data ?? cals;
+      const { data: calendars } = await calendarApi.listCalendars();
       let taskId = `local_${Date.now()}`;
 
       if (Array.isArray(calendars) && calendars.length > 0) {

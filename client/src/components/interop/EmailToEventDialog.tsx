@@ -46,14 +46,13 @@ export function EmailToEventDialog({ open, onOpenChange, mail }: Props) {
     try {
       const startISO = new Date(`${startDate}T${startTime}`).toISOString();
       const endISO = new Date(`${startDate}T${endTime}`).toISOString();
-      const cals = await calendarApi.listCalendars();
-      const calendars = (cals as any).data ?? cals;
+      const { data: calendars } = await calendarApi.listCalendars();
       let eventId = `local_${Date.now()}`;
       if (Array.isArray(calendars) && calendars.length > 0) {
-        const ev = await calendarApi.createEvent(calendars[0].id, {
-          title, notes, start_time: startISO, end_time: endISO, all_day: false,
-        } as any);
-        eventId = (ev as any).data?.id ?? (ev as any).id ?? eventId;
+        const { data: ev } = await calendarApi.createEvent(calendars[0].id, {
+          title, description: notes, start_time: startISO, end_time: endISO, is_all_day: false,
+        });
+        eventId = ev?.id ?? eventId;
       } else {
         const stored = JSON.parse(localStorage.getItem("interop:local_events") || "[]");
         stored.push({ id: eventId, title, notes, start_time: startISO, end_time: endISO });

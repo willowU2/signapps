@@ -62,7 +62,7 @@ export function AccountSwitcher({
         try {
             await accountApi.create({
                 email_address: email,
-                provider: provider as any,
+                provider,
                 app_password: password,
                 imap_server: imap,
                 imap_port: 993,

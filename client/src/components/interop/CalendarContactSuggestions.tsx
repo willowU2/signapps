@@ -24,14 +24,12 @@ export function useCalendarContactSuggestions() {
   useEffect(() => {
     (async () => {
       try {
-        const cals = await calendarApi.listCalendars();
-        const calendars = (cals as any).data ?? cals;
+        const { data: calendars } = await calendarApi.listCalendars();
         if (!Array.isArray(calendars) || calendars.length === 0) return;
 
         const now = new Date();
         const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 3600000);
-        const events = await calendarApi.listEvents(calendars[0].id, twoWeeksAgo, now);
-        const evList = (events as any).data ?? events;
+        const { data: evList } = await calendarApi.listEvents(calendars[0].id, twoWeeksAgo, now);
 
         const contactMap = new Map<string, ContactSuggestion>();
         if (Array.isArray(evList)) {

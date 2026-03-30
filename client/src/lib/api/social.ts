@@ -123,6 +123,8 @@ export interface SocialPost {
   platform?: string;
   /** Repeat interval in days (evergreen scheduling) */
   repeatInterval?: number;
+  /** Engagement count — total interactions (likes + shares + comments) */
+  engagementCount?: number;
   createdAt: string;
   updatedAt: string;
 }

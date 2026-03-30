@@ -71,7 +71,7 @@ export function ContactActivityTimeline({ contactEmail, contactId, className, ma
       try {
         const entityId = contactId ?? contactEmail;
         const { data } = await activitiesApi.entityHistory("contact", entityId);
-        const apiEntries: DisplayEntry[] = (Array.isArray(data) ? data : (data as any)?.data ?? []).map(
+        const apiEntries: DisplayEntry[] = (Array.isArray(data) ? data : []).map(
           (a: Activity) => ({
             id: a.id,
             icon: getActionIcon(a.action),

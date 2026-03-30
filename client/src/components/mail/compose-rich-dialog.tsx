@@ -120,16 +120,14 @@ export function ComposeRichDialog({
 
         debounceRef.current = setTimeout(async () => {
             try {
-                const calsRes = await calendarApi.listCalendars()
-                const cals = (calsRes as any).data ?? calsRes
+                const { data: cals } = await calendarApi.listCalendars()
                 if (!Array.isArray(cals) || cals.length === 0) return
 
                 const now = new Date()
                 const thirtyDaysOut = new Date(now.getTime() + 30 * 86400000)
 
                 for (const cal of cals) {
-                    const eventsRes = await calendarApi.listEvents(cal.id, now, thirtyDaysOut)
-                    const events: any[] = (eventsRes as any).data ?? eventsRes
+                    const { data: events } = await calendarApi.listEvents(cal.id, now, thirtyDaysOut)
                     if (!Array.isArray(events)) continue
 
                     for (const ev of events) {
@@ -208,7 +206,7 @@ export function ComposeRichDialog({
                     const slotStart = new Date(day)
                     slotStart.setHours(hour, 0, 0, 0)
                     const slotEnd = new Date(slotStart.getTime() + 3600000)
-                    const busy = (events as any[]).some((ev: any) => {
+                    const busy = Array.isArray(events) && events.some((ev) => {
                         const evStart = new Date(ev.start_time || ev.start?.dateTime || ev.start)
                         const evEnd = new Date(ev.end_time || ev.end?.dateTime || ev.end)
                         return evStart < slotEnd && evEnd > slotStart
@@ -246,7 +244,7 @@ export function ComposeRichDialog({
         setOriginalBodyBeforeRewrite(body)
         try {
             const res = await aiMailApi.rewriteTone(body, tone)
-            const rewritten = (res as any)?.data?.answer ?? (res as any)?.answer ?? ""
+            const rewritten = res?.data?.answer ?? ""
             if (!rewritten) throw new Error("Réponse vide")
             setRewrittenBody(rewritten)
             toast.success(`Ton "${tone}" appliqué — voir ci-dessous.`)
@@ -269,7 +267,7 @@ export function ComposeRichDialog({
         setCoachingResult(null)
         try {
             const res = await aiMailApi.coachDraft(body)
-            const raw = (res as any)?.data?.answer ?? (res as any)?.answer ?? ""
+            const raw = res?.data?.answer ?? ""
             // Extract JSON — may be wrapped in markdown code block
             const jsonMatch = raw.match(/\{[\s\S]*\}/)
             if (!jsonMatch) throw new Error("JSON non trouvé dans la réponse")

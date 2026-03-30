@@ -41,7 +41,7 @@ export function UnifiedContentLibrary() {
     queryKey: ['unified-library-social'],
     queryFn: async () => {
       const res = await socialApi.posts.list({ limit: 30 });
-      return (res?.data as any)?.items ?? (res?.data as any)?.posts ?? [];
+      return Array.isArray(res?.data) ? res.data : [];
     },
     enabled: open,
   });
@@ -49,7 +49,7 @@ export function UnifiedContentLibrary() {
   const docs = driveNodes.filter((n) => n.node_type === 'document');
   const files = driveNodes.filter((n) => n.node_type === 'file');
   const mediaUrls: { url: string; name: string; postId: string }[] = posts
-    .flatMap((p) => ((p as any).mediaUrls ?? []).map((url: string, i: number) => ({ url, name: `Media ${i + 1}`, postId: p.id })));
+    .flatMap((p) => (Array.isArray(p.mediaUrls) ? p.mediaUrls : []).map((url: string, i: number) => ({ url, name: `Media ${i + 1}`, postId: p.id })));
 
   const lower = search.toLowerCase();
   const filteredDocs = docs.filter((d) => !lower || d.name.toLowerCase().includes(lower));

@@ -61,15 +61,14 @@ export function EmailFollowUpDialog({ open, onOpenChange, mail }: Props) {
       const date = getFollowUpDate();
       const end = new Date(date.getTime() + 30 * 60000);
       const title = `Suivi : ${mail.subject}`;
-      const cals = await calendarApi.listCalendars();
-      const calendars = (cals as any).data ?? cals;
+      const { data: calendars } = await calendarApi.listCalendars();
       let eventId = `local_${Date.now()}`;
       if (Array.isArray(calendars) && calendars.length > 0) {
-        const ev = await calendarApi.createEvent(calendars[0].id, {
-          title, start_time: date.toISOString(), end_time: end.toISOString(), all_day: false,
-          notes: `Rappel de suivi pour l'email de ${mail.email}`,
-        } as any);
-        eventId = (ev as any).data?.id ?? (ev as any).id ?? eventId;
+        const { data: ev } = await calendarApi.createEvent(calendars[0].id, {
+          title, start_time: date.toISOString(), end_time: end.toISOString(), is_all_day: false,
+          description: `Rappel de suivi pour l'email de ${mail.email}`,
+        });
+        eventId = ev?.id ?? eventId;
       } else {
         const stored = JSON.parse(localStorage.getItem("interop:local_events") || "[]");
         stored.push({ id: eventId, title, start_time: date.toISOString(), end_time: end.toISOString() });
