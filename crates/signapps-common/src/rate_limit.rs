@@ -48,7 +48,7 @@ impl RateLimiter {
 
     /// Check if a request from the given key is allowed.
     pub fn check(&self, key: &str) -> bool {
-        let mut buckets = self.buckets.lock().unwrap();
+        let mut buckets = self.buckets.lock().expect("rate limiter mutex poisoned");
         let now = Instant::now();
 
         let bucket = buckets.entry(key.to_string()).or_insert(Bucket {
@@ -72,7 +72,7 @@ impl RateLimiter {
 
     /// Remove stale entries (call periodically).
     pub fn cleanup(&self) {
-        let mut buckets = self.buckets.lock().unwrap();
+        let mut buckets = self.buckets.lock().expect("rate limiter mutex poisoned");
         let now = Instant::now();
         buckets.retain(|_, b| now.duration_since(b.last_refill).as_secs() < 300);
     }

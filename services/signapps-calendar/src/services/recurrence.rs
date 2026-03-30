@@ -58,7 +58,11 @@ fn parse_rrule(rrule: &str) -> Result<ParsedRrule, String> {
         if v.len() == 8 {
             NaiveDate::parse_from_str(v, "%Y%m%d")
                 .ok()
-                .map(|d| d.and_hms_opt(23, 59, 59).unwrap().and_utc())
+                .map(|d| {
+                    d.and_hms_opt(23, 59, 59)
+                        .expect("23:59:59 is always a valid time")
+                        .and_utc()
+                })
         } else {
             DateTime::parse_from_str(v, "%Y%m%dT%H%M%SZ")
                 .ok()
@@ -180,15 +184,20 @@ fn advance(dt: DateTime<Utc>, rule: &ParsedRrule) -> DateTime<Utc> {
 }
 
 fn days_in_month(year: i32, month: u32) -> u32 {
-    NaiveDate::from_ymd_opt(
+    // First day of next month, then subtract 1 day to get last day of current month.
+    // Falls back to the 28th as a safe lower bound for any month.
+    let first_of_next = NaiveDate::from_ymd_opt(
         if month == 12 { year + 1 } else { year },
         if month == 12 { 1 } else { month + 1 },
         1,
     )
-    .unwrap_or(NaiveDate::from_ymd_opt(year, month, 28).unwrap())
-    .pred_opt()
-    .unwrap()
-    .day()
+    .or_else(|| NaiveDate::from_ymd_opt(year, month, 28))
+    .expect("year/month combination is always representable");
+
+    first_of_next
+        .pred_opt()
+        .expect("first-of-month always has a predecessor")
+        .day()
 }
 
 // ---------------------------------------------------------------------------

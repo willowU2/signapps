@@ -290,8 +290,12 @@ impl ServiceConfig {
 pub fn middleware_stack(router: Router) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
-            "http://localhost:3000".parse().unwrap(),
-            "http://127.0.0.1:3000".parse().unwrap(),
+            "http://localhost:3000"
+                .parse()
+                .expect("valid localhost origin"),
+            "http://127.0.0.1:3000"
+                .parse()
+                .expect("valid localhost origin"),
         ]))
         .allow_methods([
             axum::http::Method::GET,
@@ -306,7 +310,9 @@ pub fn middleware_stack(router: Router) -> Router {
             axum::http::header::AUTHORIZATION,
             axum::http::header::ACCEPT,
             axum::http::header::ORIGIN,
-            "x-workspace-id".parse().unwrap(),
+            "x-workspace-id"
+                .parse()
+                .expect("valid header name"),
         ])
         .allow_credentials(true);
 

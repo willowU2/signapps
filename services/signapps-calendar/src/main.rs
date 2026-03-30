@@ -318,8 +318,12 @@ fn build_router(state: AppState) -> Router {
     use tower_http::cors::{AllowOrigin, CorsLayer};
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
-            "http://localhost:3000".parse().unwrap(),
-            "http://127.0.0.1:3000".parse().unwrap(),
+            "http://localhost:3000"
+                .parse()
+                .expect("valid localhost origin"),
+            "http://127.0.0.1:3000"
+                .parse()
+                .expect("valid localhost origin"),
         ]))
         .allow_credentials(true)
         .allow_methods([

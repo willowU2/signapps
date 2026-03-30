@@ -23,7 +23,7 @@ pub fn validate_parent_change(
         return Ok(());
     }
 
-    let new_parent = new_parent_id.unwrap();
+    let new_parent = new_parent_id.expect("checked is_none() above");
 
     // Check if moving to self
     if task_id == new_parent {

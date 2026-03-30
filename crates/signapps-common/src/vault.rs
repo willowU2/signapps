@@ -87,10 +87,10 @@ impl VaultStore {
         let special = "!@#$%^&*()-_=+[]{}|;:,.<>?".chars().collect::<Vec<_>>();
 
         let mut password = vec![
-            lowercase.choose(&mut rng).unwrap(),
-            uppercase.choose(&mut rng).unwrap(),
-            digits.choose(&mut rng).unwrap(),
-            special.choose(&mut rng).unwrap(),
+            lowercase.choose(&mut rng).expect("lowercase is non-empty"),
+            uppercase.choose(&mut rng).expect("uppercase is non-empty"),
+            digits.choose(&mut rng).expect("digits is non-empty"),
+            special.choose(&mut rng).expect("special is non-empty"),
         ];
 
         // Fill remaining length with random chars from all categories
@@ -103,7 +103,7 @@ impl VaultStore {
             .collect();
 
         for _ in 4..length {
-            password.push(all_chars.choose(&mut rng).unwrap());
+            password.push(all_chars.choose(&mut rng).expect("all_chars is non-empty"));
         }
 
         // Shuffle the password

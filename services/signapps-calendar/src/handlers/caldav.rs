@@ -168,12 +168,17 @@ pub async fn get_event_ics(
     let mut headers = HeaderMap::new();
     headers.insert(
         header::CONTENT_TYPE,
-        "text/calendar; charset=utf-8".parse().unwrap(),
+        "text/calendar; charset=utf-8"
+            .parse()
+            .expect("valid content-type header value"),
     );
-    headers.insert(header::ETAG, etag.parse().unwrap());
+    headers.insert(
+        header::ETAG,
+        etag.parse().expect("timestamp-based ETag is always a valid header value"),
+    );
     headers.insert(
         header::HeaderName::from_static("dav"),
-        DAV_HEADER.parse().unwrap(),
+        DAV_HEADER.parse().expect("DAV header value is a static valid string"),
     );
     Ok((StatusCode::OK, headers, ics))
 }

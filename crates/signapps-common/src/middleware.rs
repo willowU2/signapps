@@ -382,13 +382,13 @@ pub async fn request_id_middleware(mut request: Request, next: Next) -> Response
 
     request
         .headers_mut()
-        .insert("x-request-id", request_id.parse().unwrap());
+        .insert("x-request-id", request_id.parse().expect("UUID is always a valid header value"));
 
     let mut response = next.run(request).await;
 
     response
         .headers_mut()
-        .insert("x-request-id", request_id.parse().unwrap());
+        .insert("x-request-id", request_id.parse().expect("UUID is always a valid header value"));
 
     response
 }
