@@ -54,6 +54,10 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'http' as const, hostname: 'localhost' },
       { protocol: 'https' as const, hostname: '**.signapps.local' },
+      { protocol: 'https' as const, hostname: 'raw.githubusercontent.com' },
+      { protocol: 'https' as const, hostname: '**.github.io' },
+      { protocol: 'https' as const, hostname: 'cdn.jsdelivr.net' },
+      { protocol: 'https' as const, hostname: '**' },
     ],
   },
   typescript: {

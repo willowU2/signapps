@@ -13,6 +13,7 @@ import type { StoreApp } from '@/lib/api';
 import { containersApi } from '@/lib/api';
 import { toast } from 'sonner';
 import SpotlightCard from '@/components/ui/spotlight-card';
+import { getAppLogo } from '@/lib/app-logos';
 
 interface AppCardProps {
   app: StoreApp;
@@ -26,6 +27,11 @@ interface AppCardProps {
 export function AppCard({ app, onInstall, onDetail, installedContainerId, containerUrl, onUpdated }: AppCardProps) {
   const [imgError, setImgError] = useState(false);
   const [updating, setUpdating] = useState(false);
+
+  // Resolve logo: app.icon → app.icon_url → official logo lookup → fallback
+  const resolvedIcon = app.icon && !imgError
+    ? app.icon
+    : getAppLogo(app.id || app.name, app.image) || (app as Record<string, unknown>).icon_url as string || null;
 
   const handleUpdate = async () => {
     if (!installedContainerId) return;
@@ -49,9 +55,9 @@ export function AppCard({ app, onInstall, onDetail, installedContainerId, contai
       >
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
-            {app.icon && !imgError ? (
+            {resolvedIcon ? (
               <Image
-                src={app.icon}
+                src={resolvedIcon}
                 alt={app.name}
                 width={48}
                 height={48}

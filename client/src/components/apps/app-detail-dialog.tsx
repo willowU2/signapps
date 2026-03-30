@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getAppLogo } from '@/lib/app-logos';
 import {
   Package,
   Download,
@@ -63,19 +64,22 @@ export function AppDetailDialog({
         <DialogHeader>
           <div className="flex items-start gap-4">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
-              {app.icon && !imgError ? (
-                <Image
-                  src={app.icon}
-                  alt={app.name}
-                  width={64}
-                  height={64}
-                  className="h-16 w-16 object-contain"
-                  onError={() => setImgError(true)}
-                  unoptimized
-                />
-              ) : (
-                <Package className="h-8 w-8 text-muted-foreground" />
-              )}
+              {(() => {
+                const logo = app.icon && !imgError ? app.icon : getAppLogo(app.id || app.name, app.image);
+                return logo ? (
+                  <Image
+                    src={logo}
+                    alt={app.name}
+                    width={64}
+                    height={64}
+                    className="h-16 w-16 object-contain"
+                    onError={() => setImgError(true)}
+                    unoptimized
+                  />
+                ) : (
+                  <Package className="h-8 w-8 text-muted-foreground" />
+                );
+              })()}
             </div>
             <div className="min-w-0 flex-1">
               <DialogTitle className="text-xl">{app.name}</DialogTitle>
