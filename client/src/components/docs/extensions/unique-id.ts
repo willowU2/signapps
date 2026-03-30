@@ -143,7 +143,8 @@ export const UniqueID = Extension.create<UniqueIDOptions>({
                         if (id) return; // Already has ID
 
                         // Check if this is a new node (not in old state at same position)
-                        const oldNode = oldState.doc.nodeAt(pos);
+                        // Guard: pos may be outside old doc bounds after insert/delete
+                        const oldNode = pos < oldState.doc.content.size ? oldState.doc.nodeAt(pos) : null;
                         const isNewNode = !oldNode || oldNode.type !== node.type;
 
                         // Also assign ID if node doesn't have one (e.g., pasted content)
