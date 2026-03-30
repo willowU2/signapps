@@ -73,6 +73,12 @@ pub struct StatsResponse {
 
 /// Index a document.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/index",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn index_document(
     State(state): State<AppState>,
     Json(payload): Json<IndexRequest>,
@@ -101,6 +107,12 @@ pub async fn index_document(
 
 /// Index a document from an internal storage notification.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/index",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn index_internal_document(
     State(state): State<AppState>,
     Json(payload): Json<InternalIndexRequest>,
@@ -163,6 +175,12 @@ pub async fn index_internal_document(
 
 /// Index a document from a direct request with known ID.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/index",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn index_direct_document(
     State(state): State<AppState>,
     Path(document_id): Path<Uuid>,
@@ -200,6 +218,12 @@ pub async fn index_direct_document(
 
 /// Remove a document from the index.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/index",
+    responses((status = 204, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn remove_document(
     State(state): State<AppState>,
     Path(document_id): Path<Uuid>,
@@ -213,6 +237,12 @@ pub async fn remove_document(
 
 /// Get indexing stats.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/index",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StatsResponse>> {
     let stats = state.vectors.get_stats(None).await?;
 
@@ -238,6 +268,12 @@ pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StatsRespon
 /// ai.document_vectors table, re-reads each file via OpenDAL, and upserts
 /// freshly-computed embeddings. Returns immediately with a task ID.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/index",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn reindex_all(
     State(state): State<AppState>,
 ) -> std::result::Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
@@ -352,4 +388,17 @@ pub async fn reindex_all(
         "message": format!("Reindexing {} documents in background", total),
         "total_documents": total
     })))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

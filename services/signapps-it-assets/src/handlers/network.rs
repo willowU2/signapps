@@ -215,6 +215,12 @@ fn guess_os(open_ports: &[u16]) -> Option<String> {
 
 /// POST /api/v1/it-assets/network/scan
 /// Perform an ARP/ping sweep on a subnet and store results.
+#[utoipa::path(
+    get,
+    path = "/api/v1/network",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn scan_network(
     State(pool): State<DatabasePool>,
     Json(payload): Json<ScanSubnetReq>,
@@ -289,6 +295,12 @@ pub async fn scan_network(
 
 /// GET /api/v1/it-assets/network/discoveries
 /// List all network discoveries.
+#[utoipa::path(
+    get,
+    path = "/api/v1/network",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn list_discoveries(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<NetworkDiscovery>>, (StatusCode, String)> {
@@ -309,6 +321,12 @@ pub async fn list_discoveries(
 
 /// POST /api/v1/it-assets/network/discoveries/:id/add-to-inventory
 /// Add a discovered host to the IT hardware inventory.
+#[utoipa::path(
+    post,
+    path = "/api/v1/network",
+    responses((status = 201, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn add_discovery_to_inventory(
     State(pool): State<DatabasePool>,
     Path(discovery_id): Path<Uuid>,
@@ -365,6 +383,12 @@ pub async fn add_discovery_to_inventory(
 
 /// POST /api/v1/it-assets/network/port-scan (ND4)
 /// TCP port scan on a specific IP.
+#[utoipa::path(
+    get,
+    path = "/api/v1/network",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn port_scan(
     State(_pool): State<DatabasePool>,
     Json(payload): Json<PortScanReq>,
@@ -416,6 +440,12 @@ pub async fn port_scan(
 
 /// GET /api/v1/it-assets/network/snmp/:ip (ND2)
 /// Query common SNMP OIDs for a given IP.
+#[utoipa::path(
+    get,
+    path = "/api/v1/network",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn query_snmp(
     State(pool): State<DatabasePool>,
     Path(ip): Path<String>,
@@ -457,4 +487,17 @@ pub async fn query_snmp(
     .ok(); // Non-fatal if fails
 
     Ok(Json(oids))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

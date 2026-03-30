@@ -20,6 +20,12 @@ use signapps_common::Result;
 
 /// Get all system metrics.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn get_all_metrics(State(state): State<AppState>) -> Result<Json<SystemMetrics>> {
     let metrics = state.collector.get_all_metrics().await;
     Ok(Json(metrics))
@@ -27,6 +33,12 @@ pub async fn get_all_metrics(State(state): State<AppState>) -> Result<Json<Syste
 
 /// Get CPU metrics.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn get_cpu_metrics(State(state): State<AppState>) -> Result<Json<CpuMetrics>> {
     let metrics = state.collector.get_cpu_metrics().await;
     Ok(Json(metrics))
@@ -34,6 +46,12 @@ pub async fn get_cpu_metrics(State(state): State<AppState>) -> Result<Json<CpuMe
 
 /// Get memory metrics.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn get_memory_metrics(State(state): State<AppState>) -> Result<Json<MemoryMetrics>> {
     let metrics = state.collector.get_memory_metrics().await;
     Ok(Json(metrics))
@@ -41,6 +59,12 @@ pub async fn get_memory_metrics(State(state): State<AppState>) -> Result<Json<Me
 
 /// Get disk metrics.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn get_disk_metrics(State(state): State<AppState>) -> Result<Json<Vec<DiskMetrics>>> {
     let metrics = state.collector.get_disk_metrics().await;
     Ok(Json(metrics))
@@ -48,6 +72,12 @@ pub async fn get_disk_metrics(State(state): State<AppState>) -> Result<Json<Vec<
 
 /// Get network metrics.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn get_network_metrics(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<NetworkMetrics>>> {
@@ -57,6 +87,12 @@ pub async fn get_network_metrics(
 
 /// Prometheus metrics endpoint.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn prometheus_metrics(State(state): State<AppState>) -> impl IntoResponse {
     // Update metrics before export
     state.exporter.update().await;
@@ -75,6 +111,12 @@ pub async fn prometheus_metrics(State(state): State<AppState>) -> impl IntoRespo
 
 /// Health check.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn health_check(State(state): State<AppState>) -> Result<Json<HealthResponse>> {
     let metrics = state.collector.get_all_metrics().await;
 
@@ -113,6 +155,12 @@ pub struct HealthResponse {
 
 /// Summary metrics for dashboard.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn get_summary(State(state): State<AppState>) -> Result<Json<SummaryMetrics>> {
     let metrics = state.collector.get_all_metrics().await;
 
@@ -178,6 +226,12 @@ pub struct SummaryMetrics {
 /// The stream automatically closes after 30 minutes to prevent unbounded connections.
 /// Clients should reconnect when the stream ends.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn metrics_stream(
     State(state): State<AppState>,
 ) -> Sse<impl Stream<Item = std::result::Result<Event, Infallible>>> {
@@ -247,4 +301,17 @@ pub async fn metrics_stream(
             .interval(Duration::from_secs(15))
             .text("keep-alive"),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

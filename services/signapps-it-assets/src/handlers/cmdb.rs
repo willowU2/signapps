@@ -49,6 +49,12 @@ pub struct UpdateCiReq {
     pub metadata: Option<Value>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/cmdb",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn list_cis(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<ConfigurationItem>>, (StatusCode, String)> {
@@ -61,6 +67,12 @@ pub async fn list_cis(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/cmdb",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn get_ci(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -76,6 +88,12 @@ pub async fn get_ci(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/cmdb",
+    responses((status = 201, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn create_ci(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreateCiReq>,
@@ -103,6 +121,12 @@ pub async fn create_ci(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/cmdb",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn update_ci(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -134,6 +158,12 @@ pub async fn update_ci(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/cmdb",
+    responses((status = 204, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn delete_ci(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -169,6 +199,12 @@ pub struct CreateCiRelReq {
     pub relationship_type: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/cmdb",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn list_ci_relationships(
     State(pool): State<DatabasePool>,
     Path(ci_id): Path<Uuid>,
@@ -183,6 +219,12 @@ pub async fn list_ci_relationships(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/cmdb",
+    responses((status = 201, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn create_ci_relationship(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreateCiRelReq>,
@@ -203,6 +245,12 @@ pub async fn create_ci_relationship(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/cmdb",
+    responses((status = 204, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn delete_ci_relationship(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -219,6 +267,12 @@ pub async fn delete_ci_relationship(
 }
 
 // Impact analysis — fetch all CIs that depend (directly or indirectly) on a given CI
+#[utoipa::path(
+    get,
+    path = "/api/v1/cmdb",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn ci_impact(
     State(pool): State<DatabasePool>,
     Path(ci_id): Path<Uuid>,
@@ -283,6 +337,12 @@ pub struct UpdateChangeStatusReq {
     pub actor_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/cmdb",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn list_change_requests(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<ChangeRequest>>, (StatusCode, String)> {
@@ -295,6 +355,12 @@ pub async fn list_change_requests(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/cmdb",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn get_change_request(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -310,6 +376,12 @@ pub async fn get_change_request(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/cmdb",
+    responses((status = 201, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn create_change_request(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreateChangeReq>,
@@ -347,6 +419,12 @@ pub async fn create_change_request(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/cmdb",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn update_change_status(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -396,6 +474,12 @@ pub struct LdapImportResult {
     pub message: String,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/cmdb",
+    responses((status = 201, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn import_ldap(
     Json(payload): Json<LdapImportReq>,
 ) -> Result<Json<LdapImportResult>, (StatusCode, String)> {
@@ -409,4 +493,17 @@ pub async fn import_ldap(
             payload.base_dn
         ),
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

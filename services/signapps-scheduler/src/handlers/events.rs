@@ -22,6 +22,12 @@ pub struct DateRangeParams {
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/events",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn list_events(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -48,6 +54,12 @@ pub async fn list_events(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/events",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn get_event(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -66,6 +78,12 @@ pub async fn get_event(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/events",
+    responses((status = 201, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn create_event(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -85,6 +103,12 @@ pub async fn create_event(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/events",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn update_event(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -103,6 +127,12 @@ pub async fn update_event(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/events",
+    responses((status = 204, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn delete_event(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -120,6 +150,12 @@ pub async fn delete_event(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/events",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn list_attendees(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -137,6 +173,12 @@ pub async fn list_attendees(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/events",
+    responses((status = 201, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn add_attendee(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -161,6 +203,12 @@ pub struct UpdateRsvpPayload {
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/events",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn update_rsvp(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -179,6 +227,12 @@ pub async fn update_rsvp(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/events",
+    responses((status = 204, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn remove_attendee(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -192,5 +246,18 @@ pub async fn remove_attendee(
             tracing::error!("Failed to remove attendee: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

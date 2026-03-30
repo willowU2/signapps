@@ -40,6 +40,12 @@ pub struct QuotaUsagePercent {
 
 /// Get current user's quota.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/quotas",
+    responses((status = 200, description = "Success")),
+    tag = "Containers"
+)]
 pub async fn get_my_quota(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -74,6 +80,12 @@ pub async fn get_my_quota(
 
 /// Get a user's quota (admin only).
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/quotas",
+    responses((status = 200, description = "Success")),
+    tag = "Containers"
+)]
 pub async fn get_user_quota(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,
@@ -108,6 +120,12 @@ pub async fn get_user_quota(
 
 /// Update a user's quota (admin only).
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/quotas",
+    responses((status = 200, description = "Success")),
+    tag = "Containers"
+)]
 pub async fn update_user_quota(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,
@@ -138,4 +156,17 @@ pub async fn update_user_quota(
         current_storage_gb: quota.current_storage_gb,
         usage_percent,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

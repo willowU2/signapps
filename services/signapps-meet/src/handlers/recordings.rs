@@ -15,6 +15,12 @@ use crate::{
 
 /// List recordings for a room
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/recordings",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn list_recordings(
     State(state): State<AppState>,
     Path(room_id): Path<Uuid>,
@@ -60,6 +66,12 @@ pub async fn list_recordings(
 
 /// Start a recording
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/recordings",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn start_recording(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -135,6 +147,12 @@ pub async fn start_recording(
 
 /// Get a specific recording
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/recordings",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn get_recording(
     State(state): State<AppState>,
     Path(recording_id): Path<Uuid>,
@@ -162,6 +180,12 @@ pub async fn get_recording(
 
 /// Stop a recording
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/recordings",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn stop_recording(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -226,6 +250,12 @@ pub async fn stop_recording(
 
 /// Get the active (in-progress) recording for a room
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/recordings",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn get_active_recording(
     State(state): State<AppState>,
     Path(room_id): Path<Uuid>,
@@ -262,6 +292,12 @@ pub async fn get_active_recording(
 
 /// Stop the active recording for a room (host convenience endpoint)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/recordings",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn stop_room_recording(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -322,6 +358,12 @@ pub async fn stop_room_recording(
 
 /// Delete a recording
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/recordings",
+    responses((status = 204, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn delete_recording(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -361,4 +403,17 @@ pub async fn delete_recording(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

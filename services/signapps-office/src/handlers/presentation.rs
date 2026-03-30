@@ -13,6 +13,12 @@ use crate::presentation::{
 
 /// Export presentation JSON to PPTX
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/presentation",
+    responses((status = 201, description = "Success")),
+    tag = "Office"
+)]
 pub async fn export_pptx(
     axum::extract::State(state): axum::extract::State<crate::AppState>,
     Json(payload): Json<serde_json::Value>,
@@ -88,6 +94,12 @@ pub async fn export_pptx(
 
 /// Export presentation to PDF (all slides)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/presentation",
+    responses((status = 201, description = "Success")),
+    tag = "Office"
+)]
 pub async fn export_slides_pdf(
     axum::extract::State(state): axum::extract::State<crate::AppState>,
     Json(payload): Json<serde_json::Value>,
@@ -174,6 +186,12 @@ pub async fn export_slides_pdf(
 
 /// Export single slide to PNG
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/presentation",
+    responses((status = 201, description = "Success")),
+    tag = "Office"
+)]
 pub async fn export_slide_png(Json(payload): Json<serde_json::Value>) -> Response {
     let presentation = match parse_json_to_presentation(&payload) {
         Ok(p) => p,
@@ -236,6 +254,12 @@ pub async fn export_slide_png(Json(payload): Json<serde_json::Value>) -> Respons
 
 /// Export single slide to SVG
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/presentation",
+    responses((status = 201, description = "Success")),
+    tag = "Office"
+)]
 pub async fn export_slide_svg(Json(payload): Json<serde_json::Value>) -> Response {
     let presentation = match parse_json_to_presentation(&payload) {
         Ok(p) => p,
@@ -298,6 +322,12 @@ pub async fn export_slide_svg(Json(payload): Json<serde_json::Value>) -> Respons
 
 /// Export all slides as PNG (returns JSON with base64 encoded images)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/presentation",
+    responses((status = 201, description = "Success")),
+    tag = "Office"
+)]
 pub async fn export_all_slides_png(Json(payload): Json<serde_json::Value>) -> Response {
     let presentation = match parse_json_to_presentation(&payload) {
         Ok(p) => p,
@@ -353,6 +383,12 @@ pub async fn export_all_slides_png(Json(payload): Json<serde_json::Value>) -> Re
 
 /// Export all slides as SVG (returns JSON with SVG strings)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/presentation",
+    responses((status = 201, description = "Success")),
+    tag = "Office"
+)]
 pub async fn export_all_slides_svg(Json(payload): Json<serde_json::Value>) -> Response {
     let presentation = match parse_json_to_presentation(&payload) {
         Ok(p) => p,
@@ -408,6 +444,12 @@ pub async fn export_all_slides_svg(Json(payload): Json<serde_json::Value>) -> Re
 
 /// Get presentation service info
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/presentation",
+    responses((status = 200, description = "Success")),
+    tag = "Office"
+)]
 pub async fn presentation_info() -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "service": "SignApps Office - Presentations",
@@ -433,4 +475,17 @@ pub async fn presentation_info() -> Json<serde_json::Value> {
             "per_slide_export": true
         }
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

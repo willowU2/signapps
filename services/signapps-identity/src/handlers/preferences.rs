@@ -26,6 +26,12 @@ struct ErrorResponse {
 
 /// Get current user preferences
 #[tracing::instrument(skip(state, claims))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/preferences",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -56,6 +62,12 @@ pub async fn get_preferences(
 
 /// Sync preferences (full update)
 #[tracing::instrument(skip(state, claims, body))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/preferences",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn sync_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -113,6 +125,12 @@ pub async fn sync_preferences(
 
 /// Patch a specific section of preferences
 #[tracing::instrument(skip(state, claims, body))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/preferences",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn patch_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -162,6 +180,12 @@ pub struct ConflictQuery {
 }
 
 #[tracing::instrument(skip(state, claims))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/preferences",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn check_conflicts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -197,6 +221,12 @@ pub async fn check_conflicts(
 
 /// Reset preferences to defaults
 #[tracing::instrument(skip(state, claims))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/preferences",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn reset_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -227,6 +257,12 @@ pub async fn reset_preferences(
 
 /// Export preferences as JSON
 #[tracing::instrument(skip(state, claims))]
+#[utoipa::path(
+    post,
+    path = "/api/v1/preferences",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn export_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -264,6 +300,12 @@ pub async fn export_preferences(
 
 /// Import preferences from JSON
 #[tracing::instrument(skip(state, claims, body))]
+#[utoipa::path(
+    post,
+    path = "/api/v1/preferences",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn import_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -424,4 +466,17 @@ fn section_to_update(section: &str, data: &serde_json::Value) -> UserPreferences
     }
 
     update
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

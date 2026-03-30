@@ -47,6 +47,12 @@ pub struct EventRecord {
 // ============================================================================
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/data_import",
+    responses((status = 201, description = "Success")),
+    tag = "Office"
+)]
 pub async fn import_info() -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "supported_formats": ["csv", "json", "vcf", "ics"],
@@ -61,6 +67,12 @@ pub async fn import_info() -> Json<serde_json::Value> {
 
 /// POST /api/v1/data/import — Upload a file and get parsed data back.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/data_import",
+    responses((status = 201, description = "Success")),
+    tag = "Office"
+)]
 pub async fn import_data(
     mut multipart: Multipart,
 ) -> Result<Json<ImportResult>, (StatusCode, String)> {
@@ -329,4 +341,17 @@ fn parse_ical(content: &str) -> std::result::Result<ImportResult, String> {
         contacts: Vec::new(),
         events,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

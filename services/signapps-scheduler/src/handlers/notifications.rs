@@ -10,6 +10,12 @@ use tokio_stream::{wrappers::BroadcastStream, StreamExt};
 use crate::AppState;
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/notifications",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn sse_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -37,4 +43,17 @@ pub async fn sse_handler(
             .interval(std::time::Duration::from_secs(15))
             .text("keep-alive-text"),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

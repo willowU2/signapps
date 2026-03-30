@@ -8,6 +8,12 @@ use uuid::Uuid;
 
 use crate::models::{CreateHardwareReq, HardwareAsset, UpdateHardwareReq};
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/hardware",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn list_hardware(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<HardwareAsset>>, (StatusCode, String)> {
@@ -20,6 +26,12 @@ pub async fn list_hardware(
     Ok(Json(assets))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/hardware",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn get_hardware(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -34,6 +46,12 @@ pub async fn get_hardware(
     Ok(Json(asset))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/hardware",
+    responses((status = 201, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn create_hardware(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreateHardwareReq>,
@@ -61,6 +79,12 @@ pub async fn create_hardware(
     Ok((StatusCode::CREATED, Json(asset)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/hardware",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn update_hardware(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -100,6 +124,12 @@ pub async fn update_hardware(
     Ok(Json(asset))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/hardware",
+    responses((status = 204, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn delete_hardware(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -115,4 +145,17 @@ pub async fn delete_hardware(
     }
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

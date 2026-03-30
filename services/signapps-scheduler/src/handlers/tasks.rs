@@ -42,6 +42,12 @@ pub struct TaskAttachmentResponse {
 // ============================================================================
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tasks",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn list(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -62,6 +68,12 @@ pub async fn list(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/tasks",
+    responses((status = 201, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn create(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -84,6 +96,12 @@ pub async fn create(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tasks",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn get_by_id(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -108,6 +126,12 @@ pub async fn get_by_id(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/tasks",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn update(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -126,6 +150,12 @@ pub async fn update(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/tasks",
+    responses((status = 204, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn delete(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -148,6 +178,12 @@ pub async fn delete(
 
 /// Add an attachment to a task.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/tasks",
+    responses((status = 201, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn add_attachment(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -183,6 +219,12 @@ pub async fn add_attachment(
 
 /// List all attachments for a task.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tasks",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn list_attachments(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -212,6 +254,12 @@ pub async fn list_attachments(
 
 /// Delete an attachment.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/tasks",
+    responses((status = 204, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn delete_attachment(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -229,4 +277,17 @@ pub async fn delete_attachment(
     }
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

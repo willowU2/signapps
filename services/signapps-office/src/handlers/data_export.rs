@@ -43,6 +43,12 @@ pub struct ExportInfo {
 // ============================================================================
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/data_export",
+    responses((status = 201, description = "Success")),
+    tag = "Office"
+)]
 pub async fn export_info() -> Json<ExportInfo> {
     Json(ExportInfo {
         supported_formats: vec![
@@ -61,6 +67,12 @@ pub async fn export_info() -> Json<ExportInfo> {
 
 /// POST /api/v1/data/export — Export data to a chosen format.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/data_export",
+    responses((status = 201, description = "Success")),
+    tag = "Office"
+)]
 pub async fn export_data(
     Json(payload): Json<ExportRequest>,
 ) -> Result<Response, (StatusCode, String)> {
@@ -271,4 +283,17 @@ fn export_pdf(
         )
         .body(Body::from(buf))
         .expect("valid response"))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

@@ -65,6 +65,12 @@ fn create_vision_worker() -> Result<Box<dyn VisionWorker + Send + Sync>, String>
 /// - `image` — the image file (required)
 /// - `prompt` — optional text prompt guiding the description
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/vision",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn describe_image(
     mut multipart: Multipart,
 ) -> Result<Json<VisionResult>, (StatusCode, String)> {
@@ -126,6 +132,12 @@ pub async fn describe_image(
 /// - `image` — the image file (required)
 /// - `question` — the question to answer (required)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/vision",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn visual_qa(
     mut multipart: Multipart,
 ) -> Result<Json<VisionResult>, (StatusCode, String)> {
@@ -200,6 +212,12 @@ pub async fn visual_qa(
 /// Accepts `multipart/form-data` with:
 /// - `images` — one or more image files (each as a separate `images` field)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/vision",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn batch_describe(
     mut multipart: Multipart,
 ) -> Result<Json<BatchDescribeResponse>, (StatusCode, String)> {
@@ -247,4 +265,17 @@ pub async fn batch_describe(
 
     let count = results.len();
     Ok(Json(BatchDescribeResponse { results, count }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

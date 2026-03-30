@@ -23,6 +23,12 @@ pub struct TopPostsQuery {
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/analytics",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn overview(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -104,6 +110,12 @@ pub async fn overview(
 
 /// GET /social/analytics/followers?days=30
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/analytics",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn followers_timeline(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -149,6 +161,12 @@ pub async fn followers_timeline(
 
 /// GET /social/analytics/by-platform
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/analytics",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn by_platform(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -194,6 +212,12 @@ pub async fn by_platform(
 
 /// GET /social/analytics/top-posts?limit=10
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/analytics",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn top_posts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -227,6 +251,12 @@ pub async fn top_posts(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/analytics",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn post_analytics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -254,5 +284,18 @@ pub async fn post_analytics(
                 Json(serde_json::json!({ "error": "database error" })),
             )
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

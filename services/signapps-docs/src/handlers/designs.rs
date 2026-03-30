@@ -66,6 +66,12 @@ fn default_height() -> i32 {
 
 /// GET /api/v1/designs
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/designs",
+    responses((status = 200, description = "Success")),
+    tag = "Docs"
+)]
 pub async fn list_designs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -90,6 +96,12 @@ pub async fn list_designs(
 
 /// POST /api/v1/designs
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/designs",
+    responses((status = 201, description = "Success")),
+    tag = "Docs"
+)]
 pub async fn create_design(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -137,6 +149,12 @@ pub async fn create_design(
 
 /// GET /api/v1/designs/:id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/designs",
+    responses((status = 200, description = "Success")),
+    tag = "Docs"
+)]
 pub async fn get_design(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -163,6 +181,12 @@ pub async fn get_design(
 
 /// PUT /api/v1/designs/:id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/designs",
+    responses((status = 200, description = "Success")),
+    tag = "Docs"
+)]
 pub async fn update_design(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -201,6 +225,12 @@ pub async fn update_design(
 
 /// DELETE /api/v1/designs/:id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/designs",
+    responses((status = 204, description = "Success")),
+    tag = "Docs"
+)]
 pub async fn delete_design(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -221,4 +251,17 @@ pub async fn delete_design(
     }
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

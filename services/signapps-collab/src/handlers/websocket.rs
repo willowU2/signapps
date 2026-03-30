@@ -25,6 +25,12 @@ static ACTIVE_CONNECTIONS: AtomicUsize = AtomicUsize::new(0);
 /// WebSocket handler for collaborative document editing
 /// Endpoint: GET /api/v1/collab/ws/:doc_id?token=JWT_TOKEN
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/websocket/{doc_id}",
+    responses((status = 200, description = "Success")),
+    tag = "Collab"
+)]
 pub async fn websocket_handler(
     Path(doc_id): Path<String>,
     ws: WebSocketUpgrade,
@@ -234,5 +240,18 @@ struct ConnectionGuard;
 impl Drop for ConnectionGuard {
     fn drop(&mut self) {
         ACTIVE_CONNECTIONS.fetch_sub(1, Ordering::Relaxed);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

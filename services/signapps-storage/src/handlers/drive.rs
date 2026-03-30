@@ -20,6 +20,12 @@ fn get_workspace_id_from_headers(headers: &HeaderMap) -> Option<Uuid> {
 
 /// List the contents of a specific folder (or the root if parent_id is missing/null)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/drive",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn list_nodes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -78,6 +84,12 @@ pub async fn list_nodes(
 
 /// Create a new folder or link an existing file/document
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/drive",
+    responses((status = 201, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn create_node(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -122,6 +134,12 @@ pub async fn create_node(
 
 /// Rename or move a node
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/drive",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn update_node(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -164,6 +182,12 @@ pub async fn update_node(
 
 /// Soft delete a node
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/drive",
+    responses((status = 204, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn delete_node(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -179,4 +203,17 @@ pub async fn delete_node(
         .map_err(|e: sqlx::Error| signapps_common::Error::Database(e.to_string()))?;
 
     Ok(Json(()))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

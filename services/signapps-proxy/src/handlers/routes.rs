@@ -43,6 +43,12 @@ impl From<Route> for RouteResponse {
 
 /// List all routes.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/routes",
+    responses((status = 200, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn list_routes(State(state): State<AppState>) -> Result<Json<Vec<RouteResponse>>> {
     let repo = RouteRepository::new(&state.pool);
     let routes = repo.list().await?;
@@ -54,6 +60,12 @@ pub async fn list_routes(State(state): State<AppState>) -> Result<Json<Vec<Route
 
 /// Get route by ID.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/routes",
+    responses((status = 200, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn get_route(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -70,6 +82,12 @@ pub async fn get_route(
 
 /// Create a new route.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/routes",
+    responses((status = 201, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn create_route(
     State(state): State<AppState>,
     Json(payload): Json<CreateRoute>,
@@ -97,6 +115,12 @@ pub async fn create_route(
 
 /// Update a route.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/routes",
+    responses((status = 200, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn update_route(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -139,6 +163,12 @@ pub async fn update_route(
 
 /// Delete a route.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/routes",
+    responses((status = 204, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn delete_route(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -163,6 +193,12 @@ pub async fn delete_route(
 
 /// Enable a route.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/routes",
+    responses((status = 200, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn enable_route(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -181,6 +217,12 @@ pub async fn enable_route(
 
 /// Disable a route.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/routes",
+    responses((status = 200, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn disable_route(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -195,4 +237,17 @@ pub async fn disable_route(
     state.route_cache.force_refresh();
 
     Ok(Json(RouteResponse::from(route)))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

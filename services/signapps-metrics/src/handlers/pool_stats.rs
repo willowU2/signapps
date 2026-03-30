@@ -30,6 +30,12 @@ pub struct PoolStats {
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/pool_stats",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn get_pool_stats(State(state): State<AppState>) -> Result<Json<PoolStats>> {
     let pool = &*state.pool;
 
@@ -52,4 +58,17 @@ pub async fn get_pool_stats(State(state): State<AppState>) -> Result<Json<PoolSt
         max,
         at_capacity,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

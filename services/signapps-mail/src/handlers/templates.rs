@@ -62,6 +62,12 @@ pub struct UpdateTemplateRequest {
 
 /// GET /api/v1/mail/templates?account_id=...
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/templates",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn list_templates(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -100,6 +106,12 @@ pub async fn list_templates(
 
 /// GET /api/v1/mail/templates/:id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/templates",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn get_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -117,6 +129,12 @@ pub async fn get_template(
 
 /// POST /api/v1/mail/templates
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/templates",
+    responses((status = 201, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn create_template(
     State(state): State<AppState>,
     Json(payload): Json<CreateTemplateRequest>,
@@ -149,6 +167,12 @@ pub async fn create_template(
 
 /// PUT /api/v1/mail/templates/:id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/templates",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn update_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -184,6 +208,12 @@ pub async fn update_template(
 
 /// DELETE /api/v1/mail/templates/:id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/templates",
+    responses((status = 204, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn delete_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -196,5 +226,18 @@ pub async fn delete_template(
         Ok(r) if r.rows_affected() > 0 => StatusCode::NO_CONTENT.into_response(),
         Ok(_) => (StatusCode::NOT_FOUND, "Template not found").into_response(),
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

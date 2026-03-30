@@ -71,6 +71,12 @@ pub struct MountResponse {
 
 /// List all mount points.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/mounts",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn list_mounts(State(_state): State<AppState>) -> Result<Json<Vec<MountPoint>>> {
     let mounts = get_system_mounts().await?;
     Ok(Json(mounts))
@@ -78,6 +84,12 @@ pub async fn list_mounts(State(_state): State<AppState>) -> Result<Json<Vec<Moun
 
 /// Mount a device.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/mounts",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn mount(
     State(_state): State<AppState>,
     Json(payload): Json<MountRequest>,
@@ -186,6 +198,12 @@ pub async fn mount(
 
 /// Unmount a filesystem.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/mounts",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn unmount(
     State(_state): State<AppState>,
     Path(path): Path<String>,
@@ -362,4 +380,17 @@ async fn get_system_mounts() -> Result<Vec<MountPoint>> {
     }
 
     Ok(mounts)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

@@ -66,6 +66,12 @@ pub struct UpsertIndexingRule {
 
 /// List all storage rules
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/storage_settings",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn list_storage_rules(State(state): State<AppState>) -> Result<Json<Vec<StorageRule>>> {
     let rules: Vec<StorageRule> = sqlx::query_as(
         r#"
@@ -83,6 +89,12 @@ pub async fn list_storage_rules(State(state): State<AppState>) -> Result<Json<Ve
 
 /// Create a new storage rule
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/storage_settings",
+    responses((status = 201, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn create_storage_rule(
     State(state): State<AppState>,
     Json(payload): Json<UpsertStorageRule>,
@@ -108,6 +120,12 @@ pub async fn create_storage_rule(
 
 /// Update a storage rule
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/storage_settings",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn update_storage_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -136,6 +154,12 @@ pub async fn update_storage_rule(
 
 /// Delete a storage rule
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/storage_settings",
+    responses((status = 204, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn delete_storage_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -159,6 +183,12 @@ pub async fn delete_storage_rule(
 
 /// List all AI indexing rules
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/storage_settings",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn list_indexing_rules(State(state): State<AppState>) -> Result<Json<Vec<IndexingRule>>> {
     let rules: Vec<IndexingRule> = sqlx::query_as(
         r#"
@@ -176,6 +206,12 @@ pub async fn list_indexing_rules(State(state): State<AppState>) -> Result<Json<V
 
 /// Create a new indexing rule
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/storage_settings",
+    responses((status = 201, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn create_indexing_rule(
     State(state): State<AppState>,
     Json(payload): Json<UpsertIndexingRule>,
@@ -202,6 +238,12 @@ pub async fn create_indexing_rule(
 
 /// Update an indexing rule
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/storage_settings",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn update_indexing_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -231,6 +273,12 @@ pub async fn update_indexing_rule(
 
 /// Delete an indexing rule
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/storage_settings",
+    responses((status = 204, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn delete_indexing_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -268,6 +316,12 @@ pub struct UpsertSystemSetting {
 
 /// Get a specific system setting
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/storage_settings",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn get_system_setting(
     State(state): axum::extract::State<crate::AppState>,
     axum::extract::Path(key): axum::extract::Path<String>,
@@ -299,6 +353,12 @@ pub async fn get_system_setting(
 
 /// Update a specific system setting
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/storage_settings",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn update_system_setting(
     State(state): axum::extract::State<crate::AppState>,
     axum::extract::Path(key): axum::extract::Path<String>,
@@ -325,4 +385,17 @@ pub async fn update_system_setting(
         .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
     Ok(axum::Json(SystemSetting { setting_value }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

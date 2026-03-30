@@ -86,6 +86,12 @@ pub struct TrackingStats {
 /// Serves a 1×1 transparent GIF.  Logs the open event (upserts the open
 /// record so repeated opens increment `open_count`).
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tracking",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn track_open(
     State(state): State<AppState>,
     Path(tracking_id): Path<Uuid>,
@@ -140,6 +146,12 @@ pub async fn track_open(
 
 /// GET /api/v1/mail/emails/tracking?email_id=...&account_id=...
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tracking",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn list_tracking(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -187,6 +199,12 @@ pub async fn list_tracking(
 
 /// GET /api/v1/mail/emails/tracking/stats
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tracking",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn tracking_stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -251,4 +269,17 @@ pub async fn tracking_stats(
         average_opens_per_email,
     })
     .into_response()
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

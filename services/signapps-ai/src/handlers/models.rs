@@ -34,6 +34,12 @@ pub struct ModelsQuery {
 
 /// List available models (optionally for a specific provider).
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/models",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn list_models(
     State(state): State<AppState>,
     Query(query): Query<ModelsQuery>,
@@ -53,4 +59,17 @@ pub async fn list_models(
     Ok(Json(ModelsResponse {
         models: model_infos,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

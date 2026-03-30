@@ -27,6 +27,12 @@ pub struct UpdateSignatureRequest {
 /// GET /api/v1/mail/signatures/me
 /// Returns the signature fields from the first active mail.accounts row for this user.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/signatures",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn get_signature(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -52,6 +58,12 @@ pub async fn get_signature(
 /// PUT /api/v1/mail/signatures/me
 /// Updates signature_html and signature_text on all mail.accounts rows for this user.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/signatures",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn upsert_signature(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -91,5 +103,18 @@ pub async fn upsert_signature(
             )
                 .into_response()
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

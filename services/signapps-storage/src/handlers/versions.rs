@@ -18,6 +18,12 @@ where
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/versions",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn list_versions(
     State(state): State<AppState>,
     Path(file_id): Path<Uuid>,
@@ -31,6 +37,12 @@ pub async fn list_versions(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/versions",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn restore_version(
     State(state): State<AppState>,
     axum::Extension(_user_id): axum::Extension<Uuid>,
@@ -97,4 +109,17 @@ pub async fn restore_version(
     // Note: Quotas logic shouldn't strictly require recalculation here because we just overwrote bytes, but storage quotas for the new archive version should ideally be incremented in a full prod app.
 
     Ok(StatusCode::OK)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

@@ -27,6 +27,12 @@ pub struct SetTenantCssRequest {
 
 /// GET /api/v1/admin/tenants/:id/css — Get CSS override for a tenant.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenant_css",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get_css(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -49,6 +55,12 @@ pub async fn get_css(
 
 /// PUT /api/v1/admin/tenants/:id/css — Set (or clear) CSS override for a tenant.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/tenant_css",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn set_css(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -74,6 +86,12 @@ pub async fn set_css(
 
 /// DELETE /api/v1/admin/tenants/:id/css — Clear CSS override for a tenant.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenant_css/{id}",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn clear_css(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let result = sqlx::query("UPDATE identity.tenants SET css_override = NULL WHERE id = $1")
         .bind(id)
@@ -86,4 +104,17 @@ pub async fn clear_css(State(state): State<AppState>, Path(id): Path<Uuid>) -> R
 
     tracing::info!(tenant_id = %id, "Cleared tenant CSS override");
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

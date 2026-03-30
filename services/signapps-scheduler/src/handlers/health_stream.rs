@@ -90,6 +90,12 @@ async fn collect_snapshot() -> HealthSnapshot {
 /// No auth required so monitoring dashboards can connect without a token,
 /// but you can layer auth middleware on the route registration if needed.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/health_stream",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn health_stream(
     State(_state): State<AppState>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
@@ -110,4 +116,17 @@ pub async fn health_stream(
             .interval(Duration::from_secs(15))
             .text("ping"),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

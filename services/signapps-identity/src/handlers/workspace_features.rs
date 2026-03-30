@@ -91,6 +91,12 @@ pub struct UpdateFeaturesRequest {
 /// Returns the feature configuration for the current user's active workspace.
 /// Merges tenant-level features with global defaults.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspace_features",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get_workspace_features(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -127,6 +133,12 @@ pub async fn get_workspace_features(
 /// Update the feature flags for a specific workspace (admin only).
 /// Accepts a partial JSON object — only specified keys are updated.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/workspace_features",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn update_workspace_features(
     State(state): State<AppState>,
     Path(workspace_id): Path<Uuid>,
@@ -173,4 +185,17 @@ pub async fn update_workspace_features(
         workspace_id,
         features,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

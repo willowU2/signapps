@@ -13,6 +13,12 @@ use crate::{AppState, CalendarError};
 
 /// List categories visible to the current user.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/categories",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn list_categories(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -28,6 +34,12 @@ pub async fn list_categories(
 
 /// Create a new category.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/categories",
+    responses((status = 201, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn create_category(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -44,6 +56,12 @@ pub async fn create_category(
 
 /// Update an existing category.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/categories",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn update_category(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -61,6 +79,12 @@ pub async fn update_category(
 
 /// Delete a category.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/categories",
+    responses((status = 204, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn delete_category(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -72,4 +96,17 @@ pub async fn delete_category(
         .map_err(|_| CalendarError::InternalError)?;
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

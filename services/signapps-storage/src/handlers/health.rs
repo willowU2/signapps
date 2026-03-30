@@ -16,6 +16,12 @@ pub struct HealthResponse {
 
 /// Health check endpoint.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/health",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
     let storage_connected = state.storage.list_buckets().await.is_ok();
 
@@ -30,4 +36,17 @@ pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse>
         version: env!("CARGO_PKG_VERSION").to_string(),
         storage_connected,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

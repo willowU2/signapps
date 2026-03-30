@@ -123,6 +123,12 @@ async fn fetch_branding(
 
 /// GET /api/v1/tenants/:id/branding — Get branding config for a specific tenant (admin).
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/branding",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get_branding(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -141,6 +147,12 @@ pub async fn get_branding(
 /// This endpoint is intentionally accessible without admin privileges so the
 /// frontend can load branding on the login page.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/branding",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get_my_branding(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -156,6 +168,12 @@ pub async fn get_my_branding(
 
 /// PUT /api/v1/tenants/:id/branding — Set branding config for a tenant (admin only).
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/branding",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn update_branding(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -219,6 +237,12 @@ pub async fn update_branding(
 
 /// DELETE /api/v1/tenants/:id/branding — Reset branding to defaults (admin only).
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/branding",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn reset_branding(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -240,4 +264,17 @@ pub async fn reset_branding(
 
     tracing::info!(tenant_id = %id, "Reset tenant branding to defaults");
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

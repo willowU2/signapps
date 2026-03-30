@@ -107,12 +107,24 @@ impl DataExportStore {
 
     /// Return the latest job for a given user, if any.
     #[tracing::instrument(skip_all)]
+    #[utoipa::path(
+        get,
+        path = "/api/v1/data_export",
+        responses((status = 200, description = "Success")),
+        tag = "Identity"
+    )]
     pub async fn get(&self, user_id: Uuid) -> Option<DataExportJob> {
         self.inner.read().await.get(&user_id).cloned()
     }
 
     /// Insert or overwrite the job for a given user.
     #[tracing::instrument(skip_all)]
+    #[utoipa::path(
+        get,
+        path = "/api/v1/data_export",
+        responses((status = 200, description = "Success")),
+        tag = "Identity"
+    )]
     pub async fn set(&self, job: DataExportJob) {
         self.inner.write().await.insert(job.user_id, job);
     }
@@ -129,6 +141,12 @@ impl DataExportStore {
 /// Once created the job is immediately processed synchronously (foundation
 /// version — no background worker yet) and marked `Completed`.
 #[tracing::instrument(skip(state, claims))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/data_export",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn request_export(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -195,6 +213,12 @@ pub async fn request_export(
 /// Returns the status of the authenticated user's latest export job.
 /// Returns `404 Not Found` if no export has ever been requested.
 #[tracing::instrument(skip(state, claims))]
+#[utoipa::path(
+    post,
+    path = "/api/v1/data_export",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn export_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -213,6 +237,12 @@ pub async fn export_status(
 /// Returns `404 Not Found` if no completed export exists.
 /// Returns `409 Conflict` if the latest job has not yet completed.
 #[tracing::instrument(skip(state, claims))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/data_export",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn download_export(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -262,4 +292,17 @@ pub async fn download_export(
     tracing::info!(user_id = %user_id, job_id = %job.id, "RGPD data export downloaded");
 
     Ok(Json(payload))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

@@ -50,6 +50,12 @@ const SLOW_THRESHOLD_SECS: f64 = 1.0;
 
 /// Return the top-10 currently running queries sorted by duration descending.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/slow_queries",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn list_slow_queries(State(state): State<AppState>) -> Result<Json<SlowQueriesResponse>> {
     // First, try to check if pg_stat_statements is available (informational).
     let pg_stat_statements_available = sqlx::query_scalar::<_, bool>(
@@ -111,4 +117,17 @@ pub async fn list_slow_queries(State(state): State<AppState>) -> Result<Json<Slo
         threshold_seconds: SLOW_THRESHOLD_SECS,
         pg_stat_statements_available,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

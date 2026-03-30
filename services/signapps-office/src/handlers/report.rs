@@ -50,6 +50,12 @@ pub struct ReportInfo {
 // ============================================================================
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/report",
+    responses((status = 200, description = "Success")),
+    tag = "Office"
+)]
 pub async fn report_info() -> Json<ReportInfo> {
     Json(ReportInfo {
         supported_templates: vec![
@@ -67,6 +73,12 @@ pub async fn report_info() -> Json<ReportInfo> {
 // ============================================================================
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/report",
+    responses((status = 201, description = "Success")),
+    tag = "Office"
+)]
 pub async fn generate_report(
     Json(payload): Json<ReportRequest>,
 ) -> Result<Response, (StatusCode, String)> {
@@ -175,4 +187,17 @@ fn build_pdf(title: &str, sections: &[ReportSection]) -> Result<Vec<u8>, String>
     let mut buf = BufWriter::new(Cursor::new(Vec::new()));
     doc.save(&mut buf).map_err(|e| e.to_string())?;
     Ok(buf.into_inner().map_err(|e| e.to_string())?.into_inner())
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

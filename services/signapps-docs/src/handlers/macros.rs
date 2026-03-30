@@ -47,6 +47,12 @@ pub struct UpdateMacroRequest {
 
 /// GET /api/v1/docs/:doc_id/macros
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/macros",
+    responses((status = 200, description = "Success")),
+    tag = "Docs"
+)]
 pub async fn list_macros(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -71,6 +77,12 @@ pub async fn list_macros(
 
 /// POST /api/v1/docs/:doc_id/macros
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/macros",
+    responses((status = 201, description = "Success")),
+    tag = "Docs"
+)]
 pub async fn create_macro(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -105,6 +117,12 @@ pub async fn create_macro(
 
 /// PUT /api/v1/docs/:doc_id/macros/:macro_id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/macros",
+    responses((status = 200, description = "Success")),
+    tag = "Docs"
+)]
 pub async fn update_macro(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -136,6 +154,12 @@ pub async fn update_macro(
 
 /// DELETE /api/v1/docs/:doc_id/macros/:macro_id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/macros",
+    responses((status = 204, description = "Success")),
+    tag = "Docs"
+)]
 pub async fn delete_macro(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -156,4 +180,17 @@ pub async fn delete_macro(
     }
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

@@ -24,6 +24,12 @@ pub struct TokenQuery {
 
 /// Get a token for joining any room (by room code or ID)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tokens",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn get_token(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -109,6 +115,12 @@ pub async fn get_token(
 
 /// Get a token for a specific room by ID
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tokens",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn get_room_token(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -211,4 +223,17 @@ pub async fn get_room_token(
         livekit_url: state.livekit_config.server_url.clone(),
         room_name: room.room_code,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

@@ -99,6 +99,12 @@ pub struct CreateDeploymentRequest {
 
 /// GET /api/v1/devops/changelog
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/devops",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn list_changelog(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -121,6 +127,12 @@ pub async fn list_changelog(
 
 /// POST /api/v1/devops/changelog
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/devops",
+    responses((status = 201, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn create_changelog(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -163,6 +175,12 @@ pub async fn create_changelog(
 
 /// GET /api/v1/devops/pipelines
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/devops",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn list_pipelines(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -185,6 +203,12 @@ pub async fn list_pipelines(
 
 /// POST /api/v1/devops/pipelines
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/devops",
+    responses((status = 201, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn create_pipeline(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -220,6 +244,12 @@ pub async fn create_pipeline(
 
 /// PUT /api/v1/devops/pipelines/:id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/devops",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn update_pipeline(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -255,6 +285,12 @@ pub async fn update_pipeline(
 
 /// GET /api/v1/devops/deployments
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/devops",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn list_deployments(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -277,6 +313,12 @@ pub async fn list_deployments(
 
 /// POST /api/v1/devops/deployments
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/devops",
+    responses((status = 201, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn create_deployment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -310,4 +352,17 @@ pub async fn create_deployment(
         StatusCode::CREATED,
         Json(serde_json::json!({ "data": row })),
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

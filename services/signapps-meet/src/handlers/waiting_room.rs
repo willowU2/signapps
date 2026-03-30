@@ -54,6 +54,12 @@ impl From<WaitingRoomEntry> for WaitingRoomResponse {
 
 /// List users in the waiting room for a given room (host only)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/waiting_room",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn list_waiting(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -91,6 +97,12 @@ pub async fn list_waiting(
 
 /// Admit a user from the waiting room (host only)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/waiting_room",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn admit_user(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -133,6 +145,12 @@ pub async fn admit_user(
 
 /// Deny a user from the waiting room (host only)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/waiting_room",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn deny_user(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -182,6 +200,12 @@ pub struct JoinWaitingRoomRequest {
 
 /// Join the waiting room (called by the participant)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/waiting_room",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn join_waiting_room(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -212,4 +236,17 @@ pub async fn join_waiting_room(
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(entry.into()))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

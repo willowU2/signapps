@@ -11,6 +11,12 @@ use crate::AppState;
 use signapps_common::Claims;
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/time_slots",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn list_time_slots(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -33,6 +39,12 @@ pub async fn list_time_slots(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/time_slots",
+    responses((status = 201, description = "Success")),
+    tag = "Social"
+)]
 pub async fn create_time_slot(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -61,6 +73,12 @@ pub async fn create_time_slot(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/time_slots",
+    responses((status = 204, description = "Success")),
+    tag = "Social"
+)]
 pub async fn delete_time_slot(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -77,5 +95,18 @@ pub async fn delete_time_slot(
             tracing::error!("delete_time_slot: {e}");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

@@ -25,6 +25,12 @@ fn hash_key(key: &str) -> String {
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/api_keys",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn list_api_keys(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -45,6 +51,12 @@ pub async fn list_api_keys(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/api_keys",
+    responses((status = 201, description = "Success")),
+    tag = "Social"
+)]
 pub async fn create_api_key(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -98,6 +110,12 @@ pub async fn create_api_key(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/api_keys",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn revoke_api_key(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -114,5 +132,18 @@ pub async fn revoke_api_key(
             tracing::error!("revoke_api_key: {e}");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

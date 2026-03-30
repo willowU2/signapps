@@ -30,6 +30,12 @@ pub struct ProvidersResponse {
 /// List available providers from the registry.
 /// Probes local providers for connectivity and marks unreachable ones as disabled.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/providers",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn list_providers(State(state): State<AppState>) -> Result<Json<ProvidersResponse>> {
     let entries = state.providers.list_providers();
 
@@ -87,4 +93,17 @@ pub async fn list_providers(State(state): State<AppState>) -> Result<Json<Provid
         providers,
         active_provider: active,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

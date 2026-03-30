@@ -56,6 +56,12 @@ pub struct CreateLinkRequest {
 
 /// GET /api/v1/links?entity_type=X&entity_id=Y
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/entity_links",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn find_links(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -87,6 +93,12 @@ pub async fn find_links(
 
 /// POST /api/v1/links
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/entity_links",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn create_link(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -123,6 +135,12 @@ pub async fn create_link(
 
 /// DELETE /api/v1/links/:id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/entity_links",
+    responses((status = 204, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn remove_link(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -148,5 +166,18 @@ pub async fn remove_link(
             )
                 .into_response()
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

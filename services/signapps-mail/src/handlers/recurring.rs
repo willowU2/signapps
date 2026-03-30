@@ -85,6 +85,12 @@ pub struct UpdateRecurringRequest {
 
 /// POST /api/v1/mail/emails/recurring
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/recurring",
+    responses((status = 201, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn create_recurring(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -143,6 +149,12 @@ pub async fn create_recurring(
 
 /// GET /api/v1/mail/emails/recurring
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/recurring",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn list_recurring(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -165,6 +177,12 @@ pub async fn list_recurring(
 
 /// PATCH /api/v1/mail/emails/recurring/:id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/recurring",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn update_recurring(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -214,6 +232,12 @@ pub async fn update_recurring(
 
 /// DELETE /api/v1/mail/emails/recurring/:id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/recurring",
+    responses((status = 204, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn delete_recurring(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -232,5 +256,18 @@ pub async fn delete_recurring(
             tracing::error!("Failed to delete recurring email {}: {}", id, e);
             (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

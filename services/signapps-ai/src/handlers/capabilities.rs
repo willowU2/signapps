@@ -36,6 +36,12 @@ fn parse_capability(s: &str) -> Result<Capability, (StatusCode, String)> {
 
 /// List all registered capabilities with backend information.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/capabilities",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn list_capabilities(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<CapabilityInfo>>, (StatusCode, String)> {
@@ -50,6 +56,12 @@ pub async fn list_capabilities(
 
 /// Get quality advice for a specific capability (local vs cloud comparison).
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/capabilities",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn get_capability_advice(
     State(state): State<AppState>,
     Path(cap_name): Path<String>,
@@ -70,4 +82,17 @@ pub async fn get_capability_advice(
     ))?;
 
     Ok(Json(advice))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

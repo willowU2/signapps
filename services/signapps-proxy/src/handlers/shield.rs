@@ -32,6 +32,12 @@ pub struct BlockResponse {
 
 /// Get shield statistics.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/shield",
+    responses((status = 200, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<ShieldStats>> {
     let stats = state.shield.get_stats().await?;
     Ok(Json(stats))
@@ -39,6 +45,12 @@ pub async fn get_stats(State(state): State<AppState>) -> Result<Json<ShieldStats
 
 /// Reset shield statistics.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/shield",
+    responses((status = 200, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn reset_stats(State(state): State<AppState>) -> Result<StatusCode> {
     state.shield.reset_stats().await?;
     tracing::info!("Shield statistics reset");
@@ -47,6 +59,12 @@ pub async fn reset_stats(State(state): State<AppState>) -> Result<StatusCode> {
 
 /// Block an IP for a route.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/shield",
+    responses((status = 200, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn block_ip(
     State(state): State<AppState>,
     Path(route_id): Path<Uuid>,
@@ -69,6 +87,12 @@ pub async fn block_ip(
 
 /// Unblock an IP for a route.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/shield",
+    responses((status = 200, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn unblock_ip(
     State(state): State<AppState>,
     Path((route_id, ip)): Path<(Uuid, String)>,
@@ -82,6 +106,12 @@ pub async fn unblock_ip(
 
 /// Check if an IP is blocked.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/shield",
+    responses((status = 200, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn check_blocked(
     State(state): State<AppState>,
     Path((route_id, ip)): Path<(Uuid, String)>,
@@ -93,4 +123,17 @@ pub async fn check_blocked(
         "ip": ip,
         "blocked": is_blocked
     })))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

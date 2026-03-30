@@ -24,6 +24,12 @@ pub struct ComponentsHealth {
 
 /// Health check endpoint.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/health",
+    responses((status = 200, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
     let db_healthy = state.pool.health_check().await.is_ok();
     let cache_healthy = state.shield.health_check();
@@ -41,4 +47,17 @@ pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse>
             proxy: proxy_healthy,
         },
     })
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

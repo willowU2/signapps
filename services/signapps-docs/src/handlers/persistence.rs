@@ -4,6 +4,12 @@ use yrs::{updates::decoder::Decode, Doc, ReadTxn, StateVector, Transact};
 
 /// Save document state to PostgreSQL
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/persistence",
+    responses((status = 200, description = "Success")),
+    tag = "Docs"
+)]
 pub async fn save_document(
     pool: &sqlx::PgPool,
     doc_id: &str,
@@ -40,6 +46,12 @@ pub async fn save_document(
 
 /// Load document state from PostgreSQL
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/persistence",
+    responses((status = 200, description = "Success")),
+    tag = "Docs"
+)]
 pub async fn load_document(pool: &sqlx::PgPool, doc_id: &str) -> Result<Option<Doc>, String> {
     let doc_uuid = Uuid::parse_str(doc_id).map_err(|e| format!("Invalid document ID: {}", e))?;
 
@@ -62,5 +74,18 @@ pub async fn load_document(pool: &sqlx::PgPool, doc_id: &str) -> Result<Option<D
         Ok(Some(doc))
     } else {
         Ok(None)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

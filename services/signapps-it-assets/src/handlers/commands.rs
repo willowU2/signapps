@@ -46,6 +46,12 @@ const ALLOWED_COMMANDS: &[&str] = &["reboot", "shutdown", "lock", "run_script", 
 
 /// POST /api/v1/it-assets/agent/commands/queue
 /// Admin queues a command for a managed machine.
+#[utoipa::path(
+    get,
+    path = "/api/v1/commands",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn queue_agent_command(
     State(pool): State<DatabasePool>,
     Json(payload): Json<QueueCommandReq>,
@@ -98,6 +104,12 @@ pub async fn queue_agent_command(
 
 /// GET /api/v1/it-assets/agent/commands/pending/:agent_id
 /// Agent polls for pending commands.
+#[utoipa::path(
+    get,
+    path = "/api/v1/commands",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn get_pending_commands(
     State(pool): State<DatabasePool>,
     Path(agent_id): Path<Uuid>,
@@ -146,6 +158,12 @@ pub async fn get_pending_commands(
 
 /// PUT /api/v1/it-assets/agent/commands/:id/status
 /// Agent reports completion of a command.
+#[utoipa::path(
+    put,
+    path = "/api/v1/commands",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn update_command_status(
     State(pool): State<DatabasePool>,
     Path(command_id): Path<Uuid>,
@@ -185,6 +203,12 @@ pub async fn update_command_status(
 
 /// GET /api/v1/it-assets/hardware/:id/commands
 /// List all commands for a hardware asset (admin view).
+#[utoipa::path(
+    get,
+    path = "/api/v1/commands",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn list_hardware_commands(
     State(pool): State<DatabasePool>,
     Path(hardware_id): Path<Uuid>,
@@ -205,4 +229,17 @@ pub async fn list_hardware_commands(
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(cmds))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

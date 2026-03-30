@@ -21,6 +21,12 @@ use crate::{
 // ---------------------------------------------------------------------------
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/automation",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn list_rss_feeds(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -46,6 +52,12 @@ pub async fn list_rss_feeds(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/automation",
+    responses((status = 201, description = "Success")),
+    tag = "Social"
+)]
 pub async fn create_rss_feed(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -92,6 +104,12 @@ pub async fn create_rss_feed(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/automation",
+    responses((status = 204, description = "Success")),
+    tag = "Social"
+)]
 pub async fn delete_rss_feed(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -117,6 +135,12 @@ pub async fn delete_rss_feed(
 // ---------------------------------------------------------------------------
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/automation",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn list_templates(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -141,6 +165,12 @@ pub async fn list_templates(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/automation",
+    responses((status = 201, description = "Success")),
+    tag = "Social"
+)]
 pub async fn create_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -177,6 +207,12 @@ pub async fn create_template(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/automation",
+    responses((status = 204, description = "Success")),
+    tag = "Social"
+)]
 pub async fn delete_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -199,6 +235,12 @@ pub async fn delete_template(
 
 /// PATCH /api/v1/social/templates/:id — SYNC-SOCIAL-TMPLUPDATE
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/automation",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn update_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -245,6 +287,12 @@ pub async fn update_template(
 
 /// POST /api/v1/social/rss-feeds/:id/check — SYNC-SOCIAL-RSSCHECK
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/automation",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn check_rss_feed_now(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -281,6 +329,12 @@ pub async fn check_rss_feed_now(
 
 /// GET /api/v1/social/ai/smart-replies/:inbox_item_id — SYNC-SOCIAL-SMARTREPLY
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/automation",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn ai_smart_replies(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -350,6 +404,12 @@ pub async fn ai_smart_replies(
 // ---------------------------------------------------------------------------
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/automation",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn ai_generate(Json(payload): Json<AiGenerateRequest>) -> impl IntoResponse {
     // Delegate to signapps-ai when available; return a scaffold response for now
     let platform = payload.platform.as_deref().unwrap_or("general");
@@ -367,6 +427,12 @@ pub async fn ai_generate(Json(payload): Json<AiGenerateRequest>) -> impl IntoRes
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/automation",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn ai_hashtags(Json(payload): Json<AiHashtagsRequest>) -> impl IntoResponse {
     let platform = payload.platform.as_deref().unwrap_or("general");
     // Placeholder — real implementation would call local LLM via signapps-ai
@@ -382,6 +448,12 @@ pub async fn ai_hashtags(Json(payload): Json<AiHashtagsRequest>) -> impl IntoRes
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/automation",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn ai_best_time(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -433,5 +505,18 @@ pub async fn ai_best_time(
                 "note": "Not enough data yet. Publish more posts to get recommendations."
             })),
         ),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

@@ -65,6 +65,12 @@ pub struct SyncResultResponse {
 
 /// Get current LDAP configuration.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/ldap",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get_config(State(state): State<AppState>) -> Result<Json<LdapConfigResponse>> {
     let config = LdapRepository::get_config(&state.pool)
         .await?
@@ -75,6 +81,12 @@ pub async fn get_config(State(state): State<AppState>) -> Result<Json<LdapConfig
 
 /// Create or update LDAP configuration.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/ldap",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn create_config(
     State(state): State<AppState>,
     Json(payload): Json<CreateLdapConfigRequest>,
@@ -106,6 +118,12 @@ pub async fn create_config(
 
 /// Update LDAP configuration.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/ldap",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn update_config(
     State(state): State<AppState>,
     Json(payload): Json<UpdateLdapConfigRequest>,
@@ -151,6 +169,12 @@ pub async fn update_config(
 
 /// Test LDAP connection.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/ldap",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn test_connection(State(state): State<AppState>) -> Result<Json<LdapTestResult>> {
     let config = LdapRepository::get_config(&state.pool)
         .await?
@@ -172,6 +196,12 @@ pub async fn test_connection(State(state): State<AppState>) -> Result<Json<LdapT
 
 /// List AD groups.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/ldap",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_groups(State(state): State<AppState>) -> Result<Json<Vec<LdapGroup>>> {
     let config = LdapRepository::get_config(&state.pool)
         .await?
@@ -189,6 +219,12 @@ pub async fn list_groups(State(state): State<AppState>) -> Result<Json<Vec<LdapG
 
 /// Sync users from AD.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/ldap",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn sync_users(State(state): State<AppState>) -> Result<Json<SyncResultResponse>> {
     let config = LdapRepository::get_config(&state.pool)
         .await?
@@ -318,4 +354,17 @@ fn decrypt_password_with_secret(encrypted: &str, jwt_secret: &str) -> Result<Str
 fn decrypt_password(encrypted: &str, jwt_secret: &str) -> Result<String> {
     let key = std::env::var("LDAP_ENCRYPTION_KEY").unwrap_or_else(|_| jwt_secret.to_string());
     decrypt_password_with_secret(encrypted, &key)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

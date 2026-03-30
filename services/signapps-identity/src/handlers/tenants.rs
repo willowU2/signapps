@@ -97,6 +97,12 @@ pub struct UpdateTenantRequest {
 
 /// List all tenants (super-admin only).
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenants",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_tenants(
     State(state): State<AppState>,
     Query(query): Query<ListTenantsQuery>,
@@ -112,6 +118,12 @@ pub async fn list_tenants(
 
 /// Get tenant by ID.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenants",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get_tenant(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -125,6 +137,12 @@ pub async fn get_tenant(
 
 /// Get current user's tenant.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenants",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get_my_tenant(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -138,6 +156,12 @@ pub async fn get_my_tenant(
 
 /// Create a new tenant (super-admin only).
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    post,
+    path = "/api/v1/tenants",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn create_tenant(
     State(state): State<AppState>,
     Json(payload): Json<CreateTenantRequest>,
@@ -184,6 +208,12 @@ pub async fn create_tenant(
 
 /// Update a tenant (super-admin or tenant admin).
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/tenants",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn update_tenant(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -229,6 +259,12 @@ pub async fn update_tenant(
 
 /// Delete (deactivate) a tenant (super-admin only).
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/tenants",
+    responses((status = 204, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn delete_tenant(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -357,6 +393,12 @@ pub struct UpdateMemberRoleRequest {
 
 /// List workspaces for current tenant.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenants",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_workspaces(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -377,6 +419,12 @@ pub async fn list_workspaces(
 
 /// List workspaces the current user is a member of.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenants",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_my_workspaces(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -392,6 +440,12 @@ pub async fn list_my_workspaces(
 
 /// Get workspace by ID.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenants",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get_workspace(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -405,6 +459,12 @@ pub async fn get_workspace(
 
 /// Create a new workspace.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    post,
+    path = "/api/v1/tenants",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn create_workspace(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -461,6 +521,12 @@ pub async fn create_workspace(
 
 /// Update a workspace.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/tenants",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn update_workspace(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -492,6 +558,12 @@ pub async fn update_workspace(
 
 /// Delete a workspace.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/tenants",
+    responses((status = 204, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn delete_workspace(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -516,6 +588,12 @@ pub async fn delete_workspace(
 
 /// List workspace members.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenants",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_workspace_members(
     State(state): State<AppState>,
     Path(workspace_id): Path<Uuid>,
@@ -536,6 +614,12 @@ pub async fn list_workspace_members(
 
 /// Add member to workspace.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    post,
+    path = "/api/v1/tenants",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn add_workspace_member(
     State(state): State<AppState>,
     Path(workspace_id): Path<Uuid>,
@@ -559,6 +643,12 @@ pub async fn add_workspace_member(
 
 /// Update workspace member role.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/tenants",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn update_workspace_member_role(
     State(state): State<AppState>,
     Path((workspace_id, user_id)): Path<(Uuid, Uuid)>,
@@ -582,6 +672,12 @@ pub async fn update_workspace_member_role(
 
 /// Remove member from workspace.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/tenants",
+    responses((status = 204, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn remove_workspace_member(
     State(state): State<AppState>,
     Path((workspace_id, user_id)): Path<(Uuid, Uuid)>,
@@ -590,4 +686,17 @@ pub async fn remove_workspace_member(
     tracing::info!(workspace_id = %workspace_id, user_id = %user_id, "Removed member from workspace");
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

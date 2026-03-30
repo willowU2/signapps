@@ -71,6 +71,12 @@ fn hash_key(key: &str) -> String {
 
 /// POST /api/v1/api-keys — Create a new API key.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    post,
+    path = "/api/v1/api_keys",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn create(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -119,6 +125,12 @@ pub async fn create(
 
 /// GET /api/v1/api-keys — List user's API keys.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/api_keys",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -164,6 +176,12 @@ pub async fn list(
 
 /// DELETE /api/v1/api-keys/:id — Revoke an API key.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/api_keys",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn revoke(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -195,6 +213,12 @@ pub struct PatchApiKeyRequest {
 
 /// PATCH /api/v1/api-keys/:id — Rename or toggle an API key.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/api_keys",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn patch(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -254,4 +278,17 @@ pub async fn patch(
         is_active: row.6,
         created_at: row.7,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

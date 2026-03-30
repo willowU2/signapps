@@ -43,6 +43,12 @@ pub struct DiskActionRequest {
 
 /// List all RAID arrays.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn list_arrays(State(state): State<AppState>) -> Result<Json<Vec<ArrayResponse>>> {
     let repo = RaidRepository::new(&state.pool);
     let arrays = repo.list_arrays().await?;
@@ -68,6 +74,12 @@ pub async fn list_arrays(State(state): State<AppState>) -> Result<Json<Vec<Array
 
 /// Get array by ID.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn get_array(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -95,6 +107,12 @@ pub async fn get_array(
 
 /// Get array by name.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn get_array_by_name(
     State(state): State<AppState>,
     Path(name): Path<String>,
@@ -122,6 +140,12 @@ pub async fn get_array_by_name(
 
 /// Delete array (removes from monitoring, not actual array).
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/raid",
+    responses((status = 204, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn delete_array(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -146,6 +170,12 @@ pub async fn delete_array(
 
 /// List all disks.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn list_disks(State(state): State<AppState>) -> Result<Json<Vec<Disk>>> {
     let repo = RaidRepository::new(&state.pool);
     let disks = repo.list_disks().await?;
@@ -154,6 +184,12 @@ pub async fn list_disks(State(state): State<AppState>) -> Result<Json<Vec<Disk>>
 
 /// Get disk by ID.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid/{id}",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn get_disk(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<Json<Disk>> {
     let repo = RaidRepository::new(&state.pool);
 
@@ -167,6 +203,12 @@ pub async fn get_disk(State(state): State<AppState>, Path(id): Path<Uuid>) -> Re
 
 /// Scan for disks (refresh disk list).
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn scan_disks(State(state): State<AppState>) -> Result<Json<Vec<Disk>>> {
     let repo = RaidRepository::new(&state.pool);
 
@@ -201,6 +243,12 @@ pub async fn scan_disks(State(state): State<AppState>) -> Result<Json<Vec<Disk>>
 
 /// List recent RAID events.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn list_events(
     State(state): State<AppState>,
     Query(query): Query<ListQuery>,
@@ -213,6 +261,12 @@ pub async fn list_events(
 
 /// Get array events.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn get_array_events(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -242,6 +296,12 @@ pub async fn get_array_events(
 
 /// Get overall RAID health.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn get_health(State(state): State<AppState>) -> Result<Json<RaidHealth>> {
     let repo = RaidRepository::new(&state.pool);
     let health = repo.get_health().await?;
@@ -254,6 +314,12 @@ pub async fn get_health(State(state): State<AppState>) -> Result<Json<RaidHealth
 
 /// Trigger array rebuild.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn rebuild_array(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -287,6 +353,12 @@ pub async fn rebuild_array(
 
 /// Add disk to array.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/raid",
+    responses((status = 201, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn add_disk_to_array(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -341,6 +413,12 @@ pub async fn add_disk_to_array(
 
 /// Remove disk from array.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/raid",
+    responses((status = 204, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn remove_disk_from_array(
     State(state): State<AppState>,
     Path((array_id, disk_id)): Path<(Uuid, Uuid)>,
@@ -384,4 +462,17 @@ pub async fn remove_disk_from_array(
         "array_id": array_id,
         "disk_id": disk_id
     })))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

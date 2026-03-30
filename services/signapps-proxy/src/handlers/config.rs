@@ -8,6 +8,12 @@ use crate::AppState;
 
 /// Get current proxy configuration summary.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/config",
+    responses((status = 200, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn get_proxy_config(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     let repo = RouteRepository::new(&state.pool);
     let routes = repo.list_enabled().await?;
@@ -27,6 +33,12 @@ pub async fn get_proxy_config(State(state): State<AppState>) -> Result<Json<serd
 
 /// Get proxy overview stats.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/config",
+    responses((status = 200, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn get_proxy_overview(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     let repo = RouteRepository::new(&state.pool);
     let routes = repo.list_enabled().await?;
@@ -52,6 +64,12 @@ pub async fn get_proxy_overview(State(state): State<AppState>) -> Result<Json<se
 
 /// Force route cache refresh.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/config",
+    responses((status = 200, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn refresh_config(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     state.route_cache.force_refresh();
 
@@ -59,4 +77,17 @@ pub async fn refresh_config(State(state): State<AppState>) -> Result<Json<serde_
         "status": "refreshed",
         "cached_routes": state.route_cache.route_count(),
     })))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

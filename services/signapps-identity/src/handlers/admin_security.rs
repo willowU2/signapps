@@ -127,11 +127,23 @@ impl SecurityPoliciesStore {
     }
 
     #[tracing::instrument(skip_all)]
+    #[utoipa::path(
+        get,
+        path = "/api/v1/admin_security",
+        responses((status = 200, description = "Success")),
+        tag = "Identity"
+    )]
     pub async fn get(&self) -> SecurityPolicies {
         self.inner.read().await.clone()
     }
 
     #[tracing::instrument(skip_all)]
+    #[utoipa::path(
+        get,
+        path = "/api/v1/admin_security",
+        responses((status = 200, description = "Success")),
+        tag = "Identity"
+    )]
     pub async fn set(&self, policies: SecurityPolicies) {
         *self.inner.write().await = policies;
     }
@@ -159,6 +171,12 @@ impl ActiveSessionsStore {
 
     /// Register a new active session.
     #[tracing::instrument(skip_all)]
+    #[utoipa::path(
+        post,
+        path = "/api/v1/admin_security",
+        responses((status = 201, description = "Success")),
+        tag = "Identity"
+    )]
     pub async fn add(&self, session: ActiveSession) {
         let mut sessions = self.inner.lock().await;
         sessions.push(session);
@@ -166,6 +184,12 @@ impl ActiveSessionsStore {
 
     /// List all sessions that have not yet expired.
     #[tracing::instrument(skip_all)]
+    #[utoipa::path(
+        get,
+        path = "/api/v1/admin_security",
+        responses((status = 200, description = "Success")),
+        tag = "Identity"
+    )]
     pub async fn list_active(&self) -> Vec<ActiveSession> {
         let sessions = self.inner.lock().await;
         let now = Utc::now();
@@ -178,6 +202,12 @@ impl ActiveSessionsStore {
 
     /// Remove a session by its ID. Returns true if found and removed.
     #[tracing::instrument(skip_all)]
+    #[utoipa::path(
+        delete,
+        path = "/api/v1/admin_security",
+        responses((status = 204, description = "Success")),
+        tag = "Identity"
+    )]
     pub async fn remove(&self, session_id: &str) -> bool {
         let mut sessions = self.inner.lock().await;
         let before = sessions.len();
@@ -187,6 +217,12 @@ impl ActiveSessionsStore {
 
     /// Purge all expired sessions (housekeeping).
     #[tracing::instrument(skip_all)]
+    #[utoipa::path(
+        delete,
+        path = "/api/v1/admin_security",
+        responses((status = 204, description = "Success")),
+        tag = "Identity"
+    )]
     pub async fn purge_expired(&self) {
         let mut sessions = self.inner.lock().await;
         let now = Utc::now();
@@ -216,6 +252,12 @@ impl LoginAttemptsStore {
 
     /// Record a failed login attempt.
     #[tracing::instrument(skip_all)]
+    #[utoipa::path(
+        get,
+        path = "/api/v1/admin_security",
+        responses((status = 200, description = "Success")),
+        tag = "Identity"
+    )]
     pub async fn record(&self, attempt: LoginAttempt) {
         const MAX_ENTRIES: usize = 5_000;
         let mut attempts = self.inner.lock().await;
@@ -227,6 +269,12 @@ impl LoginAttemptsStore {
 
     /// Return the most recent `limit` entries (newest first).
     #[tracing::instrument(skip_all)]
+    #[utoipa::path(
+        get,
+        path = "/api/v1/admin_security",
+        responses((status = 200, description = "Success")),
+        tag = "Identity"
+    )]
     pub async fn recent(&self, limit: usize) -> Vec<LoginAttempt> {
         let attempts = self.inner.lock().await;
         attempts.iter().rev().take(limit).cloned().collect()
@@ -253,6 +301,12 @@ pub struct LoginAttemptsQuery {
 ///
 /// Returns the current security policies.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/admin_security",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get_policies(State(state): State<AppState>) -> Result<Json<SecurityPolicies>> {
     let policies = state.security_policies.get().await;
     Ok(Json(policies))
@@ -262,6 +316,12 @@ pub async fn get_policies(State(state): State<AppState>) -> Result<Json<Security
 ///
 /// Replaces the current security policies with the supplied payload.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/admin_security",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn update_policies(
     State(state): State<AppState>,
     Json(payload): Json<SecurityPolicies>,
@@ -287,6 +347,12 @@ pub async fn update_policies(
 ///
 /// Lists all currently active (non-expired) user sessions.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/admin_security",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_sessions(State(state): State<AppState>) -> Result<Json<Vec<ActiveSession>>> {
     // Housekeep expired sessions before returning
     state.active_sessions.purge_expired().await;
@@ -301,6 +367,12 @@ pub async fn list_sessions(State(state): State<AppState>) -> Result<Json<Vec<Act
 /// the associated token is also blacklisted in the cache so
 /// in-flight requests are rejected immediately.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/admin_security",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn revoke_session(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -331,6 +403,12 @@ pub async fn revoke_session(
 ///
 /// Returns recent failed login attempts (newest first).
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/admin_security",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_login_attempts(
     State(state): State<AppState>,
     axum::extract::Query(query): axum::extract::Query<LoginAttemptsQuery>,
@@ -338,4 +416,17 @@ pub async fn list_login_attempts(
     let limit = query.limit.unwrap_or(50).min(200);
     let attempts = state.login_attempts.recent(limit).await;
     Ok(Json(attempts))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

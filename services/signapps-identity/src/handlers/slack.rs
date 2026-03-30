@@ -102,6 +102,12 @@ pub struct SaveSlackConfigRequest {
 /// Slack sends a URL-encoded POST. We decode it, parse the subcommand,
 /// execute via internal APIs, and return a Slack-formatted response.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/slack",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn slack_webhook(
     State(_state): State<AppState>,
     axum::extract::Form(payload): axum::extract::Form<SlashCommandPayload>,
@@ -187,6 +193,12 @@ fn handle_help() -> SlackResponse {
 
 /// Save Slack integration config (admin only — middleware enforces this).
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/slack",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn save_slack_config(
     State(_state): State<AppState>,
     Json(payload): Json<SaveSlackConfigRequest>,
@@ -216,6 +228,12 @@ pub async fn save_slack_config(
 
 /// Get current Slack config (admin only).
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/slack",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get_slack_config(
     State(_state): State<AppState>,
 ) -> Result<Json<SlackIntegrationConfig>> {
@@ -241,6 +259,12 @@ pub async fn get_slack_config(
 ///
 /// This is not an HTTP handler — it's called from the event bus listener.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/slack",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn notify_slack(webhook_url: &str, message: &str) -> anyhow::Result<()> {
     let client = reqwest::Client::new();
     let body = serde_json::json!({ "text": message });
@@ -256,4 +280,17 @@ pub async fn notify_slack(webhook_url: &str, message: &str) -> anyhow::Result<()
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

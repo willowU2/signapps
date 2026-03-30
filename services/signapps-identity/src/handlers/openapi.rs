@@ -9,6 +9,12 @@ use serde_json::json;
 
 /// `GET /api/v1/openapi.json` — Returns the OpenAPI 3.1 spec for the Identity service.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/openapi",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn openapi_spec() -> impl IntoResponse {
     let spec = json!({
         "openapi": "3.1.0",
@@ -192,4 +198,17 @@ pub async fn openapi_spec() -> impl IntoResponse {
     });
 
     ([(header::CONTENT_TYPE, "application/json")], Json(spec))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

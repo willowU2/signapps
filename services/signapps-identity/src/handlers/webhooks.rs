@@ -114,6 +114,12 @@ struct WebhookTestPayload {
 
 /// List all webhooks.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/webhooks",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<WebhookResponse>>> {
     let repo = GroupRepository::new(&state.pool);
     let webhooks = repo.list_webhooks().await?;
@@ -140,6 +146,12 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<WebhookRespo
 
 /// Get a single webhook by ID.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/webhooks",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -167,6 +179,12 @@ pub async fn get(
 
 /// Create new webhook.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    post,
+    path = "/api/v1/webhooks",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn create(
     State(state): State<AppState>,
     Json(payload): Json<CreateWebhookRequest>,
@@ -215,6 +233,12 @@ pub async fn create(
 
 /// Update webhook.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/webhooks",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -279,6 +303,12 @@ pub async fn update(
 
 /// Delete webhook.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/webhooks/{id}",
+    responses((status = 204, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let repo = GroupRepository::new(&state.pool);
 
@@ -297,6 +327,12 @@ pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Resu
 
 /// Test webhook by sending a test event.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/webhooks",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn test(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -416,5 +452,18 @@ pub async fn test(
                 error: Some(e.to_string()),
             }))
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

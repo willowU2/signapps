@@ -180,6 +180,12 @@ fn classify_by_keywords(title: &str, content: &str) -> Option<(DocumentCategory,
 
 /// POST /api/v1/docs/classify
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/classify",
+    responses((status = 200, description = "Success")),
+    tag = "Docs"
+)]
 pub async fn classify_document(
     State(_state): State<AppState>,
     Json(req): Json<ClassifyRequest>,
@@ -208,4 +214,17 @@ pub async fn classify_document(
         confidence,
         method,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

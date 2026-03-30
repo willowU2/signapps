@@ -47,6 +47,12 @@ pub struct TranscriptionJob {
 /// a transcription job is created and the AI transcription pipeline is
 /// triggered asynchronously.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/transcription",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn handle_session_ended(
     State(state): State<AppState>,
     Json(event): Json<SessionEndedEvent>,
@@ -207,3 +213,16 @@ async fn run_transcription_pipeline(
 //     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 //     updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 // );
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
+}

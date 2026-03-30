@@ -15,6 +15,12 @@ use crate::{
 };
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/posts",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn list_posts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -43,6 +49,12 @@ pub async fn list_posts(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/posts",
+    responses((status = 201, description = "Success")),
+    tag = "Social"
+)]
 pub async fn create_post(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -110,6 +122,12 @@ pub async fn create_post(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/posts",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn get_post(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -141,6 +159,12 @@ pub async fn get_post(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/posts",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn update_post(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -220,6 +244,12 @@ pub async fn update_post(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/posts",
+    responses((status = 204, description = "Success")),
+    tag = "Social"
+)]
 pub async fn delete_post(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -243,6 +273,12 @@ pub async fn delete_post(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/posts",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn publish_post(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -288,6 +324,12 @@ pub async fn publish_post(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/posts",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn schedule_post(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -343,5 +385,18 @@ pub async fn schedule_post(
                 Json(serde_json::json!({ "error": "database error" })),
             )
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

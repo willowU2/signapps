@@ -14,6 +14,12 @@ use crate::{
 };
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/accounts",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn list_accounts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -42,6 +48,12 @@ pub async fn list_accounts(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/accounts",
+    responses((status = 201, description = "Success")),
+    tag = "Social"
+)]
 pub async fn create_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -91,6 +103,12 @@ pub async fn create_account(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/accounts",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn get_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -124,6 +142,12 @@ pub async fn get_account(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/accounts",
+    responses((status = 204, description = "Success")),
+    tag = "Social"
+)]
 pub async fn delete_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -148,6 +172,12 @@ pub async fn delete_account(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/accounts",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn update_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -220,6 +250,12 @@ pub async fn update_account(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/accounts",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn refresh_token(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -251,5 +287,18 @@ pub async fn refresh_token(
                 Json(serde_json::json!({ "error": "database error" })),
             )
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

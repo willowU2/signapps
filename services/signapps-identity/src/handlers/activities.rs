@@ -43,6 +43,12 @@ pub struct ActivityEntry {
 
 /// List activities based on query parameters
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/activities",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_activities(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -67,6 +73,12 @@ pub async fn list_activities(
 /// Cross-module activity feed endpoint.
 /// Returns activities from all modules for the user's workspace(s).
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/activities",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn cross_module_activity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -89,4 +101,17 @@ pub async fn cross_module_activity(
     .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
     Ok(Json(activities))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

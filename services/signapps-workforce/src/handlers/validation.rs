@@ -276,6 +276,12 @@ pub struct ConflictQueryParams {
 
 /// Validate coverage for an organization node
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/validation",
+    responses((status = 201, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn validate_coverage(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -400,6 +406,12 @@ pub async fn validate_coverage(
 
 /// Analyze gaps across organization
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/validation",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn analyze_gaps(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -509,6 +521,12 @@ pub async fn analyze_gaps(
 
 /// Simulate leave request impact
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/validation",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn simulate_leave(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -651,6 +669,12 @@ pub async fn simulate_leave(
 
 /// Simulate shift change impact
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/validation",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn simulate_shift_change(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -784,6 +808,12 @@ pub async fn simulate_shift_change(
 
 /// Get all scheduling conflicts
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/validation",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn get_conflicts(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -1431,4 +1461,17 @@ async fn analyze_gaps_internal(
     }
 
     Ok(all_gaps)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

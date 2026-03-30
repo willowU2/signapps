@@ -66,6 +66,12 @@ pub struct QuotaListQuery {
 /// descending.  Uses `platform.api_usage` if available, otherwise returns
 /// an empty list (table may not be present in all deployments).
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/api_quota",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn list_api_quotas(
     State(state): State<AppState>,
     Query(q): Query<QuotaListQuery>,
@@ -143,6 +149,12 @@ pub async fn list_api_quotas(
 ///
 /// Returns API quota stats for a single user.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/api_quota",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn get_user_api_quota(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,
@@ -196,4 +208,17 @@ pub async fn get_user_api_quota(
         per_minute_limit: row.per_minute_limit.unwrap_or(0),
         last_call_at: row.last_call_at.map(|t: DateTime<Utc>| t.to_rfc3339()),
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

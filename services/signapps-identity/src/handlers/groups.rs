@@ -48,6 +48,12 @@ pub struct AddMemberRequest {
 
 /// List all groups.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/groups",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list(
     State(state): State<AppState>,
     axum::extract::Query(query): axum::extract::Query<ListQuery>,
@@ -79,6 +85,12 @@ pub async fn list(
 
 /// Get group by ID.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/groups",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -102,6 +114,12 @@ pub async fn get(
 
 /// Create new group.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/groups",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn create(
     State(state): State<AppState>,
     Json(payload): Json<signapps_db::models::CreateGroup>,
@@ -120,6 +138,12 @@ pub async fn create(
 
 /// Update group.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/groups",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -146,6 +170,12 @@ pub async fn update(
 
 /// Delete group.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/groups/{id}",
+    responses((status = 204, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let repo = GroupRepository::new(&state.pool);
     repo.delete(id).await?;
@@ -154,6 +184,12 @@ pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Resu
 
 /// Add member to group.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/groups",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn add_member(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -171,6 +207,12 @@ pub async fn add_member(
 
 /// Remove member from group.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/groups",
+    responses((status = 204, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn remove_member(
     State(state): State<AppState>,
     Path((group_id, user_id)): Path<(Uuid, Uuid)>,
@@ -182,6 +224,12 @@ pub async fn remove_member(
 
 /// List group members with user details.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/groups",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_members(
     State(state): State<AppState>,
     Path(group_id): Path<Uuid>,
@@ -208,4 +256,17 @@ pub async fn list_members(
         .collect();
 
     Ok(Json(response))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

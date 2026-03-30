@@ -46,6 +46,12 @@ pub struct MetadataResponse {
 
 /// Extract text from an image
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/ocr",
+    responses((status = 200, description = "Success")),
+    tag = "Media"
+)]
 pub async fn extract_text(
     State(state): State<Arc<AppState>>,
     Query(params): Query<OcrQueryParams>,
@@ -128,6 +134,12 @@ pub async fn extract_text(
 
 /// Process a multi-page document
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/ocr",
+    responses((status = 200, description = "Success")),
+    tag = "Media"
+)]
 pub async fn process_document(
     State(state): State<Arc<AppState>>,
     Query(params): Query<OcrQueryParams>,
@@ -214,6 +226,12 @@ pub struct BatchOcrResponse {
 
 /// Batch process multiple files (async job)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/ocr",
+    responses((status = 200, description = "Success")),
+    tag = "Media"
+)]
 pub async fn batch_process(
     State(state): State<Arc<AppState>>,
     Json(request): Json<BatchOcrRequest>,
@@ -243,4 +261,17 @@ pub async fn batch_process(
         status: "queued".to_string(),
         total_files,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

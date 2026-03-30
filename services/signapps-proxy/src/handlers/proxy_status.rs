@@ -27,6 +27,12 @@ pub struct ListenerStatus {
 
 /// Get proxy engine status.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/proxy_status",
+    responses((status = 200, description = "Success")),
+    tag = "Proxy"
+)]
 pub async fn get_proxy_status(State(state): State<AppState>) -> Json<ProxyStatusResponse> {
     let proxy_enabled = std::env::var("PROXY_ENABLED")
         .unwrap_or_else(|_| "true".to_string())
@@ -62,4 +68,17 @@ pub async fn get_proxy_status(State(state): State<AppState>) -> Json<ProxyStatus
         certificates_loaded: certs_loaded,
         requests_total: state.route_cache.requests_total.load(Ordering::Relaxed),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

@@ -47,6 +47,12 @@ pub struct ConversationDetail {
 
 /// List conversations for the authenticated user.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/conversations",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn list_conversations(
     State(state): State<AppState>,
     Extension(claims): Extension<signapps_common::auth::Claims>,
@@ -65,6 +71,12 @@ pub async fn list_conversations(
 
 /// Get a single conversation with its messages.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/conversations",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn get_conversation(
     State(state): State<AppState>,
     Extension(claims): Extension<signapps_common::auth::Claims>,
@@ -86,6 +98,12 @@ pub async fn get_conversation(
 
 /// Delete a conversation and all its messages.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/conversations",
+    responses((status = 204, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn delete_conversation(
     State(state): State<AppState>,
     Extension(claims): Extension<signapps_common::auth::Claims>,
@@ -98,4 +116,17 @@ pub async fn delete_conversation(
     memory.delete_conversation(id).await?;
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

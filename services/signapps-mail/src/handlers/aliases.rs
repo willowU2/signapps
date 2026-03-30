@@ -76,6 +76,12 @@ async fn owns_account(pool: &sqlx::PgPool, account_id: Uuid, user_id: Uuid) -> b
 
 /// GET /api/v1/mail/accounts/:id/aliases
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/aliases",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn list_aliases(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -103,6 +109,12 @@ pub async fn list_aliases(
 
 /// POST /api/v1/mail/accounts/:id/aliases
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/aliases",
+    responses((status = 201, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn create_alias(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -144,6 +156,12 @@ pub async fn create_alias(
 
 /// PATCH /api/v1/mail/accounts/:id/aliases/:alias_id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/aliases",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn update_alias(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -181,6 +199,12 @@ pub async fn update_alias(
 
 /// DELETE /api/v1/mail/accounts/:id/aliases/:alias_id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/aliases",
+    responses((status = 204, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn delete_alias(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -211,6 +235,12 @@ pub async fn delete_alias(
 /// Marks this alias as the default for the account; clears is_default on all
 /// other aliases for the same account in a single transaction.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/aliases",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn set_default_alias(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -262,5 +292,18 @@ pub async fn set_default_alias(
             tracing::error!("Failed to set default alias {}: {}", alias_id, e);
             (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

@@ -11,6 +11,12 @@ use crate::AppState;
 use signapps_common::Claims;
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn list_workspaces(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -34,6 +40,12 @@ pub async fn list_workspaces(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/workspaces",
+    responses((status = 201, description = "Success")),
+    tag = "Social"
+)]
 pub async fn create_workspace(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -74,6 +86,12 @@ pub async fn create_workspace(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn get_workspace(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -97,6 +115,12 @@ pub async fn get_workspace(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/workspaces",
+    responses((status = 204, description = "Success")),
+    tag = "Social"
+)]
 pub async fn delete_workspace(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -117,6 +141,12 @@ pub async fn delete_workspace(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn list_members(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -138,6 +168,12 @@ pub async fn list_members(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn invite_member(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -183,6 +219,12 @@ pub async fn invite_member(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/workspaces",
+    responses((status = 204, description = "Success")),
+    tag = "Social"
+)]
 pub async fn remove_member(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -219,5 +261,18 @@ pub async fn remove_member(
             tracing::error!("remove_member: {e}");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

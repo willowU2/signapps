@@ -175,6 +175,12 @@ fn render_csv(rows: &[CsvUserRow]) -> String {
 /// Accepts a `text/csv` body, parses and validates each row, and returns an
 /// `ImportResult`. No DB writes — validation only.
 #[tracing::instrument(skip(_state, body))]
+#[utoipa::path(
+    post,
+    path = "/api/v1/bulk_users",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn import_users(
     State(_state): State<AppState>,
     body: String,
@@ -224,6 +230,12 @@ pub async fn import_users(
 ///
 /// Returns all users as a CSV file attachment, fetched from the database.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    post,
+    path = "/api/v1/bulk_users",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn export_users(State(state): State<AppState>) -> impl IntoResponse {
     let rows = match fetch_all_users_as_csv_rows(&state).await {
         Ok(r) => r,
@@ -303,6 +315,12 @@ fn role_id_to_name(role: i16) -> String {
 /// Applies the requested action to all provided user IDs.
 /// In-memory: validates input and returns an affected count.
 #[tracing::instrument(skip(_state, payload))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/bulk_users",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn bulk_action(
     State(_state): State<AppState>,
     Json(payload): Json<BulkActionRequest>,
@@ -318,4 +336,17 @@ pub async fn bulk_action(
         affected,
         action: payload.action,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

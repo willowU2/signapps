@@ -36,6 +36,12 @@ pub struct ActionResponse {
 
 /// Execute a natural language action using Claude Opus as an orchestrator.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/action",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn execute_action(
     State(state): State<AppState>,
     headers: HeaderMap,

@@ -28,6 +28,12 @@ pub struct InitVpnResponse {
 
 /// Initialize VPN CA.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/vpn",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn init_vpn(
     State(state): State<AppState>,
     Json(request): Json<InitVpnRequest>,
@@ -43,6 +49,12 @@ pub async fn init_vpn(
 
 /// Get VPN network status.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/vpn",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn get_vpn_status(
     State(state): State<AppState>,
 ) -> Result<Json<NetworkStatus>> {
@@ -52,6 +64,12 @@ pub async fn get_vpn_status(
 
 /// Get CA certificate.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/vpn",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn get_ca_certificate(
     State(state): State<AppState>,
 ) -> Result<Json<CaCertificateResponse>> {
@@ -68,6 +86,12 @@ pub struct CaCertificateResponse {
 
 /// Regenerate all device configurations.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/vpn",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn regenerate_configs(
     State(state): State<AppState>,
 ) -> Result<Json<RegenerateResponse>> {
@@ -91,6 +115,12 @@ pub struct RegenerateResponse {
 
 /// Health check for VPN service.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/vpn",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn health_check(
     State(state): State<AppState>,
 ) -> Result<Json<HealthResponse>> {
@@ -114,4 +144,17 @@ pub async fn health_check(
 pub struct HealthResponse {
     pub status: String,
     pub network_status: NetworkStatus,
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

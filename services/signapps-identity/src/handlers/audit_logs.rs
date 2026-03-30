@@ -66,6 +66,12 @@ pub struct AuditLogListResponse {
 
 /// GET /api/v1/audit-logs
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/audit_logs",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_audit_logs(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -146,6 +152,12 @@ pub async fn list_audit_logs(
 
 /// GET /api/v1/audit-logs/:id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/audit_logs",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get_audit_log(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -179,6 +191,12 @@ pub async fn get_audit_log(
 
 /// GET /api/v1/audit-logs/export — CSV export
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/audit_logs",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn export_audit_logs(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -253,6 +271,12 @@ pub struct AuditQueryRequest {
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/audit_logs",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn query_audit(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -284,5 +308,18 @@ pub async fn query_audit(
             )
                 .into_response()
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

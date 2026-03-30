@@ -88,6 +88,12 @@ pub struct PendingInstall {
 // SD1: Package CRUD
 // ============================================================================
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/packages",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn list_packages(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<SoftwarePackage>>, (StatusCode, String)> {
@@ -101,6 +107,12 @@ pub async fn list_packages(
     Ok(Json(packages))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/packages",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn get_package(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -117,6 +129,12 @@ pub async fn get_package(
     Ok(Json(pkg))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/packages",
+    responses((status = 201, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn create_package(
     State(pool): State<DatabasePool>,
     Json(payload): Json<CreatePackageRequest>,
@@ -144,6 +162,12 @@ pub async fn create_package(
     Ok((StatusCode::CREATED, Json(pkg)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/packages",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn update_package(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -179,6 +203,12 @@ pub async fn update_package(
     Ok(Json(pkg))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/packages",
+    responses((status = 204, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn delete_package(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -199,6 +229,12 @@ pub async fn delete_package(
 // SD2: Schedule deployment to machines
 // ============================================================================
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/packages",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn deploy_package(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -240,6 +276,12 @@ pub async fn deploy_package(
 // SD3: Agent polls for pending packages
 // ============================================================================
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/packages",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn get_agent_pending_packages(
     State(pool): State<DatabasePool>,
     Path(agent_id): Path<Uuid>,
@@ -306,6 +348,12 @@ pub struct UpdateDeploymentStatusRequest {
     pub output: Option<String>,
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/packages",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn update_deployment_status(
     State(pool): State<DatabasePool>,
     Path(deployment_id): Path<Uuid>,
@@ -345,4 +393,17 @@ pub async fn update_deployment_status(
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

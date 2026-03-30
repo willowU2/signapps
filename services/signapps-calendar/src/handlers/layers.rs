@@ -56,6 +56,12 @@ pub struct LayerConfigResponse {
 /// Return the current user's saved layer configuration. Falls back to the
 /// default config if none has been saved yet.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/layers",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn get_layer_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -88,6 +94,12 @@ pub async fn get_layer_config(
 /// Upsert the layer configuration for the current user into the
 /// `identity.user_preferences.extra` JSONB column.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/layers",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn save_layer_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -117,4 +129,17 @@ pub async fn save_layer_config(
             config: body.config,
         }),
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

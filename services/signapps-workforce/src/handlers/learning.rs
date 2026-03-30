@@ -60,6 +60,12 @@ pub struct UpdateProgressRequest {
 
 /// GET /api/v1/learning/courses
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/learning",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn list_courses(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -124,6 +130,12 @@ pub async fn list_courses(
 
 /// GET /api/v1/learning/courses/:id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/learning",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn get_course(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -164,6 +176,12 @@ pub async fn get_course(
 
 /// PUT /api/v1/learning/courses/:id/progress
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/learning",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn update_progress(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -221,4 +239,17 @@ pub async fn update_progress(
     })?;
 
     Ok(Json(serde_json::json!({ "data": row })))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

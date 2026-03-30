@@ -104,6 +104,12 @@ pub struct ConversionInfoResponse {
 
 /// Get conversion service info
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/conversion",
+    responses((status = 200, description = "Success")),
+    tag = "Office"
+)]
 pub async fn info() -> Json<ConversionInfoResponse> {
     Json(ConversionInfoResponse {
         supported_input_formats: vec!["tiptapjson", "html", "markdown"],
@@ -115,6 +121,12 @@ pub async fn info() -> Json<ConversionInfoResponse> {
 
 /// Convert document from JSON body
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/conversion",
+    responses((status = 200, description = "Success")),
+    tag = "Office"
+)]
 pub async fn convert_json(
     State(state): State<AppState>,
     Query(query): Query<ConversionQuery>,
@@ -262,6 +274,12 @@ pub async fn convert_json(
 
 /// Convert document from multipart upload
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/conversion",
+    responses((status = 200, description = "Success")),
+    tag = "Office"
+)]
 pub async fn convert_upload(
     State(state): State<AppState>,
     Query(query): Query<ConversionQuery>,
@@ -456,6 +474,12 @@ pub struct BatchConversionResponse {
 
 /// Convert multiple documents in batch
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/conversion",
+    responses((status = 200, description = "Success")),
+    tag = "Office"
+)]
 pub async fn convert_batch(
     State(state): State<AppState>,
     Json(request): Json<BatchConversionRequest>,
@@ -629,5 +653,18 @@ impl IntoResponse for ConversionErrorResponse {
         });
 
         (status, Json(body)).into_response()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

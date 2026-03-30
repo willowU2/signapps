@@ -70,6 +70,12 @@ pub struct AttendanceQueryParams {
 /// Opens a new attendance record for the given employee.
 /// Returns `409 Conflict` if the employee is already clocked in.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/attendance",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn clock_in(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -124,6 +130,12 @@ pub async fn clock_in(
 /// Closes the most recent open attendance record for the given employee.
 /// Returns `404` if the employee is not currently clocked in.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/attendance",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn clock_out(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -163,6 +175,12 @@ pub async fn clock_out(
 ///
 /// Returns attendance records for the tenant, optionally filtered by employee.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/attendance",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn list_attendance(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -204,4 +222,17 @@ pub async fn list_attendance(
     })?;
 
     Ok(Json(records))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

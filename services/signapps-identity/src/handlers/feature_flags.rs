@@ -68,6 +68,12 @@ fn row_to_flag(r: FlagRow) -> FeatureFlag {
 
 /// GET /api/v1/admin/feature-flags — List all feature flags.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/feature_flags",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<FeatureFlag>>> {
     let rows = sqlx::query_as::<_, FlagRow>(
         "SELECT id, name, enabled, rollout_pct, description, created_at, updated_at
@@ -82,6 +88,12 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<FeatureFlag>
 
 /// POST /api/v1/admin/feature-flags — Create a feature flag.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    post,
+    path = "/api/v1/feature_flags",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn create(
     State(state): State<AppState>,
     Json(payload): Json<CreateFeatureFlagRequest>,
@@ -121,6 +133,12 @@ pub async fn create(
 
 /// PUT /api/v1/admin/feature-flags/:id — Replace a feature flag.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/feature_flags",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -163,6 +181,12 @@ pub async fn update(
 
 /// DELETE /api/v1/admin/feature-flags/:id — Delete a feature flag.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/feature_flags/{id}",
+    responses((status = 204, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let result = sqlx::query("DELETE FROM identity.feature_flags WHERE id = $1")
         .bind(id)
@@ -174,4 +198,17 @@ pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Resu
     }
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

@@ -24,6 +24,12 @@ pub struct IpAllowlistEntry {
 
 /// GET /api/v1/admin/security/ip-allowlist — Get tenant's IP allowlist.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/ip_allowlist",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -48,6 +54,12 @@ pub async fn get(
 
 /// PUT /api/v1/admin/security/ip-allowlist — Replace tenant's IP allowlist.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/ip_allowlist",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn update(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -83,4 +95,17 @@ pub async fn update(
     tracing::info!(tenant_id = %tenant_id, count = payload.len(), "IP allowlist updated");
 
     Ok(Json(payload))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

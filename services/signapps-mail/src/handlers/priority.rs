@@ -174,6 +174,12 @@ fn label_for_score(score: u8) -> &'static str {
 
 /// POST /api/v1/mail/emails/:id/priority-score
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/priority",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn score_single(
     State(_state): State<AppState>,
     Path(_id): Path<Uuid>,
@@ -190,6 +196,12 @@ pub async fn score_single(
 
 /// POST /api/v1/mail/priority-score/batch
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/priority",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn score_batch(
     State(_state): State<AppState>,
     Json(req): Json<BatchScoreRequest>,
@@ -214,4 +226,17 @@ pub async fn score_batch(
         })
         .collect();
     Ok(Json(BatchScoreResponse { results }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

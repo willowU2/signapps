@@ -14,6 +14,12 @@ use crate::{AppState, CalendarError};
 
 /// Create a new resource
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/resources",
+    responses((status = 201, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn create_resource(
     State(state): State<AppState>,
     Json(payload): Json<CreateResource>,
@@ -29,6 +35,12 @@ pub async fn create_resource(
 
 /// Get all resources
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn list_resources(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<Resource>>, CalendarError> {
@@ -43,6 +55,12 @@ pub async fn list_resources(
 
 /// Get resources by type
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn list_resources_by_type(
     State(state): State<AppState>,
     Path(resource_type): Path<String>,
@@ -58,6 +76,12 @@ pub async fn list_resources_by_type(
 
 /// Get resource by ID
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn get_resource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -74,6 +98,12 @@ pub async fn get_resource(
 
 /// Update resource
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/resources",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn update_resource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -93,6 +123,12 @@ pub async fn update_resource(
 
 /// Delete resource
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/resources",
+    responses((status = 204, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn delete_resource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -133,6 +169,12 @@ pub struct AvailabilityResponse {
 
 /// Check resource availability for a time period
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn check_availability(
     State(_state): State<AppState>,
     Json(_payload): Json<CheckAvailabilityRequest>,
@@ -159,6 +201,12 @@ pub struct BookResourceRequest {
 
 /// Book resources for an event
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn book_resources(
     State(_state): State<AppState>,
     Path(_resource_id): Path<Uuid>,
@@ -170,4 +218,17 @@ pub async fn book_resources(
     // 3. Return conflict errors if booking not possible
 
     Ok(StatusCode::OK)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

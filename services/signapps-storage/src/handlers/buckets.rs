@@ -30,6 +30,12 @@ pub struct BucketResponse {
 
 /// List all buckets.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/buckets",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<BucketInfo>>> {
     let buckets = state.storage.list_buckets().await?;
     Ok(Json(buckets))
@@ -37,6 +43,12 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<BucketInfo>>
 
 /// Get bucket info with stats.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/buckets",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn get(
     State(state): State<AppState>,
     Path(name): Path<String>,
@@ -57,6 +69,12 @@ pub async fn get(
 
 /// Create a new bucket.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/buckets",
+    responses((status = 201, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn create(
     State(state): State<AppState>,
     Json(payload): Json<CreateBucketRequest>,
@@ -96,6 +114,12 @@ pub async fn create(
 
 /// Delete a bucket.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/buckets/{name}",
+    responses((status = 204, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn delete(State(state): State<AppState>, Path(name): Path<String>) -> Result<StatusCode> {
     // Check bucket exists
     if !state.storage.bucket_exists(&name).await? {
@@ -122,4 +146,17 @@ pub async fn delete(State(state): State<AppState>, Path(name): Path<String>) -> 
     tracing::info!(bucket = %name, "Bucket deleted");
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

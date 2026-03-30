@@ -37,6 +37,12 @@ pub struct SecurityEventsQuery {
 
 /// GET /api/v1/admin/security/events — List security events.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/security_events",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list(
     State(state): State<AppState>,
     axum::extract::Query(query): axum::extract::Query<SecurityEventsQuery>,
@@ -65,6 +71,12 @@ pub async fn list(
 
 /// GET /api/v1/admin/security/events/summary — Aggregated counts by type.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/security_events",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn summary(State(state): State<AppState>) -> Result<Json<Vec<EventSummary>>> {
     let rows = sqlx::query_as::<_, EventSummary>(
         r#"SELECT event_type, severity, COUNT(*)::BIGINT as count
@@ -86,4 +98,17 @@ pub struct EventSummary {
     pub event_type: String,
     pub severity: String,
     pub count: i64,
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

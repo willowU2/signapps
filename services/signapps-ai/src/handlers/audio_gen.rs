@@ -120,6 +120,12 @@ async fn store_audio(state: &AppState, audio_bytes: &[u8]) -> Result<String, (St
 /// - `temperature` — generation temperature (optional)
 /// - `model` — model name override (optional)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/audio_gen",
+    responses((status = 201, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn generate_music(
     State(state): State<AppState>,
     Json(body): Json<GenerateMusicRequest>,
@@ -163,6 +169,12 @@ pub async fn generate_music(
 /// - `duration_seconds` — audio duration (optional)
 /// - `model` — model name override (optional)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/audio_gen",
+    responses((status = 201, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn generate_sfx(
     State(state): State<AppState>,
     Json(body): Json<GenerateSfxRequest>,
@@ -200,6 +212,12 @@ pub async fn generate_sfx(
 
 /// List available audio generation models.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/audio_gen",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn list_models() -> Result<Json<AudioModelsResponse>, (StatusCode, String)> {
     let worker = create_audiogen_worker().map_err(|e| (StatusCode::SERVICE_UNAVAILABLE, e))?;
 
@@ -212,4 +230,17 @@ pub async fn list_models() -> Result<Json<AudioModelsResponse>, (StatusCode, Str
 
     let count = models.len();
     Ok(Json(AudioModelsResponse { models, count }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

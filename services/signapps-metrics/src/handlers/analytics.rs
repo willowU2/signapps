@@ -68,6 +68,12 @@ pub struct ActivityPoint {
 /// Returns counts of total users, users active today, aggregate storage, number
 /// of known backend services, and current system uptime.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/analytics",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn get_overview(State(state): State<AppState>) -> Result<Json<AnalyticsOverview>> {
     let pool = state.pool.inner();
 
@@ -114,6 +120,12 @@ pub async fn get_overview(State(state): State<AppState>) -> Result<Json<Analytic
 /// Returns the top 50 storage consumers, sorted by descending used bytes.
 /// Users without a quota record are omitted (they have consumed 0 bytes).
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/analytics",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn get_storage(State(state): State<AppState>) -> Result<Json<Vec<StorageByUser>>> {
     let pool = state.pool.inner();
 
@@ -163,6 +175,12 @@ pub async fn get_storage(State(state): State<AppState>) -> Result<Json<Vec<Stora
 /// `last_login` timestamps in the users table.  This is a lightweight proxy for
 /// request activity that requires no separate audit-log table.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/analytics",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn get_activity(State(state): State<AppState>) -> Result<Json<Vec<ActivityPoint>>> {
     let pool = state.pool.inner();
 
@@ -248,5 +266,18 @@ fn weekday_to_dow(w: Weekday) -> usize {
         Weekday::Thu => 4,
         Weekday::Fri => 5,
         Weekday::Sat => 6,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

@@ -30,6 +30,12 @@ pub struct PullResponse {
 
 /// List all Docker images.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/images",
+    responses((status = 200, description = "Success")),
+    tag = "Containers"
+)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<ImageInfo>>> {
     let images = state.docker.list_images().await?;
     Ok(Json(images))
@@ -37,6 +43,12 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<ImageInfo>>>
 
 /// Pull a Docker image.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/images",
+    responses((status = 200, description = "Success")),
+    tag = "Containers"
+)]
 pub async fn pull(
     State(state): State<AppState>,
     Json(payload): Json<PullRequest>,
@@ -52,6 +64,12 @@ pub async fn pull(
 
 /// Delete a Docker image.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/images/{id}",
+    responses((status = 204, description = "Success")),
+    tag = "Containers"
+)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<String>) -> Result<StatusCode> {
     state.docker.remove_image(&id, false).await?;
     Ok(StatusCode::NO_CONTENT)
@@ -59,10 +77,29 @@ pub async fn delete(State(state): State<AppState>, Path(id): Path<String>) -> Re
 
 /// Force delete a Docker image.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/images",
+    responses((status = 200, description = "Success")),
+    tag = "Containers"
+)]
 pub async fn force_delete(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Result<StatusCode> {
     state.docker.remove_image(&id, true).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

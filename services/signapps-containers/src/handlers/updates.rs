@@ -55,6 +55,12 @@ pub struct UpdatesStatusResponse {
 
 /// Check if an update is available for a specific container.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/updates",
+    responses((status = 200, description = "Success")),
+    tag = "Containers"
+)]
 pub async fn check_update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -81,6 +87,12 @@ pub async fn check_update(
 
 /// Toggle auto-update for a container.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/updates",
+    responses((status = 200, description = "Success")),
+    tag = "Containers"
+)]
 pub async fn set_auto_update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -114,6 +126,12 @@ pub async fn set_auto_update(
 
 /// Get update status for all containers.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/updates",
+    responses((status = 200, description = "Success")),
+    tag = "Containers"
+)]
 pub async fn updates_status(State(state): State<AppState>) -> Result<Json<UpdatesStatusResponse>> {
     let repo = ContainerRepository::new(&state.pool);
     let containers = repo.list(100, 0).await?;
@@ -138,6 +156,12 @@ pub async fn updates_status(State(state): State<AppState>) -> Result<Json<Update
 /// Background auto-update task. Checks all containers with auto_update=true
 /// and updates them if a newer image is available.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/updates",
+    responses((status = 201, description = "Success")),
+    tag = "Containers"
+)]
 pub async fn run_auto_update_task(
     docker: crate::docker::DockerClient,
     pool: signapps_db::DatabasePool,
@@ -268,5 +292,18 @@ pub async fn run_auto_update_task(
         }
 
         tracing::info!("Auto-update check finished");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

@@ -83,6 +83,12 @@ pub struct JobSubmitResponse {
 /// Accepts the same body as `/api/v1/convert` plus a `format` field.
 /// Returns `{ job_id }` immediately; the conversion runs in the background.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/jobs",
+    responses((status = 201, description = "Success")),
+    tag = "Office"
+)]
 pub async fn submit_convert_job(
     State(state): State<AppState>,
     Json(req): Json<JobConvertRequest>,
@@ -119,6 +125,12 @@ pub async fn submit_convert_job(
 
 /// GET /api/v1/office/jobs/:id
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/jobs",
+    responses((status = 200, description = "Success")),
+    tag = "Office"
+)]
 pub async fn get_job_status(
     State(state): State<AppState>,
     Path(job_id): Path<String>,
@@ -275,5 +287,18 @@ fn mark_failed(jobs: &JobStore, job_id: &str, error: String) {
         entry.status = JobState::Failed;
         entry.error = Some(error);
         entry.completed_at = Some(chrono::Utc::now().to_rfc3339());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

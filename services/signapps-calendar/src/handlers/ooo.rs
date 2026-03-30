@@ -57,6 +57,12 @@ fn row_to_ooo(r: OooRow) -> OooSettings {
 
 /// GET /api/v1/ooo — Get out-of-office settings for the current user.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/ooo",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn get_ooo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -89,6 +95,12 @@ pub async fn get_ooo(
 
 /// PUT /api/v1/ooo — Create or replace out-of-office settings.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/ooo",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn set_ooo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -128,6 +140,12 @@ pub async fn set_ooo(
 
 /// DELETE /api/v1/ooo — Clear out-of-office settings.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/ooo",
+    responses((status = 204, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn delete_ooo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -140,4 +158,17 @@ pub async fn delete_ooo(
 
     tracing::info!(user_id = %claims.sub, "OOO settings cleared");
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

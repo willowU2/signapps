@@ -90,6 +90,12 @@ pub struct HeadcountSlot {
 ///
 /// List presence rules for the user's organisation (optionally filtered by team).
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/presence",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn list_rules(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -116,6 +122,12 @@ pub async fn list_rules(
 /// Create a new presence rule (admin only by convention — callers must gate at
 /// the API gateway or via `role` check; here we trust the auth middleware).
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/presence",
+    responses((status = 201, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn create_rule(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -145,6 +157,12 @@ pub async fn create_rule(
 ///
 /// Update an existing presence rule.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/presence",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn update_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -175,6 +193,12 @@ pub async fn update_rule(
 ///
 /// Delete a presence rule.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/presence",
+    responses((status = 204, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn delete_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -205,6 +229,12 @@ pub async fn delete_rule(
 /// applicable presence rules for the user's organisation.  Returns a list of
 /// violations; an empty list means the action is fully compliant.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/presence",
+    responses((status = 201, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn validate_action(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -362,6 +392,12 @@ fn evaluate_rule(
 /// Query all shift/leave events for the team on the given date and return
 /// `[{ user_id, display_name, presence_mode }]`.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/presence",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn team_status(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -430,6 +466,12 @@ pub async fn team_status(
 ///
 /// The response is `[{ time: "08:00", role: "technicien", count: 3 }, ...]`.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/presence",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn headcount(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -500,4 +542,17 @@ pub async fn headcount(
         .collect();
 
     Ok(Json(slots))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

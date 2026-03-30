@@ -142,6 +142,12 @@ pub struct AccessShareResponse {
 
 /// Create a new share link.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/shares",
+    responses((status = 201, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn create_share(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -207,6 +213,12 @@ pub async fn create_share(
 
 /// List shares for the current user.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/shares",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn list_shares(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -236,6 +248,12 @@ pub async fn list_shares(
 
 /// Get share details.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/shares",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn get_share(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -254,6 +272,12 @@ pub async fn get_share(
 
 /// Update share settings.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/shares",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn update_share(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -295,6 +319,12 @@ pub async fn update_share(
 
 /// Delete/revoke a share.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/shares",
+    responses((status = 204, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn delete_share(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -344,6 +374,12 @@ fn validate_public_share(
 
 /// Access a shared file (public endpoint).
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/shares",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn access_share(
     State(state): State<AppState>,
     Path(token): Path<String>,
@@ -406,6 +442,12 @@ pub struct DownloadSharedQuery {
 
 /// Download shared file directly.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/shares",
+    responses((status = 200, description = "Success")),
+    tag = "Storage"
+)]
 pub async fn download_shared(
     State(state): State<AppState>,
     Path(token): Path<String>,

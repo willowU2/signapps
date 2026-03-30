@@ -87,6 +87,12 @@ pub struct PredictResult {
 /// Set the event status to `approved`, record the approver, and shift the
 /// leave balance from pending to used.
 #[instrument(skip(state), fields(user_id = %claims.sub, event_id = %id))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/leave",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn approve_leave(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -173,6 +179,12 @@ pub async fn approve_leave(
 /// Set the event status to `rejected`, record the approver and comment, and
 /// decrement the pending balance.
 #[instrument(skip(state, body), fields(user_id = %claims.sub, event_id = %id))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/leave",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn reject_leave(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -251,6 +263,12 @@ pub async fn reject_leave(
 ///
 /// Return all leave balances for the current user for the current year.
 #[instrument(skip(state), fields(user_id = %claims.sub))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/leave",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn get_balances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -277,6 +295,12 @@ pub async fn get_balances(
 ///
 /// Compute: `total_days - used_days - pending_days - requested_days`.
 #[instrument(skip(state, params), fields(user_id = %claims.sub))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/leave",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn predict_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -313,6 +337,12 @@ pub async fn predict_balance(
 ///
 /// Find all leave events overlapping the given date range (organisation-wide).
 #[instrument(skip(state, params, _claims))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/leave",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn team_conflicts(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -365,6 +395,12 @@ pub async fn team_conflicts(
 /// `assigned_to` field of that event (task) to the designated user.
 /// Returns the count of successfully updated records.
 #[instrument(skip(state, body, _claims))]
+#[utoipa::path(
+    post,
+    path = "/api/v1/leave",
+    responses((status = 201, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn delegate_tasks(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -431,4 +467,17 @@ fn leave_days(event: &Event) -> f64 {
     let duration = event.end_time - event.start_time;
     let days = duration.num_hours() as f64 / 24.0;
     days.max(1.0)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

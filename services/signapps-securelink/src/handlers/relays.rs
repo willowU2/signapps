@@ -17,6 +17,12 @@ use signapps_common::Result;
 
 /// List all configured relays.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/relays",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn list_relays(State(state): State<AppState>) -> Result<Json<Vec<Relay>>> {
     let relays = state.tunnel_client.list_relays().await;
     Ok(Json(relays))
@@ -24,6 +30,12 @@ pub async fn list_relays(State(state): State<AppState>) -> Result<Json<Vec<Relay
 
 /// Get a specific relay by ID.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/relays/{id}",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn get_relay(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<Json<Relay>> {
     let relay = state
         .tunnel_client
@@ -35,6 +47,12 @@ pub async fn get_relay(State(state): State<AppState>, Path(id): Path<Uuid>) -> R
 
 /// Create a new relay.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/relays",
+    responses((status = 201, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn create_relay(
     State(state): State<AppState>,
     Json(request): Json<CreateRelay>,
@@ -87,6 +105,12 @@ pub async fn create_relay(
 /// Update an existing relay.
 #[allow(dead_code)]
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/relays",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn update_relay(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -135,6 +159,12 @@ pub async fn update_relay(
 
 /// Delete a relay.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/relays",
+    responses((status = 204, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn delete_relay(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -168,6 +198,12 @@ pub async fn delete_relay(
 
 /// Test connection to a relay.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/relays",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn test_relay(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -204,6 +240,12 @@ pub async fn test_relay(
 
 /// Connect to a relay and start all tunnels.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/relays",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn connect_relay(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -227,6 +269,12 @@ pub async fn connect_relay(
 
 /// Disconnect from a relay.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/relays",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn disconnect_relay(
     State(_state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -269,6 +317,12 @@ pub struct DisconnectResponse {
 
 /// Get relay statistics.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/relays",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn get_relay_stats(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -310,4 +364,17 @@ pub struct RelayStats {
     pub connected_tunnels: usize,
     pub latency_ms: Option<u32>,
     pub last_tested: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

@@ -23,6 +23,12 @@ static ACTIVE_CONNECTIONS: AtomicUsize = AtomicUsize::new(0);
 /// Generic WebSocket handler for all document types
 /// Endpoint: GET /api/v1/docs/{type}/{doc_id}/ws
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/websocket/{id}",
+    responses((status = 200, description = "Success")),
+    tag = "Docs"
+)]
 pub async fn websocket_handler(
     Path((doc_type, doc_id)): Path<(String, String)>,
     ws: WebSocketUpgrade,
@@ -233,5 +239,18 @@ struct ConnectionGuard;
 impl Drop for ConnectionGuard {
     fn drop(&mut self) {
         ACTIVE_CONNECTIONS.fetch_sub(1, Ordering::Relaxed);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

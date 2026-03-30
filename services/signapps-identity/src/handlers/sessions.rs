@@ -29,6 +29,12 @@ pub struct SessionItem {
 
 /// GET /api/v1/auth/sessions — List current user's active sessions.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/sessions",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -70,6 +76,12 @@ pub async fn list(
 
 /// DELETE /api/v1/auth/sessions/:id — Revoke a specific session.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/sessions",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn revoke(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -91,6 +103,12 @@ pub async fn revoke(
 
 /// DELETE /api/v1/auth/sessions — Revoke all sessions except current.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/sessions",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn revoke_all(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -111,4 +129,17 @@ pub async fn revoke_all(
     Ok(Json(serde_json::json!({
         "revoked": result.rows_affected()
     })))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

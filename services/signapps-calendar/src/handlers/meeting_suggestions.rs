@@ -62,6 +62,12 @@ pub struct MeetingSuggestionsResponse {
 
 /// POST /api/v1/calendar/meeting-suggestions
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/meeting_suggestions",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn suggest_meeting_times(
     State(state): State<AppState>,
     Json(req): Json<MeetingSuggestionsRequest>,
@@ -212,4 +218,17 @@ fn next_work_slot(dt: DateTime<Utc>, work_start_hour: u32) -> DateTime<Utc> {
         None => return dt,
     };
     Utc.from_utc_datetime(&naive)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

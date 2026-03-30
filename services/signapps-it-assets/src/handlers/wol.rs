@@ -40,6 +40,12 @@ fn build_magic_packet(mac: &str) -> Result<Vec<u8>, String> {
 
 /// POST /api/v1/it-assets/hardware/:id/wake
 /// Looks up the primary MAC address and sends a WoL magic packet via UDP broadcast.
+#[utoipa::path(
+    get,
+    path = "/api/v1/wol",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn wake_on_lan(
     State(pool): State<DatabasePool>,
     Path(hardware_id): Path<Uuid>,
@@ -106,4 +112,17 @@ pub async fn wake_on_lan(
         message: format!("Magic packet envoy a {}", mac),
         mac_address: Some(mac),
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

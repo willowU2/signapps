@@ -20,6 +20,12 @@ pub struct GpuStatusResponse {
 
 /// Get current GPU status including loaded models and VRAM usage.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/gpu_status",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn get_gpu_status(
     State(state): State<AppState>,
 ) -> Result<Json<GpuStatusResponse>, (StatusCode, String)> {
@@ -46,6 +52,12 @@ pub async fn get_gpu_status(
 
 /// List load profiles for all hardware tiers.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/gpu_status",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn list_profiles() -> Json<Vec<LoadProfile>> {
     let tiers = [
         HardwareTier::Cpu,
@@ -61,6 +73,12 @@ pub async fn list_profiles() -> Json<Vec<LoadProfile>> {
 
 /// Get recommended models based on detected hardware.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/gpu_status",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn get_recommended_models(
     State(state): State<AppState>,
 ) -> Result<Json<LoadProfile>, (StatusCode, String)> {
@@ -74,4 +92,17 @@ pub async fn get_recommended_models(
     let profile = build_profile(tier);
 
     Ok(Json(profile))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

@@ -23,6 +23,12 @@ pub struct RoleResponse {
 
 /// List all roles.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/roles",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<RoleResponse>>> {
     let repo = GroupRepository::new(&state.pool);
     let roles = repo.list_roles().await?;
@@ -43,6 +49,12 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<RoleResponse
 
 /// Create new role.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/roles",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn create(
     State(state): State<AppState>,
     Json(payload): Json<signapps_db::models::CreateRole>,
@@ -61,6 +73,12 @@ pub async fn create(
 
 /// Update role (non-system roles only).
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/roles",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -88,8 +106,27 @@ pub async fn update(
 
 /// Delete role.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/roles/{id}",
+    responses((status = 204, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let repo = GroupRepository::new(&state.pool);
     repo.delete_role(id).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

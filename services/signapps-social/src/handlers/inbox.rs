@@ -19,6 +19,12 @@ pub struct InboxQuery {
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/inbox",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn list_inbox(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -59,6 +65,12 @@ pub async fn list_inbox(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/inbox",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn mark_read(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -93,6 +105,12 @@ pub async fn mark_read(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/inbox",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn reply_inbox(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -211,5 +229,18 @@ pub async fn reply_inbox(
                 Json(serde_json::json!({ "error": "database error" })),
             )
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

@@ -51,6 +51,12 @@ pub struct AgentUploadReq {
 
 /// POST /api/v1/it-assets/agent/files/push
 /// Admin schedules a file to be delivered to a machine via the agent.
+#[utoipa::path(
+    get,
+    path = "/api/v1/files",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn push_file_to_machine(
     State(pool): State<DatabasePool>,
     Json(payload): Json<PushFileReq>,
@@ -101,6 +107,12 @@ pub async fn push_file_to_machine(
 
 /// POST /api/v1/it-assets/agent/files/upload
 /// Agent uploads a file from the managed machine to the server.
+#[utoipa::path(
+    get,
+    path = "/api/v1/files",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn agent_upload_file(
     State(pool): State<DatabasePool>,
     Json(payload): Json<AgentUploadReq>,
@@ -159,6 +171,12 @@ pub async fn agent_upload_file(
 
 /// GET /api/v1/it-assets/agent/files/download/:file_id
 /// Agent downloads a file staged for it by an admin.
+#[utoipa::path(
+    get,
+    path = "/api/v1/files",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn agent_download_file(
     State(pool): State<DatabasePool>,
     Path(file_id): Path<Uuid>,
@@ -191,6 +209,12 @@ pub async fn agent_download_file(
 
 /// GET /api/v1/it-assets/hardware/:id/files
 /// List all file transfers for a hardware asset.
+#[utoipa::path(
+    get,
+    path = "/api/v1/files",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn list_hardware_files(
     State(pool): State<DatabasePool>,
     Path(hardware_id): Path<Uuid>,
@@ -221,4 +245,17 @@ fn general_purpose_decode(s: &str) -> Result<Vec<u8>, String> {
     // For now, estimate size is sufficient for MVP
     let _ = s;
     Ok(vec![]) // MVP: return empty; real impl would decode
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

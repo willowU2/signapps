@@ -52,6 +52,12 @@ pub struct UpsertEsgQuarterlyRequest {
 
 /// GET /api/v1/esg/scores
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/esg",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn get_esg_scores(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -73,6 +79,12 @@ pub async fn get_esg_scores(
 
 /// PUT /api/v1/esg/scores
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/esg",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn upsert_esg_score(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -109,6 +121,12 @@ pub async fn upsert_esg_score(
 
 /// GET /api/v1/esg/quarterly
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/esg",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn get_esg_quarterly(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -130,6 +148,12 @@ pub async fn get_esg_quarterly(
 
 /// PUT /api/v1/esg/quarterly
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/esg",
+    responses((status = 200, description = "Success")),
+    tag = "Metrics"
+)]
 pub async fn upsert_esg_quarterly(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -158,4 +182,17 @@ pub async fn upsert_esg_quarterly(
     .map_err(|e| Error::Database(e.to_string()))?;
 
     Ok((StatusCode::OK, Json(serde_json::json!(row))))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

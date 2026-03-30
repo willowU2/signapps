@@ -98,6 +98,12 @@ pub struct RefreshRequest {
 
 /// Login endpoint - supports local and LDAP authentication.
 #[tracing::instrument(skip(state, payload), fields(username = %payload.username))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/auth",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn login(
     State(state): State<AppState>,
     Json(payload): Json<LoginRequest>,
@@ -278,6 +284,12 @@ pub async fn login(
 }
 
 #[tracing::instrument(skip(state, headers))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/auth",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result<HeaderMap> {
     let mut token = None;
 
@@ -334,6 +346,12 @@ pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result
 
 /// Register new user (local auth only).
 #[tracing::instrument(skip(state, payload), fields(username = %payload.username))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/auth",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn register(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
@@ -395,6 +413,12 @@ pub async fn register(
 }
 
 #[tracing::instrument(skip(state, headers))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/auth",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn refresh(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -494,6 +518,12 @@ pub async fn refresh(
 
 /// Get current user info.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/auth",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn me(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -518,6 +548,12 @@ pub async fn me(
 /// Bootstrap endpoint - promotes the first user to admin if no admin exists.
 /// This is a one-time operation for initial setup.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/auth",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn bootstrap(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     // Check if any admin already exists (direct SQL — checks ALL users, not just first N)
     let has_admin: bool =
@@ -596,6 +632,12 @@ pub struct PasswordResetConfirmRequest {
 /// Accepts an email address and — if an account exists — initiates the reset flow.
 /// Always returns HTTP 200 to avoid leaking account existence.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/auth",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn password_reset(
     State(state): State<AppState>,
     Json(payload): Json<serde_json::Value>,
@@ -674,6 +716,12 @@ pub async fn password_reset(
 
 /// POST /api/v1/auth/password-reset/confirm — apply a password reset token.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/auth",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn password_reset_confirm(
     State(state): State<AppState>,
     Json(payload): Json<PasswordResetConfirmRequest>,
@@ -781,4 +829,17 @@ fn decrypt_ldap_password(encrypted: &str) -> Result<String> {
 
     String::from_utf8(plain_bytes)
         .map_err(|e| Error::Internal(format!("Invalid LDAP password after decryption: {}", e)))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

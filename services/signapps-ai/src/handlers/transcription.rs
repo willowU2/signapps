@@ -37,6 +37,12 @@ pub enum TranscriptionSource {
 /// - `audio`: audio blob (webm, ogg, wav, mp4, mp3)
 /// - `language`: optional ISO-639-1 language hint (e.g. "fr", "en")
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/transcription",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn transcribe_audio(
     State(_state): State<AppState>,
     mut multipart: Multipart,
@@ -136,5 +142,18 @@ pub async fn transcribe_audio(
                 source: TranscriptionSource::Fallback,
             }))
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

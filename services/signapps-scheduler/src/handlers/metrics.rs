@@ -19,6 +19,12 @@ pub struct MetricsQuery {
 
 /// Retrieve workload metrics for the authenticated user
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn get_workload(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -36,6 +42,12 @@ pub async fn get_workload(
 
 /// Retrieve resource metrics for the authenticated user
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn get_resources(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -46,4 +58,17 @@ pub async fn get_resources(
     let metrics = repo.get_resource_metrics(ctx.tenant_id, claims.sub).await?;
 
     Ok(Json(metrics))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

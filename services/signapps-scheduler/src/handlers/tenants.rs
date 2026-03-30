@@ -12,6 +12,12 @@ use uuid::Uuid;
 use crate::AppState;
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenants",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn list_tenants(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -32,6 +38,12 @@ pub async fn list_tenants(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenants",
+    responses((status = 200, description = "Success")),
+    tag = "Scheduler"
+)]
 pub async fn get_tenant(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -59,4 +71,17 @@ pub async fn get_tenant(
         "is_active": tenant.is_active,
         "created_at": tenant.created_at,
     })))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

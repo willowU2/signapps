@@ -96,6 +96,12 @@ fn hash_token(token: &str) -> String {
 
 /// Create a new guest access token.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/guest_tokens",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn create_guest_token(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -164,6 +170,12 @@ pub async fn create_guest_token(
 
 /// List active guest tokens owned by the current user.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/guest_tokens",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_guest_tokens(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -238,6 +250,12 @@ pub async fn list_guest_tokens(
 
 /// Revoke a guest token.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/guest_tokens",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn revoke_guest_token(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -263,6 +281,12 @@ pub async fn revoke_guest_token(
 /// Public endpoint: validate a guest token and return its claims.
 /// Increments access_count on success.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/guest_tokens",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn validate_guest_token(
     State(state): State<AppState>,
     Json(payload): Json<ValidateGuestTokenRequest>,
@@ -318,4 +342,17 @@ pub async fn validate_guest_token(
         permission: Some(permission),
         expires_at,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

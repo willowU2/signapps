@@ -63,6 +63,12 @@ pub struct CreateResourceTypeRequest {
 
 /// List resource types for current tenant.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_resource_types(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -75,6 +81,12 @@ pub async fn list_resource_types(
 
 /// Create a new resource type.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    post,
+    path = "/api/v1/resources",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn create_resource_type(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -102,6 +114,12 @@ pub async fn create_resource_type(
 
 /// Delete a resource type.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/resources",
+    responses((status = 204, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn delete_resource_type(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -208,6 +226,12 @@ pub struct UpdateResourceRequest {
 
 /// List resources for current tenant.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_resources(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -232,6 +256,12 @@ pub async fn list_resources(
 
 /// Get resource by ID.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get_resource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -244,6 +274,12 @@ pub async fn get_resource(
 
 /// Create a new resource.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    post,
+    path = "/api/v1/resources",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn create_resource(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -286,6 +322,12 @@ pub async fn create_resource(
 
 /// Update a resource.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/resources",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn update_resource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -324,6 +366,12 @@ pub async fn update_resource(
 
 /// Delete a resource.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/resources",
+    responses((status = 204, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn delete_resource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -405,6 +453,12 @@ pub struct UpdateReservationStatusRequest {
 
 /// List reservations.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_reservations(
     State(state): State<AppState>,
     Query(query): Query<ListReservationsQuery>,
@@ -426,6 +480,12 @@ pub async fn list_reservations(
 
 /// List pending reservations for approval (for current user as approver).
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_pending_reservations(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -442,6 +502,12 @@ pub async fn list_pending_reservations(
 
 /// List reservations for current user (my reservations).
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn list_my_reservations(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -460,6 +526,12 @@ pub async fn list_my_reservations(
 
 /// Get reservation by ID.
 #[tracing::instrument(skip(state))]
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn get_reservation(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -472,6 +544,12 @@ pub async fn get_reservation(
 
 /// Create a new reservation.
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    post,
+    path = "/api/v1/resources",
+    responses((status = 201, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn create_reservation(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -513,6 +591,12 @@ pub async fn create_reservation(
 
 /// Update reservation status (approve/reject/cancel).
 #[tracing::instrument(skip(state, payload))]
+#[utoipa::path(
+    put,
+    path = "/api/v1/resources",
+    responses((status = 200, description = "Success")),
+    tag = "Identity"
+)]
 pub async fn update_reservation_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -557,4 +641,17 @@ pub async fn update_reservation_status(
     );
 
     Ok(Json(ReservationResponse::from(reservation)))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

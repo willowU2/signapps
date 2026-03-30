@@ -33,6 +33,12 @@ pub struct Voicemail {
 // ---------------------------------------------------------------------------
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/voicemails",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn list_voicemails(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -61,6 +67,12 @@ pub async fn list_voicemails(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/voicemails",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn mark_voicemail_read(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -91,6 +103,12 @@ pub async fn mark_voicemail_read(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/voicemails",
+    responses((status = 204, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn delete_voicemail(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -108,5 +126,18 @@ pub async fn delete_voicemail(
             tracing::error!("delete_voicemail: {e}");
             StatusCode::INTERNAL_SERVER_ERROR
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

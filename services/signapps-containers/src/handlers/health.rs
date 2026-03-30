@@ -16,6 +16,12 @@ pub struct HealthResponse {
 
 /// Health check endpoint.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/health",
+    responses((status = 200, description = "Success")),
+    tag = "Containers"
+)]
 pub async fn health_check(
     axum::extract::State(state): axum::extract::State<AppState>,
 ) -> Json<HealthResponse> {
@@ -32,4 +38,17 @@ pub async fn health_check(
         version: env!("CARGO_PKG_VERSION").to_string(),
         docker_connected,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

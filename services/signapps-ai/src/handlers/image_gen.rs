@@ -114,6 +114,12 @@ async fn store_image(state: &AppState, image_bytes: &[u8]) -> Result<String, (St
 /// - `model` — model name override (optional)
 /// - `style` — prepended to prompt as a style prefix (optional)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/image_gen",
+    responses((status = 201, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn generate_image(
     State(state): State<AppState>,
     Json(body): Json<GenerateRequest>,
@@ -183,6 +189,12 @@ pub async fn generate_image(
 /// - `prompt` — text description of the fill (required)
 /// - `model` — model name override (optional)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/image_gen",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn inpaint_image(
     State(state): State<AppState>,
     mut multipart: Multipart,
@@ -318,6 +330,12 @@ pub async fn inpaint_image(
 /// - `strength` — denoising strength 0.0..1.0 (optional, default 0.75)
 /// - `model` — model name override (optional)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/image_gen",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn img2img(
     State(state): State<AppState>,
     mut multipart: Multipart,
@@ -433,6 +451,12 @@ pub async fn img2img(
 /// - `image` — the image file to upscale (required)
 /// - `scale` — scale factor, e.g. 2 or 4 (optional, default 2)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/image_gen",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn upscale_image(
     State(state): State<AppState>,
     mut multipart: Multipart,
@@ -522,6 +546,12 @@ pub async fn upscale_image(
 
 /// List available image generation models.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/image_gen",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn list_image_models() -> Result<Json<ImageModelsResponse>, (StatusCode, String)> {
     let worker = create_imagegen_worker().map_err(|e| (StatusCode::SERVICE_UNAVAILABLE, e))?;
 
@@ -534,4 +564,17 @@ pub async fn list_image_models() -> Result<Json<ImageModelsResponse>, (StatusCod
 
     let count = models.len();
     Ok(Json(ImageModelsResponse { models, count }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

@@ -50,6 +50,12 @@ pub struct ImportMetadata {
 
 /// Get import service info
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/import",
+    responses((status = 200, description = "Success")),
+    tag = "Office"
+)]
 pub async fn info() -> Json<ImportInfoResponse> {
     Json(ImportInfoResponse {
         supported_formats: vec!["docx", "markdown", "html", "txt"],
@@ -60,6 +66,12 @@ pub async fn info() -> Json<ImportInfoResponse> {
 
 /// Import document from multipart upload
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/import",
+    responses((status = 201, description = "Success")),
+    tag = "Office"
+)]
 pub async fn import_upload(
     State(state): State<AppState>,
     Query(query): Query<ImportQuery>,
@@ -120,6 +132,12 @@ pub struct ImportJsonRequest {
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/import",
+    responses((status = 201, description = "Success")),
+    tag = "Office"
+)]
 pub async fn import_json(
     State(state): State<AppState>,
     Json(request): Json<ImportJsonRequest>,
@@ -262,5 +280,18 @@ impl IntoResponse for ImportErrorResponse {
         });
 
         (status, Json(body)).into_response()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

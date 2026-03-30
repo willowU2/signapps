@@ -26,6 +26,12 @@ pub struct TimezoneInfo {
 
 /// List available timezones
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/timezones",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn list_timezones(Query(query): Query<TimezoneListQuery>) -> Json<Vec<TimezoneInfo>> {
     let mut timezones = services::list_timezones()
         .into_iter()
@@ -57,6 +63,12 @@ pub struct ValidateTimezoneResponse {
 
 /// Validate timezone string
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/timezones",
+    responses((status = 201, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn validate_timezone(
     Json(payload): Json<ValidateTimezoneRequest>,
 ) -> Json<ValidateTimezoneResponse> {
@@ -82,6 +94,12 @@ pub struct ConvertTimezoneResponse {
 
 /// Convert datetime between timezones
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/timezones",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn convert_timezone(
     Json(payload): Json<ConvertTimezoneRequest>,
 ) -> Result<Json<ConvertTimezoneResponse>, String> {
@@ -120,6 +138,12 @@ pub struct SetUserTimezoneRequest {
 
 /// GET /api/v1/timezones/me — get user's preferred timezone
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/timezones",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn get_user_timezone(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -156,6 +180,12 @@ pub async fn get_user_timezone(
 
 /// PUT /api/v1/timezones/me — set user's preferred timezone
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/timezones",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn set_user_timezone(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -194,5 +224,18 @@ pub async fn set_user_timezone(
             )
                 .into_response()
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

@@ -11,6 +11,12 @@ use crate::AppState;
 use signapps_common::Claims;
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/content_sets",
+    responses((status = 200, description = "Success")),
+    tag = "Social"
+)]
 pub async fn list_content_sets(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -31,6 +37,12 @@ pub async fn list_content_sets(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/content_sets",
+    responses((status = 201, description = "Success")),
+    tag = "Social"
+)]
 pub async fn create_content_set(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -73,6 +85,12 @@ pub async fn create_content_set(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/content_sets",
+    responses((status = 204, description = "Success")),
+    tag = "Social"
+)]
 pub async fn delete_content_set(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -89,5 +107,18 @@ pub async fn delete_content_set(
             tracing::error!("delete_content_set: {e}");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

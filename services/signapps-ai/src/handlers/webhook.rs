@@ -20,6 +20,12 @@ pub struct WebhookResponse {
 
 /// Ingest arbitrary JSON from external services.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/webhook",
+    responses((status = 200, description = "Success")),
+    tag = "Ai"
+)]
 pub async fn ingest_webhook(
     State(state): State<AppState>,
     Path(source_type): Path<String>,

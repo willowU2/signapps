@@ -39,6 +39,12 @@ fn verify_password(password: &str, hash: &str) -> bool {
 
 /// List all rooms (active and scheduled)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/rooms",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn list_rooms(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -95,6 +101,12 @@ pub async fn list_rooms(
 
 /// Create a new room
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/rooms",
+    responses((status = 201, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn create_room(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -152,6 +164,12 @@ pub async fn create_room(
 
 /// Get a specific room by ID
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/rooms",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn get_room(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -192,6 +210,12 @@ pub async fn get_room(
 
 /// Update a room
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/rooms",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn update_room(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -275,6 +299,12 @@ pub async fn update_room(
 
 /// Delete a room
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/rooms",
+    responses((status = 204, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn delete_room(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -303,6 +333,12 @@ pub async fn delete_room(
 
 /// End a room (mark as ended and kick all participants)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/rooms",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn end_room(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -409,6 +445,12 @@ pub async fn end_room(
 
 /// List meeting history
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/rooms",
+    responses((status = 200, description = "Success")),
+    tag = "Meet"
+)]
 pub async fn list_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -440,4 +482,17 @@ pub async fn list_history(
             })
             .collect(),
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

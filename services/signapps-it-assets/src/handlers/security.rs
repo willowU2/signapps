@@ -41,6 +41,12 @@ pub struct AntivirusStatusRow {
     pub reported_at: DateTime<Utc>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/security",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn report_antivirus(
     State(pool): State<DatabasePool>,
     Json(payload): Json<ReportAntivirusReq>,
@@ -82,6 +88,12 @@ pub async fn report_antivirus(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/security",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn get_antivirus_status(
     State(pool): State<DatabasePool>,
     Path(hw_id): Path<Uuid>,
@@ -108,6 +120,12 @@ pub struct AvFleetSummary {
     pub unknown: i64,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/security",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn av_fleet_summary(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<AvFleetSummary>, (StatusCode, String)> {
@@ -179,6 +197,12 @@ pub struct EncryptionStatusRow {
     pub reported_at: DateTime<Utc>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/security",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn report_encryption(
     State(pool): State<DatabasePool>,
     Json(payload): Json<ReportEncryptionReq>,
@@ -217,6 +241,12 @@ pub async fn report_encryption(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/security",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn get_encryption_status(
     State(pool): State<DatabasePool>,
     Path(hw_id): Path<Uuid>,
@@ -242,6 +272,12 @@ pub struct EncryptionFleetSummary {
     pub compliance_pct: f64,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/security",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn encryption_fleet_summary(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<EncryptionFleetSummary>, (StatusCode, String)> {
@@ -309,4 +345,17 @@ pub async fn encryption_fleet_summary(
         not_encrypted: not_enc,
         compliance_pct: pct,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

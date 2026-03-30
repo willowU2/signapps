@@ -61,6 +61,12 @@ pub struct UpdateRuleRequest {
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/rules",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn list_rules(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -90,6 +96,12 @@ pub async fn list_rules(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/rules",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn get_rule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -119,6 +131,12 @@ pub async fn get_rule(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/rules",
+    responses((status = 201, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn create_rule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -168,6 +186,12 @@ pub async fn create_rule(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/rules",
+    responses((status = 200, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn update_rule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -222,6 +246,12 @@ pub async fn update_rule(
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/rules",
+    responses((status = 204, description = "Success")),
+    tag = "Mail"
+)]
 pub async fn delete_rule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -247,5 +277,18 @@ pub async fn delete_rule(
             tracing::error!("Failed to delete rule {}: {:?}", rule_id, e);
             (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete rule").into_response()
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

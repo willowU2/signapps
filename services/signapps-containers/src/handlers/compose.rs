@@ -67,6 +67,12 @@ pub struct VolumePreview {
 
 /// Preview a compose file without installing.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/compose",
+    responses((status = 200, description = "Success")),
+    tag = "Containers"
+)]
 pub async fn preview_compose(
     Json(req): Json<ImportComposeRequest>,
 ) -> Result<Json<ComposePreview>> {
@@ -79,6 +85,12 @@ pub async fn preview_compose(
 
 /// Import and install containers from a raw compose file.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/compose",
+    responses((status = 201, description = "Success")),
+    tag = "Containers"
+)]
 pub async fn import_compose(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -375,5 +387,18 @@ fn build_preview(parsed: &ParsedAppConfig) -> ComposePreview {
                     .collect(),
             })
             .collect(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
     }
 }

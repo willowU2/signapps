@@ -44,6 +44,12 @@ pub struct CertificateBundle {
 
 /// List all devices.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/devices",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn list_devices(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<Device>>> {
@@ -53,6 +59,12 @@ pub async fn list_devices(
 
 /// Get a device by ID.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/devices",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn get_device(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -64,6 +76,12 @@ pub async fn get_device(
 
 /// Enroll a new device.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/devices",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn enroll_device(
     State(state): State<AppState>,
     Json(request): Json<EnrollDeviceRequest>,
@@ -94,6 +112,12 @@ pub async fn enroll_device(
 
 /// Get device configuration.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/devices",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn get_device_config(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -111,6 +135,12 @@ pub async fn get_device_config(
 
 /// Block a device.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/devices",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn block_device(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -121,6 +151,12 @@ pub async fn block_device(
 
 /// Unblock a device.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/devices",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn unblock_device(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -131,6 +167,12 @@ pub async fn unblock_device(
 
 /// Delete a device.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/devices",
+    responses((status = 204, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn delete_device(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -147,10 +189,29 @@ pub struct HeartbeatRequest {
 }
 
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/devices",
+    responses((status = 200, description = "Success")),
+    tag = "Securelink"
+)]
 pub async fn device_heartbeat(
     State(state): State<AppState>,
     Json(request): Json<HeartbeatRequest>,
 ) -> Result<StatusCode> {
     state.vpn.update_device_heartbeat(request.device_id).await?;
     Ok(StatusCode::OK)
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

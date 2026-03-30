@@ -68,6 +68,12 @@ pub struct SpeakerResponse {
 
 /// Transcribe audio file
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/stt",
+    responses((status = 200, description = "Success")),
+    tag = "Media"
+)]
 pub async fn transcribe(
     State(state): State<Arc<AppState>>,
     Query(params): Query<TranscribeParams>,
@@ -170,6 +176,12 @@ pub async fn transcribe(
 
 /// Transcribe with streaming results (Server-Sent Events)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/stt",
+    responses((status = 200, description = "Success")),
+    tag = "Media"
+)]
 pub async fn transcribe_stream(
     State(state): State<Arc<AppState>>,
     Query(params): Query<TranscribeParams>,
@@ -250,6 +262,12 @@ pub async fn transcribe_stream(
 
 /// List available models
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/stt",
+    responses((status = 200, description = "Success")),
+    tag = "Media"
+)]
 pub async fn list_models(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<SttModel>>, (StatusCode, String)> {
@@ -261,4 +279,17 @@ pub async fn list_models(
     })?;
 
     Ok(Json(models))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

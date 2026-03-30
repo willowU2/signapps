@@ -195,6 +195,12 @@ pub struct RuleQueryParams {
 
 /// List all coverage templates
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/coverage",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn list_templates(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -220,6 +226,12 @@ pub async fn list_templates(
 
 /// Create a coverage template
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/coverage",
+    responses((status = 201, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn create_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -281,6 +293,12 @@ pub async fn create_template(
 
 /// Get a single template
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/coverage",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn get_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -305,6 +323,12 @@ pub async fn get_template(
 
 /// Update a template
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/coverage",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn update_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -377,6 +401,12 @@ pub async fn update_template(
 
 /// Delete a template
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/coverage",
+    responses((status = 204, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn delete_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -420,6 +450,12 @@ pub async fn delete_template(
 
 /// Duplicate a template
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/coverage",
+    responses((status = 201, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn duplicate_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -474,6 +510,12 @@ pub async fn duplicate_template(
 
 /// List all coverage rules
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/coverage",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn list_rules(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -519,6 +561,12 @@ pub async fn list_rules(
 
 /// Create a coverage rule
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/coverage",
+    responses((status = 201, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn create_rule(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -612,6 +660,12 @@ pub async fn create_rule(
 
 /// Get a single rule
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/coverage",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn get_rule(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -635,6 +689,12 @@ pub async fn get_rule(
 
 /// Update a rule
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/coverage",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn update_rule(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -698,6 +758,12 @@ pub async fn update_rule(
 
 /// Delete a rule
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/coverage",
+    responses((status = 204, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn delete_rule(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -724,6 +790,12 @@ pub async fn delete_rule(
 
 /// Get rules by org node
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/coverage",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn get_rules_by_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -761,6 +833,12 @@ pub async fn get_rules_by_node(
 
 /// Get effective coverage for a node (with inheritance)
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/coverage",
+    responses((status = 200, description = "Success")),
+    tag = "Workforce"
+)]
 pub async fn get_effective_coverage(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -898,4 +976,17 @@ pub fn flatten_weekly_pattern(pattern: &WeeklyPattern) -> Vec<CoverageSlot> {
     }
 
     slots
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

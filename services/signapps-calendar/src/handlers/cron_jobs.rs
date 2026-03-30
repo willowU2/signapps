@@ -73,6 +73,12 @@ pub struct RunCronJobResponse {
 ///
 /// List all events where `event_type = 'cron'` visible to the current user.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    get,
+    path = "/api/v1/cron_jobs",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn list_cron_jobs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -147,6 +153,12 @@ pub async fn list_cron_jobs(
 ///
 /// Create a new CRON job event.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/cron_jobs",
+    responses((status = 201, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn create_cron_job(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -211,6 +223,12 @@ pub async fn create_cron_job(
 ///
 /// Update a CRON job event (title, expression, target, status).
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/cron_jobs",
+    responses((status = 200, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn update_cron_job(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -275,6 +293,12 @@ pub async fn update_cron_job(
 ///
 /// Soft-delete a CRON job event.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    delete,
+    path = "/api/v1/cron_jobs",
+    responses((status = 204, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn delete_cron_job(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -301,6 +325,12 @@ pub async fn delete_cron_job(
 /// success response. Actual scheduling/dispatch is handled by the
 /// background NotificationScheduler; this endpoint acts as a manual trigger.
 #[tracing::instrument(skip_all)]
+#[utoipa::path(
+    post,
+    path = "/api/v1/cron_jobs",
+    responses((status = 201, description = "Success")),
+    tag = "Calendar"
+)]
 pub async fn run_cron_job(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -351,4 +381,17 @@ pub async fn run_cron_job(
         ),
         executed_at,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }

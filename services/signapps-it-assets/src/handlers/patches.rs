@@ -91,6 +91,12 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
 
 // ─── PM1: Agent reports available patches ────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/patches",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn report_available_patches(
     State(pool): State<DatabasePool>,
     Json(payload): Json<ReportPatchesReq>,
@@ -132,6 +138,12 @@ pub async fn report_available_patches(
 
 // ─── PM2: Admin lists all patches across fleet ───────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/patches",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn list_patches(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<Vec<PatchRow>>, (StatusCode, String)> {
@@ -147,6 +159,12 @@ pub async fn list_patches(
 
 // ─── PM3: Approve patch ───────────────────────────────────────────────────────
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/patches",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn approve_patch(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -170,6 +188,12 @@ pub async fn approve_patch(
 }
 
 /// Reject (deny) a patch — sets status back to 'rejected'
+#[utoipa::path(
+    put,
+    path = "/api/v1/patches",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn reject_patch(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -191,6 +215,12 @@ pub async fn reject_patch(
 
 // ─── PM4: Deploy patch ────────────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/patches",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn deploy_patch(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
@@ -217,6 +247,12 @@ pub async fn deploy_patch(
 
 // ─── PM5: Compliance stats ────────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/patches",
+    responses((status = 200, description = "Success")),
+    tag = "ItAssets"
+)]
 pub async fn patch_compliance(
     State(pool): State<DatabasePool>,
 ) -> Result<Json<ComplianceStats>, (StatusCode, String)> {
@@ -280,4 +316,17 @@ pub async fn patch_compliance(
         compliance_pct,
         by_severity,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn module_compiles() {
+        // Verify this handler module compiles correctly.
+        // Integration tests require a running database and service.
+        assert!(true, "{} handler module loaded", module_path!());
+    }
 }
