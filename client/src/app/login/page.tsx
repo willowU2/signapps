@@ -18,6 +18,7 @@ import { LdapLoginDialog } from '@/components/auth/ldap-login-dialog';
 import { parseApiError } from '@/lib/errors';
 import { logActivity } from '@/hooks/use-activity-tracker';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { AppLogo } from '@/components/layout/app-logo';
 
 const loginSchema = z.object({
   username: z.string().min(1, "Le nom d'utilisateur est requis"),
@@ -193,8 +194,8 @@ export default function LoginPage() {
     >
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary">
-            <span className="text-2xl font-bold text-primary-foreground">S</span>
+          <div className="mx-auto mb-4">
+            <AppLogo size="lg" />
           </div>
           <CardTitle className="text-2xl">Bon retour</CardTitle>
           <CardDescription>Connectez-vous à votre compte SignApps</CardDescription>

@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
+import { AppLogo } from '@/components/layout/app-logo';
 import { cn } from '@/lib/utils';
 import { useUIStore, useLabelsStore, usePinnedAppsStore, type AppPin, type PinFolder } from '@/lib/store';
+import { Pin } from 'lucide-react';
 import { useSidebarBadges } from '@/hooks/use-sidebar-badges';
 import {
   LayoutDashboard, Mail, CheckSquare, HardDrive, Calendar,
@@ -57,13 +59,29 @@ const labelColors = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { sidebarCollapsed, toggleSidebar } = useUIStore();
+  const { sidebarCollapsed, sidebarPinned, toggleSidebar, setSidebarCollapsed, setSidebarPinned } = useUIStore();
   const { labels, addLabel, removeLabel } = useLabelsStore();
   const { data: badges } = useSidebarBadges();
   const { pinnedApps, pinApp, unpinApp, reorderPinnedApps, folders, createFolder, deleteFolder, toggleFolder, moveToFolder, renameFolder } = usePinnedAppsStore();
   const [newFolderName, setNewFolderName] = useState('');
   const [renamingFolder, setRenamingFolder] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+
+  // Hover-to-expand: only when not pinned
+  const [hoverExpanded, setHoverExpanded] = useState(false);
+  const isExpanded = !sidebarCollapsed || hoverExpanded;
+
+  const handleMouseEnter = () => {
+    if (!sidebarPinned && sidebarCollapsed) {
+      setHoverExpanded(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!sidebarPinned) {
+      setHoverExpanded(false);
+    }
+  };
 
   const [nouveauOpen, setNouveauOpen] = useState(false);
   const [addLabelOpen, setAddLabelOpen] = useState(false);
@@ -162,14 +180,14 @@ export function Sidebar() {
         data-active={isActive}
         className={cn(
           'sidebar-indicator flex items-center gap-4 py-2.5 min-h-[44px] text-sm font-medium transition-all duration-150',
-          sidebarCollapsed ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6',
+          !isExpanded ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6',
           isActive
             ? 'bg-accent text-accent-foreground font-semibold'
             : 'text-sidebar-foreground hover:bg-muted active:scale-[0.98]'
         )}
       >
         <Icon className={cn('h-5 w-5 shrink-0', isActive ? 'text-accent-foreground' : item.color || 'text-muted-foreground')} />
-        {!sidebarCollapsed && (
+        {isExpanded && (
           <>
             <span className="flex-1">{item.label}</span>
             {badgeValue !== undefined && badgeValue > 0 && (
@@ -182,7 +200,7 @@ export function Sidebar() {
       </Link>
     );
 
-    if (sidebarCollapsed) {
+    if (!isExpanded) {
       return (
         <Tooltip key={item.href}>
           <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
@@ -209,7 +227,7 @@ export function Sidebar() {
           setContextMenu({ href: safeHref, x: e.clientX, y: e.clientY });
         }}
       >
-        {!sidebarCollapsed && (
+        {isExpanded && (
           <span className="absolute left-1 z-10 cursor-grab text-muted-foreground/30 opacity-0 transition-opacity group-hover:opacity-100">
             <GripVertical className="h-3 w-3" />
           </span>
@@ -220,16 +238,16 @@ export function Sidebar() {
           data-active={isActive}
           className={cn(
             'sidebar-indicator flex flex-1 items-center gap-4 py-2.5 min-h-[44px] text-sm font-medium transition-all duration-150',
-            sidebarCollapsed ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6 pl-5',
+            !isExpanded ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6 pl-5',
             isActive
               ? 'bg-accent text-accent-foreground font-semibold'
               : 'text-sidebar-foreground hover:bg-muted active:scale-[0.98]'
           )}
         >
           <DynIcon name={app.icon} className={cn('h-5 w-5 shrink-0', isActive ? 'text-accent-foreground' : app.color || 'text-muted-foreground')} />
-          {!sidebarCollapsed && <span className="flex-1 truncate">{app.label}</span>}
+          {isExpanded && <span className="flex-1 truncate">{app.label}</span>}
         </Link>
-        {!sidebarCollapsed && (
+        {isExpanded && (
           <button
             onClick={() => unpinApp(app.href)}
             className="absolute right-2 shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
@@ -241,7 +259,7 @@ export function Sidebar() {
       </div>
     );
 
-    if (sidebarCollapsed) {
+    if (!isExpanded) {
       return (
         <Tooltip key={app.href}>
           <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
@@ -264,16 +282,58 @@ export function Sidebar() {
         className={cn(
           'fixed top-0 left-0 bottom-0 z-50 flex h-full flex-col bg-sidebar py-4 transition-all duration-200 border-r',
           isDragOver ? 'border-primary/60 shadow-[inset_0_0_0_2px_hsl(var(--primary)/0.4)]' : 'border-sidebar-border',
-          sidebarCollapsed ? 'w-16' : 'w-64 pr-4',
+          !isExpanded ? 'w-16' : 'w-64 pr-4',
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
+        {/* Brand Logo */}
+        <div className={cn('mb-3 flex items-center', isExpanded ? 'px-6 gap-3' : 'justify-center px-2')}>
+          <Link href="/dashboard">
+            <AppLogo size={isExpanded ? 'md' : 'sm'} showText={isExpanded} />
+          </Link>
+        </div>
+
+        {/* Header row: collapse toggle + pin */}
+        <div className={cn('mb-2 flex items-center', isExpanded ? 'px-4 justify-between' : 'px-2 justify-center flex-col gap-1')}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={toggleSidebar}
+                className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                title={sidebarCollapsed ? 'Développer' : 'Réduire'}
+              >
+                {sidebarCollapsed
+                  ? <LucideIcons.PanelLeftOpen className="h-4 w-4" />
+                  : <LucideIcons.PanelLeftClose className="h-4 w-4" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{sidebarCollapsed ? 'Développer' : 'Réduire'}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setSidebarPinned(!sidebarPinned)}
+                className={cn(
+                  'rounded-lg p-1.5 transition-colors hover:bg-muted',
+                  sidebarPinned ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                )}
+                title={sidebarPinned ? 'Désépingler la barre' : 'Épingler la barre'}
+              >
+                <Pin className={cn('h-4 w-4', sidebarPinned && 'fill-primary')} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{sidebarPinned ? 'Désépingler' : 'Épingler'}</TooltipContent>
+          </Tooltip>
+        </div>
+
         {/* Nouveau Button */}
-        <div className={cn('mb-4', sidebarCollapsed ? 'px-2' : 'px-4')}>
-          {sidebarCollapsed ? (
+        <div className={cn('mb-4', !isExpanded ? 'px-2' : 'px-4')}>
+          {!isExpanded ? (
             <Popover open={nouveauOpen} onOpenChange={setNouveauOpen}>
               <PopoverTrigger asChild>
                 <button className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-card google-shadow google-shadow-hover transition-all" title="Nouveau">
@@ -317,7 +377,7 @@ export function Sidebar() {
           {essentialNavItems.map((item) => renderNavLink(item))}
 
           {/* Dynamic Drop Zone Hint for Pinned items */}
-          {isDragOver && !sidebarCollapsed && (
+          {isDragOver && isExpanded && (
             <div className="mx-4 my-3 pointer-events-none flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 p-4 text-center text-sm font-medium text-primary shadow-sm animate-in zoom-in-95 duration-200">
               <div className="p-3 bg-primary/10 rounded-full animate-pulse">
                 <LucideIcons.Pin className="h-5 w-5 text-primary" />
@@ -332,7 +392,7 @@ export function Sidebar() {
           {/* Pinned section with folders */}
           {(pinnedApps.length > 0 || folders.length > 0) && (
             <>
-              {!sidebarCollapsed && (
+              {isExpanded && (
                 <div className="mx-4 mt-3 mb-1 border-t border-sidebar-border pt-3">
                   <div className="flex items-center justify-between px-2">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Épinglés</p>
@@ -364,7 +424,7 @@ export function Sidebar() {
                   </div>
                 </div>
               )}
-              {sidebarCollapsed && <div className="mx-4 mt-2 mb-1 border-t border-sidebar-border" />}
+              {!isExpanded && <div className="mx-4 mt-2 mb-1 border-t border-sidebar-border" />}
 
               {/* Root-level pinned items (no folder) */}
               {pinnedApps.filter(a => !a.folderId).map((app, i) => renderPinnedItem(app, i))}
@@ -374,7 +434,7 @@ export function Sidebar() {
                 const folderApps = pinnedApps.filter(a => a.folderId === folder.id);
                 const subFolders = folders.filter(f => f.parentId === folder.id);
 
-                if (sidebarCollapsed) {
+                if (!isExpanded) {
                   return folderApps.map((app, i) => renderPinnedItem(app, i));
                 }
 
@@ -480,7 +540,7 @@ export function Sidebar() {
           )}
 
           {/* Drop hint when sidebar has no pins */}
-          {pinnedApps.length === 0 && folders.length === 0 && !sidebarCollapsed && (
+          {pinnedApps.length === 0 && folders.length === 0 && isExpanded && (
             <div className="mx-4 mt-3 border-t border-sidebar-border pt-3">
               <p className="px-2 text-[10px] text-muted-foreground/50 leading-relaxed">
                 Glissez une app depuis le dashboard pour l&apos;épingler ici
@@ -489,7 +549,7 @@ export function Sidebar() {
           )}
 
           {/* Labels */}
-          {!sidebarCollapsed && (
+          {isExpanded && (
             <div className="mx-4 mt-4 border-t border-sidebar-border pt-4">
               <div className="mb-2 flex items-center justify-between px-2">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Labels</h3>
@@ -531,9 +591,9 @@ export function Sidebar() {
         {/* Version footer */}
         <div className={cn(
           'mt-auto pt-2 border-t border-sidebar-border text-[10px] text-muted-foreground/60',
-          sidebarCollapsed ? 'text-center px-1' : 'px-6'
+          !isExpanded ? 'text-center px-1' : 'px-6'
         )}>
-          {sidebarCollapsed ? 'v0.1' : 'SignApps v0.1.0'}
+          {!isExpanded ? 'v0.1' : 'SignApps v0.1.0'}
         </div>
       </aside>
 

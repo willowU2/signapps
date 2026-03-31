@@ -32,6 +32,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { useBrandingStore } from '@/stores/branding-store';
 
 // ─── General Settings ───────────────────────────────────────────────
 interface GeneralSettings {
@@ -199,8 +200,14 @@ export default function AdminSettingsPage() {
   const [email, setEmail] = useState<EmailSettings>(defaultEmail);
   const [storage, setStorage] = useState<StorageSettings>(defaultStorage);
   const [integrations, setIntegrations] = useState<IntegrationSettings>(defaultIntegrations);
+  const { setLogoUrl, setAppName } = useBrandingStore();
 
   const handleSave = (section: string) => {
+    // Persist branding when general settings are saved
+    if (section === 'Paramètres généraux') {
+      setLogoUrl(general.logoUrl || null);
+      setAppName(general.platformName || 'SignApps');
+    }
     toast.success(`${section} sauvegardé avec succès`);
   };
 

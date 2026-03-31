@@ -2,6 +2,7 @@
 
 import { LanguageSwitcher } from '@/components/i18n/language-switcher';
 function LanguageSwitcherCompact() { return <LanguageSwitcher compact />; }
+import { AppLogo } from '@/components/layout/app-logo';
 
 import { useAuthStore, useUIStore } from '@/lib/store';
 import { useTenantStore } from '@/stores/tenant-store';
@@ -370,6 +371,13 @@ export function GlobalHeader() {
                     <TooltipContent side="bottom">Basculer le menu latéral</TooltipContent>
                 </Tooltip>
                 </TooltipProvider>
+
+                {/* Brand logo — visible in header only when sidebar is collapsed */}
+                {mounted && sidebarCollapsed && (
+                    <Link href="/dashboard" className="hidden lg:flex">
+                        <AppLogo size="sm" />
+                    </Link>
+                )}
 
                         {/* AQ-SHWK: Workspace switcher */}
                 <WorkspaceSwitcher />
