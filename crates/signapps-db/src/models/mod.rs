@@ -10,6 +10,7 @@ pub mod conversation;
 pub mod device;
 pub mod document_vector;
 pub mod drive;
+pub mod drive_acl;
 pub mod entity_reference;
 pub mod external_sync;
 pub mod form;

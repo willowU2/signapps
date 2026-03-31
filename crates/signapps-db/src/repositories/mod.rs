@@ -104,4 +104,9 @@ pub use conversation_repository::ConversationRepository;
 pub mod generated_media_repository;
 pub use generated_media_repository::GeneratedMediaRepository;
 
+pub mod drive_acl_repository;
+pub use drive_acl_repository::{
+    AclRepository, AuditAlertConfigRepository, DriveAuditLogRepository,
+};
+
 pub mod test_helpers;

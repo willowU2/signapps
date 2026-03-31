@@ -17,6 +17,7 @@ use tower_http::cors::{AllowOrigin, CorsLayer};
 
 mod handlers;
 mod jobs;
+mod services;
 mod storage;
 
 use handlers::{
