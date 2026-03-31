@@ -1449,7 +1449,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             toast.success(`Import terminé : ${importResult.totalCells.toLocaleString('fr-FR')} cellules, ${sheetLabel}`, { duration: 5000 });
         } catch(err) {
             console.error('Import error:', err);
-            toast.error("Erreur d'importation: " + (err instanceof Error ? err.message : 'Format invalide'));
+            toast.error("Une erreur est survenue. Réessayez.");
         }
         e.target.value = ''
     }, [doc, setActiveSheetIndex])
@@ -1630,7 +1630,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         } catch(err: any) {
             console.error("Erreur enregistrement spreadsheet", err);
             setSaveStatus('unsaved');
-            toast.error("Erreur d'enregistrement: " + err.message, { id: tId });
+            toast.error("Une erreur est survenue. Réessayez.", { id: tId });
         }
     }, [buildFullWorkbook, documentName, documentId, data]);
 

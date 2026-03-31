@@ -147,8 +147,8 @@ export function MigrationWizard() {
       const data: MigrationJob = await res.json();
       setJob(data);
       toast.success("Migration démarrée avec succès");
-    } catch (e) {
-      toast.error((e as Error).message);
+    } catch {
+      toast.error("Une erreur est survenue. Réessayez.");
     } finally {
       setIsSubmitting(false);
     }

@@ -158,9 +158,9 @@ function SpreadsheetsTab() {
       setImportedData(result);
       setImportStatus('success');
       toast.success('Spreadsheet imported successfully');
-    } catch (err: any) {
+    } catch {
       setImportStatus('error');
-      toast.error(`Import failed: ${err.message}`);
+      toast.error("Une erreur est survenue. Réessayez.");
     }
   };
 
@@ -176,9 +176,9 @@ function SpreadsheetsTab() {
       triggerDownload(blob as Blob, `export.${exportFormat}`);
       setExportStatus('success');
       toast.success(`Exported as ${exportFormat.toUpperCase()}`);
-    } catch (err: any) {
+    } catch {
       setExportStatus('error');
-      toast.error(`Export failed: ${err.message}`);
+      toast.error("Une erreur est survenue. Réessayez.");
     }
   };
 
@@ -286,9 +286,9 @@ function PdfToolsTab() {
       setExtractedText(result.text ?? JSON.stringify(result));
       setExtractStatus('success');
       toast.success('Text extracted');
-    } catch (err: any) {
+    } catch {
       setExtractStatus('error');
-      toast.error(`Extract failed: ${err.message}`);
+      toast.error("Une erreur est survenue. Réessayez.");
     }
   };
 
@@ -308,9 +308,9 @@ function PdfToolsTab() {
       triggerDownload(blob as Blob, 'merged.pdf');
       setMergeStatus('success');
       toast.success('PDFs merged and downloaded');
-    } catch (err: any) {
+    } catch {
       setMergeStatus('error');
-      toast.error(`Merge failed: ${err.message}`);
+      toast.error("Une erreur est survenue. Réessayez.");
     }
   };
 
@@ -325,9 +325,9 @@ function PdfToolsTab() {
       triggerDownload(blob as Blob, 'split.zip');
       setSplitStatus('success');
       toast.success('PDF split — ZIP downloaded');
-    } catch (err: any) {
+    } catch {
       setSplitStatus('error');
-      toast.error(`Split failed: ${err.message}`);
+      toast.error("Une erreur est survenue. Réessayez.");
     }
   };
 
@@ -342,9 +342,9 @@ function PdfToolsTab() {
       setPageInfo(result);
       setInfoStatus('success');
       toast.success('Page info retrieved');
-    } catch (err: any) {
+    } catch {
       setInfoStatus('error');
-      toast.error(`Info failed: ${err.message}`);
+      toast.error("Une erreur est survenue. Réessayez.");
     }
   };
 
@@ -557,9 +557,9 @@ function PresentationsTab() {
       triggerDownload(blob, `${title.replace(/\s+/g, '_')}.${ext}`);
       setStatus('success');
       toast.success(`Exported as ${format.toUpperCase()}`);
-    } catch (err: any) {
+    } catch {
       setStatus('error');
-      toast.error(`Export failed: ${err.message}`);
+      toast.error("Une erreur est survenue. Réessayez.");
     }
   };
 

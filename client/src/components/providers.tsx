@@ -14,6 +14,7 @@ import { TenantProvider } from '@/lib/tenant';
 import { PreferencesProvider } from '@/lib/preferences';
 import { AccessibilityProvider } from '@/components/accessibility/a11y-provider';
 
+import { ErrorBoundary } from '@/components/error-boundary';
 import { NotificationPermissionDialog } from '@/components/notifications/notification-permission-dialog';
 import { CommandBar } from '@/components/layout/command-bar';
 import { FloatingActionButton } from '@/components/layout/floating-action-button';
@@ -94,6 +95,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         disableTransitionOnChange
       >
         <TooltipProvider>
+          <ErrorBoundary>
           <Suspense fallback={<LoadingFallback />}>
             <AuthProvider>
               <TenantProvider>
@@ -127,6 +129,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               </TenantProvider>
             </AuthProvider>
           </Suspense>
+          </ErrorBoundary>
           <Toaster />
           <NotificationPermissionDialog />
         </TooltipProvider>

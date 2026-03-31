@@ -638,6 +638,9 @@ const Editor = ({
     // IDEA-012: Suggestion mode
     const [suggestionModeActive, setSuggestionModeActive] = useState(false);
 
+    // Footer status bar collapsed by default
+    const [footerOpen, setFooterOpen] = useState(false);
+
     // Google Fonts API Integration Hook
     const [availableFonts, setAvailableFonts] = useState<string[]>(['Inter', 'Arial', 'Times New Roman', 'Georgia', 'Verdana', 'Courier New', 'Comic Sans MS']);
     
@@ -1576,7 +1579,7 @@ ${html}
             });
         } catch (err: any) {
             console.error("Erreur enregistrement docx", err);
-            toast.error("Erreur d'enregistrement: " + err.message, {
+            toast.error("Une erreur est survenue. Réessayez.", {
                 id: tId
             });
         }
@@ -3238,66 +3241,77 @@ ${html}
             </Dialog>
 
             {/* Global Character/Word Count Status Bar — IDEA-002 + IDEA-003 */}
-            <div className="flex-none flex items-center justify-between px-4 py-1.5 text-xs text-muted-foreground dark:text-gray-400 bg-card dark:bg-[#202124] border-t border-border dark:border-gray-800 shadow-[0_-1px_3px_rgba(0,0,0,0.02)] z-10 w-full relative">
-                <div className="flex items-center gap-3">
-                    <OfflineIndicator />
-                    <AutoSaveIndicator status={saveStatus} />
-                </div>
-                <div className="flex items-center gap-4">
-                    {/* Word count + goal */}
-                    <button
-                        onClick={() => { setWordGoalInput(wordGoal ? String(wordGoal) : ''); setShowWordGoalDialog(true); }}
-                        className="flex items-center gap-1.5 hover:text-muted-foreground dark:hover:text-gray-200 transition-colors"
-                        title="Définir un objectif de mots"
-                    >
-                        <Target className="w-3 h-3" />
-                        <span>
-                            {(() => {
+            <div className="flex-none relative w-full">
+                {/* Collapsible footer content */}
+                <div className={`flex items-center justify-between px-4 text-xs text-muted-foreground dark:text-gray-400 bg-card dark:bg-[#202124] border-t border-border dark:border-gray-800 shadow-[0_-1px_3px_rgba(0,0,0,0.02)] z-10 w-full overflow-hidden transition-all duration-200 ${footerOpen ? 'max-h-10 py-1.5' : 'max-h-0 py-0'}`}>
+                    <div className="flex items-center gap-3">
+                        <OfflineIndicator />
+                        <AutoSaveIndicator status={saveStatus} />
+                    </div>
+                    <div className="flex items-center gap-4">
+                        {/* Word count + goal */}
+                        <button
+                            onClick={() => { setWordGoalInput(wordGoal ? String(wordGoal) : ''); setShowWordGoalDialog(true); }}
+                            className="flex items-center gap-1.5 hover:text-muted-foreground dark:hover:text-gray-200 transition-colors"
+                            title="Définir un objectif de mots"
+                        >
+                            <Target className="w-3 h-3" />
+                            <span>
+                                {(() => {
+                                    const words = editor.storage.characterCount?.words() || 0;
+                                    if (wordGoal) {
+                                        const pct = Math.min(100, Math.round((words / wordGoal) * 100));
+                                        return `${words} / ${wordGoal} mots (${pct}%)`;
+                                    }
+                                    return `${words} mots`;
+                                })()}
+                            </span>
+                            {wordGoal && (() => {
                                 const words = editor.storage.characterCount?.words() || 0;
-                                if (wordGoal) {
-                                    const pct = Math.min(100, Math.round((words / wordGoal) * 100));
-                                    return `${words} / ${wordGoal} mots (${pct}%)`;
-                                }
-                                return `${words} mots`;
+                                const pct = Math.min(100, (words / wordGoal) * 100);
+                                return (
+                                    <div className="w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full rounded-full transition-all ${pct >= 100 ? 'bg-green-500' : 'bg-blue-500'}`}
+                                            style={{ width: `${pct}%` }}
+                                        />
+                                    </div>
+                                );
                             })()}
+                        </button>
+                        {/* Reading time — IDEA-003 */}
+                        <span className="flex items-center gap-1" title="Temps de lecture estimé">
+                            <Clock className="w-3 h-3" />
+                            ~{Math.max(1, Math.ceil((editor.storage.characterCount?.words() || 0) / 200))} min
                         </span>
-                        {wordGoal && (() => {
-                            const words = editor.storage.characterCount?.words() || 0;
-                            const pct = Math.min(100, (words / wordGoal) * 100);
-                            return (
-                                <div className="w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                    <div
-                                        className={`h-full rounded-full transition-all ${pct >= 100 ? 'bg-green-500' : 'bg-blue-500'}`}
-                                        style={{ width: `${pct}%` }}
-                                    />
-                                </div>
-                            );
-                        })()}
-                    </button>
-                    {/* Reading time — IDEA-003 */}
-                    <span className="flex items-center gap-1" title="Temps de lecture estimé">
-                        <Clock className="w-3 h-3" />
-                        ~{Math.max(1, Math.ceil((editor.storage.characterCount?.words() || 0) / 200))} min
-                    </span>
-                    <span>
-                        {editor.storage.characterCount?.characters() || 0} car.
-                    </span>
-                    {/* IDEA-012: Suggestion mode badge */}
-                    {suggestionModeActive && (
-                        <span className="flex items-center gap-1 text-orange-500 font-medium">
-                            <GitBranch className="w-3 h-3" />
-                            Suggestions
+                        <span>
+                            {editor.storage.characterCount?.characters() || 0} car.
                         </span>
-                    )}
-                    {/* IDEA-001: Focus mode toggle in status bar */}
-                    <button
-                        onClick={() => setIsFocusMode(prev => !prev)}
-                        className="flex items-center gap-1 hover:text-muted-foreground dark:hover:text-gray-200 transition-colors"
-                        title="Mode focus (F11)"
-                    >
-                        {isFocusMode ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
-                    </button>
+                        {/* IDEA-012: Suggestion mode badge */}
+                        {suggestionModeActive && (
+                            <span className="flex items-center gap-1 text-orange-500 font-medium">
+                                <GitBranch className="w-3 h-3" />
+                                Suggestions
+                            </span>
+                        )}
+                        {/* IDEA-001: Focus mode toggle in status bar */}
+                        <button
+                            onClick={() => setIsFocusMode(prev => !prev)}
+                            className="flex items-center gap-1 hover:text-muted-foreground dark:hover:text-gray-200 transition-colors"
+                            title="Mode focus (F11)"
+                        >
+                            {isFocusMode ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+                        </button>
+                    </div>
                 </div>
+                {/* Toggle button */}
+                <button
+                    onClick={() => setFooterOpen(prev => !prev)}
+                    className="absolute bottom-0 right-4 px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground bg-card dark:bg-[#202124] border border-b-0 border-border dark:border-gray-800 rounded-t z-20"
+                    title={footerOpen ? "Masquer la barre d'état" : "Afficher la barre d'état"}
+                >
+                    {footerOpen ? '▼' : '▲'} {footerOpen ? 'Masquer' : "Barre d'état"}
+                </button>
             </div>
 
             {/* Mail Merge Dialog */}

@@ -26,6 +26,9 @@ const IMPERSONATE_BANNER_KEY = 'impersonate_banner';
 
 export function ImpersonateDialog({ user, open, onOpenChange }: ImpersonateDialogProps) {
   const handleConfirm = () => {
+    // SECURITY WARNING: Client-side impersonation only.
+    // Backend does NOT validate impersonation. This is for UI preview only.
+    // TODO: Implement server-side impersonation with audit trail.
     // Store the impersonation context in sessionStorage (clears on tab close)
     sessionStorage.setItem(IMPERSONATE_KEY, user.id);
     sessionStorage.setItem(IMPERSONATE_BANNER_KEY, JSON.stringify({
