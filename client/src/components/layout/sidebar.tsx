@@ -52,6 +52,7 @@ const essentialNavItems = [
   { href: '/admin/org-structure', icon: Building2,  label: 'Structure org',  color: 'text-purple-500', badgeKey: null },
   { href: '/admin/persons',       icon: Users,      label: 'Personnes',      color: 'text-emerald-500', badgeKey: null },
   { href: '/admin/sites',         icon: MapPin,     label: 'Sites',          color: 'text-cyan-500',   badgeKey: null },
+  { href: '/vault',               icon: Shield,     label: 'Coffre-fort',    color: 'text-emerald-500', badgeKey: null },
 ];
 
 const labelColors = [
