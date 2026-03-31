@@ -52,7 +52,21 @@ pub async fn oauth_authorize(
     // Generate CSRF state token
     let state_token = Uuid::new_v4().to_string();
 
-    // Store state token in DB (expires after 10 min)
+    // Auto-create oauth_states table if not exists
+    let _ = sqlx::query(
+        "CREATE TABLE IF NOT EXISTS social.oauth_states (
+            state VARCHAR(100) PRIMARY KEY,
+            user_id UUID NOT NULL,
+            platform VARCHAR(20) NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )"
+    ).execute(&state.pool).await;
+
+    // Clean up expired tokens (older than 10 min)
+    let _ = sqlx::query("DELETE FROM social.oauth_states WHERE created_at < NOW() - INTERVAL '10 minutes'")
+        .execute(&state.pool).await;
+
+    // Store state token
     let stored = sqlx::query(
         "INSERT INTO social.oauth_states (state, user_id, platform, created_at)
          VALUES ($1, $2, $3, NOW())",
@@ -67,9 +81,26 @@ pub async fn oauth_authorize(
         tracing::error!("oauth_authorize store state: {e}");
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({ "error": "Failed to initiate OAuth flow" })),
+            Json(json!({ "error": format!("Failed to store OAuth state: {e}") })),
         )
             .into_response();
+    }
+
+    // Check that the platform client_id is configured
+    let env_key = match platform.as_str() {
+        "twitter" => "TWITTER_CLIENT_ID",
+        "linkedin" => "LINKEDIN_CLIENT_ID",
+        "facebook" | "instagram" => "FACEBOOK_CLIENT_ID",
+        "mastodon" => "MASTODON_CLIENT_ID",
+        _ => "",
+    };
+    if !env_key.is_empty() {
+        if std::env::var(env_key).unwrap_or_default().is_empty() {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "error": format!("OAuth non configure: definissez {} dans les variables d'environnement du service social", env_key) })),
+            ).into_response();
+        }
     }
 
     let redirect_url = match platform.as_str() {
