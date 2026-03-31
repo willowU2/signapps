@@ -3,17 +3,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-/// Represents the type of a node in the drive
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, sqlx::Type)]
-#[serde(rename_all = "lowercase")]
-#[sqlx(type_name = "node_type", rename_all = "lowercase")]
-pub enum NodeType {
-    Folder,
-    File,
-    Document,
-    Spreadsheet,
-    Presentation,
-}
+/// Represents the type of a node in the drive.
+/// Stored as PostgreSQL enum `drive.node_type`.
+/// Using String to avoid sqlx enum decoding issues with schema-qualified types.
+pub type NodeType = String;
 
 /// Represents a node (folder, file, or document) in the virtual file system
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -21,7 +14,7 @@ pub struct DriveNode {
     pub id: Uuid,
     pub parent_id: Option<Uuid>,
     pub name: String,
-    pub node_type: NodeType,
+    pub node_type: String,
     pub target_id: Option<Uuid>,
     pub workspace_id: Option<Uuid>,
     pub owner_id: Uuid,
@@ -51,14 +44,9 @@ pub struct UpdateDriveNodeRequest {
     pub parent_id: Option<Uuid>,
 }
 
-/// Represents a role for drive permissions
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, sqlx::Type)]
-#[sqlx(type_name = "permission_role", rename_all = "lowercase")]
-pub enum PermissionRole {
-    Viewer,
-    Editor,
-    Manager,
-}
+/// Represents a role for drive permissions.
+/// Using String to avoid sqlx enum decoding issues with schema-qualified types.
+pub type PermissionRole = String;
 
 /// Represents a permission grant on a drive node
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -67,7 +55,7 @@ pub struct DrivePermission {
     pub node_id: Uuid,
     pub user_id: Option<Uuid>,
     pub group_id: Option<Uuid>,
-    pub role: PermissionRole,
+    pub role: String,
     pub granted_by: Uuid,
     pub created_at: Option<DateTime<Utc>>,
     pub updated_at: Option<DateTime<Utc>>,
