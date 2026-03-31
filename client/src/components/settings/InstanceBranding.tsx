@@ -9,25 +9,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { getClient, ServiceName } from '@/lib/api/factory';
+import { useBrandingStore } from '@/stores/branding-store';
 
 const client = () => getClient(ServiceName.IDENTITY);
-const LOGO_KEY = 'signapps-instance-logo';
-const NAME_KEY = 'signapps-instance-name';
 
 export function InstanceBranding() {
-  const [instanceName, setInstanceName] = useState('SignApps');
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const { logoUrl, appName, setLogoUrl: setBrandingLogo, setAppName: setBrandingName } = useBrandingStore();
+  const [instanceName, setInstanceName] = useState(appName);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const storedName = localStorage.getItem(NAME_KEY) || 'SignApps';
-    const storedLogo = localStorage.getItem(LOGO_KEY);
-    setInstanceName(storedName);
-    setLogoUrl(storedLogo);
-    // Apply to DOM
-    if (storedName) applyName(storedName);
-  }, []);
+    if (appName) applyName(appName);
+  }, [appName]);
 
   function applyName(name: string) {
     document.title = name;
@@ -37,7 +31,7 @@ export function InstanceBranding() {
   }
 
   const saveName = async () => {
-    localStorage.setItem(NAME_KEY, instanceName);
+    setBrandingName(instanceName);
     applyName(instanceName);
     try {
       await client().patch('/tenant', { name: instanceName });
@@ -53,12 +47,11 @@ export function InstanceBranding() {
 
     setUploading(true);
     try {
-      // Convert to base64 for local storage
+      // Convert to base64 and store in branding store (Zustand persisted)
       const reader = new FileReader();
       reader.onload = (ev) => {
         const dataUrl = ev.target?.result as string;
-        setLogoUrl(dataUrl);
-        localStorage.setItem(LOGO_KEY, dataUrl);
+        setBrandingLogo(dataUrl);
         toast.success('Logo mis à jour');
         setUploading(false);
       };
@@ -76,8 +69,7 @@ export function InstanceBranding() {
   };
 
   const removeLogo = () => {
-    setLogoUrl(null);
-    localStorage.removeItem(LOGO_KEY);
+    setBrandingLogo(null);
     try { client().delete('/tenant/logo'); } catch {}
     toast.success('Logo supprimé');
   };
