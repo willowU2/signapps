@@ -798,6 +798,960 @@ impl ToolRegistry {
             },
         );
 
+        // ── Mail ────────────────────────────────────────────
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "list_emails".into(),
+                description: "List emails in inbox, sent, or a specific folder".into(),
+                service: "mail".into(),
+                method: "GET".into(),
+                path_template: "/emails".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "folder": {"type": "string", "description": "Folder name: inbox|sent|drafts|trash"},
+                        "limit": {"type": "integer", "description": "Max emails to return"},
+                        "search": {"type": "string", "description": "Search query to filter emails"}
+                    }
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "read_email".into(),
+                description: "Read a specific email by ID".into(),
+                service: "mail".into(),
+                method: "GET".into(),
+                path_template: "/emails/{id}".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "Email ID"}
+                    },
+                    "required": ["id"]
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "send_email".into(),
+                description: "Send an email to one or more recipients".into(),
+                service: "mail".into(),
+                method: "POST".into(),
+                path_template: "/emails/send".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "to": {"type": "array", "items": {"type": "string"}, "description": "Recipient email addresses"},
+                        "subject": {"type": "string", "description": "Email subject"},
+                        "body": {"type": "string", "description": "Email body (plain text or HTML)"},
+                        "cc": {"type": "array", "items": {"type": "string"}, "description": "CC addresses"},
+                        "bcc": {"type": "array", "items": {"type": "string"}, "description": "BCC addresses"}
+                    },
+                    "required": ["to", "subject", "body"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "reply_email".into(),
+                description: "Reply to an existing email".into(),
+                service: "mail".into(),
+                method: "POST".into(),
+                path_template: "/emails/{id}/reply".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "Email ID to reply to"},
+                        "body": {"type": "string", "description": "Reply body"}
+                    },
+                    "required": ["id", "body"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "forward_email".into(),
+                description: "Forward an email to other recipients".into(),
+                service: "mail".into(),
+                method: "POST".into(),
+                path_template: "/emails/{id}/forward".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "Email ID to forward"},
+                        "to": {"type": "array", "items": {"type": "string"}, "description": "Recipient email addresses"},
+                        "body": {"type": "string", "description": "Additional message to prepend"}
+                    },
+                    "required": ["id", "to"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "delete_email".into(),
+                description: "Move an email to trash".into(),
+                service: "mail".into(),
+                method: "DELETE".into(),
+                path_template: "/emails/{id}".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "Email ID"}
+                    },
+                    "required": ["id"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "search_emails".into(),
+                description: "Full-text search across all emails".into(),
+                service: "mail".into(),
+                method: "GET".into(),
+                path_template: "/emails/search".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Search query"},
+                        "limit": {"type": "integer", "description": "Max results to return"}
+                    },
+                    "required": ["query"]
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "list_mail_accounts".into(),
+                description: "List configured email accounts".into(),
+                service: "mail".into(),
+                method: "GET".into(),
+                path_template: "/accounts".into(),
+                parameters: json!({}),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+
+        // ── Calendar ─────────────────────────────────────────
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "list_calendars".into(),
+                description: "List all calendars accessible to the current user".into(),
+                service: "calendar".into(),
+                method: "GET".into(),
+                path_template: "/calendars".into(),
+                parameters: json!({}),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "list_events".into(),
+                description: "List calendar events in a date range".into(),
+                service: "calendar".into(),
+                method: "GET".into(),
+                path_template: "/calendars/{calendar_id}/events".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "calendar_id": {"type": "string", "description": "Calendar ID"},
+                        "start": {"type": "string", "description": "Start date (ISO 8601)"},
+                        "end": {"type": "string", "description": "End date (ISO 8601)"}
+                    },
+                    "required": ["calendar_id"]
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "create_event".into(),
+                description: "Create a calendar event or meeting".into(),
+                service: "calendar".into(),
+                method: "POST".into(),
+                path_template: "/calendars/{calendar_id}/events".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "calendar_id": {"type": "string", "description": "Calendar ID"},
+                        "title": {"type": "string", "description": "Event title"},
+                        "start_time": {"type": "string", "description": "Start datetime (ISO 8601)"},
+                        "end_time": {"type": "string", "description": "End datetime (ISO 8601)"},
+                        "description": {"type": "string", "description": "Event description"},
+                        "location": {"type": "string", "description": "Event location"},
+                        "attendees": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Attendee email addresses"
+                        }
+                    },
+                    "required": ["calendar_id", "title", "start_time", "end_time"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "update_event".into(),
+                description: "Update an existing calendar event".into(),
+                service: "calendar".into(),
+                method: "PUT".into(),
+                path_template: "/events/{id}".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "Event ID"},
+                        "title": {"type": "string", "description": "New event title"},
+                        "start_time": {"type": "string", "description": "New start datetime (ISO 8601)"},
+                        "end_time": {"type": "string", "description": "New end datetime (ISO 8601)"},
+                        "description": {"type": "string", "description": "New description"},
+                        "location": {"type": "string", "description": "New location"}
+                    },
+                    "required": ["id"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "delete_event".into(),
+                description: "Delete a calendar event".into(),
+                service: "calendar".into(),
+                method: "DELETE".into(),
+                path_template: "/events/{id}".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "Event ID"}
+                    },
+                    "required": ["id"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "find_free_slots".into(),
+                description: "Find available meeting time slots for a group of participants".into(),
+                service: "calendar".into(),
+                method: "POST".into(),
+                path_template: "/calendar/meeting-suggestions".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "participants": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "User IDs of participants"
+                        },
+                        "duration_minutes": {"type": "integer", "description": "Required meeting duration in minutes"},
+                        "start_date": {"type": "string", "description": "Earliest date to consider (ISO 8601)"},
+                        "end_date": {"type": "string", "description": "Latest date to consider (ISO 8601)"}
+                    },
+                    "required": ["participants", "duration_minutes"]
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "request_leave".into(),
+                description: "Create a leave or absence request on the calendar".into(),
+                service: "calendar".into(),
+                method: "POST".into(),
+                path_template: "/calendars/{calendar_id}/events".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "calendar_id": {"type": "string", "description": "Calendar ID"},
+                        "title": {"type": "string", "description": "Leave request title"},
+                        "start_time": {"type": "string", "description": "Leave start datetime (ISO 8601)"},
+                        "end_time": {"type": "string", "description": "Leave end datetime (ISO 8601)"},
+                        "leave_type": {"type": "string", "description": "Type: cp|rtt|sick|unpaid|other"}
+                    },
+                    "required": ["calendar_id", "title", "start_time", "end_time"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "get_leave_balances".into(),
+                description: "Get leave balances for the current user".into(),
+                service: "calendar".into(),
+                method: "GET".into(),
+                path_template: "/leave/balances".into(),
+                parameters: json!({}),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+
+        // ── Contacts ─────────────────────────────────────────
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "list_contacts".into(),
+                description: "List contacts, optionally filtered by search query".into(),
+                service: "contacts".into(),
+                method: "GET".into(),
+                path_template: "/contacts".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "search": {"type": "string", "description": "Search query to filter contacts"},
+                        "limit": {"type": "integer", "description": "Max contacts to return"}
+                    }
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "get_contact".into(),
+                description: "Get full details of a contact by ID".into(),
+                service: "contacts".into(),
+                method: "GET".into(),
+                path_template: "/contacts/{id}".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "Contact ID"}
+                    },
+                    "required": ["id"]
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "create_contact".into(),
+                description: "Create a new contact".into(),
+                service: "contacts".into(),
+                method: "POST".into(),
+                path_template: "/contacts".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "first_name": {"type": "string", "description": "First name"},
+                        "last_name": {"type": "string", "description": "Last name"},
+                        "email": {"type": "string", "description": "Email address"},
+                        "phone": {"type": "string", "description": "Phone number"},
+                        "company": {"type": "string", "description": "Company name"}
+                    },
+                    "required": ["first_name", "last_name"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "update_contact".into(),
+                description: "Update an existing contact".into(),
+                service: "contacts".into(),
+                method: "PUT".into(),
+                path_template: "/contacts/{id}".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "Contact ID"},
+                        "first_name": {"type": "string", "description": "First name"},
+                        "last_name": {"type": "string", "description": "Last name"},
+                        "email": {"type": "string", "description": "Email address"},
+                        "phone": {"type": "string", "description": "Phone number"},
+                        "company": {"type": "string", "description": "Company name"}
+                    },
+                    "required": ["id"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "search_contacts".into(),
+                description: "Search contacts by name, email, or company".into(),
+                service: "contacts".into(),
+                method: "GET".into(),
+                path_template: "/contacts/search".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Search query"}
+                    },
+                    "required": ["query"]
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+
+        // ── Chat ─────────────────────────────────────────────
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "list_channels".into(),
+                description: "List all chat channels the current user has access to".into(),
+                service: "chat".into(),
+                method: "GET".into(),
+                path_template: "/channels".into(),
+                parameters: json!({}),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "send_message".into(),
+                description: "Send a message to a chat channel".into(),
+                service: "chat".into(),
+                method: "POST".into(),
+                path_template: "/channels/{channel_id}/messages".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "channel_id": {"type": "string", "description": "Channel ID"},
+                        "content": {"type": "string", "description": "Message content"}
+                    },
+                    "required": ["channel_id", "content"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "list_messages".into(),
+                description: "List recent messages in a chat channel".into(),
+                service: "chat".into(),
+                method: "GET".into(),
+                path_template: "/channels/{channel_id}/messages".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "channel_id": {"type": "string", "description": "Channel ID"},
+                        "limit": {"type": "integer", "description": "Max messages to return"}
+                    },
+                    "required": ["channel_id"]
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "create_channel".into(),
+                description: "Create a new chat channel".into(),
+                service: "chat".into(),
+                method: "POST".into(),
+                path_template: "/channels".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Channel name"},
+                        "topic": {"type": "string", "description": "Channel topic"},
+                        "is_private": {"type": "boolean", "description": "Whether the channel is private"}
+                    },
+                    "required": ["name"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "search_messages".into(),
+                description: "Search messages across all chat channels".into(),
+                service: "chat".into(),
+                method: "GET".into(),
+                path_template: "/messages/search".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Search query"}
+                    },
+                    "required": ["query"]
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+
+        // ── Drive / Documents ────────────────────────────────
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "list_documents".into(),
+                description: "List documents and folders in drive root or a specific folder".into(),
+                service: "storage".into(),
+                method: "GET".into(),
+                path_template: "/drive/nodes/root".into(),
+                parameters: json!({}),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "create_document".into(),
+                description: "Create a new document, spreadsheet, presentation, or folder in drive".into(),
+                service: "storage".into(),
+                method: "POST".into(),
+                path_template: "/drive/nodes".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Document or folder name"},
+                        "node_type": {
+                            "type": "string",
+                            "description": "Type: document|folder|spreadsheet|presentation"
+                        },
+                        "parent_id": {"type": "string", "description": "Parent folder ID (omit for root)"}
+                    },
+                    "required": ["name", "node_type"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "search_documents".into(),
+                description: "Search drive documents by name or content".into(),
+                service: "storage".into(),
+                method: "GET".into(),
+                path_template: "/search".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Search query"}
+                    },
+                    "required": ["query"]
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "get_document".into(),
+                description: "Get details and metadata of a drive document or folder".into(),
+                service: "storage".into(),
+                method: "GET".into(),
+                path_template: "/drive/nodes/{id}".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "Node ID"}
+                    },
+                    "required": ["id"]
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "move_document".into(),
+                description: "Move a drive document or folder to another folder".into(),
+                service: "storage".into(),
+                method: "PUT".into(),
+                path_template: "/drive/nodes/{id}".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "Node ID"},
+                        "parent_id": {"type": "string", "description": "Destination folder ID"}
+                    },
+                    "required": ["id", "parent_id"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+
+        // ── Social ───────────────────────────────────────────
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "list_social_accounts".into(),
+                description: "List connected social media accounts".into(),
+                service: "social".into(),
+                method: "GET".into(),
+                path_template: "/social/accounts".into(),
+                parameters: json!({}),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "create_social_post".into(),
+                description: "Create and publish (or schedule) a social media post".into(),
+                service: "social".into(),
+                method: "POST".into(),
+                path_template: "/social/posts".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "content": {"type": "string", "description": "Post content"},
+                        "account_ids": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Account IDs to post to"
+                        },
+                        "scheduled_at": {"type": "string", "description": "Schedule datetime (ISO 8601), omit to post immediately"}
+                    },
+                    "required": ["content"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "list_social_posts".into(),
+                description: "List social media posts by status".into(),
+                service: "social".into(),
+                method: "GET".into(),
+                path_template: "/social/posts".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "status": {"type": "string", "description": "Filter by status: draft|published|scheduled"}
+                    }
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "get_social_analytics".into(),
+                description: "Get social media analytics overview (reach, engagement, followers)".into(),
+                service: "social".into(),
+                method: "GET".into(),
+                path_template: "/social/analytics/overview".into(),
+                parameters: json!({}),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+
+        // ── Notifications ────────────────────────────────────
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "send_notification".into(),
+                description: "Send a push notification to a specific user".into(),
+                service: "notifications".into(),
+                method: "POST".into(),
+                path_template: "/notifications/send".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "user_id": {"type": "string", "description": "Target user ID"},
+                        "title": {"type": "string", "description": "Notification title"},
+                        "body": {"type": "string", "description": "Notification body text"}
+                    },
+                    "required": ["user_id", "title", "body"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "list_notifications".into(),
+                description: "List recent notifications for the current user".into(),
+                service: "notifications".into(),
+                method: "GET".into(),
+                path_template: "/notifications".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "limit": {"type": "integer", "description": "Max notifications to return"}
+                    }
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "mark_notification_read".into(),
+                description: "Mark a notification as read".into(),
+                service: "notifications".into(),
+                method: "PUT".into(),
+                path_template: "/notifications/{id}/read".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "Notification ID"}
+                    },
+                    "required": ["id"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+
+        // ── Billing ──────────────────────────────────────────
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "list_invoices".into(),
+                description: "List invoices, optionally filtered by status".into(),
+                service: "billing".into(),
+                method: "GET".into(),
+                path_template: "/invoices".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "status": {"type": "string", "description": "Filter by status: draft|sent|paid|overdue"}
+                    }
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "create_invoice".into(),
+                description: "Create a new invoice for a client".into(),
+                service: "billing".into(),
+                method: "POST".into(),
+                path_template: "/invoices".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "client_name": {"type": "string", "description": "Client name"},
+                        "items": {
+                            "type": "array",
+                            "description": "Line items",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "description": {"type": "string"},
+                                    "quantity": {"type": "number"},
+                                    "unit_price": {"type": "number"}
+                                }
+                            }
+                        },
+                        "due_date": {"type": "string", "description": "Due date (ISO 8601)"}
+                    },
+                    "required": ["client_name", "items"]
+                }),
+                is_write: true,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "get_billing_stats".into(),
+                description: "Get billing statistics and revenue overview".into(),
+                service: "billing".into(),
+                method: "GET".into(),
+                path_template: "/billing/stats".into(),
+                parameters: json!({}),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+
+        // ── Org Structure ────────────────────────────────────
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "get_orgchart".into(),
+                description: "Get the organizational chart structure".into(),
+                service: "identity".into(),
+                method: "GET".into(),
+                path_template: "/org/orgchart".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "tree_id": {"type": "string", "description": "Org tree ID (omit for default)"},
+                        "date": {"type": "string", "description": "Date to query the chart at (ISO 8601)"}
+                    }
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "list_persons".into(),
+                description: "List persons in the organization (employees, contacts, suppliers)".into(),
+                service: "identity".into(),
+                method: "GET".into(),
+                path_template: "/persons".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "role": {"type": "string", "description": "Filter by role: employee|client_contact|supplier_contact"},
+                        "node_id": {"type": "string", "description": "Filter by org node ID"}
+                    }
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "get_person".into(),
+                description: "Get person details including roles and org assignments".into(),
+                service: "identity".into(),
+                method: "GET".into(),
+                path_template: "/persons/{id}".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "Person ID"}
+                    },
+                    "required": ["id"]
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "get_org_context".into(),
+                description: "Get the current user's organizational context and assignments".into(),
+                service: "identity".into(),
+                method: "GET".into(),
+                path_template: "/org/context".into(),
+                parameters: json!({}),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+
+        // ── Vault ────────────────────────────────────────────
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "search_vault".into(),
+                description: "Search vault items by name (vault must be unlocked first)".into(),
+                service: "identity".into(),
+                method: "GET".into(),
+                path_template: "/vault/items".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "search": {"type": "string", "description": "Search term to filter vault items"}
+                    }
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "generate_password".into(),
+                description: "Generate a secure random password with configurable options".into(),
+                service: "identity".into(),
+                method: "GET".into(),
+                path_template: "/vault/generate-password".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "length": {"type": "integer", "description": "Password length (8-128)"},
+                        "uppercase": {"type": "boolean", "description": "Include uppercase letters"},
+                        "lowercase": {"type": "boolean", "description": "Include lowercase letters"},
+                        "digits": {"type": "boolean", "description": "Include digits"},
+                        "symbols": {"type": "boolean", "description": "Include special symbols"}
+                    }
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+        Self::add(
+            &mut tools,
+            ToolDefinition {
+                name: "get_totp_code".into(),
+                description: "Get the current TOTP 2FA code for a vault item".into(),
+                service: "identity".into(),
+                method: "POST".into(),
+                path_template: "/vault/items/{item_id}/totp".into(),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "item_id": {"type": "string", "description": "Vault item ID"}
+                    },
+                    "required": ["item_id"]
+                }),
+                is_write: false,
+                min_role: 0,
+            },
+        );
+
         Self { tools }
     }
 
