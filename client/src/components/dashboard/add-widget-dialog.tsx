@@ -62,6 +62,7 @@ function WidgetCard({ item, isActive, onAdd }: { item: any; isActive: boolean; o
   const [clicked, setClicked] = React.useState(false);
 
   const handleClick = () => {
+    if (isActive) return;
     setClicked(true);
     onAdd();
     setTimeout(() => setClicked(false), 800);
@@ -71,7 +72,10 @@ function WidgetCard({ item, isActive, onAdd }: { item: any; isActive: boolean; o
     <motion.div
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      className="flex flex-col gap-3 p-3 rounded-lg border bg-card hover:border-primary/50 transition-colors"
+      className={cn(
+        "flex flex-col gap-3 p-3 rounded-lg border bg-card transition-colors",
+        !isActive && "hover:border-primary/50"
+      )}
     >
       <div className="flex items-center gap-2">
         <span className="font-medium text-sm flex-1">{item.label}</span>
@@ -80,11 +84,13 @@ function WidgetCard({ item, isActive, onAdd }: { item: any; isActive: boolean; o
       <p className="text-xs text-muted-foreground flex-1">{item.description}</p>
       <Button
         size="sm"
-        variant={clicked ? "secondary" : isActive ? "outline" : "default"}
+        disabled={isActive}
+        variant={isActive ? "secondary" : clicked ? "secondary" : "default"}
         onClick={handleClick}
         className={cn(
           "w-full mt-auto transition-all relative overflow-hidden",
-          clicked && "bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20"
+          clicked && "bg-green-500/10 text-green-600 border-green-500/20",
+          isActive && "opacity-80 cursor-not-allowed bg-muted text-muted-foreground border-transparent hover:bg-muted"
         )}
       >
         <AnimatePresence mode="wait">
@@ -92,14 +98,18 @@ function WidgetCard({ item, isActive, onAdd }: { item: any; isActive: boolean; o
             <motion.div key="check" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center absolute">
               <Check className="h-3.5 w-3.5 mr-2" /> Ajouté !
             </motion.div>
+          ) : isActive ? (
+            <motion.div key="added" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center absolute">
+              <Check className="h-3.5 w-3.5 mr-2" /> Déjà ajouté
+            </motion.div>
           ) : (
             <motion.div key="add" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center absolute">
-              <Plus className="h-3.5 w-3.5 mr-2" /> {isActive ? "Ajouter autre" : "Ajouter"}
+              <Plus className="h-3.5 w-3.5 mr-2" /> Ajouter
             </motion.div>
           )}
         </AnimatePresence>
         <div className="invisible flex items-center">
-          <Plus className="h-3.5 w-3.5 mr-2" /> Ajouter autre
+          <Plus className="h-3.5 w-3.5 mr-2" /> Déjà ajouté
         </div>
       </Button>
     </motion.div>
