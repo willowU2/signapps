@@ -109,4 +109,10 @@ pub use drive_acl_repository::{
     AclRepository, AuditAlertConfigRepository, DriveAuditLogRepository,
 };
 
+pub mod core_org_repository;
+pub use core_org_repository::{
+    AssignmentRepository, OrgNodeRepository, OrgTreeRepository, PermissionProfileRepository,
+    PersonRepository, SiteRepository,
+};
+
 pub mod test_helpers;
