@@ -206,34 +206,34 @@ export function RadialMenu() {
     <>
       <div
         ref={containerRef}
-        className="fixed bottom-6 right-20 z-50 hidden md:block"
+        className="fixed bottom-6 right-20 z-[100] hidden md:block"
         onMouseMove={handleMouseMove}
         onWheel={handleWheel}
       >
         {/* Backdrop */}
         {isOpen && (
           <div
-            className="fixed inset-0 bg-black/10 backdrop-blur-[1px] z-40"
+            className="fixed inset-0 bg-black/10 backdrop-blur-[1px] z-[99]"
             onClick={() => setIsOpen(false)}
           />
         )}
 
         {/* Scroll indicators */}
         {isOpen && clampedOffset > 0 && (
-          <div className="absolute z-50 text-muted-foreground text-[10px]"
+          <div className="absolute z-[101] text-muted-foreground text-[10px]"
             style={{ transform: `translate(${Math.cos(-180 * Math.PI / 180) * (radius + 30)}px, ${Math.sin(-180 * Math.PI / 180) * (radius + 30)}px)` }}>
             ← plus
           </div>
         )}
         {isOpen && clampedOffset < maxOffset && (
-          <div className="absolute z-50 text-muted-foreground text-[10px]"
+          <div className="absolute z-[101] text-muted-foreground text-[10px]"
             style={{ transform: `translate(${Math.cos(-90 * Math.PI / 180) * (radius + 30)}px, ${Math.sin(-90 * Math.PI / 180) * (radius + 30)}px)` }}>
             ↑ plus
           </div>
         )}
 
         {/* Radial items */}
-        <div className="relative z-50 flex items-center justify-center">
+        <div className="relative z-[101] flex items-center justify-center">
           {visibleItems.map((item, i) => {
             const angle = (startAngle + i * angleStep) * (Math.PI / 180);
             const x = Math.cos(angle) * radius;
@@ -300,7 +300,7 @@ export function RadialMenu() {
 
         {/* Scroll position indicator */}
         {isOpen && totalItems > VISIBLE_SLOTS && (
-          <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-1 z-50">
+          <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-1 z-[101]">
             {Array.from({ length: Math.ceil(totalItems / VISIBLE_SLOTS) }, (_, i) => (
               <div key={i} className={cn(
                 "w-1.5 h-1.5 rounded-full transition-colors",
@@ -312,7 +312,7 @@ export function RadialMenu() {
 
         {/* Customization panel */}
         {showCustomize && (
-          <div className="absolute bottom-16 right-0 w-64 max-h-[70vh] rounded-xl border border-border bg-popover shadow-xl p-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <div className="absolute bottom-16 right-0 w-64 max-h-[70vh] rounded-xl border border-border bg-popover shadow-xl p-3 z-[102] animate-in fade-in slide-in-from-bottom-2 duration-150">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-semibold">Personnaliser le menu</p>
               <button onClick={() => setShowCustomize(false)} className="rounded p-0.5 text-muted-foreground hover:text-foreground hover:bg-muted">
