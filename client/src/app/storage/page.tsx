@@ -716,34 +716,15 @@ export default function StoragePage() {
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-y-auto p-4 bg-muted/10 flex flex-col min-h-0">
-                  {viewMode === 'tree' ? (
-                    <div className="flex-1 bg-background rounded-xl border shadow-sm overflow-hidden p-6 max-w-2xl mx-auto w-full mt-4">
-                      <div className="mb-6 pb-4 border-b">
-                        <h2 className="text-xl font-semibold flex items-center gap-2">
-                          <FolderOpen className="h-5 w-5 text-primary" />
-                          Explorateur d'arborescence
-                        </h2>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Parcourez vos fichiers sous forme d'arbre hiérarchique.
-                        </p>
+                  {viewMode === 'list' && currentBucket && driveView === 'my-drive' ? (
+                    <div className="flex-1 bg-background w-full h-full flex flex-col pt-4">
+                      <div className="flex-1 overflow-auto pr-4">
+                        <FolderTree
+                          bucket={currentBucket}
+                          currentPath={currentPath.join('/')}
+                          onSelectFolder={(path) => setCurrentPath(path ? path.split('/').filter(Boolean) : [])}
+                        />
                       </div>
-
-                      {!currentBucket ? (
-                        <div className="text-center py-12">
-                          <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4">
-                            <Database className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                          <p className="text-muted-foreground">Sélectionnez un bucket pour afficher son arborescence.</p>
-                        </div>
-                      ) : (
-                        <div className="overflow-auto max-h-[60vh] pr-4">
-                          <FolderTree
-                            bucket={currentBucket}
-                            currentPath={currentPath.join('/')}
-                            onSelectFolder={(path) => setCurrentPath(path ? path.split('/').filter(Boolean) : [])}
-                          />
-                        </div>
-                      )}
                     </div>
                   ) : driveView === 'home' ? (
                     <div className="flex-1 p-6 w-full space-y-8">
