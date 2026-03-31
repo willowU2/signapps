@@ -3,9 +3,9 @@
 import React, { useRef, useState, useCallback } from "react";
 import { Trash2, Download } from "lucide-react";
 
-type DrawingTool = "pen" | "rectangle" | "circle" | "text" | "eraser";
+type DrawingTool = "pen" | "line" | "rectangle" | "circle" | "text" | "eraser";
 
-const COLORS = ["#000000", "#FF0000", "#00AA00", "#0000FF", "#FFAA00", "#FF00FF"];
+const COLORS = ["#FFFFFF", "#000000", "#FF0000", "#00AA00", "#3B82F6", "#F59E0B", "#A855F7"];
 const STROKE_WIDTHS = [2, 4, 8, 12, 16];
 
 interface WhiteboardCanvasProps {
@@ -21,6 +21,9 @@ export const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ svgRef: exte
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
 
+  const currentPathRef = useRef<SVGPathElement | null>(null);
+  const pathDataRef = useRef<string>("");
+
   const getMousePos = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     const rect = canvasRef.current?.getBoundingClientRect();
     return {
@@ -35,14 +38,13 @@ export const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ svgRef: exte
     if (isTemp) svg.setAttribute("data-temp", "true");
 
     const attrs = {
-      stroke: tool === "eraser" ? "#FFFFFF" : color,
+      stroke: tool === "eraser" ? "#0f172a" : color, // Use background color approximation for eraser
       "stroke-width": strokeWidth.toString(),
       fill: "none",
     };
 
     switch (tool) {
-      case "pen":
-      case "eraser": {
+      case "line": {
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
         Object.entries({
           x1: startPos.x,
@@ -88,7 +90,7 @@ export const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ svgRef: exte
         text.setAttribute("font-size", (strokeWidth * 4).toString());
         text.setAttribute("fill", color);
         text.setAttribute("font-family", "Arial");
-        text.textContent = "Text";
+        text.textContent = "Texte";
         svg.appendChild(text);
         break;
       }
@@ -97,26 +99,62 @@ export const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ svgRef: exte
   };
 
   const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-    setStartPos(getMousePos(e));
+    const pos = getMousePos(e);
+    setStartPos(pos);
     setIsDrawing(true);
+
+    if (tool === "pen" || tool === "eraser") {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("data-temp", "true");
+      // Dark mode eraser matches dark background approx (#09090b or transparent logic)
+      path.setAttribute("stroke", tool === "eraser" ? "#09090b" : color);
+      path.setAttribute("stroke-width", strokeWidth.toString());
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("stroke-linejoin", "round");
+      
+      pathDataRef.current = `M ${pos.x} ${pos.y}`;
+      path.setAttribute("d", pathDataRef.current);
+      
+      canvasRef.current?.appendChild(path);
+      currentPathRef.current = path;
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     if (!isDrawing || !canvasRef.current) return;
-    const temp = canvasRef.current.querySelector('[data-temp="true"]');
-    if (temp) temp.remove();
-    const shape = createShape(startPos, getMousePos(e), true);
-    canvasRef.current.appendChild(shape);
+    const pos = getMousePos(e);
+
+    if (tool === "pen" || tool === "eraser") {
+      if (currentPathRef.current) {
+        pathDataRef.current += ` L ${pos.x} ${pos.y}`;
+        currentPathRef.current.setAttribute("d", pathDataRef.current);
+      }
+    } else {
+      const temp = canvasRef.current.querySelector('[data-temp="true"]');
+      if (temp) temp.remove();
+      const shape = createShape(startPos, pos, true);
+      canvasRef.current.appendChild(shape);
+    }
   };
 
   const handleMouseUp = (e: React.MouseEvent<SVGSVGElement>) => {
     if (!isDrawing || !canvasRef.current) return;
-    const temp = canvasRef.current.querySelector('[data-temp="true"]');
-    if (temp) {
-      temp.removeAttribute("data-temp");
-      temp.setAttribute("data-id", Date.now().toString());
-    }
     setIsDrawing(false);
+
+    if (tool === "pen" || tool === "eraser") {
+      if (currentPathRef.current) {
+        currentPathRef.current.removeAttribute("data-temp");
+        currentPathRef.current.setAttribute("data-id", Date.now().toString());
+        currentPathRef.current = null;
+      }
+    } else {
+      const temp = canvasRef.current.querySelector('[data-temp="true"]');
+      if (temp) {
+        temp.removeAttribute("data-temp");
+        temp.setAttribute("data-id", Date.now().toString());
+      }
+    }
   };
 
   const handleClear = () => {
@@ -141,7 +179,7 @@ export const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ svgRef: exte
     <div className="flex flex-col gap-4 p-4 bg-muted rounded-lg shadow-sm">
       <div className="flex flex-wrap gap-2 items-center bg-card p-3 rounded-md border border-border">
         <div className="flex gap-1 border-r border-border pr-2">
-          {(["pen", "rectangle", "circle", "text", "eraser"] as const).map((t) => (
+          {(["pen", "line", "rectangle", "circle", "text", "eraser"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTool(t)}
