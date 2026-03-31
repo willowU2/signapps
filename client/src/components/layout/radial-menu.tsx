@@ -306,24 +306,29 @@ export function RadialMenu() {
           const next = globalCenter < totalItems - 1 ? activeItems[globalCenter + 1] : null;
           return (
             <div
-              className="absolute z-[110] select-none pointer-events-none flex items-center gap-2 rounded-2xl bg-background/80 border border-border/40 backdrop-blur-xl shadow-2xl px-5 py-2.5"
+              className="absolute z-[110] select-none pointer-events-none rounded-2xl shadow-2xl overflow-hidden"
               style={{
                 bottom: radius + 40,
                 right: -10,
                 transition: "all 300ms cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >
-              {prev && (
-                <span className="text-[12px] text-muted-foreground/50 truncate max-w-[120px]">{prev.label}</span>
-              )}
-              <span className="text-[14px] text-muted-foreground/30 font-light">{"«"}</span>
-              {curr && (
-                <span className="text-[15px] font-bold text-foreground uppercase tracking-wider">{curr.label}</span>
-              )}
-              <span className="text-[14px] text-muted-foreground/30 font-light">{"»"}</span>
-              {next && (
-                <span className="text-[12px] text-muted-foreground/50 truncate max-w-[120px]">{next.label}</span>
-              )}
+              {/* Background layer with blur — separate from text */}
+              <div className="absolute inset-0 bg-background/75 backdrop-blur-md border border-border/30 rounded-2xl" />
+              {/* Text layer — crisp, no blur */}
+              <div className="relative flex items-center gap-2 px-5 py-2.5">
+                {prev && (
+                  <span className="text-[12px] text-muted-foreground/50 truncate max-w-[120px]">{prev.label}</span>
+                )}
+                <span className="text-[14px] text-muted-foreground/30 font-light">{"«"}</span>
+                {curr && (
+                  <span className="text-[15px] font-bold text-foreground uppercase tracking-wider">{curr.label}</span>
+                )}
+                <span className="text-[14px] text-muted-foreground/30 font-light">{"»"}</span>
+                {next && (
+                  <span className="text-[12px] text-muted-foreground/50 truncate max-w-[120px]">{next.label}</span>
+                )}
+              </div>
             </div>
           );
         })()}
