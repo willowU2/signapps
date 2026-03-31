@@ -256,17 +256,27 @@ export function RadialMenu() {
                   zIndex: 50 + Math.round((1 - Math.abs(i - (VISIBLE_SLOTS - 1) / 2)) * 10),
                 }}
               >
-                {/* Label badge — always visible, to the left of the bubble */}
-                <span
-                  className="whitespace-nowrap rounded-full bg-popover/95 border border-border/50 px-2.5 py-1 text-[11px] font-medium shadow-lg backdrop-blur-sm text-foreground select-none"
-                  style={{
-                    transform: `scale(${scale})`,
-                    transformOrigin: "right center",
-                    transition: "transform 400ms cubic-bezier(0.16, 1, 0.3, 1)",
-                  }}
-                >
-                  {item.label}
-                </span>
+                {/* Label badge — only visible on center item and its neighbors */}
+                {(() => {
+                  const center = Math.floor((VISIBLE_SLOTS - 1) / 2);
+                  const dist = Math.abs(i - center);
+                  const showLabel = dist <= 1;
+                  const labelOpacity = dist === 0 ? 1 : 0.7;
+                  const labelScale = dist === 0 ? scale : scale * 0.85;
+                  return showLabel ? (
+                    <span
+                      className="whitespace-nowrap rounded-full bg-popover/95 border border-border/50 px-2.5 py-1 text-[11px] font-medium shadow-lg backdrop-blur-sm text-foreground select-none"
+                      style={{
+                        transform: `scale(${labelScale})`,
+                        opacity: labelOpacity,
+                        transformOrigin: "right center",
+                        transition: "transform 400ms cubic-bezier(0.16, 1, 0.3, 1), opacity 300ms ease",
+                      }}
+                    >
+                      {item.label}
+                    </span>
+                  ) : null;
+                })()}
                 <button
                   onClick={() => { item.action(); setIsOpen(false); }}
                   className={cn(
