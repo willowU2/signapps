@@ -60,25 +60,25 @@ export function RadialMenu() {
   // ─── All possible "create new" actions ───────────────────────────────────
 
   const ALL_ITEMS: RadialMenuItem[] = useMemo(() => [
-    { id: "doc", icon: <FileText />, label: "Document", color: "bg-blue-500", action: () => router.push("/docs?new=true") },
-    { id: "mail", icon: <Mail />, label: "Email", color: "bg-amber-500", action: () => setComposeOpen(true) },
-    { id: "event", icon: <Calendar />, label: "Événement", color: "bg-green-500", action: () => router.push("/cal?new=true") },
-    { id: "task", icon: <CheckSquare />, label: "Tâche", color: "bg-purple-500", action: () => router.push("/tasks?new=true") },
-    { id: "folder", icon: <FolderPlus />, label: "Dossier", color: "bg-teal-500", action: () => router.push("/drive?new=folder") },
-    { id: "contact", icon: <UserPlus />, label: "Contact", color: "bg-pink-500", action: () => router.push("/contacts?new=true") },
-    { id: "sheet", icon: <FileSpreadsheet />, label: "Feuille", color: "bg-emerald-500", action: () => router.push("/sheets?new=true") },
-    { id: "slide", icon: <Presentation />, label: "Présentation", color: "bg-orange-500", action: () => router.push("/slides?new=true") },
-    { id: "form", icon: <FormInput />, label: "Formulaire", color: "bg-sky-500", action: () => router.push("/forms?new=true") },
-    { id: "channel", icon: <MessageSquare />, label: "Canal chat", color: "bg-violet-500", action: () => router.push("/chat?new=true") },
-    { id: "meeting", icon: <Video />, label: "Réunion", color: "bg-rose-500", action: () => router.push("/meet?new=true") },
-    { id: "announce", icon: <Megaphone />, label: "Annonce", color: "bg-yellow-500", action: () => router.push("/comms/announcements?new=true") },
-    { id: "ticket", icon: <Ticket />, label: "Ticket", color: "bg-red-500", action: () => router.push("/it-assets/tickets?new=true") },
-    { id: "deal", icon: <BarChart3 />, label: "Deal CRM", color: "bg-lime-500", action: () => router.push("/crm?new=deal") },
-    { id: "wiki", icon: <BookOpen />, label: "Page Wiki", color: "bg-cyan-600", action: () => router.push("/wiki?new=true") },
-    { id: "social", icon: <Globe />, label: "Post Social", color: "bg-fuchsia-500", action: () => router.push("/social?compose=true") },
-    { id: "whiteboard", icon: <PenLine />, label: "Tableau blanc", color: "bg-stone-500", action: () => router.push("/whiteboard") },
-    { id: "ai", icon: <Bot />, label: "AI Chat", color: "bg-cyan-500", action: toggleAI },
-    { id: "search", icon: <Search />, label: "Recherche", color: "bg-indigo-500", action: () => openCommandBar(true) },
+    { id: "doc", icon: <FileText />, label: "Nouveau Document", color: "bg-blue-500", action: () => router.push("/docs?new=true") },
+    { id: "mail", icon: <Mail />, label: "Nouveau Email", color: "bg-amber-500", action: () => setComposeOpen(true) },
+    { id: "event", icon: <Calendar />, label: "Nouvel Événement", color: "bg-green-500", action: () => router.push("/cal?new=true") },
+    { id: "task", icon: <CheckSquare />, label: "Nouvelle Tâche", color: "bg-purple-500", action: () => router.push("/tasks?new=true") },
+    { id: "folder", icon: <FolderPlus />, label: "Nouveau Dossier", color: "bg-teal-500", action: () => router.push("/drive?new=folder") },
+    { id: "contact", icon: <UserPlus />, label: "Nouveau Contact", color: "bg-pink-500", action: () => router.push("/contacts?new=true") },
+    { id: "sheet", icon: <FileSpreadsheet />, label: "Nouvelle Feuille", color: "bg-emerald-500", action: () => router.push("/sheets?new=true") },
+    { id: "slide", icon: <Presentation />, label: "Nouvelle Présentation", color: "bg-orange-500", action: () => router.push("/slides?new=true") },
+    { id: "form", icon: <FormInput />, label: "Nouveau Formulaire", color: "bg-sky-500", action: () => router.push("/forms?new=true") },
+    { id: "channel", icon: <MessageSquare />, label: "Nouveau Canal", color: "bg-violet-500", action: () => router.push("/chat?new=true") },
+    { id: "meeting", icon: <Video />, label: "Nouvelle Réunion", color: "bg-rose-500", action: () => router.push("/meet?new=true") },
+    { id: "announce", icon: <Megaphone />, label: "Nouvelle Annonce", color: "bg-yellow-500", action: () => router.push("/comms/announcements?new=true") },
+    { id: "ticket", icon: <Ticket />, label: "Nouveau Ticket", color: "bg-red-500", action: () => router.push("/it-assets/tickets?new=true") },
+    { id: "deal", icon: <BarChart3 />, label: "Nouveau Deal", color: "bg-lime-500", action: () => router.push("/crm?new=deal") },
+    { id: "wiki", icon: <BookOpen />, label: "Nouvelle Page Wiki", color: "bg-cyan-600", action: () => router.push("/wiki?new=true") },
+    { id: "social", icon: <Globe />, label: "Nouveau Post", color: "bg-fuchsia-500", action: () => router.push("/social?compose=true") },
+    { id: "whiteboard", icon: <PenLine />, label: "Nouveau Tableau", color: "bg-stone-500", action: () => router.push("/whiteboard") },
+    { id: "ai", icon: <Bot />, label: "Nouveau Chat AI", color: "bg-cyan-500", action: toggleAI },
+    { id: "search", icon: <Search />, label: "Rechercher", color: "bg-indigo-500", action: () => openCommandBar(true) },
     { id: "settings", icon: <Settings />, label: "Paramètres", color: "bg-gray-500", action: () => router.push("/settings") },
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [toggleAI, openCommandBar]);
@@ -245,35 +245,47 @@ export function RadialMenu() {
             return (
               <div
                 key={item.id}
-                className="absolute"
+                className="absolute flex items-center gap-2"
                 style={{
                   transform: isOpen
-                    ? `translate(${x}px, ${y}px) scale(${scale})`
-                    : "translate(0px, 0px) scale(0.3)",
-                  transition: isOpen
-                    ? `transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 50}ms, opacity 250ms ease ${i * 50}ms`
-                    : `transform 200ms ease ${(VISIBLE_SLOTS - i) * 30}ms, opacity 150ms ease`,
+                    ? `translate(${x}px, ${y}px)`
+                    : "translate(0px, 0px)",
+                  transition: `transform 400ms cubic-bezier(0.16, 1, 0.3, 1) ${isOpen ? i * 60 : (VISIBLE_SLOTS - i) * 25}ms, opacity 300ms ease ${isOpen ? i * 60 : 0}ms`,
                   opacity: isOpen ? 1 : 0,
                   pointerEvents: isOpen ? "auto" : "none",
                   zIndex: 50 + Math.round((1 - Math.abs(i - (VISIBLE_SLOTS - 1) / 2)) * 10),
                 }}
               >
+                {/* Label badge — always visible, to the left of the bubble */}
+                <span
+                  className="whitespace-nowrap rounded-full bg-popover/95 border border-border/50 px-2.5 py-1 text-[11px] font-medium shadow-lg backdrop-blur-sm text-foreground select-none"
+                  style={{
+                    transform: `scale(${scale})`,
+                    transformOrigin: "right center",
+                    transition: "transform 400ms cubic-bezier(0.16, 1, 0.3, 1)",
+                  }}
+                >
+                  {item.label}
+                </span>
                 <button
                   onClick={() => { item.action(); setIsOpen(false); }}
                   className={cn(
-                    "group relative rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-150 hover:brightness-110 active:scale-90",
+                    "relative rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl active:scale-90",
                     item.color
                   )}
-                  style={{ width: size, height: size }}
+                  style={{
+                    width: size,
+                    height: size,
+                    transform: `scale(1)`,
+                    transition: "transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms ease",
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(1.15)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(1)"; }}
                   title={item.label}
                 >
                   {React.cloneElement(item.icon, {
                     style: { width: iconSize, height: iconSize },
                   } as React.SVGProps<SVGSVGElement>)}
-                  {/* Tooltip */}
-                  <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-popover border border-border px-2 py-0.5 text-[10px] font-medium shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    {item.label}
-                  </span>
                 </button>
               </div>
             );
