@@ -274,15 +274,6 @@ export function RadialMenu() {
                     style: { width: iconSize, height: iconSize },
                   } as React.SVGProps<SVGSVGElement>)}
                 </button>
-                {/* Label floats above the bubble — only for center + neighbors */}
-                {showLabel && (
-                  <span
-                    className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 whitespace-nowrap rounded-full bg-popover/95 border border-border/50 px-2.5 py-1 text-[11px] font-medium shadow-lg backdrop-blur-sm text-foreground select-none pointer-events-none"
-                    style={{ opacity: labelOpacity, transition: "opacity 300ms ease" }}
-                  >
-                    {item.label}
-                  </span>
-                )}
               </div>
             );
           })}
@@ -306,17 +297,29 @@ export function RadialMenu() {
           </button>
         </div>
 
-        {/* Scroll position indicator */}
-        {isOpen && totalItems > VISIBLE_SLOTS && (
-          <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-1 z-[101]">
-            {Array.from({ length: Math.ceil(totalItems / VISIBLE_SLOTS) }, (_, i) => (
-              <div key={i} className={cn(
-                "w-1.5 h-1.5 rounded-full transition-colors",
-                Math.floor(clampedOffset / VISIBLE_SLOTS) === i ? "bg-primary" : "bg-muted-foreground/30"
-              )} />
-            ))}
-          </div>
-        )}
+        {/* Label bar below FAB: prev << CURRENT >> next */}
+        {isOpen && (() => {
+          const centerIdx = Math.floor((VISIBLE_SLOTS - 1) / 2);
+          const globalCenter = clampedOffset + centerIdx;
+          const prev = globalCenter > 0 ? activeItems[globalCenter - 1] : null;
+          const curr = activeItems[globalCenter];
+          const next = globalCenter < totalItems - 1 ? activeItems[globalCenter + 1] : null;
+          return (
+            <div className="absolute -bottom-8 right-0 flex items-center gap-1.5 z-[101] select-none" style={{ transition: "opacity 300ms ease" }}>
+              {prev && (
+                <span className="text-[10px] text-muted-foreground/60 truncate max-w-[90px]">{prev.label}</span>
+              )}
+              <span className="text-[10px] text-muted-foreground/40">{"«"}</span>
+              {curr && (
+                <span className="text-[12px] font-bold text-foreground uppercase tracking-wide">{curr.label}</span>
+              )}
+              <span className="text-[10px] text-muted-foreground/40">{"»"}</span>
+              {next && (
+                <span className="text-[10px] text-muted-foreground/60 truncate max-w-[90px]">{next.label}</span>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Customization panel */}
         {showCustomize && (
