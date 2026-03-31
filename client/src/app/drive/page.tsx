@@ -52,6 +52,9 @@ import { DocFromTemplate } from '@/components/interop/DocFromTemplate';
 import { SmartFolders } from '@/components/drive/smart-folders';
 import { DedupScanner } from '@/components/drive/dedup-scanner';
 import { SecureShareDialog } from '@/components/drive/secure-share';
+import { AclPanel } from '@/components/storage/acl-panel';
+import { AuditTimeline } from '@/components/storage/audit-timeline';
+import { ShieldCheck, History } from 'lucide-react';
 
 export default function GlobalDrivePage() {
   usePageTitle('Drive');
@@ -69,6 +72,12 @@ export default function GlobalDrivePage() {
 
   const [secureShareNode, setSecureShareNode] = useState<DriveNode | null>(null);
   const [secureShareOpen, setSecureShareOpen] = useState(false);
+
+  const [aclNode, setAclNode] = useState<DriveNode | null>(null);
+  const [aclOpen, setAclOpen] = useState(false);
+
+  const [auditNode, setAuditNode] = useState<DriveNode | null>(null);
+  const [auditOpen, setAuditOpen] = useState(false);
 
   const [showDedupScanner, setShowDedupScanner] = useState(false);
 
@@ -501,6 +510,15 @@ export default function GlobalDrivePage() {
                               <DropdownMenuItem onClick={() => { setSecureShareNode(node); setSecureShareOpen(true); }}>Partager avec lien</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { setDetailNode(node); setDetailOpen(true); }}>Détails</DropdownMenuItem>
                               <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => { setAclNode(node); setAclOpen(true); }} className="gap-2">
+                                <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                                Permissions
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => { setAuditNode(node); setAuditOpen(true); }} className="gap-2">
+                                <History className="h-4 w-4 text-muted-foreground" />
+                                Historique d&apos;accès
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
                               <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="p-0">
                                 <DriveShareEmail node={node} />
                               </DropdownMenuItem>
@@ -549,6 +567,16 @@ export default function GlobalDrivePage() {
                           <DropdownMenuItem onClick={() => handleNavigate(node)}>Ouvrir</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => { setShareNode(node); setShareOpen(true); }}>Partager</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => { setDetailNode(node); setDetailOpen(true); }}>Détails</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => { setAclNode(node); setAclOpen(true); }} className="gap-2">
+                            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                            Permissions
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setAuditNode(node); setAuditOpen(true); }} className="gap-2">
+                            <History className="h-4 w-4 text-muted-foreground" />
+                            Historique d&apos;accès
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={(e) => handleDownload(node, e)} className="gap-2 focus:bg-[#f1f3f4] dark:focus:bg-[#3c4043] cursor-pointer">
                             <Download className="h-4 w-4 text-[#5f6368] dark:text-[#9aa0a6]" />
                             <span className="text-[#3c4043] dark:text-[#e8eaed]">Télécharger</span>
@@ -653,6 +681,25 @@ export default function GlobalDrivePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ACL Panel */}
+      {aclNode && (
+        <AclPanel
+          nodeId={aclNode.id}
+          nodeName={aclNode.name}
+          open={aclOpen}
+          onOpenChange={(open) => { setAclOpen(open); if (!open) setAclNode(null); }}
+        />
+      )}
+
+      {/* Audit Timeline */}
+      {auditNode && (
+        <AuditTimeline
+          nodeId={auditNode.id}
+          open={auditOpen}
+          onOpenChange={(open) => { setAuditOpen(open); if (!open) setAuditNode(null); }}
+        />
+      )}
 
       {/* Delete Confirm */}
       <AlertDialog open={!!deleteNodeId} onOpenChange={() => setDeleteNodeId(null)}>

@@ -751,3 +751,94 @@ export interface ConnectExternalRequest {
     password?: string;
     options?: Record<string, string>;
 }
+
+// ─── Drive ACL API ──────────────────────────────────────────
+
+export type AclRole = 'viewer' | 'downloader' | 'editor' | 'contributor' | 'manager';
+export type GranteeType = 'user' | 'group' | 'everyone';
+
+export interface DriveAcl {
+    id: string;
+    node_id: string;
+    grantee_type: GranteeType;
+    grantee_id?: string;
+    role: AclRole;
+    inherit: boolean;
+    granted_by: string;
+    expires_at?: string;
+    grantee_name?: string;
+}
+
+export interface EffectiveAcl {
+    node_id: string;
+    user_id: string;
+    role: AclRole | null;
+    is_owner: boolean;
+    inherited_from?: string;
+    grants: DriveAcl[];
+}
+
+export interface AuditLogEntry {
+    id: string;
+    node_id?: string;
+    node_path: string;
+    action: string;
+    actor_id: string;
+    actor_ip?: string;
+    actor_geo?: string;
+    file_hash?: string;
+    details: Record<string, unknown>;
+    log_hash: string;
+    created_at: string;
+    actor_name?: string;
+}
+
+export interface ChainVerification {
+    valid: boolean;
+    total_entries: number;
+    first_corrupt_index?: number;
+}
+
+export const driveAclApi = {
+    list: (nodeId: string) =>
+        storageClient.get<DriveAcl[]>(`/drive/nodes/${nodeId}/acl`),
+    create: (
+        nodeId: string,
+        data: {
+            grantee_type: GranteeType;
+            grantee_id?: string;
+            role: AclRole;
+            inherit?: boolean;
+            expires_at?: string;
+        }
+    ) => storageClient.post<DriveAcl>(`/drive/nodes/${nodeId}/acl`, data),
+    update: (nodeId: string, aclId: string, data: { role?: AclRole; expires_at?: string }) =>
+        storageClient.put<DriveAcl>(`/drive/nodes/${nodeId}/acl/${aclId}`, data),
+    delete: (nodeId: string, aclId: string) =>
+        storageClient.delete(`/drive/nodes/${nodeId}/acl/${aclId}`),
+    breakInheritance: (nodeId: string) =>
+        storageClient.post(`/drive/nodes/${nodeId}/acl/break`),
+    restoreInheritance: (nodeId: string) =>
+        storageClient.post(`/drive/nodes/${nodeId}/acl/restore`),
+    effective: (nodeId: string) =>
+        storageClient.get<EffectiveAcl>(`/drive/nodes/${nodeId}/effective-acl`),
+};
+
+export const driveAuditApi = {
+    list: (params: {
+        node_id?: string;
+        actor_id?: string;
+        action?: string;
+        date_from?: string;
+        date_to?: string;
+        limit?: number;
+        offset?: number;
+    }) => storageClient.get<AuditLogEntry[]>('/drive/audit', { params }),
+    verify: () => storageClient.get<ChainVerification>('/drive/audit/verify'),
+    export: (params: { format: 'csv' | 'json'; date_from?: string; date_to?: string }) =>
+        storageClient.post('/drive/audit/export', params, { responseType: 'blob' }),
+    alerts: () => storageClient.get('/drive/audit/alerts'),
+    alertConfig: () => storageClient.get('/drive/audit/alerts/config'),
+    updateAlertConfig: (data: unknown) =>
+        storageClient.put('/drive/audit/alerts/config', data),
+};

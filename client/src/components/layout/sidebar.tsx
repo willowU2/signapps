@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Mail, CheckSquare, HardDrive, Calendar,
   Container, Network, Settings, Users, Shield, Clock, Activity,
   Mic, Store, Archive, Plus, Tag, Brain, Upload, MessageSquare,
-  Route, X, Star, HelpCircle, GripVertical, Grid, PenLine,
+  Route, X, Star, HelpCircle, GripVertical, Grid, PenLine, History,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import {
@@ -45,6 +45,7 @@ const essentialNavItems = [
   { href: '/tasks',     icon: CheckSquare,     label: 'Tâches',          color: 'text-green-500', badgeKey: 'tasks' as const },
   { href: '/storage',   icon: HardDrive,       label: 'Drive',           color: 'text-muted-foreground', badgeKey: 'storage' as const },
   { href: '/whiteboard', icon: PenLine,          label: 'Tableau blanc',    color: 'text-violet-500', badgeKey: null },
+  { href: '/admin/drive-audit', icon: History,   label: 'Audit Drive',     color: 'text-amber-500', badgeKey: null },
 ];
 
 const labelColors = [
