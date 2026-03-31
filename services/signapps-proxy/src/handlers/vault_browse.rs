@@ -382,10 +382,7 @@ pub async fn vault_browse(
         },
         Err(e) => {
             tracing::error!(error = %e, "Vault browse proxy error");
-            plain_response(
-                StatusCode::BAD_GATEWAY,
-                format!("Proxy error: {e}"),
-            )
+            plain_response(StatusCode::BAD_GATEWAY, format!("Proxy error: {e}"))
         },
     }
 }
@@ -427,10 +424,7 @@ pub async fn vault_browse_sub(
         },
         Err(e) => {
             tracing::error!(error = %e, "Vault browse sub-resource proxy error");
-            plain_response(
-                StatusCode::BAD_GATEWAY,
-                format!("Proxy error: {e}"),
-            )
+            plain_response(StatusCode::BAD_GATEWAY, format!("Proxy error: {e}"))
         },
     }
 }

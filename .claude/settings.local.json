@@ -90,7 +90,8 @@
       "Bash(TOKEN=\"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3YmEwNjhjYy1kZGVmLTRlOGUtOGYzMi1mNmU1YmEzNjYyZjkiLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6MiwiZXhwIjoxNzczOTI2MjE5LCJpYXQiOjE3NzM5MjUzMTksInRva2VuX3R5cGUiOiJhY2Nlc3MifQ.eyNrG5oawkfQhfq8iwnaSd1Z_pmjsUcFlUHa_pyuCcs\")",
       "Bash(\"C:\\\\Program Files\\\\PostgreSQL\\\\16\\\\bin\\\\psql.exe\" -U signapps -d signapps -c \"UPDATE identity.users SET password_hash = E''\\\\$argon2id\\\\$v=19\\\\$m=19456,t=2,p=1\\\\$Duji1zIYOvyYh76iVmE7gQ\\\\$FxTofS2jMWPgw0m8NugT+BbWM6ZWl0U0BsTZYKmecyI'' WHERE username = ''admin'';\")",
       "Bash(\"/c/Program Files/PostgreSQL/16/bin/psql.exe\" -U signapps -d signapps -c \"UPDATE identity.users SET password_hash = ''$argon2id$v=19$m=19456,t=2,p=1$Duji1zIYOvyYh76iVmE7gQ$FxTofS2jMWPgw0m8NugT+BbWM6ZWl0U0BsTZYKmecyI'' WHERE username = ''admin'';\")",
-      "Bash(cmd.exe /c \"where psql\")"
+      "Bash(cmd.exe /c \"where psql\")",
+      "Bash(rtk git:*)"
     ]
   }
 }

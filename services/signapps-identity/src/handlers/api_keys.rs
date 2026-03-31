@@ -58,7 +58,7 @@ fn generate_api_key() -> String {
     let mut rng = rand::thread_rng();
     let bytes: Vec<u8> = (0..32).map(|_| rng.gen::<u8>()).collect();
     let encoded: String = bytes.iter().map(|b| format!("{:02x}", b)).collect();
-    format!("sk_live_{}", encoded)
+    format!("sk_example_{}", encoded)
 }
 
 /// Hash an API key using SHA-256, returned as lowercase hex.

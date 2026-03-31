@@ -1,4 +1,5 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
+use chrono::Utc;
 use oauth2::{
     basic::BasicClient, reqwest::async_http_client, AuthUrl, AuthorizationCode, ClientId,
     ClientSecret, CsrfToken, RedirectUrl, Scope, TokenResponse, TokenUrl,
@@ -71,6 +72,7 @@ impl OAuthProvider {
         match self {
             OAuthProvider::Google => vec![
                 "https://mail.google.com/",
+                "https://www.googleapis.com/auth/gmail.send",
                 "https://www.googleapis.com/auth/userinfo.email",
             ],
             OAuthProvider::Microsoft => vec![
@@ -101,6 +103,48 @@ impl OAuthProvider {
 // Build OAuth2 client for a given provider
 // ---------------------------------------------------------------------------
 
+/// Ensure the mail.oauth_app_configs table exists (auto-migrate).
+pub async fn ensure_oauth_configs_table(pool: &sqlx::Pool<sqlx::Postgres>) {
+    let _ = sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS mail.oauth_app_configs (
+            platform    TEXT PRIMARY KEY,
+            client_id   TEXT NOT NULL DEFAULT '',
+            client_secret TEXT NOT NULL DEFAULT '',
+            updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await;
+}
+
+/// Look up client_id / client_secret from DB first, fall back to env vars.
+async fn resolve_credentials(
+    pool: &sqlx::Pool<sqlx::Postgres>,
+    provider: OAuthProvider,
+) -> (String, String) {
+    let platform = provider.name();
+    let row: Option<(String, String)> = sqlx::query_as(
+        "SELECT client_id, client_secret FROM mail.oauth_app_configs WHERE platform = $1",
+    )
+    .bind(platform)
+    .fetch_optional(pool)
+    .await
+    .unwrap_or(None);
+
+    if let Some((id, secret)) = row {
+        if !id.is_empty() && !secret.is_empty() {
+            return (id, secret);
+        }
+    }
+
+    // Fall back to environment variables
+    let id = env::var(provider.client_id_env()).unwrap_or_default();
+    let secret = env::var(provider.client_secret_env()).unwrap_or_default();
+    (id, secret)
+}
+
 pub fn oauth_client_for(provider: OAuthProvider) -> BasicClient {
     let client_id = ClientId::new(
         env::var(provider.client_id_env()).unwrap_or_else(|_| "dummy_client_id".to_string()),
@@ -119,9 +163,106 @@ pub fn oauth_client_for(provider: OAuthProvider) -> BasicClient {
     )
 }
 
+/// Build OAuth2 client using credentials resolved from DB first, then env vars.
+async fn oauth_client_for_with_db(
+    pool: &sqlx::Pool<sqlx::Postgres>,
+    provider: OAuthProvider,
+) -> BasicClient {
+    let (id, secret) = resolve_credentials(pool, provider).await;
+    let client_id = ClientId::new(if id.is_empty() {
+        "dummy_client_id".to_string()
+    } else {
+        id
+    });
+    let client_secret = ClientSecret::new(if secret.is_empty() {
+        "dummy_client_secret".to_string()
+    } else {
+        secret
+    });
+    let auth_url =
+        AuthUrl::new(provider.auth_url().to_string()).expect("Invalid authorization endpoint URL");
+    let token_url =
+        TokenUrl::new(provider.token_url().to_string()).expect("Invalid token endpoint URL");
+
+    BasicClient::new(client_id, Some(client_secret), auth_url, Some(token_url)).set_redirect_uri(
+        RedirectUrl::new(provider.redirect_uri().to_string()).expect("Invalid redirect URL"),
+    )
+}
+
 /// Kept for backward compatibility with any existing callers.
 pub fn oauth_client() -> BasicClient {
     oauth_client_for(OAuthProvider::Google)
+}
+
+// ---------------------------------------------------------------------------
+// OAuth app config management (save/read Google Client ID & Secret from DB)
+// ---------------------------------------------------------------------------
+
+#[derive(Deserialize)]
+pub struct OAuthAppConfigRequest {
+    pub platform: String,
+    pub client_id: String,
+    pub client_secret: String,
+}
+
+#[derive(Serialize)]
+pub struct OAuthAppConfigResponse {
+    pub platform: String,
+    pub client_id: String,
+    pub configured: bool,
+}
+
+pub async fn get_oauth_config(
+    State(state): State<AppState>,
+    axum::extract::Path(platform): axum::extract::Path<String>,
+) -> impl IntoResponse {
+    let row: Option<(String, String)> = sqlx::query_as(
+        "SELECT client_id, client_secret FROM mail.oauth_app_configs WHERE platform = $1",
+    )
+    .bind(&platform)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    let (client_id, configured) = match row {
+        Some((id, secret)) => (id.clone(), !id.is_empty() && !secret.is_empty()),
+        None => (String::new(), false),
+    };
+
+    Json(OAuthAppConfigResponse {
+        platform,
+        client_id,
+        configured,
+    })
+}
+
+pub async fn save_oauth_config(
+    State(state): State<AppState>,
+    Json(payload): Json<OAuthAppConfigRequest>,
+) -> impl IntoResponse {
+    let result = sqlx::query(
+        r#"
+        INSERT INTO mail.oauth_app_configs (platform, client_id, client_secret, updated_at)
+        VALUES ($1, $2, $3, NOW())
+        ON CONFLICT (platform) DO UPDATE SET
+            client_id = EXCLUDED.client_id,
+            client_secret = EXCLUDED.client_secret,
+            updated_at = NOW()
+        "#,
+    )
+    .bind(&payload.platform)
+    .bind(&payload.client_id)
+    .bind(&payload.client_secret)
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => StatusCode::OK.into_response(),
+        Err(e) => {
+            tracing::error!("Failed to save OAuth config: {:?}", e);
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        },
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -157,21 +298,24 @@ struct MicrosoftUserProfile {
 // Login URL handlers — /oauth/google/login  and  /oauth/microsoft/login
 // ---------------------------------------------------------------------------
 
-pub async fn oauth_google_login() -> impl IntoResponse {
-    oauth_login_url_for(OAuthProvider::Google).await
+pub async fn oauth_google_login(State(state): State<AppState>) -> impl IntoResponse {
+    oauth_login_url_for(&state.pool, OAuthProvider::Google).await
 }
 
-pub async fn oauth_microsoft_login() -> impl IntoResponse {
-    oauth_login_url_for(OAuthProvider::Microsoft).await
+pub async fn oauth_microsoft_login(State(state): State<AppState>) -> impl IntoResponse {
+    oauth_login_url_for(&state.pool, OAuthProvider::Microsoft).await
 }
 
 /// Legacy single-provider endpoint kept for backward compatibility.
-pub async fn oauth_login_url() -> impl IntoResponse {
-    oauth_login_url_for(OAuthProvider::Google).await
+pub async fn oauth_login_url(State(state): State<AppState>) -> impl IntoResponse {
+    oauth_login_url_for(&state.pool, OAuthProvider::Google).await
 }
 
-async fn oauth_login_url_for(provider: OAuthProvider) -> impl IntoResponse {
-    let client = oauth_client_for(provider);
+async fn oauth_login_url_for(
+    pool: &sqlx::Pool<sqlx::Postgres>,
+    provider: OAuthProvider,
+) -> impl IntoResponse {
+    let client = oauth_client_for_with_db(pool, provider).await;
     let mut req = client.authorize_url(CsrfToken::new_random);
     for scope in provider.scopes() {
         req = req.add_scope(Scope::new(scope.to_string()));
@@ -216,7 +360,7 @@ async fn oauth_callback_for(
     Json(payload): Json<AuthCallbackRequest>,
     provider: OAuthProvider,
 ) -> impl IntoResponse {
-    let client = oauth_client_for(provider);
+    let client = oauth_client_for_with_db(&state.pool, provider).await;
     let token_result = client
         .exchange_code(AuthorizationCode::new(payload.code))
         .request_async(async_http_client)
@@ -239,6 +383,14 @@ async fn oauth_callback_for(
         .refresh_token()
         .map(|rt| rt.secret().clone())
         .unwrap_or_default();
+    // Compute expiry time from expires_in (default 3600s if not provided)
+    let oauth_expires_at = {
+        let expires_in = token
+            .expires_in()
+            .map(|d| d.as_secs() as i64)
+            .unwrap_or(3600);
+        Utc::now() + chrono::Duration::seconds(expires_in)
+    };
 
     // Fetch user profile to get their email address
     let http_client = reqwest::Client::new();
@@ -274,19 +426,21 @@ async fn oauth_callback_for(
     // Upsert the mail account in the database.
     let account = sqlx::query_as::<_, MailAccount>(
         r#"
-        INSERT INTO mail_accounts (
-            user_id, email_address, provider, imap_server, imap_port, oauth_token, oauth_refresh_token
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO mail.accounts (
+            user_id, email_address, provider, imap_server, imap_port, oauth_token, oauth_refresh_token, oauth_expires_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         ON CONFLICT (user_id, email_address) DO UPDATE SET
             oauth_token = EXCLUDED.oauth_token,
             oauth_refresh_token = CASE
                 WHEN EXCLUDED.oauth_refresh_token != '' THEN EXCLUDED.oauth_refresh_token
-                ELSE mail_accounts.oauth_refresh_token
+                ELSE mail.accounts.oauth_refresh_token
             END,
+            oauth_expires_at = EXCLUDED.oauth_expires_at,
             provider = EXCLUDED.provider,
             imap_server = EXCLUDED.imap_server,
             imap_port = EXCLUDED.imap_port,
-            status = 'active'
+            status = 'active',
+            updated_at = NOW()
         RETURNING *
         "#,
     )
@@ -294,9 +448,10 @@ async fn oauth_callback_for(
     .bind(&email)
     .bind(provider.name())
     .bind(provider.imap_server())
-    .bind(993)
+    .bind(993_i32)
     .bind(&access_token)
     .bind(&refresh_token)
+    .bind(oauth_expires_at)
     .fetch_one(&state.pool)
     .await;
 

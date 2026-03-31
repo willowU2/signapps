@@ -1,6 +1,14 @@
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 use uuid::Uuid;
+
+/// Helper: serialize `oauth_token` as `has_oauth_token: bool`.
+fn serialize_has_oauth_token<S>(token: &Option<String>, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    s.serialize_bool(token.is_some())
+}
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
 /// Represents a mail account.
@@ -24,7 +32,11 @@ pub struct MailAccount {
     // Auth
     #[serde(skip_serializing)]
     pub app_password: Option<String>,
-    #[serde(skip_serializing)]
+    /// Serialized as `has_oauth_token: bool` — never exposes the raw token.
+    #[serde(
+        serialize_with = "serialize_has_oauth_token",
+        rename = "has_oauth_token"
+    )]
     pub oauth_token: Option<String>,
     #[serde(skip_serializing)]
     pub oauth_refresh_token: Option<String>,

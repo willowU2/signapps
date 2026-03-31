@@ -70,6 +70,9 @@ async fn main() {
         event_bus: event_bus.clone(),
     };
 
+    // Ensure OAuth app configs table exists (auto-migrate)
+    crate::auth::ensure_oauth_configs_table(&pool).await;
+
     // Start background sync service (polling fallback, 30 s interval)
     let sync_pool = pool.clone();
     let sync_event_bus = event_bus.clone();

@@ -1,13 +1,31 @@
 use crate::handlers::categorize::{categorize_email, ensure_label_and_apply};
 use crate::models::{MailAccount, MailFolder};
 use async_imap::extensions::idle::IdleResponse;
+use async_imap::Authenticator;
+use base64::Engine as _;
 use chrono::Utc;
 use futures_util::stream::StreamExt;
 use mailparse::parse_mail;
+use reqwest;
 use signapps_common::pg_events::{NewEvent, PgEventBus};
 use sqlx::{Pool, Postgres};
 use tokio::time::Duration;
 use uuid::Uuid;
+
+// ---------------------------------------------------------------------------
+// XOAUTH2 authenticator for Gmail / Outlook IMAP OAuth2
+// ---------------------------------------------------------------------------
+
+struct XOAuth2Authenticator {
+    response: String,
+}
+
+impl Authenticator for XOAuth2Authenticator {
+    type Response = String;
+    fn process(&mut self, _challenge: &[u8]) -> Self::Response {
+        self.response.clone()
+    }
+}
 
 pub async fn start_sync_scheduler(pool: Pool<Postgres>, event_bus: PgEventBus) {
     tracing::info!("Starting IMAP sync scheduler...");
@@ -36,13 +54,15 @@ pub async fn idle_inbox(pool: Pool<Postgres>, event_bus: PgEventBus, account: Ma
         },
     };
     let imap_port = account.imap_port.unwrap_or(993) as u16;
-    let password = match account.app_password.as_deref() {
-        Some(p) => p.to_string(),
-        None => {
-            tracing::warn!("IDLE: account {} has no password", account.email_address);
-            return;
-        },
-    };
+    // Allow OAuth-only accounts (no app_password required when oauth_token is set)
+    let password = account.app_password.as_deref().map(|s| s.to_string());
+    if password.is_none() && account.oauth_token.is_none() {
+        tracing::warn!(
+            "IDLE: account {} has neither password nor OAuth token",
+            account.email_address
+        );
+        return;
+    }
 
     loop {
         // ---- connect --------------------------------------------------------
@@ -86,17 +106,107 @@ pub async fn idle_inbox(pool: Pool<Postgres>, event_bus: PgEventBus, account: Ma
         };
 
         let client = async_imap::Client::new(tls_stream);
-        let mut session = match client
-            .login(&account.email_address, &password)
-            .await
-            .map_err(|e| e.0)
-        {
-            Ok(s) => s,
-            Err(e) => {
-                tracing::warn!("IDLE: login failed for {}: {}", account.email_address, e);
-                tokio::time::sleep(Duration::from_secs(60)).await;
-                continue;
-            },
+        // Try XOAUTH2 first if OAuth token is available, otherwise fall back to password.
+        let mut session = if let Some(ref oauth_token) = account.oauth_token {
+            let auth_string = format!(
+                "user={}\x01auth=Bearer {}\x01\x01",
+                account.email_address, oauth_token
+            );
+            let encoded = base64::engine::general_purpose::STANDARD.encode(auth_string.as_bytes());
+            match client
+                .authenticate("XOAUTH2", XOAuth2Authenticator { response: encoded })
+                .await
+            {
+                Ok(s) => {
+                    tracing::info!(
+                        "IDLE: XOAUTH2 login succeeded for {}",
+                        account.email_address
+                    );
+                    s
+                },
+                Err((e, _c)) => {
+                    tracing::warn!(
+                        "IDLE: XOAUTH2 failed for {}, trying password: {}",
+                        account.email_address,
+                        e
+                    );
+                    // Reconnect for password fallback
+                    let tcp2 =
+                        match tokio::net::TcpStream::connect((&imap_server as &str, imap_port))
+                            .await
+                        {
+                            Ok(s) => s,
+                            Err(e) => {
+                                tracing::warn!(
+                                    "IDLE: reconnect failed for {}: {}",
+                                    account.email_address,
+                                    e
+                                );
+                                tokio::time::sleep(Duration::from_secs(60)).await;
+                                continue;
+                            },
+                        };
+                    let tls2_stream = match tls_connector.connect(&imap_server, tcp2).await {
+                        Ok(s) => s,
+                        Err(e) => {
+                            tracing::warn!(
+                                "IDLE: TLS reconnect failed for {}: {}",
+                                account.email_address,
+                                e
+                            );
+                            tokio::time::sleep(Duration::from_secs(60)).await;
+                            continue;
+                        },
+                    };
+                    let client2 = async_imap::Client::new(tls2_stream);
+                    match password {
+                        Some(ref pw) => match client2
+                            .login(&account.email_address, pw)
+                            .await
+                            .map_err(|e| e.0)
+                        {
+                            Ok(s) => s,
+                            Err(e) => {
+                                tracing::warn!(
+                                    "IDLE: password login also failed for {}: {}",
+                                    account.email_address,
+                                    e
+                                );
+                                tokio::time::sleep(Duration::from_secs(60)).await;
+                                continue;
+                            },
+                        },
+                        None => {
+                            tracing::warn!(
+                                "IDLE: XOAUTH2 failed and no password for {}",
+                                account.email_address
+                            );
+                            tokio::time::sleep(Duration::from_secs(60)).await;
+                            continue;
+                        },
+                    }
+                },
+            }
+        } else {
+            match password {
+                Some(ref pw) => match client
+                    .login(&account.email_address, pw)
+                    .await
+                    .map_err(|e| e.0)
+                {
+                    Ok(s) => s,
+                    Err(e) => {
+                        tracing::warn!("IDLE: login failed for {}: {}", account.email_address, e);
+                        tokio::time::sleep(Duration::from_secs(60)).await;
+                        continue;
+                    },
+                },
+                None => {
+                    tracing::warn!("IDLE: no credentials for {}", account.email_address);
+                    tokio::time::sleep(Duration::from_secs(60)).await;
+                    continue;
+                },
+            }
         };
 
         // ---- select INBOX (required before IDLE) ----------------------------
@@ -274,6 +384,38 @@ fn folder_display_name(folder_type: &str, imap_name: &str) -> String {
     }
 }
 
+/// Refresh a Google OAuth2 access token using the stored refresh token.
+/// Returns (new_access_token, new_expiry).
+async fn refresh_google_token(
+    refresh_token: &str,
+) -> Result<(String, chrono::DateTime<Utc>), Box<dyn std::error::Error + Send + Sync>> {
+    let client_id = std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default();
+    let client_secret = std::env::var("GOOGLE_CLIENT_SECRET").unwrap_or_default();
+
+    let http = reqwest::Client::new();
+    let resp = http
+        .post("https://oauth2.googleapis.com/token")
+        .form(&[
+            ("client_id", client_id.as_str()),
+            ("client_secret", client_secret.as_str()),
+            ("refresh_token", refresh_token),
+            ("grant_type", "refresh_token"),
+        ])
+        .send()
+        .await?
+        .json::<serde_json::Value>()
+        .await?;
+
+    let new_token = resp["access_token"]
+        .as_str()
+        .ok_or("Missing access_token in refresh response")?
+        .to_string();
+    let expires_in = resp["expires_in"].as_i64().unwrap_or(3600);
+    let new_expiry = Utc::now() + chrono::Duration::seconds(expires_in);
+
+    Ok((new_token, new_expiry))
+}
+
 pub async fn sync_account(
     pool: &Pool<Postgres>,
     account: &MailAccount,
@@ -284,7 +426,55 @@ pub async fn sync_account(
         .as_deref()
         .ok_or("IMAP server not configured")?;
     let imap_port = account.imap_port.unwrap_or(993) as u16;
-    let password = account.app_password.as_deref().ok_or("No password set")?;
+
+    // -------------------------------------------------------------------------
+    // Part 4: Refresh OAuth token if expired before attempting IMAP connection
+    // -------------------------------------------------------------------------
+    let effective_oauth_token: Option<String> = if let (Some(ref token), Some(expires)) =
+        (&account.oauth_token, account.oauth_expires_at)
+    {
+        if expires < Utc::now() {
+            tracing::info!(
+                "OAuth token expired for {}, attempting refresh",
+                account.email_address
+            );
+            if let Some(ref refresh_token) = account.oauth_refresh_token {
+                match refresh_google_token(refresh_token).await {
+                    Ok((new_token, new_expires)) => {
+                        let _ = sqlx::query(
+                                "UPDATE mail.accounts SET oauth_token = $1, oauth_expires_at = $2, updated_at = NOW() WHERE id = $3",
+                            )
+                            .bind(&new_token)
+                            .bind(new_expires)
+                            .bind(account.id)
+                            .execute(pool)
+                            .await;
+                        tracing::info!("OAuth token refreshed for {}", account.email_address);
+                        Some(new_token)
+                    },
+                    Err(e) => {
+                        tracing::error!(
+                            "Token refresh failed for {}: {}",
+                            account.email_address,
+                            e
+                        );
+                        Some(token.clone()) // try with the expired token anyway
+                    },
+                }
+            } else {
+                Some(token.clone())
+            }
+        } else {
+            Some(token.clone())
+        }
+    } else {
+        account.oauth_token.clone()
+    };
+
+    // Require at least one auth mechanism
+    if effective_oauth_token.is_none() && account.app_password.is_none() {
+        return Err("No authentication credentials (password or OAuth token)".into());
+    }
 
     tracing::info!("Syncing account: {}", account.email_address);
 
@@ -300,10 +490,51 @@ pub async fn sync_account(
     let tls_stream = tls.connect(imap_server, tcp_stream).await?;
     let client = async_imap::Client::new(tls_stream);
 
-    let mut session = client
-        .login(&account.email_address, password)
-        .await
-        .map_err(|e| e.0)?;
+    // -------------------------------------------------------------------------
+    // Part 1: Try XOAUTH2 first if token available, fall back to password
+    // -------------------------------------------------------------------------
+    let mut session = if let Some(ref oauth_token) = effective_oauth_token {
+        let auth_string = format!(
+            "user={}\x01auth=Bearer {}\x01\x01",
+            account.email_address, oauth_token
+        );
+        let encoded = base64::engine::general_purpose::STANDARD.encode(auth_string.as_bytes());
+
+        match client
+            .authenticate("XOAUTH2", XOAuth2Authenticator { response: encoded })
+            .await
+        {
+            Ok(s) => {
+                tracing::info!("XOAUTH2 login succeeded for {}", account.email_address);
+                s
+            },
+            Err((e, _client)) => {
+                tracing::warn!(
+                    "XOAUTH2 failed for {}, trying password: {}",
+                    account.email_address,
+                    e
+                );
+                // Reconnect and try password
+                let tcp2 = tokio::net::TcpStream::connect((imap_server, imap_port)).await?;
+                let tls_stream2 = tls.connect(imap_server, tcp2).await?;
+                let client2 = async_imap::Client::new(tls_stream2);
+                let pw = account
+                    .app_password
+                    .as_deref()
+                    .ok_or("XOAUTH2 failed and no password fallback available")?;
+                client2
+                    .login(&account.email_address, pw)
+                    .await
+                    .map_err(|e| e.0)?
+            },
+        }
+    } else {
+        let pw = account.app_password.as_deref().ok_or("No password set")?;
+        client
+            .login(&account.email_address, pw)
+            .await
+            .map_err(|e| e.0)?
+    };
 
     // -------------------------------------------------------------------------
     // Bug 5: List ALL folders from IMAP server

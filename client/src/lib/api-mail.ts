@@ -21,6 +21,9 @@ export interface MailAccount {
     smtp_server?: string
     smtp_port?: number
     smtp_use_tls?: boolean
+    // OAuth (token fields are redacted server-side but has_oauth_token can be inferred)
+    has_oauth_token?: boolean
+    oauth_expires_at?: string
     // Sync status
     status?: string
     last_sync_at?: string
@@ -174,6 +177,28 @@ export const accountApi = {
     test: async (id: string): Promise<{ imap_ok: boolean; smtp_ok: boolean; imap_error?: string; smtp_error?: string }> => {
         const res = await mailClient.post(`/mail/accounts/${id}/test`)
         return res.data
+    },
+
+    // OAuth: get the Google authorization URL
+    getGoogleOAuthUrl: async (): Promise<{ url: string }> => {
+        const res = await mailClient.get('/mail/oauth/google/login')
+        return res.data
+    },
+
+    // OAuth: exchange code for token and link to account
+    exchangeGoogleOAuthCode: async (code: string, user_id: string): Promise<MailAccount> => {
+        const res = await mailClient.post('/mail/oauth/google/callback', { code, user_id })
+        return res.data
+    },
+
+    // OAuth config management
+    getOAuthConfig: async (platform: string): Promise<{ platform: string; client_id: string; configured: boolean }> => {
+        const res = await mailClient.get(`/mail/oauth/config/${platform}`)
+        return res.data
+    },
+
+    saveOAuthConfig: async (platform: string, client_id: string, client_secret: string): Promise<void> => {
+        await mailClient.post(`/mail/oauth/config/${platform}`, { platform, client_id, client_secret })
     },
 
     // IDEA-261: Email aliases

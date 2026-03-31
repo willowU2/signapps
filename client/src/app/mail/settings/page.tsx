@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Plus,
   Trash2,
@@ -11,6 +11,8 @@ import {
   Globe,
   Server,
   TestTube,
+  ShieldCheck,
+  Settings2,
 } from "lucide-react";
 import {
   accountApi,
@@ -22,6 +24,7 @@ import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { EmailAutomationRules } from "@/components/workflow/email-automation-rules";
 import { usePageTitle } from '@/hooks/use-page-title';
+import { useAuth } from '@/hooks/use-auth';
 
 // ─── Provider presets ────────────────────────────────────────────────────────
 
@@ -458,16 +461,124 @@ function AddAccountWizard({
   );
 }
 
+// ─── Google OAuth Setup Wizard ───────────────────────────────────────────────
+
+function GoogleOAuthSetupWizard({
+  onClose,
+  onSaved,
+}: {
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [clientId, setClientId] = useState("");
+  const [clientSecret, setClientSecret] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    accountApi.getOAuthConfig("google").then((cfg) => {
+      if (cfg.client_id) setClientId(cfg.client_id);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    if (!clientId.trim() || !clientSecret.trim()) {
+      toast.error("Client ID et Client Secret requis");
+      return;
+    }
+    setSaving(true);
+    try {
+      await accountApi.saveOAuthConfig("google", clientId.trim(), clientSecret.trim());
+      toast.success("Configuration Google OAuth enregistree");
+      onSaved();
+      onClose();
+    } catch {
+      toast.error("Impossible d'enregistrer la configuration");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border bg-card p-6 space-y-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Settings2 className="h-5 w-5 text-primary" />
+          <div>
+            <h2 className="text-lg font-semibold">Configuration Google OAuth</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Entrez vos identifiants Google Cloud Console pour activer OAuth.
+            </p>
+          </div>
+        </div>
+        <button onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground">
+          Annuler
+        </button>
+      </div>
+
+      <div className="rounded-lg bg-muted/50 p-4 text-sm space-y-2 text-muted-foreground">
+        <p className="font-medium text-foreground">Comment obtenir vos identifiants :</p>
+        <ol className="list-decimal list-inside space-y-1">
+          <li>Allez sur <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">console.cloud.google.com/apis/credentials</a></li>
+          <li>Creez un projet et activez l&apos;API Gmail</li>
+          <li>Creez des identifiants OAuth 2.0 (type: Application Web)</li>
+          <li>Ajoutez <code className="bg-muted px-1 rounded text-xs">http://localhost:3000/mail/callback/google</code> comme URI de redirection</li>
+          <li>Copiez le Client ID et le Client Secret ci-dessous</li>
+        </ol>
+      </div>
+
+      {loading ? (
+        <div className="h-20 bg-muted animate-pulse rounded-lg" />
+      ) : (
+        <div className="space-y-4">
+          <Field
+            label="Google Client ID"
+            value={clientId}
+            onChange={setClientId}
+            placeholder="123456789-abc.apps.googleusercontent.com"
+          />
+          <Field
+            label="Google Client Secret"
+            value={clientSecret}
+            onChange={setClientSecret}
+            placeholder="GOCSPX-..."
+            type="password"
+          />
+        </div>
+      )}
+
+      <div className="flex items-center gap-3 pt-2">
+        <button
+          onClick={handleSave}
+          disabled={saving || loading}
+          className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground
+            text-sm font-medium hover:bg-primary/90 transition-colors
+            disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          {saving ? (
+            <><RefreshCw className="h-4 w-4 animate-spin" />Enregistrement...</>
+          ) : (
+            <><ShieldCheck className="h-4 w-4" />Enregistrer</>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Account Card ─────────────────────────────────────────────────────────────
 
 function AccountCard({
   account,
   onSupprimé,
   onSynced,
+  userId,
 }: {
   account: MailAccount;
   onSupprimé: () => void;
   onSynced: () => void;
+  userId?: string;
 }) {
   const [syncing, setSyncing] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -479,6 +590,8 @@ function AccountCard({
   } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [connectingOAuth, setConnectingOAuth] = useState(false);
+  const popupRef = useRef<Window | null>(null);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -524,6 +637,54 @@ function AccountCard({
     }
   };
 
+  const handleGoogleOAuth = async () => {
+    if (!userId) {
+      toast.error("Utilisateur non identifié");
+      return;
+    }
+    setConnectingOAuth(true);
+    try {
+      const { url } = await accountApi.getGoogleOAuthUrl();
+      // Open OAuth popup
+      const popup = window.open(url, "google_oauth", "width=600,height=700,left=200,top=100");
+      popupRef.current = popup;
+
+      // Listen for the callback via postMessage
+      const handleMessage = async (event: MessageEvent) => {
+        if (event.data?.type === "oauth_callback" && event.data?.code) {
+          window.removeEventListener("message", handleMessage);
+          popupRef.current?.close();
+          try {
+            await accountApi.exchangeGoogleOAuthCode(event.data.code, userId);
+            toast.success("Connecte via Google OAuth");
+            onSynced();
+          } catch {
+            toast.error("Echec de l'echange OAuth");
+          } finally {
+            setConnectingOAuth(false);
+          }
+        }
+      };
+      window.addEventListener("message", handleMessage);
+
+      // Poll to detect if popup was closed without completing
+      const pollTimer = setInterval(() => {
+        if (popupRef.current?.closed) {
+          clearInterval(pollTimer);
+          window.removeEventListener("message", handleMessage);
+          setConnectingOAuth(false);
+        }
+      }, 1000);
+    } catch {
+      toast.error("Impossible de lancer le flux OAuth");
+      setConnectingOAuth(false);
+    }
+  };
+
+  const isGmailOrOutlook =
+    account.provider === "gmail" || account.provider === "google" ||
+    account.provider === "outlook" || account.provider === "microsoft";
+
   return (
     <div className="rounded-xl border bg-card p-4 space-y-3">
       <div className="flex items-center justify-between">
@@ -532,7 +693,15 @@ function AccountCard({
             <Mail className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="font-medium text-sm">{account.email_address}</p>
+            <p className="font-medium text-sm flex items-center gap-2">
+              {account.email_address}
+              {account.has_oauth_token && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                  <ShieldCheck className="h-3 w-3" />
+                  Google OAuth
+                </span>
+              )}
+            </p>
             <p className="text-xs text-muted-foreground">
               {account.provider} &middot; {account.status || "active"}
               {account.last_sync_at && (
@@ -580,6 +749,37 @@ function AccountCard({
           {account.smtp_use_tls ? " (TLS)" : ""}
         </div>
       </div>
+
+      {/* Google OAuth connect button (Gmail/Outlook/Google accounts) */}
+      {isGmailOrOutlook && (
+        <div className="pt-1">
+          {account.has_oauth_token ? (
+            <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
+              <ShieldCheck className="h-4 w-4" />
+              <span>Connecte via Google OAuth &mdash; synchronisation IMAP securisee</span>
+            </div>
+          ) : (
+            <button
+              onClick={handleGoogleOAuth}
+              disabled={connectingOAuth}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background
+                hover:bg-accent text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {connectingOAuth ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+              )}
+              {connectingOAuth ? "Connexion..." : "Se connecter avec Google"}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Test results */}
       {testResult && (
@@ -775,10 +975,12 @@ function SignatureBuilder({
 
 export default function MailSettingsPage() {
   usePageTitle('Parametres mail');
+  const { user } = useAuth();
   const [accounts, setAccounts] = useState<MailAccount[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddWizard, setShowAddWizard] = useState(false);
+  const [showOAuthWizard, setShowOAuthWizard] = useState(false);
 
   const loadAccounts = useCallback(async () => {
     setLoading(true);
@@ -810,10 +1012,31 @@ export default function MailSettingsPage() {
               Gerez vos comptes de messagerie et signatures.
             </p>
           </div>
-          <a href="/mail" className="text-sm text-primary hover:underline">
-            &larr; Retour au mail
-          </a>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowOAuthWizard((v) => !v)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium hover:bg-accent transition-colors"
+              title="Configurer Google OAuth (Client ID / Secret)"
+            >
+              <Settings2 className="h-3.5 w-3.5" />
+              Config. OAuth
+            </button>
+            <a href="/mail" className="text-sm text-primary hover:underline">
+              &larr; Retour au mail
+            </a>
+          </div>
         </div>
+
+        {/* Google OAuth Setup Wizard */}
+        {showOAuthWizard && (
+          <GoogleOAuthSetupWizard
+            onClose={() => setShowOAuthWizard(false)}
+            onSaved={() => {
+              setShowOAuthWizard(false);
+              loadAccounts();
+            }}
+          />
+        )}
 
         {/* Add Account button / wizard */}
         {showAddWizard ? (
@@ -857,6 +1080,7 @@ export default function MailSettingsPage() {
                     account={acc}
                     onSupprimé={loadAccounts}
                     onSynced={loadAccounts}
+                    userId={user?.id}
                   />
                 ))}
               </div>

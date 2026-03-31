@@ -142,6 +142,26 @@ pub fn router() -> Router<AppState> {
             axum::routing::post(send_newsletter),
         )
         // OAuth provider routes (M7)
+        .route("/api/v1/mail/oauth/google/login", axum::routing::get(crate::auth::oauth_google_login))
+        .route(
+            "/api/v1/mail/oauth/google/callback",
+            axum::routing::post(crate::auth::oauth_google_callback),
+        )
+        .route(
+            "/api/v1/mail/oauth/microsoft/login",
+            axum::routing::get(crate::auth::oauth_microsoft_login),
+        )
+        .route(
+            "/api/v1/mail/oauth/microsoft/callback",
+            axum::routing::post(crate::auth::oauth_microsoft_callback),
+        )
+        // OAuth app config management (save/read Client ID & Secret from DB)
+        .route(
+            "/api/v1/mail/oauth/config/:platform",
+            axum::routing::get(crate::auth::get_oauth_config)
+                .post(crate::auth::save_oauth_config),
+        )
+        // Legacy routes (backward compat)
         .route("/oauth/google/login", axum::routing::get(crate::auth::oauth_google_login))
         .route(
             "/oauth/google/callback",

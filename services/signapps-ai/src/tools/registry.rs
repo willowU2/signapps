@@ -1344,7 +1344,8 @@ impl ToolRegistry {
             &mut tools,
             ToolDefinition {
                 name: "create_document".into(),
-                description: "Create a new document, spreadsheet, presentation, or folder in drive".into(),
+                description: "Create a new document, spreadsheet, presentation, or folder in drive"
+                    .into(),
                 service: "storage".into(),
                 method: "POST".into(),
                 path_template: "/drive/nodes".into(),
@@ -1484,7 +1485,8 @@ impl ToolRegistry {
             &mut tools,
             ToolDefinition {
                 name: "get_social_analytics".into(),
-                description: "Get social media analytics overview (reach, engagement, followers)".into(),
+                description: "Get social media analytics overview (reach, engagement, followers)"
+                    .into(),
                 service: "social".into(),
                 method: "GET".into(),
                 path_template: "/social/analytics/overview".into(),
@@ -1643,7 +1645,8 @@ impl ToolRegistry {
             &mut tools,
             ToolDefinition {
                 name: "list_persons".into(),
-                description: "List persons in the organization (employees, contacts, suppliers)".into(),
+                description: "List persons in the organization (employees, contacts, suppliers)"
+                    .into(),
                 service: "identity".into(),
                 method: "GET".into(),
                 path_template: "/persons".into(),
