@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, Loader2, AlertCircle, ExternalLink } from 'lucide-react';
+import { CheckCircle, Loader2, AlertCircle, ExternalLink, Settings } from 'lucide-react';
 import { socialApi } from '@/lib/api/social';
 import type { SocialAccount } from '@/lib/api/social';
+import { OAuthSetupWizard } from './oauth-setup-wizard';
 
 // ---------------------------------------------------------------------------
 // Platform config
@@ -91,6 +92,8 @@ export function OAuthConnect({ accounts, onConnected }: OAuthConnectProps) {
   // Mastodon instance URL state
   const [mastodonInstance, setMastodonInstance] = useState('mastodon.social');
   const [showMastodonInput, setShowMastodonInput] = useState(false);
+  // Setup wizard state
+  const [wizardPlatform, setWizardPlatform] = useState<string | null>(null);
 
   // Listen for postMessage from OAuth popup
   useEffect(() => {
@@ -184,7 +187,20 @@ export function OAuthConnect({ accounts, onConnected }: OAuthConnectProps) {
   const connectedForPlatform = (platformId: string) =>
     accounts.filter((a) => a.platform === platformId);
 
+  const handleWizardSaved = useCallback(() => {
+    if (wizardPlatform) {
+      // Re-trigger OAuth flow for the platform now that credentials are saved
+      const p = PLATFORMS.find((pl) => pl.id === wizardPlatform);
+      setWizardPlatform(null);
+      if (p) {
+        // Small delay to let the dialog close cleanly
+        setTimeout(() => handleConnect(p), 300);
+      }
+    }
+  }, [wizardPlatform, handleConnect]);
+
   return (
+    <>
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
       {PLATFORMS.map((platform) => {
         const connected = connectedForPlatform(platform.id);
@@ -241,9 +257,30 @@ export function OAuthConnect({ accounts, onConnected }: OAuthConnectProps) {
 
               {/* Error */}
               {error && (
-                <div className="flex items-start gap-1.5 text-xs text-destructive">
-                  <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                  <span>{error}</span>
+                <div className="space-y-1.5">
+                  <div className="flex items-start gap-1.5 text-xs text-destructive">
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                    <span>{error}</span>
+                  </div>
+                  {/* Show setup wizard button when OAuth is not configured (non-Mastodon platforms) */}
+                  {error.includes('OAuth non configure') && platform.id !== 'mastodon' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full h-7 text-xs gap-1.5"
+                      onClick={() => {
+                        setErrorPlatform((prev) => {
+                          const copy = { ...prev };
+                          delete copy[platform.id];
+                          return copy;
+                        });
+                        setWizardPlatform(platform.id);
+                      }}
+                    >
+                      <Settings className="h-3 w-3" />
+                      Configurer les credentials OAuth
+                    </Button>
+                  )}
                 </div>
               )}
 
@@ -278,5 +315,15 @@ export function OAuthConnect({ accounts, onConnected }: OAuthConnectProps) {
         );
       })}
     </div>
+    {/* OAuth Setup Wizard dialog */}
+    {wizardPlatform && (
+      <OAuthSetupWizard
+        platform={wizardPlatform}
+        open={wizardPlatform !== null}
+        onClose={() => setWizardPlatform(null)}
+        onCredentialsSaved={handleWizardSaved}
+      />
+    )}
+    </>
   );
 }

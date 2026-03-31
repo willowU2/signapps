@@ -378,6 +378,12 @@ export const socialApi = {
         `/oauth/${platform}/authorize`,
         { params },
       ),
+    /**
+     * Save OAuth client_id and client_secret for a platform in the DB.
+     * These credentials are used in preference to env vars.
+     */
+    saveCredentials: (data: { platform: string; client_id: string; client_secret: string }) =>
+      s.post<{ status: string; platform: string }>('/oauth/credentials', data),
   },
 
   posts: {
