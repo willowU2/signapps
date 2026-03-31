@@ -17,7 +17,7 @@ import { AccessibilityProvider } from '@/components/accessibility/a11y-provider'
 import { ErrorBoundary } from '@/components/error-boundary';
 import { NotificationPermissionDialog } from '@/components/notifications/notification-permission-dialog';
 import { CommandBar } from '@/components/layout/command-bar';
-import { FloatingActionButton } from '@/components/layout/floating-action-button';
+import { RadialMenu } from '@/components/layout/radial-menu';
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GlobalModals } from '@/components/global-modals';
@@ -108,7 +108,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       {!pathname?.startsWith('/login') && (
                         <>
                           <CommandBar />
-                          <FloatingActionButton />
+                          <RadialMenu />
                           <MobileBottomNav />
                           <PwaInstallPrompt />
                           <QuickDocumentSwitcher />

@@ -68,7 +68,9 @@ export type RightWidgetType = 'chat' | 'calendar' | 'tasks' | 'notes' | 'details
 // UI State
 interface UIState {
   sidebarCollapsed: boolean;
+  sidebarPinned: boolean;
   rightSidebarOpen: boolean;
+  rightSidebarPinned: boolean;
   activeRightWidget: RightWidgetType;
   theme: 'light' | 'dark' | 'system';
   // Modal state
@@ -77,8 +79,10 @@ interface UIState {
   createTaskModalOpen: boolean;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+  setSidebarPinned: (pinned: boolean) => void;
   toggleRightSidebar: () => void;
   setRightSidebarOpen: (open: boolean) => void;
+  setRightSidebarPinned: (pinned: boolean) => void;
   setActiveRightWidget: (widget: RightWidgetType) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   setCreateWorkspaceModalOpen: (open: boolean) => void;
@@ -90,7 +94,9 @@ export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
       sidebarCollapsed: false,
+      sidebarPinned: true,
       rightSidebarOpen: false,
+      rightSidebarPinned: false,
       activeRightWidget: 'chat' as RightWidgetType,
       theme: 'system',
       createWorkspaceModalOpen: false,
@@ -98,8 +104,10 @@ export const useUIStore = create<UIState>()(
       createTaskModalOpen: false,
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+      setSidebarPinned: (pinned) => set({ sidebarPinned: pinned }),
       toggleRightSidebar: () => set((state) => ({ rightSidebarOpen: !state.rightSidebarOpen })),
       setRightSidebarOpen: (open) => set({ rightSidebarOpen: open }),
+      setRightSidebarPinned: (pinned) => set({ rightSidebarPinned: pinned }),
       setActiveRightWidget: (widget) => set({ activeRightWidget: widget, rightSidebarOpen: true }),
       setTheme: (theme) => set({ theme }),
       setCreateWorkspaceModalOpen: (open) => set({ createWorkspaceModalOpen: open }),

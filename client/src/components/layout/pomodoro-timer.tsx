@@ -76,6 +76,13 @@ export function PomodoroTimer() {
     setCompleted(loadCompleted());
   }, []);
 
+  // Listen for radial menu toggle event
+  useEffect(() => {
+    const handler = () => setOpen((o) => !o);
+    window.addEventListener('radial:toggle-pomodoro', handler);
+    return () => window.removeEventListener('radial:toggle-pomodoro', handler);
+  }, []);
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const totalSeconds = phase === 'work' ? WORK_SECONDS : BREAK_SECONDS;

@@ -16,6 +16,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const rightSidebarOpen = useUIStore((s) => s.rightSidebarOpen);
+  const rightSidebarPinned = useUIStore((s) => s.rightSidebarPinned);
   const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
   const pathname = usePathname();
   const mainRef = useRef<HTMLElement>(null);
@@ -25,11 +26,14 @@ export function AppLayout({ children }: AppLayoutProps) {
     mainRef.current?.scrollTo({ top: 0 });
   }, [pathname]);
 
+  // When right sidebar is pinned open, adjust layout to accommodate the panel
+  const rightPanelOpen = rightSidebarOpen || rightSidebarPinned;
+
   return (
     <div className={cn(
       "flex h-screen w-full flex-col overflow-hidden bg-background transition-all duration-200",
       sidebarCollapsed ? "md:pl-16" : "md:pl-64",
-      rightSidebarOpen ? "md:pr-[24rem]" : "md:pr-16"
+      rightPanelOpen ? "md:pr-[24rem]" : "md:pr-16"
     )}>
       <SkipLink />
       <Header />

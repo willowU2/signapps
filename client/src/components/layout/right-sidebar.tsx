@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useUIStore, RightWidgetType } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Bot, CalendarDays, CheckSquare, StickyNote,
   X, ChevronRight, Pin, Search,
+  Mail, Users, FileText, HardDrive, BarChart2,
+  Smartphone, CreditCard, Share2, Clock,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -32,9 +34,119 @@ const widgetItems = [
   { id: "notes"    as RightWidgetType, icon: StickyNote,   label: "Keep Notes" },
 ] as const;
 
+// Route-to-context mapping: defines which icon-bar widgets + panel content to show
+interface RouteContext {
+  label: string;
+  icons: { id: RightWidgetType; icon: React.ElementType; label: string }[];
+}
+
+function getRouteContext(pathname: string): RouteContext {
+  if (pathname.startsWith("/mail")) {
+    return {
+      label: "Mail",
+      icons: [
+        { id: "chat", icon: Bot, label: "AI Compose" },
+        { id: "notes", icon: Users, label: "Contacts" },
+      ],
+    };
+  }
+  if (pathname.startsWith("/cal")) {
+    return {
+      label: "Calendrier",
+      icons: [
+        { id: "calendar", icon: CalendarDays, label: "Événement" },
+        { id: "chat", icon: Bot, label: "Préparation réunion" },
+      ],
+    };
+  }
+  if (pathname.startsWith("/tasks")) {
+    return {
+      label: "Tâches",
+      icons: [
+        { id: "tasks", icon: CheckSquare, label: "Détails tâche" },
+        { id: "notes", icon: Clock, label: "Suivi temps" },
+        { id: "chat", icon: Bot, label: "AI Assistant" },
+      ],
+    };
+  }
+  if (pathname.startsWith("/contacts")) {
+    return {
+      label: "Contacts",
+      icons: [
+        { id: "notes", icon: Users, label: "Contact 360" },
+        { id: "chat", icon: Bot, label: "Activité" },
+      ],
+    };
+  }
+  if (pathname.startsWith("/docs")) {
+    return {
+      label: "Documents",
+      icons: [
+        { id: "notes", icon: FileText, label: "Plan du doc" },
+        { id: "chat", icon: Bot, label: "AI Assistant" },
+      ],
+    };
+  }
+  if (pathname.startsWith("/storage") || pathname.startsWith("/drive")) {
+    return {
+      label: "Drive",
+      icons: [
+        { id: "notes", icon: HardDrive, label: "Aperçu fichier" },
+        { id: "chat", icon: Share2, label: "Partage" },
+      ],
+    };
+  }
+  if (pathname.startsWith("/social")) {
+    return {
+      label: "Social",
+      icons: [
+        { id: "chat", icon: Bot, label: "Aperçu post" },
+        { id: "notes", icon: BarChart2, label: "Analytiques" },
+        { id: "tasks", icon: CalendarDays, label: "Planification" },
+      ],
+    };
+  }
+  if (pathname.startsWith("/it-assets")) {
+    return {
+      label: "IT Assets",
+      icons: [
+        { id: "notes", icon: Smartphone, label: "Détails appareil" },
+        { id: "chat", icon: Bot, label: "Scripts" },
+      ],
+    };
+  }
+  if (pathname.startsWith("/billing")) {
+    return {
+      label: "Facturation",
+      icons: [
+        { id: "notes", icon: CreditCard, label: "Facture" },
+        { id: "chat", icon: Bot, label: "Statut paiement" },
+      ],
+    };
+  }
+  // Default
+  return {
+    label: "Panel",
+    icons: [
+      { id: "chat", icon: Bot, label: "AI Assistant" },
+      { id: "calendar", icon: CalendarDays, label: "Calendar" },
+      { id: "tasks", icon: CheckSquare, label: "Tasks" },
+      { id: "notes", icon: StickyNote, label: "Keep Notes" },
+    ],
+  };
+}
+
 export function RightSidebar() {
   const router = useRouter();
-  const { rightSidebarOpen, activeRightWidget, setRightSidebarOpen, setActiveRightWidget } = useUIStore();
+  const pathname = usePathname();
+  const {
+    rightSidebarOpen,
+    rightSidebarPinned,
+    activeRightWidget,
+    setRightSidebarOpen,
+    setRightSidebarPinned,
+    setActiveRightWidget,
+  } = useUIStore();
   const [mounted, setMounted] = useState(false);
   const [panelMode, setPanelMode] = useState<"widget" | "apps">("widget");
   const [appSearch, setAppSearch] = useState("");
@@ -43,9 +155,11 @@ export function RightSidebar() {
 
   useEffect(() => { setMounted(true); }, []);
 
-  // Close panel when clicking outside (not on icon bar or panel itself)
+  const routeContext = useMemo(() => getRouteContext(pathname), [pathname]);
+
+  // Close panel when clicking outside (not pinned, not on icon bar or panel itself)
   useEffect(() => {
-    if (!rightSidebarOpen) return;
+    if (!rightSidebarOpen || rightSidebarPinned) return;
     const handler = (e: MouseEvent) => {
       const target = e.target as Node;
       if (
@@ -57,17 +171,19 @@ export function RightSidebar() {
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [rightSidebarOpen, setRightSidebarOpen]);
+  }, [rightSidebarOpen, rightSidebarPinned, setRightSidebarOpen]);
 
   // Force panel closed on first mount to reset any stale localStorage state
   useEffect(() => {
-    setRightSidebarOpen(false);
+    if (!rightSidebarPinned) {
+      setRightSidebarOpen(false);
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const isOpen = mounted ? rightSidebarOpen : false;
+  const isOpen = mounted ? (rightSidebarOpen || rightSidebarPinned) : false;
 
   const toggleWidget = (widget: RightWidgetType) => {
-    if (isOpen && activeRightWidget === widget && panelMode === "widget") {
+    if (isOpen && activeRightWidget === widget && panelMode === "widget" && !rightSidebarPinned) {
       setRightSidebarOpen(false);
     } else {
       setPanelMode("widget");
@@ -76,7 +192,7 @@ export function RightSidebar() {
   };
 
   const openApps = () => {
-    if (isOpen && panelMode === "apps") {
+    if (isOpen && panelMode === "apps" && !rightSidebarPinned) {
       setRightSidebarOpen(false);
     } else {
       setPanelMode("apps");
@@ -84,10 +200,21 @@ export function RightSidebar() {
     }
   };
 
+  const handlePinToggle = () => {
+    const newPinned = !rightSidebarPinned;
+    setRightSidebarPinned(newPinned);
+    if (newPinned) {
+      // Ensure panel is open when pinning
+      setRightSidebarOpen(true);
+    }
+  };
+
   const panelTitle =
     panelMode === "apps"
       ? "Applications"
-      : (widgetItems.find((i) => i.id === activeRightWidget)?.label ?? "Panel");
+      : routeContext.label !== "Panel"
+        ? routeContext.label
+        : (widgetItems.find((i) => i.id === activeRightWidget)?.label ?? "Panel");
 
   const filteredApps = useMemo(() => {
     if (!appSearch.trim()) return null;
@@ -103,6 +230,9 @@ export function RightSidebar() {
     }));
     e.dataTransfer.effectAllowed = "copy";
   };
+
+  // Use route-specific icons when available, otherwise fall back to default widgetItems
+  const displayedIcons = routeContext.icons;
 
   return (
     <>
@@ -123,9 +253,27 @@ export function RightSidebar() {
           {/* Panel header */}
           <div className="h-14 flex items-center justify-between px-4 border-b border-border shrink-0">
             <h2 className="font-semibold text-sm">{panelTitle}</h2>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setRightSidebarOpen(false)}>
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              {/* Pin toggle */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost" size="icon" className="h-8 w-8"
+                    onClick={handlePinToggle}
+                  >
+                    <Pin className={cn("h-4 w-4", rightSidebarPinned && "fill-primary text-primary")} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  {rightSidebarPinned ? "Désépingler" : "Épingler ouvert"}
+                </TooltipContent>
+              </Tooltip>
+              {!rightSidebarPinned && (
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setRightSidebarOpen(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
 
         <ScrollArea className="flex-1">
@@ -231,10 +379,10 @@ export function RightSidebar() {
         style={{ width: 'var(--right-sidebar-icon-width)' }}
       >
         <TooltipProvider delayDuration={0}>
-          {widgetItems.map((item) => {
+          {displayedIcons.map((item) => {
             const isActive = isOpen && activeRightWidget === item.id && panelMode === "widget";
             return (
-              <Tooltip key={item.id}>
+              <Tooltip key={item.id + item.label}>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost" size="icon"
@@ -272,7 +420,22 @@ export function RightSidebar() {
           </Tooltip>
 
           {/* Expand/collapse toggle */}
-          <div className="mt-auto">
+          <div className="mt-auto flex flex-col items-center gap-1">
+            {/* Pin indicator */}
+            {rightSidebarPinned && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost" size="icon"
+                    className="h-8 w-8 text-primary"
+                    onClick={handlePinToggle}
+                  >
+                    <Pin className="h-4 w-4 fill-primary" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left"><p>Désépingler</p></TooltipContent>
+              </Tooltip>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground"
