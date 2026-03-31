@@ -708,21 +708,8 @@ fn create_router(state: AppState) -> Router {
 
     // Enterprise Org Structure routes (auth required)
     let org_routes = Router::new()
-        // Org trees
-        .route("/api/v1/org/trees", get(handlers::org_trees::list_trees).post(handlers::org_trees::create_tree))
-        .route("/api/v1/org/trees/:id/full", get(handlers::org_trees::get_full_tree))
-        // Org nodes
-        .route("/api/v1/org/nodes", post(handlers::org_nodes::create_node))
-        .route("/api/v1/org/nodes/:id", get(handlers::org_nodes::get_node).put(handlers::org_nodes::update_node).delete(handlers::org_nodes::delete_node))
-        .route("/api/v1/org/nodes/:id/move", post(handlers::org_nodes::move_node))
-        .route("/api/v1/org/nodes/:id/children", get(handlers::org_nodes::get_children))
-        .route("/api/v1/org/nodes/:id/descendants", get(handlers::org_nodes::get_descendants))
-        .route("/api/v1/org/nodes/:id/ancestors", get(handlers::org_nodes::get_ancestors))
-        .route("/api/v1/org/nodes/:id/assignments", get(handlers::org_nodes::get_node_assignments))
-        .route("/api/v1/org/nodes/:id/permissions", get(handlers::org_nodes::get_node_permissions).put(handlers::org_nodes::set_node_permissions))
-        // Orgchart (Task 10)
+        // Only non-duplicate org routes (trees/nodes CRUD already registered in protected_routes above)
         .route("/api/v1/org/orgchart", get(handlers::org_nodes::get_orgchart))
-        // Org context for the current user (Task 9)
         .route("/api/v1/org/context", get(handlers::org_context::get_context))
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
