@@ -217,8 +217,14 @@ export const useDashboardStore = create<DashboardStore>()(
 
       addWidget: (type) =>
         set((state) => {
+          // Check if widget type is already in dashboard
+          if (state.widgets.some((w) => w.type === type)) {
+            return state;
+          }
+
           const catalog = WIDGET_CATALOG.find((c) => c.type === type);
           if (!catalog) return state;
+          
           const id = `${type}-${Date.now()}`;
           const maxY = state.widgets.reduce(
             (max, w) => Math.max(max, w.y + w.h),
