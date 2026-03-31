@@ -271,14 +271,6 @@ export function Sidebar() {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {/* Drop zone hint */}
-        {isDragOver && !sidebarCollapsed && (
-          <div className="pointer-events-none absolute inset-x-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 p-4 text-center text-xs text-primary">
-            <LucideIcons.Pin className="h-5 w-5" />
-            Déposer pour épingler
-          </div>
-        )}
-
         {/* Nouveau Button */}
         <div className={cn('mb-4', sidebarCollapsed ? 'px-2' : 'px-4')}>
           {sidebarCollapsed ? (
@@ -323,6 +315,19 @@ export function Sidebar() {
         <nav className="flex-1 space-y-0.5 overflow-y-auto">
           {/* Essential items */}
           {essentialNavItems.map((item) => renderNavLink(item))}
+
+          {/* Dynamic Drop Zone Hint for Pinned items */}
+          {isDragOver && !sidebarCollapsed && (
+            <div className="mx-4 my-3 pointer-events-none flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 p-4 text-center text-sm font-medium text-primary shadow-sm animate-in zoom-in-95 duration-200">
+              <div className="p-3 bg-primary/10 rounded-full animate-pulse">
+                <LucideIcons.Pin className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-semibold">Déposer ici</span>
+                <span className="text-xs text-muted-foreground font-normal">pour épingler au menu</span>
+              </div>
+            </div>
+          )}
 
           {/* Pinned section with folders */}
           {(pinnedApps.length > 0 || folders.length > 0) && (
