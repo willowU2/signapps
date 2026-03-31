@@ -106,28 +106,27 @@ export function RightSidebar() {
 
   return (
     <>
-      {/* Expanded Panel — fixed, sits to the left of the icon bar.
-          When closed: translate it fully off-screen to the right (past the icon bar).
-          We shift by panel-width + icon-bar-width = 20rem + 4rem = 24rem. */}
+      {/* Expanded Panel — Clipped wrapper to prevent horizontal layout overflow */}
       <div
-        ref={panelRef}
         className={cn(
-          "hidden md:flex fixed top-0 right-16 bottom-0 w-80 bg-background border-l border-border",
-          "transition-all duration-300 ease-in-out z-30 flex-col shadow-xl",
-          isOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none"
+          "hidden md:flex fixed top-0 bottom-0 bg-background border-l border-border",
+          "transition-all duration-300 ease-in-out z-30 overflow-hidden shadow-xl",
+          isOpen ? "w-80 opacity-100" : "w-0 opacity-0 border-none"
         )}
-        style={{
-          right: 'var(--right-sidebar-icon-width)',
-          width: 'var(--right-sidebar-panel-width)',
-        }}
+        style={{ right: 'var(--right-sidebar-icon-width)' }}
       >
-        {/* Panel header */}
-        <div className="h-14 flex items-center justify-between px-4 border-b border-border shrink-0">
-          <h2 className="font-semibold text-sm">{panelTitle}</h2>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setRightSidebarOpen(false)}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+        <div
+          ref={panelRef}
+          className="w-80 flex flex-col h-full"
+          style={{ width: 'var(--right-sidebar-panel-width)' }}
+        >
+          {/* Panel header */}
+          <div className="h-14 flex items-center justify-between px-4 border-b border-border shrink-0">
+            <h2 className="font-semibold text-sm">{panelTitle}</h2>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setRightSidebarOpen(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
 
         <ScrollArea className="flex-1">
           {/* Widget mode */}
@@ -222,6 +221,7 @@ export function RightSidebar() {
             </div>
           )}
         </ScrollArea>
+        </div>
       </div>
 
       {/* Icon Bar (always visible, fixed on far right) */}

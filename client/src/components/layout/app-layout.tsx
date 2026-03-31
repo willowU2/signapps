@@ -27,7 +27,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className={cn(
-      "flex h-screen flex-col overflow-hidden bg-background transition-all duration-200",
+      "flex h-screen w-full flex-col overflow-hidden bg-background transition-all duration-200",
       sidebarCollapsed ? "md:pl-16" : "md:pl-64",
       rightSidebarOpen ? "md:pr-[24rem]" : "md:pr-16"
     )}>
