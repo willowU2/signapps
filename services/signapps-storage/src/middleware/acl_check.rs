@@ -135,7 +135,10 @@ pub async fn acl_check_middleware(
     let claims = match request.extensions().get::<Claims>() {
         Some(c) => c.clone(),
         None => {
-            return Err((StatusCode::UNAUTHORIZED, "Authentication required".to_string()));
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                "Authentication required".to_string(),
+            ));
         },
     };
 
@@ -224,10 +227,7 @@ mod tests {
 
     #[test]
     fn required_role_get_download_is_downloader() {
-        let role = required_role(
-            &Method::GET,
-            "/api/v1/drive/nodes/some-uuid/download",
-        );
+        let role = required_role(&Method::GET, "/api/v1/drive/nodes/some-uuid/download");
         assert_eq!(role, Some("downloader"));
     }
 

@@ -233,7 +233,8 @@ pub async fn effective_acl(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<EffectiveAcl>> {
-    let effective = acl_resolver::resolve_effective_role(state.pool.inner(), claims.sub, id).await?;
+    let effective =
+        acl_resolver::resolve_effective_role(state.pool.inner(), claims.sub, id).await?;
     Ok(Json(effective))
 }
 

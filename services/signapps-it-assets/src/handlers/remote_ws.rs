@@ -36,6 +36,8 @@ pub struct AppState {
     pub agent_channels: Arc<DashMap<Uuid, broadcast::Sender<String>>>,
     /// Map of agent_id → broadcast sender for frames coming from that agent.
     pub frame_channels: Arc<DashMap<Uuid, broadcast::Sender<String>>>,
+    /// Map of agent_id → recording file path (when recording is enabled).
+    pub recording_paths: Arc<DashMap<Uuid, std::path::PathBuf>>,
 }
 
 impl AppState {
@@ -45,6 +47,7 @@ impl AppState {
             pool,
             agent_channels: Arc::new(DashMap::new()),
             frame_channels: Arc::new(DashMap::new()),
+            recording_paths: Arc::new(DashMap::new()),
         }
     }
 }
@@ -62,6 +65,8 @@ pub struct AgentWsQuery {
 pub struct StartSessionReq {
     pub mode: Option<String>,
     pub admin_name: Option<String>,
+    /// When true, all frames are saved to a recording file.
+    pub record: Option<bool>,
 }
 
 /// Response for session creation.
@@ -116,12 +121,24 @@ async fn handle_agent_ws(socket: WebSocket, agent_id: Uuid, state: AppState) {
         }
     });
 
-    // Receive frames from agent → relay to admin viewers
+    // Receive frames from agent → relay to admin viewers + optional recording
     while let Some(Ok(msg)) = ws_stream.next().await {
         match msg {
             Message::Text(text) => {
                 tracing::debug!("Frame from agent {}: {} bytes", agent_id, text.len());
                 let _ = frame_tx.send(text.to_string());
+
+                // Feature 26: Append frame to recording file if active
+                if let Some(rec_path) = state.recording_paths.get(&agent_id) {
+                    use std::io::Write;
+                    if let Ok(mut f) = std::fs::OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open(rec_path.value())
+                    {
+                        let _ = writeln!(f, "{}", text);
+                    }
+                }
             },
             Message::Close(_) => {
                 tracing::info!("Agent {} disconnected from remote channel", agent_id);
@@ -224,18 +241,35 @@ pub async fn start_remote_session(
     let session_id = Uuid::new_v4();
     let mode = payload.mode.unwrap_or_else(|| "observe".to_string());
     let admin_name = payload.admin_name.unwrap_or_else(|| "Admin".to_string());
+    let record = payload.record.unwrap_or(false);
+
+    // Feature 26: determine recording file path if recording enabled
+    let rec_file_path: Option<String> = if record {
+        let recs_dir = std::path::PathBuf::from("/var/lib/signapps/recordings");
+        let _ = std::fs::create_dir_all(&recs_dir);
+        let file_name = format!("session_{}.ndjson", session_id);
+        let full_path = recs_dir.join(&file_name);
+        // Register recording path in AppState so handle_agent_ws can write frames
+        if let Some(agent_id) = resolve_agent_id(hw_id, &state.pool).await {
+            state.recording_paths.insert(agent_id, full_path.clone());
+        }
+        Some(full_path.to_string_lossy().to_string())
+    } else {
+        None
+    };
 
     // Record in DB (using dynamic query — remote.sessions table created in migration 123)
     sqlx::query(
         r#"
-        INSERT INTO remote.sessions (id, hardware_id, admin_user_id, mode, status)
-        VALUES ($1, $2, $3, $4, 'active')
+        INSERT INTO remote.sessions (id, hardware_id, admin_user_id, mode, status, file_path)
+        VALUES ($1, $2, $3, $4, 'active', $5)
         "#,
     )
     .bind(session_id)
     .bind(hw_id)
     .bind(Uuid::nil()) // TODO: extract from JWT auth middleware
     .bind(&mode)
+    .bind(&rec_file_path)
     .execute(state.pool.inner())
     .await
     .map_err(internal_err)?;
@@ -274,6 +308,43 @@ pub async fn start_remote_session(
     ))
 }
 
+// ─── RM6: List session recordings ─────────────────────────────────────────────
+//
+// GET /:hw_id/recordings
+
+#[derive(Debug, serde::Serialize, sqlx::FromRow)]
+pub struct RecordingRow {
+    pub id: Uuid,
+    pub hardware_id: Uuid,
+    pub session_id: Uuid,
+    pub file_path: Option<String>,
+    pub size_bytes: Option<i64>,
+    pub started_at: chrono::DateTime<chrono::Utc>,
+    pub ended_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+pub async fn list_recordings(
+    Path(hw_id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<RecordingRow>>, (StatusCode, String)> {
+    let rows = sqlx::query_as::<_, RecordingRow>(
+        r#"
+        SELECT id, hardware_id, session_id, file_path, size_bytes, started_at, ended_at
+        FROM remote.sessions
+        WHERE hardware_id = $1
+          AND file_path IS NOT NULL
+        ORDER BY started_at DESC
+        LIMIT 100
+        "#,
+    )
+    .bind(hw_id)
+    .fetch_all(state.pool.inner())
+    .await
+    .map_err(internal_err)?;
+
+    Ok(Json(rows))
+}
+
 // ─── RM5: Stop remote session (HTTP POST) ─────────────────────────────────────
 //
 // POST /:hw_id/remote-session/stop
@@ -301,6 +372,20 @@ pub async fn stop_remote_session(
     .execute(state.pool.inner())
     .await
     .map_err(internal_err)?;
+
+    // Feature 26: stop recording — update file_size in DB then remove recording path
+    if let Some(rec_path) = state.recording_paths.remove(&agent_id) {
+        let size = std::fs::metadata(&rec_path.1)
+            .map(|m| m.len() as i64)
+            .unwrap_or(0);
+        let _ = sqlx::query(
+            "UPDATE remote.sessions SET size_bytes = $1 WHERE hardware_id = $2 AND status = 'active'",
+        )
+        .bind(size)
+        .bind(hw_id)
+        .execute(state.pool.inner())
+        .await;
+    }
 
     // Notify agent to end all sessions
     let cmd = serde_json::json!({

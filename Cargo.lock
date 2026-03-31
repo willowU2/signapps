@@ -10220,6 +10220,7 @@ dependencies = [
  "dotenvy",
  "futures 0.3.31",
  "ipnetwork",
+ "reqwest 0.12.28",
  "serde",
  "serde_json",
  "signapps-common",

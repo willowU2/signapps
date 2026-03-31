@@ -35,6 +35,8 @@ import { AssetIncidentTickets } from "@/components/it-assets/asset-incident-tick
 import { AssetNbvReport } from "@/components/it-assets/asset-nbv-report"
 import { AssetRemoteActions } from "@/components/it-assets/asset-remote-actions"
 import { AssetMonitorInfo } from "@/components/it-assets/asset-monitor-info"
+import { ActiveSessions } from "@/components/it-assets/active-sessions"
+import { PatchHistory } from "@/components/it-assets/patch-history"
 import Link from "next/link"
 import { usePageTitle } from '@/hooks/use-page-title';
 
@@ -92,6 +94,7 @@ function AssetDetailPanel({ asset }: { asset: HardwareAsset }) {
       <AssetWarranty assetId={asset.id} assetName={asset.name} />
       <AssetIncidentTickets asset={asset} />
       <AssetDepreciation assetName={asset.name} purchaseDate={asset.purchase_date} />
+      <PatchHistory hardwareId={asset.id} />
     </div>
   )
 }
@@ -363,6 +366,9 @@ export default function ITAssetsPage() {
             <AssetNbvReport assets={assets} />
           </TabsContent>
         </Tabs>
+
+        {/* Active Remote Sessions — shown below main tabs */}
+        <ActiveSessions />
       </div>
 
       {/* Create / Edit Dialog */}

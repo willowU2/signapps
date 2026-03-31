@@ -165,17 +165,20 @@ pub async fn export_audit(
                     entry.actor_ip.as_deref().unwrap_or(""),
                     entry.file_hash.as_deref().unwrap_or(""),
                     entry.log_hash,
-                    entry
-                        .created_at
-                        .map(|d| d.to_rfc3339())
-                        .unwrap_or_default(),
+                    entry.created_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 ));
             }
-            Ok((StatusCode::OK, Json(json!({ "format": "csv", "data": csv, "count": count }))))
+            Ok((
+                StatusCode::OK,
+                Json(json!({ "format": "csv", "data": csv, "count": count })),
+            ))
         },
         _ => {
             // Default: JSON
-            Ok((StatusCode::OK, Json(json!({ "format": "json", "data": logs, "count": count }))))
+            Ok((
+                StatusCode::OK,
+                Json(json!({ "format": "json", "data": logs, "count": count })),
+            ))
         },
     }
 }

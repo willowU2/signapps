@@ -26,3 +26,4 @@ signapps-db = { path = "../../crates/signapps-db" }
 ipnetwork = { version = "0.20", features = ["serde"] }
 dashmap.workspace = true
 futures.workspace = true
+reqwest.workspace = true

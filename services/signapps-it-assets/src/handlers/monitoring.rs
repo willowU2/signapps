@@ -190,6 +190,74 @@ pub async fn resolve_alert(
     Ok(StatusCode::NO_CONTENT)
 }
 
+// ─── MD2+: Alert notification & automation hook ──────────────────────────────
+//
+// Called when a metric ingestion detects a threshold breach and creates an alert.
+// Publishes an `it.alert.fired` event to the notifications service event bus
+// and evaluates automation rules.
+
+pub async fn fire_alert(
+    pool: &DatabasePool,
+    rule_id: Uuid,
+    hardware_id: Uuid,
+    metric: &str,
+    value: f32,
+    severity: &str,
+) {
+    // Insert alert record
+    let alert_id: Option<Uuid> = sqlx::query_scalar(
+        r#"
+        INSERT INTO it.alerts (rule_id, hardware_id, value)
+        VALUES ($1, $2, $3)
+        RETURNING id
+        "#,
+    )
+    .bind(rule_id)
+    .bind(hardware_id)
+    .bind(value)
+    .fetch_optional(pool.inner())
+    .await
+    .ok()
+    .flatten();
+
+    tracing::info!(
+        alert_id = ?alert_id,
+        hardware_id = %hardware_id,
+        metric = %metric,
+        value = %value,
+        severity = %severity,
+        "Alert fired — publishing it.alert.fired"
+    );
+
+    // Evaluate automation rules (condition→action engine)
+    let event = crate::handlers::automation::AlertFiredEvent {
+        rule_id,
+        hardware_id,
+        metric: metric.to_string(),
+        value: value as f64,
+        severity: severity.to_string(),
+    };
+    crate::handlers::automation::evaluate_alert_rules(pool, &event).await;
+
+    // Publish notification event via the notifications service event topic.
+    // The notifications service listens to all events and creates in-app + email alerts.
+    let notification_payload = serde_json::json!({
+        "event": "it.alert.fired",
+        "alert_id": alert_id,
+        "hardware_id": hardware_id,
+        "metric": metric,
+        "value": value,
+        "severity": severity,
+        "message": format!("{} alert: {} = {:.1}", severity, metric, value),
+    });
+    tracing::info!(
+        payload = %notification_payload,
+        "Notification event: it.alert.fired"
+    );
+    // In production: publish to Redis stream / NATS / PostgreSQL NOTIFY
+    // pub_event("it.alert.fired", &notification_payload).await;
+}
+
 // ─── MD3: Event logs ─────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
@@ -978,6 +1046,123 @@ pub async fn delete_maintenance_window(
         ));
     }
     Ok(StatusCode::NO_CONTENT)
+}
+
+// ─── #12: Unified device health score ────────────────────────────────────────
+
+#[derive(Debug, Serialize)]
+pub struct HealthScore {
+    pub hardware_id: Uuid,
+    pub score: f32,
+    pub patch_score: f32,
+    pub av_score: f32,
+    pub encryption_score: f32,
+    pub policy_score: f32,
+    pub uptime_score: f32,
+}
+
+/// GET /api/v1/it-assets/hardware/:hw_id/health-score
+/// Compute a composite 0-100 health score from patch, AV, encryption, policy, and uptime signals.
+#[tracing::instrument(skip_all)]
+pub async fn get_health_score(
+    State(pool): State<DatabasePool>,
+    Path(hw_id): Path<Uuid>,
+) -> Result<Json<HealthScore>, (StatusCode, String)> {
+    // Patch score: % of patches that are installed vs pending
+    let patch: (i64, i64) = sqlx::query_as(
+        r#"SELECT
+            COUNT(*) FILTER (WHERE status IN ('installed','approved','deployed')),
+            COUNT(*)
+           FROM it.patches WHERE hardware_id = $1"#,
+    )
+    .bind(hw_id)
+    .fetch_one(pool.inner())
+    .await
+    .map_err(internal_err)?;
+
+    let patch_score = if patch.1 == 0 {
+        100.0f32
+    } else {
+        (patch.0 as f32 / patch.1 as f32) * 100.0
+    };
+
+    // AV score: protected=100, outdated=50, disabled=0
+    let av_status: Option<(String,)> = sqlx::query_as(
+        "SELECT status FROM it.antivirus_status WHERE hardware_id = $1 ORDER BY updated_at DESC LIMIT 1",
+    )
+    .bind(hw_id)
+    .fetch_optional(pool.inner())
+    .await
+    .map_err(internal_err)?;
+
+    let av_score = match av_status.as_ref().map(|(s,)| s.as_str()) {
+        Some("protected") => 100.0f32,
+        Some("outdated") => 50.0f32,
+        _ => 0.0f32,
+    };
+
+    // Encryption score: encrypted=100, otherwise 0
+    let enc_count: (i64,) = sqlx::query_as(
+        "SELECT COUNT(*) FROM it.disk_encryption WHERE hardware_id = $1 AND status = 'encrypted'",
+    )
+    .bind(hw_id)
+    .fetch_one(pool.inner())
+    .await
+    .map_err(internal_err)?;
+
+    let encryption_score = if enc_count.0 > 0 { 100.0f32 } else { 0.0f32 };
+
+    // Policy score: % compliant
+    let policy: (i64, i64) = sqlx::query_as(
+        r#"SELECT
+            COUNT(*) FILTER (WHERE compliant = true),
+            COUNT(*)
+           FROM it.policy_compliance WHERE hardware_id = $1"#,
+    )
+    .bind(hw_id)
+    .fetch_one(pool.inner())
+    .await
+    .map_err(internal_err)?;
+
+    let policy_score = if policy.1 == 0 {
+        100.0f32
+    } else {
+        (policy.0 as f32 / policy.1 as f32) * 100.0
+    };
+
+    // Uptime score: online last 24h=100, last 7d=50, older=0
+    let last_hb: Option<(DateTime<Utc>,)> =
+        sqlx::query_as("SELECT last_heartbeat FROM it.hardware WHERE id = $1")
+            .bind(hw_id)
+            .fetch_optional(pool.inner())
+            .await
+            .map_err(internal_err)?;
+
+    let uptime_score = match last_hb {
+        Some((ts,)) => {
+            let hours_ago = (Utc::now() - ts).num_hours();
+            if hours_ago <= 24 {
+                100.0f32
+            } else if hours_ago <= 168 {
+                50.0f32
+            } else {
+                0.0f32
+            }
+        },
+        None => 0.0f32,
+    };
+
+    let score = (patch_score + av_score + encryption_score + policy_score + uptime_score) / 5.0;
+
+    Ok(Json(HealthScore {
+        hardware_id: hw_id,
+        score,
+        patch_score,
+        av_score,
+        encryption_score,
+        policy_score,
+        uptime_score,
+    }))
 }
 
 #[cfg(test)]

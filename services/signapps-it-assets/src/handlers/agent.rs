@@ -716,6 +716,92 @@ launchctl list | grep signapps
     Ok(Json(info))
 }
 
+// ─── EA-SVC: Agent reports running services (Feature 24) ─────────────────────
+
+#[derive(Debug, Deserialize)]
+pub struct ServiceEntry {
+    pub name: String,
+    pub status: String,
+    pub description: Option<String>,
+    pub pid: Option<i32>,
+}
+
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct ServiceRow {
+    pub id: Uuid,
+    pub hardware_id: Uuid,
+    pub name: String,
+    pub status: String,
+    pub description: Option<String>,
+    pub pid: Option<i32>,
+    pub reported_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReportServicesReq {
+    pub services: Vec<ServiceEntry>,
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn report_services(
+    State(pool): State<DatabasePool>,
+    Path(agent_id): Path<Uuid>,
+    Json(payload): Json<ReportServicesReq>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    let hw = sqlx::query!("SELECT id FROM it.hardware WHERE agent_id = $1", agent_id)
+        .fetch_optional(pool.inner())
+        .await
+        .map_err(internal_err)?
+        .ok_or((StatusCode::NOT_FOUND, "Agent not registered".to_string()))?;
+
+    let hardware_id = hw.id;
+
+    // Upsert all services — delete old entries first for this hardware
+    sqlx::query("DELETE FROM it.agent_services WHERE hardware_id = $1")
+        .bind(hardware_id)
+        .execute(pool.inner())
+        .await
+        .map_err(internal_err)?;
+
+    for svc in payload.services {
+        sqlx::query(
+            r#"INSERT INTO it.agent_services (hardware_id, name, status, description, pid)
+               VALUES ($1, $2, $3, $4, $5)"#,
+        )
+        .bind(hardware_id)
+        .bind(svc.name)
+        .bind(svc.status)
+        .bind(svc.description)
+        .bind(svc.pid)
+        .execute(pool.inner())
+        .await
+        .map_err(internal_err)?;
+    }
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn list_hardware_services(
+    State(pool): State<DatabasePool>,
+    Path(hw_id): Path<Uuid>,
+) -> Result<Json<Vec<ServiceRow>>, (StatusCode, String)> {
+    let rows = sqlx::query_as::<_, ServiceRow>(
+        r#"
+        SELECT id, hardware_id, name, status, description, pid, reported_at
+        FROM it.agent_services
+        WHERE hardware_id = $1
+        ORDER BY status ASC, name ASC
+        "#,
+    )
+    .bind(hw_id)
+    .fetch_all(pool.inner())
+    .await
+    .map_err(internal_err)?;
+
+    Ok(Json(rows))
+}
+
 #[cfg(test)]
 mod tests {
     #[allow(unused_imports)]

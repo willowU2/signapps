@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from "react"
-import { Monitor, MousePointer, Eye, EyeOff, Loader2, AlertCircle, StopCircle } from "lucide-react"
+import { Monitor, MousePointer, Eye, EyeOff, Loader2, AlertCircle, StopCircle, Columns2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -33,6 +33,9 @@ type RemoteMode = "observe" | "share" | "control"
 
 type ConnectionState = "idle" | "connecting" | "connected" | "error" | "ended"
 
+/** 0 = all monitors combined; 1, 2, … = specific monitor index */
+type MonitorIndex = number
+
 interface RemoteFrame {
   type: "frame"
   session_id: string
@@ -40,6 +43,7 @@ interface RemoteFrame {
   height: number
   data: string        // base64 WebP
   frame_type: string  // "full" | "delta"
+  monitor_index?: number
 }
 
 interface SessionStarted {
@@ -47,6 +51,7 @@ interface SessionStarted {
   session_id: string
   screen_width: number
   screen_height: number
+  monitor_count?: number
 }
 
 type AgentMessage = RemoteFrame | SessionStarted
@@ -86,6 +91,10 @@ export function SecureRemoteViewer({
   const [sessionDuration, setSessionDuration] = useState(0)
   const [screenSize, setScreenSize] = useState<{ w: number; h: number } | null>(null)
   const [frameCount, setFrameCount] = useState(0)
+  const [monitorCount, setMonitorCount] = useState(1)
+  const [selectedMonitor, setSelectedMonitor] = useState<MonitorIndex>(1)
+  // Per-monitor canvas refs (for "All" layout)
+  const canvasRefs = useRef<Record<number, HTMLCanvasElement | null>>({})
 
   // ─── Session timer ──────────────────────────────────────────────────────────
 
@@ -109,7 +118,7 @@ export function SecureRemoteViewer({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ mode, admin_name: adminName }),
+        body: JSON.stringify({ mode, admin_name: adminName, monitor_index: selectedMonitor }),
       })
       if (!resp.ok) {
         const msg = await resp.text()
@@ -154,20 +163,27 @@ export function SecureRemoteViewer({
       setConnState("error")
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hardwareId, mode, adminName, apiBase])
+  }, [hardwareId, mode, adminName, apiBase, selectedMonitor])
 
   // ─── Handle incoming agent messages ─────────────────────────────────────────
 
   const handleAgentMessage = useCallback((msg: AgentMessage) => {
     if (msg.type === "session_started") {
       setScreenSize({ w: msg.screen_width, h: msg.screen_height })
+      if (msg.monitor_count && msg.monitor_count > 1) {
+        setMonitorCount(msg.monitor_count)
+      }
     } else if (msg.type === "frame") {
       renderFrame(msg)
     }
   }, [])
 
   const renderFrame = useCallback((frame: RemoteFrame) => {
-    const canvas = canvasRef.current
+    // Determine target canvas: per-monitor canvas (for "All" view) or main canvas
+    const monIdx = frame.monitor_index ?? 1
+    const canvas = selectedMonitor === 0
+      ? (canvasRefs.current[monIdx] ?? canvasRef.current)
+      : canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext("2d")
     if (!ctx) return
@@ -184,7 +200,8 @@ export function SecureRemoteViewer({
       setFrameCount((c) => c + 1)
     }
     img.src = `data:image/webp;base64,${frame.data}`
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMonitor])
 
   // ─── Stop session ────────────────────────────────────────────────────────────
 
@@ -384,7 +401,7 @@ export function SecureRemoteViewer({
 
       {/* ── Controls ── */}
       {connState === "idle" || connState === "error" || connState === "ended" ? (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Select
             value={mode}
             onValueChange={(v) => setMode(v as RemoteMode)}
@@ -409,6 +426,28 @@ export function SecureRemoteViewer({
                 <span className="flex items-center gap-2">
                   <MousePointer className="h-3.5 w-3.5" />
                   Control
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Monitor selector */}
+          <Select
+            value={String(selectedMonitor)}
+            onValueChange={(v) => setSelectedMonitor(Number(v))}
+          >
+            <SelectTrigger className="w-36">
+              <Columns2 className="h-3.5 w-3.5 mr-1.5" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Monitor 1</SelectItem>
+              {Array.from({ length: Math.max(0, monitorCount - 1) }, (_, i) => (
+                <SelectItem key={i + 2} value={String(i + 2)}>Monitor {i + 2}</SelectItem>
+              ))}
+              <SelectItem value="0">
+                <span className="flex items-center gap-2">
+                  <Columns2 className="h-3.5 w-3.5" />All monitors
                 </span>
               </SelectItem>
             </SelectContent>
@@ -464,19 +503,41 @@ export function SecureRemoteViewer({
           </div>
         )}
 
-        <canvas
-          ref={canvasRef}
-          className="w-full h-auto"
-          style={{
-            cursor: mode === "control" ? "crosshair" : "default",
-            display: connState === "connected" ? "block" : "none",
-          }}
-          onMouseMove={handleMouseMove}
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-          // Prevent context menu on right-click in control mode
-          onContextMenu={(e) => mode === "control" && e.preventDefault()}
-        />
+        {/* Single monitor canvas */}
+        {selectedMonitor !== 0 && (
+          <canvas
+            ref={canvasRef}
+            className="w-full h-auto"
+            style={{
+              cursor: mode === "control" ? "crosshair" : "default",
+              display: connState === "connected" ? "block" : "none",
+            }}
+            onMouseMove={handleMouseMove}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+            onContextMenu={(e) => mode === "control" && e.preventDefault()}
+          />
+        )}
+
+        {/* All monitors: side-by-side scaled canvases */}
+        {selectedMonitor === 0 && connState === "connected" && (
+          <div className="flex gap-1 p-1" style={{ display: "flex" }}>
+            {Array.from({ length: monitorCount }, (_, i) => (
+              <div key={i + 1} className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground text-center mb-0.5">Monitor {i + 1}</p>
+                <canvas
+                  ref={el => { canvasRefs.current[i + 1] = el }}
+                  className="w-full h-auto border border-muted/30 rounded"
+                  style={{ cursor: mode === "control" ? "crosshair" : "default" }}
+                  onMouseMove={handleMouseMove}
+                  onMouseDown={handleMouseDown}
+                  onMouseUp={handleMouseUp}
+                  onContextMenu={(e) => mode === "control" && e.preventDefault()}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Mode description ── */}

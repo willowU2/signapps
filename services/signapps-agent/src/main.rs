@@ -1,13 +1,16 @@
 //! SignApps Endpoint Agent
 //! Lightweight Rust binary for managed endpoints.
-//! Capabilities: inventory, scripts, patches, remote screen, auto-update.
+//! Capabilities: inventory, scripts, patches, remote screen, auto-update,
+//!               services monitor, backup, bandwidth monitoring.
 
+mod backup;
 mod config;
 mod heartbeat;
 mod inventory;
 mod patches;
 mod remote;
 mod scripts;
+mod services;
 
 use clap::Parser;
 use std::sync::Arc;
@@ -94,15 +97,25 @@ async fn run_agent(config: Arc<RwLock<config::AgentConfig>>) -> anyhow::Result<(
     let cfg = config.clone();
     let remote_handle = tokio::spawn(async move { remote::remote_access_server(cfg).await });
 
+    // Feature 24: Service/process monitoring
+    let cfg = config.clone();
+    let services_handle = tokio::spawn(async move { services::services_monitor_loop(cfg).await });
+
+    // Feature 25: Endpoint backup
+    let cfg = config.clone();
+    let backup_handle = tokio::spawn(async move { backup::backup_loop(cfg).await });
+
     tracing::info!("All agent tasks running");
 
     // Wait for any task to finish (they should run forever)
     tokio::select! {
-        r = heartbeat_handle => tracing::error!("Heartbeat task exited: {:?}", r),
-        r = inventory_handle => tracing::error!("Inventory task exited: {:?}", r),
-        r = scripts_handle => tracing::error!("Scripts task exited: {:?}", r),
-        r = patches_handle => tracing::error!("Patches task exited: {:?}", r),
-        r = remote_handle => tracing::error!("Remote task exited: {:?}", r),
+        r = heartbeat_handle  => tracing::error!("Heartbeat task exited: {:?}", r),
+        r = inventory_handle  => tracing::error!("Inventory task exited: {:?}", r),
+        r = scripts_handle    => tracing::error!("Scripts task exited: {:?}", r),
+        r = patches_handle    => tracing::error!("Patches task exited: {:?}", r),
+        r = remote_handle     => tracing::error!("Remote task exited: {:?}", r),
+        r = services_handle   => tracing::error!("Services task exited: {:?}", r),
+        r = backup_handle     => tracing::error!("Backup task exited: {:?}", r),
     }
 
     Ok(())

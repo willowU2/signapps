@@ -288,6 +288,93 @@ pub async fn patch_compliance(
     }))
 }
 
+// ─── PM6: Rollback patch (Feature 30) ────────────────────────────────────────
+//
+// POST /api/v1/it-assets/patches/:id/rollback
+// Queues a rollback command: wusa /uninstall (Windows) or apt downgrade (Linux).
+
+#[tracing::instrument(skip_all)]
+pub async fn rollback_patch(
+    State(pool): State<DatabasePool>,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    // Fetch patch info
+    let patch = sqlx::query!(
+        r#"
+        SELECT hardware_id, kb_number, patch_id, title, category
+        FROM it.available_patches
+        WHERE id = $1 AND status = 'installed'
+        "#,
+        id
+    )
+    .fetch_optional(pool.inner())
+    .await
+    .map_err(internal_err)?
+    .ok_or((
+        StatusCode::NOT_FOUND,
+        "Patch not found or not in installed state".to_string(),
+    ))?;
+
+    // Mark patch as rollback_pending
+    sqlx::query!(
+        "UPDATE it.available_patches SET status = 'rollback_pending' WHERE id = $1",
+        id
+    )
+    .execute(pool.inner())
+    .await
+    .map_err(internal_err)?;
+
+    // Build rollback script based on OS type inferred from patch metadata
+    let rollback_script = if let Some(ref kb) = patch.kb_number {
+        // Windows: wusa.exe /uninstall /kb:<number> /quiet /norestart
+        let kb_num = kb.trim_start_matches("KB");
+        format!(
+            r#"wusa /uninstall /kb:{kb_num} /quiet /norestart
+if %errorlevel% == 0 (echo Rollback OK) else (echo Rollback failed: %errorlevel% && exit 1)"#,
+            kb_num = kb_num
+        )
+    } else if patch.category.as_deref() == Some("os") {
+        // Linux apt: revert to previous version
+        // patch_id format: apt-<name>-<version>
+        let pkg_info = patch
+            .patch_id
+            .strip_prefix("apt-")
+            .and_then(|s| s.rsplit_once('-'))
+            .map(|(name, _ver)| name.to_string())
+            .unwrap_or_else(|| patch.patch_id.clone());
+        format!(
+            "apt-get install --reinstall {} 2>&1\n\
+             # For specific version: apt-get install {}=<prev_version>",
+            pkg_info, pkg_info
+        )
+    } else {
+        format!(
+            "# Manual rollback required for patch: {}\n# Title: {}",
+            patch.patch_id, patch.title
+        )
+    };
+
+    // Queue rollback script via script_queue
+    sqlx::query!(
+        r#"
+        INSERT INTO it.script_queue (hardware_id, script_type, script_content, timeout_seconds)
+        VALUES ($1, $2, $3, 600)
+        "#,
+        patch.hardware_id,
+        if patch.kb_number.is_some() {
+            "cmd"
+        } else {
+            "bash"
+        },
+        rollback_script,
+    )
+    .execute(pool.inner())
+    .await
+    .map_err(internal_err)?;
+
+    Ok(StatusCode::ACCEPTED)
+}
+
 #[cfg(test)]
 mod tests {
     #[allow(unused_imports)]

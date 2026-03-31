@@ -371,6 +371,94 @@ export const itAssetsApi = {
         itAssetsClient.get<EncryptionStatus[]>(`/it-assets/hardware/${hwId}/security/encryption`),
     getEncryptionFleetSummary: () =>
         itAssetsClient.get<EncryptionFleetSummary>('/it-assets/fleet/security/encryption'),
+
+    // #51: PSA Ticketing
+    listTickets: (filters?: { status?: string; priority?: string; assigned_to?: string; hardware_id?: string }) => {
+        const q = new URLSearchParams();
+        if (filters?.status) q.set('status', filters.status);
+        if (filters?.priority) q.set('priority', filters.priority);
+        if (filters?.assigned_to) q.set('assigned_to', filters.assigned_to);
+        if (filters?.hardware_id) q.set('hardware_id', filters.hardware_id);
+        const qs = q.toString();
+        return itAssetsClient.get<Ticket[]>(`/it-assets/tickets${qs ? `?${qs}` : ''}`);
+    },
+    getTicketStats: () =>
+        itAssetsClient.get<TicketStats>('/it-assets/tickets/stats'),
+    createTicket: (data: CreateTicketRequest) =>
+        itAssetsClient.post<Ticket>('/it-assets/tickets', data),
+    getTicket: (id: string) =>
+        itAssetsClient.get<TicketDetail>(`/it-assets/tickets/${id}`),
+    updateTicket: (id: string, data: Partial<CreateTicketRequest> & { status?: string }) =>
+        itAssetsClient.patch<Ticket>(`/it-assets/tickets/${id}`, data),
+    addTicketComment: (id: string, data: { content: string; author_name?: string; is_internal?: boolean }) =>
+        itAssetsClient.post<TicketComment>(`/it-assets/tickets/${id}/comments`, data),
+    logTicketTime: (id: string, data: { duration_minutes: number; description?: string; billable?: boolean }) =>
+        itAssetsClient.post<TicketTimeEntry>(`/it-assets/tickets/${id}/time`, data),
+
+    // #11: Per-device documentation
+    listDeviceDocs: (hwId: string) =>
+        itAssetsClient.get<DeviceDoc[]>(`/it-assets/hardware/${hwId}/docs`),
+    createDeviceDoc: (hwId: string, data: { title: string; content?: string; doc_type?: string }) =>
+        itAssetsClient.post<DeviceDoc>(`/it-assets/hardware/${hwId}/docs`, data),
+
+    // #12: Health score
+    getHealthScore: (hwId: string) =>
+        itAssetsClient.get<HealthScore>(`/it-assets/hardware/${hwId}/health-score`),
+
+    // #20: Software policies
+    listSoftwarePolicies: () =>
+        itAssetsClient.get<SoftwarePolicy[]>('/it-assets/software-policies'),
+    createSoftwarePolicy: (data: { name: string; mode: string; patterns: string[]; action: string }) =>
+        itAssetsClient.post<SoftwarePolicy>('/it-assets/software-policies', data),
+    checkSoftwareCompliance: (hwId: string) =>
+        itAssetsClient.get<SoftwarePolicyCheckResult>(`/it-assets/hardware/${hwId}/software-check`),
+
+    // #21: Remediation playbooks
+    listPlaybooks: () =>
+        itAssetsClient.get<Playbook[]>('/it-assets/playbooks'),
+    createPlaybook: (data: { name: string; description?: string; steps: PlaybookStep[] }) =>
+        itAssetsClient.post<Playbook>('/it-assets/playbooks', data),
+    getPlaybook: (id: string) =>
+        itAssetsClient.get<Playbook>(`/it-assets/playbooks/${id}`),
+    updatePlaybook: (id: string, data: Partial<{ name: string; description?: string; steps: PlaybookStep[]; enabled: boolean }>) =>
+        itAssetsClient.put<Playbook>(`/it-assets/playbooks/${id}`, data),
+    deletePlaybook: (id: string) =>
+        itAssetsClient.delete(`/it-assets/playbooks/${id}`),
+    runPlaybook: (id: string, data: { hardware_id?: string }) =>
+        itAssetsClient.post<PlaybookRun>(`/it-assets/playbooks/${id}/run`, data),
+    listPlaybookRuns: (id: string) =>
+        itAssetsClient.get<PlaybookRun[]>(`/it-assets/playbooks/${id}/runs`),
+
+    // #24: Services monitoring
+    listHardwareServices: (hwId: string) =>
+        itAssetsClient.get<ServiceEntry[]>(`/it-assets/hardware/${hwId}/services`),
+
+    // #26: Session recordings
+    listRecordings: (hwId: string) =>
+        itAssetsClient.get<SessionRecording[]>(`/it-assets/hardware/${hwId}/recordings`),
+
+    // #27: Remote file browser
+    listRemoteFiles: (agentId: string, path: string) =>
+        itAssetsClient.get<RemoteFileEntry[]>(`/it-assets/agent/${agentId}/files/list?path=${encodeURIComponent(path)}`),
+
+    agentCommand: (agentId: string, data: { action: string; path?: string }) =>
+        itAssetsClient.post(`/it-assets/agent/commands/queue`, { agent_id: agentId, ...data }),
+
+    // #28: Bandwidth metrics (included in regular metrics endpoint with network_interfaces)
+
+    // #29: PSA integrations
+    listPsaIntegrations: () =>
+        itAssetsClient.get<PsaIntegration[]>('/it-assets/psa-integrations'),
+    createPsaIntegration: (data: CreatePsaIntegrationRequest) =>
+        itAssetsClient.post<PsaIntegration>('/it-assets/psa-integrations', data),
+    updatePsaIntegration: (id: string, data: Partial<CreatePsaIntegrationRequest & { enabled: boolean }>) =>
+        itAssetsClient.put<PsaIntegration>(`/it-assets/psa-integrations/${id}`, data),
+    deletePsaIntegration: (id: string) =>
+        itAssetsClient.delete(`/it-assets/psa-integrations/${id}`),
+
+    // #30: Patch rollback
+    rollbackPatch: (id: string) =>
+        itAssetsClient.post(`/it-assets/patches/${id}/rollback`, {}),
 };
 
 // ============================================================================
@@ -620,4 +708,220 @@ export interface EncryptionFleetSummary {
     partially_encrypted: number;
     not_encrypted: number;
     compliance_pct: number;
+}
+
+// ─── #51: PSA Ticketing types ────────────────────────────────────────────────
+
+export interface Ticket {
+    id: string;
+    number: number;
+    title: string;
+    description?: string;
+    status: 'open' | 'in_progress' | 'waiting' | 'resolved' | 'closed';
+    priority: 'critical' | 'high' | 'medium' | 'low';
+    category?: string;
+    hardware_id?: string;
+    requester_id?: string;
+    requester_name?: string;
+    requester_email?: string;
+    assigned_to?: string;
+    assigned_group?: string;
+    sla_response_due?: string;
+    sla_resolution_due?: string;
+    first_response_at?: string;
+    resolved_at?: string;
+    closed_at?: string;
+    tags: string[];
+    metadata?: Record<string, unknown>;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface TicketComment {
+    id: string;
+    ticket_id: string;
+    author_id?: string;
+    author_name?: string;
+    content: string;
+    is_internal?: boolean;
+    attachments?: unknown[];
+    created_at: string;
+}
+
+export interface TicketTimeEntry {
+    id: string;
+    ticket_id: string;
+    user_id?: string;
+    duration_minutes: number;
+    description?: string;
+    billable?: boolean;
+    created_at: string;
+}
+
+export interface TicketDetail {
+    ticket: Ticket;
+    comments: TicketComment[];
+    time_entries: TicketTimeEntry[];
+}
+
+export interface TicketStats {
+    total_open: number;
+    by_priority: Array<{ priority: string; count: number }>;
+    avg_resolution_minutes?: number;
+    sla_compliance_pct: number;
+    overdue_count: number;
+}
+
+export interface CreateTicketRequest {
+    title: string;
+    description?: string;
+    priority?: string;
+    category?: string;
+    hardware_id?: string;
+    requester_name?: string;
+    requester_email?: string;
+    assigned_to?: string;
+    tags?: string[];
+}
+
+// ─── #11: Device documentation ───────────────────────────────────────────────
+
+export interface DeviceDoc {
+    id: string;
+    hardware_id: string;
+    title: string;
+    content?: string;
+    doc_type?: string;
+    created_by?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+// ─── #12: Health score ────────────────────────────────────────────────────────
+
+export interface HealthScore {
+    hardware_id: string;
+    score: number;
+    patch_score: number;
+    av_score: number;
+    encryption_score: number;
+    policy_score: number;
+    uptime_score: number;
+}
+
+// ─── #20: Software policies ───────────────────────────────────────────────────
+
+export interface SoftwarePolicy {
+    id: string;
+    name: string;
+    mode: 'whitelist' | 'blacklist';
+    patterns: string[];
+    action: 'alert' | 'remove';
+    enabled?: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface SoftwarePolicyCheckResult {
+    hardware_id: string;
+    violations: Array<{
+        policy_id: string;
+        policy_name: string;
+        mode: string;
+        action: string;
+        matched_software: string;
+        pattern: string;
+    }>;
+}
+
+// ─── #21: Remediation playbooks ───────────────────────────────────────────────
+
+export interface PlaybookStep {
+    action_type: string;
+    config: Record<string, unknown>;
+    on_failure: 'continue' | 'stop' | 'escalate';
+}
+
+export interface Playbook {
+    id: string;
+    name: string;
+    description?: string;
+    steps: PlaybookStep[];
+    enabled: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PlaybookRun {
+    id: string;
+    playbook_id: string;
+    hardware_id?: string;
+    status: string;
+    step_results: Array<{
+        step_index: number;
+        action_type: string;
+        status: string;
+        output?: string;
+        error?: string;
+        started_at?: string;
+        completed_at?: string;
+    }>;
+    started_at: string;
+    completed_at?: string;
+}
+
+// ─── #24: Service monitoring ──────────────────────────────────────────────────
+
+export interface ServiceEntry {
+    id: string;
+    hardware_id: string;
+    name: string;
+    status: 'running' | 'stopped' | 'paused' | 'unknown';
+    description?: string;
+    pid?: number;
+    reported_at: string;
+}
+
+// ─── #26: Session recordings ──────────────────────────────────────────────────
+
+export interface SessionRecording {
+    id: string;
+    hardware_id: string;
+    session_id: string;
+    file_path?: string;
+    size_bytes?: number;
+    started_at: string;
+    ended_at?: string;
+}
+
+// ─── #27: Remote file entry ───────────────────────────────────────────────────
+
+export interface RemoteFileEntry {
+    name: string;
+    path: string;
+    is_dir: boolean;
+    size?: number;
+    modified?: string;
+}
+
+// ─── #29: PSA Integrations ────────────────────────────────────────────────────
+
+export interface PsaIntegration {
+    id: string;
+    name: string;
+    type: string;
+    webhook_url: string;
+    api_key?: string;
+    mapping_config: Record<string, unknown>;
+    enabled: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreatePsaIntegrationRequest {
+    name: string;
+    type: string;
+    webhook_url: string;
+    api_key?: string;
+    mapping_config?: Record<string, unknown>;
 }

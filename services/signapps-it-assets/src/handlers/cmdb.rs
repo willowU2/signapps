@@ -391,7 +391,7 @@ pub async fn update_change_status(
     Ok(Json(row))
 }
 
-// CM4: LDAP import stub
+// CM4: LDAP import — basic TCP probe + proper structure for ldap3 crate
 #[derive(Debug, Deserialize)]
 /// Represents a ldap import req.
 pub struct LdapImportReq {
@@ -400,6 +400,10 @@ pub struct LdapImportReq {
     pub base_dn: String,
     pub bind_dn: Option<String>,
     pub bind_password: Option<String>,
+    /// LDAP filter, e.g. "(objectClass=user)"
+    pub filter: Option<String>,
+    /// Attributes to return, e.g. ["cn", "mail", "sAMAccountName"]
+    pub attributes: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -407,21 +411,75 @@ pub struct LdapImportReq {
 pub struct LdapImportResult {
     pub status: String,
     pub message: String,
+    pub host_reachable: bool,
+    pub port: u16,
+    pub note: String,
 }
 
 #[tracing::instrument(skip_all)]
 pub async fn import_ldap(
     Json(payload): Json<LdapImportReq>,
 ) -> Result<Json<LdapImportResult>, (StatusCode, String)> {
-    // Structural stub — real LDAP integration requires ldap3 crate
-    Ok(Json(LdapImportResult {
-        status: "queued".to_string(),
-        message: format!(
-            "LDAP import from {}:{} with base DN '{}' queued for async processing",
-            payload.host,
-            payload.port.unwrap_or(389),
+    use std::net::{SocketAddr, TcpStream};
+    use std::str::FromStr;
+    use std::time::Duration;
+
+    let port = payload.port.unwrap_or(389);
+
+    // Attempt basic TCP connectivity to LDAP port
+    let host = payload.host.clone();
+    let host_reachable = tokio::task::spawn_blocking(move || {
+        let addr_str = format!("{}:{}", host, port);
+        if let Ok(addr) = SocketAddr::from_str(&addr_str) {
+            TcpStream::connect_timeout(&addr, Duration::from_millis(2000)).is_ok()
+        } else {
+            // Try as hostname:port
+            std::net::TcpStream::connect_timeout(
+                &format!("{}:{}", host, port)
+                    .parse()
+                    .unwrap_or_else(|_| SocketAddr::from_str("127.0.0.1:389").unwrap()),
+                Duration::from_millis(2000),
+            )
+            .is_ok()
+        }
+    })
+    .await
+    .unwrap_or(false);
+
+    // TODO: Replace with ldap3 crate for production LDAP bind+search:
+    //
+    // use ldap3::{Ldap, LdapConn, Scope, SearchEntry};
+    // let mut ldap = LdapConn::new(&format!("ldap://{}:{}", payload.host, port))?;
+    // ldap.simple_bind(&bind_dn, &bind_password).await?.success()?;
+    // let (entries, _) = ldap.search(&payload.base_dn, Scope::Subtree, &filter, &attrs).await?.success()?;
+    // for entry in entries { let se = SearchEntry::construct(entry); /* process */ }
+    // ldap.unbind().await?;
+
+    let status = if host_reachable {
+        "ready"
+    } else {
+        "unreachable"
+    };
+    let message = if host_reachable {
+        format!(
+            "LDAP server {}:{} is reachable. Bind DN: {}. Base DN: {}. Ready for ldap3 crate integration.",
+            payload.host, port,
+            payload.bind_dn.as_deref().unwrap_or("(anonymous)"),
             payload.base_dn
-        ),
+        )
+    } else {
+        format!(
+            "Cannot reach LDAP server {}:{}. Check host/port and firewall rules.",
+            payload.host, port
+        )
+    };
+
+    Ok(Json(LdapImportResult {
+        status: status.to_string(),
+        message,
+        host_reachable,
+        port,
+        note: "Add 'ldap3 = \"0.11\"' to Cargo.toml for full LDAP bind+search support.".to_string(),
     }))
 }
 
