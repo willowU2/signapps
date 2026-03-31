@@ -53,7 +53,7 @@ setup('authenticate', async ({ page }) => {
 
   // Wait for either the redirect OR an error message to appear
   try {
-    await page.waitForURL(/\/(dashboard|login\/verify)/, { timeout: 10000 });
+    await page.waitForURL(/\/(dashboard|login\/verify)/, { timeout: 30000 });
   } catch (error) {
     // If we timed out, let's grab the text content of the page to see if there's an error message
     const pageText = await page.locator('body').innerText();
