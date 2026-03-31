@@ -842,3 +842,128 @@ export const driveAuditApi = {
     updateAlertConfig: (data: unknown) =>
         storageClient.put('/drive/audit/alerts/config', data),
 };
+
+// ============================================================
+// Drive SP3 Backup API
+// ============================================================
+
+export interface BackupPlan {
+    id: string;
+    name: string;
+    schedule: string;
+    backup_type: 'full' | 'incremental' | 'differential';
+    retention_days: number;
+    max_snapshots: number;
+    include_paths: string[];
+    exclude_paths: string[];
+    enabled: boolean;
+    last_run_at: string | null;
+    next_run_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateBackupPlan {
+    name: string;
+    schedule?: string;
+    backup_type?: 'full' | 'incremental' | 'differential';
+    retention_days?: number;
+    max_snapshots?: number;
+    include_paths?: string[];
+    exclude_paths?: string[];
+    enabled?: boolean;
+}
+
+export interface UpdateBackupPlan {
+    name?: string;
+    schedule?: string;
+    backup_type?: 'full' | 'incremental' | 'differential';
+    retention_days?: number;
+    max_snapshots?: number;
+    include_paths?: string[];
+    exclude_paths?: string[];
+    enabled?: boolean;
+}
+
+export interface BackupSnapshot {
+    id: string;
+    plan_id: string;
+    backup_type: 'full' | 'incremental' | 'differential';
+    status: 'running' | 'completed' | 'failed';
+    started_at: string;
+    completed_at: string | null;
+    files_count: number;
+    total_size: number;
+    storage_path: string | null;
+    error_message: string | null;
+    created_at: string;
+}
+
+export interface BackupEntry {
+    id: string;
+    snapshot_id: string;
+    node_id: string | null;
+    node_path: string;
+    file_hash: string | null;
+    file_size: number;
+    backup_key: string;
+    created_at: string;
+}
+
+export interface BackupSnapshotDetail extends BackupSnapshot {
+    entries: BackupEntry[];
+}
+
+export interface RestoreRequest {
+    snapshot_id: string;
+    node_path?: string;
+    target_path?: string;
+}
+
+export interface RestoreResponse {
+    message: string;
+    restored_files: number;
+}
+
+export const backupApi = {
+    // Plans
+    listPlans: () =>
+        storageClient.get<BackupPlan[]>('/backups/plans'),
+    createPlan: (data: CreateBackupPlan) =>
+        storageClient.post<BackupPlan>('/backups/plans', data),
+    updatePlan: (id: string, data: UpdateBackupPlan) =>
+        storageClient.put<BackupPlan>(`/backups/plans/${id}`, data),
+    deletePlan: (id: string) =>
+        storageClient.delete(`/backups/plans/${id}`),
+    runPlan: (id: string) =>
+        storageClient.post<BackupSnapshot>(`/backups/plans/${id}/run`),
+
+    // Snapshots
+    listSnapshots: (plan_id?: string) =>
+        storageClient.get<BackupSnapshot[]>('/backups/snapshots', { params: plan_id ? { plan_id } : {} }),
+    getSnapshot: (id: string) =>
+        storageClient.get<BackupSnapshotDetail>(`/backups/snapshots/${id}`),
+    deleteSnapshot: (id: string) =>
+        storageClient.delete(`/backups/snapshots/${id}`),
+
+    // Restore
+    restore: (req: RestoreRequest) =>
+        storageClient.post<RestoreResponse>('/backups/restore', req),
+};
+
+// ─── WebDAV Configuration API ─────────────────────────────────────────────────
+
+export interface WebDavConfigResponse {
+    enabled: boolean;
+    url: string;
+}
+
+export const webdavApi = {
+    /** GET /api/v1/webdav/config — global WebDAV status and URL */
+    getConfig: () =>
+        storageClient.get<WebDavConfigResponse>('/webdav/config'),
+
+    /** PUT /api/v1/webdav/config — enable or disable WebDAV globally */
+    updateConfig: (data: { enabled: boolean }) =>
+        storageClient.put<WebDavConfigResponse>('/webdav/config', data),
+};

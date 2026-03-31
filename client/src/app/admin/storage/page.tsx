@@ -5,7 +5,8 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StorageRulesSettings } from "@/components/admin/storage-rules-settings";
 import { AiIndexingSettings } from "@/components/admin/ai-indexing-settings";
-import { ShieldAlert, HardDrive, BrainCircuit } from "lucide-react";
+import { WebDavConfig } from "@/components/admin/webdav-config";
+import { ShieldAlert, HardDrive, BrainCircuit, Network } from "lucide-react";
 import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function AdminStorageSettingsPage() {
@@ -40,6 +41,13 @@ export default function AdminStorageSettingsPage() {
                   <BrainCircuit className="h-4 w-4" />
                   AI Indexing
                 </TabsTrigger>
+                <TabsTrigger
+                  value="webdav"
+                  className="flex items-center gap-2 rounded-md px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                >
+                  <Network className="h-4 w-4" />
+                  WebDAV
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="storage-rules" className="space-y-4 m-0">
@@ -66,6 +74,10 @@ export default function AdminStorageSettingsPage() {
                   </div>
                 </div>
                 <AiIndexingSettings />
+              </TabsContent>
+
+              <TabsContent value="webdav" className="space-y-4 m-0">
+                <WebDavConfig />
               </TabsContent>
             </Tabs>
           </div>

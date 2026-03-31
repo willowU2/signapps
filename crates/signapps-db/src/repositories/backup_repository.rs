@@ -1,6 +1,9 @@
 //! Backup repository for database operations.
 
-use crate::models::{BackupProfile, BackupRun, CreateBackupProfile, UpdateBackupProfile};
+use crate::models::{
+    BackupEntry, BackupPlan, BackupProfile, BackupRun, BackupSnapshot, CreateBackupPlan,
+    CreateBackupProfile, UpdateBackupPlan, UpdateBackupProfile,
+};
 use crate::DatabasePool;
 use signapps_common::Result;
 use uuid::Uuid;
@@ -219,5 +222,316 @@ impl<'a> BackupRepository<'a> {
         .await?;
 
         Ok(())
+    }
+}
+
+// ============================================================
+// Drive SP3 Backup Repository (storage schema)
+// ============================================================
+
+/// Repository for Drive SP3 backup plans, snapshots, and entries.
+pub struct DriveBackupRepository<'a> {
+    pool: &'a DatabasePool,
+}
+
+impl<'a> DriveBackupRepository<'a> {
+    pub fn new(pool: &'a DatabasePool) -> Self {
+        Self { pool }
+    }
+
+    // === Plans ===
+
+    /// List all backup plans.
+    pub async fn list_plans(&self) -> Result<Vec<BackupPlan>> {
+        let plans = sqlx::query_as::<_, BackupPlan>(
+            "SELECT id, name, schedule, backup_type::text, retention_days, max_snapshots,
+                    include_paths, exclude_paths, enabled, last_run_at, next_run_at,
+                    created_at, updated_at
+             FROM storage.backup_plans ORDER BY created_at DESC",
+        )
+        .fetch_all(self.pool.inner())
+        .await?;
+        Ok(plans)
+    }
+
+    /// Find a plan by ID.
+    pub async fn find_plan(&self, id: Uuid) -> Result<Option<BackupPlan>> {
+        let plan = sqlx::query_as::<_, BackupPlan>(
+            "SELECT id, name, schedule, backup_type::text, retention_days, max_snapshots,
+                    include_paths, exclude_paths, enabled, last_run_at, next_run_at,
+                    created_at, updated_at
+             FROM storage.backup_plans WHERE id = $1",
+        )
+        .bind(id)
+        .fetch_optional(self.pool.inner())
+        .await?;
+        Ok(plan)
+    }
+
+    /// Create a new backup plan.
+    pub async fn create_plan(&self, req: CreateBackupPlan) -> Result<BackupPlan> {
+        let plan = sqlx::query_as::<_, BackupPlan>(
+            r#"
+            INSERT INTO storage.backup_plans
+                (name, schedule, backup_type, retention_days, max_snapshots,
+                 include_paths, exclude_paths, enabled)
+            VALUES ($1, $2, $3::storage.backup_type, $4, $5, $6, $7, $8)
+            RETURNING id, name, schedule, backup_type::text, retention_days, max_snapshots,
+                      include_paths, exclude_paths, enabled, last_run_at, next_run_at,
+                      created_at, updated_at
+            "#,
+        )
+        .bind(&req.name)
+        .bind(&req.schedule)
+        .bind(&req.backup_type)
+        .bind(req.retention_days)
+        .bind(req.max_snapshots)
+        .bind(&req.include_paths)
+        .bind(&req.exclude_paths)
+        .bind(req.enabled)
+        .fetch_one(self.pool.inner())
+        .await?;
+        Ok(plan)
+    }
+
+    /// Update an existing backup plan.
+    pub async fn update_plan(&self, id: Uuid, req: UpdateBackupPlan) -> Result<BackupPlan> {
+        let plan = sqlx::query_as::<_, BackupPlan>(
+            r#"
+            UPDATE storage.backup_plans SET
+                name = COALESCE($2, name),
+                schedule = COALESCE($3, schedule),
+                backup_type = COALESCE($4::storage.backup_type, backup_type),
+                retention_days = COALESCE($5, retention_days),
+                max_snapshots = COALESCE($6, max_snapshots),
+                include_paths = COALESCE($7, include_paths),
+                exclude_paths = COALESCE($8, exclude_paths),
+                enabled = COALESCE($9, enabled),
+                updated_at = NOW()
+            WHERE id = $1
+            RETURNING id, name, schedule, backup_type::text, retention_days, max_snapshots,
+                      include_paths, exclude_paths, enabled, last_run_at, next_run_at,
+                      created_at, updated_at
+            "#,
+        )
+        .bind(id)
+        .bind(&req.name)
+        .bind(&req.schedule)
+        .bind(&req.backup_type)
+        .bind(req.retention_days)
+        .bind(req.max_snapshots)
+        .bind(&req.include_paths)
+        .bind(&req.exclude_paths)
+        .bind(req.enabled)
+        .fetch_one(self.pool.inner())
+        .await?;
+        Ok(plan)
+    }
+
+    /// Delete a backup plan (cascades to snapshots and entries).
+    pub async fn delete_plan(&self, id: Uuid) -> Result<()> {
+        sqlx::query("DELETE FROM storage.backup_plans WHERE id = $1")
+            .bind(id)
+            .execute(self.pool.inner())
+            .await?;
+        Ok(())
+    }
+
+    /// Update last_run_at and compute next_run_at (stub: +1 day) for a plan.
+    pub async fn mark_plan_run(&self, id: Uuid) -> Result<()> {
+        sqlx::query(
+            r#"UPDATE storage.backup_plans SET
+                last_run_at = NOW(),
+                next_run_at = NOW() + INTERVAL '1 day',
+                updated_at = NOW()
+               WHERE id = $1"#,
+        )
+        .bind(id)
+        .execute(self.pool.inner())
+        .await?;
+        Ok(())
+    }
+
+    /// List plans that are due to run.
+    pub async fn list_due_plans(&self) -> Result<Vec<BackupPlan>> {
+        let plans = sqlx::query_as::<_, BackupPlan>(
+            r#"SELECT id, name, schedule, backup_type::text, retention_days, max_snapshots,
+                      include_paths, exclude_paths, enabled, last_run_at, next_run_at,
+                      created_at, updated_at
+               FROM storage.backup_plans
+               WHERE enabled = true
+                 AND (next_run_at IS NULL OR next_run_at <= NOW())
+               ORDER BY created_at"#,
+        )
+        .fetch_all(self.pool.inner())
+        .await?;
+        Ok(plans)
+    }
+
+    // === Snapshots ===
+
+    /// List all snapshots, optionally filtered by plan.
+    pub async fn list_snapshots(&self, plan_id: Option<Uuid>) -> Result<Vec<BackupSnapshot>> {
+        let snapshots = if let Some(pid) = plan_id {
+            sqlx::query_as::<_, BackupSnapshot>(
+                r#"SELECT id, plan_id, backup_type::text, status::text, started_at,
+                          completed_at, files_count, total_size, storage_path, error_message, created_at
+                   FROM storage.backup_snapshots WHERE plan_id = $1 ORDER BY started_at DESC"#,
+            )
+            .bind(pid)
+            .fetch_all(self.pool.inner())
+            .await?
+        } else {
+            sqlx::query_as::<_, BackupSnapshot>(
+                r#"SELECT id, plan_id, backup_type::text, status::text, started_at,
+                          completed_at, files_count, total_size, storage_path, error_message, created_at
+                   FROM storage.backup_snapshots ORDER BY started_at DESC LIMIT 100"#,
+            )
+            .fetch_all(self.pool.inner())
+            .await?
+        };
+        Ok(snapshots)
+    }
+
+    /// Find a snapshot by ID.
+    pub async fn find_snapshot(&self, id: Uuid) -> Result<Option<BackupSnapshot>> {
+        let snapshot = sqlx::query_as::<_, BackupSnapshot>(
+            r#"SELECT id, plan_id, backup_type::text, status::text, started_at,
+                      completed_at, files_count, total_size, storage_path, error_message, created_at
+               FROM storage.backup_snapshots WHERE id = $1"#,
+        )
+        .bind(id)
+        .fetch_optional(self.pool.inner())
+        .await?;
+        Ok(snapshot)
+    }
+
+    /// Create a new snapshot with status=running.
+    pub async fn create_snapshot(
+        &self,
+        plan_id: Uuid,
+        backup_type: &str,
+        storage_path: Option<&str>,
+    ) -> Result<BackupSnapshot> {
+        let snapshot = sqlx::query_as::<_, BackupSnapshot>(
+            r#"INSERT INTO storage.backup_snapshots (plan_id, backup_type, storage_path)
+               VALUES ($1, $2::storage.backup_type, $3)
+               RETURNING id, plan_id, backup_type::text, status::text, started_at,
+                         completed_at, files_count, total_size, storage_path, error_message, created_at"#,
+        )
+        .bind(plan_id)
+        .bind(backup_type)
+        .bind(storage_path)
+        .fetch_one(self.pool.inner())
+        .await?;
+        Ok(snapshot)
+    }
+
+    /// Mark snapshot as completed.
+    pub async fn complete_snapshot(
+        &self,
+        id: Uuid,
+        files_count: i32,
+        total_size: i64,
+    ) -> Result<()> {
+        sqlx::query(
+            r#"UPDATE storage.backup_snapshots SET
+                status = 'completed',
+                completed_at = NOW(),
+                files_count = $2,
+                total_size = $3
+               WHERE id = $1"#,
+        )
+        .bind(id)
+        .bind(files_count)
+        .bind(total_size)
+        .execute(self.pool.inner())
+        .await?;
+        Ok(())
+    }
+
+    /// Mark snapshot as failed.
+    pub async fn fail_snapshot(&self, id: Uuid, error: &str) -> Result<()> {
+        sqlx::query(
+            r#"UPDATE storage.backup_snapshots SET
+                status = 'failed',
+                completed_at = NOW(),
+                error_message = $2
+               WHERE id = $1"#,
+        )
+        .bind(id)
+        .bind(error)
+        .execute(self.pool.inner())
+        .await?;
+        Ok(())
+    }
+
+    /// Delete a snapshot (cascades to entries).
+    pub async fn delete_snapshot(&self, id: Uuid) -> Result<()> {
+        sqlx::query("DELETE FROM storage.backup_snapshots WHERE id = $1")
+            .bind(id)
+            .execute(self.pool.inner())
+            .await?;
+        Ok(())
+    }
+
+    /// Delete old snapshots beyond retention limit for a plan.
+    pub async fn cleanup_old_snapshots(&self, plan_id: Uuid, max_snapshots: i32) -> Result<()> {
+        sqlx::query(
+            r#"DELETE FROM storage.backup_snapshots
+               WHERE plan_id = $1
+                 AND id NOT IN (
+                     SELECT id FROM storage.backup_snapshots
+                     WHERE plan_id = $1
+                     ORDER BY started_at DESC
+                     LIMIT $2
+                 )"#,
+        )
+        .bind(plan_id)
+        .bind(max_snapshots as i64)
+        .execute(self.pool.inner())
+        .await?;
+        Ok(())
+    }
+
+    // === Entries ===
+
+    /// List entries for a snapshot.
+    pub async fn list_entries(&self, snapshot_id: Uuid) -> Result<Vec<BackupEntry>> {
+        let entries = sqlx::query_as::<_, BackupEntry>(
+            r#"SELECT id, snapshot_id, node_id, node_path, file_hash, file_size, backup_key, created_at
+               FROM storage.backup_entries WHERE snapshot_id = $1 ORDER BY node_path"#,
+        )
+        .bind(snapshot_id)
+        .fetch_all(self.pool.inner())
+        .await?;
+        Ok(entries)
+    }
+
+    /// Create a backup entry for a file.
+    pub async fn create_entry(
+        &self,
+        snapshot_id: Uuid,
+        node_id: Option<Uuid>,
+        node_path: &str,
+        file_hash: Option<&str>,
+        file_size: i64,
+        backup_key: &str,
+    ) -> Result<BackupEntry> {
+        let entry = sqlx::query_as::<_, BackupEntry>(
+            r#"INSERT INTO storage.backup_entries
+                   (snapshot_id, node_id, node_path, file_hash, file_size, backup_key)
+               VALUES ($1, $2, $3, $4, $5, $6)
+               RETURNING id, snapshot_id, node_id, node_path, file_hash, file_size, backup_key, created_at"#,
+        )
+        .bind(snapshot_id)
+        .bind(node_id)
+        .bind(node_path)
+        .bind(file_hash)
+        .bind(file_size)
+        .bind(backup_key)
+        .fetch_one(self.pool.inner())
+        .await?;
+        Ok(entry)
     }
 }

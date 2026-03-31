@@ -3,6 +3,7 @@
 
 pub mod acl;
 pub mod audit;
+pub mod backups;
 pub mod buckets;
 pub mod drive;
 pub mod external;
@@ -21,3 +22,4 @@ pub mod storage_settings;
 pub mod tags;
 pub mod trash;
 pub mod versions;
+pub mod webdav;

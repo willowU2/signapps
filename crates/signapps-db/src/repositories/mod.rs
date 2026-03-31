@@ -21,7 +21,7 @@ pub mod job_repository;
 pub use job_repository::JobRepository;
 
 pub mod backup_repository;
-pub use backup_repository::BackupRepository;
+pub use backup_repository::{BackupRepository, DriveBackupRepository};
 
 pub mod certificate_repository;
 pub use certificate_repository::CertificateRepository;

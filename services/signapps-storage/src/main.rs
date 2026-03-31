@@ -2,7 +2,7 @@
 
 use axum::{
     middleware as axum_mw,
-    routing::{delete, get, post, put},
+    routing::{any, delete, get, post, put},
     Router,
 };
 use signapps_common::bootstrap::{env_or, init_tracing, load_env, ServiceConfig};
@@ -22,8 +22,8 @@ mod services;
 mod storage;
 
 use handlers::{
-    acl, audit, buckets, drive, external, favorites, files, health, mounts, permissions, preview,
-    quotas, raid, search, shares, stats, storage_settings, trash,
+    acl, audit, backups, buckets, drive, external, favorites, files, health, mounts, permissions,
+    preview, quotas, raid, search, shares, stats, storage_settings, trash, webdav,
 };
 use storage::StorageBackend;
 
@@ -118,6 +118,12 @@ async fn main() -> anyhow::Result<()> {
     let alert_pool = state.pool.inner().clone();
     tokio::spawn(async move {
         services::alert_worker::run(alert_pool).await;
+    });
+
+    // Spawn drive backup worker (checks every 60 seconds)
+    let backup_pool = state.pool.clone();
+    tokio::spawn(async move {
+        services::backup_worker::run(backup_pool).await;
     });
 
     // Build router
@@ -398,6 +404,18 @@ fn create_router(state: AppState) -> Router {
             put(storage_settings::update_system_setting),
         );
 
+    // Backup plan + snapshot routes
+    let backup_routes = Router::new()
+        .route("/backups/plans", get(backups::list_plans))
+        .route("/backups/plans", post(backups::create_plan))
+        .route("/backups/plans/:id", put(backups::update_plan))
+        .route("/backups/plans/:id", delete(backups::delete_plan))
+        .route("/backups/plans/:id/run", post(backups::run_plan))
+        .route("/backups/snapshots", get(backups::list_snapshots))
+        .route("/backups/snapshots/:id", get(backups::get_snapshot))
+        .route("/backups/snapshots/:id", delete(backups::delete_snapshot))
+        .route("/backups/restore", post(backups::restore));
+
     // Admin routes (require admin role + authentication)
     let admin_routes = Router::new()
         .merge(admin_quota_routes)
@@ -405,6 +423,7 @@ fn create_router(state: AppState) -> Router {
         .merge(mount_routes)
         .merge(external_routes)
         .merge(audit_routes)
+        .merge(backup_routes)
         .route_layer(axum_mw::from_fn(require_admin))
         .route_layer(axum_mw::from_fn_with_state(
             state.clone(),
@@ -460,17 +479,39 @@ fn create_router(state: AppState) -> Router {
                 .expect("x-workspace-id is a valid header name"),
         ]);
 
+    // WebDAV admin config routes (JWT-protected, admin only)
+    let webdav_admin_routes = Router::new()
+        .route("/webdav/config", get(webdav::get_webdav_config))
+        .route("/webdav/config", put(webdav::update_webdav_config))
+        .route_layer(axum_mw::from_fn(require_admin))
+        .route_layer(axum_mw::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
     // Combine all routes into a single v1 router to prevent path shadowing
     let v1_routes = public_routes
         .merge(public_share_routes)
         .merge(admin_routes)
-        .merge(protected_routes);
+        .merge(protected_routes)
+        .merge(webdav_admin_routes);
+
+    // WebDAV routes — Basic Auth, mounted at root level (not under /api/v1)
+    let webdav_routes = Router::new()
+        .route("/webdav", any(webdav::webdav_dispatch))
+        .route("/webdav/", any(webdav::webdav_dispatch))
+        .route("/webdav/*path", any(webdav::webdav_dispatch))
+        .route_layer(axum_mw::from_fn_with_state(
+            state.clone(),
+            webdav::webdav_auth,
+        ));
 
     // Root-level health check (outside /api/v1 nest so it's reachable at /health)
     let root_health = Router::new().route("/health", get(health::health_check));
 
     Router::new()
         .merge(root_health)
+        .merge(webdav_routes)
         .nest("/api/v1", v1_routes)
         .layer(
             ServiceBuilder::new()
