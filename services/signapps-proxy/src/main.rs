@@ -2,7 +2,7 @@
 
 use axum::{
     middleware,
-    routing::{delete, get, post, put},
+    routing::{any, delete, get, post, put},
     Router,
 };
 use signapps_common::bootstrap::{env_or, init_tracing, load_env, ServiceConfig};
@@ -19,7 +19,9 @@ mod handlers;
 mod proxy;
 mod shield;
 
-use handlers::{certificates, config, health, proxy_status, routes, shield as shield_handlers};
+use handlers::{
+    certificates, config, health, proxy_status, routes, shield as shield_handlers, vault_browse,
+};
 use proxy::acme::{AcmeChallengeStore, AcmeService};
 use proxy::engine::ProxyEngine;
 use proxy::forwarder::HttpForwarder;
@@ -299,9 +301,18 @@ fn create_router(state: AppState) -> Router {
     // Root-level health check (outside /api/v1 nest so it's reachable at /health)
     let root_health = Router::new().route("/health", get(health::health_check));
 
+    // Vault browse proxy routes (public — authenticated via session token in URL)
+    let vault_routes = Router::new()
+        .route("/proxy/vault/:token", any(vault_browse::vault_browse))
+        .route(
+            "/proxy/vault/:token/*path",
+            any(vault_browse::vault_browse_sub),
+        );
+
     // Combine all routes
     Router::new()
         .merge(root_health)
+        .merge(vault_routes)
         .nest("/api/v1", public_routes)
         .nest("/api/v1", route_routes)
         .nest("/api/v1", cert_routes)
