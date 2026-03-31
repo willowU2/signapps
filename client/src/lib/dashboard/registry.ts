@@ -305,6 +305,72 @@ widgetRegistry.set("performance-chart", {
 });
 
 // ============================================================================
+// Unified Dashboard Widgets (previously hardcoded sections)
+// ============================================================================
+
+import { Sparkles, BarChart, Eye, Rss as RssIcon, LayoutGrid } from 'lucide-react';
+
+widgetRegistry.set('ai-daily-brief', {
+  type: 'ai-daily-brief',
+  name: 'Résumé du jour (IA)',
+  description: 'Résumé IA: tâches en attente, emails non lus, événements',
+  category: 'productivity',
+  icon: Sparkles,
+  size: { minW: 6, minH: 2, defaultW: 12, defaultH: 3 },
+  isPublic: true,
+});
+
+widgetRegistry.set('unified-stats', {
+  type: 'unified-stats',
+  name: 'Statistiques unifiées',
+  description: 'Documents, emails, événements en un coup d\'oeil',
+  category: 'analytics',
+  icon: BarChart,
+  size: { minW: 6, minH: 2, defaultW: 12, defaultH: 2 },
+  isPublic: true,
+});
+
+widgetRegistry.set('today-view', {
+  type: 'today-view',
+  name: 'Vue Aujourd\'hui',
+  description: 'Emails + tâches + événements du jour combinés',
+  category: 'productivity',
+  icon: Eye,
+  size: { minW: 6, minH: 3, defaultW: 12, defaultH: 5 },
+  isPublic: true,
+});
+
+widgetRegistry.set('activity-feed', {
+  type: 'activity-feed',
+  name: 'Fil d\'activité',
+  description: 'Activité globale avec filtres et recherche',
+  category: 'content',
+  icon: Activity,
+  size: { minW: 4, minH: 3, defaultW: 6, defaultH: 4 },
+  isPublic: true,
+});
+
+widgetRegistry.set('all-apps', {
+  type: 'all-apps',
+  name: 'Toutes les applications',
+  description: 'Catalogue complet des applications avec recherche',
+  category: 'system',
+  icon: LayoutGrid,
+  size: { minW: 6, minH: 3, defaultW: 12, defaultH: 5 },
+  isPublic: true,
+});
+
+widgetRegistry.set('kpi-cards', {
+  type: 'kpi-cards',
+  name: 'KPIs clés',
+  description: 'Indicateurs de performance multi-services',
+  category: 'analytics',
+  icon: TrendingUp,
+  size: { minW: 4, minH: 2, defaultW: 8, defaultH: 3 },
+  isPublic: true,
+});
+
+// ============================================================================
 // Registry Functions
 // ============================================================================
 

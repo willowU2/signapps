@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { useDashboardStore, useDashboardWidgets, useDashboardEditMode, useDashboardWidgetActions, WidgetConfig } from '@/stores/dashboard-store';
 import { useContainers } from '@/hooks/use-containers';
 
+// Core widgets
 import { WidgetStatCards } from './widget-stat-cards';
 import { WidgetInstalledApps } from './widget-installed-apps';
 import { WidgetSystemHealth } from './widget-system-health';
@@ -15,6 +16,7 @@ import { WidgetQuickActions } from './widget-quick-actions';
 import { WidgetNetworkTraffic } from './widget-network-traffic';
 import { WidgetBookmarks } from './widget-bookmarks';
 import { WidgetProxyStatus } from './widget-proxy-status';
+// Productivity widgets
 import { WidgetRecentTasks } from './widgets/widget-recent-tasks';
 import { WidgetUpcomingEvents } from './widgets/widget-upcoming-events';
 import { WidgetRecentFiles } from './widgets/widget-recent-files';
@@ -23,6 +25,18 @@ import { WidgetTodayCalendar } from './widgets/widget-today-calendar';
 import { WidgetTasksSummary } from './widgets/widget-tasks-summary';
 import { WidgetUnreadEmails } from './widgets/widget-unread-emails';
 import { WidgetActiveTasks } from './widgets/widget-active-tasks';
+// Unified dashboard widgets (previously hardcoded sections)
+import { WidgetAiDailyBrief } from './widgets/widget-ai-daily-brief';
+import { WidgetUnifiedStats } from './widgets/widget-unified-stats';
+import { WidgetTodayView } from './widgets/widget-today-view';
+import { WidgetActivityFeed } from './widgets/widget-activity-feed';
+import { WidgetAllApps } from './widgets/widget-all-apps';
+import { WidgetKpiCards } from './widgets/widget-kpi-cards';
+// Missing widget imports (previously flagged)
+import { WidgetNotificationCenter } from './widgets/widget-notification-center';
+import { WidgetActivityTimeline } from './widgets/widget-activity-timeline';
+import { WidgetStorageUsage } from './widgets/widget-storage-usage';
+import { WidgetPerformanceChart } from './widgets/widget-performance-chart';
 // IDEA-122: Extended widget library
 import { WidgetWeather } from './widgets/widget-weather';
 import { WidgetRssFeed } from './widgets/widget-rss-feed';
@@ -84,6 +98,30 @@ function WidgetRenderer({ widget }: { widget: WidgetConfig }) {
       return <WidgetUnreadEmails {...renderProps} />;
     case 'active-tasks':
       return <WidgetActiveTasks {...renderProps} />;
+    // Unified dashboard widgets
+    case 'ai-daily-brief':
+      return <WidgetAiDailyBrief {...renderProps} />;
+    case 'unified-stats':
+      return <WidgetUnifiedStats {...renderProps} />;
+    case 'today-view':
+      return <WidgetTodayView {...renderProps} />;
+    case 'activity-feed':
+      return <WidgetActivityFeed {...renderProps} />;
+    case 'all-apps':
+      return <WidgetAllApps {...renderProps} />;
+    case 'kpi-cards':
+      return <WidgetKpiCards {...renderProps} />;
+    // Previously missing imports — now wired
+    case 'notifications':
+      return <WidgetNotificationCenter {...renderProps} />;
+    case 'team-activity':
+      return <WidgetActivityTimeline {...renderProps} />;
+    case 'recent-activity':
+      return <WidgetActivityTimeline {...renderProps} />;
+    case 'storage-usage':
+      return <WidgetStorageUsage {...renderProps} />;
+    case 'performance-chart':
+      return <WidgetPerformanceChart {...renderProps} />;
     // IDEA-122: Extended widget library
     case 'weather':
       return <WidgetWeather {...renderProps} />;
@@ -215,7 +253,7 @@ export function WidgetGrid() {
                   </Button>
                 </>
               )}
-              <motion.div 
+              <motion.div
                 className={editMode ? 'pt-6 h-full' : 'h-full'}
                 initial={{ opacity: 0, scale: 0.95, y: 15 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}

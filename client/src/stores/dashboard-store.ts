@@ -33,6 +33,13 @@ export type WidgetType =
   | 'performance-chart'
   | 'unread-emails'
   | 'active-tasks'
+  // Unified dashboard widgets (previously hardcoded sections)
+  | 'ai-daily-brief'
+  | 'unified-stats'
+  | 'today-view'
+  | 'activity-feed'
+  | 'all-apps'
+  | 'kpi-cards'
   // IDEA-122: Extended widget library
   | 'weather'
   | 'rss-feed'
@@ -70,13 +77,60 @@ export interface BookmarkItem {
   icon?: string;
 }
 
-const DEFAULT_WIDGETS: WidgetConfig[] = [
+// ============================================================================
+// Role-based default layouts
+// ============================================================================
+
+/** Admin layout: system monitoring focus */
+const LAYOUT_ADMIN: WidgetConfig[] = [
   { id: 'stat-cards', type: 'stat-cards', x: 0, y: 0, w: 12, h: 2 },
-  { id: 'installed-apps', type: 'installed-apps', x: 0, y: 2, w: 12, h: 3 },
-  { id: 'system-health', type: 'system-health', x: 0, y: 5, w: 8, h: 5 },
-  { id: 'quick-actions', type: 'quick-actions', x: 8, y: 5, w: 4, h: 5 },
+  { id: 'system-health', type: 'system-health', x: 0, y: 2, w: 8, h: 5 },
+  { id: 'quick-actions', type: 'quick-actions', x: 8, y: 2, w: 4, h: 5 },
+  { id: 'installed-apps', type: 'installed-apps', x: 0, y: 7, w: 12, h: 3 },
   { id: 'network-traffic', type: 'network-traffic', x: 0, y: 10, w: 12, h: 2 },
+  { id: 'proxy-status', type: 'proxy-status', x: 0, y: 12, w: 4, h: 4 },
+  { id: 'recent-activity', type: 'recent-activity', x: 4, y: 12, w: 8, h: 4 },
 ];
+
+/** User layout: productivity focus */
+const LAYOUT_USER: WidgetConfig[] = [
+  { id: 'ai-daily-brief', type: 'ai-daily-brief', x: 0, y: 0, w: 12, h: 3 },
+  { id: 'unified-stats', type: 'unified-stats', x: 0, y: 3, w: 12, h: 2 },
+  { id: 'recent-tasks', type: 'recent-tasks', x: 0, y: 5, w: 6, h: 4 },
+  { id: 'today-calendar', type: 'today-calendar', x: 6, y: 5, w: 6, h: 4 },
+  { id: 'recent-emails', type: 'recent-emails', x: 0, y: 9, w: 6, h: 4 },
+  { id: 'recent-files', type: 'recent-files', x: 6, y: 9, w: 6, h: 4 },
+  { id: 'favorites', type: 'favorites', x: 0, y: 13, w: 4, h: 3 },
+  { id: 'quick-notes', type: 'quick-notes', x: 4, y: 13, w: 4, h: 3 },
+  { id: 'quick-actions', type: 'quick-actions', x: 8, y: 13, w: 4, h: 3 },
+];
+
+/** Manager layout: hybrid productivity + team oversight */
+const LAYOUT_MANAGER: WidgetConfig[] = [
+  { id: 'ai-daily-brief', type: 'ai-daily-brief', x: 0, y: 0, w: 12, h: 3 },
+  { id: 'unified-stats', type: 'unified-stats', x: 0, y: 3, w: 12, h: 2 },
+  { id: 'recent-tasks', type: 'recent-tasks', x: 0, y: 5, w: 6, h: 4 },
+  { id: 'today-calendar', type: 'today-calendar', x: 6, y: 5, w: 6, h: 4 },
+  { id: 'team-activity', type: 'team-activity', x: 0, y: 9, w: 6, h: 4 },
+  { id: 'recent-emails', type: 'recent-emails', x: 6, y: 9, w: 6, h: 4 },
+  { id: 'kpi-cards', type: 'kpi-cards', x: 0, y: 13, w: 8, h: 3 },
+  { id: 'quick-actions', type: 'quick-actions', x: 8, y: 13, w: 4, h: 3 },
+  { id: 'activity-heatmap', type: 'activity-heatmap', x: 0, y: 16, w: 8, h: 3 },
+  { id: 'notifications', type: 'notifications', x: 8, y: 16, w: 4, h: 3 },
+];
+
+/**
+ * Returns the appropriate default layout based on user role.
+ * Role values from backend (UserRole enum): 0=Guest, 1=User, 2=Admin, 3=SuperAdmin
+ */
+export function getDefaultLayout(role: number): WidgetConfig[] {
+  if (role >= 2) return LAYOUT_ADMIN;
+  if (role >= 1) return LAYOUT_MANAGER;
+  return LAYOUT_USER;
+}
+
+// Fallback for backwards compat — uses user layout
+const DEFAULT_WIDGETS: WidgetConfig[] = LAYOUT_USER;
 
 export const WIDGET_CATALOG: { type: WidgetType; label: string; description: string; defaultW: number; defaultH: number; category?: string }[] = [
   // Analytics
@@ -94,6 +148,13 @@ export const WIDGET_CATALOG: { type: WidgetType; label: string; description: str
   { type: 'recent-emails', label: 'Emails Récents', description: 'Derniers emails reçus', defaultW: 6, defaultH: 4, category: 'productivity' },
   { type: 'unread-emails', label: 'Emails Non Lus', description: 'Compteur d\'emails non lus avec lien direct', defaultW: 4, defaultH: 2, category: 'productivity' },
   { type: 'active-tasks', label: 'Tâches Actives', description: 'Nombre de tâches en cours', defaultW: 4, defaultH: 2, category: 'productivity' },
+  // Unified dashboard widgets (previously hardcoded)
+  { type: 'ai-daily-brief', label: 'Résumé du jour (IA)', description: 'Résumé IA: tâches, emails, événements', defaultW: 12, defaultH: 3, category: 'productivity' },
+  { type: 'unified-stats', label: 'Statistiques unifiées', description: 'Documents, emails, événements en un coup d\'oeil', defaultW: 12, defaultH: 2, category: 'analytics' },
+  { type: 'today-view', label: 'Vue Aujourd\'hui', description: 'Emails + tâches + événements du jour combinés', defaultW: 12, defaultH: 5, category: 'productivity' },
+  { type: 'activity-feed', label: 'Fil d\'activité', description: 'Activité globale avec filtres', defaultW: 6, defaultH: 4, category: 'content' },
+  { type: 'all-apps', label: 'Toutes les applications', description: 'Catalogue complet des applications', defaultW: 12, defaultH: 5, category: 'system' },
+  { type: 'kpi-cards', label: 'KPIs clés', description: 'Indicateurs de performance multi-services', defaultW: 8, defaultH: 3, category: 'analytics' },
   // Content
   { type: 'recent-files', label: 'Fichiers Récents', description: 'Derniers fichiers consultés', defaultW: 6, defaultH: 4, category: 'content' },
   { type: 'recent-activity', label: 'Activité Récente', description: 'Votre activité récente', defaultW: 4, defaultH: 4, category: 'content' },
@@ -133,7 +194,7 @@ interface DashboardStore {
   removeWidget: (id: string) => void;
   updateLayout: (layouts: { i: string; x: number; y: number; w: number; h: number }[]) => void;
   setEditMode: (editing: boolean) => void;
-  resetLayout: () => void;
+  resetLayout: (role?: number) => void;
   // IDEA-124: Update per-widget config (including refreshInterval)
   updateWidgetConfig: (id: string, config: Partial<WidgetConfig['config'] & { refreshInterval?: number }>) => void;
 
@@ -200,9 +261,10 @@ export const useDashboardStore = create<DashboardStore>()(
 
       setEditMode: (editMode) => set({ editMode }),
 
-      resetLayout: () => {
-        set({ widgets: DEFAULT_WIDGETS });
-        syncDashboardLayoutToBackend(DEFAULT_WIDGETS);
+      resetLayout: (role?: number) => {
+        const layout = role !== undefined ? getDefaultLayout(role) : DEFAULT_WIDGETS;
+        set({ widgets: layout });
+        syncDashboardLayoutToBackend(layout);
       },
 
       updateWidgetConfig: (id, updates) =>
@@ -242,9 +304,10 @@ export const useDashboardStore = create<DashboardStore>()(
     }),
     {
       name: 'dashboard-layout',
-      version: 2,
+      version: 3,
       migrate: (persisted: unknown) => {
         const state = persisted as Record<string, unknown>;
+        // On version upgrade, reset to new user layout (role-based init happens on page load)
         return { ...state, widgets: DEFAULT_WIDGETS };
       },
     },
