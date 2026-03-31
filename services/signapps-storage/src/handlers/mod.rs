@@ -1,6 +1,8 @@
 //! HTTP handlers for the Storage service.
 #![allow(dead_code)]
 
+pub mod acl;
+pub mod audit;
 pub mod buckets;
 pub mod drive;
 pub mod external;

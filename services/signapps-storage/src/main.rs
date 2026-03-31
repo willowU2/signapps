@@ -1,7 +1,7 @@
 //! SignApps Storage Service - Documents and RAID management
 
 use axum::{
-    middleware,
+    middleware as axum_mw,
     routing::{delete, get, post, put},
     Router,
 };
@@ -17,12 +17,13 @@ use tower_http::cors::{AllowOrigin, CorsLayer};
 
 mod handlers;
 mod jobs;
+mod middleware;
 mod services;
 mod storage;
 
 use handlers::{
-    buckets, drive, external, favorites, files, health, mounts, permissions, preview, quotas, raid,
-    search, shares, stats, storage_settings, trash,
+    acl, audit, buckets, drive, external, favorites, files, health, mounts, permissions, preview,
+    quotas, raid, search, shares, stats, storage_settings, trash,
 };
 use storage::StorageBackend;
 
@@ -113,6 +114,12 @@ async fn main() -> anyhow::Result<()> {
         .await
         .map_err(|e| anyhow::anyhow!("Failed to start cron: {}", e))?;
 
+    // Spawn drive audit alert worker (checks every 60 seconds)
+    let alert_pool = state.pool.inner().clone();
+    tokio::spawn(async move {
+        services::alert_worker::run(alert_pool).await;
+    });
+
     // Build router
     let app = create_router(state);
 
@@ -155,6 +162,23 @@ fn create_router(state: AppState) -> Router {
         .route("/drive/nodes/:id/children", get(drive::list_nodes))
         .route("/drive/nodes/:id", put(drive::update_node))
         .route("/drive/nodes/:id", delete(drive::delete_node));
+
+    // Drive ACL routes
+    let acl_routes = Router::new()
+        .route("/drive/nodes/:id/acl", get(acl::list_acl))
+        .route("/drive/nodes/:id/acl", post(acl::create_acl))
+        .route("/drive/nodes/:id/acl/:acl_id", put(acl::update_acl))
+        .route("/drive/nodes/:id/acl/:acl_id", delete(acl::delete_acl))
+        .route("/drive/nodes/:id/acl/break", post(acl::break_inheritance))
+        .route(
+            "/drive/nodes/:id/acl/restore",
+            post(acl::restore_inheritance),
+        )
+        .route("/drive/nodes/:id/effective-acl", get(acl::effective_acl))
+        .route_layer(axum_mw::from_fn_with_state(
+            state.clone(),
+            crate::middleware::acl_check::acl_check_middleware,
+        ));
 
     // Protected RAID routes (arrays)
     let raid_array_routes = Router::new()
@@ -325,6 +349,18 @@ fn create_router(state: AppState) -> Router {
     // Stats route
     let stats_routes = Router::new().route("/stats", get(stats::get_stats));
 
+    // Audit routes (admin only)
+    let audit_routes = Router::new()
+        .route("/drive/audit", get(audit::list_audit))
+        .route("/drive/audit/verify", get(audit::verify_chain))
+        .route("/drive/audit/export", post(audit::export_audit))
+        .route("/drive/audit/alerts", get(audit::list_alerts))
+        .route("/drive/audit/alerts/config", get(audit::get_alert_config))
+        .route(
+            "/drive/audit/alerts/config",
+            put(audit::update_alert_config),
+        );
+
     // Admin Storage Settings routes
     let storage_settings_routes = Router::new()
         .route("/storage_rules", get(storage_settings::list_storage_rules))
@@ -368,8 +404,9 @@ fn create_router(state: AppState) -> Router {
         .merge(storage_settings_routes)
         .merge(mount_routes)
         .merge(external_routes)
-        .route_layer(middleware::from_fn(require_admin))
-        .route_layer(middleware::from_fn_with_state(
+        .merge(audit_routes)
+        .route_layer(axum_mw::from_fn(require_admin))
+        .route_layer(axum_mw::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
         ));
@@ -379,6 +416,7 @@ fn create_router(state: AppState) -> Router {
         .merge(file_routes)
         .merge(bucket_routes)
         .merge(drive_routes)
+        .merge(acl_routes)
         .merge(raid_array_routes)
         .merge(raid_disk_routes)
         .merge(raid_other_routes)
@@ -392,7 +430,7 @@ fn create_router(state: AppState) -> Router {
         .merge(tags_routes)
         .merge(versions_routes)
         .merge(stats_routes)
-        .route_layer(middleware::from_fn_with_state(
+        .route_layer(axum_mw::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
         ));
@@ -436,8 +474,8 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1", v1_routes)
         .layer(
             ServiceBuilder::new()
-                .layer(middleware::from_fn(request_id_middleware))
-                .layer(middleware::from_fn(logging_middleware))
+                .layer(axum_mw::from_fn(request_id_middleware))
+                .layer(axum_mw::from_fn(logging_middleware))
                 .layer(cors),
         )
         .layer(axum::extract::DefaultBodyLimit::max(100 * 1024 * 1024)) // 100MB for file uploads
