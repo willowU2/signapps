@@ -11,7 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useDashboardData } from '@/hooks/use-dashboard';
 import { useDashboardStore, getDefaultLayout } from '@/stores/dashboard-store';
 import { WidgetGrid } from '@/components/dashboard/widget-grid';
-import { AddWidgetSheet as AddWidgetDialog } from '@/components/dashboard/add-widget-sheet';
+import { AddWidgetDialog } from '@/components/dashboard/add-widget-dialog';
 import { useAuthStore } from '@/lib/store';
 import { resetAllBreakers } from '@/lib/circuit-breaker';
 import { cn } from '@/lib/utils';

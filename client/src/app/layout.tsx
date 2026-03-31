@@ -59,7 +59,7 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} antialiased overflow-hidden w-screen h-screen`}
+        className={`${inter.variable} ${jetbrainsMono.variable} antialiased overflow-hidden w-full h-screen`}
       >
         {/* AC2: Skip navigation link for keyboard users */}
         <a

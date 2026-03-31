@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Start all SignApps services for development.
 
@@ -8,7 +8,7 @@
     monitors their health, and handles graceful shutdown on Ctrl+C.
 
     Unlike windows-services/start-all.ps1 which manages Windows Services (requires
-    Admin + install), this script runs binaries directly — ideal for development.
+    Admin + install), this script runs binaries directly -€” ideal for development.
 
 .PARAMETER SkipFrontend
     Do not start the Next.js frontend.
@@ -43,7 +43,7 @@ $BaseDir = (Get-Item $PSScriptRoot).Parent.FullName
 $BinDir = if ($Release) { Join-Path $BaseDir "target\release" } else { Join-Path $BaseDir "target\debug" }
 $LogDir = Join-Path $BaseDir "data\logs"
 
-# ── Service registry (port = default from source code) ────────────────────────
+# -”€-”€ Service registry (port = default from source code) -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€
 $AllServices = @(
     @{ Short = "identity";      Port = 3001;  Desc = "Auth, LDAP/AD, MFA, RBAC" },
     @{ Short = "containers";    Port = 3002;  Desc = "Docker container lifecycle" },
@@ -73,7 +73,7 @@ $AllServices = @(
     @{ Short = "gateway";       Port = 3099;  Desc = "API gateway (aggregator)" }
 )
 
-# ── Filter services if --Only is set ─────────────────────────────────────────
+# -”€-”€ Filter services if --Only is set -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€
 if ($Only) {
     $selected = $Only -split "," | ForEach-Object { $_.Trim() }
     $Services = $AllServices | Where-Object { $selected -contains $_.Short }
@@ -89,7 +89,7 @@ if ($Only) {
     }
 }
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# -”€-”€ Helpers -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€
 function Write-Ok    { param($msg) Write-Host "  [OK]   $msg" -ForegroundColor Green }
 function Write-Fail  { param($msg) Write-Host "  [FAIL] $msg" -ForegroundColor Red }
 function Write-Info  { param($msg) Write-Host "  [..]   $msg" -ForegroundColor Cyan }
@@ -107,14 +107,14 @@ function Test-TcpPort {
     } catch { return $false }
 }
 
-# ── Banner ────────────────────────────────────────────────────────────────────
+# -”€-”€ Banner -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€
 Write-Host ""
-Write-Host "  ╔══════════════════════════════════════════╗" -ForegroundColor Magenta
-Write-Host "  ║       SignApps Platform — Start All      ║" -ForegroundColor Magenta
-Write-Host "  ╚══════════════════════════════════════════╝" -ForegroundColor Magenta
+Write-Host "  -•”-•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•—" -ForegroundColor Magenta
+Write-Host "  -•‘       SignApps Platform -€” Start All      -•‘" -ForegroundColor Magenta
+Write-Host "  -•š-•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•-" -ForegroundColor Magenta
 Write-Host ""
 
-# ── Step 1: Check PostgreSQL ─────────────────────────────────────────────────
+# -”€-”€ Step 1: Check PostgreSQL -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€
 Write-Host "  Checking prerequisites..." -ForegroundColor White
 if (Test-TcpPort -Port 5432) {
     Write-Ok "PostgreSQL is running on port 5432"
@@ -124,13 +124,12 @@ if (Test-TcpPort -Port 5432) {
     Write-Host ""
 }
 
-# ── Step 2: Build (optional) ─────────────────────────────────────────────────
+# -”€-”€ Step 2: Build (optional) -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€
 if (-not $SkipBuild) {
     Write-Host ""
     Write-Host "  Building workspace..." -ForegroundColor White
     $buildArgs = if ($Release) { "build --workspace --release" } else { "build --workspace" }
-    $buildResult = Start-Process -FilePath "cargo" -ArgumentList $buildArgs `
-        -WorkingDirectory $BaseDir -Wait -NoNewWindow -PassThru
+    $buildResult = Start-Process -FilePath "cargo" -ArgumentList $buildArgs -WorkingDirectory $BaseDir -Wait -NoNewWindow -PassThru
     if ($buildResult.ExitCode -ne 0) {
         Write-Fail "Build failed (exit code $($buildResult.ExitCode))"
         exit 1
@@ -138,10 +137,10 @@ if (-not $SkipBuild) {
     Write-Ok "Build succeeded"
 }
 
-# ── Step 3: Ensure log directory ─────────────────────────────────────────────
+# -”€-”€ Step 3: Ensure log directory -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€
 New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 
-# ── Step 4: Register Ctrl+C handler ─────────────────────────────────────────
+# -”€-”€ Step 4: Register Ctrl+C handler -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€
 $script:ChildProcesses = @()
 $script:Stopping = $false
 
@@ -171,12 +170,10 @@ function Stop-AllServices {
 [Console]::TreatControlCAsInput = $false
 $null = Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action { Stop-AllServices }
 
-try {
-
-# ── Step 5: Start backend services ───────────────────────────────────────────
+# -”€-”€ Step 5: Start backend services -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€
 Write-Host ""
 Write-Host "  Starting services..." -ForegroundColor White
-Write-Host "  ─────────────────────────────────────────" -ForegroundColor DarkGray
+Write-Host "  -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€" -ForegroundColor DarkGray
 
 $startedServices = @()
 
@@ -185,13 +182,13 @@ foreach ($svc in $Services) {
     $exePath = Join-Path $BinDir $exeName
 
     if (-not (Test-Path $exePath)) {
-        Write-Warn "$($svc.Short) — binary not found ($exeName)"
+        Write-Warn "$($svc.Short) -€” binary not found ($exeName)"
         continue
     }
 
     # Check if port is already in use
     if (Test-TcpPort -Port $svc.Port -TimeoutMs 300) {
-        Write-Warn "$($svc.Short) — port $($svc.Port) already in use, skipping"
+        Write-Warn "$($svc.Short) -€” port $($svc.Port) already in use, skipping"
         continue
     }
 
@@ -199,12 +196,7 @@ foreach ($svc in $Services) {
     $errFile = Join-Path $LogDir "signapps-$($svc.Short).err.log"
 
     try {
-        $proc = Start-Process -FilePath $exePath `
-            -WorkingDirectory $BaseDir `
-            -RedirectStandardOutput $logFile `
-            -RedirectStandardError $errFile `
-            -PassThru `
-            -WindowStyle Hidden
+        $proc = Start-Process -FilePath $exePath -WorkingDirectory $BaseDir -RedirectStandardOutput $logFile -RedirectStandardError $errFile -PassThru -WindowStyle Hidden
 
         $script:ChildProcesses += $proc
         $startedServices += @{ Short = $svc.Short; Port = $svc.Port; Desc = $svc.Desc; Proc = $proc }
@@ -212,11 +204,11 @@ foreach ($svc in $Services) {
         Write-Host "signapps-$($svc.Short)" -NoNewline -ForegroundColor Cyan
         Write-Host " (PID $($proc.Id), port $($svc.Port))" -ForegroundColor DarkGray
     } catch {
-        Write-Fail "$($svc.Short) — failed to start: $_"
+        Write-Fail "$($svc.Short) -€” failed to start: $_"
     }
 }
 
-# ── Step 6: Start frontend ──────────────────────────────────────────────────
+# -”€-”€ Step 6: Start frontend -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€
 if (-not $SkipFrontend) {
     Write-Host ""
     Write-Host "  Starting frontend..." -ForegroundColor White
@@ -226,13 +218,7 @@ if (-not $SkipFrontend) {
         $frontLog = Join-Path $LogDir "frontend.log"
         $frontErr = Join-Path $LogDir "frontend.err.log"
 
-        $frontProc = Start-Process -FilePath "npm" `
-            -ArgumentList "run", "dev" `
-            -WorkingDirectory $clientDir `
-            -RedirectStandardOutput $frontLog `
-            -RedirectStandardError $frontErr `
-            -PassThru `
-            -WindowStyle Hidden
+        $frontProc = Start-Process -FilePath "npm" -ArgumentList "run", "dev" -WorkingDirectory $clientDir -RedirectStandardOutput $frontLog -RedirectStandardError $frontErr -PassThru -WindowStyle Hidden
 
         $script:ChildProcesses += $frontProc
         Write-Host "  Started " -NoNewline -ForegroundColor DarkGray
@@ -243,7 +229,7 @@ if (-not $SkipFrontend) {
     }
 }
 
-# ── Step 7: Wait for services to become healthy ─────────────────────────────
+# -”€-”€ Step 7: Wait for services to become healthy -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€
 Write-Host ""
 Write-Host "  Waiting for services to become healthy..." -ForegroundColor White
 
@@ -276,11 +262,11 @@ while (((Get-Date) - $startTime).TotalSeconds -lt $timeout) {
 
 Write-Host ""
 
-# ── Step 8: Status report ───────────────────────────────────────────────────
+# -”€-”€ Step 8: Status report -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€
 Write-Host ""
-Write-Host "  ╔══════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "  ║           Service Status                 ║" -ForegroundColor Cyan
-Write-Host "  ╚══════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host "  -•”-•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•—" -ForegroundColor Cyan
+Write-Host "  -•‘           Service Status                 -•‘" -ForegroundColor Cyan
+Write-Host "  -•š-•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•--•-" -ForegroundColor Cyan
 Write-Host ""
 
 $okCount = 0
@@ -310,7 +296,7 @@ if (-not $SkipFrontend) {
 }
 
 Write-Host ""
-Write-Host "  ─────────────────────────────────────────" -ForegroundColor DarkGray
+Write-Host "  -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€" -ForegroundColor DarkGray
 Write-Host "  Healthy: $okCount  |  Failed: $failCount" -ForegroundColor $(if ($failCount -eq 0) { "Green" } else { "Yellow" })
 Write-Host ""
 
@@ -320,7 +306,7 @@ if ($okCount -gt 0) {
     Write-Host ""
 }
 
-# ── Step 9: Keep alive until Ctrl+C ─────────────────────────────────────────
+# -”€-”€ Step 9: Keep alive until Ctrl+C -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€
 Write-Host "  Press Ctrl+C to stop all services..." -ForegroundColor DarkGray
 Write-Host ""
 
@@ -336,6 +322,6 @@ while (-not $script:Stopping) {
     }
 }
 
-} finally {
-    Stop-AllServices
-}
+# -”€-”€ End Keep alive -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€
+
+
