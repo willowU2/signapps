@@ -72,6 +72,84 @@ export interface UpdatePxeAssetRequest {
 }
 
 // ============================================================================
+// Images
+// ============================================================================
+
+export interface PxeImage {
+    id: string;
+    name: string;
+    os_type: string;
+    os_version?: string;
+    image_type: string;
+    file_path: string;
+    file_size?: number;
+    file_hash?: string;
+    description?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+// ============================================================================
+// Deployments
+// ============================================================================
+
+export interface PxeDeployment {
+    id: string;
+    asset_mac: string;
+    profile_id?: string;
+    status: string;
+    progress: number;
+    current_step?: string;
+    started_at?: string;
+    completed_at?: string;
+    error_message?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+// ============================================================================
+// Post-deploy hooks
+// ============================================================================
+
+export interface DomainJoinConfig {
+    domain: string;
+    ou?: string;
+    credential_ref?: string;
+}
+
+export interface PostDeployHooks {
+    run_scripts: string[];
+    install_packages: string[];
+    join_domain?: DomainJoinConfig;
+    notify_webhook?: string;
+}
+
+// ============================================================================
+// Catalog
+// ============================================================================
+
+export interface OsImage {
+    name: string;
+    version: string;
+    arch: string;
+    iso_url: string;
+    sha256: string;
+    size_bytes: number;
+    os_type: string;
+    category: string;
+    description: string;
+}
+
+export interface DownloadStarted {
+    download_id: string;
+    name: string;
+    version: string;
+    iso_url: string;
+    status: string;
+    message: string;
+}
+
+// ============================================================================
 // PXE API
 // ============================================================================
 
@@ -113,6 +191,46 @@ export const pxeApi = {
 
     deleteAsset: (id: string) =>
         pxeClient.delete(`/pxe/assets/${id}`),
+
+    // ========================================================================
+    // Images
+    // ========================================================================
+
+    listImages: () =>
+        pxeClient.get<PxeImage[]>('/pxe/images'),
+
+    uploadImage: (formData: FormData) =>
+        pxeClient.post<PxeImage>('/pxe/images', formData),
+
+    deleteImage: (id: string) =>
+        pxeClient.delete(`/pxe/images/${id}`),
+
+    // ========================================================================
+    // Deployments
+    // ========================================================================
+
+    listDeployments: () =>
+        pxeClient.get<PxeDeployment[]>('/pxe/deployments'),
+
+    // ========================================================================
+    // Post-deploy hooks
+    // ========================================================================
+
+    getHooks: (profileId: string) =>
+        pxeClient.get<PostDeployHooks>(`/pxe/profiles/${profileId}/hooks`),
+
+    updateHooks: (profileId: string, hooks: PostDeployHooks) =>
+        pxeClient.put<void>(`/pxe/profiles/${profileId}/hooks`, hooks),
+
+    // ========================================================================
+    // Catalog
+    // ========================================================================
+
+    listCatalog: () =>
+        pxeClient.get<OsImage[]>('/pxe/catalog'),
+
+    downloadCatalogImage: (index: number) =>
+        pxeClient.post<DownloadStarted>(`/pxe/catalog/${index}/download`, {}),
 
     // ========================================================================
     // Boot Script

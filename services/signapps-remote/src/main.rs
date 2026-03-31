@@ -83,15 +83,19 @@ async fn main() -> anyhow::Result<()> {
             CorsLayer::new()
                 .allow_origin(tower_http::cors::Any)
                 .allow_methods([
-                    axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT,
-                    axum::http::Method::DELETE, axum::http::Method::PATCH, axum::http::Method::OPTIONS,
+                    axum::http::Method::GET,
+                    axum::http::Method::POST,
+                    axum::http::Method::PUT,
+                    axum::http::Method::DELETE,
+                    axum::http::Method::PATCH,
+                    axum::http::Method::OPTIONS,
                 ])
                 .allow_headers([
                     axum::http::header::CONTENT_TYPE,
                     axum::http::header::AUTHORIZATION,
                     axum::http::HeaderName::from_static("x-request-id"),
                     axum::http::HeaderName::from_static("x-workspace-id"),
-                ])
+                ]),
         )
         .layer(TraceLayer::new_for_http())
         .layer(axum::middleware::from_fn(logging_middleware))

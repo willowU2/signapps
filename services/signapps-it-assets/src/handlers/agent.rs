@@ -1,6 +1,7 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
+    response::IntoResponse,
     Json,
 };
 use chrono::{DateTime, Utc};
@@ -610,6 +611,109 @@ pub async fn create_enrollment_token(
     .map_err(internal_err)?;
 
     Ok((StatusCode::CREATED, Json(row)))
+}
+
+// ─── EA7: Agent binary download ───────────────────────────────────────────────
+
+#[derive(Debug, Serialize)]
+struct AgentDownloadInfo {
+    platform: String,
+    version: String,
+    install_instructions: String,
+    download_url: Option<String>,
+    checksum_url: Option<String>,
+}
+
+pub async fn download_agent(
+    Path(platform): Path<String>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    let version = AGENT_LATEST_VERSION;
+
+    let info = match platform.to_lowercase().as_str() {
+        "windows" | "win" | "win64" => AgentDownloadInfo {
+            platform: "windows".into(),
+            version: version.into(),
+            install_instructions: format!(
+                r#"Windows Installation (PowerShell, run as Administrator):
+
+1. Download the agent installer:
+   Invoke-WebRequest -Uri "https://your-signapps-server/api/v1/it-assets/agent/download/windows" -OutFile signapps-agent-{version}.exe
+
+2. Install silently:
+   .\signapps-agent-{version}.exe /S /TOKEN=<enrollment-token> /SERVER=https://your-signapps-server
+
+3. Verify the service is running:
+   Get-Service signapps-agent
+
+Alternatively, use the MSI package:
+   msiexec /i signapps-agent-{version}.msi TOKEN=<enrollment-token> SERVER=https://your-signapps-server /qn
+"#,
+                version = version
+            ),
+            download_url: None, // Binary not yet compiled — placeholder
+            checksum_url: None,
+        },
+        "linux" | "linux64" | "deb" | "rpm" => AgentDownloadInfo {
+            platform: "linux".into(),
+            version: version.into(),
+            install_instructions: format!(
+                r#"Linux Installation:
+
+# Debian/Ubuntu (DEB):
+curl -fsSL https://your-signapps-server/api/v1/it-assets/agent/download/linux | sudo bash
+# Or manual:
+wget https://your-signapps-server/agent/signapps-agent_{version}_amd64.deb
+sudo dpkg -i signapps-agent_{version}_amd64.deb
+sudo signapps-agent enroll --token <enrollment-token> --server https://your-signapps-server
+
+# RHEL/CentOS/Fedora (RPM):
+wget https://your-signapps-server/agent/signapps-agent-{version}-1.x86_64.rpm
+sudo rpm -i signapps-agent-{version}-1.x86_64.rpm
+sudo signapps-agent enroll --token <enrollment-token> --server https://your-signapps-server
+
+# Verify:
+sudo systemctl status signapps-agent
+"#,
+                version = version
+            ),
+            download_url: None, // Binary not yet compiled — placeholder
+            checksum_url: None,
+        },
+        "macos" | "darwin" | "mac" => AgentDownloadInfo {
+            platform: "macos".into(),
+            version: version.into(),
+            install_instructions: format!(
+                r#"macOS Installation:
+
+# Using the PKG installer:
+curl -fsSL https://your-signapps-server/agent/signapps-agent-{version}.pkg -o signapps-agent-{version}.pkg
+sudo installer -pkg signapps-agent-{version}.pkg -target /
+sudo /usr/local/bin/signapps-agent enroll --token <enrollment-token> --server https://your-signapps-server
+
+# Or using Homebrew (when available):
+brew install signapps/tap/signapps-agent
+signapps-agent enroll --token <enrollment-token> --server https://your-signapps-server
+
+# Verify:
+launchctl list | grep signapps
+"#,
+                version = version
+            ),
+            download_url: None, // Binary not yet compiled — placeholder
+            checksum_url: None,
+        },
+        other => {
+            return Err((
+                StatusCode::NOT_FOUND,
+                format!(
+                    "Unknown platform '{}'. Supported platforms: windows, linux, macos",
+                    other
+                ),
+            ));
+        },
+    };
+
+    Ok(Json(info))
 }
 
 #[cfg(test)]

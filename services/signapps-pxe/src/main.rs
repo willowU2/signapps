@@ -1,3 +1,4 @@
+mod catalog;
 mod dhcp_proxy;
 mod handlers;
 mod images;
@@ -137,6 +138,12 @@ async fn main() -> anyhow::Result<()> {
         )
         // PX6: Golden image capture
         .route("/api/v1/pxe/images/capture", post(images::capture_golden_image))
+        // Catalog: list and download OS images
+        .route("/api/v1/pxe/catalog", get(catalog::list_catalog))
+        .route(
+            "/api/v1/pxe/catalog/:index/download",
+            post(catalog::download_catalog_image),
+        )
         .layer(axum::middleware::from_fn_with_state(
             app_state.clone(),
             optional_auth_middleware::<AppState>,

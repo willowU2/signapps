@@ -67,12 +67,18 @@ async fn main() -> anyhow::Result<()> {
     // LiveKit configuration
     let livekit_config = LiveKitConfig {
         api_key: std::env::var("LIVEKIT_API_KEY").unwrap_or_else(|_| {
-            if cfg!(debug_assertions) { "devkey".to_string() }
-            else { panic!("LIVEKIT_API_KEY must be set in production") }
+            if cfg!(debug_assertions) {
+                "devkey".to_string()
+            } else {
+                panic!("LIVEKIT_API_KEY must be set in production")
+            }
         }),
         api_secret: std::env::var("LIVEKIT_API_SECRET").unwrap_or_else(|_| {
-            if cfg!(debug_assertions) { "secret".to_string() }
-            else { panic!("LIVEKIT_API_SECRET must be set in production") }
+            if cfg!(debug_assertions) {
+                "secret".to_string()
+            } else {
+                panic!("LIVEKIT_API_SECRET must be set in production")
+            }
         }),
         server_url: env_or("LIVEKIT_URL", "ws://localhost:7880"),
     };
@@ -172,8 +178,12 @@ fn build_router(state: AppState) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(tower_http::cors::Any)
         .allow_methods([
-            axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT,
-            axum::http::Method::DELETE, axum::http::Method::PATCH, axum::http::Method::OPTIONS,
+            axum::http::Method::GET,
+            axum::http::Method::POST,
+            axum::http::Method::PUT,
+            axum::http::Method::DELETE,
+            axum::http::Method::PATCH,
+            axum::http::Method::OPTIONS,
         ])
         .allow_headers([
             axum::http::header::CONTENT_TYPE,

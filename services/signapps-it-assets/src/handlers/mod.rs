@@ -8,8 +8,11 @@ pub mod network;
 pub mod packages;
 pub mod patches;
 pub mod policies;
+pub mod remote_ws;
 pub mod security;
 pub mod wol;
 
 // Re-export hardware handlers at crate::handlers level for backwards compat
 pub use hardware::*;
+// Re-export AppState for use in main and routes
+pub use remote_ws::AppState;

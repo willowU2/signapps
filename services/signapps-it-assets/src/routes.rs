@@ -1,12 +1,14 @@
 use axum::{
+    extract::FromRef,
     routing::{delete, get, post, put},
     Json, Router,
 };
 use signapps_db::DatabasePool;
 
 use crate::handlers::agent::{
-    agent_heartbeat, create_enrollment_token, get_agent_config, get_pending_scripts, queue_script,
-    register_agent, report_hardware_inventory, report_script_result, report_software_inventory,
+    agent_heartbeat, create_enrollment_token, download_agent, get_agent_config,
+    get_pending_scripts, queue_script, register_agent, report_hardware_inventory,
+    report_script_result, report_software_inventory,
 };
 use crate::handlers::cmdb::{
     ci_impact, create_change_request, create_ci, create_ci_relationship, delete_ci,
@@ -43,6 +45,10 @@ use crate::handlers::policies::{
     get_policy, list_assignments, list_policies, list_policies_tree, report_compliance,
     update_policy,
 };
+use crate::handlers::remote_ws::AppState;
+use crate::handlers::remote_ws::{
+    admin_remote_viewer, agent_remote_ws, start_remote_session, stop_remote_session,
+};
 use crate::handlers::security::{
     av_fleet_summary, encryption_fleet_summary, get_antivirus_status, get_encryption_status,
     report_antivirus, report_encryption,
@@ -52,11 +58,24 @@ use crate::handlers::{
     create_hardware, delete_hardware, get_hardware, list_hardware, update_hardware,
 };
 
+// ─── State extraction ─────────────────────────────────────────────────────────
+
+/// Allow handlers that only need DatabasePool to extract it from AppState.
+impl FromRef<AppState> for DatabasePool {
+    fn from_ref(state: &AppState) -> Self {
+        state.pool.clone()
+    }
+}
+
+// ─── Health ───────────────────────────────────────────────────────────────────
+
 async fn health() -> Json<serde_json::Value> {
     Json(serde_json::json!({ "status": "ok", "service": "signapps-it-assets" }))
 }
 
-pub fn api_routes() -> Router<DatabasePool> {
+// ─── Routes ───────────────────────────────────────────────────────────────────
+
+pub fn api_routes() -> Router<AppState> {
     Router::new()
         // Hardware
         .route("/hardware", get(list_hardware).post(create_hardware))
@@ -102,7 +121,10 @@ pub fn api_routes() -> Router<DatabasePool> {
         .route("/packages/:id/deploy", post(deploy_package))
         // Agent package endpoints
         .route("/agent/packages/pending/:agent_id", get(get_agent_pending_packages))
-        .route("/agent/packages/deployment/:deployment_id/status", put(update_deployment_status))
+        .route(
+            "/agent/packages/deployment/:deployment_id/status",
+            put(update_deployment_status),
+        )
         // MD1: Metrics
         .route("/hardware/:id/metrics", get(get_metrics))
         // MD2: Alert rules & alerts
@@ -117,26 +139,50 @@ pub fn api_routes() -> Router<DatabasePool> {
         // MD4: Fleet overview
         .route("/fleet", get(fleet_overview))
         // BK1: Hardware components
-        .route("/hardware/:hw_id/components", get(list_components).post(create_component))
+        .route(
+            "/hardware/:hw_id/components",
+            get(list_components).post(create_component),
+        )
         .route("/components/:id", put(update_component).delete(delete_component))
         // BK2: Software licenses
         .route("/licenses", get(list_licenses).post(create_license))
-        .route("/licenses/:id", get(get_license).put(update_license).delete(delete_license))
+        .route(
+            "/licenses/:id",
+            get(get_license).put(update_license).delete(delete_license),
+        )
         // BK3: Network interfaces
-        .route("/hardware/:hw_id/interfaces", get(list_network_interfaces).post(create_network_interface))
-        .route("/interfaces/:id", put(update_network_interface).delete(delete_network_interface))
+        .route(
+            "/hardware/:hw_id/interfaces",
+            get(list_network_interfaces).post(create_network_interface),
+        )
+        .route(
+            "/interfaces/:id",
+            put(update_network_interface).delete(delete_network_interface),
+        )
         // BK4: Maintenance windows
-        .route("/maintenance-windows", get(list_maintenance_windows).post(create_maintenance_window))
-        .route("/maintenance-windows/:id", put(update_maintenance_window).delete(delete_maintenance_window))
+        .route(
+            "/maintenance-windows",
+            get(list_maintenance_windows).post(create_maintenance_window),
+        )
+        .route(
+            "/maintenance-windows/:id",
+            put(update_maintenance_window).delete(delete_maintenance_window),
+        )
         // CM1: CMDB CIs
         .route("/cmdb/cis", get(list_cis).post(create_ci))
-        .route("/cmdb/cis/:id", get(get_ci).put(update_ci).delete(delete_ci))
+        .route(
+            "/cmdb/cis/:id",
+            get(get_ci).put(update_ci).delete(delete_ci),
+        )
         .route("/cmdb/cis/:ci_id/relationships", get(list_ci_relationships))
         .route("/cmdb/cis/:id/impact", get(ci_impact))
         .route("/cmdb/relationships", post(create_ci_relationship))
         .route("/cmdb/relationships/:id", delete(delete_ci_relationship))
         // CM3: Change management
-        .route("/changes", get(list_change_requests).post(create_change_request))
+        .route(
+            "/changes",
+            get(list_change_requests).post(create_change_request),
+        )
         .route("/changes/:id", get(get_change_request))
         .route("/changes/:id/status", put(update_change_status))
         // CM4: LDAP import stub
@@ -147,13 +193,19 @@ pub fn api_routes() -> Router<DatabasePool> {
         .route("/fleet/security/av", get(av_fleet_summary))
         // SE2: Encryption status
         .route("/agent/security/encryption", post(report_encryption))
-        .route("/hardware/:id/security/encryption", get(get_encryption_status))
+        .route(
+            "/hardware/:id/security/encryption",
+            get(get_encryption_status),
+        )
         .route("/fleet/security/encryption", get(encryption_fleet_summary))
         // RM2: Wake-on-LAN
         .route("/hardware/:id/wake", post(wake_on_lan))
         // RM3: Agent commands (reboot, shutdown, lock)
         .route("/agent/commands/queue", post(queue_agent_command))
-        .route("/agent/commands/pending/:agent_id", get(get_pending_commands))
+        .route(
+            "/agent/commands/pending/:agent_id",
+            get(get_pending_commands),
+        )
         .route("/agent/commands/:id/status", put(update_command_status))
         .route("/hardware/:id/commands", get(list_hardware_commands))
         // RM4: File transfer
@@ -164,11 +216,27 @@ pub fn api_routes() -> Router<DatabasePool> {
         // ND1: Network scanner
         .route("/network/scan", post(scan_network))
         .route("/network/discoveries", get(list_discoveries))
-        .route("/network/discoveries/:id/add-to-inventory", post(add_discovery_to_inventory))
-        // ND2: SNMP monitoring (conceptual)
+        .route(
+            "/network/discoveries/:id/add-to-inventory",
+            post(add_discovery_to_inventory),
+        )
+        // ND2: SNMP monitoring
         .route("/network/snmp/:ip", get(query_snmp))
         // ND4: Port scanner
         .route("/network/port-scan", post(port_scan))
+        // EA7: Agent binary download (placeholder — returns install instructions)
+        .route("/agent/download/:platform", get(download_agent))
+        // RM5: Remote access — custom WSS protocol (no VNC)
+        .route("/agent/:agent_id/remote-ws", get(agent_remote_ws))
+        .route("/hardware/:hw_id/remote-session", get(admin_remote_viewer))
+        .route(
+            "/hardware/:hw_id/remote-session/start",
+            post(start_remote_session),
+        )
+        .route(
+            "/hardware/:hw_id/remote-session/stop",
+            post(stop_remote_session),
+        )
 }
 
 pub fn public_routes() -> Router<DatabasePool> {

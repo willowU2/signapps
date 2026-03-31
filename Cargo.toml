@@ -37,6 +37,8 @@ members = [
     "services/signapps-social",
     # Single-binary gateway (LT-05 POC)
     "services/signapps-gateway",
+    # Endpoint management agent (standalone binary)
+    "services/signapps-agent",
 ]
 
 [workspace.package]

@@ -689,23 +689,31 @@ pub async fn get_profile_hooks(
     State(state): State<AppState>,
     Path(profile_id): Path<Uuid>,
 ) -> Result<Json<PostDeployHooks>, (StatusCode, String)> {
-    let row: Option<(serde_json::Value,)> =
-        sqlx::query_as("SELECT description FROM pxe.profiles WHERE id = $1")
+    let row: Option<(Option<serde_json::Value>,)> =
+        sqlx::query_as("SELECT post_deploy_hooks FROM pxe.profiles WHERE id = $1")
             .bind(profile_id)
             .fetch_optional(state.db.inner())
             .await
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    // We store hooks as JSON in description (or dedicated column if added)
-    // For now return empty hooks if not set
-    let _ = row.ok_or((StatusCode::NOT_FOUND, "Profile not found".to_string()))?;
+    let (hooks_json,) = row.ok_or((StatusCode::NOT_FOUND, "Profile not found".to_string()))?;
 
-    Ok(Json(PostDeployHooks {
-        run_scripts: vec![],
-        install_packages: vec![],
-        join_domain: None,
-        notify_webhook: None,
-    }))
+    let hooks: PostDeployHooks = match hooks_json {
+        Some(v) => serde_json::from_value(v).unwrap_or(PostDeployHooks {
+            run_scripts: vec![],
+            install_packages: vec![],
+            join_domain: None,
+            notify_webhook: None,
+        }),
+        None => PostDeployHooks {
+            run_scripts: vec![],
+            install_packages: vec![],
+            join_domain: None,
+            notify_webhook: None,
+        },
+    };
+
+    Ok(Json(hooks))
 }
 
 pub async fn update_profile_hooks(
@@ -713,18 +721,17 @@ pub async fn update_profile_hooks(
     Path(profile_id): Path<Uuid>,
     Json(hooks): Json<PostDeployHooks>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    // Store hooks as JSON in a dedicated metadata field
-    // We use the description field here; a proper migration would add a hooks JSONB column
-    let hooks_json = serde_json::to_string(&hooks)
+    let hooks_value = serde_json::to_value(&hooks)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    let result =
-        sqlx::query("UPDATE pxe.profiles SET description = $1, updated_at = NOW() WHERE id = $2")
-            .bind(format!("__hooks__:{}", hooks_json))
-            .bind(profile_id)
-            .execute(state.db.inner())
-            .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let result = sqlx::query(
+        "UPDATE pxe.profiles SET post_deploy_hooks = $1, updated_at = NOW() WHERE id = $2",
+    )
+    .bind(hooks_value)
+    .bind(profile_id)
+    .execute(state.db.inner())
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     if result.rows_affected() == 0 {
         return Err((StatusCode::NOT_FOUND, "Profile not found".to_string()));
@@ -794,20 +801,8 @@ pub async fn capture_golden_image(
 // ============================================================================
 
 fn sha256_hex(data: &[u8]) -> String {
-    use std::fmt::Write;
-    // Simple SHA-256 using standard library approach via a folding hash
-    // In production, use sha2 crate — here we do a deterministic hash via std
-    // Using a basic polynomial hash as placeholder (sha2 not in deps)
-    let mut hash: u64 = 0xcbf29ce484222325;
-    for &byte in data {
-        hash = hash.wrapping_mul(0x100000001b3);
-        hash ^= byte as u64;
-    }
-    // Extend to 64 chars
-    let mut s = String::new();
-    for i in 0..4 {
-        let part = hash.wrapping_add(i * 0x9e3779b97f4a7c15);
-        let _ = write!(s, "{:016x}", part);
-    }
-    s
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    format!("{:x}", hasher.finalize())
 }

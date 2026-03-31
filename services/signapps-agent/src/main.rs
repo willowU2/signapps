@@ -1,0 +1,109 @@
+//! SignApps Endpoint Agent
+//! Lightweight Rust binary for managed endpoints.
+//! Capabilities: inventory, scripts, patches, remote screen, auto-update.
+
+mod config;
+mod heartbeat;
+mod inventory;
+mod patches;
+mod remote;
+mod scripts;
+
+use clap::Parser;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+
+#[derive(Parser)]
+#[command(name = "signapps-agent", about = "SignApps endpoint management agent")]
+struct Cli {
+    /// Enroll with server
+    #[command(subcommand)]
+    command: Option<Command>,
+}
+
+#[derive(clap::Subcommand)]
+enum Command {
+    /// Enroll this machine with the SignApps server
+    Enroll {
+        /// Server URL (e.g., https://signapps.local)
+        #[arg(long)]
+        server: String,
+        /// One-time enrollment token
+        #[arg(long)]
+        token: String,
+    },
+    /// Run the agent (default)
+    Run,
+    /// Show agent status
+    Status,
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter("signapps_agent=info")
+        .init();
+
+    let cli = Cli::parse();
+    let config = Arc::new(RwLock::new(config::AgentConfig::load()?));
+
+    match cli.command.unwrap_or(Command::Run) {
+        Command::Enroll { server, token } => {
+            config::enroll(&server, &token).await?;
+            tracing::info!("Enrollment successful");
+        },
+        Command::Run => {
+            let cfg = config.read().await;
+            if cfg.agent_id.is_none() {
+                tracing::error!(
+                    "Not enrolled. Run: signapps-agent enroll --server URL --token TOKEN"
+                );
+                std::process::exit(1);
+            }
+            drop(cfg);
+            run_agent(config).await?;
+        },
+        Command::Status => {
+            let cfg = config.read().await;
+            println!(
+                "Agent ID: {}",
+                cfg.agent_id.as_deref().unwrap_or("not enrolled")
+            );
+            println!("Server: {}", cfg.server_url.as_deref().unwrap_or("not set"));
+        },
+    }
+    Ok(())
+}
+
+async fn run_agent(config: Arc<RwLock<config::AgentConfig>>) -> anyhow::Result<()> {
+    tracing::info!("SignApps Agent starting...");
+
+    // Spawn concurrent tasks
+    let cfg = config.clone();
+    let heartbeat_handle = tokio::spawn(async move { heartbeat::heartbeat_loop(cfg).await });
+
+    let cfg = config.clone();
+    let inventory_handle = tokio::spawn(async move { inventory::inventory_loop(cfg).await });
+
+    let cfg = config.clone();
+    let scripts_handle = tokio::spawn(async move { scripts::script_poll_loop(cfg).await });
+
+    let cfg = config.clone();
+    let patches_handle = tokio::spawn(async move { patches::patch_scan_loop(cfg).await });
+
+    let cfg = config.clone();
+    let remote_handle = tokio::spawn(async move { remote::remote_access_server(cfg).await });
+
+    tracing::info!("All agent tasks running");
+
+    // Wait for any task to finish (they should run forever)
+    tokio::select! {
+        r = heartbeat_handle => tracing::error!("Heartbeat task exited: {:?}", r),
+        r = inventory_handle => tracing::error!("Inventory task exited: {:?}", r),
+        r = scripts_handle => tracing::error!("Scripts task exited: {:?}", r),
+        r = patches_handle => tracing::error!("Patches task exited: {:?}", r),
+        r = remote_handle => tracing::error!("Remote task exited: {:?}", r),
+    }
+
+    Ok(())
+}

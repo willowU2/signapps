@@ -20,6 +20,9 @@ async fn main() -> anyhow::Result<()> {
     let pool = signapps_db::create_pool(&config.database_url).await?;
     tracing::info!("Database connected");
 
+    // Build extended AppState (DB + live agent WS channels)
+    let state = handlers::AppState::new(pool);
+
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
             "http://localhost:3000".parse().expect("valid origin"),
@@ -44,9 +47,9 @@ async fn main() -> anyhow::Result<()> {
         ]);
 
     let app = Router::new()
-        .merge(routes::public_routes().with_state(pool.clone()))
+        .merge(routes::public_routes().with_state(state.pool.clone()))
         .nest("/api/v1/it-assets", routes::api_routes())
-        .with_state(pool)
+        .with_state(state)
         .layer(cors)
         .layer(TraceLayer::new_for_http());
 
