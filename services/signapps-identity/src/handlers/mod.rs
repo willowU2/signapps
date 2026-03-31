@@ -2,6 +2,7 @@
 
 pub mod accounting;
 pub mod activities;
+pub mod assignments;
 pub mod admin_security;
 pub mod api_keys;
 pub mod audit_logs;
@@ -23,12 +24,17 @@ pub mod lms;
 pub mod mfa;
 pub mod migration;
 pub mod openapi;
+pub mod org_context;
+pub mod org_nodes;
+pub mod org_trees;
+pub mod persons;
 pub mod preferences;
 pub mod resources;
 pub mod retention_purge;
 pub mod roles;
 pub mod security_events;
 pub mod sessions;
+pub mod sites;
 pub mod signatures;
 pub mod supply_chain;
 pub mod tenant_css;
