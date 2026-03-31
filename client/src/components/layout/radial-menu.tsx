@@ -206,7 +206,7 @@ export function RadialMenu() {
     <>
       <div
         ref={containerRef}
-        className="fixed bottom-6 right-20 z-[100] hidden md:block"
+        className="fixed bottom-[120px] right-[8px] z-[100] hidden md:block"
         onMouseMove={handleMouseMove}
         onWheel={handleWheel}
       >

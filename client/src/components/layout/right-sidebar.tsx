@@ -420,7 +420,10 @@ export function RightSidebar() {
           </Tooltip>
 
           {/* Expand/collapse toggle */}
-          <div className="mt-auto flex flex-col items-center gap-1">
+          <div className="mt-auto flex flex-col items-center gap-2">
+            {/* Radial menu FAB — centered above pin */}
+            <div id="radial-menu-anchor" className="flex items-center justify-center" />
+
             {/* Pin indicator */}
             {rightSidebarPinned && (
               <Tooltip>
