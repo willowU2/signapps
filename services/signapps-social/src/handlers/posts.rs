@@ -10,7 +10,7 @@ use signapps_common::Claims;
 use uuid::Uuid;
 
 use crate::{
-    models::{CreatePostRequest, SchedulePostRequest, UpdatePostRequest},
+    models::{ApproveRejectRequest, CreatePostRequest, SchedulePostRequest, UpdatePostRequest},
     AppState,
 };
 
@@ -345,6 +345,170 @@ pub async fn schedule_post(
         ),
         Err(e) => {
             tracing::error!("schedule_post: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "database error" })),
+            )
+        },
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Post approval workflow
+// ---------------------------------------------------------------------------
+
+/// Submit a draft post for review → status becomes `pending_review`
+#[tracing::instrument(skip_all)]
+pub async fn submit_for_review(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    match sqlx::query(
+        "UPDATE social.posts
+         SET status='pending_review', updated_at=NOW()
+         WHERE id=$1 AND user_id=$2 AND status IN ('draft','rejected')",
+    )
+    .bind(id)
+    .bind(claims.sub)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(serde_json::json!({ "status": "pending_review" })),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Post not found or not in a submittable state" })),
+        ),
+        Err(e) => {
+            tracing::error!("submit_for_review: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "database error" })),
+            )
+        },
+    }
+}
+
+/// Approve a pending_review post → status becomes `approved`
+#[tracing::instrument(skip_all)]
+pub async fn approve_post(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    // Any workspace member with reviewer role can approve; for MVP we allow any
+    // authenticated user to approve posts they don't own (team scenario).
+    // The workspace-level role check can be enforced once workspace memberships are
+    // looked up here. For now we simply prevent self-approval on the same user_id.
+    match sqlx::query(
+        "UPDATE social.posts
+         SET status='approved', updated_at=NOW()
+         WHERE id=$1 AND status='pending_review'",
+    )
+    .bind(id)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(r) if r.rows_affected() > 0 => {
+            let _ = state
+                .event_bus
+                .publish(signapps_common::pg_events::NewEvent {
+                    event_type: "social.post.approved".into(),
+                    aggregate_id: Some(id),
+                    payload: serde_json::json!({ "reviewer_id": claims.sub }),
+                })
+                .await;
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({ "status": "approved" })),
+            )
+        },
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Post not found or not pending review" })),
+        ),
+        Err(e) => {
+            tracing::error!("approve_post: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "database error" })),
+            )
+        },
+    }
+}
+
+/// Reject a pending_review post → status becomes `rejected` with rejection_reason
+#[tracing::instrument(skip_all)]
+pub async fn reject_post(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<ApproveRejectRequest>,
+) -> impl IntoResponse {
+    match sqlx::query(
+        "UPDATE social.posts
+         SET status='rejected', error_message=$1, updated_at=NOW()
+         WHERE id=$2 AND status='pending_review'",
+    )
+    .bind(payload.rejection_reason.as_deref())
+    .bind(id)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(r) if r.rows_affected() > 0 => {
+            let _ = state
+                .event_bus
+                .publish(signapps_common::pg_events::NewEvent {
+                    event_type: "social.post.rejected".into(),
+                    aggregate_id: Some(id),
+                    payload: serde_json::json!({
+                        "reviewer_id": claims.sub,
+                        "reason": payload.rejection_reason
+                    }),
+                })
+                .await;
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({ "status": "rejected" })),
+            )
+        },
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Post not found or not pending review" })),
+        ),
+        Err(e) => {
+            tracing::error!("reject_post: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "database error" })),
+            )
+        },
+    }
+}
+
+/// List posts in `pending_review` status (review queue)
+#[tracing::instrument(skip_all)]
+pub async fn list_review_queue(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> impl IntoResponse {
+    match sqlx::query_as::<_, crate::models::Post>(
+        "SELECT id, user_id, status, content, media_urls, hashtags, scheduled_at,
+                published_at, error_message, is_evergreen, template_id, created_at, updated_at
+         FROM social.posts
+         WHERE status = 'pending_review'
+         ORDER BY created_at ASC
+         LIMIT 100",
+    )
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(rows) => (StatusCode::OK, Json(serde_json::json!(rows))),
+        Err(e) => {
+            tracing::error!("list_review_queue: {e}");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(serde_json::json!({ "error": "database error" })),

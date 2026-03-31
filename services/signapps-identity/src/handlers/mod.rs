@@ -2,9 +2,9 @@
 
 pub mod accounting;
 pub mod activities;
-pub mod assignments;
 pub mod admin_security;
 pub mod api_keys;
+pub mod assignments;
 pub mod audit_logs;
 pub mod auth;
 pub mod backup;
@@ -34,8 +34,8 @@ pub mod retention_purge;
 pub mod roles;
 pub mod security_events;
 pub mod sessions;
-pub mod sites;
 pub mod signatures;
+pub mod sites;
 pub mod supply_chain;
 pub mod tenant_css;
 pub mod tenants;

@@ -836,6 +836,44 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
           )}
         </div>
 
+        {/* Character count bars per selected platform */}
+        {selectedPlatforms.length > 0 && hasContent && (
+          <div className="space-y-2 pt-1">
+            <p className="text-xs text-muted-foreground font-medium">Character limits</p>
+            {selectedPlatforms.map((platform) => {
+              const textLen = threadPosts.reduce((sum, tp) => sum + tp.content.length, 0);
+              const limit = getPlatformCharLimit(platform as SocialAccount['platform']);
+              const ratio = Math.min(textLen / limit, 1);
+              const pct = Math.round(ratio * 100);
+              const barColor =
+                ratio < 0.8
+                  ? 'bg-green-500'
+                  : ratio < 0.95
+                  ? 'bg-yellow-500'
+                  : 'bg-red-500';
+              const textColor = getCharLimitColor(textLen, limit);
+              return (
+                <div key={platform} className="space-y-0.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="capitalize text-muted-foreground">{PLATFORM_LABELS[platform as SocialAccount['platform']] ?? platform}</span>
+                    <span className={textColor}>
+                      {limit - textLen >= 0
+                        ? `${limit - textLen} remaining`
+                        : `${Math.abs(limit - textLen)} over limit`}
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${barColor}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex flex-wrap gap-2 pt-2">
           <Button variant="outline" onClick={handleSaveDraft} disabled={isSaving || !hasContent}>

@@ -23,6 +23,8 @@ interface PlatformDef {
   scopes: string;
   /** Platforms using manual credential entry instead of OAuth web flow */
   manualOnly?: boolean;
+  /** Label shown on the token/key input field for manual platforms */
+  tokenLabel?: string;
 }
 
 const PLATFORMS: PlatformDef[] = [
@@ -68,6 +70,99 @@ const PLATFORMS: PlatformDef[] = [
     color: '#0085FF',
     scopes: 'Publier, lire',
     manualOnly: true,
+    tokenLabel: 'App Password',
+  },
+  // --- New platforms ---
+  {
+    id: 'reddit',
+    name: 'Reddit',
+    icon: '🤖',
+    color: '#FF4500',
+    scopes: 'Soumettre, lire, identité',
+  },
+  {
+    id: 'telegram',
+    name: 'Telegram',
+    icon: '✈️',
+    color: '#2CA5E0',
+    scopes: 'Envoyer des messages',
+    manualOnly: true,
+    tokenLabel: 'Bot Token',
+  },
+  {
+    id: 'discord',
+    name: 'Discord',
+    icon: '💬',
+    color: '#5865F2',
+    scopes: 'Publier via webhook',
+    manualOnly: true,
+    tokenLabel: 'Webhook URL',
+  },
+  {
+    id: 'slack',
+    name: 'Slack',
+    icon: '#',
+    color: '#4A154B',
+    scopes: 'Publier, lire les channels',
+  },
+  {
+    id: 'google_business',
+    name: 'Google Business',
+    icon: 'G',
+    color: '#4285F4',
+    scopes: 'Gérer les posts locaux',
+  },
+  {
+    id: 'dribbble',
+    name: 'Dribbble',
+    icon: '🏀',
+    color: '#EA4C89',
+    scopes: 'Publier des shots',
+  },
+  {
+    id: 'medium',
+    name: 'Medium',
+    icon: 'M',
+    color: '#000000',
+    scopes: 'Publier des articles',
+    manualOnly: true,
+    tokenLabel: 'Integration Token',
+  },
+  {
+    id: 'devto',
+    name: 'Dev.to',
+    icon: 'DEV',
+    color: '#0A0A0A',
+    scopes: 'Publier, analytics',
+    manualOnly: true,
+    tokenLabel: 'API Key',
+  },
+  {
+    id: 'hashnode',
+    name: 'Hashnode',
+    icon: '#',
+    color: '#2962FF',
+    scopes: 'Publier des articles',
+    manualOnly: true,
+    tokenLabel: 'Personal Access Token',
+  },
+  {
+    id: 'wordpress',
+    name: 'WordPress',
+    icon: 'WP',
+    color: '#21759B',
+    scopes: 'Publier, gérer les posts',
+    manualOnly: true,
+    tokenLabel: 'Application Password',
+  },
+  {
+    id: 'lemmy',
+    name: 'Lemmy',
+    icon: '🐭',
+    color: '#00BC8C',
+    scopes: 'Publier, commenter',
+    manualOnly: true,
+    tokenLabel: 'JWT (via login)',
   },
 ];
 
@@ -287,7 +382,9 @@ export function OAuthConnect({ accounts, onConnected }: OAuthConnectProps) {
               {/* Connect button */}
               {platform.manualOnly ? (
                 <p className="text-xs text-muted-foreground">
-                  Uses app password — configure via the manual form below.
+                  {platform.tokenLabel
+                    ? `Requires ${platform.tokenLabel} — configure via the manual form below.`
+                    : 'Uses app password — configure via the manual form below.'}
                 </p>
               ) : (
                 <Button

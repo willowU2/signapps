@@ -31,13 +31,11 @@ pub async fn on_node_created(
 
 /// Called when an org node is deleted — removes the corresponding `identity.group`.
 pub async fn on_node_deleted(pool: &PgPool, node_id: Uuid) -> Result<(), Error> {
-    sqlx::query(
-        "DELETE FROM identity.groups WHERE source = 'org' AND external_id = $1",
-    )
-    .bind(node_id.to_string())
-    .execute(pool)
-    .await
-    .map_err(|e| Error::Internal(format!("Group cleanup: {e}")))?;
+    sqlx::query("DELETE FROM identity.groups WHERE source = 'org' AND external_id = $1")
+        .bind(node_id.to_string())
+        .execute(pool)
+        .await
+        .map_err(|e| Error::Internal(format!("Group cleanup: {e}")))?;
     Ok(())
 }
 
@@ -49,14 +47,13 @@ pub async fn on_assignment_created(
     node_id: Uuid,
 ) -> Result<(), Error> {
     // 1. Resolve person → user_id
-    let user_id: Option<Uuid> = sqlx::query_scalar(
-        "SELECT user_id FROM core.persons WHERE id = $1",
-    )
-    .bind(person_id)
-    .fetch_optional(pool)
-    .await
-    .unwrap_or(None)
-    .flatten();
+    let user_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT user_id FROM core.persons WHERE id = $1")
+            .bind(person_id)
+            .fetch_optional(pool)
+            .await
+            .unwrap_or(None)
+            .flatten();
 
     let user_id = match user_id {
         Some(id) => id,
@@ -64,13 +61,12 @@ pub async fn on_assignment_created(
     };
 
     // 2. Get all ancestor nodes (closure table), including self (depth = 0)
-    let ancestor_ids: Vec<Uuid> = sqlx::query_scalar(
-        "SELECT ancestor_id FROM core.org_closure WHERE descendant_id = $1",
-    )
-    .bind(node_id)
-    .fetch_all(pool)
-    .await
-    .unwrap_or_default();
+    let ancestor_ids: Vec<Uuid> =
+        sqlx::query_scalar("SELECT ancestor_id FROM core.org_closure WHERE descendant_id = $1")
+            .bind(node_id)
+            .fetch_all(pool)
+            .await
+            .unwrap_or_default();
 
     // 3. For each ancestor, find its auto-group and add the user
     for ancestor_id in ancestor_ids {
@@ -106,14 +102,13 @@ pub async fn on_assignment_ended(
     person_id: Uuid,
     node_id: Uuid,
 ) -> Result<(), Error> {
-    let user_id: Option<Uuid> = sqlx::query_scalar(
-        "SELECT user_id FROM core.persons WHERE id = $1",
-    )
-    .bind(person_id)
-    .fetch_optional(pool)
-    .await
-    .unwrap_or(None)
-    .flatten();
+    let user_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT user_id FROM core.persons WHERE id = $1")
+            .bind(person_id)
+            .fetch_optional(pool)
+            .await
+            .unwrap_or(None)
+            .flatten();
 
     let user_id = match user_id {
         Some(id) => id,
@@ -121,13 +116,12 @@ pub async fn on_assignment_ended(
     };
 
     // Get all ancestor IDs of the ended assignment's node
-    let ancestor_ids: Vec<Uuid> = sqlx::query_scalar(
-        "SELECT ancestor_id FROM core.org_closure WHERE descendant_id = $1",
-    )
-    .bind(node_id)
-    .fetch_all(pool)
-    .await
-    .unwrap_or_default();
+    let ancestor_ids: Vec<Uuid> =
+        sqlx::query_scalar("SELECT ancestor_id FROM core.org_closure WHERE descendant_id = $1")
+            .bind(node_id)
+            .fetch_all(pool)
+            .await
+            .unwrap_or_default();
 
     // For each ancestor, only remove if the user has no other active assignment
     // whose subtree still reaches that ancestor

@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,40 @@ import { socialApi } from '@/lib/api/social';
 import { PLATFORM_COLORS } from './platform-utils';
 import { ChannelSidebar } from './channel-sidebar';
 import { formatDistanceToNow } from 'date-fns';
+
+// ── Sentiment analysis ────────────────────────────────────────────────────────
+
+type Sentiment = 'positive' | 'negative' | 'neutral';
+
+const POSITIVE_WORDS = ['merci', 'super', 'bravo', 'love', 'amazing', 'great', 'excellent', 'fantastic', 'awesome', 'perfect', 'wonderful', 'brilliant'];
+const NEGATIVE_WORDS = ['problème', 'bug', 'nul', 'horrible', 'complaint', 'issue', 'bad', 'terrible', 'awful', 'broken', 'error', 'fail', 'disappointed', 'hate'];
+
+function analyzeSentiment(text: string): Sentiment {
+  const lower = (text ?? '').toLowerCase();
+  const pos = POSITIVE_WORDS.filter((w) => lower.includes(w)).length;
+  const neg = NEGATIVE_WORDS.filter((w) => lower.includes(w)).length;
+  if (pos > neg) return 'positive';
+  if (neg > pos) return 'negative';
+  return 'neutral';
+}
+
+const SENTIMENT_CONFIG: Record<Sentiment, { emoji: string; label: string; className: string }> = {
+  positive: { emoji: '😊', label: 'Positive', className: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' },
+  negative: { emoji: '😠', label: 'Negative', className: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' },
+  neutral:  { emoji: '😐', label: 'Neutral',  className: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
+};
+
+function SentimentBadge({ text }: { text: string | undefined }) {
+  const sentiment = analyzeSentiment(text ?? '');
+  const cfg = SENTIMENT_CONFIG[sentiment];
+  return (
+    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium ${cfg.className}`} title={cfg.label}>
+      {cfg.emoji}
+    </span>
+  );
+}
+
+// ── Inbox type badge ──────────────────────────────────────────────────────────
 
 function InboxBadge({ type }: { type: string | undefined }) {
   const map: Record<string, string> = {
@@ -40,6 +74,7 @@ export function SocialInbox() {
 
   const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [sentimentFilter, setSentimentFilter] = useState<'all' | Sentiment>('all');
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InboxItem | null>(null);
   const [replyText, setReplyText] = useState('');
@@ -108,10 +143,16 @@ export function SocialInbox() {
 
   const platforms = [...new Set(inboxItems.map((i) => i.platform).filter((p): p is string => !!p))];
 
-  // Filter inbox items by selected channels
-  const filteredInboxItems = selectedChannelIds.length > 0
-    ? inboxItems.filter((item) => selectedChannelIds.includes(item.accountId))
-    : inboxItems;
+  // Filter inbox items by selected channels and sentiment
+  const filteredInboxItems = useMemo(() => {
+    let items = selectedChannelIds.length > 0
+      ? inboxItems.filter((item) => selectedChannelIds.includes(item.accountId))
+      : inboxItems;
+    if (sentimentFilter !== 'all') {
+      items = items.filter((item) => analyzeSentiment(item.content ?? '') === sentimentFilter);
+    }
+    return items;
+  }, [inboxItems, selectedChannelIds, sentimentFilter]);
 
   return (
     <div className="flex h-full">
@@ -161,6 +202,23 @@ export function SocialInbox() {
               </Button>
             )}
           </div>
+          {/* Sentiment filter */}
+          <div className="flex gap-1.5">
+            {(['all', 'positive', 'negative', 'neutral'] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setSentimentFilter(s)}
+                className={`flex-1 text-xs py-1 rounded-md border transition-colors ${
+                  sentimentFilter === s
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'border-border hover:bg-muted/50'
+                }`}
+              >
+                {s === 'all' ? 'All' : s === 'positive' ? '😊' : s === 'negative' ? '😠' : '😐'}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Items */}
@@ -203,6 +261,7 @@ export function SocialInbox() {
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-sm font-medium">{item.authorName}</span>
                     <InboxBadge type={item.type} />
+                    <SentimentBadge text={item.content} />
                     {!item.read && <div className="w-2 h-2 rounded-full bg-primary" />}
                   </div>
                   <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{item.content}</p>
@@ -237,6 +296,7 @@ export function SocialInbox() {
                     <span className="font-semibold">{selectedItem.authorName}</span>
                     <span className="text-muted-foreground text-sm">@{selectedItem.authorName}</span>
                     <InboxBadge type={selectedItem.type} />
+                    <SentimentBadge text={selectedItem.content} />
                     <Badge
                       variant="outline"
                       className="text-xs capitalize"

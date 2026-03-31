@@ -110,12 +110,11 @@ impl PersonRepository {
 
     /// Find a person by their linked platform user account.
     pub async fn find_by_user_id(pool: &PgPool, user_id: Uuid) -> Result<Option<Person>> {
-        let person =
-            sqlx::query_as::<_, Person>("SELECT * FROM core.persons WHERE user_id = $1")
-                .bind(user_id)
-                .fetch_optional(pool)
-                .await
-                .map_err(|e| Error::Database(e.to_string()))?;
+        let person = sqlx::query_as::<_, Person>("SELECT * FROM core.persons WHERE user_id = $1")
+            .bind(user_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
         Ok(person)
     }
 
@@ -280,12 +279,11 @@ impl OrgTreeRepository {
 
     /// Find an org tree by primary key.
     pub async fn find_by_id(pool: &PgPool, id: Uuid) -> Result<Option<OrgTree>> {
-        let tree =
-            sqlx::query_as::<_, OrgTree>("SELECT * FROM core.org_trees WHERE id = $1")
-                .bind(id)
-                .fetch_optional(pool)
-                .await
-                .map_err(|e| Error::Database(e.to_string()))?;
+        let tree = sqlx::query_as::<_, OrgTree>("SELECT * FROM core.org_trees WHERE id = $1")
+            .bind(id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
         Ok(tree)
     }
 
@@ -383,12 +381,11 @@ impl OrgNodeRepository {
 
     /// Find an org node by primary key.
     pub async fn find(pool: &PgPool, id: Uuid) -> Result<Option<OrgNode>> {
-        let node =
-            sqlx::query_as::<_, OrgNode>("SELECT * FROM core.org_nodes WHERE id = $1")
-                .bind(id)
-                .fetch_optional(pool)
-                .await
-                .map_err(|e| Error::Database(e.to_string()))?;
+        let node = sqlx::query_as::<_, OrgNode>("SELECT * FROM core.org_nodes WHERE id = $1")
+            .bind(id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
         Ok(node)
     }
 
@@ -450,7 +447,11 @@ impl OrgNodeRepository {
     /// 1. Delete all closure rows where the descendant is the node or its subtree,
     ///    and the ancestor is NOT in the subtree (removes old upward links).
     /// 2. Re-insert links from the new parent's ancestors to all descendants of the moved node.
-    pub async fn move_node(pool: &PgPool, node_id: Uuid, new_parent_id: Option<Uuid>) -> Result<()> {
+    pub async fn move_node(
+        pool: &PgPool,
+        node_id: Uuid,
+        new_parent_id: Option<Uuid>,
+    ) -> Result<()> {
         // Step 1 – detach from old parent ancestry
         sqlx::query(
             r#"
@@ -488,14 +489,12 @@ impl OrgNodeRepository {
         }
 
         // Update parent_id on the node itself
-        sqlx::query(
-            "UPDATE core.org_nodes SET parent_id = $2, updated_at = NOW() WHERE id = $1",
-        )
-        .bind(node_id)
-        .bind(new_parent_id)
-        .execute(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        sqlx::query("UPDATE core.org_nodes SET parent_id = $2, updated_at = NOW() WHERE id = $1")
+            .bind(node_id)
+            .bind(new_parent_id)
+            .execute(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(())
     }
@@ -606,11 +605,7 @@ impl AssignmentRepository {
     }
 
     /// Update mutable fields of an assignment.
-    pub async fn update(
-        pool: &PgPool,
-        id: Uuid,
-        input: UpdateAssignment,
-    ) -> Result<Assignment> {
+    pub async fn update(pool: &PgPool, id: Uuid, input: UpdateAssignment) -> Result<Assignment> {
         let assignment = sqlx::query_as::<_, Assignment>(
             r#"
             UPDATE core.assignments SET
@@ -736,10 +731,7 @@ impl AssignmentRepository {
     }
 
     /// Get the full audit trail for a single assignment, newest first.
-    pub async fn get_history(
-        pool: &PgPool,
-        assignment_id: Uuid,
-    ) -> Result<Vec<AssignmentHistory>> {
+    pub async fn get_history(pool: &PgPool, assignment_id: Uuid) -> Result<Vec<AssignmentHistory>> {
         let history = sqlx::query_as::<_, AssignmentHistory>(
             r#"
             SELECT * FROM core.assignment_history
@@ -756,12 +748,11 @@ impl AssignmentRepository {
 
     /// Find an assignment by primary key.
     pub async fn find_by_id(pool: &PgPool, id: Uuid) -> Result<Option<Assignment>> {
-        let a =
-            sqlx::query_as::<_, Assignment>("SELECT * FROM core.assignments WHERE id = $1")
-                .bind(id)
-                .fetch_optional(pool)
-                .await
-                .map_err(|e| Error::Database(e.to_string()))?;
+        let a = sqlx::query_as::<_, Assignment>("SELECT * FROM core.assignments WHERE id = $1")
+            .bind(id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
         Ok(a)
     }
 }
@@ -920,13 +911,11 @@ impl SiteRepository {
 
     /// End a person's site attachment (sets end_date to today).
     pub async fn detach_person(pool: &PgPool, person_site_id: Uuid) -> Result<()> {
-        sqlx::query(
-            "UPDATE core.person_sites SET end_date = CURRENT_DATE WHERE id = $1",
-        )
-        .bind(person_site_id)
-        .execute(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        sqlx::query("UPDATE core.person_sites SET end_date = CURRENT_DATE WHERE id = $1")
+            .bind(person_site_id)
+            .execute(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
         Ok(())
     }
 
@@ -1024,10 +1013,7 @@ impl PermissionProfileRepository {
     /// Profiles are collected from root (shallowest ancestor) to the target node
     /// (deepest), so that more-specific nodes override their ancestors per module.
     /// When a profile has `inherit = false`, the walk stops at that profile.
-    pub async fn get_effective(
-        pool: &PgPool,
-        node_id: Uuid,
-    ) -> Result<EffectivePermissions> {
+    pub async fn get_effective(pool: &PgPool, node_id: Uuid) -> Result<EffectivePermissions> {
         // Fetch all ancestor profiles ordered root-first (deepest depth = closest ancestor)
         let profiles = sqlx::query_as::<_, PermissionProfile>(
             r#"
@@ -1056,10 +1042,8 @@ impl PermissionProfileRepository {
             inherited_from.push(profile.node_id);
 
             // Merge modules (child overrides parent per key)
-            if let (
-                serde_json::Value::Object(base),
-                serde_json::Value::Object(overlay),
-            ) = (&mut merged_modules, &profile.modules)
+            if let (serde_json::Value::Object(base), serde_json::Value::Object(overlay)) =
+                (&mut merged_modules, &profile.modules)
             {
                 for (k, v) in overlay {
                     base.insert(k.clone(), v.clone());
@@ -1067,10 +1051,8 @@ impl PermissionProfileRepository {
             }
 
             // Merge custom_permissions
-            if let (
-                serde_json::Value::Object(base),
-                serde_json::Value::Object(overlay),
-            ) = (&mut merged_custom, &profile.custom_permissions)
+            if let (serde_json::Value::Object(base), serde_json::Value::Object(overlay)) =
+                (&mut merged_custom, &profile.custom_permissions)
             {
                 for (k, v) in overlay {
                     base.insert(k.clone(), v.clone());

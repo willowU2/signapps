@@ -125,7 +125,9 @@ pub async fn run_plan(
         let repo = DriveBackupRepository::new(&pool);
         match run_backup_task(&pool, snapshot_id, &backup_type, &include_paths).await {
             Ok((files_count, total_size)) => {
-                let _ = repo.complete_snapshot(snapshot_id, files_count, total_size).await;
+                let _ = repo
+                    .complete_snapshot(snapshot_id, files_count, total_size)
+                    .await;
                 let _ = repo.mark_plan_run(plan_id).await;
                 let _ = repo.cleanup_old_snapshots(plan_id, max_snapshots).await;
                 tracing::info!(

@@ -25,8 +25,7 @@ use crate::AppState;
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const DAV_CAPABILITIES: &str = "1, 2";
-const ALLOWED_METHODS: &str =
-    "OPTIONS, GET, PUT, DELETE, MKCOL, MOVE, COPY, PROPFIND, HEAD";
+const ALLOWED_METHODS: &str = "OPTIONS, GET, PUT, DELETE, MKCOL, MOVE, COPY, PROPFIND, HEAD";
 
 // ─── Internal DB row type ─────────────────────────────────────────────────────
 
@@ -290,7 +289,10 @@ pub async fn webdav_auth(
         .and_then(|h| h.to_str().ok())
         .map(|s| s.to_owned());
 
-    let credentials = match auth_header.as_deref().and_then(|h| h.strip_prefix("Basic ")) {
+    let credentials = match auth_header
+        .as_deref()
+        .and_then(|h| h.strip_prefix("Basic "))
+    {
         Some(encoded) => {
             // Decode base64
             use base64::Engine;
@@ -308,10 +310,7 @@ pub async fn webdav_auth(
         None => {
             return Ok(Response::builder()
                 .status(StatusCode::UNAUTHORIZED)
-                .header(
-                    header::WWW_AUTHENTICATE,
-                    r#"Basic realm="SignApps Drive""#,
-                )
+                .header(header::WWW_AUTHENTICATE, r#"Basic realm="SignApps Drive""#)
                 .header(header::CONTENT_TYPE, "text/plain")
                 .body(Body::from("Authentication required"))
                 .unwrap());
@@ -340,10 +339,7 @@ pub async fn webdav_auth(
         None => {
             return Ok(Response::builder()
                 .status(StatusCode::UNAUTHORIZED)
-                .header(
-                    header::WWW_AUTHENTICATE,
-                    r#"Basic realm="SignApps Drive""#,
-                )
+                .header(header::WWW_AUTHENTICATE, r#"Basic realm="SignApps Drive""#)
                 .header(header::CONTENT_TYPE, "text/plain")
                 .body(Body::from("Invalid credentials"))
                 .unwrap());
@@ -360,16 +356,12 @@ pub async fn webdav_auth(
     }
 
     // Verify password with bcrypt
-    let password_valid =
-        bcrypt::verify(&password, &hash).unwrap_or(false);
+    let password_valid = bcrypt::verify(&password, &hash).unwrap_or(false);
 
     if !password_valid {
         return Ok(Response::builder()
             .status(StatusCode::UNAUTHORIZED)
-            .header(
-                header::WWW_AUTHENTICATE,
-                r#"Basic realm="SignApps Drive""#,
-            )
+            .header(header::WWW_AUTHENTICATE, r#"Basic realm="SignApps Drive""#)
             .header(header::CONTENT_TYPE, "text/plain")
             .body(Body::from("Invalid credentials"))
             .unwrap());
@@ -397,10 +389,7 @@ pub async fn webdav_auth(
 // ─── WebDAV dispatch ──────────────────────────────────────────────────────────
 
 /// Central dispatcher: routes by HTTP method to the appropriate WebDAV handler.
-pub async fn webdav_dispatch(
-    State(state): State<AppState>,
-    request: Request,
-) -> Response {
+pub async fn webdav_dispatch(State(state): State<AppState>, request: Request) -> Response {
     let method = request.method().clone();
     let uri = request.uri().clone();
     let headers = request.headers().clone();
@@ -445,17 +434,16 @@ pub async fn webdav_dispatch(
         },
         Method::PUT => {
             // Collect body bytes from request
-            let body_bytes = match axum::body::to_bytes(request.into_body(), 500 * 1024 * 1024)
-                .await
-            {
-                Ok(b) => b,
-                Err(_) => {
-                    return Response::builder()
-                        .status(StatusCode::BAD_REQUEST)
-                        .body(Body::from("Failed to read request body"))
-                        .unwrap();
-                },
-            };
+            let body_bytes =
+                match axum::body::to_bytes(request.into_body(), 500 * 1024 * 1024).await {
+                    Ok(b) => b,
+                    Err(_) => {
+                        return Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from("Failed to read request body"))
+                            .unwrap();
+                    },
+                };
             let content_type = headers
                 .get(header::CONTENT_TYPE)
                 .and_then(|h| h.to_str().ok())
@@ -465,17 +453,13 @@ pub async fn webdav_dispatch(
                 Err(e) => error_response(e),
             }
         },
-        m if m.as_str() == "MKCOL" => {
-            match handle_mkcol(&state, user_id, &vpath).await {
-                Ok(r) => r,
-                Err(e) => error_response(e),
-            }
+        m if m.as_str() == "MKCOL" => match handle_mkcol(&state, user_id, &vpath).await {
+            Ok(r) => r,
+            Err(e) => error_response(e),
         },
-        Method::DELETE => {
-            match handle_delete(&state, user_id, &vpath).await {
-                Ok(r) => r,
-                Err(e) => error_response(e),
-            }
+        Method::DELETE => match handle_delete(&state, user_id, &vpath).await {
+            Ok(r) => r,
+            Err(e) => error_response(e),
         },
         m if m.as_str() == "MOVE" => {
             let dest = headers
@@ -625,9 +609,9 @@ async fn handle_get(
     head_only: bool,
 ) -> Result<Response, AppError> {
     let pool = state.pool.inner();
-    let node = resolve_path(pool, user_id, vpath).await?.ok_or_else(|| {
-        AppError::NotFound(format!("Node not found: {vpath}"))
-    })?;
+    let node = resolve_path(pool, user_id, vpath)
+        .await?
+        .ok_or_else(|| AppError::NotFound(format!("Node not found: {vpath}")))?;
 
     if node.node_type == "folder" {
         return Ok(Response::builder()
@@ -696,9 +680,9 @@ async fn handle_put(
     let parent_id = if parent_path.trim_matches('/').is_empty() {
         None
     } else {
-        let parent = resolve_path(pool, user_id, parent_path).await?.ok_or_else(|| {
-            AppError::NotFound(format!("Parent path not found: {parent_path}"))
-        })?;
+        let parent = resolve_path(pool, user_id, parent_path)
+            .await?
+            .ok_or_else(|| AppError::NotFound(format!("Parent path not found: {parent_path}")))?;
         // Check write permission on parent
         check_write_permission(pool, user_id, parent.id).await?;
         Some(parent.id)
@@ -786,11 +770,7 @@ async fn handle_put(
 }
 
 /// MKCOL — create a folder node.
-async fn handle_mkcol(
-    state: &AppState,
-    user_id: Uuid,
-    vpath: &str,
-) -> Result<Response, AppError> {
+async fn handle_mkcol(state: &AppState, user_id: Uuid, vpath: &str) -> Result<Response, AppError> {
     let pool = state.pool.inner();
 
     let (parent_path, folder_name) = split_parent(vpath);
@@ -813,9 +793,9 @@ async fn handle_mkcol(
     let parent_id = if parent_path.trim_matches('/').is_empty() {
         None
     } else {
-        let parent = resolve_path(pool, user_id, parent_path).await?.ok_or_else(|| {
-            AppError::NotFound(format!("Parent path not found: {parent_path}"))
-        })?;
+        let parent = resolve_path(pool, user_id, parent_path)
+            .await?
+            .ok_or_else(|| AppError::NotFound(format!("Parent path not found: {parent_path}")))?;
         check_write_permission(pool, user_id, parent.id).await?;
         Some(parent.id)
     };
@@ -840,15 +820,11 @@ async fn handle_mkcol(
 }
 
 /// DELETE — soft-delete a node.
-async fn handle_delete(
-    state: &AppState,
-    user_id: Uuid,
-    vpath: &str,
-) -> Result<Response, AppError> {
+async fn handle_delete(state: &AppState, user_id: Uuid, vpath: &str) -> Result<Response, AppError> {
     let pool = state.pool.inner();
-    let node = resolve_path(pool, user_id, vpath).await?.ok_or_else(|| {
-        AppError::NotFound(format!("Node not found: {vpath}"))
-    })?;
+    let node = resolve_path(pool, user_id, vpath)
+        .await?
+        .ok_or_else(|| AppError::NotFound(format!("Node not found: {vpath}")))?;
 
     // Require manager role (owner or explicit grant)
     let is_owner = node.owner_id == Some(user_id);
@@ -887,14 +863,15 @@ async fn handle_move(
 ) -> Result<Response, AppError> {
     let pool = state.pool.inner();
 
-    let dest_full = destination.ok_or_else(|| AppError::Validation("Missing Destination header".into()))?;
+    let dest_full =
+        destination.ok_or_else(|| AppError::Validation("Missing Destination header".into()))?;
 
     // Extract path portion from the Destination URL (may be a full URL)
     let dest_path = extract_webdav_path(dest_full);
 
-    let node = resolve_path(pool, user_id, vpath).await?.ok_or_else(|| {
-        AppError::NotFound(format!("Source not found: {vpath}"))
-    })?;
+    let node = resolve_path(pool, user_id, vpath)
+        .await?
+        .ok_or_else(|| AppError::NotFound(format!("Source not found: {vpath}")))?;
 
     // Check write access on source
     check_write_permission(pool, user_id, node.id).await?;
@@ -904,9 +881,11 @@ async fn handle_move(
     let new_parent_id = if dest_parent_path.trim_matches('/').is_empty() {
         None
     } else {
-        let parent = resolve_path(pool, user_id, dest_parent_path).await?.ok_or_else(|| {
-            AppError::NotFound(format!("Destination parent not found: {dest_parent_path}"))
-        })?;
+        let parent = resolve_path(pool, user_id, dest_parent_path)
+            .await?
+            .ok_or_else(|| {
+                AppError::NotFound(format!("Destination parent not found: {dest_parent_path}"))
+            })?;
         Some(parent.id)
     };
 
@@ -936,21 +915,24 @@ async fn handle_copy(
 ) -> Result<Response, AppError> {
     let pool = state.pool.inner();
 
-    let dest_full = destination.ok_or_else(|| AppError::Validation("Missing Destination header".into()))?;
+    let dest_full =
+        destination.ok_or_else(|| AppError::Validation("Missing Destination header".into()))?;
     let dest_path = extract_webdav_path(dest_full);
 
-    let node = resolve_path(pool, user_id, vpath).await?.ok_or_else(|| {
-        AppError::NotFound(format!("Source not found: {vpath}"))
-    })?;
+    let node = resolve_path(pool, user_id, vpath)
+        .await?
+        .ok_or_else(|| AppError::NotFound(format!("Source not found: {vpath}")))?;
 
     let (dest_parent_path, new_name) = split_parent(dest_path);
 
     let new_parent_id = if dest_parent_path.trim_matches('/').is_empty() {
         None
     } else {
-        let parent = resolve_path(pool, user_id, dest_parent_path).await?.ok_or_else(|| {
-            AppError::NotFound(format!("Destination parent not found: {dest_parent_path}"))
-        })?;
+        let parent = resolve_path(pool, user_id, dest_parent_path)
+            .await?
+            .ok_or_else(|| {
+                AppError::NotFound(format!("Destination parent not found: {dest_parent_path}"))
+            })?;
         Some(parent.id)
     };
 
@@ -1098,10 +1080,9 @@ async fn check_write_permission(
     user_id: Uuid,
     node_id: Uuid,
 ) -> Result<(), AppError> {
-    let allowed =
-        crate::services::acl_resolver::check_permission(pool, user_id, node_id, "editor")
-            .await
-            .unwrap_or(false);
+    let allowed = crate::services::acl_resolver::check_permission(pool, user_id, node_id, "editor")
+        .await
+        .unwrap_or(false);
     if !allowed {
         return Err(AppError::Forbidden(
             "Requires editor role on this node".into(),
@@ -1149,10 +1130,7 @@ mod tests {
             extract_webdav_path("http://localhost:3004/webdav/Documents/file.txt"),
             "/Documents/file.txt"
         );
-        assert_eq!(
-            extract_webdav_path("/webdav/Documents"),
-            "/Documents"
-        );
+        assert_eq!(extract_webdav_path("/webdav/Documents"), "/Documents");
     }
 
     #[test]

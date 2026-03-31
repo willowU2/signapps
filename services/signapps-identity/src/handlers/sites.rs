@@ -105,10 +105,7 @@ pub async fn create_site(
 
 /// GET /api/v1/sites/:id — Retrieve a site by ID.
 #[tracing::instrument(skip_all)]
-pub async fn get_site(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<Json<Site>> {
+pub async fn get_site(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<Json<Site>> {
     let site = SiteRepository::find(&state.pool, id)
         .await?
         .ok_or_else(|| Error::NotFound(format!("Site {id} not found")))?;

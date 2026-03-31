@@ -4,10 +4,13 @@ import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Users, Eye, MousePointer, Download } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TrendingUp, Users, Eye, MousePointer, Download, Film, Zap, MessageSquare, ChevronUp } from 'lucide-react';
 import {
   LineChart,
   Line,
+  AreaChart,
+  Area,
   BarChart,
   Bar,
   XAxis,
@@ -94,6 +97,48 @@ export function SocialAnalytics() {
 
   const platformsInHistory = [...new Set(followerHistory.map((d) => d.platform))];
 
+  // ---------------------------------------------------------------------------
+  // Stories & Reels mock data (structure ready for real API)
+  // ---------------------------------------------------------------------------
+  const storiesTimelineData = Array.from({ length: 14 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (13 - i));
+    return {
+      date: date.toISOString().slice(0, 10),
+      views: Math.floor(Math.random() * 3000) + 500,
+      completionRate: Math.round(Math.random() * 40 + 45),
+      swipeUps: Math.floor(Math.random() * 80),
+      replies: Math.floor(Math.random() * 25),
+    };
+  });
+
+  const storiesStats = [
+    {
+      title: 'Total Views',
+      value: storiesTimelineData.reduce((s, d) => s + d.views, 0).toLocaleString(),
+      icon: Eye,
+      color: 'text-blue-500',
+    },
+    {
+      title: 'Avg Completion',
+      value: `${Math.round(storiesTimelineData.reduce((s, d) => s + d.completionRate, 0) / storiesTimelineData.length)}%`,
+      icon: Film,
+      color: 'text-purple-500',
+    },
+    {
+      title: 'Swipe-Ups',
+      value: storiesTimelineData.reduce((s, d) => s + d.swipeUps, 0).toLocaleString(),
+      icon: ChevronUp,
+      color: 'text-green-500',
+    },
+    {
+      title: 'Replies',
+      value: storiesTimelineData.reduce((s, d) => s + d.replies, 0).toLocaleString(),
+      icon: MessageSquare,
+      color: 'text-orange-500',
+    },
+  ];
+
   return (
     <div className="flex h-full">
       <ChannelSidebar
@@ -110,6 +155,18 @@ export function SocialAnalytics() {
           Export PDF
         </Button>
       </div>
+
+      {/* Analytics tabs */}
+      <Tabs defaultValue="feed">
+        <TabsList>
+          <TabsTrigger value="feed">Feed Posts</TabsTrigger>
+          <TabsTrigger value="stories" className="flex items-center gap-1.5">
+            <Film className="h-3.5 w-3.5" />
+            Stories &amp; Reels
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="feed" className="mt-4 space-y-6">
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -265,6 +322,113 @@ export function SocialAnalytics() {
           )}
         </CardContent>
       </Card>
+
+        </TabsContent>{/* end feed tab */}
+
+        <TabsContent value="stories" className="mt-4 space-y-6">
+          {/* Stories stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            {storiesStats.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <Card key={stat.title}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">{stat.title}</p>
+                        <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                      </div>
+                      <div className={`p-2 bg-muted rounded-lg ${stat.color}`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Timeline chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Film className="h-4 w-4 text-muted-foreground" />
+                Stories &amp; Reels (14 days)
+                <Badge variant="secondary" className="text-xs ml-2">Mock data</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={240}>
+                <AreaChart data={storiesTimelineData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v) => v.slice(5)} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} unit="%" />
+                  <Tooltip />
+                  <Legend />
+                  <Area
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="views"
+                    name="Views"
+                    stroke="#3b82f6"
+                    fill="#3b82f620"
+                    strokeWidth={2}
+                  />
+                  <Area
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="completionRate"
+                    name="Completion %"
+                    stroke="#8b5cf6"
+                    fill="#8b5cf620"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Swipe-ups & replies */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Swipe-Ups</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={storiesTimelineData} margin={{ top: 0, right: 10, bottom: 0, left: -20 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v) => v.slice(5)} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip />
+                    <Bar dataKey="swipeUps" name="Swipe-Ups" fill="#22c55e" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Replies</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={storiesTimelineData} margin={{ top: 0, right: 10, bottom: 0, left: -20 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v) => v.slice(5)} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip />
+                    <Bar dataKey="replies" name="Replies" fill="#f97316" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>{/* end stories tab */}
+
+      </Tabs>
+
       </div>
     </div>
   );

@@ -153,9 +153,7 @@ pub async fn get_person(
     let today = chrono::Utc::now().date_naive();
     let active_assignments = all_assignments
         .into_iter()
-        .filter(|a| {
-            a.start_date <= today && a.end_date.map_or(true, |end| end >= today)
-        })
+        .filter(|a| a.start_date <= today && a.end_date.map_or(true, |end| end >= today))
         .collect();
     Ok(Json(PersonDetailResponse {
         person,

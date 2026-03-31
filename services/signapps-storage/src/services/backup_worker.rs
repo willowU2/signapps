@@ -33,8 +33,7 @@ async fn tick(pool: &DatabasePool) -> Result<(), signapps_common::Error> {
     tracing::info!(count = due_plans.len(), "Running due backup plans");
 
     for plan in due_plans {
-        let storage_path =
-            format!("backups/{}/{}", plan.id, Utc::now().timestamp());
+        let storage_path = format!("backups/{}/{}", plan.id, Utc::now().timestamp());
         let snapshot = match repo
             .create_snapshot(plan.id, &plan.backup_type, Some(&storage_path))
             .await
@@ -59,7 +58,10 @@ async fn tick(pool: &DatabasePool) -> Result<(), signapps_common::Error> {
                 },
             };
 
-        if let Err(e) = repo.complete_snapshot(snapshot.id, files_count, total_size).await {
+        if let Err(e) = repo
+            .complete_snapshot(snapshot.id, files_count, total_size)
+            .await
+        {
             tracing::error!(snapshot_id = %snapshot.id, error = %e, "Failed to complete snapshot");
             continue;
         }
@@ -68,7 +70,10 @@ async fn tick(pool: &DatabasePool) -> Result<(), signapps_common::Error> {
             tracing::warn!(plan_id = %plan.id, error = %e, "Failed to mark plan run");
         }
 
-        if let Err(e) = repo.cleanup_old_snapshots(plan.id, plan.max_snapshots).await {
+        if let Err(e) = repo
+            .cleanup_old_snapshots(plan.id, plan.max_snapshots)
+            .await
+        {
             tracing::warn!(plan_id = %plan.id, error = %e, "Failed to cleanup old snapshots");
         }
 

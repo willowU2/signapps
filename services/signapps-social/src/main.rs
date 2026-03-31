@@ -120,6 +120,23 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/social/posts/:id/schedule",
             post(posts::schedule_post),
         )
+        // Post approval workflow
+        .route(
+            "/api/v1/social/posts/:id/submit-for-review",
+            post(posts::submit_for_review),
+        )
+        .route(
+            "/api/v1/social/posts/:id/approve",
+            post(posts::approve_post),
+        )
+        .route(
+            "/api/v1/social/posts/:id/reject",
+            post(posts::reject_post),
+        )
+        .route(
+            "/api/v1/social/posts/review-queue",
+            get(posts::list_review_queue),
+        )
         // Inbox
         .route("/api/v1/social/inbox", get(inbox::list_inbox))
         .route("/api/v1/social/inbox/:id/read", patch(inbox::mark_read))

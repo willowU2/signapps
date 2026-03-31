@@ -3,14 +3,25 @@ use async_trait::async_trait;
 use crate::models::{AccountAnalytics, InboxItem, PlatformPost};
 
 pub mod bluesky;
+pub mod devto;
+pub mod discord;
+pub mod dribbble;
 pub mod facebook;
+pub mod google_business;
+pub mod hashnode;
 pub mod instagram;
+pub mod lemmy;
 pub mod linkedin;
 pub mod mastodon;
+pub mod medium;
 pub mod pinterest;
+pub mod reddit;
+pub mod slack;
+pub mod telegram;
 pub mod threads;
 pub mod tiktok;
 pub mod twitter;
+pub mod wordpress;
 pub mod youtube;
 
 #[derive(Debug, thiserror::Error)]

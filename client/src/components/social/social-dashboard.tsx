@@ -5,8 +5,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, FileText, TrendingUp, Inbox, Plus, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Users, FileText, TrendingUp, Inbox, Plus, Clock, CheckCircle, AlertCircle, ClipboardList, CheckCheck, XCircle } from 'lucide-react';
 import { useSocialStore } from '@/stores/social-store';
+import { socialApi } from '@/lib/api/social';
+import { toast } from 'sonner';
+import type { SocialPost } from '@/lib/api/social';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { PLATFORM_COLORS, PLATFORM_LABELS } from './platform-utils';
@@ -44,12 +47,48 @@ export function SocialDashboard() {
   } = useSocialStore();
 
   const [selectedChannelIds, setSelectedChannelIds] = useState<string[]>([]);
+  const [reviewQueue, setReviewQueue] = useState<SocialPost[]>([]);
+  const [reviewLoading, setReviewLoading] = useState(false);
+
+  const loadReviewQueue = useCallback(async () => {
+    setReviewLoading(true);
+    try {
+      const res = await socialApi.posts.listReviewQueue();
+      setReviewQueue(res.data);
+    } catch {
+      // silently ignore — service may not be running
+    } finally {
+      setReviewLoading(false);
+    }
+  }, []);
+
+  const handleApprove = async (postId: string) => {
+    try {
+      await socialApi.posts.approve(postId);
+      setReviewQueue((prev) => prev.filter((p) => p.id !== postId));
+      toast.success('Post approved');
+    } catch {
+      toast.error('Failed to approve post');
+    }
+  };
+
+  const handleReject = async (postId: string) => {
+    const reason = prompt('Rejection reason (optional):') ?? undefined;
+    try {
+      await socialApi.posts.reject(postId, reason);
+      setReviewQueue((prev) => prev.filter((p) => p.id !== postId));
+      toast.success('Post rejected');
+    } catch {
+      toast.error('Failed to reject post');
+    }
+  };
 
   const reload = () => {
     fetchAccounts();
     fetchPosts();
     fetchInbox({ unreadOnly: true });
     fetchAnalytics();
+    loadReviewQueue();
   };
 
   useEffect(() => {
@@ -57,7 +96,8 @@ export function SocialDashboard() {
     fetchPosts();
     fetchInbox({ unreadOnly: true });
     fetchAnalytics();
-  }, [fetchAccounts, fetchPosts, fetchInbox, fetchAnalytics]);
+    loadReviewQueue();
+  }, [fetchAccounts, fetchPosts, fetchInbox, fetchAnalytics, loadReviewQueue]);
 
   const handleChannelSelection = useCallback((ids: string[]) => {
     setSelectedChannelIds(ids);
@@ -250,6 +290,59 @@ export function SocialDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Review Queue */}
+        {(reviewQueue.length > 0 || reviewLoading) && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <ClipboardList className="h-4 w-4 text-amber-500" />
+                Review Queue
+                {reviewQueue.length > 0 && (
+                  <Badge variant="secondary" className="text-xs">{reviewQueue.length}</Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {reviewLoading ? (
+                <p className="text-sm text-muted-foreground text-center py-2 animate-pulse">Loading…</p>
+              ) : reviewQueue.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-2">Queue empty</p>
+              ) : (
+                reviewQueue.map((post) => (
+                  <div key={post.id} className="flex items-start gap-3 p-2 rounded-lg border bg-muted/20">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm line-clamp-2">{post.content}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Submitted {new Date(post.updatedAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-green-600 border-green-600 hover:bg-green-50"
+                        onClick={() => handleApprove(post.id)}
+                      >
+                        <CheckCheck className="h-3.5 w-3.5 mr-1" />
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-red-600 border-red-600 hover:bg-red-50"
+                        onClick={() => handleReject(post.id)}
+                      >
+                        <XCircle className="h-3.5 w-3.5 mr-1" />
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Connecté Accounts Overview */}
         {accounts.length === 0 ? (

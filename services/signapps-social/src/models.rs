@@ -104,6 +104,12 @@ pub struct SchedulePostRequest {
     pub account_ids: Vec<Uuid>,
 }
 
+#[derive(Debug, Deserialize)]
+/// Request payload for ApproveReject operation.
+pub struct ApproveRejectRequest {
+    pub rejection_reason: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 /// Represents a post target.
 pub struct PostTarget {

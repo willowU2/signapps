@@ -118,11 +118,21 @@ pub struct CreateBackupPlan {
     pub enabled: bool,
 }
 
-fn default_schedule() -> String { "0 2 * * *".to_string() }
-fn default_backup_type() -> String { "incremental".to_string() }
-fn default_retention_days() -> i32 { 30 }
-fn default_max_snapshots() -> i32 { 10 }
-fn default_true() -> bool { true }
+fn default_schedule() -> String {
+    "0 2 * * *".to_string()
+}
+fn default_backup_type() -> String {
+    "incremental".to_string()
+}
+fn default_retention_days() -> i32 {
+    30
+}
+fn default_max_snapshots() -> i32 {
+    10
+}
+fn default_true() -> bool {
+    true
+}
 
 /// Request to update a backup plan.
 #[derive(Debug, Clone, Deserialize)]

@@ -414,6 +414,15 @@ export const socialApi = {
         scheduledAt,
         repeatInterval,
       }),
+    // Post approval workflow
+    submitForReview: (id: string) =>
+      s.post<{ status: string }>(`/posts/${id}/submit-for-review`),
+    approve: (id: string) =>
+      s.post<{ status: string }>(`/posts/${id}/approve`),
+    reject: (id: string, rejectionReason?: string) =>
+      s.post<{ status: string }>(`/posts/${id}/reject`, { rejectionReason }),
+    listReviewQueue: () =>
+      s.get<SocialPost[]>('/posts/review-queue'),
   },
 
   comments: {

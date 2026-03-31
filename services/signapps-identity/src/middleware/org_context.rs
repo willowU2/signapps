@@ -153,10 +153,9 @@ pub async fn get_org_context(pool: &DatabasePool, user_id: Uuid) -> OrgContext {
     let mut merged_modules = serde_json::json!({});
     let mut max_role = "viewer".to_string();
     for profile in &profiles {
-        if let (Some(base), Some(overlay)) = (
-            merged_modules.as_object_mut(),
-            profile.modules.as_object(),
-        ) {
+        if let (Some(base), Some(overlay)) =
+            (merged_modules.as_object_mut(), profile.modules.as_object())
+        {
             for (k, v) in overlay {
                 base.entry(k).or_insert_with(|| v.clone());
             }

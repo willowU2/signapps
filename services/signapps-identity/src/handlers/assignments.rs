@@ -164,7 +164,9 @@ pub async fn end_assignment(
             "end_date": assignment.end_date,
         })),
         reason: reason.clone(),
-        effective_date: assignment.end_date.unwrap_or_else(|| chrono::Utc::now().date_naive()),
+        effective_date: assignment
+            .end_date
+            .unwrap_or_else(|| chrono::Utc::now().date_naive()),
     };
     AssignmentRepository::log_history(&state.pool, history_input).await?;
 

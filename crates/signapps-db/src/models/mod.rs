@@ -1,13 +1,13 @@
 //! Database models for SignApps Platform.
 
 pub mod activity;
-pub mod core_org;
 pub mod audit_log;
 pub mod backup;
 pub mod calendar;
 pub mod certificate;
 pub mod container;
 pub mod conversation;
+pub mod core_org;
 pub mod device;
 pub mod document_vector;
 pub mod drive;
@@ -33,12 +33,12 @@ pub mod user;
 pub mod user_preferences;
 
 pub use audit_log::*;
-pub use core_org::*;
 pub use backup::*;
 pub use calendar::*;
 pub use certificate::*;
 pub use container::*;
 pub use conversation::*;
+pub use core_org::*;
 pub use device::*;
 pub use document_vector::*;
 pub use drive::*;
