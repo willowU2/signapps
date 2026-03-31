@@ -321,15 +321,23 @@ function evaluateMath(expr: string): string {
     if (/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?)?$/.test(expr)) {
         return expr;
     }
-    
+
     if (!/^[0-9+\-*/().\s]*$/.test(expr)) {
         // Could be a string result from a function
         if (expr.match(/^[A-Z]/i)) return expr;
         return SHEET_ERRORS.VALUE;
     }
+
+    // Security: strip whitespace and apply strict guards before eval
+    const sanitized = expr.replace(/\s/g, '');
+    // Reject if too long (prevents resource exhaustion)
+    if (sanitized.length > 200) return SHEET_ERRORS.VALUE;
+    // Reject any identifier characters — no access to variables or prototypes
+    if (/[a-zA-Z_$]/.test(sanitized)) return SHEET_ERRORS.VALUE;
+
     try {
-        if (/\/0(?!\.)/.test(expr.replace(/\s/g, ''))) return SHEET_ERRORS.DIV_ZERO;
-        const result = new Function('return ' + expr)();
+        if (/\/0(?!\.)/.test(sanitized)) return SHEET_ERRORS.DIV_ZERO;
+        const result = Function('"use strict"; return (' + sanitized + ')')() as number;
         if (typeof result !== 'number' || isNaN(result) || !isFinite(result)) return SHEET_ERRORS.VALUE;
         return Math.round(result * 10000000000) / 10000000000 + "";
     } catch {

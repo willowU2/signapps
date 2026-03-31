@@ -91,14 +91,26 @@ export function SemanticSearch({
     setHasSearched(false);
   };
 
+  const escapeHtml = (str: string): string => {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
+
   const highlightMatch = (text: string, searchQuery: string) => {
-    if (!searchQuery.trim()) return text;
+    // Escape HTML first to prevent XSS from search result content
+    const escaped = escapeHtml(text);
+    if (!searchQuery.trim()) return escaped;
 
     const words = searchQuery.trim().split(/\s+/).filter(Boolean);
-    let highlighted = text;
+    let highlighted = escaped;
 
     for (const word of words) {
-      const regex = new RegExp(`(${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      const escapedWord = escapeHtml(word).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${escapedWord})`, 'gi');
       highlighted = highlighted.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 rounded px-0.5">$1</mark>');
     }
 

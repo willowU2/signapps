@@ -66,8 +66,14 @@ async fn main() -> anyhow::Result<()> {
 
     // LiveKit configuration
     let livekit_config = LiveKitConfig {
-        api_key: env_or("LIVEKIT_API_KEY", "devkey"),
-        api_secret: env_or("LIVEKIT_API_SECRET", "secret"),
+        api_key: std::env::var("LIVEKIT_API_KEY").unwrap_or_else(|_| {
+            if cfg!(debug_assertions) { "devkey".to_string() }
+            else { panic!("LIVEKIT_API_KEY must be set in production") }
+        }),
+        api_secret: std::env::var("LIVEKIT_API_SECRET").unwrap_or_else(|_| {
+            if cfg!(debug_assertions) { "secret".to_string() }
+            else { panic!("LIVEKIT_API_SECRET must be set in production") }
+        }),
         server_url: env_or("LIVEKIT_URL", "ws://localhost:7880"),
     };
 
@@ -163,7 +169,18 @@ fn build_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
-    let cors = CorsLayer::permissive();
+    let cors = CorsLayer::new()
+        .allow_origin(tower_http::cors::Any)
+        .allow_methods([
+            axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT,
+            axum::http::Method::DELETE, axum::http::Method::PATCH, axum::http::Method::OPTIONS,
+        ])
+        .allow_headers([
+            axum::http::header::CONTENT_TYPE,
+            axum::http::header::AUTHORIZATION,
+            axum::http::HeaderName::from_static("x-request-id"),
+            axum::http::HeaderName::from_static("x-workspace-id"),
+        ]);
 
     public_routes
         .merge(protected_routes)

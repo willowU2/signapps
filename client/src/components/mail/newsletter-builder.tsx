@@ -200,9 +200,12 @@ export function NewsletterBuilder({ onExport }: NewsletterBuilderProps) {
                 </div>
 
                 {preview ? (
-                    <div
-                        className="flex-1 rounded-xl border bg-muted overflow-auto p-4"
-                        dangerouslySetInnerHTML={{ __html: buildHtml() }}
+                    <iframe
+                        srcDoc={buildHtml()}
+                        sandbox=""
+                        className="flex-1 rounded-xl border bg-muted w-full"
+                        style={{ minHeight: "400px" }}
+                        title="Newsletter preview"
                     />
                 ) : (
                     <div className="space-y-2">

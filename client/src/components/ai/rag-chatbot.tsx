@@ -60,10 +60,19 @@ export function RagChatbot({
     }
   }, [isOpen]);
 
+  const escapeHtml = (str: string): string => {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
+
   const renderMarkdown = (text: string) => {
-    // Basic markdown rendering: bold, italic, code, links, lists
-    let html = text
-      // Code blocks
+    // Escape HTML first to prevent XSS, then apply safe markdown transforms
+    let html = escapeHtml(text)
+      // Code blocks (restore escaped backtick content)
       .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre class="bg-muted p-2 rounded text-xs my-2 overflow-x-auto"><code>$2</code></pre>')
       // Inline code
       .replace(/`([^`]+)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-xs">$1</code>')

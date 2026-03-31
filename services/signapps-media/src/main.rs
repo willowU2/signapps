@@ -263,10 +263,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             auth_middleware::<AppState>,
         ));
 
+    let cors = CorsLayer::new()
+        .allow_origin(tower_http::cors::Any)
+        .allow_methods([
+            axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT,
+            axum::http::Method::DELETE, axum::http::Method::PATCH, axum::http::Method::OPTIONS,
+        ])
+        .allow_headers([
+            axum::http::header::CONTENT_TYPE,
+            axum::http::header::AUTHORIZATION,
+            axum::http::HeaderName::from_static("x-request-id"),
+            axum::http::HeaderName::from_static("x-workspace-id"),
+        ]);
+
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
-        .layer(CorsLayer::permissive())
+        .layer(cors)
         .layer(axum::extract::DefaultBodyLimit::max(10 * 1024 * 1024))
         .with_state(state);
 

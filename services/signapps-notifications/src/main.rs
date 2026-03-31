@@ -450,8 +450,12 @@ async fn main() -> anyhow::Result<()> {
         "postgres://signapps:password@localhost:5432/signapps",
     );
     let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-        tracing::warn!("JWT_SECRET not set, using insecure dev default");
-        "dev_secret_change_in_production_32chars".to_string()
+        if cfg!(debug_assertions) {
+            tracing::warn!("JWT_SECRET not set, using insecure dev default");
+            "dev_secret_change_in_production_32chars".to_string()
+        } else {
+            panic!("JWT_SECRET must be set in production — refusing to start with insecure default")
+        }
     });
 
     let pool = PgPoolOptions::new()

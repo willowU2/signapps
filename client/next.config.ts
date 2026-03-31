@@ -45,6 +45,14 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=()' },
+          // NOTE (C6 - accepted risk): 'unsafe-eval' is required by the formula evaluator
+          // (Function() constructor in client/src/lib/sheets/formula.ts) and by several
+          // third-party libraries (monaco-editor, Tiptap extensions, Serwist service worker
+          // compilation). Removing it would break the spreadsheet/macro editor.
+          // Mitigation: the formula evaluator has been hardened (C1) — strict length limit +
+          // identifier rejection — so the actual injection surface is minimal.
+          // TODO: replace Function() with a pure recursive-descent parser to allow removing
+          // 'unsafe-eval' entirely.
           { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http://localhost:*; connect-src 'self' http://localhost:* ws://localhost:*; font-src 'self' data:; media-src 'self' blob:; frame-src 'self'" },
         ],
       },

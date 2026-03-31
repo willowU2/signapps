@@ -299,11 +299,12 @@ export function TemplateManager({ accountId, onUse }: TemplateManagerProps) {
           {previewing && (
             <div className="space-y-3">
               <p className="text-sm font-medium">Sujet : <span className="font-normal">{previewing.subject}</span></p>
-              <div
-                className="border rounded p-4 text-sm bg-muted/30 min-h-[100px] whitespace-pre-wrap"
-                dangerouslySetInnerHTML={{
-                  __html: substitutePreview(previewing.body_html, previewing.variables ?? []),
-                }}
+              <iframe
+                srcDoc={substitutePreview(previewing.body_html, previewing.variables ?? [])}
+                sandbox=""
+                className="border rounded w-full min-h-[100px] bg-muted/30"
+                style={{ height: "200px" }}
+                title="Template preview"
               />
             </div>
           )}

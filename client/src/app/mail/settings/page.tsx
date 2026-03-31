@@ -737,9 +737,12 @@ function SignatureBuilder({
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Apercu
         </p>
-        <div
-          className="rounded-xl border bg-card dark:bg-zinc-900 p-6 min-h-24 overflow-auto"
-          dangerouslySetInnerHTML={{ __html: preview || "<em style='color:#999'>Apercu vide</em>" }}
+        <iframe
+          srcDoc={preview || "<em style='color:#999'>Apercu vide</em>"}
+          sandbox=""
+          className="rounded-xl border bg-card w-full min-h-24"
+          style={{ height: "120px" }}
+          title="Apercu signature"
         />
       </div>
 

@@ -185,9 +185,12 @@ export function EmailSignatureEditor() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div
-                className="bg-card rounded border p-4 min-h-[80px]"
-                dangerouslySetInnerHTML={{ __html: html }}
+              <iframe
+                srcDoc={html}
+                sandbox=""
+                className="bg-card rounded border w-full"
+                style={{ minHeight: "80px", height: "120px" }}
+                title="Signature preview"
               />
             </CardContent>
           </Card>
