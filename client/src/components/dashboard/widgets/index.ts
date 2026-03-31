@@ -35,3 +35,13 @@ export { WidgetUpcomingDeadlines } from "./widget-upcoming-deadlines";
 export { WidgetKpiCards } from "./widget-kpi-cards";
 export { WidgetNotificationCenter } from "./widget-notification-center";
 export { WidgetProjectProgress } from "./widget-project-progress";
+
+// AgentIQ widgets
+export { AgentiqAgentsWidget } from "./agentiq-agents";
+export { AgentiqSubagentsWidget } from "./agentiq-subagents";
+export { AgentiqReviewersWidget } from "./agentiq-reviewers";
+export { AgentiqIdeasWidget } from "./agentiq-ideas";
+export { AgentiqPipelineWidget } from "./agentiq-pipeline";
+export { AgentiqTimelineWidget } from "./agentiq-timeline";
+export { AgentiqGuidelinesWidget } from "./agentiq-guidelines";
+export { AgentiqHealthWidget } from "./agentiq-health";

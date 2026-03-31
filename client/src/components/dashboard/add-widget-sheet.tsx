@@ -21,6 +21,7 @@ import {
   FileText,
   Users,
   Sparkles,
+  Bot,
 } from "lucide-react";
 import {
   useDashboardStore,
@@ -43,6 +44,7 @@ const categoryIcons: Record<string, React.ElementType> = {
   system: Activity,
   content: FileText,
   social: Users,
+  agentiq: Bot,
 };
 
 const categoryLabels: Record<string, string> = {
@@ -51,6 +53,7 @@ const categoryLabels: Record<string, string> = {
   system: "Système",
   content: "Contenu",
   social: "Social",
+  agentiq: "AgentIQ",
 };
 
 export function AddWidgetSheet({ open, onOpenChange }: AddWidgetSheetProps) {

@@ -40,7 +40,16 @@ export type WidgetType =
   // Dashboard customization: extended widgets
   | 'activity-heatmap'
   | 'favorites'
-  | 'calendar-preview';
+  | 'calendar-preview'
+  // AgentIQ widgets
+  | 'agentiq-agents'
+  | 'agentiq-subagents'
+  | 'agentiq-reviewers'
+  | 'agentiq-ideas'
+  | 'agentiq-pipeline'
+  | 'agentiq-timeline'
+  | 'agentiq-guidelines'
+  | 'agentiq-health';
 
 export interface WidgetConfig {
   id: string;
@@ -103,6 +112,15 @@ export const WIDGET_CATALOG: { type: WidgetType; label: string; description: str
   { type: 'activity-heatmap', label: 'Heatmap d\'activité', description: 'Carte de chaleur de l\'activité sur les 12 dernières semaines', defaultW: 8, defaultH: 3, category: 'analytics' },
   { type: 'favorites', label: 'Favoris', description: 'Accès rapide à vos éléments épinglés', defaultW: 4, defaultH: 3, category: 'productivity' },
   { type: 'calendar-preview', label: 'Aperçu calendrier', description: 'Mini-calendrier avec événements de la semaine', defaultW: 4, defaultH: 4, category: 'productivity' },
+  // AgentIQ widgets
+  { type: 'agentiq-agents', label: 'AI Agents', description: 'Les 3 agents principaux: Antigravity, Claude, OpenClaw', defaultW: 6, defaultH: 4, category: 'agentiq' },
+  { type: 'agentiq-subagents', label: 'Sous-Agents', description: 'Sous-agents dispatchés par les agents principaux', defaultW: 4, defaultH: 3, category: 'agentiq' },
+  { type: 'agentiq-reviewers', label: 'Code Reviewers', description: 'Agents de revue de code par domaine', defaultW: 4, defaultH: 3, category: 'agentiq' },
+  { type: 'agentiq-ideas', label: 'Ideas Kanban', description: 'Kanban des idées: Quick Win / Moyen Terme / Long Terme', defaultW: 6, defaultH: 5, category: 'agentiq' },
+  { type: 'agentiq-pipeline', label: 'Pipeline', description: 'Funnel du cycle de vie des idées', defaultW: 6, defaultH: 2, category: 'agentiq' },
+  { type: 'agentiq-timeline', label: 'Timeline', description: 'Journal d\'actions des agents', defaultW: 4, defaultH: 4, category: 'agentiq' },
+  { type: 'agentiq-guidelines', label: 'Guidelines', description: 'Guidelines actives du projet', defaultW: 6, defaultH: 2, category: 'agentiq' },
+  { type: 'agentiq-health', label: 'AgentIQ Health', description: 'Santé du système AgentIQ: uptime, crashes, règles', defaultW: 4, defaultH: 3, category: 'agentiq' },
 ];
 
 interface DashboardStore {

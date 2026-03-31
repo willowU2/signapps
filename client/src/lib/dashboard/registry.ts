@@ -510,6 +510,108 @@ widgetRegistry.set('calendar-preview', {
   isPublic: true,
 });
 
+// AgentIQ widgets
+import { Bot, GitBranch, ShieldCheck, Lightbulb, GitPullRequest, Compass } from 'lucide-react';
+
+widgetRegistry.set('agentiq-agents', {
+  type: 'agentiq-agents',
+  name: 'AI Agents',
+  description: 'Les 3 agents principaux: Antigravity, Claude, OpenClaw',
+  category: 'custom',
+  icon: Bot,
+  size: { minW: 4, minH: 3, defaultW: 6, defaultH: 4 },
+  isPublic: true,
+});
+
+widgetRegistry.set('agentiq-subagents', {
+  type: 'agentiq-subagents',
+  name: 'Sous-Agents',
+  description: 'Sous-agents dispatchés en temps réel',
+  category: 'custom',
+  icon: GitBranch,
+  size: { minW: 3, minH: 2, defaultW: 4, defaultH: 3 },
+  isPublic: true,
+});
+
+widgetRegistry.set('agentiq-reviewers', {
+  type: 'agentiq-reviewers',
+  name: 'Code Reviewers',
+  description: 'Agents de revue de code par domaine',
+  category: 'custom',
+  icon: ShieldCheck,
+  size: { minW: 3, minH: 2, defaultW: 4, defaultH: 3 },
+  isPublic: true,
+});
+
+widgetRegistry.set('agentiq-ideas', {
+  type: 'agentiq-ideas',
+  name: 'Ideas Kanban',
+  description: 'Kanban des idées: Quick Win / Moyen Terme / Long Terme',
+  category: 'custom',
+  icon: Lightbulb,
+  size: { minW: 4, minH: 3, defaultW: 6, defaultH: 5 },
+  isPublic: true,
+});
+
+widgetRegistry.set('agentiq-pipeline', {
+  type: 'agentiq-pipeline',
+  name: 'Pipeline',
+  description: 'Funnel du cycle de vie des idées',
+  category: 'custom',
+  icon: GitPullRequest,
+  size: { minW: 3, minH: 2, defaultW: 6, defaultH: 2 },
+  isPublic: true,
+});
+
+widgetRegistry.set('agentiq-timeline', {
+  type: 'agentiq-timeline',
+  name: 'Timeline',
+  description: 'Journal d\'actions des agents',
+  category: 'custom',
+  icon: Clock,
+  size: { minW: 3, minH: 2, defaultW: 4, defaultH: 4 },
+  isPublic: true,
+});
+
+widgetRegistry.set('agentiq-guidelines', {
+  type: 'agentiq-guidelines',
+  name: 'Guidelines',
+  description: 'Guidelines actives du projet',
+  category: 'custom',
+  icon: Compass,
+  size: { minW: 3, minH: 1, defaultW: 6, defaultH: 2 },
+  isPublic: true,
+});
+
+widgetRegistry.set('agentiq-health', {
+  type: 'agentiq-health',
+  name: 'AgentIQ Health',
+  description: 'Santé du système AgentIQ: uptime, crashes, Golden Rules',
+  category: 'custom',
+  icon: Activity,
+  size: { minW: 3, minH: 2, defaultW: 4, defaultH: 3 },
+  isPublic: true,
+});
+
+// CEO / Operator preset including AgentIQ widgets
+dashboardPresets.push({
+  id: 'ceo',
+  name: 'CEO / Opérateur',
+  description: 'Vue AgentIQ complète pour piloter les agents IA et les idées',
+  targetRole: 'admin',
+  icon: Bot,
+  widgets: [
+    { type: 'agentiq-health', x: 0, y: 0, w: 4, h: 3, config: {} },
+    { type: 'agentiq-agents', x: 4, y: 0, w: 8, h: 4, config: {} },
+    { type: 'agentiq-pipeline', x: 0, y: 3, w: 4, h: 2, config: {} },
+    { type: 'agentiq-ideas', x: 0, y: 5, w: 6, h: 5, config: {} },
+    { type: 'agentiq-timeline', x: 6, y: 4, w: 4, h: 4, config: {} },
+    { type: 'agentiq-subagents', x: 10, y: 4, w: 2, h: 4, config: {} },
+    { type: 'agentiq-reviewers', x: 6, y: 8, w: 3, h: 3, config: {} },
+    { type: 'agentiq-guidelines', x: 0, y: 10, w: 12, h: 2, config: {} },
+  ],
+});
+
 export function getPreset(id: string): DashboardPreset | undefined {
   return dashboardPresets.find((p) => p.id === id);
 }

@@ -31,6 +31,15 @@ import { WidgetQuickNotes } from './widgets/widget-quick-notes';
 import { WidgetActivityHeatmap } from './widgets/widget-activity-heatmap';
 import { WidgetFavorites } from './widgets/widget-favorites';
 import { WidgetCalendarPreview } from './widgets/widget-calendar-preview';
+// AgentIQ widgets
+import { AgentiqAgentsWidget } from './widgets/agentiq-agents';
+import { AgentiqSubagentsWidget } from './widgets/agentiq-subagents';
+import { AgentiqReviewersWidget } from './widgets/agentiq-reviewers';
+import { AgentiqIdeasWidget } from './widgets/agentiq-ideas';
+import { AgentiqPipelineWidget } from './widgets/agentiq-pipeline';
+import { AgentiqTimelineWidget } from './widgets/agentiq-timeline';
+import { AgentiqGuidelinesWidget } from './widgets/agentiq-guidelines';
+import { AgentiqHealthWidget } from './widgets/agentiq-health';
 
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -89,6 +98,23 @@ function WidgetRenderer({ widget }: { widget: WidgetConfig }) {
       return <WidgetFavorites {...renderProps} />;
     case 'calendar-preview':
       return <WidgetCalendarPreview {...renderProps} />;
+    // AgentIQ widgets
+    case 'agentiq-agents':
+      return <AgentiqAgentsWidget {...renderProps} />;
+    case 'agentiq-subagents':
+      return <AgentiqSubagentsWidget {...renderProps} />;
+    case 'agentiq-reviewers':
+      return <AgentiqReviewersWidget {...renderProps} />;
+    case 'agentiq-ideas':
+      return <AgentiqIdeasWidget {...renderProps} />;
+    case 'agentiq-pipeline':
+      return <AgentiqPipelineWidget {...renderProps} />;
+    case 'agentiq-timeline':
+      return <AgentiqTimelineWidget {...renderProps} />;
+    case 'agentiq-guidelines':
+      return <AgentiqGuidelinesWidget {...renderProps} />;
+    case 'agentiq-health':
+      return <AgentiqHealthWidget {...renderProps} />;
     default:
       return <div className="p-4 text-muted-foreground text-center">Widget inconnu: {widget.type}</div>;
   }
