@@ -115,4 +115,10 @@ pub use core_org_repository::{
     PersonRepository, SiteRepository,
 };
 
+pub mod vault_repository;
+pub use vault_repository::{
+    VaultAuditRepository, VaultBrowseRepository, VaultFolderRepository, VaultItemRepository,
+    VaultKeysRepository, VaultOrgKeyRepository, VaultShareRepository,
+};
+
 pub mod test_helpers;

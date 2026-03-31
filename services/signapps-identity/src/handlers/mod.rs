@@ -42,5 +42,6 @@ pub mod tenants;
 pub mod user_profile;
 pub mod user_signatures;
 pub mod users;
+pub mod vault;
 pub mod webhooks;
 pub mod workspace_features;

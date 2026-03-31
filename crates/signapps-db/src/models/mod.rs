@@ -31,6 +31,7 @@ pub mod storage_tier3;
 pub mod tenant;
 pub mod user;
 pub mod user_preferences;
+pub mod vault;
 
 pub use audit_log::*;
 pub use backup::*;
@@ -58,3 +59,4 @@ pub use storage_tier3::*;
 pub use tenant::*;
 pub use user::*;
 pub use user_preferences::*;
+pub use vault::*;

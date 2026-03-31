@@ -729,6 +729,43 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    // Vault Enterprise routes (auth required)
+    let vault_routes = Router::new()
+        // Keys (3)
+        .route("/api/v1/vault/keys", post(handlers::vault::init_keys))
+        .route("/api/v1/vault/keys", get(handlers::vault::get_keys))
+        .route("/api/v1/vault/keys", put(handlers::vault::update_keys))
+        // Items (4)
+        .route("/api/v1/vault/items", get(handlers::vault::list_items))
+        .route("/api/v1/vault/items", post(handlers::vault::create_item))
+        .route("/api/v1/vault/items/:id", put(handlers::vault::update_item))
+        .route("/api/v1/vault/items/:id", delete(handlers::vault::delete_item))
+        // Folders (4)
+        .route("/api/v1/vault/folders", get(handlers::vault::list_folders))
+        .route("/api/v1/vault/folders", post(handlers::vault::create_folder))
+        .route("/api/v1/vault/folders/:id", put(handlers::vault::update_folder))
+        .route("/api/v1/vault/folders/:id", delete(handlers::vault::delete_folder))
+        // Shares (3)
+        .route("/api/v1/vault/shares", post(handlers::vault::create_share))
+        .route("/api/v1/vault/shares/:id", delete(handlers::vault::delete_share))
+        .route("/api/v1/vault/shared-with-me", get(handlers::vault::shared_with_me))
+        // TOTP (1)
+        .route("/api/v1/vault/items/:id/totp", post(handlers::vault::get_totp_code))
+        // Password generator (1)
+        .route("/api/v1/vault/generate-password", get(handlers::vault::generate_password))
+        // Org keys (2)
+        .route("/api/v1/vault/org-keys", put(handlers::vault::upsert_org_key))
+        .route("/api/v1/vault/org-keys/:group_id", get(handlers::vault::get_org_key))
+        // Audit (1)
+        .route("/api/v1/vault/audit", get(handlers::vault::list_audit))
+        // Browse sessions (2)
+        .route("/api/v1/vault/browse/start", post(handlers::vault::start_browse))
+        .route("/api/v1/vault/browse/:token", delete(handlers::vault::end_browse))
+        .layer(axum_middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
     // Combine all routes
     Router::new()
         .merge(public_routes)
@@ -740,6 +777,7 @@ fn create_router(state: AppState) -> Router {
         .merge(comms_routes)
         .merge(accounting_routes)
         .merge(org_routes)
+        .merge(vault_routes)
         .layer(axum_middleware::from_fn(logging_middleware))
         .layer(axum_middleware::from_fn(request_id_middleware))
         .layer(axum_middleware::from_fn(security_headers_middleware))
