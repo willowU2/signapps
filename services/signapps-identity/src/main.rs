@@ -6,10 +6,12 @@
 mod auth;
 mod handlers;
 mod ldap;
+mod middleware;
+mod services;
 mod webhook_dispatcher;
 
 use axum::{
-    middleware,
+    middleware as axum_middleware,
     routing::{delete, get, patch, post, put},
     Router,
 };
@@ -171,7 +173,7 @@ fn create_router(state: AppState) -> Router {
     let login_routes =
         Router::new()
             .route("/api/v1/auth/login", post(handlers::auth::login))
-            .layer(middleware::from_fn(move |req, next| {
+            .layer(axum_middleware::from_fn(move |req, next| {
                 let limiter = login_limiter_clone.clone();
                 async move {
                     signapps_common::rate_limit::rate_limit_middleware(limiter, req, next).await
@@ -190,7 +192,7 @@ fn create_router(state: AppState) -> Router {
                 "/api/v1/auth/password-reset/confirm",
                 post(handlers::auth::password_reset_confirm),
             )
-            .layer(middleware::from_fn(move |req, next| {
+            .layer(axum_middleware::from_fn(move |req, next| {
                 let limiter = password_reset_limiter_clone.clone();
                 async move {
                     signapps_common::rate_limit::rate_limit_middleware(limiter, req, next).await
@@ -296,7 +298,113 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/compliance/consent", get(handlers::compliance::get_consent))
         .route("/api/v1/compliance/cookie-banner", put(handlers::compliance::save_cookie_banner))
         .route("/api/v1/compliance/cookie-banner", get(handlers::compliance::get_cookie_banner))
-        .layer(middleware::from_fn_with_state(
+        // Org structure — trees
+        .route(
+            "/api/v1/org/trees",
+            get(handlers::org_trees::list_trees).post(handlers::org_trees::create_tree),
+        )
+        .route(
+            "/api/v1/org/trees/:id/full",
+            get(handlers::org_trees::get_full_tree),
+        )
+        // Org structure — nodes
+        .route(
+            "/api/v1/org/nodes/:id",
+            get(handlers::org_nodes::get_node)
+                .put(handlers::org_nodes::update_node)
+                .delete(handlers::org_nodes::delete_node),
+        )
+        .route("/api/v1/org/nodes", post(handlers::org_nodes::create_node))
+        .route(
+            "/api/v1/org/nodes/:id/move",
+            post(handlers::org_nodes::move_node),
+        )
+        .route(
+            "/api/v1/org/nodes/:id/children",
+            get(handlers::org_nodes::get_children),
+        )
+        .route(
+            "/api/v1/org/nodes/:id/descendants",
+            get(handlers::org_nodes::get_descendants),
+        )
+        .route(
+            "/api/v1/org/nodes/:id/ancestors",
+            get(handlers::org_nodes::get_ancestors),
+        )
+        .route(
+            "/api/v1/org/nodes/:id/assignments",
+            get(handlers::org_nodes::get_node_assignments),
+        )
+        .route(
+            "/api/v1/org/nodes/:id/permissions",
+            get(handlers::org_nodes::get_node_permissions)
+                .put(handlers::org_nodes::set_node_permissions),
+        )
+        // Persons
+        .route(
+            "/api/v1/persons",
+            get(handlers::persons::list_persons).post(handlers::persons::create_person),
+        )
+        .route(
+            "/api/v1/persons/:id",
+            get(handlers::persons::get_person).put(handlers::persons::update_person),
+        )
+        .route(
+            "/api/v1/persons/:id/assignments",
+            get(handlers::persons::get_person_assignments),
+        )
+        .route(
+            "/api/v1/persons/:id/history",
+            get(handlers::persons::get_person_history),
+        )
+        .route(
+            "/api/v1/persons/:id/link-user",
+            post(handlers::persons::link_user),
+        )
+        .route(
+            "/api/v1/persons/:id/unlink-user",
+            post(handlers::persons::unlink_user),
+        )
+        .route(
+            "/api/v1/persons/:id/effective-permissions",
+            get(handlers::persons::get_effective_permissions),
+        )
+        // Assignments
+        .route(
+            "/api/v1/assignments",
+            post(handlers::assignments::create_assignment),
+        )
+        .route(
+            "/api/v1/assignments/history",
+            get(handlers::assignments::list_history),
+        )
+        .route(
+            "/api/v1/assignments/:id",
+            put(handlers::assignments::update_assignment)
+                .delete(handlers::assignments::end_assignment),
+        )
+        // Sites
+        .route(
+            "/api/v1/sites",
+            get(handlers::sites::list_sites).post(handlers::sites::create_site),
+        )
+        .route(
+            "/api/v1/sites/:id",
+            get(handlers::sites::get_site).put(handlers::sites::update_site),
+        )
+        .route(
+            "/api/v1/sites/:id/persons",
+            get(handlers::sites::list_site_persons),
+        )
+        .route(
+            "/api/v1/sites/:id/attach-node",
+            post(handlers::sites::attach_node),
+        )
+        .route(
+            "/api/v1/sites/:id/attach-person",
+            post(handlers::sites::attach_person),
+        )
+        .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
         ));
@@ -352,8 +460,8 @@ fn create_router(state: AppState) -> Router {
         // User signature/stamp management (AQ-SIGRT)
         .route("/api/v1/user-signatures", get(handlers::user_signatures::list_user_signatures).post(handlers::user_signatures::create_user_signature))
         .route("/api/v1/user-signatures/:id", get(handlers::user_signatures::get_user_signature).put(handlers::user_signatures::update_user_signature).delete(handlers::user_signatures::delete_user_signature))
-        .layer(middleware::from_fn(tenant_context_middleware))
-        .layer(middleware::from_fn_with_state(
+        .layer(axum_middleware::from_fn(tenant_context_middleware))
+        .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
         ));
@@ -500,8 +608,8 @@ fn create_router(state: AppState) -> Router {
         // Database backup (admin-only)
         .route("/api/v1/admin/backup", post(handlers::backup::create_backup))
         .route("/api/v1/admin/backups", get(handlers::backup::list_backups))
-        .layer(middleware::from_fn(require_admin))
-        .layer(middleware::from_fn_with_state(
+        .layer(axum_middleware::from_fn(require_admin))
+        .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
         ));
@@ -528,7 +636,7 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/supply-chain/inventory",
             get(handlers::supply_chain::list_inventory),
         )
-        .layer(middleware::from_fn_with_state(
+        .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
         ));
@@ -551,7 +659,7 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/lms/discussions",
             get(handlers::lms::list_discussions).post(handlers::lms::create_discussion),
         )
-        .layer(middleware::from_fn_with_state(
+        .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
         ));
@@ -574,7 +682,7 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/comms/news-feed",
             get(handlers::comms::list_news).post(handlers::comms::create_news),
         )
-        .layer(middleware::from_fn_with_state(
+        .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
         ));
@@ -593,7 +701,30 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/accounting/reports",
             get(handlers::accounting::get_reports),
         )
-        .layer(middleware::from_fn_with_state(
+        .layer(axum_middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    // Enterprise Org Structure routes (auth required)
+    let org_routes = Router::new()
+        // Org trees
+        .route("/api/v1/org/trees", get(handlers::org_trees::list_trees).post(handlers::org_trees::create_tree))
+        .route("/api/v1/org/trees/:id/full", get(handlers::org_trees::get_full_tree))
+        // Org nodes
+        .route("/api/v1/org/nodes", post(handlers::org_nodes::create_node))
+        .route("/api/v1/org/nodes/:id", get(handlers::org_nodes::get_node).put(handlers::org_nodes::update_node).delete(handlers::org_nodes::delete_node))
+        .route("/api/v1/org/nodes/:id/move", post(handlers::org_nodes::move_node))
+        .route("/api/v1/org/nodes/:id/children", get(handlers::org_nodes::get_children))
+        .route("/api/v1/org/nodes/:id/descendants", get(handlers::org_nodes::get_descendants))
+        .route("/api/v1/org/nodes/:id/ancestors", get(handlers::org_nodes::get_ancestors))
+        .route("/api/v1/org/nodes/:id/assignments", get(handlers::org_nodes::get_node_assignments))
+        .route("/api/v1/org/nodes/:id/permissions", get(handlers::org_nodes::get_node_permissions).put(handlers::org_nodes::set_node_permissions))
+        // Orgchart (Task 10)
+        .route("/api/v1/org/orgchart", get(handlers::org_nodes::get_orgchart))
+        // Org context for the current user (Task 9)
+        .route("/api/v1/org/context", get(handlers::org_context::get_context))
+        .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
         ));
@@ -608,9 +739,10 @@ fn create_router(state: AppState) -> Router {
         .merge(lms_routes)
         .merge(comms_routes)
         .merge(accounting_routes)
-        .layer(middleware::from_fn(logging_middleware))
-        .layer(middleware::from_fn(request_id_middleware))
-        .layer(middleware::from_fn(security_headers_middleware))
+        .merge(org_routes)
+        .layer(axum_middleware::from_fn(logging_middleware))
+        .layer(axum_middleware::from_fn(request_id_middleware))
+        .layer(axum_middleware::from_fn(security_headers_middleware))
         .layer(TraceLayer::new_for_http())
         .layer(axum::extract::DefaultBodyLimit::max(10 * 1024 * 1024))
         .layer(cors)

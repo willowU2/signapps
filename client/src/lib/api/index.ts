@@ -52,3 +52,4 @@ export * from './office';
 export * from './spreadsheet';
 export * from './pdf';
 export * from './search';
+export * from './org';

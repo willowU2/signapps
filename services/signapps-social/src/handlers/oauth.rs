@@ -5,7 +5,7 @@ use axum::{
     Extension, Json,
 };
 use chrono::Utc;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use signapps_common::Claims;
 use uuid::Uuid;
@@ -53,13 +53,18 @@ pub async fn oauth_authorize(
     let state_token = Uuid::new_v4().to_string();
 
     // Auto-create oauth_states table if not exists
+    // platform column is VARCHAR(500) to allow mastodon:<instance>:<client_id>:<client_secret>
     let _ = sqlx::query(
         "CREATE TABLE IF NOT EXISTS social.oauth_states (
             state VARCHAR(100) PRIMARY KEY,
             user_id UUID NOT NULL,
-            platform VARCHAR(20) NOT NULL,
+            platform VARCHAR(500) NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )"
+    ).execute(&state.pool).await;
+    // Widen existing column if needed (idempotent)
+    let _ = sqlx::query(
+        "ALTER TABLE social.oauth_states ALTER COLUMN platform TYPE VARCHAR(500)"
     ).execute(&state.pool).await;
 
     // Clean up expired tokens (older than 10 min)
@@ -86,16 +91,25 @@ pub async fn oauth_authorize(
             .into_response();
     }
 
-    // Check that the platform client_id is configured
+    // Check that the platform client_id is configured (mastodon auto-registers, so skip)
+    // For other platforms, check DB first, then env var
     let env_key = match platform.as_str() {
         "twitter" => "TWITTER_CLIENT_ID",
         "linkedin" => "LINKEDIN_CLIENT_ID",
         "facebook" | "instagram" => "FACEBOOK_CLIENT_ID",
-        "mastodon" => "MASTODON_CLIENT_ID",
+        // mastodon uses dynamic registration — no env_key required
         _ => "",
     };
     if !env_key.is_empty() {
-        if std::env::var(env_key).unwrap_or_default().is_empty() {
+        // Try DB-stored credentials first, then env var
+        let db_client_id = sqlx::query_scalar::<_, String>(
+            "SELECT client_id FROM social.oauth_app_configs WHERE platform = $1"
+        ).bind(&platform).fetch_optional(&state.pool).await.ok().flatten();
+
+        let has_credential = db_client_id.is_some()
+            || !std::env::var(env_key).unwrap_or_default().is_empty();
+
+        if !has_credential {
             return (
                 StatusCode::BAD_REQUEST,
                 Json(json!({ "error": format!("OAuth non configure: definissez {} dans les variables d'environnement du service social", env_key) })),
@@ -105,7 +119,12 @@ pub async fn oauth_authorize(
 
     let redirect_url = match platform.as_str() {
         "twitter" => {
-            let client_id = std::env::var("TWITTER_CLIENT_ID").unwrap_or_default();
+            // DB credentials take priority over env var
+            let client_id = sqlx::query_scalar::<_, String>(
+                "SELECT client_id FROM social.oauth_app_configs WHERE platform = 'twitter'"
+            ).fetch_optional(&state.pool).await.ok().flatten()
+             .or_else(|| std::env::var("TWITTER_CLIENT_ID").ok())
+             .unwrap_or_default();
             let redirect_uri = format!("{}/api/v1/social/oauth/twitter/callback", base);
             let scopes = "tweet.read tweet.write users.read offline.access";
             // Twitter OAuth 2.0 PKCE — code_challenge_method=plain for simplicity
@@ -120,7 +139,11 @@ pub async fn oauth_authorize(
             )
         },
         "linkedin" => {
-            let client_id = std::env::var("LINKEDIN_CLIENT_ID").unwrap_or_default();
+            let client_id = sqlx::query_scalar::<_, String>(
+                "SELECT client_id FROM social.oauth_app_configs WHERE platform = 'linkedin'"
+            ).fetch_optional(&state.pool).await.ok().flatten()
+             .or_else(|| std::env::var("LINKEDIN_CLIENT_ID").ok())
+             .unwrap_or_default();
             let redirect_uri = format!("{}/api/v1/social/oauth/linkedin/callback", base);
             let scopes = "r_liteprofile r_emailaddress w_member_social";
             format!(
@@ -132,7 +155,11 @@ pub async fn oauth_authorize(
             )
         },
         "facebook" => {
-            let client_id = std::env::var("FACEBOOK_CLIENT_ID").unwrap_or_default();
+            let client_id = sqlx::query_scalar::<_, String>(
+                "SELECT client_id FROM social.oauth_app_configs WHERE platform = 'facebook'"
+            ).fetch_optional(&state.pool).await.ok().flatten()
+             .or_else(|| std::env::var("FACEBOOK_CLIENT_ID").ok())
+             .unwrap_or_default();
             let redirect_uri = format!("{}/api/v1/social/oauth/facebook/callback", base);
             let scopes = "pages_show_list,pages_read_engagement,pages_manage_posts";
             format!(
@@ -144,7 +171,12 @@ pub async fn oauth_authorize(
             )
         },
         "instagram" => {
-            let client_id = std::env::var("FACEBOOK_CLIENT_ID").unwrap_or_default();
+            // Instagram shares Facebook app credentials
+            let client_id = sqlx::query_scalar::<_, String>(
+                "SELECT client_id FROM social.oauth_app_configs WHERE platform IN ('instagram','facebook') ORDER BY platform DESC LIMIT 1"
+            ).fetch_optional(&state.pool).await.ok().flatten()
+             .or_else(|| std::env::var("FACEBOOK_CLIENT_ID").ok())
+             .unwrap_or_default();
             let redirect_uri = format!("{}/api/v1/social/oauth/instagram/callback", base);
             let scopes = "pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish";
             format!(
@@ -156,34 +188,67 @@ pub async fn oauth_authorize(
             )
         },
         "mastodon" => {
-            let instance = match &query.instance {
-                Some(i) if !i.is_empty() => i.clone(),
+            let instance = query.instance.as_deref().unwrap_or("mastodon.social");
+            let instance_url = if instance.starts_with("http") {
+                instance.trim_end_matches('/').to_string()
+            } else {
+                format!("https://{}", instance.trim_end_matches('/'))
+            };
+
+            // Auto-register OAuth app on the Mastodon instance
+            let http_client = reqwest::Client::new();
+            let redirect_uri = format!("{}/api/v1/social/oauth/mastodon/callback", base);
+            let register_resp = http_client
+                .post(format!("{}/api/v1/apps", instance_url))
+                .form(&[
+                    ("client_name", "SignApps"),
+                    ("redirect_uris", redirect_uri.as_str()),
+                    ("scopes", "read write follow push"),
+                    ("website", base.as_str()),
+                ])
+                .send()
+                .await;
+
+            match register_resp {
+                Ok(resp) if resp.status().is_success() => {
+                    let app: serde_json::Value = resp.json().await.unwrap_or_default();
+                    let client_id = app["client_id"].as_str().unwrap_or_default();
+                    let client_secret = app["client_secret"].as_str().unwrap_or_default();
+
+                    // Store instance_url + client_id + client_secret in the platform column
+                    // Format: "mastodon:<instance_url>:<client_id>:<client_secret>"
+                    let encoded_platform = format!(
+                        "mastodon:{}:{}:{}",
+                        instance_url, client_id, client_secret
+                    );
+                    let _ = sqlx::query(
+                        "UPDATE social.oauth_states SET platform = $1 WHERE state = $2"
+                    )
+                    .bind(&encoded_platform)
+                    .bind(&state_token)
+                    .execute(&state.pool)
+                    .await;
+
+                    let scopes = "read write follow push";
+                    format!(
+                        "{}/oauth/authorize?client_id={}&redirect_uri={}&response_type=code&scope={}&state={}",
+                        instance_url,
+                        encode(client_id),
+                        encode(&redirect_uri),
+                        encode(scopes),
+                        encode(&state_token),
+                    )
+                },
                 _ => {
                     return (
                         StatusCode::BAD_REQUEST,
-                        Json(json!({ "error": "instance parameter required for Mastodon" })),
+                        Json(json!({
+                            "error": format!("Impossible de contacter l'instance Mastodon: {}", instance_url)
+                        })),
                     )
                         .into_response();
                 },
-            };
-            // Normalize: strip https:// if present
-            let instance = instance
-                .trim_start_matches("https://")
-                .trim_start_matches("http://")
-                .trim_end_matches('/')
-                .to_string();
-
-            let client_id = std::env::var("MASTODON_CLIENT_ID").unwrap_or_default();
-            let redirect_uri = format!("{}/api/v1/social/oauth/mastodon/callback", base);
-            let scopes = "read write follow";
-            format!(
-                "https://{}/oauth/authorize?response_type=code&client_id={}&redirect_uri={}&scope={}&state={}",
-                instance,
-                encode(&client_id),
-                encode(&redirect_uri),
-                encode(scopes),
-                encode(&state_token),
-            )
+            }
         },
         "bluesky" => {
             // Bluesky uses app passwords, not OAuth2. Return a special indicator.
@@ -271,19 +336,35 @@ pub async fn oauth_callback(
         },
     };
 
-    // Verify and consume state token
-    let row = sqlx::query_as::<_, (Uuid, String)>(
-        "DELETE FROM social.oauth_states
-         WHERE state = $1 AND platform = $2
-           AND created_at > NOW() - INTERVAL '10 minutes'
-         RETURNING user_id, platform",
-    )
-    .bind(&state_token)
-    .bind(&platform)
-    .fetch_optional(&state.pool)
-    .await;
+    // Verify and consume state token.
+    // For Mastodon, platform column contains "mastodon:<instance>:<client_id>:<client_secret>"
+    // so we match on platform = $2 OR platform starting with "mastodon:" (for mastodon callbacks).
+    let row = if platform == "mastodon" {
+        sqlx::query_as::<_, (Uuid, String)>(
+            "DELETE FROM social.oauth_states
+             WHERE state = $1
+               AND (platform = $2 OR platform LIKE 'mastodon:%')
+               AND created_at > NOW() - INTERVAL '10 minutes'
+             RETURNING user_id, platform",
+        )
+        .bind(&state_token)
+        .bind(&platform)
+        .fetch_optional(&state.pool)
+        .await
+    } else {
+        sqlx::query_as::<_, (Uuid, String)>(
+            "DELETE FROM social.oauth_states
+             WHERE state = $1 AND platform = $2
+               AND created_at > NOW() - INTERVAL '10 minutes'
+             RETURNING user_id, platform",
+        )
+        .bind(&state_token)
+        .bind(&platform)
+        .fetch_optional(&state.pool)
+        .await
+    };
 
-    let (user_id, _) = match row {
+    let (user_id, stored_platform) = match row {
         Ok(Some(r)) => r,
         Ok(None) => {
             tracing::warn!(
@@ -309,7 +390,7 @@ pub async fn oauth_callback(
     };
 
     // Exchange code for tokens
-    let token_result = exchange_code_for_tokens(&platform, &code, &state.pool).await;
+    let token_result = exchange_code_for_tokens(&platform, &code, &stored_platform, &state.pool).await;
 
     match token_result {
         Ok(token_data) => {
@@ -405,15 +486,25 @@ struct TokenData {
 async fn exchange_code_for_tokens(
     platform: &str,
     code: &str,
-    _pool: &sqlx::Pool<sqlx::Postgres>,
+    stored_platform: &str,
+    pool: &sqlx::Pool<sqlx::Postgres>,
 ) -> Result<TokenData, anyhow::Error> {
     let base = base_url();
     let client = reqwest::Client::new();
 
     match platform {
         "twitter" => {
-            let client_id = std::env::var("TWITTER_CLIENT_ID")?;
-            let client_secret = std::env::var("TWITTER_CLIENT_SECRET")?;
+            // DB credentials first, then env var
+            let client_id = sqlx::query_scalar::<_, String>(
+                "SELECT client_id FROM social.oauth_app_configs WHERE platform = 'twitter'"
+            ).fetch_optional(pool).await.ok().flatten()
+             .or_else(|| std::env::var("TWITTER_CLIENT_ID").ok())
+             .ok_or_else(|| anyhow::anyhow!("TWITTER_CLIENT_ID not configured"))?;
+            let client_secret = sqlx::query_scalar::<_, String>(
+                "SELECT client_secret FROM social.oauth_app_configs WHERE platform = 'twitter'"
+            ).fetch_optional(pool).await.ok().flatten()
+             .or_else(|| std::env::var("TWITTER_CLIENT_SECRET").ok())
+             .ok_or_else(|| anyhow::anyhow!("TWITTER_CLIENT_SECRET not configured"))?;
             let redirect_uri = format!("{}/api/v1/social/oauth/twitter/callback", base);
 
             let resp = client
@@ -461,8 +552,16 @@ async fn exchange_code_for_tokens(
         },
 
         "linkedin" => {
-            let client_id = std::env::var("LINKEDIN_CLIENT_ID")?;
-            let client_secret = std::env::var("LINKEDIN_CLIENT_SECRET")?;
+            let client_id = sqlx::query_scalar::<_, String>(
+                "SELECT client_id FROM social.oauth_app_configs WHERE platform = 'linkedin'"
+            ).fetch_optional(pool).await.ok().flatten()
+             .or_else(|| std::env::var("LINKEDIN_CLIENT_ID").ok())
+             .ok_or_else(|| anyhow::anyhow!("LINKEDIN_CLIENT_ID not configured"))?;
+            let client_secret = sqlx::query_scalar::<_, String>(
+                "SELECT client_secret FROM social.oauth_app_configs WHERE platform = 'linkedin'"
+            ).fetch_optional(pool).await.ok().flatten()
+             .or_else(|| std::env::var("LINKEDIN_CLIENT_SECRET").ok())
+             .ok_or_else(|| anyhow::anyhow!("LINKEDIN_CLIENT_SECRET not configured"))?;
             let redirect_uri = format!("{}/api/v1/social/oauth/linkedin/callback", base);
 
             let resp = client
@@ -520,8 +619,16 @@ async fn exchange_code_for_tokens(
         },
 
         "facebook" => {
-            let client_id = std::env::var("FACEBOOK_CLIENT_ID")?;
-            let client_secret = std::env::var("FACEBOOK_CLIENT_SECRET")?;
+            let client_id = sqlx::query_scalar::<_, String>(
+                "SELECT client_id FROM social.oauth_app_configs WHERE platform = 'facebook'"
+            ).fetch_optional(pool).await.ok().flatten()
+             .or_else(|| std::env::var("FACEBOOK_CLIENT_ID").ok())
+             .ok_or_else(|| anyhow::anyhow!("FACEBOOK_CLIENT_ID not configured"))?;
+            let client_secret = sqlx::query_scalar::<_, String>(
+                "SELECT client_secret FROM social.oauth_app_configs WHERE platform = 'facebook'"
+            ).fetch_optional(pool).await.ok().flatten()
+             .or_else(|| std::env::var("FACEBOOK_CLIENT_SECRET").ok())
+             .ok_or_else(|| anyhow::anyhow!("FACEBOOK_CLIENT_SECRET not configured"))?;
             let redirect_uri = format!("{}/api/v1/social/oauth/facebook/callback", base);
 
             let resp = client
@@ -585,8 +692,16 @@ async fn exchange_code_for_tokens(
 
         "instagram" => {
             // Instagram uses the same Facebook OAuth flow
-            let client_id = std::env::var("FACEBOOK_CLIENT_ID")?;
-            let client_secret = std::env::var("FACEBOOK_CLIENT_SECRET")?;
+            let client_id = sqlx::query_scalar::<_, String>(
+                "SELECT client_id FROM social.oauth_app_configs WHERE platform IN ('instagram','facebook') ORDER BY platform DESC LIMIT 1"
+            ).fetch_optional(pool).await.ok().flatten()
+             .or_else(|| std::env::var("FACEBOOK_CLIENT_ID").ok())
+             .ok_or_else(|| anyhow::anyhow!("FACEBOOK_CLIENT_ID not configured"))?;
+            let client_secret = sqlx::query_scalar::<_, String>(
+                "SELECT client_secret FROM social.oauth_app_configs WHERE platform IN ('instagram','facebook') ORDER BY platform DESC LIMIT 1"
+            ).fetch_optional(pool).await.ok().flatten()
+             .or_else(|| std::env::var("FACEBOOK_CLIENT_SECRET").ok())
+             .ok_or_else(|| anyhow::anyhow!("FACEBOOK_CLIENT_SECRET not configured"))?;
             let redirect_uri = format!("{}/api/v1/social/oauth/instagram/callback", base);
 
             let resp = client
@@ -654,21 +769,40 @@ async fn exchange_code_for_tokens(
         },
 
         "mastodon" => {
-            // Instance URL is encoded in the state or we read MASTODON_INSTANCE env
-            let instance = std::env::var("MASTODON_INSTANCE")
-                .unwrap_or_else(|_| "mastodon.social".to_string());
-            let client_id = std::env::var("MASTODON_CLIENT_ID")?;
-            let client_secret = std::env::var("MASTODON_CLIENT_SECRET")?;
+            // stored_platform format: "mastodon:<instance_url>:<client_id>:<client_secret>"
+            // (set during auto-registration in oauth_authorize)
+            let parts: Vec<&str> = stored_platform.splitn(4, ':').collect();
+            // parts[0] = "mastodon", parts[1..] reconstructed = instance_url, client_id, secret
+            // But instance_url itself starts with "https:" so we need to re-join properly.
+            // Format was: "mastodon:{instance_url}:{client_id}:{client_secret}"
+            // where instance_url = "https://mastodon.social"
+            // splitn(4, ':') gives: ["mastodon", "https", "//mastodon.social", "client_id:client_secret"]
+            // We need to handle this carefully — split on first ':' only for mastodon prefix
+            let remainder = stored_platform.strip_prefix("mastodon:").unwrap_or(stored_platform);
+            // remainder = "<instance_url>:<client_id>:<client_secret>"
+            // instance_url may contain ':' (https://...), so split from the right
+            // Find last two ':' separators for client_id and client_secret
+            let last_colon = remainder.rfind(':').ok_or_else(|| anyhow::anyhow!("invalid mastodon state: missing client_secret"))?;
+            let client_secret = &remainder[last_colon + 1..];
+            let before_secret = &remainder[..last_colon];
+            let second_last_colon = before_secret.rfind(':').ok_or_else(|| anyhow::anyhow!("invalid mastodon state: missing client_id"))?;
+            let client_id = &before_secret[second_last_colon + 1..];
+            let instance_url = &before_secret[..second_last_colon];
+
+            if instance_url.is_empty() || client_id.is_empty() || client_secret.is_empty() {
+                return Err(anyhow::anyhow!("incomplete mastodon state: instance={}, client_id present={}", instance_url, !client_id.is_empty()));
+            }
+
             let redirect_uri = format!("{}/api/v1/social/oauth/mastodon/callback", base);
 
             let resp = client
-                .post(format!("https://{}/oauth/token", instance))
+                .post(format!("{}/oauth/token", instance_url))
                 .form(&[
                     ("grant_type", "authorization_code"),
                     ("code", code),
                     ("redirect_uri", &redirect_uri),
-                    ("client_id", &client_id),
-                    ("client_secret", &client_secret),
+                    ("client_id", client_id),
+                    ("client_secret", client_secret),
                 ])
                 .send()
                 .await?
@@ -682,10 +816,7 @@ async fn exchange_code_for_tokens(
 
             // Fetch account info
             let acct_resp = client
-                .get(format!(
-                    "https://{}/api/v1/accounts/verify_credentials",
-                    instance
-                ))
+                .get(format!("{}/api/v1/accounts/verify_credentials", instance_url))
                 .bearer_auth(&access_token)
                 .send()
                 .await?
@@ -700,7 +831,7 @@ async fn exchange_code_for_tokens(
                 username: acct_resp["username"].as_str().map(String::from),
                 display_name: acct_resp["display_name"].as_str().map(String::from),
                 avatar_url: acct_resp["avatar"].as_str().map(String::from),
-                platform_config: Some(json!({ "instance_url": format!("https://{}", instance) })),
+                platform_config: Some(json!({ "instance_url": instance_url })),
             })
         },
 
@@ -708,6 +839,92 @@ async fn exchange_code_for_tokens(
             "Unsupported platform for token exchange: {}",
             other
         )),
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Save OAuth credentials endpoint
+// POST /api/v1/social/oauth/credentials
+// Admin stores client_id + client_secret for a platform in the DB
+// ---------------------------------------------------------------------------
+
+#[derive(Deserialize, Serialize)]
+pub struct SaveCredentialsRequest {
+    pub platform: String,
+    pub client_id: String,
+    pub client_secret: String,
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn save_oauth_credentials(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(body): Json<SaveCredentialsRequest>,
+) -> impl IntoResponse {
+    // Validate platform
+    let allowed = ["twitter", "linkedin", "facebook", "instagram"];
+    if !allowed.contains(&body.platform.as_str()) {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(json!({ "error": format!("Unsupported platform: {}", body.platform) })),
+        )
+            .into_response();
+    }
+
+    if body.client_id.trim().is_empty() || body.client_secret.trim().is_empty() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(json!({ "error": "client_id and client_secret are required" })),
+        )
+            .into_response();
+    }
+
+    // Auto-create table if needed
+    let _ = sqlx::query(
+        "CREATE TABLE IF NOT EXISTS social.oauth_app_configs (
+            platform VARCHAR(20) PRIMARY KEY,
+            client_id VARCHAR(500) NOT NULL,
+            client_secret VARCHAR(500) NOT NULL,
+            updated_by UUID,
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )"
+    )
+    .execute(&state.pool)
+    .await;
+
+    let result = sqlx::query(
+        "INSERT INTO social.oauth_app_configs (platform, client_id, client_secret, updated_by, updated_at)
+         VALUES ($1, $2, $3, $4, NOW())
+         ON CONFLICT (platform) DO UPDATE
+         SET client_id = EXCLUDED.client_id,
+             client_secret = EXCLUDED.client_secret,
+             updated_by = EXCLUDED.updated_by,
+             updated_at = NOW()",
+    )
+    .bind(&body.platform)
+    .bind(&body.client_id)
+    .bind(&body.client_secret)
+    .bind(claims.sub)
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => {
+            tracing::info!("OAuth credentials saved for platform: {}", body.platform);
+            (
+                StatusCode::OK,
+                Json(json!({ "status": "saved", "platform": body.platform })),
+            )
+                .into_response()
+        },
+        Err(e) => {
+            tracing::error!("Failed to save OAuth credentials: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "error": format!("Failed to save credentials: {}", e) })),
+            )
+                .into_response()
+        },
     }
 }
 

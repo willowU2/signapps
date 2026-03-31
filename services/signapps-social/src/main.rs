@@ -84,6 +84,11 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/social/oauth/:platform/authorize",
             get(oauth::oauth_authorize),
         )
+        // OAuth credentials save (admin stores client_id/secret in DB)
+        .route(
+            "/api/v1/social/oauth/credentials",
+            post(oauth::save_oauth_credentials),
+        )
         // Accounts
         .route(
             "/api/v1/social/accounts",
