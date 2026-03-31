@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useEffect } from "react"
+import { Suspense, useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import { EditorLayout } from '@/components/layout/editor-layout';
@@ -48,6 +48,38 @@ const Editor = dynamic(
     { ssr: false }
 )
 
+import { ChevronDown, ChevronUp, Link2, GitBranch, Sparkles, MessageSquare } from 'lucide-react';
+
+function BottomPanel({ entityId, entityName }: { entityId: string; entityName: string }) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <div className="border-t border-border bg-background/50 relative">
+            {/* Toggle bar — always visible */}
+            <button
+                onClick={() => setOpen(!open)}
+                className="w-full flex items-center justify-center gap-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+                {open ? (
+                    <><ChevronDown className="h-3 w-3" /> Masquer les détails</>
+                ) : (
+                    <><ChevronUp className="h-3 w-3" /> Liens, entités, commentaires</>
+                )}
+            </button>
+
+            {/* Collapsible content */}
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${open ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="p-4 space-y-4">
+                    <EntityLinks entityType="document" entityId={entityId} />
+                    <LinkedEntitiesPanel entityType="document" entityId={entityId} />
+                    <SmartSuggestions entityType="document" entityId={entityId} entityTitle={entityName} />
+                    <CrossModuleComments entityType="document" entityId={entityId} compact />
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function EditorContent() {
     const searchParams = useSearchParams();
     const id = searchParams.get('id') || 'new';
@@ -90,15 +122,7 @@ function EditorContent() {
                     <Editor documentId={id} documentName={name || undefined} className="h-full" bucket={name ? 'drive' : undefined} fileName={name || undefined} userName={userName} />
                 </div>
                 {id !== 'new' && (
-                    <div className="border-t p-4 bg-background/50 space-y-4">
-                        <EntityLinks entityType="document" entityId={id} />
-                        {/* Idea 28: Linked entities panel */}
-                        <LinkedEntitiesPanel entityType="document" entityId={id} />
-                        {/* Idea 29: Smart suggestions */}
-                        <SmartSuggestions entityType="document" entityId={id} entityTitle={name || 'Document'} />
-                        {/* Idea 43: Cross-module comments */}
-                        <CrossModuleComments entityType="document" entityId={id} compact />
-                    </div>
+                    <BottomPanel entityId={id} entityName={name || 'Document'} />
                 )}
             </div>
         </EditorLayout>
