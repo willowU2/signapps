@@ -311,12 +311,6 @@ export function AddWidgetDialog({ open, onOpenChange }: AddWidgetDialogProps) {
             </ScrollArea>
           </TabsContent>
         </Tabs>
-
-        <div className="flex justify-end pt-4 mt-4 border-t shrink-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Fermer
-          </Button>
-        </div>
       </DialogContent>
     </Dialog>
   );
