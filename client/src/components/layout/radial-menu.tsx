@@ -242,61 +242,47 @@ export function RadialMenu() {
             const size = Math.round(44 * scale);
             const iconSize = Math.round(18 * scale);
 
+            const center = Math.floor((VISIBLE_SLOTS - 1) / 2);
+            const dist = Math.abs(i - center);
+            const showLabel = dist <= 1;
+            const labelOpacity = dist === 0 ? 1 : 0.6;
+
             return (
               <div
                 key={item.id}
-                className="absolute flex items-center gap-2"
+                className="absolute"
                 style={{
                   transform: isOpen
-                    ? `translate(${x}px, ${y}px)`
-                    : "translate(0px, 0px)",
+                    ? `translate(${x}px, ${y}px) scale(${scale})`
+                    : "translate(0px, 0px) scale(0.3)",
                   transition: `transform 400ms cubic-bezier(0.16, 1, 0.3, 1) ${isOpen ? i * 60 : (VISIBLE_SLOTS - i) * 25}ms, opacity 300ms ease ${isOpen ? i * 60 : 0}ms`,
                   opacity: isOpen ? 1 : 0,
                   pointerEvents: isOpen ? "auto" : "none",
-                  zIndex: 50 + Math.round((1 - Math.abs(i - (VISIBLE_SLOTS - 1) / 2)) * 10),
+                  zIndex: 50 + Math.round((1 - Math.abs(i - center)) * 10),
                 }}
               >
-                {/* Label badge — only visible on center item and its neighbors */}
-                {(() => {
-                  const center = Math.floor((VISIBLE_SLOTS - 1) / 2);
-                  const dist = Math.abs(i - center);
-                  const showLabel = dist <= 1;
-                  const labelOpacity = dist === 0 ? 1 : 0.7;
-                  const labelScale = dist === 0 ? scale : scale * 0.85;
-                  return showLabel ? (
-                    <span
-                      className="whitespace-nowrap rounded-full bg-popover/95 border border-border/50 px-2.5 py-1 text-[11px] font-medium shadow-lg backdrop-blur-sm text-foreground select-none"
-                      style={{
-                        transform: `scale(${labelScale})`,
-                        opacity: labelOpacity,
-                        transformOrigin: "right center",
-                        transition: "transform 400ms cubic-bezier(0.16, 1, 0.3, 1), opacity 300ms ease",
-                      }}
-                    >
-                      {item.label}
-                    </span>
-                  ) : null;
-                })()}
                 <button
                   onClick={() => { item.action(); setIsOpen(false); }}
                   className={cn(
-                    "relative rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl active:scale-90",
+                    "relative rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:scale-110 active:scale-90 transition-all duration-200",
                     item.color
                   )}
-                  style={{
-                    width: size,
-                    height: size,
-                    transform: `scale(1)`,
-                    transition: "transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms ease",
-                  }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(1.15)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(1)"; }}
+                  style={{ width: size, height: size }}
                   title={item.label}
                 >
                   {React.cloneElement(item.icon, {
                     style: { width: iconSize, height: iconSize },
                   } as React.SVGProps<SVGSVGElement>)}
                 </button>
+                {/* Label floats above the bubble — only for center + neighbors */}
+                {showLabel && (
+                  <span
+                    className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 whitespace-nowrap rounded-full bg-popover/95 border border-border/50 px-2.5 py-1 text-[11px] font-medium shadow-lg backdrop-blur-sm text-foreground select-none pointer-events-none"
+                    style={{ opacity: labelOpacity, transition: "opacity 300ms ease" }}
+                  >
+                    {item.label}
+                  </span>
+                )}
               </div>
             );
           })}
