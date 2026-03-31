@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, Plus, Search, LayoutGrid, List as ListIcon, Database } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Search, LayoutGrid, List as ListIcon, Database, AlignLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -107,7 +107,6 @@ export function StorageHeader({
             onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
-        
         <div className="flex items-center gap-1 border border-[#dadce0] dark:border-[#5f6368] rounded-full p-1 bg-background dark:bg-[#202124]">
           <Button
             variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
