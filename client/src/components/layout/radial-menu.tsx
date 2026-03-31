@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Plus, X, FileText, Mail, Calendar, CheckSquare, Bot, Timer, Search, Settings } from "lucide-react";
+import { Plus, X, FileText, Mail, Calendar, CheckSquare, Bot, Search, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/lib/store";
@@ -58,13 +58,6 @@ export function RadialMenu() {
     setRightSidebarOpen(true);
   }, [setActiveRightWidget, setRightSidebarOpen]);
 
-  const triggerPomodoro = useCallback(() => {
-    // Dispatch a custom event that the PomodoroTimer can listen to
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("radial:toggle-pomodoro"));
-    }
-  }, []);
-
   const allItems: RadialMenuItem[] = [
     {
       id: "doc",
@@ -102,13 +95,6 @@ export function RadialMenu() {
       action: toggleAI,
     },
     {
-      id: "pomodoro",
-      icon: <Timer />,
-      label: "Pomodoro",
-      color: "bg-rose-500 hover:bg-rose-600",
-      action: triggerPomodoro,
-    },
-    {
       id: "search",
       icon: <Search />,
       label: "Recherche",
@@ -135,10 +121,10 @@ export function RadialMenu() {
   // Only show first 8 items
   const visibleItems = orderedItems.slice(0, 8);
 
-  // Arrange in a semicircle above the FAB
-  const radius = 110; // px
-  const startAngle = -150;
-  const endAngle = -30;
+  // Arrange in a quarter-circle: bottom-left to top-right (90° arc)
+  const radius = 120; // px
+  const startAngle = -180; // left
+  const endAngle = -90; // top
   const angleStep = visibleItems.length > 1
     ? (endAngle - startAngle) / (visibleItems.length - 1)
     : 0;

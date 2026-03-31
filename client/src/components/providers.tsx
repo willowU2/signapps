@@ -35,7 +35,7 @@ import { QuickDocumentSwitcher } from '@/components/layout/quick-switcher';
 import dynamic from 'next/dynamic';
 const FirstRunDialog = dynamic(() => import('@/components/first-run-dialog').then(m => m.FirstRunDialog), { ssr: false });
 const OfflineBanner = dynamic(() => import('@/components/layout/offline-banner').then(m => m.OfflineBanner), { ssr: false });
-const PomodoroTimer = dynamic(() => import('@/components/layout/pomodoro-timer').then(m => m.PomodoroTimer), { ssr: false });
+// PomodoroTimer removed from global UI
 
 function LoadingFallback() {
   return (
@@ -122,7 +122,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       <OnboardingWizard />
                       <FirstRunDialog />
                       <OfflineBanner />
-                      <PomodoroTimer />
                     </PermissionsProvider>
                   </AccessibilityProvider>
                 </PreferencesProvider>
