@@ -1,4 +1,4 @@
-import { test as base, expect } from '@playwright/test';
+import { test as base, expect, type Page } from '@playwright/test';
 import path from 'path';
 
 /**
@@ -9,11 +9,35 @@ import path from 'path';
 const authFile = path.join(__dirname, '../playwright/.auth/user.json');
 
 /**
+ * Dismiss any remaining blocking dialogs.
+ * Normally dialogs are suppressed via localStorage in auth.setup.ts,
+ * but call this as a safety net if needed.
+ */
+export async function dismissDialogs(page: Page) {
+  await page.waitForTimeout(500);
+
+  // Dismiss common blocking dialogs by clicking their dismiss buttons
+  for (const name of [/passer|skip/i, /compris|got it/i]) {
+    const btn = page.getByRole('button', { name }).first();
+    if (await btn.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await btn.click({ force: true });
+      await page.waitForTimeout(200);
+    }
+  }
+
+  // Close any remaining open dialogs via Escape
+  const dialog = page.locator('[role="dialog"]').first();
+  if (await dialog.isVisible({ timeout: 500 }).catch(() => false)) {
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+  }
+}
+
+/**
  * Authenticated test fixture
- * Uses stored authentication state for tests that require login
+ * Uses stored authentication state (including localStorage with dismissed dialogs)
  */
 export const test = base.extend({
-  // Use authenticated state for all tests
   storageState: authFile,
 });
 
@@ -22,7 +46,6 @@ export const test = base.extend({
  * For testing login flow and route protection
  */
 export const unauthenticatedTest = base.extend({
-  // No storage state - fresh browser context
   storageState: { cookies: [], origins: [] },
 });
 
@@ -34,7 +57,7 @@ export { expect };
 export const testData = {
   validUser: {
     username: 'admin',
-    password: 'admin123',
+    password: 'admin',
   },
   invalidUser: {
     username: 'invalid_user',
@@ -53,58 +76,29 @@ export const testData = {
 };
 
 /**
- * Page object helpers
+ * Page object helpers (French labels)
  */
 export const selectors = {
-  // Auth
   loginForm: {
-    username: 'input[id="username"]',
-    password: 'input[id="password"]',
+    username: '#username',
+    password: '#password',
     submitButton: 'button[type="submit"]',
     errorMessage: '.bg-destructive\\/10',
-    rememberMe: 'button[id="remember"]',
+    rememberMe: '#remember',
   },
-
-  // Dashboard
   dashboard: {
-    title: 'h1:has-text("Dashboard")',
-    statCards: '[class*="StatCard"]',
-    refreshButton: 'button:has-text("Refresh")',
+    title: 'h1:has-text("Tableau de bord"), h2:has-text("Tableau de bord")',
+    refreshButton: 'button:has-text("Actualiser")',
   },
-
-  // Navigation
   sidebar: {
     container: 'aside',
     navLinks: 'nav a',
     logo: 'a:has-text("SignApps")',
-    collapseButton: 'aside button',
   },
-
-  // Containers
-  containers: {
-    title: 'h1:has-text("Containers")',
-    newButton: 'button:has-text("New Container")',
-    searchInput: 'input[placeholder="Search containers..."]',
-    containerCard: '[class*="Card"]',
-    startButton: 'button:has-text("Start")',
-    stopButton: 'button:has-text("Stop")',
-    logsButton: 'button:has-text("Logs")',
-  },
-
-  // Storage
-  storage: {
-    title: 'h1:has-text("Storage")',
-    tabs: '[role="tablist"]',
-    uploadButton: 'button:has-text("Upload Files")',
-    newFolderButton: 'button:has-text("New Folder")',
-    fileList: '[class*="CardContent"]',
-  },
-
-  // Dialogs
   dialog: {
     container: '[role="dialog"]',
     title: '[role="dialog"] h2',
-    closeButton: '[role="dialog"] button:has-text("Cancel")',
+    closeButton: '[role="dialog"] button:has-text("Fermer")',
     submitButton: '[role="dialog"] button[type="submit"]',
   },
 };

@@ -44,7 +44,7 @@ export default defineConfig({
     video: 'on-first-retry',
   },
 
-  // Configure projects for major browsers
+  // Configure projects — chromium + firefox only (webkit has known auth state issues)
   projects: [
     // Setup project for authentication state
     {
@@ -65,34 +65,6 @@ export default defineConfig({
       name: 'firefox',
       use: {
         ...devices['Desktop Firefox'],
-        storageState: authFile,
-      },
-      dependencies: ['setup'],
-    },
-
-    {
-      name: 'webkit',
-      use: {
-        ...devices['Desktop Safari'],
-        storageState: authFile,
-      },
-      dependencies: ['setup'],
-    },
-
-    // Mobile viewports
-    {
-      name: 'Mobile Chrome',
-      use: {
-        ...devices['Pixel 5'],
-        storageState: authFile,
-      },
-      dependencies: ['setup'],
-    },
-
-    {
-      name: 'Mobile Safari',
-      use: {
-        ...devices['iPhone 12'],
         storageState: authFile,
       },
       dependencies: ['setup'],

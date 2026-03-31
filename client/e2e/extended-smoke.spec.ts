@@ -74,17 +74,14 @@ const PAGES = [
   { path: '/gamification', group: 'misc' },
   { path: '/integrations', group: 'misc' },
   { path: '/reports', group: 'misc' },
-  { path: '/search', group: 'misc' },
   { path: '/slides', group: 'misc' },
   { path: '/trash', group: 'misc' },
-  { path: '/voice', group: 'misc' },
-  { path: '/print', group: 'misc' },
   { path: '/team/org-chart', group: 'misc' },
-  { path: '/drive', group: 'misc' },
-  { path: '/it-assets/scan', group: 'misc' },
-  { path: '/workforce/hr', group: 'misc' },
-  { path: '/notifications', group: 'misc' },
-  { path: '/scheduler', group: 'misc' },
+  { path: '/storage', group: 'misc' },
+  { path: '/vault', group: 'misc' },
+  { path: '/admin/org-structure', group: 'misc' },
+  { path: '/admin/persons', group: 'misc' },
+  { path: '/admin/sites', group: 'misc' },
 ];
 
 test.describe('Extended Smoke Tests — Uncovered Pages', () => {

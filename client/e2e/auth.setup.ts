@@ -10,35 +10,9 @@ const authFile = path.join(__dirname, '../playwright/.auth/user.json');
 setup('authenticate', async ({ page }) => {
   // Navigate to login page
   await page.goto('/login');
+  await page.waitForLoadState('domcontentloaded');
 
-  // Wait for React hydration
-  await page.waitForLoadState('networkidle');
-
-  // Aggressively close any dialogs/modals blocking the login form
-  for (let i = 0; i < 5; i++) {
-    await page.keyboard.press('Escape');
-  }
-  // Click any dismiss/close/skip button that might be visible
-  for (const selector of [
-    'button:has-text("Passer")',
-    'button:has-text("Compris")',
-    'button:has-text("Close")',
-    'button:has-text("Fermer")',
-    'button:has-text("Skip")',
-    'button[aria-label="Close"]',
-    '[data-state="open"] button:has-text("×")',
-    'div[role="dialog"] button',
-  ]) {
-    const btn = page.locator(selector).first();
-    if (await btn.isVisible({ timeout: 500 }).catch(() => false)) {
-      await btn.click({ force: true }).catch(() => {});
-      await page.waitForLoadState("domcontentloaded").catch(() => {});
-    }
-  }
-  // Final escape to close anything remaining
-  await page.keyboard.press('Escape');
-
-  // Fill in login credentials using IDs (language-independent)
+  // Fill in login credentials
   const usernameInput = page.locator('#username');
   await usernameInput.click({ force: true });
   await usernameInput.fill('admin');
@@ -47,38 +21,25 @@ setup('authenticate', async ({ page }) => {
   await passwordInput.click();
   await passwordInput.fill('admin');
 
-  // Click the sign in button within the form (supports both FR and EN labels)
+  // Click the sign in button
   const signInBtn = page.locator('form').getByRole('button', { name: /sign in|se connecter|connexion/i });
   await signInBtn.click();
 
-  // Wait for either the redirect OR an error message to appear
-  try {
-    await page.waitForURL(/\/(dashboard|login\/verify)/, { timeout: 30000 });
-  } catch (error) {
-    // If we timed out, let's grab the text content of the page to see if there's an error message
-    const pageText = await page.locator('body').innerText();
-    console.error("Login failed or timed out. Page content snippet:");
-    console.error(pageText.substring(0, 500));
-    
-    // Also check for any specific error boxes
-    const errorBox = page.locator('.text-destructive');
-    if (await errorBox.count() > 0) {
-      console.error("Found error on page:", await errorBox.first().innerText());
-    }
-    
-    throw error; // Rethrow to fail the test naturally
-  }
-  if (page.url().includes('/login/verify')) {
-    // MFA verification would go here
-    // For tests, you might skip MFA or use a test account without MFA
-    console.log('MFA verification required - skipping for test setup');
-  }
+  // Wait for redirect to dashboard
+  await page.waitForURL(/\/(dashboard|login\/verify)/, { timeout: 30000 });
 
-  // Save the authentication state
+  // Pre-dismiss all onboarding/changelog dialogs via localStorage
+  // These will be persisted in the storage state file for all subsequent tests
+  await page.evaluate(() => {
+    localStorage.setItem('signapps-onboarding-completed', new Date().toISOString());
+    localStorage.setItem('signapps-onboarding-dismissed', 'true');
+    localStorage.setItem('signapps-changelog-seen', 'v2.6.0');
+    localStorage.setItem('signapps_initialized', new Date().toISOString());
+    localStorage.setItem('signapps_seed_dismissed', 'true');
+  });
+
+  // Save the authentication state (including localStorage with dismissed dialogs)
   await page.context().storageState({ path: authFile });
 });
 
-/**
- * Export the auth file path for use in other test files
- */
 export { authFile };
