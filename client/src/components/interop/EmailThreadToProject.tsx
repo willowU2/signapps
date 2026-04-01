@@ -11,52 +11,94 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { interopStore } from "@/lib/interop/store";
 import type { Mail } from "@/lib/data/mail";
 
-import { CALENDAR_URL } from '@/lib/api/core';
+import { CALENDAR_URL } from "@/lib/api/core";
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   mail: Mail;
 }
 
-export function EmailThreadToProjectDialog({ open, onOpenChange, mail }: Props) {
+export function EmailThreadToProjectDialog({
+  open,
+  onOpenChange,
+  mail,
+}: Props) {
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
 
   const handleCreate = async () => {
-    if (!projectName.trim()) { toast.error("Le nom du projet est requis"); return; }
+    if (!projectName.trim()) {
+      toast.error("Le nom du projet est requis");
+      return;
+    }
     setSaving(true);
     try {
       const API = CALENDAR_URL;
       let projectId = `local_proj_${Date.now()}`;
       try {
         const res = await fetch(`${API}/projects`, {
-          method: "POST", credentials: "include",
+          method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: projectName.trim(), description: description.trim() || `Créé depuis l'email : ${mail.subject}` }),
+          body: JSON.stringify({
+            name: projectName.trim(),
+            description:
+              description.trim() || `Créé depuis l'email : ${mail.subject}`,
+          }),
         });
-        if (res.ok) { const d = await res.json(); projectId = d.id ?? d.data?.id ?? projectId; }
-      } catch { /* store locally */ }
+        if (res.ok) {
+          const d = await res.json();
+          projectId = d.id ?? d.data?.id ?? projectId;
+        }
+      } catch {
+        /* store locally */
+      }
 
       // Store locally if API failed
       if (projectId.startsWith("local_")) {
-        const projects = JSON.parse(localStorage.getItem("interop:local_projects") || "[]");
-        projects.push({ id: projectId, name: projectName, description, created_at: new Date().toISOString() });
-        localStorage.setItem("interop:local_projects", JSON.stringify(projects));
+        const projects = JSON.parse(
+          localStorage.getItem("interop:local_projects") || "[]",
+        );
+        projects.push({
+          id: projectId,
+          name: projectName,
+          description,
+          created_at: new Date().toISOString(),
+        });
+        localStorage.setItem(
+          "interop:local_projects",
+          JSON.stringify(projects),
+        );
       }
 
-      interopStore.addLink({ sourceType: "mail", sourceId: mail.id, sourceTitle: mail.subject, targetType: "task", targetId: projectId, targetTitle: projectName, relation: "project_source" });
+      interopStore.addLink({
+        sourceType: "mail",
+        sourceId: mail.id,
+        sourceTitle: mail.subject,
+        targetType: "task",
+        targetId: projectId,
+        targetTitle: projectName,
+        relation: "project_source",
+      });
       toast.success(`Projet « ${projectName} » créé`);
       onOpenChange(false);
     } catch {
       toast.error("Impossible de créer le projet");
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -74,16 +116,34 @@ export function EmailThreadToProjectDialog({ open, onOpenChange, mail }: Props) 
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label>Nom du projet *</Label>
-            <Input value={projectName} onChange={e => setProjectName(e.target.value)} placeholder="Mon nouveau projet" autoFocus />
+            <Input
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              placeholder="Mon nouveau projet"
+              autoFocus
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Description</Label>
-            <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Description optionnelle" />
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Description optionnelle"
+            />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Annuler</Button>
-          <Button onClick={handleCreate} disabled={saving || !projectName.trim()}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={saving}
+          >
+            Annuler
+          </Button>
+          <Button
+            onClick={handleCreate}
+            disabled={saving || !projectName.trim()}
+          >
             {saving ? "Création…" : "Créer le projet"}
           </Button>
         </DialogFooter>
@@ -93,27 +153,45 @@ export function EmailThreadToProjectDialog({ open, onOpenChange, mail }: Props) 
 }
 
 /** Feature 27: small indicator component for linking a draft to a project */
-export function DraftProjectLink({ draftId, className }: { draftId: string; className?: string }) {
+export function DraftProjectLink({
+  draftId,
+  className,
+}: {
+  draftId: string;
+  className?: string;
+}) {
   const [projectId, setProjectId] = useState<string | null>(() => {
     const links = interopStore.getLinksBySource("mail", draftId);
-    return links.find(l => l.relation === "draft_project")?.targetId ?? null;
+    return links.find((l) => l.relation === "draft_project")?.targetId ?? null;
   });
 
   const localProjects: { id: string; name: string }[] = JSON.parse(
-    typeof window !== "undefined" ? (localStorage.getItem("interop:local_projects") || "[]") : "[]"
+    typeof window !== "undefined"
+      ? localStorage.getItem("interop:local_projects") || "[]"
+      : "[]",
   );
 
-  const linked = localProjects.find(p => p.id === projectId);
+  const linked = localProjects.find((p) => p.id === projectId);
 
   const handleLink = (id: string, name: string) => {
-    interopStore.addLink({ sourceType: "mail", sourceId: draftId, sourceTitle: "Brouillon", targetType: "task", targetId: id, targetTitle: name, relation: "draft_project" });
+    interopStore.addLink({
+      sourceType: "mail",
+      sourceId: draftId,
+      sourceTitle: "Brouillon",
+      targetType: "task",
+      targetId: id,
+      targetTitle: name,
+      relation: "draft_project",
+    });
     setProjectId(id);
     toast.success(`Brouillon lié au projet « ${name} »`);
   };
 
   if (linked) {
     return (
-      <div className={`flex items-center gap-1.5 text-xs text-muted-foreground ${className}`}>
+      <div
+        className={`flex items-center gap-1.5 text-xs text-muted-foreground ${className}`}
+      >
         <Link2 className="h-3 w-3" />
         Lié au projet : <strong>{linked.name}</strong>
       </div>
@@ -126,10 +204,19 @@ export function DraftProjectLink({ draftId, className }: { draftId: string; clas
     <select
       className={`text-xs border border-border rounded px-2 py-1 bg-background ${className}`}
       defaultValue=""
-      onChange={e => { const p = localProjects.find(x => x.id === e.target.value); if (p) handleLink(p.id, p.name); }}
+      onChange={(e) => {
+        const p = localProjects.find((x) => x.id === e.target.value);
+        if (p) handleLink(p.id, p.name);
+      }}
     >
-      <option value="" disabled>Lier à un projet…</option>
-      {localProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+      <option value="" disabled>
+        Lier à un projet…
+      </option>
+      {localProjects.map((p) => (
+        <option key={p.id} value={p.id}>
+          {p.name}
+        </option>
+      ))}
     </select>
   );
 }

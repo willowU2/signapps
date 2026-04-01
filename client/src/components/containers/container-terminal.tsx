@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { RotateCcw, Maximize2, Minimize2, Circle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { RotateCcw, Maximize2, Minimize2, Circle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-import { CONTAINERS_URL } from '@/lib/api/core';
+import { CONTAINERS_URL } from "@/lib/api/core";
 interface ContainerTerminalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -20,7 +20,7 @@ interface ContainerTerminalProps {
   containerName: string;
 }
 
-type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
+type ConnectionStatus = "connecting" | "connected" | "disconnected" | "error";
 
 export function ContainerTerminal({
   open,
@@ -32,14 +32,14 @@ export function ContainerTerminal({
   const terminalInstanceRef = useRef<any>(null);
   const fitAddonRef = useRef<any>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const [status, setStatus] = useState<ConnectionStatus>('disconnected');
+  const [status, setStatus] = useState<ConnectionStatus>("disconnected");
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Get WebSocket URL from environment
   const getWsUrl = useCallback(() => {
     const containersUrl = CONTAINERS_URL;
     // Convert HTTP to WS
-    const wsUrl = containersUrl.replace(/^http/, 'ws');
+    const wsUrl = containersUrl.replace(/^http/, "ws");
     return `${wsUrl}/containers/${containerId}/exec`;
   }, [containerId]);
 
@@ -48,42 +48,43 @@ export function ContainerTerminal({
     if (!terminalRef.current || terminalInstanceRef.current) return;
 
     // Dynamically import xterm to avoid SSR issues
-    const { Terminal } = await import('xterm');
-    const { FitAddon } = await import('@xterm/addon-fit');
-    const { WebLinksAddon } = await import('@xterm/addon-web-links');
+    const { Terminal } = await import("xterm");
+    const { FitAddon } = await import("@xterm/addon-fit");
+    const { WebLinksAddon } = await import("@xterm/addon-web-links");
 
     // Import xterm CSS - using require to avoid TypeScript module resolution issues
     // @ts-ignore -- xterm CSS import has no type declaration; safe to ignore at runtime
-    await import('xterm/css/xterm.css').catch(() => {});
+    await import("xterm/css/xterm.css").catch(() => {});
 
     const terminal = new Terminal({
       cursorBlink: true,
-      cursorStyle: 'block',
+      cursorStyle: "block",
       fontSize: 14,
-      fontFamily: '"Cascadia Code", "Fira Code", "JetBrains Mono", Consolas, Monaco, monospace',
+      fontFamily:
+        '"Cascadia Code", "Fira Code", "JetBrains Mono", Consolas, Monaco, monospace',
       theme: {
-        background: '#1a1b26',
-        foreground: '#a9b1d6',
-        cursor: '#c0caf5',
-        cursorAccent: '#1a1b26',
-        selectionBackground: '#33467c',
-        selectionForeground: '#a9b1d6',
-        black: '#32344a',
-        red: '#f7768e',
-        green: '#9ece6a',
-        yellow: '#e0af68',
-        blue: '#7aa2f7',
-        magenta: '#bb9af7',
-        cyan: '#7dcfff',
-        white: '#a9b1d6',
-        brightBlack: '#444b6a',
-        brightRed: '#ff7a93',
-        brightGreen: '#b9f27c',
-        brightYellow: '#ff9e64',
-        brightBlue: '#7da6ff',
-        brightMagenta: '#c0a6ff',
-        brightCyan: '#0db9d7',
-        brightWhite: '#c0caf5',
+        background: "#1a1b26",
+        foreground: "#a9b1d6",
+        cursor: "#c0caf5",
+        cursorAccent: "#1a1b26",
+        selectionBackground: "#33467c",
+        selectionForeground: "#a9b1d6",
+        black: "#32344a",
+        red: "#f7768e",
+        green: "#9ece6a",
+        yellow: "#e0af68",
+        blue: "#7aa2f7",
+        magenta: "#bb9af7",
+        cyan: "#7dcfff",
+        white: "#a9b1d6",
+        brightBlack: "#444b6a",
+        brightRed: "#ff7a93",
+        brightGreen: "#b9f27c",
+        brightYellow: "#ff9e64",
+        brightBlue: "#7da6ff",
+        brightMagenta: "#c0a6ff",
+        brightCyan: "#0db9d7",
+        brightWhite: "#c0caf5",
       },
       allowTransparency: false,
       scrollback: 5000,
@@ -103,9 +104,11 @@ export function ContainerTerminal({
     fitAddonRef.current = fitAddon;
 
     // Welcome message
-    terminal.writeln('\x1b[1;34m=== SignApps Container Terminal ===\x1b[0m');
-    terminal.writeln(`\x1b[90mConnecting to container: ${containerName}...\x1b[0m`);
-    terminal.writeln('');
+    terminal.writeln("\x1b[1;34m=== SignApps Container Terminal ===\x1b[0m");
+    terminal.writeln(
+      `\x1b[90mConnecting to container: ${containerName}...\x1b[0m`,
+    );
+    terminal.writeln("");
   }, [containerName]);
 
   // Connect to WebSocket
@@ -119,8 +122,8 @@ export function ContainerTerminal({
       wsRef.current.close();
     }
 
-    setStatus('connecting');
-    terminal.writeln('\x1b[33mConnecting...\x1b[0m');
+    setStatus("connecting");
+    terminal.writeln("\x1b[33mConnecting...\x1b[0m");
 
     const wsUrl = getWsUrl();
 
@@ -129,14 +132,14 @@ export function ContainerTerminal({
       wsRef.current = ws;
 
       ws.onopen = () => {
-        setStatus('connected');
-        terminal.writeln('\x1b[32mConnecté!\x1b[0m');
-        terminal.writeln('');
+        setStatus("connected");
+        terminal.writeln("\x1b[32mConnecté!\x1b[0m");
+        terminal.writeln("");
         terminal.focus();
       };
 
       ws.onmessage = (event) => {
-        if (typeof event.data === 'string') {
+        if (typeof event.data === "string") {
           terminal.write(event.data);
         } else if (event.data instanceof Blob) {
           event.data.text().then((text) => {
@@ -146,8 +149,8 @@ export function ContainerTerminal({
       };
 
       ws.onclose = (event) => {
-        setStatus('disconnected');
-        terminal.writeln('');
+        setStatus("disconnected");
+        terminal.writeln("");
         terminal.writeln(`\x1b[33mDéconnecté (code: ${event.code})\x1b[0m`);
         if (event.reason) {
           terminal.writeln(`\x1b[90mReason: ${event.reason}\x1b[0m`);
@@ -155,8 +158,8 @@ export function ContainerTerminal({
       };
 
       ws.onerror = () => {
-        setStatus('error');
-        terminal.writeln('\x1b[31mConnection error\x1b[0m');
+        setStatus("error");
+        terminal.writeln("\x1b[31mConnection error\x1b[0m");
       };
 
       // Send terminal input to WebSocket
@@ -165,22 +168,25 @@ export function ContainerTerminal({
           ws.send(data);
         }
       });
-
     } catch (error) {
-      setStatus('error');
+      setStatus("error");
       terminal.writeln(`\x1b[31mFailed to connect: ${error}\x1b[0m`);
     }
   }, [getWsUrl]);
 
   // Send resize event to server
   const sendResize = useCallback(() => {
-    if (!terminalInstanceRef.current || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+    if (
+      !terminalInstanceRef.current ||
+      !wsRef.current ||
+      wsRef.current.readyState !== WebSocket.OPEN
+    ) {
       return;
     }
 
     const terminal = terminalInstanceRef.current;
     const resizeMessage = JSON.stringify({
-      type: 'resize',
+      type: "resize",
       cols: terminal.cols,
       rows: terminal.rows,
     });
@@ -196,8 +202,8 @@ export function ContainerTerminal({
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [sendResize]);
 
   // Initialize when dialog opens
@@ -224,7 +230,7 @@ export function ContainerTerminal({
         terminalInstanceRef.current = null;
       }
       fitAddonRef.current = null;
-      setStatus('disconnected');
+      setStatus("disconnected");
     }
   }, [open]);
 
@@ -241,36 +247,40 @@ export function ContainerTerminal({
   const handleReconnect = () => {
     if (terminalInstanceRef.current) {
       terminalInstanceRef.current.clear();
-      terminalInstanceRef.current.writeln('\x1b[1;34m=== SignApps Container Terminal ===\x1b[0m');
-      terminalInstanceRef.current.writeln(`\x1b[90mReconnecting to container: ${containerName}...\x1b[0m`);
-      terminalInstanceRef.current.writeln('');
+      terminalInstanceRef.current.writeln(
+        "\x1b[1;34m=== SignApps Container Terminal ===\x1b[0m",
+      );
+      terminalInstanceRef.current.writeln(
+        `\x1b[90mReconnecting to container: ${containerName}...\x1b[0m`,
+      );
+      terminalInstanceRef.current.writeln("");
     }
     connect();
   };
 
   const getStatusColor = (s: ConnectionStatus) => {
     switch (s) {
-      case 'connected':
-        return 'bg-green-500';
-      case 'connecting':
-        return 'bg-yellow-500 animate-pulse';
-      case 'error':
-        return 'bg-red-500';
+      case "connected":
+        return "bg-green-500";
+      case "connecting":
+        return "bg-yellow-500 animate-pulse";
+      case "error":
+        return "bg-red-500";
       default:
-        return 'bg-gray-500';
+        return "bg-gray-500";
     }
   };
 
   const getStatusText = (s: ConnectionStatus) => {
     switch (s) {
-      case 'connected':
-        return 'Connecté';
-      case 'connecting':
-        return 'Connecting...';
-      case 'error':
-        return 'Error';
+      case "connected":
+        return "Connecté";
+      case "connecting":
+        return "Connecting...";
+      case "error":
+        return "Error";
       default:
-        return 'Déconnecté';
+        return "Déconnecté";
     }
   };
 
@@ -278,10 +288,10 @@ export function ContainerTerminal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          'flex flex-col p-0 gap-0 bg-[#1a1b26] border-gray-700',
+          "flex flex-col p-0 gap-0 bg-[#1a1b26] border-gray-700",
           isFullscreen
-            ? 'max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] rounded-none'
-            : 'max-w-4xl w-[90vw] h-[70vh] max-h-[70vh]'
+            ? "max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] rounded-none"
+            : "max-w-4xl w-[90vw] h-[70vh] max-h-[70vh]",
         )}
         showCloseButton={false}
       >
@@ -294,19 +304,24 @@ export function ContainerTerminal({
               <Badge
                 variant="outline"
                 className={cn(
-                  'flex items-center gap-1.5 text-xs border-gray-600',
-                  status === 'connected' && 'border-green-500/50 text-green-400',
-                  status === 'connecting' && 'border-yellow-500/50 text-yellow-400',
-                  status === 'error' && 'border-red-500/50 text-red-400',
-                  status === 'disconnected' && 'border-gray-500/50 text-gray-400'
+                  "flex items-center gap-1.5 text-xs border-gray-600",
+                  status === "connected" &&
+                    "border-green-500/50 text-green-400",
+                  status === "connecting" &&
+                    "border-yellow-500/50 text-yellow-400",
+                  status === "error" && "border-red-500/50 text-red-400",
+                  status === "disconnected" &&
+                    "border-gray-500/50 text-gray-400",
                 )}
               >
-                <Circle className={cn('h-2 w-2 fill-current', getStatusColor(status))} />
+                <Circle
+                  className={cn("h-2 w-2 fill-current", getStatusColor(status))}
+                />
                 {getStatusText(status)}
               </Badge>
             </div>
             <div className="flex items-center gap-2">
-              {status !== 'connected' && status !== 'connecting' && (
+              {status !== "connected" && status !== "connecting" && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -345,8 +360,8 @@ export function ContainerTerminal({
           ref={terminalRef}
           className="flex-1 min-h-0 p-2"
           style={{
-            backgroundColor: '#1a1b26',
-            overflow: 'hidden',
+            backgroundColor: "#1a1b26",
+            overflow: "hidden",
           }}
         />
       </DialogContent>

@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useState, useRef, useCallback } from 'react';
-import { Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { storageApi } from '@/lib/api';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { useState, useRef, useCallback } from "react";
+import { Upload, X, CheckCircle, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { storageApi } from "@/lib/api";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-import { STORAGE_URL } from '@/lib/api/core';
+import { STORAGE_URL } from "@/lib/api/core";
 interface UploadFile {
   id: string;
   file: File;
   progress: number;
-  status: 'pending' | 'uploading' | 'success' | 'error';
+  status: "pending" | "uploading" | "success" | "error";
   error?: string;
 }
 
@@ -45,7 +45,7 @@ export function DropZone({
   bucket,
   prefix,
   onUploadComplete,
-  acceptedTypes = '*',
+  acceptedTypes = "*",
   maxFileSize = 10 * 1024 * 1024, // 10 MB default
   children,
   className,
@@ -53,9 +53,7 @@ export function DropZone({
   const [isDragging, setIsDragging] = useState(false);
   const [uploads, setUploads] = useState<UploadFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const abortControllersRef = useRef<Map<string, AbortController>>(
-    new Map()
-  );
+  const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
 
   const handleFiles = useCallback(
     async (files: File[]) => {
@@ -63,7 +61,7 @@ export function DropZone({
         id: Math.random().toString(36).substr(2, 9),
         file,
         progress: 0,
-        status: 'pending',
+        status: "pending",
       }));
 
       setUploads((prev) => [...prev, ...newUploads]);
@@ -74,7 +72,7 @@ export function DropZone({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [bucket, prefix]
+    [bucket, prefix],
   );
 
   const uploadFile = async (upload: UploadFile) => {
@@ -84,12 +82,12 @@ export function DropZone({
         prev.map((u) =>
           u.id === upload.id
             ? {
-              ...u,
-              status: 'error',
-              error: `File size exceeds ${Math.round(maxFileSize / 1024 / 1024)} MB limit`,
-            }
-            : u
-        )
+                ...u,
+                status: "error",
+                error: `File size exceeds ${Math.round(maxFileSize / 1024 / 1024)} MB limit`,
+              }
+            : u,
+        ),
       );
       toast.error(`File too large: ${upload.file.name}`);
       return;
@@ -97,8 +95,8 @@ export function DropZone({
 
     setUploads((prev) =>
       prev.map((u) =>
-        u.id === upload.id ? { ...u, status: 'uploading', progress: 0 } : u
-      )
+        u.id === upload.id ? { ...u, status: "uploading", progress: 0 } : u,
+      ),
     );
 
     try {
@@ -107,35 +105,35 @@ export function DropZone({
 
       // Create a wrapper around XMLHttpRequest to track progress
       const formData = new FormData();
-      formData.append('file', upload.file);
+      formData.append("file", upload.file);
       if (prefix) {
-        formData.append('path', prefix);
+        formData.append("path", prefix);
       }
 
       // Use axios with onUploadProgress if possible, or fallback to XMLHttpRequest
       const xhr = new XMLHttpRequest();
       let completed = false;
 
-      xhr.upload.addEventListener('progress', (e) => {
+      xhr.upload.addEventListener("progress", (e) => {
         if (e.lengthComputable) {
           const percentComplete = (e.loaded / e.total) * 100;
           setUploads((prev) =>
             prev.map((u) =>
-              u.id === upload.id ? { ...u, progress: percentComplete } : u
-            )
+              u.id === upload.id ? { ...u, progress: percentComplete } : u,
+            ),
           );
         }
       });
 
-      xhr.addEventListener('load', () => {
+      xhr.addEventListener("load", () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           completed = true;
           setUploads((prev) =>
             prev.map((u) =>
               u.id === upload.id
-                ? { ...u, status: 'success', progress: 100 }
-                : u
-            )
+                ? { ...u, status: "success", progress: 100 }
+                : u,
+            ),
           );
           toast.success(`Uploaded: ${upload.file.name}`);
         } else {
@@ -143,41 +141,41 @@ export function DropZone({
             prev.map((u) =>
               u.id === upload.id
                 ? {
-                  ...u,
-                  status: 'error',
-                  error: `Échec du téléversement (${xhr.status})`,
-                }
-                : u
-            )
+                    ...u,
+                    status: "error",
+                    error: `Échec du téléversement (${xhr.status})`,
+                  }
+                : u,
+            ),
           );
           toast.error(`Failed to upload: ${upload.file.name}`);
         }
       });
 
-      xhr.addEventListener('error', () => {
+      xhr.addEventListener("error", () => {
         setUploads((prev) =>
           prev.map((u) =>
             u.id === upload.id
-              ? { ...u, status: 'error', error: 'Erreur réseau' }
-              : u
-          )
+              ? { ...u, status: "error", error: "Erreur réseau" }
+              : u,
+          ),
         );
         toast.error(`Erreur réseau uploading: ${upload.file.name}`);
       });
 
-      xhr.addEventListener('abort', () => {
+      xhr.addEventListener("abort", () => {
         if (!completed) {
           setUploads((prev) =>
             prev.map((u) =>
               u.id === upload.id
-                ? { ...u, status: 'error', error: 'Upload cancelled' }
-                : u
-            )
+                ? { ...u, status: "error", error: "Upload cancelled" }
+                : u,
+            ),
           );
         }
       });
 
-      xhr.open('POST', `${STORAGE_URL}/files/${bucket}`);
+      xhr.open("POST", `${STORAGE_URL}/files/${bucket}`);
       xhr.withCredentials = true; // Send HttpOnly cookies for auth
 
       xhr.send(formData);
@@ -188,22 +186,18 @@ export function DropZone({
         prev.map((u) =>
           u.id === upload.id
             ? {
-              ...u,
-              status: 'error',
-              error: error instanceof Error ? error.message : 'Unknown error',
-            }
-            : u
-        )
+                ...u,
+                status: "error",
+                error: error instanceof Error ? error.message : "Unknown error",
+              }
+            : u,
+        ),
       );
       toast.error(`Error uploading: ${upload.file.name}`);
     }
 
     // Call completion callback if all uploads are done
-    if (
-      uploads.every((u) =>
-        ['success', 'error'].includes(u.status)
-      )
-    ) {
+    if (uploads.every((u) => ["success", "error"].includes(u.status))) {
       onUploadComplete?.();
     }
   };
@@ -218,7 +212,7 @@ export function DropZone({
   };
 
   const clearCompleted = () => {
-    setUploads((prev) => prev.filter((u) => u.status !== 'success'));
+    setUploads((prev) => prev.filter((u) => u.status !== "success"));
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -243,19 +237,21 @@ export function DropZone({
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.currentTarget.files ? Array.from(e.currentTarget.files) : [];
+    const files = e.currentTarget.files
+      ? Array.from(e.currentTarget.files)
+      : [];
     handleFiles(files);
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
   const hasActiveUploads = uploads.some((u) =>
-    ['pending', 'uploading'].includes(u.status)
+    ["pending", "uploading"].includes(u.status),
   );
-  const hasCompletedUploads = uploads.some((u) => u.status === 'success');
-  const successCount = uploads.filter((u) => u.status === 'success').length;
-  const errorCount = uploads.filter((u) => u.status === 'error').length;
+  const hasCompletedUploads = uploads.some((u) => u.status === "success");
+  const successCount = uploads.filter((u) => u.status === "success").length;
+  const errorCount = uploads.filter((u) => u.status === "error").length;
 
   return (
     <div
@@ -274,7 +270,7 @@ export function DropZone({
             "flex flex-col items-center justify-center p-8 text-center transition-all",
             children
               ? "absolute inset-0 bg-background/80 z-50 border-2 border-dashed border-primary rounded-lg backdrop-blur-sm"
-              : `border-2 border-dashed rounded-lg ${isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-muted-foreground/50'}`
+              : `border-2 border-dashed rounded-lg ${isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-muted-foreground/50"}`,
           )}
         >
           <input
@@ -291,9 +287,7 @@ export function DropZone({
             <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
             <div>
               <p className="font-medium">
-                {isDragging
-                  ? 'Drop files here'
-                  : 'Drag & drop files here'}
+                {isDragging ? "Drop files here" : "Drag & drop files here"}
               </p>
               {!isDragging && (
                 <p className="text-sm text-muted-foreground">
@@ -326,14 +320,16 @@ export function DropZone({
 
       {/* Upload Progress Overlay/Card */}
       {uploads.length > 0 && (
-        <div className={cn(
-          children ? "fixed bottom-6 right-6 w-96 z-50 shadow-lg" : "mt-4"
-        )}>
+        <div
+          className={cn(
+            children ? "fixed bottom-6 right-6 w-96 z-50 shadow-lg" : "mt-4",
+          )}
+        >
           <Card>
             <CardHeader className="pb-3 py-3 px-4 bg-muted/30">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium">
-                  Uploads{' '}
+                  Uploads{" "}
                   {successCount > 0 && (
                     <span className="text-green-600">({successCount})</span>
                   )}
@@ -361,7 +357,10 @@ export function DropZone({
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate" title={upload.file.name}>
+                      <p
+                        className="text-xs font-medium truncate"
+                        title={upload.file.name}
+                      >
                         {upload.file.name}
                       </p>
                       <p className="text-[10px] text-muted-foreground">
@@ -369,16 +368,22 @@ export function DropZone({
                       </p>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      {upload.status === 'uploading' && (
-                        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3.5 w-3.5  text-blue-500" />
+                      {upload.status === "uploading" && (
+                        <SpinnerInfinity
+                          size={24}
+                          secondaryColor="rgba(128,128,128,0.2)"
+                          color="currentColor"
+                          speed={120}
+                          className="h-3.5 w-3.5  text-blue-500"
+                        />
                       )}
-                      {upload.status === 'success' && (
+                      {upload.status === "success" && (
                         <CheckCircle className="h-3.5 w-3.5 text-green-500" />
                       )}
-                      {upload.status === 'error' && (
+                      {upload.status === "error" && (
                         <AlertCircle className="h-3.5 w-3.5 text-red-500" />
                       )}
-                      {['pending', 'uploading'].includes(upload.status) && (
+                      {["pending", "uploading"].includes(upload.status) && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -391,11 +396,11 @@ export function DropZone({
                     </div>
                   </div>
 
-                  {['pending', 'uploading'].includes(upload.status) && (
+                  {["pending", "uploading"].includes(upload.status) && (
                     <Progress value={upload.progress} className="h-1" />
                   )}
 
-                  {upload.status === 'error' && upload.error && (
+                  {upload.status === "error" && upload.error && (
                     <p className="text-[10px] text-red-600">{upload.error}</p>
                   )}
                 </div>

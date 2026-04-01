@@ -4,10 +4,10 @@
  * Client for signapps-metrics service (port 3008).
  * Covers: system metrics, analytics, experiments, ESG.
  */
-import { getClient, ServiceName } from './factory';
-import { schedulerApiClient as schedulerClient } from './core';
+import { getClient, ServiceName } from "./factory";
+import { schedulerApiClient as schedulerClient } from "./core";
 
-import { METRICS_URL } from '@/lib/api/core';
+import { METRICS_URL } from "@/lib/api/core";
 const metricsClient = getClient(ServiceName.METRICS);
 
 // ============================================================================
@@ -35,10 +35,14 @@ export interface MetricsQuery {
 // Legacy scheduler metrics (kept for backwards compat)
 export const schedulerMetricsApi = {
   getWorkload: (params?: MetricsQuery) =>
-    schedulerClient.get<WorkloadMetrics>('/metrics/workload', { params }).then((res: any) => res.data),
+    schedulerClient
+      .get<WorkloadMetrics>("/metrics/workload", { params })
+      .then((res: any) => res.data),
 
   getResources: () =>
-    schedulerClient.get<ResourceMetrics>('/metrics/resources').then((res: any) => res.data),
+    schedulerClient
+      .get<ResourceMetrics>("/metrics/resources")
+      .then((res: any) => res.data),
 };
 
 // ============================================================================
@@ -153,19 +157,19 @@ export interface UserEventsBatchPayload {
 export const metricsApi = {
   // User event tracking
   track: (payload: UserEventPayload) =>
-    metricsClient.post('/metrics/track', payload),
+    metricsClient.post("/metrics/track", payload),
 
   trackBatch: (payload: UserEventsBatchPayload) =>
-    metricsClient.post('/metrics/track/batch', payload),
+    metricsClient.post("/metrics/track/batch", payload),
   // Admin analytics — requires admin role
   analyticsOverview: () =>
-    metricsClient.get<AnalyticsOverview>('/admin/analytics/overview'),
+    metricsClient.get<AnalyticsOverview>("/admin/analytics/overview"),
 
   analyticsStorage: () =>
-    metricsClient.get<StorageByUser[]>('/admin/analytics/storage'),
+    metricsClient.get<StorageByUser[]>("/admin/analytics/storage"),
 
   analyticsActivity: () =>
-    metricsClient.get<ActivityPoint[]>('/admin/analytics/activity'),
+    metricsClient.get<ActivityPoint[]>("/admin/analytics/activity"),
 
   // System metrics SSE stream — GET /api/v1/system/stream
   // Returns the raw URL so callers can open an EventSource
@@ -176,26 +180,22 @@ export const metricsApi = {
 
   // A/B Experiments
   experiments: {
-    list: () =>
-      metricsClient.get<Experiment[]>('/experiments'),
+    list: () => metricsClient.get<Experiment[]>("/experiments"),
     create: (data: CreateExperimentRequest) =>
-      metricsClient.post<Experiment>('/experiments', data),
+      metricsClient.post<Experiment>("/experiments", data),
     update: (id: string, data: UpdateExperimentRequest) =>
       metricsClient.put<Experiment>(`/experiments/${id}`, data),
-    delete: (id: string) =>
-      metricsClient.delete(`/experiments/${id}`),
+    delete: (id: string) => metricsClient.delete(`/experiments/${id}`),
   },
 
   // ESG
   esg: {
-    scores: () =>
-      metricsClient.get<EsgScore[]>('/esg/scores'),
+    scores: () => metricsClient.get<EsgScore[]>("/esg/scores"),
     upsertScore: (data: UpsertEsgScoreRequest) =>
-      metricsClient.put<EsgScore>('/esg/scores', data),
-    quarterly: () =>
-      metricsClient.get<EsgQuarterly[]>('/esg/quarterly'),
+      metricsClient.put<EsgScore>("/esg/scores", data),
+    quarterly: () => metricsClient.get<EsgQuarterly[]>("/esg/quarterly"),
     upsertQuarterly: (data: UpsertEsgQuarterlyRequest) =>
-      metricsClient.put<EsgQuarterly>('/esg/quarterly', data),
+      metricsClient.put<EsgQuarterly>("/esg/quarterly", data),
   },
 };
 

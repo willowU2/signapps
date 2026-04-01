@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-import { IDENTITY_URL } from '@/lib/api/core';
+import { IDENTITY_URL } from "@/lib/api/core";
 // ---------------------------------------------------------------------------
 // Types (mirror backend domain types)
 // ---------------------------------------------------------------------------
@@ -75,8 +75,8 @@ function StepIndicator({
               i < current
                 ? "bg-primary text-primary-foreground"
                 : i === current
-                ? "bg-primary text-primary-foreground ring-2 ring-offset-2 ring-primary"
-                : "bg-muted text-muted-foreground"
+                  ? "bg-primary text-primary-foreground ring-2 ring-offset-2 ring-primary"
+                  : "bg-muted text-muted-foreground"
             }`}
           >
             {i + 1}
@@ -88,9 +88,7 @@ function StepIndicator({
           >
             {label}
           </span>
-          {i < steps.length - 1 && (
-            <div className="mx-1 h-px w-8 bg-border" />
-          )}
+          {i < steps.length - 1 && <div className="mx-1 h-px w-8 bg-border" />}
         </div>
       ))}
     </div>
@@ -113,7 +111,7 @@ export function MigrationWizard() {
 
   // Step 3 — what to import
   const [selected, setSelected] = useState<Set<ImportOptionId>>(
-    new Set(["mail", "calendar", "contacts", "files"])
+    new Set(["mail", "calendar", "contacts", "files"]),
   );
 
   // Step 4 — result
@@ -200,7 +198,10 @@ export function MigrationWizard() {
         <div className="space-y-4">
           <p className="text-sm font-medium">
             Enter connection details for{" "}
-            <span className="text-primary">{source ? SOURCE_LABELS[source] : ""}</span>:
+            <span className="text-primary">
+              {source ? SOURCE_LABELS[source] : ""}
+            </span>
+            :
           </p>
           <div className="space-y-2">
             <Label htmlFor="admin-email">Admin e-mail</Label>

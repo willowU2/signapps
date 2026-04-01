@@ -1,77 +1,105 @@
-"use client"
+"use client";
 
 // PX3: Multi-step deployment wizard (template generation + image selection)
 // PX4: Live deployment progress tracking
 
-import { useState, useEffect, useCallback } from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { AppLayout } from "@/components/layout/app-layout"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
+import { useState, useEffect, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { AppLayout } from "@/components/layout/app-layout";
 import {
-  ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Download,
-  Upload, HardDrive, Cpu, Globe, Package, RefreshCw, Plus, Trash2, Wand2,
-} from "lucide-react"
-import { toast } from "sonner"
-import { pxeApi, PxeProfile } from "@/lib/api/pxe"
-import { getClient, ServiceName } from "@/lib/api/factory"
-import { usePageTitle } from "@/hooks/use-page-title"
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle2,
+  AlertCircle,
+  Download,
+  Upload,
+  HardDrive,
+  Cpu,
+  Globe,
+  Package,
+  RefreshCw,
+  Plus,
+  Trash2,
+  Wand2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { pxeApi, PxeProfile } from "@/lib/api/pxe";
+import { getClient, ServiceName } from "@/lib/api/factory";
+import { usePageTitle } from "@/hooks/use-page-title";
 
-import { PXE_URL } from '@/lib/api/core';
-const client = getClient(ServiceName.PXE)
+import { PXE_URL } from "@/lib/api/core";
+const client = getClient(ServiceName.PXE);
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface PxeImage {
-  id: string
-  name: string
-  os_type: string
-  os_version?: string
-  image_type: string
-  file_path: string
-  file_size?: number
-  file_hash?: string
-  description?: string
-  created_at: string
+  id: string;
+  name: string;
+  os_type: string;
+  os_version?: string;
+  image_type: string;
+  file_path: string;
+  file_size?: number;
+  file_hash?: string;
+  description?: string;
+  created_at: string;
 }
 
 interface PxeDeployment {
-  id: string
-  asset_mac: string
-  profile_id?: string
-  status: string
-  progress: number
-  current_step?: string
-  started_at?: string
-  completed_at?: string
-  error_message?: string
-  created_at: string
-  updated_at: string
+  id: string;
+  asset_mac: string;
+  profile_id?: string;
+  status: string;
+  progress: number;
+  current_step?: string;
+  started_at?: string;
+  completed_at?: string;
+  error_message?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface TemplateUser {
-  username: string
-  password_hash?: string
-  sudo?: boolean
+  username: string;
+  password_hash?: string;
+  sudo?: boolean;
 }
 
-type WizardStep = "os" | "network" | "disk" | "users" | "packages" | "review"
+type WizardStep = "os" | "network" | "disk" | "users" | "packages" | "review";
 
 const STEPS: { id: WizardStep; label: string; icon: React.ReactNode }[] = [
   { id: "os", label: "Système", icon: <Cpu className="h-4 w-4" /> },
   { id: "network", label: "Réseau", icon: <Globe className="h-4 w-4" /> },
   { id: "disk", label: "Disque", icon: <HardDrive className="h-4 w-4" /> },
-  { id: "users", label: "Utilisateurs", icon: <CheckCircle2 className="h-4 w-4" /> },
+  {
+    id: "users",
+    label: "Utilisateurs",
+    icon: <CheckCircle2 className="h-4 w-4" />,
+  },
   { id: "packages", label: "Paquets", icon: <Package className="h-4 w-4" /> },
   { id: "review", label: "Révision", icon: <Wand2 className="h-4 w-4" /> },
-]
+];
 
 const OS_TYPES = [
   { value: "ubuntu", label: "Ubuntu", format: "Preseed" },
@@ -79,45 +107,45 @@ const OS_TYPES = [
   { value: "rhel", label: "RHEL / Rocky / Alma", format: "Kickstart" },
   { value: "centos", label: "CentOS", format: "Kickstart" },
   { value: "windows", label: "Windows", format: "Unattend.xml" },
-]
+];
 
 const DISK_LAYOUTS = [
   { value: "auto", label: "Automatique (simple)" },
   { value: "lvm", label: "LVM (recommandé)" },
   { value: "custom", label: "Personnalisé" },
-]
+];
 
 // ─── Upload Dialog ────────────────────────────────────────────────────────────
 
 function ImageUploader({ onUploaded }: { onUploaded: () => void }) {
-  const [file, setFile] = useState<File | null>(null)
-  const [name, setName] = useState("")
-  const [osType, setOsType] = useState("linux")
-  const [imageType, setImageType] = useState("kernel")
-  const [uploading, setUploading] = useState(false)
+  const [file, setFile] = useState<File | null>(null);
+  const [name, setName] = useState("");
+  const [osType, setOsType] = useState("linux");
+  const [imageType, setImageType] = useState("kernel");
+  const [uploading, setUploading] = useState(false);
 
   const handleUpload = async () => {
-    if (!file) return
-    setUploading(true)
+    if (!file) return;
+    setUploading(true);
     try {
-      const form = new FormData()
-      form.append("file", file)
-      form.append("name", name || file.name)
-      form.append("os_type", osType)
-      form.append("image_type", imageType)
+      const form = new FormData();
+      form.append("file", file);
+      form.append("name", name || file.name);
+      form.append("os_type", osType);
+      form.append("image_type", imageType);
       const res = await fetch(`${PXE_URL}/pxe/images`, {
         method: "POST",
         body: form,
-      })
-      if (!res.ok) throw new Error(await res.text())
-      toast.success("Image téléversée avec succès")
-      onUploaded()
+      });
+      if (!res.ok) throw new Error(await res.text());
+      toast.success("Image téléversée avec succès");
+      onUploaded();
     } catch (e) {
-      toast.error("Erreur upload: " + String(e))
+      toast.error("Erreur upload: " + String(e));
     } finally {
-      setUploading(false)
+      setUploading(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-3 p-4 border rounded-md bg-muted/20">
@@ -125,19 +153,32 @@ function ImageUploader({ onUploaded }: { onUploaded: () => void }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <Label className="text-xs">Fichier</Label>
-          <Input type="file" onChange={e => setFile(e.target.files?.[0] ?? null)} className="text-xs" />
+          <Input
+            type="file"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            className="text-xs"
+          />
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Nom</Label>
-          <Input value={name} onChange={e => setName(e.target.value)} placeholder={file?.name ?? "kernel"} className="text-xs" />
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={file?.name ?? "kernel"}
+            className="text-xs"
+          />
         </div>
         <div className="space-y-1">
           <Label className="text-xs">OS type</Label>
           <Select value={osType} onValueChange={setOsType}>
-            <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="text-xs">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
-              {["linux", "windows", "esxi", "other"].map(v => (
-                <SelectItem key={v} value={v}>{v}</SelectItem>
+              {["linux", "windows", "esxi", "other"].map((v) => (
+                <SelectItem key={v} value={v}>
+                  {v}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -145,10 +186,14 @@ function ImageUploader({ onUploaded }: { onUploaded: () => void }) {
         <div className="space-y-1">
           <Label className="text-xs">Type d&apos;image</Label>
           <Select value={imageType} onValueChange={setImageType}>
-            <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="text-xs">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
-              {["kernel", "initrd", "iso", "squashfs", "other"].map(v => (
-                <SelectItem key={v} value={v}>{v}</SelectItem>
+              {["kernel", "initrd", "iso", "squashfs", "other"].map((v) => (
+                <SelectItem key={v} value={v}>
+                  {v}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -159,20 +204,20 @@ function ImageUploader({ onUploaded }: { onUploaded: () => void }) {
         {uploading ? "Téléversement..." : "Téléverser"}
       </Button>
     </div>
-  )
+  );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function PxeWizardPage() {
-  usePageTitle("Wizard PXE")
-  const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState("wizard")
-  const [currentStep, setCurrentStep] = useState<WizardStep>("os")
-  const [showUploader, setShowUploader] = useState(false)
-  const [generatedTemplate, setGeneratedTemplate] = useState<string>("")
-  const [generatedFormat, setGeneratedFormat] = useState<string>("")
-  const [generating, setGenerating] = useState(false)
+  usePageTitle("Wizard PXE");
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("wizard");
+  const [currentStep, setCurrentStep] = useState<WizardStep>("os");
+  const [showUploader, setShowUploader] = useState(false);
+  const [generatedTemplate, setGeneratedTemplate] = useState<string>("");
+  const [generatedFormat, setGeneratedFormat] = useState<string>("");
+  const [generating, setGenerating] = useState(false);
 
   // Wizard form state
   const [wizardForm, setWizardForm] = useState({
@@ -186,40 +231,42 @@ export default function PxeWizardPage() {
     packagesInput: "",
     users: [] as TemplateUser[],
     newUser: { username: "", password_hash: "", sudo: true } as TemplateUser,
-  })
+  });
 
   // ─── Queries ───────────────────────────────────────────────────────────────
 
   const { data: images, isLoading: imagesLoading } = useQuery({
     queryKey: ["pxe-images"],
-    queryFn: () => client.get<PxeImage[]>("/pxe/images").then(r => r.data),
-  })
+    queryFn: () => client.get<PxeImage[]>("/pxe/images").then((r) => r.data),
+  });
 
   const { data: deployments, isLoading: deploymentsLoading } = useQuery({
     queryKey: ["pxe-deployments"],
-    queryFn: () => client.get<PxeDeployment[]>("/pxe/deployments").then(r => r.data),
+    queryFn: () =>
+      client.get<PxeDeployment[]>("/pxe/deployments").then((r) => r.data),
     refetchInterval: 5000, // poll every 5s for live progress
-  })
+  });
 
   // ─── Image deletion ─────────────────────────────────────────────────────────
 
   const deleteImageMutation = useMutation({
-    mutationFn: (id: string) => client.delete(`/pxe/images/${id}`).then(r => r.data),
+    mutationFn: (id: string) =>
+      client.delete(`/pxe/images/${id}`).then((r) => r.data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pxe-images"] })
-      toast.success("Image supprimée")
+      queryClient.invalidateQueries({ queryKey: ["pxe-images"] });
+      toast.success("Image supprimée");
     },
     onError: () => toast.error("Erreur lors de la suppression"),
-  })
+  });
 
   // ─── Template generation ───────────────────────────────────────────────────
 
   const handleGenerateTemplate = async () => {
     if (!wizardForm.hostname) {
-      toast.error("Veuillez saisir un hostname")
-      return
+      toast.error("Veuillez saisir un hostname");
+      return;
     }
-    setGenerating(true)
+    setGenerating(true);
     try {
       const payload = {
         os_type: wizardForm.os_type,
@@ -228,48 +275,56 @@ export default function PxeWizardPage() {
         disk_layout: wizardForm.disk_layout,
         timezone: wizardForm.timezone,
         locale: wizardForm.locale,
-        packages: wizardForm.packages.length > 0 ? wizardForm.packages : undefined,
+        packages:
+          wizardForm.packages.length > 0 ? wizardForm.packages : undefined,
         users: wizardForm.users.length > 0 ? wizardForm.users : undefined,
-      }
-      const result = await client.post<{ os_type: string; format: string; content: string }>(
-        "/pxe/templates/generate",
-        payload
-      ).then(r => r.data)
-      setGeneratedTemplate(result.content)
-      setGeneratedFormat(result.format)
-      setCurrentStep("review")
+      };
+      const result = await client
+        .post<{
+          os_type: string;
+          format: string;
+          content: string;
+        }>("/pxe/templates/generate", payload)
+        .then((r) => r.data);
+      setGeneratedTemplate(result.content);
+      setGeneratedFormat(result.format);
+      setCurrentStep("review");
     } catch (e) {
-      toast.error("Erreur génération: " + String(e))
+      toast.error("Erreur génération: " + String(e));
     } finally {
-      setGenerating(false)
+      setGenerating(false);
     }
-  }
+  };
 
   const downloadTemplate = () => {
-    const blob = new Blob([generatedTemplate], { type: "text/plain" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = generatedFormat === "unattend.xml" ? "autounattend.xml" :
-      generatedFormat === "kickstart" ? "ks.cfg" : "preseed.cfg"
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+    const blob = new Blob([generatedTemplate], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download =
+      generatedFormat === "unattend.xml"
+        ? "autounattend.xml"
+        : generatedFormat === "kickstart"
+          ? "ks.cfg"
+          : "preseed.cfg";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // ─── Step navigation ───────────────────────────────────────────────────────
 
-  const stepIndex = STEPS.findIndex(s => s.id === currentStep)
-  const canGoNext = stepIndex < STEPS.length - 1
-  const canGoBack = stepIndex > 0
+  const stepIndex = STEPS.findIndex((s) => s.id === currentStep);
+  const canGoNext = stepIndex < STEPS.length - 1;
+  const canGoBack = stepIndex > 0;
 
   const nextStep = () => {
-    if (canGoNext) setCurrentStep(STEPS[stepIndex + 1].id)
-  }
+    if (canGoNext) setCurrentStep(STEPS[stepIndex + 1].id);
+  };
   const prevStep = () => {
-    if (canGoBack) setCurrentStep(STEPS[stepIndex - 1].id)
-  }
+    if (canGoBack) setCurrentStep(STEPS[stepIndex - 1].id);
+  };
 
-  const selectedOsInfo = OS_TYPES.find(o => o.value === wizardForm.os_type)
+  const selectedOsInfo = OS_TYPES.find((o) => o.value === wizardForm.os_type);
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
@@ -282,7 +337,9 @@ export default function PxeWizardPage() {
               <Wand2 className="h-6 w-6" />
               Wizard PXE
             </h1>
-            <p className="text-muted-foreground text-sm">Déploiement guidé, gestion des images et suivi en temps réel</p>
+            <p className="text-muted-foreground text-sm">
+              Déploiement guidé, gestion des images et suivi en temps réel
+            </p>
           </div>
         </div>
 
@@ -301,28 +358,38 @@ export default function PxeWizardPage() {
                 <Card>
                   <CardContent className="pt-4 space-y-1">
                     {STEPS.map((step, i) => {
-                      const isActive = step.id === currentStep
-                      const isDone = i < stepIndex
+                      const isActive = step.id === currentStep;
+                      const isDone = i < stepIndex;
                       return (
                         <button
                           key={step.id}
                           className={`w-full flex items-center gap-3 p-2 rounded-md text-sm text-left transition-colors ${
-                            isActive ? "bg-primary text-primary-foreground" :
-                            isDone ? "text-muted-foreground hover:bg-muted/40" :
-                            "text-muted-foreground/50"
+                            isActive
+                              ? "bg-primary text-primary-foreground"
+                              : isDone
+                                ? "text-muted-foreground hover:bg-muted/40"
+                                : "text-muted-foreground/50"
                           }`}
-                          onClick={() => isDone || isActive ? setCurrentStep(step.id) : undefined}
+                          onClick={() =>
+                            isDone || isActive
+                              ? setCurrentStep(step.id)
+                              : undefined
+                          }
                         >
-                          <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-xs ${
-                            isDone ? "bg-green-500 border-green-500 text-white" :
-                            isActive ? "border-primary-foreground text-primary-foreground" :
-                            "border-muted-foreground/30"
-                          }`}>
+                          <span
+                            className={`w-5 h-5 rounded-full border flex items-center justify-center text-xs ${
+                              isDone
+                                ? "bg-green-500 border-green-500 text-white"
+                                : isActive
+                                  ? "border-primary-foreground text-primary-foreground"
+                                  : "border-muted-foreground/30"
+                            }`}
+                          >
                             {isDone ? "✓" : i + 1}
                           </span>
                           {step.label}
                         </button>
-                      )
+                      );
                     })}
                   </CardContent>
                 </Card>
@@ -334,7 +401,10 @@ export default function PxeWizardPage() {
                   <CardHeader>
                     <CardTitle>{STEPS[stepIndex]?.label}</CardTitle>
                     {selectedOsInfo && currentStep !== "os" && (
-                      <CardDescription>Système: {selectedOsInfo.label} — Format: {selectedOsInfo.format}</CardDescription>
+                      <CardDescription>
+                        Système: {selectedOsInfo.label} — Format:{" "}
+                        {selectedOsInfo.format}
+                      </CardDescription>
                     )}
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -343,7 +413,7 @@ export default function PxeWizardPage() {
                         <div className="space-y-2">
                           <Label>Système d&apos;exploitation</Label>
                           <div className="grid grid-cols-2 gap-2">
-                            {OS_TYPES.map(os => (
+                            {OS_TYPES.map((os) => (
                               <div
                                 key={os.value}
                                 className={`p-3 border rounded-md cursor-pointer transition-colors ${
@@ -351,10 +421,19 @@ export default function PxeWizardPage() {
                                     ? "border-primary bg-primary/5"
                                     : "hover:bg-muted/40"
                                 }`}
-                                onClick={() => setWizardForm(f => ({ ...f, os_type: os.value }))}
+                                onClick={() =>
+                                  setWizardForm((f) => ({
+                                    ...f,
+                                    os_type: os.value,
+                                  }))
+                                }
                               >
-                                <div className="font-medium text-sm">{os.label}</div>
-                                <div className="text-xs text-muted-foreground">{os.format}</div>
+                                <div className="font-medium text-sm">
+                                  {os.label}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {os.format}
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -364,7 +443,12 @@ export default function PxeWizardPage() {
                             <Label>Timezone</Label>
                             <Input
                               value={wizardForm.timezone}
-                              onChange={e => setWizardForm(f => ({ ...f, timezone: e.target.value }))}
+                              onChange={(e) =>
+                                setWizardForm((f) => ({
+                                  ...f,
+                                  timezone: e.target.value,
+                                }))
+                              }
                               placeholder="Europe/Paris"
                             />
                           </div>
@@ -372,7 +456,12 @@ export default function PxeWizardPage() {
                             <Label>Locale</Label>
                             <Input
                               value={wizardForm.locale}
-                              onChange={e => setWizardForm(f => ({ ...f, locale: e.target.value }))}
+                              onChange={(e) =>
+                                setWizardForm((f) => ({
+                                  ...f,
+                                  locale: e.target.value,
+                                }))
+                              }
                               placeholder="fr_FR.UTF-8"
                             />
                           </div>
@@ -387,7 +476,12 @@ export default function PxeWizardPage() {
                             <Label>Hostname</Label>
                             <Input
                               value={wizardForm.hostname}
-                              onChange={e => setWizardForm(f => ({ ...f, hostname: e.target.value }))}
+                              onChange={(e) =>
+                                setWizardForm((f) => ({
+                                  ...f,
+                                  hostname: e.target.value,
+                                }))
+                              }
                               placeholder="ws-001"
                             />
                           </div>
@@ -395,7 +489,12 @@ export default function PxeWizardPage() {
                             <Label>Domaine</Label>
                             <Input
                               value={wizardForm.domain}
-                              onChange={e => setWizardForm(f => ({ ...f, domain: e.target.value }))}
+                              onChange={(e) =>
+                                setWizardForm((f) => ({
+                                  ...f,
+                                  domain: e.target.value,
+                                }))
+                              }
                               placeholder="corp.local"
                             />
                           </div>
@@ -408,7 +507,7 @@ export default function PxeWizardPage() {
                         <div className="space-y-2">
                           <Label>Schéma de partitionnement</Label>
                           <div className="grid grid-cols-1 gap-2">
-                            {DISK_LAYOUTS.map(dl => (
+                            {DISK_LAYOUTS.map((dl) => (
                               <div
                                 key={dl.value}
                                 className={`p-3 border rounded-md cursor-pointer transition-colors ${
@@ -416,9 +515,16 @@ export default function PxeWizardPage() {
                                     ? "border-primary bg-primary/5"
                                     : "hover:bg-muted/40"
                                 }`}
-                                onClick={() => setWizardForm(f => ({ ...f, disk_layout: dl.value }))}
+                                onClick={() =>
+                                  setWizardForm((f) => ({
+                                    ...f,
+                                    disk_layout: dl.value,
+                                  }))
+                                }
                               >
-                                <div className="font-medium text-sm">{dl.label}</div>
+                                <div className="font-medium text-sm">
+                                  {dl.label}
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -431,15 +537,41 @@ export default function PxeWizardPage() {
                         <div className="space-y-2">
                           <Label>Utilisateurs à créer</Label>
                           {wizardForm.users.length === 0 ? (
-                            <div className="text-sm text-muted-foreground py-2">Aucun utilisateur défini (utilisera les valeurs par défaut)</div>
+                            <div className="text-sm text-muted-foreground py-2">
+                              Aucun utilisateur défini (utilisera les valeurs
+                              par défaut)
+                            </div>
                           ) : (
                             <div className="space-y-2">
                               {wizardForm.users.map((u, i) => (
-                                <div key={i} className="flex items-center gap-3 p-2 border rounded-md">
-                                  <span className="font-medium text-sm flex-1">{u.username}</span>
-                                  {u.sudo && <Badge variant="secondary" className="text-xs">sudo</Badge>}
-                                  <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive"
-                                    onClick={() => setWizardForm(f => ({ ...f, users: f.users.filter((_, j) => j !== i) }))}>
+                                <div
+                                  key={i}
+                                  className="flex items-center gap-3 p-2 border rounded-md"
+                                >
+                                  <span className="font-medium text-sm flex-1">
+                                    {u.username}
+                                  </span>
+                                  {u.sudo && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      sudo
+                                    </Badge>
+                                  )}
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-6 w-6 text-destructive"
+                                    onClick={() =>
+                                      setWizardForm((f) => ({
+                                        ...f,
+                                        users: f.users.filter(
+                                          (_, j) => j !== i,
+                                        ),
+                                      }))
+                                    }
+                                  >
                                     <Trash2 className="h-3 w-3" />
                                   </Button>
                                 </div>
@@ -450,29 +582,60 @@ export default function PxeWizardPage() {
                             <Input
                               placeholder="username"
                               value={wizardForm.newUser.username}
-                              onChange={e => setWizardForm(f => ({ ...f, newUser: { ...f.newUser, username: e.target.value } }))}
+                              onChange={(e) =>
+                                setWizardForm((f) => ({
+                                  ...f,
+                                  newUser: {
+                                    ...f.newUser,
+                                    username: e.target.value,
+                                  },
+                                }))
+                              }
                             />
                             <Input
                               placeholder="mot de passe"
                               type="password"
                               value={wizardForm.newUser.password_hash ?? ""}
-                              onChange={e => setWizardForm(f => ({ ...f, newUser: { ...f.newUser, password_hash: e.target.value } }))}
+                              onChange={(e) =>
+                                setWizardForm((f) => ({
+                                  ...f,
+                                  newUser: {
+                                    ...f.newUser,
+                                    password_hash: e.target.value,
+                                  },
+                                }))
+                              }
                             />
                             <div className="flex items-center gap-2">
                               <input
                                 type="checkbox"
                                 checked={wizardForm.newUser.sudo ?? false}
-                                onChange={e => setWizardForm(f => ({ ...f, newUser: { ...f.newUser, sudo: e.target.checked } }))}
+                                onChange={(e) =>
+                                  setWizardForm((f) => ({
+                                    ...f,
+                                    newUser: {
+                                      ...f.newUser,
+                                      sudo: e.target.checked,
+                                    },
+                                  }))
+                                }
                               />
                               <Label className="text-sm">sudo</Label>
-                              <Button size="sm" onClick={() => {
-                                if (!wizardForm.newUser.username) return
-                                setWizardForm(f => ({
-                                  ...f,
-                                  users: [...f.users, f.newUser],
-                                  newUser: { username: "", password_hash: "", sudo: true },
-                                }))
-                              }}>
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  if (!wizardForm.newUser.username) return;
+                                  setWizardForm((f) => ({
+                                    ...f,
+                                    users: [...f.users, f.newUser],
+                                    newUser: {
+                                      username: "",
+                                      password_hash: "",
+                                      sudo: true,
+                                    },
+                                  }));
+                                }}
+                              >
                                 <Plus className="h-3 w-3" />
                               </Button>
                             </div>
@@ -489,26 +652,63 @@ export default function PxeWizardPage() {
                             <Input
                               placeholder="curl, wget, htop..."
                               value={wizardForm.packagesInput}
-                              onChange={e => setWizardForm(f => ({ ...f, packagesInput: e.target.value }))}
-                              onKeyDown={e => {
+                              onChange={(e) =>
+                                setWizardForm((f) => ({
+                                  ...f,
+                                  packagesInput: e.target.value,
+                                }))
+                              }
+                              onKeyDown={(e) => {
                                 if (e.key === "Enter" || e.key === ",") {
-                                  e.preventDefault()
-                                  const pkgs = wizardForm.packagesInput.split(",").map(s => s.trim()).filter(Boolean)
-                                  setWizardForm(f => ({ ...f, packages: [...new Set([...f.packages, ...pkgs])], packagesInput: "" }))
+                                  e.preventDefault();
+                                  const pkgs = wizardForm.packagesInput
+                                    .split(",")
+                                    .map((s) => s.trim())
+                                    .filter(Boolean);
+                                  setWizardForm((f) => ({
+                                    ...f,
+                                    packages: [
+                                      ...new Set([...f.packages, ...pkgs]),
+                                    ],
+                                    packagesInput: "",
+                                  }));
                                 }
                               }}
                             />
-                            <Button size="sm" onClick={() => {
-                              const pkgs = wizardForm.packagesInput.split(",").map(s => s.trim()).filter(Boolean)
-                              setWizardForm(f => ({ ...f, packages: [...new Set([...f.packages, ...pkgs])], packagesInput: "" }))
-                            }}>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                const pkgs = wizardForm.packagesInput
+                                  .split(",")
+                                  .map((s) => s.trim())
+                                  .filter(Boolean);
+                                setWizardForm((f) => ({
+                                  ...f,
+                                  packages: [
+                                    ...new Set([...f.packages, ...pkgs]),
+                                  ],
+                                  packagesInput: "",
+                                }));
+                              }}
+                            >
                               <Plus className="h-4 w-4" />
                             </Button>
                           </div>
                           <div className="flex flex-wrap gap-1 pt-1">
-                            {wizardForm.packages.map(pkg => (
-                              <Badge key={pkg} variant="secondary" className="cursor-pointer text-xs"
-                                onClick={() => setWizardForm(f => ({ ...f, packages: f.packages.filter(p => p !== pkg) }))}>
+                            {wizardForm.packages.map((pkg) => (
+                              <Badge
+                                key={pkg}
+                                variant="secondary"
+                                className="cursor-pointer text-xs"
+                                onClick={() =>
+                                  setWizardForm((f) => ({
+                                    ...f,
+                                    packages: f.packages.filter(
+                                      (p) => p !== pkg,
+                                    ),
+                                  }))
+                                }
+                              >
                                 {pkg} ×
                               </Badge>
                             ))}
@@ -520,13 +720,46 @@ export default function PxeWizardPage() {
                     {currentStep === "review" && (
                       <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div><span className="text-muted-foreground">OS:</span> {selectedOsInfo?.label}</div>
-                          <div><span className="text-muted-foreground">Format:</span> {selectedOsInfo?.format}</div>
-                          <div><span className="text-muted-foreground">Hostname:</span> {wizardForm.hostname || "(non défini)"}</div>
-                          <div><span className="text-muted-foreground">Domaine:</span> {wizardForm.domain}</div>
-                          <div><span className="text-muted-foreground">Disque:</span> {wizardForm.disk_layout}</div>
-                          <div><span className="text-muted-foreground">Utilisateurs:</span> {wizardForm.users.length}</div>
-                          <div><span className="text-muted-foreground">Paquets:</span> {wizardForm.packages.length}</div>
+                          <div>
+                            <span className="text-muted-foreground">OS:</span>{" "}
+                            {selectedOsInfo?.label}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">
+                              Format:
+                            </span>{" "}
+                            {selectedOsInfo?.format}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">
+                              Hostname:
+                            </span>{" "}
+                            {wizardForm.hostname || "(non défini)"}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">
+                              Domaine:
+                            </span>{" "}
+                            {wizardForm.domain}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">
+                              Disque:
+                            </span>{" "}
+                            {wizardForm.disk_layout}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">
+                              Utilisateurs:
+                            </span>{" "}
+                            {wizardForm.users.length}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">
+                              Paquets:
+                            </span>{" "}
+                            {wizardForm.packages.length}
+                          </div>
                         </div>
                         {generatedTemplate ? (
                           <div className="space-y-2">
@@ -535,7 +768,11 @@ export default function PxeWizardPage() {
                                 <CheckCircle2 className="h-4 w-4" />
                                 Template généré — {generatedFormat}
                               </Label>
-                              <Button size="sm" variant="outline" onClick={downloadTemplate}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={downloadTemplate}
+                              >
                                 <Download className="h-3 w-3 mr-1" />
                                 Télécharger
                               </Button>
@@ -548,13 +785,24 @@ export default function PxeWizardPage() {
                             />
                           </div>
                         ) : (
-                          <Button onClick={handleGenerateTemplate} disabled={generating} className="w-full">
+                          <Button
+                            onClick={handleGenerateTemplate}
+                            disabled={generating}
+                            className="w-full"
+                          >
                             <Wand2 className="h-4 w-4 mr-2" />
-                            {generating ? "Génération en cours..." : "Générer le template"}
+                            {generating
+                              ? "Génération en cours..."
+                              : "Générer le template"}
                           </Button>
                         )}
                         {generatedTemplate && (
-                          <Button variant="outline" onClick={handleGenerateTemplate} disabled={generating} className="w-full">
+                          <Button
+                            variant="outline"
+                            onClick={handleGenerateTemplate}
+                            disabled={generating}
+                            className="w-full"
+                          >
                             <RefreshCw className="h-4 w-4 mr-2" />
                             Régénérer
                           </Button>
@@ -563,7 +811,11 @@ export default function PxeWizardPage() {
                     )}
                   </CardContent>
                   <div className="flex justify-between px-6 pb-6">
-                    <Button variant="outline" onClick={prevStep} disabled={!canGoBack}>
+                    <Button
+                      variant="outline"
+                      onClick={prevStep}
+                      disabled={!canGoBack}
+                    >
                       <ArrowLeft className="h-4 w-4 mr-2" />
                       Précédent
                     </Button>
@@ -585,9 +837,15 @@ export default function PxeWizardPage() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle>Images PXE</CardTitle>
-                  <CardDescription>Kernels, initrd, ISO stockés dans data/pxe/tftpboot/images/</CardDescription>
+                  <CardDescription>
+                    Kernels, initrd, ISO stockés dans data/pxe/tftpboot/images/
+                  </CardDescription>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => setShowUploader(!showUploader)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowUploader(!showUploader)}
+                >
                   <Upload className="h-4 w-4 mr-2" />
                   Téléverser
                 </Button>
@@ -596,31 +854,46 @@ export default function PxeWizardPage() {
                 {showUploader && (
                   <ImageUploader
                     onUploaded={() => {
-                      queryClient.invalidateQueries({ queryKey: ["pxe-images"] })
-                      setShowUploader(false)
+                      queryClient.invalidateQueries({
+                        queryKey: ["pxe-images"],
+                      });
+                      setShowUploader(false);
                     }}
                   />
                 )}
                 {imagesLoading ? (
-                  <div className="text-muted-foreground text-sm">Chargement...</div>
+                  <div className="text-muted-foreground text-sm">
+                    Chargement...
+                  </div>
                 ) : !images || images.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <HardDrive className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                    <p>Aucune image. Téléversez votre premier fichier (kernel, initrd, ISO).</p>
+                    <p>
+                      Aucune image. Téléversez votre premier fichier (kernel,
+                      initrd, ISO).
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {images.map(img => (
-                      <div key={img.id} className="flex items-center gap-3 p-3 border rounded-md">
+                    {images.map((img) => (
+                      <div
+                        key={img.id}
+                        className="flex items-center gap-3 p-3 border rounded-md"
+                      >
                         <HardDrive className="h-5 w-5 text-muted-foreground shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-sm">{img.name}</div>
                           <div className="text-xs text-muted-foreground">
-                            {img.os_type} {img.os_version && `· ${img.os_version}`} ·{" "}
-                            {img.file_size ? `${(img.file_size / 1024 / 1024).toFixed(1)} MB` : "taille inconnue"}
+                            {img.os_type}{" "}
+                            {img.os_version && `· ${img.os_version}`} ·{" "}
+                            {img.file_size
+                              ? `${(img.file_size / 1024 / 1024).toFixed(1)} MB`
+                              : "taille inconnue"}
                           </div>
                         </div>
-                        <Badge variant="outline" className="text-xs">{img.image_type}</Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {img.image_type}
+                        </Badge>
                         <div className="text-xs text-muted-foreground">
                           {new Date(img.created_at).toLocaleDateString("fr-FR")}
                         </div>
@@ -645,11 +918,15 @@ export default function PxeWizardPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Déploiements en cours</CardTitle>
-                <CardDescription>Actualisation automatique toutes les 5 secondes via polling</CardDescription>
+                <CardDescription>
+                  Actualisation automatique toutes les 5 secondes via polling
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {deploymentsLoading ? (
-                  <div className="text-muted-foreground text-sm">Chargement...</div>
+                  <div className="text-muted-foreground text-sm">
+                    Chargement...
+                  </div>
                 ) : !deployments || deployments.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <RefreshCw className="h-12 w-12 mx-auto mb-3 opacity-30" />
@@ -657,21 +934,32 @@ export default function PxeWizardPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {deployments.map(dep => (
-                      <div key={dep.id} className="p-4 border rounded-md space-y-2">
+                    {deployments.map((dep) => (
+                      <div
+                        key={dep.id}
+                        className="p-4 border rounded-md space-y-2"
+                      >
                         <div className="flex items-center gap-3">
-                          <div className="font-mono text-sm font-medium">{dep.asset_mac}</div>
+                          <div className="font-mono text-sm font-medium">
+                            {dep.asset_mac}
+                          </div>
                           <Badge
                             variant={
-                              dep.status === "completed" ? "default" :
-                              dep.status === "failed" ? "destructive" :
-                              dep.status === "deploying" ? "secondary" : "outline"
+                              dep.status === "completed"
+                                ? "default"
+                                : dep.status === "failed"
+                                  ? "destructive"
+                                  : dep.status === "deploying"
+                                    ? "secondary"
+                                    : "outline"
                             }
                           >
                             {dep.status}
                           </Badge>
                           {dep.current_step && (
-                            <span className="text-xs text-muted-foreground">{dep.current_step}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {dep.current_step}
+                            </span>
                           )}
                           {dep.error_message && (
                             <div className="flex items-center gap-1 text-destructive text-xs">
@@ -685,11 +973,25 @@ export default function PxeWizardPage() {
                         </div>
                         <Progress
                           value={dep.progress}
-                          className={dep.status === "failed" ? "bg-destructive/20" : ""}
+                          className={
+                            dep.status === "failed" ? "bg-destructive/20" : ""
+                          }
                         />
                         <div className="flex gap-4 text-xs text-muted-foreground">
-                          {dep.started_at && <span>Démarré: {new Date(dep.started_at).toLocaleString("fr-FR")}</span>}
-                          {dep.completed_at && <span>Terminé: {new Date(dep.completed_at).toLocaleString("fr-FR")}</span>}
+                          {dep.started_at && (
+                            <span>
+                              Démarré:{" "}
+                              {new Date(dep.started_at).toLocaleString("fr-FR")}
+                            </span>
+                          )}
+                          {dep.completed_at && (
+                            <span>
+                              Terminé:{" "}
+                              {new Date(dep.completed_at).toLocaleString(
+                                "fr-FR",
+                              )}
+                            </span>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -701,5 +1003,5 @@ export default function PxeWizardPage() {
         </Tabs>
       </div>
     </AppLayout>
-  )
+  );
 }

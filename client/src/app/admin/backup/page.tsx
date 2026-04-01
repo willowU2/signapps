@@ -1,12 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { BackupScheduleConfig } from '@/components/admin/backup-schedule-config';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useState, useEffect, useCallback } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { BackupScheduleConfig } from "@/components/admin/backup-schedule-config";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Database,
   Play,
@@ -18,21 +24,21 @@ import {
   Trash2,
   Download,
   RefreshCw,
-} from 'lucide-react';
-import { usePageTitle } from '@/hooks/use-page-title';
-import { PageHeader } from '@/components/ui/page-header';
-import { toast } from 'sonner';
-import { SpinnerInfinity } from 'spinners-react';
+} from "lucide-react";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { PageHeader } from "@/components/ui/page-header";
+import { toast } from "sonner";
+import { SpinnerInfinity } from "spinners-react";
 
-import { IDENTITY_URL } from '@/lib/api/core';
-const BACKUP_HISTORY_KEY = 'signapps_backup_history';
-const BACKUP_SCHEDULE_KEY = 'backup_schedule_config';
+import { IDENTITY_URL } from "@/lib/api/core";
+const BACKUP_HISTORY_KEY = "signapps_backup_history";
+const BACKUP_SCHEDULE_KEY = "backup_schedule_config";
 
 interface BackupEntry {
   id: string;
   timestamp: string;
-  type: 'manual' | 'scheduled';
-  status: 'success' | 'failed' | 'in_progress';
+  type: "manual" | "scheduled";
+  status: "success" | "failed" | "in_progress";
   size?: string;
   destination: string;
   duration?: number; // seconds
@@ -40,30 +46,42 @@ interface BackupEntry {
 }
 
 function getBackupHistory(): BackupEntry[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === "undefined") return [];
   try {
-    return JSON.parse(localStorage.getItem(BACKUP_HISTORY_KEY) || '[]');
-  } catch { return []; }
+    return JSON.parse(localStorage.getItem(BACKUP_HISTORY_KEY) || "[]");
+  } catch {
+    return [];
+  }
 }
 
 function saveBackupHistory(entries: BackupEntry[]) {
-  localStorage.setItem(BACKUP_HISTORY_KEY, JSON.stringify(entries.slice(0, 50)));
+  localStorage.setItem(
+    BACKUP_HISTORY_KEY,
+    JSON.stringify(entries.slice(0, 50)),
+  );
 }
 
 function getScheduleConfig() {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   try {
-    return JSON.parse(localStorage.getItem(BACKUP_SCHEDULE_KEY) || 'null');
-  } catch { return null; }
+    return JSON.parse(localStorage.getItem(BACKUP_SCHEDULE_KEY) || "null");
+  } catch {
+    return null;
+  }
 }
 
 function formatDate(dateStr: string) {
   try {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      year: 'numeric', month: 'short', day: 'numeric',
-      hour: '2-digit', minute: '2-digit',
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
-  } catch { return dateStr; }
+  } catch {
+    return dateStr;
+  }
 }
 
 function formatDuration(seconds: number) {
@@ -76,7 +94,7 @@ function formatDuration(seconds: number) {
 function formatTimeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
+  if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h ago`;
@@ -85,10 +103,14 @@ function formatTimeAgo(dateStr: string) {
 }
 
 export default function BackupAdminPage() {
-  usePageTitle('Sauvegardes');
+  usePageTitle("Sauvegardes");
   const [history, setHistory] = useState<BackupEntry[]>([]);
   const [running, setRunning] = useState(false);
-  const [schedule, setSchedule] = useState<{ cron: string; destination: string; enabled: boolean } | null>(null);
+  const [schedule, setSchedule] = useState<{
+    cron: string;
+    destination: string;
+    enabled: boolean;
+  } | null>(null);
 
   useEffect(() => {
     setHistory(getBackupHistory());
@@ -98,8 +120,8 @@ export default function BackupAdminPage() {
     const handleStorage = (e: StorageEvent) => {
       if (e.key === BACKUP_SCHEDULE_KEY) setSchedule(getScheduleConfig());
     };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
   const refreshSchedule = useCallback(() => {
@@ -109,12 +131,12 @@ export default function BackupAdminPage() {
   const handleManualBackup = async () => {
     setRunning(true);
     const backupId = `backup-${Date.now()}`;
-    const dest = schedule?.destination || 'local';
+    const dest = schedule?.destination || "local";
     const entry: BackupEntry = {
       id: backupId,
       timestamp: new Date().toISOString(),
-      type: 'manual',
-      status: 'in_progress',
+      type: "manual",
+      status: "in_progress",
       destination: dest,
     };
 
@@ -122,7 +144,7 @@ export default function BackupAdminPage() {
     setHistory(updatedHistory);
     saveBackupHistory(updatedHistory);
 
-    toast.info('Backup démarré...');
+    toast.info("Backup démarré...");
 
     const startTime = Date.now();
     let completedEntry: BackupEntry;
@@ -130,12 +152,15 @@ export default function BackupAdminPage() {
     try {
       // Call real backup endpoint
       const apiBase = IDENTITY_URL;
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("access_token")
+          : null;
 
       const res = await fetch(`${apiBase}/admin/backup`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ destination: dest }),
@@ -147,16 +172,16 @@ export default function BackupAdminPage() {
         // Endpoint not deployed yet
         completedEntry = {
           ...entry,
-          status: 'failed',
+          status: "failed",
           duration,
-          error: 'Endpoint non disponible — backup manuel requis',
+          error: "Endpoint non disponible — backup manuel requis",
         };
-        toast.error('Endpoint non disponible — backup manuel requis');
+        toast.error("Endpoint non disponible — backup manuel requis");
       } else if (!res.ok) {
         const errText = await res.text().catch(() => res.statusText);
         completedEntry = {
           ...entry,
-          status: 'failed',
+          status: "failed",
           duration,
           error: `Erreur serveur: ${res.status} ${errText}`.slice(0, 120),
         };
@@ -165,7 +190,7 @@ export default function BackupAdminPage() {
         const data = await res.json().catch(() => ({}));
         completedEntry = {
           ...entry,
-          status: 'success',
+          status: "success",
           duration,
           size: data.size ?? undefined,
         };
@@ -176,11 +201,11 @@ export default function BackupAdminPage() {
       const duration = Math.round((Date.now() - startTime) / 1000);
       completedEntry = {
         ...entry,
-        status: 'failed',
+        status: "failed",
         duration,
-        error: 'Endpoint non disponible — backup manuel requis',
+        error: "Endpoint non disponible — backup manuel requis",
       };
-      toast.error('Endpoint non disponible — backup manuel requis');
+      toast.error("Endpoint non disponible — backup manuel requis");
     }
 
     const finalHistory = [completedEntry, ...history];
@@ -190,7 +215,7 @@ export default function BackupAdminPage() {
   };
 
   const handleDeleteEntry = (id: string) => {
-    const updated = history.filter(e => e.id !== id);
+    const updated = history.filter((e) => e.id !== id);
     setHistory(updated);
     saveBackupHistory(updated);
   };
@@ -198,15 +223,15 @@ export default function BackupAdminPage() {
   const handleClearHistory = () => {
     setHistory([]);
     saveBackupHistory([]);
-    toast.success('Backup history cleared');
+    toast.success("Backup history cleared");
   };
 
-  const lastSuccessful = history.find(e => e.status === 'success');
-  const lastFailed = history.find(e => e.status === 'failed');
-  const totalBackups = history.filter(e => e.status === 'success').length;
+  const lastSuccessful = history.find((e) => e.status === "success");
+  const lastFailed = history.find((e) => e.status === "failed");
+  const totalBackups = history.filter((e) => e.status === "success").length;
   const totalSize = history
-    .filter(e => e.status === 'success' && e.size)
-    .reduce((acc, e) => acc + parseFloat(e.size || '0'), 0);
+    .filter((e) => e.status === "success" && e.size)
+    .reduce((acc, e) => acc + parseFloat(e.size || "0"), 0);
 
   return (
     <AppLayout>
@@ -222,7 +247,9 @@ export default function BackupAdminPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${lastSuccessful ? 'bg-green-500/10' : 'bg-muted'}`}>
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-lg ${lastSuccessful ? "bg-green-500/10" : "bg-muted"}`}
+                >
                   {lastSuccessful ? (
                     <CheckCircle className="h-5 w-5 text-green-500" />
                   ) : (
@@ -230,12 +257,18 @@ export default function BackupAdminPage() {
                   )}
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Last Successful</p>
+                  <p className="text-sm text-muted-foreground">
+                    Last Successful
+                  </p>
                   <p className="font-medium text-sm">
-                    {lastSuccessful ? formatTimeAgo(lastSuccessful.timestamp) : 'None'}
+                    {lastSuccessful
+                      ? formatTimeAgo(lastSuccessful.timestamp)
+                      : "None"}
                   </p>
                   {lastSuccessful?.size && (
-                    <p className="text-xs text-muted-foreground">{lastSuccessful.size}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {lastSuccessful.size}
+                    </p>
                   )}
                 </div>
               </div>
@@ -251,7 +284,9 @@ export default function BackupAdminPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Backups</p>
                   <p className="font-medium text-sm">{totalBackups}</p>
-                  <p className="text-xs text-muted-foreground">{totalSize.toFixed(1)} MB total</p>
+                  <p className="text-xs text-muted-foreground">
+                    {totalSize.toFixed(1)} MB total
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -260,8 +295,10 @@ export default function BackupAdminPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${schedule?.enabled ? 'bg-green-500/10' : 'bg-muted'}`}>
-                  {schedule?.destination === 's3' ? (
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-lg ${schedule?.enabled ? "bg-green-500/10" : "bg-muted"}`}
+                >
+                  {schedule?.destination === "s3" ? (
                     <Cloud className="h-5 w-5 text-blue-500" />
                   ) : (
                     <HardDrive className="h-5 w-5 text-muted-foreground" />
@@ -270,10 +307,10 @@ export default function BackupAdminPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Schedule</p>
                   <p className="font-medium text-sm capitalize">
-                    {schedule?.enabled ? 'Active' : 'Disabled'}
+                    {schedule?.enabled ? "Active" : "Disabled"}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Target: {schedule?.destination || 'local'}
+                    Target: {schedule?.destination || "local"}
                   </p>
                 </div>
               </div>
@@ -296,11 +333,17 @@ export default function BackupAdminPage() {
               </div>
               <Button onClick={handleManualBackup} disabled={running}>
                 {running ? (
-                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4" />
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="mr-2 h-4 w-4"
+                  />
                 ) : (
                   <Play className="mr-2 h-4 w-4" />
                 )}
-                {running ? 'Backing up...' : 'Start Backup'}
+                {running ? "Backing up..." : "Start Backup"}
               </Button>
             </div>
           </CardHeader>
@@ -325,7 +368,12 @@ export default function BackupAdminPage() {
                 </CardDescription>
               </div>
               {history.length > 0 && (
-                <Button variant="ghost" size="sm" onClick={handleClearHistory} className="text-xs text-muted-foreground">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearHistory}
+                  className="text-xs text-muted-foreground"
+                >
                   <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                   Clear
                 </Button>
@@ -350,47 +398,75 @@ export default function BackupAdminPage() {
                       className="flex items-center justify-between rounded-lg border p-3"
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`flex h-8 w-8 items-center justify-center rounded-md ${
-                          entry.status === 'success' ? 'bg-green-500/10' :
-                          entry.status === 'failed' ? 'bg-red-500/10' :
-                          'bg-blue-500/10'
-                        }`}>
-                          {entry.status === 'success' && <CheckCircle className="h-4 w-4 text-green-500" />}
-                          {entry.status === 'failed' && <XCircle className="h-4 w-4 text-red-500" />}
-                          {entry.status === 'in_progress' && <RefreshCw className="h-4 w-4 text-blue-500 animate-spin" />}
+                        <div
+                          className={`flex h-8 w-8 items-center justify-center rounded-md ${
+                            entry.status === "success"
+                              ? "bg-green-500/10"
+                              : entry.status === "failed"
+                                ? "bg-red-500/10"
+                                : "bg-blue-500/10"
+                          }`}
+                        >
+                          {entry.status === "success" && (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          )}
+                          {entry.status === "failed" && (
+                            <XCircle className="h-4 w-4 text-red-500" />
+                          )}
+                          {entry.status === "in_progress" && (
+                            <RefreshCw className="h-4 w-4 text-blue-500 animate-spin" />
+                          )}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="text-sm font-medium">
-                              {entry.type === 'manual' ? 'Manual' : 'Scheduled'} Backup
+                              {entry.type === "manual" ? "Manual" : "Scheduled"}{" "}
+                              Backup
                             </p>
                             <Badge
                               variant={
-                                entry.status === 'success' ? 'default' :
-                                entry.status === 'failed' ? 'destructive' :
-                                'secondary'
+                                entry.status === "success"
+                                  ? "default"
+                                  : entry.status === "failed"
+                                    ? "destructive"
+                                    : "secondary"
                               }
                               className={`text-[10px] h-4 px-1.5 ${
-                                entry.status === 'success' ? 'bg-green-500/10 text-green-600' : ''
+                                entry.status === "success"
+                                  ? "bg-green-500/10 text-green-600"
+                                  : ""
                               }`}
                             >
-                              {entry.status === 'in_progress' ? 'Running' : entry.status}
+                              {entry.status === "in_progress"
+                                ? "Running"
+                                : entry.status}
                             </Badge>
                           </div>
                           <div className="flex items-center gap-3 text-xs text-muted-foreground">
                             <span>{formatDate(entry.timestamp)}</span>
                             {entry.size && <span>{entry.size}</span>}
-                            {entry.duration && <span>{formatDuration(entry.duration)}</span>}
-                            <span className="capitalize">{entry.destination}</span>
+                            {entry.duration && (
+                              <span>{formatDuration(entry.duration)}</span>
+                            )}
+                            <span className="capitalize">
+                              {entry.destination}
+                            </span>
                           </div>
                           {entry.error && (
-                            <p className="text-xs text-red-500 mt-0.5">{entry.error}</p>
+                            <p className="text-xs text-red-500 mt-0.5">
+                              {entry.error}
+                            </p>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
-                        {entry.status === 'success' && (
-                          <Button variant="ghost" size="icon" className="h-7 w-7" title="Download">
+                        {entry.status === "success" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            title="Download"
+                          >
                             <Download className="h-3.5 w-3.5" />
                           </Button>
                         )}

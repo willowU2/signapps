@@ -4,7 +4,7 @@ import { WebsocketProvider } from "y-websocket";
 import { IndexeddbPersistence } from "y-indexeddb";
 import { Awareness } from "y-protocols/awareness";
 import { usePresenceStore } from "@/stores/presence-store";
-import { COLLAB_ENABLED, COLLAB_URL } from '@/lib/api/core';
+import { COLLAB_ENABLED, COLLAB_URL } from "@/lib/api/core";
 
 interface UseYjsDocumentOptions {
   /**

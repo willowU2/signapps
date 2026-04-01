@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { searchApi, mailApi } from "@/lib/api-mail";
 import { calendarApi } from "@/lib/api/calendar";
 
-import { CALENDAR_URL } from '@/lib/api/core';
+import { CALENDAR_URL } from "@/lib/api/core";
 interface TodayItem {
   id: string;
   type: "mail" | "task" | "event";
@@ -130,7 +130,9 @@ async function fetchTodayItems(): Promise<TodayItem[]> {
       );
       stored
         .filter(
-          (t) => (t.due_date as string | undefined)?.slice(0, 10) === today && t.status !== "completed",
+          (t) =>
+            (t.due_date as string | undefined)?.slice(0, 10) === today &&
+            t.status !== "completed",
         )
         .slice(0, 3)
         .forEach((t) =>

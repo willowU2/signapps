@@ -20,7 +20,7 @@ import { searchApi } from "@/lib/api-mail";
 import { toast } from "sonner";
 import { interopStore } from "@/lib/interop/store";
 
-import { CALENDAR_URL } from '@/lib/api/core';
+import { CALENDAR_URL } from "@/lib/api/core";
 interface SearchResult {
   id: string;
   module: "mail" | "task" | "event";
@@ -54,8 +54,7 @@ async function searchAll(q: string): Promise<SearchResult[]> {
     }),
     // Tasks — best-effort
     (async () => {
-      const API =
-        CALENDAR_URL;
+      const API = CALENDAR_URL;
       const calsRes = await fetch(`${API}/calendars`, {
         credentials: "include",
       });
@@ -82,8 +81,7 @@ async function searchAll(q: string): Promise<SearchResult[]> {
     })(),
     // Events — best-effort
     (async () => {
-      const API =
-        CALENDAR_URL;
+      const API = CALENDAR_URL;
       const calsRes = await fetch(`${API}/calendars`, {
         credentials: "include",
       });
@@ -216,8 +214,7 @@ export async function extractActionItems(
 
   if (actionItems.length === 0) return 0;
 
-  const API =
-    CALENDAR_URL;
+  const API = CALENDAR_URL;
   let created = 0;
   for (const item of actionItems) {
     try {

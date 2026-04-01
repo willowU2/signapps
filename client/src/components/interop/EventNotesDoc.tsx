@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { interopStore } from "@/lib/interop/store";
 
-import { DOCS_URL } from '@/lib/api/core';
+import { DOCS_URL } from "@/lib/api/core";
 interface Props {
   eventId: string;
   eventTitle: string;
@@ -18,18 +18,28 @@ interface Props {
   className?: string;
 }
 
-export function EventNotesDocSave({ eventId, eventTitle, notes, className }: Props) {
+export function EventNotesDocSave({
+  eventId,
+  eventTitle,
+  notes,
+  className,
+}: Props) {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Check if already saved
   useEffect(() => {
-    const docs: { eventId: string }[] = JSON.parse(localStorage.getItem("interop:event_docs") || "[]");
-    setSaved(docs.some(d => d.eventId === eventId));
+    const docs: { eventId: string }[] = JSON.parse(
+      localStorage.getItem("interop:event_docs") || "[]",
+    );
+    setSaved(docs.some((d) => d.eventId === eventId));
   }, [eventId]);
 
   const handleSave = async () => {
-    if (!notes.trim()) { toast.error("Aucune note à enregistrer"); return; }
+    if (!notes.trim()) {
+      toast.error("Aucune note à enregistrer");
+      return;
+    }
     setSaving(true);
     try {
       const docId = `doc_${eventId}`;
@@ -39,24 +49,53 @@ export function EventNotesDocSave({ eventId, eventTitle, notes, className }: Pro
       try {
         const API = DOCS_URL;
         const res = await fetch(`${API}/documents`, {
-          method: "POST", credentials: "include",
+          method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: `Notes : ${eventTitle}`, content: notes, source: "calendar_event", source_id: eventId }),
+          body: JSON.stringify({
+            title: `Notes : ${eventTitle}`,
+            content: notes,
+            source: "calendar_event",
+            source_id: eventId,
+          }),
         });
-        if (res.ok) { const d = await res.json(); saved_id = d.id ?? d.data?.id ?? docId; }
-      } catch { /* fallback to localStorage */ }
+        if (res.ok) {
+          const d = await res.json();
+          saved_id = d.id ?? d.data?.id ?? docId;
+        }
+      } catch {
+        /* fallback to localStorage */
+      }
 
       // Save locally
-      const docs = JSON.parse(localStorage.getItem("interop:event_docs") || "[]");
-      docs.push({ eventId, docId: saved_id, title: `Notes : ${eventTitle}`, notes, created_at: new Date().toISOString() });
+      const docs = JSON.parse(
+        localStorage.getItem("interop:event_docs") || "[]",
+      );
+      docs.push({
+        eventId,
+        docId: saved_id,
+        title: `Notes : ${eventTitle}`,
+        notes,
+        created_at: new Date().toISOString(),
+      });
       localStorage.setItem("interop:event_docs", JSON.stringify(docs));
 
-      interopStore.addLink({ sourceType: "event", sourceId: eventId, sourceTitle: eventTitle, targetType: "document", targetId: saved_id, targetTitle: `Notes : ${eventTitle}`, relation: "notes_doc" });
+      interopStore.addLink({
+        sourceType: "event",
+        sourceId: eventId,
+        sourceTitle: eventTitle,
+        targetType: "document",
+        targetId: saved_id,
+        targetTitle: `Notes : ${eventTitle}`,
+        relation: "notes_doc",
+      });
       setSaved(true);
       toast.success("Notes enregistrées comme document");
     } catch {
       toast.error("Impossible d'enregistrer les notes");
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

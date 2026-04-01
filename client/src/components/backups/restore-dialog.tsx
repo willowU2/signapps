@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { RotateCcw } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { backupsApi } from '@/lib/api';
-import type { ContainerBackupSnapshot } from '@/lib/api/containers';
-import { toast } from 'sonner';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { RotateCcw } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { backupsApi } from "@/lib/api";
+import type { ContainerBackupSnapshot } from "@/lib/api/containers";
+import { toast } from "sonner";
 
 interface RestoreDialogProps {
   open: boolean;
@@ -25,13 +25,17 @@ interface RestoreDialogProps {
   profileId: string;
 }
 
-export function RestoreDialog({ open, onOpenChange, profileId }: RestoreDialogProps) {
+export function RestoreDialog({
+  open,
+  onOpenChange,
+  profileId,
+}: RestoreDialogProps) {
   const queryClient = useQueryClient();
   const [selectedSnapshot, setSelectedSnapshot] = useState<string | null>(null);
-  const [targetPath, setTargetPath] = useState('');
+  const [targetPath, setTargetPath] = useState("");
 
   const { data: snapshotsData, isLoading } = useQuery({
-    queryKey: ['backup-snapshots', profileId],
+    queryKey: ["backup-snapshots", profileId],
     queryFn: async () => {
       const res = await backupsApi.snapshots(profileId);
       return res.data.snapshots;
@@ -45,11 +49,11 @@ export function RestoreDialog({ open, onOpenChange, profileId }: RestoreDialogPr
     mutationFn: () =>
       backupsApi.restore(profileId, selectedSnapshot!, targetPath || undefined),
     onSuccess: () => {
-      toast.success('Restore started');
-      queryClient.invalidateQueries({ queryKey: ['backup-profiles'] });
+      toast.success("Restore started");
+      queryClient.invalidateQueries({ queryKey: ["backup-profiles"] });
       onOpenChange(false);
     },
-    onError: () => toast.error('Restore failed'),
+    onError: () => toast.error("Restore failed"),
   });
 
   return (
@@ -76,8 +80,8 @@ export function RestoreDialog({ open, onOpenChange, profileId }: RestoreDialogPr
                     onClick={() => setSelectedSnapshot(snap.short_id)}
                     className={`cursor-pointer rounded p-2 transition-colors ${
                       selectedSnapshot === snap.short_id
-                        ? 'bg-primary/10 border border-primary/30'
-                        : 'hover:bg-accent'
+                        ? "bg-primary/10 border border-primary/30"
+                        : "hover:bg-accent"
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -89,7 +93,11 @@ export function RestoreDialog({ open, onOpenChange, profileId }: RestoreDialogPr
                     {snap.tags && snap.tags.length > 0 && (
                       <div className="mt-1 flex gap-1 flex-wrap">
                         {snap.tags.map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
+                          <Badge
+                            key={tag}
+                            variant="outline"
+                            className="text-xs"
+                          >
                             {tag}
                           </Badge>
                         ))}
@@ -120,7 +128,7 @@ export function RestoreDialog({ open, onOpenChange, profileId }: RestoreDialogPr
             disabled={!selectedSnapshot || restoreMutation.isPending}
           >
             <RotateCcw className="mr-2 h-4 w-4" />
-            {restoreMutation.isPending ? 'Restoring...' : 'Restore'}
+            {restoreMutation.isPending ? "Restoring..." : "Restore"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,12 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { metricsApi, alertsApi, SystemMetrics, DiskMetrics, AlertConfig, AlertEvent } from '@/lib/api';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  metricsApi,
+  alertsApi,
+  SystemMetrics,
+  DiskMetrics,
+  AlertConfig,
+  AlertEvent,
+} from "@/lib/api";
+import { toast } from "sonner";
 
-import { METRICS_URL } from '@/lib/api/core';
+import { METRICS_URL } from "@/lib/api/core";
 export function useMetricsSummary(refetchInterval?: number) {
   return useQuery<SystemMetrics>({
-    queryKey: ['metrics', 'summary'],
+    queryKey: ["metrics", "summary"],
     queryFn: async () => {
       const response = await metricsApi.summary();
       return response.data;
@@ -17,7 +24,7 @@ export function useMetricsSummary(refetchInterval?: number) {
 
 export function useDiskMetrics(refetchInterval?: number) {
   return useQuery<DiskMetrics[]>({
-    queryKey: ['metrics', 'disk'],
+    queryKey: ["metrics", "disk"],
     queryFn: async () => {
       const response = await metricsApi.disk();
       return (response.data || []).map((d: DiskMetrics) => ({
@@ -34,7 +41,7 @@ export function useDiskMetrics(refetchInterval?: number) {
 
 export function useAlertConfigs() {
   return useQuery<AlertConfig[]>({
-    queryKey: ['alerts', 'configs'],
+    queryKey: ["alerts", "configs"],
     queryFn: async () => {
       const response = await alertsApi.listConfigs();
       return response.data || [];
@@ -44,7 +51,7 @@ export function useAlertConfigs() {
 
 export function useActiveAlerts() {
   return useQuery<AlertEvent[]>({
-    queryKey: ['alerts', 'active'],
+    queryKey: ["alerts", "active"],
     queryFn: async () => {
       const response = await alertsApi.listActive();
       return response.data || [];
@@ -55,7 +62,7 @@ export function useActiveAlerts() {
 
 export function useAlertHistory(limit: number = 10) {
   return useQuery<AlertEvent[]>({
-    queryKey: ['alerts', 'history', limit],
+    queryKey: ["alerts", "history", limit],
     queryFn: async () => {
       const response = await alertsApi.listHistory(limit);
       // Backend returns array directly
@@ -73,11 +80,11 @@ export function useAcknowledgeAlert() {
       await alertsApi.acknowledge(alertId);
     },
     onSuccess: () => {
-      toast.success('Alert acknowledged');
-      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      toast.success("Alert acknowledged");
+      queryClient.invalidateQueries({ queryKey: ["alerts"] });
     },
     onError: () => {
-      toast.error('Failed to acknowledge alert');
+      toast.error("Failed to acknowledge alert");
     },
   });
 }
@@ -90,10 +97,10 @@ export function useToggleAlertConfig() {
       await alertsApi.toggleConfig(id, enabled);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['alerts', 'configs'] });
+      queryClient.invalidateQueries({ queryKey: ["alerts", "configs"] });
     },
     onError: () => {
-      toast.error('Failed to toggle alert config');
+      toast.error("Failed to toggle alert config");
     },
   });
 }
@@ -106,11 +113,11 @@ export function useDeleteAlertConfig() {
       await alertsApi.deleteConfig(configId);
     },
     onSuccess: () => {
-      toast.success('Alert configuration deleted');
-      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      toast.success("Alert configuration deleted");
+      queryClient.invalidateQueries({ queryKey: ["alerts"] });
     },
     onError: () => {
-      toast.error('Impossible de supprimer alert config');
+      toast.error("Impossible de supprimer alert config");
     },
   });
 }

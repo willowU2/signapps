@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -21,14 +21,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +38,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Send,
   Bot,
@@ -65,25 +65,28 @@ import {
   ChevronRight,
   Languages,
   Settings,
-} from 'lucide-react';
-import { aiApi, AIStats, Model, ProviderInfo, KnowledgeBase } from '@/lib/api';
-import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
-import { DocumentUpload } from '@/components/ai/document-upload';
-import { VoiceChatButton } from '@/components/ai/voice-chat-button';
-import { useVoiceChat } from '@/hooks/use-voice-chat';
-import { ModelManagement } from '@/components/ai/model-management';
-import { ToolCallDisplay, ToolCallInfo } from '@/components/ai/tool-call-display';
-import { toast } from 'sonner';
-import { usePageTitle } from '@/hooks/use-page-title';
-import { AiGenerateDoc } from '@/components/interop/AiGenerateDoc';
-import { UnifiedContentLibrary } from '@/components/interop/UnifiedContentLibrary';
+} from "lucide-react";
+import { aiApi, AIStats, Model, ProviderInfo, KnowledgeBase } from "@/lib/api";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { DocumentUpload } from "@/components/ai/document-upload";
+import { VoiceChatButton } from "@/components/ai/voice-chat-button";
+import { useVoiceChat } from "@/hooks/use-voice-chat";
+import { ModelManagement } from "@/components/ai/model-management";
+import {
+  ToolCallDisplay,
+  ToolCallInfo,
+} from "@/components/ai/tool-call-display";
+import { toast } from "sonner";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { AiGenerateDoc } from "@/components/interop/AiGenerateDoc";
+import { UnifiedContentLibrary } from "@/components/interop/UnifiedContentLibrary";
 
-import { AI_URL } from '@/lib/api/core';
+import { AI_URL } from "@/lib/api/core";
 // Types for conversations
 interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   sources?: { filename: string; page?: number; score?: number }[];
   toolCalls?: ToolCallInfo[];
@@ -100,23 +103,23 @@ interface Conversation {
 }
 
 // LocalStorage keys
-const CONVERSATIONS_KEY = 'signapps_ai_conversations';
-const ACTIVE_CONVERSATION_KEY = 'signapps_ai_active_conversation';
-const LANGUAGE_KEY = 'signapps_ai_language';
-const SYSTEM_PROMPT_KEY = 'signapps_ai_system_prompt';
+const CONVERSATIONS_KEY = "signapps_ai_conversations";
+const ACTIVE_CONVERSATION_KEY = "signapps_ai_active_conversation";
+const LANGUAGE_KEY = "signapps_ai_language";
+const SYSTEM_PROMPT_KEY = "signapps_ai_system_prompt";
 
 const LANGUAGES = [
-  { code: 'fr', label: 'Francais' },
-  { code: 'en', label: 'English' },
-  { code: 'es', label: 'Espanol' },
-  { code: 'de', label: 'Deutsch' },
-  { code: 'it', label: 'Italiano' },
-  { code: 'pt', label: 'Portugues' },
+  { code: "fr", label: "Francais" },
+  { code: "en", label: "English" },
+  { code: "es", label: "Espanol" },
+  { code: "de", label: "Deutsch" },
+  { code: "it", label: "Italiano" },
+  { code: "pt", label: "Portugues" },
 ] as const;
 
 // Helper functions for localStorage
 function loadConversations(): Conversation[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === "undefined") return [];
   try {
     const data = localStorage.getItem(CONVERSATIONS_KEY);
     if (!data) return [];
@@ -136,17 +139,17 @@ function loadConversations(): Conversation[] {
 }
 
 function saveConversations(conversations: Conversation[]) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations));
 }
 
 function loadActiveConversationId(): string | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   return localStorage.getItem(ACTIVE_CONVERSATION_KEY);
 }
 
 function saveActiveConversationId(id: string | null) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   if (id) {
     localStorage.setItem(ACTIVE_CONVERSATION_KEY, id);
   } else {
@@ -155,20 +158,22 @@ function saveActiveConversationId(id: string | null) {
 }
 
 function generateConversationTitle(messages: Message[]): string {
-  const firstUserMessage = messages.find(m => m.role === 'user');
+  const firstUserMessage = messages.find((m) => m.role === "user");
   if (firstUserMessage) {
     const title = firstUserMessage.content.slice(0, 50);
-    return title.length < firstUserMessage.content.length ? `${title}...` : title;
+    return title.length < firstUserMessage.content.length
+      ? `${title}...`
+      : title;
   }
-  return 'Nouvelle conversation';
+  return "Nouvelle conversation";
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
 function formatDate(date: Date): string {
@@ -177,39 +182,45 @@ function formatDate(date: Date): string {
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
   if (days === 0) {
-    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   } else if (days === 1) {
-    return 'Hier';
+    return "Hier";
   } else if (days < 7) {
-    return date.toLocaleDateString('fr-FR', { weekday: 'long' });
+    return date.toLocaleDateString("fr-FR", { weekday: "long" });
   } else {
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
   }
 }
 
 export default function AIPage() {
-  usePageTitle('Assistant IA');
+  usePageTitle("Assistant IA");
   // Conversations state
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState<
+    string | null
+  >(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Current conversation messages
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   // AI stats and models
   const [stats, setStats] = useState<AIStats | null>(null);
   const [models, setModels] = useState<Model[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [selectedModel, setSelectedModel] = useState<string>("");
   const [loadingModels, setLoadingModels] = useState(true);
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
-  const [selectedProvider, setSelectedProvider] = useState<string>('');
+  const [selectedProvider, setSelectedProvider] = useState<string>("");
 
   // Knowledge bases
   const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
-  const [selectedKnowledgeBase, setSelectedKnowledgeBase] = useState<string>('');
+  const [selectedKnowledgeBase, setSelectedKnowledgeBase] =
+    useState<string>("");
   const [loadingKnowledgeBases, setLoadingKnowledgeBases] = useState(false);
 
   // Dialogs
@@ -220,31 +231,35 @@ export default function AIPage() {
   const [deleteKbDialogOpen, setDeleteKbDialogOpen] = useState(false);
 
   // Dialog state
-  const [conversationToRename, setConversationToRename] = useState<Conversation | null>(null);
-  const [conversationToDelete, setConversationToDelete] = useState<Conversation | null>(null);
+  const [conversationToRename, setConversationToRename] =
+    useState<Conversation | null>(null);
+  const [conversationToDelete, setConversationToDelete] =
+    useState<Conversation | null>(null);
   const [kbToDelete, setKbToDelete] = useState<KnowledgeBase | null>(null);
-  const [newConversationTitle, setNewConversationTitle] = useState('');
-  const [newKbName, setNewKbName] = useState('');
-  const [newKbDescription, setNewKbDescription] = useState('');
+  const [newConversationTitle, setNewConversationTitle] = useState("");
+  const [newKbName, setNewKbName] = useState("");
+  const [newKbDescription, setNewKbDescription] = useState("");
 
   // Language & system prompt
   const [selectedLanguage, setSelectedLanguage] = useState<string>(() => {
-    if (typeof window === 'undefined') return 'fr';
-    return localStorage.getItem(LANGUAGE_KEY) || 'fr';
+    if (typeof window === "undefined") return "fr";
+    return localStorage.getItem(LANGUAGE_KEY) || "fr";
   });
   const [customSystemPrompt, setCustomSystemPrompt] = useState<string>(() => {
-    if (typeof window === 'undefined') return '';
-    return localStorage.getItem(SYSTEM_PROMPT_KEY) || '';
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem(SYSTEM_PROMPT_KEY) || "";
   });
   const [systemPromptDialogOpen, setSystemPromptDialogOpen] = useState(false);
-  const [tempSystemPrompt, setTempSystemPrompt] = useState('');
+  const [tempSystemPrompt, setTempSystemPrompt] = useState("");
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'chat' | 'knowledge' | 'models'>('chat');
+  const [activeTab, setActiveTab] = useState<"chat" | "knowledge" | "models">(
+    "chat",
+  );
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const accumulatedRef = useRef('');
+  const accumulatedRef = useRef("");
 
   // Load conversations from localStorage on mount
   useEffect(() => {
@@ -252,12 +267,12 @@ export default function AIPage() {
     setConversations(loaded);
 
     const activeId = loadActiveConversationId();
-    if (activeId && loaded.find(c => c.id === activeId)) {
+    if (activeId && loaded.find((c) => c.id === activeId)) {
       setActiveConversationId(activeId);
-      const active = loaded.find(c => c.id === activeId);
+      const active = loaded.find((c) => c.id === activeId);
       if (active) {
         setMessages(active.messages);
-        setSelectedKnowledgeBase(active.knowledgeBase || '');
+        setSelectedKnowledgeBase(active.knowledgeBase || "");
       }
     }
   }, []);
@@ -291,17 +306,22 @@ export default function AIPage() {
   // Update conversation messages when they change
   useEffect(() => {
     if (activeConversationId && messages.length > 0) {
-      setConversations(prev => prev.map(c => {
-        if (c.id === activeConversationId) {
-          return {
-            ...c,
-            messages,
-            title: c.title === 'Nouvelle conversation' ? generateConversationTitle(messages) : c.title,
-            updatedAt: new Date(),
-          };
-        }
-        return c;
-      }));
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id === activeConversationId) {
+            return {
+              ...c,
+              messages,
+              title:
+                c.title === "Nouvelle conversation"
+                  ? generateConversationTitle(messages)
+                  : c.title,
+              updatedAt: new Date(),
+            };
+          }
+          return c;
+        }),
+      );
     }
   }, [messages, activeConversationId]);
 
@@ -310,8 +330,8 @@ export default function AIPage() {
       const response = await aiApi.stats();
       setStats(response.data);
     } catch (error) {
-      console.error('Failed to fetch AI stats:', error);
-      toast.error('Erreur lors du chargement des statistiques IA');
+      console.error("Failed to fetch AI stats:", error);
+      toast.error("Erreur lors du chargement des statistiques IA");
       setStats({
         documents_count: 0,
         chunks_count: 0,
@@ -326,62 +346,73 @@ export default function AIPage() {
       const providerList = response.data.providers || [];
       const activeProvider = response.data.active_provider;
       setProviders(providerList);
-      setSelectedProvider(prev => {
+      setSelectedProvider((prev) => {
         if (prev) return prev; // keep user selection
-        const defaultProvider = providerList.find(p => p.id === activeProvider && p.enabled)
-          || providerList.find(p => p.enabled);
+        const defaultProvider =
+          providerList.find((p) => p.id === activeProvider && p.enabled) ||
+          providerList.find((p) => p.enabled);
         if (defaultProvider) {
-          setSelectedModel(curr => curr || defaultProvider.default_model);
+          setSelectedModel((curr) => curr || defaultProvider.default_model);
           return defaultProvider.id;
         }
         return prev;
       });
     } catch (error) {
-      console.error('Failed to fetch providers:', error);
-      toast.error('Erreur lors du chargement des fournisseurs IA');
-      setProviders([{
-        id: 'ollama',
-        name: 'Ollama (Local)',
-        provider_type: 'ollama',
-        enabled: true,
-        default_model: 'llama3.2:3b',
-        is_local: true,
-      }]);
-      setSelectedProvider(prev => prev || 'ollama');
+      console.error("Failed to fetch providers:", error);
+      toast.error("Erreur lors du chargement des fournisseurs IA");
+      setProviders([
+        {
+          id: "ollama",
+          name: "Ollama (Local)",
+          provider_type: "ollama",
+          enabled: true,
+          default_model: "llama3.2:3b",
+          is_local: true,
+        },
+      ]);
+      setSelectedProvider((prev) => prev || "ollama");
     }
   }, []);
 
-  const fetchModels = useCallback(async (providerId: string, providersList: ProviderInfo[]) => {
-    if (!providerId) return;
-    setLoadingModels(true);
-    try {
-      const response = await aiApi.models(providerId);
-      const modelList = response.data.models || [];
-      setModels(modelList);
-      // Only auto-select if current model is not in the list
-      setSelectedModel(prev => {
-        if (prev && modelList.some(m => m.id === prev)) return prev;
-        const provider = providersList.find(p => p.id === providerId);
-        if (provider && modelList.some(m => m.id === provider.default_model)) {
-          return provider.default_model;
+  const fetchModels = useCallback(
+    async (providerId: string, providersList: ProviderInfo[]) => {
+      if (!providerId) return;
+      setLoadingModels(true);
+      try {
+        const response = await aiApi.models(providerId);
+        const modelList = response.data.models || [];
+        setModels(modelList);
+        // Only auto-select if current model is not in the list
+        setSelectedModel((prev) => {
+          if (prev && modelList.some((m) => m.id === prev)) return prev;
+          const provider = providersList.find((p) => p.id === providerId);
+          if (
+            provider &&
+            modelList.some((m) => m.id === provider.default_model)
+          ) {
+            return provider.default_model;
+          }
+          return modelList.length > 0 ? modelList[0].id : prev;
+        });
+      } catch (error) {
+        console.error("Failed to fetch models:", error);
+        toast.error("Erreur lors du chargement des modèles IA");
+        const provider = providersList.find((p) => p.id === providerId);
+        if (provider) {
+          setModels([
+            { id: provider.default_model, name: provider.default_model },
+          ]);
+          setSelectedModel((prev) => prev || provider.default_model);
+        } else {
+          setModels([{ id: "default", name: "Default Model" }]);
+          setSelectedModel((prev) => prev || "default");
         }
-        return modelList.length > 0 ? modelList[0].id : prev;
-      });
-    } catch (error) {
-      console.error('Failed to fetch models:', error);
-      toast.error('Erreur lors du chargement des modèles IA');
-      const provider = providersList.find(p => p.id === providerId);
-      if (provider) {
-        setModels([{ id: provider.default_model, name: provider.default_model }]);
-        setSelectedModel(prev => prev || provider.default_model);
-      } else {
-        setModels([{ id: 'default', name: 'Default Model' }]);
-        setSelectedModel(prev => prev || 'default');
+      } finally {
+        setLoadingModels(false);
       }
-    } finally {
-      setLoadingModels(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   const fetchKnowledgeBases = useCallback(async () => {
     setLoadingKnowledgeBases(true);
@@ -389,8 +420,8 @@ export default function AIPage() {
       const response = await aiApi.listCollections();
       setKnowledgeBases(response.data.collections || []);
     } catch (error) {
-      console.error('Failed to fetch knowledge bases:', error);
-      toast.error('Erreur lors du chargement des bases de connaissances');
+      console.error("Failed to fetch knowledge bases:", error);
+      toast.error("Erreur lors du chargement des bases de connaissances");
       setKnowledgeBases([]);
     } finally {
       setLoadingKnowledgeBases(false);
@@ -422,19 +453,22 @@ export default function AIPage() {
   const createNewChat = useCallback(() => {
     const newConversation: Conversation = {
       id: crypto.randomUUID(),
-      title: 'Nouvelle conversation',
-      messages: [{
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: 'Bonjour ! Je suis votre assistant IA. Je peux vous aider a rechercher et comprendre vos documents. Que souhaitez-vous savoir ?',
-        timestamp: new Date(),
-      }],
+      title: "Nouvelle conversation",
+      messages: [
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content:
+            "Bonjour ! Je suis votre assistant IA. Je peux vous aider a rechercher et comprendre vos documents. Que souhaitez-vous savoir ?",
+          timestamp: new Date(),
+        },
+      ],
       knowledgeBase: selectedKnowledgeBase,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    setConversations(prev => [newConversation, ...prev]);
+    setConversations((prev) => [newConversation, ...prev]);
     setActiveConversationId(newConversation.id);
     setMessages(newConversation.messages);
   }, [selectedKnowledgeBase]);
@@ -442,30 +476,38 @@ export default function AIPage() {
   const selectConversation = useCallback((conversation: Conversation) => {
     setActiveConversationId(conversation.id);
     setMessages(conversation.messages);
-    setSelectedKnowledgeBase(conversation.knowledgeBase || '');
-    setActiveTab('chat');
+    setSelectedKnowledgeBase(conversation.knowledgeBase || "");
+    setActiveTab("chat");
   }, []);
 
   const handleRenameConversation = useCallback(() => {
     if (!conversationToRename || !newConversationTitle.trim()) return;
 
-    setConversations(prev => prev.map(c => {
-      if (c.id === conversationToRename.id) {
-        return { ...c, title: newConversationTitle.trim(), updatedAt: new Date() };
-      }
-      return c;
-    }));
+    setConversations((prev) =>
+      prev.map((c) => {
+        if (c.id === conversationToRename.id) {
+          return {
+            ...c,
+            title: newConversationTitle.trim(),
+            updatedAt: new Date(),
+          };
+        }
+        return c;
+      }),
+    );
 
     setRenameDialogOpen(false);
     setConversationToRename(null);
-    setNewConversationTitle('');
-    toast.success('Conversation renommée');
+    setNewConversationTitle("");
+    toast.success("Conversation renommée");
   }, [conversationToRename, newConversationTitle]);
 
   const handleDeleteConversation = useCallback(() => {
     if (!conversationToDelete) return;
 
-    setConversations(prev => prev.filter(c => c.id !== conversationToDelete.id));
+    setConversations((prev) =>
+      prev.filter((c) => c.id !== conversationToDelete.id),
+    );
 
     if (activeConversationId === conversationToDelete.id) {
       setActiveConversationId(null);
@@ -474,7 +516,7 @@ export default function AIPage() {
 
     setDeleteDialogOpen(false);
     setConversationToDelete(null);
-    toast.success('Conversation supprimée');
+    toast.success("Conversation supprimée");
   }, [conversationToDelete, activeConversationId]);
 
   const handleCreateKnowledgeBase = useCallback(async () => {
@@ -488,12 +530,12 @@ export default function AIPage() {
 
       await fetchKnowledgeBases();
       setCreateKbDialogOpen(false);
-      setNewKbName('');
-      setNewKbDescription('');
-      toast.success('Base de connaissances créée');
+      setNewKbName("");
+      setNewKbDescription("");
+      toast.success("Base de connaissances créée");
     } catch (error) {
-      console.error('Impossible de créer knowledge base:', error);
-      toast.error('Erreur lors de la création');
+      console.error("Impossible de créer knowledge base:", error);
+      toast.error("Erreur lors de la création");
     }
   }, [newKbName, newKbDescription, fetchKnowledgeBases]);
 
@@ -505,62 +547,64 @@ export default function AIPage() {
       await fetchKnowledgeBases();
 
       if (selectedKnowledgeBase === kbToDelete.name) {
-        setSelectedKnowledgeBase('');
+        setSelectedKnowledgeBase("");
       }
 
       setDeleteKbDialogOpen(false);
       setKbToDelete(null);
-      toast.success('Base de connaissances supprimée');
+      toast.success("Base de connaissances supprimée");
     } catch (error) {
-      console.error('Impossible de supprimer knowledge base:', error);
-      toast.error('Erreur lors de la suppression');
+      console.error("Impossible de supprimer knowledge base:", error);
+      toast.error("Erreur lors de la suppression");
     }
   }, [kbToDelete, selectedKnowledgeBase, fetchKnowledgeBases]);
 
   const exportConversation = useCallback(() => {
     if (messages.length === 0) return;
 
-    const activeConversation = conversations.find(c => c.id === activeConversationId);
-    const title = activeConversation?.title || 'conversation';
+    const activeConversation = conversations.find(
+      (c) => c.id === activeConversationId,
+    );
+    const title = activeConversation?.title || "conversation";
 
     let markdown = `# ${title}\n\n`;
-    markdown += `*Exporte le ${new Date().toLocaleDateString('fr-FR')} a ${new Date().toLocaleTimeString('fr-FR')}*\n\n`;
+    markdown += `*Exporte le ${new Date().toLocaleDateString("fr-FR")} a ${new Date().toLocaleTimeString("fr-FR")}*\n\n`;
 
     if (selectedKnowledgeBase) {
       markdown += `**Knowledge Base:** ${selectedKnowledgeBase}\n\n`;
     }
 
-    markdown += '---\n\n';
+    markdown += "---\n\n";
 
-    messages.forEach(message => {
-      const role = message.role === 'user' ? 'Vous' : 'Assistant';
+    messages.forEach((message) => {
+      const role = message.role === "user" ? "Vous" : "Assistant";
       markdown += `### ${role}\n\n`;
       markdown += `${message.content}\n\n`;
 
       if (message.sources && message.sources.length > 0) {
-        markdown += '**Sources:**\n';
-        message.sources.forEach(source => {
+        markdown += "**Sources:**\n";
+        message.sources.forEach((source) => {
           markdown += `- ${source.filename}`;
           if (source.score) {
             markdown += ` (${(source.score * 100).toFixed(0)}%)`;
           }
-          markdown += '\n';
+          markdown += "\n";
         });
-        markdown += '\n';
+        markdown += "\n";
       }
     });
 
-    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const blob = new Blob([markdown], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `${title.replace(/[^a-z0-9]/gi, '_')}.md`;
+    a.download = `${title.replace(/[^a-z0-9]/gi, "_")}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    toast.success('Conversation exportée');
+    toast.success("Conversation exportée");
   }, [messages, conversations, activeConversationId, selectedKnowledgeBase]);
 
   const handleSend = async (textOverride?: string) => {
@@ -574,15 +618,15 @@ export default function AIPage() {
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
-      role: 'user',
+      role: "user",
       content: text,
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    if (!textOverride) setInput('');
+    setMessages((prev) => [...prev, userMessage]);
+    if (!textOverride) setInput("");
     setIsLoading(true);
-    accumulatedRef.current = '';
+    accumulatedRef.current = "";
 
     // Create a placeholder assistant message for streaming
     const assistantMessageId = crypto.randomUUID();
@@ -593,12 +637,15 @@ export default function AIPage() {
 
     try {
       // Try streaming first with native fetch
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("access_token")
+          : null;
 
       const streamResponse = await fetch(`${AI_URL}/ai/chat/stream`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
@@ -615,12 +662,15 @@ export default function AIPage() {
 
       if (streamResponse.ok && streamResponse.body) {
         // Add empty assistant message that we'll stream into
-        setMessages(prev => [...prev, {
-          id: assistantMessageId,
-          role: 'assistant' as const,
-          content: '',
-          timestamp: new Date(),
-        }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: assistantMessageId,
+            role: "assistant" as const,
+            content: "",
+            timestamp: new Date(),
+          },
+        ]);
 
         const reader = streamResponse.body.getReader();
         const decoder = new TextDecoder();
@@ -631,90 +681,105 @@ export default function AIPage() {
             if (done) break;
 
             const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
+            const lines = chunk.split("\n");
 
             for (const line of lines) {
-              if (line.startsWith('data: ')) {
+              if (line.startsWith("data: ")) {
                 const data = line.slice(6).trim();
-                if (data === '[DONE]') continue;
+                if (data === "[DONE]") continue;
                 try {
                   const parsed = JSON.parse(data);
 
-                  if (parsed.type === 'token') {
-                    accumulatedRef.current += parsed.content || '';
-                    setMessages(prev => prev.map(m =>
-                      m.id === assistantMessageId
-                        ? { ...m, content: accumulatedRef.current }
-                        : m
-                    ));
-                  } else if (parsed.type === 'sources') {
-                    setMessages(prev => prev.map(m =>
-                      m.id === assistantMessageId
-                        ? {
-                            ...m,
-                            sources: parsed.sources.map(
-                              (s: { filename: string; score?: number }) => ({
-                                filename: s.filename,
-                                score: s.score,
-                              })
-                            ),
-                          }
-                        : m
-                    ));
-                  } else if (parsed.type === 'tool_call') {
-                    setMessages(prev => prev.map(m => {
-                      if (m.id !== assistantMessageId) return m;
-                      const existing = m.toolCalls || [];
-                      return {
-                        ...m,
-                        toolCalls: [...existing, {
-                          tool: parsed.tool,
-                          parameters: parsed.parameters || {},
-                          pending: true,
-                        }],
-                      };
-                    }));
-                  } else if (parsed.type === 'tool_result') {
-                    setMessages(prev => prev.map(m => {
-                      if (m.id !== assistantMessageId) return m;
-                      const toolCalls = (m.toolCalls || []).map(tc =>
-                        tc.tool === parsed.tool && tc.pending
+                  if (parsed.type === "token") {
+                    accumulatedRef.current += parsed.content || "";
+                    setMessages((prev) =>
+                      prev.map((m) =>
+                        m.id === assistantMessageId
+                          ? { ...m, content: accumulatedRef.current }
+                          : m,
+                      ),
+                    );
+                  } else if (parsed.type === "sources") {
+                    setMessages((prev) =>
+                      prev.map((m) =>
+                        m.id === assistantMessageId
                           ? {
-                              ...tc,
-                              pending: false,
-                              success: parsed.success,
-                              result: parsed.result,
-                              error: parsed.error,
+                              ...m,
+                              sources: parsed.sources.map(
+                                (s: { filename: string; score?: number }) => ({
+                                  filename: s.filename,
+                                  score: s.score,
+                                }),
+                              ),
                             }
-                          : tc
-                      );
-                      return { ...m, toolCalls };
-                    }));
+                          : m,
+                      ),
+                    );
+                  } else if (parsed.type === "tool_call") {
+                    setMessages((prev) =>
+                      prev.map((m) => {
+                        if (m.id !== assistantMessageId) return m;
+                        const existing = m.toolCalls || [];
+                        return {
+                          ...m,
+                          toolCalls: [
+                            ...existing,
+                            {
+                              tool: parsed.tool,
+                              parameters: parsed.parameters || {},
+                              pending: true,
+                            },
+                          ],
+                        };
+                      }),
+                    );
+                  } else if (parsed.type === "tool_result") {
+                    setMessages((prev) =>
+                      prev.map((m) => {
+                        if (m.id !== assistantMessageId) return m;
+                        const toolCalls = (m.toolCalls || []).map((tc) =>
+                          tc.tool === parsed.tool && tc.pending
+                            ? {
+                                ...tc,
+                                pending: false,
+                                success: parsed.success,
+                                result: parsed.result,
+                                error: parsed.error,
+                              }
+                            : tc,
+                        );
+                        return { ...m, toolCalls };
+                      }),
+                    );
                   } else if (parsed.token || parsed.content || parsed.text) {
                     // Legacy format fallback
                     accumulatedRef.current +=
-                      parsed.token || parsed.content || parsed.text || '';
-                    setMessages(prev => prev.map(m =>
-                      m.id === assistantMessageId
-                        ? { ...m, content: accumulatedRef.current }
-                        : m
-                    ));
+                      parsed.token || parsed.content || parsed.text || "";
+                    setMessages((prev) =>
+                      prev.map((m) =>
+                        m.id === assistantMessageId
+                          ? { ...m, content: accumulatedRef.current }
+                          : m,
+                      ),
+                    );
                   }
                 } catch {
                   // If not JSON, treat as plain text token
                   accumulatedRef.current += data;
-                  setMessages(prev => prev.map(m =>
-                    m.id === assistantMessageId
-                      ? { ...m, content: accumulatedRef.current }
-                      : m
-                  ));
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantMessageId
+                        ? { ...m, content: accumulatedRef.current }
+                        : m,
+                    ),
+                  );
                 }
               }
             }
           }
         } catch (err) {
           // AbortError means the user interrupted — keep partial text
-          if (err instanceof DOMException && err.name === 'AbortError') {
+          if (err instanceof DOMException && err.name === "AbortError") {
             // Partial text is already in the message via accumulatedRef
           } else {
             throw err;
@@ -723,26 +788,29 @@ export default function AIPage() {
 
         // If we got no content from streaming, remove the empty message
         if (!accumulatedRef.current) {
-          setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
-          throw new Error('Empty streaming response');
+          setMessages((prev) =>
+            prev.filter((m) => m.id !== assistantMessageId),
+          );
+          throw new Error("Empty streaming response");
         }
       } else {
         // Streaming not available, fallback to non-streaming
-        throw new Error('Streaming not available');
+        throw new Error("Streaming not available");
       }
     } catch (err) {
       // If aborted with partial content, keep it
       if (
-        err instanceof DOMException && err.name === 'AbortError' &&
+        err instanceof DOMException &&
+        err.name === "AbortError" &&
         accumulatedRef.current
       ) {
         // Partial response preserved
       } else {
         // Remove any empty streaming message
-        setMessages(prev =>
-          prev.filter(m =>
-            m.id === assistantMessageId ? m.content !== '' : true
-          )
+        setMessages((prev) =>
+          prev.filter((m) =>
+            m.id === assistantMessageId ? m.content !== "" : true,
+          ),
         );
 
         // Fallback: use non-streaming chat API
@@ -750,36 +818,38 @@ export default function AIPage() {
           const response = await aiApi.chat(text, {
             model: selectedModel || undefined,
             provider: selectedProvider || undefined,
-            collections: selectedKnowledgeBase ? [selectedKnowledgeBase] : undefined,
+            collections: selectedKnowledgeBase
+              ? [selectedKnowledgeBase]
+              : undefined,
             language: selectedLanguage || undefined,
             systemPrompt: customSystemPrompt || undefined,
           });
 
           const assistantMessage: Message = {
             id: crypto.randomUUID(),
-            role: 'assistant',
+            role: "assistant",
             content:
               response.data.answer || "Je n'ai pas pu generer de reponse.",
-            sources: response.data.sources?.map(s => ({
+            sources: response.data.sources?.map((s) => ({
               filename: s.filename,
               score: s.score,
             })),
             timestamp: new Date(),
           };
 
-          setMessages(prev => [...prev, assistantMessage]);
+          setMessages((prev) => [...prev, assistantMessage]);
         } catch (error) {
-          console.error('Chat error:', error);
+          console.error("Chat error:", error);
 
           const errorMessage: Message = {
             id: crypto.randomUUID(),
-            role: 'assistant',
+            role: "assistant",
             content:
               "Desole, je n'ai pas pu traiter votre demande. Le service IA est peut-etre indisponible. Verifiez que Ollama/vLLM est en cours d'execution.",
             timestamp: new Date(),
           };
 
-          setMessages(prev => [...prev, errorMessage]);
+          setMessages((prev) => [...prev, errorMessage]);
         }
       }
     } finally {
@@ -789,7 +859,7 @@ export default function AIPage() {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
@@ -800,45 +870,55 @@ export default function AIPage() {
 
     setIsLoading(true);
     try {
-      const response = await aiApi.search(input, 5, selectedKnowledgeBase ? [selectedKnowledgeBase] : undefined);
+      const response = await aiApi.search(
+        input,
+        5,
+        selectedKnowledgeBase ? [selectedKnowledgeBase] : undefined,
+      );
       const results = response.data || [];
 
       if (results.length === 0) {
-        setMessages(prev => [
+        setMessages((prev) => [
           ...prev,
           {
             id: crypto.randomUUID(),
-            role: 'assistant',
-            content: 'Aucun document pertinent trouve pour votre recherche.',
+            role: "assistant",
+            content: "Aucun document pertinent trouve pour votre recherche.",
             timestamp: new Date(),
           },
         ]);
       } else {
         const resultText = results
-          .map((r, i) => `${i + 1}. **${r.filename}** (score: ${(r.score * 100).toFixed(0)}%)\n   ${r.content.substring(0, 200)}...`)
-          .join('\n\n');
+          .map(
+            (r, i) =>
+              `${i + 1}. **${r.filename}** (score: ${(r.score * 100).toFixed(0)}%)\n   ${r.content.substring(0, 200)}...`,
+          )
+          .join("\n\n");
 
-        setMessages(prev => [
+        setMessages((prev) => [
           ...prev,
           {
             id: crypto.randomUUID(),
-            role: 'user',
+            role: "user",
             content: `Recherche: ${input}`,
             timestamp: new Date(),
           },
           {
             id: crypto.randomUUID(),
-            role: 'assistant',
+            role: "assistant",
             content: `${results.length} document(s) pertinent(s) trouves:\n\n${resultText}`,
-            sources: results.map(r => ({ filename: r.filename, score: r.score })),
+            sources: results.map((r) => ({
+              filename: r.filename,
+              score: r.score,
+            })),
             timestamp: new Date(),
           },
         ]);
       }
-      setInput('');
+      setInput("");
     } catch (error) {
-      console.error('Search error:', error);
-      toast.error('Erreur lors de la recherche dans les documents');
+      console.error("Search error:", error);
+      toast.error("Erreur lors de la recherche dans les documents");
     } finally {
       setIsLoading(false);
     }
@@ -849,20 +929,20 @@ export default function AIPage() {
     onTranscript: (text) => {
       const userMessage: Message = {
         id: crypto.randomUUID(),
-        role: 'user',
+        role: "user",
         content: text,
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, userMessage]);
+      setMessages((prev) => [...prev, userMessage]);
     },
     onAssistantMessage: (text) => {
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
-        role: 'assistant',
+        role: "assistant",
         content: text,
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
     },
     provider: selectedProvider,
     model: selectedModel,
@@ -874,10 +954,12 @@ export default function AIPage() {
     <>
       <div className="flex min-h-0 flex-1 h-[min(calc(100vh-8rem),800px)]">
         {/* Sidebar - Conversation History */}
-        <div className={cn(
-          "flex flex-col border-r bg-muted/30 transition-all duration-300",
-          sidebarOpen ? "w-72" : "w-0 overflow-hidden"
-        )}>
+        <div
+          className={cn(
+            "flex flex-col border-r bg-muted/30 transition-all duration-300",
+            sidebarOpen ? "w-72" : "w-0 overflow-hidden",
+          )}
+        >
           <div className="flex items-center justify-between p-3 border-b">
             <h2 className="font-semibold text-sm">Historique</h2>
             <Button variant="ghost" size="icon" onClick={createNewChat}>
@@ -896,12 +978,12 @@ export default function AIPage() {
                   </Button>
                 </div>
               ) : (
-                conversations.map(conversation => (
+                conversations.map((conversation) => (
                   <div
                     key={conversation.id}
                     className={cn(
                       "group flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-muted transition-colors",
-                      activeConversationId === conversation.id && "bg-muted"
+                      activeConversationId === conversation.id && "bg-muted",
                     )}
                     onClick={() => selectConversation(conversation)}
                   >
@@ -914,18 +996,27 @@ export default function AIPage() {
                       </p>
                     </div>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
+                      <DropdownMenuTrigger
+                        asChild
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                        >
                           <MoreVertical className="h-3 w-3" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => {
-                          e.stopPropagation();
-                          setConversationToRename(conversation);
-                          setNewConversationTitle(conversation.title);
-                          setRenameDialogOpen(true);
-                        }}>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConversationToRename(conversation);
+                            setNewConversationTitle(conversation.title);
+                            setRenameDialogOpen(true);
+                          }}
+                        >
                           <Edit3 className="h-4 w-4 mr-2" />
                           Renommer
                         </DropdownMenuItem>
@@ -955,10 +1046,14 @@ export default function AIPage() {
           variant="ghost"
           size="icon"
           className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-4 rounded-l-none rounded-r-md bg-muted hover:bg-muted-foreground/20"
-          style={{ left: sidebarOpen ? '288px' : '0px' }}
+          style={{ left: sidebarOpen ? "288px" : "0px" }}
           onClick={() => setSidebarOpen(!sidebarOpen)}
         >
-          {sidebarOpen ? <ChevronLeft className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+          {sidebarOpen ? (
+            <ChevronLeft className="h-3 w-3" />
+          ) : (
+            <ChevronRight className="h-3 w-3" />
+          )}
         </Button>
 
         {/* Main Content */}
@@ -977,9 +1072,11 @@ export default function AIPage() {
             <div className="flex items-center gap-2">
               {/* Provider Selector */}
               <div className="flex items-center gap-2">
-                {providers.find(p => p.id === selectedProvider)?.provider_type === 'llamacpp' ? (
+                {providers.find((p) => p.id === selectedProvider)
+                  ?.provider_type === "llamacpp" ? (
                   <Cpu className="h-4 w-4 text-muted-foreground" />
-                ) : providers.find(p => p.id === selectedProvider)?.is_local ? (
+                ) : providers.find((p) => p.id === selectedProvider)
+                    ?.is_local ? (
                   <Server className="h-4 w-4 text-muted-foreground" />
                 ) : (
                   <Cloud className="h-4 w-4 text-muted-foreground" />
@@ -987,7 +1084,7 @@ export default function AIPage() {
                 <Select
                   value={selectedProvider}
                   onValueChange={(value) => {
-                    const provider = providers.find(p => p.id === value);
+                    const provider = providers.find((p) => p.id === value);
                     if (provider) {
                       setSelectedModel(provider.default_model);
                     }
@@ -998,20 +1095,22 @@ export default function AIPage() {
                     <SelectValue placeholder="Provider" />
                   </SelectTrigger>
                   <SelectContent>
-                    {providers.filter(p => p.enabled).map((provider) => (
-                      <SelectItem key={provider.id} value={provider.id}>
-                        <div className="flex items-center gap-2">
-                          {provider.provider_type === 'llamacpp' ? (
-                            <Cpu className="h-3 w-3" />
-                          ) : provider.is_local ? (
-                            <Server className="h-3 w-3" />
-                          ) : (
-                            <Cloud className="h-3 w-3" />
-                          )}
-                          {provider.name}
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {providers
+                      .filter((p) => p.enabled)
+                      .map((provider) => (
+                        <SelectItem key={provider.id} value={provider.id}>
+                          <div className="flex items-center gap-2">
+                            {provider.provider_type === "llamacpp" ? (
+                              <Cpu className="h-3 w-3" />
+                            ) : provider.is_local ? (
+                              <Server className="h-3 w-3" />
+                            ) : (
+                              <Cloud className="h-3 w-3" />
+                            )}
+                            {provider.name}
+                          </div>
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1022,8 +1121,8 @@ export default function AIPage() {
                 <Select
                   value={selectedModel}
                   onValueChange={(value) => {
-                    if (value === '__manage_models__') {
-                      setActiveTab('models');
+                    if (value === "__manage_models__") {
+                      setActiveTab("models");
                       return;
                     }
                     setSelectedModel(value);
@@ -1034,15 +1133,20 @@ export default function AIPage() {
                     <SelectValue placeholder="Modele" />
                   </SelectTrigger>
                   <SelectContent>
-                    {models.filter(m => m.object !== 'model.available').map((model) => (
-                      <SelectItem key={model.id} value={model.id}>
-                        {model.id}
-                      </SelectItem>
-                    ))}
-                    {models.some(m => m.object === 'model.available') && (
+                    {models
+                      .filter((m) => m.object !== "model.available")
+                      .map((model) => (
+                        <SelectItem key={model.id} value={model.id}>
+                          {model.id}
+                        </SelectItem>
+                      ))}
+                    {models.some((m) => m.object === "model.available") && (
                       <>
                         <DropdownMenuSeparator />
-                        <SelectItem value="__manage_models__" className="text-muted-foreground">
+                        <SelectItem
+                          value="__manage_models__"
+                          className="text-muted-foreground"
+                        >
                           <div className="flex items-center gap-2">
                             <Download className="h-3 w-3" />
                             Telecharger des modeles...
@@ -1078,7 +1182,10 @@ export default function AIPage() {
               <Button
                 variant="outline"
                 size="icon"
-                className={cn("h-8 w-8", customSystemPrompt && "border-primary text-primary")}
+                className={cn(
+                  "h-8 w-8",
+                  customSystemPrompt && "border-primary text-primary",
+                )}
                 onClick={() => {
                   setTempSystemPrompt(customSystemPrompt);
                   setSystemPromptDialogOpen(true);
@@ -1093,14 +1200,29 @@ export default function AIPage() {
                 {stats?.documents_count || 0} docs
               </Badge>
 
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => { fetchStats(); fetchProviders(); fetchKnowledgeBases(); }}>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => {
+                  fetchStats();
+                  fetchProviders();
+                  fetchKnowledgeBases();
+                }}
+              >
                 <RefreshCw className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
           {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'chat' | 'knowledge' | 'models')} className="flex-1 flex flex-col">
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) =>
+              setActiveTab(v as "chat" | "knowledge" | "models")
+            }
+            className="flex-1 flex flex-col"
+          >
             <div className="border-b px-4">
               <TabsList variant="line">
                 <TabsTrigger value="chat">
@@ -1126,8 +1248,13 @@ export default function AIPage() {
                   {messages.length === 0 ? (
                     <div className="text-center text-muted-foreground py-12">
                       <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg font-medium">Bienvenue dans l&apos;assistant IA</p>
-                      <p className="text-sm mt-2">Selectionnez une conversation ou commencez-en une nouvelle</p>
+                      <p className="text-lg font-medium">
+                        Bienvenue dans l&apos;assistant IA
+                      </p>
+                      <p className="text-sm mt-2">
+                        Selectionnez une conversation ou commencez-en une
+                        nouvelle
+                      </p>
                       <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
                         <Button variant="outline" onClick={createNewChat}>
                           <Plus className="h-4 w-4 mr-2" />
@@ -1142,32 +1269,40 @@ export default function AIPage() {
                       <div
                         key={message.id}
                         className={cn(
-                          'flex gap-3',
-                          message.role === 'user' ? 'justify-end' : 'justify-start'
+                          "flex gap-3",
+                          message.role === "user"
+                            ? "justify-end"
+                            : "justify-start",
                         )}
                       >
-                        {message.role === 'assistant' && (
+                        {message.role === "assistant" && (
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
                             <Bot className="h-4 w-4 text-primary-foreground" />
                           </div>
                         )}
                         <div
                           className={cn(
-                            'max-w-[80%] rounded-lg px-4 py-3',
-                            message.role === 'user'
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted'
+                            "max-w-[80%] rounded-lg px-4 py-3",
+                            message.role === "user"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted",
                           )}
                         >
                           {/* Tool Calls */}
-                          {message.toolCalls && message.toolCalls.length > 0 && (
-                            <div className="space-y-1.5 mb-2">
-                              {message.toolCalls.map((tc, i) => (
-                                <ToolCallDisplay key={`${tc.tool}-${i}`} toolCall={tc} />
-                              ))}
-                            </div>
-                          )}
-                          <p className="whitespace-pre-wrap">{message.content}</p>
+                          {message.toolCalls &&
+                            message.toolCalls.length > 0 && (
+                              <div className="space-y-1.5 mb-2">
+                                {message.toolCalls.map((tc, i) => (
+                                  <ToolCallDisplay
+                                    key={`${tc.tool}-${i}`}
+                                    toolCall={tc}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          <p className="whitespace-pre-wrap">
+                            {message.content}
+                          </p>
                           {message.sources && message.sources.length > 0 && (
                             <div className="mt-3 flex flex-wrap gap-2">
                               {message.sources.map((source, i) => (
@@ -1181,7 +1316,10 @@ export default function AIPage() {
                                   {source.filename}
                                   {source.page && ` (p.${source.page})`}
                                   {source.score && (
-                                    <Badge variant="secondary" className="ml-1 text-xs">
+                                    <Badge
+                                      variant="secondary"
+                                      className="ml-1 text-xs"
+                                    >
                                       {(source.score * 100).toFixed(0)}%
                                     </Badge>
                                   )}
@@ -1190,7 +1328,7 @@ export default function AIPage() {
                             </div>
                           )}
                         </div>
-                        {message.role === 'user' && (
+                        {message.role === "user" && (
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
                             <User className="h-4 w-4" />
                           </div>
@@ -1218,15 +1356,21 @@ export default function AIPage() {
                   {/* Knowledge Base selector and actions */}
                   <div className="flex items-center gap-2 mb-3">
                     <Select
-                      value={selectedKnowledgeBase || '__all__'}
-                      onValueChange={(value) => setSelectedKnowledgeBase(value === '__all__' ? '' : value)}
+                      value={selectedKnowledgeBase || "__all__"}
+                      onValueChange={(value) =>
+                        setSelectedKnowledgeBase(
+                          value === "__all__" ? "" : value,
+                        )
+                      }
                     >
                       <SelectTrigger className="w-[200px] h-8">
                         <Database className="h-3 w-3 mr-2" />
                         <SelectValue placeholder="Toutes les bases" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__all__">Toutes les bases</SelectItem>
+                        <SelectItem value="__all__">
+                          Toutes les bases
+                        </SelectItem>
                         {knowledgeBases.map((kb) => (
                           <SelectItem key={kb.name} value={kb.name}>
                             {kb.name} ({kb.documents_count} docs)
@@ -1237,12 +1381,21 @@ export default function AIPage() {
 
                     <div className="flex-1" />
 
-                    <Button variant="outline" size="sm" onClick={() => setUploadDialogOpen(true)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setUploadDialogOpen(true)}
+                    >
                       <Upload className="mr-2 h-4 w-4" />
                       Indexer
                     </Button>
 
-                    <Button variant="outline" size="sm" onClick={exportConversation} disabled={messages.length === 0}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={exportConversation}
+                      disabled={messages.length === 0}
+                    >
                       <Download className="mr-2 h-4 w-4" />
                       Exporter
                     </Button>
@@ -1276,21 +1429,27 @@ export default function AIPage() {
                     >
                       <Search className="h-4 w-4" />
                     </Button>
-                    <Button onClick={() => handleSend()} disabled={isLoading || !input.trim()}>
+                    <Button
+                      onClick={() => handleSend()}
+                      disabled={isLoading || !input.trim()}
+                    >
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
                     {voiceEnabled
-                      ? 'Mode vocal actif — parlez, le micro detecte automatiquement votre voix'
-                      : 'Appuyez sur Entree pour discuter avec l\u0027IA, ou cliquez sur Recherche pour une recherche semantique'}
+                      ? "Mode vocal actif — parlez, le micro detecte automatiquement votre voix"
+                      : "Appuyez sur Entree pour discuter avec l\u0027IA, ou cliquez sur Recherche pour une recherche semantique"}
                   </p>
                 </div>
               </div>
             </TabsContent>
 
             {/* Knowledge Bases Tab */}
-            <TabsContent value="knowledge" className="flex-1 m-0 p-4 overflow-auto">
+            <TabsContent
+              value="knowledge"
+              className="flex-1 m-0 p-4 overflow-auto"
+            >
               <div className="max-w-4xl mx-auto">
                 <div className="flex items-center justify-between mb-6">
                   <div>
@@ -1313,9 +1472,12 @@ export default function AIPage() {
                   <Card>
                     <CardContent className="flex flex-col items-center justify-center py-12">
                       <Database className="h-12 w-12 text-muted-foreground mb-4" />
-                      <p className="text-lg font-medium">Aucune knowledge base</p>
+                      <p className="text-lg font-medium">
+                        Aucune knowledge base
+                      </p>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Creez une collection pour commencer a indexer vos documents
+                        Creez une collection pour commencer a indexer vos
+                        documents
                       </p>
                       <Button onClick={() => setCreateKbDialogOpen(true)}>
                         <FolderPlus className="h-4 w-4 mr-2" />
@@ -1326,34 +1488,48 @@ export default function AIPage() {
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2">
                     {knowledgeBases.map((kb) => (
-                      <Card key={kb.name} className={cn(
-                        "cursor-pointer transition-colors hover:bg-muted/50",
-                        selectedKnowledgeBase === kb.name && "ring-2 ring-primary"
-                      )}>
+                      <Card
+                        key={kb.name}
+                        className={cn(
+                          "cursor-pointer transition-colors hover:bg-muted/50",
+                          selectedKnowledgeBase === kb.name &&
+                            "ring-2 ring-primary",
+                        )}
+                      >
                         <CardHeader className="pb-2">
                           <div className="flex items-start justify-between">
                             <div className="flex items-center gap-2">
                               <Database className="h-5 w-5 text-primary" />
-                              <CardTitle className="text-lg">{kb.name}</CardTitle>
+                              <CardTitle className="text-lg">
+                                {kb.name}
+                              </CardTitle>
                             </div>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                >
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => {
-                                  setSelectedKnowledgeBase(kb.name);
-                                  setActiveTab('chat');
-                                }}>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedKnowledgeBase(kb.name);
+                                    setActiveTab("chat");
+                                  }}
+                                >
                                   <MessageSquare className="h-4 w-4 mr-2" />
                                   Utiliser pour le chat
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => {
-                                  setSelectedKnowledgeBase(kb.name);
-                                  setUploadDialogOpen(true);
-                                }}>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedKnowledgeBase(kb.name);
+                                    setUploadDialogOpen(true);
+                                  }}
+                                >
                                   <Upload className="h-4 w-4 mr-2" />
                                   Ajouter des documents
                                 </DropdownMenuItem>
@@ -1372,7 +1548,9 @@ export default function AIPage() {
                             </DropdownMenu>
                           </div>
                           {kb.description && (
-                            <p className="text-sm text-muted-foreground">{kb.description}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {kb.description}
+                            </p>
                           )}
                         </CardHeader>
                         <CardContent>
@@ -1380,22 +1558,32 @@ export default function AIPage() {
                             <div className="flex items-center gap-2">
                               <FileText className="h-4 w-4 text-muted-foreground" />
                               <div>
-                                <p className="font-medium">{kb.documents_count}</p>
-                                <p className="text-xs text-muted-foreground">Documents</p>
+                                <p className="font-medium">
+                                  {kb.documents_count}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Documents
+                                </p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <HardDrive className="h-4 w-4 text-muted-foreground" />
                               <div>
                                 <p className="font-medium">{kb.chunks_count}</p>
-                                <p className="text-xs text-muted-foreground">Chunks</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Chunks
+                                </p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <Database className="h-4 w-4 text-muted-foreground" />
                               <div>
-                                <p className="font-medium">{formatBytes(kb.size_bytes)}</p>
-                                <p className="text-xs text-muted-foreground">Taille</p>
+                                <p className="font-medium">
+                                  {formatBytes(kb.size_bytes)}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Taille
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -1408,16 +1596,21 @@ export default function AIPage() {
             </TabsContent>
 
             {/* Models Tab */}
-            <TabsContent value="models" className="flex-1 m-0 p-4 overflow-auto">
+            <TabsContent
+              value="models"
+              className="flex-1 m-0 p-4 overflow-auto"
+            >
               <ModelManagement
                 onSelectLlmModel={(modelId) => {
                   setSelectedModel(modelId);
                   // Find the llamacpp provider and select it
-                  const llmProvider = providers.find(p => p.provider_type === 'llamacpp');
+                  const llmProvider = providers.find(
+                    (p) => p.provider_type === "llamacpp",
+                  );
                   if (llmProvider) {
                     setSelectedProvider(llmProvider.id);
                   }
-                  setActiveTab('chat');
+                  setActiveTab("chat");
                   toast.success(`Modèle ${modelId} sélectionné`);
                 }}
               />
@@ -1449,13 +1642,19 @@ export default function AIPage() {
             value={newConversationTitle}
             onChange={(e) => setNewConversationTitle(e.target.value)}
             placeholder="Titre de la conversation"
-            onKeyPress={(e) => e.key === 'Enter' && handleRenameConversation()}
+            onKeyPress={(e) => e.key === "Enter" && handleRenameConversation()}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setRenameDialogOpen(false)}
+            >
               Annuler
             </Button>
-            <Button onClick={handleRenameConversation} disabled={!newConversationTitle.trim()}>
+            <Button
+              onClick={handleRenameConversation}
+              disabled={!newConversationTitle.trim()}
+            >
               Renommer
             </Button>
           </DialogFooter>
@@ -1468,12 +1667,16 @@ export default function AIPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer la conversation ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irreversible. La conversation &quot;{conversationToDelete?.title}&quot; sera definitivement supprimee.
+              Cette action est irreversible. La conversation &quot;
+              {conversationToDelete?.title}&quot; sera definitivement supprimee.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConversation} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDeleteConversation}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1499,7 +1702,9 @@ export default function AIPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Description (optionnel)</label>
+              <label className="text-sm font-medium">
+                Description (optionnel)
+              </label>
               <Input
                 value={newKbDescription}
                 onChange={(e) => setNewKbDescription(e.target.value)}
@@ -1508,10 +1713,16 @@ export default function AIPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateKbDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setCreateKbDialogOpen(false)}
+            >
               Annuler
             </Button>
-            <Button onClick={handleCreateKnowledgeBase} disabled={!newKbName.trim()}>
+            <Button
+              onClick={handleCreateKnowledgeBase}
+              disabled={!newKbName.trim()}
+            >
               Creer
             </Button>
           </DialogFooter>
@@ -1519,13 +1730,17 @@ export default function AIPage() {
       </Dialog>
 
       {/* System Prompt Dialog */}
-      <Dialog open={systemPromptDialogOpen} onOpenChange={setSystemPromptDialogOpen}>
+      <Dialog
+        open={systemPromptDialogOpen}
+        onOpenChange={setSystemPromptDialogOpen}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Prompt systeme personnalise</DialogTitle>
             <DialogDescription>
-              Definissez un prompt systeme personnalise pour adapter le comportement de l&apos;IA.
-              Laissez vide pour utiliser le prompt par defaut.
+              Definissez un prompt systeme personnalise pour adapter le
+              comportement de l&apos;IA. Laissez vide pour utiliser le prompt
+              par defaut.
             </DialogDescription>
           </DialogHeader>
           <Textarea
@@ -1538,17 +1753,19 @@ export default function AIPage() {
             <Button
               variant="outline"
               onClick={() => {
-                setTempSystemPrompt('');
-                setCustomSystemPrompt('');
+                setTempSystemPrompt("");
+                setCustomSystemPrompt("");
                 setSystemPromptDialogOpen(false);
               }}
             >
               Reinitialiser
             </Button>
-            <Button onClick={() => {
-              setCustomSystemPrompt(tempSystemPrompt);
-              setSystemPromptDialogOpen(false);
-            }}>
+            <Button
+              onClick={() => {
+                setCustomSystemPrompt(tempSystemPrompt);
+                setSystemPromptDialogOpen(false);
+              }}
+            >
               Enregistrer
             </Button>
           </DialogFooter>
@@ -1556,17 +1773,25 @@ export default function AIPage() {
       </Dialog>
 
       {/* Delete Knowledge Base Dialog */}
-      <AlertDialog open={deleteKbDialogOpen} onOpenChange={setDeleteKbDialogOpen}>
+      <AlertDialog
+        open={deleteKbDialogOpen}
+        onOpenChange={setDeleteKbDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer la Knowledge Base ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irreversible. La collection &quot;{kbToDelete?.name}&quot; et tous ses documents seront definitivement supprimes.
+              Cette action est irreversible. La collection &quot;
+              {kbToDelete?.name}&quot; et tous ses documents seront
+              definitivement supprimes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteKnowledgeBase} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDeleteKnowledgeBase}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>

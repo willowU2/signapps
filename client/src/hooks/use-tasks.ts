@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 
-import { CALENDAR_URL } from '@/lib/api/core';
+import { CALENDAR_URL } from "@/lib/api/core";
 interface Task {
   id: string;
   calendar_id: string;
@@ -49,8 +49,36 @@ export function useTasks(calendarId?: string) {
 
       try {
         setError(null);
-        const response = await fetch(`${API_BASE}/calendars/${calendarId}/tasks`, {
-          method: "POST",
+        const response = await fetch(
+          `${API_BASE}/calendars/${calendarId}/tasks`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          },
+        );
+
+        if (!response.ok) throw new Error("Impossible de créer task");
+        return await response.json();
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Impossible de créer task";
+        setError(message);
+        throw err;
+      }
+    },
+    [calendarId],
+  );
+
+  const updateTask = useCallback(
+    async (id: string, data: UpdateTaskRequest) => {
+      try {
+        setError(null);
+        const response = await fetch(`${API_BASE}/tasks/${id}`, {
+          method: "PUT",
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
@@ -58,61 +86,41 @@ export function useTasks(calendarId?: string) {
           body: JSON.stringify(data),
         });
 
-        if (!response.ok) throw new Error("Impossible de créer task");
+        if (!response.ok) throw new Error("Impossible de mettre à jour task");
         return await response.json();
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Impossible de créer task";
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Impossible de mettre à jour task";
         setError(message);
         throw err;
       }
     },
-    [calendarId]
+    [],
   );
 
-  const updateTask = useCallback(async (id: string, data: UpdateTaskRequest) => {
+  const moveTask = useCallback(async (id: string, newParentId?: string) => {
     try {
       setError(null);
-      const response = await fetch(`${API_BASE}/tasks/${id}`, {
+      const response = await fetch(`${API_BASE}/tasks/${id}/move`, {
         method: "PUT",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ new_parent_id: newParentId || null }),
       });
 
-      if (!response.ok) throw new Error("Impossible de mettre à jour task");
+      if (!response.ok) throw new Error("Failed to move task");
       return await response.json();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Impossible de mettre à jour task";
+      const message =
+        err instanceof Error ? err.message : "Failed to move task";
       setError(message);
       throw err;
     }
   }, []);
-
-  const moveTask = useCallback(
-    async (id: string, newParentId?: string) => {
-      try {
-        setError(null);
-        const response = await fetch(`${API_BASE}/tasks/${id}/move`, {
-          method: "PUT",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ new_parent_id: newParentId || null }),
-        });
-
-        if (!response.ok) throw new Error("Failed to move task");
-        return await response.json();
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to move task";
-        setError(message);
-        throw err;
-      }
-    },
-    []
-  );
 
   const completeTask = useCallback(async (id: string) => {
     try {
@@ -124,7 +132,8 @@ export function useTasks(calendarId?: string) {
 
       if (!response.ok) throw new Error("Failed to complete task");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to complete task";
+      const message =
+        err instanceof Error ? err.message : "Failed to complete task";
       setError(message);
       throw err;
     }
@@ -140,7 +149,8 @@ export function useTasks(calendarId?: string) {
 
       if (!response.ok) throw new Error("Impossible de supprimer task");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Impossible de supprimer task";
+      const message =
+        err instanceof Error ? err.message : "Impossible de supprimer task";
       setError(message);
       throw err;
     }
@@ -152,21 +162,25 @@ export function useTasks(calendarId?: string) {
 
       try {
         setIsLoading(true);
-        const response = await fetch(`${API_BASE}/calendars/${calendarId}/tasks/tree`, {
-          credentials: "include",
-        });
+        const response = await fetch(
+          `${API_BASE}/calendars/${calendarId}/tasks/tree`,
+          {
+            credentials: "include",
+          },
+        );
 
         if (!response.ok) throw new Error("Failed to fetch task tree");
         return await response.json();
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to fetch task tree";
+        const message =
+          err instanceof Error ? err.message : "Failed to fetch task tree";
         setError(message);
         throw err;
       } finally {
         setIsLoading(false);
       }
     },
-    [calendarId]
+    [calendarId],
   );
 
   return {
