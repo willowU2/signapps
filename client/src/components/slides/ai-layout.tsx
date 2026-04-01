@@ -287,18 +287,20 @@ export function extractCanvasObjectInfo(
   return canvas
     .getObjects()
     .filter((obj) => !obj._masterElement) // Skip master slide elements
-    .map((obj) => ({
-      id: obj.id,
-      type: obj.type,
-      text: obj.text,
-      left: obj.left || 0,
-      top: obj.top || 0,
-      width: obj.width || 0,
-      height: obj.height || 0,
-      scaleX: obj.scaleX || 1,
-      scaleY: obj.scaleY || 1,
-      fontSize: obj.fontSize,
-    }));
+    .map(
+      (obj): CanvasObjectInfo => ({
+        id: obj.id !== undefined ? obj.id : "",
+        type: obj.type !== undefined ? obj.type : "",
+        text: obj.text,
+        left: obj.left || 0,
+        top: obj.top || 0,
+        width: obj.width || 0,
+        height: obj.height || 0,
+        scaleX: obj.scaleX || 1,
+        scaleY: obj.scaleY || 1,
+        fontSize: obj.fontSize,
+      }),
+    );
 }
 
 // --- AI-Enhanced Layout (calls signapps-ai) ---

@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { ComposeEncryptToggle } from "./pgp-indicator";
 import { encryptMessage } from "./pgp-settings";
 
+import { CALENDAR_URL } from '@/lib/api/core';
 // ─── A2: Tone options ────────────────────────────────────────────────────────
 const TONE_OPTIONS = [
     "Plus formel",
@@ -181,7 +182,7 @@ export function ComposeRichDialog({
         setLoadingSlots(true)
         setShowAvailability(true)
         try {
-            const API = process.env.NEXT_PUBLIC_CALENDAR_API || 'http://localhost:3011/api/v1'
+            const API = CALENDAR_URL
             const calsRes = await fetch(`${API}/calendars`, { credentials: 'include' })
             const cals = await calsRes.json()
             const calId = (cals.data ?? cals)?.[0]?.id

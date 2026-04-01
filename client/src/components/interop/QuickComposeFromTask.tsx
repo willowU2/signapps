@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { interopStore } from "@/lib/interop/store";
 
+import { MAIL_URL } from '@/lib/api/core';
 interface Task {
   id: string;
   title: string;

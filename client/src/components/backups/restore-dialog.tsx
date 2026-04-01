@@ -15,7 +15,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RotateCcw } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { backupsApi, BackupSnapshot } from '@/lib/api';
+import { backupsApi } from '@/lib/api';
+import type { ContainerBackupSnapshot } from '@/lib/api/containers';
 import { toast } from 'sonner';
 
 interface RestoreDialogProps {
@@ -69,7 +70,7 @@ export function RestoreDialog({ open, onOpenChange, profileId }: RestoreDialogPr
             <div>
               <Label>Select Snapshot</Label>
               <div className="mt-1 max-h-48 overflow-y-auto space-y-1 rounded border p-2">
-                {snapshots.map((snap: BackupSnapshot) => (
+                {snapshots.map((snap: ContainerBackupSnapshot) => (
                   <div
                     key={snap.id}
                     onClick={() => setSelectedSnapshot(snap.short_id)}

@@ -11,6 +11,7 @@ import { storageApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
+import { STORAGE_URL } from '@/lib/api/core';
 interface UploadFile {
   id: string;
   file: File;

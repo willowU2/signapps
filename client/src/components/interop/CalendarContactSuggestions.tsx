@@ -11,6 +11,7 @@ import { CalendarDays, User, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { calendarApi } from "@/lib/api/calendar";
 
+import { CALENDAR_URL } from '@/lib/api/core';
 interface ContactSuggestion {
   email: string;
   name: string;

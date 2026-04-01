@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { interopStore } from "@/lib/interop/store";
 import { useInteropActivity } from "@/hooks/use-interop";
 
+import { CALENDAR_URL, MAIL_URL } from '@/lib/api/core';
 interface Task {
   id: string;
   title: string;
@@ -37,7 +38,7 @@ export function useTaskNotifications() {
   /** Feature 13: Call periodically to check overdue tasks */
   const checkOverdueTasks = useCallback(async () => {
     try {
-      const API = process.env.NEXT_PUBLIC_CALENDAR_API || "http://localhost:3011/api/v1";
+      const API = CALENDAR_URL;
       const calsRes = await fetch(`${API}/calendars`, { credentials: "include" });
       if (!calsRes.ok) return;
       const cals = await calsRes.json();
@@ -83,7 +84,7 @@ export function useTaskNotifications() {
 /** Sends email notification via mail API (best-effort) */
 async function sendEmailNotification(to: string, subject: string, body: string) {
   try {
-    const MAIL_API = process.env.NEXT_PUBLIC_MAIL_API || "http://localhost:3010/api/v1";
+    const MAIL_API = MAIL_URL;
     await fetch(`${MAIL_API}/messages/send`, {
       method: "POST", credentials: "include",
       headers: { "Content-Type": "application/json" },

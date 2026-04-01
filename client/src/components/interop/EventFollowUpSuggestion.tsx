@@ -15,6 +15,7 @@ import { interopStore } from "@/lib/interop/store";
 import { calendarApi } from "@/lib/api/calendar";
 import type { ScheduleBlock } from "@/lib/scheduling/types/scheduling";
 
+import { CALENDAR_URL } from '@/lib/api/core';
 interface Props {
   event: ScheduleBlock;
   mode: "follow_up" | "prepare" | "invite";

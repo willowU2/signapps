@@ -8,6 +8,7 @@
  */
 import { getClient, getServiceBaseUrl, ServiceName } from './factory';
 
+import { CHAT_URL } from '@/lib/api/core';
 const chatClient = getClient(ServiceName.CHAT);
 
 // ============================================================================

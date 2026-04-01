@@ -25,6 +25,7 @@ import {
   markServiceDown,
   markServiceUp,
 } from "@/lib/service-health";
+import { GATEWAY_URL } from "./core";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SERVICE CONFIGURATION
@@ -111,9 +112,8 @@ export function getServiceUrl(service: ServiceName): string {
   if (envValue) return envValue;
 
   // Gateway fallback — strip /api/v1 if accidentally included
-  const rawGateway = process.env.NEXT_PUBLIC_GATEWAY_URL;
-  if (rawGateway) {
-    const gatewayBase = rawGateway.replace(/\/api\/v1\/?$/, "");
+  const gatewayBase = GATEWAY_URL.replace(/\/api\/v1\/?$/, "");
+  if (gatewayBase !== "http://localhost:3099") {
     return `${gatewayBase}/api/v1`;
   }
 
@@ -136,9 +136,9 @@ export function getServiceBaseUrl(service: ServiceName): string {
   }
 
   // Gateway fallback
-  const rawGateway = process.env.NEXT_PUBLIC_GATEWAY_URL;
-  if (rawGateway) {
-    return rawGateway.replace(/\/api\/v1\/?$/, "");
+  const rawBase = GATEWAY_URL.replace(/\/api\/v1\/?$/, "");
+  if (rawBase !== "http://localhost:3099") {
+    return rawBase;
   }
 
   return `http://localhost:${config.port}`;

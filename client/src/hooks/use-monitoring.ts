@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { metricsApi, alertsApi, SystemMetrics, DiskMetrics, AlertConfig, AlertEvent } from '@/lib/api';
 import { toast } from 'sonner';
 
+import { METRICS_URL } from '@/lib/api/core';
 export function useMetricsSummary(refetchInterval?: number) {
   return useQuery<SystemMetrics>({
     queryKey: ['metrics', 'summary'],
@@ -124,7 +125,6 @@ export function useMetricsStream(enabled: boolean) {
     }
 
     let active = true;
-    const METRICS_URL = process.env.NEXT_PUBLIC_METRICS_URL || 'http://localhost:3008/api/v1';
     const eventSource = new EventSource(`${METRICS_URL}/metrics/stream`);
 
     eventSource.onopen = () => {

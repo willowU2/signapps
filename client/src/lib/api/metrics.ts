@@ -7,6 +7,7 @@
 import { getClient, ServiceName } from './factory';
 import { schedulerApiClient as schedulerClient } from './core';
 
+import { METRICS_URL } from '@/lib/api/core';
 const metricsClient = getClient(ServiceName.METRICS);
 
 // ============================================================================
@@ -169,7 +170,7 @@ export const metricsApi = {
   // System metrics SSE stream — GET /api/v1/system/stream
   // Returns the raw URL so callers can open an EventSource
   getMetricsStreamUrl: (): string => {
-    const base = process.env.NEXT_PUBLIC_METRICS_URL || 'http://localhost:3008/api/v1';
+    const base = METRICS_URL;
     return `${base}/system/stream`;
   },
 

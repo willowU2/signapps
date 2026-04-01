@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { searchApi, mailApi } from "@/lib/api-mail";
 import { calendarApi } from "@/lib/api/calendar";
 
+import { CALENDAR_URL } from '@/lib/api/core';
 interface TodayItem {
   id: string;
   type: "mail" | "task" | "event";
@@ -72,8 +73,7 @@ async function fetchTodayItems(): Promise<TodayItem[]> {
     }),
     // Tasks due today
     (async () => {
-      const API =
-        process.env.NEXT_PUBLIC_CALENDAR_API || "http://localhost:3011/api/v1";
+      const API = CALENDAR_URL;
       const calsRes = await fetch(`${API}/calendars`, {
         credentials: "include",
       });

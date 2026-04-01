@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { interopStore } from "@/lib/interop/store";
 
+import { CALENDAR_URL } from '@/lib/api/core';
 interface Props {
   eventId: string;
   eventTitle: string;

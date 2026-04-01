@@ -4,6 +4,7 @@
  */
 
 import { api } from '@/lib/api';
+import { SCHEDULER_URL } from '@/lib/api/core';
 import type {
   TimeItem,
   TimeItemsQuery,
@@ -20,7 +21,6 @@ import type {
 // API CONFIGURATION
 // ============================================================================
 
-const SCHEDULER_URL = process.env.NEXT_PUBLIC_SCHEDULER_URL || 'http://localhost:3007';
 const TIME_ITEMS_PATH = '/api/v1/time-items';
 const SCHEDULING_PATH = '/api/v1/scheduling';
 

@@ -114,7 +114,7 @@ export const getSuggestionOptions = (items: CommandItem[]) => ({
         [key: string]: unknown;
       }) {
         component.updateProps(props);
-        updatePosition(props.clientRect);
+        updatePosition(props.clientRect != null ? props.clientRect : null);
       },
 
       onKeyDown(props: { event: KeyboardEvent }) {

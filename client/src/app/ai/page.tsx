@@ -79,6 +79,7 @@ import { usePageTitle } from '@/hooks/use-page-title';
 import { AiGenerateDoc } from '@/components/interop/AiGenerateDoc';
 import { UnifiedContentLibrary } from '@/components/interop/UnifiedContentLibrary';
 
+import { AI_URL } from '@/lib/api/core';
 // Types for conversations
 interface Message {
   id: string;
@@ -592,7 +593,6 @@ export default function AIPage() {
 
     try {
       // Try streaming first with native fetch
-      const AI_URL = process.env.NEXT_PUBLIC_AI_URL || 'http://localhost:3005/api/v1';
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
 
       const streamResponse = await fetch(`${AI_URL}/ai/chat/stream`, {

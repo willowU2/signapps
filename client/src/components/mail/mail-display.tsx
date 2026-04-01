@@ -42,6 +42,7 @@ import { useAiStream } from "@/hooks/use-ai-stream"
 import { VoiceInput } from "@/components/ui/voice-input"
 import { ConversationThreadView, groupByThread } from "./conversation-thread"
 
+import { CALENDAR_URL } from '@/lib/api/core';
 // ─── Idea 34: action detection helpers ──────────────────────────────────────
 function detectActions(text: string): string[] {
     const actions: string[] = []
@@ -128,7 +129,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
         if (!mail) return
         setExtracting(true)
         try {
-            const API = process.env.NEXT_PUBLIC_CALENDAR_API || 'http://localhost:3011/api/v1'
+            const API = CALENDAR_URL
             const calsRes = await fetch(`${API}/calendars`, { credentials: 'include' })
             const cals = await calsRes.json()
             const calId = (cals.data ?? cals)?.[0]?.id ?? 'default'

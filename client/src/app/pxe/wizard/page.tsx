@@ -24,6 +24,7 @@ import { pxeApi, PxeProfile } from "@/lib/api/pxe"
 import { getClient, ServiceName } from "@/lib/api/factory"
 import { usePageTitle } from "@/hooks/use-page-title"
 
+import { PXE_URL } from '@/lib/api/core';
 const client = getClient(ServiceName.PXE)
 
 // ─── Types ───────────────────────────────────────────────────────────────────

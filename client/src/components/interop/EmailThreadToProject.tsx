@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { interopStore } from "@/lib/interop/store";
 import type { Mail } from "@/lib/data/mail";
 
+import { CALENDAR_URL } from '@/lib/api/core';
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;

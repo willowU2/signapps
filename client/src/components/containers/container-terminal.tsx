@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { RotateCcw, Maximize2, Minimize2, Circle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+import { CONTAINERS_URL } from '@/lib/api/core';
 interface ContainerTerminalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -52,7 +53,7 @@ export function ContainerTerminal({
     const { WebLinksAddon } = await import('@xterm/addon-web-links');
 
     // Import xterm CSS - using require to avoid TypeScript module resolution issues
-    // @ts-expect-error xterm CSS import has no type declaration; safe to ignore at runtime
+    // @ts-ignore -- xterm CSS import has no type declaration; safe to ignore at runtime
     await import('xterm/css/xterm.css').catch(() => {});
 
     const terminal = new Terminal({

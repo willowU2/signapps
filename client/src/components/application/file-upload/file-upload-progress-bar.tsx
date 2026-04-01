@@ -3,6 +3,7 @@ import { FileUpload, getReadableFileSize } from "@/components/application/file-u
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
+import { STORAGE_URL } from '@/lib/api/core';
 interface UploadedFile {
     id: string;
     name: string;

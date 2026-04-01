@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { interopStore } from "@/lib/interop/store";
 
+import { DOCS_URL } from '@/lib/api/core';
 interface Props {
   eventId: string;
   eventTitle: string;
@@ -36,7 +37,7 @@ export function EventNotesDocSave({ eventId, eventTitle, notes, className }: Pro
 
       // Try docs API
       try {
-        const API = process.env.NEXT_PUBLIC_DOCS_API || "http://localhost:3012/api/v1";
+        const API = DOCS_URL;
         const res = await fetch(`${API}/documents`, {
           method: "POST", credentials: "include",
           headers: { "Content-Type": "application/json" },
