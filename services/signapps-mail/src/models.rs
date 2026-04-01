@@ -14,7 +14,7 @@ where
 ///
 /// Supports IMAP/SMTP with password or OAuth2 authentication.
 /// Each user can have multiple accounts (Gmail, Outlook, custom).
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone, utoipa::ToSchema)]
 pub struct MailAccount {
     /// Unique identifier (UUID v4).
     pub id: Uuid,
@@ -85,7 +85,7 @@ pub struct MailAccount {
 ///
 /// Folders are discovered during IMAP LIST and kept in sync.
 /// Standard types: `inbox`, `sent`, `drafts`, `trash`, `spam`, `archive`, `custom`.
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone, utoipa::ToSchema)]
 pub struct MailFolder {
     /// Unique identifier (UUID v4).
     pub id: Uuid,
@@ -115,7 +115,7 @@ pub struct MailFolder {
 ///
 /// Emails are synced from IMAP or created locally as drafts.
 /// Threading is handled via `message_id` / `in_reply_to` / `thread_id`.
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone, utoipa::ToSchema)]
 pub struct Email {
     /// Unique identifier (UUID v4).
     pub id: Uuid,
@@ -197,7 +197,7 @@ pub struct Email {
 /// Attachments can be regular (downloadable) or inline (embedded in the HTML body
 /// via `Content-ID`). Files are stored externally; `storage_bucket` and
 /// `storage_key` point to the backing store (filesystem or S3).
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone, utoipa::ToSchema)]
 pub struct Attachment {
     /// Unique identifier (UUID v4).
     pub id: Uuid,
@@ -225,7 +225,7 @@ pub struct Attachment {
 ///
 /// Labels are per-account and can have an optional color for UI display.
 /// An email can carry multiple labels simultaneously.
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone, utoipa::ToSchema)]
 pub struct MailLabel {
     /// Unique identifier (UUID v4).
     pub id: Uuid,

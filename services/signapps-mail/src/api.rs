@@ -415,7 +415,7 @@ where
 // Accounts
 // ============================================================================
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateAccount operation.
 pub struct CreateAccountRequest {
     pub email_address: String,
@@ -430,7 +430,7 @@ pub struct CreateAccountRequest {
     pub app_password: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdateAccount operation.
 pub struct UpdateAccountRequest {
     pub display_name: Option<String>,
@@ -447,8 +447,19 @@ pub struct UpdateAccountRequest {
     pub status: Option<String>,
 }
 
+/// List all mail accounts for the current user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/mail/accounts",
+    tag = "mail-accounts",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "List of mail accounts", body = Vec<crate::models::MailAccount>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn list_accounts(
+pub async fn list_accounts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> impl IntoResponse {
@@ -463,8 +474,20 @@ async fn list_accounts(
     Json(accounts)
 }
 
+/// Get a mail account by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/mail/accounts/{id}",
+    tag = "mail-accounts",
+    security(("bearerAuth" = [])),
+    params(("id" = uuid::Uuid, Path, description = "Account UUID")),
+    responses(
+        (status = 200, description = "Mail account", body = crate::models::MailAccount),
+        (status = 404, description = "Account not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn get_account(
+pub async fn get_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -496,8 +519,20 @@ async fn get_account(
     }
 }
 
+/// Create a new mail account (IMAP/SMTP or OAuth2).
+#[utoipa::path(
+    post,
+    path = "/api/v1/mail/accounts",
+    tag = "mail-accounts",
+    security(("bearerAuth" = [])),
+    request_body = CreateAccountRequest,
+    responses(
+        (status = 201, description = "Account created", body = crate::models::MailAccount),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn create_account(
+pub async fn create_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateAccountRequest>,
@@ -564,8 +599,21 @@ async fn create_account(
     }
 }
 
+/// Update an existing mail account.
+#[utoipa::path(
+    patch,
+    path = "/api/v1/mail/accounts/{id}",
+    tag = "mail-accounts",
+    security(("bearerAuth" = [])),
+    params(("id" = uuid::Uuid, Path, description = "Account UUID")),
+    request_body = UpdateAccountRequest,
+    responses(
+        (status = 200, description = "Account updated", body = crate::models::MailAccount),
+        (status = 404, description = "Account not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn update_account(
+pub async fn update_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -632,8 +680,20 @@ async fn update_account(
     }
 }
 
+/// Delete a mail account.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/mail/accounts/{id}",
+    tag = "mail-accounts",
+    security(("bearerAuth" = [])),
+    params(("id" = uuid::Uuid, Path, description = "Account UUID")),
+    responses(
+        (status = 204, description = "Account deleted"),
+        (status = 404, description = "Account not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn delete_account(
+pub async fn delete_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -662,8 +722,20 @@ async fn delete_account(
     }
 }
 
+/// Trigger an immediate IMAP sync for a mail account.
+#[utoipa::path(
+    post,
+    path = "/api/v1/mail/accounts/{id}/sync",
+    tag = "mail-accounts",
+    security(("bearerAuth" = [])),
+    params(("id" = uuid::Uuid, Path, description = "Account UUID")),
+    responses(
+        (status = 200, description = "Sync triggered"),
+        (status = 404, description = "Account not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn sync_account_now(
+pub async fn sync_account_now(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -874,8 +946,20 @@ pub struct FolderQuery {
     pub account_id: Option<Uuid>,
 }
 
+/// List IMAP folders for the current user's accounts.
+#[utoipa::path(
+    get,
+    path = "/api/v1/mail/folders",
+    tag = "mail-folders",
+    security(("bearerAuth" = [])),
+    params(("account_id" = Option<uuid::Uuid>, Query, description = "Filter by account")),
+    responses(
+        (status = 200, description = "List of folders", body = Vec<crate::models::MailFolder>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn list_folders(
+pub async fn list_folders(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<FolderQuery>,
@@ -912,8 +996,20 @@ async fn list_folders(
     Json(folders.unwrap_or_default())
 }
 
+/// Get a mail folder by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/mail/folders/{id}",
+    tag = "mail-folders",
+    security(("bearerAuth" = [])),
+    params(("id" = uuid::Uuid, Path, description = "Folder UUID")),
+    responses(
+        (status = 200, description = "Folder details", body = crate::models::MailFolder),
+        (status = 404, description = "Folder not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn get_folder(
+pub async fn get_folder(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -968,8 +1064,19 @@ pub struct EmailQuery {
     pub offset: Option<i64>,
 }
 
+/// List emails for the current user with optional filtering.
+#[utoipa::path(
+    get,
+    path = "/api/v1/mail/emails",
+    tag = "mail-emails",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "List of emails", body = Vec<crate::models::Email>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn list_emails(
+pub async fn list_emails(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<EmailQuery>,
@@ -1001,8 +1108,20 @@ async fn list_emails(
     Json(emails)
 }
 
+/// Get a single email by ID (marks it as read).
+#[utoipa::path(
+    get,
+    path = "/api/v1/mail/emails/{id}",
+    tag = "mail-emails",
+    security(("bearerAuth" = [])),
+    params(("id" = uuid::Uuid, Path, description = "Email UUID")),
+    responses(
+        (status = 200, description = "Email message", body = crate::models::Email),
+        (status = 404, description = "Email not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn get_email(
+pub async fn get_email(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1047,7 +1166,7 @@ async fn get_email(
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for SendEmail operation.
 pub struct SendEmailRequest {
     pub account_id: Uuid,
@@ -1062,8 +1181,21 @@ pub struct SendEmailRequest {
     pub scheduled_send_at: Option<chrono::DateTime<Utc>>,
 }
 
+/// Send an email or save it as a draft.
+#[utoipa::path(
+    post,
+    path = "/api/v1/mail/emails",
+    tag = "mail-emails",
+    security(("bearerAuth" = [])),
+    request_body = SendEmailRequest,
+    responses(
+        (status = 200, description = "Email sent or queued", body = crate::models::Email),
+        (status = 400, description = "Invalid request"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn send_email(
+pub async fn send_email(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<SendEmailRequest>,
@@ -1370,7 +1502,7 @@ async fn send_via_smtp(
     Ok(())
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdateEmail operation.
 pub struct UpdateEmailRequest {
     pub is_read: Option<bool>,
@@ -1386,8 +1518,21 @@ pub struct UpdateEmailRequest {
     pub body_html: Option<String>,
 }
 
+/// Update an email (read status, labels, folder, snooze, etc.).
+#[utoipa::path(
+    patch,
+    path = "/api/v1/mail/emails/{id}",
+    tag = "mail-emails",
+    security(("bearerAuth" = [])),
+    params(("id" = uuid::Uuid, Path, description = "Email UUID")),
+    request_body = UpdateEmailRequest,
+    responses(
+        (status = 200, description = "Email updated", body = crate::models::Email),
+        (status = 404, description = "Email not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn update_email(
+pub async fn update_email(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1448,8 +1593,20 @@ async fn update_email(
     }
 }
 
+/// Soft-delete an email (moves to trash).
+#[utoipa::path(
+    delete,
+    path = "/api/v1/mail/emails/{id}",
+    tag = "mail-emails",
+    security(("bearerAuth" = [])),
+    params(("id" = uuid::Uuid, Path, description = "Email UUID")),
+    responses(
+        (status = 204, description = "Email deleted"),
+        (status = 404, description = "Email not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn delete_email(
+pub async fn delete_email(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1489,8 +1646,20 @@ async fn delete_email(
     }
 }
 
+/// List attachments for an email.
+#[utoipa::path(
+    get,
+    path = "/api/v1/mail/emails/{id}/attachments",
+    tag = "mail-emails",
+    security(("bearerAuth" = [])),
+    params(("id" = uuid::Uuid, Path, description = "Email UUID")),
+    responses(
+        (status = 200, description = "List of attachments", body = Vec<crate::models::Attachment>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn list_attachments(
+pub async fn list_attachments(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1518,8 +1687,19 @@ async fn list_attachments(
 // Labels
 // ============================================================================
 
+/// List mail labels for the current user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/mail/labels",
+    tag = "mail-labels",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "List of labels", body = Vec<crate::models::MailLabel>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn list_labels(
+pub async fn list_labels(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<FolderQuery>,
@@ -1556,7 +1736,7 @@ async fn list_labels(
     Json(labels.unwrap_or_default())
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateLabel operation.
 pub struct CreateLabelRequest {
     pub account_id: Uuid,
@@ -1564,8 +1744,20 @@ pub struct CreateLabelRequest {
     pub color: Option<String>,
 }
 
+/// Create a new mail label.
+#[utoipa::path(
+    post,
+    path = "/api/v1/mail/labels",
+    tag = "mail-labels",
+    security(("bearerAuth" = [])),
+    request_body = CreateLabelRequest,
+    responses(
+        (status = 201, description = "Label created", body = crate::models::MailLabel),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn create_label(
+pub async fn create_label(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateLabelRequest>,
@@ -1628,15 +1820,28 @@ async fn create_label(
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdateLabel operation.
 pub struct UpdateLabelRequest {
     pub name: Option<String>,
     pub color: Option<String>,
 }
 
+/// Update a mail label.
+#[utoipa::path(
+    patch,
+    path = "/api/v1/mail/labels/{id}",
+    tag = "mail-labels",
+    security(("bearerAuth" = [])),
+    params(("id" = uuid::Uuid, Path, description = "Label UUID")),
+    request_body = UpdateLabelRequest,
+    responses(
+        (status = 200, description = "Label updated", body = crate::models::MailLabel),
+        (status = 404, description = "Label not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn update_label(
+pub async fn update_label(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1678,8 +1883,20 @@ async fn update_label(
     }
 }
 
+/// Delete a mail label.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/mail/labels/{id}",
+    tag = "mail-labels",
+    security(("bearerAuth" = [])),
+    params(("id" = uuid::Uuid, Path, description = "Label UUID")),
+    responses(
+        (status = 204, description = "Label deleted"),
+        (status = 404, description = "Label not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
-async fn delete_label(
+pub async fn delete_label(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

@@ -2,9 +2,11 @@ pub mod api;
 pub mod auth;
 pub mod handlers;
 pub mod models;
+pub mod openapi;
 pub mod sync_service;
 
 use chrono::{Datelike, Timelike, Weekday};
+use openapi::MailApiDoc;
 use signapps_common::bootstrap::{env_or, env_required, init_tracing, load_env};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::pg_events::{PgEventBus, PlatformEvent};
@@ -15,6 +17,8 @@ use tower_http::{
     cors::{AllowOrigin, CorsLayer},
     trace::TraceLayer,
 };
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(Clone)]
 /// Application state for  service.
@@ -174,8 +178,13 @@ async fn main() {
             axum::http::HeaderName::from_static("x-request-id"),
         ]);
 
+    // OpenAPI docs
+    let openapi_routes =
+        SwaggerUi::new("/swagger-ui").url("/api/v1/openapi.json", MailApiDoc::openapi());
+
     // Unauthenticated health route (no auth middleware)
     let public_router = axum::Router::new()
+        .merge(openapi_routes)
         .route(
             "/health",
             axum::routing::get(|| async {
