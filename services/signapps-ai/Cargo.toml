@@ -116,3 +116,9 @@ gpu-cuda = []
 gpu-rocm = []
 gpu-vulkan = []
 gpu-metal = []
+
+[dev-dependencies]
+axum = { workspace = true }
+tokio = { workspace = true }
+serde_json = { workspace = true }
+tower = { workspace = true }
