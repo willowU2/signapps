@@ -16,6 +16,7 @@ use axum::{
     Router,
 };
 use handlers::admin_security;
+use handlers::openapi::IdentityApiDoc;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin,
@@ -28,6 +29,8 @@ use tower_http::{
     cors::{AllowOrigin, CorsLayer},
     trace::TraceLayer,
 };
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -199,11 +202,14 @@ fn create_router(state: AppState) -> Router {
                 }
             }));
 
+    // OpenAPI spec + Swagger UI (utoipa code-first)
+    let openapi_routes =
+        SwaggerUi::new("/swagger-ui").url("/api/v1/openapi.json", IdentityApiDoc::openapi());
+
     // Public routes (no auth required)
     let public_routes = Router::new()
+        .merge(openapi_routes)
         .route("/health", get(handlers::health::health_check))
-        // OpenAPI spec — machine-readable API documentation
-        .route("/api/v1/openapi.json", get(handlers::openapi::openapi_spec))
         .route("/api/v1/auth/register", post(handlers::auth::register))
         .route("/api/v1/auth/refresh", post(handlers::auth::refresh))
         .route("/api/v1/bootstrap", post(handlers::auth::bootstrap))

@@ -39,66 +39,102 @@ async fn audit_auth_event(
 }
 
 /// Login request payload.
-#[derive(Debug, Deserialize, Validate)]
-/// Request body for Login.
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 pub struct LoginRequest {
+    /// Username or email address.
     #[validate(length(min = 1, message = "Username is required"))]
     pub username: String,
+    /// User password.
     #[validate(length(min = 1, message = "Password is required"))]
     pub password: String,
+    /// TOTP code (required when MFA is enabled).
     pub mfa_code: Option<String>,
 }
 
-/// Login response with tokens.
-#[derive(Debug, Serialize)]
-/// Response for Login.
+/// Login response with JWT tokens.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct LoginResponse {
+    /// Short-lived access token (Bearer JWT).
     pub access_token: String,
+    /// Long-lived refresh token.
     pub refresh_token: String,
+    /// Always `"Bearer"`.
     pub token_type: String,
+    /// Access token lifetime in seconds.
     pub expires_in: i64,
 }
 
 /// Registration request payload.
-#[derive(Debug, Deserialize, Validate)]
-/// Request body for Register.
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 pub struct RegisterRequest {
+    /// Unique username (3–64 chars).
     #[validate(length(min = 3, max = 64, message = "Username must be 3-64 characters"))]
     pub username: String,
+    /// Optional email address.
     #[validate(email(message = "Invalid email format"))]
     pub email: Option<String>,
+    /// Password (8–128 chars).
     #[validate(length(min = 8, max = 128, message = "Password must be 8-128 characters"))]
     pub password: String,
+    /// Optional display name (max 255 chars).
     #[validate(length(max = 255))]
     pub display_name: Option<String>,
 }
 
 /// User information response.
-#[derive(Debug, Serialize)]
-/// Response for User.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct UserResponse {
+    /// User UUID.
     pub id: Uuid,
+    /// Unique username.
     pub username: String,
+    /// Email address (optional).
     pub email: Option<String>,
+    /// Display name (optional).
     pub display_name: Option<String>,
+    /// Role level: 1=user, 2=admin, 3=super-admin.
     pub role: i16,
+    /// Whether MFA (TOTP) is enabled.
     pub mfa_enabled: bool,
+    /// Auth provider: `"local"` or `"ldap"`.
     pub auth_provider: String,
+    /// Account creation timestamp (RFC 3339).
     pub created_at: String,
+    /// Last login timestamp (RFC 3339), if any.
     pub last_login: Option<String>,
 }
 
 /// Refresh token request.
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
-/// Request body for Refresh.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct RefreshRequest {
+    /// Refresh token previously issued by `/api/v1/auth/login`.
     pub refresh_token: String,
 }
 
-/// Login endpoint - supports local and LDAP authentication.
+/// Password reset confirm request payload.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct PasswordResetConfirmRequest {
+    /// Reset token received by email.
+    pub token: String,
+    /// New password (min 8 chars).
+    #[serde(rename = "new_password")]
+    pub new_password: String,
+}
+
+/// Login endpoint — supports local and LDAP authentication.
+#[utoipa::path(
+    post,
+    path = "/api/v1/auth/login",
+    tag = "auth",
+    request_body = LoginRequest,
+    responses(
+        (status = 200, description = "Login successful — returns tokens + sets HttpOnly cookies", body = LoginResponse),
+        (status = 401, description = "Invalid credentials or MFA code"),
+        (status = 422, description = "Validation error"),
+    )
+)]
 #[tracing::instrument(skip(state, payload), fields(username = %payload.username))]
-#[tracing::instrument(skip_all)]
 pub async fn login(
     State(state): State<AppState>,
     Json(payload): Json<LoginRequest>,
@@ -278,8 +314,17 @@ pub async fn login(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/auth/logout",
+    tag = "auth",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "Logged out — clears HttpOnly cookies"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, headers))]
-#[tracing::instrument(skip_all)]
 pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result<HeaderMap> {
     let mut token = None;
 
@@ -335,8 +380,18 @@ pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result
 }
 
 /// Register new user (local auth only).
+#[utoipa::path(
+    post,
+    path = "/api/v1/auth/register",
+    tag = "auth",
+    request_body = RegisterRequest,
+    responses(
+        (status = 200, description = "User created successfully", body = UserResponse),
+        (status = 409, description = "Username or email already exists"),
+        (status = 422, description = "Validation error"),
+    )
+)]
 #[tracing::instrument(skip(state, payload), fields(username = %payload.username))]
-#[tracing::instrument(skip_all)]
 pub async fn register(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
@@ -397,8 +452,16 @@ pub async fn register(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/auth/refresh",
+    tag = "auth",
+    responses(
+        (status = 200, description = "New token pair issued", body = LoginResponse),
+        (status = 401, description = "Missing, invalid or expired refresh token"),
+    )
+)]
 #[tracing::instrument(skip(state, headers))]
-#[tracing::instrument(skip_all)]
 pub async fn refresh(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -497,8 +560,17 @@ pub async fn refresh(
 }
 
 /// Get current user info.
+#[utoipa::path(
+    get,
+    path = "/api/v1/auth/me",
+    tag = "auth",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "Current authenticated user", body = UserResponse),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
-#[tracing::instrument(skip_all)]
 pub async fn me(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -520,10 +592,20 @@ pub async fn me(
     }))
 }
 
-/// Bootstrap endpoint - promotes the first user to admin if no admin exists.
-/// This is a one-time operation for initial setup.
+/// Bootstrap endpoint — promotes the first user to admin if no admin exists.
+///
+/// One-time operation for initial instance setup.
+#[utoipa::path(
+    post,
+    path = "/api/v1/bootstrap",
+    tag = "system",
+    responses(
+        (status = 200, description = "Bootstrap complete — first user promoted to admin"),
+        (status = 403, description = "An admin already exists"),
+        (status = 404, description = "No users found"),
+    )
+)]
 #[tracing::instrument(skip(state))]
-#[tracing::instrument(skip_all)]
 pub async fn bootstrap(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     // Check if any admin already exists (direct SQL — checks ALL users, not just first N)
     let has_admin: bool =
@@ -588,21 +670,19 @@ fn verify_totp(secret: &str, code: &str) -> Result<bool> {
     Ok(totp.check_current(code).unwrap_or(false))
 }
 
-/// Password reset confirm request payload.
-#[derive(Debug, Deserialize)]
-/// Request body for PasswordResetConfirm.
-pub struct PasswordResetConfirmRequest {
-    pub token: String,
-    #[serde(rename = "new_password")]
-    pub new_password: String,
-}
-
-/// Password reset request (rate-limited to 3/min per IP).
+/// Request a password reset link by email.
 ///
-/// Accepts an email address and — if an account exists — initiates the reset flow.
-/// Always returns HTTP 200 to avoid leaking account existence.
+/// Rate-limited to 3/min per IP. Always returns 200 to avoid leaking account existence.
+#[utoipa::path(
+    post,
+    path = "/api/v1/auth/password-reset",
+    tag = "auth",
+    request_body = inline(serde_json::Value),
+    responses(
+        (status = 200, description = "Reset email dispatched (if account exists)"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
-#[tracing::instrument(skip_all)]
 pub async fn password_reset(
     State(state): State<AppState>,
     Json(payload): Json<serde_json::Value>,
@@ -679,9 +759,19 @@ pub async fn password_reset(
     })))
 }
 
-/// POST /api/v1/auth/password-reset/confirm — apply a password reset token.
+/// Apply a password reset token and set a new password.
+#[utoipa::path(
+    post,
+    path = "/api/v1/auth/password-reset/confirm",
+    tag = "auth",
+    request_body = PasswordResetConfirmRequest,
+    responses(
+        (status = 200, description = "Password reset successfully"),
+        (status = 401, description = "Invalid, expired or already-used token"),
+        (status = 422, description = "Password too short"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
-#[tracing::instrument(skip_all)]
 pub async fn password_reset_confirm(
     State(state): State<AppState>,
     Json(payload): Json<PasswordResetConfirmRequest>,
