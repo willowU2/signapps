@@ -5,10 +5,15 @@
  * Wraps the base calendar API with scheduling-specific types and React Query hooks.
  */
 
-import * as React from 'react';
-import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
-import { calendarApi, tasksApi } from '@/lib/api/calendar';
-import { toast } from 'sonner';
+import * as React from "react";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseQueryOptions,
+} from "@tanstack/react-query";
+import { calendarApi, tasksApi } from "@/lib/api/calendar";
+import { toast } from "sonner";
 import type {
   ScheduleBlock,
   CreateEventInput,
@@ -23,22 +28,24 @@ import type {
   RSVPInput,
   RSVPStatus,
   Attendee,
-} from '../types/scheduling';
+} from "../types/scheduling";
 
 // ============================================================================
 // Query Keys
 // ============================================================================
 
 export const schedulingKeys = {
-  all: ['scheduling'] as const,
-  events: () => [...schedulingKeys.all, 'events'] as const,
-  eventsList: (params: EventsQueryParams) => [...schedulingKeys.events(), params] as const,
+  all: ["scheduling"] as const,
+  events: () => [...schedulingKeys.all, "events"] as const,
+  eventsList: (params: EventsQueryParams) =>
+    [...schedulingKeys.events(), params] as const,
   event: (id: string) => [...schedulingKeys.events(), id] as const,
-  tasks: () => [...schedulingKeys.all, 'tasks'] as const,
-  tasksList: (calendarId: string) => [...schedulingKeys.tasks(), calendarId] as const,
+  tasks: () => [...schedulingKeys.all, "tasks"] as const,
+  tasksList: (calendarId: string) =>
+    [...schedulingKeys.tasks(), calendarId] as const,
   task: (id: string) => [...schedulingKeys.tasks(), id] as const,
-  calendars: () => [...schedulingKeys.all, 'calendars'] as const,
-  templates: () => [...schedulingKeys.all, 'templates'] as const,
+  calendars: () => [...schedulingKeys.all, "calendars"] as const,
+  templates: () => [...schedulingKeys.all, "templates"] as const,
   template: (id: string) => [...schedulingKeys.templates(), id] as const,
 };
 
@@ -49,26 +56,35 @@ export const schedulingKeys = {
 /**
  * Transform API event to ScheduleBlock
  */
-function toScheduleBlock(event: any): ScheduleBlock {
+function toScheduleBlock(event: Record<string, unknown>): ScheduleBlock {
   return {
     id: event.id,
-    type: 'event',
+    type: "event",
     title: event.title,
     description: event.description,
     start: new Date(event.start_time || event.start),
-    end: event.end_time || event.end ? new Date(event.end_time || event.end) : undefined,
+    end:
+      event.end_time || event.end
+        ? new Date(event.end_time || event.end)
+        : undefined,
     allDay: event.all_day ?? false,
     calendarId: event.calendar_id,
-    attendees: event.attendees?.map((a: any) => ({
-      id: a.id,
-      name: a.user?.display_name || a.email,
-      email: a.email,
-      status: a.rsvp_status || 'pending',
-      required: a.required ?? true,
-    })),
+    attendees: (event.attendees as Record<string, unknown>[] | undefined)?.map(
+      (a) => ({
+        id: a.id,
+        name:
+          (a.user as Record<string, unknown> | undefined)?.display_name ||
+          a.email,
+        email: a.email,
+        status: a.rsvp_status || "pending",
+        required: a.required ?? true,
+      }),
+    ),
     color: event.color,
-    status: event.status || 'confirmed',
-    recurrence: event.recurrence_rule ? parseRecurrence(event.recurrence_rule) : undefined,
+    status: event.status || "confirmed",
+    recurrence: event.recurrence_rule
+      ? parseRecurrence(event.recurrence_rule)
+      : undefined,
     metadata: event.metadata,
     createdAt: new Date(event.created_at),
     updatedAt: new Date(event.updated_at),
@@ -78,7 +94,9 @@ function toScheduleBlock(event: any): ScheduleBlock {
 /**
  * Transform ScheduleBlock to API event format
  */
-function toApiEvent(block: Partial<CreateEventInput | UpdateEventInput>): any {
+function toApiEvent(
+  block: Partial<CreateEventInput | UpdateEventInput>,
+): Record<string, unknown> {
   return {
     title: block.title,
     description: block.description,
@@ -86,32 +104,34 @@ function toApiEvent(block: Partial<CreateEventInput | UpdateEventInput>): any {
     end_time: block.end?.toISOString(),
     all_day: block.allDay,
     color: block.color,
-    recurrence_rule: block.recurrence ? formatRecurrence(block.recurrence) : undefined,
+    recurrence_rule: block.recurrence
+      ? formatRecurrence(block.recurrence)
+      : undefined,
   };
 }
 
-function parseRecurrence(rule: string): any {
+function parseRecurrence(rule: string): Record<string, unknown> {
   // Simple RRULE parser
-  const parts = rule.split(';');
-  const result: any = {};
+  const parts = rule.split(";");
+  const result: Record<string, unknown> = {};
 
   for (const part of parts) {
-    const [key, value] = part.split('=');
+    const [key, value] = part.split("=");
     switch (key) {
-      case 'FREQ':
+      case "FREQ":
         result.frequency = value.toLowerCase();
         break;
-      case 'INTERVAL':
+      case "INTERVAL":
         result.interval = parseInt(value, 10);
         break;
-      case 'COUNT':
+      case "COUNT":
         result.count = parseInt(value, 10);
         break;
-      case 'UNTIL':
+      case "UNTIL":
         result.endDate = new Date(value);
         break;
-      case 'BYDAY':
-        result.byDay = value.split(',');
+      case "BYDAY":
+        result.byDay = value.split(",");
         break;
     }
   }
@@ -119,11 +139,11 @@ function parseRecurrence(rule: string): any {
   return result;
 }
 
-function formatRecurrence(recurrence: any): string {
+function formatRecurrence(recurrence: Record<string, unknown>): string {
   const parts: string[] = [];
 
   if (recurrence.frequency) {
-    parts.push(`FREQ=${recurrence.frequency.toUpperCase()}`);
+    parts.push(`FREQ=${(recurrence.frequency as string).toUpperCase()}`);
   }
   if (recurrence.interval) {
     parts.push(`INTERVAL=${recurrence.interval}`);
@@ -132,13 +152,15 @@ function formatRecurrence(recurrence: any): string {
     parts.push(`COUNT=${recurrence.count}`);
   }
   if (recurrence.endDate) {
-    parts.push(`UNTIL=${recurrence.endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`);
+    parts.push(
+      `UNTIL=${(recurrence.endDate as Date).toISOString().replace(/[-:]/g, "").split(".")[0]}Z`,
+    );
   }
-  if (recurrence.byDay?.length) {
-    parts.push(`BYDAY=${recurrence.byDay.join(',')}`);
+  if (recurrence.byDay && (recurrence.byDay as string[]).length) {
+    parts.push(`BYDAY=${(recurrence.byDay as string[]).join(",")}`);
   }
 
-  return parts.join(';');
+  return parts.join(";");
 }
 
 // ============================================================================
@@ -148,12 +170,14 @@ function formatRecurrence(recurrence: any): string {
 /**
  * Fetch events for a date range
  */
-export async function fetchEvents(params: EventsQueryParams): Promise<ScheduleBlock[]> {
+export async function fetchEvents(
+  params: EventsQueryParams,
+): Promise<ScheduleBlock[]> {
   const calendars = await calendarApi.listCalendars();
-  const calendarIds = params.calendarIds || calendars.data.map((c: any) => c.id);
+  const calendarIds = params.calendarIds || calendars.data.map((c) => c.id);
 
   const eventPromises = calendarIds.map((calendarId: string) =>
-    calendarApi.listEvents(calendarId, params.start, params.end)
+    calendarApi.listEvents(calendarId, params.start, params.end),
   );
 
   const responses = await Promise.all(eventPromises);
@@ -175,7 +199,7 @@ export async function fetchEvent(eventId: string): Promise<ScheduleBlock> {
  */
 export async function createEvent(
   calendarId: string,
-  input: CreateEventInput
+  input: CreateEventInput,
 ): Promise<ScheduleBlock> {
   const response = await calendarApi.createEvent(calendarId, toApiEvent(input));
   return toScheduleBlock(response.data);
@@ -186,7 +210,7 @@ export async function createEvent(
  */
 export async function updateEvent(
   eventId: string,
-  input: UpdateEventInput
+  input: UpdateEventInput,
 ): Promise<ScheduleBlock> {
   const response = await calendarApi.updateEvent(eventId, toApiEvent(input));
   return toScheduleBlock(response.data);
@@ -208,7 +232,7 @@ export async function deleteEvent(eventId: string): Promise<void> {
  */
 export function useEvents(
   params: EventsQueryParams,
-  options?: Omit<UseQueryOptions<ScheduleBlock[]>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<ScheduleBlock[]>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
     queryKey: schedulingKeys.eventsList(params),
@@ -224,7 +248,7 @@ export function useEvents(
  */
 export function useEvent(
   eventId: string,
-  options?: Omit<UseQueryOptions<ScheduleBlock>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<ScheduleBlock>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
     queryKey: schedulingKeys.event(eventId),
@@ -241,11 +265,16 @@ export function useCreateEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ calendarId, input }: { calendarId: string; input: CreateEventInput }) =>
-      createEvent(calendarId, input),
+    mutationFn: ({
+      calendarId,
+      input,
+    }: {
+      calendarId: string;
+      input: CreateEventInput;
+    }) => createEvent(calendarId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: schedulingKeys.events() });
-      toast.success('Événement créé');
+      toast.success("Événement créé");
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);
@@ -260,8 +289,13 @@ export function useUpdateEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ eventId, input }: { eventId: string; input: UpdateEventInput }) =>
-      updateEvent(eventId, input),
+    mutationFn: ({
+      eventId,
+      input,
+    }: {
+      eventId: string;
+      input: UpdateEventInput;
+    }) => updateEvent(eventId, input),
     onMutate: async ({ eventId, input }) => {
       // Cancel outgoing queries
       await queryClient.cancelQueries({ queryKey: schedulingKeys.events() });
@@ -276,8 +310,8 @@ export function useUpdateEvent() {
           old?.map((event) =>
             event.id === eventId
               ? { ...event, ...input, updatedAt: new Date() }
-              : event
-          )
+              : event,
+          ),
       );
 
       return { previousEvents };
@@ -287,10 +321,10 @@ export function useUpdateEvent() {
       if (context?.previousEvents) {
         queryClient.setQueriesData(
           { queryKey: schedulingKeys.events() },
-          context.previousEvents
+          context.previousEvents,
         );
       }
-      toast.error('Erreur lors de la mise à jour');
+      toast.error("Erreur lors de la mise à jour");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: schedulingKeys.events() });
@@ -313,7 +347,8 @@ export function useDeleteEvent() {
 
       queryClient.setQueriesData(
         { queryKey: schedulingKeys.events() },
-        (old: ScheduleBlock[] | undefined) => old?.filter((event) => event.id !== eventId)
+        (old: ScheduleBlock[] | undefined) =>
+          old?.filter((event) => event.id !== eventId),
       );
 
       return { previousEvents };
@@ -322,16 +357,16 @@ export function useDeleteEvent() {
       if (context?.previousEvents) {
         queryClient.setQueriesData(
           { queryKey: schedulingKeys.events() },
-          context.previousEvents
+          context.previousEvents,
         );
       }
-      toast.error('Erreur lors de la suppression');
+      toast.error("Erreur lors de la suppression");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: schedulingKeys.events() });
     },
     onSuccess: () => {
-      toast.success('Événement supprimé');
+      toast.success("Événement supprimé");
     },
   });
 }
@@ -343,8 +378,15 @@ export function useMoveEvent() {
   const updateMutation = useUpdateEvent();
 
   return useMutation({
-    mutationFn: ({ eventId, start, end }: { eventId: string; start: Date; end?: Date }) =>
-      updateMutation.mutateAsync({ eventId, input: { start, end } }),
+    mutationFn: ({
+      eventId,
+      start,
+      end,
+    }: {
+      eventId: string;
+      start: Date;
+      end?: Date;
+    }) => updateMutation.mutateAsync({ eventId, input: { start, end } }),
   });
 }
 
@@ -367,27 +409,29 @@ export function useCalendars() {
 // Event Templates — API with localStorage cache/fallback
 // ============================================================================
 
-const TEMPLATES_STORAGE_KEY = 'scheduling_templates';
-const TEMPLATES_API_PATH = '/scheduling/templates';
+const TEMPLATES_STORAGE_KEY = "scheduling_templates";
+const TEMPLATES_API_PATH = "/scheduling/templates";
 
 function getStoredTemplates(): EventTemplate[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === "undefined") return [];
   try {
     const data = localStorage.getItem(TEMPLATES_STORAGE_KEY);
     if (!data) return [];
     const templates = JSON.parse(data);
-    return templates.map((t: EventTemplate & { createdAt: string; updatedAt: string }) => ({
-      ...t,
-      createdAt: new Date(t.createdAt),
-      updatedAt: new Date(t.updatedAt),
-    }));
+    return templates.map(
+      (t: EventTemplate & { createdAt: string; updatedAt: string }) => ({
+        ...t,
+        createdAt: new Date(t.createdAt),
+        updatedAt: new Date(t.updatedAt),
+      }),
+    );
   } catch {
     return [];
   }
 }
 
 function saveTemplates(templates: EventTemplate[]): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(templates));
 }
 
@@ -397,13 +441,11 @@ function saveTemplates(templates: EventTemplate[]): void {
 export async function fetchTemplates(): Promise<EventTemplate[]> {
   try {
     const response = await calendarApi.get<EventTemplate[]>(TEMPLATES_API_PATH);
-    const templates = (response.data || []).map(
-      (t) => ({
-        ...t,
-        createdAt: new Date(t.createdAt as unknown as string),
-        updatedAt: new Date(t.updatedAt as unknown as string),
-      })
-    );
+    const templates = (response.data || []).map((t) => ({
+      ...t,
+      createdAt: new Date(t.createdAt as unknown as string),
+      updatedAt: new Date(t.updatedAt as unknown as string),
+    }));
     // Update local cache with fresh data from API
     saveTemplates(templates);
     return templates;
@@ -416,9 +458,14 @@ export async function fetchTemplates(): Promise<EventTemplate[]> {
 /**
  * Create a new template — tries API first, falls back to localStorage.
  */
-export async function createTemplate(input: CreateTemplateInput): Promise<EventTemplate> {
+export async function createTemplate(
+  input: CreateTemplateInput,
+): Promise<EventTemplate> {
   try {
-    const response = await calendarApi.post<EventTemplate>(TEMPLATES_API_PATH, input);
+    const response = await calendarApi.post<EventTemplate>(
+      TEMPLATES_API_PATH,
+      input,
+    );
     const newTemplate: EventTemplate = {
       ...response.data,
       createdAt: new Date(response.data.createdAt),
@@ -449,12 +496,12 @@ export async function createTemplate(input: CreateTemplateInput): Promise<EventT
  */
 export async function updateTemplate(
   templateId: string,
-  input: UpdateTemplateInput
+  input: UpdateTemplateInput,
 ): Promise<EventTemplate> {
   try {
     const response = await calendarApi.put<EventTemplate>(
       `${TEMPLATES_API_PATH}/${templateId}`,
-      input
+      input,
     );
     const updated: EventTemplate = {
       ...response.data,
@@ -473,7 +520,7 @@ export async function updateTemplate(
     // API unavailable — update locally
     const templates = getStoredTemplates();
     const index = templates.findIndex((t) => t.id === templateId);
-    if (index === -1) throw new Error('Template not found');
+    if (index === -1) throw new Error("Template not found");
 
     templates[index] = {
       ...templates[index],
@@ -530,7 +577,7 @@ export function useCreateTemplate() {
     mutationFn: createTemplate,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: schedulingKeys.templates() });
-      toast.success('Modèle créé');
+      toast.success("Modèle créé");
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);
@@ -545,11 +592,16 @@ export function useUpdateTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ templateId, input }: { templateId: string; input: UpdateTemplateInput }) =>
-      updateTemplate(templateId, input),
+    mutationFn: ({
+      templateId,
+      input,
+    }: {
+      templateId: string;
+      input: UpdateTemplateInput;
+    }) => updateTemplate(templateId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: schedulingKeys.templates() });
-      toast.success('Modèle mis à jour');
+      toast.success("Modèle mis à jour");
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);
@@ -567,7 +619,7 @@ export function useDeleteTemplate() {
     mutationFn: deleteTemplate,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: schedulingKeys.templates() });
-      toast.success('Modèle supprimé');
+      toast.success("Modèle supprimé");
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);
@@ -579,7 +631,7 @@ export function useDeleteTemplate() {
 // RSVP (MVP: localStorage for attendee status)
 // ============================================================================
 
-const RSVP_STORAGE_KEY = 'scheduling_rsvp';
+const RSVP_STORAGE_KEY = "scheduling_rsvp";
 
 interface StoredRSVP {
   eventId: string;
@@ -590,7 +642,7 @@ interface StoredRSVP {
 }
 
 function getStoredRSVPs(): StoredRSVP[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === "undefined") return [];
   try {
     const data = localStorage.getItem(RSVP_STORAGE_KEY);
     return data ? JSON.parse(data) : [];
@@ -600,7 +652,7 @@ function getStoredRSVPs(): StoredRSVP[] {
 }
 
 function saveRSVPs(rsvps: StoredRSVP[]): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   localStorage.setItem(RSVP_STORAGE_KEY, JSON.stringify(rsvps));
 }
 
@@ -612,7 +664,7 @@ export async function updateRSVP(input: RSVPInput): Promise<StoredRSVP> {
 
   // Remove existing RSVP for this event/attendee
   const filtered = rsvps.filter(
-    (r) => !(r.eventId === input.eventId && r.attendeeId === input.attendeeId)
+    (r) => !(r.eventId === input.eventId && r.attendeeId === input.attendeeId),
   );
 
   const newRSVP: StoredRSVP = {
@@ -632,9 +684,14 @@ export async function updateRSVP(input: RSVPInput): Promise<StoredRSVP> {
 /**
  * Get RSVP status for an attendee
  */
-export function getRSVP(eventId: string, attendeeId: string): StoredRSVP | undefined {
+export function getRSVP(
+  eventId: string,
+  attendeeId: string,
+): StoredRSVP | undefined {
   const rsvps = getStoredRSVPs();
-  return rsvps.find((r) => r.eventId === eventId && r.attendeeId === attendeeId);
+  return rsvps.find(
+    (r) => r.eventId === eventId && r.attendeeId === attendeeId,
+  );
 }
 
 /**
@@ -648,7 +705,10 @@ export function getEventRSVPs(eventId: string): StoredRSVP[] {
 /**
  * Get RSVP summary for an event
  */
-export function getRSVPSummary(eventId: string, attendees: Attendee[]): {
+export function getRSVPSummary(
+  eventId: string,
+  attendees: Attendee[],
+): {
   accepted: number;
   declined: number;
   tentative: number;
@@ -664,15 +724,15 @@ export function getRSVPSummary(eventId: string, attendees: Attendee[]): {
   let pending = 0;
 
   for (const attendee of attendees) {
-    const status = rsvpMap.get(attendee.id) || attendee.status || 'pending';
+    const status = rsvpMap.get(attendee.id) || attendee.status || "pending";
     switch (status) {
-      case 'accepted':
+      case "accepted":
         accepted++;
         break;
-      case 'declined':
+      case "declined":
         declined++;
         break;
-      case 'tentative':
+      case "tentative":
         tentative++;
         break;
       default:
@@ -716,18 +776,18 @@ export function useUpdateRSVP() {
               attendees: event.attendees?.map((a) =>
                 a.id === input.attendeeId
                   ? { ...a, status: input.status, respondedAt: new Date() }
-                  : a
+                  : a,
               ),
             };
-          })
+          }),
       );
     },
     onSuccess: (data) => {
       const statusLabels: Record<RSVPStatus, string> = {
-        accepted: 'Accepté',
-        declined: 'Refusé',
-        tentative: 'Peut-être',
-        pending: 'En attente',
+        accepted: "Accepté",
+        declined: "Refusé",
+        tentative: "Peut-être",
+        pending: "En attente",
       };
       toast.success(`Réponse: ${statusLabels[data.status]}`);
     },
@@ -748,4 +808,3 @@ export function useRSVPSummary(eventId: string, attendees: Attendee[]) {
     return getRSVPSummary(eventId, attendees);
   }, [eventId, attendees]);
 }
-

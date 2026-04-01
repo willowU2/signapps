@@ -1191,7 +1191,7 @@ export function Spreadsheet({
 }: {
   documentId?: string;
   documentName?: string;
-  initialData?: any;
+  initialData?: Record<string, CellData>;
   initialColWidths?: Record<number, number>;
   initialRowHeights?: Record<number, number>;
 }) {
@@ -1248,7 +1248,7 @@ export function Spreadsheet({
   // Track Yjs updates as history entries
   useEffect(() => {
     if (!doc) return;
-    const handleUpdate = (_update: Uint8Array, origin: any) => {
+    const handleUpdate = (_update: Uint8Array, origin: unknown) => {
       const now = Date.now();
       // Throttle: max one entry per 2s per origin
       if (now - lastUpdateRef.current < 2000) return;
@@ -2281,9 +2281,9 @@ export function Spreadsheet({
         }
       }
       return null;
-      // DAYS_*/MONTHS_* are static literal arrays defined in component scope — safe to omit
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
+    // DAYS_*/MONTHS_* are static literal arrays defined in component scope — safe to omit
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
@@ -2454,25 +2454,39 @@ export function Spreadsheet({
   );
 
   // ---- Advanced Chart: insert floating chart ----
-  const handleInsertChart = useCallback((config: any, parsed: any) => {
-    const chartData = parsed.labels.map((label: string, i: number) => {
-      const entry: Record<string, string | number> = { label };
-      parsed.series.forEach((s: any) => {
-        entry[s.name] = s.values[i] ?? 0;
+  const handleInsertChart = useCallback(
+    (
+      config: {
+        type: string;
+        title?: string;
+        colors?: string[];
+        showLegend?: boolean;
+      },
+      parsed: {
+        labels: string[];
+        series: { name: string; values: number[] }[];
+      },
+    ) => {
+      const chartData = parsed.labels.map((label: string, i: number) => {
+        const entry: Record<string, string | number> = { label };
+        parsed.series.forEach((s) => {
+          entry[s.name] = s.values[i] ?? 0;
+        });
+        return entry;
       });
-      return entry;
-    });
-    const newChart = {
-      id: `chart-${Date.now()}`,
-      type: config.type,
-      title: config.title || "Graphique",
-      chartData,
-      seriesNames: parsed.series.map((s: any) => s.name),
-      colors: config.colors,
-      showLegend: config.showLegend,
-    };
-    setFloatingCharts((prev) => [...prev, newChart]);
-  }, []);
+      const newChart = {
+        id: `chart-${Date.now()}`,
+        type: config.type,
+        title: config.title || "Graphique",
+        chartData,
+        seriesNames: parsed.series.map((s) => s.name),
+        colors: config.colors,
+        showLegend: config.showLegend,
+      };
+      setFloatingCharts((prev) => [...prev, newChart]);
+    },
+    [],
+  );
 
   const handleRemoveFloatingChart = useCallback((id: string) => {
     setFloatingCharts((prev) => prev.filter((c) => c.id !== id));
