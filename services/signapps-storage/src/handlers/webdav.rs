@@ -10,7 +10,7 @@
 use axum::{
     body::Body,
     extract::{Request, State},
-    http::{header, HeaderMap, Method, StatusCode},
+    http::{header, Method, StatusCode},
     middleware::Next,
     response::Response,
 };
@@ -277,6 +277,7 @@ fn multistatus_xml(responses: &[String]) -> String {
 ///
 /// On success injects `Claims` and `Uuid` (user ID) into request extensions,
 /// matching what `auth_middleware` does for JWT routes.
+#[tracing::instrument(skip(state, request, next), name = "webdav_auth")]
 pub async fn webdav_auth(
     State(state): State<AppState>,
     mut request: Request,
@@ -294,13 +295,11 @@ pub async fn webdav_auth(
         .and_then(|h| h.strip_prefix("Basic "))
     {
         Some(encoded) => {
-            // Decode base64
             use base64::Engine;
-            let decoded = base64::engine::general_purpose::STANDARD
+            base64::engine::general_purpose::STANDARD
                 .decode(encoded)
                 .ok()
-                .and_then(|b| String::from_utf8(b).ok());
-            decoded
+                .and_then(|b| String::from_utf8(b).ok())
         },
         None => None,
     };
@@ -389,6 +388,7 @@ pub async fn webdav_auth(
 // ─── WebDAV dispatch ──────────────────────────────────────────────────────────
 
 /// Central dispatcher: routes by HTTP method to the appropriate WebDAV handler.
+#[tracing::instrument(skip(state, request), name = "webdav_dispatch")]
 pub async fn webdav_dispatch(State(state): State<AppState>, request: Request) -> Response {
     let method = request.method().clone();
     let uri = request.uri().clone();
@@ -999,6 +999,7 @@ async fn handle_copy(
 // ─── WebDAV admin config handlers ─────────────────────────────────────────────
 
 /// `GET /api/v1/webdav/config` — return global WebDAV configuration.
+#[tracing::instrument(skip(state), name = "get_webdav_config")]
 pub async fn get_webdav_config(
     State(state): State<AppState>,
 ) -> Result<axum::Json<serde_json::Value>, AppError> {
@@ -1024,6 +1025,7 @@ pub async fn get_webdav_config(
 }
 
 /// `PUT /api/v1/webdav/config` — update global WebDAV enabled flag.
+#[tracing::instrument(skip(state, payload), name = "update_webdav_config")]
 pub async fn update_webdav_config(
     State(state): State<AppState>,
     axum::Json(payload): axum::Json<serde_json::Value>,

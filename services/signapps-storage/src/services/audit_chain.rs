@@ -6,6 +6,8 @@ use signapps_db::models::drive_acl::ChainVerification;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+type AuditLogRow = (String, Option<String>, String, Uuid, Option<Uuid>, i64);
+
 /// Compute a SHA-256 hash for a single chain link.
 ///
 /// The hash covers: previous hash, action, actor UUID, optional node UUID,
@@ -92,7 +94,7 @@ pub async fn log_audit(
 /// if not, the index of the first corrupted entry.
 pub async fn verify_chain(pool: &PgPool) -> Result<ChainVerification> {
     // Fetch all entries ordered oldest-first for sequential verification
-    let logs: Vec<(String, Option<String>, String, Uuid, Option<Uuid>, i64)> = sqlx::query_as(
+    let logs: Vec<AuditLogRow> = sqlx::query_as(
         r#"SELECT log_hash,
                       prev_log_hash,
                       action::text,

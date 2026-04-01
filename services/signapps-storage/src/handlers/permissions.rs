@@ -11,18 +11,21 @@ use signapps_common::{Error, Result};
 
 use crate::AppState;
 
+/// FilePermissions data transfer object.
+///
 /// Represents POSIX file permissions (mode).
 /// Stored as an integer where bits represent:
+///
 /// - Owner: read (4), write (2), execute (1)
 /// - Group: read (4), write (2), execute (1)
 /// - Other: read (4), write (2), execute (1)
 ///
 /// Examples:
-/// - 755 = rwxr-xr-x (owner can do all, group and others can read/execute)
-/// - 644 = rw-r--r-- (owner can read/write, others can read)
-/// - 700 = rwx------ (only owner can access)
+///
+/// - `755` = rwxr-xr-x (owner can do all, group and others can read/execute)
+/// - `644` = rw-r--r-- (owner can read/write, others can read)
+/// - `700` = rwx------ (only owner can access)
 #[derive(Debug, Clone, Serialize, Deserialize)]
-/// FilePermissions data transfer object.
 pub struct FilePermissions {
     pub bucket: String,
     pub key: String,

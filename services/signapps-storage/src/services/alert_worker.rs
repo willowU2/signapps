@@ -92,6 +92,7 @@ async fn check_alerts(pool: &PgPool) -> Result<(), sqlx::Error> {
 
 #[derive(sqlx::FromRow)]
 struct AlertConfigRow {
+    #[allow(dead_code)]
     id: uuid::Uuid,
     org_id: uuid::Uuid,
     alert_type: String,
