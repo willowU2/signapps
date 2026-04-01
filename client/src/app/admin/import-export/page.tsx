@@ -404,11 +404,12 @@ export default function ImportExportPage() {
           case "contacts": {
             try {
               const client = getClient(ServiceName.CONTACTS);
-              const res = await client.get<any[]>("/contacts");
+              const res =
+                await client.get<Record<string, unknown>[]>("/contacts");
               const contacts = res.data || [];
               count = contacts.length;
               const header = "Nom,Email,Telephone,Entreprise,Tags";
-              const rows = contacts.map((c: any) =>
+              const rows = contacts.map((c) =>
                 [
                   c.name || "",
                   c.email || "",
@@ -514,7 +515,7 @@ export default function ImportExportPage() {
               const files = res.data?.objects || [];
               count = files.length;
               const header = "Nom,Cle,Type,Taille";
-              const rows = files.map((f: any) =>
+              const rows = files.map((f) =>
                 [
                   f.name || f.key?.split("/").pop() || "",
                   f.key || "",
@@ -539,11 +540,12 @@ export default function ImportExportPage() {
           case "documents": {
             try {
               const client = getClient(ServiceName.DOCS);
-              const res = await client.get<any[]>("/documents");
+              const res =
+                await client.get<Record<string, unknown>[]>("/documents");
               const docs = Array.isArray(res.data) ? res.data : [];
               count = docs.length;
               const header = "Titre,Contenu,Date de modification";
-              const rows = docs.map((d: any) =>
+              const rows = docs.map((d) =>
                 [
                   d.title || "",
                   (d.content || "").substring(0, 500),
@@ -567,13 +569,15 @@ export default function ImportExportPage() {
           case "emails": {
             try {
               const client = getClient(ServiceName.MAIL);
-              const res = await client.get<{ messages: any[] }>("/messages", {
+              const res = await client.get<{
+                messages: Record<string, unknown>[];
+              }>("/messages", {
                 params: { limit: 500 },
               });
               const messages = res.data?.messages || [];
               count = messages.length;
               const header = "Sujet,Expediteur,Date,Extrait";
-              const rows = messages.map((m: any) =>
+              const rows = messages.map((m) =>
                 [
                   m.subject || "",
                   m.from_address || "",

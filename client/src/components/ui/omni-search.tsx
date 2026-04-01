@@ -30,7 +30,11 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command";
-import { useOmniStore, useOmniIsOpen, useOmniActions } from "@/stores/omni-store";
+import {
+  useOmniStore,
+  useOmniIsOpen,
+  useOmniActions,
+} from "@/stores/omni-store";
 import { usePageContext } from "@/lib/store/page-context";
 import { toast } from "sonner";
 
@@ -186,7 +190,10 @@ const CATEGORY_LABELS: Record<string, string> = {
   contact: "Contacts",
 };
 
-const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+const CATEGORY_ICONS: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
   document: FileText,
   email: Mail,
   event: Calendar,
@@ -194,7 +201,9 @@ const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>
   contact: Contact,
 };
 
-function docTypeIcon(docType?: string): React.ComponentType<{ className?: string }> {
+function docTypeIcon(
+  docType?: string,
+): React.ComponentType<{ className?: string }> {
   if (docType === "sheet") return Table2;
   if (docType === "slide") return Presentation;
   return FileText;
@@ -241,7 +250,7 @@ function useCrossAppSearch(query: string) {
               const res = await mailApi.searchEmails({ q: query, limit: 5 });
               const emails = res.data || [];
               return emails.map(
-                (e: any): CrossAppResult => ({
+                (e): CrossAppResult => ({
                   id: `mail-${e.id}`,
                   category: "email",
                   title: e.subject || "(no subject)",
@@ -249,7 +258,7 @@ function useCrossAppSearch(query: string) {
                   href: `/mail?id=${e.id}`,
                   icon: Mail,
                   date: e.received_at || e.created_at,
-                })
+                }),
               );
             } catch {
               return [] as CrossAppResult[];
@@ -262,17 +271,25 @@ function useCrossAppSearch(query: string) {
               const calendarsRes = await calendarApi.listCalendars();
               const calendars = calendarsRes.data || [];
               const now = new Date();
-              const futureEnd = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+              const futureEnd = new Date(
+                now.getTime() + 365 * 24 * 60 * 60 * 1000,
+              );
               const allEvents: CrossAppResult[] = [];
 
               for (const cal of calendars.slice(0, 3)) {
                 try {
-                  const eventsRes = await calendarApi.listEvents(cal.id, now, futureEnd);
+                  const eventsRes = await calendarApi.listEvents(
+                    cal.id,
+                    now,
+                    futureEnd,
+                  );
                   const events = eventsRes.data || [];
                   const matching = events
-                    .filter((ev: any) => ev.title?.toLowerCase().includes(query.toLowerCase()))
+                    .filter((ev) =>
+                      ev.title?.toLowerCase().includes(query.toLowerCase()),
+                    )
                     .slice(0, 3);
-                  matching.forEach((ev: any) => {
+                  matching.forEach((ev) => {
                     allEvents.push({
                       id: `cal-${ev.id}`,
                       category: "event",
@@ -301,14 +318,14 @@ function useCrossAppSearch(query: string) {
               const res = await searchApi.quickSearch(query, 5);
               const files = res.data?.results || [];
               return files.map(
-                (f: any): CrossAppResult => ({
+                (f): CrossAppResult => ({
                   id: `file-${f.bucket}-${f.key}`,
                   category: "file",
                   title: f.filename,
                   subtitle: `${f.bucket}/${f.key}`,
                   href: `/drive?bucket=${f.bucket}&file=${encodeURIComponent(f.key)}`,
                   icon: HardDrive,
-                })
+                }),
               );
             } catch {
               return [] as CrossAppResult[];
@@ -323,22 +340,22 @@ function useCrossAppSearch(query: string) {
               const q = query.toLowerCase();
               return contacts
                 .filter(
-                  (c: any) =>
+                  (c) =>
                     c.first_name?.toLowerCase().includes(q) ||
                     c.last_name?.toLowerCase().includes(q) ||
                     c.email?.toLowerCase().includes(q) ||
-                    c.company?.toLowerCase().includes(q)
+                    c.company?.toLowerCase().includes(q),
                 )
                 .slice(0, 5)
                 .map(
-                  (c: any): CrossAppResult => ({
+                  (c): CrossAppResult => ({
                     id: `contact-${c.id}`,
                     category: "contact",
                     title: `${c.first_name} ${c.last_name}`.trim(),
                     subtitle: [c.email, c.company].filter(Boolean).join(" - "),
                     href: `/contacts?id=${c.id}`,
                     icon: Contact,
-                  })
+                  }),
                 );
             } catch {
               return [] as CrossAppResult[];
@@ -372,7 +389,9 @@ function useCrossAppSearch(query: string) {
 
 // ── Group results by category ──────────────────────────────────────────────
 
-function groupByCategory(results: CrossAppResult[]): Record<string, CrossAppResult[]> {
+function groupByCategory(
+  results: CrossAppResult[],
+): Record<string, CrossAppResult[]> {
   const groups: Record<string, CrossAppResult[]> = {};
   results.forEach((r) => {
     if (!groups[r.category]) groups[r.category] = [];
@@ -391,36 +410,47 @@ export function OmniSearch() {
   const [isExecuting, setIsExecuting] = React.useState(false);
   const pageContext = usePageContext();
 
-  const { results: crossAppResults, isSearching } = useCrossAppSearch(isOpen ? query : "");
-  const grouped = React.useMemo(() => groupByCategory(crossAppResults), [crossAppResults]);
+  const { results: crossAppResults, isSearching } = useCrossAppSearch(
+    isOpen ? query : "",
+  );
+  const grouped = React.useMemo(
+    () => groupByCategory(crossAppResults),
+    [crossAppResults],
+  );
 
   const executeAIAction = async () => {
     close();
     setIsExecuting(true);
     const loadingToast = toast.loading(`Exécution de : "${query}"...`);
     try {
-      const res = await fetch('/api/v1/ai/action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/v1/ai/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: query,
-          context_id: pageContext.activeContext
-        })
+          context_id: pageContext.activeContext,
+        }),
       });
       const data = await res.json();
       if (data.success) {
-        toast.success(`Succès (${Math.round(data.confidence * 100)}% confiant)`, {
-          description: data.result_message,
-          id: loadingToast
-        });
+        toast.success(
+          `Succès (${Math.round(data.confidence * 100)}% confiant)`,
+          {
+            description: data.result_message,
+            id: loadingToast,
+          },
+        );
       } else {
-        toast.error('Échec de l\'action', {
+        toast.error("Échec de l'action", {
           description: data.result_message,
-          id: loadingToast
+          id: loadingToast,
         });
       }
     } catch (e) {
-      toast.error('Erreur', { description: 'Impossible de contacter l\'orchestrateur IA', id: loadingToast });
+      toast.error("Erreur", {
+        description: "Impossible de contacter l'orchestrateur IA",
+        id: loadingToast,
+      });
     } finally {
       setIsExecuting(false);
       setQuery("");
@@ -505,7 +535,9 @@ export function OmniSearch() {
             {isSearching ? (
               <>
                 <Loader2 className="h-10 w-10 text-muted-foreground/50 animate-spin" />
-                <p className="text-sm text-muted-foreground">Searching across apps...</p>
+                <p className="text-sm text-muted-foreground">
+                  Searching across apps...
+                </p>
               </>
             ) : (
               <>
@@ -528,10 +560,12 @@ export function OmniSearch() {
             </CommandGroup>
 
             <CommandGroup heading="Assistant (RAG)">
-              <CommandItem onSelect={() => {
-                close();
-                router.push(`/chat?q=${encodeURIComponent(query)}`);
-              }}>
+              <CommandItem
+                onSelect={() => {
+                  close();
+                  router.push(`/chat?q=${encodeURIComponent(query)}`);
+                }}
+              >
                 <Bot className="mr-2 h-4 w-4 text-primary" />
                 Interroger l'IA sur : "{query}"
               </CommandItem>
@@ -547,7 +581,9 @@ export function OmniSearch() {
               <CommandGroup heading="Recherche en cours...">
                 <CommandItem disabled>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin text-muted-foreground" />
-                  <span className="text-muted-foreground">Searching across all apps...</span>
+                  <span className="text-muted-foreground">
+                    Searching across all apps...
+                  </span>
                 </CommandItem>
               </CommandGroup>
             )}
@@ -568,7 +604,9 @@ export function OmniSearch() {
                           <item.icon className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="flex flex-col min-w-0 flex-1">
-                          <span className="font-medium text-sm truncate">{item.title}</span>
+                          <span className="font-medium text-sm truncate">
+                            {item.title}
+                          </span>
                           <span className="text-xs text-muted-foreground truncate">
                             {item.subtitle}
                           </span>

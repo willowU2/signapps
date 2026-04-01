@@ -7,14 +7,14 @@
  * - PDF Operations: merge, split, extract text
  */
 
-import { getClient, getServiceBaseUrl, ServiceName } from './factory';
+import { getClient, getServiceBaseUrl, ServiceName } from "./factory";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════
 
-export type ExportFormat = 'docx' | 'pdf' | 'markdown' | 'html' | 'text';
-export type ImportFormat = 'docx' | 'markdown' | 'html' | 'txt';
+export type ExportFormat = "docx" | "pdf" | "markdown" | "html" | "text";
+export type ImportFormat = "docx" | "markdown" | "html" | "txt";
 
 export interface ConversionInfo {
   supported_input_formats: string[];
@@ -31,7 +31,7 @@ export interface ImportInfo {
 export interface ImportResult {
   success: boolean;
   detected_format: string;
-  tiptap_json: any;
+  tiptap_json: Record<string, unknown>;
   metadata: {
     word_count: number;
     character_count: number;
@@ -39,7 +39,6 @@ export interface ImportResult {
     has_tables: boolean;
   };
 }
-
 
 /**
  * Comment reply for export
@@ -76,7 +75,7 @@ const officeClient = () => getClient(ServiceName.OFFICE);
  * Get conversion service info
  */
 export async function getConversionInfo(): Promise<ConversionInfo> {
-  const response = await officeClient().get('/convert/info');
+  const response = await officeClient().get("/convert/info");
   return response.data;
 }
 
@@ -93,25 +92,25 @@ export interface ExportOptions {
  * Returns a Blob that can be downloaded
  */
 export async function exportDocument(
-  tiptapJson: any,
+  tiptapJson: Record<string, unknown>,
   format: ExportFormat,
-  options?: ExportOptions
+  options?: ExportOptions,
 ): Promise<Blob> {
   const queryParams = new URLSearchParams({ format });
   if (options?.filename) {
-    queryParams.set('filename', options.filename);
+    queryParams.set("filename", options.filename);
   }
 
   const response = await officeClient().post(
     `/convert?${queryParams.toString()}`,
     {
-      input_format: 'tiptapjson',
+      input_format: "tiptapjson",
       content: tiptapJson,
       comments: options?.comments,
     },
     {
-      responseType: 'blob',
-    }
+      responseType: "blob",
+    },
   );
   return response.data;
 }
@@ -120,20 +119,20 @@ export async function exportDocument(
  * Export a document and trigger download
  */
 export async function downloadDocument(
-  tiptapJson: any,
+  tiptapJson: Record<string, unknown>,
   format: ExportFormat,
   filename: string,
-  comments?: ExportComment[]
+  comments?: ExportComment[],
 ): Promise<void> {
   const blob = await exportDocument(tiptapJson, format, { filename, comments });
 
-  const extension = format === 'markdown' ? 'md' : format;
+  const extension = format === "markdown" ? "md" : format;
   const fullFilename = filename.endsWith(`.${extension}`)
     ? filename
     : `${filename}.${extension}`;
 
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = fullFilename;
   document.body.appendChild(a);
@@ -146,16 +145,13 @@ export async function downloadDocument(
  * Export document as text (returns string instead of blob)
  */
 export async function exportAsText(
-  tiptapJson: any,
-  format: 'markdown' | 'html' | 'text'
+  tiptapJson: Record<string, unknown>,
+  format: "markdown" | "html" | "text",
 ): Promise<string> {
-  const response = await officeClient().post(
-    `/convert?format=${format}`,
-    {
-      input_format: 'tiptapjson',
-      content: tiptapJson,
-    }
-  );
+  const response = await officeClient().post(`/convert?format=${format}`, {
+    input_format: "tiptapjson",
+    content: tiptapJson,
+  });
   return response.data;
 }
 
@@ -167,7 +163,7 @@ export async function exportAsText(
  * Get import service info
  */
 export async function getImportInfo(): Promise<ImportInfo> {
-  const response = await officeClient().get('/import/info');
+  const response = await officeClient().get("/import/info");
   return response.data;
 }
 
@@ -176,9 +172,9 @@ export async function getImportInfo(): Promise<ImportInfo> {
  */
 export async function importFromText(
   content: string,
-  format?: ImportFormat
+  format?: ImportFormat,
 ): Promise<ImportResult> {
-  const response = await officeClient().post('/import', {
+  const response = await officeClient().post("/import", {
     content,
     format,
   });
@@ -190,11 +186,11 @@ export async function importFromText(
  */
 export async function importFromFile(file: File): Promise<ImportResult> {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append("file", file);
 
-  const response = await officeClient().post('/import/upload', formData, {
+  const response = await officeClient().post("/import/upload", formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
   return response.data;
@@ -204,7 +200,7 @@ export async function importFromFile(file: File): Promise<ImportResult> {
 // PRESENTATION OPERATIONS (Epic 7)
 // ═══════════════════════════════════════════════════════════════════════════
 
-export type PresentationExportFormat = 'pptx' | 'pdf' | 'png' | 'svg';
+export type PresentationExportFormat = "pptx" | "pdf" | "png" | "svg";
 
 export interface PresentationInfo {
   supported_formats: string[];
@@ -213,7 +209,7 @@ export interface PresentationInfo {
 }
 
 export interface SlideElement {
-  type: 'text' | 'image' | 'shape' | 'chart';
+  type: "text" | "image" | "shape" | "chart";
   x: number;
   y: number;
   width: number;
@@ -244,18 +240,20 @@ export interface PresentationData {
  * Get presentation service info
  */
 export async function getPresentationInfo(): Promise<PresentationInfo> {
-  const response = await officeClient().get('/presentation/info');
+  const response = await officeClient().get("/presentation/info");
   return response.data;
 }
 
 /**
  * Export presentation to PPTX
  */
-export async function exportPresentationPptx(data: PresentationData): Promise<Blob> {
+export async function exportPresentationPptx(
+  data: PresentationData,
+): Promise<Blob> {
   const response = await officeClient().post(
-    '/presentation/export/pptx',
+    "/presentation/export/pptx",
     data,
-    { responseType: 'blob' }
+    { responseType: "blob" },
   );
   return response.data;
 }
@@ -263,12 +261,12 @@ export async function exportPresentationPptx(data: PresentationData): Promise<Bl
 /**
  * Export presentation to PDF
  */
-export async function exportPresentationPdf(data: PresentationData): Promise<Blob> {
-  const response = await officeClient().post(
-    '/presentation/export/pdf',
-    data,
-    { responseType: 'blob' }
-  );
+export async function exportPresentationPdf(
+  data: PresentationData,
+): Promise<Blob> {
+  const response = await officeClient().post("/presentation/export/pdf", data, {
+    responseType: "blob",
+  });
   return response.data;
 }
 
@@ -277,12 +275,12 @@ export async function exportPresentationPdf(data: PresentationData): Promise<Blo
  */
 export async function exportSlidePng(
   slide: PresentationSlide,
-  options?: { width?: number; height?: number }
+  options?: { width?: number; height?: number },
 ): Promise<Blob> {
   const response = await officeClient().post(
-    '/presentation/export/png',
+    "/presentation/export/png",
     { slide, ...options },
-    { responseType: 'blob' }
+    { responseType: "blob" },
   );
   return response.data;
 }
@@ -290,8 +288,12 @@ export async function exportSlidePng(
 /**
  * Export single slide to SVG
  */
-export async function exportSlideSvg(slide: PresentationSlide): Promise<string> {
-  const response = await officeClient().post('/presentation/export/svg', { slide });
+export async function exportSlideSvg(
+  slide: PresentationSlide,
+): Promise<string> {
+  const response = await officeClient().post("/presentation/export/svg", {
+    slide,
+  });
   return response.data;
 }
 
@@ -300,12 +302,12 @@ export async function exportSlideSvg(slide: PresentationSlide): Promise<string> 
  */
 export async function exportAllSlidesPng(
   data: PresentationData,
-  options?: { width?: number; height?: number }
+  options?: { width?: number; height?: number },
 ): Promise<Blob> {
   const response = await officeClient().post(
-    '/presentation/export/all/png',
+    "/presentation/export/all/png",
     { ...data, ...options },
-    { responseType: 'blob' }
+    { responseType: "blob" },
   );
   return response.data;
 }
@@ -313,11 +315,13 @@ export async function exportAllSlidesPng(
 /**
  * Export all slides to SVG (zip archive)
  */
-export async function exportAllSlidesSvg(data: PresentationData): Promise<Blob> {
+export async function exportAllSlidesSvg(
+  data: PresentationData,
+): Promise<Blob> {
   const response = await officeClient().post(
-    '/presentation/export/all/svg',
+    "/presentation/export/all/svg",
     data,
-    { responseType: 'blob' }
+    { responseType: "blob" },
   );
   return response.data;
 }
@@ -327,19 +331,20 @@ export async function exportAllSlidesSvg(data: PresentationData): Promise<Blob> 
  */
 export async function downloadPresentation(
   data: PresentationData,
-  format: 'pptx' | 'pdf',
-  filename: string
+  format: "pptx" | "pdf",
+  filename: string,
 ): Promise<void> {
-  const blob = format === 'pptx'
-    ? await exportPresentationPptx(data)
-    : await exportPresentationPdf(data);
+  const blob =
+    format === "pptx"
+      ? await exportPresentationPptx(data)
+      : await exportPresentationPdf(data);
 
   const fullFilename = filename.endsWith(`.${format}`)
     ? filename
     : `${filename}.${format}`;
 
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = fullFilename;
   document.body.appendChild(a);

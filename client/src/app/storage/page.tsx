@@ -1,74 +1,117 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CardGridSkeleton, DataTableSkeleton } from '@/components/ui/skeleton-loader';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  CardGridSkeleton,
+  DataTableSkeleton,
+} from "@/components/ui/skeleton-loader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 
-import { DriveSidebar } from '@/components/storage/drive-sidebar';
-import { DriveView } from '@/components/storage/types';
-import { StorageFileGrid } from '@/components/storage/storage-file-grid';
-import { StorageHeader } from '@/components/storage/storage-header';
-import { RenameSheet } from '@/components/storage/rename-sheet';
-import { MoveToSheet } from '@/components/storage/move-to-sheet';
-import { Upload, Folder, FileText, Image as ImageIcon, Search, ChevronRight, ChevronDown, MoreVertical, Download, Trash2, FolderPlus, Home, FileArchive, FileCode, Plus, Database, LayoutDashboard, HardDrive, FolderOpen, Usb, Share2, Eye, Lock, Star, LayoutGrid, List as ListIcon, AlignLeft } from 'lucide-react'; // Added for tree view
+import { DriveSidebar } from "@/components/storage/drive-sidebar";
+import { DriveView } from "@/components/storage/types";
+import { StorageFileGrid } from "@/components/storage/storage-file-grid";
+import { StorageHeader } from "@/components/storage/storage-header";
+import { RenameSheet } from "@/components/storage/rename-sheet";
+import { MoveToSheet } from "@/components/storage/move-to-sheet";
+import {
+  Upload,
+  Folder,
+  FileText,
+  Image as ImageIcon,
+  Search,
+  ChevronRight,
+  ChevronDown,
+  MoreVertical,
+  Download,
+  Trash2,
+  FolderPlus,
+  Home,
+  FileArchive,
+  FileCode,
+  Plus,
+  Database,
+  LayoutDashboard,
+  HardDrive,
+  FolderOpen,
+  Usb,
+  Share2,
+  Eye,
+  Lock,
+  Star,
+  LayoutGrid,
+  List as ListIcon,
+  AlignLeft,
+} from "lucide-react"; // Added for tree view
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { storageApi, favoritesApi, searchApi, trashApi, sharesApi } from '@/lib/api';
-import { UploadSheet } from '@/components/storage/upload-sheet';
-import { FilePreviewDialog } from '@/components/storage/file-preview-dialog';
-import { FolderTree } from '@/components/storage/folder-tree';
-import { PermissionsSheet } from '@/components/storage/permissions-sheet';
-import { FileUploadProgressBar } from '@/components/application/file-upload/file-upload-progress-bar';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  storageApi,
+  favoritesApi,
+  searchApi,
+  trashApi,
+  sharesApi,
+} from "@/lib/api";
+import { UploadSheet } from "@/components/storage/upload-sheet";
+import { FilePreviewDialog } from "@/components/storage/file-preview-dialog";
+import { FolderTree } from "@/components/storage/folder-tree";
+import { PermissionsSheet } from "@/components/storage/permissions-sheet";
+import { FileUploadProgressBar } from "@/components/application/file-upload/file-upload-progress-bar";
 
-import { ManageTagsSheet } from '@/components/storage/manage-tags-sheet';
-import { FileTagsSheet } from '@/components/storage/file-tags-sheet';
-import { VersionHistorySheet } from '@/components/storage/version-history-sheet';
-import { ConfirmDialog } from '@/components/confirm-dialog';
-import { toast } from 'sonner';
-import { ShareSheet } from '@/components/storage/share-sheet';
-import { BulkActionToolbar } from '@/components/storage/bulk-action-toolbar';
-import { InlineAudioPlayer } from '@/components/storage/inline-audio-player';
-import { ContentSearchDialog } from '@/components/storage/content-search-dialog';
+import { ManageTagsSheet } from "@/components/storage/manage-tags-sheet";
+import { FileTagsSheet } from "@/components/storage/file-tags-sheet";
+import { VersionHistorySheet } from "@/components/storage/version-history-sheet";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { toast } from "sonner";
+import { ShareSheet } from "@/components/storage/share-sheet";
+import { BulkActionToolbar } from "@/components/storage/bulk-action-toolbar";
+import { InlineAudioPlayer } from "@/components/storage/inline-audio-player";
+import { ContentSearchDialog } from "@/components/storage/content-search-dialog";
 
 // Import storage components
-import { OverviewStats, AlertsPanel, HealthGauge, QuotaCard, RecentUploads, LargestFiles } from './components/dashboard';
-import { DiskList } from './components/disks';
-import { MountList } from './components/mounts';
-import { ExternalList } from './components/external';
-import { ShareList } from './components/shares';
-import { RaidOverview } from './components/raid';
+import {
+  OverviewStats,
+  AlertsPanel,
+  HealthGauge,
+  QuotaCard,
+  RecentUploads,
+  LargestFiles,
+} from "./components/dashboard";
+import { DiskList } from "./components/disks";
+import { MountList } from "./components/mounts";
+import { ExternalList } from "./components/external";
+import { ShareList } from "./components/shares";
+import { RaidOverview } from "./components/raid";
 import {
   useStorageStats,
   useRaidData,
   useShares,
   useMounts,
   useExternalStorage,
-} from './hooks/use-storage-data';
+} from "./hooks/use-storage-data";
 
-import { FileItem } from '@/components/storage/types';
-import { usePageTitle } from '@/hooks/use-page-title';
+import { FileItem } from "@/components/storage/types";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface Bucket {
   name: string;
@@ -76,37 +119,39 @@ interface Bucket {
 }
 
 const TABS = [
-  { id: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-  { id: 'files', label: 'Fichiers', icon: Folder },
-  { id: 'disks', label: 'Disques', icon: HardDrive },
-  { id: 'mounts', label: 'Montages', icon: FolderOpen },
-  { id: 'external', label: 'Externes', icon: Usb },
-  { id: 'shares', label: 'Partages', icon: Share2 },
-  { id: 'raid', label: 'RAID', icon: Database },
+  { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
+  { id: "files", label: "Fichiers", icon: Folder },
+  { id: "disks", label: "Disques", icon: HardDrive },
+  { id: "mounts", label: "Montages", icon: FolderOpen },
+  { id: "external", label: "Externes", icon: Usb },
+  { id: "shares", label: "Partages", icon: Share2 },
+  { id: "raid", label: "RAID", icon: Database },
 ];
 
 export default function StoragePage() {
-  usePageTitle('Stockage');
+  usePageTitle("Stockage");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'files');
+  const [activeTab, setActiveTab] = useState(
+    searchParams.get("tab") || "files",
+  );
 
   // Drive UI state
-  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'tree'>('list');
-  const [driveView, setDriveView] = useState<DriveView>('my-drive');
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "tree">("list");
+  const [driveView, setDriveView] = useState<DriveView>("my-drive");
 
   // File browser state
   const [buckets, setBuckets] = useState<Bucket[]>([]);
   const [files, setFiles] = useState<FileItem[]>([]);
-  const [currentBucket, setCurrentBucket] = useState<string>('');
+  const [currentBucket, setCurrentBucket] = useState<string>("");
   const [currentPath, setCurrentPath] = useState<string[]>([]);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
   const [bucketDialogOpen, setBucketDialogOpen] = useState(false);
-  const [newFolderName, setNewFolderName] = useState('');
-  const [newBucketName, setNewBucketName] = useState('');
+  const [newFolderName, setNewFolderName] = useState("");
+  const [newBucketName, setNewBucketName] = useState("");
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [creatingBucket, setCreatingBucket] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
@@ -144,14 +189,16 @@ export default function StoragePage() {
   // Content search
   const [contentSearchOpen, setContentSearchOpen] = useState(false);
 
-  const AUDIO_EXTS = ['mp3', 'ogg', 'wav', 'flac', 'aac', 'm4a'];
+  const AUDIO_EXTS = ["mp3", "ogg", "wav", "flac", "aac", "m4a"];
   const isAudio = (f: FileItem) =>
-    f.type === 'file' && AUDIO_EXTS.includes(f.name.split('.').pop()?.toLowerCase() ?? '');
+    f.type === "file" &&
+    AUDIO_EXTS.includes(f.name.split(".").pop()?.toLowerCase() ?? "");
 
   const toggleSelect = useCallback((key: string) => {
-    setSelectedFiles(prev => {
+    setSelectedFiles((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   }, []);
@@ -166,17 +213,23 @@ export default function StoragePage() {
   const handleBulkDeleteConfirmed = async () => {
     if (!currentBucket) return;
     try {
-      await Promise.all(bulkDeleteItems.map(f => storageApi.delete(currentBucket, f.key)));
+      await Promise.all(
+        bulkDeleteItems.map((f) => storageApi.delete(currentBucket, f.key)),
+      );
       toast.success(`${bulkDeleteItems.length} élément(s) supprimé(s)`);
       clearSelection();
       fetchFiles();
-    } catch { toast.error('Échec de la suppression groupée'); }
+    } catch {
+      toast.error("Échec de la suppression groupée");
+    }
     setBulkDeleteItems([]);
   };
 
   const handleBulkMove = (items: FileItem[]) => {
-    if (items.length === 1) { setMoveItem(items[0]); setMoveDialogOpen(true); }
-    else toast.info('Select a single item for move or use drag-and-drop');
+    if (items.length === 1) {
+      setMoveItem(items[0]);
+      setMoveDialogOpen(true);
+    } else toast.info("Select a single item for move or use drag-and-drop");
   };
 
   const handleBulkCopy = (items: FileItem[]) => {
@@ -184,69 +237,77 @@ export default function StoragePage() {
   };
 
   const handleBulkTag = (items: FileItem[]) => {
-    if (items.length === 1 && items[0].id) { setTagFile(items[0]); setFileTagsOpen(true); }
-    else toast.info('Select a single tagged file to manage tags');
+    if (items.length === 1 && items[0].id) {
+      setTagFile(items[0]);
+      setFileTagsOpen(true);
+    } else toast.info("Select a single tagged file to manage tags");
   };
 
   const handleAction = async (action: string, item: FileItem) => {
-    if (action === 'open') {
-      if (item.type === 'folder') handleNavigate(item);
+    if (action === "open") {
+      if (item.type === "folder") handleNavigate(item);
       else if (isAudio(item)) setAudioFile(item);
       else if (isPreviewable(item)) handlePreview(item);
-    } else if (action === 'download') {
+    } else if (action === "download") {
       handleDownload(item);
-    } else if (action === 'delete') {
+    } else if (action === "delete") {
       setDeleteItem(item);
-    } else if (action === 'rename') {
+    } else if (action === "rename") {
       setRenameItem(item);
       setRenameDialogOpen(true);
-    } else if (action === 'move') {
+    } else if (action === "move") {
       setMoveItem(item);
       setMoveDialogOpen(true);
-    } else if (action === 'permissions') {
+    } else if (action === "permissions") {
       setPermissionsFile(item);
       setPermissionsDialogOpen(true);
-    } else if (action === 'manage-tags') {
+    } else if (action === "manage-tags") {
       if (item.id) {
         setTagFile(item);
         setFileTagsOpen(true);
       } else {
         toast.error("Impossible de gérer les tags : identifiant manquant");
       }
-    } else if (action === 'version-history') {
+    } else if (action === "version-history") {
       if (item.id) {
         setHistoryFile(item);
         setHistoryOpen(true);
       } else {
         toast.error("Impossible de voir l'historique : identifiant manquant");
       }
-    } else if (action === 'share') {
+    } else if (action === "share") {
       setShareItem(item);
       setShareDialogOpen(true);
-    } else if (action === 'restore' && item.id) {
+    } else if (action === "restore" && item.id) {
       try {
         await trashApi.restore([item.id]);
         toast.success("Restauré");
         fetchFiles();
-      } catch { toast.error("Échec de la restauration"); }
-    } else if (action === 'delete-forever') {
+      } catch {
+        toast.error("Échec de la restauration");
+      }
+    } else if (action === "delete-forever") {
       setDeleteItem(item);
-    } else if (action === 'star') {
+    } else if (action === "star") {
       try {
         await favoritesApi.add({
-          bucket: currentBucket || item.bucket || '',
+          bucket: currentBucket || item.bucket || "",
           key: item.key,
-          is_folder: item.type === 'folder'
+          is_folder: item.type === "folder",
         });
         toast.success("Ajouté aux favoris");
         fetchFiles();
-      } catch { toast.error("Échec de l'ajout aux favoris"); }
-    } else if (action === 'unstar' && item.id) {
+      } catch {
+        toast.error("Échec de l'ajout aux favoris");
+      }
+    } else if (action === "unstar" && item.id) {
       try {
         await favoritesApi.remove(item.id);
         toast.success("Retiré des favoris");
         fetchFiles();
-      } catch { toast.error("Échec du retrait des favoris"); }
+      } catch {
+        toast.error("Échec du retrait des favoris");
+      }
     }
   };
 
@@ -256,18 +317,21 @@ export default function StoragePage() {
     try {
       // Construct new key
       const oldKey = renameItem.key;
-      let parentPath = '';
+      let parentPath = "";
 
-      if (oldKey.includes('/')) {
-        const parts = oldKey.split('/');
+      if (oldKey.includes("/")) {
+        const parts = oldKey.split("/");
         // remove last part (filename or empty if folder)
         parts.pop();
-        if (renameItem.type === 'folder') parts.pop();
+        if (renameItem.type === "folder") parts.pop();
 
-        parentPath = parts.join('/');
+        parentPath = parts.join("/");
       }
 
-      const newKey = (parentPath ? parentPath + '/' : '') + newName + (renameItem.type === 'folder' ? '/' : '');
+      const newKey =
+        (parentPath ? parentPath + "/" : "") +
+        newName +
+        (renameItem.type === "folder" ? "/" : "");
 
       await storageApi.move(currentBucket, oldKey, currentBucket, newKey);
       toast.success("Renommé avec succès");
@@ -283,7 +347,8 @@ export default function StoragePage() {
     try {
       const oldKey = moveItem.key;
       // destPath usually ends with / e.g. "folder/" or "" for root
-      const newKey = destPath + moveItem.name + (moveItem.type === 'folder' ? '/' : '');
+      const newKey =
+        destPath + moveItem.name + (moveItem.type === "folder" ? "/" : "");
 
       if (oldKey === newKey) return;
 
@@ -308,7 +373,10 @@ export default function StoragePage() {
     router.push(`/storage?tab=${tab}`, { scroll: false });
   };
 
-  const DEFAULT_BUCKETS = useMemo(() => ['documents', 'images', 'backups', 'keep', 'media'], []);
+  const DEFAULT_BUCKETS = useMemo(
+    () => ["documents", "images", "backups", "keep", "media"],
+    [],
+  );
 
   const seedDefaultBuckets = useCallback(async () => {
     const created: Bucket[] = [];
@@ -326,7 +394,9 @@ export default function StoragePage() {
   const fetchBuckets = useCallback(async () => {
     try {
       const response = await storageApi.listBuckets();
-      let bucketList = (response.data || []).filter((b: { name: string }) => b.name);
+      let bucketList = (response.data || []).filter(
+        (b: { name: string }) => b.name,
+      );
 
       // Auto-seed default buckets when storage is empty
       if (bucketList.length === 0) {
@@ -336,16 +406,21 @@ export default function StoragePage() {
         bucketList = (retry.data || []).filter((b: { name: string }) => b.name);
       }
 
-      setBuckets(bucketList.map((b: { name: string; created_at?: string }) => ({ name: b.name, creationDate: b.created_at })));
+      setBuckets(
+        bucketList.map((b: { name: string; created_at?: string }) => ({
+          name: b.name,
+          creationDate: b.created_at,
+        })),
+      );
       if (bucketList.length === 0) {
         setLoading(false);
       }
     } catch {
       setBuckets([]);
-      setCurrentBucket('');
+      setCurrentBucket("");
       setLoading(false);
     }
-  // currentBucket not needed as dep — only used to reset on error path, not a trigger
+    // currentBucket not needed as dep — only used to reset on error path, not a trigger
   }, [seedDefaultBuckets]);
 
   const fetchFiles = useCallback(async () => {
@@ -353,90 +428,104 @@ export default function StoragePage() {
     setFiles([]);
 
     try {
-      if (driveView === 'recent' || driveView === 'home') {
-        const response = await searchApi.recent(driveView === 'home' ? 12 : 50);
-        const recentFiles: FileItem[] = response.data.map((item: any) => ({
+      if (driveView === "recent" || driveView === "home") {
+        const response = await searchApi.recent(driveView === "home" ? 12 : 50);
+        const recentFiles: FileItem[] = response.data.map((item) => ({
           key: item.key,
           name: item.filename,
-          type: 'file' as const,
+          type: "file" as const,
           size: item.size,
           contentType: item.content_type,
           bucket: item.bucket,
           lastModified: item.modified_at,
         }));
         setFiles(recentFiles);
-      } else if (driveView === 'starred') {
+      } else if (driveView === "starred") {
         const response = await favoritesApi.list();
-        const starredFiles: FileItem[] = response.data.favorites.map((item: any) => ({
-          key: item.key,
-          name: item.display_name || item.filename || item.key.split('/').pop() || item.key,
-          type: item.is_folder ? 'folder' : 'file',
-          size: item.size,
-          contentType: item.content_type,
-          bucket: item.bucket,
-          id: item.id
-        }));
+        const starredFiles: FileItem[] = response.data.favorites.map(
+          (item) => ({
+            key: item.key,
+            name:
+              item.display_name ||
+              item.filename ||
+              item.key.split("/").pop() ||
+              item.key,
+            type: item.is_folder ? "folder" : "file",
+            size: item.size,
+            contentType: item.content_type,
+            bucket: item.bucket,
+            id: item.id,
+          }),
+        );
         setFiles(starredFiles);
-      } else if (driveView === 'trash') {
+      } else if (driveView === "trash") {
         const response = await trashApi.list();
-        const trashFiles: FileItem[] = response.data.items.map((item: any) => ({
+        const trashFiles: FileItem[] = response.data.items.map((item) => ({
           key: item.trash_key,
           name: item.filename,
-          type: 'file', // Trash items are usually treated as files or bundles
+          type: "file", // Trash items are usually treated as files or bundles
           size: item.size,
           contentType: item.content_type,
           bucket: item.original_bucket,
           originalPath: item.original_key,
           id: item.id,
-          lastModified: item.deleted_at
+          lastModified: item.deleted_at,
         }));
         setFiles(trashFiles);
-      } else if (driveView === 'shared') {
+      } else if (driveView === "shared") {
         const response = await sharesApi.list();
-        const sharedFiles: FileItem[] = response.data.shares.map((item: any) => ({
+        const sharedFiles: FileItem[] = response.data.shares.map((item) => ({
           key: item.key,
-          name: item.key.split('/').pop() || item.key,
-          type: 'file',
+          name: item.key.split("/").pop() || item.key,
+          type: "file",
           lastModified: item.created_at,
           bucket: item.bucket,
-          id: item.id
+          id: item.id,
         }));
         setFiles(sharedFiles);
       } else {
         // My Drive
         if (!currentBucket) {
-          const bucketFolders: FileItem[] = buckets.map(b => ({
+          const bucketFolders: FileItem[] = buckets.map((b) => ({
             key: b.name,
             name: b.name,
-            type: 'folder' as const,
-            bucket: b.name
+            type: "folder" as const,
+            bucket: b.name,
           }));
           setFiles(bucketFolders);
           setLoading(false);
           return;
         }
-        const prefix = currentPath.length > 0 ? currentPath.join('/') + '/' : '';
-        const response = await storageApi.listFiles(currentBucket, prefix, '/');
+        const prefix =
+          currentPath.length > 0 ? currentPath.join("/") + "/" : "";
+        const response = await storageApi.listFiles(currentBucket, prefix, "/");
         const data = response.data;
 
         const folders: FileItem[] = (data.prefixes || []).map((p: string) => ({
           key: p,
-          name: p.replace(/\/$/, '').split('/').filter(Boolean).pop() || p,
-          type: 'folder' as const,
-          bucket: currentBucket
+          name: p.replace(/\/$/, "").split("/").filter(Boolean).pop() || p,
+          type: "folder" as const,
+          bucket: currentBucket,
         }));
 
         const files: FileItem[] = (data.objects || [])
-          .filter((o: { key: string }) => !o.key.endsWith('/'))
-          .map((o: { key: string; size: number; last_modified: string | null; content_type: string | null }) => ({
-            key: o.key,
-            name: o.key.split('/').filter(Boolean).pop() || o.key,
-            type: 'file' as const,
-            size: o.size,
-            lastModified: o.last_modified || undefined,
-            contentType: o.content_type || undefined,
-            bucket: currentBucket
-          }));
+          .filter((o: { key: string }) => !o.key.endsWith("/"))
+          .map(
+            (o: {
+              key: string;
+              size: number;
+              last_modified: string | null;
+              content_type: string | null;
+            }) => ({
+              key: o.key,
+              name: o.key.split("/").filter(Boolean).pop() || o.key,
+              type: "file" as const,
+              size: o.size,
+              lastModified: o.last_modified || undefined,
+              contentType: o.content_type || undefined,
+              bucket: currentBucket,
+            }),
+          );
 
         setFiles([...folders, ...files]);
       }
@@ -449,36 +538,41 @@ export default function StoragePage() {
   }, [currentBucket, currentPath, driveView, buckets]);
 
   useEffect(() => {
-    if (activeTab === 'files') {
+    if (activeTab === "files") {
       fetchBuckets();
     }
   }, [activeTab, fetchBuckets]);
 
   useEffect(() => {
-    if (activeTab === 'files') {
+    if (activeTab === "files") {
       fetchFiles();
     }
   }, [activeTab, fetchFiles]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (search.trim() && activeTab === 'files') {
-        searchApi.search(search, { bucket: currentBucket }).then(response => {
-          const searchFiles: FileItem[] = response.data.results.map((item: any) => ({
-            key: item.key,
-            name: item.filename,
-            type: 'file',
-            size: item.size,
-            contentType: item.content_type,
-            bucket: item.bucket,
-            lastModified: item.modified_at,
-          }));
-          setFiles(searchFiles);
-        }).catch(err => {
-          console.warn("Échec de la recherche", err);
-          setFiles([]);
-        });
-      } else if (!search.trim() && activeTab === 'files') {
+      if (search.trim() && activeTab === "files") {
+        searchApi
+          .search(search, { bucket: currentBucket })
+          .then((response) => {
+            const searchFiles: FileItem[] = response.data.results.map(
+              (item) => ({
+                key: item.key,
+                name: item.filename,
+                type: "file",
+                size: item.size,
+                contentType: item.content_type,
+                bucket: item.bucket,
+                lastModified: item.modified_at,
+              }),
+            );
+            setFiles(searchFiles);
+          })
+          .catch((err) => {
+            console.warn("Échec de la recherche", err);
+            setFiles([]);
+          });
+      } else if (!search.trim() && activeTab === "files") {
         fetchFiles();
       }
     }, 300);
@@ -487,7 +581,7 @@ export default function StoragePage() {
   }, [search, currentBucket, fetchFiles, activeTab]);
 
   const handleNavigate = (item: FileItem) => {
-    if (item.type === 'folder') {
+    if (item.type === "folder") {
       if (!currentBucket && item.bucket) {
         // Navigating into a bucket from root
         setCurrentBucket(item.name);
@@ -500,7 +594,7 @@ export default function StoragePage() {
 
   const handleBreadcrumbClick = (index: number) => {
     if (index === -1) {
-      setCurrentBucket('');
+      setCurrentBucket("");
       setCurrentPath([]);
     } else {
       setCurrentPath(currentPath.slice(0, index + 1));
@@ -509,13 +603,14 @@ export default function StoragePage() {
 
   const handleDownload = async (item: FileItem) => {
     try {
-      const key = currentPath.length > 0
-        ? `${currentPath.join('/')}/${item.name}`
-        : item.name;
+      const key =
+        currentPath.length > 0
+          ? `${currentPath.join("/")}/${item.name}`
+          : item.name;
       const response = await storageApi.download(currentBucket, key);
       const blob = new Blob([response.data]);
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = item.name;
       document.body.appendChild(a);
@@ -529,13 +624,14 @@ export default function StoragePage() {
 
   const handleDelete = async (item: FileItem) => {
     try {
-      if (driveView === 'trash' && item.id) {
+      if (driveView === "trash" && item.id) {
         await trashApi.delete(item.id);
         toast.success("Supprimé définitivement");
       } else {
-        const key = currentPath.length > 0
-          ? `${currentPath.join('/')}/${item.name}`
-          : item.name;
+        const key =
+          currentPath.length > 0
+            ? `${currentPath.join("/")}/${item.name}`
+            : item.name;
         await storageApi.deleteFile(currentBucket, key);
         toast.success("Déplacé dans la corbeille");
       }
@@ -553,57 +649,118 @@ export default function StoragePage() {
 
   const handleAddToFavorites = async (item: FileItem) => {
     try {
-      const key = currentPath.length > 0
-        ? `${currentPath.join('/')}/${item.name}`
-        : item.name;
+      const key =
+        currentPath.length > 0
+          ? `${currentPath.join("/")}/${item.name}`
+          : item.name;
       await favoritesApi.add({
         bucket: currentBucket,
         key,
-        is_folder: item.type === 'folder',
+        is_folder: item.type === "folder",
       });
-      toast.success('Ajouté aux favoris');
+      toast.success("Ajouté aux favoris");
     } catch {
-      toast.error('Impossible d\'ajouter aux favoris');
+      toast.error("Impossible d'ajouter aux favoris");
     }
   };
 
   const isPreviewable = (item: FileItem): boolean => {
-    if (item.type === 'folder') return false;
+    if (item.type === "folder") return false;
     const name = item.name.toLowerCase();
-    const ext = name.split('.').pop() || '';
-    const contentType = item.contentType || '';
+    const ext = name.split(".").pop() || "";
+    const contentType = item.contentType || "";
 
     // Images
-    if (contentType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext)) {
+    if (
+      contentType.startsWith("image/") ||
+      ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "ico"].includes(ext)
+    ) {
       return true;
     }
     // PDF
-    if (contentType === 'application/pdf' || ext === 'pdf') {
+    if (contentType === "application/pdf" || ext === "pdf") {
       return true;
     }
     // Video
-    const videoExtensions = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'ogv'];
-    if (contentType.startsWith('video/') || videoExtensions.includes(ext)) {
+    const videoExtensions = ["mp4", "webm", "mov", "avi", "mkv", "ogv"];
+    if (contentType.startsWith("video/") || videoExtensions.includes(ext)) {
       return true;
     }
     // Audio
-    const audioExtensions = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'];
-    if (contentType.startsWith('audio/') || audioExtensions.includes(ext)) {
+    const audioExtensions = ["mp3", "wav", "ogg", "flac", "aac", "m4a"];
+    if (contentType.startsWith("audio/") || audioExtensions.includes(ext)) {
       return true;
     }
     // Text/Code
-    const textExtensions = ['txt', 'log', 'csv', 'xml', 'yaml', 'yml', 'ini', 'conf', 'cfg', 'md', 'mdx', 'markdown'];
-    const codeExtensions = ['js', 'ts', 'tsx', 'jsx', 'py', 'rs', 'go', 'java', 'c', 'cpp', 'h', 'hpp', 'cs', 'php', 'rb', 'swift', 'kt', 'scala', 'sh', 'bash', 'zsh', 'ps1', 'sql', 'html', 'css', 'scss', 'less', 'json', 'toml'];
-    if (contentType.startsWith('text/') || textExtensions.includes(ext) || codeExtensions.includes(ext)) {
+    const textExtensions = [
+      "txt",
+      "log",
+      "csv",
+      "xml",
+      "yaml",
+      "yml",
+      "ini",
+      "conf",
+      "cfg",
+      "md",
+      "mdx",
+      "markdown",
+    ];
+    const codeExtensions = [
+      "js",
+      "ts",
+      "tsx",
+      "jsx",
+      "py",
+      "rs",
+      "go",
+      "java",
+      "c",
+      "cpp",
+      "h",
+      "hpp",
+      "cs",
+      "php",
+      "rb",
+      "swift",
+      "kt",
+      "scala",
+      "sh",
+      "bash",
+      "zsh",
+      "ps1",
+      "sql",
+      "html",
+      "css",
+      "scss",
+      "less",
+      "json",
+      "toml",
+    ];
+    if (
+      contentType.startsWith("text/") ||
+      textExtensions.includes(ext) ||
+      codeExtensions.includes(ext)
+    ) {
       return true;
     }
     // Archives
-    const archiveExtensions = ['zip', 'tar', 'gz', 'rar', '7z', 'bz2', 'xz'];
+    const archiveExtensions = ["zip", "tar", "gz", "rar", "7z", "bz2", "xz"];
     if (archiveExtensions.includes(ext)) {
       return true;
     }
     // Documents
-    const docExtensions = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp'];
+    const docExtensions = [
+      "doc",
+      "docx",
+      "xls",
+      "xlsx",
+      "ppt",
+      "pptx",
+      "odt",
+      "ods",
+      "odp",
+    ];
     if (docExtensions.includes(ext)) {
       return true;
     }
@@ -615,18 +772,19 @@ export default function StoragePage() {
 
     setCreatingFolder(true);
     try {
-      const folderPath = currentPath.length > 0
-        ? `${currentPath.join('/')}/${newFolderName}`
-        : newFolderName;
+      const folderPath =
+        currentPath.length > 0
+          ? `${currentPath.join("/")}/${newFolderName}`
+          : newFolderName;
 
       await storageApi.createFolder(currentBucket, folderPath);
 
-      toast.success('Dossier créé avec succès');
+      toast.success("Dossier créé avec succès");
       setFolderDialogOpen(false);
-      setNewFolderName('');
+      setNewFolderName("");
       fetchFiles();
     } catch {
-      toast.error('Échec de la création du dossier');
+      toast.error("Échec de la création du dossier");
     } finally {
       setCreatingFolder(false);
     }
@@ -637,20 +795,22 @@ export default function StoragePage() {
 
     const validName = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/;
     if (!validName.test(newBucketName)) {
-      toast.error('Le nom du bucket doit être en minuscules, commencer et finir par une lettre ou un chiffre');
+      toast.error(
+        "Le nom du bucket doit être en minuscules, commencer et finir par une lettre ou un chiffre",
+      );
       return;
     }
 
     setCreatingBucket(true);
     try {
       await storageApi.createBucket(newBucketName);
-      toast.success('Bucket créé avec succès');
+      toast.success("Bucket créé avec succès");
       setBucketDialogOpen(false);
-      setNewBucketName('');
+      setNewBucketName("");
       fetchBuckets();
       setCurrentBucket(newBucketName);
     } catch {
-      toast.error('Échec de la création du bucket');
+      toast.error("Échec de la création du bucket");
     } finally {
       setCreatingBucket(false);
     }
@@ -659,22 +819,23 @@ export default function StoragePage() {
   const handleDeleteBucket = async (bucketName: string) => {
     try {
       await storageApi.deleteBucket(bucketName);
-      toast.success('Bucket supprimé');
+      toast.success("Bucket supprimé");
       fetchBuckets();
       if (currentBucket === bucketName) {
-        setCurrentBucket('');
+        setCurrentBucket("");
         setCurrentPath([]);
       }
     } catch {
-      toast.error('Échec de la suppression du bucket');
+      toast.error("Échec de la suppression du bucket");
     }
   };
 
   const formatSize = (bytes?: number) => {
-    if (!bytes) return '';
+    if (!bytes) return "";
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes < 1024 * 1024 * 1024)
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
   };
 
@@ -683,223 +844,319 @@ export default function StoragePage() {
   return (
     <AppLayout>
       <>
-      {activeTab === 'files' ? (
-        <div className="flex h-[calc(100vh-4rem)] -m-4 overflow-hidden bg-background dark:bg-[#1a1a1a]">
-          <DriveSidebar
-            currentView={driveView}
-            onViewChange={setDriveView}
-            quota={storageStats.stats ? {
-              used: storageStats.stats.used_bytes,
-              total: storageStats.stats.total_bytes
-            } : undefined}
-            onNewClick={() => setUploadDialogOpen(true)}
-          />
-
-          <div className="flex-1 flex flex-col min-w-0 bg-background dark:bg-[#202124] rounded-tl-2xl overflow-hidden shadow-sm border border-[#e3e3e3] dark:border-[#3c4043]">
-            {/* Drive Header / Toolbar */}
-            <StorageHeader
-              driveView={driveView}
-              currentBucket={currentBucket}
-              buckets={buckets}
-              currentPath={currentPath}
-              search={search}
-              viewMode={viewMode}
-              onBucketSelect={(bucketName) => {
-                setCurrentBucket(bucketName);
-                setCurrentPath([]);
-              }}
-              onPathClick={handleBreadcrumbClick}
-              onSearchChange={setSearch}
-              onViewModeChange={setViewMode}
-              onCreateBucket={() => setBucketDialogOpen(true)}
+        {activeTab === "files" ? (
+          <div className="flex h-[calc(100vh-4rem)] -m-4 overflow-hidden bg-background dark:bg-[#1a1a1a]">
+            <DriveSidebar
+              currentView={driveView}
+              onViewChange={setDriveView}
+              quota={
+                storageStats.stats
+                  ? {
+                      used: storageStats.stats.used_bytes,
+                      total: storageStats.stats.total_bytes,
+                    }
+                  : undefined
+              }
+              onNewClick={() => setUploadDialogOpen(true)}
             />
 
-                {/* Content Area */}
-                <div className="flex-1 overflow-y-auto p-4 bg-muted/10 flex flex-col min-h-0">
-                  {viewMode === 'list' && currentBucket && driveView === 'my-drive' ? (
-                    <div className="flex-1 bg-background w-full h-full flex flex-col pt-4">
-                      <div className="flex-1 overflow-auto pr-4">
-                        <FolderTree
-                          bucket={currentBucket}
-                          currentPath={currentPath.join('/')}
-                          onSelectFolder={(path) => setCurrentPath(path ? path.split('/').filter(Boolean) : [])}
+            <div className="flex-1 flex flex-col min-w-0 bg-background dark:bg-[#202124] rounded-tl-2xl overflow-hidden shadow-sm border border-[#e3e3e3] dark:border-[#3c4043]">
+              {/* Drive Header / Toolbar */}
+              <StorageHeader
+                driveView={driveView}
+                currentBucket={currentBucket}
+                buckets={buckets}
+                currentPath={currentPath}
+                search={search}
+                viewMode={viewMode}
+                onBucketSelect={(bucketName) => {
+                  setCurrentBucket(bucketName);
+                  setCurrentPath([]);
+                }}
+                onPathClick={handleBreadcrumbClick}
+                onSearchChange={setSearch}
+                onViewModeChange={setViewMode}
+                onCreateBucket={() => setBucketDialogOpen(true)}
+              />
+
+              {/* Content Area */}
+              <div className="flex-1 overflow-y-auto p-4 bg-muted/10 flex flex-col min-h-0">
+                {viewMode === "list" &&
+                currentBucket &&
+                driveView === "my-drive" ? (
+                  <div className="flex-1 bg-background w-full h-full flex flex-col pt-4">
+                    <div className="flex-1 overflow-auto pr-4">
+                      <FolderTree
+                        bucket={currentBucket}
+                        currentPath={currentPath.join("/")}
+                        onSelectFolder={(path) =>
+                          setCurrentPath(
+                            path ? path.split("/").filter(Boolean) : [],
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+                ) : driveView === "home" ? (
+                  <div className="flex-1 p-6 w-full space-y-8">
+                    <h2 className="text-2xl text-[#202124] dark:text-[#e8eaed]">
+                      Accueil
+                    </h2>
+
+                    {/* Suggérés */}
+                    <div>
+                      <h3 className="text-[14px] font-medium text-[#5f6368] dark:text-[#9aa0a6] mb-4">
+                        Suggérés
+                      </h3>
+                      {loading ? (
+                        <CardGridSkeleton
+                          count={6}
+                          className="grid-cols-2 md:grid-cols-4 lg:grid-cols-6"
                         />
-                      </div>
-                    </div>
-                  ) : driveView === 'home' ? (
-                    <div className="flex-1 p-6 w-full space-y-8">
-                      <h2 className="text-2xl text-[#202124] dark:text-[#e8eaed]">Accueil</h2>
-                      
-                      {/* Suggérés */}
-                      <div>
-                        <h3 className="text-[14px] font-medium text-[#5f6368] dark:text-[#9aa0a6] mb-4">Suggérés</h3>
-                        {loading ? (
-                          <CardGridSkeleton count={6} className="grid-cols-2 md:grid-cols-4 lg:grid-cols-6" />
-                        ) : displayFiles.length === 0 ? (
-                           <div className="text-sm text-muted-foreground">Aucun fichier suggéré.</div>
-                        ) : (
-                          <StorageFileGrid
-                            files={displayFiles.slice(0, 6)}
-                            viewMode="grid"
-                            driveView={driveView}
-                            onNavigate={handleNavigate}
-                            onPreview={(file) => file.type === 'file' && isPreviewable(file) && handlePreview(file)}
-                            onAction={handleAction}
-                          />
-                        )}
-                      </div>
-
-                      {/* Récents */}
-                      {displayFiles.length > 6 && (
-                        <div>
-                          <div className="flex items-center justify-between mb-4">
-                             <h3 className="text-[14px] font-medium text-[#5f6368] dark:text-[#9aa0a6]">Récents</h3>
-                             <div className="flex items-center border border-[#dadce0] dark:border-[#5f6368] rounded-md p-1 bg-background dark:bg-[#1a1a1a]">
-                               <Button variant={viewMode === 'grid' ? "secondary" : "ghost"} size="icon" className="h-7 w-7" onClick={() => setViewMode('grid')}>
-                                 <LayoutGrid className="h-4 w-4" />
-                               </Button>
-                               <Button variant={viewMode === 'list' ? "secondary" : "ghost"} size="icon" className="h-7 w-7" onClick={() => setViewMode('list')}>
-                                 <ListIcon className="h-4 w-4" />
-                               </Button>
-                             </div>
-                          </div>
-
-                          {loading ? (
-                            <DataTableSkeleton count={2} className="shadow-sm border rounded-xl p-4" />
-                          ) : (
-                            <StorageFileGrid
-                              files={displayFiles.slice(6)}
-                              viewMode={viewMode}
-                              driveView={driveView}
-                              onNavigate={handleNavigate}
-                              onPreview={(file) => file.type === 'file' && isPreviewable(file) && handlePreview(file)}
-                              onAction={handleAction}
-                            />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ) : currentBucket ? (
-                    <div className="flex-1 min-h-[400px] flex flex-col gap-4">
-  <FileUploadProgressBar
-    bucket={currentBucket}
-    prefix={currentPath.length > 0 ? currentPath.join('/') : undefined}
-    onUploadComplete={fetchFiles}
-  />
-                      {loading ? (
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                          {[...Array(10)].map((_, i) => (
-                            <Skeleton key={i} className="aspect-[4/3] rounded-lg" />
-                          ))}
-                        </div>
                       ) : displayFiles.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
-                          <FolderOpen className="h-16 w-16 mb-4" />
-                          <p>{search ? 'No files found matching search' : 'Empty folder'}</p>
-                          <p className="text-sm">Drag files here or click New</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {audioFile && (
-                            <InlineAudioPlayer
-                              file={audioFile}
-                              bucket={currentBucket}
-                              currentPath={currentPath}
-                              onClose={() => setAudioFile(null)}
-                            />
-                          )}
-                          {selectedFiles.size > 0 && (
-                            <BulkActionToolbar
-                              selectedItems={displayFiles.filter(f => selectedFiles.has(f.key))}
-                              onClearSelection={clearSelection}
-                              onSelectAll={() => setSelectedFiles(new Set(displayFiles.map(f => f.key)))}
-                              onBulkDelete={handleBulkDelete}
-                              onBulkMove={handleBulkMove}
-                              onBulkCopy={handleBulkCopy}
-                              onBulkTag={handleBulkTag}
-                              totalCount={displayFiles.length}
-                            />
-                          )}
-                          <StorageFileGrid
-                            files={displayFiles}
-                            viewMode={viewMode}
-                            driveView={driveView}
-                            onNavigate={(file) => file.type === 'folder' && handleNavigate(file)}
-                            onPreview={(file) => file.type === 'file' && isPreviewable(file) && handlePreview(file)}
-                            onAction={handleAction}
-                            selectedKeys={selectedFiles}
-                            onToggleSelect={toggleSelect}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="h-full flex flex-col min-h-[400px]">
-                      {loading ? (
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                          {[...Array(10)].map((_, i) => (
-                            <Skeleton key={i} className="aspect-[4/3] rounded-lg" />
-                          ))}
-                        </div>
-                      ) : displayFiles.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-4">
-                          <div className="p-4 bg-muted/50 rounded-full">
-                            <HardDrive className="h-8 w-8" />
-                          </div>
-                          <div className="text-center">
-                            <h3 className="font-semibold text-lg">No Buckets Found</h3>
-                            <p className="text-sm">Create a bucket to start uploading files.</p>
-                          </div>
-                          <Button onClick={() => setBucketDialogOpen(true)}>
-                            Create Bucket
-                          </Button>
+                        <div className="text-sm text-muted-foreground">
+                          Aucun fichier suggéré.
                         </div>
                       ) : (
                         <StorageFileGrid
-                          files={displayFiles}
-                          viewMode={viewMode}
+                          files={displayFiles.slice(0, 6)}
+                          viewMode="grid"
                           driveView={driveView}
                           onNavigate={handleNavigate}
-                          onPreview={() => { }}
+                          onPreview={(file) =>
+                            file.type === "file" &&
+                            isPreviewable(file) &&
+                            handlePreview(file)
+                          }
                           onAction={handleAction}
                         />
                       )}
                     </div>
-                  )}
-                </div>
+
+                    {/* Récents */}
+                    {displayFiles.length > 6 && (
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-[14px] font-medium text-[#5f6368] dark:text-[#9aa0a6]">
+                            Récents
+                          </h3>
+                          <div className="flex items-center border border-[#dadce0] dark:border-[#5f6368] rounded-md p-1 bg-background dark:bg-[#1a1a1a]">
+                            <Button
+                              variant={
+                                viewMode === "grid" ? "secondary" : "ghost"
+                              }
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => setViewMode("grid")}
+                            >
+                              <LayoutGrid className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant={
+                                viewMode === "list" ? "secondary" : "ghost"
+                              }
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => setViewMode("list")}
+                            >
+                              <ListIcon className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {loading ? (
+                          <DataTableSkeleton
+                            count={2}
+                            className="shadow-sm border rounded-xl p-4"
+                          />
+                        ) : (
+                          <StorageFileGrid
+                            files={displayFiles.slice(6)}
+                            viewMode={viewMode}
+                            driveView={driveView}
+                            onNavigate={handleNavigate}
+                            onPreview={(file) =>
+                              file.type === "file" &&
+                              isPreviewable(file) &&
+                              handlePreview(file)
+                            }
+                            onAction={handleAction}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : currentBucket ? (
+                  <div className="flex-1 min-h-[400px] flex flex-col gap-4">
+                    <FileUploadProgressBar
+                      bucket={currentBucket}
+                      prefix={
+                        currentPath.length > 0
+                          ? currentPath.join("/")
+                          : undefined
+                      }
+                      onUploadComplete={fetchFiles}
+                    />
+                    {loading ? (
+                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {[...Array(10)].map((_, i) => (
+                          <Skeleton
+                            key={i}
+                            className="aspect-[4/3] rounded-lg"
+                          />
+                        ))}
+                      </div>
+                    ) : displayFiles.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
+                        <FolderOpen className="h-16 w-16 mb-4" />
+                        <p>
+                          {search
+                            ? "No files found matching search"
+                            : "Empty folder"}
+                        </p>
+                        <p className="text-sm">Drag files here or click New</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {audioFile && (
+                          <InlineAudioPlayer
+                            file={audioFile}
+                            bucket={currentBucket}
+                            currentPath={currentPath}
+                            onClose={() => setAudioFile(null)}
+                          />
+                        )}
+                        {selectedFiles.size > 0 && (
+                          <BulkActionToolbar
+                            selectedItems={displayFiles.filter((f) =>
+                              selectedFiles.has(f.key),
+                            )}
+                            onClearSelection={clearSelection}
+                            onSelectAll={() =>
+                              setSelectedFiles(
+                                new Set(displayFiles.map((f) => f.key)),
+                              )
+                            }
+                            onBulkDelete={handleBulkDelete}
+                            onBulkMove={handleBulkMove}
+                            onBulkCopy={handleBulkCopy}
+                            onBulkTag={handleBulkTag}
+                            totalCount={displayFiles.length}
+                          />
+                        )}
+                        <StorageFileGrid
+                          files={displayFiles}
+                          viewMode={viewMode}
+                          driveView={driveView}
+                          onNavigate={(file) =>
+                            file.type === "folder" && handleNavigate(file)
+                          }
+                          onPreview={(file) =>
+                            file.type === "file" &&
+                            isPreviewable(file) &&
+                            handlePreview(file)
+                          }
+                          onAction={handleAction}
+                          selectedKeys={selectedFiles}
+                          onToggleSelect={toggleSelect}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="h-full flex flex-col min-h-[400px]">
+                    {loading ? (
+                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {[...Array(10)].map((_, i) => (
+                          <Skeleton
+                            key={i}
+                            className="aspect-[4/3] rounded-lg"
+                          />
+                        ))}
+                      </div>
+                    ) : displayFiles.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-4">
+                        <div className="p-4 bg-muted/50 rounded-full">
+                          <HardDrive className="h-8 w-8" />
+                        </div>
+                        <div className="text-center">
+                          <h3 className="font-semibold text-lg">
+                            No Buckets Found
+                          </h3>
+                          <p className="text-sm">
+                            Create a bucket to start uploading files.
+                          </p>
+                        </div>
+                        <Button onClick={() => setBucketDialogOpen(true)}>
+                          Create Bucket
+                        </Button>
+                      </div>
+                    ) : (
+                      <StorageFileGrid
+                        files={displayFiles}
+                        viewMode={viewMode}
+                        driveView={driveView}
+                        onNavigate={handleNavigate}
+                        onPreview={() => {}}
+                        onAction={handleAction}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
+            </div>
           </div>
         ) : (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-bold">Administration Stockage</h1>
-              <Button variant="outline" onClick={() => handleTabChange('files')}>
+              <Button
+                variant="outline"
+                onClick={() => handleTabChange("files")}
+              >
                 Retour au Drive
               </Button>
             </div>
-            
+
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 mb-6">
-                {TABS.filter(t => t.id !== 'files').map((tab) => (
-                  <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
+                {TABS.filter((t) => t.id !== "files").map((tab) => (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className="flex items-center gap-2"
+                  >
                     <tab.icon className="h-4 w-4" />
                     <span className="hidden sm:inline">{tab.label}</span>
                   </TabsTrigger>
                 ))}
               </TabsList>
-              
+
               <TabsContent value="dashboard" className="space-y-6">
-                <OverviewStats stats={storageStats.stats} raidHealth={raidData.health} loading={storageStats.loading} />
+                <OverviewStats
+                  stats={storageStats.stats}
+                  raidHealth={raidData.health}
+                  loading={storageStats.loading}
+                />
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   <HealthGauge
-                    value={storageStats.stats && storageStats.stats.total_bytes > 0
-                      ? Math.round((storageStats.stats.used_bytes / storageStats.stats.total_bytes) * 100)
-                      : 0}
+                    value={
+                      storageStats.stats && storageStats.stats.total_bytes > 0
+                        ? Math.round(
+                            (storageStats.stats.used_bytes /
+                              storageStats.stats.total_bytes) *
+                              100,
+                          )
+                        : 0
+                    }
                     label="Utilisation Stockage"
                     status={storageStats.stats?.health_status}
                   />
                   <QuotaCard />
-                  <AlertsPanel events={raidData.events || []} loading={raidData.loading} />
+                  <AlertsPanel
+                    events={raidData.events || []}
+                    loading={raidData.loading}
+                  />
                 </div>
                 <div className="grid gap-6 md:grid-cols-2">
                   <RecentUploads />
@@ -907,60 +1164,63 @@ export default function StoragePage() {
                 </div>
               </TabsContent>
 
-          {/* Disks Tab */}
-          <TabsContent value="disks" className="mt-6">
-            <DiskList
-              disks={raidData.disks}
-              loading={raidData.loading}
-              onScan={raidData.scanDisks}
-            />
-          </TabsContent>
+              {/* Disks Tab */}
+              <TabsContent value="disks" className="mt-6">
+                <DiskList
+                  disks={raidData.disks}
+                  loading={raidData.loading}
+                  onScan={raidData.scanDisks}
+                />
+              </TabsContent>
 
-          {/* Mounts Tab */}
-          <TabsContent value="mounts" className="mt-6">
-            <MountList mounts={mountsData.mounts} loading={mountsData.loading} />
-          </TabsContent>
+              {/* Mounts Tab */}
+              <TabsContent value="mounts" className="mt-6">
+                <MountList
+                  mounts={mountsData.mounts}
+                  loading={mountsData.loading}
+                />
+              </TabsContent>
 
-          {/* External Tab */}
-          <TabsContent value="external" className="mt-6">
-            <ExternalList
-              storages={externalData.storages}
-              loading={externalData.loading}
-              onDetect={externalData.detect}
-              onDisconnect={externalData.disconnect}
-              onEject={externalData.eject}
-            />
-          </TabsContent>
+              {/* External Tab */}
+              <TabsContent value="external" className="mt-6">
+                <ExternalList
+                  storages={externalData.storages}
+                  loading={externalData.loading}
+                  onDetect={externalData.detect}
+                  onDisconnect={externalData.disconnect}
+                  onEject={externalData.eject}
+                />
+              </TabsContent>
 
-          {/* Shares Tab */}
-          <TabsContent value="shares" className="mt-6">
-            <ShareList
-              shares={sharesData.shares}
-              loading={sharesData.loading}
-              onCreateShare={sharesData.createShare}
-              onDeleteShare={sharesData.deleteShare}
-              onRefresh={sharesData.refresh}
-            />
-          </TabsContent>
+              {/* Shares Tab */}
+              <TabsContent value="shares" className="mt-6">
+                <ShareList
+                  shares={sharesData.shares}
+                  loading={sharesData.loading}
+                  onCreateShare={sharesData.createShare}
+                  onDeleteShare={sharesData.deleteShare}
+                  onRefresh={sharesData.refresh}
+                />
+              </TabsContent>
 
-          {/* RAID Tab */}
-          <TabsContent value="raid" className="mt-6">
-            <RaidOverview
-              arrays={raidData.arrays}
-              health={raidData.health}
-              loading={raidData.loading}
-              onRefresh={raidData.refresh}
-              onCreateArray={raidData.createArray}
-              onDeleteArray={raidData.deleteArray}
-              onRebuildArray={raidData.rebuildArray}
-            />
-          </TabsContent>
-        </Tabs>
-        </div>
-      )}
-      
-      {/* Dialogs globally accessible */}
-            {/* Manage Tags Sheet */}
+              {/* RAID Tab */}
+              <TabsContent value="raid" className="mt-6">
+                <RaidOverview
+                  arrays={raidData.arrays}
+                  health={raidData.health}
+                  loading={raidData.loading}
+                  onRefresh={raidData.refresh}
+                  onCreateArray={raidData.createArray}
+                  onDeleteArray={raidData.deleteArray}
+                  onRebuildArray={raidData.rebuildArray}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
+
+        {/* Dialogs globally accessible */}
+        {/* Manage Tags Sheet */}
         <ManageTagsSheet
           open={manageTagsOpen}
           onOpenChange={setManageTagsOpen}
@@ -990,12 +1250,12 @@ export default function StoragePage() {
         )}
 
         {/* Dialogs and Modals */}
-      <UploadSheet
-        open={uploadDialogOpen}
-        onOpenChange={setUploadDialogOpen}
-        bucket={currentBucket}
-        onUploadComplete={fetchFiles}
-      />
+        <UploadSheet
+          open={uploadDialogOpen}
+          onOpenChange={setUploadDialogOpen}
+          bucket={currentBucket}
+          onUploadComplete={fetchFiles}
+        />
 
         {/* Rename Sheet */}
         <RenameSheet
@@ -1040,21 +1300,35 @@ export default function StoragePage() {
                   placeholder="mon-dossier"
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleCreateFolder()}
+                  onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
                 />
                 <p className="text-xs text-muted-foreground">
                   {currentPath.length > 0
-                    ? `Sera créé dans : ${currentPath.join('/')}/`
-                    : 'Sera créé à la racine'}
+                    ? `Sera créé dans : ${currentPath.join("/")}/`
+                    : "Sera créé à la racine"}
                 </p>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setFolderDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setFolderDialogOpen(false)}
+              >
                 Annuler
               </Button>
-              <Button onClick={handleCreateFolder} disabled={creatingFolder || !newFolderName.trim()}>
-                {creatingFolder && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+              <Button
+                onClick={handleCreateFolder}
+                disabled={creatingFolder || !newFolderName.trim()}
+              >
+                {creatingFolder && (
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="mr-2 h-4 w-4 "
+                  />
+                )}
                 Créer le dossier
               </Button>
             </DialogFooter>
@@ -1064,11 +1338,18 @@ export default function StoragePage() {
         {/* Delete File Confirmation */}
         <ConfirmDialog
           open={deleteItem !== null}
-          onOpenChange={(open) => { if (!open) setDeleteItem(null); }}
-          title={driveView === 'trash' ? "Supprimer définitivement" : "Supprimer le fichier"}
-          description={driveView === 'trash'
-            ? `Voulez-vous vraiment supprimer définitivement "${deleteItem?.name}" ? Cette action est irréversible.`
-            : `Voulez-vous vraiment supprimer "${deleteItem?.name}" ?`
+          onOpenChange={(open) => {
+            if (!open) setDeleteItem(null);
+          }}
+          title={
+            driveView === "trash"
+              ? "Supprimer définitivement"
+              : "Supprimer le fichier"
+          }
+          description={
+            driveView === "trash"
+              ? `Voulez-vous vraiment supprimer définitivement "${deleteItem?.name}" ? Cette action est irréversible.`
+              : `Voulez-vous vraiment supprimer "${deleteItem?.name}" ?`
           }
           onConfirm={() => {
             if (deleteItem) handleDelete(deleteItem);
@@ -1079,7 +1360,9 @@ export default function StoragePage() {
         {/* Delete Bucket Confirmation */}
         <ConfirmDialog
           open={deleteBucket !== null}
-          onOpenChange={(open) => { if (!open) setDeleteBucket(null); }}
+          onOpenChange={(open) => {
+            if (!open) setDeleteBucket(null);
+          }}
           title="Supprimer le bucket"
           description={`Supprimer le bucket "${deleteBucket}" ? Tous les fichiers seront supprimés.`}
           onConfirm={() => {
@@ -1091,7 +1374,9 @@ export default function StoragePage() {
         {/* Bulk Delete Confirmation */}
         <ConfirmDialog
           open={bulkDeleteItems.length > 0}
-          onOpenChange={(open) => { if (!open) setBulkDeleteItems([]); }}
+          onOpenChange={(open) => {
+            if (!open) setBulkDeleteItems([]);
+          }}
           title="Supprimer les éléments sélectionnés"
           description={`Voulez-vous vraiment supprimer ${bulkDeleteItems.length} élément(s) ? Cette action est irréversible.`}
           onConfirm={handleBulkDeleteConfirmed}
@@ -1124,26 +1409,49 @@ export default function StoragePage() {
                   id="bucketName"
                   placeholder="my-bucket"
                   value={newBucketName}
-                  onChange={(e) => setNewBucketName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                  onKeyDown={(e) => e.key === 'Enter' && handleCreateBucket()}
+                  onChange={(e) =>
+                    setNewBucketName(
+                      e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""),
+                    )
+                  }
+                  onKeyDown={(e) => e.key === "Enter" && handleCreateBucket()}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Bucket names must be lowercase, contain only letters, numbers, and hyphens.
+                  Bucket names must be lowercase, contain only letters, numbers,
+                  and hyphens.
                 </p>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setBucketDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setBucketDialogOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleCreateBucket} disabled={creatingBucket || !newBucketName.trim()}>
-                {creatingBucket && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+              <Button
+                onClick={handleCreateBucket}
+                disabled={creatingBucket || !newBucketName.trim()}
+              >
+                {creatingBucket && (
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="mr-2 h-4 w-4 "
+                  />
+                )}
                 Create Bucket
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        <ShareSheet open={shareDialogOpen} onOpenChange={setShareDialogOpen} item={shareItem} />
+        <ShareSheet
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          item={shareItem}
+        />
         <ContentSearchDialog
           open={contentSearchOpen}
           onOpenChange={setContentSearchOpen}
