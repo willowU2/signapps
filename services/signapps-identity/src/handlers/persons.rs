@@ -33,7 +33,7 @@ pub struct ListPersonsQuery {
 }
 
 /// Request body for creating a person.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreatePersonRequest {
     pub first_name: String,
     pub last_name: String,
@@ -45,7 +45,7 @@ pub struct CreatePersonRequest {
 }
 
 /// Request body for updating a person.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdatePersonRequest {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
@@ -57,13 +57,13 @@ pub struct UpdatePersonRequest {
 }
 
 /// Request body for linking a user account to a person.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct LinkUserRequest {
     pub user_id: Uuid,
 }
 
 /// Person detail response including roles and active assignments.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct PersonDetailResponse {
     #[serde(flatten)]
     pub person: Person,
@@ -78,6 +78,25 @@ pub struct PersonDetailResponse {
 /// GET /api/v1/persons — List persons for the authenticated user's tenant.
 ///
 /// Supports optional filters: role, node_id, site_id, active.
+#[utoipa::path(
+    get,
+    path = "/api/v1/persons",
+    tag = "persons",
+    security(("bearerAuth" = [])),
+    params(
+        ("role" = Option<String>, Query, description = "Filter by role type"),
+        ("node_id" = Option<Uuid>, Query, description = "Filter by org node assignment"),
+        ("site_id" = Option<Uuid>, Query, description = "Filter by site assignment"),
+        ("active" = Option<bool>, Query, description = "Filter by active status"),
+        ("limit" = Option<i64>, Query, description = "Maximum results (default 50)"),
+        ("offset" = Option<i64>, Query, description = "Pagination offset"),
+    ),
+    responses(
+        (status = 200, description = "Person list", body = Vec<Person>),
+        (status = 401, description = "Not authenticated"),
+        (status = 403, description = "No tenant context"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_persons(
     State(state): State<AppState>,
@@ -116,6 +135,18 @@ pub async fn list_persons(
 }
 
 /// POST /api/v1/persons — Create a new person for the authenticated user's tenant.
+#[utoipa::path(
+    post,
+    path = "/api/v1/persons",
+    tag = "persons",
+    security(("bearerAuth" = [])),
+    request_body = CreatePersonRequest,
+    responses(
+        (status = 201, description = "Person created", body = Person),
+        (status = 401, description = "Not authenticated"),
+        (status = 403, description = "No tenant context"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_person(
     State(state): State<AppState>,
@@ -140,6 +171,18 @@ pub async fn create_person(
 }
 
 /// GET /api/v1/persons/:id — Retrieve a person with their roles and active assignments.
+#[utoipa::path(
+    get,
+    path = "/api/v1/persons/{id}",
+    tag = "persons",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Person UUID")),
+    responses(
+        (status = 200, description = "Person detail with roles and active assignments", body = PersonDetailResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Person not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_person(
     State(state): State<AppState>,
@@ -163,6 +206,19 @@ pub async fn get_person(
 }
 
 /// PUT /api/v1/persons/:id — Update a person record.
+#[utoipa::path(
+    put,
+    path = "/api/v1/persons/{id}",
+    tag = "persons",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Person UUID")),
+    request_body = UpdatePersonRequest,
+    responses(
+        (status = 200, description = "Person updated", body = Person),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Person not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_person(
     State(state): State<AppState>,
@@ -183,6 +239,17 @@ pub async fn update_person(
 }
 
 /// GET /api/v1/persons/:id/assignments — List all assignments (including historical) for a person.
+#[utoipa::path(
+    get,
+    path = "/api/v1/persons/{id}/assignments",
+    tag = "persons",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Person UUID")),
+    responses(
+        (status = 200, description = "All assignments (including historical)", body = Vec<Assignment>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_person_assignments(
     State(state): State<AppState>,
@@ -193,6 +260,17 @@ pub async fn get_person_assignments(
 }
 
 /// GET /api/v1/persons/:id/history — List assignment history entries for all of a person's assignments.
+#[utoipa::path(
+    get,
+    path = "/api/v1/persons/{id}/history",
+    tag = "persons",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Person UUID")),
+    responses(
+        (status = 200, description = "Assignment history (newest first)", body = Vec<AssignmentHistory>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_person_history(
     State(state): State<AppState>,
@@ -210,6 +288,19 @@ pub async fn get_person_history(
 }
 
 /// POST /api/v1/persons/:id/link-user — Link a platform user account to this person.
+#[utoipa::path(
+    post,
+    path = "/api/v1/persons/{id}/link-user",
+    tag = "persons",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Person UUID")),
+    request_body = LinkUserRequest,
+    responses(
+        (status = 200, description = "User linked", body = Person),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Person not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn link_user(
     State(state): State<AppState>,
@@ -221,6 +312,18 @@ pub async fn link_user(
 }
 
 /// POST /api/v1/persons/:id/unlink-user — Remove the platform user link from this person.
+#[utoipa::path(
+    post,
+    path = "/api/v1/persons/{id}/unlink-user",
+    tag = "persons",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Person UUID")),
+    responses(
+        (status = 200, description = "User unlinked", body = Person),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Person not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn unlink_user(
     State(state): State<AppState>,
@@ -232,6 +335,17 @@ pub async fn unlink_user(
 
 /// GET /api/v1/persons/:id/effective-permissions — Compute effective permissions
 /// for a person based on their active assignment nodes.
+#[utoipa::path(
+    get,
+    path = "/api/v1/persons/{id}/effective-permissions",
+    tag = "persons",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Person UUID")),
+    responses(
+        (status = 200, description = "Effective permissions per active assignment node", body = Vec<EffectivePermissions>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_effective_permissions(
     State(state): State<AppState>,

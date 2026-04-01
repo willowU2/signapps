@@ -37,6 +37,7 @@ pub type SiteType = String; // 'campus' | 'building' | 'floor' | 'room'
 ///
 /// Persons may optionally be linked to an identity `user_id` (platform account).
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Person {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -55,6 +56,7 @@ pub struct Person {
 
 /// Request payload to create a new person record.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreatePerson {
     pub tenant_id: Uuid,
     pub first_name: String,
@@ -68,6 +70,7 @@ pub struct CreatePerson {
 
 /// Request payload to update an existing person record.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpdatePerson {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
@@ -85,6 +88,7 @@ pub struct UpdatePerson {
 /// A role context attached to a person (e.g. the same person can be both
 /// an employee and a client contact).
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct PersonRole {
     pub id: Uuid,
     pub person_id: Uuid,
@@ -111,6 +115,7 @@ pub struct CreatePersonRole {
 ///
 /// Each tenant has at most one tree per `tree_type` (enforced by UNIQUE constraint).
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct OrgTree {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -140,6 +145,7 @@ pub struct CreateOrgTree {
 /// The `node_type` field is free-text so that each tree can use its own taxonomy
 /// without schema changes (e.g. `"department"`, `"team"`, `"cost_center"`).
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct OrgNode {
     pub id: Uuid,
     pub tree_id: Uuid,
@@ -160,6 +166,7 @@ pub struct OrgNode {
 
 /// Request payload to create a new org node.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreateOrgNode {
     pub tree_id: Uuid,
     pub parent_id: Option<Uuid>,
@@ -173,6 +180,7 @@ pub struct CreateOrgNode {
 
 /// Request payload to update an existing org node.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpdateOrgNode {
     pub name: Option<String>,
     pub code: Option<String>,
@@ -208,6 +216,7 @@ pub struct OrgChartNode {
 /// Supports partial FTE (e.g. 0.5 for half-time) and multiple responsibility
 /// dimensions (hierarchical, functional, matrix).
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Assignment {
     pub id: Uuid,
     pub person_id: Uuid,
@@ -254,6 +263,7 @@ pub struct UpdateAssignment {
 
 /// Forensic log entry tracking every change made to an assignment.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct AssignmentHistory {
     pub id: Uuid,
     pub assignment_id: Uuid,
@@ -287,6 +297,7 @@ pub struct CreateAssignmentHistory {
 ///
 /// Sites can be nested (campus → building → floor → room) via `parent_id`.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Site {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -308,6 +319,7 @@ pub struct Site {
 
 /// Request payload to create a new site.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreateSite {
     pub tenant_id: Uuid,
     pub parent_id: Option<Uuid>,
@@ -324,6 +336,7 @@ pub struct CreateSite {
 
 /// Request payload to update an existing site.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpdateSite {
     pub name: Option<String>,
     pub address: Option<String>,
@@ -344,6 +357,7 @@ pub struct UpdateSite {
 ///
 /// A node may span multiple sites; `is_primary` flags the canonical one.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct NodeSite {
     pub node_id: Uuid,
     pub site_id: Uuid,
@@ -356,6 +370,7 @@ pub struct NodeSite {
 
 /// Temporal assignment of a person to a site (their physical work location).
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct PersonSite {
     pub id: Uuid,
     pub person_id: Uuid,
@@ -374,6 +389,7 @@ pub struct PersonSite {
 /// When `inherit` is `true` the effective permissions are merged up the tree
 /// via the closure table (most-specific node wins per module).
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct PermissionProfile {
     pub id: Uuid,
     pub node_id: Uuid,
@@ -391,6 +407,7 @@ pub struct PermissionProfile {
 
 /// Request payload to create or replace the permission profile of an org node.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpsertPermissionProfile {
     pub inherit: Option<bool>,
     pub modules: Option<serde_json::Value>,
@@ -401,6 +418,7 @@ pub struct UpsertPermissionProfile {
 /// Resolved permission set for a person at a specific org node,
 /// obtained by walking the closure table and merging inherited profiles.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct EffectivePermissions {
     pub node_id: Uuid,
     /// Merged module permissions (deepest node overrides ancestors).

@@ -25,7 +25,7 @@ use uuid::Uuid;
 // ============================================================================
 
 /// Request body for creating an org node.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateOrgNodeRequest {
     pub tree_id: Uuid,
     pub parent_id: Option<Uuid>,
@@ -38,7 +38,7 @@ pub struct CreateOrgNodeRequest {
 }
 
 /// Request body for updating an org node.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdateOrgNodeRequest {
     pub name: Option<String>,
     pub code: Option<String>,
@@ -49,13 +49,13 @@ pub struct UpdateOrgNodeRequest {
 }
 
 /// Request body for moving a node to a new parent.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct MoveNodeRequest {
     pub parent_id: Option<Uuid>,
 }
 
 /// Request body for setting node permissions.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct SetPermissionsRequest {
     pub inherit: Option<bool>,
     pub modules: Option<serde_json::Value>,
@@ -68,6 +68,18 @@ pub struct SetPermissionsRequest {
 // ============================================================================
 
 /// GET /api/v1/org/nodes/:id — Retrieve a single org node by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/org/nodes/{id}",
+    tag = "org",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Org node UUID")),
+    responses(
+        (status = 200, description = "Org node detail", body = OrgNode),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Org node not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_node(
     State(state): State<AppState>,
@@ -80,6 +92,18 @@ pub async fn get_node(
 }
 
 /// POST /api/v1/org/nodes — Create a new org node.
+#[utoipa::path(
+    post,
+    path = "/api/v1/org/nodes",
+    tag = "org",
+    security(("bearerAuth" = [])),
+    request_body = CreateOrgNodeRequest,
+    responses(
+        (status = 201, description = "Org node created", body = OrgNode),
+        (status = 400, description = "Validation error"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_node(
     State(state): State<AppState>,
@@ -100,6 +124,19 @@ pub async fn create_node(
 }
 
 /// PUT /api/v1/org/nodes/:id — Update mutable fields of an org node.
+#[utoipa::path(
+    put,
+    path = "/api/v1/org/nodes/{id}",
+    tag = "org",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Org node UUID")),
+    request_body = UpdateOrgNodeRequest,
+    responses(
+        (status = 200, description = "Org node updated", body = OrgNode),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Org node not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_node(
     State(state): State<AppState>,
@@ -119,6 +156,18 @@ pub async fn update_node(
 }
 
 /// DELETE /api/v1/org/nodes/:id — Delete an org node (cascades to closure rows).
+#[utoipa::path(
+    delete,
+    path = "/api/v1/org/nodes/{id}",
+    tag = "org",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Org node UUID")),
+    responses(
+        (status = 204, description = "Org node deleted"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Org node not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_node(
     State(state): State<AppState>,
@@ -133,6 +182,19 @@ pub async fn delete_node(
 }
 
 /// POST /api/v1/org/nodes/:id/move — Move a node to a new parent.
+#[utoipa::path(
+    post,
+    path = "/api/v1/org/nodes/{id}/move",
+    tag = "org",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Org node UUID")),
+    request_body = MoveNodeRequest,
+    responses(
+        (status = 204, description = "Node moved"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Org node not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn move_node(
     State(state): State<AppState>,
@@ -144,6 +206,17 @@ pub async fn move_node(
 }
 
 /// GET /api/v1/org/nodes/:id/children — List direct children of a node.
+#[utoipa::path(
+    get,
+    path = "/api/v1/org/nodes/{id}/children",
+    tag = "org",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Org node UUID")),
+    responses(
+        (status = 200, description = "Direct children", body = Vec<OrgNode>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_children(
     State(state): State<AppState>,
@@ -154,6 +227,17 @@ pub async fn get_children(
 }
 
 /// GET /api/v1/org/nodes/:id/descendants — List all descendants via closure table.
+#[utoipa::path(
+    get,
+    path = "/api/v1/org/nodes/{id}/descendants",
+    tag = "org",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Org node UUID")),
+    responses(
+        (status = 200, description = "All descendants (flat list)", body = Vec<OrgNode>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_descendants(
     State(state): State<AppState>,
@@ -164,6 +248,17 @@ pub async fn get_descendants(
 }
 
 /// GET /api/v1/org/nodes/:id/ancestors — List all ancestors via closure table (root first).
+#[utoipa::path(
+    get,
+    path = "/api/v1/org/nodes/{id}/ancestors",
+    tag = "org",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Org node UUID")),
+    responses(
+        (status = 200, description = "Ancestor chain from root to node", body = Vec<OrgNode>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_ancestors(
     State(state): State<AppState>,
@@ -174,6 +269,17 @@ pub async fn get_ancestors(
 }
 
 /// GET /api/v1/org/nodes/:id/assignments — List all assignments for this node.
+#[utoipa::path(
+    get,
+    path = "/api/v1/org/nodes/{id}/assignments",
+    tag = "org",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Org node UUID")),
+    responses(
+        (status = 200, description = "Node assignments", body = Vec<Assignment>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_node_assignments(
     State(state): State<AppState>,
@@ -184,6 +290,17 @@ pub async fn get_node_assignments(
 }
 
 /// GET /api/v1/org/nodes/:id/permissions — Get permission profile for a node.
+#[utoipa::path(
+    get,
+    path = "/api/v1/org/nodes/{id}/permissions",
+    tag = "org",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Org node UUID")),
+    responses(
+        (status = 200, description = "Effective permissions (merged from ancestors)", body = EffectivePermissions),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_node_permissions(
     State(state): State<AppState>,
@@ -194,6 +311,18 @@ pub async fn get_node_permissions(
 }
 
 /// PUT /api/v1/org/nodes/:id/permissions — Create or replace the permission profile for a node.
+#[utoipa::path(
+    put,
+    path = "/api/v1/org/nodes/{id}/permissions",
+    tag = "org",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Org node UUID")),
+    request_body = SetPermissionsRequest,
+    responses(
+        (status = 200, description = "Permission profile set", body = PermissionProfile),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn set_node_permissions(
     State(state): State<AppState>,
@@ -224,7 +353,7 @@ pub struct OrgchartQuery {
 }
 
 /// One person appearing in the orgchart, augmented with assignment details.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct OrgchartPerson {
     /// Assignment primary key.
     pub assignment_id: Uuid,
@@ -261,6 +390,21 @@ pub struct OrgchartResponse {
 /// Optional query parameters:
 /// - `?tree_id=UUID`    — select a specific org tree (defaults to the first one found).
 /// - `?date=YYYY-MM-DD` — historical snapshot; returns assignments active on that date.
+#[utoipa::path(
+    get,
+    path = "/api/v1/org/orgchart",
+    tag = "org",
+    security(("bearerAuth" = [])),
+    params(
+        ("tree_id" = Option<Uuid>, Query, description = "Org tree UUID (defaults to first tree for tenant)"),
+        ("date" = Option<String>, Query, description = "Historical snapshot date (YYYY-MM-DD)"),
+    ),
+    responses(
+        (status = 200, description = "Full orgchart with nested nodes and assignments", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "No org tree found for tenant"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_orgchart(
     State(state): State<AppState>,

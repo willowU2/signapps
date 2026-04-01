@@ -29,7 +29,7 @@ pub struct ListTenantsQuery {
 }
 
 /// Tenant response DTO.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Tenant.
 pub struct TenantResponse {
     pub id: Uuid,
@@ -64,7 +64,7 @@ impl From<signapps_db::models::Tenant> for TenantResponse {
 }
 
 /// Create tenant request.
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for CreateTenant.
 pub struct CreateTenantRequest {
     #[validate(length(min = 2, max = 255))]
@@ -79,7 +79,7 @@ pub struct CreateTenantRequest {
 }
 
 /// Update tenant request.
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for UpdateTenant.
 pub struct UpdateTenantRequest {
     #[validate(length(min = 2, max = 255))]
@@ -95,7 +95,22 @@ pub struct UpdateTenantRequest {
     pub is_active: Option<bool>,
 }
 
-/// List all tenants (super-admin only).
+/// GET /api/v1/tenants — List all tenants (super-admin only).
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenants",
+    tag = "tenants",
+    security(("bearerAuth" = [])),
+    params(
+        ("limit" = Option<i64>, Query, description = "Maximum results (default 50, max 100)"),
+        ("offset" = Option<i64>, Query, description = "Pagination offset"),
+    ),
+    responses(
+        (status = 200, description = "Tenant list", body = Vec<TenantResponse>),
+        (status = 401, description = "Not authenticated"),
+        (status = 403, description = "Insufficient permissions"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list_tenants(
@@ -111,7 +126,19 @@ pub async fn list_tenants(
     Ok(Json(response))
 }
 
-/// Get tenant by ID.
+/// GET /api/v1/tenants/:id — Get tenant by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenants/{id}",
+    tag = "tenants",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Tenant UUID")),
+    responses(
+        (status = 200, description = "Tenant detail", body = TenantResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Tenant not found"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn get_tenant(
@@ -125,7 +152,18 @@ pub async fn get_tenant(
     Ok(Json(TenantResponse::from(tenant)))
 }
 
-/// Get current user's tenant.
+/// GET /api/v1/tenant — Get current user's tenant.
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenant",
+    tag = "tenants",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "Current tenant", body = TenantResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Tenant not found"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn get_my_tenant(
@@ -139,7 +177,20 @@ pub async fn get_my_tenant(
     Ok(Json(TenantResponse::from(tenant)))
 }
 
-/// Create a new tenant (super-admin only).
+/// POST /api/v1/tenants — Create a new tenant (super-admin only).
+#[utoipa::path(
+    post,
+    path = "/api/v1/tenants",
+    tag = "tenants",
+    security(("bearerAuth" = [])),
+    request_body = CreateTenantRequest,
+    responses(
+        (status = 201, description = "Tenant created", body = TenantResponse),
+        (status = 400, description = "Validation error"),
+        (status = 401, description = "Not authenticated"),
+        (status = 409, description = "Slug or domain already exists"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn create_tenant(
@@ -186,7 +237,22 @@ pub async fn create_tenant(
     Ok((StatusCode::CREATED, Json(TenantResponse::from(tenant))))
 }
 
-/// Update a tenant (super-admin or tenant admin).
+/// PUT /api/v1/tenants/:id — Update a tenant (super-admin or tenant admin).
+#[utoipa::path(
+    put,
+    path = "/api/v1/tenants/{id}",
+    tag = "tenants",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Tenant UUID")),
+    request_body = UpdateTenantRequest,
+    responses(
+        (status = 200, description = "Tenant updated", body = TenantResponse),
+        (status = 400, description = "Validation error"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Tenant not found"),
+        (status = 409, description = "Domain already registered"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn update_tenant(
@@ -232,7 +298,19 @@ pub async fn update_tenant(
     Ok(Json(TenantResponse::from(tenant)))
 }
 
-/// Delete (deactivate) a tenant (super-admin only).
+/// DELETE /api/v1/tenants/:id — Delete (deactivate) a tenant (super-admin only).
+#[utoipa::path(
+    delete,
+    path = "/api/v1/tenants/{id}",
+    tag = "tenants",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Tenant UUID")),
+    responses(
+        (status = 204, description = "Tenant deactivated"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Tenant not found"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn delete_tenant(
@@ -263,7 +341,7 @@ pub struct ListWorkspacesQuery {
 }
 
 /// Workspace response DTO.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Workspace.
 pub struct WorkspaceResponse {
     pub id: Uuid,
@@ -292,7 +370,7 @@ impl From<signapps_db::models::Workspace> for WorkspaceResponse {
 }
 
 /// Workspace member response DTO.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for WorkspaceMember.
 pub struct WorkspaceMemberResponse {
     pub id: Uuid,
@@ -321,7 +399,7 @@ impl From<signapps_db::models::WorkspaceMemberWithUser> for WorkspaceMemberRespo
 }
 
 /// Create workspace request.
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for CreateWorkspace.
 pub struct CreateWorkspaceRequest {
     #[validate(length(min = 2, max = 255))]
@@ -334,7 +412,7 @@ pub struct CreateWorkspaceRequest {
 }
 
 /// Update workspace request.
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for UpdateWorkspace.
 pub struct UpdateWorkspaceRequest {
     #[validate(length(min = 2, max = 255))]
@@ -347,7 +425,7 @@ pub struct UpdateWorkspaceRequest {
 }
 
 /// Add member request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for AddMember.
 pub struct AddMemberRequest {
     pub user_id: Uuid,
@@ -355,13 +433,27 @@ pub struct AddMemberRequest {
 }
 
 /// Update member role request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for UpdateMemberRole.
 pub struct UpdateMemberRoleRequest {
     pub role: String,
 }
 
-/// List workspaces for current tenant.
+/// GET /api/v1/workspaces — List workspaces for current tenant.
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces",
+    tag = "workspaces",
+    security(("bearerAuth" = [])),
+    params(
+        ("limit" = Option<i64>, Query, description = "Maximum results (default 50, max 100)"),
+        ("offset" = Option<i64>, Query, description = "Pagination offset"),
+    ),
+    responses(
+        (status = 200, description = "Workspace list", body = Vec<WorkspaceResponse>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list_workspaces(
@@ -382,7 +474,17 @@ pub async fn list_workspaces(
     Ok(Json(response))
 }
 
-/// List workspaces the current user is a member of.
+/// GET /api/v1/workspaces/mine — List workspaces the current user is a member of.
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces/mine",
+    tag = "workspaces",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "User's workspaces", body = Vec<WorkspaceResponse>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list_my_workspaces(
@@ -398,7 +500,19 @@ pub async fn list_my_workspaces(
     Ok(Json(response))
 }
 
-/// Get workspace by ID.
+/// GET /api/v1/workspaces/:id — Get workspace by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces/{id}",
+    tag = "workspaces",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Workspace UUID")),
+    responses(
+        (status = 200, description = "Workspace detail", body = WorkspaceResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Workspace not found"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn get_workspace(
@@ -412,7 +526,19 @@ pub async fn get_workspace(
     Ok(Json(WorkspaceResponse::from(workspace)))
 }
 
-/// Create a new workspace.
+/// POST /api/v1/workspaces — Create a new workspace.
+#[utoipa::path(
+    post,
+    path = "/api/v1/workspaces",
+    tag = "workspaces",
+    security(("bearerAuth" = [])),
+    request_body = CreateWorkspaceRequest,
+    responses(
+        (status = 201, description = "Workspace created", body = WorkspaceResponse),
+        (status = 400, description = "Validation error or limit reached"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn create_workspace(
@@ -469,7 +595,21 @@ pub async fn create_workspace(
     ))
 }
 
-/// Update a workspace.
+/// PUT /api/v1/workspaces/:id — Update a workspace.
+#[utoipa::path(
+    put,
+    path = "/api/v1/workspaces/{id}",
+    tag = "workspaces",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Workspace UUID")),
+    request_body = UpdateWorkspaceRequest,
+    responses(
+        (status = 200, description = "Workspace updated", body = WorkspaceResponse),
+        (status = 400, description = "Validation error"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Workspace not found"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn update_workspace(
@@ -501,7 +641,20 @@ pub async fn update_workspace(
     Ok(Json(WorkspaceResponse::from(workspace)))
 }
 
-/// Delete a workspace.
+/// DELETE /api/v1/workspaces/:id — Delete a workspace.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/workspaces/{id}",
+    tag = "workspaces",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Workspace UUID")),
+    responses(
+        (status = 204, description = "Workspace deleted"),
+        (status = 400, description = "Cannot delete default workspace"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Workspace not found"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn delete_workspace(
@@ -526,7 +679,19 @@ pub async fn delete_workspace(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// List workspace members.
+/// GET /api/v1/workspaces/:id/members — List workspace members.
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces/{id}/members",
+    tag = "workspaces",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Workspace UUID")),
+    responses(
+        (status = 200, description = "Member list", body = Vec<WorkspaceMemberResponse>),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Workspace not found"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list_workspace_members(
@@ -547,7 +712,20 @@ pub async fn list_workspace_members(
     Ok(Json(response))
 }
 
-/// Add member to workspace.
+/// POST /api/v1/workspaces/:id/members — Add member to workspace.
+#[utoipa::path(
+    post,
+    path = "/api/v1/workspaces/{id}/members",
+    tag = "workspaces",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Workspace UUID")),
+    request_body = AddMemberRequest,
+    responses(
+        (status = 201, description = "Member added"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Workspace not found"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn add_workspace_member(
@@ -571,7 +749,23 @@ pub async fn add_workspace_member(
     Ok(StatusCode::CREATED)
 }
 
-/// Update workspace member role.
+/// PUT /api/v1/workspaces/:id/members/:uid — Update workspace member role.
+#[utoipa::path(
+    put,
+    path = "/api/v1/workspaces/{id}/members/{uid}",
+    tag = "workspaces",
+    security(("bearerAuth" = [])),
+    params(
+        ("id" = Uuid, Path, description = "Workspace UUID"),
+        ("uid" = Uuid, Path, description = "User UUID"),
+    ),
+    request_body = UpdateMemberRoleRequest,
+    responses(
+        (status = 200, description = "Role updated"),
+        (status = 400, description = "Invalid role"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn update_workspace_member_role(
@@ -595,7 +789,21 @@ pub async fn update_workspace_member_role(
     Ok(StatusCode::OK)
 }
 
-/// Remove member from workspace.
+/// DELETE /api/v1/workspaces/:id/members/:uid — Remove member from workspace.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/workspaces/{id}/members/{uid}",
+    tag = "workspaces",
+    security(("bearerAuth" = [])),
+    params(
+        ("id" = Uuid, Path, description = "Workspace UUID"),
+        ("uid" = Uuid, Path, description = "User UUID"),
+    ),
+    responses(
+        (status = 204, description = "Member removed"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn remove_workspace_member(
