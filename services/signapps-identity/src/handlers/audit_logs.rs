@@ -21,7 +21,7 @@ use crate::AppState;
 // Types
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 /// AuditLog data transfer object.
 pub struct AuditLog {
     pub id: Uuid,
@@ -51,7 +51,7 @@ pub struct AuditLogFilters {
     pub offset: Option<i64>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for AuditLogList.
 pub struct AuditLogListResponse {
     pub logs: Vec<AuditLog>,
@@ -65,6 +65,27 @@ pub struct AuditLogListResponse {
 // ---------------------------------------------------------------------------
 
 /// GET /api/v1/audit-logs
+#[utoipa::path(
+    get,
+    path = "/api/v1/audit-logs",
+    tag = "audit",
+    security(("bearerAuth" = [])),
+    params(
+        ("user_id" = Option<Uuid>, Query, description = "Filter by user UUID"),
+        ("username" = Option<String>, Query, description = "Filter by username (partial match)"),
+        ("action" = Option<String>, Query, description = "Filter by action"),
+        ("resource_type" = Option<String>, Query, description = "Filter by resource type"),
+        ("status" = Option<String>, Query, description = "Filter by status"),
+        ("start_date" = Option<String>, Query, description = "Filter from date (ISO 8601)"),
+        ("end_date" = Option<String>, Query, description = "Filter to date (ISO 8601)"),
+        ("limit" = Option<i64>, Query, description = "Max results (default 50, max 500)"),
+        ("offset" = Option<i64>, Query, description = "Pagination offset"),
+    ),
+    responses(
+        (status = 200, description = "Audit log list", body = AuditLogListResponse),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_audit_logs(
@@ -146,6 +167,18 @@ pub async fn list_audit_logs(
 }
 
 /// GET /api/v1/audit-logs/:id
+#[utoipa::path(
+    get,
+    path = "/api/v1/audit-logs/{id}",
+    tag = "audit",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Audit log entry UUID")),
+    responses(
+        (status = 200, description = "Audit log entry", body = AuditLog),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Audit log not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_audit_log(
@@ -180,6 +213,22 @@ pub async fn get_audit_log(
 }
 
 /// GET /api/v1/audit-logs/export — CSV export
+#[utoipa::path(
+    get,
+    path = "/api/v1/audit-logs/export",
+    tag = "audit",
+    security(("bearerAuth" = [])),
+    params(
+        ("user_id" = Option<Uuid>, Query, description = "Filter by user UUID"),
+        ("action" = Option<String>, Query, description = "Filter by action"),
+        ("start_date" = Option<String>, Query, description = "Filter from date (ISO 8601)"),
+        ("end_date" = Option<String>, Query, description = "Filter to date (ISO 8601)"),
+    ),
+    responses(
+        (status = 200, description = "CSV export of audit logs (text/csv)"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn export_audit_logs(
@@ -247,7 +296,7 @@ pub async fn export_audit_logs(
 }
 
 /// POST /api/v1/audit — query endpoint (used by crosslinks.ts auditApi)
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for AuditQuery.
 pub struct AuditQueryRequest {
     pub entity_type: Option<String>,
@@ -255,6 +304,18 @@ pub struct AuditQueryRequest {
     pub limit: Option<i64>,
 }
 
+/// POST /api/v1/audit — query audit logs by entity type/id.
+#[utoipa::path(
+    post,
+    path = "/api/v1/audit",
+    tag = "audit",
+    security(("bearerAuth" = [])),
+    request_body = AuditQueryRequest,
+    responses(
+        (status = 200, description = "Matching audit log entries", body = Vec<AuditLog>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn query_audit(

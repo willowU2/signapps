@@ -24,7 +24,7 @@ use crate::AppState;
 // ============================================================================
 
 /// Resource type response DTO.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for ResourceType.
 pub struct ResourceTypeResponse {
     pub id: Uuid,
@@ -51,7 +51,7 @@ impl From<signapps_db::models::ResourceType> for ResourceTypeResponse {
 }
 
 /// Create resource type request.
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for CreateResourceType.
 pub struct CreateResourceTypeRequest {
     #[validate(length(min = 2, max = 64))]
@@ -62,6 +62,16 @@ pub struct CreateResourceTypeRequest {
 }
 
 /// List resource types for current tenant.
+#[utoipa::path(
+    get,
+    path = "/api/v1/resource-types",
+    tag = "resources",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "Resource type list", body = Vec<ResourceTypeResponse>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list_resource_types(
@@ -75,6 +85,18 @@ pub async fn list_resource_types(
 }
 
 /// Create a new resource type.
+#[utoipa::path(
+    post,
+    path = "/api/v1/resource-types",
+    tag = "resources",
+    security(("bearerAuth" = [])),
+    request_body = CreateResourceTypeRequest,
+    responses(
+        (status = 201, description = "Resource type created", body = ResourceTypeResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 422, description = "Validation error"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn create_resource_type(
@@ -103,6 +125,17 @@ pub async fn create_resource_type(
 }
 
 /// Delete a resource type.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/resource-types/{id}",
+    tag = "resources",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Resource type UUID")),
+    responses(
+        (status = 204, description = "Resource type deleted"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn delete_resource_type(
@@ -128,7 +161,7 @@ pub struct ListResourcesQuery {
 }
 
 /// Resource response DTO.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Resource.
 pub struct ResourceResponse {
     pub id: Uuid,
@@ -171,7 +204,7 @@ impl From<signapps_db::models::TenantResource> for ResourceResponse {
 }
 
 /// Create resource request.
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for CreateResource.
 pub struct CreateResourceRequest {
     pub resource_type_id: Option<Uuid>,
@@ -191,7 +224,7 @@ pub struct CreateResourceRequest {
 }
 
 /// Update resource request.
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for UpdateResource.
 pub struct UpdateResourceRequest {
     #[validate(length(min = 2, max = 255))]
@@ -210,6 +243,21 @@ pub struct UpdateResourceRequest {
 }
 
 /// List resources for current tenant.
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources",
+    tag = "resources",
+    security(("bearerAuth" = [])),
+    params(
+        ("resource_type" = Option<String>, Query, description = "Filter by resource type"),
+        ("limit" = Option<i64>, Query, description = "Max results (default 50)"),
+        ("offset" = Option<i64>, Query, description = "Pagination offset"),
+    ),
+    responses(
+        (status = 200, description = "Resource list", body = Vec<ResourceResponse>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list_resources(
@@ -235,6 +283,18 @@ pub async fn list_resources(
 }
 
 /// Get resource by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources/{id}",
+    tag = "resources",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Resource UUID")),
+    responses(
+        (status = 200, description = "Resource detail", body = ResourceResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Resource not found"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn get_resource(
@@ -248,6 +308,18 @@ pub async fn get_resource(
 }
 
 /// Create a new resource.
+#[utoipa::path(
+    post,
+    path = "/api/v1/resources",
+    tag = "resources",
+    security(("bearerAuth" = [])),
+    request_body = CreateResourceRequest,
+    responses(
+        (status = 201, description = "Resource created", body = ResourceResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 422, description = "Validation error"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn create_resource(
@@ -291,6 +363,20 @@ pub async fn create_resource(
 }
 
 /// Update a resource.
+#[utoipa::path(
+    put,
+    path = "/api/v1/resources/{id}",
+    tag = "resources",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Resource UUID")),
+    request_body = UpdateResourceRequest,
+    responses(
+        (status = 200, description = "Resource updated", body = ResourceResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Resource not found"),
+        (status = 422, description = "Validation error"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn update_resource(
@@ -330,6 +416,18 @@ pub async fn update_resource(
 }
 
 /// Delete a resource.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/resources/{id}",
+    tag = "resources",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Resource UUID")),
+    responses(
+        (status = 204, description = "Resource deleted"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Resource not found"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn delete_resource(
@@ -360,7 +458,7 @@ pub struct ListReservationsQuery {
 }
 
 /// Reservation response DTO.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Reservation.
 pub struct ReservationResponse {
     pub id: Uuid,
@@ -395,7 +493,7 @@ impl From<signapps_db::models::Reservation> for ReservationResponse {
 }
 
 /// Create reservation request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for CreateReservation.
 pub struct CreateReservationRequest {
     pub resource_id: Uuid,
@@ -404,7 +502,7 @@ pub struct CreateReservationRequest {
 }
 
 /// Update reservation status request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for UpdateReservationStatus.
 pub struct UpdateReservationStatusRequest {
     pub status: String, // approved, rejected, cancelled
@@ -412,6 +510,21 @@ pub struct UpdateReservationStatusRequest {
 }
 
 /// List reservations.
+#[utoipa::path(
+    get,
+    path = "/api/v1/reservations",
+    tag = "resources",
+    security(("bearerAuth" = [])),
+    params(
+        ("resource_id" = Option<Uuid>, Query, description = "Filter by resource UUID (required)"),
+        ("status" = Option<String>, Query, description = "Filter by status"),
+    ),
+    responses(
+        (status = 200, description = "Reservation list", body = Vec<ReservationResponse>),
+        (status = 400, description = "resource_id required"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list_reservations(
@@ -434,6 +547,16 @@ pub async fn list_reservations(
 }
 
 /// List pending reservations for approval (for current user as approver).
+#[utoipa::path(
+    get,
+    path = "/api/v1/reservations/pending",
+    tag = "resources",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "Pending reservations awaiting approval", body = Vec<ReservationResponse>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list_pending_reservations(
@@ -451,6 +574,19 @@ pub async fn list_pending_reservations(
 }
 
 /// List reservations for current user (my reservations).
+#[utoipa::path(
+    get,
+    path = "/api/v1/reservations/mine",
+    tag = "resources",
+    security(("bearerAuth" = [])),
+    params(
+        ("status" = Option<String>, Query, description = "Filter by status"),
+    ),
+    responses(
+        (status = 200, description = "Current user's reservations", body = Vec<ReservationResponse>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list_my_reservations(
@@ -470,6 +606,18 @@ pub async fn list_my_reservations(
 }
 
 /// Get reservation by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/reservations/{id}",
+    tag = "resources",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Reservation UUID")),
+    responses(
+        (status = 200, description = "Reservation detail", body = ReservationResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Reservation not found"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn get_reservation(
@@ -483,6 +631,18 @@ pub async fn get_reservation(
 }
 
 /// Create a new reservation.
+#[utoipa::path(
+    post,
+    path = "/api/v1/reservations",
+    tag = "resources",
+    security(("bearerAuth" = [])),
+    request_body = CreateReservationRequest,
+    responses(
+        (status = 201, description = "Reservation created", body = ReservationResponse),
+        (status = 400, description = "Resource not available"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn create_reservation(
@@ -525,6 +685,20 @@ pub async fn create_reservation(
 }
 
 /// Update reservation status (approve/reject/cancel).
+#[utoipa::path(
+    put,
+    path = "/api/v1/reservations/{id}/status",
+    tag = "resources",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Reservation UUID")),
+    request_body = UpdateReservationStatusRequest,
+    responses(
+        (status = 200, description = "Reservation status updated", body = ReservationResponse),
+        (status = 400, description = "Invalid status or reservation already processed"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Reservation not found"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn update_reservation_status(

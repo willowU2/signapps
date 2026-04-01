@@ -35,7 +35,7 @@ struct ComplianceRow {
 
 // ── DPIA ─────────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 /// Request body for SaveDpia.
 pub struct SaveDpiaRequest {
     pub project_name: String,
@@ -48,7 +48,7 @@ pub struct SaveDpiaRequest {
     pub extra: Value,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// DpiaRecord data transfer object.
 pub struct DpiaRecord {
     pub id: Uuid,
@@ -62,6 +62,16 @@ pub struct DpiaRecord {
 }
 
 /// `POST /api/v1/compliance/dpia` — save a new DPIA record.
+#[utoipa::path(
+    post,
+    path = "/api/v1/compliance/dpia",
+    tag = "compliance",
+    request_body = SaveDpiaRequest,
+    responses(
+        (status = 201, description = "DPIA saved", body = DpiaRecord),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn save_dpia(
@@ -77,6 +87,15 @@ pub async fn save_dpia(
 }
 
 /// `GET /api/v1/compliance/dpia` — list all DPIA records.
+#[utoipa::path(
+    get,
+    path = "/api/v1/compliance/dpia",
+    tag = "compliance",
+    responses(
+        (status = 200, description = "DPIA record list", body = Vec<DpiaRecord>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list_dpias(State(state): State<AppState>) -> Result<Json<Vec<DpiaRecord>>> {
@@ -127,7 +146,7 @@ fn dpia_from_row(row: ComplianceRow) -> Result<DpiaRecord> {
 
 // ── DSAR ─────────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for CreateDsar.
 pub struct CreateDsarRequest {
     #[serde(rename = "type")]
@@ -137,7 +156,7 @@ pub struct CreateDsarRequest {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, utoipa::ToSchema)]
 /// DsarRecord data transfer object.
 pub struct DsarRecord {
     pub id: Uuid,
@@ -153,7 +172,7 @@ pub struct DsarRecord {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for UpdateDsar.
 pub struct UpdateDsarRequest {
     pub status: String,
@@ -161,6 +180,16 @@ pub struct UpdateDsarRequest {
 }
 
 /// `POST /api/v1/compliance/dsar` — create a new DSAR request.
+#[utoipa::path(
+    post,
+    path = "/api/v1/compliance/dsar",
+    tag = "compliance",
+    request_body = CreateDsarRequest,
+    responses(
+        (status = 201, description = "DSAR created", body = DsarRecord),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn create_dsar(
@@ -190,6 +219,15 @@ pub async fn create_dsar(
 }
 
 /// `GET /api/v1/compliance/dsar` — list all DSAR requests.
+#[utoipa::path(
+    get,
+    path = "/api/v1/compliance/dsar",
+    tag = "compliance",
+    responses(
+        (status = 200, description = "DSAR list", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list_dsars(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
@@ -202,6 +240,18 @@ pub async fn list_dsars(State(state): State<AppState>) -> Result<Json<serde_json
 }
 
 /// `PATCH /api/v1/compliance/dsar/:id` — update DSAR status (CO2: triggers event on approval).
+#[utoipa::path(
+    patch,
+    path = "/api/v1/compliance/dsar/{id}",
+    tag = "compliance",
+    params(("id" = Uuid, Path, description = "DSAR UUID")),
+    request_body = UpdateDsarRequest,
+    responses(
+        (status = 200, description = "DSAR updated", body = DsarRecord),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "DSAR not found"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn update_dsar(
@@ -321,13 +371,13 @@ fn dsar_from_row(row: ComplianceRow) -> Result<DsarRecord> {
 
 // ── Retention policies ────────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for RetentionPolicies.
 pub struct RetentionPoliciesRequest {
     pub policies: Value,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for RetentionPolicies.
 pub struct RetentionPoliciesResponse {
     pub data: Value,
@@ -335,6 +385,16 @@ pub struct RetentionPoliciesResponse {
 }
 
 /// `PUT /api/v1/compliance/retention-policies` — save retention policies blob.
+#[utoipa::path(
+    put,
+    path = "/api/v1/compliance/retention-policies",
+    tag = "compliance",
+    request_body = RetentionPoliciesRequest,
+    responses(
+        (status = 200, description = "Retention policies saved", body = RetentionPoliciesResponse),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn save_retention_policies(
@@ -360,6 +420,15 @@ pub async fn save_retention_policies(
 }
 
 /// `GET /api/v1/compliance/retention-policies` — get retention policies blob.
+#[utoipa::path(
+    get,
+    path = "/api/v1/compliance/retention-policies",
+    tag = "compliance",
+    responses(
+        (status = 200, description = "Retention policies", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn get_retention_policies(
@@ -372,13 +441,23 @@ pub async fn get_retention_policies(
 
 // ── Consent (CO4) ─────────────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for SaveConsent.
 pub struct SaveConsentRequest {
     pub consent: Value,
 }
 
 /// `PUT /api/v1/compliance/consent` — save consent choices.
+#[utoipa::path(
+    put,
+    path = "/api/v1/compliance/consent",
+    tag = "compliance",
+    request_body = SaveConsentRequest,
+    responses(
+        (status = 200, description = "Consent saved", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn save_consent(
@@ -396,6 +475,15 @@ pub async fn save_consent(
 }
 
 /// `GET /api/v1/compliance/consent` — get current consent configuration.
+#[utoipa::path(
+    get,
+    path = "/api/v1/compliance/consent",
+    tag = "compliance",
+    responses(
+        (status = 200, description = "Current consent configuration", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn get_consent(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
@@ -410,6 +498,16 @@ pub async fn get_consent(State(state): State<AppState>) -> Result<Json<serde_jso
 // ── Cookie banner (existing frontend uses /api/compliance/cookie-banner) ─────
 
 /// `PUT /api/v1/compliance/cookie-banner` — save cookie banner configuration.
+#[utoipa::path(
+    put,
+    path = "/api/v1/compliance/cookie-banner",
+    tag = "compliance",
+    request_body(content = serde_json::Value, description = "Cookie banner config"),
+    responses(
+        (status = 200, description = "Cookie banner config saved", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn save_cookie_banner(
@@ -423,6 +521,15 @@ pub async fn save_cookie_banner(
 }
 
 /// `GET /api/v1/compliance/cookie-banner` — get cookie banner configuration.
+#[utoipa::path(
+    get,
+    path = "/api/v1/compliance/cookie-banner",
+    tag = "compliance",
+    responses(
+        (status = 200, description = "Cookie banner configuration", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn get_cookie_banner(State(state): State<AppState>) -> Result<Json<Value>> {

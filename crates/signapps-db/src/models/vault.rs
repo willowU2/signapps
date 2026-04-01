@@ -14,6 +14,7 @@ use uuid::Uuid;
 
 /// Type of vault item.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[sqlx(type_name = "vault.item_type", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 pub enum VaultItemType {
@@ -28,6 +29,7 @@ pub enum VaultItemType {
 
 /// Who a share is granted to.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[sqlx(type_name = "vault.share_type", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 pub enum VaultShareType {
@@ -37,6 +39,7 @@ pub enum VaultShareType {
 
 /// Access level for a share.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[sqlx(type_name = "vault.access_level", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 pub enum VaultAccessLevel {
@@ -47,6 +50,7 @@ pub enum VaultAccessLevel {
 
 /// Action recorded in the vault audit log.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[sqlx(type_name = "vault.audit_action", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 pub enum VaultAuditAction {
@@ -86,6 +90,7 @@ pub struct VaultUserKeys {
 
 /// Request to initialise or update a user's key bundle.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpsertVaultUserKeys {
     pub encrypted_sym_key: Vec<u8>,
     pub encrypted_private_key: Vec<u8>,
@@ -111,12 +116,14 @@ pub struct VaultFolder {
 
 /// Request to create a vault folder.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreateVaultFolder {
     pub name: Vec<u8>,
 }
 
 /// Request to rename a vault folder.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpdateVaultFolder {
     pub name: Vec<u8>,
 }
@@ -155,6 +162,7 @@ pub struct VaultItem {
 
 /// Request to create a vault item.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreateVaultItem {
     pub folder_id: Option<Uuid>,
     pub item_type: VaultItemType,
@@ -171,6 +179,7 @@ pub struct CreateVaultItem {
 
 /// Request to update a vault item (all fields optional).
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpdateVaultItem {
     pub folder_id: Option<Uuid>,
     pub name: Option<Vec<u8>>,
@@ -232,6 +241,7 @@ pub struct VaultOrgKey {
 
 /// Request to upsert an org key.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpsertVaultOrgKey {
     pub group_id: Uuid,
     pub member_user_id: Uuid,
@@ -259,6 +269,7 @@ pub struct VaultBrowseSession {
 
 /// Request to start a browse session.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreateBrowseSession {
     pub item_id: Uuid,
     pub target_url: String,

@@ -50,6 +50,17 @@ async fn audit(
 // ---------------------------------------------------------------------------
 
 /// `POST /api/v1/vault/keys` — Initialise the user's key bundle.
+#[utoipa::path(
+    post,
+    path = "/api/v1/vault/keys",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    request_body = UpsertVaultUserKeys,
+    responses(
+        (status = 201, description = "Keys initialised", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
 pub async fn init_keys(
     State(state): State<AppState>,
@@ -65,6 +76,17 @@ pub async fn init_keys(
 }
 
 /// `GET /api/v1/vault/keys` — Get the current user's key bundle.
+#[utoipa::path(
+    get,
+    path = "/api/v1/vault/keys",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "User key bundle", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Keys not initialised"),
+    )
+)]
 #[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
 pub async fn get_keys(
     State(state): State<AppState>,
@@ -78,6 +100,17 @@ pub async fn get_keys(
 }
 
 /// `PUT /api/v1/vault/keys` — Replace the user's key bundle (re-key operation).
+#[utoipa::path(
+    put,
+    path = "/api/v1/vault/keys",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    request_body = UpsertVaultUserKeys,
+    responses(
+        (status = 200, description = "Keys updated", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
 pub async fn update_keys(
     State(state): State<AppState>,
@@ -94,6 +127,16 @@ pub async fn update_keys(
 // ---------------------------------------------------------------------------
 
 /// `GET /api/v1/vault/items` — List all items owned by the current user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/vault/items",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "Vault item list", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
 pub async fn list_items(
     State(state): State<AppState>,
@@ -104,6 +147,17 @@ pub async fn list_items(
 }
 
 /// `POST /api/v1/vault/items` — Create a new vault item.
+#[utoipa::path(
+    post,
+    path = "/api/v1/vault/items",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    request_body = CreateVaultItem,
+    responses(
+        (status = 201, description = "Vault item created", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
 pub async fn create_item(
     State(state): State<AppState>,
@@ -125,6 +179,19 @@ pub async fn create_item(
 }
 
 /// `PUT /api/v1/vault/items/:id` — Update a vault item.
+#[utoipa::path(
+    put,
+    path = "/api/v1/vault/items/{id}",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Vault item UUID")),
+    request_body = UpdateVaultItem,
+    responses(
+        (status = 200, description = "Vault item updated", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Item not found"),
+    )
+)]
 #[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub, item_id = %id))]
 pub async fn update_item(
     State(state): State<AppState>,
@@ -146,6 +213,18 @@ pub async fn update_item(
 }
 
 /// `DELETE /api/v1/vault/items/:id` — Delete a vault item.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/vault/items/{id}",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Vault item UUID")),
+    responses(
+        (status = 204, description = "Vault item deleted"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Item not found"),
+    )
+)]
 #[tracing::instrument(skip(state), fields(user_id = %claims.sub, item_id = %id))]
 pub async fn delete_item(
     State(state): State<AppState>,
@@ -165,6 +244,16 @@ pub async fn delete_item(
 // ---------------------------------------------------------------------------
 
 /// `GET /api/v1/vault/folders` — List all folders.
+#[utoipa::path(
+    get,
+    path = "/api/v1/vault/folders",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "Folder list", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
 pub async fn list_folders(
     State(state): State<AppState>,
@@ -175,6 +264,17 @@ pub async fn list_folders(
 }
 
 /// `POST /api/v1/vault/folders` — Create a folder.
+#[utoipa::path(
+    post,
+    path = "/api/v1/vault/folders",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    request_body = CreateVaultFolder,
+    responses(
+        (status = 201, description = "Folder created", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
 pub async fn create_folder(
     State(state): State<AppState>,
@@ -189,6 +289,19 @@ pub async fn create_folder(
 }
 
 /// `PUT /api/v1/vault/folders/:id` — Rename a folder.
+#[utoipa::path(
+    put,
+    path = "/api/v1/vault/folders/{id}",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Folder UUID")),
+    request_body = UpdateVaultFolder,
+    responses(
+        (status = 200, description = "Folder updated", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Folder not found"),
+    )
+)]
 #[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub, folder_id = %id))]
 pub async fn update_folder(
     State(state): State<AppState>,
@@ -203,6 +316,18 @@ pub async fn update_folder(
 }
 
 /// `DELETE /api/v1/vault/folders/:id` — Delete a folder.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/vault/folders/{id}",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Folder UUID")),
+    responses(
+        (status = 204, description = "Folder deleted"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Folder not found"),
+    )
+)]
 #[tracing::instrument(skip(state), fields(user_id = %claims.sub, folder_id = %id))]
 pub async fn delete_folder(
     State(state): State<AppState>,
@@ -221,7 +346,7 @@ pub async fn delete_folder(
 // ---------------------------------------------------------------------------
 
 /// Request body for creating a share.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateShareRequest {
     pub item_id: Uuid,
     pub share_type: VaultShareType,
@@ -232,6 +357,18 @@ pub struct CreateShareRequest {
 }
 
 /// `POST /api/v1/vault/shares` — Share an item with a person or group.
+#[utoipa::path(
+    post,
+    path = "/api/v1/vault/shares",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    request_body = CreateShareRequest,
+    responses(
+        (status = 201, description = "Share created", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Item not found"),
+    )
+)]
 #[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
 pub async fn create_share(
     State(state): State<AppState>,
@@ -267,6 +404,18 @@ pub async fn create_share(
 }
 
 /// `DELETE /api/v1/vault/shares/:id` — Revoke a share.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/vault/shares/{id}",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Share UUID")),
+    responses(
+        (status = 204, description = "Share revoked"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Share not found"),
+    )
+)]
 #[tracing::instrument(skip(state), fields(user_id = %claims.sub, share_id = %id))]
 pub async fn delete_share(
     State(state): State<AppState>,
@@ -286,6 +435,16 @@ pub async fn delete_share(
 }
 
 /// `GET /api/v1/vault/shared-with-me` — List items shared with the current user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/vault/shared-with-me",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "Items shared with the current user", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
 pub async fn shared_with_me(
     State(state): State<AppState>,
@@ -300,7 +459,7 @@ pub async fn shared_with_me(
 // ---------------------------------------------------------------------------
 
 /// Response for a TOTP code.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct TotpCodeResponse {
     pub code: String,
     pub valid_for_seconds: u64,
@@ -312,13 +471,25 @@ pub struct TotpCodeResponse {
 /// (decrypted client-side and sent in the request, OR the server holds a
 /// known secret for use_only browsing). For this endpoint the caller sends
 /// the decrypted base32 secret in the request body.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct TotpRequest {
     /// Decrypted base32 TOTP secret supplied by the client.
     pub secret_base32: String,
 }
 
 /// `POST /api/v1/vault/items/:id/totp` — Generate TOTP code from client-supplied secret.
+#[utoipa::path(
+    post,
+    path = "/api/v1/vault/items/{id}/totp",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Vault item UUID")),
+    request_body = TotpRequest,
+    responses(
+        (status = 200, description = "TOTP code and validity window", body = TotpCodeResponse),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub, item_id = %id))]
 pub async fn get_totp_code(
     State(state): State<AppState>,
@@ -369,13 +540,30 @@ pub struct GeneratePasswordQuery {
 }
 
 /// Response for password generation.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct GeneratedPasswordResponse {
     pub password: String,
     pub length: usize,
 }
 
 /// `GET /api/v1/vault/generate-password` — Generate a strong random password.
+#[utoipa::path(
+    get,
+    path = "/api/v1/vault/generate-password",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    params(
+        ("length" = Option<usize>, Query, description = "Password length (default 20)"),
+        ("uppercase" = Option<bool>, Query, description = "Include uppercase letters"),
+        ("lowercase" = Option<bool>, Query, description = "Include lowercase letters"),
+        ("digits" = Option<bool>, Query, description = "Include digits"),
+        ("symbols" = Option<bool>, Query, description = "Include symbols"),
+    ),
+    responses(
+        (status = 200, description = "Generated password", body = GeneratedPasswordResponse),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(q))]
 pub async fn generate_password(
     Extension(_claims): Extension<Claims>,
@@ -401,6 +589,17 @@ pub async fn generate_password(
 // ---------------------------------------------------------------------------
 
 /// `PUT /api/v1/vault/org-keys` — Upsert an org key for a group member.
+#[utoipa::path(
+    put,
+    path = "/api/v1/vault/org-keys",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    request_body = UpsertVaultOrgKey,
+    responses(
+        (status = 200, description = "Org key upserted", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 pub async fn upsert_org_key(
     State(state): State<AppState>,
@@ -415,6 +614,18 @@ pub async fn upsert_org_key(
 }
 
 /// `GET /api/v1/vault/org-keys/:group_id` — Get the org key for the current user in a group.
+#[utoipa::path(
+    get,
+    path = "/api/v1/vault/org-keys/{group_id}",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    params(("group_id" = Uuid, Path, description = "Group UUID")),
+    responses(
+        (status = 200, description = "Org key", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Org key not found"),
+    )
+)]
 #[tracing::instrument(skip(state), fields(user_id = %claims.sub, group_id = %group_id))]
 pub async fn get_org_key(
     State(state): State<AppState>,
@@ -443,6 +654,21 @@ pub struct AuditQuery {
 ///
 /// If `item_id` is supplied, returns entries for that item (owner-checked).
 /// Otherwise returns entries for the current actor.
+#[utoipa::path(
+    get,
+    path = "/api/v1/vault/audit",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    params(
+        ("item_id" = Option<Uuid>, Query, description = "Filter by vault item UUID"),
+        ("limit" = Option<i64>, Query, description = "Max results (default 50)"),
+        ("offset" = Option<i64>, Query, description = "Pagination offset"),
+    ),
+    responses(
+        (status = 200, description = "Vault audit log entries", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, q), fields(user_id = %claims.sub))]
 pub async fn list_audit(
     State(state): State<AppState>,
@@ -470,7 +696,7 @@ pub async fn list_audit(
 // ---------------------------------------------------------------------------
 
 /// Response for a started browse session.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct BrowseSessionResponse {
     pub token: String,
     pub target_url: String,
@@ -481,6 +707,18 @@ pub struct BrowseSessionResponse {
 ///
 /// Verifies the user has access to the item (as owner or with use_only/full share),
 /// then creates a short-lived session with a random token.
+#[utoipa::path(
+    post,
+    path = "/api/v1/vault/browse/start",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    request_body = CreateBrowseSession,
+    responses(
+        (status = 201, description = "Browse session started", body = BrowseSessionResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 403, description = "No access to vault item"),
+    )
+)]
 #[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
 pub async fn start_browse(
     State(state): State<AppState>,
@@ -540,6 +778,18 @@ pub async fn start_browse(
 }
 
 /// `DELETE /api/v1/vault/browse/:token` — End a browse session.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/vault/browse/{token}",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    params(("token" = String, Path, description = "Browse session token")),
+    responses(
+        (status = 204, description = "Browse session ended"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Browse session not found"),
+    )
+)]
 #[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
 pub async fn end_browse(
     State(state): State<AppState>,
