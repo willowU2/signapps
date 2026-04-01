@@ -44,7 +44,7 @@ export function useTaskNotifications() {
       const calId = (cals.data ?? cals)?.[0]?.id;
       if (!calId) return;
       const today = new Date().toISOString().slice(0, 10);
-      const res = await fetch(`${API}/calendars/${calId}/tasks?status=open,in_progress&due_before=${today}`, { credentials: "include" });
+      const res = await fetch(`${CALENDAR_URL}/calendars/${calId}/tasks?status=open,in_progress&due_before=${today}`, { credentials: "include" });
       if (!res.ok) return;
       const data = await res.json();
       const overdue: Task[] = data.data ?? data ?? [];

@@ -28,7 +28,10 @@ export function SendNotificationAdmin() {
 
     setLoading(true);
     try {
-      const response = await calendarApi.post('/notifications/push/send', {
+      const response = await calendarApi.post<{
+        successful: number;
+        failed: number;
+      }>('/notifications/push/send', {
         title,
         body: message, // API expects "body"
         notification_type: type,

@@ -73,7 +73,7 @@ export function AttendeeList({
       const newAttendee: Attendee = {
         id: response.data.id,
         event_id: eventId,
-        user_id: response.data.user_id,
+        user_id: response.data.user_id ?? "",
         email: email,
         rsvp_status: "pending",
       };

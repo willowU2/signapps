@@ -313,7 +313,7 @@ export const backupsApi = {
     run: (profileId: string) =>
         containersClient.post(`/backups/profiles/${profileId}/run`),
     snapshots: (profileId: string) =>
-        containersClient.get<{ snapshots: BackupSnapshot[] }>(`/backups/profiles/${profileId}/snapshots`),
+        containersClient.get<{ snapshots: ContainerBackupSnapshot[] }>(`/backups/profiles/${profileId}/snapshots`),
     restore: (profileId: string, snapshotId: string, targetPath?: string) =>
         containersClient.post(`/backups/profiles/${profileId}/restore`, { snapshot_id: snapshotId, target_path: targetPath }),
     runs: (profileId: string) =>
@@ -370,7 +370,7 @@ export interface BackupItem {
     error?: string;
 }
 
-export interface BackupSnapshot {
+export interface ContainerBackupSnapshot {
     id: string;
     short_id: string;
     time: string;

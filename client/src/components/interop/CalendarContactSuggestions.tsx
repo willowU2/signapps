@@ -105,10 +105,10 @@ export function useCalendarAvailability(email: string | null) {
     // Availability check — returns free/busy from calendar API if available
     (async () => {
       try {
-        const API = process.env.NEXT_PUBLIC_CALENDAR_API || "http://localhost:3011/api/v1";
+        
         const start = new Date().toISOString();
         const end = new Date(Date.now() + 7 * 24 * 3600000).toISOString();
-        const res = await fetch(`${API}/freebusy?email=${encodeURIComponent(email)}&start=${start}&end=${end}`, { credentials: "include" });
+        const res = await fetch(`${CALENDAR_URL}/freebusy?email=${encodeURIComponent(email)}&start=${start}&end=${end}`, { credentials: "include" });
         if (!res.ok) return;
         const data = await res.json();
         setSlots(data.slots ?? []);

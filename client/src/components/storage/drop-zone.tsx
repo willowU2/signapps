@@ -176,7 +176,7 @@ export function DropZone({
         }
       });
 
-      xhr.open('POST', `${process.env.NEXT_PUBLIC_STORAGE_URL || 'http://localhost:3004/api/v1'}/files/${bucket}`);
+      xhr.open('POST', `${STORAGE_URL}/files/${bucket}`);
       xhr.withCredentials = true; // Send HttpOnly cookies for auth
 
       xhr.send(formData);

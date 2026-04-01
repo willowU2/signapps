@@ -39,10 +39,10 @@ export function QuickComposeFromTask({ task, open, onOpenChange }: Props) {
     if (!to.trim()) { toast.error("Destinataire requis"); return; }
     setSending(true);
     try {
-      const MAIL_API = process.env.NEXT_PUBLIC_MAIL_API || "http://localhost:3010/api/v1";
+      
       let mailId = `local_${Date.now()}`;
       try {
-        const res = await fetch(`${MAIL_API}/messages/send`, {
+        const res = await fetch(`${MAIL_URL}/messages/send`, {
           method: "POST", credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ to: to.trim(), subject: subject.trim(), body_text: body }),

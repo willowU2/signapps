@@ -46,7 +46,7 @@ export function EventFollowUpSuggestion({ event, mode, onDismiss }: Props) {
       let taskId = `local_${Date.now()}`;
 
       if (Array.isArray(calendars) && calendars.length > 0) {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_CALENDAR_API || "http://localhost:3011/api/v1"}/calendars/${calendars[0].id}/tasks`, {
+        const res = await fetch(`${CALENDAR_URL}/calendars/${calendars[0].id}/tasks`, {
           method: "POST", credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: taskTitle, due_date: dueDate, priority: 2 }),

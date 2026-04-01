@@ -37,7 +37,7 @@ interface MigrationJob {
 // Constants
 // ---------------------------------------------------------------------------
 
-const IDENTITY_API = process.env.NEXT_PUBLIC_IDENTITY_URL ?? "http://localhost:3001";
+const IDENTITY_API = IDENTITY_URL;
 
 const SOURCE_LABELS: Record<MigrationSource, string> = {
   google_workspace: "Google Workspace",

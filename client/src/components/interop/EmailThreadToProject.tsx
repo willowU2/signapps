@@ -32,7 +32,7 @@ export function EmailThreadToProjectDialog({ open, onOpenChange, mail }: Props) 
     if (!projectName.trim()) { toast.error("Le nom du projet est requis"); return; }
     setSaving(true);
     try {
-      const API = process.env.NEXT_PUBLIC_TASK_API || process.env.NEXT_PUBLIC_CALENDAR_API || "http://localhost:3011/api/v1";
+      const API = CALENDAR_URL;
       let projectId = `local_proj_${Date.now()}`;
       try {
         const res = await fetch(`${API}/projects`, {

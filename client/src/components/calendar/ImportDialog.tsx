@@ -57,9 +57,10 @@ export function ImportDialog({
           "/icalendar/validate",
           { ics_content: fileContent }
         );
+        const validationData = validationResult.data as { valid: boolean; errors: string[] };
 
-        if (!validationResult.data.valid) {
-          const errors = validationResult.data.errors;
+        if (!validationData.valid) {
+          const errors = validationData.errors;
           setResult({
             success: false,
             importedCount: 0,
@@ -77,13 +78,14 @@ export function ImportDialog({
           `/calendars/${calendarId}/import`,
           { ics_content: fileContent }
         );
+        const importData = importResult.data as { imported: number; skipped: number; errors: string[] };
 
-        const importedCount = importResult.data.imported;
+        const importedCount = importData.imported;
         setResult({
           success: true,
           importedCount,
-          skippedCount: importResult.data.skipped,
-          errors: importResult.data.errors || [],
+          skippedCount: importData.skipped,
+          errors: importData.errors || [],
         });
 
         if (onImportComplete) {

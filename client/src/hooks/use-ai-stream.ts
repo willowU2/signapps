@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
+import { AI_URL } from '@/lib/api/core';
 
-const AI_URL = process.env.NEXT_PUBLIC_AI_URL || 'http://localhost:3005/api/v1';
+
 
 interface UseAiStreamOptions {
   onToken?: (token: string) => void;

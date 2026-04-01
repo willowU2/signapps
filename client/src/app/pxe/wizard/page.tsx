@@ -104,7 +104,7 @@ function ImageUploader({ onUploaded }: { onUploaded: () => void }) {
       form.append("name", name || file.name)
       form.append("os_type", osType)
       form.append("image_type", imageType)
-      const res = await fetch(`${process.env.NEXT_PUBLIC_PXE_URL ?? "http://localhost:3016"}/api/v1/pxe/images`, {
+      const res = await fetch(`${PXE_URL}/pxe/images`, {
         method: "POST",
         body: form,
       })

@@ -410,7 +410,7 @@ export function TimesheetView() {
           id = data[0]?.timesheet_id;
         } else if (data && typeof data === "object") {
           // Single timesheet object
-          status = data.status ?? "pending";
+          status = (data.status ?? "pending") as TimesheetStatus;
           id = data.id;
           generatedAt = data.generated_at;
           validatedAt = data.validated_at;

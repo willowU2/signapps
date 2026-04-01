@@ -128,7 +128,7 @@ export default function BackupAdminPage() {
 
     try {
       // Call real backup endpoint
-      const apiBase = process.env.NEXT_PUBLIC_IDENTITY_URL || 'http://localhost:3001/api/v1';
+      const apiBase = IDENTITY_URL;
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
 
       const res = await fetch(`${apiBase}/admin/backup`, {

@@ -36,7 +36,7 @@ export interface UpdateTaskRequest {
   assigned_to?: string;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_CALENDAR_API || "http://localhost:3011/api/v1";
+const API_BASE = CALENDAR_URL;
 
 export function useTasks(calendarId?: string) {
   const [isLoading, setIsLoading] = useState(false);

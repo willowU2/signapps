@@ -320,7 +320,7 @@ export function TimesheetExportDialog({
         if (typeof raw === "object") {
           content = JSON.stringify(raw, null, 2);
         } else {
-          const rows = parseRawToPreview(raw);
+          const rows = parseRawToPreview(null);
           content = buildJsonContent(rows);
         }
         filename = `feuilles_temps_${startDate}_${endDate}.json`;

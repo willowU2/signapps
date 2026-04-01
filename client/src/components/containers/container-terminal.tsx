@@ -36,7 +36,7 @@ export function ContainerTerminal({
 
   // Get WebSocket URL from environment
   const getWsUrl = useCallback(() => {
-    const containersUrl = process.env.NEXT_PUBLIC_CONTAINERS_URL || 'http://localhost:3002/api/v1';
+    const containersUrl = CONTAINERS_URL;
     // Convert HTTP to WS
     const wsUrl = containersUrl.replace(/^http/, 'ws');
     return `${wsUrl}/containers/${containerId}/exec`;

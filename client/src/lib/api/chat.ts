@@ -250,7 +250,7 @@ export const chatApi = {
     // ========================================================================
 
     getExportUrl: (channelId: string, format: 'json' | 'csv' = 'json') => {
-        const base = process.env.NEXT_PUBLIC_CHAT_URL || 'http://localhost:3020/api/v1';
+        const base = CHAT_URL;
         return `${base}/channels/${channelId}/export?format=${format}`;
     },
 
@@ -260,7 +260,7 @@ export const chatApi = {
     // ========================================================================
 
     getWebSocketUrl: () => {
-        const baseUrl = process.env.NEXT_PUBLIC_CHAT_URL || 'http://localhost:3020/api/v1';
+        const baseUrl = CHAT_URL;
         // baseUrl already ends in /api/v1, replace http→ws and append /ws
         const wsBaseUrl = baseUrl.replace(/^http/, 'ws');
         return `${wsBaseUrl}/ws`;

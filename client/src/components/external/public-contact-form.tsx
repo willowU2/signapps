@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { API_URL } from "@/lib/api/core";
 
 interface ContactFormData {
   name: string;
@@ -24,7 +25,7 @@ export interface PublicContactFormProps {
 
 export function PublicContactForm({
   organizationId = "default",
-  apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.signapps.local",
+  apiBaseUrl = API_URL,
   onSuccess,
 }: PublicContactFormProps) {
   const [formData, setFormData] = useState<ContactFormData>({
@@ -47,7 +48,7 @@ export function PublicContactForm({
 ></iframe>`;
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({

@@ -13,9 +13,11 @@ import {
   UseQueryOptions,
 } from "@tanstack/react-query";
 import { calendarApi, tasksApi } from "@/lib/api/calendar";
+import type { Event as CalendarEvent, CreateEvent } from "@/types/calendar";
 import { toast } from "sonner";
 import type {
   ScheduleBlock,
+  BlockStatus,
   CreateEventInput,
   UpdateEventInput,
   EventsQueryParams,
@@ -28,6 +30,7 @@ import type {
   RSVPInput,
   RSVPStatus,
   Attendee,
+  ScheduleRecurrenceRule,
 } from "../types/scheduling";
 
 // ============================================================================
@@ -56,35 +59,42 @@ export const schedulingKeys = {
 /**
  * Transform API event to ScheduleBlock
  */
-function toScheduleBlock(event: Record<string, unknown>): ScheduleBlock {
+function toScheduleBlock(event: CalendarEvent): ScheduleBlock {
+  const raw = event as unknown as Record<string, unknown>;
+  const startValue =
+    event.start_time ||
+    (typeof event.start === "string" ? event.start : undefined);
+  const endValue =
+    event.end_time ||
+    (typeof event.end === "string" ? event.end : undefined);
   return {
     id: event.id,
     type: "event",
     title: event.title,
     description: event.description,
-    start: new Date(event.start_time || event.start),
-    end:
-      event.end_time || event.end
-        ? new Date(event.end_time || event.end)
-        : undefined,
-    allDay: event.all_day ?? false,
+    start: new Date(startValue as string),
+    end: endValue ? new Date(endValue) : undefined,
+    allDay: event.is_all_day ?? false,
     calendarId: event.calendar_id,
-    attendees: (event.attendees as Record<string, unknown>[] | undefined)?.map(
+    attendees: (raw.attendees as Record<string, unknown>[] | undefined)?.map(
       (a) => ({
-        id: a.id,
-        name:
-          (a.user as Record<string, unknown> | undefined)?.display_name ||
-          a.email,
-        email: a.email,
-        status: a.rsvp_status || "pending",
-        required: a.required ?? true,
+        id: (a.id as string) ?? "",
+        name: String(
+          (a.user as Record<string, unknown> | undefined)?.display_name ??
+            a.email ??
+            "",
+        ),
+        email: String(a.email ?? ""),
+        status: ((a.rsvp_status as RSVPStatus) || "pending") as RSVPStatus,
+        required: Boolean(a.required ?? true),
       }),
     ),
-    color: event.color,
-    status: event.status || "confirmed",
-    recurrence: event.recurrence_rule
-      ? parseRecurrence(event.recurrence_rule)
-      : undefined,
+    color: raw.color as string | undefined,
+    status: ((raw.status as BlockStatus) || "confirmed") as BlockStatus,
+    recurrence:
+      typeof raw.recurrence_rule === "string"
+        ? parseRecurrence(raw.recurrence_rule)
+        : undefined,
     metadata: event.metadata,
     createdAt: new Date(event.created_at),
     updatedAt: new Date(event.updated_at),
@@ -96,30 +106,31 @@ function toScheduleBlock(event: Record<string, unknown>): ScheduleBlock {
  */
 function toApiEvent(
   block: Partial<CreateEventInput | UpdateEventInput>,
-): Record<string, unknown> {
+): CreateEvent {
   return {
-    title: block.title,
+    title: block.title ?? "",
     description: block.description,
-    start_time: block.start?.toISOString(),
-    end_time: block.end?.toISOString(),
-    all_day: block.allDay,
-    color: block.color,
-    recurrence_rule: block.recurrence
-      ? formatRecurrence(block.recurrence)
-      : undefined,
+    start_time: block.start?.toISOString() ?? "",
+    end_time: block.end?.toISOString() ?? "",
+    is_all_day: block.allDay,
+    rrule: block.recurrence ? formatRecurrence(block.recurrence) : undefined,
   };
 }
 
-function parseRecurrence(rule: string): Record<string, unknown> {
+function parseRecurrence(rule: string): ScheduleRecurrenceRule {
   // Simple RRULE parser
   const parts = rule.split(";");
-  const result: Record<string, unknown> = {};
+  const result: ScheduleRecurrenceRule = {
+    frequency: "daily",
+    interval: 1,
+  };
 
   for (const part of parts) {
     const [key, value] = part.split("=");
     switch (key) {
       case "FREQ":
-        result.frequency = value.toLowerCase();
+        result.frequency =
+          value.toLowerCase() as ScheduleRecurrenceRule["frequency"];
         break;
       case "INTERVAL":
         result.interval = parseInt(value, 10);
@@ -139,11 +150,11 @@ function parseRecurrence(rule: string): Record<string, unknown> {
   return result;
 }
 
-function formatRecurrence(recurrence: Record<string, unknown>): string {
+function formatRecurrence(recurrence: ScheduleRecurrenceRule): string {
   const parts: string[] = [];
 
   if (recurrence.frequency) {
-    parts.push(`FREQ=${(recurrence.frequency as string).toUpperCase()}`);
+    parts.push(`FREQ=${recurrence.frequency.toUpperCase()}`);
   }
   if (recurrence.interval) {
     parts.push(`INTERVAL=${recurrence.interval}`);
@@ -153,11 +164,11 @@ function formatRecurrence(recurrence: Record<string, unknown>): string {
   }
   if (recurrence.endDate) {
     parts.push(
-      `UNTIL=${(recurrence.endDate as Date).toISOString().replace(/[-:]/g, "").split(".")[0]}Z`,
+      `UNTIL=${recurrence.endDate.toISOString().replace(/[-:]/g, "").split(".")[0]}Z`,
     );
   }
-  if (recurrence.byDay && (recurrence.byDay as string[]).length) {
-    parts.push(`BYDAY=${(recurrence.byDay as string[]).join(",")}`);
+  if (recurrence.byDay && recurrence.byDay.length) {
+    parts.push(`BYDAY=${recurrence.byDay.join(",")}`);
   }
 
   return parts.join(";");
@@ -212,7 +223,10 @@ export async function updateEvent(
   eventId: string,
   input: UpdateEventInput,
 ): Promise<ScheduleBlock> {
-  const response = await calendarApi.updateEvent(eventId, toApiEvent(input));
+  const response = await calendarApi.updateEvent(
+    eventId,
+    toApiEvent(input) as import("@/types/calendar").UpdateEvent,
+  );
   return toScheduleBlock(response.data);
 }
 

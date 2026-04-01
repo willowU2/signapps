@@ -27,7 +27,7 @@ export function RecurringEventToTask({ eventId, eventTitle, recurrenceFrequency,
   const handleCreate = async () => {
     setCreating(true);
     try {
-      const API = process.env.NEXT_PUBLIC_CALENDAR_API || "http://localhost:3011/api/v1";
+      
       const calsRes = await fetch(`${API}/calendars`, { credentials: "include" });
       const cals = await calsRes.json();
       const calId = (cals.data ?? cals)?.[0]?.id;
@@ -50,7 +50,7 @@ export function RecurringEventToTask({ eventId, eventTitle, recurrenceFrequency,
         let taskId = `local_${Date.now()}_${date}`;
         if (calId) {
           try {
-            const res = await fetch(`${API}/calendars/${calId}/tasks`, {
+            const res = await fetch(`${CALENDAR_URL}/calendars/${calId}/tasks`, {
               method: "POST", credentials: "include",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ title: taskTitle, due_date: date, priority: 1 }),

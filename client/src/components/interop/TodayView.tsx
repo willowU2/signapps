@@ -82,7 +82,7 @@ async function fetchTodayItems(): Promise<TodayItem[]> {
       const calId = (cals.data ?? cals)?.[0]?.id;
       if (!calId) return;
       const res = await fetch(
-        `${API}/calendars/${calId}/tasks?due_date=${today}&status=open,in_progress&limit=10`,
+        `${CALENDAR_URL}/calendars/${calId}/tasks?due_date=${today}&status=open,in_progress&limit=10`,
         { credentials: "include" },
       );
       if (!res.ok) return;
@@ -130,15 +130,15 @@ async function fetchTodayItems(): Promise<TodayItem[]> {
       );
       stored
         .filter(
-          (t) => t.due_date?.slice(0, 10) === today && t.status !== "completed",
+          (t) => (t.due_date as string | undefined)?.slice(0, 10) === today && t.status !== "completed",
         )
         .slice(0, 3)
         .forEach((t) =>
           items.push({
-            id: t.id,
+            id: t.id as string,
             type: "task",
-            title: t.title,
-            status: t.status,
+            title: t.title as string,
+            status: t.status as string | undefined,
             href: "/tasks",
           }),
         );

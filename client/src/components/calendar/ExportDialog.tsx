@@ -44,7 +44,7 @@ export function ExportDialog({
       );
 
       // Create download link
-      const url = window.URL.createObjectURL(response.data);
+      const url = window.URL.createObjectURL(response.data as Blob);
       const link = document.createElement("a");
       link.href = url;
       link.download = `${calendarName.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.ics`;

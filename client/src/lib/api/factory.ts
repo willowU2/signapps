@@ -14,40 +14,48 @@
  *   const client = getClient(ServiceName.IDENTITY);
  */
 
-import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { useEntityStore } from '@/stores/entity-hub-store';
-import { isServiceDown, markServiceDown, markServiceUp } from '@/lib/service-health';
+import axios, {
+  AxiosInstance,
+  AxiosError,
+  InternalAxiosRequestConfig,
+} from "axios";
+import { useEntityStore } from "@/stores/entity-hub-store";
+import {
+  isServiceDown,
+  markServiceDown,
+  markServiceUp,
+} from "@/lib/service-health";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SERVICE CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════
 
 export enum ServiceName {
-  IDENTITY = 'identity',
-  CONTAINERS = 'containers',
-  PROXY = 'proxy',
-  STORAGE = 'storage',
-  AI = 'ai',
-  SECURELINK = 'securelink',
-  SCHEDULER = 'scheduler',
-  METRICS = 'metrics',
-  MEDIA = 'media',
-  DOCS = 'docs',
-  CALENDAR = 'calendar',
-  MAIL = 'mail',
-  COLLAB = 'collab',
-  MEET = 'meet',
-  IT_ASSETS = 'it-assets',
-  PXE = 'pxe',
-  REMOTE = 'remote',
-  OFFICE = 'office',
-  WORKFORCE = 'workforce',
-  CONTACTS = 'contacts',
-  FORMS = 'forms',
-  CHAT = 'chat',
-  SOCIAL = 'social',
-  NOTIFICATIONS = 'notifications',
-  BILLING = 'billing',
+  IDENTITY = "identity",
+  CONTAINERS = "containers",
+  PROXY = "proxy",
+  STORAGE = "storage",
+  AI = "ai",
+  SECURELINK = "securelink",
+  SCHEDULER = "scheduler",
+  METRICS = "metrics",
+  MEDIA = "media",
+  DOCS = "docs",
+  CALENDAR = "calendar",
+  MAIL = "mail",
+  COLLAB = "collab",
+  MEET = "meet",
+  IT_ASSETS = "it-assets",
+  PXE = "pxe",
+  REMOTE = "remote",
+  OFFICE = "office",
+  WORKFORCE = "workforce",
+  CONTACTS = "contacts",
+  FORMS = "forms",
+  CHAT = "chat",
+  SOCIAL = "social",
+  NOTIFICATIONS = "notifications",
+  BILLING = "billing",
 }
 
 interface ServiceConfig {
@@ -89,15 +97,27 @@ const SERVICE_CONFIG: Record<ServiceName, ServiceConfig> = {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Récupère l'URL de base d'un service
+ * Récupère l'URL de base d'un service.
+ * Falls back to the gateway (NEXT_PUBLIC_GATEWAY_URL) when no service-specific
+ * env var is set, so a single gateway port replaces 25+ individual env vars.
  */
 export function getServiceUrl(service: ServiceName): string {
   const config = SERVICE_CONFIG[service];
-  const envValue = typeof window !== 'undefined'
-    ? (process.env[config.envVar] || null)
-    : process.env[config.envVar];
+  const envValue =
+    typeof window !== "undefined"
+      ? process.env[config.envVar] || null
+      : process.env[config.envVar];
 
-  return envValue || `http://localhost:${config.port}/api/v1`;
+  if (envValue) return envValue;
+
+  // Gateway fallback — strip /api/v1 if accidentally included
+  const rawGateway = process.env.NEXT_PUBLIC_GATEWAY_URL;
+  if (rawGateway) {
+    const gatewayBase = rawGateway.replace(/\/api\/v1\/?$/, "");
+    return `${gatewayBase}/api/v1`;
+  }
+
+  return `http://localhost:${config.port}/api/v1`;
 }
 
 /**
@@ -105,14 +125,22 @@ export function getServiceUrl(service: ServiceName): string {
  */
 export function getServiceBaseUrl(service: ServiceName): string {
   const config = SERVICE_CONFIG[service];
-  const envValue = typeof window !== 'undefined'
-    ? (process.env[config.envVar] || null)
-    : process.env[config.envVar];
+  const envValue =
+    typeof window !== "undefined"
+      ? process.env[config.envVar] || null
+      : process.env[config.envVar];
 
   if (envValue) {
     // Remove /api/v1 suffix if present
-    return envValue.replace(/\/api\/v1\/?$/, '');
+    return envValue.replace(/\/api\/v1\/?$/, "");
   }
+
+  // Gateway fallback
+  const rawGateway = process.env.NEXT_PUBLIC_GATEWAY_URL;
+  if (rawGateway) {
+    return rawGateway.replace(/\/api\/v1\/?$/, "");
+  }
+
   return `http://localhost:${config.port}`;
 }
 
@@ -134,19 +162,19 @@ let refreshPromise: Promise<void> | null = null;
  * legitimately when the backend hasn't been set up yet.
  */
 const SILENT_AUTH_PATHS = [
-  '/users/me/profile',
-  '/users/me/history',
-  '/users/me/preferences',
-  '/users/me/recent-docs',
-  '/users/me/streak',
-  '/users/me/export',
-  '/activities',
-  '/workspaces/mine',
-  '/workspaces',
-  '/links',
-  '/audit',
-  '/notifications',
-  '/health',
+  "/users/me/profile",
+  "/users/me/history",
+  "/users/me/preferences",
+  "/users/me/recent-docs",
+  "/users/me/streak",
+  "/users/me/export",
+  "/activities",
+  "/workspaces/mine",
+  "/workspaces",
+  "/links",
+  "/audit",
+  "/notifications",
+  "/health",
 ];
 
 /**
@@ -154,7 +182,7 @@ const SILENT_AUTH_PATHS = [
  */
 function isSilentAuthPath(url?: string): boolean {
   if (!url) return false;
-  return SILENT_AUTH_PATHS.some(path => url.includes(path));
+  return SILENT_AUTH_PATHS.some((path) => url.includes(path));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -168,68 +196,78 @@ function isSilentAuthPath(url?: string): boolean {
 export function getHumanErrorMessage(error: AxiosError): string {
   // Network-level errors (no response at all)
   if (!error.response) {
-    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
-      return 'Le serveur met trop de temps à répondre. Réessayez dans quelques instants.';
+    if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") {
+      return "Le serveur met trop de temps à répondre. Réessayez dans quelques instants.";
     }
-    if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
-      return 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+    if (
+      error.code === "ERR_NETWORK" ||
+      error.message?.includes("Network Error")
+    ) {
+      return "Impossible de contacter le serveur. Vérifiez votre connexion.";
     }
-    return 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+    return "Impossible de contacter le serveur. Vérifiez votre connexion.";
   }
 
   const status = error.response.status;
 
   switch (status) {
     case 400:
-      return 'Requête invalide. Vérifiez les données saisies.';
+      return "Requête invalide. Vérifiez les données saisies.";
     case 401:
-      return 'Votre session a expiré. Veuillez vous reconnecter.';
+      return "Votre session a expiré. Veuillez vous reconnecter.";
     case 403:
-      return 'Vous n\'avez pas les permissions nécessaires.';
+      return "Vous n'avez pas les permissions nécessaires.";
     case 404:
-      return 'La ressource demandée n\'existe pas.';
+      return "La ressource demandée n'existe pas.";
     case 408:
-      return 'Le serveur met trop de temps à répondre. Réessayez dans quelques instants.';
+      return "Le serveur met trop de temps à répondre. Réessayez dans quelques instants.";
     case 409:
-      return 'Conflit : cette ressource a été modifiée par un autre utilisateur.';
+      return "Conflit : cette ressource a été modifiée par un autre utilisateur.";
     case 413:
-      return 'Le fichier envoyé est trop volumineux.';
+      return "Le fichier envoyé est trop volumineux.";
     case 422:
-      return 'Les données envoyées sont invalides. Vérifiez le formulaire.';
+      return "Les données envoyées sont invalides. Vérifiez le formulaire.";
     case 429:
-      return 'Trop de requêtes. Veuillez patienter avant de réessayer.';
+      return "Trop de requêtes. Veuillez patienter avant de réessayer.";
     case 500:
-      return 'Erreur interne du serveur. Réessayez dans quelques instants.';
+      return "Erreur interne du serveur. Réessayez dans quelques instants.";
     case 502:
-      return 'Le serveur est temporairement indisponible. Réessayez dans quelques instants.';
+      return "Le serveur est temporairement indisponible. Réessayez dans quelques instants.";
     case 503:
-      return 'Service en maintenance. Réessayez dans quelques instants.';
+      return "Service en maintenance. Réessayez dans quelques instants.";
     case 504:
-      return 'Le serveur ne répond pas. Réessayez dans quelques instants.';
+      return "Le serveur ne répond pas. Réessayez dans quelques instants.";
     default:
       if (status >= 500) {
-        return 'Erreur interne du serveur. Réessayez dans quelques instants.';
+        return "Erreur interne du serveur. Réessayez dans quelques instants.";
       }
       return `Erreur inattendue (${status}). Réessayez dans quelques instants.`;
   }
 }
 
-function addAuthHeader(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
+function addAuthHeader(
+  config: InternalAxiosRequestConfig,
+): InternalAxiosRequestConfig {
   // Cookies are automatically sent via withCredentials: true
   // Add workspace context header
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     const workspaceId = useEntityStore.getState().selectedWorkspaceId;
     if (workspaceId) {
-      config.headers['X-Workspace-ID'] = workspaceId;
+      config.headers["X-Workspace-ID"] = workspaceId;
     }
   }
   return config;
 }
 
-async function handleAuthError(error: AxiosError, client: AxiosInstance): Promise<any> {
-  const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+async function handleAuthError(
+  error: AxiosError,
+  client: AxiosInstance,
+): Promise<any> {
+  const originalRequest = error.config as InternalAxiosRequestConfig & {
+    _retry?: boolean;
+  };
   const status = error.response?.status;
-  const requestUrl = originalRequest?.url || '';
+  const requestUrl = originalRequest?.url || "";
 
   // For non-critical paths, silently reject 401/403 without redirect or retry
   if ((status === 401 || status === 403) && isSilentAuthPath(requestUrl)) {
@@ -244,16 +282,19 @@ async function handleAuthError(error: AxiosError, client: AxiosInstance): Promis
   if (status === 401 && !originalRequest._retry) {
     originalRequest._retry = true;
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
         // Prevent race condition: only one refresh at a time
         if (!refreshPromise) {
           const identityUrl = getServiceUrl(ServiceName.IDENTITY);
-          refreshPromise = axios.post(`${identityUrl}/auth/refresh`, null, {
-            withCredentials: true,
-          }).then(() => {}).finally(() => {
-            refreshPromise = null;
-          });
+          refreshPromise = axios
+            .post(`${identityUrl}/auth/refresh`, null, {
+              withCredentials: true,
+            })
+            .then(() => {})
+            .finally(() => {
+              refreshPromise = null;
+            });
         }
 
         await refreshPromise;
@@ -275,11 +316,11 @@ async function handleAuthError(error: AxiosError, client: AxiosInstance): Promis
 }
 
 function clearAuthAndRedirect(): void {
-  localStorage.removeItem('auth-storage');
-  document.cookie = 'auth-storage=; path=/; max-age=0';
+  localStorage.removeItem("auth-storage");
+  document.cookie = "auth-storage=; path=/; max-age=0";
   // Don't hard-redirect if already on login page (preserves query params like ?auto=admin)
-  if (!window.location.pathname.startsWith('/login')) {
-    window.location.href = '/login';
+  if (!window.location.pathname.startsWith("/login")) {
+    window.location.href = "/login";
   }
 }
 
@@ -302,14 +343,14 @@ export function getClient(service: ServiceName): AxiosInstance {
     baseURL,
     timeout: 10_000, // 10s timeout — prevents hanging when services are down
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     withCredentials: true,
   });
 
   // Request interceptor — skip known-down services (circuit breaker)
   client.interceptors.request.use((config) => {
-    const url = `${config.baseURL || ''}`;
+    const url = `${config.baseURL || ""}`;
     if (url && isServiceDown(url)) {
       // Silently cancel — no network call, no console error
       return Promise.reject(new axios.Cancel(`Service offline: ${url}`));
@@ -321,7 +362,7 @@ export function getClient(service: ServiceName): AxiosInstance {
   client.interceptors.response.use(
     (response) => {
       // Mark service healthy on any successful response
-      const url = response.config.baseURL || '';
+      const url = response.config.baseURL || "";
       if (url) markServiceUp(url);
       return response;
     },
@@ -331,12 +372,12 @@ export function getClient(service: ServiceName): AxiosInstance {
         return Promise.reject(error);
       }
 
-      const url = error.config?.baseURL || '';
+      const url = error.config?.baseURL || "";
       const isNetworkError =
         !error.response &&
-        (error.code === 'ERR_NETWORK' ||
-          error.code === 'ECONNREFUSED' ||
-          error.message?.includes('Network Error'));
+        (error.code === "ERR_NETWORK" ||
+          error.code === "ECONNREFUSED" ||
+          error.message?.includes("Network Error"));
 
       if (isNetworkError && url) {
         markServiceDown(url);
@@ -350,7 +391,7 @@ export function getClient(service: ServiceName): AxiosInstance {
           getHumanErrorMessage(error);
       }
       return handleAuthError(error, client);
-    }
+    },
   );
 
   // Cache the client
@@ -380,10 +421,12 @@ export interface HealthCheckResult {
 /**
  * Vérifie la santé d'un service
  */
-export async function checkServiceHealth(service: ServiceName): Promise<HealthCheckResult> {
+export async function checkServiceHealth(
+  service: ServiceName,
+): Promise<HealthCheckResult> {
   const config = SERVICE_CONFIG[service];
   const baseUrl = getServiceBaseUrl(service);
-  const healthUrl = `${baseUrl}${config.healthPath || '/health'}`;
+  const healthUrl = `${baseUrl}${config.healthPath || "/health"}`;
 
   const start = Date.now();
 
@@ -399,7 +442,7 @@ export async function checkServiceHealth(service: ServiceName): Promise<HealthCh
       service,
       healthy: false,
       latency: Date.now() - start,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }

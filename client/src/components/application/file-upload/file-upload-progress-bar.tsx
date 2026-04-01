@@ -107,7 +107,7 @@ export const FileUploadProgressBar = ({
                 }
             });
 
-            xhr.open('POST', `${process.env.NEXT_PUBLIC_STORAGE_URL || 'http://localhost:3004/api/v1'}/files/${bucket}`);
+            xhr.open('POST', `${STORAGE_URL}/files/${bucket}`);
 
             const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
             if (token) {

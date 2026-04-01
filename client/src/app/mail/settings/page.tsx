@@ -26,8 +26,8 @@ import { mailApi } from "@/lib/api/mail";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { EmailAutomationRules } from "@/components/workflow/email-automation-rules";
-import { usePageTitle } from '@/hooks/use-page-title';
-import { useAuth } from '@/hooks/use-auth';
+import { usePageTitle } from "@/hooks/use-page-title";
+import { useAuth } from "@/hooks/use-auth";
 
 // ─── Provider presets ────────────────────────────────────────────────────────
 
@@ -102,11 +102,12 @@ function buildSignatureHtml(data: SignatureData): string {
 
   if (data.logo_url) {
     parts.push(
-      `<img src="${data.logo_url}" alt="logo" style="max-height:48px;margin-bottom:8px;display:block;" />`
+      `<img src="${data.logo_url}" alt="logo" style="max-height:48px;margin-bottom:8px;display:block;" />`,
     );
   }
 
-  parts.push(`
+  parts.push(
+    `
     <table style="font-family:Arial,sans-serif;font-size:13px;color:#333;border-collapse:collapse;">
       <tr>
         <td style="padding-bottom:8px;border-bottom:2px solid #3b82f6;padding-right:16px;">
@@ -131,7 +132,8 @@ function buildSignatureHtml(data: SignatureData): string {
           : ""
       }
     </table>
-  `.trim());
+  `.trim(),
+  );
 
   return parts.join("\n");
 }
@@ -206,7 +208,9 @@ function AddAccountWizard({
   onCancel: () => void;
 }) {
   const [step, setStep] = useState<"provider" | "details">("provider");
-  const [selectedPreset, setSelectedPreset] = useState<ProviderPreset | null>(null);
+  const [selectedPreset, setSelectedPreset] = useState<ProviderPreset | null>(
+    null,
+  );
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [imapServer, setImapServer] = useState("");
@@ -241,7 +245,7 @@ function AddAccountWizard({
       const payload: CreateAccountRequest = {
         email_address: email.trim(),
         display_name: displayName.trim() || undefined,
-        provider: selectedPreset.provider,
+        provider: selectedPreset.provider as MailProvider,
         imap_server: imapServer || undefined,
         imap_port: parseInt(imapPort) || undefined,
         imap_use_tls: imapUseTls,
@@ -293,8 +297,8 @@ function AddAccountWizard({
                   {preset.provider === "custom"
                     ? "Serveur IMAP/SMTP personnalise"
                     : preset.provider === "local"
-                    ? "localhost:1025, sans TLS"
-                    : `${preset.imap_server}`}
+                      ? "localhost:1025, sans TLS"
+                      : `${preset.imap_server}`}
                 </p>
               </div>
             </button>
@@ -479,10 +483,13 @@ function GoogleOAuthSetupWizard({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    accountApi.getOAuthConfig("google").then((cfg) => {
-      if (cfg.client_id) setClientId(cfg.client_id);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    accountApi
+      .getOAuthConfig("google")
+      .then((cfg) => {
+        if (cfg.client_id) setClientId(cfg.client_id);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   const handleSave = async () => {
@@ -492,7 +499,11 @@ function GoogleOAuthSetupWizard({
     }
     setSaving(true);
     try {
-      await accountApi.saveOAuthConfig("google", clientId.trim(), clientSecret.trim());
+      await accountApi.saveOAuthConfig(
+        "google",
+        clientId.trim(),
+        clientSecret.trim(),
+      );
       toast.success("Configuration Google OAuth enregistree");
       onSaved();
       onClose();
@@ -509,24 +520,47 @@ function GoogleOAuthSetupWizard({
         <div className="flex items-center gap-2">
           <Settings2 className="h-5 w-5 text-primary" />
           <div>
-            <h2 className="text-lg font-semibold">Configuration Google OAuth</h2>
+            <h2 className="text-lg font-semibold">
+              Configuration Google OAuth
+            </h2>
             <p className="text-sm text-muted-foreground mt-0.5">
               Entrez vos identifiants Google Cloud Console pour activer OAuth.
             </p>
           </div>
         </div>
-        <button onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground">
+        <button
+          onClick={onClose}
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
           Annuler
         </button>
       </div>
 
       <div className="rounded-lg bg-muted/50 p-4 text-sm space-y-2 text-muted-foreground">
-        <p className="font-medium text-foreground">Comment obtenir vos identifiants :</p>
+        <p className="font-medium text-foreground">
+          Comment obtenir vos identifiants :
+        </p>
         <ol className="list-decimal list-inside space-y-1">
-          <li>Allez sur <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">console.cloud.google.com/apis/credentials</a></li>
+          <li>
+            Allez sur{" "}
+            <a
+              href="https://console.cloud.google.com/apis/credentials"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              console.cloud.google.com/apis/credentials
+            </a>
+          </li>
           <li>Creez un projet et activez l&apos;API Gmail</li>
           <li>Creez des identifiants OAuth 2.0 (type: Application Web)</li>
-          <li>Ajoutez <code className="bg-muted px-1 rounded text-xs">http://localhost:3000/mail/callback/google</code> comme URI de redirection</li>
+          <li>
+            Ajoutez{" "}
+            <code className="bg-muted px-1 rounded text-xs">
+              http://localhost:3000/mail/callback/google
+            </code>{" "}
+            comme URI de redirection
+          </li>
           <li>Copiez le Client ID et le Client Secret ci-dessous</li>
         </ol>
       </div>
@@ -560,9 +594,15 @@ function GoogleOAuthSetupWizard({
             disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {saving ? (
-            <><RefreshCw className="h-4 w-4 animate-spin" />Enregistrement...</>
+            <>
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              Enregistrement...
+            </>
           ) : (
-            <><ShieldCheck className="h-4 w-4" />Enregistrer</>
+            <>
+              <ShieldCheck className="h-4 w-4" />
+              Enregistrer
+            </>
           )}
         </button>
       </div>
@@ -649,7 +689,11 @@ function AccountCard({
     try {
       const { url } = await accountApi.getGoogleOAuthUrl();
       // Open OAuth popup
-      const popup = window.open(url, "google_oauth", "width=600,height=700,left=200,top=100");
+      const popup = window.open(
+        url,
+        "google_oauth",
+        "width=600,height=700,left=200,top=100",
+      );
       popupRef.current = popup;
 
       // Listen for the callback via postMessage
@@ -685,8 +729,10 @@ function AccountCard({
   };
 
   const isGmailOrOutlook =
-    account.provider === "gmail" || account.provider === "google" ||
-    account.provider === "outlook" || account.provider === "microsoft";
+    account.provider === "gmail" ||
+    account.provider === "google" ||
+    account.provider === "outlook" ||
+    account.provider === "microsoft";
 
   return (
     <div className="rounded-xl border bg-card p-4 space-y-3">
@@ -708,7 +754,11 @@ function AccountCard({
             <p className="text-xs text-muted-foreground">
               {account.provider} &middot; {account.status || "active"}
               {account.last_sync_at && (
-                <> &middot; Synchro: {new Date(account.last_sync_at).toLocaleString()}</>
+                <>
+                  {" "}
+                  &middot; Synchro:{" "}
+                  {new Date(account.last_sync_at).toLocaleString()}
+                </>
               )}
             </p>
           </div>
@@ -759,7 +809,9 @@ function AccountCard({
           {account.has_oauth_token ? (
             <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
               <ShieldCheck className="h-4 w-4" />
-              <span>Connecte via Google OAuth &mdash; synchronisation IMAP securisee</span>
+              <span>
+                Connecte via Google OAuth &mdash; synchronisation IMAP securisee
+              </span>
             </div>
           ) : (
             <button
@@ -772,10 +824,22 @@ function AccountCard({
                 <RefreshCw className="h-4 w-4 animate-spin" />
               ) : (
                 <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  <path
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    fill="#4285F4"
+                  />
+                  <path
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    fill="#34A853"
+                  />
+                  <path
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    fill="#FBBC05"
+                  />
+                  <path
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    fill="#EA4335"
+                  />
                 </svg>
               )}
               {connectingOAuth ? "Connexion..." : "Se connecter avec Google"}
@@ -844,7 +908,8 @@ function SignatureBuilder({
 
   const handleSave = useCallback(async () => {
     setSaving(true);
-    const signatureHtml = mode === "builder" ? buildSignatureHtml(sig) : rawHtml;
+    const signatureHtml =
+      mode === "builder" ? buildSignatureHtml(sig) : rawHtml;
     // Plain text fallback
     const signatureText = signatureHtml
       .replace(/<br\s*\/?>/gi, "\n")
@@ -891,12 +956,44 @@ function SignatureBuilder({
 
       {mode === "builder" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Nom complet" value={sig.name} onChange={setField("name")} placeholder="Jean Dupont" />
-          <Field label="Poste / Fonction" value={sig.title} onChange={setField("title")} placeholder="Directeur Technique" />
-          <Field label="Entreprise" value={sig.company} onChange={setField("company")} placeholder="SignApps" />
-          <Field label="Telephone" value={sig.phone} onChange={setField("phone")} placeholder="+33 1 23 45 67 89" />
-          <Field label="E-mail" value={sig.email} onChange={setField("email")} placeholder="jean@exemple.fr" type="email" />
-          <Field label="Site web" value={sig.website} onChange={setField("website")} placeholder="https://exemple.fr" type="url" />
+          <Field
+            label="Nom complet"
+            value={sig.name}
+            onChange={setField("name")}
+            placeholder="Jean Dupont"
+          />
+          <Field
+            label="Poste / Fonction"
+            value={sig.title}
+            onChange={setField("title")}
+            placeholder="Directeur Technique"
+          />
+          <Field
+            label="Entreprise"
+            value={sig.company}
+            onChange={setField("company")}
+            placeholder="SignApps"
+          />
+          <Field
+            label="Telephone"
+            value={sig.phone}
+            onChange={setField("phone")}
+            placeholder="+33 1 23 45 67 89"
+          />
+          <Field
+            label="E-mail"
+            value={sig.email}
+            onChange={setField("email")}
+            placeholder="jean@exemple.fr"
+            type="email"
+          />
+          <Field
+            label="Site web"
+            value={sig.website}
+            onChange={setField("website")}
+            placeholder="https://exemple.fr"
+            type="url"
+          />
           <div className="sm:col-span-2">
             <Field
               label="URL du logo (optionnel)"
@@ -977,7 +1074,7 @@ function SignatureBuilder({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function MailSettingsPage() {
-  usePageTitle('Parametres mail');
+  usePageTitle("Parametres mail");
   const { user } = useAuth();
   const [accounts, setAccounts] = useState<MailAccount[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -1006,152 +1103,156 @@ export default function MailSettingsPage() {
   const selectedAccount = accounts.find((a) => a.id === selectedId);
 
   return (
-      <div className="p-6 max-w-3xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Parametres Mail</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Gerez vos comptes de messagerie et signatures.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowOAuthWizard((v) => !v)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium hover:bg-accent transition-colors"
-              title="Configurer Google OAuth (Client ID / Secret)"
-            >
-              <Settings2 className="h-3.5 w-3.5" />
-              Config. OAuth
-            </button>
-            <a href="/mail" className="text-sm text-primary hover:underline">
-              &larr; Retour au mail
-            </a>
-          </div>
+    <div className="p-6 max-w-3xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Parametres Mail</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Gerez vos comptes de messagerie et signatures.
+          </p>
         </div>
-
-        {/* Google OAuth Setup Wizard */}
-        {showOAuthWizard && (
-          <GoogleOAuthSetupWizard
-            onClose={() => setShowOAuthWizard(false)}
-            onSaved={() => {
-              setShowOAuthWizard(false);
-              loadAccounts();
-            }}
-          />
-        )}
-
-        {/* Add Account button / wizard */}
-        {showAddWizard ? (
-          <AddAccountWizard
-            onCreated={() => {
-              setShowAddWizard(false);
-              loadAccounts();
-            }}
-            onCancel={() => setShowAddWizard(false)}
-          />
-        ) : (
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => setShowAddWizard(true)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed
-              border-primary/30 hover:border-primary/60 text-primary hover:bg-primary/5 transition-all text-sm font-medium"
+            onClick={() => setShowOAuthWizard((v) => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium hover:bg-accent transition-colors"
+            title="Configurer Google OAuth (Client ID / Secret)"
           >
-            <Plus className="h-4 w-4" />
-            Ajouter un compte
+            <Settings2 className="h-3.5 w-3.5" />
+            Config. OAuth
           </button>
-        )}
-
-        {loading ? (
-          <div className="h-48 rounded-xl bg-muted animate-pulse" />
-        ) : accounts.length === 0 && !showAddWizard ? (
-          <div className="rounded-xl border p-12 text-center text-muted-foreground">
-            <Mail className="h-12 w-12 mx-auto mb-3 opacity-40" />
-            <p className="font-medium">Aucun compte mail configure.</p>
-            <p className="text-sm mt-1">
-              Cliquez sur &quot;Ajouter un compte&quot; pour commencer.
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Account list */}
-            {accounts.length > 0 && (
-              <div className="space-y-3">
-                <h2 className="text-lg font-semibold">Comptes configures</h2>
-                {accounts.map((acc) => (
-                  <AccountCard
-                    key={acc.id}
-                    account={acc}
-                    onSupprimé={loadAccounts}
-                    onSynced={loadAccounts}
-                    userId={user?.id}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Account selector for signature */}
-            {accounts.length > 1 && (
-              <div className="flex flex-wrap gap-2 pt-4 border-t">
-                {accounts.map((a) => (
-                  <button
-                    key={a.id}
-                    onClick={() => setSelectedId(a.id)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                      a.id === selectedId
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background hover:bg-accent border-border"
-                    }`}
-                  >
-                    {a.email_address}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Signature builder */}
-            {selectedAccount && (
-              <div className="rounded-xl border bg-card p-6 space-y-4">
-                <div>
-                  <h2 className="text-lg font-semibold">
-                    Signature &mdash; {selectedAccount.email_address}
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Cette signature sera ajoutee automatiquement a vos messages sortants.
-                  </p>
-                </div>
-                <SignatureBuilder
-                  key={selectedAccount.id}
-                  account={selectedAccount}
-                  onSaved={loadAccounts}
-                />
-              </div>
-            )}
-          </>
-        )}
-
-        {/* IDEA-127: Email automation rules */}
-        <div className="pt-6 border-t mt-6">
-          <EmailAutomationRules />
-        </div>
-
-        {/* Mail Templates link */}
-        <div className="pt-6 border-t mt-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-sm font-medium">Modèles d&apos;email</p>
-                <p className="text-xs text-muted-foreground">Créez et gérez vos modèles réutilisables avec variables dynamiques.</p>
-              </div>
-            </div>
-            <Link href="/mail/templates">
-              <button className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted transition-colors">
-                Gérer les modèles
-                <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-            </Link>
-          </div>
+          <a href="/mail" className="text-sm text-primary hover:underline">
+            &larr; Retour au mail
+          </a>
         </div>
       </div>
+
+      {/* Google OAuth Setup Wizard */}
+      {showOAuthWizard && (
+        <GoogleOAuthSetupWizard
+          onClose={() => setShowOAuthWizard(false)}
+          onSaved={() => {
+            setShowOAuthWizard(false);
+            loadAccounts();
+          }}
+        />
+      )}
+
+      {/* Add Account button / wizard */}
+      {showAddWizard ? (
+        <AddAccountWizard
+          onCreated={() => {
+            setShowAddWizard(false);
+            loadAccounts();
+          }}
+          onCancel={() => setShowAddWizard(false)}
+        />
+      ) : (
+        <button
+          onClick={() => setShowAddWizard(true)}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed
+              border-primary/30 hover:border-primary/60 text-primary hover:bg-primary/5 transition-all text-sm font-medium"
+        >
+          <Plus className="h-4 w-4" />
+          Ajouter un compte
+        </button>
+      )}
+
+      {loading ? (
+        <div className="h-48 rounded-xl bg-muted animate-pulse" />
+      ) : accounts.length === 0 && !showAddWizard ? (
+        <div className="rounded-xl border p-12 text-center text-muted-foreground">
+          <Mail className="h-12 w-12 mx-auto mb-3 opacity-40" />
+          <p className="font-medium">Aucun compte mail configure.</p>
+          <p className="text-sm mt-1">
+            Cliquez sur &quot;Ajouter un compte&quot; pour commencer.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Account list */}
+          {accounts.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold">Comptes configures</h2>
+              {accounts.map((acc) => (
+                <AccountCard
+                  key={acc.id}
+                  account={acc}
+                  onSupprimé={loadAccounts}
+                  onSynced={loadAccounts}
+                  userId={user?.id}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Account selector for signature */}
+          {accounts.length > 1 && (
+            <div className="flex flex-wrap gap-2 pt-4 border-t">
+              {accounts.map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => setSelectedId(a.id)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                    a.id === selectedId
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background hover:bg-accent border-border"
+                  }`}
+                >
+                  {a.email_address}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Signature builder */}
+          {selectedAccount && (
+            <div className="rounded-xl border bg-card p-6 space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold">
+                  Signature &mdash; {selectedAccount.email_address}
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Cette signature sera ajoutee automatiquement a vos messages
+                  sortants.
+                </p>
+              </div>
+              <SignatureBuilder
+                key={selectedAccount.id}
+                account={selectedAccount}
+                onSaved={loadAccounts}
+              />
+            </div>
+          )}
+        </>
+      )}
+
+      {/* IDEA-127: Email automation rules */}
+      <div className="pt-6 border-t mt-6">
+        <EmailAutomationRules />
+      </div>
+
+      {/* Mail Templates link */}
+      <div className="pt-6 border-t mt-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Modèles d&apos;email</p>
+              <p className="text-xs text-muted-foreground">
+                Créez et gérez vos modèles réutilisables avec variables
+                dynamiques.
+              </p>
+            </div>
+          </div>
+          <Link href="/mail/templates">
+            <button className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted transition-colors">
+              Gérer les modèles
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }
