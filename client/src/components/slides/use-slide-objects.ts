@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
-import { COLLAB_ENABLED } from "@/lib/api/core";
+import { COLLAB_ENABLED, COLLAB_WS_URL } from "@/lib/api/core";
 
 export function useSlideObjects(docId: string, slideId: string) {
   const [objects, setObjects] = useState<Record<string, any>>({});
@@ -15,8 +15,7 @@ export function useSlideObjects(docId: string, slideId: string) {
     const doc = new Y.Doc();
     // RT1: Connect Slides objects to signapps-collab (port 3013)
     const collabServerEnabled = COLLAB_ENABLED;
-    const baseWsUrl =
-      process.env.NEXT_PUBLIC_COLLAB_WS_URL || "ws://localhost:3013";
+    const baseWsUrl = COLLAB_WS_URL;
     const wsUrl = `${baseWsUrl}/api/v1/collab/ws/${docId}`;
     const provider = new WebsocketProvider(wsUrl, docId, doc, {
       connect: false,

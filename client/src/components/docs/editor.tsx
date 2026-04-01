@@ -72,7 +72,11 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { fetchAndParseDocument } from "@/lib/file-parsers";
 import { GenericFeatureModal } from "@/components/editor/generic-feature-modal";
 import { driveApi } from "@/lib/api";
-import { COLLAB_ENABLED, GOOGLE_FONTS_API_KEY } from "@/lib/api/core";
+import {
+  COLLAB_ENABLED,
+  COLLAB_WS_URL,
+  GOOGLE_FONTS_API_KEY,
+} from "@/lib/api/core";
 import { saveUserTemplate } from "@/lib/document-templates";
 
 // Utility to dynamically load Google Fonts without freezing the browser
@@ -1010,8 +1014,7 @@ const Editor = ({
   useEffect(() => {
     // RT1: Connect Docs to signapps-collab (port 3013)
     const collabServerEnabled = COLLAB_ENABLED;
-    const baseWsUrl =
-      process.env.NEXT_PUBLIC_COLLAB_WS_URL || "ws://localhost:3013";
+    const baseWsUrl = COLLAB_WS_URL;
     const wsUrl = `${baseWsUrl}/api/v1/collab/ws/${documentId}`;
 
     const wsProvider = new WebsocketProvider(wsUrl, documentId, ydoc, {

@@ -1,5 +1,7 @@
 "use client";
 
+import { LIVEKIT_URL } from "@/lib/api/core";
+
 import { useState } from "react";
 import {
   LiveKitRoom,
@@ -339,8 +341,7 @@ function VideoComponent() {
           Impossible de se connecter au serveur
         </span>
         <span className="text-gray-300 text-sm">
-          Vérifiez que LiveKit tourne sur{" "}
-          {process.env.NEXT_PUBLIC_LIVEKIT_URL || "ws://localhost:7880"}
+          Vérifiez que LiveKit tourne sur {LIVEKIT_URL}
         </span>
       </div>
     );

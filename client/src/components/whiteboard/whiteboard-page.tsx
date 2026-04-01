@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
-import { COLLAB_ENABLED } from "@/lib/api/core";
+import { COLLAB_ENABLED, COLLAB_WS_URL } from "@/lib/api/core";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -131,8 +131,7 @@ function useWhiteboardCollab(
 
     const doc = new Y.Doc();
     docRef.current = doc;
-    const baseWs =
-      process.env.NEXT_PUBLIC_COLLAB_WS_URL || "ws://localhost:3013";
+    const baseWs = COLLAB_WS_URL;
     const wsUrl = `${baseWs}/api/v1/collab/ws/${roomId}`;
     const provider = new WebsocketProvider(wsUrl, roomId, doc, {
       connect: true,

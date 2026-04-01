@@ -38,7 +38,7 @@ export function useYjsDocument(
   options: UseYjsDocumentOptions = {},
 ) {
   const {
-    wsUrl = process.env.NEXT_PUBLIC_COLLAB_URL || "ws://localhost:3010",
+    wsUrl = COLLAB_URL,
     awareness: enableAwareness = true,
     enableOffline = true,
     onSync,
