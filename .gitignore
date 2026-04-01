@@ -7,8 +7,7 @@
 *.dll
 *.so
 *.dylib
-livekit-server/*.exe
-livekit-server/*.zip
+livekit-server/
 
 # IDE
 .idea/
@@ -50,6 +49,30 @@ tmp/
 temp/
 *.tmp
 tmp_*/
+tmp_*.js
+*.old
+
+# Debug/development dumps
+check_error*.txt
+deleted_check.txt
+push_error*.txt
+push*.err
+run_output.txt
+mocks_found.txt
+security_logs.txt
+test_pdf_base64.txt
+test_payload.json
+diff.txt
+log.txt
+query_out.txt
+
+# One-off scripts (should not be committed)
+convert_types.js
+fix_workforce.js
+refactor_office.js
+
+# Business files (not code)
+*.xlsx
 
 # Node.js
 node_modules/
@@ -73,29 +96,32 @@ __pycache__/
 *.png
 !client/public/**/*.png
 
+# Empty stubs
+capture_qr.py
+
 # Test artifacts
 client/playwright-report/
 client/test-results/
+test-results/
 client/**/build_output.txt
+client/**/build_log.txt
 client/**/lint*.txt
 client/**/find_output.txt
 client/**/all_files.txt
+client/**/audit_report*.txt
+client/**/integration_test_report*.txt
+client/**/ts_status*.txt
+client/**/tsc_err*.txt
+client/**/tsc_errors*.txt
+client/**/tsc_output*.txt
 
 # Build artifacts
 services/**/build_errors.txt
 services/**/check_output*.txt
 
 # Claude session artifacts
-.claude/BUILD_STATUS.md
-.claude/BUILD_TROUBLESHOOTING.md
-.claude/CORRECTION_REPORT.md
-.claude/FINAL_STATUS.md
-.claude/FINAL_SUMMARY.md
-.claude/FIXES_APPLIED.md
-.claude/PHASE6_INTEGRATION.md
-.claude/PHASE6_PROGRESS.md
-.claude/PROJECT_COMPLETE.md
-.claude/SESSION_COMPLETE_SUMMARY.md
+.claude/*.md
+!.claude/CLAUDE.md
 
 # Session persistence (AgentIQ context)
 .session/
@@ -108,3 +134,8 @@ services/**/check_output*.txt
 
 # WebAssembly (downloaded at runtime)
 client/public/vad/
+
+# Agent/AI context (generated per-session)
+.agents/
+.planning/
+.remember/
