@@ -1,2 +1,0 @@
-﻿src/components/storage/storage-file-grid.tsx(32,13): error TS2322: Type 'string' is not assignable to type 'DriveView | undefined'.
-src/components/storage/storage-file-grid.tsx(55,13): error TS2322: Type 'string' is not assignable to type 'DriveView | undefined'.

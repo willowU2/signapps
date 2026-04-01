@@ -230,6 +230,7 @@ pub fn router() -> Router<AppState> {
 /// and inserts into `mail.emails`.
 ///
 /// Returns `{ imported, failed }`.
+#[tracing::instrument(skip_all)]
 async fn import_mbox(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -446,6 +447,7 @@ pub struct UpdateAccountRequest {
     pub status: Option<String>,
 }
 
+#[tracing::instrument(skip_all)]
 async fn list_accounts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -461,6 +463,7 @@ async fn list_accounts(
     Json(accounts)
 }
 
+#[tracing::instrument(skip_all)]
 async fn get_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -493,6 +496,7 @@ async fn get_account(
     }
 }
 
+#[tracing::instrument(skip_all)]
 async fn create_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -560,6 +564,7 @@ async fn create_account(
     }
 }
 
+#[tracing::instrument(skip_all)]
 async fn update_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -627,6 +632,7 @@ async fn update_account(
     }
 }
 
+#[tracing::instrument(skip_all)]
 async fn delete_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -656,6 +662,7 @@ async fn delete_account(
     }
 }
 
+#[tracing::instrument(skip_all)]
 async fn sync_account_now(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -711,6 +718,7 @@ struct TestResult {
     smtp_server: Option<String>,
 }
 
+#[tracing::instrument(skip_all)]
 async fn test_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -866,6 +874,7 @@ pub struct FolderQuery {
     pub account_id: Option<Uuid>,
 }
 
+#[tracing::instrument(skip_all)]
 async fn list_folders(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -903,6 +912,7 @@ async fn list_folders(
     Json(folders.unwrap_or_default())
 }
 
+#[tracing::instrument(skip_all)]
 async fn get_folder(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -958,6 +968,7 @@ pub struct EmailQuery {
     pub offset: Option<i64>,
 }
 
+#[tracing::instrument(skip_all)]
 async fn list_emails(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -990,6 +1001,7 @@ async fn list_emails(
     Json(emails)
 }
 
+#[tracing::instrument(skip_all)]
 async fn get_email(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1050,6 +1062,7 @@ pub struct SendEmailRequest {
     pub scheduled_send_at: Option<chrono::DateTime<Utc>>,
 }
 
+#[tracing::instrument(skip_all)]
 async fn send_email(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1373,6 +1386,7 @@ pub struct UpdateEmailRequest {
     pub body_html: Option<String>,
 }
 
+#[tracing::instrument(skip_all)]
 async fn update_email(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1434,6 +1448,7 @@ async fn update_email(
     }
 }
 
+#[tracing::instrument(skip_all)]
 async fn delete_email(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1474,6 +1489,7 @@ async fn delete_email(
     }
 }
 
+#[tracing::instrument(skip_all)]
 async fn list_attachments(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1502,6 +1518,7 @@ async fn list_attachments(
 // Labels
 // ============================================================================
 
+#[tracing::instrument(skip_all)]
 async fn list_labels(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1547,6 +1564,7 @@ pub struct CreateLabelRequest {
     pub color: Option<String>,
 }
 
+#[tracing::instrument(skip_all)]
 async fn create_label(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1617,6 +1635,7 @@ pub struct UpdateLabelRequest {
     pub color: Option<String>,
 }
 
+#[tracing::instrument(skip_all)]
 async fn update_label(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1659,6 +1678,7 @@ async fn update_label(
     }
 }
 
+#[tracing::instrument(skip_all)]
 async fn delete_label(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1707,6 +1727,7 @@ pub struct SearchQuery {
     pub limit: Option<i64>,
 }
 
+#[tracing::instrument(skip_all)]
 async fn search_emails(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1752,6 +1773,7 @@ pub struct MailStats {
     pub draft_count: i64,
 }
 
+#[tracing::instrument(skip_all)]
 async fn get_stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1905,6 +1927,7 @@ struct SendNewsletterResponse {
     failed: usize,
 }
 
+#[tracing::instrument(skip_all)]
 async fn send_newsletter(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1995,6 +2018,7 @@ async fn send_newsletter(
 /// GET /api/v1/mail/analytics
 ///
 /// Returns 30-day send/receive/read stats and top senders for the authenticated user.
+#[tracing::instrument(skip_all)]
 async fn mail_analytics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2096,6 +2120,7 @@ pub struct ThreadQuery {
 ///
 /// Returns emails grouped by thread_id, one row per thread (the latest message).
 /// Ordered by most-recent message descending.
+#[tracing::instrument(skip_all)]
 async fn list_threads(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2137,6 +2162,7 @@ async fn list_threads(
 ///
 /// Cancels a pending send by clearing `scheduled_send_at` and reverting to draft.
 /// Only works while the email is still in the send buffer (scheduled_send_at IS NOT NULL).
+#[tracing::instrument(skip_all)]
 async fn cancel_send(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
