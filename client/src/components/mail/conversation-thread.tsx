@@ -51,7 +51,7 @@ function ThreadRow({ thread, selectedId, onSelect }: {
         return (
             <button
                 className={cn(
-                    "group relative flex items-center gap-2 px-1 py-0 h-10 text-left text-sm transition-all w-full border-b border-border/60 dark:border-gray-800/60 cursor-pointer",
+                    "group relative flex items-center gap-2 px-1 py-0 h-10 text-left text-sm transition-all w-full border-b border-border/60 cursor-pointer",
                     selectedId === latest.id
                         ? "bg-primary/10 text-primary dark:bg-primary/20"
                         : "bg-background hover:bg-muted/80"
@@ -59,7 +59,7 @@ function ThreadRow({ thread, selectedId, onSelect }: {
                 onClick={() => onSelect(latest.id)}
             >
                 <div className="flex-shrink-0 flex items-center gap-2 px-3">
-                    <MessageSquare className="h-[18px] w-[18px] text-gray-400" />
+                    <MessageSquare className="h-[18px] w-[18px] text-muted-foreground" />
                 </div>
                 <span className={cn("w-48 truncate flex-shrink-0 text-[14px]", !latest.read ? "font-bold" : "font-medium")}>
                     {latest.name}
@@ -75,17 +75,17 @@ function ThreadRow({ thread, selectedId, onSelect }: {
     }
 
     return (
-        <div className={cn("border-b border-border/60 dark:border-gray-800/60", hasSelected && "bg-primary/5 dark:bg-primary/10")}>
+        <div className={cn("border-b border-border/60", hasSelected && "bg-primary/5 dark:bg-primary/10")}>
             {/* Thread header */}
             <button
-                className="flex items-center gap-2 px-1 h-10 w-full text-left text-sm hover:bg-muted/80 dark:hover:bg-[#202124] transition-all"
+                className="flex items-center gap-2 px-1 h-10 w-full text-left text-sm hover:bg-muted/80 transition-all"
                 onClick={() => setExpanded(!expanded)}
             >
                 <div className="flex-shrink-0 flex items-center gap-2 px-3">
                     {expanded ? (
-                        <ChevronUp className="h-[18px] w-[18px] text-gray-400" />
+                        <ChevronUp className="h-[18px] w-[18px] text-muted-foreground" />
                     ) : (
-                        <ChevronDown className="h-[18px] w-[18px] text-gray-400" />
+                        <ChevronDown className="h-[18px] w-[18px] text-muted-foreground" />
                     )}
                 </div>
                 <span className={cn("w-48 truncate flex-shrink-0 text-[14px]", unreadCount > 0 ? "font-bold" : "font-medium")}>
@@ -109,12 +109,12 @@ function ThreadRow({ thread, selectedId, onSelect }: {
 
             {/* Expanded messages */}
             {expanded && (
-                <div className="pl-12 border-t border-border/60 dark:border-gray-800/60">
+                <div className="pl-12 border-t border-border/60">
                     {thread.messages.map((msg) => (
                         <button
                             key={msg.id}
                             className={cn(
-                                "flex items-center gap-3 px-3 py-2 w-full text-left text-sm hover:bg-muted dark:hover:bg-gray-900 transition-colors",
+                                "flex items-center gap-3 px-3 py-2 w-full text-left text-sm hover:bg-muted transition-colors",
                                 selectedId === msg.id && "bg-primary/10 dark:bg-primary/20"
                             )}
                             onClick={() => onSelect(msg.id)}

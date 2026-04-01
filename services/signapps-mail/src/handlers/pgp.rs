@@ -41,7 +41,6 @@ pub struct UpsertPgpConfigRequest {
 
 /// GET /api/v1/mail/accounts/:account_id/pgp
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_pgp_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -88,7 +87,6 @@ pub async fn get_pgp_config(
 }
 
 /// PUT /api/v1/mail/accounts/:account_id/pgp
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn upsert_pgp_config(
     State(state): State<AppState>,
@@ -146,7 +144,6 @@ pub async fn upsert_pgp_config(
 }
 
 /// DELETE /api/v1/mail/accounts/:account_id/pgp
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_pgp_config(
     State(state): State<AppState>,

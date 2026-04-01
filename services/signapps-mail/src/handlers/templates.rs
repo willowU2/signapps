@@ -62,7 +62,6 @@ pub struct UpdateTemplateRequest {
 
 /// GET /api/v1/mail/templates?account_id=...
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_templates(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -101,7 +100,6 @@ pub async fn list_templates(
 
 /// GET /api/v1/mail/templates/:id
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -118,7 +116,6 @@ pub async fn get_template(
 }
 
 /// POST /api/v1/mail/templates
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_template(
     State(state): State<AppState>,
@@ -151,7 +148,6 @@ pub async fn create_template(
 }
 
 /// PUT /api/v1/mail/templates/:id
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_template(
     State(state): State<AppState>,
@@ -187,7 +183,6 @@ pub async fn update_template(
 }
 
 /// DELETE /api/v1/mail/templates/:id
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_template(
     State(state): State<AppState>,

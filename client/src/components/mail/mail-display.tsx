@@ -519,7 +519,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
     }
 
     return (
-        <div className="flex h-full flex-col bg-background dark:bg-gray-950 relative">
+        <div className="flex h-full flex-col bg-background relative">
             {/* Top Action Bar */}
             <div className="sticky top-0 z-20 shadow-sm border-b border-border dark:border-border">
                 <Toolbar className="border-b-0 bg-background/50 backdrop-blur-md">
@@ -636,7 +636,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
             {mail ? (
                 <div className="flex flex-1 flex-col overflow-y-auto">
                     {/* Email Header */}
-                    <div className="flex flex-col px-8 pt-6 pb-2 bg-background dark:bg-[#1f1f1f]">
+                    <div className="flex flex-col px-8 pt-6 pb-2 bg-background">
                         <div className="flex items-center gap-3 mb-6 w-full flex-wrap">
                             <h2 className="font-normal text-[22px] leading-tight text-foreground">{mail.subject}</h2>
                             <PgpStatusBadges body={mail.text} accountId={mail.id} />
@@ -758,7 +758,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
                                     <Skeleton className="h-4 w-4/6 bg-purple-200/50 dark:bg-purple-800/50 rounded" />
                                 </div>
                             ) : (
-                                <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed relative z-10">
+                                <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed relative z-10">
                                     {summaryText}
                                     {isStreaming && <span className="inline-block w-2 h-4 bg-purple-500 animate-pulse ml-1 align-middle rounded-sm" />}
                                 </p>
@@ -954,7 +954,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
                     )}
 
                     {/* Reply Composer Area */}
-                    <div className="mt-auto px-6 py-4 bg-muted/50 dark:bg-gray-900/30 border-t border-white/20 dark:border-white/5 rounded-b-2xl backdrop-blur-sm">
+                    <div className="mt-auto px-6 py-4 bg-muted/50 border-t border-border rounded-b-2xl backdrop-blur-sm">
                         {/* Idea 36: CRM context badge */}
                         {crmDeals.length > 0 && (
                             <div className="mb-3 flex flex-wrap gap-2">
@@ -981,7 +981,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="text-sm font-semibold text-purple-700 dark:text-purple-400 border-purple-200/80 dark:border-purple-800/60 bg-background/80 dark:bg-gray-900/80 hover:bg-purple-50 dark:hover:bg-purple-900/40 rounded-xl shadow-sm transition-all h-9 px-4"
+                                    className="text-sm font-semibold text-purple-700 dark:text-purple-400 border-purple-200/80 dark:border-purple-800/60 bg-background/80 hover:bg-purple-50 dark:hover:bg-purple-900/40 rounded-xl shadow-sm transition-all h-9 px-4"
                                     onClick={generateSmartReplies}
                                     disabled={isRepliesLoading}
                                 >
@@ -997,7 +997,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
                                     <button
                                         key={i}
                                         onClick={() => setReplyText(reply)}
-                                        className="whitespace-nowrap rounded-xl border border-purple-200/80 dark:border-purple-800/60 bg-background/95 dark:bg-gray-900/95 shadow-sm px-5 py-2 text-sm font-semibold text-gray-800 dark:text-gray-200 hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-900/40 hover:text-purple-700 dark:hover:text-purple-300 transition-all duration-200 transform hover:-translate-y-0.5"
+                                        className="whitespace-nowrap rounded-xl border border-purple-200/80 dark:border-purple-800/60 bg-background/95 shadow-sm px-5 py-2 text-sm font-semibold text-foreground hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-900/40 hover:text-purple-700 dark:hover:text-purple-300 transition-all duration-200 transform hover:-translate-y-0.5"
                                     >
                                         {reply}
                                     </button>
@@ -1007,7 +1007,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
                         <form className="mt-2">
                             <div className="grid gap-3 relative">
                                 <Textarea
-                                    className="p-4 pt-5 pb-14 min-h-[140px] resize-none border border-border/80 dark:border-gray-800/80 bg-background/80 dark:bg-gray-950/80 focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:border-transparent rounded-2xl shadow-sm transition-all text-[15px] leading-relaxed block w-full placeholder:text-gray-400"
+                                    className="p-4 pt-5 pb-14 min-h-[140px] resize-none border border-border/80 bg-background/80 focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:border-transparent rounded-2xl shadow-sm transition-all text-[15px] leading-relaxed block w-full placeholder:text-muted-foreground"
                                     placeholder={replyMode === 'forward' ? `Forward to… (add recipient above, then type message)` : replyMode === 'replyAll' ? `Reply all to ${mail.name}...` : `Write your reply to ${mail.name}...`}
                                     value={replyText + (interimReplyText ? (replyText && !replyText.endsWith(' ') ? ' ' : '') + interimReplyText : '')}
                                     onChange={(e) => {
@@ -1016,13 +1016,13 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
                                     }}
                                 />
                                 <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-                                    <div className="text-[13px] font-medium text-muted-foreground/80 dark:text-gray-400/80 flex items-center gap-1.5 pl-2 pointer-events-auto">
+                                    <div className="text-[13px] font-medium text-muted-foreground/80 flex items-center gap-1.5 pl-2 pointer-events-auto">
                                         <Bot className="w-4 h-4" />
                                         <span>AI available via '/'</span>
                                     </div>
                                     {sending ? (
-                                        <div className="flex items-center gap-3 bg-background/90 dark:bg-gray-900/90 py-1.5 px-2 rounded-xl border border-gray-100 dark:border-gray-800 backdrop-blur-md shadow-sm pointer-events-auto">
-                                            <span className="text-sm font-bold text-muted-foreground dark:text-gray-300 ml-2">
+                                        <div className="flex items-center gap-3 bg-background/90 py-1.5 px-2 rounded-xl border border-border backdrop-blur-md shadow-sm pointer-events-auto">
+                                            <span className="text-sm font-bold text-muted-foreground ml-2">
                                                 Sending in {countdown}s
                                             </span>
                                             <Button
@@ -1045,7 +1045,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
                                                         setInterimReplyText(text)
                                                     }
                                                 }}
-                                                className="bg-background hover:bg-muted text-muted-foreground shadow-sm border border-gray-100 h-9 w-9 [&>svg]:w-4 [&>svg]:h-4 mr-1"
+                                                className="bg-background hover:bg-muted text-muted-foreground shadow-sm border border-border h-9 w-9 [&>svg]:w-4 [&>svg]:h-4 mr-1"
                                                 title="Dicter la réponse"
                                             />
                                             <DropdownMenu>
@@ -1054,13 +1054,13 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
                                                         type="button"
                                                         variant="ghost"
                                                         size="sm"
-                                                        className="text-muted-foreground hover:text-foreground hover:bg-muted/80 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800/80 rounded-xl h-9 px-3 transition-colors"
+                                                        className="text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-xl h-9 px-3 transition-colors"
                                                     >
                                                         <FileText className="w-4 h-4 mr-2" />
                                                         Templates
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-[200px] rounded-xl shadow-xl border-gray-100 dark:border-gray-800">
+                                                <DropdownMenuContent align="end" className="w-[200px] rounded-xl shadow-xl border-border">
                                                     <DropdownMenuItem className="rounded-lg cursor-pointer font-medium py-2" onClick={() => setReplyText("Thanks, I'll take a look at this asap.")}>
                                                         "Thanks, I'll look into it"
                                                     </DropdownMenuItem>

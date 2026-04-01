@@ -12,7 +12,7 @@ export interface MailAccount {
     user_id: string
     email_address: string
     display_name?: string
-    provider: string // 'gmail' | 'outlook' | 'custom'
+    provider: MailProvider
     // IMAP settings
     imap_server?: string
     imap_port?: number
@@ -114,6 +114,80 @@ export interface MailStats {
     draft_count: number
 }
 
+export type MailProvider = 'gmail' | 'outlook' | 'custom' | 'local' | 'google' | 'microsoft'
+
+export interface MailAlias {
+    id: string
+    account_id: string
+    alias_email: string
+    display_name: string
+    is_default: boolean
+    is_verified: boolean
+    created_at?: string
+    updated_at?: string
+}
+
+export interface MailDelegation {
+    id: string
+    account_id: string
+    delegate_user_id: string
+    permissions: string
+    granted_by: string
+    expires_at?: string
+    created_at?: string
+    updated_at?: string
+}
+
+export interface RecurringEmail {
+    id: string
+    account_id: string
+    user_id: string
+    recipient: string
+    cc?: string
+    bcc?: string
+    subject: string
+    body_text?: string
+    body_html?: string
+    cron_expr: string
+    is_active: boolean
+    last_sent_at?: string
+    next_send_at?: string
+    created_at?: string
+    updated_at?: string
+}
+
+export interface TrackingRecord {
+    id: string
+    email_id: string
+    tracking_id: string
+    opened_at?: string
+    ip_address?: string
+    user_agent?: string
+    open_count: number
+    created_at?: string
+}
+
+export interface TrackingStats {
+    total_tracked: number
+    total_opened: number
+    open_rate: number
+    unique_opens: number
+}
+
+export interface CategorizeResult {
+    email_id: string
+    category: string
+    confidence: number
+    label_applied?: string
+}
+
+export interface CategorizeSettings {
+    account_id: string
+    enabled: boolean
+    categories: string[]
+    auto_apply: boolean
+}
+
 // ============================================================================
 // Account API
 // ============================================================================
@@ -121,7 +195,7 @@ export interface MailStats {
 export interface CreateAccountRequest {
     email_address: string
     display_name?: string
-    provider: string
+    provider: MailProvider
     imap_server?: string
     imap_port?: number
     imap_use_tls?: boolean
@@ -202,38 +276,32 @@ export const accountApi = {
     },
 
     // IDEA-261: Email aliases
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    listAliases: async (accountId: string): Promise<any[]> => {
+    listAliases: async (accountId: string): Promise<MailAlias[]> => {
         const res = await mailClient.get(`/mail/accounts/${accountId}/aliases`)
         return res.data
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    createAlias: async (accountId: string, data: { alias_email: string; display_name: string }): Promise<any> => {
+    createAlias: async (accountId: string, data: { alias_email: string; display_name: string }): Promise<MailAlias> => {
         const res = await mailClient.post(`/mail/accounts/${accountId}/aliases`, data)
         return res.data
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    updateAlias: async (accountId: string, aliasId: string, data: Partial<{ alias_email: string; display_name: string }>): Promise<any> => {
+    updateAlias: async (accountId: string, aliasId: string, data: Partial<{ alias_email: string; display_name: string }>): Promise<MailAlias> => {
         const res = await mailClient.patch(`/mail/accounts/${accountId}/aliases/${aliasId}`, data)
         return res.data
     },
     deleteAlias: async (accountId: string, aliasId: string): Promise<void> => {
         await mailClient.delete(`/mail/accounts/${accountId}/aliases/${aliasId}`)
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setDefaultAlias: async (accountId: string, aliasId: string): Promise<any> => {
+    setDefaultAlias: async (accountId: string, aliasId: string): Promise<MailAlias> => {
         const res = await mailClient.post(`/mail/accounts/${accountId}/aliases/${aliasId}/set-default`)
         return res.data
     },
 
     // IDEA-264: Delegation
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    listDelegations: async (accountId: string): Promise<any[]> => {
+    listDelegations: async (accountId: string): Promise<MailDelegation[]> => {
         const res = await mailClient.get(`/mail/accounts/${accountId}/delegations`)
         return res.data
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    createDelegation: async (accountId: string, data: object): Promise<any> => {
+    createDelegation: async (accountId: string, data: object): Promise<MailDelegation> => {
         const res = await mailClient.post(`/mail/accounts/${accountId}/delegations`, data)
         return res.data
     },
@@ -333,13 +401,11 @@ export const mailApi = {
     },
 
     // IDEA-263: Recurring emails
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    createRecurring: async (data: object): Promise<any> => {
+    createRecurring: async (data: object): Promise<RecurringEmail> => {
         const res = await mailClient.post('/mail/emails/recurring', data)
         return res.data
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    updateRecurring: async (id: string, data: object): Promise<any> => {
+    updateRecurring: async (id: string, data: object): Promise<RecurringEmail> => {
         const res = await mailClient.patch(`/mail/emails/recurring/${id}`, data)
         return res.data
     },
@@ -348,25 +414,21 @@ export const mailApi = {
     },
 
     // IDEA-265: Read tracking
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getTrackingRecords: async (params: object): Promise<any[]> => {
+    getTrackingRecords: async (params: object): Promise<TrackingRecord[]> => {
         const res = await mailClient.get('/mail/emails/tracking', { params })
         return res.data
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getTrackingStats: async (params: object): Promise<any> => {
+    getTrackingStats: async (params: object): Promise<TrackingStats> => {
         const res = await mailClient.get('/mail/emails/tracking/stats', { params })
         return res.data
     },
 
     // IDEA-266: AI categorization
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    categorizeInbox: async (data: object): Promise<any> => {
+    categorizeInbox: async (data: object): Promise<CategorizeResult[]> => {
         const res = await mailClient.post('/mail/emails/categorize', data)
         return res.data
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    saveCategorizeSettings: async (data: object): Promise<any> => {
+    saveCategorizeSettings: async (data: object): Promise<CategorizeSettings> => {
         const res = await mailClient.put('/mail/emails/categorize/settings', data)
         return res.data
     },

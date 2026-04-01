@@ -27,7 +27,6 @@ pub struct UpdateSignatureRequest {
 /// GET /api/v1/mail/signatures/me
 /// Returns the signature fields from the first active mail.accounts row for this user.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_signature(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -52,7 +51,6 @@ pub async fn get_signature(
 
 /// PUT /api/v1/mail/signatures/me
 /// Updates signature_html and signature_text on all mail.accounts rows for this user.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn upsert_signature(
     State(state): State<AppState>,

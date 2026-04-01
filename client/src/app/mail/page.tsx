@@ -251,7 +251,7 @@ export default function MailPage() {
             // PW2: persist to IndexedDB cache after successful fetch
             setMailCache(folder, uiMails).catch(() => {})
         } catch (err) {
-            console.warn('Failed to load folder:', err)
+            toast.error("Erreur de chargement du dossier")
             // PW2: offline fallback — load from IndexedDB cache
             const cached = await getMailCache(folder)
             if (cached && cached.length > 0) {
@@ -337,7 +337,7 @@ export default function MailPage() {
                 }))
                 setSearchResults(uiMails)
             } catch (err) {
-                console.warn('Échec de la recherche:', err)
+                toast.error("Erreur lors de la recherche")
                 setSearchResults([])
             } finally {
                 setIsSearching(false)
@@ -402,7 +402,7 @@ export default function MailPage() {
             }))
             setMailList(uiMails)
         } catch (err) {
-            console.warn('Failed to fetch mail data:', err)
+            toast.error("Impossible de charger les emails")
             setLoadError("Le service mail est inaccessible. Vérifiez que le serveur est démarré.")
             setMailList([])
         } finally {
@@ -637,7 +637,9 @@ export default function MailPage() {
                 className="bg-muted dark:bg-[#111111] text-foreground font-sans"
                 header={<WorkspaceHeader />}
                 sidebar={
-                    <div
+                    <nav
+                        role="navigation"
+                        aria-label="Navigation mail"
                         className={cn(
                             "shrink-0 flex flex-col gap-2 overflow-y-auto transition-all duration-200",
                             sidebarCollapsed ? "w-14 px-1 pt-2 items-center" : "w-[256px] px-4 pt-4"
@@ -851,7 +853,7 @@ export default function MailPage() {
                                 </span>
                             </div>
                         </div>
-                    </div>
+                    </nav>
                 }
             >
                 {/* C2: EmailToEventDialog triggered from drag-drop */}
@@ -922,6 +924,7 @@ export default function MailPage() {
                                     ref={searchInputRef}
                                     className="pl-9 pr-8 h-9 rounded-full bg-muted dark:bg-[#303134] border-0 focus-visible:ring-1"
                                     placeholder="Rechercher… (from: to: has:attachment is:unread after:YYYY-MM)"
+                                    aria-label="Rechercher dans les emails"
                                     value={searchQuery}
                                     onChange={e => handleSearch(e.target.value)}
                                     disabled={isSearching}

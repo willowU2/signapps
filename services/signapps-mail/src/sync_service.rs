@@ -27,6 +27,18 @@ impl Authenticator for XOAuth2Authenticator {
     }
 }
 
+/// Run the periodic IMAP sync loop (every 30 seconds).
+///
+/// This is the fallback sync mechanism for accounts that do not support
+/// IMAP IDLE. It iterates over all active accounts and syncs those whose
+/// `sync_interval_minutes` has elapsed since `last_sync_at`.
+///
+/// This function never returns -- it runs as a background Tokio task.
+///
+/// # Errors
+///
+/// Individual account sync failures are logged and recorded in the
+/// `last_error` column; they do not stop the loop.
 pub async fn start_sync_scheduler(pool: Pool<Postgres>, event_bus: PgEventBus) {
     tracing::info!("Starting IMAP sync scheduler...");
 
@@ -39,12 +51,20 @@ pub async fn start_sync_scheduler(pool: Pool<Postgres>, event_bus: PgEventBus) {
     }
 }
 
-/// Attempt IMAP IDLE on INBOX for a single account.  When the server signals a
-/// change the function triggers an incremental sync and then re-enters IDLE.
-/// If the server does not support IDLE the function exits, leaving the periodic
-/// polling loop in `start_sync_scheduler` as the sole sync mechanism.
+/// Attempt IMAP IDLE on INBOX for a single account.
 ///
-/// Spawned once per active account by `start_idle_listeners`.
+/// When the server signals a change the function triggers an incremental sync
+/// and then re-enters IDLE. If the server does not support IDLE the function
+/// exits, leaving the periodic polling loop in [`start_sync_scheduler`] as the
+/// sole sync mechanism.
+///
+/// Spawned once per active account by [`start_idle_listeners`].
+///
+/// # Errors
+///
+/// Connection and authentication failures are logged and retried after a
+/// 60-second backoff. The function only returns (without error) when IDLE
+/// is not supported by the server.
 pub async fn idle_inbox(pool: Pool<Postgres>, event_bus: PgEventBus, account: MailAccount) {
     let imap_server = match account.imap_server.as_deref() {
         Some(s) => s.to_string(),
@@ -80,9 +100,12 @@ pub async fn idle_inbox(pool: Pool<Postgres>, event_bus: PgEventBus, account: Ma
                 },
             };
 
+        let accept_invalid = std::env::var("IMAP_ACCEPT_INVALID_CERTS")
+            .map(|v| v == "true" || v == "1")
+            .unwrap_or(false);
         let tls_connector = match native_tls::TlsConnector::builder()
-            .danger_accept_invalid_certs(true)
-            .danger_accept_invalid_hostnames(true)
+            .danger_accept_invalid_certs(accept_invalid)
+            .danger_accept_invalid_hostnames(accept_invalid)
             .build()
         {
             Ok(c) => tokio_native_tls::TlsConnector::from(c),
@@ -240,7 +263,12 @@ pub async fn idle_inbox(pool: Pool<Postgres>, event_bus: PgEventBus, account: Ma
         tracing::debug!("IDLE active on INBOX for {}", account.email_address);
 
         // Wait up to 25 minutes for a server notification (RFC 2177: < 29 min).
-        let (wait_fut, _stop) = handle.wait_with_timeout(Duration::from_secs(25 * 60));
+        let idle_timeout_mins: u64 = std::env::var("IMAP_IDLE_TIMEOUT_MINS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(25);
+        let (wait_fut, _stop) =
+            handle.wait_with_timeout(Duration::from_secs(idle_timeout_mins * 60));
         let idle_result = wait_fut.await;
 
         // ---- exit IDLE and recover session ----------------------------------
@@ -288,9 +316,17 @@ pub async fn idle_inbox(pool: Pool<Postgres>, event_bus: PgEventBus, account: Ma
     }
 }
 
-/// Spawn one `idle_inbox` task per active account immediately after the first
-/// successful sync round.  Accounts whose servers don't support IDLE will
-/// silently fall back to the polling loop.
+/// Spawn one [`idle_inbox`] task per active mail account.
+///
+/// Called once at startup after the first successful sync round. Each task
+/// maintains a long-lived IMAP IDLE connection for real-time push
+/// notifications. Accounts whose servers do not support IDLE will silently
+/// fall back to the periodic polling loop.
+///
+/// # Errors
+///
+/// If the initial account query fails, a warning is logged and no listeners
+/// are started (the polling loop in [`start_sync_scheduler`] still works).
 pub async fn start_idle_listeners(pool: Pool<Postgres>, event_bus: PgEventBus) {
     let accounts: Vec<MailAccount> =
         match sqlx::query_as("SELECT * FROM mail.accounts WHERE status = 'active'")
@@ -416,6 +452,21 @@ async fn refresh_google_token(
     Ok((new_token, new_expiry))
 }
 
+/// Perform a full IMAP sync for a single mail account.
+///
+/// Connects to the IMAP server, lists all folders, and fetches new messages
+/// since `last_synced_uid` for each folder. OAuth tokens are refreshed
+/// automatically if expired. Downloaded emails are categorized and persisted
+/// to the database, and a real-time event is emitted via `event_bus`.
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - The IMAP server is not configured on the account.
+/// - No authentication credentials are available (password or OAuth token).
+/// - The TLS/IMAP connection or authentication fails.
+/// - A database write fails during folder or email upsert.
+#[tracing::instrument(skip(pool, event_bus), fields(account = %account.email_address))]
 pub async fn sync_account(
     pool: &Pool<Postgres>,
     account: &MailAccount,
@@ -479,14 +530,32 @@ pub async fn sync_account(
     tracing::info!("Syncing account: {}", account.email_address);
 
     // Connect to IMAP
+    let accept_invalid = std::env::var("IMAP_ACCEPT_INVALID_CERTS")
+        .map(|v| v == "true" || v == "1")
+        .unwrap_or(false);
     let tls = tokio_native_tls::TlsConnector::from(
         native_tls::TlsConnector::builder()
-            .danger_accept_invalid_certs(true)
-            .danger_accept_invalid_hostnames(true)
+            .danger_accept_invalid_certs(accept_invalid)
+            .danger_accept_invalid_hostnames(accept_invalid)
             .build()?,
     );
 
-    let tcp_stream = tokio::net::TcpStream::connect((imap_server, imap_port)).await?;
+    let connect_timeout = Duration::from_secs(
+        std::env::var("IMAP_CONNECT_TIMEOUT_SECS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(30),
+    );
+    let tcp_stream = match tokio::time::timeout(
+        connect_timeout,
+        tokio::net::TcpStream::connect((imap_server, imap_port)),
+    )
+    .await
+    {
+        Ok(Ok(s)) => s,
+        Ok(Err(e)) => return Err(format!("TCP connect failed: {}", e).into()),
+        Err(_) => return Err("IMAP connection timed out".into()),
+    };
     let tls_stream = tls.connect(imap_server, tcp_stream).await?;
     let client = async_imap::Client::new(tls_stream);
 
@@ -668,7 +737,11 @@ pub async fn sync_account(
 
         // Fetch full messages for new UIDs (limit 20 per folder per sync).
         // Always use uid_fetch so the set refers to IMAP UIDs, not sequence numbers.
-        for uid in uids_to_fetch.iter().take(20) {
+        let batch_size: usize = std::env::var("IMAP_SYNC_BATCH_SIZE")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(20);
+        for uid in uids_to_fetch.iter().take(batch_size) {
             let full_msg_stream = match session
                 .uid_fetch(uid.to_string(), "(BODY.PEEK[] FLAGS)")
                 .await

@@ -8,7 +8,7 @@ export function MailHeader() {
     return (
         <header className="h-16 shrink-0 flex items-center justify-between px-4 pr-6">
             <div className="flex items-center gap-4 w-[260px] shrink-0 relative z-20">
-                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-muted dark:hover:bg-gray-800">
+                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full text-muted-foreground hover:bg-muted">
                     <Menu className="h-6 w-6" />
                 </Button>
                 <div className="flex items-center gap-2 px-2 select-none cursor-pointer">
@@ -21,46 +21,46 @@ export function MailHeader() {
                             <path d="M20 8V16L12 11" fill="#F4B400"/>
                         </svg>
                     </div>
-                    <span className="text-[22px] font-normal text-[#444746] dark:text-[#e3e3e3] tracking-tight">Gmail</span>
+                    <span className="text-[22px] font-normal text-muted-foreground tracking-tight">Gmail</span>
                 </div>
             </div>
 
             {/* Central Search Bar */}
             <div className="flex-1 max-w-[720px] mx-8 relative hidden md:block group z-20">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-full cursor-pointer transition-colors">
-                    <Search className="h-5 w-5 text-[#444746] dark:text-gray-400 group-focus-within:text-[#1a73e8]" />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 p-2 hover:bg-muted rounded-full cursor-pointer transition-colors">
+                    <Search className="h-5 w-5 text-muted-foreground group-focus-within:text-primary" />
                 </div>
                 <Input
                     placeholder="Rechercher dans les messages"
-                    className="w-full pl-14 pr-12 h-12 bg-[#eaf1fb] dark:bg-[#1f1f1f] border-transparent hover:bg-background hover:shadow-[0_1px_2px_0_rgba(60,64,67,0.3)] focus-visible:bg-background focus-visible:ring-0 focus-visible:shadow-[0_1px_2px_0_rgba(60,64,67,0.3)] transition-all rounded-full text-base dark:hover:bg-[#28292a] dark:focus-visible:bg-[#28292a] text-[#1f1f1f] dark:text-[#e3e3e3] placeholder:text-[#444746] dark:placeholder:text-gray-400"
+                    className="w-full pl-14 pr-12 h-12 bg-muted border-transparent hover:bg-background hover:shadow-[0_1px_2px_0_rgba(60,64,67,0.3)] focus-visible:bg-background focus-visible:ring-0 focus-visible:shadow-[0_1px_2px_0_rgba(60,64,67,0.3)] transition-all rounded-full text-base text-foreground placeholder:text-muted-foreground"
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-full cursor-pointer transition-colors">
-                    <SlidersHorizontal className="h-5 w-5 text-[#444746] dark:text-gray-400" />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-muted rounded-full cursor-pointer transition-colors">
+                    <SlidersHorizontal className="h-5 w-5 text-muted-foreground" />
                 </div>
             </div>
 
             {/* Right action area */}
             <div className="flex items-center gap-1 shrink-0 z-20">
-                <Button variant="outline" size="sm" className="hidden lg:flex h-9 rounded-full border-border dark:border-gray-700 text-[#444746] dark:text-[#e3e3e3] font-medium px-4 hover:bg-muted dark:hover:bg-gray-800 mr-2 gap-2">
+                <Button variant="outline" size="sm" className="hidden lg:flex h-9 rounded-full border-border text-muted-foreground font-medium px-4 hover:bg-muted mr-2 gap-2">
                     <div className="w-2 h-2 rounded-full bg-green-600"></div>
                     Actif
                     <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1 opacity-60">
                         <path d="M5 6L0 1.05562L1.07143 0L5 3.88876L8.92857 0L10 1.05562L5 6Z" fill="currentColor"/>
                     </svg>
                 </Button>
-                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-muted dark:hover:bg-gray-800">
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-muted-foreground hover:bg-muted">
                     <HelpCircle className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-muted dark:hover:bg-gray-800">
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-muted-foreground hover:bg-muted">
                     <Settings className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#444746] dark:text-[#e3e3e3] hover:bg-muted dark:hover:bg-gray-800 ml-1">
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-muted-foreground hover:bg-muted ml-1">
                     <Grid className="h-5 w-5" />
                 </Button>
                 <div className="mx-2 flex items-center justify-center">
-                    <Avatar className="h-8 w-8 hover:ring-4 ring-gray-200 cursor-pointer transition-all">
+                    <Avatar className="h-8 w-8 hover:ring-4 ring-border cursor-pointer transition-all">
                         <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" />
-                        <AvatarFallback className="bg-[#1a73e8] text-white">AD</AvatarFallback>
+                        <AvatarFallback className="bg-primary text-primary-foreground">AD</AvatarFallback>
                     </Avatar>
                 </div>
             </div>

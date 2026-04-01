@@ -85,7 +85,6 @@ pub struct UpdateRecurringRequest {
 
 /// POST /api/v1/mail/emails/recurring
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn create_recurring(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -110,6 +109,16 @@ pub async fn create_recurring(
     }
     if payload.cron_expr.trim().is_empty() {
         return (StatusCode::BAD_REQUEST, "cron_expr must not be empty").into_response();
+    }
+
+    // Validate cron expression format (basic: must have 5-6 space-separated fields)
+    let fields: Vec<&str> = payload.cron_expr.trim().split_whitespace().collect();
+    if fields.len() < 5 || fields.len() > 6 {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": "Invalid cron expression: must have 5-6 fields" })),
+        )
+            .into_response();
     }
 
     let result = sqlx::query_as::<_, RecurringEmail>(
@@ -144,7 +153,6 @@ pub async fn create_recurring(
 
 /// GET /api/v1/mail/emails/recurring
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_recurring(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -166,7 +174,6 @@ pub async fn list_recurring(
 }
 
 /// PATCH /api/v1/mail/emails/recurring/:id
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_recurring(
     State(state): State<AppState>,
@@ -216,7 +223,6 @@ pub async fn update_recurring(
 }
 
 /// DELETE /api/v1/mail/emails/recurring/:id
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_recurring(
     State(state): State<AppState>,

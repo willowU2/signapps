@@ -41,12 +41,9 @@ async fn main() {
     tracing::info!("🚀 Starting signapps-mail on port {}", port);
 
     // Database
-    let database_url = env_or(
-        "DATABASE_URL",
-        "postgres://signapps:password@localhost:5432/signapps",
-    );
+    let database_url = env_required("DATABASE_URL");
     let pool = PgPoolOptions::new()
-        .max_connections(10)
+        .max_connections(env_or("DB_MAX_CONNECTIONS", "10").parse().unwrap_or(10))
         .connect(&database_url)
         .await
         .expect("Failed to connect to Postgres");
@@ -128,25 +125,37 @@ async fn main() {
     });
 
     // Spawn cross-service event listener (calendar.task.overdue → send reminder email)
+    // Wrapped in a retry loop so that transient PG LISTEN failures don't
+    // permanently kill the listener task.
     let mail_listener_pool = pool.clone();
-    let mail_bus = PgEventBus::new(mail_listener_pool.clone(), "signapps-mail".to_string());
     tokio::spawn(async move {
-        if let Err(e) = mail_bus
-            .listen("mail-consumer", move |event| {
-                let p = mail_listener_pool.clone();
-                Box::pin(async move { handle_cross_event(&p, event).await })
-            })
-            .await
-        {
-            tracing::error!("Mail event listener crashed: {}", e);
+        loop {
+            let p = mail_listener_pool.clone();
+            let bus = PgEventBus::new(p.clone(), "signapps-mail".to_string());
+            if let Err(e) = bus
+                .listen("mail-consumer", move |event| {
+                    let p2 = p.clone();
+                    Box::pin(async move { handle_cross_event(&p2, event).await })
+                })
+                .await
+            {
+                tracing::error!("Mail event listener crashed: {}, restarting in 10s", e);
+                tokio::time::sleep(Duration::from_secs(10)).await;
+            }
         }
     });
 
     let cors = CorsLayer::new()
-        .allow_origin(AllowOrigin::list([
-            "http://localhost:3000".parse().expect("valid origin"),
-            "http://127.0.0.1:3000".parse().expect("valid origin"),
-        ]))
+        .allow_origin(AllowOrigin::list({
+            let origins_str = env_or(
+                "ALLOWED_ORIGINS",
+                "http://localhost:3000,http://127.0.0.1:3000",
+            );
+            origins_str
+                .split(',')
+                .filter_map(|s| s.trim().parse().ok())
+                .collect::<Vec<_>>()
+        }))
         .allow_credentials(true)
         .allow_methods([
             axum::http::Method::GET,
@@ -232,10 +241,11 @@ struct HighPriorityRow {
 
 /// Generate a daily mail summary notification for every user who has at least
 /// one active mail account and received emails in the last 24 hours.
+#[tracing::instrument(skip(pool))]
 async fn generate_daily_summaries(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> {
     // Collect all users with mail accounts
     let users: Vec<uuid::Uuid> = sqlx::query_scalar(
-        "SELECT DISTINCT user_id FROM mail.accounts WHERE is_active = true OR is_active IS NULL",
+        "SELECT DISTINCT user_id FROM mail.accounts WHERE status = 'active' OR status IS NULL",
     )
     .fetch_all(pool)
     .await?;
@@ -360,6 +370,7 @@ async fn generate_daily_summaries(pool: &Pool<Postgres>) -> Result<(), sqlx::Err
 }
 
 /// Handle cross-service events received by the mail service.
+#[tracing::instrument(skip(pool))]
 async fn handle_cross_event(pool: &sqlx::PgPool, event: PlatformEvent) -> Result<(), sqlx::Error> {
     match event.event_type.as_str() {
         "calendar.task.overdue" => {
@@ -540,10 +551,11 @@ struct WeeklyEventRow {
 /// Generate a cross-module weekly digest for every active user:
 /// emails received this week, tasks completed, deals moved, meetings held.
 /// Cross-queries `platform.events` for the last 7 days.
+#[tracing::instrument(skip(pool))]
 async fn generate_weekly_digests(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> {
     // All users with active mail accounts
     let users: Vec<uuid::Uuid> = sqlx::query_scalar(
-        "SELECT DISTINCT user_id FROM mail.accounts WHERE is_active = true OR is_active IS NULL",
+        "SELECT DISTINCT user_id FROM mail.accounts WHERE status = 'active' OR status IS NULL",
     )
     .fetch_all(pool)
     .await?;

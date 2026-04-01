@@ -154,7 +154,6 @@ fn naive_bayes_classify(
 
 /// POST /api/v1/mail/spam/classify
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn classify_email(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -250,7 +249,6 @@ pub async fn classify_email(
 
 /// POST /api/v1/mail/spam/train
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn train_spam(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -308,7 +306,8 @@ pub async fn train_spam(
     }
 
     // Upsert word counts
-    let column = if payload.is_spam {
+    // col is a string literal derived from bool, safe to use in format!
+    let col = if payload.is_spam {
         "spam_count"
     } else {
         "ham_count"
@@ -321,7 +320,7 @@ pub async fn train_spam(
                VALUES ($1, $2, 1)
                ON CONFLICT (account_id, word)
                DO UPDATE SET {col} = mail.spam_model.{col} + 1, updated_at = NOW()"#,
-            col = column
+            col = col
         );
 
         let result = sqlx::query(&query)
@@ -364,7 +363,6 @@ pub async fn train_spam(
 
 /// GET /api/v1/mail/spam/settings/:account_id
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_spam_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -404,7 +402,6 @@ pub async fn get_spam_settings(
 
 /// PATCH /api/v1/mail/spam/settings/:account_id
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn update_spam_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -422,6 +419,16 @@ pub async fn update_spam_settings(
 
     if account.unwrap_or(None).is_none() {
         return (StatusCode::NOT_FOUND, "Account not found").into_response();
+    }
+
+    if let Some(threshold) = payload.threshold {
+        if !(0.0..=1.0).contains(&threshold) {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({ "error": "Threshold must be between 0.0 and 1.0" })),
+            )
+                .into_response();
+        }
     }
 
     // Ensure settings exist

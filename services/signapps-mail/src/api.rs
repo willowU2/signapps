@@ -278,21 +278,23 @@ async fn import_mbox(
     let mut imported = 0u32;
     let mut failed = 0u32;
 
+    // Resolve account_id once before the loop to avoid N+1 queries
+    let account_id: Option<uuid::Uuid> =
+        sqlx::query_scalar("SELECT id FROM mail.accounts WHERE user_id = $1 LIMIT 1")
+            .bind(claims.sub)
+            .fetch_optional(&state.pool)
+            .await
+            .ok()
+            .flatten();
+
+    let Some(account_id) = account_id else {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": "No mail account found for user" })),
+        );
+    };
+
     for raw_msg in messages {
-        // Try to find the first account for this user to attach imports to
-        let account_id: Option<uuid::Uuid> =
-            sqlx::query_scalar("SELECT id FROM mail.accounts WHERE user_id = $1 LIMIT 1")
-                .bind(claims.sub)
-                .fetch_optional(&state.pool)
-                .await
-                .ok()
-                .flatten();
-
-        let Some(account_id) = account_id else {
-            failed += 1;
-            continue;
-        };
-
         // Parse headers from the raw message
         let (subject, sender, recipients, body) = parse_mbox_message(&raw_msg);
 
@@ -364,14 +366,21 @@ fn parse_mbox_message(raw: &str) -> (String, String, Vec<String>, String) {
                 in_headers = false;
                 continue;
             }
-            let lower = line.to_lowercase();
-            if lower.starts_with("subject:") {
-                subject = line[8..].trim().to_string();
-            } else if lower.starts_with("from:") {
-                sender = line[5..].trim().to_string();
-            } else if lower.starts_with("to:") {
-                let to = line[3..].trim();
-                recipients.extend(to.split(',').map(|s| s.trim().to_string()));
+            if let Some(val) = line
+                .strip_prefix("Subject:")
+                .or_else(|| line.strip_prefix("subject:"))
+            {
+                subject = val.trim().to_string();
+            } else if let Some(val) = line
+                .strip_prefix("From:")
+                .or_else(|| line.strip_prefix("from:"))
+            {
+                sender = val.trim().to_string();
+            } else if let Some(val) = line
+                .strip_prefix("To:")
+                .or_else(|| line.strip_prefix("to:"))
+            {
+                recipients.extend(val.trim().split(',').map(|s| s.trim().to_string()));
             }
         } else {
             body_lines.push(line);
@@ -466,12 +475,20 @@ async fn get_account(
     .await
     .map_err(|e| {
         tracing::error!("Failed to fetch mail account: {:?}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response()
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({ "error": "Database error" })),
+        )
+            .into_response()
     });
 
     match account {
         Ok(Some(acc)) => Json(acc).into_response(),
-        Ok(None) => (StatusCode::NOT_FOUND, "Account not found").into_response(),
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Account not found" })),
+        )
+            .into_response(),
         Err(e) => e,
     }
 }
@@ -549,6 +566,12 @@ async fn update_account(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateAccountRequest>,
 ) -> impl IntoResponse {
+    if let Some(interval) = payload.sync_interval_minutes {
+        if interval < 1 || interval > 1440 {
+            return (StatusCode::BAD_REQUEST, Json(serde_json::json!({ "error": "sync_interval_minutes must be between 1 and 1440" }))).into_response();
+        }
+    }
+
     let account = sqlx::query_as::<_, MailAccount>(
         r#"
         UPDATE mail.accounts SET
@@ -588,10 +611,18 @@ async fn update_account(
 
     match account {
         Ok(Some(acc)) => Json(acc).into_response(),
-        Ok(None) => (StatusCode::NOT_FOUND, "Account not found").into_response(),
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Account not found" })),
+        )
+            .into_response(),
         Err(e) => {
             tracing::error!("Failed to update account: {:?}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to update").into_response()
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Failed to update" })),
+            )
+                .into_response()
         },
     }
 }
@@ -609,10 +640,18 @@ async fn delete_account(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => StatusCode::NO_CONTENT.into_response(),
-        Ok(_) => (StatusCode::NOT_FOUND, "Account not found").into_response(),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Account not found" })),
+        )
+            .into_response(),
         Err(e) => {
             tracing::error!("Failed to delete account: {:?}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete").into_response()
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Failed to delete" })),
+            )
+                .into_response()
         },
     }
 }
@@ -632,10 +671,20 @@ async fn sync_account_now(
     .await
     {
         Ok(Some(acc)) => acc,
-        Ok(None) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
+        Ok(None) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": "Account not found" })),
+            )
+                .into_response()
+        },
         Err(e) => {
             tracing::error!("Failed to fetch account for sync: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+                .into_response();
         },
     };
 
@@ -676,10 +725,20 @@ async fn test_account(
     .await
     {
         Ok(Some(acc)) => acc,
-        Ok(None) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
+        Ok(None) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": "Account not found" })),
+            )
+                .into_response()
+        },
         Err(e) => {
             tracing::error!("Failed to fetch account for test: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+                .into_response();
         },
     };
 
@@ -819,6 +878,7 @@ async fn list_folders(
             JOIN mail.accounts a ON a.id = f.account_id
             WHERE f.account_id = $1 AND a.user_id = $2
             ORDER BY f.folder_type, f.name
+            LIMIT 500
             "#,
         )
         .bind(account_id)
@@ -832,6 +892,7 @@ async fn list_folders(
             JOIN mail.accounts a ON a.id = f.account_id
             WHERE a.user_id = $1
             ORDER BY a.email_address, f.folder_type, f.name
+            LIMIT 500
             "#,
         )
         .bind(claims.sub)
@@ -862,13 +923,21 @@ async fn get_folder(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("Failed to fetch folder: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+                .into_response();
         },
     };
 
     match folder {
         Some(f) => Json(f).into_response(),
-        None => (StatusCode::NOT_FOUND, "Folder not found").into_response(),
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Folder not found" })),
+        )
+            .into_response(),
     }
 }
 
@@ -894,7 +963,7 @@ async fn list_emails(
     Extension(claims): Extension<Claims>,
     Query(query): Query<EmailQuery>,
 ) -> impl IntoResponse {
-    let limit = query.limit.unwrap_or(50).min(200);
+    let limit = query.limit.unwrap_or(50).min(1000);
     let offset = query.offset.unwrap_or(0);
 
     let emails = sqlx::query_as::<_, Email>(
@@ -941,7 +1010,11 @@ async fn get_email(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("Failed to fetch email: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+                .into_response();
         },
     };
 
@@ -954,7 +1027,11 @@ async fn get_email(
                 .await;
             Json(e).into_response()
         },
-        None => (StatusCode::NOT_FOUND, "Email not found").into_response(),
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Email not found" })),
+        )
+            .into_response(),
     }
 }
 
@@ -978,6 +1055,29 @@ async fn send_email(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<SendEmailRequest>,
 ) -> impl IntoResponse {
+    if payload.recipient.trim().is_empty() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": "Recipient is required" })),
+        )
+            .into_response();
+    }
+    if !payload.recipient.contains('@') {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": "Invalid recipient email format" })),
+        )
+            .into_response();
+    }
+
+    if payload.subject.len() > 998 {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": "Subject too long (max 998 chars per RFC 5322)" })),
+        )
+            .into_response();
+    }
+
     // Get account
     let account = match sqlx::query_as::<_, MailAccount>(
         "SELECT * FROM mail.accounts WHERE id = $1 AND user_id = $2",
@@ -988,10 +1088,20 @@ async fn send_email(
     .await
     {
         Ok(Some(acc)) => acc,
-        Ok(None) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
+        Ok(None) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": "Account not found" })),
+            )
+                .into_response()
+        },
         Err(e) => {
             tracing::error!("Failed to fetch account for send: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+                .into_response();
         },
     };
 
@@ -1010,7 +1120,11 @@ async fn send_email(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("Failed to fetch folder for send: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+                .into_response();
         },
     };
 
@@ -1082,7 +1196,11 @@ async fn send_email(
         Ok(e) => e,
         Err(e) => {
             tracing::error!("Failed to save email: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to save email").into_response();
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Failed to save email" })),
+            )
+                .into_response();
         },
     };
 
@@ -1300,10 +1418,18 @@ async fn update_email(
 
     match email {
         Ok(Some(e)) => Json(e).into_response(),
-        Ok(None) => (StatusCode::NOT_FOUND, "Email not found").into_response(),
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Email not found" })),
+        )
+            .into_response(),
         Err(e) => {
             tracing::error!("Failed to update email: {:?}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to update").into_response()
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Failed to update" })),
+            )
+                .into_response()
         },
     }
 }
@@ -1332,10 +1458,18 @@ async fn delete_email(
             log_mail_activity(&state.pool, claims.sub, "deleted", id, "").await;
             StatusCode::NO_CONTENT.into_response()
         },
-        Ok(_) => (StatusCode::NOT_FOUND, "Email not found").into_response(),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Email not found" })),
+        )
+            .into_response(),
         Err(e) => {
             tracing::error!("Failed to delete email: {:?}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete").into_response()
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Failed to delete" })),
+            )
+                .into_response()
         },
     }
 }
@@ -1351,6 +1485,8 @@ async fn list_attachments(
         JOIN mail.emails e ON e.id = att.email_id
         JOIN mail.accounts a ON a.id = e.account_id
         WHERE e.id = $1 AND a.user_id = $2
+        ORDER BY att.created_at
+        LIMIT 100
         "#,
     )
     .bind(id)
@@ -1378,6 +1514,7 @@ async fn list_labels(
             JOIN mail.accounts a ON a.id = l.account_id
             WHERE l.account_id = $1 AND a.user_id = $2
             ORDER BY l.name
+            LIMIT 200
             "#,
         )
         .bind(account_id)
@@ -1391,6 +1528,7 @@ async fn list_labels(
             JOIN mail.accounts a ON a.id = l.account_id
             WHERE a.user_id = $1
             ORDER BY l.name
+            LIMIT 200
             "#,
         )
         .bind(claims.sub)
@@ -1426,12 +1564,28 @@ async fn create_label(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("Failed to verify account ownership: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+                .into_response();
         },
     };
 
     if account.is_none() {
-        return (StatusCode::NOT_FOUND, "Account not found").into_response();
+        return (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Account not found" })),
+        )
+            .into_response();
+    }
+
+    if payload.name.trim().is_empty() || payload.name.len() > 50 {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": "Label name must be 1-50 characters" })),
+        )
+            .into_response();
     }
 
     let label = sqlx::query_as::<_, MailLabel>(
@@ -1447,7 +1601,11 @@ async fn create_label(
         Ok(l) => (StatusCode::CREATED, Json(l)).into_response(),
         Err(e) => {
             tracing::error!("Failed to create label: {:?}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to create label").into_response()
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Failed to create label" })),
+            )
+                .into_response()
         },
     }
 }
@@ -1485,10 +1643,18 @@ async fn update_label(
 
     match label {
         Ok(Some(l)) => Json(l).into_response(),
-        Ok(None) => (StatusCode::NOT_FOUND, "Label not found").into_response(),
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Label not found" })),
+        )
+            .into_response(),
         Err(e) => {
             tracing::error!("Failed to update label: {:?}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to update").into_response()
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Failed to update" })),
+            )
+                .into_response()
         },
     }
 }
@@ -1513,10 +1679,18 @@ async fn delete_label(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => StatusCode::NO_CONTENT.into_response(),
-        Ok(_) => (StatusCode::NOT_FOUND, "Label not found").into_response(),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Label not found" })),
+        )
+            .into_response(),
         Err(e) => {
             tracing::error!("Failed to delete label: {:?}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete").into_response()
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Failed to delete" })),
+            )
+                .into_response()
         },
     }
 }
@@ -1538,7 +1712,7 @@ async fn search_emails(
     Extension(claims): Extension<Claims>,
     Query(query): Query<SearchQuery>,
 ) -> impl IntoResponse {
-    let limit = query.limit.unwrap_or(50).min(200);
+    let limit = query.limit.unwrap_or(50).min(1000);
     let emails = sqlx::query_as::<_, Email>(
         r#"
         SELECT e.* FROM mail.emails e
@@ -1654,7 +1828,6 @@ async fn get_stats(
 
 /// Process emails whose `scheduled_send_at` has arrived. Called every 30s from main.rs.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn process_scheduled_emails(
     pool: &sqlx::PgPool,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -1738,12 +1911,16 @@ async fn send_newsletter(
     Json(payload): Json<SendNewsletterRequest>,
 ) -> impl IntoResponse {
     if payload.subject.is_empty() {
-        return (StatusCode::UNPROCESSABLE_ENTITY, "Subject is required").into_response();
+        return (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(serde_json::json!({ "error": "Subject is required" })),
+        )
+            .into_response();
     }
     if payload.recipient_list.is_empty() {
         return (
             StatusCode::UNPROCESSABLE_ENTITY,
-            "recipient_list must not be empty",
+            Json(serde_json::json!({ "error": "recipient_list must not be empty" })),
         )
             .into_response();
     }
@@ -1758,10 +1935,20 @@ async fn send_newsletter(
     .await
     {
         Ok(Some(acc)) => acc,
-        Ok(None) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
+        Ok(None) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": "Account not found" })),
+            )
+                .into_response()
+        },
         Err(e) => {
             tracing::error!("Newsletter: failed to fetch account: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+                .into_response();
         },
     };
 
@@ -1914,7 +2101,7 @@ async fn list_threads(
     Extension(claims): Extension<Claims>,
     Query(query): Query<ThreadQuery>,
 ) -> impl IntoResponse {
-    let limit = query.limit.unwrap_or(50).min(200);
+    let limit = query.limit.unwrap_or(50).min(1000);
     let offset = query.offset.unwrap_or(0);
 
     let threads = sqlx::query_as::<_, Email>(
@@ -1969,10 +2156,20 @@ async fn cancel_send(
     .await
     {
         Ok(Some(e)) => e,
-        Ok(None) => return (StatusCode::NOT_FOUND, "Email not found").into_response(),
+        Ok(None) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": "Email not found" })),
+            )
+                .into_response()
+        },
         Err(e) => {
             tracing::error!("cancel_send: DB error fetching email: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+                .into_response();
         },
     };
 
@@ -2003,7 +2200,11 @@ async fn cancel_send(
         },
         Err(e) => {
             tracing::error!("cancel_send: DB update failed: {:?}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response()
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+                .into_response()
         },
     }
 }

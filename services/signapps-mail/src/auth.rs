@@ -14,8 +14,11 @@ use crate::AppState;
 // Provider enum
 // ---------------------------------------------------------------------------
 
+/// Supported OAuth2 providers for mail account authentication.
+///
+/// Each variant carries the provider-specific URLs, scopes, environment
+/// variable names, and IMAP server defaults.
 #[derive(Debug, Clone, Copy)]
-/// Enum representing OAuthProvider variants.
 pub enum OAuthProvider {
     Google,
     Microsoft,
@@ -61,10 +64,12 @@ impl OAuthProvider {
         }
     }
 
-    fn redirect_uri(&self) -> &'static str {
+    fn redirect_uri_value(&self) -> String {
+        let base = std::env::var("OAUTH_REDIRECT_BASE")
+            .unwrap_or_else(|_| "http://localhost:3000".to_string());
         match self {
-            OAuthProvider::Google => "http://localhost:3000/mail/callback/google",
-            OAuthProvider::Microsoft => "http://localhost:3000/mail/callback/microsoft",
+            OAuthProvider::Google => format!("{}/mail/callback/google", base),
+            OAuthProvider::Microsoft => format!("{}/mail/callback/microsoft", base),
         }
     }
 
@@ -103,7 +108,14 @@ impl OAuthProvider {
 // Build OAuth2 client for a given provider
 // ---------------------------------------------------------------------------
 
-/// Ensure the mail.oauth_app_configs table exists (auto-migrate).
+/// Ensure the `mail.oauth_app_configs` table exists (auto-migrate).
+///
+/// Called once at service startup before any OAuth flow can proceed.
+/// Uses `CREATE TABLE IF NOT EXISTS` so it is safe to call repeatedly.
+///
+/// # Errors
+///
+/// Silently ignores database errors (logged via tracing in the caller).
 pub async fn ensure_oauth_configs_table(pool: &sqlx::Pool<sqlx::Postgres>) {
     let _ = sqlx::query(
         r#"
@@ -145,21 +157,44 @@ async fn resolve_credentials(
     (id, secret)
 }
 
+/// Build an OAuth2 [`BasicClient`] for the given provider using environment variables.
+///
+/// Reads `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (or the Microsoft equivalents)
+/// from the process environment. If either is missing the client is created with
+/// an `"unconfigured"` placeholder and a warning is logged.
+///
+/// # Panics
+///
+/// Panics if the provider's well-known auth/token/redirect URLs are not valid URLs
+/// (should never happen with the hard-coded constants).
 pub fn oauth_client_for(provider: OAuthProvider) -> BasicClient {
-    let client_id = ClientId::new(
-        env::var(provider.client_id_env()).unwrap_or_else(|_| "dummy_client_id".to_string()),
-    );
-    let client_secret = ClientSecret::new(
-        env::var(provider.client_secret_env())
-            .unwrap_or_else(|_| "dummy_client_secret".to_string()),
-    );
+    let id = env::var(provider.client_id_env()).unwrap_or_default();
+    let client_id = ClientId::new(if id.is_empty() {
+        tracing::warn!(
+            "OAuth {} client_id not configured — OAuth flow will fail",
+            provider.name()
+        );
+        "unconfigured".to_string()
+    } else {
+        id
+    });
+    let secret = env::var(provider.client_secret_env()).unwrap_or_default();
+    let client_secret = ClientSecret::new(if secret.is_empty() {
+        tracing::warn!(
+            "OAuth {} client_secret not configured — OAuth flow will fail",
+            provider.name()
+        );
+        "unconfigured".to_string()
+    } else {
+        secret
+    });
     let auth_url =
         AuthUrl::new(provider.auth_url().to_string()).expect("Invalid authorization endpoint URL");
     let token_url =
         TokenUrl::new(provider.token_url().to_string()).expect("Invalid token endpoint URL");
 
     BasicClient::new(client_id, Some(client_secret), auth_url, Some(token_url)).set_redirect_uri(
-        RedirectUrl::new(provider.redirect_uri().to_string()).expect("Invalid redirect URL"),
+        RedirectUrl::new(provider.redirect_uri_value()).expect("Invalid redirect URL"),
     )
 }
 
@@ -170,12 +205,20 @@ async fn oauth_client_for_with_db(
 ) -> BasicClient {
     let (id, secret) = resolve_credentials(pool, provider).await;
     let client_id = ClientId::new(if id.is_empty() {
-        "dummy_client_id".to_string()
+        tracing::warn!(
+            "OAuth {} client_id not configured — OAuth flow will fail",
+            provider.name()
+        );
+        "unconfigured".to_string()
     } else {
         id
     });
     let client_secret = ClientSecret::new(if secret.is_empty() {
-        "dummy_client_secret".to_string()
+        tracing::warn!(
+            "OAuth {} client_secret not configured — OAuth flow will fail",
+            provider.name()
+        );
+        "unconfigured".to_string()
     } else {
         secret
     });
@@ -185,11 +228,14 @@ async fn oauth_client_for_with_db(
         TokenUrl::new(provider.token_url().to_string()).expect("Invalid token endpoint URL");
 
     BasicClient::new(client_id, Some(client_secret), auth_url, Some(token_url)).set_redirect_uri(
-        RedirectUrl::new(provider.redirect_uri().to_string()).expect("Invalid redirect URL"),
+        RedirectUrl::new(provider.redirect_uri_value()).expect("Invalid redirect URL"),
     )
 }
 
+/// Build an OAuth2 client defaulting to Google.
+///
 /// Kept for backward compatibility with any existing callers.
+/// Prefer [`oauth_client_for`] for explicit provider selection.
 pub fn oauth_client() -> BasicClient {
     oauth_client_for(OAuthProvider::Google)
 }
@@ -198,6 +244,7 @@ pub fn oauth_client() -> BasicClient {
 // OAuth app config management (save/read Google Client ID & Secret from DB)
 // ---------------------------------------------------------------------------
 
+/// Request payload for saving OAuth app credentials (client ID & secret).
 #[derive(Deserialize)]
 pub struct OAuthAppConfigRequest {
     pub platform: String,
@@ -205,6 +252,7 @@ pub struct OAuthAppConfigRequest {
     pub client_secret: String,
 }
 
+/// Response payload returned when querying OAuth app configuration.
 #[derive(Serialize)]
 pub struct OAuthAppConfigResponse {
     pub platform: String,
@@ -212,6 +260,15 @@ pub struct OAuthAppConfigResponse {
     pub configured: bool,
 }
 
+/// GET handler returning the OAuth app configuration for a given platform.
+///
+/// Returns the `client_id` and whether the platform is fully configured
+/// (both client ID and secret are non-empty). The client secret is never
+/// included in the response.
+///
+/// # Errors
+///
+/// Returns an empty/unconfigured response on database errors (never fails the HTTP request).
 pub async fn get_oauth_config(
     State(state): State<AppState>,
     axum::extract::Path(platform): axum::extract::Path<String>,
@@ -236,6 +293,14 @@ pub async fn get_oauth_config(
     })
 }
 
+/// POST handler to create or update OAuth app credentials for a platform.
+///
+/// Performs an upsert into `mail.oauth_app_configs`. Existing rows for the
+/// same platform are updated in place.
+///
+/// # Errors
+///
+/// Returns `500 Internal Server Error` if the database write fails.
 pub async fn save_oauth_config(
     State(state): State<AppState>,
     Json(payload): Json<OAuthAppConfigRequest>,
@@ -269,14 +334,14 @@ pub async fn save_oauth_config(
 // DTOs
 // ---------------------------------------------------------------------------
 
+/// Response payload containing the OAuth2 authorization URL the frontend should redirect to.
 #[derive(Serialize)]
-/// Response payload for AuthUrl operation.
 pub struct AuthUrlResponse {
     pub url: String,
 }
 
+/// Request payload sent by the frontend after the OAuth2 redirect callback.
 #[derive(Deserialize)]
-/// Request payload for AuthCallback operation.
 pub struct AuthCallbackRequest {
     pub code: String,
     pub user_id: uuid::Uuid,
@@ -298,10 +363,20 @@ struct MicrosoftUserProfile {
 // Login URL handlers — /oauth/google/login  and  /oauth/microsoft/login
 // ---------------------------------------------------------------------------
 
+/// Generate a Google OAuth2 authorization URL for the user to initiate login.
+///
+/// # Errors
+///
+/// Never fails at the HTTP level; returns a JSON body with the URL.
 pub async fn oauth_google_login(State(state): State<AppState>) -> impl IntoResponse {
     oauth_login_url_for(&state.pool, OAuthProvider::Google).await
 }
 
+/// Generate a Microsoft OAuth2 authorization URL for the user to initiate login.
+///
+/// # Errors
+///
+/// Never fails at the HTTP level; returns a JSON body with the URL.
 pub async fn oauth_microsoft_login(State(state): State<AppState>) -> impl IntoResponse {
     oauth_login_url_for(&state.pool, OAuthProvider::Microsoft).await
 }
@@ -333,6 +408,15 @@ async fn oauth_login_url_for(
 // Callback handlers — /oauth/google/callback  and  /oauth/microsoft/callback
 // ---------------------------------------------------------------------------
 
+/// Handle the Google OAuth2 callback after user authorization.
+///
+/// Exchanges the authorization code for tokens, fetches the user profile,
+/// and upserts the mail account in the database.
+///
+/// # Errors
+///
+/// Returns `400 Bad Request` if the token exchange fails, or
+/// `500 Internal Server Error` if the profile fetch or DB upsert fails.
 pub async fn oauth_google_callback(
     state: State<AppState>,
     body: Json<AuthCallbackRequest>,
@@ -340,6 +424,15 @@ pub async fn oauth_google_callback(
     oauth_callback_for(state, body, OAuthProvider::Google).await
 }
 
+/// Handle the Microsoft OAuth2 callback after user authorization.
+///
+/// Exchanges the authorization code for tokens, fetches the user profile,
+/// and upserts the mail account in the database.
+///
+/// # Errors
+///
+/// Returns `400 Bad Request` if the token exchange fails, or
+/// `500 Internal Server Error` if the profile fetch or DB upsert fails.
 pub async fn oauth_microsoft_callback(
     state: State<AppState>,
     body: Json<AuthCallbackRequest>,

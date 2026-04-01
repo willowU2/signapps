@@ -76,7 +76,6 @@ async fn owns_account(pool: &sqlx::PgPool, account_id: Uuid, user_id: Uuid) -> b
 
 /// GET /api/v1/mail/accounts/:id/aliases
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_aliases(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -104,7 +103,6 @@ pub async fn list_aliases(
 
 /// POST /api/v1/mail/accounts/:id/aliases
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn create_alias(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -117,6 +115,15 @@ pub async fn create_alias(
 
     if payload.alias_email.trim().is_empty() {
         return (StatusCode::BAD_REQUEST, "alias_email must not be empty").into_response();
+    }
+
+    // Basic email format validation
+    if !payload.alias_email.contains('@') || !payload.alias_email.contains('.') {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": "Invalid email format" })),
+        )
+            .into_response();
     }
 
     let result = sqlx::query_as::<_, Alias>(
@@ -145,7 +152,6 @@ pub async fn create_alias(
 }
 
 /// PATCH /api/v1/mail/accounts/:id/aliases/:alias_id
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_alias(
     State(state): State<AppState>,
@@ -184,7 +190,6 @@ pub async fn update_alias(
 
 /// DELETE /api/v1/mail/accounts/:id/aliases/:alias_id
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_alias(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -214,7 +219,6 @@ pub async fn delete_alias(
 ///
 /// Marks this alias as the default for the account; clears is_default on all
 /// other aliases for the same account in a single transaction.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn set_default_alias(
     State(state): State<AppState>,
