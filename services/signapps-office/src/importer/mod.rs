@@ -21,7 +21,7 @@ pub enum ImportError {
 }
 
 /// Input formats supported
-#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum ImportFormat {
     Docx,

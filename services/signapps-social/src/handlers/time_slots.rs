@@ -10,6 +10,17 @@ use crate::models::{CreateTimeSlotRequest, TimeSlot};
 use crate::AppState;
 use signapps_common::Claims;
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/time-slots",
+    responses(
+        (status = 200, description = "List of scheduled time slots"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Time Slots"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_time_slots(
@@ -33,6 +44,19 @@ pub async fn list_time_slots(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/time-slots",
+    request_body = crate::models::CreateTimeSlotRequest,
+    responses(
+        (status = 201, description = "Time slot created", body = crate::models::TimeSlot),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Time Slots"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_time_slot(
@@ -62,6 +86,19 @@ pub async fn create_time_slot(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/social/time-slots/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Time slot ID")),
+    responses(
+        (status = 204, description = "Time slot deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Time slot not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Time Slots"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_time_slot(

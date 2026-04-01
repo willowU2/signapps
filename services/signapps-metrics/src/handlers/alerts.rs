@@ -17,7 +17,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 /// Alert severity level.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum AlertSeverity {
     Info,
@@ -36,7 +36,7 @@ impl std::fmt::Display for AlertSeverity {
 }
 
 /// Alert status.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum AlertStatus {
     Active,
@@ -45,7 +45,7 @@ pub enum AlertStatus {
 }
 
 /// Type of metric to monitor.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum MetricType {
     CpuUsage,
@@ -58,7 +58,7 @@ pub enum MetricType {
 }
 
 /// Comparison operator for alert conditions.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Operator {
     GreaterThan,
@@ -83,7 +83,7 @@ impl Operator {
 }
 
 /// Alert configuration defining when an alert should trigger.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 /// AlertConfig data transfer object.
 pub struct AlertConfig {
     pub id: Uuid,
@@ -107,7 +107,7 @@ pub struct AlertConfig {
 }
 
 /// An alert event that was triggered.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 /// AlertEvent data transfer object.
 pub struct AlertEvent {
     pub id: Uuid,
@@ -126,7 +126,7 @@ pub struct AlertEvent {
 }
 
 /// Request to create an alert configuration.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for CreateAlert.
 pub struct CreateAlertRequest {
     pub name: String,
@@ -154,7 +154,7 @@ fn default_enabled() -> bool {
 }
 
 /// Request to update an alert configuration.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for UpdateAlert.
 pub struct UpdateAlertRequest {
     pub name: Option<String>,
@@ -171,7 +171,7 @@ pub struct UpdateAlertRequest {
 }
 
 /// Request to acknowledge an alert.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for Acknowledge.
 pub struct AcknowledgeRequest {
     pub acknowledged_by: String,
@@ -203,6 +203,22 @@ static ALERT_CONFIGS: Lazy<RwLock<HashMap<Uuid, AlertConfig>>> =
 static ALERT_EVENTS: Lazy<RwLock<Vec<AlertEvent>>> = Lazy::new(|| RwLock::new(Vec::new()));
 
 /// List all alert configurations.
+#[utoipa::path(
+    get,
+    path = "/api/v1/alerts",
+    params(
+        ("severity" = Option<String>, Query, description = "Filter by severity"),
+        ("enabled" = Option<bool>, Query, description = "Filter by enabled status"),
+        ("limit" = Option<usize>, Query, description = "Maximum results")
+    ),
+    responses(
+        (status = 200, description = "List of alert configurations", body = Vec<AlertConfig>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_alerts(
@@ -237,6 +253,19 @@ pub async fn list_alerts(
 }
 
 /// Get a single alert configuration.
+#[utoipa::path(
+    get,
+    path = "/api/v1/alerts/{id}",
+    params(("id" = Uuid, Path, description = "Alert configuration ID")),
+    responses(
+        (status = 200, description = "Alert configuration", body = AlertConfig),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Alert not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_alert(
@@ -256,6 +285,19 @@ pub async fn get_alert(
 }
 
 /// Create a new alert configuration.
+#[utoipa::path(
+    post,
+    path = "/api/v1/alerts",
+    request_body = CreateAlertRequest,
+    responses(
+        (status = 200, description = "Alert configuration created", body = AlertConfig),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_alert(
@@ -302,6 +344,21 @@ pub async fn create_alert(
 }
 
 /// Update an alert configuration.
+#[utoipa::path(
+    put,
+    path = "/api/v1/alerts/{id}",
+    params(("id" = Uuid, Path, description = "Alert configuration ID")),
+    request_body = UpdateAlertRequest,
+    responses(
+        (status = 200, description = "Alert configuration updated", body = AlertConfig),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Alert not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_alert(
@@ -372,6 +429,19 @@ pub async fn update_alert(
 }
 
 /// Delete an alert configuration.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/alerts/{id}",
+    params(("id" = Uuid, Path, description = "Alert configuration ID")),
+    responses(
+        (status = 204, description = "Alert configuration deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Alert not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_alert(
@@ -392,6 +462,21 @@ pub async fn delete_alert(
 }
 
 /// Get active alerts (alerts that are currently firing).
+#[utoipa::path(
+    get,
+    path = "/api/v1/alerts/active",
+    params(
+        ("severity" = Option<String>, Query, description = "Filter by severity"),
+        ("limit" = Option<usize>, Query, description = "Maximum results")
+    ),
+    responses(
+        (status = 200, description = "List of active alert events", body = Vec<AlertEvent>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_active_alerts(
@@ -557,6 +642,22 @@ pub async fn get_active_alerts(
 }
 
 /// List all alert events (history).
+#[utoipa::path(
+    get,
+    path = "/api/v1/alerts/events",
+    params(
+        ("status" = Option<String>, Query, description = "Filter by status"),
+        ("severity" = Option<String>, Query, description = "Filter by severity"),
+        ("limit" = Option<usize>, Query, description = "Maximum results")
+    ),
+    responses(
+        (status = 200, description = "Alert event history", body = Vec<AlertEvent>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_alert_events(
@@ -591,6 +692,21 @@ pub async fn list_alert_events(
 }
 
 /// Acknowledge an alert.
+#[utoipa::path(
+    post,
+    path = "/api/v1/alerts/{id}/acknowledge",
+    params(("id" = Uuid, Path, description = "Alert event ID")),
+    request_body = AcknowledgeRequest,
+    responses(
+        (status = 200, description = "Alert acknowledged", body = AlertEvent),
+        (status = 400, description = "Alert is not in active state"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Alert event not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn acknowledge_alert(

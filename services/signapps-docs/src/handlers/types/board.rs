@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateBoard operation.
 pub struct CreateBoardRequest {
     pub name: String,
@@ -16,7 +16,7 @@ pub struct CreateBoardRequest {
     pub board_type: String, // kanban, board, etc.
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 /// Response payload for Board operation.
 pub struct BoardResponse {
     pub id: String,
@@ -48,6 +48,19 @@ pub struct ColumnsResponse {
     pub columns: Vec<Column>,
 }
 
+/// POST /api/v1/docs/board — create a new kanban board
+#[utoipa::path(
+    post,
+    path = "/api/v1/docs/board",
+    request_body = CreateBoardRequest,
+    responses(
+        (status = 201, description = "Board created", body = BoardResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Documents"
+)]
 /// Create a new board (Kanban) and persist its initial CRDT state to the
 /// database so the first WebSocket client receives a well-formed structure.
 #[tracing::instrument(skip_all)]
@@ -103,6 +116,19 @@ pub async fn create_board(
     ))
 }
 
+/// GET /api/v1/docs/board/:doc_id/columns — get board columns
+#[utoipa::path(
+    get,
+    path = "/api/v1/docs/board/{doc_id}/columns",
+    params(("doc_id" = String, Path, description = "Board document ID")),
+    responses(
+        (status = 200, description = "Board columns"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Documents"
+)]
 /// Get columns from board
 #[tracing::instrument(skip_all)]
 pub async fn get_columns(

@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 /// Proxy route mode.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum RouteMode {
     /// Standard reverse proxy.
@@ -22,6 +23,7 @@ pub enum RouteMode {
 
 /// SmartShield configuration for rate limiting.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ShieldConfig {
     /// Enable rate limiting.
     #[serde(default)]
@@ -48,6 +50,7 @@ pub struct ShieldConfig {
 
 /// Geo-blocking configuration.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct GeoBlockConfig {
     /// Enable geo-blocking.
     #[serde(default)]
@@ -69,6 +72,7 @@ fn default_block_duration() -> i32 {
 
 /// Custom headers configuration.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct HeadersConfig {
     /// Headers to add to requests.
     #[serde(default)]
@@ -86,6 +90,7 @@ pub struct HeadersConfig {
 
 /// A single header entry.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct HeaderEntry {
     pub name: String,
     pub value: String,
@@ -93,6 +98,7 @@ pub struct HeaderEntry {
 
 /// Proxy route entity.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Route {
     pub id: Uuid,
     pub name: String,
@@ -128,6 +134,7 @@ impl Route {
 
 /// Create route request.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreateRoute {
     pub name: String,
     pub host: String,
@@ -152,6 +159,7 @@ fn default_true() -> bool {
 
 /// Update route request.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpdateRoute {
     pub name: Option<String>,
     pub host: Option<String>,
@@ -168,6 +176,7 @@ pub struct UpdateRoute {
 
 /// Certificate info.
 #[derive(Debug, Clone, Serialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CertificateInfo {
     pub domain: String,
     pub issuer: String,
@@ -178,6 +187,7 @@ pub struct CertificateInfo {
 
 /// Shield statistics.
 #[derive(Debug, Clone, Serialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ShieldStats {
     pub total_requests: u64,
     pub blocked_requests: u64,

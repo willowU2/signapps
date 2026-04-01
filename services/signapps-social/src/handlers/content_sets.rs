@@ -10,6 +10,17 @@ use crate::models::{ContentSet, CreateContentSetRequest};
 use crate::AppState;
 use signapps_common::Claims;
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/content-sets",
+    responses(
+        (status = 200, description = "List of content sets"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Content Sets"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_content_sets(
@@ -31,6 +42,19 @@ pub async fn list_content_sets(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/content-sets",
+    request_body = crate::models::CreateContentSetRequest,
+    responses(
+        (status = 201, description = "Content set created", body = crate::models::ContentSet),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Content Sets"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_content_set(
@@ -74,6 +98,19 @@ pub async fn create_content_set(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/social/content-sets/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Content set ID")),
+    responses(
+        (status = 204, description = "Content set deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Content set not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Content Sets"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_content_set(

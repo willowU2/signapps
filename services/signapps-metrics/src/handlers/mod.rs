@@ -6,6 +6,7 @@ pub mod api_quota;
 pub mod esg;
 pub mod experiments;
 pub mod metrics;
+pub mod openapi;
 pub mod pool_stats;
 pub mod slow_queries;
 

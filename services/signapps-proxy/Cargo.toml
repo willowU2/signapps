@@ -13,7 +13,7 @@ path = "src/main.rs"
 
 [dependencies]
 signapps-common = { path = "../../crates/signapps-common" }
-signapps-db = { path = "../../crates/signapps-db" }
+signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 signapps-cache = { path = "../../crates/signapps-cache" }
 axum = { workspace = true }
 tokio = { workspace = true }
@@ -46,3 +46,5 @@ hmac = { workspace = true }
 sha1 = "0.10"
 base32 = "0.5"
 url = "2"
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }

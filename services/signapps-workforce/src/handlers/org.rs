@@ -23,7 +23,7 @@ use signapps_common::{Claims, TenantContext};
 // ============================================================================
 
 /// Organization node in the hierarchy
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 /// OrgNode data transfer object.
 pub struct OrgNode {
     pub id: Uuid,
@@ -41,7 +41,7 @@ pub struct OrgNode {
 }
 
 /// Node type definition (customizable per tenant)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 /// OrgNodeType data transfer object.
 pub struct OrgNodeType {
     pub id: Uuid,
@@ -68,7 +68,7 @@ pub struct OrgTreeNode {
 }
 
 /// Create node request
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for CreateNode.
 pub struct CreateNodeRequest {
     pub parent_id: Option<Uuid>,
@@ -83,7 +83,7 @@ pub struct CreateNodeRequest {
 }
 
 /// Update node request
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for UpdateNode.
 pub struct UpdateNodeRequest {
     #[validate(length(min = 1, max = 255))]
@@ -96,14 +96,14 @@ pub struct UpdateNodeRequest {
 }
 
 /// Move node request
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for MoveNode.
 pub struct MoveNodeRequest {
     pub new_parent_id: Option<Uuid>,
 }
 
 /// Create node type request
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for CreateNodeType.
 pub struct CreateNodeTypeRequest {
     #[validate(length(min = 1, max = 50))]
@@ -131,6 +131,17 @@ pub struct TreeQueryParams {
 // ============================================================================
 
 /// Get the full organizational tree
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/org/tree",
+    responses(
+        (status = 200, description = "Full organizational tree"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Org"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_tree(
@@ -201,6 +212,20 @@ pub async fn get_tree(
 }
 
 /// Create a new organization node
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/org/nodes",
+    request_body = CreateNodeRequest,
+    responses(
+        (status = 201, description = "Organization node created", body = OrgNode),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Parent node not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Org"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_node(
@@ -279,6 +304,19 @@ pub async fn create_node(
 }
 
 /// Get a single organization node
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/org/nodes/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Node ID")),
+    responses(
+        (status = 200, description = "Organization node found", body = OrgNode),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Node not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Org"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_node(
@@ -305,6 +343,21 @@ pub async fn get_node(
 }
 
 /// Update an organization node
+#[utoipa::path(
+    put,
+    path = "/api/v1/workforce/org/nodes/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Node ID")),
+    request_body = UpdateNodeRequest,
+    responses(
+        (status = 200, description = "Organization node updated", body = OrgNode),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Node not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Org"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_node(
@@ -359,6 +412,20 @@ pub async fn update_node(
 }
 
 /// Delete an organization node
+#[utoipa::path(
+    delete,
+    path = "/api/v1/workforce/org/nodes/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Node ID")),
+    responses(
+        (status = 204, description = "Organization node deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Node not found"),
+        (status = 409, description = "Node has children or employees"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Org"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_node(
@@ -450,6 +517,22 @@ pub async fn delete_node(
 }
 
 /// Move a node to a new parent
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/org/nodes/{id}/move",
+    params(("id" = uuid::Uuid, Path, description = "Node ID")),
+    request_body = MoveNodeRequest,
+    responses(
+        (status = 200, description = "Node moved"),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Node not found"),
+        (status = 409, description = "Circular reference detected"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Org"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn move_node(
@@ -532,6 +615,18 @@ pub async fn move_node(
 }
 
 /// Get direct children of a node
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/org/nodes/{id}/children",
+    params(("id" = uuid::Uuid, Path, description = "Node ID")),
+    responses(
+        (status = 200, description = "Direct children of the node"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Org"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_children(
@@ -560,6 +655,18 @@ pub async fn get_children(
 }
 
 /// Get all descendants of a node (using closure table)
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/org/nodes/{id}/descendants",
+    params(("id" = uuid::Uuid, Path, description = "Node ID")),
+    responses(
+        (status = 200, description = "All descendants of the node"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Org"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_descendants(
@@ -589,6 +696,18 @@ pub async fn get_descendants(
 }
 
 /// Get all ancestors of a node (path to root)
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/org/nodes/{id}/ancestors",
+    params(("id" = uuid::Uuid, Path, description = "Node ID")),
+    responses(
+        (status = 200, description = "Ancestor path to root"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Org"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_ancestors(
@@ -618,6 +737,17 @@ pub async fn get_ancestors(
 }
 
 /// List all node types for tenant
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/org/node-types",
+    responses(
+        (status = 200, description = "List of organization node types"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Org"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_node_types(
@@ -644,6 +774,19 @@ pub async fn list_node_types(
 }
 
 /// Create a new node type
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/org/node-types",
+    request_body = CreateNodeTypeRequest,
+    responses(
+        (status = 201, description = "Node type created", body = OrgNodeType),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Org"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_node_type(
@@ -691,6 +834,20 @@ pub async fn create_node_type(
 }
 
 /// Delete a node type
+#[utoipa::path(
+    delete,
+    path = "/api/v1/workforce/org/node-types/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Node type ID")),
+    responses(
+        (status = 204, description = "Node type deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Node type not found"),
+        (status = 409, description = "Node type is in use"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Org"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_node_type(

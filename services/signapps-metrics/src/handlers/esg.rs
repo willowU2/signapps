@@ -9,7 +9,7 @@ use crate::AppState;
 // Models
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// EsgScore data transfer object.
 pub struct EsgScore {
     pub id: Uuid,
@@ -20,7 +20,7 @@ pub struct EsgScore {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// EsgQuarterly data transfer object.
 pub struct EsgQuarterly {
     pub id: Uuid,
@@ -30,7 +30,7 @@ pub struct EsgQuarterly {
     pub score: f64,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
 /// Request body for UpsertEsgScore.
 pub struct UpsertEsgScoreRequest {
     pub category: String,
@@ -38,7 +38,7 @@ pub struct UpsertEsgScoreRequest {
     pub trend: Option<String>,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
 /// Request body for UpsertEsgQuarterly.
 pub struct UpsertEsgQuarterlyRequest {
     pub quarter: i32,
@@ -51,6 +51,17 @@ pub struct UpsertEsgQuarterlyRequest {
 // ---------------------------------------------------------------------------
 
 /// GET /api/v1/esg/scores
+#[utoipa::path(
+    get,
+    path = "/api/v1/esg/scores",
+    responses(
+        (status = 200, description = "ESG scores for the tenant", body = Vec<EsgScore>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_esg_scores(
@@ -73,6 +84,19 @@ pub async fn get_esg_scores(
 }
 
 /// PUT /api/v1/esg/scores
+#[utoipa::path(
+    put,
+    path = "/api/v1/esg/scores",
+    request_body = UpsertEsgScoreRequest,
+    responses(
+        (status = 200, description = "ESG score upserted", body = EsgScore),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn upsert_esg_score(
@@ -110,6 +134,17 @@ pub async fn upsert_esg_score(
 // ---------------------------------------------------------------------------
 
 /// GET /api/v1/esg/quarterly
+#[utoipa::path(
+    get,
+    path = "/api/v1/esg/quarterly",
+    responses(
+        (status = 200, description = "Quarterly ESG scores", body = Vec<EsgQuarterly>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_esg_quarterly(
@@ -132,6 +167,19 @@ pub async fn get_esg_quarterly(
 }
 
 /// PUT /api/v1/esg/quarterly
+#[utoipa::path(
+    put,
+    path = "/api/v1/esg/quarterly",
+    request_body = UpsertEsgQuarterlyRequest,
+    responses(
+        (status = 200, description = "Quarterly ESG score upserted", body = EsgQuarterly),
+        (status = 400, description = "Invalid quarter value"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn upsert_esg_quarterly(

@@ -7,7 +7,7 @@ use std::sync::atomic::Ordering;
 use crate::AppState;
 
 /// Proxy status response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for ProxyStatus.
 pub struct ProxyStatusResponse {
     pub http_listener: ListenerStatus,
@@ -18,7 +18,7 @@ pub struct ProxyStatusResponse {
 }
 
 /// Listener status.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// ListenerStatus data transfer object.
 pub struct ListenerStatus {
     pub port: u16,
@@ -26,6 +26,16 @@ pub struct ListenerStatus {
 }
 
 /// Get proxy engine status.
+#[utoipa::path(
+    get,
+    path = "/api/v1/proxy/status",
+    responses(
+        (status = 200, description = "Current proxy engine status", body = ProxyStatusResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_proxy_status(State(state): State<AppState>) -> Json<ProxyStatusResponse> {

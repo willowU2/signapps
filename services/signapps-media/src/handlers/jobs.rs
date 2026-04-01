@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// JobStatus data transfer object.
 pub struct JobStatus {
     pub id: String,
@@ -27,6 +27,22 @@ pub struct JobStatus {
 }
 
 /// Get job status from the in-memory job store
+#[utoipa::path(
+    get,
+    path = "/api/v1/jobs/{id}",
+    params(
+        ("id" = String, Path, description = "Job UUID")
+    ),
+    responses(
+        (status = 200, description = "Job status retrieved", body = JobStatus),
+        (status = 400, description = "Invalid job ID"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Job not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Jobs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_job_status(

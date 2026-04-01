@@ -22,6 +22,17 @@ pub struct TopPostsQuery {
     pub limit: Option<i64>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/analytics/overview",
+    responses(
+        (status = 200, description = "Analytics overview"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Analytics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn overview(
@@ -104,6 +115,17 @@ pub async fn overview(
 }
 
 /// GET /social/analytics/followers?days=30
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/analytics/followers",
+    responses(
+        (status = 200, description = "Follower timeline data"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Analytics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn followers_timeline(
@@ -150,6 +172,17 @@ pub async fn followers_timeline(
 }
 
 /// GET /social/analytics/by-platform
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/analytics/by-platform",
+    responses(
+        (status = 200, description = "Analytics grouped by platform"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Analytics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn by_platform(
@@ -196,6 +229,17 @@ pub async fn by_platform(
 }
 
 /// GET /social/analytics/top-posts?limit=10
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/analytics/top-posts",
+    responses(
+        (status = 200, description = "Top performing posts"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Analytics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn top_posts(
@@ -230,6 +274,19 @@ pub async fn top_posts(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/analytics/posts/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Post ID")),
+    responses(
+        (status = 200, description = "Analytics for a specific post"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Post not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Analytics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn post_analytics(

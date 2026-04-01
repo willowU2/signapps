@@ -22,8 +22,26 @@ const MAX_CONNECTIONS: usize = 1000;
 /// Global counter for active WebSocket connections.
 static ACTIVE_CONNECTIONS: AtomicUsize = AtomicUsize::new(0);
 
-/// WebSocket handler for collaborative document editing
-/// Endpoint: GET /api/v1/collab/ws/:doc_id?token=JWT_TOKEN
+/// WebSocket handler for collaborative document editing (Y.js/CRDT)
+///
+/// Clients connect to this endpoint and exchange Y.js binary update messages
+/// to collaboratively edit documents in real-time. Authentication is provided
+/// via the `Authorization` header or `?token=` query parameter.
+#[utoipa::path(
+    get,
+    path = "/api/v1/collab/ws/{doc_id}",
+    params(
+        ("doc_id" = String, Path, description = "Document UUID to collaborate on")
+    ),
+    responses(
+        (status = 101, description = "WebSocket upgrade — Y.js CRDT collaborative editing"),
+        (status = 400, description = "Invalid document ID format"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "Too many active connections"),
+    ),
+    security(("bearer" = [])),
+    tag = "Collab"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn websocket_handler(

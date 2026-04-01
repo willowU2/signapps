@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 /// TLS certificate stored in the database.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Certificate {
     pub id: Uuid,
     pub domain: String,
@@ -23,6 +24,7 @@ pub struct Certificate {
 
 /// Request to upload a certificate manually.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreateCertificate {
     pub domain: String,
     pub cert_pem: String,
@@ -40,6 +42,7 @@ fn default_true() -> bool {
 
 /// ACME account for Let's Encrypt.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct AcmeAccount {
     pub id: Uuid,
     pub email: String,

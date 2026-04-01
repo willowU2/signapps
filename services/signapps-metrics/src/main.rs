@@ -211,6 +211,7 @@ fn create_router(state: AppState) -> Router {
 
     // Combine all routes
     Router::new()
+        .merge(handlers::openapi::swagger_router())
         .merge(public_routes)
         .merge(protected_routes)
         .merge(admin_routes)

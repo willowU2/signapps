@@ -20,7 +20,17 @@ use tokio::sync::mpsc;
 
 use crate::AppState;
 
-/// WebSocket upgrade handler for voice pipeline.
+/// WebSocket upgrade handler for voice pipeline (STT → LLM → TTS full-duplex)
+#[utoipa::path(
+    get,
+    path = "/api/v1/voice",
+    responses(
+        (status = 101, description = "WebSocket upgrade — full-duplex voice pipeline"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Voice"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn voice_ws(

@@ -13,7 +13,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 /// Block IP request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for BlockIp.
 pub struct BlockIpRequest {
     pub ip: String,
@@ -21,7 +21,7 @@ pub struct BlockIpRequest {
 }
 
 /// Block response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Block.
 pub struct BlockResponse {
     pub route_id: Uuid,
@@ -31,6 +31,17 @@ pub struct BlockResponse {
 }
 
 /// Get shield statistics.
+#[utoipa::path(
+    get,
+    path = "/api/v1/shield/stats",
+    responses(
+        (status = 200, description = "Shield statistics", body = ShieldStats),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<ShieldStats>> {
@@ -39,6 +50,17 @@ pub async fn get_stats(State(state): State<AppState>) -> Result<Json<ShieldStats
 }
 
 /// Reset shield statistics.
+#[utoipa::path(
+    post,
+    path = "/api/v1/admin/shield/stats/reset",
+    responses(
+        (status = 204, description = "Statistics reset"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn reset_stats(State(state): State<AppState>) -> Result<StatusCode> {
@@ -48,6 +70,21 @@ pub async fn reset_stats(State(state): State<AppState>) -> Result<StatusCode> {
 }
 
 /// Block an IP for a route.
+#[utoipa::path(
+    post,
+    path = "/api/v1/shield/{route_id}/block",
+    params(
+        ("route_id" = Uuid, Path, description = "Route ID")
+    ),
+    request_body = BlockIpRequest,
+    responses(
+        (status = 200, description = "IP blocked", body = BlockResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn block_ip(
@@ -71,6 +108,21 @@ pub async fn block_ip(
 }
 
 /// Unblock an IP for a route.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/shield/{route_id}/block/{ip}",
+    params(
+        ("route_id" = Uuid, Path, description = "Route ID"),
+        ("ip" = String, Path, description = "IP address to unblock")
+    ),
+    responses(
+        (status = 204, description = "IP unblocked"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn unblock_ip(
@@ -85,6 +137,21 @@ pub async fn unblock_ip(
 }
 
 /// Check if an IP is blocked.
+#[utoipa::path(
+    get,
+    path = "/api/v1/shield/{route_id}/check/{ip}",
+    params(
+        ("route_id" = Uuid, Path, description = "Route ID"),
+        ("ip" = String, Path, description = "IP address to check")
+    ),
+    responses(
+        (status = 200, description = "Block status for the IP"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn check_blocked(

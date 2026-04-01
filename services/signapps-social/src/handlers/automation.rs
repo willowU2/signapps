@@ -20,6 +20,17 @@ use crate::{
 // RSS Feeds
 // ---------------------------------------------------------------------------
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/rss-feeds",
+    responses(
+        (status = 200, description = "List of RSS feeds"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Automation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_rss_feeds(
@@ -46,6 +57,19 @@ pub async fn list_rss_feeds(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/rss-feeds",
+    request_body = crate::models::CreateRssFeedRequest,
+    responses(
+        (status = 201, description = "RSS feed created", body = crate::models::RssFeed),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Automation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_rss_feed(
@@ -93,6 +117,19 @@ pub async fn create_rss_feed(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/social/rss-feeds/{id}",
+    params(("id" = uuid::Uuid, Path, description = "RSS feed ID")),
+    responses(
+        (status = 204, description = "RSS feed deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "RSS feed not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Automation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_rss_feed(
@@ -119,6 +156,17 @@ pub async fn delete_rss_feed(
 // Templates
 // ---------------------------------------------------------------------------
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/templates",
+    responses(
+        (status = 200, description = "List of post templates"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Automation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_templates(
@@ -144,6 +192,19 @@ pub async fn list_templates(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/templates",
+    request_body = crate::models::CreateTemplateRequest,
+    responses(
+        (status = 201, description = "Template created", body = crate::models::PostTemplate),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Automation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_template(
@@ -181,6 +242,19 @@ pub async fn create_template(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/social/templates/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Template ID")),
+    responses(
+        (status = 204, description = "Template deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Template not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Automation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_template(
@@ -204,6 +278,20 @@ pub async fn delete_template(
 }
 
 /// PATCH /api/v1/social/templates/:id — SYNC-SOCIAL-TMPLUPDATE
+#[utoipa::path(
+    patch,
+    path = "/api/v1/social/templates/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Template ID")),
+    responses(
+        (status = 200, description = "Template updated", body = crate::models::PostTemplate),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Template not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Automation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_template(
@@ -251,6 +339,19 @@ pub async fn update_template(
 }
 
 /// POST /api/v1/social/rss-feeds/:id/check — SYNC-SOCIAL-RSSCHECK
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/rss-feeds/{id}/check",
+    params(("id" = uuid::Uuid, Path, description = "RSS feed ID")),
+    responses(
+        (status = 200, description = "RSS feed check scheduled"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "RSS feed not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Automation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn check_rss_feed_now(
@@ -288,6 +389,19 @@ pub async fn check_rss_feed_now(
 }
 
 /// GET /api/v1/social/ai/smart-replies/:inbox_item_id — SYNC-SOCIAL-SMARTREPLY
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/ai/smart-replies/{inbox_item_id}",
+    params(("inbox_item_id" = uuid::Uuid, Path, description = "Inbox item ID")),
+    responses(
+        (status = 200, description = "Smart reply suggestions"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Inbox item not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Automation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn ai_smart_replies(
@@ -358,6 +472,19 @@ pub async fn ai_smart_replies(
 // AI endpoints (local Ollama / signapps-ai delegation)
 // ---------------------------------------------------------------------------
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/ai/generate",
+    request_body = crate::models::AiGenerateRequest,
+    responses(
+        (status = 200, description = "AI-generated content draft"),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Automation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn ai_generate(Json(payload): Json<AiGenerateRequest>) -> impl IntoResponse {
@@ -376,6 +503,19 @@ pub async fn ai_generate(Json(payload): Json<AiGenerateRequest>) -> impl IntoRes
     )
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/ai/hashtags",
+    request_body = crate::models::AiHashtagsRequest,
+    responses(
+        (status = 200, description = "Hashtag suggestions"),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Automation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn ai_hashtags(Json(payload): Json<AiHashtagsRequest>) -> impl IntoResponse {
@@ -392,6 +532,19 @@ pub async fn ai_hashtags(Json(payload): Json<AiHashtagsRequest>) -> impl IntoRes
     )
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/ai/best-time",
+    request_body = crate::models::AiBestTimeRequest,
+    responses(
+        (status = 200, description = "Best posting time suggestions"),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Automation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn ai_best_time(

@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 /// Backup profile entity.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct BackupProfile {
     pub id: Uuid,
     pub name: String,
@@ -25,6 +26,7 @@ pub struct BackupProfile {
 
 /// Create backup profile request.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreateBackupProfile {
     pub name: String,
     pub container_ids: Vec<Uuid>,
@@ -37,6 +39,7 @@ pub struct CreateBackupProfile {
 
 /// Update backup profile request.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpdateBackupProfile {
     pub name: Option<String>,
     pub container_ids: Option<Vec<Uuid>>,
@@ -49,6 +52,7 @@ pub struct UpdateBackupProfile {
 
 /// Backup run entity.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct BackupRun {
     pub id: Uuid,
     pub profile_id: Uuid,
@@ -82,6 +86,7 @@ pub struct RetentionPolicy {
 
 /// Drive backup plan entity.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct BackupPlan {
     pub id: Uuid,
     pub name: String,
@@ -100,6 +105,7 @@ pub struct BackupPlan {
 
 /// Request to create a backup plan.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreateBackupPlan {
     pub name: String,
     #[serde(default = "default_schedule")]
@@ -136,6 +142,7 @@ fn default_true() -> bool {
 
 /// Request to update a backup plan.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpdateBackupPlan {
     pub name: Option<String>,
     pub schedule: Option<String>,
@@ -149,6 +156,7 @@ pub struct UpdateBackupPlan {
 
 /// Drive backup snapshot entity.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct BackupSnapshot {
     pub id: Uuid,
     pub plan_id: Uuid,
@@ -165,6 +173,7 @@ pub struct BackupSnapshot {
 
 /// Drive backup entry (one file per entry).
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct BackupEntry {
     pub id: Uuid,
     pub snapshot_id: Uuid,
@@ -178,6 +187,7 @@ pub struct BackupEntry {
 
 /// Request body for restore operation.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct RestoreRequest {
     pub snapshot_id: Uuid,
     pub node_path: Option<String>,

@@ -7,6 +7,17 @@ use signapps_db::repositories::RouteRepository;
 use crate::AppState;
 
 /// Get current proxy configuration summary.
+#[utoipa::path(
+    get,
+    path = "/api/v1/config/proxy",
+    responses(
+        (status = 200, description = "Proxy configuration summary"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_proxy_config(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
@@ -27,6 +38,17 @@ pub async fn get_proxy_config(State(state): State<AppState>) -> Result<Json<serd
 }
 
 /// Get proxy overview stats.
+#[utoipa::path(
+    get,
+    path = "/api/v1/config/proxy/overview",
+    responses(
+        (status = 200, description = "Proxy overview statistics"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_proxy_overview(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
@@ -53,6 +75,17 @@ pub async fn get_proxy_overview(State(state): State<AppState>) -> Result<Json<se
 }
 
 /// Force route cache refresh.
+#[utoipa::path(
+    post,
+    path = "/api/v1/admin/config/refresh",
+    responses(
+        (status = 200, description = "Cache refreshed successfully"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn refresh_config(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {

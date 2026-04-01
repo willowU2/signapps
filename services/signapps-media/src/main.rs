@@ -283,6 +283,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .merge(handlers::openapi::swagger_router())
         .layer(cors)
         .layer(axum::extract::DefaultBodyLimit::max(10 * 1024 * 1024))
         .with_state(state);

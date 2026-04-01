@@ -129,6 +129,15 @@ pub async fn import_xlsx(mut multipart: Multipart) -> Response {
         .into_response()
 }
 
+/// GET /api/v1/spreadsheet/info — get spreadsheet service info
+#[utoipa::path(
+    get,
+    path = "/api/v1/spreadsheet/info",
+    responses(
+        (status = 200, description = "Spreadsheet service info"),
+    ),
+    tag = "Spreadsheet"
+)]
 /// Get spreadsheet format information
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -157,6 +166,17 @@ pub struct ExportParams {
     pub format: Option<String>,
 }
 
+/// POST /api/v1/spreadsheet/export — export spreadsheet JSON to XLSX, CSV, or ODS
+#[utoipa::path(
+    post,
+    path = "/api/v1/spreadsheet/export",
+    params(("format" = Option<String>, Query, description = "Output format: xlsx (default), csv, ods")),
+    responses(
+        (status = 200, description = "Spreadsheet binary"),
+        (status = 400, description = "Unsupported format or export failed"),
+    ),
+    tag = "Spreadsheet"
+)]
 /// Export spreadsheet JSON data to specified format (XLSX or CSV)
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -181,6 +201,16 @@ pub async fn export_spreadsheet(
     }
 }
 
+/// POST /api/v1/spreadsheet/export/csv — export spreadsheet JSON to CSV
+#[utoipa::path(
+    post,
+    path = "/api/v1/spreadsheet/export/csv",
+    responses(
+        (status = 200, description = "CSV file"),
+        (status = 400, description = "Export failed"),
+    ),
+    tag = "Spreadsheet"
+)]
 /// Export spreadsheet JSON data to CSV
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -225,6 +255,16 @@ pub async fn export_csv_handler(Json(payload): Json<serde_json::Value>) -> Respo
     }
 }
 
+/// POST /api/v1/spreadsheet/export/ods — export spreadsheet JSON to ODS
+#[utoipa::path(
+    post,
+    path = "/api/v1/spreadsheet/export/ods",
+    responses(
+        (status = 200, description = "ODS file"),
+        (status = 400, description = "Export failed"),
+    ),
+    tag = "Spreadsheet"
+)]
 /// Export spreadsheet JSON data to ODS (OpenDocument Spreadsheet)
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -267,7 +307,7 @@ pub async fn export_ods_handler(Json(payload): Json<serde_json::Value>) -> Respo
 }
 
 /// Import CSV from text content
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for CsvImport.
 pub struct CsvImportRequest {
     pub content: String,
@@ -275,6 +315,17 @@ pub struct CsvImportRequest {
     pub has_headers: Option<bool>,
 }
 
+/// POST /api/v1/spreadsheet/import/csv — import CSV text to spreadsheet JSON
+#[utoipa::path(
+    post,
+    path = "/api/v1/spreadsheet/import/csv",
+    request_body = CsvImportRequest,
+    responses(
+        (status = 200, description = "Imported spreadsheet JSON"),
+        (status = 400, description = "Import failed"),
+    ),
+    tag = "Spreadsheet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn import_csv_text(Json(payload): Json<CsvImportRequest>) -> Response {
@@ -316,6 +367,16 @@ pub async fn import_csv_text(Json(payload): Json<CsvImportRequest>) -> Response 
     }
 }
 
+/// POST /api/v1/spreadsheet/import — import XLSX/CSV/ODS from multipart upload
+#[utoipa::path(
+    post,
+    path = "/api/v1/spreadsheet/import",
+    responses(
+        (status = 200, description = "Imported spreadsheet JSON"),
+        (status = 400, description = "No file or unsupported format"),
+    ),
+    tag = "Spreadsheet"
+)]
 /// Import XLSX or CSV file to JSON (auto-detect format)
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]

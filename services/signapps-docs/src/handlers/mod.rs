@@ -3,6 +3,7 @@ pub mod designs;
 pub mod health;
 pub mod macros;
 pub mod notes;
+pub mod openapi;
 pub mod persistence;
 pub mod templates;
 pub mod types;

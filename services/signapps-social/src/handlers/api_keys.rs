@@ -24,6 +24,17 @@ fn hash_key(key: &str) -> String {
     hex::encode(hasher.finalize())
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/api-keys",
+    responses(
+        (status = 200, description = "List of API keys"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social API Keys"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_api_keys(
@@ -45,6 +56,19 @@ pub async fn list_api_keys(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/api-keys",
+    request_body = crate::models::CreateApiKeyRequest,
+    responses(
+        (status = 201, description = "API key created"),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social API Keys"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_api_key(
@@ -99,6 +123,19 @@ pub async fn create_api_key(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/api-keys/{id}/revoke",
+    params(("id" = uuid::Uuid, Path, description = "API key ID")),
+    responses(
+        (status = 204, description = "API key revoked"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "API key not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social API Keys"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn revoke_api_key(

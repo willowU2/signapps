@@ -18,7 +18,7 @@ use crate::AppState;
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// High-level system overview for the admin dashboard.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// AnalyticsOverview data transfer object.
 pub struct AnalyticsOverview {
     /// Total number of registered users.
@@ -34,7 +34,7 @@ pub struct AnalyticsOverview {
 }
 
 /// Per-user storage consumption entry.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// StorageByUser data transfer object.
 pub struct StorageByUser {
     pub user_id: Uuid,
@@ -48,7 +48,7 @@ pub struct StorageByUser {
 }
 
 /// One cell in the activity heatmap (hour × weekday).
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// ActivityPoint data transfer object.
 pub struct ActivityPoint {
     /// Hour of day (0–23, UTC).
@@ -67,6 +67,17 @@ pub struct ActivityPoint {
 ///
 /// Returns counts of total users, users active today, aggregate storage, number
 /// of known backend services, and current system uptime.
+#[utoipa::path(
+    get,
+    path = "/api/v1/admin/analytics/overview",
+    responses(
+        (status = 200, description = "System analytics overview", body = AnalyticsOverview),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_overview(State(state): State<AppState>) -> Result<Json<AnalyticsOverview>> {
@@ -114,6 +125,17 @@ pub async fn get_overview(State(state): State<AppState>) -> Result<Json<Analytic
 ///
 /// Returns the top 50 storage consumers, sorted by descending used bytes.
 /// Users without a quota record are omitted (they have consumed 0 bytes).
+#[utoipa::path(
+    get,
+    path = "/api/v1/admin/analytics/storage",
+    responses(
+        (status = 200, description = "Per-user storage consumption (top 50)", body = Vec<StorageByUser>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_storage(State(state): State<AppState>) -> Result<Json<Vec<StorageByUser>>> {
@@ -164,6 +186,17 @@ pub async fn get_storage(State(state): State<AppState>) -> Result<Json<Vec<Stora
 /// Returns a 7 × 24 heatmap (weekday × hour) of login activity derived from
 /// `last_login` timestamps in the users table.  This is a lightweight proxy for
 /// request activity that requires no separate audit-log table.
+#[utoipa::path(
+    get,
+    path = "/api/v1/admin/analytics/activity",
+    responses(
+        (status = 200, description = "Activity heatmap (7 days x 24 hours)", body = Vec<ActivityPoint>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_activity(State(state): State<AppState>) -> Result<Json<Vec<ActivityPoint>>> {

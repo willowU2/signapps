@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 /// Request payload for CreatePresentation operation.
 pub struct CreatePresentationRequest {
     pub name: String,
@@ -16,7 +16,7 @@ pub struct CreatePresentationRequest {
     pub theme: String,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 /// Response payload for Presentation operation.
 pub struct PresentationResponse {
     pub id: String,
@@ -42,6 +42,19 @@ pub struct SlidesResponse {
     pub slides: Vec<Slide>,
 }
 
+/// POST /api/v1/docs/slide — create a new presentation
+#[utoipa::path(
+    post,
+    path = "/api/v1/docs/slide",
+    request_body = CreatePresentationRequest,
+    responses(
+        (status = 201, description = "Presentation created", body = PresentationResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Documents"
+)]
 /// Create a new presentation and persist its initial CRDT state to the
 /// database so the first WebSocket client receives a well-formed structure.
 #[tracing::instrument(skip_all)]
@@ -98,6 +111,19 @@ pub async fn create_presentation(
     ))
 }
 
+/// GET /api/v1/docs/slide/:doc_id/slides — get presentation slides
+#[utoipa::path(
+    get,
+    path = "/api/v1/docs/slide/{doc_id}/slides",
+    params(("doc_id" = String, Path, description = "Presentation document ID")),
+    responses(
+        (status = 200, description = "Presentation slides"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Documents"
+)]
 /// Get slides from presentation
 #[tracing::instrument(skip_all)]
 pub async fn get_slides(

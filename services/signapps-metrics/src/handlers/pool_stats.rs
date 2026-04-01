@@ -13,7 +13,7 @@ use crate::AppState;
 use signapps_common::Result;
 
 /// Pool statistics response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// PoolStats data transfer object.
 pub struct PoolStats {
     /// Total connections currently held (active + idle).
@@ -29,6 +29,18 @@ pub struct PoolStats {
     pub at_capacity: bool,
 }
 
+/// Get database connection pool statistics.
+#[utoipa::path(
+    get,
+    path = "/api/v1/system/pool-stats",
+    responses(
+        (status = 200, description = "Database connection pool statistics", body = PoolStats),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_pool_stats(State(state): State<AppState>) -> Result<Json<PoolStats>> {

@@ -3,6 +3,7 @@
 pub mod certificates;
 pub mod config;
 pub mod health;
+pub mod openapi;
 pub mod proxy_status;
 pub mod routes;
 pub mod shield;

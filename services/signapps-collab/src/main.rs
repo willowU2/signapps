@@ -76,6 +76,8 @@ async fn main() -> anyhow::Result<()> {
 
     // Build router
     let app = Router::new()
+        // OpenAPI / Swagger UI
+        .merge(handlers::openapi::swagger_router())
         // Health check
         .route("/health", get(health_handler))
 

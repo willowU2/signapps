@@ -14,7 +14,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 /// Certificate response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Certificate.
 pub struct CertificateResponse {
     pub id: Uuid,
@@ -43,6 +43,17 @@ impl From<Certificate> for CertificateResponse {
 }
 
 /// List all certificates.
+#[utoipa::path(
+    get,
+    path = "/api/v1/certificates",
+    responses(
+        (status = 200, description = "List of certificates", body = Vec<CertificateResponse>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_certificates(
@@ -58,6 +69,19 @@ pub async fn list_certificates(
 }
 
 /// Upload a certificate manually.
+#[utoipa::path(
+    post,
+    path = "/api/v1/certificates",
+    request_body = CreateCertificate,
+    responses(
+        (status = 201, description = "Certificate uploaded", body = CertificateResponse),
+        (status = 400, description = "Invalid certificate format"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn upload_certificate(
@@ -89,13 +113,26 @@ pub async fn upload_certificate(
 }
 
 /// Request body for ACME certificate request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for RequestCertificateBody.
 pub struct RequestCertificateBody {
     pub domain: String,
 }
 
 /// Request a certificate via ACME (Let's Encrypt).
+#[utoipa::path(
+    post,
+    path = "/api/v1/certificates/request",
+    request_body = RequestCertificateBody,
+    responses(
+        (status = 200, description = "Certificate request queued"),
+        (status = 400, description = "Invalid request or ACME not enabled"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn request_certificate(
@@ -125,6 +162,21 @@ pub async fn request_certificate(
 }
 
 /// Renew an existing certificate.
+#[utoipa::path(
+    post,
+    path = "/api/v1/certificates/{id}/renew",
+    params(
+        ("id" = Uuid, Path, description = "Certificate ID")
+    ),
+    responses(
+        (status = 200, description = "Certificate renewal queued"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Certificate not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn renew_certificate(
@@ -152,6 +204,21 @@ pub async fn renew_certificate(
 }
 
 /// Delete a certificate.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/certificates/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Certificate ID")
+    ),
+    responses(
+        (status = 204, description = "Certificate deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Certificate not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_certificate(

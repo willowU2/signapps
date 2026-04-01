@@ -14,7 +14,7 @@ use crate::AppState;
 // Models
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// VideoMessage data transfer object.
 pub struct VideoMessage {
     pub id: Uuid,
@@ -27,7 +27,7 @@ pub struct VideoMessage {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
 /// Request body for CreateVideoMessage.
 pub struct CreateVideoMessageRequest {
     pub recipient_id: Uuid,
@@ -40,6 +40,18 @@ pub struct CreateVideoMessageRequest {
 // Handlers
 // ---------------------------------------------------------------------------
 
+/// List video messages for the authenticated user
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/video-messages",
+    responses(
+        (status = 200, description = "List of video messages", body = Vec<VideoMessage>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_video_messages(
@@ -69,6 +81,19 @@ pub async fn list_video_messages(
     }
 }
 
+/// Create a new video message
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/video-messages",
+    request_body = CreateVideoMessageRequest,
+    responses(
+        (status = 201, description = "Video message created", body = VideoMessage),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_video_message(
@@ -108,6 +133,20 @@ pub async fn create_video_message(
     }
 }
 
+/// Mark a video message as read
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/video-messages/{id}/read",
+    params(("id" = Uuid, Path, description = "Video message ID")),
+    responses(
+        (status = 200, description = "Video message marked as read"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Video message not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn mark_video_message_read(
@@ -142,6 +181,20 @@ pub async fn mark_video_message_read(
     }
 }
 
+/// Delete a video message
+#[utoipa::path(
+    delete,
+    path = "/api/v1/meet/video-messages/{id}",
+    params(("id" = Uuid, Path, description = "Video message ID")),
+    responses(
+        (status = 204, description = "Video message deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Video message not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_video_message(

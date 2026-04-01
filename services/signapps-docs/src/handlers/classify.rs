@@ -15,7 +15,7 @@ use crate::AppState;
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for Classify.
 pub struct ClassifyRequest {
     /// Document ID (optional – used only for audit).
@@ -26,7 +26,7 @@ pub struct ClassifyRequest {
     pub content_preview: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Classify.
 pub struct ClassifyResponse {
     pub document_id: Option<Uuid>,
@@ -35,7 +35,7 @@ pub struct ClassifyResponse {
     pub method: ClassificationMethod,
 }
 
-#[derive(Debug, Serialize, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Serialize, Clone, Copy, PartialEq, Eq, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 /// Enum representing DocumentCategory variants.
 pub enum DocumentCategory {
@@ -51,7 +51,7 @@ pub enum DocumentCategory {
     Other,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 /// Enum representing ClassificationMethod variants.
 pub enum ClassificationMethod {
@@ -178,7 +178,20 @@ fn classify_by_keywords(title: &str, content: &str) -> Option<(DocumentCategory,
 // Handler
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// POST /api/v1/docs/classify
+/// POST /api/v1/docs/classify — Classify a document by content heuristics or LLM
+#[utoipa::path(
+    post,
+    path = "/api/v1/docs/classify",
+    request_body = ClassifyRequest,
+    responses(
+        (status = 200, description = "Classification result", body = ClassifyResponse),
+        (status = 400, description = "Bad request — title is required"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Documents"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn classify_document(

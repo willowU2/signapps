@@ -30,3 +30,5 @@ async-trait = { workspace = true }
 thiserror = { workspace = true }
 validator = { workspace = true }
 reqwest = { workspace = true }
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }

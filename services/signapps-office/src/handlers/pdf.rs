@@ -13,7 +13,7 @@ use crate::pdf::{
 };
 
 /// PDF info response
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for PdfInfo.
 pub struct PdfInfoResponse {
     pub service: &'static str,
@@ -21,6 +21,15 @@ pub struct PdfInfoResponse {
     pub operations: Vec<&'static str>,
 }
 
+/// GET /api/v1/pdf/info — get PDF operations service info
+#[utoipa::path(
+    get,
+    path = "/api/v1/pdf/info",
+    responses(
+        (status = 200, description = "PDF service info", body = PdfInfoResponse),
+    ),
+    tag = "PDF"
+)]
 /// Get PDF operations info
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -32,6 +41,17 @@ pub async fn pdf_info() -> Json<PdfInfoResponse> {
     })
 }
 
+/// POST /api/v1/pdf/extract-text — extract text from a PDF (multipart upload)
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/extract-text",
+    responses(
+        (status = 200, description = "Extracted text"),
+        (status = 400, description = "No file provided or read error"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "PDF"
+)]
 /// Extract text from a PDF
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -81,6 +101,17 @@ pub async fn extract_pdf_text(mut multipart: Multipart) -> Response {
     }
 }
 
+/// POST /api/v1/pdf/document-info — get PDF document metadata (multipart upload)
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/document-info",
+    responses(
+        (status = 200, description = "PDF document metadata"),
+        (status = 400, description = "No file provided or read error"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "PDF"
+)]
 /// Get PDF document info
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -126,6 +157,17 @@ pub async fn get_pdf_document_info(mut multipart: Multipart) -> Response {
     }
 }
 
+/// POST /api/v1/pdf/pages — get page dimensions for a PDF (multipart upload)
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pages",
+    responses(
+        (status = 200, description = "Page dimensions"),
+        (status = 400, description = "No file provided or read error"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "PDF"
+)]
 /// Get page dimensions for all pages
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -184,6 +226,17 @@ pub struct MergeRequest {
     pub files: Vec<String>,
 }
 
+/// POST /api/v1/pdf/merge — merge multiple PDFs from multipart upload
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/merge",
+    responses(
+        (status = 200, description = "Merged PDF binary"),
+        (status = 400, description = "No files provided"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "PDF"
+)]
 /// Merge multiple PDFs from multipart upload
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -245,6 +298,17 @@ pub struct SplitRequest {
     pub ranges: Vec<(u32, u32)>,
 }
 
+/// POST /api/v1/pdf/split — split a PDF by page ranges (multipart upload)
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/split",
+    responses(
+        (status = 200, description = "Split PDF parts as base64"),
+        (status = 400, description = "No file or ranges provided"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "PDF"
+)]
 /// Split a PDF by page ranges
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]

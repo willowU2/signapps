@@ -15,7 +15,7 @@ use signapps_common::Claims;
 // Types
 // ============================================================================
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, utoipa::ToSchema)]
 /// Design data transfer object.
 pub struct Design {
     pub id: Uuid,
@@ -29,7 +29,7 @@ pub struct Design {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for CreateDesign.
 pub struct CreateDesignRequest {
     pub name: String,
@@ -43,7 +43,7 @@ pub struct CreateDesignRequest {
     pub metadata: serde_json::Value,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for UpdateDesign.
 pub struct UpdateDesignRequest {
     pub name: Option<String>,
@@ -64,7 +64,18 @@ fn default_height() -> i32 {
 // Handlers
 // ============================================================================
 
-/// GET /api/v1/designs
+/// GET /api/v1/designs — list designs for the authenticated user
+#[utoipa::path(
+    get,
+    path = "/api/v1/designs",
+    responses(
+        (status = 200, description = "List of designs"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Designs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_designs(
@@ -89,7 +100,20 @@ pub async fn list_designs(
     Ok(Json(serde_json::json!({ "data": rows })))
 }
 
-/// POST /api/v1/designs
+/// POST /api/v1/designs — create a new design
+#[utoipa::path(
+    post,
+    path = "/api/v1/designs",
+    request_body = CreateDesignRequest,
+    responses(
+        (status = 201, description = "Design created", body = Design),
+        (status = 400, description = "Bad request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Designs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_design(
@@ -137,7 +161,20 @@ pub async fn create_design(
     ))
 }
 
-/// GET /api/v1/designs/:id
+/// GET /api/v1/designs/:id — get a design by ID
+#[utoipa::path(
+    get,
+    path = "/api/v1/designs/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Design ID")),
+    responses(
+        (status = 200, description = "Design found", body = Design),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Design not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Designs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_design(
@@ -164,7 +201,21 @@ pub async fn get_design(
     Ok(Json(serde_json::json!({ "data": row })))
 }
 
-/// PUT /api/v1/designs/:id
+/// PUT /api/v1/designs/:id — update a design
+#[utoipa::path(
+    put,
+    path = "/api/v1/designs/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Design ID")),
+    request_body = UpdateDesignRequest,
+    responses(
+        (status = 200, description = "Design updated", body = Design),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Design not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Designs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_design(
@@ -203,7 +254,20 @@ pub async fn update_design(
     Ok(Json(serde_json::json!({ "data": row })))
 }
 
-/// DELETE /api/v1/designs/:id
+/// DELETE /api/v1/designs/:id — delete a design
+#[utoipa::path(
+    delete,
+    path = "/api/v1/designs/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Design ID")),
+    responses(
+        (status = 204, description = "Design deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Design not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Designs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_design(

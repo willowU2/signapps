@@ -49,7 +49,7 @@ pub enum ContractType {
 }
 
 /// Employee record
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 /// Employee data transfer object.
 pub struct Employee {
     pub id: Uuid,
@@ -84,7 +84,7 @@ pub struct EmployeeWithDetails {
 }
 
 /// Function definition (job roles/positions)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 /// FunctionDefinition data transfer object.
 pub struct FunctionDefinition {
     pub id: Uuid,
@@ -100,7 +100,7 @@ pub struct FunctionDefinition {
 }
 
 /// Create employee request
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for CreateEmployee.
 pub struct CreateEmployeeRequest {
     pub user_id: Option<Uuid>,
@@ -122,7 +122,7 @@ pub struct CreateEmployeeRequest {
 }
 
 /// Update employee request
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for UpdateEmployee.
 pub struct UpdateEmployeeRequest {
     pub org_node_id: Option<Uuid>,
@@ -144,21 +144,21 @@ pub struct UpdateEmployeeRequest {
 }
 
 /// Link user request
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for LinkUser.
 pub struct LinkUserRequest {
     pub user_id: Uuid,
 }
 
 /// Update functions request
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for UpdateFunctions.
 pub struct UpdateFunctionsRequest {
     pub functions: Vec<String>,
 }
 
 /// Create function definition request
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for CreateFunctionDefinition.
 pub struct CreateFunctionDefinitionRequest {
     #[validate(length(min = 1, max = 50))]
@@ -172,7 +172,7 @@ pub struct CreateFunctionDefinitionRequest {
 }
 
 /// Update function definition request
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for UpdateFunctionDefinition.
 pub struct UpdateFunctionDefinitionRequest {
     #[validate(length(min = 1, max = 100))]
@@ -212,6 +212,17 @@ pub struct SearchQueryParams {
 // ============================================================================
 
 /// List all employees
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/employees",
+    responses(
+        (status = 200, description = "List of employees"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Employees"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_employees(
@@ -266,6 +277,20 @@ pub async fn list_employees(
 }
 
 /// Create a new employee
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/employees",
+    request_body = CreateEmployeeRequest,
+    responses(
+        (status = 201, description = "Employee created", body = Employee),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Organization node not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Employees"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_employee(
@@ -342,6 +367,19 @@ pub async fn create_employee(
 }
 
 /// Get a single employee
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/employees/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Employee ID")),
+    responses(
+        (status = 200, description = "Employee found", body = Employee),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Employee not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Employees"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_employee(
@@ -423,6 +461,21 @@ pub async fn get_employee(
 }
 
 /// Update an employee
+#[utoipa::path(
+    put,
+    path = "/api/v1/workforce/employees/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Employee ID")),
+    request_body = UpdateEmployeeRequest,
+    responses(
+        (status = 200, description = "Employee updated", body = Employee),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Employee not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Employees"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_employee(
@@ -487,6 +540,19 @@ pub async fn update_employee(
 }
 
 /// Delete an employee (soft delete by setting status to terminated)
+#[utoipa::path(
+    delete,
+    path = "/api/v1/workforce/employees/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Employee ID")),
+    responses(
+        (status = 204, description = "Employee terminated"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Employee not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Employees"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_employee(
@@ -523,6 +589,21 @@ pub async fn delete_employee(
 }
 
 /// Link employee to a user account
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/employees/{id}/link-user",
+    params(("id" = uuid::Uuid, Path, description = "Employee ID")),
+    request_body = LinkUserRequest,
+    responses(
+        (status = 200, description = "Employee linked to user", body = Employee),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Employee not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Employees"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn link_user(
@@ -558,6 +639,19 @@ pub async fn link_user(
 }
 
 /// Unlink employee from user account
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/employees/{id}/unlink-user",
+    params(("id" = uuid::Uuid, Path, description = "Employee ID")),
+    responses(
+        (status = 200, description = "Employee unlinked from user", body = Employee),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Employee not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Employees"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn unlink_user(
@@ -591,6 +685,19 @@ pub async fn unlink_user(
 }
 
 /// Get employee functions
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/employees/{id}/functions",
+    params(("id" = uuid::Uuid, Path, description = "Employee ID")),
+    responses(
+        (status = 200, description = "Employee function definitions"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Employee not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Employees"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_functions(
@@ -638,6 +745,21 @@ pub async fn get_functions(
 }
 
 /// Update employee functions
+#[utoipa::path(
+    put,
+    path = "/api/v1/workforce/employees/{id}/functions",
+    params(("id" = uuid::Uuid, Path, description = "Employee ID")),
+    request_body = UpdateFunctionsRequest,
+    responses(
+        (status = 200, description = "Employee functions updated", body = Employee),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Employee not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Employees"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_functions(
@@ -678,6 +800,18 @@ pub async fn update_functions(
 }
 
 /// List employees by org node (including descendants)
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/employees/by-node/{node_id}",
+    params(("node_id" = uuid::Uuid, Path, description = "Organization node ID")),
+    responses(
+        (status = 200, description = "Employees in the org node subtree"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Employees"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_by_org_node(
@@ -729,6 +863,17 @@ pub async fn list_by_org_node(
 }
 
 /// Search employees by name or employee number
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/employees/search",
+    responses(
+        (status = 200, description = "Matching employees"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Employees"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn search_employees(
@@ -774,6 +919,17 @@ pub async fn search_employees(
 // ============================================================================
 
 /// List all function definitions
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/functions",
+    responses(
+        (status = 200, description = "List of function definitions"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Functions"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_function_definitions(
@@ -800,6 +956,19 @@ pub async fn list_function_definitions(
 }
 
 /// Create a function definition
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/functions",
+    request_body = CreateFunctionDefinitionRequest,
+    responses(
+        (status = 201, description = "Function definition created", body = FunctionDefinition),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Functions"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_function_definition(
@@ -845,6 +1014,21 @@ pub async fn create_function_definition(
 }
 
 /// Update a function definition
+#[utoipa::path(
+    put,
+    path = "/api/v1/workforce/functions/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Function definition ID")),
+    request_body = UpdateFunctionDefinitionRequest,
+    responses(
+        (status = 200, description = "Function definition updated", body = FunctionDefinition),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Function definition not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Functions"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_function_definition(
@@ -893,6 +1077,19 @@ pub async fn update_function_definition(
 }
 
 /// Delete a function definition
+#[utoipa::path(
+    delete,
+    path = "/api/v1/workforce/functions/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Function definition ID")),
+    responses(
+        (status = 204, description = "Function definition deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Function definition not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Functions"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_function_definition(
@@ -924,7 +1121,7 @@ pub async fn delete_function_definition(
 // =============================================================================
 
 /// Result summary for a bulk import operation.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// ImportResult data transfer object.
 pub struct ImportResult {
     pub imported: u32,
@@ -940,6 +1137,18 @@ pub struct ImportResult {
 ///
 /// Employees are created and linked to an org node if `department` matches
 /// an existing org node name for this tenant.
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/employees/import",
+    responses(
+        (status = 200, description = "Import result summary"),
+        (status = 400, description = "Invalid CSV file or no file uploaded"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Employees"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn import_employees(

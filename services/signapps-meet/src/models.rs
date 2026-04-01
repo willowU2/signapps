@@ -77,7 +77,7 @@ pub struct MeetingHistory {
 // Request/Response DTOs
 // ============================================================================
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateRoom operation.
 pub struct CreateRoomRequest {
     pub name: String,
@@ -90,7 +90,7 @@ pub struct CreateRoomRequest {
     pub settings: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdateRoom operation.
 pub struct UpdateRoomRequest {
     pub name: Option<String>,
@@ -103,7 +103,7 @@ pub struct UpdateRoomRequest {
     pub settings: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response payload for Room operation.
 pub struct RoomResponse {
     pub id: Uuid,
@@ -123,14 +123,14 @@ pub struct RoomResponse {
     pub livekit_url: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for JoinRoom operation.
 pub struct JoinRoomRequest {
     pub password: Option<String>,
     pub display_name: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response payload for Token operation.
 pub struct TokenResponse {
     pub token: String,
@@ -138,7 +138,7 @@ pub struct TokenResponse {
     pub room_name: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response payload for Participant operation.
 pub struct ParticipantResponse {
     pub id: Uuid,
@@ -151,14 +151,14 @@ pub struct ParticipantResponse {
     pub is_screen_sharing: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for Mute operation.
 pub struct MuteRequest {
     pub audio: Option<bool>,
     pub video: Option<bool>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response payload for Recording operation.
 pub struct RecordingResponse {
     pub id: Uuid,
@@ -171,7 +171,7 @@ pub struct RecordingResponse {
     pub download_url: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response payload for MeetingHistory operation.
 pub struct MeetingHistoryResponse {
     pub id: Uuid,
@@ -183,7 +183,7 @@ pub struct MeetingHistoryResponse {
     pub had_recording: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response payload for Config operation.
 pub struct ConfigResponse {
     pub livekit_url: String,

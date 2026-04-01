@@ -10,6 +10,18 @@ use crate::models::{CreatePostCommentRequest, PostComment};
 use crate::AppState;
 use signapps_common::Claims;
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/posts/{id}/comments",
+    params(("id" = uuid::Uuid, Path, description = "Post ID")),
+    responses(
+        (status = 200, description = "List of post comments"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Post Comments"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_comments(
@@ -32,6 +44,20 @@ pub async fn list_comments(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/posts/{id}/comments",
+    params(("id" = uuid::Uuid, Path, description = "Post ID")),
+    request_body = crate::models::CreatePostCommentRequest,
+    responses(
+        (status = 201, description = "Comment created", body = crate::models::PostComment),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Post Comments"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_comment(
@@ -60,6 +86,22 @@ pub async fn create_comment(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/social/posts/{post_id}/comments/{id}",
+    params(
+        ("post_id" = uuid::Uuid, Path, description = "Post ID"),
+        ("id" = uuid::Uuid, Path, description = "Comment ID")
+    ),
+    responses(
+        (status = 204, description = "Comment deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Comment not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Post Comments"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_comment(

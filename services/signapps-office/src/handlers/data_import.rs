@@ -11,7 +11,7 @@ use std::collections::HashMap;
 // Types
 // ============================================================================
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 /// ImportResult data transfer object.
 pub struct ImportResult {
     pub format: String,
@@ -22,7 +22,7 @@ pub struct ImportResult {
     pub events: Vec<EventRecord>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 /// ContactRecord data transfer object.
 pub struct ContactRecord {
     pub name: String,
@@ -32,7 +32,7 @@ pub struct ContactRecord {
     pub extra: HashMap<String, String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 /// EventRecord data transfer object.
 pub struct EventRecord {
     pub summary: String,
@@ -46,6 +46,15 @@ pub struct EventRecord {
 // Info endpoint
 // ============================================================================
 
+/// GET /api/v1/data/import/info — get data import service info
+#[utoipa::path(
+    get,
+    path = "/api/v1/data/import/info",
+    responses(
+        (status = 200, description = "Data import service info"),
+    ),
+    tag = "DataImport"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn import_info() -> Json<serde_json::Value> {
@@ -60,7 +69,17 @@ pub async fn import_info() -> Json<serde_json::Value> {
 // Import handler
 // ============================================================================
 
-/// POST /api/v1/data/import — Upload a file and get parsed data back.
+/// POST /api/v1/data/import — upload a file and get parsed data back
+#[utoipa::path(
+    post,
+    path = "/api/v1/data/import",
+    responses(
+        (status = 200, description = "Parsed import result", body = ImportResult),
+        (status = 400, description = "No file or invalid encoding"),
+        (status = 422, description = "Unsupported or malformed format"),
+    ),
+    tag = "DataImport"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn import_data(

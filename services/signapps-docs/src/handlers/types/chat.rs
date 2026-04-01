@@ -10,7 +10,7 @@ use yrs::{ReadTxn, Transact};
 
 use crate::AppState;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateChannel operation.
 pub struct CreateChannelRequest {
     pub name: String,
@@ -20,7 +20,7 @@ pub struct CreateChannelRequest {
     pub is_private: bool,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 /// Response payload for Channel operation.
 pub struct ChannelResponse {
     pub id: String,
@@ -31,6 +31,19 @@ pub struct ChannelResponse {
     pub created_by: String, // uuid
 }
 
+/// POST /api/v1/docs/chat — create a new chat channel
+#[utoipa::path(
+    post,
+    path = "/api/v1/docs/chat",
+    request_body = CreateChannelRequest,
+    responses(
+        (status = 201, description = "Channel created", body = ChannelResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Chat"
+)]
 /// Create a new chat channel
 #[tracing::instrument(skip_all)]
 pub async fn create_channel(
@@ -115,6 +128,18 @@ pub struct ChannelRow {
     pub created_by: Option<Uuid>,
 }
 
+/// GET /api/v1/channels — list all chat channels
+#[utoipa::path(
+    get,
+    path = "/api/v1/channels",
+    responses(
+        (status = 200, description = "List of channels", body = Vec<ChannelResponse>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Chat"
+)]
 /// List all chat channels
 #[tracing::instrument(skip_all)]
 pub async fn get_channels(
@@ -160,6 +185,20 @@ pub async fn get_channels(
     Ok(Json(response))
 }
 
+/// GET /api/v1/channels/:channel_id — get a channel by ID
+#[utoipa::path(
+    get,
+    path = "/api/v1/channels/{channel_id}",
+    params(("channel_id" = uuid::Uuid, Path, description = "Channel ID")),
+    responses(
+        (status = 200, description = "Channel found", body = ChannelResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Channel not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Chat"
+)]
 /// Get a specific channel by ID
 #[tracing::instrument(skip_all)]
 pub async fn get_channel(
@@ -205,7 +244,7 @@ pub async fn get_channel(
     }))
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdateChannel operation.
 pub struct UpdateChannelRequest {
     pub name: Option<String>,
@@ -213,6 +252,21 @@ pub struct UpdateChannelRequest {
     pub is_private: Option<bool>,
 }
 
+/// PUT /api/v1/channels/:channel_id — update a channel
+#[utoipa::path(
+    put,
+    path = "/api/v1/channels/{channel_id}",
+    params(("channel_id" = uuid::Uuid, Path, description = "Channel ID")),
+    request_body = UpdateChannelRequest,
+    responses(
+        (status = 200, description = "Channel updated", body = ChannelResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Channel not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Chat"
+)]
 /// Update a channel
 #[tracing::instrument(skip_all)]
 pub async fn update_channel(
@@ -304,6 +358,20 @@ pub async fn update_channel(
     }))
 }
 
+/// DELETE /api/v1/channels/:channel_id — delete a channel
+#[utoipa::path(
+    delete,
+    path = "/api/v1/channels/{channel_id}",
+    params(("channel_id" = uuid::Uuid, Path, description = "Channel ID")),
+    responses(
+        (status = 204, description = "Channel deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Channel not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Chat"
+)]
 /// Delete a channel
 #[tracing::instrument(skip_all)]
 pub async fn delete_channel(
@@ -379,7 +447,7 @@ pub async fn delete_channel(
 // Channel Members
 // ============================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 /// Represents a channel member.
 pub struct ChannelMember {
     pub user_id: String,
@@ -388,7 +456,7 @@ pub struct ChannelMember {
     pub joined_at: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 /// Request payload for AddMember operation.
 pub struct AddMemberRequest {
     pub user_id: Uuid,
@@ -400,6 +468,19 @@ fn default_role() -> String {
     "member".to_string()
 }
 
+/// GET /api/v1/channels/:channel_id/members — list channel members
+#[utoipa::path(
+    get,
+    path = "/api/v1/channels/{channel_id}/members",
+    params(("channel_id" = uuid::Uuid, Path, description = "Channel ID")),
+    responses(
+        (status = 200, description = "Channel members", body = Vec<ChannelMember>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Chat"
+)]
 /// Get channel members
 #[tracing::instrument(skip_all)]
 pub async fn get_channel_members(
@@ -433,6 +514,21 @@ pub async fn get_channel_members(
     Ok(Json(response))
 }
 
+/// POST /api/v1/channels/:channel_id/members — add a member to a channel
+#[utoipa::path(
+    post,
+    path = "/api/v1/channels/{channel_id}/members",
+    params(("channel_id" = uuid::Uuid, Path, description = "Channel ID")),
+    request_body = AddMemberRequest,
+    responses(
+        (status = 201, description = "Member added", body = ChannelMember),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Channel or user not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Chat"
+)]
 /// Add a member to a channel
 #[tracing::instrument(skip_all)]
 pub async fn add_channel_member(
@@ -498,6 +594,23 @@ pub async fn add_channel_member(
     ))
 }
 
+/// DELETE /api/v1/channels/:channel_id/members/:user_id — remove a member from a channel
+#[utoipa::path(
+    delete,
+    path = "/api/v1/channels/{channel_id}/members/{user_id}",
+    params(
+        ("channel_id" = uuid::Uuid, Path, description = "Channel ID"),
+        ("user_id" = uuid::Uuid, Path, description = "User ID"),
+    ),
+    responses(
+        (status = 204, description = "Member removed"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Member not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Chat"
+)]
 /// Remove a member from a channel
 #[tracing::instrument(skip_all)]
 pub async fn remove_channel_member(
@@ -524,7 +637,7 @@ pub async fn remove_channel_member(
 // Direct Messages
 // ============================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 /// Represents a direct message.
 pub struct DirectMessage {
     pub id: String,
@@ -533,19 +646,31 @@ pub struct DirectMessage {
     pub last_message_at: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 /// Represents a dm participant.
 pub struct DmParticipant {
     pub user_id: String,
     pub username: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateDm operation.
 pub struct CreateDmRequest {
     pub participant_ids: Vec<Uuid>,
 }
 
+/// GET /api/v1/dms — list direct messages for current user
+#[utoipa::path(
+    get,
+    path = "/api/v1/dms",
+    responses(
+        (status = 200, description = "List of direct messages", body = Vec<DirectMessage>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Chat"
+)]
 /// Get direct messages for current user
 #[tracing::instrument(skip_all)]
 pub async fn get_direct_messages(
@@ -599,6 +724,20 @@ pub async fn get_direct_messages(
     Ok(Json(response))
 }
 
+/// POST /api/v1/dms — create a direct message conversation
+#[utoipa::path(
+    post,
+    path = "/api/v1/dms",
+    request_body = CreateDmRequest,
+    responses(
+        (status = 201, description = "DM conversation created", body = DirectMessage),
+        (status = 400, description = "Bad request — participants required"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Chat"
+)]
 /// Create a direct message conversation
 #[tracing::instrument(skip_all)]
 pub async fn create_direct_message(
@@ -679,6 +818,18 @@ pub async fn create_direct_message(
     ))
 }
 
+/// DELETE /api/v1/dms/:id — delete a direct message conversation
+#[utoipa::path(
+    delete,
+    path = "/api/v1/dms/{id}",
+    params(("id" = uuid::Uuid, Path, description = "DM conversation ID")),
+    responses(
+        (status = 204, description = "DM deleted"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Chat"
+)]
 /// Delete a direct message
 #[tracing::instrument(skip_all)]
 pub async fn delete_direct_message(
@@ -695,7 +846,7 @@ pub async fn delete_direct_message(
 // Channel Read Status (Unread Count)
 // ============================================================================
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 /// Represents a channel read status.
 pub struct ChannelReadStatus {
     pub channel_id: String,
@@ -704,6 +855,19 @@ pub struct ChannelReadStatus {
     pub last_read_at: String,
 }
 
+/// GET /api/v1/channels/:channel_id/read-status — get unread count for a channel
+#[utoipa::path(
+    get,
+    path = "/api/v1/channels/{channel_id}/read-status",
+    params(("channel_id" = uuid::Uuid, Path, description = "Channel ID")),
+    responses(
+        (status = 200, description = "Channel read status", body = ChannelReadStatus),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Chat"
+)]
 /// Get read status for a channel (unread count)
 #[tracing::instrument(skip_all)]
 pub async fn get_channel_read_status(
@@ -741,6 +905,19 @@ pub async fn get_channel_read_status(
     }))
 }
 
+/// POST /api/v1/channels/:channel_id/read-status — mark channel as read
+#[utoipa::path(
+    post,
+    path = "/api/v1/channels/{channel_id}/read-status",
+    params(("channel_id" = uuid::Uuid, Path, description = "Channel ID")),
+    responses(
+        (status = 200, description = "Channel marked as read", body = ChannelReadStatus),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Chat"
+)]
 /// Mark channel as read (reset unread count)
 #[tracing::instrument(skip_all)]
 pub async fn mark_channel_read(
@@ -782,6 +959,19 @@ pub async fn mark_channel_read(
     }))
 }
 
+/// POST /api/v1/channels/:channel_id/increment-unread — increment unread count for channel members
+#[utoipa::path(
+    post,
+    path = "/api/v1/channels/{channel_id}/increment-unread",
+    params(("channel_id" = uuid::Uuid, Path, description = "Channel ID")),
+    responses(
+        (status = 200, description = "Unread count incremented"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Chat"
+)]
 /// Increment unread count for all channel members except sender
 /// (Called when a new message is sent)
 #[tracing::instrument(skip_all)]
@@ -816,6 +1006,18 @@ pub async fn increment_unread_count(
     Ok(StatusCode::OK)
 }
 
+/// GET /api/v1/unread-counts — get unread counts for all channels
+#[utoipa::path(
+    get,
+    path = "/api/v1/unread-counts",
+    responses(
+        (status = 200, description = "Unread counts per channel", body = Vec<ChannelReadStatus>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Chat"
+)]
 /// Get unread counts for all channels for a user
 #[tracing::instrument(skip_all)]
 pub async fn get_all_unread_counts(

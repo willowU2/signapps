@@ -23,7 +23,7 @@ use signapps_common::{Claims, TenantContext};
 // ============================================================================
 
 /// Coverage template (reusable weekly pattern)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 /// CoverageTemplate data transfer object.
 pub struct CoverageTemplate {
     pub id: Uuid,
@@ -37,7 +37,7 @@ pub struct CoverageTemplate {
 }
 
 /// Coverage rule (applied to an org node)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 /// CoverageRule data transfer object.
 pub struct CoverageRule {
     pub id: Uuid,
@@ -92,7 +92,7 @@ impl CoverageRuleWithAncestor {
 }
 
 /// Coverage slot definition
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 /// CoverageSlot data transfer object.
 pub struct CoverageSlot {
     pub day_of_week: i32,   // 0=Sunday, 6=Saturday
@@ -105,7 +105,7 @@ pub struct CoverageSlot {
 }
 
 /// Weekly pattern structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 /// WeeklyPattern data transfer object.
 pub struct WeeklyPattern {
     pub monday: Vec<CoverageSlot>,
@@ -130,7 +130,7 @@ pub struct EffectiveCoverage {
 }
 
 /// Create template request
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for CreateTemplate.
 pub struct CreateTemplateRequest {
     #[validate(length(min = 1, max = 255))]
@@ -141,7 +141,7 @@ pub struct CreateTemplateRequest {
 }
 
 /// Update template request
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for UpdateTemplate.
 pub struct UpdateTemplateRequest {
     #[validate(length(min = 1, max = 255))]
@@ -152,7 +152,7 @@ pub struct UpdateTemplateRequest {
 }
 
 /// Create rule request
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for CreateRule.
 pub struct CreateRuleRequest {
     pub org_node_id: Uuid,
@@ -166,7 +166,7 @@ pub struct CreateRuleRequest {
 }
 
 /// Update rule request
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for UpdateRule.
 pub struct UpdateRuleRequest {
     pub template_id: Option<Uuid>,
@@ -194,6 +194,17 @@ pub struct RuleQueryParams {
 // ============================================================================
 
 /// List all coverage templates
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/coverage/templates",
+    responses(
+        (status = 200, description = "List of coverage templates"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Coverage"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_templates(
@@ -220,6 +231,19 @@ pub async fn list_templates(
 }
 
 /// Create a coverage template
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/coverage/templates",
+    request_body = CreateTemplateRequest,
+    responses(
+        (status = 201, description = "Coverage template created", body = CoverageTemplate),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Coverage"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_template(
@@ -282,6 +306,19 @@ pub async fn create_template(
 }
 
 /// Get a single template
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/coverage/templates/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Template ID")),
+    responses(
+        (status = 200, description = "Coverage template found", body = CoverageTemplate),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Template not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Coverage"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_template(
@@ -307,6 +344,21 @@ pub async fn get_template(
 }
 
 /// Update a template
+#[utoipa::path(
+    put,
+    path = "/api/v1/workforce/coverage/templates/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Template ID")),
+    request_body = UpdateTemplateRequest,
+    responses(
+        (status = 200, description = "Coverage template updated", body = CoverageTemplate),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Template not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Coverage"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_template(
@@ -380,6 +432,20 @@ pub async fn update_template(
 }
 
 /// Delete a template
+#[utoipa::path(
+    delete,
+    path = "/api/v1/workforce/coverage/templates/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Template ID")),
+    responses(
+        (status = 204, description = "Coverage template deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Template not found"),
+        (status = 409, description = "Template is in use by rules"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Coverage"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_template(
@@ -424,6 +490,19 @@ pub async fn delete_template(
 }
 
 /// Duplicate a template
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/coverage/templates/{id}/duplicate",
+    params(("id" = uuid::Uuid, Path, description = "Template ID to duplicate")),
+    responses(
+        (status = 201, description = "Coverage template duplicated", body = CoverageTemplate),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Template not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Coverage"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn duplicate_template(
@@ -479,6 +558,17 @@ pub async fn duplicate_template(
 // ============================================================================
 
 /// List all coverage rules
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/coverage/rules",
+    responses(
+        (status = 200, description = "List of coverage rules"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Coverage"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_rules(
@@ -525,6 +615,20 @@ pub async fn list_rules(
 }
 
 /// Create a coverage rule
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/coverage/rules",
+    request_body = CreateRuleRequest,
+    responses(
+        (status = 201, description = "Coverage rule created", body = CoverageRule),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Org node or template not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Coverage"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_rule(
@@ -619,6 +723,19 @@ pub async fn create_rule(
 }
 
 /// Get a single rule
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/coverage/rules/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Rule ID")),
+    responses(
+        (status = 200, description = "Coverage rule found", body = CoverageRule),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Rule not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Coverage"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_rule(
@@ -643,6 +760,21 @@ pub async fn get_rule(
 }
 
 /// Update a rule
+#[utoipa::path(
+    put,
+    path = "/api/v1/workforce/coverage/rules/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Rule ID")),
+    request_body = UpdateRuleRequest,
+    responses(
+        (status = 200, description = "Coverage rule updated", body = CoverageRule),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Rule not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Coverage"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_rule(
@@ -707,6 +839,19 @@ pub async fn update_rule(
 }
 
 /// Delete a rule
+#[utoipa::path(
+    delete,
+    path = "/api/v1/workforce/coverage/rules/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Rule ID")),
+    responses(
+        (status = 204, description = "Coverage rule deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Rule not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Coverage"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_rule(
@@ -734,6 +879,18 @@ pub async fn delete_rule(
 }
 
 /// Get rules by org node
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/coverage/rules/by-node/{node_id}",
+    params(("node_id" = uuid::Uuid, Path, description = "Organization node ID")),
+    responses(
+        (status = 200, description = "Coverage rules for the node"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Coverage"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_rules_by_node(
@@ -772,6 +929,19 @@ pub async fn get_rules_by_node(
 }
 
 /// Get effective coverage for a node (with inheritance)
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/coverage/rules/effective/{node_id}",
+    params(("node_id" = uuid::Uuid, Path, description = "Organization node ID")),
+    responses(
+        (status = 200, description = "Effective coverage for the node"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Node not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Coverage"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_effective_coverage(

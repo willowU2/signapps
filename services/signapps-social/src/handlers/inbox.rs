@@ -18,6 +18,17 @@ pub struct InboxQuery {
     pub item_type: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/inbox",
+    responses(
+        (status = 200, description = "List of inbox items"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Inbox"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_inbox(
@@ -59,6 +70,19 @@ pub async fn list_inbox(
     }
 }
 
+#[utoipa::path(
+    patch,
+    path = "/api/v1/social/inbox/{id}/read",
+    params(("id" = uuid::Uuid, Path, description = "Inbox item ID")),
+    responses(
+        (status = 200, description = "Item marked as read"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Inbox item not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Inbox"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn mark_read(
@@ -94,6 +118,21 @@ pub async fn mark_read(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/inbox/{id}/reply",
+    params(("id" = uuid::Uuid, Path, description = "Inbox item ID")),
+    request_body = crate::models::ReplyRequest,
+    responses(
+        (status = 200, description = "Reply sent"),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Inbox item not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Inbox"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn reply_inbox(

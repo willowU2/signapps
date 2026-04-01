@@ -13,7 +13,7 @@ use crate::{
     AppState,
 };
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for Synthesize.
 pub struct SynthesizeRequest {
     pub text: String,
@@ -34,7 +34,20 @@ pub struct SynthesizeResponse {
     pub voice_used: String,
 }
 
-/// Synthesize speech from text
+/// Synthesize speech from text (returns raw audio bytes)
+#[utoipa::path(
+    post,
+    path = "/api/v1/tts/synthesize",
+    request_body = SynthesizeRequest,
+    responses(
+        (status = 200, description = "Audio data (audio/wav, audio/mpeg, audio/ogg, or audio/flac)"),
+        (status = 400, description = "Invalid input or text too long"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "TTS synthesis failed"),
+    ),
+    security(("bearer" = [])),
+    tag = "TTS"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn synthesize(
@@ -90,7 +103,20 @@ pub async fn synthesize(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
 }
 
-/// Synthesize speech with streaming
+/// Synthesize speech with streaming (chunked audio/wav)
+#[utoipa::path(
+    post,
+    path = "/api/v1/tts/stream",
+    request_body = SynthesizeRequest,
+    responses(
+        (status = 200, description = "Chunked audio/wav stream"),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "TTS stream failed"),
+    ),
+    security(("bearer" = [])),
+    tag = "TTS"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn synthesize_stream(
@@ -128,7 +154,18 @@ pub async fn synthesize_stream(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
 }
 
-/// List available voices
+/// List available TTS voices
+#[utoipa::path(
+    get,
+    path = "/api/v1/tts/voices",
+    responses(
+        (status = 200, description = "List of available voices"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Failed to list voices"),
+    ),
+    security(("bearer" = [])),
+    tag = "TTS"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_voices(

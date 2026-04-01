@@ -15,7 +15,7 @@ use signapps_common::Claims;
 // Types
 // ============================================================================
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, utoipa::ToSchema)]
 /// Macro data transfer object.
 pub struct Macro {
     pub id: Uuid,
@@ -27,14 +27,14 @@ pub struct Macro {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for CreateMacro.
 pub struct CreateMacroRequest {
     pub name: String,
     pub code: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for UpdateMacro.
 pub struct UpdateMacroRequest {
     pub name: Option<String>,
@@ -45,7 +45,19 @@ pub struct UpdateMacroRequest {
 // Handlers
 // ============================================================================
 
-/// GET /api/v1/docs/:doc_id/macros
+/// GET /api/v1/docs/:doc_id/macros — list macros for a document
+#[utoipa::path(
+    get,
+    path = "/api/v1/docs/{doc_id}/macros",
+    params(("doc_id" = uuid::Uuid, Path, description = "Document ID")),
+    responses(
+        (status = 200, description = "List of macros"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Macros"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_macros(
@@ -70,7 +82,21 @@ pub async fn list_macros(
     Ok(Json(serde_json::json!({ "data": rows })))
 }
 
-/// POST /api/v1/docs/:doc_id/macros
+/// POST /api/v1/docs/:doc_id/macros — create a macro for a document
+#[utoipa::path(
+    post,
+    path = "/api/v1/docs/{doc_id}/macros",
+    params(("doc_id" = uuid::Uuid, Path, description = "Document ID")),
+    request_body = CreateMacroRequest,
+    responses(
+        (status = 201, description = "Macro created", body = Macro),
+        (status = 400, description = "Bad request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Macros"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_macro(
@@ -105,7 +131,24 @@ pub async fn create_macro(
     ))
 }
 
-/// PUT /api/v1/docs/:doc_id/macros/:macro_id
+/// PUT /api/v1/docs/:doc_id/macros/:macro_id — update a macro
+#[utoipa::path(
+    put,
+    path = "/api/v1/docs/{doc_id}/macros/{macro_id}",
+    params(
+        ("doc_id" = uuid::Uuid, Path, description = "Document ID"),
+        ("macro_id" = uuid::Uuid, Path, description = "Macro ID"),
+    ),
+    request_body = UpdateMacroRequest,
+    responses(
+        (status = 200, description = "Macro updated", body = Macro),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Macro not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Macros"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_macro(
@@ -137,7 +180,23 @@ pub async fn update_macro(
     Ok(Json(serde_json::json!({ "data": row })))
 }
 
-/// DELETE /api/v1/docs/:doc_id/macros/:macro_id
+/// DELETE /api/v1/docs/:doc_id/macros/:macro_id — delete a macro
+#[utoipa::path(
+    delete,
+    path = "/api/v1/docs/{doc_id}/macros/{macro_id}",
+    params(
+        ("doc_id" = uuid::Uuid, Path, description = "Document ID"),
+        ("macro_id" = uuid::Uuid, Path, description = "Macro ID"),
+    ),
+    responses(
+        (status = 204, description = "Macro deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Macro not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Macros"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_macro(

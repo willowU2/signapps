@@ -40,4 +40,8 @@ signapps-db = { path = "../../crates/signapps-db" }
 signapps-cache = { path = "../../crates/signapps-cache" }
 dotenvy.workspace = true
 
+# OpenAPI
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }
+
 [dev-dependencies]

@@ -10,6 +10,7 @@ pub mod attendance;
 pub mod coverage;
 pub mod employees;
 pub mod learning;
+pub mod openapi;
 pub mod org;
 pub mod validation;
 

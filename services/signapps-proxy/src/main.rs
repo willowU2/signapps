@@ -20,7 +20,8 @@ mod proxy;
 mod shield;
 
 use handlers::{
-    certificates, config, health, proxy_status, routes, shield as shield_handlers, vault_browse,
+    certificates, config, health, openapi, proxy_status, routes, shield as shield_handlers,
+    vault_browse,
 };
 use proxy::acme::{AcmeChallengeStore, AcmeService};
 use proxy::engine::ProxyEngine;
@@ -311,6 +312,7 @@ fn create_router(state: AppState) -> Router {
 
     // Combine all routes
     Router::new()
+        .merge(openapi::swagger_router())
         .merge(root_health)
         .merge(vault_routes)
         .nest("/api/v1", public_routes)

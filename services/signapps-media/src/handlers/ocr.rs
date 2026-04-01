@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 use crate::{ocr::OcrRequest, AppState};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 /// Query parameters for filtering results.
 pub struct OcrQueryParams {
     languages: Option<String>,
@@ -16,7 +16,7 @@ pub struct OcrQueryParams {
     detect_tables: Option<bool>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Ocr.
 pub struct OcrResponse {
     pub success: bool,
@@ -26,7 +26,7 @@ pub struct OcrResponse {
     pub metadata: MetadataResponse,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Page.
 pub struct PageResponse {
     pub page_number: u32,
@@ -35,7 +35,7 @@ pub struct PageResponse {
     pub tables_count: usize,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Metadata.
 pub struct MetadataResponse {
     pub provider: String,
@@ -45,6 +45,20 @@ pub struct MetadataResponse {
 }
 
 /// Extract text from an image
+#[utoipa::path(
+    post,
+    path = "/api/v1/ocr",
+    params(OcrQueryParams),
+    request_body(content_type = "multipart/form-data", description = "Image file"),
+    responses(
+        (status = 200, description = "Text extracted successfully", body = OcrResponse),
+        (status = 400, description = "Invalid input or missing file"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "OCR processing failed"),
+    ),
+    security(("bearer" = [])),
+    tag = "OCR"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn extract_text(
@@ -128,6 +142,20 @@ pub async fn extract_text(
 }
 
 /// Process a multi-page document
+#[utoipa::path(
+    post,
+    path = "/api/v1/ocr/document",
+    params(OcrQueryParams),
+    request_body(content_type = "multipart/form-data", description = "Document file"),
+    responses(
+        (status = 200, description = "Document processed successfully", body = OcrResponse),
+        (status = 400, description = "Invalid input or missing file"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "OCR processing failed"),
+    ),
+    security(("bearer" = [])),
+    tag = "OCR"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn process_document(
@@ -197,7 +225,7 @@ pub async fn process_document(
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for BatchOcr.
 pub struct BatchOcrRequest {
     pub files: Vec<String>,
@@ -206,7 +234,7 @@ pub struct BatchOcrRequest {
     pub detect_tables: Option<bool>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for BatchOcr.
 pub struct BatchOcrResponse {
     pub job_id: String,
@@ -215,6 +243,19 @@ pub struct BatchOcrResponse {
 }
 
 /// Batch process multiple files (async job)
+#[utoipa::path(
+    post,
+    path = "/api/v1/ocr/batch",
+    request_body = BatchOcrRequest,
+    responses(
+        (status = 200, description = "Batch job queued", body = BatchOcrResponse),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "OCR"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn batch_process(

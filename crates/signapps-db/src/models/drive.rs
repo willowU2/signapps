@@ -10,6 +10,7 @@ pub type NodeType = String;
 
 /// Represents a node (folder, file, or document) in the virtual file system
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct DriveNode {
     pub id: Uuid,
     pub parent_id: Option<Uuid>,
@@ -27,6 +28,7 @@ pub struct DriveNode {
 
 /// Request to create a new drive node
 #[derive(Debug, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreateDriveNodeRequest {
     pub parent_id: Option<Uuid>,
     pub name: String,
@@ -39,6 +41,7 @@ pub struct CreateDriveNodeRequest {
 
 /// Request to update an existing drive node
 #[derive(Debug, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpdateDriveNodeRequest {
     pub name: Option<String>,
     pub parent_id: Option<Uuid>,

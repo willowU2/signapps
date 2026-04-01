@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateSheet operation.
 pub struct CreateSheetRequest {
     pub name: String,
@@ -18,7 +18,7 @@ pub struct CreateSheetRequest {
     pub cols: u32,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 /// Response payload for Sheet operation.
 pub struct SheetResponse {
     pub id: String,
@@ -35,6 +35,19 @@ pub struct RowsResponse {
     pub rows: Vec<Vec<String>>,
 }
 
+/// POST /api/v1/docs/sheet — create a new spreadsheet
+#[utoipa::path(
+    post,
+    path = "/api/v1/docs/sheet",
+    request_body = CreateSheetRequest,
+    responses(
+        (status = 201, description = "Sheet created", body = SheetResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Documents"
+)]
 /// Create a new spreadsheet and persist its initial CRDT state to the
 /// database so the first WebSocket client receives a well-formed structure.
 #[tracing::instrument(skip_all)]
@@ -89,6 +102,19 @@ pub async fn create_sheet(
     ))
 }
 
+/// GET /api/v1/docs/sheet/:doc_id/rows — get spreadsheet rows
+#[utoipa::path(
+    get,
+    path = "/api/v1/docs/sheet/{doc_id}/rows",
+    params(("doc_id" = String, Path, description = "Sheet document ID")),
+    responses(
+        (status = 200, description = "Sheet rows"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Documents"
+)]
 /// Get rows from spreadsheet
 #[tracing::instrument(skip_all)]
 pub async fn get_rows(

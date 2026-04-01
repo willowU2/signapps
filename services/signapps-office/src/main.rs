@@ -5,6 +5,8 @@ use axum::{
 use signapps_common::bootstrap::{env_or, init_tracing, load_env};
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 mod api;
 mod converter;
@@ -128,6 +130,10 @@ async fn main() {
         // ═══════════════════════════════════════════════════════════════════════
         .route("/api/v1/office/jobs/convert", post(handlers::jobs::submit_convert_job))
         .route("/api/v1/office/jobs/:id", get(handlers::jobs::get_job_status))
+
+        // OpenAPI / Swagger UI
+        .merge(SwaggerUi::new("/swagger-ui/{_:.*}")
+            .url("/api-docs/openapi.json", handlers::openapi::OfficeApiDoc::openapi()))
 
         // Middleware
         .layer(TraceLayer::new_for_http())

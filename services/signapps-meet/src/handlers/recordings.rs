@@ -14,6 +14,19 @@ use crate::{
 };
 
 /// List recordings for a room
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/rooms/{id}/recordings",
+    params(("id" = Uuid, Path, description = "Room ID")),
+    responses(
+        (status = 200, description = "List of recordings for the room", body = Vec<RecordingResponse>),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Room not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_recordings(
@@ -60,6 +73,20 @@ pub async fn list_recordings(
 }
 
 /// Start a recording
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms/{id}/recordings",
+    params(("id" = Uuid, Path, description = "Room ID")),
+    responses(
+        (status = 200, description = "Recording started", body = RecordingResponse),
+        (status = 400, description = "Room not active or recording already in progress"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Room not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn start_recording(
@@ -136,6 +163,19 @@ pub async fn start_recording(
 }
 
 /// Get a specific recording
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/recordings/{id}",
+    params(("id" = Uuid, Path, description = "Recording ID")),
+    responses(
+        (status = 200, description = "Recording details", body = RecordingResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Recording not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_recording(
@@ -164,6 +204,21 @@ pub async fn get_recording(
 }
 
 /// Stop a recording
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/recordings/{id}/stop",
+    params(("id" = Uuid, Path, description = "Recording ID")),
+    responses(
+        (status = 200, description = "Recording stopped", body = RecordingResponse),
+        (status = 400, description = "Recording is not in progress"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Recording not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn stop_recording(
@@ -229,6 +284,19 @@ pub async fn stop_recording(
 }
 
 /// Get the active (in-progress) recording for a room
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/rooms/{id}/recordings/active",
+    params(("id" = Uuid, Path, description = "Room ID")),
+    responses(
+        (status = 200, description = "Active recording details", body = RecordingResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Room not found or no active recording"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_active_recording(
@@ -266,6 +334,20 @@ pub async fn get_active_recording(
 }
 
 /// Stop the active recording for a room (host convenience endpoint)
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms/{id}/recordings/stop",
+    params(("id" = Uuid, Path, description = "Room ID")),
+    responses(
+        (status = 200, description = "Active recording stopped", body = RecordingResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — only host can stop"),
+        (status = 404, description = "Room not found or no active recording"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn stop_room_recording(
@@ -327,6 +409,21 @@ pub async fn stop_room_recording(
 }
 
 /// Delete a recording
+#[utoipa::path(
+    delete,
+    path = "/api/v1/meet/recordings/{id}",
+    params(("id" = Uuid, Path, description = "Recording ID")),
+    responses(
+        (status = 204, description = "Recording deleted"),
+        (status = 400, description = "Cannot delete an active recording"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Recording not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_recording(

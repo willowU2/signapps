@@ -18,7 +18,7 @@ use crate::AppState;
 
 // ─── JobStatus ───────────────────────────────────────────────────────────────
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, utoipa::ToSchema)]
 #[serde(rename_all = "lowercase")]
 /// Application state for Job service.
 pub enum JobState {
@@ -28,7 +28,7 @@ pub enum JobState {
     Failed,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 /// JobStatus data transfer object.
 pub struct JobStatus {
     pub id: String,
@@ -58,7 +58,7 @@ pub fn new_job_store() -> JobStore {
 // ─── Request / Response DTOs ─────────────────────────────────────────────────
 
 /// POST /api/v1/office/jobs/convert
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for JobConvert.
 pub struct JobConvertRequest {
     /// Output format (docx, pdf, markdown, html, text)
@@ -70,7 +70,7 @@ pub struct JobConvertRequest {
     pub conversion: ConversionRequest,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for JobSubmit.
 pub struct JobSubmitResponse {
     pub job_id: String,
@@ -78,10 +78,19 @@ pub struct JobSubmitResponse {
 
 // ─── Handlers ────────────────────────────────────────────────────────────────
 
-/// POST /api/v1/office/jobs/convert
-///
-/// Accepts the same body as `/api/v1/convert` plus a `format` field.
-/// Returns `{ job_id }` immediately; the conversion runs in the background.
+/// POST /api/v1/office/jobs/convert — enqueue an async document conversion job
+#[utoipa::path(
+    post,
+    path = "/api/v1/office/jobs/convert",
+    request_body = JobConvertRequest,
+    responses(
+        (status = 202, description = "Job accepted", body = JobSubmitResponse),
+        (status = 400, description = "Invalid request"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Jobs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn submit_convert_job(
@@ -118,7 +127,19 @@ pub async fn submit_convert_job(
     Ok((StatusCode::ACCEPTED, Json(JobSubmitResponse { job_id })))
 }
 
-/// GET /api/v1/office/jobs/:id
+/// GET /api/v1/office/jobs/:id — poll async job status
+#[utoipa::path(
+    get,
+    path = "/api/v1/office/jobs/{id}",
+    params(("id" = String, Path, description = "Job ID")),
+    responses(
+        (status = 200, description = "Job status", body = JobStatus),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Job not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Jobs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_job_status(

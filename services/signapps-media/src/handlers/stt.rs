@@ -13,7 +13,7 @@ use crate::{
     AppState,
 };
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 /// Query parameters for filtering results.
 pub struct TranscribeParams {
     pub language: Option<String>,
@@ -23,7 +23,7 @@ pub struct TranscribeParams {
     pub diarize: Option<bool>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Transcribe.
 pub struct TranscribeResponse {
     pub success: bool,
@@ -38,7 +38,7 @@ pub struct TranscribeResponse {
     pub processing_time_ms: u64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Segment.
 pub struct SegmentResponse {
     pub id: u32,
@@ -48,7 +48,7 @@ pub struct SegmentResponse {
     pub speaker: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Word.
 pub struct WordResponse {
     pub word: String,
@@ -58,7 +58,7 @@ pub struct WordResponse {
     pub speaker: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Speaker.
 pub struct SpeakerResponse {
     pub id: String,
@@ -67,6 +67,20 @@ pub struct SpeakerResponse {
 }
 
 /// Transcribe audio file
+#[utoipa::path(
+    post,
+    path = "/api/v1/stt/transcribe",
+    params(TranscribeParams),
+    request_body(content_type = "multipart/form-data", description = "Audio file (max 100 MB)"),
+    responses(
+        (status = 200, description = "Transcription completed", body = TranscribeResponse),
+        (status = 400, description = "Invalid input or file too large"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Transcription failed"),
+    ),
+    security(("bearer" = [])),
+    tag = "STT"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn transcribe(
@@ -170,6 +184,20 @@ pub async fn transcribe(
 }
 
 /// Transcribe with streaming results (Server-Sent Events)
+#[utoipa::path(
+    post,
+    path = "/api/v1/stt/transcribe/stream",
+    params(TranscribeParams),
+    request_body(content_type = "multipart/form-data", description = "Audio file"),
+    responses(
+        (status = 200, description = "SSE stream of transcription chunks (text/event-stream)"),
+        (status = 400, description = "Invalid input or missing file"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Stream failed"),
+    ),
+    security(("bearer" = [])),
+    tag = "STT"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn transcribe_stream(
@@ -250,7 +278,18 @@ pub async fn transcribe_stream(
     ))
 }
 
-/// List available models
+/// List available STT models
+#[utoipa::path(
+    get,
+    path = "/api/v1/stt/models",
+    responses(
+        (status = 200, description = "List of available STT models"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Failed to list models"),
+    ),
+    security(("bearer" = [])),
+    tag = "STT"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_models(

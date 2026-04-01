@@ -10,6 +10,17 @@ use crate::models::{CreateWebhookRequest, UpdateWebhookRequest, Webhook};
 use crate::AppState;
 use signapps_common::Claims;
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/webhooks",
+    responses(
+        (status = 200, description = "List of webhooks"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Webhooks"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_webhooks(
@@ -31,6 +42,19 @@ pub async fn list_webhooks(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/webhooks",
+    request_body = crate::models::CreateWebhookRequest,
+    responses(
+        (status = 201, description = "Webhook created", body = crate::models::Webhook),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Webhooks"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_webhook(
@@ -65,6 +89,21 @@ pub async fn create_webhook(
     }
 }
 
+#[utoipa::path(
+    patch,
+    path = "/api/v1/social/webhooks/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Webhook ID")),
+    request_body = crate::models::UpdateWebhookRequest,
+    responses(
+        (status = 200, description = "Webhook updated", body = crate::models::Webhook),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Webhook not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Webhooks"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_webhook(
@@ -114,6 +153,19 @@ pub async fn update_webhook(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/social/webhooks/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Webhook ID")),
+    responses(
+        (status = 204, description = "Webhook deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Webhook not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Webhooks"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_webhook(
@@ -135,6 +187,19 @@ pub async fn delete_webhook(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/webhooks/{id}/test",
+    params(("id" = uuid::Uuid, Path, description = "Webhook ID")),
+    responses(
+        (status = 200, description = "Webhook test result"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Webhook not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Webhooks"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn test_webhook(

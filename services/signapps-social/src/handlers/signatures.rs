@@ -10,6 +10,17 @@ use crate::models::{CreateSignatureRequest, Signature, UpdateSignatureRequest};
 use crate::AppState;
 use signapps_common::Claims;
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/signatures",
+    responses(
+        (status = 200, description = "List of signatures"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Signatures"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_signatures(
@@ -31,6 +42,19 @@ pub async fn list_signatures(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/signatures",
+    request_body = crate::models::CreateSignatureRequest,
+    responses(
+        (status = 201, description = "Signature created", body = crate::models::Signature),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Signatures"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_signature(
@@ -58,6 +82,21 @@ pub async fn create_signature(
     }
 }
 
+#[utoipa::path(
+    patch,
+    path = "/api/v1/social/signatures/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Signature ID")),
+    request_body = crate::models::UpdateSignatureRequest,
+    responses(
+        (status = 200, description = "Signature updated", body = crate::models::Signature),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Signature not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Signatures"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_signature(
@@ -109,6 +148,19 @@ pub async fn update_signature(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/social/signatures/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Signature ID")),
+    responses(
+        (status = 204, description = "Signature deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Signature not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Signatures"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_signature(

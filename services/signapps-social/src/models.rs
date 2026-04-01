@@ -7,7 +7,7 @@ use uuid::Uuid;
 // Accounts
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a social account.
 pub struct SocialAccount {
     pub id: Uuid,
@@ -28,7 +28,7 @@ pub struct SocialAccount {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateAccount operation.
 pub struct CreateAccountRequest {
     pub platform: String,
@@ -42,7 +42,7 @@ pub struct CreateAccountRequest {
     pub platform_config: Option<JsonValue>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdateAccount operation.
 pub struct UpdateAccountRequest {
     pub username: Option<String>,
@@ -56,7 +56,7 @@ pub struct UpdateAccountRequest {
 // Posts
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a post.
 pub struct Post {
     pub id: Uuid,
@@ -74,7 +74,7 @@ pub struct Post {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreatePost operation.
 pub struct CreatePostRequest {
     pub content: String,
@@ -86,7 +86,7 @@ pub struct CreatePostRequest {
     pub account_ids: Option<Vec<Uuid>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdatePost operation.
 pub struct UpdatePostRequest {
     pub content: Option<String>,
@@ -97,14 +97,14 @@ pub struct UpdatePostRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for SchedulePost operation.
 pub struct SchedulePostRequest {
     pub scheduled_at: DateTime<Utc>,
     pub account_ids: Vec<Uuid>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for ApproveReject operation.
 pub struct ApproveRejectRequest {
     pub rejection_reason: Option<String>,
@@ -128,7 +128,7 @@ pub struct PostTarget {
 // Inbox
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a inbox item.
 pub struct InboxItem {
     pub id: Uuid,
@@ -146,7 +146,7 @@ pub struct InboxItem {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for Reply operation.
 pub struct ReplyRequest {
     pub content: String,
@@ -191,7 +191,7 @@ pub struct PostAnalyticsRow {
 // RSS Feeds
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a rss feed.
 pub struct RssFeed {
     pub id: Uuid,
@@ -207,7 +207,7 @@ pub struct RssFeed {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateRssFeed operation.
 pub struct CreateRssFeedRequest {
     pub feed_url: String,
@@ -221,7 +221,7 @@ pub struct CreateRssFeedRequest {
 // Templates
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a post template.
 pub struct PostTemplate {
     pub id: Uuid,
@@ -233,7 +233,7 @@ pub struct PostTemplate {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateTemplate operation.
 pub struct CreateTemplateRequest {
     pub name: String,
@@ -246,7 +246,7 @@ pub struct CreateTemplateRequest {
 // AI requests
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for AiGenerate operation.
 pub struct AiGenerateRequest {
     pub topic: String,
@@ -255,14 +255,14 @@ pub struct AiGenerateRequest {
     pub max_length: Option<u32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for AiHashtags operation.
 pub struct AiHashtagsRequest {
     pub content: String,
     pub platform: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for AiBestTime operation.
 pub struct AiBestTimeRequest {
     pub account_id: Uuid,
@@ -273,7 +273,7 @@ pub struct AiBestTimeRequest {
 // Signatures
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a signature.
 pub struct Signature {
     pub id: Uuid,
@@ -285,7 +285,7 @@ pub struct Signature {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateSignature operation.
 pub struct CreateSignatureRequest {
     pub name: String,
@@ -293,7 +293,7 @@ pub struct CreateSignatureRequest {
     pub is_auto_add: Option<bool>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdateSignature operation.
 pub struct UpdateSignatureRequest {
     pub name: Option<String>,
@@ -305,7 +305,7 @@ pub struct UpdateSignatureRequest {
 // Media
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a media item.
 pub struct MediaItem {
     pub id: Uuid,
@@ -324,7 +324,7 @@ pub struct MediaItem {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateMedia operation.
 pub struct CreateMediaRequest {
     pub filename: String,
@@ -342,7 +342,7 @@ pub struct CreateMediaRequest {
 // Short URLs
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a short url.
 pub struct ShortUrl {
     pub id: Uuid,
@@ -354,7 +354,7 @@ pub struct ShortUrl {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateShortUrl operation.
 pub struct CreateShortUrlRequest {
     pub original_url: String,
@@ -365,7 +365,7 @@ pub struct CreateShortUrlRequest {
 // Webhooks
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a webhook.
 pub struct Webhook {
     pub id: Uuid,
@@ -382,7 +382,7 @@ pub struct Webhook {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateWebhook operation.
 pub struct CreateWebhookRequest {
     pub name: String,
@@ -392,7 +392,7 @@ pub struct CreateWebhookRequest {
     pub secret: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdateWebhook operation.
 pub struct UpdateWebhookRequest {
     pub name: Option<String>,
@@ -406,7 +406,7 @@ pub struct UpdateWebhookRequest {
 // Workspaces
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a workspace.
 pub struct Workspace {
     pub id: Uuid,
@@ -419,7 +419,7 @@ pub struct Workspace {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateWorkspace operation.
 pub struct CreateWorkspaceRequest {
     pub name: String,
@@ -428,7 +428,7 @@ pub struct CreateWorkspaceRequest {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a workspace member.
 pub struct WorkspaceMember {
     pub id: Uuid,
@@ -439,7 +439,7 @@ pub struct WorkspaceMember {
     pub accepted_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for InviteMember operation.
 pub struct InviteMemberRequest {
     pub user_id: Uuid,
@@ -450,7 +450,7 @@ pub struct InviteMemberRequest {
 // Post comments (team review)
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a post comment.
 pub struct PostComment {
     pub id: Uuid,
@@ -462,7 +462,7 @@ pub struct PostComment {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreatePostComment operation.
 pub struct CreatePostCommentRequest {
     pub content: String,
@@ -473,7 +473,7 @@ pub struct CreatePostCommentRequest {
 // Time slots
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a time slot.
 pub struct TimeSlot {
     pub id: Uuid,
@@ -486,7 +486,7 @@ pub struct TimeSlot {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateTimeSlot operation.
 pub struct CreateTimeSlotRequest {
     pub account_id: Option<Uuid>,
@@ -499,7 +499,7 @@ pub struct CreateTimeSlotRequest {
 // Content sets
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a content set.
 pub struct ContentSet {
     pub id: Uuid,
@@ -516,7 +516,7 @@ pub struct ContentSet {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateContentSet operation.
 pub struct CreateContentSetRequest {
     pub name: String,
@@ -533,7 +533,7 @@ pub struct CreateContentSetRequest {
 // API keys
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a api key.
 pub struct ApiKey {
     pub id: Uuid,
@@ -550,7 +550,7 @@ pub struct ApiKey {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateApiKey operation.
 pub struct CreateApiKeyRequest {
     pub name: String,

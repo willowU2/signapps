@@ -20,7 +20,7 @@ pub struct ImportQuery {
 }
 
 /// Response for import info
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for ImportInfo.
 pub struct ImportInfoResponse {
     pub supported_formats: Vec<&'static str>,
@@ -29,7 +29,7 @@ pub struct ImportInfoResponse {
 }
 
 /// Response for imported document
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Import.
 pub struct ImportResponse {
     pub success: bool,
@@ -39,7 +39,7 @@ pub struct ImportResponse {
 }
 
 /// Import metadata
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// ImportMetadata data transfer object.
 pub struct ImportMetadata {
     pub word_count: usize,
@@ -48,6 +48,15 @@ pub struct ImportMetadata {
     pub has_tables: bool,
 }
 
+/// GET /api/v1/import/info — get import service info
+#[utoipa::path(
+    get,
+    path = "/api/v1/import/info",
+    responses(
+        (status = 200, description = "Import service info", body = ImportInfoResponse),
+    ),
+    tag = "Import"
+)]
 /// Get import service info
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -59,6 +68,17 @@ pub async fn info() -> Json<ImportInfoResponse> {
     })
 }
 
+/// POST /api/v1/import/upload — import a document from multipart upload
+#[utoipa::path(
+    post,
+    path = "/api/v1/import/upload",
+    responses(
+        (status = 200, description = "Imported document as Tiptap JSON", body = ImportResponse),
+        (status = 400, description = "Invalid input or no file provided"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Import"
+)]
 /// Import document from multipart upload
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -114,13 +134,25 @@ pub async fn import_upload(
 }
 
 /// Import document from JSON body (for HTML/Markdown content)
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for ImportJson.
 pub struct ImportJsonRequest {
     pub content: String,
     pub format: Option<ImportFormat>,
 }
 
+/// POST /api/v1/import — import a document from JSON body (HTML or Markdown)
+#[utoipa::path(
+    post,
+    path = "/api/v1/import",
+    request_body = ImportJsonRequest,
+    responses(
+        (status = 200, description = "Imported document as Tiptap JSON", body = ImportResponse),
+        (status = 400, description = "Invalid input"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Import"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn import_json(

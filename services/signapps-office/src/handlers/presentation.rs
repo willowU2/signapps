@@ -11,6 +11,17 @@ use crate::presentation::{
     slide_to_png, slide_to_svg,
 };
 
+/// POST /api/v1/presentation/export/pptx — export slides JSON to PPTX
+#[utoipa::path(
+    post,
+    path = "/api/v1/presentation/export/pptx",
+    responses(
+        (status = 200, description = "PPTX binary"),
+        (status = 400, description = "Invalid presentation data"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Presentation"
+)]
 /// Export presentation JSON to PPTX
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -87,6 +98,17 @@ pub async fn export_pptx(
     }
 }
 
+/// POST /api/v1/presentation/export/pdf — export slides JSON to PDF
+#[utoipa::path(
+    post,
+    path = "/api/v1/presentation/export/pdf",
+    responses(
+        (status = 200, description = "PDF binary"),
+        (status = 400, description = "Invalid presentation data"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Presentation"
+)]
 /// Export presentation to PDF (all slides)
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -174,6 +196,17 @@ pub async fn export_slides_pdf(
     }
 }
 
+/// POST /api/v1/presentation/export/png — export a single slide to PNG
+#[utoipa::path(
+    post,
+    path = "/api/v1/presentation/export/png",
+    responses(
+        (status = 200, description = "PNG binary"),
+        (status = 400, description = "Invalid presentation data or slide number"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Presentation"
+)]
 /// Export single slide to PNG
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -237,6 +270,17 @@ pub async fn export_slide_png(Json(payload): Json<serde_json::Value>) -> Respons
     }
 }
 
+/// POST /api/v1/presentation/export/svg — export a single slide to SVG
+#[utoipa::path(
+    post,
+    path = "/api/v1/presentation/export/svg",
+    responses(
+        (status = 200, description = "SVG data"),
+        (status = 400, description = "Invalid presentation data or slide number"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Presentation"
+)]
 /// Export single slide to SVG
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -300,6 +344,17 @@ pub async fn export_slide_svg(Json(payload): Json<serde_json::Value>) -> Respons
     }
 }
 
+/// POST /api/v1/presentation/export/all/png — export all slides as base64-encoded PNGs
+#[utoipa::path(
+    post,
+    path = "/api/v1/presentation/export/all/png",
+    responses(
+        (status = 200, description = "All slides as base64 PNGs"),
+        (status = 400, description = "Invalid presentation data"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Presentation"
+)]
 /// Export all slides as PNG (returns JSON with base64 encoded images)
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -356,6 +411,17 @@ pub async fn export_all_slides_png(Json(payload): Json<serde_json::Value>) -> Re
     }
 }
 
+/// POST /api/v1/presentation/export/all/svg — export all slides as SVG strings
+#[utoipa::path(
+    post,
+    path = "/api/v1/presentation/export/all/svg",
+    responses(
+        (status = 200, description = "All slides as SVG strings"),
+        (status = 400, description = "Invalid presentation data"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Presentation"
+)]
 /// Export all slides as SVG (returns JSON with SVG strings)
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -412,6 +478,15 @@ pub async fn export_all_slides_svg(Json(payload): Json<serde_json::Value>) -> Re
     }
 }
 
+/// GET /api/v1/presentation/info — get presentation service info
+#[utoipa::path(
+    get,
+    path = "/api/v1/presentation/info",
+    responses(
+        (status = 200, description = "Presentation service info"),
+    ),
+    tag = "Presentation"
+)]
 /// Get presentation service info
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]

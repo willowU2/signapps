@@ -38,6 +38,17 @@ fn verify_password(password: &str, hash: &str) -> bool {
 }
 
 /// List all rooms (active and scheduled)
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/rooms",
+    responses(
+        (status = 200, description = "List of rooms", body = Vec<RoomResponse>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_rooms(
@@ -95,6 +106,18 @@ pub async fn list_rooms(
 }
 
 /// Create a new room
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms",
+    request_body = CreateRoomRequest,
+    responses(
+        (status = 200, description = "Room created", body = RoomResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_room(
@@ -153,6 +176,19 @@ pub async fn create_room(
 }
 
 /// Get a specific room by ID
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/rooms/{id}",
+    params(("id" = Uuid, Path, description = "Room ID")),
+    responses(
+        (status = 200, description = "Room details", body = RoomResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Room not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_room(
@@ -194,6 +230,20 @@ pub async fn get_room(
 }
 
 /// Update a room
+#[utoipa::path(
+    put,
+    path = "/api/v1/meet/rooms/{id}",
+    params(("id" = Uuid, Path, description = "Room ID")),
+    request_body = UpdateRoomRequest,
+    responses(
+        (status = 200, description = "Room updated", body = RoomResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Room not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_room(
@@ -278,6 +328,19 @@ pub async fn update_room(
 }
 
 /// Delete a room
+#[utoipa::path(
+    delete,
+    path = "/api/v1/meet/rooms/{id}",
+    params(("id" = Uuid, Path, description = "Room ID")),
+    responses(
+        (status = 204, description = "Room deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Room not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_room(
@@ -307,6 +370,19 @@ pub async fn delete_room(
 }
 
 /// End a room (mark as ended and kick all participants)
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms/{id}/end",
+    params(("id" = Uuid, Path, description = "Room ID")),
+    responses(
+        (status = 200, description = "Room ended", body = RoomResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Room not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn end_room(
@@ -414,6 +490,17 @@ pub async fn end_room(
 }
 
 /// List meeting history
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/history",
+    responses(
+        (status = 200, description = "Meeting history for the authenticated user", body = Vec<MeetingHistoryResponse>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_history(

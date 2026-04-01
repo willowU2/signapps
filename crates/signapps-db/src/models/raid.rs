@@ -32,6 +32,7 @@ pub enum RaidStatus {
 
 /// RAID array entity.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct RaidArray {
     pub id: Uuid,
     pub name: String,
@@ -55,6 +56,7 @@ pub struct CreateRaidArray {
 
 /// Disk entity.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Disk {
     pub id: Uuid,
     pub device_path: String,
@@ -83,6 +85,7 @@ pub enum DiskStatus {
 
 /// RAID event entity.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct RaidEvent {
     pub id: Uuid,
     pub array_id: Uuid,
@@ -104,6 +107,7 @@ pub enum EventSeverity {
 
 /// RAID health summary.
 #[derive(Debug, Clone, Serialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct RaidHealth {
     pub total_arrays: i32,
     pub healthy_arrays: i32,

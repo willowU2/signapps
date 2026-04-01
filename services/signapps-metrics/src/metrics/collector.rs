@@ -145,7 +145,7 @@ impl Default for MetricsCollector {
 }
 
 /// System metrics aggregate.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct SystemMetrics {
     pub hostname: String,
     pub os_name: String,
@@ -160,7 +160,7 @@ pub struct SystemMetrics {
 }
 
 /// CPU metrics.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct CpuMetrics {
     pub count: usize,
     pub total_usage_percent: f32,
@@ -169,7 +169,7 @@ pub struct CpuMetrics {
 }
 
 /// Load average.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct LoadAverage {
     pub one: f64,
     pub five: f64,
@@ -177,7 +177,7 @@ pub struct LoadAverage {
 }
 
 /// Memory metrics.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct MemoryMetrics {
     pub total_bytes: u64,
     pub used_bytes: u64,
@@ -189,7 +189,7 @@ pub struct MemoryMetrics {
 }
 
 /// Disk metrics.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct DiskMetrics {
     pub name: String,
     pub mount_point: String,
@@ -202,7 +202,7 @@ pub struct DiskMetrics {
 }
 
 /// Network interface metrics.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct NetworkMetrics {
     pub name: String,
     pub received_bytes: u64,

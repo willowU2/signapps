@@ -15,7 +15,7 @@ use signapps_common::Claims;
 // Types
 // ============================================================================
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, utoipa::ToSchema)]
 /// Course data transfer object.
 pub struct Course {
     pub id: Uuid,
@@ -26,7 +26,7 @@ pub struct Course {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, utoipa::ToSchema)]
 /// CourseProgress data transfer object.
 pub struct CourseProgress {
     pub id: Uuid,
@@ -46,7 +46,7 @@ pub struct CourseWithProgress {
     pub user_progress: Option<CourseProgress>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for UpdateProgress.
 pub struct UpdateProgressRequest {
     pub module_completions: serde_json::Value,
@@ -59,6 +59,17 @@ pub struct UpdateProgressRequest {
 // ============================================================================
 
 /// GET /api/v1/learning/courses
+#[utoipa::path(
+    get,
+    path = "/api/v1/learning/courses",
+    responses(
+        (status = 200, description = "List of courses with user progress"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Learning"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_courses(
@@ -124,6 +135,19 @@ pub async fn list_courses(
 }
 
 /// GET /api/v1/learning/courses/:id
+#[utoipa::path(
+    get,
+    path = "/api/v1/learning/courses/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Course ID")),
+    responses(
+        (status = 200, description = "Course with user progress", body = Course),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Course not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Learning"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_course(
@@ -165,6 +189,21 @@ pub async fn get_course(
 }
 
 /// PUT /api/v1/learning/courses/:id/progress
+#[utoipa::path(
+    put,
+    path = "/api/v1/learning/courses/{id}/progress",
+    params(("id" = uuid::Uuid, Path, description = "Course ID")),
+    request_body = UpdateProgressRequest,
+    responses(
+        (status = 200, description = "Progress updated", body = CourseProgress),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Course not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Learning"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_progress(

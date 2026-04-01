@@ -13,6 +13,17 @@ use crate::{
     AppState,
 };
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/accounts",
+    responses(
+        (status = 200, description = "List of social accounts"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Accounts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_accounts(
@@ -42,6 +53,19 @@ pub async fn list_accounts(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/accounts",
+    request_body = crate::models::CreateAccountRequest,
+    responses(
+        (status = 201, description = "Account created", body = crate::models::SocialAccount),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Accounts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_account(
@@ -92,6 +116,19 @@ pub async fn create_account(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/accounts/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Account ID")),
+    responses(
+        (status = 200, description = "Account found", body = crate::models::SocialAccount),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Account not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Accounts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_account(
@@ -126,6 +163,19 @@ pub async fn get_account(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/social/accounts/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Account ID")),
+    responses(
+        (status = 204, description = "Account deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Account not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Accounts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_account(
@@ -151,6 +201,21 @@ pub async fn delete_account(
     }
 }
 
+#[utoipa::path(
+    patch,
+    path = "/api/v1/social/accounts/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Account ID")),
+    request_body = crate::models::UpdateAccountRequest,
+    responses(
+        (status = 200, description = "Account updated", body = crate::models::SocialAccount),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Account not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Accounts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_account(
@@ -224,6 +289,19 @@ pub async fn update_account(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/accounts/{id}/refresh-token",
+    params(("id" = uuid::Uuid, Path, description = "Account ID")),
+    responses(
+        (status = 200, description = "Token refresh triggered"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Account not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Accounts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn refresh_token(

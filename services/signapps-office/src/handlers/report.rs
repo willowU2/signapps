@@ -17,7 +17,7 @@ use std::io::{BufWriter, Cursor};
 // Types
 // ============================================================================
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for Report.
 pub struct ReportRequest {
     /// Report template: "activity" | "users" | "storage"
@@ -30,7 +30,7 @@ pub struct ReportRequest {
     pub filename: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// ReportSection data transfer object.
 pub struct ReportSection {
     pub heading: String,
@@ -38,7 +38,7 @@ pub struct ReportSection {
     pub columns: Vec<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// ReportInfo data transfer object.
 pub struct ReportInfo {
     pub supported_templates: Vec<String>,
@@ -49,6 +49,15 @@ pub struct ReportInfo {
 // Info endpoint
 // ============================================================================
 
+/// GET /api/v1/reports/info — get report generation service info
+#[utoipa::path(
+    get,
+    path = "/api/v1/reports/info",
+    responses(
+        (status = 200, description = "Report service info", body = ReportInfo),
+    ),
+    tag = "Reports"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn report_info() -> Json<ReportInfo> {
@@ -67,6 +76,17 @@ pub async fn report_info() -> Json<ReportInfo> {
 // Generate handler
 // ============================================================================
 
+/// POST /api/v1/reports/generate — generate a multi-section PDF report
+#[utoipa::path(
+    post,
+    path = "/api/v1/reports/generate",
+    request_body = ReportRequest,
+    responses(
+        (status = 200, description = "Generated PDF binary"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Reports"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn generate_report(

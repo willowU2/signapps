@@ -7,6 +7,7 @@ pub mod content_sets;
 pub mod inbox;
 pub mod media;
 pub mod oauth;
+pub mod openapi;
 pub mod post_comments;
 pub mod posts;
 pub mod short_urls;

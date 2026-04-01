@@ -14,7 +14,7 @@ use crate::AppState;
 // Models
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// AiThread data transfer object.
 pub struct AiThread {
     pub id: Uuid,
@@ -25,14 +25,14 @@ pub struct AiThread {
     pub updated_at: chrono::DateTime<Utc>,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
 /// Request body for CreateAiThread.
 pub struct CreateAiThreadRequest {
     pub title: String,
     pub messages: Option<serde_json::Value>,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
 /// Request body for UpdateAiThread.
 pub struct UpdateAiThreadRequest {
     pub title: Option<String>,
@@ -43,6 +43,17 @@ pub struct UpdateAiThreadRequest {
 // Handlers
 // ---------------------------------------------------------------------------
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/ai-threads",
+    responses(
+        (status = 200, description = "List of AI chat threads"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social AI Threads"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_ai_threads(
@@ -71,6 +82,19 @@ pub async fn list_ai_threads(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/ai-threads",
+    request_body = CreateAiThreadRequest,
+    responses(
+        (status = 201, description = "AI thread created", body = AiThread),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social AI Threads"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_ai_thread(
@@ -107,6 +131,19 @@ pub async fn create_ai_thread(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/ai-threads/{id}",
+    params(("id" = uuid::Uuid, Path, description = "AI thread ID")),
+    responses(
+        (status = 200, description = "AI thread found", body = AiThread),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Thread not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social AI Threads"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_ai_thread(
@@ -139,6 +176,21 @@ pub async fn get_ai_thread(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/social/ai-threads/{id}",
+    params(("id" = uuid::Uuid, Path, description = "AI thread ID")),
+    request_body = UpdateAiThreadRequest,
+    responses(
+        (status = 200, description = "AI thread updated", body = AiThread),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Thread not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social AI Threads"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_ai_thread(
@@ -200,6 +252,19 @@ pub async fn update_ai_thread(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/social/ai-threads/{id}",
+    params(("id" = uuid::Uuid, Path, description = "AI thread ID")),
+    responses(
+        (status = 204, description = "AI thread deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Thread not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social AI Threads"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_ai_thread(

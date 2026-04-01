@@ -18,6 +18,17 @@ pub struct MediaQuery {
     pub sort: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/media",
+    responses(
+        (status = 200, description = "List of media items"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Media"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_media(
@@ -67,6 +78,19 @@ pub async fn list_media(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/media",
+    request_body = crate::models::CreateMediaRequest,
+    responses(
+        (status = 201, description = "Media item created", body = crate::models::MediaItem),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Media"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_media(
@@ -101,6 +125,19 @@ pub async fn create_media(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/social/media/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Media item ID")),
+    responses(
+        (status = 204, description = "Media item deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Media item not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Media"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_media(

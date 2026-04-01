@@ -30,7 +30,7 @@ struct ApiUsageRow {
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// ApiQuotaEntry data transfer object.
 pub struct ApiQuotaEntry {
     pub user_id: Uuid,
@@ -65,6 +65,21 @@ pub struct QuotaListQuery {
 /// Returns per-user API quota usage for the last 24 hours, ordered by usage
 /// descending.  Uses `platform.api_usage` if available, otherwise returns
 /// an empty list (table may not be present in all deployments).
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics/api-quota",
+    params(
+        ("limit" = Option<i64>, Query, description = "Maximum results (default 50, max 200)"),
+        ("offset" = Option<i64>, Query, description = "Pagination offset")
+    ),
+    responses(
+        (status = 200, description = "Per-user API quota usage", body = Vec<ApiQuotaEntry>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_api_quotas(
@@ -143,6 +158,19 @@ pub async fn list_api_quotas(
 /// GET /api/v1/metrics/api-quota/:user_id
 ///
 /// Returns API quota stats for a single user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics/api-quota/{user_id}",
+    params(("user_id" = Uuid, Path, description = "User ID")),
+    responses(
+        (status = 200, description = "API quota stats for the user", body = ApiQuotaEntry),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "User not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_user_api_quota(

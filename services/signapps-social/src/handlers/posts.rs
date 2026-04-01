@@ -14,6 +14,17 @@ use crate::{
     AppState,
 };
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/posts",
+    responses(
+        (status = 200, description = "List of posts"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Posts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_posts(
@@ -43,6 +54,19 @@ pub async fn list_posts(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/posts",
+    request_body = crate::models::CreatePostRequest,
+    responses(
+        (status = 201, description = "Post created", body = crate::models::Post),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Posts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_post(
@@ -111,6 +135,19 @@ pub async fn create_post(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/posts/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Post ID")),
+    responses(
+        (status = 200, description = "Post found", body = crate::models::Post),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Post not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Posts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_post(
@@ -143,6 +180,21 @@ pub async fn get_post(
     }
 }
 
+#[utoipa::path(
+    patch,
+    path = "/api/v1/social/posts/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Post ID")),
+    request_body = crate::models::UpdatePostRequest,
+    responses(
+        (status = 200, description = "Post updated", body = crate::models::Post),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Post not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Posts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_post(
@@ -223,6 +275,19 @@ pub async fn update_post(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/social/posts/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Post ID")),
+    responses(
+        (status = 204, description = "Post deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Post not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Posts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_post(
@@ -247,6 +312,19 @@ pub async fn delete_post(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/posts/{id}/publish",
+    params(("id" = uuid::Uuid, Path, description = "Post ID")),
+    responses(
+        (status = 202, description = "Post queued for immediate publishing"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Post not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Posts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn publish_post(
@@ -293,6 +371,21 @@ pub async fn publish_post(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/posts/{id}/schedule",
+    params(("id" = uuid::Uuid, Path, description = "Post ID")),
+    request_body = crate::models::SchedulePostRequest,
+    responses(
+        (status = 200, description = "Post scheduled"),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Post not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Posts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn schedule_post(
@@ -358,6 +451,19 @@ pub async fn schedule_post(
 // ---------------------------------------------------------------------------
 
 /// Submit a draft post for review → status becomes `pending_review`
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/posts/{id}/submit-for-review",
+    params(("id" = uuid::Uuid, Path, description = "Post ID")),
+    responses(
+        (status = 200, description = "Post submitted for review"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Post not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Posts"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn submit_for_review(
     State(state): State<AppState>,
@@ -393,6 +499,19 @@ pub async fn submit_for_review(
 }
 
 /// Approve a pending_review post → status becomes `approved`
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/posts/{id}/approve",
+    params(("id" = uuid::Uuid, Path, description = "Post ID")),
+    responses(
+        (status = 200, description = "Post approved"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Post not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Posts"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn approve_post(
     State(state): State<AppState>,
@@ -441,6 +560,21 @@ pub async fn approve_post(
 }
 
 /// Reject a pending_review post → status becomes `rejected` with rejection_reason
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/posts/{id}/reject",
+    params(("id" = uuid::Uuid, Path, description = "Post ID")),
+    request_body = crate::models::ApproveRejectRequest,
+    responses(
+        (status = 200, description = "Post rejected"),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Post not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Posts"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn reject_post(
     State(state): State<AppState>,
@@ -490,6 +624,17 @@ pub async fn reject_post(
 }
 
 /// List posts in `pending_review` status (review queue)
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/posts/review-queue",
+    responses(
+        (status = 200, description = "List of posts pending review"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Posts"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_review_queue(
     State(state): State<AppState>,

@@ -12,6 +12,8 @@ use std::sync::Arc;
 use std::time::Duration;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 mod handlers;
 mod models;
@@ -141,6 +143,10 @@ async fn main() -> anyhow::Result<()> {
 
     let app = public_routes
         .merge(protected_routes)
+        .merge(
+            SwaggerUi::new("/swagger-ui/{_:.*}")
+                .url("/api-docs/openapi.json", handlers::openapi::DocsApiDoc::openapi()),
+        )
         // Global middleware
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::new()

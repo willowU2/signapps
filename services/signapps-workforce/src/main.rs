@@ -288,6 +288,7 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/workforce/validate", validation_routes)
         .nest("/api/v1/learning", learning_routes)
         .nest("/health", health_routes)
+        .merge(handlers::openapi::swagger_router())
         .layer(TraceLayer::new_for_http())
         .layer(cors)
         .with_state(state)

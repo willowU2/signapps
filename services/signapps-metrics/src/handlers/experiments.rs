@@ -14,7 +14,7 @@ use crate::AppState;
 // Models
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Experiment data transfer object.
 pub struct Experiment {
     pub id: Uuid,
@@ -27,7 +27,7 @@ pub struct Experiment {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
 /// Request body for CreateExperiment.
 pub struct CreateExperimentRequest {
     pub name: String,
@@ -37,7 +37,7 @@ pub struct CreateExperimentRequest {
     pub traffic_split: Option<serde_json::Value>,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
 /// Request body for UpdateExperiment.
 pub struct UpdateExperimentRequest {
     pub name: Option<String>,
@@ -51,6 +51,18 @@ pub struct UpdateExperimentRequest {
 // Handlers
 // ---------------------------------------------------------------------------
 
+/// List all A/B experiments.
+#[utoipa::path(
+    get,
+    path = "/api/v1/experiments",
+    responses(
+        (status = 200, description = "List of experiments", body = Vec<Experiment>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_experiments(
@@ -71,6 +83,20 @@ pub async fn list_experiments(
     Ok((StatusCode::OK, Json(serde_json::json!(rows))))
 }
 
+/// Create a new A/B experiment.
+#[utoipa::path(
+    post,
+    path = "/api/v1/experiments",
+    request_body = CreateExperimentRequest,
+    responses(
+        (status = 201, description = "Experiment created", body = Experiment),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_experiment(
@@ -114,6 +140,21 @@ pub async fn create_experiment(
     Ok((StatusCode::CREATED, Json(serde_json::json!(row))))
 }
 
+/// Update an A/B experiment.
+#[utoipa::path(
+    put,
+    path = "/api/v1/experiments/{id}",
+    params(("id" = Uuid, Path, description = "Experiment ID")),
+    request_body = UpdateExperimentRequest,
+    responses(
+        (status = 200, description = "Experiment updated", body = Experiment),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Experiment not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_experiment(
@@ -160,6 +201,20 @@ pub async fn update_experiment(
     Ok((StatusCode::OK, Json(serde_json::json!(row))))
 }
 
+/// Delete an A/B experiment.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/experiments/{id}",
+    params(("id" = Uuid, Path, description = "Experiment ID")),
+    responses(
+        (status = 204, description = "Experiment deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Experiment not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_experiment(

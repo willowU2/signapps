@@ -306,6 +306,7 @@ fn create_router(state: AppState) -> Router {
 
     public_routes
         .merge(protected_routes)
+        .merge(handlers::openapi::swagger_router())
         .layer(TraceLayer::new_for_http())
         .layer(cors)
         .with_state(state)

@@ -70,7 +70,7 @@ pub struct CustomTemplate {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, utoipa::ToSchema)]
 /// TemplateSummary data transfer object.
 pub struct TemplateSummary {
     pub id: String,
@@ -79,7 +79,7 @@ pub struct TemplateSummary {
     pub builtin: bool,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, utoipa::ToSchema)]
 /// TemplateDetail data transfer object.
 pub struct TemplateDetail {
     pub id: String,
@@ -89,7 +89,7 @@ pub struct TemplateDetail {
     pub builtin: bool,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 /// Request body for CreateTemplate.
 pub struct CreateTemplateRequest {
     pub name: String,
@@ -97,7 +97,18 @@ pub struct CreateTemplateRequest {
     pub content: String,
 }
 
-/// GET /api/v1/docs/templates — list built-in + custom templates
+/// GET /api/v1/docs/templates — list built-in and custom templates
+#[utoipa::path(
+    get,
+    path = "/api/v1/docs/templates",
+    responses(
+        (status = 200, description = "List of templates", body = Vec<TemplateSummary>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Templates"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_templates(State(state): State<AppState>) -> Json<Vec<TemplateSummary>> {
@@ -134,6 +145,18 @@ pub async fn list_templates(State(state): State<AppState>) -> Json<Vec<TemplateS
 }
 
 /// GET /api/v1/docs/templates/:id — get full template content (built-in or custom)
+#[utoipa::path(
+    get,
+    path = "/api/v1/docs/templates/{id}",
+    params(("id" = String, Path, description = "Template ID or slug")),
+    responses(
+        (status = 200, description = "Template found", body = TemplateDetail),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Template not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Templates"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_template(
@@ -196,7 +219,20 @@ pub async fn get_template(
     }
 }
 
-/// POST /api/v1/docs/templates — create a custom template (persisted in DB)
+/// POST /api/v1/docs/templates — create a custom template persisted in DB
+#[utoipa::path(
+    post,
+    path = "/api/v1/docs/templates",
+    request_body = CreateTemplateRequest,
+    responses(
+        (status = 201, description = "Template created"),
+        (status = 400, description = "Bad request — name required"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Templates"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_template(
@@ -255,6 +291,19 @@ pub async fn create_template(
 }
 
 /// DELETE /api/v1/docs/templates/:id — delete a custom template
+#[utoipa::path(
+    delete,
+    path = "/api/v1/docs/templates/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Template ID")),
+    responses(
+        (status = 204, description = "Template deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Template not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Templates"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_template(

@@ -10,6 +10,17 @@ use crate::models::{CreateWorkspaceRequest, InviteMemberRequest, Workspace, Work
 use crate::AppState;
 use signapps_common::Claims;
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/workspaces",
+    responses(
+        (status = 200, description = "List of workspaces"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Workspaces"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_workspaces(
@@ -34,6 +45,19 @@ pub async fn list_workspaces(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/workspaces",
+    request_body = crate::models::CreateWorkspaceRequest,
+    responses(
+        (status = 201, description = "Workspace created", body = crate::models::Workspace),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Workspaces"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_workspace(
@@ -75,6 +99,19 @@ pub async fn create_workspace(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/workspaces/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Workspace ID")),
+    responses(
+        (status = 200, description = "Workspace found", body = crate::models::Workspace),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Workspace not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Workspaces"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_workspace(
@@ -99,6 +136,19 @@ pub async fn get_workspace(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/social/workspaces/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Workspace ID")),
+    responses(
+        (status = 204, description = "Workspace deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Workspace not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Workspaces"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_workspace(
@@ -120,6 +170,18 @@ pub async fn delete_workspace(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/social/workspaces/{id}/members",
+    params(("id" = uuid::Uuid, Path, description = "Workspace ID")),
+    responses(
+        (status = 200, description = "List of workspace members"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Workspaces"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_members(
@@ -142,6 +204,21 @@ pub async fn list_members(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/social/workspaces/{id}/members",
+    params(("id" = uuid::Uuid, Path, description = "Workspace ID")),
+    request_body = crate::models::InviteMemberRequest,
+    responses(
+        (status = 201, description = "Member invited", body = crate::models::WorkspaceMember),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Workspace not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Workspaces"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn invite_member(
@@ -188,6 +265,22 @@ pub async fn invite_member(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/social/workspaces/{id}/members/{user_id}",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Workspace ID"),
+        ("user_id" = uuid::Uuid, Path, description = "User ID")
+    ),
+    responses(
+        (status = 204, description = "Member removed"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Workspace or member not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Social Workspaces"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_member(

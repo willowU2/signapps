@@ -14,7 +14,7 @@ use crate::AppState;
 // Models
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Voicemail data transfer object.
 pub struct Voicemail {
     pub id: Uuid,
@@ -32,6 +32,18 @@ pub struct Voicemail {
 // Handlers
 // ---------------------------------------------------------------------------
 
+/// List voicemails for the authenticated user
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/voicemails",
+    responses(
+        (status = 200, description = "List of voicemails", body = Vec<Voicemail>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_voicemails(
@@ -61,6 +73,20 @@ pub async fn list_voicemails(
     }
 }
 
+/// Mark a voicemail as read
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/voicemails/{id}/read",
+    params(("id" = Uuid, Path, description = "Voicemail ID")),
+    responses(
+        (status = 200, description = "Voicemail marked as read"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Voicemail not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn mark_voicemail_read(
@@ -92,6 +118,20 @@ pub async fn mark_voicemail_read(
     }
 }
 
+/// Delete a voicemail
+#[utoipa::path(
+    delete,
+    path = "/api/v1/meet/voicemails/{id}",
+    params(("id" = Uuid, Path, description = "Voicemail ID")),
+    responses(
+        (status = 204, description = "Voicemail deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Voicemail not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_voicemail(

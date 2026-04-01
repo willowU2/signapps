@@ -13,8 +13,8 @@ use crate::AppState;
 use signapps_common::Result;
 
 /// A single slow query record.
-#[derive(Debug, Serialize)]
-/// Query parameters for filtering results.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+/// SlowQuery data transfer object.
 pub struct SlowQuery {
     /// Backend PID.
     pub pid: i32,
@@ -35,8 +35,8 @@ pub struct SlowQuery {
 }
 
 /// Response envelope.
-#[derive(Debug, Serialize)]
-/// Response for SlowQueries.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+/// SlowQueriesResponse data transfer object.
 pub struct SlowQueriesResponse {
     pub queries: Vec<SlowQuery>,
     /// Minimum duration threshold used for filtering (seconds).
@@ -49,6 +49,17 @@ pub struct SlowQueriesResponse {
 const SLOW_THRESHOLD_SECS: f64 = 1.0;
 
 /// Return the top-10 currently running queries sorted by duration descending.
+#[utoipa::path(
+    get,
+    path = "/api/v1/system/slow-queries",
+    responses(
+        (status = 200, description = "Slow queries from pg_stat_activity", body = SlowQueriesResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_slow_queries(State(state): State<AppState>) -> Result<Json<SlowQueriesResponse>> {

@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 /// Represents a user-defined tag for categorizing storage files
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Tag {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -16,6 +17,7 @@ pub struct Tag {
 
 /// Request to create a new tag
 #[derive(Debug, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreateTagRequest {
     pub name: String,
     pub color: Option<String>,
@@ -23,6 +25,7 @@ pub struct CreateTagRequest {
 
 /// Request to update an existing tag
 #[derive(Debug, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpdateTagRequest {
     pub name: Option<String>,
     pub color: Option<String>,
@@ -38,6 +41,7 @@ pub struct FileTag {
 
 /// Represents a specific version of a file in storage
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct FileVersion {
     pub id: Uuid,
     pub file_id: Uuid,
@@ -50,6 +54,7 @@ pub struct FileVersion {
 
 /// Response returned when fetching tags for a file
 #[derive(Debug, Serialize, FromRow)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct FileTagResponse {
     pub id: Uuid,
     pub name: String,

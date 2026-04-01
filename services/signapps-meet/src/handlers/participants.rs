@@ -14,6 +14,19 @@ use crate::{
 };
 
 /// List participants in a room
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/rooms/{id}/participants",
+    params(("id" = Uuid, Path, description = "Room ID")),
+    responses(
+        (status = 200, description = "List of participants", body = Vec<ParticipantResponse>),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Room not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_participants(
@@ -58,6 +71,22 @@ pub async fn list_participants(
 }
 
 /// Kick a participant from a room
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms/{id}/participants/{user_id}/kick",
+    params(
+        ("id" = Uuid, Path, description = "Room ID"),
+        ("user_id" = Uuid, Path, description = "User ID to kick")
+    ),
+    responses(
+        (status = 204, description = "Participant kicked"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Room or participant not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn kick_participant(
@@ -122,6 +151,23 @@ pub async fn kick_participant(
 }
 
 /// Mute/unmute a participant
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms/{id}/participants/{user_id}/mute",
+    params(
+        ("id" = Uuid, Path, description = "Room ID"),
+        ("user_id" = Uuid, Path, description = "User ID to mute/unmute")
+    ),
+    request_body = MuteRequest,
+    responses(
+        (status = 200, description = "Participant mute state updated", body = ParticipantResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Room or participant not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn mute_participant(

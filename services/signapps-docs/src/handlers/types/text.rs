@@ -4,13 +4,13 @@ use uuid::Uuid;
 
 use crate::AppState;
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateTextDocument operation.
 pub struct CreateTextDocumentRequest {
     pub name: String,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 /// Response payload for Document operation.
 pub struct DocumentResponse {
     pub id: String,
@@ -19,6 +19,19 @@ pub struct DocumentResponse {
     pub created_at: String,
 }
 
+/// POST /api/v1/docs/text — create a new text document
+#[utoipa::path(
+    post,
+    path = "/api/v1/docs/text",
+    request_body = CreateTextDocumentRequest,
+    responses(
+        (status = 201, description = "Text document created", body = DocumentResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Documents"
+)]
 /// Create a new text document and persist its initial CRDT state to the
 /// database so the first WebSocket client receives a well-formed structure.
 #[tracing::instrument(skip_all)]

@@ -13,7 +13,7 @@ use crate::AppState;
 // ── Event payload ─────────────────────────────────────────────────────────────
 
 /// Payload emitted by the event bus when a meet session ends.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// SessionEndedEvent data transfer object.
 pub struct SessionEndedEvent {
     pub room_id: Uuid,
@@ -46,6 +46,17 @@ pub struct TranscriptionJob {
 /// `meet.session.ended` event fires.  If the event contains a recording_id,
 /// a transcription job is created and the AI transcription pipeline is
 /// triggered asynchronously.
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/events/session-ended",
+    request_body = SessionEndedEvent,
+    responses(
+        (status = 200, description = "Event processed; transcription queued if recording present"),
+        (status = 404, description = "Recording not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn handle_session_ended(

@@ -64,6 +64,10 @@ base64 = "0.22"
 thiserror = "1.0"
 anyhow = "1.0"
 
+# OpenAPI
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }
+
 # URL encoding
 urlencoding = "2.1"
 

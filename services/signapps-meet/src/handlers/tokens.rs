@@ -15,7 +15,7 @@ use crate::{
     AppState,
 };
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Query parameters for filtering results.
 pub struct TokenQuery {
     pub room: Option<String>,
@@ -23,6 +23,24 @@ pub struct TokenQuery {
 }
 
 /// Get a token for joining any room (by room code or ID)
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/token",
+    params(
+        ("room" = Option<String>, Query, description = "Room code or UUID"),
+        ("display_name" = Option<String>, Query, description = "Display name override"),
+    ),
+    responses(
+        (status = 200, description = "LiveKit token for the room", body = crate::models::TokenResponse),
+        (status = 400, description = "Missing room parameter"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Room not found"),
+        (status = 410, description = "Room has ended"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_token(
@@ -109,6 +127,22 @@ pub async fn get_token(
 }
 
 /// Get a token for a specific room by ID
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/rooms/{id}/token",
+    params(("id" = Uuid, Path, description = "Room ID")),
+    request_body(content = Option<crate::models::JoinRoomRequest>, description = "Optional join request with password and display name"),
+    responses(
+        (status = 200, description = "LiveKit token for the room", body = crate::models::TokenResponse),
+        (status = 401, description = "Unauthorized or invalid password"),
+        (status = 404, description = "Room not found"),
+        (status = 409, description = "Room is full"),
+        (status = 410, description = "Room has ended"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_room_token(

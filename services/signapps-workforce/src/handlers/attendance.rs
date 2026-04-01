@@ -21,7 +21,7 @@ use signapps_common::{Claims, TenantContext};
 // Types
 // ============================================================================
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 /// AttendanceRecord data transfer object.
 pub struct AttendanceRecord {
     pub id: Uuid,
@@ -37,7 +37,7 @@ pub struct AttendanceRecord {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for ClockIn.
 pub struct ClockInRequest {
     /// UUID of the employee clocking in.
@@ -45,7 +45,7 @@ pub struct ClockInRequest {
     pub note: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for ClockOut.
 pub struct ClockOutRequest {
     /// UUID of the employee clocking out.
@@ -69,6 +69,19 @@ pub struct AttendanceQueryParams {
 ///
 /// Opens a new attendance record for the given employee.
 /// Returns `409 Conflict` if the employee is already clocked in.
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/attendance/clock-in",
+    request_body = ClockInRequest,
+    responses(
+        (status = 201, description = "Clock-in recorded", body = AttendanceRecord),
+        (status = 401, description = "Unauthorized"),
+        (status = 409, description = "Employee already clocked in"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Attendance"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn clock_in(
@@ -124,6 +137,19 @@ pub async fn clock_in(
 ///
 /// Closes the most recent open attendance record for the given employee.
 /// Returns `404` if the employee is not currently clocked in.
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/attendance/clock-out",
+    request_body = ClockOutRequest,
+    responses(
+        (status = 200, description = "Clock-out recorded", body = AttendanceRecord),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Employee not currently clocked in"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Attendance"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn clock_out(
@@ -164,6 +190,17 @@ pub async fn clock_out(
 /// GET /api/v1/workforce/attendance
 ///
 /// Returns attendance records for the tenant, optionally filtered by employee.
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/attendance",
+    responses(
+        (status = 200, description = "List of attendance records"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Attendance"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_attendance(

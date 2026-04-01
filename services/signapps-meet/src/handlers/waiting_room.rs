@@ -26,7 +26,7 @@ pub struct WaitingRoomEntry {
     pub resolved_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for WaitingRoom.
 pub struct WaitingRoomResponse {
     pub id: Uuid,
@@ -53,6 +53,20 @@ impl From<WaitingRoomEntry> for WaitingRoomResponse {
 }
 
 /// List users in the waiting room for a given room (host only)
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/rooms/{id}/waiting-room",
+    params(("id" = Uuid, Path, description = "Room ID")),
+    responses(
+        (status = 200, description = "List of waiting users", body = Vec<WaitingRoomResponse>),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — only host can view waiting room"),
+        (status = 404, description = "Room not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_waiting(
@@ -91,6 +105,23 @@ pub async fn list_waiting(
 }
 
 /// Admit a user from the waiting room (host only)
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms/{id}/waiting-room/admit/{user_id}",
+    params(
+        ("id" = Uuid, Path, description = "Room ID"),
+        ("user_id" = Uuid, Path, description = "User ID to admit"),
+    ),
+    responses(
+        (status = 200, description = "User admitted", body = WaitingRoomResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — only host can admit users"),
+        (status = 404, description = "Room or waiting user not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn admit_user(
@@ -134,6 +165,23 @@ pub async fn admit_user(
 }
 
 /// Deny a user from the waiting room (host only)
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms/{id}/waiting-room/deny/{user_id}",
+    params(
+        ("id" = Uuid, Path, description = "Room ID"),
+        ("user_id" = Uuid, Path, description = "User ID to deny"),
+    ),
+    responses(
+        (status = 200, description = "User denied", body = WaitingRoomResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — only host can deny users"),
+        (status = 404, description = "Room or waiting user not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn deny_user(
@@ -177,13 +225,27 @@ pub async fn deny_user(
 }
 
 /// DTO for joining the waiting room (called by the participant themselves)
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for JoinWaitingRoom.
 pub struct JoinWaitingRoomRequest {
     pub display_name: String,
 }
 
 /// Join the waiting room (called by the participant)
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms/{id}/waiting-room",
+    params(("id" = Uuid, Path, description = "Room ID")),
+    request_body = JoinWaitingRoomRequest,
+    responses(
+        (status = 200, description = "Joined waiting room", body = WaitingRoomResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Room not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn join_waiting_room(

@@ -14,7 +14,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 /// Route response with additional info.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Route.
 pub struct RouteResponse {
     #[serde(flatten)]
@@ -42,6 +42,17 @@ impl From<Route> for RouteResponse {
 }
 
 /// List all routes.
+#[utoipa::path(
+    get,
+    path = "/api/v1/routes",
+    responses(
+        (status = 200, description = "List of proxy routes", body = Vec<RouteResponse>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_routes(State(state): State<AppState>) -> Result<Json<Vec<RouteResponse>>> {
@@ -54,6 +65,21 @@ pub async fn list_routes(State(state): State<AppState>) -> Result<Json<Vec<Route
 }
 
 /// Get route by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/routes/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Route ID")
+    ),
+    responses(
+        (status = 200, description = "Route details", body = RouteResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Route not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_route(
@@ -71,6 +97,19 @@ pub async fn get_route(
 }
 
 /// Create a new route.
+#[utoipa::path(
+    post,
+    path = "/api/v1/routes",
+    request_body = CreateRoute,
+    responses(
+        (status = 201, description = "Route created", body = RouteResponse),
+        (status = 400, description = "Route name or host already exists"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_route(
@@ -99,6 +138,23 @@ pub async fn create_route(
 }
 
 /// Update a route.
+#[utoipa::path(
+    put,
+    path = "/api/v1/routes/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Route ID")
+    ),
+    request_body = UpdateRoute,
+    responses(
+        (status = 200, description = "Route updated", body = RouteResponse),
+        (status = 400, description = "Conflicting name or host"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Route not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_route(
@@ -142,6 +198,21 @@ pub async fn update_route(
 }
 
 /// Delete a route.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/routes/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Route ID")
+    ),
+    responses(
+        (status = 204, description = "Route deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Route not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_route(
@@ -167,6 +238,21 @@ pub async fn delete_route(
 }
 
 /// Enable a route.
+#[utoipa::path(
+    post,
+    path = "/api/v1/routes/{id}/enable",
+    params(
+        ("id" = Uuid, Path, description = "Route ID")
+    ),
+    responses(
+        (status = 200, description = "Route enabled", body = RouteResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Route not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn enable_route(
@@ -186,6 +272,21 @@ pub async fn enable_route(
 }
 
 /// Disable a route.
+#[utoipa::path(
+    post,
+    path = "/api/v1/routes/{id}/disable",
+    params(
+        ("id" = Uuid, Path, description = "Route ID")
+    ),
+    responses(
+        (status = 200, description = "Route disabled", body = RouteResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Route not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Proxy"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn disable_route(

@@ -15,7 +15,7 @@ use signapps_common::Claims;
 // Types
 // ============================================================================
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, utoipa::ToSchema)]
 /// QuickNote data transfer object.
 pub struct QuickNote {
     pub id: Uuid,
@@ -25,7 +25,7 @@ pub struct QuickNote {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for CreateNote.
 pub struct CreateNoteRequest {
     pub title: String,
@@ -33,7 +33,7 @@ pub struct CreateNoteRequest {
     pub content: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for UpdateNote.
 pub struct UpdateNoteRequest {
     pub title: Option<String>,
@@ -44,7 +44,18 @@ pub struct UpdateNoteRequest {
 // Handlers
 // ============================================================================
 
-/// GET /api/v1/keep/notes
+/// GET /api/v1/keep/notes — list quick notes for the authenticated user
+#[utoipa::path(
+    get,
+    path = "/api/v1/keep/notes",
+    responses(
+        (status = 200, description = "List of quick notes"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Notes"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_notes(
@@ -68,7 +79,19 @@ pub async fn list_notes(
     Ok(Json(serde_json::json!({ "data": rows })))
 }
 
-/// POST /api/v1/keep/notes
+/// POST /api/v1/keep/notes — create a new quick note
+#[utoipa::path(
+    post,
+    path = "/api/v1/keep/notes",
+    request_body = CreateNoteRequest,
+    responses(
+        (status = 201, description = "Note created", body = QuickNote),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Notes"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_note(
@@ -97,7 +120,21 @@ pub async fn create_note(
     ))
 }
 
-/// PUT /api/v1/keep/notes/:id
+/// PUT /api/v1/keep/notes/:id — update a quick note
+#[utoipa::path(
+    put,
+    path = "/api/v1/keep/notes/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Note ID")),
+    request_body = UpdateNoteRequest,
+    responses(
+        (status = 200, description = "Note updated", body = QuickNote),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Note not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Notes"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_note(
@@ -130,7 +167,20 @@ pub async fn update_note(
     Ok(Json(serde_json::json!({ "data": row })))
 }
 
-/// DELETE /api/v1/keep/notes/:id
+/// DELETE /api/v1/keep/notes/:id — delete a quick note
+#[utoipa::path(
+    delete,
+    path = "/api/v1/keep/notes/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Note ID")),
+    responses(
+        (status = 204, description = "Note deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Note not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Notes"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_note(

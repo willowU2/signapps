@@ -48,6 +48,7 @@ pub struct UserQuota {
 
 /// Update quota request.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpdateQuota {
     pub max_containers: Option<i32>,
     pub max_cpu_cores: Option<f64>,

@@ -13,7 +13,7 @@ use crate::converter::{ConversionError, ConversionFormat};
 use crate::AppState;
 
 /// Supported input formats
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, utoipa::ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum InputFormat {
     TiptapJson,
@@ -22,7 +22,7 @@ pub enum InputFormat {
 }
 
 /// Supported output formats
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, utoipa::ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum OutputFormat {
     Docx,
@@ -55,7 +55,7 @@ pub struct ConversionQuery {
 }
 
 /// Comment data for export
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, utoipa::ToSchema)]
 /// ExportComment data transfer object.
 pub struct ExportComment {
     pub id: String,
@@ -68,7 +68,7 @@ pub struct ExportComment {
 }
 
 /// Comment reply for export
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, utoipa::ToSchema)]
 /// ExportCommentReply data transfer object.
 pub struct ExportCommentReply {
     pub author: String,
@@ -77,7 +77,7 @@ pub struct ExportCommentReply {
 }
 
 /// Request body for JSON conversion
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, utoipa::ToSchema)]
 /// Request body for Conversion.
 pub struct ConversionRequest {
     /// Input format (tiptapjson, html, markdown)
@@ -93,7 +93,7 @@ pub struct ConversionRequest {
 }
 
 /// Response for conversion info
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for ConversionInfo.
 pub struct ConversionInfoResponse {
     pub supported_input_formats: Vec<&'static str>,
@@ -102,6 +102,15 @@ pub struct ConversionInfoResponse {
     pub version: String,
 }
 
+/// GET /api/v1/convert/info — get conversion service info
+#[utoipa::path(
+    get,
+    path = "/api/v1/convert/info",
+    responses(
+        (status = 200, description = "Conversion service info", body = ConversionInfoResponse),
+    ),
+    tag = "Conversion"
+)]
 /// Get conversion service info
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -114,6 +123,22 @@ pub async fn info() -> Json<ConversionInfoResponse> {
     })
 }
 
+/// POST /api/v1/convert — convert a document from JSON body
+#[utoipa::path(
+    post,
+    path = "/api/v1/convert",
+    params(
+        ("format" = OutputFormat, Query, description = "Output format"),
+        ("filename" = Option<String>, Query, description = "Optional output filename"),
+    ),
+    request_body = ConversionRequest,
+    responses(
+        (status = 200, description = "Converted document binary"),
+        (status = 400, description = "Invalid input"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Conversion"
+)]
 /// Convert document from JSON body
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -262,6 +287,21 @@ pub async fn convert_json(
         .expect("valid response"))
 }
 
+/// POST /api/v1/convert/upload — convert a document from multipart upload
+#[utoipa::path(
+    post,
+    path = "/api/v1/convert/upload",
+    params(
+        ("format" = OutputFormat, Query, description = "Output format"),
+        ("filename" = Option<String>, Query, description = "Optional output filename"),
+    ),
+    responses(
+        (status = 200, description = "Converted document binary"),
+        (status = 400, description = "Invalid input or no file provided"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Conversion"
+)]
 /// Convert document from multipart upload
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -413,7 +453,7 @@ fn parse_input_format(s: &str) -> Result<crate::converter::InputFormat, Conversi
 }
 
 /// Batch conversion request item
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// BatchConversionItem data transfer object.
 pub struct BatchConversionItem {
     pub id: String,
@@ -423,14 +463,14 @@ pub struct BatchConversionItem {
 }
 
 /// Batch conversion request
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for BatchConversion.
 pub struct BatchConversionRequest {
     pub items: Vec<BatchConversionItem>,
 }
 
 /// Batch conversion response item
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// BatchConversionResultItem data transfer object.
 pub struct BatchConversionResultItem {
     pub id: String,
@@ -448,7 +488,7 @@ pub struct BatchConversionResultItem {
 }
 
 /// Batch conversion response
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for BatchConversion.
 pub struct BatchConversionResponse {
     pub total: usize,
@@ -457,6 +497,18 @@ pub struct BatchConversionResponse {
     pub results: Vec<BatchConversionResultItem>,
 }
 
+/// POST /api/v1/convert/batch — convert multiple documents in a single request
+#[utoipa::path(
+    post,
+    path = "/api/v1/convert/batch",
+    request_body = BatchConversionRequest,
+    responses(
+        (status = 200, description = "Batch conversion results", body = BatchConversionResponse),
+        (status = 400, description = "Invalid input"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Conversion"
+)]
 /// Convert multiple documents in batch
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]

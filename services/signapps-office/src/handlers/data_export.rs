@@ -16,7 +16,7 @@ use std::io::{BufWriter, Cursor};
 // Types
 // ============================================================================
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for Export.
 pub struct ExportRequest {
     /// Output format: "csv" | "json" | "xlsx" | "pdf"
@@ -31,7 +31,7 @@ pub struct ExportRequest {
     pub title: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// ExportInfo data transfer object.
 pub struct ExportInfo {
     pub supported_formats: Vec<String>,
@@ -42,6 +42,15 @@ pub struct ExportInfo {
 // Info endpoint
 // ============================================================================
 
+/// GET /api/v1/data/export/info — get data export service info
+#[utoipa::path(
+    get,
+    path = "/api/v1/data/export/info",
+    responses(
+        (status = 200, description = "Export service info", body = ExportInfo),
+    ),
+    tag = "DataExport"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn export_info() -> Json<ExportInfo> {
@@ -60,6 +69,18 @@ pub async fn export_info() -> Json<ExportInfo> {
 // Export handler
 // ============================================================================
 
+/// POST /api/v1/data/export — export tabular data to CSV, JSON, XLSX, or PDF
+#[utoipa::path(
+    post,
+    path = "/api/v1/data/export",
+    request_body = ExportRequest,
+    responses(
+        (status = 200, description = "Exported file binary"),
+        (status = 400, description = "Unsupported format"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "DataExport"
+)]
 /// POST /api/v1/data/export — Export data to a chosen format.
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]

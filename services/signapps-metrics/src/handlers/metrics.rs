@@ -19,6 +19,17 @@ use crate::AppState;
 use signapps_common::Result;
 
 /// Get all system metrics.
+#[utoipa::path(
+    get,
+    path = "/api/v1/system",
+    responses(
+        (status = 200, description = "All system metrics", body = SystemMetrics),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_all_metrics(State(state): State<AppState>) -> Result<Json<SystemMetrics>> {
@@ -27,6 +38,17 @@ pub async fn get_all_metrics(State(state): State<AppState>) -> Result<Json<Syste
 }
 
 /// Get CPU metrics.
+#[utoipa::path(
+    get,
+    path = "/api/v1/system/cpu",
+    responses(
+        (status = 200, description = "CPU metrics", body = CpuMetrics),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_cpu_metrics(State(state): State<AppState>) -> Result<Json<CpuMetrics>> {
@@ -35,6 +57,17 @@ pub async fn get_cpu_metrics(State(state): State<AppState>) -> Result<Json<CpuMe
 }
 
 /// Get memory metrics.
+#[utoipa::path(
+    get,
+    path = "/api/v1/system/memory",
+    responses(
+        (status = 200, description = "Memory metrics", body = MemoryMetrics),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_memory_metrics(State(state): State<AppState>) -> Result<Json<MemoryMetrics>> {
@@ -43,6 +76,17 @@ pub async fn get_memory_metrics(State(state): State<AppState>) -> Result<Json<Me
 }
 
 /// Get disk metrics.
+#[utoipa::path(
+    get,
+    path = "/api/v1/system/disk",
+    responses(
+        (status = 200, description = "Disk metrics", body = Vec<DiskMetrics>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_disk_metrics(State(state): State<AppState>) -> Result<Json<Vec<DiskMetrics>>> {
@@ -51,6 +95,17 @@ pub async fn get_disk_metrics(State(state): State<AppState>) -> Result<Json<Vec<
 }
 
 /// Get network metrics.
+#[utoipa::path(
+    get,
+    path = "/api/v1/system/network",
+    responses(
+        (status = 200, description = "Network interface metrics", body = Vec<NetworkMetrics>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_network_metrics(
@@ -80,6 +135,14 @@ pub async fn prometheus_metrics(State(state): State<AppState>) -> impl IntoRespo
 }
 
 /// Health check.
+#[utoipa::path(
+    get,
+    path = "/health",
+    responses(
+        (status = 200, description = "Service health status", body = HealthResponse),
+    ),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn health_check(State(state): State<AppState>) -> Result<Json<HealthResponse>> {
@@ -109,7 +172,7 @@ pub async fn health_check(State(state): State<AppState>) -> Result<Json<HealthRe
 }
 
 /// Health response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Health.
 pub struct HealthResponse {
     pub status: String,
@@ -119,6 +182,17 @@ pub struct HealthResponse {
 }
 
 /// Summary metrics for dashboard.
+#[utoipa::path(
+    get,
+    path = "/api/v1/system/summary",
+    responses(
+        (status = 200, description = "System summary metrics", body = SummaryMetrics),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_summary(State(state): State<AppState>) -> Result<Json<SummaryMetrics>> {
@@ -164,7 +238,7 @@ pub async fn get_summary(State(state): State<AppState>) -> Result<Json<SummaryMe
 }
 
 /// Summary metrics.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// SummaryMetrics data transfer object.
 pub struct SummaryMetrics {
     pub hostname: String,

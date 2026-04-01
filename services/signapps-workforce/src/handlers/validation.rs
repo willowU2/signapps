@@ -23,7 +23,7 @@ use signapps_common::{Claims, TenantContext};
 // ============================================================================
 
 /// TimeSpan for scheduling operations
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 /// TimeSpan data transfer object.
 pub struct TimeSpan {
     pub start: DateTime<Utc>,
@@ -51,7 +51,7 @@ impl TimeSpan {
 }
 
 /// Coverage validation request
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for ValidateCoverage.
 pub struct ValidateCoverageRequest {
     pub org_node_id: Uuid,
@@ -61,7 +61,7 @@ pub struct ValidateCoverageRequest {
 }
 
 /// Date range for queries
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, utoipa::ToSchema)]
 /// DateRange data transfer object.
 pub struct DateRange {
     pub start: NaiveDate,
@@ -140,7 +140,7 @@ pub struct GapAnalysisParams {
 }
 
 /// Leave simulation request
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for LeaveSimulation.
 pub struct LeaveSimulationRequest {
     pub employee_id: Uuid,
@@ -188,7 +188,7 @@ pub struct SuggestedReplacement {
 }
 
 /// Shift change simulation request
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for ShiftChangeSimulation.
 pub struct ShiftChangeSimulationRequest {
     pub employee_id: Uuid,
@@ -275,6 +275,20 @@ pub struct ConflictQueryParams {
 // ============================================================================
 
 /// Validate coverage for an organization node
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/validate/coverage",
+    request_body = ValidateCoverageRequest,
+    responses(
+        (status = 200, description = "Coverage validation result"),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Organization node not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Validation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn validate_coverage(
@@ -400,6 +414,17 @@ pub async fn validate_coverage(
 }
 
 /// Analyze gaps across organization
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/validate/gaps",
+    responses(
+        (status = 200, description = "Coverage gap analysis results"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Validation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn analyze_gaps(
@@ -510,6 +535,20 @@ pub async fn analyze_gaps(
 }
 
 /// Simulate leave request impact
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/validate/leave-simulation",
+    request_body = LeaveSimulationRequest,
+    responses(
+        (status = 200, description = "Leave simulation result"),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Employee not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Validation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn simulate_leave(
@@ -653,6 +692,20 @@ pub async fn simulate_leave(
 }
 
 /// Simulate shift change impact
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/validate/shift-simulation",
+    request_body = ShiftChangeSimulationRequest,
+    responses(
+        (status = 200, description = "Shift change simulation result"),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Employee not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Validation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn simulate_shift_change(
@@ -787,6 +840,17 @@ pub async fn simulate_shift_change(
 }
 
 /// Get all scheduling conflicts
+#[utoipa::path(
+    get,
+    path = "/api/v1/workforce/validate/conflicts",
+    responses(
+        (status = 200, description = "List of scheduling conflicts"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Validation"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_conflicts(

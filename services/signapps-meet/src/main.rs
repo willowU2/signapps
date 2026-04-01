@@ -115,7 +115,7 @@ async fn meet_health() -> axum::Json<serde_json::Value> {
 fn build_router(state: AppState) -> Router {
     use axum::routing::{delete, get, patch, post};
     use handlers::{
-        participants, recordings, rooms, tokens, transcription, video_messages, voicemails,
+        openapi, participants, recordings, rooms, tokens, transcription, video_messages, voicemails,
         waiting_room,
     };
 
@@ -193,6 +193,7 @@ fn build_router(state: AppState) -> Router {
         ]);
 
     public_routes
+        .merge(openapi::swagger_router())
         .merge(protected_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)
