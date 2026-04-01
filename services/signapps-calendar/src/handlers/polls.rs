@@ -170,7 +170,6 @@ async fn fetch_slots(state: &AppState, poll_id: Uuid) -> Result<Vec<PollSlot>, C
 
 /// GET /api/v1/polls — List polls created by the current user.
 #[tracing::instrument(skip(state))]
-#[tracing::instrument(skip_all)]
 pub async fn list_polls(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -192,7 +191,6 @@ pub async fn list_polls(
 
 /// POST /api/v1/polls — Create a new scheduling poll with slots.
 #[tracing::instrument(skip(state, payload))]
-#[tracing::instrument(skip_all)]
 pub async fn create_poll(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -257,7 +255,6 @@ pub async fn create_poll(
 
 /// GET /api/v1/polls/:id — Get a poll with all slots and votes (public by poll ID).
 #[tracing::instrument(skip(state))]
-#[tracing::instrument(skip_all)]
 pub async fn get_poll(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -283,7 +280,6 @@ pub async fn get_poll(
 
 /// POST /api/v1/polls/:id/vote — Submit votes for multiple slots at once.
 #[tracing::instrument(skip(state, payload))]
-#[tracing::instrument(skip_all)]
 pub async fn vote_poll(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -362,7 +358,6 @@ pub async fn vote_poll(
 
 /// POST /api/v1/polls/:id/confirm — Close poll and pick winning slot; optionally create event.
 #[tracing::instrument(skip(state, payload))]
-#[tracing::instrument(skip_all)]
 pub async fn confirm_poll(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

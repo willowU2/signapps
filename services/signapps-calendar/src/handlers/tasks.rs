@@ -16,7 +16,6 @@ use crate::{services, AppState, CalendarError};
 
 /// Create a new task
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn create_task(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -60,7 +59,6 @@ pub async fn create_task(
 
 /// Get task by ID
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_task(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -77,7 +75,6 @@ pub async fn get_task(
 
 /// List all tasks in a calendar (root only)
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_root_tasks(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -93,7 +90,6 @@ pub async fn list_root_tasks(
 
 /// Get all child tasks for a parent
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_children(
     State(state): State<AppState>,
     Path(task_id): Path<Uuid>,
@@ -108,7 +104,6 @@ pub async fn list_children(
 }
 
 /// Update a task
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_task(
     State(state): State<AppState>,
@@ -147,7 +142,6 @@ pub struct MoveTaskRequest {
 }
 
 /// Move task to new parent (change position in tree)
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn move_task(
     State(state): State<AppState>,
@@ -189,7 +183,6 @@ pub async fn move_task(
 
 /// Mark task as completed
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn complete_task(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -212,7 +205,6 @@ pub async fn complete_task(
 }
 
 /// Delete task (cascade to children)
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_task(
     State(state): State<AppState>,
@@ -242,7 +234,6 @@ pub struct TaskTreeNode {
 }
 
 /// Get full task tree for a calendar
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_task_tree(
     State(state): State<AppState>,
@@ -294,7 +285,6 @@ pub struct TaskTreeInfo {
 }
 
 /// Get task tree statistics
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_task_tree_info(
     State(state): State<AppState>,

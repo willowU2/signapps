@@ -27,7 +27,6 @@ use crate::{AppState, CalendarError};
 /// The org_id is derived from a `X-Workspace-Id` header carried in the JWT
 /// claims or falls back to the user's own UUID as a single-tenant sentinel.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_workflows(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -53,7 +52,6 @@ pub async fn list_workflows(
 /// `POST /api/v1/approval-workflows`
 ///
 /// Create a new approval workflow.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_workflow(
     State(state): State<AppState>,
@@ -86,7 +84,6 @@ pub async fn create_workflow(
 ///
 /// Update an existing approval workflow.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn update_workflow(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -118,7 +115,6 @@ pub async fn update_workflow(
 /// `DELETE /api/v1/approval-workflows/:id`
 ///
 /// Delete an approval workflow by ID.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_workflow(
     State(state): State<AppState>,

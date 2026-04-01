@@ -87,7 +87,6 @@ pub struct PredictResult {
 /// Set the event status to `approved`, record the approver, and shift the
 /// leave balance from pending to used.
 #[instrument(skip(state), fields(user_id = %claims.sub, event_id = %id))]
-#[tracing::instrument(skip_all)]
 pub async fn approve_leave(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -174,7 +173,6 @@ pub async fn approve_leave(
 /// Set the event status to `rejected`, record the approver and comment, and
 /// decrement the pending balance.
 #[instrument(skip(state, body), fields(user_id = %claims.sub, event_id = %id))]
-#[tracing::instrument(skip_all)]
 pub async fn reject_leave(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -253,7 +251,6 @@ pub async fn reject_leave(
 ///
 /// Return all leave balances for the current user for the current year.
 #[instrument(skip(state), fields(user_id = %claims.sub))]
-#[tracing::instrument(skip_all)]
 pub async fn get_balances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -280,7 +277,6 @@ pub async fn get_balances(
 ///
 /// Compute: `total_days - used_days - pending_days - requested_days`.
 #[instrument(skip(state, params), fields(user_id = %claims.sub))]
-#[tracing::instrument(skip_all)]
 pub async fn predict_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -317,7 +313,6 @@ pub async fn predict_balance(
 ///
 /// Find all leave events overlapping the given date range (organisation-wide).
 #[instrument(skip(state, params, _claims))]
-#[tracing::instrument(skip_all)]
 pub async fn team_conflicts(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -370,7 +365,6 @@ pub async fn team_conflicts(
 /// `assigned_to` field of that event (task) to the designated user.
 /// Returns the count of successfully updated records.
 #[instrument(skip(state, body, _claims))]
-#[tracing::instrument(skip_all)]
 pub async fn delegate_tasks(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

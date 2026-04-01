@@ -10,7 +10,6 @@ use crate::{AppState, CalendarError};
 
 /// Create a new floor plan
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn create_floor_plan(
     State(state): State<AppState>,
     Json(payload): Json<CreateFloorPlan>,
@@ -26,7 +25,6 @@ pub async fn create_floor_plan(
 
 /// Get all floor plans
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_floor_plans(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<FloorPlan>>, CalendarError> {
@@ -40,7 +38,6 @@ pub async fn list_floor_plans(
 }
 
 /// Get floor plan by ID
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_floor_plan(
     State(state): State<AppState>,
@@ -61,7 +58,6 @@ pub async fn get_floor_plan(
 
 /// Update floor plan
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn update_floor_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -77,7 +73,6 @@ pub async fn update_floor_plan(
 }
 
 /// Delete floor plan
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_floor_plan(
     State(state): State<AppState>,

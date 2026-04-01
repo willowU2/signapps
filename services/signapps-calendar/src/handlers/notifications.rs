@@ -67,7 +67,6 @@ pub struct NotificationRecord {
 /// GET /api/v1/notifications/preferences
 /// Get user's notification preferences
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_preferences(
     State(state): State<AppState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
@@ -95,7 +94,6 @@ pub async fn get_preferences(
 
 /// PUT /api/v1/notifications/preferences
 /// Update user's notification preferences
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_preferences(
     State(state): State<AppState>,
@@ -146,7 +144,6 @@ pub struct PushSubscriptionRequest {
 }
 
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn subscribe_push(
     State(state): State<AppState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
@@ -161,7 +158,6 @@ pub async fn subscribe_push(
 
 /// GET /api/v1/notifications/subscriptions/push
 /// Get all push subscriptions for user
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_push_subscriptions(
     State(state): State<AppState>,
@@ -187,7 +183,6 @@ pub async fn list_push_subscriptions(
 
 /// DELETE /api/v1/notifications/subscriptions/push/:id
 /// Unregister a push subscription
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn unsubscribe_push(
     State(state): State<AppState>,
@@ -223,7 +218,6 @@ pub struct NotificationHistoryQuery {
     pub offset: Option<i32>,
 }
 
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_notification_history(
     State(state): State<AppState>,
@@ -262,7 +256,6 @@ pub async fn get_notification_history(
 /// POST /api/v1/notifications/:id/resend
 /// Resend a failed notification
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn resend_notification(
     State(state): State<AppState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
@@ -295,7 +288,6 @@ pub async fn resend_notification(
 
 /// GET /api/v1/notifications/unread-count
 /// Get count of unread notifications
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_unread_count(
     State(state): State<AppState>,

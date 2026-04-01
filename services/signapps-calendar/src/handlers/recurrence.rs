@@ -32,7 +32,6 @@ pub struct ExpandedEvent {
 
 /// Get expanded instances for a recurring event
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_event_instances(
     State(state): State<AppState>,
     Path(event_id): Path<Uuid>,
@@ -78,7 +77,6 @@ pub struct CreateExceptionRequest {
 
 /// Cancel a single instance of a recurring event
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn create_exception(
     State(state): State<AppState>,
     Path(event_id): Path<Uuid>,
@@ -123,7 +121,6 @@ pub struct ValidateRruleResponse {
 }
 
 /// Validate RRULE string
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn validate_rrule(
     Json(payload): Json<ValidateRruleRequest>,

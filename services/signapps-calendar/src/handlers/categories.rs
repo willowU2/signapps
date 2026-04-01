@@ -13,7 +13,6 @@ use crate::{AppState, CalendarError};
 
 /// List categories visible to the current user.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_categories(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -28,7 +27,6 @@ pub async fn list_categories(
 }
 
 /// Create a new category.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_category(
     State(state): State<AppState>,
@@ -46,7 +44,6 @@ pub async fn create_category(
 
 /// Update an existing category.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn update_category(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -63,7 +60,6 @@ pub async fn update_category(
 }
 
 /// Delete a category.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_category(
     State(state): State<AppState>,

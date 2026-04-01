@@ -31,7 +31,6 @@ pub struct ImportResult {
 /// Export calendar to iCalendar format (RFC 5545)
 #[tracing::instrument(skip_all)]
 #[allow(clippy::type_complexity)]
-#[tracing::instrument(skip_all)]
 pub async fn export_calendar(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -93,7 +92,6 @@ pub async fn export_calendar(
 /// Get calendar as iCalendar feed (public URL like standard Calendar apps)
 #[tracing::instrument(skip_all)]
 #[allow(clippy::type_complexity)]
-#[tracing::instrument(skip_all)]
 pub async fn get_calendar_feed(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -148,7 +146,6 @@ pub async fn get_calendar_feed(
 
 /// Import calendar from iCalendar format (RFC 5545)
 #[allow(dead_code)]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn import_calendar(
     State(state): State<AppState>,
@@ -253,7 +250,6 @@ pub struct CalendarSession {
     pub tx: tokio::sync::broadcast::Sender<Vec<u8>>,
 }
 
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn validate_icalendar(
     Json(payload): Json<ValidateICalendarRequest>,

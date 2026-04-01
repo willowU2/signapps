@@ -73,7 +73,6 @@ pub struct RunCronJobResponse {
 ///
 /// List all events where `event_type = 'cron'` visible to the current user.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_cron_jobs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -148,7 +147,6 @@ pub async fn list_cron_jobs(
 ///
 /// Create a new CRON job event.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn create_cron_job(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -212,7 +210,6 @@ pub async fn create_cron_job(
 /// `PUT /api/v1/cron-jobs/:id`
 ///
 /// Update a CRON job event (title, expression, target, status).
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_cron_job(
     State(state): State<AppState>,
@@ -278,7 +275,6 @@ pub async fn update_cron_job(
 ///
 /// Soft-delete a CRON job event.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_cron_job(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -304,7 +300,6 @@ pub async fn delete_cron_job(
 /// Execute the CRON job immediately. Logs the execution and returns a
 /// success response. Actual scheduling/dispatch is handled by the
 /// background NotificationScheduler; this endpoint acts as a manual trigger.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn run_cron_job(
     State(state): State<AppState>,

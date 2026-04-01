@@ -83,7 +83,6 @@ pub struct PushSendResultItem {
 /// GET /api/v1/notifications/push/vapid-key
 /// Get VAPID public key for frontend registration
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_vapid_key() -> Result<Json<VapidKeyResponse>, CalendarError> {
     let public_key = get_vapid_public_key()
         .map_err(|_| CalendarError::internal("Failed to retrieve VAPID key"))?;
@@ -93,7 +92,6 @@ pub async fn get_vapid_key() -> Result<Json<VapidKeyResponse>, CalendarError> {
 
 /// POST /api/v1/notifications/push/send
 /// Send a push notification to user's subscriptions
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn send_push(
     State(state): State<AppState>,

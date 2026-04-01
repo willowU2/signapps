@@ -14,7 +14,6 @@ use crate::{AppState, CalendarError};
 
 /// Create a new resource
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn create_resource(
     State(state): State<AppState>,
     Json(payload): Json<CreateResource>,
@@ -30,7 +29,6 @@ pub async fn create_resource(
 
 /// Get all resources
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_resources(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<Resource>>, CalendarError> {
@@ -44,7 +42,6 @@ pub async fn list_resources(
 }
 
 /// Get resources by type
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_resources_by_type(
     State(state): State<AppState>,
@@ -61,7 +58,6 @@ pub async fn list_resources_by_type(
 
 /// Get resource by ID
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_resource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -77,7 +73,6 @@ pub async fn get_resource(
 }
 
 /// Update resource
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_resource(
     State(state): State<AppState>,
@@ -97,7 +92,6 @@ pub async fn update_resource(
 }
 
 /// Delete resource
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_resource(
     State(state): State<AppState>,
@@ -139,7 +133,6 @@ pub struct AvailabilityResponse {
 
 /// Check resource availability for a time period
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn check_availability(
     State(_state): State<AppState>,
     Json(_payload): Json<CheckAvailabilityRequest>,
@@ -165,7 +158,6 @@ pub struct BookResourceRequest {
 }
 
 /// Book resources for an event
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn book_resources(
     State(_state): State<AppState>,

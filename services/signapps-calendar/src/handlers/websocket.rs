@@ -34,7 +34,6 @@ pub struct CalendarSession {
 /// WebSocket handler for calendar real-time collaboration
 /// Endpoint: GET /api/v1/calendars/:calendar_id/ws
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn websocket_handler(
     Path(calendar_id): Path<Uuid>,
     ws: WebSocketUpgrade,

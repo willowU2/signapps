@@ -45,7 +45,6 @@ pub struct DateRangeQuery {
 
 /// Create a new event.
 #[instrument(skip(state, payload), fields(user_id = %claims.sub, calendar_id = %calendar_id))]
-#[tracing::instrument(skip_all)]
 pub async fn create_event(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -106,7 +105,6 @@ pub async fn create_event(
 
 /// Get events in a calendar within a date range.
 #[instrument(skip(state, query), fields(calendar_id = %calendar_id))]
-#[tracing::instrument(skip_all)]
 pub async fn list_events(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -145,7 +143,6 @@ pub async fn list_events(
 
 /// Get event by ID.
 #[instrument(skip(state), fields(event_id = %id))]
-#[tracing::instrument(skip_all)]
 pub async fn get_event(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -162,7 +159,6 @@ pub async fn get_event(
 
 /// Update an event.
 #[instrument(skip(state, payload), fields(user_id = %claims.sub, event_id = %id))]
-#[tracing::instrument(skip_all)]
 pub async fn update_event(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -213,7 +209,6 @@ pub async fn update_event(
 
 /// Delete an event (soft delete).
 #[instrument(skip(state), fields(user_id = %claims.sub, event_id = %id))]
-#[tracing::instrument(skip_all)]
 pub async fn delete_event(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -242,7 +237,6 @@ pub async fn delete_event(
 /// Either `user_id` (internal user) or `email` (external attendee) must be supplied.
 /// The attendee is created with `rsvp_status = "pending"`.
 #[instrument(skip(state, payload), fields(event_id = %event_id))]
-#[tracing::instrument(skip_all)]
 pub async fn add_attendee(
     State(state): State<AppState>,
     Path(event_id): Path<Uuid>,
@@ -265,7 +259,6 @@ pub async fn add_attendee(
 
 /// Get attendees for an event.
 #[instrument(skip(state), fields(event_id = %event_id))]
-#[tracing::instrument(skip_all)]
 pub async fn list_attendees(
     State(state): State<AppState>,
     Path(event_id): Path<Uuid>,
@@ -283,7 +276,6 @@ pub async fn list_attendees(
 ///
 /// Accepts `{ "rsvp_status": "accepted" | "declined" | "tentative" | "pending" }`.
 #[instrument(skip(state, payload), fields(attendee_id = %attendee_id))]
-#[tracing::instrument(skip_all)]
 pub async fn update_rsvp(
     State(state): State<AppState>,
     Path(attendee_id): Path<Uuid>,
@@ -308,7 +300,6 @@ pub async fn update_rsvp(
 
 /// Remove an attendee from an event.
 #[instrument(skip(state), fields(attendee_id = %attendee_id))]
-#[tracing::instrument(skip_all)]
 pub async fn remove_attendee(
     State(state): State<AppState>,
     Path(attendee_id): Path<Uuid>,

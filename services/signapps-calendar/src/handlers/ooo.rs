@@ -57,7 +57,6 @@ fn row_to_ooo(r: OooRow) -> OooSettings {
 
 /// GET /api/v1/ooo — Get out-of-office settings for the current user.
 #[tracing::instrument(skip(state))]
-#[tracing::instrument(skip_all)]
 pub async fn get_ooo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -90,7 +89,6 @@ pub async fn get_ooo(
 
 /// PUT /api/v1/ooo — Create or replace out-of-office settings.
 #[tracing::instrument(skip(state, payload))]
-#[tracing::instrument(skip_all)]
 pub async fn set_ooo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -130,7 +128,6 @@ pub async fn set_ooo(
 
 /// DELETE /api/v1/ooo — Clear out-of-office settings.
 #[tracing::instrument(skip(state))]
-#[tracing::instrument(skip_all)]
 pub async fn delete_ooo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -56,7 +56,6 @@ pub struct LayerConfigResponse {
 /// Return the current user's saved layer configuration. Falls back to the
 /// default config if none has been saved yet.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_layer_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -88,7 +87,6 @@ pub async fn get_layer_config(
 ///
 /// Upsert the layer configuration for the current user into the
 /// `identity.user_preferences.extra` JSONB column.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn save_layer_config(
     State(state): State<AppState>,
