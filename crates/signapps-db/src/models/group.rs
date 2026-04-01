@@ -19,6 +19,7 @@ pub struct Group {
 
 /// Create group request.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreateGroup {
     pub name: String,
     pub description: Option<String>,
@@ -58,6 +59,7 @@ pub struct Role {
 
 /// Create role request.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreateRole {
     pub name: String,
     pub description: Option<String>,

@@ -11,7 +11,7 @@ use signapps_common::{Error, Result};
 use signapps_db::repositories::GroupRepository;
 use uuid::Uuid;
 
-#[derive(Serialize)]
+#[derive(Serialize, utoipa::ToSchema)]
 /// Response for Group.
 pub struct GroupResponse {
     pub id: Uuid,
@@ -21,7 +21,7 @@ pub struct GroupResponse {
     pub member_count: i32,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, utoipa::ToSchema)]
 /// Response for GroupMember.
 pub struct GroupMemberResponse {
     pub user_id: Uuid,
@@ -39,7 +39,7 @@ pub struct ListQuery {
     pub offset: Option<i64>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 /// Request body for AddMember.
 pub struct AddMemberRequest {
     pub user_id: Uuid,
@@ -47,6 +47,20 @@ pub struct AddMemberRequest {
 }
 
 /// List all groups.
+#[utoipa::path(
+    get,
+    path = "/api/v1/groups",
+    tag = "groups",
+    security(("bearerAuth" = [])),
+    params(
+        ("limit" = Option<i64>, Query, description = "Maximum results (default 50)"),
+        ("offset" = Option<i64>, Query, description = "Pagination offset"),
+    ),
+    responses(
+        (status = 200, description = "Group list", body = Vec<GroupResponse>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list(
@@ -79,6 +93,18 @@ pub async fn list(
 }
 
 /// Get group by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/groups/{id}",
+    tag = "groups",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Group UUID")),
+    responses(
+        (status = 200, description = "Group found", body = GroupResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Group not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get(
@@ -103,6 +129,18 @@ pub async fn get(
 }
 
 /// Create new group.
+#[utoipa::path(
+    post,
+    path = "/api/v1/groups",
+    tag = "groups",
+    security(("bearerAuth" = [])),
+    request_body = signapps_db::models::CreateGroup,
+    responses(
+        (status = 200, description = "Group created", body = GroupResponse),
+        (status = 400, description = "Validation error"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create(
@@ -122,6 +160,19 @@ pub async fn create(
 }
 
 /// Update group.
+#[utoipa::path(
+    put,
+    path = "/api/v1/groups/{id}",
+    tag = "groups",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Group UUID")),
+    request_body = signapps_db::models::CreateGroup,
+    responses(
+        (status = 200, description = "Group updated", body = GroupResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Group not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update(
@@ -149,6 +200,18 @@ pub async fn update(
 }
 
 /// Delete group.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/groups/{id}",
+    tag = "groups",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Group UUID")),
+    responses(
+        (status = 204, description = "Group deleted"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Group not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
@@ -158,6 +221,19 @@ pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Resu
 }
 
 /// Add member to group.
+#[utoipa::path(
+    post,
+    path = "/api/v1/groups/{id}/members",
+    tag = "groups",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Group UUID")),
+    request_body = AddMemberRequest,
+    responses(
+        (status = 201, description = "Member added"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Group not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn add_member(
@@ -176,6 +252,21 @@ pub async fn add_member(
 }
 
 /// Remove member from group.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/groups/{id}/members/{uid}",
+    tag = "groups",
+    security(("bearerAuth" = [])),
+    params(
+        ("id" = Uuid, Path, description = "Group UUID"),
+        ("uid" = Uuid, Path, description = "User UUID"),
+    ),
+    responses(
+        (status = 204, description = "Member removed"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Group or member not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_member(
@@ -188,6 +279,18 @@ pub async fn remove_member(
 }
 
 /// List group members with user details.
+#[utoipa::path(
+    get,
+    path = "/api/v1/groups/{id}/members",
+    tag = "groups",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Group UUID")),
+    responses(
+        (status = 200, description = "Member list", body = Vec<GroupMemberResponse>),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Group not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_members(

@@ -21,6 +21,7 @@ use utoipa::OpenApi;
         (url = "http://localhost:3001", description = "Local development"),
     ),
     paths(
+        // Auth
         crate::handlers::auth::login,
         crate::handlers::auth::logout,
         crate::handlers::auth::register,
@@ -29,20 +30,62 @@ use utoipa::OpenApi;
         crate::handlers::auth::bootstrap,
         crate::handlers::auth::password_reset,
         crate::handlers::auth::password_reset_confirm,
+        // Users
+        crate::handlers::users::list,
+        crate::handlers::users::get,
+        crate::handlers::users::create,
+        crate::handlers::users::update,
+        crate::handlers::users::delete,
+        crate::handlers::users::get_me,
+        crate::handlers::users::update_me,
+        crate::handlers::users::set_tenant,
+        // Groups
+        crate::handlers::groups::list,
+        crate::handlers::groups::get,
+        crate::handlers::groups::create,
+        crate::handlers::groups::update,
+        crate::handlers::groups::delete,
+        crate::handlers::groups::list_members,
+        crate::handlers::groups::add_member,
+        crate::handlers::groups::remove_member,
+        // Roles
+        crate::handlers::roles::list,
+        crate::handlers::roles::create,
+        crate::handlers::roles::update,
+        crate::handlers::roles::delete,
     ),
     components(
         schemas(
+            // Auth schemas
             crate::handlers::auth::LoginRequest,
             crate::handlers::auth::LoginResponse,
             crate::handlers::auth::RegisterRequest,
             crate::handlers::auth::UserResponse,
             crate::handlers::auth::RefreshRequest,
             crate::handlers::auth::PasswordResetConfirmRequest,
+            // User schemas
+            crate::handlers::users::UserResponse,
+            crate::handlers::users::UserListResponse,
+            crate::handlers::users::AdminCreateUserRequest,
+            crate::handlers::users::AdminUpdateUserRequest,
+            crate::handlers::users::UpdateSelfRequest,
+            crate::handlers::users::SetTenantRequest,
+            // Group schemas
+            crate::handlers::groups::GroupResponse,
+            crate::handlers::groups::GroupMemberResponse,
+            crate::handlers::groups::AddMemberRequest,
+            signapps_db::models::CreateGroup,
+            // Role schemas
+            crate::handlers::roles::RoleResponse,
+            signapps_db::models::CreateRole,
         )
     ),
     tags(
         (name = "auth", description = "Authentication and session management"),
         (name = "system", description = "System bootstrap and health"),
+        (name = "users", description = "User management (admin)"),
+        (name = "groups", description = "Group management (RBAC)"),
+        (name = "roles", description = "Role management (RBAC)"),
     ),
     modifiers(&SecurityAddon),
 )]

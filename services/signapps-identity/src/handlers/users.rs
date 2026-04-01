@@ -46,7 +46,7 @@ pub struct ListQuery {
 }
 
 /// User response DTO.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for User.
 pub struct UserResponse {
     pub id: Uuid,
@@ -63,7 +63,7 @@ pub struct UserResponse {
 
 /// User list response with pagination info.
 #[allow(dead_code)]
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for UserList.
 pub struct UserListResponse {
     pub users: Vec<UserResponse>,
@@ -73,7 +73,7 @@ pub struct UserListResponse {
 }
 
 /// Create user request (admin).
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for AdminCreateUser.
 pub struct AdminCreateUserRequest {
     #[validate(length(min = 3, max = 64))]
@@ -92,7 +92,7 @@ pub struct AdminCreateUserRequest {
 }
 
 /// Update user request (admin).
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 #[allow(dead_code)]
 /// Request body for AdminUpdateUser.
 pub struct AdminUpdateUserRequest {
@@ -108,7 +108,7 @@ pub struct AdminUpdateUserRequest {
 }
 
 /// Update self request.
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, utoipa::ToSchema)]
 /// Request body for UpdateSelf.
 pub struct UpdateSelfRequest {
     #[validate(email)]
@@ -123,7 +123,7 @@ pub struct UpdateSelfRequest {
 }
 
 /// Set user tenant request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for SetTenant.
 pub struct SetTenantRequest {
     pub tenant_id: Uuid,
@@ -147,6 +147,21 @@ impl From<signapps_db::models::User> for UserResponse {
 }
 
 /// List all users with pagination (admin only).
+#[utoipa::path(
+    get,
+    path = "/api/v1/users",
+    tag = "users",
+    security(("bearerAuth" = [])),
+    params(
+        ("limit" = Option<i64>, Query, description = "Maximum results (default 50, max 100)"),
+        ("offset" = Option<i64>, Query, description = "Pagination offset"),
+        ("search" = Option<String>, Query, description = "Filter by username or email"),
+    ),
+    responses(
+        (status = 200, description = "User list", body = Vec<UserResponse>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list(
@@ -164,6 +179,18 @@ pub async fn list(
 }
 
 /// Get user by ID (admin only).
+#[utoipa::path(
+    get,
+    path = "/api/v1/users/{id}",
+    tag = "users",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "User UUID")),
+    responses(
+        (status = 200, description = "User found", body = UserResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "User not found"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn get(
@@ -178,6 +205,19 @@ pub async fn get(
 }
 
 /// Create new user (admin only).
+#[utoipa::path(
+    post,
+    path = "/api/v1/users",
+    tag = "users",
+    security(("bearerAuth" = [])),
+    request_body = AdminCreateUserRequest,
+    responses(
+        (status = 200, description = "User created", body = UserResponse),
+        (status = 400, description = "Validation error"),
+        (status = 401, description = "Not authenticated"),
+        (status = 409, description = "Username or email already exists"),
+    )
+)]
 #[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
 #[tracing::instrument(skip_all)]
 pub async fn create(
@@ -296,6 +336,20 @@ pub async fn create(
 }
 
 /// Update user (admin only).
+#[utoipa::path(
+    put,
+    path = "/api/v1/users/{id}",
+    tag = "users",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "User UUID")),
+    request_body = AdminUpdateUserRequest,
+    responses(
+        (status = 200, description = "User updated", body = UserResponse),
+        (status = 400, description = "Validation error"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "User not found"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn update(
@@ -353,6 +407,18 @@ pub async fn update(
 }
 
 /// Delete user (admin only).
+#[utoipa::path(
+    delete,
+    path = "/api/v1/users/{id}",
+    tag = "users",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "User UUID")),
+    responses(
+        (status = 204, description = "User deleted"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "User not found"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn delete(
@@ -389,6 +455,16 @@ pub async fn delete(
 }
 
 /// Get current user profile.
+#[utoipa::path(
+    get,
+    path = "/api/v1/users/me",
+    tag = "users",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "Current user profile", body = UserResponse),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn get_me(
@@ -403,6 +479,18 @@ pub async fn get_me(
 }
 
 /// Update current user profile.
+#[utoipa::path(
+    put,
+    path = "/api/v1/users/me",
+    tag = "users",
+    security(("bearerAuth" = [])),
+    request_body = UpdateSelfRequest,
+    responses(
+        (status = 200, description = "Profile updated", body = UserResponse),
+        (status = 400, description = "Validation error or wrong current password"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn update_me(
@@ -464,6 +552,19 @@ pub async fn update_me(
 }
 
 /// Set user's default tenant (admin only).
+#[utoipa::path(
+    put,
+    path = "/api/v1/users/{id}/tenant",
+    tag = "users",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "User UUID")),
+    request_body = SetTenantRequest,
+    responses(
+        (status = 200, description = "Tenant assigned", body = UserResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "User or tenant not found"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn set_tenant(

@@ -11,7 +11,7 @@ use signapps_common::{Error, Result};
 use signapps_db::repositories::GroupRepository;
 use uuid::Uuid;
 
-#[derive(Serialize)]
+#[derive(Serialize, utoipa::ToSchema)]
 /// Response for Role.
 pub struct RoleResponse {
     pub id: Uuid,
@@ -22,6 +22,16 @@ pub struct RoleResponse {
 }
 
 /// List all roles.
+#[utoipa::path(
+    get,
+    path = "/api/v1/roles",
+    tag = "roles",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "Role list", body = Vec<RoleResponse>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<RoleResponse>>> {
@@ -43,6 +53,18 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<RoleResponse
 }
 
 /// Create new role.
+#[utoipa::path(
+    post,
+    path = "/api/v1/roles",
+    tag = "roles",
+    security(("bearerAuth" = [])),
+    request_body = signapps_db::models::CreateRole,
+    responses(
+        (status = 200, description = "Role created", body = RoleResponse),
+        (status = 400, description = "Validation error"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create(
@@ -62,6 +84,20 @@ pub async fn create(
 }
 
 /// Update role (non-system roles only).
+#[utoipa::path(
+    put,
+    path = "/api/v1/roles/{id}",
+    tag = "roles",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Role UUID")),
+    request_body = signapps_db::models::CreateRole,
+    responses(
+        (status = 200, description = "Role updated", body = RoleResponse),
+        (status = 400, description = "System roles cannot be modified"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Role not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update(
@@ -90,6 +126,18 @@ pub async fn update(
 }
 
 /// Delete role.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/roles/{id}",
+    tag = "roles",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Role UUID")),
+    responses(
+        (status = 204, description = "Role deleted"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Role not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
