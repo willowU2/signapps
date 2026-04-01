@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useEntityStore } from '@/stores/entity-hub-store';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useEntityStore } from "@/stores/entity-hub-store";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -18,23 +18,23 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const taskSchema = z.object({
-  title: z.string().min(2, 'Title must be at least 2 characters'),
+  title: z.string().min(2, "Title must be at least 2 characters"),
   description: z.string().optional(),
-  project_id: z.string().min(1, 'You must select a project'),
+  project_id: z.string().min(1, "You must select a project"),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
@@ -45,16 +45,20 @@ interface CreateTaskModalProps {
   defaultProjectId?: string;
 }
 
-export function CreateTaskModal({ open, onOpenChange, defaultProjectId }: CreateTaskModalProps) {
+export function CreateTaskModal({
+  open,
+  onOpenChange,
+  defaultProjectId,
+}: CreateTaskModalProps) {
   const { projects, createTask } = useEntityStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
-      title: '',
-      description: '',
-      project_id: defaultProjectId || '',
+      title: "",
+      description: "",
+      project_id: defaultProjectId || "",
     },
   });
 
@@ -62,11 +66,14 @@ export function CreateTaskModal({ open, onOpenChange, defaultProjectId }: Create
     setIsSubmitting(true);
     try {
       await createTask(data);
-      toast.success('Tâche créée avec succès');
+      toast.success("Tâche créée avec succès");
       form.reset();
       onOpenChange(false);
-    } catch (error: any) {
-      toast.error(error.message || 'Impossible de créer task');
+    } catch (error: unknown) {
+      toast.error(
+        (error instanceof Error ? error.message : String(error)) ||
+          "Impossible de créer task",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -84,14 +91,17 @@ export function CreateTaskModal({ open, onOpenChange, defaultProjectId }: Create
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            
             <FormField
               control={form.control}
               name="project_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Project</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    value={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a project" />
@@ -123,7 +133,7 @@ export function CreateTaskModal({ open, onOpenChange, defaultProjectId }: Create
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="description"
@@ -151,7 +161,7 @@ export function CreateTaskModal({ open, onOpenChange, defaultProjectId }: Create
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating...' : 'Create Task'}
+                {isSubmitting ? "Creating..." : "Create Task"}
               </Button>
             </DialogFooter>
           </form>

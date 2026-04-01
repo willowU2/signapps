@@ -70,7 +70,7 @@ function buildCsvContent(entries: TimesheetSummaryRow[]): string {
 
   // Collect all category keys
   const allCategories = Array.from(
-    new Set(entries.flatMap((e) => Object.keys(e.byCategory)))
+    new Set(entries.flatMap((e) => Object.keys(e.byCategory))),
   ).sort();
 
   const headers = [
@@ -109,7 +109,7 @@ function buildJsonContent(entries: TimesheetSummaryRow[]): string {
       })),
     },
     null,
-    2
+    2,
   );
 }
 
@@ -137,10 +137,7 @@ function parseRawToPreview(raw: any): TimesheetSummaryRow[] {
       if (!grouped[key]) {
         grouped[key] = {
           employee:
-            entry.employee_name ??
-            entry.username ??
-            entry.user_id ??
-            "Inconnu",
+            entry.employee_name ?? entry.username ?? entry.user_id ?? "Inconnu",
           week: entry.week ?? entry.week_key ?? "?",
           status: entry.status ?? "pending",
           totalHours: 0,
@@ -173,7 +170,7 @@ interface TimesheetExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultStartDate?: string; // YYYY-MM-DD
-  defaultEndDate?: string;   // YYYY-MM-DD
+  defaultEndDate?: string; // YYYY-MM-DD
 }
 
 // ============================================================================
@@ -189,12 +186,10 @@ export function TimesheetExportDialog({
   const today = format(new Date(), "yyyy-MM-dd");
   const firstOfMonth = format(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-    "yyyy-MM-dd"
+    "yyyy-MM-dd",
   );
 
-  const [startDate, setStartDate] = useState(
-    defaultStartDate ?? firstOfMonth
-  );
+  const [startDate, setStartDate] = useState(defaultStartDate ?? firstOfMonth);
   const [endDate, setEndDate] = useState(defaultEndDate ?? today);
   const [exportFormat, setExportFormat] = useState<ExportFormat>("csv");
   const [preview, setPreview] = useState<ExportPreview | null>(null);
@@ -246,7 +241,7 @@ export function TimesheetExportDialog({
         const weekStart = new Date(
           jan4.getTime() +
             (week - 1) * 7 * 24 * 60 * 60 * 1000 -
-            ((jan4.getDay() || 7) - 1) * 24 * 60 * 60 * 1000
+            ((jan4.getDay() || 7) - 1) * 24 * 60 * 60 * 1000,
         );
         return weekStart >= s && weekStart <= e;
       });
@@ -258,7 +253,7 @@ export function TimesheetExportDialog({
         alreadyExportedCount: exported,
         pendingCount: filtered.length - exported,
       });
-    } catch (err: any) {
+    } catch (_err: unknown) {
       // No data or error — show empty preview
       setPreview({
         entries: [],
@@ -295,8 +290,7 @@ export function TimesheetExportDialog({
       let mime: string;
 
       if (exportFormat === "csv") {
-        const rows =
-          typeof raw === "string" ? [] : parseRawToPreview(raw);
+        const rows = typeof raw === "string" ? [] : parseRawToPreview(raw);
         if (typeof raw === "string") {
           // Backend returned raw CSV
           content = raw;
@@ -334,10 +328,10 @@ export function TimesheetExportDialog({
                 alreadyExportedCount: prev.totalEntries,
                 pendingCount: 0,
               }
-            : prev
+            : prev,
         );
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // If API fails, build from preview data we have
       if (preview && preview.entries.length > 0) {
         let content: string;
@@ -355,10 +349,14 @@ export function TimesheetExportDialog({
         triggerDownload(content, filename, mime);
         setExportDone(true);
       } else {
+        const e = err as {
+          response?: { data?: { message?: string } };
+          message?: string;
+        };
         setError(
-          err?.response?.data?.message ??
-            err?.message ??
-            "Erreur lors de l'export."
+          e?.response?.data?.message ??
+            (err instanceof Error ? err.message : String(err)) ??
+            "Erreur lors de l'export.",
         );
       }
     } finally {
@@ -424,12 +422,10 @@ export function TimesheetExportDialog({
               <p className="text-xs text-muted-foreground">
                 Période de{" "}
                 <strong>
-                  {differenceInDays(parseISO(endDate), parseISO(startDate)) +
-                    1}{" "}
+                  {differenceInDays(parseISO(endDate), parseISO(startDate)) + 1}{" "}
                   jours
                 </strong>{" "}
-                ({format(parseISO(startDate), "d MMMM yyyy", { locale: fr })}{" "}
-                au{" "}
+                ({format(parseISO(startDate), "d MMMM yyyy", { locale: fr })} au{" "}
                 {format(parseISO(endDate), "d MMMM yyyy", { locale: fr })})
               </p>
             )}
@@ -454,7 +450,7 @@ export function TimesheetExportDialog({
                   "flex items-start gap-3 p-3 rounded-lg border text-left transition-colors",
                   exportFormat === "csv"
                     ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                    : "border-border hover:bg-muted/40"
+                    : "border-border hover:bg-muted/40",
                 )}
               >
                 <FileText
@@ -462,7 +458,7 @@ export function TimesheetExportDialog({
                     "h-5 w-5 mt-0.5 shrink-0",
                     exportFormat === "csv"
                       ? "text-primary"
-                      : "text-muted-foreground"
+                      : "text-muted-foreground",
                   )}
                 />
                 <div>
@@ -481,7 +477,7 @@ export function TimesheetExportDialog({
                   "flex items-start gap-3 p-3 rounded-lg border text-left transition-colors",
                   exportFormat === "json"
                     ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                    : "border-border hover:bg-muted/40"
+                    : "border-border hover:bg-muted/40",
                 )}
               >
                 <FileJson
@@ -489,7 +485,7 @@ export function TimesheetExportDialog({
                     "h-5 w-5 mt-0.5 shrink-0",
                     exportFormat === "json"
                       ? "text-primary"
-                      : "text-muted-foreground"
+                      : "text-muted-foreground",
                   )}
                 />
                 <div>
@@ -514,10 +510,7 @@ export function TimesheetExportDialog({
                 className="h-7 gap-1.5 text-xs"
               >
                 <RefreshCw
-                  className={cn(
-                    "h-3 w-3",
-                    isLoadingPreview && "animate-spin"
-                  )}
+                  className={cn("h-3 w-3", isLoadingPreview && "animate-spin")}
                 />
                 Rafraîchir
               </Button>
@@ -587,7 +580,7 @@ export function TimesheetExportDialog({
                           key={i}
                           className={cn(
                             "border-b last:border-0 transition-colors hover:bg-muted/30",
-                            row.alreadyExported && "opacity-60"
+                            row.alreadyExported && "opacity-60",
                           )}
                         >
                           <td className="px-3 py-2 font-medium text-sm">
@@ -676,7 +669,7 @@ export function TimesheetExportDialog({
             disabled={
               isExporting ||
               !isValidRange() ||
-              ((preview?.totalEntries ?? 1) === 0)
+              (preview?.totalEntries ?? 1) === 0
             }
             className="gap-2"
           >
@@ -688,8 +681,7 @@ export function TimesheetExportDialog({
             ) : (
               <>
                 <Download className="h-4 w-4" />
-                Télécharger en{" "}
-                {exportFormat.toUpperCase()}
+                Télécharger en {exportFormat.toUpperCase()}
               </>
             )}
           </Button>

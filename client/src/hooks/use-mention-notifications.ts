@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useCallback, useRef } from 'react';
-import { useNotificationStore } from '@/stores/notification-store';
-import type { Editor } from '@tiptap/core';
+import { useEffect, useCallback, useRef } from "react";
+import { useNotificationStore } from "@/stores/notification-store";
+import { SCHEDULER_URL } from "@/lib/api/core";
+import type { Editor } from "@tiptap/core";
 
 /**
  * Listens for @mention insertions in a TipTap editor and pushes
@@ -37,7 +38,7 @@ export interface UseMentionNotificationsOptions {
 export function useMentionNotifications({
   editor,
   currentUser,
-  documentTitle = 'un document',
+  documentTitle = "un document",
   documentId,
 }: UseMentionNotificationsOptions) {
   const pushNotification = useNotificationStore((s) => s.pushSSENotification);
@@ -50,7 +51,7 @@ export function useMentionNotifications({
     const currentMentionIds = new Set<string>();
 
     doc.descendants((node) => {
-      if (node.type.name === 'mention' && node.attrs.id) {
+      if (node.type.name === "mention" && node.attrs.id) {
         const mentionKey = `${node.attrs.id}-${doc.content.size}`;
         currentMentionIds.add(node.attrs.id);
 
@@ -63,10 +64,10 @@ export function useMentionNotifications({
 
           pushNotification({
             id: `mention-${node.attrs.id}-${Date.now()}`,
-            title: 'Nouvelle mention',
+            title: "Nouvelle mention",
             description: `${currentUser.name} vous a mentionne dans "${documentTitle}"`,
-            type: 'user',
-            status: 'info',
+            type: "user",
+            status: "info",
           });
 
           // Also send to backend (fire-and-forget)
@@ -74,7 +75,7 @@ export function useMentionNotifications({
             mentionedUserId: node.attrs.id,
             mentionedByUserId: currentUser.id,
             mentionedByName: currentUser.name,
-            documentId: documentId ?? '',
+            documentId: documentId ?? "",
             documentTitle,
           });
         }
@@ -90,9 +91,9 @@ export function useMentionNotifications({
       scanForNewMentions();
     };
 
-    editor.on('transaction', handler);
+    editor.on("transaction", handler);
     return () => {
-      editor.off('transaction', handler);
+      editor.off("transaction", handler);
     };
   }, [editor, scanForNewMentions]);
 
@@ -114,14 +115,14 @@ async function sendMentionNotificationToBackend(payload: {
   documentTitle: string;
 }) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SCHEDULER_URL || '/api/scheduler';
+    const baseUrl = SCHEDULER_URL;
     await fetch(`${baseUrl}/notifications/mention`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         recipient_user_id: payload.mentionedUserId,
-        notification_type: 'mention',
-        channel: 'in_app',
+        notification_type: "mention",
+        channel: "in_app",
         payload: {
           mentioned_by: payload.mentionedByName,
           mentioned_by_id: payload.mentionedByUserId,

@@ -121,7 +121,7 @@ function sumRow(row: CategoryRow, days: Date[]): number {
 function sumDay(rows: CategoryRow[], dateKey: string): number {
   return rows.reduce(
     (acc, row) => acc + (row.dayEntries[dateKey]?.hours ?? 0),
-    0
+    0,
   );
 }
 
@@ -140,10 +140,7 @@ const DEFAULT_CATEGORIES: TimesheetCategory[] = [
   { id: "reunion", name: "Réunion", color: "#ec4899" },
 ];
 
-function buildEmptyRow(
-  category: TimesheetCategory,
-  days: Date[]
-): CategoryRow {
+function buildEmptyRow(category: TimesheetCategory, days: Date[]): CategoryRow {
   const dayEntries: Record<string, DayEntry> = {};
   days.forEach((d) => {
     dayEntries[format(d, "yyyy-MM-dd")] = {
@@ -159,7 +156,7 @@ function buildEmptyRow(
 function mergeApiEntries(
   rows: CategoryRow[],
   apiEntries: any[],
-  days: Date[]
+  days: Date[],
 ): CategoryRow[] {
   const merged = rows.map((row) => ({
     ...row,
@@ -174,7 +171,7 @@ function mergeApiEntries(
     const rowIdx = merged.findIndex(
       (r) =>
         r.category.id === entry.category_id ||
-        r.category.name === entry.category
+        r.category.name === entry.category,
     );
     if (rowIdx >= 0) {
       merged[rowIdx].dayEntries[dateKey] = {
@@ -265,7 +262,7 @@ function EditableCell({
         isTodayDay && "bg-primary/5",
         modified && "bg-yellow-500/10 dark:bg-yellow-400/10",
         value > 0 && !modified && "text-foreground",
-        value === 0 && "text-muted-foreground/50"
+        value === 0 && "text-muted-foreground/50",
       )}
       title={disabled ? undefined : "Double-clic pour modifier"}
     >
@@ -324,11 +321,10 @@ function StatusBadge({ status }: { status: TimesheetStatus }) {
 export function TimesheetView() {
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [timesheetData, setTimesheetData] = useState<TimesheetData | null>(
-    null
+    null,
   );
-  const [categories, setCategories] = useState<TimesheetCategory[]>(
-    DEFAULT_CATEGORIES
-  );
+  const [categories, setCategories] =
+    useState<TimesheetCategory[]>(DEFAULT_CATEGORIES);
   const [rows, setRows] = useState<CategoryRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -341,10 +337,7 @@ export function TimesheetView() {
 
   const weekKey = useMemo(() => getWeekKey(currentDate), [currentDate]);
   const weekDays = useMemo(() => getWeekDays(currentDate), [currentDate]);
-  const weekNumber = useMemo(
-    () => getISOWeek(currentDate),
-    [currentDate]
-  );
+  const weekNumber = useMemo(() => getISOWeek(currentDate), [currentDate]);
 
   // Load categories
   useEffect(() => {
@@ -358,7 +351,7 @@ export function TimesheetView() {
               id: c.id,
               name: c.name,
               color: c.color,
-            }))
+            })),
           );
         }
       })
@@ -431,7 +424,7 @@ export function TimesheetView() {
         setIsLoading(false);
       }
     },
-    [weekKey]
+    [weekKey],
   );
 
   useEffect(() => {
@@ -452,11 +445,15 @@ export function TimesheetView() {
       await timesheetsApi.generate(start, end);
       showSuccess("Feuille de temps générée depuis les événements.");
       await loadTimesheet(categories, weekDays);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
       setError(
-        err?.response?.data?.message ??
-          err?.message ??
-          "Erreur lors de la génération."
+        e?.response?.data?.message ??
+          (err instanceof Error ? err.message : String(err)) ??
+          "Erreur lors de la génération.",
       );
     } finally {
       setIsGenerating(false);
@@ -471,15 +468,23 @@ export function TimesheetView() {
       await timesheetsApi.validate(weekKey);
       setTimesheetData((prev) =>
         prev
-          ? { ...prev, status: "validated", validatedAt: new Date().toISOString() }
-          : prev
+          ? {
+              ...prev,
+              status: "validated",
+              validatedAt: new Date().toISOString(),
+            }
+          : prev,
       );
       showSuccess("Semaine validée avec succès.");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
       setError(
-        err?.response?.data?.message ??
-          err?.message ??
-          "Erreur lors de la validation."
+        e?.response?.data?.message ??
+          (err instanceof Error ? err.message : String(err)) ??
+          "Erreur lors de la validation.",
       );
     } finally {
       setIsValidating(false);
@@ -492,8 +497,11 @@ export function TimesheetView() {
     setIsSaving(true);
     setError(null);
     try {
-      const updates: Array<{ date: string; category_id: string; hours: number }> =
-        [];
+      const updates: Array<{
+        date: string;
+        category_id: string;
+        hours: number;
+      }> = [];
       rows.forEach((row) => {
         weekDays.forEach((d) => {
           const key = format(d, "yyyy-MM-dd");
@@ -530,17 +538,21 @@ export function TimesheetView() {
             Object.entries(row.dayEntries).map(([k, v]) => [
               k,
               { ...v, modified: false },
-            ])
+            ]),
           ),
-        }))
+        })),
       );
       setHasUnsaved(false);
       showSuccess("Modifications sauvegardées.");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
       setError(
-        err?.response?.data?.message ??
-          err?.message ??
-          "Erreur lors de la sauvegarde."
+        e?.response?.data?.message ??
+          (err instanceof Error ? err.message : String(err)) ??
+          "Erreur lors de la sauvegarde.",
       );
     } finally {
       setIsSaving(false);
@@ -569,7 +581,7 @@ export function TimesheetView() {
       });
       setHasUnsaved(true);
     },
-    []
+    [],
   );
 
   function showSuccess(msg: string) {
@@ -587,13 +599,10 @@ export function TimesheetView() {
         dateKey: format(d, "yyyy-MM-dd"),
         total: sumDay(rows, format(d, "yyyy-MM-dd")),
       })),
-    [rows, weekDays]
+    [rows, weekDays],
   );
 
-  const grandTotal = useMemo(
-    () => sumTotal(rows, weekDays),
-    [rows, weekDays]
-  );
+  const grandTotal = useMemo(() => sumTotal(rows, weekDays), [rows, weekDays]);
 
   // ============================================================================
   // Render
@@ -616,9 +625,7 @@ export function TimesheetView() {
             </Button>
 
             <div className="min-w-[160px] text-center">
-              <p className="font-semibold text-sm">
-                Semaine {weekNumber}
-              </p>
+              <p className="font-semibold text-sm">Semaine {weekNumber}</p>
               <p className="text-xs text-muted-foreground">
                 {format(weekDays[0], "d MMM", { locale: fr })} –{" "}
                 {format(weekDays[6], "d MMM yyyy", { locale: fr })}
@@ -675,11 +682,7 @@ export function TimesheetView() {
             <Button
               size="sm"
               onClick={handleValidate}
-              disabled={
-                isValidating ||
-                isReadOnly ||
-                grandTotal === 0
-              }
+              disabled={isValidating || isReadOnly || grandTotal === 0}
               className="gap-1.5"
             >
               {isValidating ? (
@@ -749,8 +752,7 @@ export function TimesheetView() {
                       key={i}
                       className={cn(
                         "text-center px-2 py-3 font-medium text-muted-foreground w-[80px]",
-                        todayDay &&
-                          "text-primary font-semibold"
+                        todayDay && "text-primary font-semibold",
                       )}
                     >
                       <div>{DAYS_OF_WEEK[i]}</div>
@@ -759,7 +761,7 @@ export function TimesheetView() {
                           "text-xs font-normal",
                           todayDay
                             ? "text-primary"
-                            : "text-muted-foreground/70"
+                            : "text-muted-foreground/70",
                         )}
                       >
                         {format(day, "d MMM", { locale: fr })}
@@ -786,7 +788,7 @@ export function TimesheetView() {
                     className={cn(
                       "border-b transition-colors",
                       "hover:bg-muted/30",
-                      !hasData && "opacity-60"
+                      !hasData && "opacity-60",
                     )}
                   >
                     {/* Category label */}
@@ -803,7 +805,7 @@ export function TimesheetView() {
                             "text-sm",
                             hasData
                               ? "text-foreground font-medium"
-                              : "text-muted-foreground"
+                              : "text-muted-foreground",
                           )}
                         >
                           {row.category.name}
@@ -840,7 +842,7 @@ export function TimesheetView() {
                         "text-center px-3 py-2 font-medium text-sm",
                         hasData
                           ? "text-foreground"
-                          : "text-muted-foreground/50"
+                          : "text-muted-foreground/50",
                       )}
                     >
                       {rowTotal === 0 ? "—" : formatHours(rowTotal)}
@@ -863,7 +865,8 @@ export function TimesheetView() {
                       className={cn(
                         "text-center px-2 py-3 text-sm font-bold",
                         todayDay && "text-primary",
-                        dayTotal === 0 && "text-muted-foreground/50 font-normal"
+                        dayTotal === 0 &&
+                          "text-muted-foreground/50 font-normal",
                       )}
                     >
                       {dayTotal === 0 ? "—" : formatHours(dayTotal)}
@@ -888,9 +891,13 @@ export function TimesheetView() {
               <span className="flex items-center gap-1">
                 <Bot className="h-3.5 w-3.5 text-primary/60" />
                 Généré le{" "}
-                {format(parseISO(timesheetData.generatedAt), "d MMM yyyy à HH:mm", {
-                  locale: fr,
-                })}
+                {format(
+                  parseISO(timesheetData.generatedAt),
+                  "d MMM yyyy à HH:mm",
+                  {
+                    locale: fr,
+                  },
+                )}
               </span>
             )}
             {timesheetData?.validatedAt && (
@@ -900,7 +907,7 @@ export function TimesheetView() {
                 {format(
                   parseISO(timesheetData.validatedAt),
                   "d MMM yyyy à HH:mm",
-                  { locale: fr }
+                  { locale: fr },
                 )}
               </span>
             )}
@@ -911,7 +918,7 @@ export function TimesheetView() {
                 {format(
                   parseISO(timesheetData.exportedAt),
                   "d MMM yyyy à HH:mm",
-                  { locale: fr }
+                  { locale: fr },
                 )}
               </span>
             )}

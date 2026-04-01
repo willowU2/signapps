@@ -1,38 +1,61 @@
-'use client';
+"use client";
 
 /**
  * Notification Settings Page
  * Configure email, SMS, and push notifications
  */
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Mail, MessageSquare, Bell, Clock, Save, CheckCircle2, AlertCircle, History, Settings } from 'lucide-react';
-import { calendarApi } from '@/lib/api';
-import { useAuth } from '@/hooks/use-auth';
-import { PushSubscriptionManager } from '@/components/notifications/push-subscription-manager';
-import { NotificationPreferencesForm } from '@/components/notifications/notification-preferences-form';
-import { NotificationHistory } from '@/components/notifications/notification-history';
-import { SendNotificationAdmin } from '@/components/notifications/send-notification-admin';
-import { NotificationGranularPrefs } from '@/components/notifications/notification-granular-prefs';
-import { NotificationSounds } from '@/components/notifications/notification-sounds';
-import { NotificationDndSchedule } from '@/components/notifications/notification-dnd-schedule';
-import { usePageTitle } from '@/hooks/use-page-title';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import {
+  Mail,
+  MessageSquare,
+  Bell,
+  Clock,
+  Save,
+  CheckCircle2,
+  AlertCircle,
+  History,
+  Settings,
+} from "lucide-react";
+import { calendarApi } from "@/lib/api";
+import { VAPID_PUBLIC_KEY } from "@/lib/api/core";
+import { useAuth } from "@/hooks/use-auth";
+import { PushSubscriptionManager } from "@/components/notifications/push-subscription-manager";
+import { NotificationPreferencesForm } from "@/components/notifications/notification-preferences-form";
+import { NotificationHistory } from "@/components/notifications/notification-history";
+import { SendNotificationAdmin } from "@/components/notifications/send-notification-admin";
+import { NotificationGranularPrefs } from "@/components/notifications/notification-granular-prefs";
+import { NotificationSounds } from "@/components/notifications/notification-sounds";
+import { NotificationDndSchedule } from "@/components/notifications/notification-dnd-schedule";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface NotificationPreferences {
   id: string;
   email_enabled: boolean;
-  email_frequency: 'instant' | 'digest' | 'disabled';
+  email_frequency: "instant" | "digest" | "disabled";
   sms_enabled: boolean;
   phone_number: string | null;
   push_enabled: boolean;
@@ -44,7 +67,7 @@ interface NotificationPreferences {
 }
 
 export default function NotificationSettingsPage() {
-  usePageTitle('Preferences notifications');
+  usePageTitle("Preferences notifications");
   const { user } = useAuth();
   const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,11 +80,11 @@ export default function NotificationSettingsPage() {
   useEffect(() => {
     const loadPreferences = async () => {
       try {
-        const response = await calendarApi.get('/notifications/preferences');
+        const response = await calendarApi.get("/notifications/preferences");
         setPrefs(response.data);
         checkPushRegistration();
       } catch {
-        setError('Failed to load notification preferences');
+        setError("Failed to load notification preferences");
       } finally {
         setLoading(false);
       }
@@ -73,7 +96,7 @@ export default function NotificationSettingsPage() {
   }, [user]);
 
   const checkPushRegistration = async () => {
-    if ('serviceWorker' in navigator) {
+    if ("serviceWorker" in navigator) {
       const registration = await navigator.serviceWorker.getRegistration();
       setPushRegistered(!!registration);
     }
@@ -91,7 +114,7 @@ export default function NotificationSettingsPage() {
     setError(null);
 
     try {
-      await calendarApi.put('/notifications/preferences', {
+      await calendarApi.put("/notifications/preferences", {
         email_enabled: prefs.email_enabled,
         email_frequency: prefs.email_frequency,
         sms_enabled: prefs.sms_enabled,
@@ -113,52 +136,59 @@ export default function NotificationSettingsPage() {
 
   const handleRegisterPush = async () => {
     try {
-      if (!('serviceWorker' in navigator)) {
-        setError('Service workers not supported');
+      if (!("serviceWorker" in navigator)) {
+        setError("Service workers not supported");
         return;
       }
 
-      const registration = await navigator.serviceWorker.register('/service-worker.js');
+      const registration =
+        await navigator.serviceWorker.register("/service-worker.js");
 
       // Request permission
       const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        setError('Notification permission denied');
+      if (permission !== "granted") {
+        setError("Notification permission denied");
         return;
       }
 
       // Subscribe to push
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+        applicationServerKey: VAPID_PUBLIC_KEY || undefined,
       });
 
       // Send to backend
-      await calendarApi.post('/notifications/subscriptions/push', {
+      await calendarApi.post("/notifications/subscriptions/push", {
         subscription,
         browser_name: getBrowserName(),
       });
 
       setPushRegistered(true);
-      handleChange('push_enabled', true);
+      handleChange("push_enabled", true);
     } catch {
-      setError('Failed to register push notifications');
+      setError("Failed to register push notifications");
     }
   };
 
   const getBrowserName = () => {
     const ua = navigator.userAgent;
-    if (ua.includes('Chrome')) return 'Chrome';
-    if (ua.includes('Firefox')) return 'Firefox';
-    if (ua.includes('Safari')) return 'Safari';
-    if (ua.includes('Edge')) return 'Edge';
-    return 'Unknown';
+    if (ua.includes("Chrome")) return "Chrome";
+    if (ua.includes("Firefox")) return "Firefox";
+    if (ua.includes("Safari")) return "Safari";
+    if (ua.includes("Edge")) return "Edge";
+    return "Unknown";
   };
 
   if (loading) {
     return (
       <div className="container mx-auto py-10 flex items-center justify-center">
-        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
+        <SpinnerInfinity
+          size={24}
+          secondaryColor="rgba(128,128,128,0.2)"
+          color="currentColor"
+          speed={120}
+          className="h-8 w-8  text-muted-foreground"
+        />
       </div>
     );
   }
@@ -168,7 +198,9 @@ export default function NotificationSettingsPage() {
       <div className="container mx-auto py-10">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Failed to load notification settings</AlertDescription>
+          <AlertDescription>
+            Failed to load notification settings
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -177,8 +209,12 @@ export default function NotificationSettingsPage() {
   return (
     <div className="container mx-auto py-10 max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Notification Settings</h1>
-        <p className="text-muted-foreground mt-2">Manage how you receive notifications across all devices</p>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Notification Settings
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          Manage how you receive notifications across all devices
+        </p>
       </div>
 
       {error && (
@@ -191,7 +227,9 @@ export default function NotificationSettingsPage() {
       {saved && (
         <Alert className="mb-6 border-green-200 bg-green-50">
           <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">Paramètres enregistrés successfully</AlertDescription>
+          <AlertDescription className="text-green-800">
+            Paramètres enregistrés successfully
+          </AlertDescription>
         </Alert>
       )}
 
@@ -224,45 +262,69 @@ export default function NotificationSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Email Notifications</CardTitle>
-              <CardDescription>Receive calendar reminders via email</CardDescription>
+              <CardDescription>
+                Receive calendar reminders via email
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <Label htmlFor="email-enabled">Enable Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">Send reminders to your email address</p>
+                  <Label htmlFor="email-enabled">
+                    Enable Email Notifications
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Send reminders to your email address
+                  </p>
                 </div>
                 <Switch
                   id="email-enabled"
                   checked={prefs.email_enabled}
-                  onCheckedChange={(value) => handleChange('email_enabled', value)}
+                  onCheckedChange={(value) =>
+                    handleChange("email_enabled", value)
+                  }
                 />
               </div>
 
               {prefs.email_enabled && (
                 <div className="space-y-3 border-t pt-6">
                   <Label>Frequency</Label>
-                  <Select value={prefs.email_frequency} onValueChange={(value) => handleChange('email_frequency', value)}>
+                  <Select
+                    value={prefs.email_frequency}
+                    onValueChange={(value) =>
+                      handleChange("email_frequency", value)
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select frequency" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="instant">Instant - One email per reminder</SelectItem>
-                      <SelectItem value="digest">Digest - Daily email at 8 AM</SelectItem>
-                      <SelectItem value="disabled">Disabled - No emails</SelectItem>
+                      <SelectItem value="instant">
+                        Instant - One email per reminder
+                      </SelectItem>
+                      <SelectItem value="digest">
+                        Digest - Daily email at 8 AM
+                      </SelectItem>
+                      <SelectItem value="disabled">
+                        Disabled - No emails
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    {prefs.email_frequency === 'instant' && 'You will receive an email for each event reminder'}
-                    {prefs.email_frequency === 'digest' && 'You will receive one email per day with all reminders'}
-                    {prefs.email_frequency === 'disabled' && 'Email reminders are disabled'}
+                    {prefs.email_frequency === "instant" &&
+                      "You will receive an email for each event reminder"}
+                    {prefs.email_frequency === "digest" &&
+                      "You will receive one email per day with all reminders"}
+                    {prefs.email_frequency === "disabled" &&
+                      "Email reminders are disabled"}
                   </p>
                 </div>
               )}
 
               <div className="border-t pt-6 space-y-3">
                 <Label>Reminder Timing</Label>
-                <p className="text-sm text-muted-foreground">Receive reminders:</p>
+                <p className="text-sm text-muted-foreground">
+                  Receive reminders:
+                </p>
                 <div className="space-y-2">
                   {[15, 60, 1440].map((minutes) => (
                     <div key={minutes} className="flex items-center gap-2">
@@ -273,17 +335,26 @@ export default function NotificationSettingsPage() {
                         onChange={(e) => {
                           const times = prefs.reminder_times;
                           if (e.target.checked) {
-                            handleChange('reminder_times', [...times, minutes].sort((a, b) => a - b));
+                            handleChange(
+                              "reminder_times",
+                              [...times, minutes].sort((a, b) => a - b),
+                            );
                           } else {
-                            handleChange('reminder_times', times.filter((t) => t !== minutes));
+                            handleChange(
+                              "reminder_times",
+                              times.filter((t) => t !== minutes),
+                            );
                           }
                         }}
                         className="rounded border-border"
                       />
-                      <label htmlFor={`reminder-${minutes}`} className="text-sm">
-                        {minutes === 15 && '15 minutes before'}
-                        {minutes === 60 && '1 hour before'}
-                        {minutes === 1440 && '1 day before'}
+                      <label
+                        htmlFor={`reminder-${minutes}`}
+                        className="text-sm"
+                      >
+                        {minutes === 15 && "15 minutes before"}
+                        {minutes === 60 && "1 hour before"}
+                        {minutes === 1440 && "1 day before"}
                       </label>
                     </div>
                   ))}
@@ -298,16 +369,22 @@ export default function NotificationSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Push Notifications</CardTitle>
-              <CardDescription>Receive browser notifications in real-time</CardDescription>
+              <CardDescription>
+                Receive browser notifications in real-time
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <Label>Browser Push Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Get instant alerts in your browser</p>
+                    <p className="text-sm text-muted-foreground">
+                      Get instant alerts in your browser
+                    </p>
                   </div>
-                  {pushRegistered && <Badge className="bg-green-600">Registered</Badge>}
+                  {pushRegistered && (
+                    <Badge className="bg-green-600">Registered</Badge>
+                  )}
                 </div>
 
                 {!pushRegistered ? (
@@ -332,11 +409,14 @@ export default function NotificationSettingsPage() {
                     <Switch
                       id="push-enabled"
                       checked={prefs.push_enabled}
-                      onCheckedChange={(value) => handleChange('push_enabled', value)}
+                      onCheckedChange={(value) =>
+                        handleChange("push_enabled", value)
+                      }
                     />
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    You can disable notifications anytime. Browser settings will still override this.
+                    You can disable notifications anytime. Browser settings will
+                    still override this.
                   </p>
                 </div>
               )}
@@ -373,18 +453,24 @@ export default function NotificationSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Quiet Hours</CardTitle>
-              <CardDescription>Don&apos;t receive notifications during these hours</CardDescription>
+              <CardDescription>
+                Don&apos;t receive notifications during these hours
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <Label htmlFor="quiet-enabled">Enable Quiet Hours</Label>
-                  <p className="text-sm text-muted-foreground">Pause notifications during specific times</p>
+                  <p className="text-sm text-muted-foreground">
+                    Pause notifications during specific times
+                  </p>
                 </div>
                 <Switch
                   id="quiet-enabled"
                   checked={prefs.quiet_hours_enabled}
-                  onCheckedChange={(value) => handleChange('quiet_hours_enabled', value)}
+                  onCheckedChange={(value) =>
+                    handleChange("quiet_hours_enabled", value)
+                  }
                 />
               </div>
 
@@ -396,8 +482,10 @@ export default function NotificationSettingsPage() {
                       <Input
                         id="quiet-start"
                         type="time"
-                        value={prefs.quiet_start || '22:00'}
-                        onChange={(e) => handleChange('quiet_start', e.target.value)}
+                        value={prefs.quiet_start || "22:00"}
+                        onChange={(e) =>
+                          handleChange("quiet_start", e.target.value)
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -405,15 +493,17 @@ export default function NotificationSettingsPage() {
                       <Input
                         id="quiet-end"
                         type="time"
-                        value={prefs.quiet_end || '08:00'}
-                        onChange={(e) => handleChange('quiet_end', e.target.value)}
+                        value={prefs.quiet_end || "08:00"}
+                        onChange={(e) =>
+                          handleChange("quiet_end", e.target.value)
+                        }
                       />
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {prefs.quiet_start && prefs.quiet_end
                       ? `Quiet hours: ${prefs.quiet_start} - ${prefs.quiet_end}`
-                      : 'Set your quiet hours'}
+                      : "Set your quiet hours"}
                   </p>
                 </div>
               )}
@@ -433,7 +523,13 @@ export default function NotificationSettingsPage() {
         >
           {saving ? (
             <>
-              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-4 w-4 "
+              />
               Saving...
             </>
           ) : (

@@ -5,10 +5,10 @@
  * Integrates directly with the `signapps-calendar` backend microservice.
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Resource, Booking } from '../types/scheduling';
-import { getClient, ServiceName } from '@/lib/api/factory';
-import * as React from 'react';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { Resource, Booking } from "../types/scheduling";
+import { getClient, ServiceName } from "@/lib/api/factory";
+import * as React from "react";
 
 // ============================================================================
 // Backend Data Mappings
@@ -31,7 +31,7 @@ function toFrontendResource(r: BackendResource): Resource {
   return {
     id: r.id,
     name: r.name,
-    type: (r.resource_type as Resource['type']) || 'room',
+    type: (r.resource_type as Resource["type"]) || "room",
     description: r.description || undefined,
     capacity: r.capacity || undefined,
     location: r.location || undefined,
@@ -45,26 +45,29 @@ function toFrontendResource(r: BackendResource): Resource {
 // ============================================================================
 
 export const resourceKeys = {
-  all: ['resources'] as const,
-  lists: () => [...resourceKeys.all, 'list'] as const,
-  list: (filters: Record<string, unknown>) => [...resourceKeys.lists(), filters] as const,
-  details: () => [...resourceKeys.all, 'detail'] as const,
+  all: ["resources"] as const,
+  lists: () => [...resourceKeys.all, "list"] as const,
+  list: (filters: Record<string, unknown>) =>
+    [...resourceKeys.lists(), filters] as const,
+  details: () => [...resourceKeys.all, "detail"] as const,
   detail: (id: string) => [...resourceKeys.details(), id] as const,
 };
 
 export const bookingKeys = {
-  all: ['bookings'] as const,
-  lists: () => [...bookingKeys.all, 'list'] as const,
-  list: (filters: Record<string, unknown>) => [...bookingKeys.lists(), filters] as const,
-  details: () => [...bookingKeys.all, 'detail'] as const,
+  all: ["bookings"] as const,
+  lists: () => [...bookingKeys.all, "list"] as const,
+  list: (filters: Record<string, unknown>) =>
+    [...bookingKeys.lists(), filters] as const,
+  details: () => [...bookingKeys.all, "detail"] as const,
   detail: (id: string) => [...bookingKeys.details(), id] as const,
-  byResource: (resourceId: string) => [...bookingKeys.all, 'resource', resourceId] as const,
+  byResource: (resourceId: string) =>
+    [...bookingKeys.all, "resource", resourceId] as const,
 };
 
 export const floorPlanKeys = {
-  all: ['floorplans'] as const,
-  lists: () => [...floorPlanKeys.all, 'list'] as const,
-  details: () => [...floorPlanKeys.all, 'detail'] as const,
+  all: ["floorplans"] as const,
+  lists: () => [...floorPlanKeys.all, "list"] as const,
+  details: () => [...floorPlanKeys.all, "detail"] as const,
   detail: (id: string) => [...floorPlanKeys.details(), id] as const,
 };
 
@@ -77,7 +80,7 @@ export function useResources() {
     queryKey: resourceKeys.lists(),
     queryFn: async (): Promise<Resource[]> => {
       const client = getClient(ServiceName.CALENDAR);
-      const res = await client.get<BackendResource[]>('/resources');
+      const res = await client.get<BackendResource[]>("/resources");
       return res.data.map(toFrontendResource);
     },
   });
@@ -100,7 +103,7 @@ export function useCreateResource() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Omit<Resource, 'id'>) => {
+    mutationFn: async (data: Omit<Resource, "id">) => {
       const client = getClient(ServiceName.CALENDAR);
       const payload = {
         name: data.name,
@@ -109,7 +112,7 @@ export function useCreateResource() {
         capacity: data.capacity || null,
         location: data.location || null,
       };
-      const res = await client.post<BackendResource>('/resources', payload);
+      const res = await client.post<BackendResource>("/resources", payload);
       return toFrontendResource(res.data);
     },
     onSuccess: () => {
@@ -132,9 +135,13 @@ export function useUpdateResource() {
       const client = getClient(ServiceName.CALENDAR);
       const payload: any = {};
       if (updates.name !== undefined) payload.name = updates.name;
-      if (updates.available !== undefined) payload.is_available = updates.available;
+      if (updates.available !== undefined)
+        payload.is_available = updates.available;
 
-      const res = await client.put<BackendResource>(`/resources/${id}`, payload);
+      const res = await client.put<BackendResource>(
+        `/resources/${id}`,
+        payload,
+      );
       return toFrontendResource(res.data);
     },
     onSuccess: () => {
@@ -149,7 +156,9 @@ export function useUpdateResource() {
 
 export function useBookings(resourceId?: string) {
   return useQuery({
-    queryKey: resourceId ? bookingKeys.byResource(resourceId) : bookingKeys.lists(),
+    queryKey: resourceId
+      ? bookingKeys.byResource(resourceId)
+      : bookingKeys.lists(),
     queryFn: async (): Promise<Booking[]> => {
       // Backend doesn't support fetching bookings right now - returning empty array for MVP integration
       return [];
@@ -171,21 +180,23 @@ export function useCreateBooking() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => {
+    mutationFn: async (
+      data: Omit<Booking, "id" | "createdAt" | "updatedAt">,
+    ) => {
       const client = getClient(ServiceName.CALENDAR);
-      
+
       const payload = {
         event_id: data.title, // using title to fake event_id for mock integration
         resource_ids: [data.resourceId],
       };
-      
+
       await client.post(`/resources/${data.resourceId}/book`, payload);
 
       const now = new Date();
       return {
         ...data,
         id: `mock-book-${Date.now()}`,
-        approvalStatus: 'pending',
+        approvalStatus: "pending",
         createdAt: now,
         updatedAt: now,
       } as Booking;
@@ -200,7 +211,13 @@ export function useUpdateBooking() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Booking> }) => {
+    mutationFn: async ({
+      id,
+      updates,
+    }: {
+      id: string;
+      updates: Partial<Booking>;
+    }) => {
       return { id, updates };
     },
     onSuccess: () => {
@@ -226,7 +243,11 @@ export function useDeleteBooking() {
 // Availability Check
 // ============================================================================
 
-export function useResourceAvailability(resourceId: string, start: Date, end: Date) {
+export function useResourceAvailability(
+  resourceId: string,
+  start: Date,
+  end: Date,
+) {
   const { data: bookings = [] } = useBookings(resourceId);
 
   return React.useMemo(() => {
@@ -247,9 +268,11 @@ export function useResourceAvailability(resourceId: string, start: Date, end: Da
 export function useFloorPlans() {
   return useQuery({
     queryKey: floorPlanKeys.lists(),
-    queryFn: async (): Promise<import('../types/scheduling').FloorPlanData[]> => {
+    queryFn: async (): Promise<
+      import("../types/scheduling").FloorPlanData[]
+    > => {
       const client = getClient(ServiceName.CALENDAR);
-      const res = await client.get('/floorplans');
+      const res = await client.get("/floorplans");
       return res.data;
     },
   });
@@ -258,17 +281,20 @@ export function useFloorPlans() {
 export function useFloorPlan(id: string) {
   return useQuery({
     queryKey: floorPlanKeys.detail(id),
-    queryFn: async (): Promise<import('../types/scheduling').FloorPlanData | null> => {
+    queryFn: async (): Promise<
+      import("../types/scheduling").FloorPlanData | null
+    > => {
       const client = getClient(ServiceName.CALENDAR);
       try {
         const res = await client.get(`/floorplans/${id}`);
         return res.data;
-      } catch (e: any) {
-        if (e.response?.status === 404) return null;
+      } catch (e: unknown) {
+        if ((e as { response?: { status?: number } }).response?.status === 404)
+          return null;
         throw e;
       }
     },
-    enabled: !!id && id !== 'new',
+    enabled: !!id && id !== "new",
   });
 }
 
@@ -276,9 +302,11 @@ export function useCreateFloorPlan() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Omit<import('../types/scheduling').FloorPlanData, 'id'>) => {
+    mutationFn: async (
+      data: Omit<import("../types/scheduling").FloorPlanData, "id">,
+    ) => {
       const client = getClient(ServiceName.CALENDAR);
-      const res = await client.post('/floorplans', data);
+      const res = await client.post("/floorplans", data);
       return res.data;
     },
     onSuccess: () => {
@@ -291,7 +319,13 @@ export function useUpdateFloorPlan() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<import('../types/scheduling').FloorPlanData> }) => {
+    mutationFn: async ({
+      id,
+      updates,
+    }: {
+      id: string;
+      updates: Partial<import("../types/scheduling").FloorPlanData>;
+    }) => {
       const client = getClient(ServiceName.CALENDAR);
       const res = await client.put(`/floorplans/${id}`, updates);
       return res.data;
@@ -317,4 +351,3 @@ export function useDeleteFloorPlan() {
     },
   });
 }
-

@@ -1,17 +1,17 @@
-import { create } from 'zustand';
-import axios from 'axios';
-import { entityHubApi } from '@/lib/api/entityHub';
+import { create } from "zustand";
+import axios from "axios";
+import { entityHubApi } from "@/lib/api/entityHub";
 
-import { workspacesApi } from '@/lib/api/tenant';
+import { workspacesApi } from "@/lib/api/tenant";
 
 // Unified Entity Hub Store for Phase 5 Calendars & Projects
 interface EntityState {
-  workspaces: any[];
-  calendars: any[];
-  resources: any[];
-  projects: any[];
-  tasks: any[];
-  events: any[];
+  workspaces: unknown[];
+  calendars: unknown[];
+  resources: unknown[];
+  projects: unknown[];
+  tasks: unknown[];
+  events: unknown[];
 
   selectedWorkspaceId: string | null;
   setSelectedWorkspace: (id: string | null) => void;
@@ -26,10 +26,24 @@ interface EntityState {
   fetchResources: () => Promise<void>;
   fetchEvents: () => Promise<void>;
 
-  createWorkspace: (data: { name: string; description?: string }) => Promise<void>;
-  createProject: (data: { name: string; description?: string; workspace_id: string }) => Promise<void>;
-  createTask: (data: { title: string; description?: string; project_id: string, parent_id?: string, priority?: number, due_date?: string }) => Promise<void>;
-  updateTask: (id: string, data: any) => Promise<void>;
+  createWorkspace: (data: {
+    name: string;
+    description?: string;
+  }) => Promise<void>;
+  createProject: (data: {
+    name: string;
+    description?: string;
+    workspace_id: string;
+  }) => Promise<void>;
+  createTask: (data: {
+    title: string;
+    description?: string;
+    project_id: string;
+    parent_id?: string;
+    priority?: number;
+    due_date?: string;
+  }) => Promise<void>;
+  updateTask: (id: string, data: Record<string, unknown>) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
 }
 
@@ -53,16 +67,26 @@ export const useEntityStore = create<EntityState>((set, get) => ({
       const data = response.data;
       set((state) => ({
         workspaces: data,
-        selectedWorkspaceId: state.selectedWorkspaceId || (data.length > 0 ? data[0].id : null),
-        isLoading: false
+        selectedWorkspaceId:
+          state.selectedWorkspaceId ||
+          (data.length > 0
+            ? ((data[0] as Record<string, unknown>).id as string)
+            : null),
+        isLoading: false,
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Silently handle 401/403 - user may not have workspace access yet
-      const status = error?.response?.status;
+      const status = (error as { response?: { status?: number } })?.response
+        ?.status;
       if (status === 401 || status === 403) {
         set({ workspaces: [], isLoading: false });
       } else {
-        set({ error: error.message || 'Failed to fetch workspaces', isLoading: false });
+        set({
+          error:
+            (error instanceof Error ? error.message : String(error)) ||
+            "Failed to fetch workspaces",
+          isLoading: false,
+        });
       }
     }
   },
@@ -72,8 +96,11 @@ export const useEntityStore = create<EntityState>((set, get) => ({
     try {
       const response = await entityHubApi.listCalendars();
       set({ calendars: response.data.data || response.data, isLoading: false });
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false });
+    } catch (error: unknown) {
+      set({
+        error: error instanceof Error ? error.message : String(error),
+        isLoading: false,
+      });
     }
   },
 
@@ -82,8 +109,11 @@ export const useEntityStore = create<EntityState>((set, get) => ({
     try {
       const response = await entityHubApi.listProjects();
       set({ projects: response.data.data || response.data, isLoading: false });
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false });
+    } catch (error: unknown) {
+      set({
+        error: error instanceof Error ? error.message : String(error),
+        isLoading: false,
+      });
     }
   },
 
@@ -92,18 +122,24 @@ export const useEntityStore = create<EntityState>((set, get) => ({
     try {
       const response = await entityHubApi.listTasks();
       set({ tasks: response.data.data || response.data, isLoading: false });
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false });
+    } catch (error: unknown) {
+      set({
+        error: error instanceof Error ? error.message : String(error),
+        isLoading: false,
+      });
     }
   },
-  
+
   fetchResources: async () => {
     set({ isLoading: true });
     try {
       const response = await entityHubApi.listResources();
       set({ resources: response.data.data || response.data, isLoading: false });
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false });
+    } catch (error: unknown) {
+      set({
+        error: error instanceof Error ? error.message : String(error),
+        isLoading: false,
+      });
     }
   },
 
@@ -112,8 +148,11 @@ export const useEntityStore = create<EntityState>((set, get) => ({
     try {
       const response = await entityHubApi.listEvents();
       set({ events: response.data.data || response.data, isLoading: false });
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false });
+    } catch (error: unknown) {
+      set({
+        error: error instanceof Error ? error.message : String(error),
+        isLoading: false,
+      });
     }
   },
 
@@ -122,8 +161,11 @@ export const useEntityStore = create<EntityState>((set, get) => ({
     try {
       await entityHubApi.createWorkspace(data);
       await get().fetchWorkspaces();
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false });
+    } catch (error: unknown) {
+      set({
+        error: error instanceof Error ? error.message : String(error),
+        isLoading: false,
+      });
       throw error;
     }
   },
@@ -133,8 +175,11 @@ export const useEntityStore = create<EntityState>((set, get) => ({
     try {
       await entityHubApi.createProject(data);
       await get().fetchProjects();
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false });
+    } catch (error: unknown) {
+      set({
+        error: error instanceof Error ? error.message : String(error),
+        isLoading: false,
+      });
       throw error;
     }
   },
@@ -144,8 +189,11 @@ export const useEntityStore = create<EntityState>((set, get) => ({
     try {
       await entityHubApi.createTask(data);
       await get().fetchTasks();
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false });
+    } catch (error: unknown) {
+      set({
+        error: error instanceof Error ? error.message : String(error),
+        isLoading: false,
+      });
       throw error;
     }
   },
@@ -155,8 +203,11 @@ export const useEntityStore = create<EntityState>((set, get) => ({
     try {
       await entityHubApi.updateTask(id, data);
       await get().fetchTasks();
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false });
+    } catch (error: unknown) {
+      set({
+        error: error instanceof Error ? error.message : String(error),
+        isLoading: false,
+      });
       throw error;
     }
   },
@@ -166,8 +217,11 @@ export const useEntityStore = create<EntityState>((set, get) => ({
     try {
       await entityHubApi.deleteTask(id);
       await get().fetchTasks();
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false });
+    } catch (error: unknown) {
+      set({
+        error: error instanceof Error ? error.message : String(error),
+        isLoading: false,
+      });
       throw error;
     }
   },

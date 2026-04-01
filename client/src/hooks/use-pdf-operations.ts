@@ -3,15 +3,15 @@
  * Provides easy-to-use functions for extracting text, merging, splitting PDFs
  */
 
-import { useState, useCallback } from 'react';
-import { toast } from 'sonner';
+import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import {
   pdfApi,
   PdfDocumentInfo,
   PdfPagesResponse,
   PdfSplitRange,
   PdfSplitResponse,
-} from '@/lib/api/pdf';
+} from "@/lib/api/pdf";
 
 interface UsePdfOperationsState {
   isLoading: boolean;
@@ -35,9 +35,16 @@ interface UsePdfOperationsReturn extends UsePdfOperationsState {
   mergePdfsAndDownload: (files: File[], filename?: string) => Promise<void>;
 
   // Split
-  splitPdf: (file: File, ranges: PdfSplitRange[]) => Promise<PdfSplitResponse | null>;
+  splitPdf: (
+    file: File,
+    ranges: PdfSplitRange[],
+  ) => Promise<PdfSplitResponse | null>;
   extractPage: (file: File, pageNumber: number) => Promise<Blob | null>;
-  splitPdfAndDownload: (file: File, ranges: PdfSplitRange[], baseFilename?: string) => Promise<void>;
+  splitPdfAndDownload: (
+    file: File,
+    ranges: PdfSplitRange[],
+    baseFilename?: string,
+  ) => Promise<void>;
 
   // Reset state
   reset: () => void;
@@ -51,7 +58,11 @@ export function usePdfOperations(): UsePdfOperationsReturn {
   });
 
   const setLoading = useCallback((loading: boolean) => {
-    setState((prev) => ({ ...prev, isLoading: loading, error: loading ? null : prev.error }));
+    setState((prev) => ({
+      ...prev,
+      isLoading: loading,
+      error: loading ? null : prev.error,
+    }));
   }, []);
 
   const setError = useCallback((error: string | null) => {
@@ -89,14 +100,16 @@ export function usePdfOperations(): UsePdfOperationsReturn {
         const info = await pdfApi.getDocumentInfo(file);
         setLoading(false);
         return info;
-      } catch (err: any) {
-        const errorMsg = err.message || 'Erreur lors de la lecture des informations PDF';
+      } catch (err: unknown) {
+        const errorMsg =
+          (err instanceof Error ? err.message : String(err)) ||
+          "Erreur lors de la lecture des informations PDF";
         setError(errorMsg);
         toast.error(errorMsg);
         return null;
       }
     },
-    [setLoading, setError]
+    [setLoading, setError],
   );
 
   const getPages = useCallback(
@@ -106,14 +119,16 @@ export function usePdfOperations(): UsePdfOperationsReturn {
         const pages = await pdfApi.getPages(file);
         setLoading(false);
         return pages;
-      } catch (err: any) {
-        const errorMsg = err.message || 'Erreur lors de la lecture des pages';
+      } catch (err: unknown) {
+        const errorMsg =
+          (err instanceof Error ? err.message : String(err)) ||
+          "Erreur lors de la lecture des pages";
         setError(errorMsg);
         toast.error(errorMsg);
         return null;
       }
     },
-    [setLoading, setError]
+    [setLoading, setError],
   );
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -126,16 +141,18 @@ export function usePdfOperations(): UsePdfOperationsReturn {
       try {
         const text = await pdfApi.extractText(file);
         setLoading(false);
-        toast.success('Texte extrait avec succès');
+        toast.success("Texte extrait avec succès");
         return text;
-      } catch (err: any) {
-        const errorMsg = err.message || "Erreur lors de l'extraction du texte";
+      } catch (err: unknown) {
+        const errorMsg =
+          (err instanceof Error ? err.message : String(err)) ||
+          "Erreur lors de l'extraction du texte";
         setError(errorMsg);
         toast.error(errorMsg);
         return null;
       }
     },
-    [setLoading, setError]
+    [setLoading, setError],
   );
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -145,7 +162,7 @@ export function usePdfOperations(): UsePdfOperationsReturn {
   const mergePdfs = useCallback(
     async (files: File[]): Promise<Blob | null> => {
       if (files.length < 2) {
-        const errorMsg = 'Au moins 2 fichiers sont nécessaires pour la fusion';
+        const errorMsg = "Au moins 2 fichiers sont nécessaires pour la fusion";
         setError(errorMsg);
         toast.error(errorMsg);
         return null;
@@ -160,24 +177,26 @@ export function usePdfOperations(): UsePdfOperationsReturn {
         setProgress(100);
         toast.success(`${files.length} fichiers PDF fusionnés`);
         return merged;
-      } catch (err: any) {
-        const errorMsg = err.message || 'Erreur lors de la fusion des PDF';
+      } catch (err: unknown) {
+        const errorMsg =
+          (err instanceof Error ? err.message : String(err)) ||
+          "Erreur lors de la fusion des PDF";
         setError(errorMsg);
         toast.error(errorMsg);
         return null;
       }
     },
-    [setLoading, setError, setProgress]
+    [setLoading, setError, setProgress],
   );
 
   const mergePdfsAndDownload = useCallback(
-    async (files: File[], filename: string = 'merged.pdf'): Promise<void> => {
+    async (files: File[], filename: string = "merged.pdf"): Promise<void> => {
       const merged = await mergePdfs(files);
       if (merged) {
         downloadBlob(merged, filename);
       }
     },
-    [mergePdfs]
+    [mergePdfs],
   );
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -185,9 +204,12 @@ export function usePdfOperations(): UsePdfOperationsReturn {
   // ═══════════════════════════════════════════════════════════════════════════
 
   const splitPdf = useCallback(
-    async (file: File, ranges: PdfSplitRange[]): Promise<PdfSplitResponse | null> => {
+    async (
+      file: File,
+      ranges: PdfSplitRange[],
+    ): Promise<PdfSplitResponse | null> => {
       if (ranges.length === 0) {
-        const errorMsg = 'Aucune plage de pages spécifiée';
+        const errorMsg = "Aucune plage de pages spécifiée";
         setError(errorMsg);
         toast.error(errorMsg);
         return null;
@@ -202,14 +224,16 @@ export function usePdfOperations(): UsePdfOperationsReturn {
         setProgress(100);
         toast.success(`PDF divisé en ${result.count} partie(s)`);
         return result;
-      } catch (err: any) {
-        const errorMsg = err.message || 'Erreur lors de la division du PDF';
+      } catch (err: unknown) {
+        const errorMsg =
+          (err instanceof Error ? err.message : String(err)) ||
+          "Erreur lors de la division du PDF";
         setError(errorMsg);
         toast.error(errorMsg);
         return null;
       }
     },
-    [setLoading, setError, setProgress]
+    [setLoading, setError, setProgress],
   );
 
   const extractPage = useCallback(
@@ -220,33 +244,36 @@ export function usePdfOperations(): UsePdfOperationsReturn {
         setLoading(false);
         toast.success(`Page ${pageNumber} extraite`);
         return page;
-      } catch (err: any) {
-        const errorMsg = err.message || `Erreur lors de l'extraction de la page ${pageNumber}`;
+      } catch (err: unknown) {
+        const errorMsg =
+          (err instanceof Error ? err.message : String(err)) ||
+          `Erreur lors de l'extraction de la page ${pageNumber}`;
         setError(errorMsg);
         toast.error(errorMsg);
         return null;
       }
     },
-    [setLoading, setError]
+    [setLoading, setError],
   );
 
   const splitPdfAndDownload = useCallback(
     async (
       file: File,
       ranges: PdfSplitRange[],
-      baseFilename: string = 'document'
+      baseFilename: string = "document",
     ): Promise<void> => {
       const result = await splitPdf(file, ranges);
       if (result) {
         result.results.forEach((splitResult) => {
-          const blob = base64ToBlob(splitResult.data_base64, 'application/pdf');
+          const blob = base64ToBlob(splitResult.data_base64, "application/pdf");
           const [start, end] = splitResult.range;
-          const suffix = start === end ? `page-${start}` : `pages-${start}-${end}`;
+          const suffix =
+            start === end ? `page-${start}` : `pages-${start}-${end}`;
           downloadBlob(blob, `${baseFilename}-${suffix}.pdf`);
         });
       }
     },
-    [splitPdf]
+    [splitPdf],
   );
 
   return {
@@ -280,7 +307,7 @@ function base64ToBlob(base64: string, mimeType: string): Blob {
 
 function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = url;
   link.download = filename;
   document.body.appendChild(link);

@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { useEffect, useState, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Webhook,
   Plus,
@@ -24,28 +24,32 @@ import {
   RotateCw,
   Globe,
   Copy,
-} from 'lucide-react';
-import { webhooksApi, type Webhook as WebhookType, type CreateWebhookRequest } from '@/lib/api/identity';
-import { toast } from 'sonner';
+} from "lucide-react";
+import {
+  webhooksApi,
+  type Webhook as WebhookType,
+  type CreateWebhookRequest,
+} from "@/lib/api/identity";
+import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
 // Available event types
 // ---------------------------------------------------------------------------
 
 const EVENT_TYPES = [
-  'user.created',
-  'user.updated',
-  'user.deleted',
-  'document.created',
-  'document.updated',
-  'document.deleted',
-  'container.started',
-  'container.stopped',
-  'backup.completed',
-  'backup.failed',
-  'storage.quota_exceeded',
-  'auth.login',
-  'auth.login_failed',
+  "user.created",
+  "user.updated",
+  "user.deleted",
+  "document.created",
+  "document.updated",
+  "document.deleted",
+  "container.started",
+  "container.stopped",
+  "backup.completed",
+  "backup.failed",
+  "storage.quota_exceeded",
+  "auth.login",
+  "auth.login_failed",
 ];
 
 // ---------------------------------------------------------------------------
@@ -59,9 +63,9 @@ export function WebhookManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Form state
-  const [formName, setFormName] = useState('');
-  const [formUrl, setFormUrl] = useState('');
-  const [formSecret, setFormSecret] = useState('');
+  const [formName, setFormName] = useState("");
+  const [formUrl, setFormUrl] = useState("");
+  const [formSecret, setFormSecret] = useState("");
   const [formEvents, setFormEvents] = useState<Set<string>>(new Set());
   const [formEnabled, setFormEnabled] = useState(true);
 
@@ -82,9 +86,9 @@ export function WebhookManager() {
   }, [fetchHooks]);
 
   const resetForm = () => {
-    setFormName('');
-    setFormUrl('');
-    setFormSecret('');
+    setFormName("");
+    setFormUrl("");
+    setFormSecret("");
     setFormEvents(new Set());
     setFormEnabled(true);
     setEditingId(null);
@@ -99,7 +103,7 @@ export function WebhookManager() {
     setEditingId(hook.id);
     setFormName(hook.name);
     setFormUrl(hook.url);
-    setFormSecret('');
+    setFormSecret("");
     setFormEvents(new Set(hook.events));
     setFormEnabled(hook.enabled);
     setDialogOpen(true);
@@ -119,7 +123,7 @@ export function WebhookManager() {
 
   const handleSave = async () => {
     if (!formName.trim() || !formUrl.trim()) {
-      toast.error('Name and URL are required');
+      toast.error("Name and URL are required");
       return;
     }
 
@@ -136,26 +140,29 @@ export function WebhookManager() {
     try {
       if (editingId) {
         await webhooksApi.update(editingId, data);
-        toast.success('Webhook updated');
+        toast.success("Webhook updated");
       } else {
         await webhooksApi.create(data);
-        toast.success('Webhook created');
+        toast.success("Webhook created");
       }
       setDialogOpen(false);
       resetForm();
       fetchHooks();
-    } catch (e: any) {
-      toast.error(e.message || "Impossible d'enregistrer webhook");
+    } catch (e: unknown) {
+      toast.error(
+        (e instanceof Error ? e.message : String(e)) ||
+          "Impossible d'enregistrer webhook",
+      );
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await webhooksApi.delete(id);
-      toast.success('Webhook deleted');
+      toast.success("Webhook deleted");
       fetchHooks();
     } catch {
-      toast.error('Impossible de supprimer webhook');
+      toast.error("Impossible de supprimer webhook");
     }
   };
 
@@ -166,11 +173,13 @@ export function WebhookManager() {
       if (result.success) {
         toast.success(`Test delivery succeeded (${result.status_code})`);
       } else {
-        toast.error(`Test delivery failed (${result.status_code || 'no response'})`);
+        toast.error(
+          `Test delivery failed (${result.status_code || "no response"})`,
+        );
       }
       fetchHooks();
     } catch {
-      toast.error('Test delivery failed');
+      toast.error("Test delivery failed");
     }
   };
 
@@ -183,8 +192,15 @@ export function WebhookManager() {
           <h2 className="text-xl font-bold">Webhook Manager</h2>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchHooks} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchHooks}
+            disabled={loading}
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
           <Button size="sm" onClick={openCreate}>
@@ -211,11 +227,16 @@ export function WebhookManager() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium">{hook.name}</span>
-                    <Badge variant={hook.enabled ? 'default' : 'secondary'} className="text-[10px]">
-                      {hook.enabled ? 'Active' : 'Disabled'}
+                    <Badge
+                      variant={hook.enabled ? "default" : "secondary"}
+                      className="text-[10px]"
+                    >
+                      {hook.enabled ? "Active" : "Disabled"}
                     </Badge>
                   </div>
-                  <p className="text-xs font-mono text-muted-foreground truncate">{hook.url}</p>
+                  <p className="text-xs font-mono text-muted-foreground truncate">
+                    {hook.url}
+                  </p>
                   <div className="flex flex-wrap gap-1 mt-2">
                     {hook.events.map((ev) => (
                       <Badge key={ev} variant="outline" className="text-[10px]">
@@ -227,28 +248,40 @@ export function WebhookManager() {
                   <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                     {hook.last_triggered && (
                       <span>
-                        Last triggered: {new Date(hook.last_triggered).toLocaleString('fr-FR')}
+                        Last triggered:{" "}
+                        {new Date(hook.last_triggered).toLocaleString("fr-FR")}
                       </span>
                     )}
-                    {hook.last_status !== undefined && hook.last_status !== null && (
-                      <span className="flex items-center gap-1">
-                        {hook.last_status >= 200 && hook.last_status < 300 ? (
-                          <CheckCircle2 className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <XCircle className="h-3 w-3 text-red-500" />
-                        )}
-                        HTTP {hook.last_status}
-                      </span>
-                    )}
+                    {hook.last_status !== undefined &&
+                      hook.last_status !== null && (
+                        <span className="flex items-center gap-1">
+                          {hook.last_status >= 200 && hook.last_status < 300 ? (
+                            <CheckCircle2 className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <XCircle className="h-3 w-3 text-red-500" />
+                          )}
+                          HTTP {hook.last_status}
+                        </span>
+                      )}
                   </div>
                 </div>
 
                 {/* Actions */}
                 <div className="flex gap-1 shrink-0">
-                  <Button variant="ghost" size="sm" onClick={() => handleTest(hook.id)} title="Test delivery">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleTest(hook.id)}
+                    title="Test delivery"
+                  >
                     <RotateCw className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => openEdit(hook)} title="Modifier">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openEdit(hook)}
+                    title="Modifier"
+                  >
                     <Edit2 className="h-4 w-4" />
                   </Button>
                   <Button
@@ -271,7 +304,9 @@ export function WebhookManager() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingId ? 'Edit Webhook' : 'Create Webhook'}</DialogTitle>
+            <DialogTitle>
+              {editingId ? "Edit Webhook" : "Create Webhook"}
+            </DialogTitle>
             <DialogDescription>
               Configure the webhook endpoint and select events to subscribe to.
             </DialogDescription>
@@ -307,7 +342,10 @@ export function WebhookManager() {
               <Label>Events</Label>
               <div className="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto rounded-md border p-3">
                 {EVENT_TYPES.map((ev) => (
-                  <label key={ev} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <label
+                    key={ev}
+                    className="flex items-center gap-2 text-sm cursor-pointer"
+                  >
                     <input
                       type="checkbox"
                       checked={formEvents.has(ev)}
@@ -324,18 +362,18 @@ export function WebhookManager() {
               <button
                 onClick={() => setFormEnabled(!formEnabled)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  formEnabled ? 'bg-green-600' : 'bg-gray-300'
+                  formEnabled ? "bg-green-600" : "bg-gray-300"
                 }`}
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${
-                    formEnabled ? 'translate-x-6' : 'translate-x-1'
+                    formEnabled ? "translate-x-6" : "translate-x-1"
                   }`}
                 />
               </button>
             </div>
             <Button onClick={handleSave} className="w-full">
-              {editingId ? 'Update Webhook' : 'Create Webhook'}
+              {editingId ? "Update Webhook" : "Create Webhook"}
             </Button>
           </div>
         </DialogContent>

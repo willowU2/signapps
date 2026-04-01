@@ -3,14 +3,14 @@
  * Manages Yrs document sync and presence tracking
  */
 
-import { useEffect, useRef, useCallback, useState } from 'react';
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
+import { useEffect, useRef, useCallback, useState } from "react";
+import * as Y from "yjs";
+import { WebsocketProvider } from "y-websocket";
 
 interface CalendarPresence {
   user_id: string;
   username: string;
-  status: 'join' | 'leave' | 'viewing' | 'editing' | 'idle';
+  status: "join" | "leave" | "viewing" | "editing" | "idle";
   editing_item_id?: string;
   timestamp: number;
 }
@@ -26,11 +26,7 @@ interface UseCalendarWebSocketOptions {
  * Provides WebSocket sync with Yrs CRDT and presence tracking
  */
 export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
-  const {
-    calendar_id,
-    username = 'Anonymous',
-    enabled = true,
-  } = options;
+  const { calendar_id, username = "Anonymous", enabled = true } = options;
 
   const [isConnecté, setIsConnecté] = useState(false);
   const [presence, setPresence] = useState<CalendarPresence[]>([]);
@@ -38,7 +34,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
 
   const ydocRef = useRef<Y.Doc | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
-  const yeventsRef = useRef<Y.Map<any> | null>(null);
+  const yeventsRef = useRef<Y.Map<unknown> | null>(null);
 
   /**
    * Initialize WebSocket connection to calendar
@@ -54,12 +50,16 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
       ydocRef.current = ydoc;
 
       // Create Y.Map for events
-      const yevents = ydoc.getMap('events');
+      const yevents = ydoc.getMap("events");
       yeventsRef.current = yevents;
 
       // Build WebSocket URL - use calendar service (port 3011), not the frontend
-      const calendarHost = process.env.NEXT_PUBLIC_CALENDAR_URL?.replace(/^https?:\/\//, '').replace(/\/api\/v1$/, '') || 'localhost:3011';
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const calendarHost =
+        process.env.NEXT_PUBLIC_CALENDAR_URL?.replace(
+          /^https?:\/\//,
+          "",
+        ).replace(/\/api\/v1$/, "") || "localhost:3011";
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${calendarHost}/api/v1/calendars/${calendar_id}/ws`;
 
       // Create WebSocket provider
@@ -72,44 +72,58 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
           // @ts-expect-error y-websocket WebsocketProviderOptions type omits `awareness` boolean; accepted at runtime
           awareness: true,
           resyncInterval: 5000, // Resync every 5 seconds
-        }
+        },
       );
 
       // Check if server is reachable before connecting
-      const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://');
-      fetch(httpUrl, { method: 'HEAD' })
+      const httpUrl = wsUrl
+        .replace("ws://", "http://")
+        .replace("wss://", "https://");
+      fetch(httpUrl, { method: "HEAD" })
         .then(() => provider.connect())
-        .catch(() => console.warn(`[useCalendarWebSocket] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`));
+        .catch(() =>
+          console.warn(
+            `[useCalendarWebSocket] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`,
+          ),
+        );
 
       providerRef.current = provider;
 
       // Connection state handlers
-      provider.on('status', ({ status }: { status: 'connected' | 'disconnected' }) => {
-        setIsConnecté(status === 'connected');
-        if (status === 'connected') {
-          setError(null);
-        }
-      });
+      provider.on(
+        "status",
+        ({ status }: { status: "connected" | "disconnected" }) => {
+          setIsConnecté(status === "connected");
+          if (status === "connected") {
+            setError(null);
+          }
+        },
+      );
 
       // Error handler
-      provider.on('connection-error', (error: any) => {
-        setError(`Connection error: ${error.message}`);
+      provider.on("connection-error", (error: unknown) => {
+        setError(
+          `Connection error: ${(error as { message?: string }).message ?? String(error)}`,
+        );
       });
 
       // Presence updates
-      provider.awareness?.on('change', (changes: any[]) => {
+      provider.awareness?.on("change", (_changes: unknown) => {
         const presences: CalendarPresence[] = [];
-        provider.awareness?.getStates().forEach((state: any) => {
-          if (state.user) {
-            presences.push({
-              user_id: state.user.user_id,
-              username: state.user.username,
-              status: state.user.status,
-              editing_item_id: state.user.editing_item_id,
-              timestamp: state.user.timestamp,
-            });
-          }
-        });
+        provider.awareness
+          ?.getStates()
+          .forEach((state: Record<string, unknown>) => {
+            const user = state.user as CalendarPresence | undefined;
+            if (user) {
+              presences.push({
+                user_id: user.user_id,
+                username: user.username,
+                status: user.status,
+                editing_item_id: user.editing_item_id,
+                timestamp: user.timestamp,
+              });
+            }
+          });
         setPresence(presences);
       });
 
@@ -118,7 +132,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
         user: {
           user_id: Math.random().toString(36).substr(2, 9), // Temporary user ID
           username,
-          status: 'viewing',
+          status: "viewing",
           timestamp: Date.now(),
         },
       });
@@ -128,7 +142,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
         ydoc.destroy();
       };
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = err instanceof Error ? err.message : "Unknown error";
       setError(message);
     }
   }, [calendar_id, enabled, username]);
@@ -143,7 +157,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
         ...currentState,
         user: {
           ...currentState?.user,
-          status: 'viewing',
+          status: "viewing",
           timestamp: Date.now(),
         },
       });
@@ -160,7 +174,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
         ...currentState,
         user: {
           ...currentState?.user,
-          status: itemId ? 'editing' : 'viewing',
+          status: itemId ? "editing" : "viewing",
           editing_item_id: itemId || undefined,
           timestamp: Date.now(),
         },
@@ -171,23 +185,32 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
   /**
    * Add event to shared calendar
    */
-  const addEvent = useCallback((event: any) => {
-    if (yeventsRef.current) {
-      yeventsRef.current.set(event.id, JSON.parse(JSON.stringify(event)));
-    }
-  }, []);
+  const addEvent = useCallback(
+    (event: Record<string, unknown> & { id: string }) => {
+      if (yeventsRef.current) {
+        yeventsRef.current.set(event.id, JSON.parse(JSON.stringify(event)));
+      }
+    },
+    [],
+  );
 
   /**
    * Update existing event
    */
-  const updateEvent = useCallback((id: string, updates: any) => {
-    if (yeventsRef.current) {
-      const existing = yeventsRef.current.get(id);
-      if (existing) {
-        yeventsRef.current.set(id, { ...existing, ...updates });
+  const updateEvent = useCallback(
+    (id: string, updates: Record<string, unknown>) => {
+      if (yeventsRef.current) {
+        const existing = yeventsRef.current.get(id);
+        if (existing) {
+          yeventsRef.current.set(id, {
+            ...(existing as Record<string, unknown>),
+            ...updates,
+          });
+        }
       }
-    }
-  }, []);
+    },
+    [],
+  );
 
   /**
    * Delete event from shared calendar
@@ -203,9 +226,9 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
    */
   const getEvents = useCallback(() => {
     if (!yeventsRef.current) return [];
-    const events: any[] = [];
-    yeventsRef.current.forEach((value: any, key: string) => {
-      events.push({ id: key, ...value });
+    const events: Record<string, unknown>[] = [];
+    yeventsRef.current.forEach((value: unknown, key: string) => {
+      events.push({ id: key, ...(value as Record<string, unknown>) });
     });
     return events;
   }, []);
@@ -214,7 +237,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
    * Subscribe to event changes
    */
   const onEventsChange = useCallback(
-    (callback: (events: any[]) => void) => {
+    (callback: (events: Record<string, unknown>[]) => void) => {
       if (!yeventsRef.current) return;
 
       const handleChange = () => {
@@ -227,7 +250,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
         yeventsRef.current?.unobserve(handleChange);
       };
     },
-    [getEvents]
+    [getEvents],
   );
 
   // Setup connection on mount/change

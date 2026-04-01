@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useEntityStore } from '@/stores/entity-hub-store';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useEntityStore } from "@/stores/entity-hub-store";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -18,23 +18,23 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const projectSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
+  name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().optional(),
-  workspace_id: z.string().min(1, 'You must select a workspace'),
+  workspace_id: z.string().min(1, "You must select a workspace"),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -44,22 +44,25 @@ interface CreateProjectModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalProps) {
+export function CreateProjectModal({
+  open,
+  onOpenChange,
+}: CreateProjectModalProps) {
   const { workspaces, selectedWorkspaceId, createProject } = useEntityStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
-      name: '',
-      description: '',
-      workspace_id: selectedWorkspaceId || '',
+      name: "",
+      description: "",
+      workspace_id: selectedWorkspaceId || "",
     },
   });
 
   useEffect(() => {
-    if (open && selectedWorkspaceId && !form.getValues('workspace_id')) {
-        form.setValue('workspace_id', selectedWorkspaceId);
+    if (open && selectedWorkspaceId && !form.getValues("workspace_id")) {
+      form.setValue("workspace_id", selectedWorkspaceId);
     }
   }, [open, selectedWorkspaceId, form]);
 
@@ -67,11 +70,14 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
     setIsSubmitting(true);
     try {
       await createProject(data);
-      toast.success('Project created successfully');
+      toast.success("Project created successfully");
       form.reset();
       onOpenChange(false);
-    } catch (error: any) {
-      toast.error(error.message || 'Impossible de créer project');
+    } catch (error: unknown) {
+      toast.error(
+        (error instanceof Error ? error.message : String(error)) ||
+          "Impossible de créer project",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -89,14 +95,17 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            
             <FormField
               control={form.control}
               name="workspace_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Workspace</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    value={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a workspace" />
@@ -128,7 +137,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="description"
@@ -156,7 +165,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating...' : 'Create Project'}
+                {isSubmitting ? "Creating..." : "Create Project"}
               </Button>
             </DialogFooter>
           </form>

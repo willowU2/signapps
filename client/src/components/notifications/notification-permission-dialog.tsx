@@ -3,9 +3,9 @@
  * Requests user permission for push notifications
  */
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,10 +13,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Bell, X } from 'lucide-react';
-import { usePushNotifications } from '@/hooks/use-push-notifications';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Bell, X } from "lucide-react";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { VAPID_PUBLIC_KEY } from "@/lib/api/core";
 
 export interface NotificationPermissionDialogProps {
   open?: boolean;
@@ -36,9 +37,15 @@ export function NotificationPermissionDialog({
 
   const { register, loading } = usePushNotifications();
 
-  const isSupported = typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window;
-  const permission = typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default';
-  const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const isSupported =
+    typeof window !== "undefined" &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window;
+  const permission =
+    typeof window !== "undefined" && "Notification" in window
+      ? Notification.permission
+      : "default";
+  const vapidKey = VAPID_PUBLIC_KEY || undefined;
 
   // Sync controlled open state
   useEffect(() => {
@@ -49,7 +56,7 @@ export function NotificationPermissionDialog({
 
   // Auto-show if permission not yet requested and service is available
   useEffect(() => {
-    if (!dismissed && isSupported && permission === 'default' && vapidKey) {
+    if (!dismissed && isSupported && permission === "default" && vapidKey) {
       setOpen(true);
     }
   }, [isSupported, permission, dismissed, vapidKey]);
@@ -63,8 +70,11 @@ export function NotificationPermissionDialog({
     try {
       await register();
       handleClose();
-    } catch (e: any) {
-      setErrorStr(e?.message || 'Failed to enable notifications');
+    } catch (e: unknown) {
+      setErrorStr(
+        (e instanceof Error ? e.message : String(e)) ||
+          "Failed to enable notifications",
+      );
     }
   };
 
@@ -77,7 +87,7 @@ export function NotificationPermissionDialog({
     handleClose();
   };
 
-  if (!isSupported || permission !== 'default' || dismissed || !vapidKey) {
+  if (!isSupported || permission !== "default" || dismissed || !vapidKey) {
     return null;
   }
 
@@ -148,7 +158,7 @@ export function NotificationPermissionDialog({
             Don't Ask Again
           </Button>
           <Button onClick={handleEnable} disabled={loading}>
-            {loading ? 'Enabling...' : 'Enable Notifications'}
+            {loading ? "Enabling..." : "Enable Notifications"}
           </Button>
         </DialogFooter>
       </DialogContent>

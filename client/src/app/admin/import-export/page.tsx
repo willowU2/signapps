@@ -126,7 +126,7 @@ export default function ImportExportPage() {
   const [importStep, setImportStep] = useState(0);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(
-    null
+    null,
   );
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{
@@ -138,7 +138,7 @@ export default function ImportExportPage() {
   // Export state
   const [exportStep, setExportStep] = useState(0);
   const [selectedModules, setSelectedModules] = useState<Set<ExportModule>>(
-    new Set()
+    new Set(),
   );
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState<ExportProgress[]>([]);
@@ -157,19 +157,17 @@ export default function ImportExportPage() {
 
       if (importType === "contacts-csv") {
         const columns = parseCsvLine(lines[0] || "");
-        const sampleRows = lines
-          .slice(1, 6)
-          .map((line) => parseCsvLine(line));
+        const sampleRows = lines.slice(1, 6).map((line) => parseCsvLine(line));
         const errors: string[] = [];
 
         // Validate columns
         const requiredCols = ["nom", "name", "email"];
         const hasRequired = columns.some((c) =>
-          requiredCols.includes(c.toLowerCase())
+          requiredCols.includes(c.toLowerCase()),
         );
         if (!hasRequired) {
           errors.push(
-            'Le fichier doit contenir au moins une colonne "Nom" ou "Email".'
+            'Le fichier doit contenir au moins une colonne "Nom" ou "Email".',
           );
         }
 
@@ -185,9 +183,7 @@ export default function ImportExportPage() {
         const eventCount = (text.match(/BEGIN:VEVENT/g) || []).length;
         const errors: string[] = [];
         if (!text.includes("BEGIN:VCALENDAR")) {
-          errors.push(
-            "Le fichier ne semble pas etre un fichier ICS valide."
-          );
+          errors.push("Le fichier ne semble pas etre un fichier ICS valide.");
         }
         setImportPreview({
           fileName: file.name,
@@ -199,7 +195,7 @@ export default function ImportExportPage() {
 
       setImportStep(1);
     },
-    [importType]
+    [importType],
   );
 
   const handleImportConfirm = useCallback(async () => {
@@ -217,25 +213,25 @@ export default function ImportExportPage() {
           (h) =>
             h.toLowerCase() === "nom" ||
             h.toLowerCase() === "name" ||
-            h.toLowerCase() === "prenom"
+            h.toLowerCase() === "prenom",
         );
         const emailIdx = headers.findIndex(
           (h) =>
             h.toLowerCase() === "email" ||
             h.toLowerCase() === "e-mail" ||
-            h.toLowerCase() === "courriel"
+            h.toLowerCase() === "courriel",
         );
         const phoneIdx = headers.findIndex(
           (h) =>
             h.toLowerCase() === "telephone" ||
             h.toLowerCase() === "phone" ||
-            h.toLowerCase() === "tel"
+            h.toLowerCase() === "tel",
         );
         const companyIdx = headers.findIndex(
           (h) =>
             h.toLowerCase() === "entreprise" ||
             h.toLowerCase() === "company" ||
-            h.toLowerCase() === "societe"
+            h.toLowerCase() === "societe",
         );
 
         let success = 0;
@@ -326,9 +322,7 @@ export default function ImportExportPage() {
                   .replace(/\\,/g, ","),
                 location: location.replace(/\\,/g, ","),
                 start_time: parseIcsDate(dtstart),
-                end_time: dtend
-                  ? parseIcsDate(dtend)
-                  : parseIcsDate(dtstart),
+                end_time: dtend ? parseIcsDate(dtend) : parseIcsDate(dtstart),
                 is_all_day: dtstart.length === 8,
               });
               success++;
@@ -379,7 +373,7 @@ export default function ImportExportPage() {
         "files",
         "documents",
         "emails",
-      ])
+      ]),
     );
   };
 
@@ -414,17 +408,16 @@ export default function ImportExportPage() {
               const contacts = res.data || [];
               count = contacts.length;
               const header = "Nom,Email,Telephone,Entreprise,Tags";
-              const rows = contacts.map(
-                (c: any) =>
-                  [
-                    c.name || "",
-                    c.email || "",
-                    c.phone || "",
-                    c.company || "",
-                    (c.tags || []).join("; "),
-                  ]
-                    .map((v: string) => `"${v.replace(/"/g, '""')}"`)
-                    .join(",")
+              const rows = contacts.map((c: any) =>
+                [
+                  c.name || "",
+                  c.email || "",
+                  c.phone || "",
+                  c.company || "",
+                  (c.tags || []).join("; "),
+                ]
+                  .map((v: string) => `"${v.replace(/"/g, '""')}"`)
+                  .join(","),
               );
               data = [header, ...rows].join("\n");
               exportedFiles.push({
@@ -450,13 +443,14 @@ export default function ImportExportPage() {
               const evRes = await calendarApi.listEvents(
                 calendars[0].id,
                 start,
-                end
+                end,
               );
               const events = evRes.data || [];
               count = events.length;
 
               // Build ICS
-              let ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//SignApps//Export//FR\r\n";
+              let ics =
+                "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//SignApps//Export//FR\r\n";
               for (const ev of events) {
                 const formatIcs = (d: string) =>
                   d.replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
@@ -467,8 +461,7 @@ export default function ImportExportPage() {
                 if (ev.location)
                   ics += `LOCATION:${ev.location.replace(/,/g, "\\,")}\r\n`;
                 ics += `DTSTART:${formatIcs(ev.start_time || new Date().toISOString())}\r\n`;
-                if (ev.end_time)
-                  ics += `DTEND:${formatIcs(ev.end_time)}\r\n`;
+                if (ev.end_time) ics += `DTEND:${formatIcs(ev.end_time)}\r\n`;
                 ics += `END:VEVENT\r\n`;
               }
               ics += "END:VCALENDAR\r\n";
@@ -490,19 +483,18 @@ export default function ImportExportPage() {
               count = jobs.length;
               const header =
                 "Nom,Description,Planification,Commande,Type Cible,Active,Dernier Statut";
-              const rows = jobs.map(
-                (j) =>
-                  [
-                    j.name || "",
-                    j.description || "",
-                    j.cron_expression || "",
-                    j.command || "",
-                    j.target_type || "",
-                    j.enabled ? "Oui" : "Non",
-                    j.last_status || "-",
-                  ]
-                    .map((v: string) => `"${v.replace(/"/g, '""')}"`)
-                    .join(",")
+              const rows = jobs.map((j) =>
+                [
+                  j.name || "",
+                  j.description || "",
+                  j.cron_expression || "",
+                  j.command || "",
+                  j.target_type || "",
+                  j.enabled ? "Oui" : "Non",
+                  j.last_status || "-",
+                ]
+                  .map((v: string) => `"${v.replace(/"/g, '""')}"`)
+                  .join(","),
               );
               data = [header, ...rows].join("\n");
               exportedFiles.push({
@@ -522,16 +514,15 @@ export default function ImportExportPage() {
               const files = res.data?.objects || [];
               count = files.length;
               const header = "Nom,Cle,Type,Taille";
-              const rows = files.map(
-                (f: any) =>
-                  [
-                    f.name || f.key?.split("/").pop() || "",
-                    f.key || "",
-                    f.mime_type || f.content_type || "",
-                    String(f.size || 0),
-                  ]
-                    .map((v: string) => `"${v.replace(/"/g, '""')}"`)
-                    .join(",")
+              const rows = files.map((f: any) =>
+                [
+                  f.name || f.key?.split("/").pop() || "",
+                  f.key || "",
+                  f.mime_type || f.content_type || "",
+                  String(f.size || 0),
+                ]
+                  .map((v: string) => `"${v.replace(/"/g, '""')}"`)
+                  .join(","),
               );
               data = [header, ...rows].join("\n");
               exportedFiles.push({
@@ -552,15 +543,14 @@ export default function ImportExportPage() {
               const docs = Array.isArray(res.data) ? res.data : [];
               count = docs.length;
               const header = "Titre,Contenu,Date de modification";
-              const rows = docs.map(
-                (d: any) =>
-                  [
-                    d.title || "",
-                    (d.content || "").substring(0, 500),
-                    d.updated_at || "",
-                  ]
-                    .map((v: string) => `"${v.replace(/"/g, '""')}"`)
-                    .join(",")
+              const rows = docs.map((d: any) =>
+                [
+                  d.title || "",
+                  (d.content || "").substring(0, 500),
+                  d.updated_at || "",
+                ]
+                  .map((v: string) => `"${v.replace(/"/g, '""')}"`)
+                  .join(","),
               );
               data = [header, ...rows].join("\n");
               exportedFiles.push({
@@ -583,16 +573,15 @@ export default function ImportExportPage() {
               const messages = res.data?.messages || [];
               count = messages.length;
               const header = "Sujet,Expediteur,Date,Extrait";
-              const rows = messages.map(
-                (m: any) =>
-                  [
-                    m.subject || "",
-                    m.from_address || "",
-                    m.date || "",
-                    (m.snippet || "").substring(0, 200),
-                  ]
-                    .map((v: string) => `"${v.replace(/"/g, '""')}"`)
-                    .join(",")
+              const rows = messages.map((m: any) =>
+                [
+                  m.subject || "",
+                  m.from_address || "",
+                  m.date || "",
+                  (m.snippet || "").substring(0, 200),
+                ]
+                  .map((v: string) => `"${v.replace(/"/g, '""')}"`)
+                  .join(","),
               );
               data = [header, ...rows].join("\n");
               exportedFiles.push({
@@ -609,11 +598,11 @@ export default function ImportExportPage() {
         }
 
         progress[i] = { module: mod, status: "done", count };
-      } catch (err: any) {
+      } catch (err: unknown) {
         progress[i] = {
           module: mod,
           status: "error",
-          error: err?.message || "Erreur",
+          error: (err instanceof Error ? err.message : String(err)) || "Erreur",
         };
       }
       setExportProgress([...progress]);
@@ -649,7 +638,7 @@ export default function ImportExportPage() {
     setExporting(false);
     setExportStep(2);
     toast.success(
-      `Export termine: ${exportedFiles.length} fichier(s) telecharge(s)`
+      `Export termine: ${exportedFiles.length} fichier(s) telecharge(s)`,
     );
   }, [selectedModules]);
 
@@ -751,11 +740,7 @@ export default function ImportExportPage() {
                           : "bg-muted text-muted-foreground"
                     }`}
                   >
-                    {i < importStep ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      i + 1
-                    )}
+                    {i < importStep ? <Check className="h-4 w-4" /> : i + 1}
                   </div>
                   <span
                     className={`text-sm ${i === importStep ? "font-medium" : "text-muted-foreground"}`}
@@ -818,9 +803,7 @@ export default function ImportExportPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="import-file">
-                      Selectionner le fichier
-                    </Label>
+                    <Label htmlFor="import-file">Selectionner le fichier</Label>
                     <Input
                       ref={fileInputRef}
                       id="import-file"
@@ -848,9 +831,7 @@ export default function ImportExportPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-4 text-sm">
-                    <Badge variant="outline">
-                      {importPreview.fileName}
-                    </Badge>
+                    <Badge variant="outline">{importPreview.fileName}</Badge>
                     <span className="text-muted-foreground">
                       {importPreview.fileSize}
                     </span>
@@ -869,10 +850,7 @@ export default function ImportExportPage() {
                         Avertissements
                       </div>
                       {importPreview.errors.map((err, i) => (
-                        <p
-                          key={i}
-                          className="text-sm text-destructive/80 ml-6"
-                        >
+                        <p key={i} className="text-sm text-destructive/80 ml-6">
                           {err}
                         </p>
                       ))}
@@ -881,7 +859,9 @@ export default function ImportExportPage() {
 
                   {importPreview.columns && (
                     <div>
-                      <p className="text-sm font-medium mb-2">Colonnes detectees:</p>
+                      <p className="text-sm font-medium mb-2">
+                        Colonnes detectees:
+                      </p>
                       <div className="flex gap-2 flex-wrap">
                         {importPreview.columns.map((col, i) => (
                           <Badge key={i} variant="secondary">
@@ -984,7 +964,8 @@ export default function ImportExportPage() {
                           </p>
                           {importResult.errors > 0 && (
                             <p className="text-sm text-destructive">
-                              {importResult.errors} erreur(s) lors de l&apos;import
+                              {importResult.errors} erreur(s) lors de
+                              l&apos;import
                             </p>
                           )}
                         </div>
@@ -1037,11 +1018,7 @@ export default function ImportExportPage() {
                           : "bg-muted text-muted-foreground"
                     }`}
                   >
-                    {i < exportStep ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      i + 1
-                    )}
+                    {i < exportStep ? <Check className="h-4 w-4" /> : i + 1}
                   </div>
                   <span
                     className={`text-sm ${i === exportStep ? "font-medium" : "text-muted-foreground"}`}
@@ -1072,32 +1049,32 @@ export default function ImportExportPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                    {(
-                      Object.keys(MODULE_LABELS) as ExportModule[]
-                    ).map((mod) => (
-                      <Card
-                        key={mod}
-                        className={`cursor-pointer transition-all ${
-                          selectedModules.has(mod)
-                            ? "border-primary bg-primary/5"
-                            : "border-border/50 hover:border-primary/30"
-                        }`}
-                        onClick={() => toggleModule(mod)}
-                      >
-                        <CardContent className="flex items-center gap-3 p-4">
-                          <Checkbox
-                            checked={selectedModules.has(mod)}
-                            onCheckedChange={() => toggleModule(mod)}
-                          />
-                          <span className="text-primary">
-                            {MODULE_ICONS[mod]}
-                          </span>
-                          <span className="font-medium text-sm">
-                            {MODULE_LABELS[mod]}
-                          </span>
-                        </CardContent>
-                      </Card>
-                    ))}
+                    {(Object.keys(MODULE_LABELS) as ExportModule[]).map(
+                      (mod) => (
+                        <Card
+                          key={mod}
+                          className={`cursor-pointer transition-all ${
+                            selectedModules.has(mod)
+                              ? "border-primary bg-primary/5"
+                              : "border-border/50 hover:border-primary/30"
+                          }`}
+                          onClick={() => toggleModule(mod)}
+                        >
+                          <CardContent className="flex items-center gap-3 p-4">
+                            <Checkbox
+                              checked={selectedModules.has(mod)}
+                              onCheckedChange={() => toggleModule(mod)}
+                            />
+                            <span className="text-primary">
+                              {MODULE_ICONS[mod]}
+                            </span>
+                            <span className="font-medium text-sm">
+                              {MODULE_LABELS[mod]}
+                            </span>
+                          </CardContent>
+                        </Card>
+                      ),
+                    )}
                   </div>
 
                   <div className="flex gap-2 justify-end">
@@ -1184,9 +1161,8 @@ export default function ImportExportPage() {
                       {exportProgress.some((p) => p.status === "error") && (
                         <p className="text-sm text-destructive">
                           {
-                            exportProgress.filter(
-                              (p) => p.status === "error"
-                            ).length
+                            exportProgress.filter((p) => p.status === "error")
+                              .length
                           }{" "}
                           erreur(s)
                         </p>
@@ -1206,9 +1182,7 @@ export default function ImportExportPage() {
                         ) : (
                           <X className="h-4 w-4 text-destructive" />
                         )}
-                        <span>
-                          {MODULE_LABELS[p.module as ExportModule]}
-                        </span>
+                        <span>{MODULE_LABELS[p.module as ExportModule]}</span>
                         {p.count !== undefined && (
                           <span className="text-muted-foreground">
                             ({p.count} elements)

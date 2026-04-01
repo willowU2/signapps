@@ -1,4 +1,5 @@
-import { getClient, ServiceName } from './factory';
+import type { AxiosRequestConfig } from "axios";
+import { getClient, ServiceName } from "./factory";
 
 // ============================================================================
 // Case-conversion utilities
@@ -6,14 +7,14 @@ import { getClient, ServiceName } from './factory';
 
 // Recursively converts all object keys from snake_case to camelCase.
 // Applied to every response coming from the Rust backend.
-function snakeToCamel(obj: any): any {
+function snakeToCamel(obj: unknown): unknown {
   if (Array.isArray(obj)) return obj.map(snakeToCamel);
-  if (obj && typeof obj === 'object' && !(obj instanceof Date)) {
+  if (obj && typeof obj === "object" && !(obj instanceof Date)) {
     return Object.fromEntries(
-      Object.entries(obj).map(([k, v]) => [
-        k.replace(/_([a-z])/g, (_, c) => c.toUpperCase()),
+      Object.entries(obj as Record<string, unknown>).map(([k, v]) => [
+        k.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase()),
         snakeToCamel(v),
-      ])
+      ]),
     );
   }
   return obj;
@@ -21,14 +22,14 @@ function snakeToCamel(obj: any): any {
 
 // Recursively converts all object keys from camelCase to snake_case.
 // Applied to every request body before it reaches the Rust backend.
-function camelToSnake(obj: any): any {
+function camelToSnake(obj: unknown): unknown {
   if (Array.isArray(obj)) return obj.map(camelToSnake);
-  if (obj && typeof obj === 'object' && !(obj instanceof Date)) {
+  if (obj && typeof obj === "object" && !(obj instanceof Date)) {
     return Object.fromEntries(
-      Object.entries(obj).map(([k, v]) => [
-        k.replace(/[A-Z]/g, c => '_' + c.toLowerCase()),
+      Object.entries(obj as Record<string, unknown>).map(([k, v]) => [
+        k.replace(/[A-Z]/g, (c: string) => "_" + c.toLowerCase()),
         camelToSnake(v),
-      ])
+      ]),
     );
   }
   return obj;
@@ -56,11 +57,25 @@ socialApiClient.interceptors.request.use((config) => {
 
 // Internal helper used by socialApi methods — adds /social prefix automatically
 const s = {
-  get: <T = any>(path: string, config?: any) => socialApiClient.get<T>(`/social${path}`, config),
-  post: <T = any>(path: string, data?: any, config?: any) => socialApiClient.post<T>(`/social${path}`, data, config),
-  patch: <T = any>(path: string, data?: any, config?: any) => socialApiClient.patch<T>(`/social${path}`, data, config),
-  put: <T = any>(path: string, data?: any, config?: any) => socialApiClient.put<T>(`/social${path}`, data, config),
-  delete: <T = any>(path: string, config?: any) => socialApiClient.delete<T>(`/social${path}`, config),
+  get: <T = unknown>(path: string, config?: AxiosRequestConfig) =>
+    socialApiClient.get<T>(`/social${path}`, config),
+  post: <T = unknown>(
+    path: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ) => socialApiClient.post<T>(`/social${path}`, data, config),
+  patch: <T = unknown>(
+    path: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ) => socialApiClient.patch<T>(`/social${path}`, data, config),
+  put: <T = unknown>(
+    path: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ) => socialApiClient.put<T>(`/social${path}`, data, config),
+  delete: <T = unknown>(path: string, config?: AxiosRequestConfig) =>
+    socialApiClient.delete<T>(`/social${path}`, config),
 };
 
 // ============================================================================
@@ -208,7 +223,7 @@ export interface PostTemplate {
 
 export interface AiGenerateRequest {
   topic: string;
-  platform?: SocialAccount['platform'];
+  platform?: SocialAccount["platform"];
   tone?: string;
 }
 
@@ -359,9 +374,9 @@ export interface ApiKeyInfo {
 
 export const socialApi = {
   accounts: {
-    list: () => s.get<SocialAccount[]>('/accounts'),
+    list: () => s.get<SocialAccount[]>("/accounts"),
     create: (data: Record<string, string>) =>
-      s.post<SocialAccount>('/accounts', data),
+      s.post<SocialAccount>("/accounts", data),
     update: (id: string, data: Partial<SocialAccount>) =>
       s.patch<SocialAccount>(`/accounts/${id}`, data),
     delete: (id: string) => s.delete(`/accounts/${id}`),
@@ -382,14 +397,22 @@ export const socialApi = {
      * Save OAuth client_id and client_secret for a platform in the DB.
      * These credentials are used in preference to env vars.
      */
-    saveCredentials: (data: { platform: string; client_id: string; client_secret: string }) =>
-      s.post<{ status: string; platform: string }>('/oauth/credentials', data),
+    saveCredentials: (data: {
+      platform: string;
+      client_id: string;
+      client_secret: string;
+    }) =>
+      s.post<{ status: string; platform: string }>("/oauth/credentials", data),
   },
 
   posts: {
     // Backend returns SocialPost[] array directly (no pagination wrapper)
-    list: (params?: { status?: string; accountId?: string; page?: number; limit?: number }) =>
-      s.get<SocialPost[]>('/posts', { params }),
+    list: (params?: {
+      status?: string;
+      accountId?: string;
+      page?: number;
+      limit?: number;
+    }) => s.get<SocialPost[]>("/posts", { params }),
     get: (id: string) => s.get<SocialPost>(`/posts/${id}`),
     create: (data: {
       content: string;
@@ -399,14 +422,17 @@ export const socialApi = {
       isEvergreen?: boolean;
       templateId?: string;
       accountIds?: string[];
-    }) => s.post<SocialPost>('/posts', data),
-    update: (id: string, data: {
-      content?: string;
-      mediaUrls?: unknown;
-      hashtags?: unknown;
-      scheduledAt?: string;
-      isEvergreen?: boolean;
-    }) => s.patch<SocialPost>(`/posts/${id}`, data),
+    }) => s.post<SocialPost>("/posts", data),
+    update: (
+      id: string,
+      data: {
+        content?: string;
+        mediaUrls?: unknown;
+        hashtags?: unknown;
+        scheduledAt?: string;
+        isEvergreen?: boolean;
+      },
+    ) => s.patch<SocialPost>(`/posts/${id}`, data),
     delete: (id: string) => s.delete(`/posts/${id}`),
     publish: (id: string) => s.post<SocialPost>(`/posts/${id}/publish`),
     schedule: (id: string, scheduledAt: string, repeatInterval?: number) =>
@@ -417,19 +443,18 @@ export const socialApi = {
     // Post approval workflow
     submitForReview: (id: string) =>
       s.post<{ status: string }>(`/posts/${id}/submit-for-review`),
-    approve: (id: string) =>
-      s.post<{ status: string }>(`/posts/${id}/approve`),
+    approve: (id: string) => s.post<{ status: string }>(`/posts/${id}/approve`),
     reject: (id: string, rejectionReason?: string) =>
       s.post<{ status: string }>(`/posts/${id}/reject`, { rejectionReason }),
-    listReviewQueue: () =>
-      s.get<SocialPost[]>('/posts/review-queue'),
+    listReviewQueue: () => s.get<SocialPost[]>("/posts/review-queue"),
   },
 
   comments: {
-    list: (postId: string) =>
-      s.get<PostComment[]>(`/posts/${postId}/comments`),
-    create: (postId: string, data: { content: string; parentCommentId?: string }) =>
-      s.post<PostComment>(`/posts/${postId}/comments`, data),
+    list: (postId: string) => s.get<PostComment[]>(`/posts/${postId}/comments`),
+    create: (
+      postId: string,
+      data: { content: string; parentCommentId?: string },
+    ) => s.post<PostComment>(`/posts/${postId}/comments`, data),
     delete: (postId: string, commentId: string) =>
       s.delete(`/posts/${postId}/comments/${commentId}`),
   },
@@ -438,24 +463,32 @@ export const socialApi = {
     // Backend returns InboxItem[] array directly (no pagination wrapper)
     // Backend query params: account_id, item_type, unread_only
     // camelToSnake interceptor handles the conversion automatically.
-    list: (params?: { accountId?: string; itemType?: string; unreadOnly?: boolean }) =>
-      s.get<InboxItem[]>('/inbox', { params }),
+    list: (params?: {
+      accountId?: string;
+      itemType?: string;
+      unreadOnly?: boolean;
+    }) => s.get<InboxItem[]>("/inbox", { params }),
     markRead: (id: string) => s.patch(`/inbox/${id}/read`),
-    reply: (id: string, content: string) => s.post(`/inbox/${id}/reply`, { content }),
+    reply: (id: string, content: string) =>
+      s.post(`/inbox/${id}/reply`, { content }),
   },
 
   analytics: {
-    overview: () => s.get<AnalyticsOverview>('/analytics/overview'),
+    overview: () => s.get<AnalyticsOverview>("/analytics/overview"),
     postAnalytics: (postId: string) => s.get(`/analytics/posts/${postId}`),
     followers: (days?: number) =>
-      s.get<FollowerDataPoint[]>('/analytics/followers', { params: { days: days ?? 30 } }),
-    byPlatform: () => s.get<PlatformEngagement[]>('/analytics/by-platform'),
+      s.get<FollowerDataPoint[]>("/analytics/followers", {
+        params: { days: days ?? 30 },
+      }),
+    byPlatform: () => s.get<PlatformEngagement[]>("/analytics/by-platform"),
     topPosts: (limit?: number) =>
-      s.get<SocialPost[]>('/analytics/top-posts', { params: { limit: limit ?? 10 } }),
+      s.get<SocialPost[]>("/analytics/top-posts", {
+        params: { limit: limit ?? 10 },
+      }),
   },
 
   rssFeeds: {
-    list: () => s.get<RssFeed[]>('/rss-feeds'),
+    list: () => s.get<RssFeed[]>("/rss-feeds"),
     create: (data: {
       feedUrl: string;
       name?: string;
@@ -463,33 +496,56 @@ export const socialApi = {
       postTemplate?: string;
       checkIntervalMinutes?: number;
       autoPublish?: boolean;
-    }) => s.post<RssFeed>('/rss-feeds', data),
+    }) => s.post<RssFeed>("/rss-feeds", data),
     delete: (id: string) => s.delete(`/rss-feeds/${id}`),
     checkNow: (id: string) => s.post(`/rss-feeds/${id}/check`),
-    toggle: (id: string, isActive: boolean) => s.patch(`/rss-feeds/${id}`, { isActive }),
+    toggle: (id: string, isActive: boolean) =>
+      s.patch(`/rss-feeds/${id}`, { isActive }),
   },
 
   templates: {
-    list: () => s.get<PostTemplate[]>('/templates'),
-    create: (data: { name: string; content: string; hashtags?: unknown; category?: string }) =>
-      s.post<PostTemplate>('/templates', data),
-    update: (id: string, data: { name?: string; content?: string; hashtags?: unknown; category?: string }) =>
-      s.patch<PostTemplate>(`/templates/${id}`, data),
+    list: () => s.get<PostTemplate[]>("/templates"),
+    create: (data: {
+      name: string;
+      content: string;
+      hashtags?: unknown;
+      category?: string;
+    }) => s.post<PostTemplate>("/templates", data),
+    update: (
+      id: string,
+      data: {
+        name?: string;
+        content?: string;
+        hashtags?: unknown;
+        category?: string;
+      },
+    ) => s.patch<PostTemplate>(`/templates/${id}`, data),
     delete: (id: string) => s.delete(`/templates/${id}`),
   },
 
   signatures: {
-    list: () => s.get<Signature[]>('/signatures'),
-    create: (data: { name: string; content: string; autoAdd?: boolean; isDefault?: boolean }) =>
-      s.post<Signature>('/signatures', data),
-    update: (id: string, data: { name?: string; content?: string; autoAdd?: boolean; isDefault?: boolean }) =>
-      s.patch<Signature>(`/signatures/${id}`, data),
+    list: () => s.get<Signature[]>("/signatures"),
+    create: (data: {
+      name: string;
+      content: string;
+      autoAdd?: boolean;
+      isDefault?: boolean;
+    }) => s.post<Signature>("/signatures", data),
+    update: (
+      id: string,
+      data: {
+        name?: string;
+        content?: string;
+        autoAdd?: boolean;
+        isDefault?: boolean;
+      },
+    ) => s.patch<Signature>(`/signatures/${id}`, data),
     delete: (id: string) => s.delete(`/signatures/${id}`),
   },
 
   media: {
     list: (params?: { mimeType?: string; sort?: string }) =>
-      s.get<MediaItem[]>('/media', { params }),
+      s.get<MediaItem[]>("/media", { params }),
     create: (data: {
       filename: string;
       mimeType: string;
@@ -500,19 +556,19 @@ export const socialApi = {
       width?: number;
       height?: number;
       tags?: unknown;
-    }) => s.post<MediaItem>('/media', data),
+    }) => s.post<MediaItem>("/media", data),
     delete: (id: string) => s.delete(`/media/${id}`),
   },
 
   shortUrls: {
-    list: () => s.get<ShortUrl[]>('/short-urls'),
+    list: () => s.get<ShortUrl[]>("/short-urls"),
     create: (data: { originalUrl: string; postId?: string }) =>
-      s.post<ShortUrl>('/short-urls', data),
+      s.post<ShortUrl>("/short-urls", data),
     delete: (id: string) => s.delete(`/short-urls/${id}`),
   },
 
   webhooks: {
-    list: () => s.get<Webhook[]>('/webhooks'),
+    list: () => s.get<Webhook[]>("/webhooks"),
     create: (data: {
       name: string;
       url: string;
@@ -520,17 +576,25 @@ export const socialApi = {
       accountFilter?: string;
       secret?: string;
       active?: boolean;
-    }) => s.post<Webhook>('/webhooks', data),
-    update: (id: string, data: Partial<Pick<Webhook, 'name' | 'url' | 'events' | 'active' | 'secret'>>) =>
-      s.patch<Webhook>(`/webhooks/${id}`, data),
+    }) => s.post<Webhook>("/webhooks", data),
+    update: (
+      id: string,
+      data: Partial<
+        Pick<Webhook, "name" | "url" | "events" | "active" | "secret">
+      >,
+    ) => s.patch<Webhook>(`/webhooks/${id}`, data),
     delete: (id: string) => s.delete(`/webhooks/${id}`),
     test: (id: string) => s.post(`/webhooks/${id}/test`),
   },
 
   workspaces: {
-    list: () => s.get<Workspace[]>('/workspaces'),
-    create: (data: { name: string; slug?: string; description?: string; avatarUrl?: string }) =>
-      s.post<Workspace>('/workspaces', data),
+    list: () => s.get<Workspace[]>("/workspaces"),
+    create: (data: {
+      name: string;
+      slug?: string;
+      description?: string;
+      avatarUrl?: string;
+    }) => s.post<Workspace>("/workspaces", data),
     get: (id: string) => s.get<Workspace>(`/workspaces/${id}`),
     delete: (id: string) => s.delete(`/workspaces/${id}`),
     listMembers: (id: string) =>
@@ -542,14 +606,18 @@ export const socialApi = {
   },
 
   timeSlots: {
-    list: () => s.get<TimeSlot[]>('/time-slots'),
-    create: (data: { dayOfWeek: number; hour: number; minute?: number; accountIds?: string[] }) =>
-      s.post<TimeSlot>('/time-slots', data),
+    list: () => s.get<TimeSlot[]>("/time-slots"),
+    create: (data: {
+      dayOfWeek: number;
+      hour: number;
+      minute?: number;
+      accountIds?: string[];
+    }) => s.post<TimeSlot>("/time-slots", data),
     delete: (id: string) => s.delete(`/time-slots/${id}`),
   },
 
   contentSets: {
-    list: () => s.get<ContentSet[]>('/content-sets'),
+    list: () => s.get<ContentSet[]>("/content-sets"),
     create: (data: {
       name: string;
       content: string;
@@ -559,41 +627,48 @@ export const socialApi = {
       targetAccounts?: unknown;
       platformOverrides?: unknown;
       signatureId?: string;
-    }) => s.post<ContentSet>('/content-sets', data),
+    }) => s.post<ContentSet>("/content-sets", data),
     delete: (id: string) => s.delete(`/content-sets/${id}`),
   },
 
   apiKeys: {
-    list: () => s.get<ApiKeyInfo[]>('/api-keys'),
+    list: () => s.get<ApiKeyInfo[]>("/api-keys"),
     // Backend CreateApiKeyRequest: name, scopes?, rate_limit_per_hour?, expires_at?
-    create: (data: { name: string; scopes?: unknown; rateLimitPerHour?: number; expiresAt?: string }) =>
-      s.post<ApiKeyInfo & { key: string }>('/api-keys', data),
+    create: (data: {
+      name: string;
+      scopes?: unknown;
+      rateLimitPerHour?: number;
+      expiresAt?: string;
+    }) => s.post<ApiKeyInfo & { key: string }>("/api-keys", data),
     revoke: (id: string) => s.post(`/api-keys/${id}/revoke`),
   },
 
   ai: {
     generate: (data: AiGenerateRequest) =>
-      s.post<AiGenerateResponse>('/ai/generate', data),
+      s.post<AiGenerateResponse>("/ai/generate", data),
     hashtags: (content: string) =>
-      s.post<{ hashtags: string[] }>('/ai/hashtags', { content }),
+      s.post<{ hashtags: string[] }>("/ai/hashtags", { content }),
     bestTime: (accountId: string) =>
-      s.post<{ bestTimes: { dayOfWeek: number; hour: number; engagementScore: number }[] }>(`/ai/best-time`, { accountId }),
+      s.post<{
+        bestTimes: {
+          dayOfWeek: number;
+          hour: number;
+          engagementScore: number;
+        }[];
+      }>(`/ai/best-time`, { accountId }),
     smartReplies: (inboxItemId: string) =>
       s.get<{ suggestions: string[] }>(`/ai/smart-replies/${inboxItemId}`),
   },
 
   // AI Threads — /api/v1/social/ai-threads
   aiThreads: {
-    list: () =>
-      s.get<AiThread[]>('/ai-threads'),
+    list: () => s.get<AiThread[]>("/ai-threads"),
     create: (data: { title: string; messages?: unknown }) =>
-      s.post<AiThread>('/ai-threads', data),
-    get: (id: string) =>
-      s.get<AiThread>(`/ai-threads/${id}`),
+      s.post<AiThread>("/ai-threads", data),
+    get: (id: string) => s.get<AiThread>(`/ai-threads/${id}`),
     update: (id: string, data: { title?: string; messages?: unknown }) =>
       s.put<AiThread>(`/ai-threads/${id}`, data),
-    delete: (id: string) =>
-      s.delete(`/ai-threads/${id}`),
+    delete: (id: string) => s.delete(`/ai-threads/${id}`),
   },
 };
 
