@@ -1,5 +1,6 @@
 //! Tool calling system for AI-driven service interaction.
 
+pub mod definitions;
 pub mod errors;
 pub mod executor;
 pub mod registry;
