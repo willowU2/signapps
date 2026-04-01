@@ -1,4 +1,5 @@
 //! Windows Service Support for SignApps Platform
+#![warn(missing_docs)]
 //!
 //! This crate provides utilities for running SignApps services as Windows services.
 //!

@@ -1,4 +1,5 @@
 //! In-process cache service for SignApps Platform.
+#![warn(missing_docs)]
 //!
 //! Replaces Redis with moka (TTL cache) and dashmap (atomic counters).
 //! Suitable for rate-limiting, token blacklisting, and general caching.
@@ -25,6 +26,7 @@ pub struct BinaryCacheService {
 }
 
 impl BinaryCacheService {
+    /// Create a new binary cache with the given capacity and default TTL.
     pub fn new(max_capacity: u64, default_ttl: Duration) -> Self {
         let cache = Cache::builder()
             .max_capacity(max_capacity)
@@ -33,11 +35,13 @@ impl BinaryCacheService {
         Self { cache }
     }
 
+    /// Create a binary cache with sensible defaults (1 000 items, 1 hour TTL).
     pub fn default_config() -> Self {
         // Cache up to 1000 items, default 1 hour TTL
         Self::new(1000, Duration::from_secs(3600))
     }
 
+    /// Get a cached binary value by key.
     pub async fn get(&self, key: &str) -> Option<Vec<u8>> {
         self.cache.get(key).await
     }

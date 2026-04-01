@@ -13,14 +13,20 @@ use crate::gpu::{HardwareProfile, ModelTier};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ModelType {
+    /// Speech-to-text transcription model.
     Stt,
+    /// Text-to-speech synthesis model.
     Tts,
+    /// Optical character recognition model.
     Ocr,
+    /// Large language model.
     Llm,
+    /// Text embedding model.
     Embeddings,
 }
 
 impl ModelType {
+    /// Returns the subdirectory name used for caching models of this type.
     pub fn subdir(&self) -> &'static str {
         match self {
             Self::Stt => "stt",
@@ -36,32 +42,65 @@ impl ModelType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "lowercase")]
 pub enum ModelSource {
-    HuggingFace { repo_id: String, filename: String },
-    Url { url: String },
-    LocalPath { path: PathBuf },
+    /// Download from a Hugging Face repository.
+    HuggingFace {
+        /// Hugging Face repository identifier (e.g. `"username/repo"`).
+        repo_id: String,
+        /// Filename within the repository to fetch.
+        filename: String,
+    },
+    /// Download from an arbitrary HTTP URL.
+    Url {
+        /// Full URL to the model file.
+        url: String,
+    },
+    /// Use a model already present on the local filesystem.
+    LocalPath {
+        /// Absolute or relative path to the model file.
+        path: PathBuf,
+    },
 }
 
 /// Model download/load status.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum ModelStatus {
+    /// Model is available for download but not yet fetched.
     Available,
-    Downloading { progress: f32 },
+    /// Model is currently downloading.
+    Downloading {
+        /// Download progress as a fraction in `[0.0, 1.0]`.
+        progress: f32,
+    },
+    /// Model has been downloaded and is ready to load.
     Ready,
+    /// Model is loaded into memory and ready for inference.
     Loaded,
-    Error { message: String },
+    /// An error occurred during download or loading.
+    Error {
+        /// Human-readable error description.
+        message: String,
+    },
 }
 
 /// A model entry in the registry.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelEntry {
+    /// Unique identifier for the model (e.g. `"whisper-base"`).
     pub id: String,
+    /// Category of AI task this model performs.
     pub model_type: ModelType,
+    /// Where to obtain the model file.
     pub source: ModelSource,
+    /// Expected file size in bytes (0 if unknown).
     pub size_bytes: u64,
+    /// Current download / load status.
     pub status: ModelStatus,
+    /// Absolute path to the cached model file once downloaded.
     pub local_path: Option<PathBuf>,
+    /// Minimum VRAM in megabytes recommended to run this model.
     pub recommended_vram_mb: u64,
+    /// Short human-readable description of the model.
     pub description: String,
 }
 
@@ -774,12 +813,15 @@ impl std::fmt::Debug for ModelManager {
 #[derive(Debug, thiserror::Error)]
 /// Error type for Model operations.
 pub enum ModelError {
+    /// The requested model ID does not exist in the registry.
     #[error("Model not found: {0}")]
     NotFound(String),
 
+    /// The model download failed (network error, checksum mismatch, etc.).
     #[error("Download failed: {0}")]
     DownloadFailed(String),
 
+    /// A filesystem I/O error occurred while reading or writing the model.
     #[error("IO error: {0}")]
     IoError(String),
 }

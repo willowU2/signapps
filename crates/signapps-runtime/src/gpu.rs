@@ -7,10 +7,15 @@ use std::fmt;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "lowercase")]
 pub enum GpuVendor {
+    /// NVIDIA (GeForce, Quadro, Tesla, etc.).
     Nvidia,
+    /// AMD (Radeon, Instinct, etc.).
     Amd,
+    /// Intel (Arc, integrated graphics).
     Intel,
+    /// Apple Silicon (M-series unified memory).
     Apple,
+    /// Unrecognised vendor.
     Unknown,
 }
 
@@ -18,10 +23,21 @@ pub enum GpuVendor {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum InferenceBackend {
-    Cuda { version: String },
-    Rocm { version: String },
+    /// NVIDIA CUDA with detected driver version.
+    Cuda {
+        /// CUDA driver version string (e.g. `"12.3"`).
+        version: String,
+    },
+    /// AMD ROCm with detected version.
+    Rocm {
+        /// ROCm version string.
+        version: String,
+    },
+    /// Vulkan (cross-vendor GPU compute).
     Vulkan,
+    /// Apple Metal (macOS / Apple Silicon).
     Metal,
+    /// CPU-only (no accelerator available).
     Cpu,
 }
 
@@ -40,18 +56,26 @@ impl fmt::Display for InferenceBackend {
 /// Info about a detected GPU.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GpuInfo {
+    /// Human-readable GPU name (e.g. `"NVIDIA GeForce RTX 4090"`).
     pub name: String,
+    /// GPU manufacturer.
     pub vendor: GpuVendor,
+    /// Total video memory in megabytes.
     pub vram_mb: u64,
 }
 
 /// Overall hardware profile for inference.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HardwareProfile {
+    /// All detected GPUs on this machine.
     pub gpus: Vec<GpuInfo>,
+    /// Recommended inference backend based on detected hardware.
     pub preferred_backend: InferenceBackend,
+    /// Sum of VRAM across all detected GPUs in megabytes.
     pub total_vram_mb: u64,
+    /// Number of logical CPU cores available.
     pub cpu_cores: usize,
+    /// Total system RAM in megabytes.
     pub system_ram_mb: u64,
 }
 

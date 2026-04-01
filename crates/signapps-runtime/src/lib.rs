@@ -1,4 +1,5 @@
 //! Runtime manager for SignApps Platform.
+#![warn(missing_docs)]
 //!
 //! Manages the lifecycle of PostgreSQL:
 //! 1. If `DATABASE_URL` is set, use it directly
