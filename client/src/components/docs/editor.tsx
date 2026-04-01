@@ -3,6 +3,10 @@
 import { SpinnerInfinity } from "spinners-react";
 
 import { useEditor, EditorContent } from "@tiptap/react";
+import type {
+  Editor as TiptapEditor,
+  Range as TiptapRange,
+} from "@tiptap/core";
 import { BubbleMenu, FloatingMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -235,7 +239,7 @@ type VoiceAction =
 
 const parseVoiceCommand = (
   text: string,
-  editor: any,
+  editor: TiptapEditor,
   pendingMarksRef: React.MutableRefObject<string[]>,
   pendingBlocksRef: React.MutableRefObject<string[]>,
   onVoiceAction?: (action: VoiceAction) => void,
@@ -1029,7 +1033,7 @@ const Editor = ({
         const currentText = editor?.getText() || "";
         if (!currentText || currentText.trim() === "") {
           try {
-            let parsed: any;
+            let parsed: unknown;
             const targetKey = `${documentId}.html`;
             try {
               parsed = await fetchAndParseDocument(
@@ -1234,7 +1238,7 @@ const Editor = ({
         if (data.items) {
           const fetchedFonts = data.items
             .slice(0, 100)
-            .map((item: any) => item.family);
+            .map((item: { family: string }) => item.family);
           setAvailableFonts([
             ...new Set(["Inter", "Arial", ...fetchedFonts]),
           ] as string[]);
@@ -1420,7 +1424,13 @@ const Editor = ({
               title: "Heading 1",
               description: "Big section heading.",
               icon: <Heading1 className="w-4 h-4" />,
-              command: ({ editor, range }: any) => {
+              command: ({
+                editor,
+                range,
+              }: {
+                editor: TiptapEditor;
+                range: TiptapRange;
+              }) => {
                 editor
                   .chain()
                   .focus()
@@ -1435,7 +1445,13 @@ const Editor = ({
               title: "Heading 2",
               description: "Medium section heading.",
               icon: <Heading2 className="w-4 h-4" />,
-              command: ({ editor, range }: any) => {
+              command: ({
+                editor,
+                range,
+              }: {
+                editor: TiptapEditor;
+                range: TiptapRange;
+              }) => {
                 editor
                   .chain()
                   .focus()
@@ -1450,7 +1466,13 @@ const Editor = ({
               title: "Heading 3",
               description: "Small section heading.",
               icon: <Heading3 className="w-4 h-4" />,
-              command: ({ editor, range }: any) => {
+              command: ({
+                editor,
+                range,
+              }: {
+                editor: TiptapEditor;
+                range: TiptapRange;
+              }) => {
                 editor
                   .chain()
                   .focus()
@@ -1465,7 +1487,13 @@ const Editor = ({
               title: "Bullet List",
               description: "Create a simple bulleted list.",
               icon: <List className="w-4 h-4" />,
-              command: ({ editor, range }: any) => {
+              command: ({
+                editor,
+                range,
+              }: {
+                editor: TiptapEditor;
+                range: TiptapRange;
+              }) => {
                 editor
                   .chain()
                   .focus()
@@ -1478,7 +1506,13 @@ const Editor = ({
               title: "Numbered List",
               description: "Create a list with numbering.",
               icon: <ListOrdered className="w-4 h-4" />,
-              command: ({ editor, range }: any) => {
+              command: ({
+                editor,
+                range,
+              }: {
+                editor: TiptapEditor;
+                range: TiptapRange;
+              }) => {
                 editor
                   .chain()
                   .focus()
@@ -1491,7 +1525,13 @@ const Editor = ({
               title: "To-do List",
               description: "Track tasks with a to-do list.",
               icon: <CheckSquare className="w-4 h-4" />,
-              command: ({ editor, range }: any) => {
+              command: ({
+                editor,
+                range,
+              }: {
+                editor: TiptapEditor;
+                range: TiptapRange;
+              }) => {
                 editor
                   .chain()
                   .focus()
@@ -1504,7 +1544,13 @@ const Editor = ({
               title: "Code Block",
               description: "Capture a code snippet.",
               icon: <Code className="w-4 h-4" />,
-              command: ({ editor, range }: any) => {
+              command: ({
+                editor,
+                range,
+              }: {
+                editor: TiptapEditor;
+                range: TiptapRange;
+              }) => {
                 editor
                   .chain()
                   .focus()
@@ -1517,7 +1563,13 @@ const Editor = ({
               title: "Image",
               description: "Upload or embed an image.",
               icon: <ImageIcon className="w-4 h-4" />,
-              command: ({ editor, range }: any) => {
+              command: ({
+                editor,
+                range,
+              }: {
+                editor: TiptapEditor;
+                range: TiptapRange;
+              }) => {
                 editor.chain().focus().deleteRange(range).run();
                 slashImageCallbackRef.current = (url: string) => {
                   if (url) editor.chain().focus().setImage({ src: url }).run();
@@ -1530,7 +1582,13 @@ const Editor = ({
               title: "Ask AI",
               description: "Generate text using AI.",
               icon: <Sparkles className="w-4 h-4 text-purple-500" />,
-              command: ({ editor, range }: any) => {
+              command: ({
+                editor,
+                range,
+              }: {
+                editor: TiptapEditor;
+                range: TiptapRange;
+              }) => {
                 editor.chain().focus().deleteRange(range).run();
                 setTimeout(() => {
                   setFloatingMode("prompt");
@@ -1541,7 +1599,13 @@ const Editor = ({
               title: "Embed Sheet",
               description: "Embed a spreadsheet in the document.",
               icon: <Table2 className="w-4 h-4 text-green-600" />,
-              command: ({ editor, range }: any) => {
+              command: ({
+                editor,
+                range,
+              }: {
+                editor: TiptapEditor;
+                range: TiptapRange;
+              }) => {
                 editor.chain().focus().deleteRange(range).run();
                 embedSheetCallbackRef.current = (
                   id: string,
