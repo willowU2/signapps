@@ -5,7 +5,7 @@
 
 use crate::AppState;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Query, State},
     http::StatusCode,
     Json,
 };
@@ -28,7 +28,7 @@ struct AccRow {
 
 // ── DTO ───────────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Generic accounting record returned to the client.
 pub struct AccRecord {
     pub id: Uuid,
@@ -118,6 +118,16 @@ async fn list_rows(pool: &signapps_db::DatabasePool, entity_type: &str) -> Resul
 // ── Journal Entries ───────────────────────────────────────────────────────────
 
 /// `GET /api/v1/accounting/entries` — list journal entries.
+#[utoipa::path(
+    get,
+    path = "/api/v1/accounting/entries",
+    tag = "accounting",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "List of journal entries", body = Vec<AccRecord>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_entries(State(state): State<AppState>) -> Result<Json<Vec<AccRecord>>> {
     let rows = list_rows(&state.pool, "journal_entry").await?;
@@ -125,6 +135,17 @@ pub async fn list_entries(State(state): State<AppState>) -> Result<Json<Vec<AccR
 }
 
 /// `POST /api/v1/accounting/entries` — create journal entry.
+#[utoipa::path(
+    post,
+    path = "/api/v1/accounting/entries",
+    tag = "accounting",
+    security(("bearerAuth" = [])),
+    request_body(content = serde_json::Value, description = "Journal entry data"),
+    responses(
+        (status = 201, description = "Journal entry created", body = AccRecord),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_entry(
     State(state): State<AppState>,
@@ -137,6 +158,16 @@ pub async fn create_entry(
 // ── Chart of Accounts ─────────────────────────────────────────────────────────
 
 /// `GET /api/v1/accounting/accounts` — list accounts.
+#[utoipa::path(
+    get,
+    path = "/api/v1/accounting/accounts",
+    tag = "accounting",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "List of accounts", body = Vec<AccRecord>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_accounts(State(state): State<AppState>) -> Result<Json<Vec<AccRecord>>> {
     let rows = list_rows(&state.pool, "account").await?;
@@ -144,6 +175,17 @@ pub async fn list_accounts(State(state): State<AppState>) -> Result<Json<Vec<Acc
 }
 
 /// `POST /api/v1/accounting/accounts` — create account.
+#[utoipa::path(
+    post,
+    path = "/api/v1/accounting/accounts",
+    tag = "accounting",
+    security(("bearerAuth" = [])),
+    request_body(content = serde_json::Value, description = "Account data"),
+    responses(
+        (status = 201, description = "Account created", body = AccRecord),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_account(
     State(state): State<AppState>,
@@ -159,6 +201,19 @@ pub async fn create_account(
 ///
 /// Query `?report_type=pl` or `?report_type=balance_sheet`.
 /// Returns computed summary built from journal entries in the DB.
+#[utoipa::path(
+    get,
+    path = "/api/v1/accounting/reports",
+    tag = "accounting",
+    security(("bearerAuth" = [])),
+    params(
+        ("report_type" = Option<String>, Query, description = "Report type: 'pl' or 'balance_sheet'"),
+    ),
+    responses(
+        (status = 200, description = "Generated report", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_reports(
     State(state): State<AppState>,

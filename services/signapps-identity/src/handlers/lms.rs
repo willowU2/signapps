@@ -28,7 +28,7 @@ struct LmsRow {
 
 // ── DTO ───────────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Generic LMS record returned to the client.
 pub struct LmsRecord {
     pub id: Uuid,
@@ -142,6 +142,16 @@ async fn patch_row(pool: &signapps_db::DatabasePool, id: Uuid, patch: &Value) ->
 // ── Courses ───────────────────────────────────────────────────────────────────
 
 /// `GET /api/v1/lms/courses` — list all courses.
+#[utoipa::path(
+    get,
+    path = "/api/v1/lms/courses",
+    tag = "lms",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "List of courses", body = Vec<LmsRecord>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_courses(State(state): State<AppState>) -> Result<Json<Vec<LmsRecord>>> {
     let rows = list_rows(&state.pool, "course").await?;
@@ -149,6 +159,17 @@ pub async fn list_courses(State(state): State<AppState>) -> Result<Json<Vec<LmsR
 }
 
 /// `POST /api/v1/lms/courses` — create a course.
+#[utoipa::path(
+    post,
+    path = "/api/v1/lms/courses",
+    tag = "lms",
+    security(("bearerAuth" = [])),
+    request_body(content = serde_json::Value, description = "Course data"),
+    responses(
+        (status = 201, description = "Course created", body = LmsRecord),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_course(
     State(state): State<AppState>,
@@ -159,6 +180,18 @@ pub async fn create_course(
 }
 
 /// `GET /api/v1/lms/courses/:id` — get one course.
+#[utoipa::path(
+    get,
+    path = "/api/v1/lms/courses/{id}",
+    tag = "lms",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Course UUID")),
+    responses(
+        (status = 200, description = "Course record", body = LmsRecord),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_course(
     State(state): State<AppState>,
@@ -171,6 +204,19 @@ pub async fn get_course(
 }
 
 /// `PATCH /api/v1/lms/courses/:id` — partial update a course.
+#[utoipa::path(
+    patch,
+    path = "/api/v1/lms/courses/{id}",
+    tag = "lms",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Course UUID")),
+    request_body(content = serde_json::Value, description = "Partial course update"),
+    responses(
+        (status = 200, description = "Updated course record", body = LmsRecord),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn patch_course(
     State(state): State<AppState>,
@@ -184,6 +230,16 @@ pub async fn patch_course(
 // ── Progress ──────────────────────────────────────────────────────────────────
 
 /// `GET /api/v1/lms/progress` — list all progress records.
+#[utoipa::path(
+    get,
+    path = "/api/v1/lms/progress",
+    tag = "lms",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "List of progress records", body = Vec<LmsRecord>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_progress(State(state): State<AppState>) -> Result<Json<Vec<LmsRecord>>> {
     let rows = list_rows(&state.pool, "progress").await?;
@@ -191,6 +247,17 @@ pub async fn list_progress(State(state): State<AppState>) -> Result<Json<Vec<Lms
 }
 
 /// `POST /api/v1/lms/progress` — upsert user progress.
+#[utoipa::path(
+    post,
+    path = "/api/v1/lms/progress",
+    tag = "lms",
+    security(("bearerAuth" = [])),
+    request_body(content = serde_json::Value, description = "Progress data"),
+    responses(
+        (status = 201, description = "Progress record created", body = LmsRecord),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn track_progress(
     State(state): State<AppState>,
@@ -203,6 +270,16 @@ pub async fn track_progress(
 // ── Discussions ───────────────────────────────────────────────────────────────
 
 /// `GET /api/v1/lms/discussions` — list all discussions.
+#[utoipa::path(
+    get,
+    path = "/api/v1/lms/discussions",
+    tag = "lms",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "List of discussions", body = Vec<LmsRecord>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_discussions(State(state): State<AppState>) -> Result<Json<Vec<LmsRecord>>> {
     let rows = list_rows(&state.pool, "discussion").await?;
@@ -210,6 +287,17 @@ pub async fn list_discussions(State(state): State<AppState>) -> Result<Json<Vec<
 }
 
 /// `POST /api/v1/lms/discussions` — create a discussion comment.
+#[utoipa::path(
+    post,
+    path = "/api/v1/lms/discussions",
+    tag = "lms",
+    security(("bearerAuth" = [])),
+    request_body(content = serde_json::Value, description = "Discussion data"),
+    responses(
+        (status = 201, description = "Discussion created", body = LmsRecord),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_discussion(
     State(state): State<AppState>,

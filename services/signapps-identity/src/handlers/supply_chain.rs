@@ -28,7 +28,7 @@ struct ScRow {
 
 // ── Generic record DTO ────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Generic supply-chain record returned to the client.
 pub struct ScRecord {
     pub id: Uuid,
@@ -163,6 +163,19 @@ async fn delete_row(pool: &signapps_db::DatabasePool, id: Uuid) -> Result<()> {
 // ── Purchase Orders ───────────────────────────────────────────────────────────
 
 /// `GET /api/v1/supply-chain/purchase-orders` — list all POs (optional ?status= filter).
+#[utoipa::path(
+    get,
+    path = "/api/v1/supply-chain/purchase-orders",
+    tag = "supply_chain",
+    security(("bearerAuth" = [])),
+    params(
+        ("status" = Option<String>, Query, description = "Filter by status"),
+    ),
+    responses(
+        (status = 200, description = "List of purchase orders", body = Vec<ScRecord>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_purchase_orders(
     State(state): State<AppState>,
@@ -185,6 +198,17 @@ pub async fn list_purchase_orders(
 }
 
 /// `POST /api/v1/supply-chain/purchase-orders` — create a new PO.
+#[utoipa::path(
+    post,
+    path = "/api/v1/supply-chain/purchase-orders",
+    tag = "supply_chain",
+    security(("bearerAuth" = [])),
+    request_body(content = serde_json::Value, description = "Purchase order data"),
+    responses(
+        (status = 201, description = "Purchase order created", body = ScRecord),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_purchase_order(
     State(state): State<AppState>,
@@ -195,6 +219,18 @@ pub async fn create_purchase_order(
 }
 
 /// `GET /api/v1/supply-chain/purchase-orders/:id` — get one PO.
+#[utoipa::path(
+    get,
+    path = "/api/v1/supply-chain/purchase-orders/{id}",
+    tag = "supply_chain",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Purchase order UUID")),
+    responses(
+        (status = 200, description = "Purchase order record", body = ScRecord),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_purchase_order(
     State(state): State<AppState>,
@@ -207,6 +243,19 @@ pub async fn get_purchase_order(
 }
 
 /// `PATCH /api/v1/supply-chain/purchase-orders/:id` — partial update.
+#[utoipa::path(
+    patch,
+    path = "/api/v1/supply-chain/purchase-orders/{id}",
+    tag = "supply_chain",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Purchase order UUID")),
+    request_body(content = serde_json::Value, description = "Partial PO update"),
+    responses(
+        (status = 200, description = "Updated purchase order", body = ScRecord),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn patch_purchase_order(
     State(state): State<AppState>,
@@ -218,6 +267,18 @@ pub async fn patch_purchase_order(
 }
 
 /// `DELETE /api/v1/supply-chain/purchase-orders/:id` — delete a PO.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/supply-chain/purchase-orders/{id}",
+    tag = "supply_chain",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Purchase order UUID")),
+    responses(
+        (status = 204, description = "Purchase order deleted"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_purchase_order(
     State(state): State<AppState>,
@@ -230,6 +291,16 @@ pub async fn delete_purchase_order(
 // ── Warehouses ────────────────────────────────────────────────────────────────
 
 /// `GET /api/v1/supply-chain/warehouses` — list all warehouse zones.
+#[utoipa::path(
+    get,
+    path = "/api/v1/supply-chain/warehouses",
+    tag = "supply_chain",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "List of warehouses", body = Vec<ScRecord>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_warehouses(State(state): State<AppState>) -> Result<Json<Vec<ScRecord>>> {
     let rows = list_rows(&state.pool, "warehouse").await?;
@@ -237,6 +308,17 @@ pub async fn list_warehouses(State(state): State<AppState>) -> Result<Json<Vec<S
 }
 
 /// `POST /api/v1/supply-chain/warehouses` — create a warehouse zone.
+#[utoipa::path(
+    post,
+    path = "/api/v1/supply-chain/warehouses",
+    tag = "supply_chain",
+    security(("bearerAuth" = [])),
+    request_body(content = serde_json::Value, description = "Warehouse data"),
+    responses(
+        (status = 201, description = "Warehouse created", body = ScRecord),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_warehouse(
     State(state): State<AppState>,
@@ -249,6 +331,16 @@ pub async fn create_warehouse(
 // ── Inventory ─────────────────────────────────────────────────────────────────
 
 /// `GET /api/v1/supply-chain/inventory` — list all inventory items.
+#[utoipa::path(
+    get,
+    path = "/api/v1/supply-chain/inventory",
+    tag = "supply_chain",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "List of inventory items", body = Vec<ScRecord>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_inventory(State(state): State<AppState>) -> Result<Json<Vec<ScRecord>>> {
     let rows = list_rows(&state.pool, "inventory_item").await?;

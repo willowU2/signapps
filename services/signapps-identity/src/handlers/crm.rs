@@ -23,7 +23,7 @@ use uuid::Uuid;
 
 // ── Deal types ────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct Deal {
     pub id: Uuid,
     pub title: String,
@@ -43,7 +43,7 @@ pub struct Deal {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateDealRequest {
     pub title: String,
     pub stage: Option<String>,
@@ -59,7 +59,7 @@ pub struct CreateDealRequest {
     pub metadata: Option<Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdateDealRequest {
     pub title: Option<String>,
     pub stage: Option<String>,
@@ -83,7 +83,7 @@ pub struct DealListQuery {
 
 // ── Lead types ────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct Lead {
     pub id: Uuid,
     pub name: String,
@@ -101,7 +101,7 @@ pub struct Lead {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateLeadRequest {
     pub name: String,
     pub email: Option<String>,
@@ -115,7 +115,7 @@ pub struct CreateLeadRequest {
     pub metadata: Option<Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdateLeadRequest {
     pub name: Option<String>,
     pub email: Option<String>,
@@ -137,7 +137,7 @@ pub struct LeadListQuery {
 
 // ── Pipeline summary ──────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct PipelineStage {
     pub stage: String,
     pub count: i64,
@@ -198,6 +198,21 @@ async fn ensure_tables(pool: &signapps_db::DatabasePool) -> Result<()> {
 // ── Deal handlers ─────────────────────────────────────────────────────────────
 
 /// `GET /api/v1/crm/deals` — list deals owned by caller, optional stage filter.
+#[utoipa::path(
+    get,
+    path = "/api/v1/crm/deals",
+    tag = "crm",
+    security(("bearerAuth" = [])),
+    params(
+        ("stage" = Option<String>, Query, description = "Filter by deal stage"),
+        ("limit" = Option<i64>, Query, description = "Max results (default 100)"),
+        ("offset" = Option<i64>, Query, description = "Pagination offset"),
+    ),
+    responses(
+        (status = 200, description = "Deal list", body = Vec<Deal>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, q), fields(user_id = %claims.sub))]
 pub async fn list_deals(
     State(state): State<AppState>,
@@ -238,6 +253,18 @@ pub async fn list_deals(
 }
 
 /// `GET /api/v1/crm/deals/:id` — get a single deal.
+#[utoipa::path(
+    get,
+    path = "/api/v1/crm/deals/{id}",
+    tag = "crm",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Deal UUID")),
+    responses(
+        (status = 200, description = "Deal detail", body = Deal),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Deal not found"),
+    )
+)]
 #[tracing::instrument(skip(state), fields(user_id = %claims.sub, deal_id = %id))]
 pub async fn get_deal(
     State(state): State<AppState>,
@@ -257,6 +284,17 @@ pub async fn get_deal(
 }
 
 /// `POST /api/v1/crm/deals` — create a deal.
+#[utoipa::path(
+    post,
+    path = "/api/v1/crm/deals",
+    tag = "crm",
+    security(("bearerAuth" = [])),
+    request_body = CreateDealRequest,
+    responses(
+        (status = 201, description = "Deal created", body = Deal),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, body), fields(user_id = %claims.sub))]
 pub async fn create_deal(
     State(state): State<AppState>,
@@ -292,6 +330,19 @@ pub async fn create_deal(
 }
 
 /// `PUT /api/v1/crm/deals/:id` — update a deal.
+#[utoipa::path(
+    put,
+    path = "/api/v1/crm/deals/{id}",
+    tag = "crm",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Deal UUID")),
+    request_body = UpdateDealRequest,
+    responses(
+        (status = 200, description = "Deal updated", body = Deal),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Deal not found"),
+    )
+)]
 #[tracing::instrument(skip(state, body), fields(user_id = %claims.sub, deal_id = %id))]
 pub async fn update_deal(
     State(state): State<AppState>,
@@ -348,6 +399,18 @@ pub async fn update_deal(
 }
 
 /// `DELETE /api/v1/crm/deals/:id` — delete a deal.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/crm/deals/{id}",
+    tag = "crm",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Deal UUID")),
+    responses(
+        (status = 204, description = "Deal deleted"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Deal not found"),
+    )
+)]
 #[tracing::instrument(skip(state), fields(user_id = %claims.sub, deal_id = %id))]
 pub async fn delete_deal(
     State(state): State<AppState>,
@@ -372,6 +435,21 @@ pub async fn delete_deal(
 // ── Lead handlers ─────────────────────────────────────────────────────────────
 
 /// `GET /api/v1/crm/leads` — list leads owned by caller.
+#[utoipa::path(
+    get,
+    path = "/api/v1/crm/leads",
+    tag = "crm",
+    security(("bearerAuth" = [])),
+    params(
+        ("status" = Option<String>, Query, description = "Filter by lead status"),
+        ("limit" = Option<i64>, Query, description = "Max results (default 100)"),
+        ("offset" = Option<i64>, Query, description = "Pagination offset"),
+    ),
+    responses(
+        (status = 200, description = "Lead list", body = Vec<Lead>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, q), fields(user_id = %claims.sub))]
 pub async fn list_leads(
     State(state): State<AppState>,
@@ -412,6 +490,18 @@ pub async fn list_leads(
 }
 
 /// `GET /api/v1/crm/leads/:id` — get a single lead.
+#[utoipa::path(
+    get,
+    path = "/api/v1/crm/leads/{id}",
+    tag = "crm",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Lead UUID")),
+    responses(
+        (status = 200, description = "Lead detail", body = Lead),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Lead not found"),
+    )
+)]
 #[tracing::instrument(skip(state), fields(user_id = %claims.sub, lead_id = %id))]
 pub async fn get_lead(
     State(state): State<AppState>,
@@ -431,6 +521,17 @@ pub async fn get_lead(
 }
 
 /// `POST /api/v1/crm/leads` — create a lead.
+#[utoipa::path(
+    post,
+    path = "/api/v1/crm/leads",
+    tag = "crm",
+    security(("bearerAuth" = [])),
+    request_body = CreateLeadRequest,
+    responses(
+        (status = 201, description = "Lead created", body = Lead),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, body), fields(user_id = %claims.sub))]
 pub async fn create_lead(
     State(state): State<AppState>,
@@ -464,6 +565,19 @@ pub async fn create_lead(
 }
 
 /// `PUT /api/v1/crm/leads/:id` — update a lead.
+#[utoipa::path(
+    put,
+    path = "/api/v1/crm/leads/{id}",
+    tag = "crm",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Lead UUID")),
+    request_body = UpdateLeadRequest,
+    responses(
+        (status = 200, description = "Lead updated", body = Lead),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Lead not found"),
+    )
+)]
 #[tracing::instrument(skip(state, body), fields(user_id = %claims.sub, lead_id = %id))]
 pub async fn update_lead(
     State(state): State<AppState>,
@@ -515,6 +629,18 @@ pub async fn update_lead(
 }
 
 /// `DELETE /api/v1/crm/leads/:id` — delete a lead.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/crm/leads/{id}",
+    tag = "crm",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Lead UUID")),
+    responses(
+        (status = 204, description = "Lead deleted"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Lead not found"),
+    )
+)]
 #[tracing::instrument(skip(state), fields(user_id = %claims.sub, lead_id = %id))]
 pub async fn delete_lead(
     State(state): State<AppState>,
@@ -539,6 +665,16 @@ pub async fn delete_lead(
 // ── Pipeline summary ──────────────────────────────────────────────────────────
 
 /// `GET /api/v1/crm/pipeline` — count + total amount per stage for the caller.
+#[utoipa::path(
+    get,
+    path = "/api/v1/crm/pipeline",
+    tag = "crm",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "Deal pipeline summary by stage", body = Vec<PipelineStage>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
 pub async fn get_pipeline(
     State(state): State<AppState>,

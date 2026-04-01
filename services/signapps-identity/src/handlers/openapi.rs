@@ -170,6 +170,50 @@ use utoipa::OpenApi;
         crate::handlers::audit_logs::get_audit_log,
         crate::handlers::audit_logs::export_audit_logs,
         crate::handlers::audit_logs::query_audit,
+        // CRM
+        crate::handlers::crm::list_deals,
+        crate::handlers::crm::get_deal,
+        crate::handlers::crm::create_deal,
+        crate::handlers::crm::update_deal,
+        crate::handlers::crm::delete_deal,
+        crate::handlers::crm::list_leads,
+        crate::handlers::crm::get_lead,
+        crate::handlers::crm::create_lead,
+        crate::handlers::crm::update_lead,
+        crate::handlers::crm::delete_lead,
+        crate::handlers::crm::get_pipeline,
+        // LMS
+        crate::handlers::lms::list_courses,
+        crate::handlers::lms::create_course,
+        crate::handlers::lms::get_course,
+        crate::handlers::lms::patch_course,
+        crate::handlers::lms::list_progress,
+        crate::handlers::lms::track_progress,
+        crate::handlers::lms::list_discussions,
+        crate::handlers::lms::create_discussion,
+        // Supply chain
+        crate::handlers::supply_chain::list_purchase_orders,
+        crate::handlers::supply_chain::create_purchase_order,
+        crate::handlers::supply_chain::get_purchase_order,
+        crate::handlers::supply_chain::patch_purchase_order,
+        crate::handlers::supply_chain::delete_purchase_order,
+        crate::handlers::supply_chain::list_warehouses,
+        crate::handlers::supply_chain::create_warehouse,
+        crate::handlers::supply_chain::list_inventory,
+        // Comms
+        crate::handlers::comms::list_announcements,
+        crate::handlers::comms::create_announcement,
+        crate::handlers::comms::list_polls,
+        crate::handlers::comms::create_poll,
+        crate::handlers::comms::patch_poll,
+        crate::handlers::comms::list_news,
+        crate::handlers::comms::create_news,
+        // Accounting
+        crate::handlers::accounting::list_entries,
+        crate::handlers::accounting::create_entry,
+        crate::handlers::accounting::list_accounts,
+        crate::handlers::accounting::create_account,
+        crate::handlers::accounting::get_reports,
     ),
     components(
         schemas(
@@ -287,6 +331,22 @@ use utoipa::OpenApi;
             crate::handlers::audit_logs::AuditLog,
             crate::handlers::audit_logs::AuditLogListResponse,
             crate::handlers::audit_logs::AuditQueryRequest,
+            // CRM schemas
+            crate::handlers::crm::Deal,
+            crate::handlers::crm::CreateDealRequest,
+            crate::handlers::crm::UpdateDealRequest,
+            crate::handlers::crm::Lead,
+            crate::handlers::crm::CreateLeadRequest,
+            crate::handlers::crm::UpdateLeadRequest,
+            crate::handlers::crm::PipelineStage,
+            // LMS schemas
+            crate::handlers::lms::LmsRecord,
+            // Supply chain schemas
+            crate::handlers::supply_chain::ScRecord,
+            // Comms schemas
+            crate::handlers::comms::CommsRecord,
+            // Accounting schemas
+            crate::handlers::accounting::AccRecord,
         )
     ),
     tags(
@@ -307,6 +367,11 @@ use utoipa::OpenApi;
         (name = "compliance", description = "GDPR compliance — DPIA, DSAR, retention, consent"),
         (name = "resources", description = "Resource booking — rooms, equipment, reservations"),
         (name = "audit", description = "Platform audit logs"),
+        (name = "crm", description = "CRM — deals, leads, pipeline"),
+        (name = "lms", description = "Learning Management System — courses, progress, discussions"),
+        (name = "supply_chain", description = "Supply chain — purchase orders, warehouses, inventory"),
+        (name = "comms", description = "Internal communications — announcements, polls, news feed"),
+        (name = "accounting", description = "Accounting — journal entries, chart of accounts, reports"),
     ),
     modifiers(&SecurityAddon),
 )]

@@ -28,7 +28,7 @@ struct CommsRow {
 
 // ── DTO ───────────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Generic comms record returned to the client.
 pub struct CommsRecord {
     pub id: Uuid,
@@ -130,6 +130,16 @@ async fn patch_row(pool: &signapps_db::DatabasePool, id: Uuid, patch: &Value) ->
 // ── Announcements ─────────────────────────────────────────────────────────────
 
 /// `GET /api/v1/comms/announcements` — list announcements.
+#[utoipa::path(
+    get,
+    path = "/api/v1/comms/announcements",
+    tag = "comms",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "List of announcements", body = Vec<CommsRecord>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_announcements(State(state): State<AppState>) -> Result<Json<Vec<CommsRecord>>> {
     let rows = list_rows(&state.pool, "announcement").await?;
@@ -137,6 +147,17 @@ pub async fn list_announcements(State(state): State<AppState>) -> Result<Json<Ve
 }
 
 /// `POST /api/v1/comms/announcements` — create announcement.
+#[utoipa::path(
+    post,
+    path = "/api/v1/comms/announcements",
+    tag = "comms",
+    security(("bearerAuth" = [])),
+    request_body(content = serde_json::Value, description = "Announcement data"),
+    responses(
+        (status = 201, description = "Announcement created", body = CommsRecord),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_announcement(
     State(state): State<AppState>,
@@ -149,6 +170,16 @@ pub async fn create_announcement(
 // ── Polls ─────────────────────────────────────────────────────────────────────
 
 /// `GET /api/v1/comms/polls` — list polls.
+#[utoipa::path(
+    get,
+    path = "/api/v1/comms/polls",
+    tag = "comms",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "List of polls", body = Vec<CommsRecord>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_polls(State(state): State<AppState>) -> Result<Json<Vec<CommsRecord>>> {
     let rows = list_rows(&state.pool, "poll").await?;
@@ -156,6 +187,17 @@ pub async fn list_polls(State(state): State<AppState>) -> Result<Json<Vec<CommsR
 }
 
 /// `POST /api/v1/comms/polls` — create poll.
+#[utoipa::path(
+    post,
+    path = "/api/v1/comms/polls",
+    tag = "comms",
+    security(("bearerAuth" = [])),
+    request_body(content = serde_json::Value, description = "Poll data"),
+    responses(
+        (status = 201, description = "Poll created", body = CommsRecord),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_poll(
     State(state): State<AppState>,
@@ -166,6 +208,19 @@ pub async fn create_poll(
 }
 
 /// `PATCH /api/v1/comms/polls/:id` — vote or update a poll.
+#[utoipa::path(
+    patch,
+    path = "/api/v1/comms/polls/{id}",
+    tag = "comms",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Poll UUID")),
+    request_body(content = serde_json::Value, description = "Poll update / vote data"),
+    responses(
+        (status = 200, description = "Updated poll record", body = CommsRecord),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn patch_poll(
     State(state): State<AppState>,
@@ -179,6 +234,16 @@ pub async fn patch_poll(
 // ── News Feed ─────────────────────────────────────────────────────────────────
 
 /// `GET /api/v1/comms/news-feed` — list news posts.
+#[utoipa::path(
+    get,
+    path = "/api/v1/comms/news-feed",
+    tag = "comms",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "List of news posts", body = Vec<CommsRecord>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_news(State(state): State<AppState>) -> Result<Json<Vec<CommsRecord>>> {
     let rows = list_rows(&state.pool, "news_post").await?;
@@ -186,6 +251,17 @@ pub async fn list_news(State(state): State<AppState>) -> Result<Json<Vec<CommsRe
 }
 
 /// `POST /api/v1/comms/news-feed` — create news post.
+#[utoipa::path(
+    post,
+    path = "/api/v1/comms/news-feed",
+    tag = "comms",
+    security(("bearerAuth" = [])),
+    request_body(content = serde_json::Value, description = "News post data"),
+    responses(
+        (status = 201, description = "News post created", body = CommsRecord),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_news(
     State(state): State<AppState>,
