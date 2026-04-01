@@ -1,5 +1,6 @@
 mod handlers;
 mod models;
+mod openapi;
 
 use axum::{routing::get, Router};
 use signapps_common::auth::JwtConfig;
@@ -75,6 +76,7 @@ async fn main() -> anyhow::Result<()> {
             "/api/v1/remote/ws/:id",
             get(handlers::connection_gateway_ws),
         )
+        .merge(openapi::swagger_router())
         .layer(axum::middleware::from_fn_with_state(
             app_state.clone(),
             optional_auth_middleware::<AppState>,

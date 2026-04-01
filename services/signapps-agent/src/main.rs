@@ -7,11 +7,14 @@ mod backup;
 mod config;
 mod heartbeat;
 mod inventory;
+mod openapi;
 mod patches;
 mod remote;
 mod scripts;
 mod services;
+mod status;
 
+use axum::{routing::get, Router};
 use clap::Parser;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -80,6 +83,28 @@ async fn main() -> anyhow::Result<()> {
 
 async fn run_agent(config: Arc<RwLock<config::AgentConfig>>) -> anyhow::Result<()> {
     tracing::info!("SignApps Agent starting...");
+
+    // Spawn minimal status HTTP server (default port 9999)
+    let status_port: u16 = std::env::var("AGENT_STATUS_PORT")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(9999);
+    let status_config = config.clone();
+    tokio::spawn(async move {
+        let app = Router::new()
+            .route("/health", get(status::agent_health))
+            .route("/status", get(status::agent_status))
+            .merge(openapi::swagger_router())
+            .with_state(status_config);
+        let addr = format!("0.0.0.0:{}", status_port);
+        match tokio::net::TcpListener::bind(&addr).await {
+            Ok(listener) => {
+                tracing::info!("Agent status interface on port {}", status_port);
+                let _ = axum::serve(listener, app).await;
+            },
+            Err(e) => tracing::warn!("Status interface unavailable: {}", e),
+        }
+    });
 
     // Spawn concurrent tasks
     let cfg = config.clone();

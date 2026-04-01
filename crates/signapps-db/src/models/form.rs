@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 /// The input type of a form field.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum FieldType {
     Text,
     TextArea,
@@ -18,6 +19,7 @@ pub enum FieldType {
 
 /// A single field definition within a form, including its type, label, and options.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct FormField {
     pub id: Uuid,
     pub field_type: FieldType,
@@ -30,11 +32,13 @@ pub struct FormField {
 
 /// A form with a title, description, and a list of field definitions.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Form {
     pub id: Uuid,
     pub title: String,
     pub description: String,
     pub owner_id: Uuid,
+    #[cfg_attr(feature = "openapi", schema(value_type = Vec<FormField>))]
     pub fields: sqlx::types::Json<Vec<FormField>>,
     pub is_published: bool,
     pub created_at: DateTime<Utc>,
@@ -43,6 +47,7 @@ pub struct Form {
 
 /// A single field answer within a form submission.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Answer {
     pub field_id: Uuid,
     pub value: serde_json::Value,
@@ -50,10 +55,12 @@ pub struct Answer {
 
 /// A submitted form response containing all field answers.
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct FormResponse {
     pub id: Uuid,
     pub form_id: Uuid,
     pub respondent: Option<String>,
+    #[cfg_attr(feature = "openapi", schema(value_type = Vec<Answer>))]
     pub answers: sqlx::types::Json<Vec<Answer>>,
     pub submitted_at: DateTime<Utc>,
 }

@@ -3,6 +3,7 @@
 
 mod carddav;
 mod carddav_sync;
+mod openapi;
 
 use axum::{
     extract::{Multipart, Path, State},
@@ -27,7 +28,7 @@ use uuid::Uuid;
 // Domain types
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 /// Represents a contact.
 pub struct Contact {
     pub id: Uuid,
@@ -43,7 +44,7 @@ pub struct Contact {
     pub updated_at: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 /// Represents a contact group.
 pub struct ContactGroup {
     pub id: Uuid,
@@ -55,7 +56,7 @@ pub struct ContactGroup {
     pub updated_at: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateContact operation.
 pub struct CreateContactRequest {
     pub first_name: String,
@@ -67,7 +68,7 @@ pub struct CreateContactRequest {
     pub group_ids: Option<Vec<Uuid>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdateContact operation.
 pub struct UpdateContactRequest {
     pub first_name: Option<String>,
@@ -79,7 +80,7 @@ pub struct UpdateContactRequest {
     pub group_ids: Option<Vec<Uuid>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateGroup operation.
 pub struct CreateGroupRequest {
     pub name: String,
@@ -87,7 +88,7 @@ pub struct CreateGroupRequest {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdateGroup operation.
 pub struct UpdateGroupRequest {
     pub name: Option<String>,
@@ -95,7 +96,7 @@ pub struct UpdateGroupRequest {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for AddGroupMember operation.
 pub struct AddGroupMemberRequest {
     pub contact_id: Uuid,
@@ -124,11 +125,32 @@ impl AuthState for AppState {
 // Handlers
 // ---------------------------------------------------------------------------
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/contacts",
+    responses(
+        (status = 200, description = "List of contacts", body = Vec<Contact>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Contacts",
+)]
 async fn list_contacts(State(state): State<AppState>) -> impl IntoResponse {
     let contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
     Json(contacts.clone())
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/contacts",
+    request_body = CreateContactRequest,
+    responses(
+        (status = 201, description = "Contact created", body = Contact),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Contacts",
+)]
 async fn create_contact(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -169,6 +191,20 @@ async fn create_contact(
     (StatusCode::CREATED, Json(contact))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/contacts/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Contact UUID"),
+    ),
+    responses(
+        (status = 200, description = "Contact found", body = Contact),
+        (status = 404, description = "Contact not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Contacts",
+)]
 async fn get_contact(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     let contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
     match contacts.iter().find(|c| c.id == id) {
@@ -183,6 +219,21 @@ async fn get_contact(State(state): State<AppState>, Path(id): Path<Uuid>) -> imp
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/contacts/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Contact UUID"),
+    ),
+    request_body = UpdateContactRequest,
+    responses(
+        (status = 200, description = "Contact updated", body = Contact),
+        (status = 404, description = "Contact not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Contacts",
+)]
 async fn update_contact(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -225,6 +276,20 @@ async fn update_contact(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/contacts/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Contact UUID"),
+    ),
+    responses(
+        (status = 204, description = "Contact deleted"),
+        (status = 404, description = "Contact not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Contacts",
+)]
 async fn delete_contact(State(state): State<AppState>, Path(id): Path<Uuid>) -> StatusCode {
     let mut contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
     let before = contacts.len();
@@ -244,6 +309,21 @@ async fn delete_contact(State(state): State<AppState>, Path(id): Path<Uuid>) -> 
 /// or: first_name, last_name, email, phone, company, job_title
 ///
 /// Returns a JSON summary: { imported, skipped, failed }
+#[utoipa::path(
+    post,
+    path = "/api/v1/contacts/import/csv",
+    request_body(
+        content_type = "multipart/form-data",
+        description = "CSV file with contacts (field name: `file`)",
+    ),
+    responses(
+        (status = 200, description = "Import result with counts", body = inline(serde_json::Value)),
+        (status = 400, description = "Missing or invalid CSV file"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Contacts",
+)]
 async fn import_contacts_csv(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -395,11 +475,33 @@ async fn import_contacts_csv(
     )
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/contacts/groups",
+    responses(
+        (status = 200, description = "List of contact groups", body = Vec<ContactGroup>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups",
+)]
 async fn list_groups(State(state): State<AppState>) -> impl IntoResponse {
     let groups = state.groups.lock().unwrap_or_else(|e| e.into_inner());
     Json(groups.clone())
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/contacts/groups",
+    request_body = CreateGroupRequest,
+    responses(
+        (status = 201, description = "Group created", body = ContactGroup),
+        (status = 400, description = "Invalid group name"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups",
+)]
 async fn create_group(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -433,6 +535,22 @@ async fn create_group(
     )
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/contacts/groups/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Group UUID"),
+    ),
+    request_body = UpdateGroupRequest,
+    responses(
+        (status = 200, description = "Group updated", body = ContactGroup),
+        (status = 400, description = "Invalid group name"),
+        (status = 404, description = "Group not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups",
+)]
 async fn update_group(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -469,6 +587,20 @@ async fn update_group(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/contacts/groups/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Group UUID"),
+    ),
+    responses(
+        (status = 204, description = "Group deleted"),
+        (status = 404, description = "Group not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups",
+)]
 async fn delete_group(State(state): State<AppState>, Path(id): Path<Uuid>) -> StatusCode {
     // Unassign this group from all contacts first
     {
@@ -488,6 +620,21 @@ async fn delete_group(State(state): State<AppState>, Path(id): Path<Uuid>) -> St
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/contacts/groups/{id}/members",
+    params(
+        ("id" = Uuid, Path, description = "Group UUID"),
+    ),
+    request_body = AddGroupMemberRequest,
+    responses(
+        (status = 200, description = "Member added"),
+        (status = 404, description = "Group or contact not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups",
+)]
 async fn add_group_member(
     State(state): State<AppState>,
     Path(group_id): Path<Uuid>,
@@ -520,6 +667,21 @@ async fn add_group_member(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/contacts/groups/{id}/members/{contact_id}",
+    params(
+        ("id" = Uuid, Path, description = "Group UUID"),
+        ("contact_id" = Uuid, Path, description = "Contact UUID to remove"),
+    ),
+    responses(
+        (status = 204, description = "Member removed"),
+        (status = 404, description = "Contact not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups",
+)]
 async fn remove_group_member(
     State(state): State<AppState>,
     Path((group_id, contact_id)): Path<(Uuid, Uuid)>,
@@ -535,6 +697,14 @@ async fn remove_group_member(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/health",
+    responses(
+        (status = 200, description = "Service is healthy", body = inline(serde_json::Value)),
+    ),
+    tag = "System",
+)]
 async fn health_check() -> axum::Json<serde_json::Value> {
     axum::Json(serde_json::json!({
         "status": "ok",
@@ -609,6 +779,7 @@ fn create_router(state: AppState) -> Router {
 
     public_routes
         .merge(protected_routes)
+        .merge(openapi::swagger_router())
         .layer(TraceLayer::new_for_http())
         .layer(cors)
         .with_state(state)

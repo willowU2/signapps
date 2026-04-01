@@ -23,7 +23,7 @@ const IMAGES_DIR: &str = "data/pxe/tftpboot/images";
 // Models
 // ============================================================================
 
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a pxe image.
 pub struct PxeImage {
     pub id: Uuid,
@@ -39,7 +39,7 @@ pub struct PxeImage {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a pxe deployment.
 pub struct PxeDeployment {
     pub id: Uuid,
@@ -59,6 +59,16 @@ pub struct PxeDeployment {
 // PX2: Image management
 // ============================================================================
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/pxe/images",
+    responses(
+        (status = 200, description = "List of PXE images", body = Vec<PxeImage>),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-images"
+)]
 pub async fn list_images(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<PxeImage>>, (StatusCode, String)> {
@@ -72,6 +82,22 @@ pub async fn list_images(
     Ok(Json(images))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/pxe/images",
+    request_body(
+        content = String,
+        description = "Multipart form: file (binary), name, os_type, os_version, image_type, description",
+        content_type = "multipart/form-data"
+    ),
+    responses(
+        (status = 201, description = "Image uploaded and registered", body = PxeImage),
+        (status = 400, description = "Bad request or missing file field"),
+        (status = 500, description = "Storage or database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-images"
+)]
 pub async fn upload_image(
     State(state): State<AppState>,
     mut multipart: Multipart,
@@ -195,6 +221,18 @@ pub async fn upload_image(
     Ok((StatusCode::CREATED, Json(image)))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/pxe/images/{id}",
+    params(("id" = Uuid, Path, description = "Image UUID")),
+    responses(
+        (status = 204, description = "Image deleted"),
+        (status = 404, description = "Image not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-images"
+)]
 pub async fn delete_image(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -227,7 +265,7 @@ pub async fn delete_image(
 // PX3: Template generation
 // ============================================================================
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for GenerateTemplate operation.
 pub struct GenerateTemplateRequest {
     pub os_type: String, // "rhel" | "debian" | "ubuntu" | "windows"
@@ -240,7 +278,7 @@ pub struct GenerateTemplateRequest {
     pub users: Option<Vec<TemplateUser>>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, utoipa::ToSchema)]
 /// Represents a template user.
 pub struct TemplateUser {
     pub username: String,
@@ -248,7 +286,7 @@ pub struct TemplateUser {
     pub sudo: Option<bool>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a generated template.
 pub struct GeneratedTemplate {
     pub os_type: String,
@@ -256,6 +294,17 @@ pub struct GeneratedTemplate {
     pub content: String,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/pxe/templates/generate",
+    request_body = GenerateTemplateRequest,
+    responses(
+        (status = 200, description = "Generated OS installer template", body = GeneratedTemplate),
+        (status = 400, description = "Unsupported os_type"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-templates"
+)]
 pub async fn generate_template(
     Json(req): Json<GenerateTemplateRequest>,
 ) -> Result<Json<GeneratedTemplate>, (StatusCode, String)> {
@@ -592,7 +641,7 @@ fn generate_unattend(req: &GenerateTemplateRequest) -> String {
 // PX4: Deployment progress tracking
 // ============================================================================
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for DeploymentProgress operation.
 pub struct DeploymentProgressRequest {
     pub progress: i32,
@@ -601,6 +650,17 @@ pub struct DeploymentProgressRequest {
     pub error_message: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/pxe/deployments/{mac}/progress",
+    params(("mac" = String, Path, description = "MAC address of the deploying machine")),
+    request_body = DeploymentProgressRequest,
+    responses(
+        (status = 204, description = "Deployment progress updated"),
+        (status = 500, description = "Database error"),
+    ),
+    tag = "pxe-deployments"
+)]
 pub async fn update_deployment_progress(
     State(state): State<AppState>,
     Path(mac): Path<String>,
@@ -650,6 +710,16 @@ pub async fn update_deployment_progress(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/pxe/deployments",
+    responses(
+        (status = 200, description = "List of PXE deployments", body = Vec<PxeDeployment>),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-deployments"
+)]
 pub async fn list_deployments(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<PxeDeployment>>, (StatusCode, String)> {
@@ -667,7 +737,7 @@ pub async fn list_deployments(
 // PX5: Post-deploy hook config stored in profile metadata
 // ============================================================================
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, utoipa::ToSchema)]
 /// Represents a post deploy hooks.
 pub struct PostDeployHooks {
     pub run_scripts: Vec<String>,
@@ -676,7 +746,7 @@ pub struct PostDeployHooks {
     pub notify_webhook: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, utoipa::ToSchema)]
 /// Configuration for DomainJoin.
 pub struct DomainJoinConfig {
     pub domain: String,
@@ -684,6 +754,18 @@ pub struct DomainJoinConfig {
     pub credential_ref: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/pxe/profiles/{id}/hooks",
+    params(("id" = Uuid, Path, description = "Profile UUID")),
+    responses(
+        (status = 200, description = "Post-deploy hooks for this profile", body = PostDeployHooks),
+        (status = 404, description = "Profile not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-profiles"
+)]
 pub async fn get_profile_hooks(
     State(state): State<AppState>,
     Path(profile_id): Path<Uuid>,
@@ -715,6 +797,19 @@ pub async fn get_profile_hooks(
     Ok(Json(hooks))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/pxe/profiles/{id}/hooks",
+    params(("id" = Uuid, Path, description = "Profile UUID")),
+    request_body = PostDeployHooks,
+    responses(
+        (status = 204, description = "Hooks updated"),
+        (status = 404, description = "Profile not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-profiles"
+)]
 pub async fn update_profile_hooks(
     State(state): State<AppState>,
     Path(profile_id): Path<Uuid>,
@@ -742,7 +837,7 @@ pub async fn update_profile_hooks(
 // PX6: Golden image capture (config-only — stores metadata)
 // ============================================================================
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, utoipa::ToSchema)]
 /// Request payload for CaptureImage operation.
 pub struct CaptureImageRequest {
     pub source_mac: String,
@@ -753,7 +848,7 @@ pub struct CaptureImageRequest {
     pub capture_tool: Option<String>, // "clonezilla" | "fog" | "custom"
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response payload for CaptureImage operation.
 pub struct CaptureImageResponse {
     pub capture_id: Uuid,
@@ -762,6 +857,17 @@ pub struct CaptureImageResponse {
     pub instructions: String,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/pxe/images/capture",
+    request_body = CaptureImageRequest,
+    responses(
+        (status = 202, description = "Golden image capture configured", body = CaptureImageResponse),
+        (status = 500, description = "Internal error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-images"
+)]
 pub async fn capture_golden_image(
     State(_state): State<AppState>,
     Json(req): Json<CaptureImageRequest>,

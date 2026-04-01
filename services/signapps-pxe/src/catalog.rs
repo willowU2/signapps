@@ -14,7 +14,7 @@ use crate::AppState;
 
 const IMAGES_DIR: &str = "data/pxe/tftpboot/images";
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct OsImage {
     pub name: String,
     pub version: String,
@@ -709,6 +709,14 @@ pub fn get_catalog() -> Vec<OsImage> {
 // GET /api/v1/pxe/catalog
 // ============================================================================
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/pxe/catalog",
+    responses(
+        (status = 200, description = "Built-in OS image catalog", body = Vec<OsImage>),
+    ),
+    tag = "pxe-catalog"
+)]
 pub async fn list_catalog() -> Json<Vec<OsImage>> {
     Json(get_catalog())
 }
@@ -718,7 +726,7 @@ pub async fn list_catalog() -> Json<Vec<OsImage>> {
 // Starts a background download of the ISO at the given catalog index.
 // ============================================================================
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct DownloadStarted {
     pub download_id: Uuid,
     pub name: String,
@@ -728,6 +736,18 @@ pub struct DownloadStarted {
     pub message: String,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/pxe/catalog/{index}/download",
+    params(("index" = usize, Path, description = "Zero-based index into the catalog list")),
+    responses(
+        (status = 202, description = "Background ISO download started", body = DownloadStarted),
+        (status = 404, description = "Index out of range"),
+        (status = 422, description = "Image has no public download URL"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-catalog"
+)]
 pub async fn download_catalog_image(
     State(_state): State<AppState>,
     Path(index): Path<usize>,

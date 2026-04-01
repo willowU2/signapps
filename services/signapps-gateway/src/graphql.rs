@@ -32,7 +32,7 @@ use std::time::Duration;
 // ---------------------------------------------------------------------------
 
 /// Incoming GraphQL request (POST body).
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 #[allow(dead_code)]
 pub struct GraphQLRequest {
     pub query: String,
@@ -43,7 +43,7 @@ pub struct GraphQLRequest {
 }
 
 /// GraphQL response envelope.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct GraphQLResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<Value>,
@@ -52,7 +52,7 @@ pub struct GraphQLResponse {
 }
 
 /// A single GraphQL error.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct GraphQLError {
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -211,6 +211,17 @@ fn extract_int_arg(query: &str, field: &str, arg: &str) -> Option<i64> {
 // ---------------------------------------------------------------------------
 
 /// POST /api/v1/graphql — Minimal GraphQL gateway.
+#[utoipa::path(
+    post,
+    path = "/api/v1/graphql",
+    request_body = GraphQLRequest,
+    responses(
+        (status = 200, description = "GraphQL response (data and/or errors)", body = GraphQLResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "GraphQL",
+)]
 pub async fn graphql_handler(
     State(svc): State<Arc<ServiceUrls>>,
     headers: HeaderMap,
@@ -355,6 +366,14 @@ pub async fn graphql_handler(
 // ---------------------------------------------------------------------------
 
 /// GET /api/v1/graphql/schema — Returns the GraphQL SDL schema description.
+#[utoipa::path(
+    get,
+    path = "/api/v1/graphql/schema",
+    responses(
+        (status = 200, description = "GraphQL SDL schema", body = inline(serde_json::Value)),
+    ),
+    tag = "GraphQL",
+)]
 pub async fn graphql_schema() -> Json<Value> {
     Json(json!({
         "schema": r#"

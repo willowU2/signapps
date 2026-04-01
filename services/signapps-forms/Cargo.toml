@@ -13,7 +13,7 @@ path = "src/main.rs"
 
 [dependencies]
 signapps-common = { path = "../../crates/signapps-common" }
-signapps-db = { path = "../../crates/signapps-db" }
+signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 sqlx = { workspace = true }
 axum = { workspace = true }
 tokio = { workspace = true }
@@ -28,3 +28,5 @@ anyhow = { workspace = true }
 thiserror = { workspace = true }
 chrono = { workspace = true }
 reqwest = { workspace = true }
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }

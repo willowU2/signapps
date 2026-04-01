@@ -17,7 +17,7 @@ use crate::AppState;
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CardDavSync operation.
 pub struct CardDavSyncRequest {
     /// Full URL of the CardDAV addressbook, e.g.
@@ -29,7 +29,7 @@ pub struct CardDavSyncRequest {
     pub password: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a card dav sync result.
 pub struct CardDavSyncResult {
     pub synced: usize,
@@ -82,6 +82,22 @@ async fn fetch_vcards_from_server(
 ///
 /// Pulls contacts from the given CardDAV server and merges them into the
 /// local contact store (deduplicating by UID).
+///
+/// Note: CardDAV uses non-standard HTTP methods (PROPFIND, REPORT) for
+/// addressbook discovery. This endpoint uses a plain GET to fetch the vCard
+/// collection for maximum server compatibility.
+#[utoipa::path(
+    post,
+    path = "/api/v1/contacts/carddav/sync",
+    request_body = CardDavSyncRequest,
+    responses(
+        (status = 200, description = "Sync completed", body = CardDavSyncResult),
+        (status = 502, description = "CardDAV server unreachable or returned an error", body = CardDavSyncResult),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "CardDAV",
+)]
 pub async fn sync_carddav(
     State(state): State<AppState>,
     Json(req): Json<CardDavSyncRequest>,

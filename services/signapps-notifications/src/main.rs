@@ -1,6 +1,8 @@
 //! SignApps Notifications Service
 //! Per-user notification feed with read/unread state management
 
+mod openapi;
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -23,7 +25,7 @@ use uuid::Uuid;
 // Domain types
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 /// Represents a notification.
 pub struct Notification {
     pub id: Uuid,
@@ -44,7 +46,7 @@ pub struct Notification {
 // Request / Query DTOs
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 /// Query parameters for filtering and pagination.
 pub struct ListNotificationsQuery {
     pub user_id: Option<Uuid>,
@@ -52,7 +54,7 @@ pub struct ListNotificationsQuery {
     pub limit: Option<i64>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateNotification operation.
 pub struct CreateNotificationRequest {
     pub user_id: Uuid,
@@ -65,7 +67,7 @@ pub struct CreateNotificationRequest {
     pub metadata: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 /// Query parameters for filtering and pagination.
 pub struct ReadAllQuery {
     pub user_id: Option<Uuid>,
@@ -114,6 +116,18 @@ fn resolve_user_id(
 
 /// GET /api/notifications
 /// Lists notifications for the authenticated user (or user_id param).
+#[utoipa::path(
+    get,
+    path = "/api/notifications",
+    params(ListNotificationsQuery),
+    responses(
+        (status = 200, description = "List of notifications", body = Vec<Notification>),
+        (status = 400, description = "user_id required when not authenticated"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "notifications"
+)]
 async fn list_notifications(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -160,6 +174,17 @@ async fn list_notifications(
 
 /// POST /api/notifications
 /// Create a new notification for a user.
+#[utoipa::path(
+    post,
+    path = "/api/notifications",
+    request_body = CreateNotificationRequest,
+    responses(
+        (status = 201, description = "Notification created", body = Notification),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "notifications"
+)]
 async fn create_notification(
     State(state): State<AppState>,
     Json(payload): Json<CreateNotificationRequest>,
@@ -196,6 +221,18 @@ async fn create_notification(
 
 /// PATCH /api/notifications/:id/read
 /// Mark a specific notification as read.
+#[utoipa::path(
+    patch,
+    path = "/api/notifications/{id}/read",
+    params(("id" = Uuid, Path, description = "Notification UUID")),
+    responses(
+        (status = 200, description = "Notification marked as read", body = Notification),
+        (status = 404, description = "Notification not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "notifications"
+)]
 async fn mark_read(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -224,6 +261,18 @@ async fn mark_read(
 
 /// POST /api/notifications/read-all
 /// Mark all unread notifications as read for the authenticated user.
+#[utoipa::path(
+    post,
+    path = "/api/notifications/read-all",
+    params(ReadAllQuery),
+    responses(
+        (status = 200, description = "Count of notifications marked as read"),
+        (status = 400, description = "user_id required when not authenticated"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "notifications"
+)]
 async fn mark_all_read(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -429,6 +478,7 @@ fn create_router(state: AppState) -> Router {
 
     public_routes
         .merge(protected_routes)
+        .merge(openapi::swagger_router())
         .layer(TraceLayer::new_for_http())
         .layer(axum::extract::DefaultBodyLimit::max(10 * 1024 * 1024))
         .layer(cors)

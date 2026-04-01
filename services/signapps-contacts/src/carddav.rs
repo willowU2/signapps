@@ -157,6 +157,16 @@ pub fn split_vcards(input: &str) -> Vec<&str> {
 /// GET /api/v1/contacts/export/vcf
 ///
 /// Returns all contacts in the in-memory store as a `text/vcard` collection.
+#[utoipa::path(
+    get,
+    path = "/api/v1/contacts/export/vcf",
+    responses(
+        (status = 200, description = "vCard collection download (text/vcard)", content_type = "text/vcard"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Contacts",
+)]
 pub async fn export_vcf(State(state): State<AppState>) -> Response {
     let contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
     let body: String = contacts.iter().map(contact_to_vcard).collect();
@@ -180,6 +190,21 @@ pub async fn export_vcf(State(state): State<AppState>) -> Response {
 /// Accepts a `text/vcard` body, parses each VCARD block, and inserts the
 /// resulting contacts into the in-memory store.
 /// Returns the list of newly created contacts as JSON.
+#[utoipa::path(
+    post,
+    path = "/api/v1/contacts/import/vcf",
+    request_body(
+        content_type = "text/vcard",
+        description = "One or more VCARD 3.0 blocks",
+    ),
+    responses(
+        (status = 201, description = "Contacts imported", body = inline(serde_json::Value)),
+        (status = 400, description = "No valid VCARD blocks found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Contacts",
+)]
 pub async fn import_vcf(
     State(state): State<AppState>,
     body: String,

@@ -1,6 +1,8 @@
 //! SignApps Forms Service
 //! Forms builder and response collector (Google Forms equivalent)
 
+mod openapi;
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -26,7 +28,7 @@ use uuid::Uuid;
 // ---------------------------------------------------------------------------
 
 /// Request body for setting a webhook URL on a form.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct SetWebhookRequest {
     /// The URL to POST to when a response is submitted.
     /// Pass `null` or omit to remove the webhook.
@@ -36,7 +38,7 @@ pub struct SetWebhookRequest {
 }
 
 /// Stored webhook configuration (serialised to DB as JSON in form metadata).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct WebhookConfig {
     pub url: String,
     pub secret: Option<String>,
@@ -54,7 +56,7 @@ fn new_webhook_store() -> WebhookStore {
 // Request DTOs
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateForm operation.
 pub struct CreateFormRequest {
     pub title: String,
@@ -62,7 +64,7 @@ pub struct CreateFormRequest {
     pub fields: Vec<CreateFieldRequest>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateField operation.
 pub struct CreateFieldRequest {
     pub field_type: FieldType,
@@ -73,7 +75,7 @@ pub struct CreateFieldRequest {
     pub placeholder: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdateForm operation.
 pub struct UpdateFormRequest {
     pub title: Option<String>,
@@ -81,7 +83,7 @@ pub struct UpdateFormRequest {
     pub fields: Option<Vec<CreateFieldRequest>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for SubmitResponse operation.
 pub struct SubmitResponseRequest {
     pub respondent: Option<String>,
@@ -112,6 +114,16 @@ impl AuthState for AppState {
 // Handlers
 // ---------------------------------------------------------------------------
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/forms",
+    responses(
+        (status = 200, description = "List of forms owned by the authenticated user"),
+        (status = 500, description = "Internal error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "forms"
+)]
 async fn list_forms(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -131,6 +143,17 @@ async fn list_forms(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/forms",
+    request_body = CreateFormRequest,
+    responses(
+        (status = 201, description = "Form created"),
+        (status = 500, description = "Internal error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "forms"
+)]
 async fn create_form(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -175,6 +198,17 @@ async fn create_form(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/forms/{id}",
+    params(("id" = Uuid, Path, description = "Form UUID")),
+    responses(
+        (status = 200, description = "Form found"),
+        (status = 404, description = "Form not found"),
+        (status = 500, description = "Internal error"),
+    ),
+    tag = "forms"
+)]
 async fn get_form(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     match FormRepository::get_by_id(&state.pool, id).await {
         Ok(Some(form)) => (
@@ -195,6 +229,19 @@ async fn get_form(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl I
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/forms/{id}",
+    params(("id" = Uuid, Path, description = "Form UUID")),
+    request_body = UpdateFormRequest,
+    responses(
+        (status = 200, description = "Form updated"),
+        (status = 404, description = "Form not found"),
+        (status = 500, description = "Internal error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "forms"
+)]
 async fn update_form(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -241,6 +288,19 @@ async fn update_form(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/forms/{id}",
+    params(("id" = Uuid, Path, description = "Form UUID")),
+    responses(
+        (status = 204, description = "Form deleted"),
+        (status = 403, description = "Forbidden — caller does not own this form"),
+        (status = 404, description = "Form not found"),
+        (status = 500, description = "Internal error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "forms"
+)]
 async fn delete_form(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -286,6 +346,18 @@ async fn delete_form(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/forms/{id}/publish",
+    params(("id" = Uuid, Path, description = "Form UUID")),
+    responses(
+        (status = 200, description = "Form published"),
+        (status = 404, description = "Form not found"),
+        (status = 500, description = "Internal error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "forms"
+)]
 async fn publish_form(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     match FormRepository::publish(&state.pool, id).await {
         Ok(form) => {
@@ -309,6 +381,18 @@ async fn publish_form(State(state): State<AppState>, Path(id): Path<Uuid>) -> im
     }
 }
 
+#[utoipa::path(
+    patch,
+    path = "/api/v1/forms/{id}/unpublish",
+    params(("id" = Uuid, Path, description = "Form UUID")),
+    responses(
+        (status = 200, description = "Form unpublished"),
+        (status = 404, description = "Form not found"),
+        (status = 500, description = "Internal error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "forms"
+)]
 async fn unpublish_form(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     let result = sqlx::query_as::<_, signapps_db::models::Form>(
         r#"UPDATE forms.forms SET is_published = FALSE, updated_at = NOW()
@@ -340,6 +424,19 @@ async fn unpublish_form(State(state): State<AppState>, Path(id): Path<Uuid>) -> 
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/forms/{id}/respond",
+    params(("id" = Uuid, Path, description = "Form UUID")),
+    request_body = SubmitResponseRequest,
+    responses(
+        (status = 201, description = "Response submitted"),
+        (status = 403, description = "Form is not published"),
+        (status = 404, description = "Form not found"),
+        (status = 500, description = "Internal error"),
+    ),
+    tag = "forms"
+)]
 async fn submit_response(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -407,6 +504,17 @@ async fn submit_response(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/forms/{id}/responses",
+    params(("id" = Uuid, Path, description = "Form UUID")),
+    responses(
+        (status = 200, description = "List of responses for this form"),
+        (status = 500, description = "Internal error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "forms"
+)]
 async fn list_responses(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     match FormRepository::list_responses(&state.pool, id).await {
         Ok(responses) => (
@@ -431,6 +539,17 @@ async fn list_responses(State(state): State<AppState>, Path(id): Path<Uuid>) -> 
 ///
 /// Set (or clear) a webhook URL for the given form.
 /// When a response is submitted, the service will POST to this URL.
+#[utoipa::path(
+    post,
+    path = "/api/v1/forms/{id}/webhook",
+    params(("id" = Uuid, Path, description = "Form UUID")),
+    request_body = SetWebhookRequest,
+    responses(
+        (status = 200, description = "Webhook set or cleared"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "forms-webhooks"
+)]
 async fn set_webhook(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -468,6 +587,16 @@ async fn set_webhook(
 /// GET /api/v1/forms/:id/webhook
 ///
 /// Returns the current webhook configuration for the given form (secret redacted).
+#[utoipa::path(
+    get,
+    path = "/api/v1/forms/{id}/webhook",
+    params(("id" = Uuid, Path, description = "Form UUID")),
+    responses(
+        (status = 200, description = "Current webhook configuration (secret redacted)"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "forms-webhooks"
+)]
 async fn get_webhook(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -587,6 +716,7 @@ fn create_router(state: AppState) -> Router {
 
     public_routes
         .merge(protected_routes)
+        .merge(openapi::swagger_router())
         .layer(TraceLayer::new_for_http())
         .layer(cors)
         .with_state(state)

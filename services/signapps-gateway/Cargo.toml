@@ -46,6 +46,8 @@ dotenvy = { workspace = true }
 reqwest = { workspace = true }
 uuid = { workspace = true }
 bytes = { workspace = true }
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }
 
 # NOTE: In the full implementation, each service would be an optional dependency:
 # signapps-identity = { path = "../signapps-identity", optional = true }

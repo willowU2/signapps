@@ -3,6 +3,7 @@ mod dhcp_proxy;
 mod handlers;
 mod images;
 mod models;
+mod openapi;
 mod tftp;
 
 use axum::{
@@ -144,6 +145,7 @@ async fn main() -> anyhow::Result<()> {
             "/api/v1/pxe/catalog/:index/download",
             post(catalog::download_catalog_image),
         )
+        .merge(openapi::swagger_router())
         .layer(axum::middleware::from_fn_with_state(
             app_state.clone(),
             optional_auth_middleware::<AppState>,

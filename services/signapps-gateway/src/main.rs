@@ -4,6 +4,7 @@
 //! Each service runs on its own port; the gateway forwards by path prefix.
 
 mod graphql;
+mod openapi;
 
 use axum::{
     body::Body,
@@ -61,6 +62,14 @@ impl ServiceMap {
 // Gateway health
 // ---------------------------------------------------------------------------
 
+#[utoipa::path(
+    get,
+    path = "/gateway/health",
+    responses(
+        (status = 200, description = "Gateway is healthy", body = inline(serde_json::Value)),
+    ),
+    tag = "System",
+)]
 async fn gateway_health() -> axum::Json<serde_json::Value> {
     axum::Json(serde_json::json!({
         "gateway": "signapps-gateway",
@@ -73,6 +82,19 @@ async fn gateway_health() -> axum::Json<serde_json::Value> {
 // Reverse-proxy handler
 // ---------------------------------------------------------------------------
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/{path}",
+    params(
+        ("path" = String, Path, description = "Path forwarded to the appropriate backend service"),
+    ),
+    responses(
+        (status = 200, description = "Response from upstream backend service"),
+        (status = 404, description = "No backend configured for this path"),
+        (status = 502, description = "Backend service unreachable"),
+    ),
+    tag = "Proxy",
+)]
 async fn proxy_handler(State(svc): State<Arc<ServiceMap>>, req: Request) -> Response {
     let path = req.uri().path();
     let path_query = req
@@ -312,6 +334,7 @@ async fn main() -> anyhow::Result<()> {
         // DA3: Minimal GraphQL gateway endpoint
         .route("/api/v1/graphql", post(graphql::graphql_handler).with_state(graphql_state.clone()))
         .route("/api/v1/graphql/schema", get(graphql::graphql_schema))
+        .merge(openapi::swagger_router())
         .fallback(any(proxy_handler))
         .with_state(service_map);
 

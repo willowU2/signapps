@@ -11,6 +11,16 @@ use uuid::Uuid;
 use crate::models::{CreateConnectionRequest, RemoteConnection, UpdateConnectionRequest};
 use crate::AppState;
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/remote/connections",
+    responses(
+        (status = 200, description = "List of remote connections", body = Vec<crate::models::RemoteConnection>),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "remote-connections"
+)]
 pub async fn list_connections(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<RemoteConnection>>, (StatusCode, String)> {
@@ -31,6 +41,17 @@ pub async fn list_connections(
     Ok(Json(connections))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/remote/connections",
+    request_body = crate::models::CreateConnectionRequest,
+    responses(
+        (status = 201, description = "Connection created", body = crate::models::RemoteConnection),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "remote-connections"
+)]
 pub async fn create_connection(
     State(state): State<AppState>,
     Json(payload): Json<CreateConnectionRequest>,
@@ -63,6 +84,18 @@ pub async fn create_connection(
     Ok((StatusCode::CREATED, Json(connection)))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/remote/connections/{id}",
+    params(("id" = Uuid, Path, description = "Connection UUID")),
+    responses(
+        (status = 200, description = "Remote connection found", body = crate::models::RemoteConnection),
+        (status = 404, description = "Connection not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "remote-connections"
+)]
 pub async fn get_connection(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -86,6 +119,19 @@ pub async fn get_connection(
     Ok(Json(connection))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/remote/connections/{id}",
+    params(("id" = Uuid, Path, description = "Connection UUID")),
+    request_body = crate::models::UpdateConnectionRequest,
+    responses(
+        (status = 200, description = "Connection updated", body = crate::models::RemoteConnection),
+        (status = 404, description = "Connection not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "remote-connections"
+)]
 pub async fn update_connection(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -134,6 +180,18 @@ pub async fn update_connection(
     Ok(Json(connection))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/remote/connections/{id}",
+    params(("id" = Uuid, Path, description = "Connection UUID")),
+    responses(
+        (status = 204, description = "Connection deleted"),
+        (status = 404, description = "Connection not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "remote-connections"
+)]
 pub async fn delete_connection(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -157,6 +215,17 @@ pub async fn delete_connection(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/remote/ws/{id}",
+    params(("id" = Uuid, Path, description = "Connection UUID")),
+    responses(
+        (status = 101, description = "WebSocket upgrade — Guacamole protocol tunnel"),
+        (status = 404, description = "Connection not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "remote-connections"
+)]
 pub async fn connection_gateway_ws(
     ws: WebSocketUpgrade,
     Path(connection_id): Path<Uuid>,

@@ -27,3 +27,5 @@ anyhow = { workspace = true }
 thiserror = { workspace = true }
 chrono = { workspace = true }
 reqwest = { workspace = true }
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 /// Represents a pxe profile.
 pub struct PxeProfile {
     pub id: Uuid,
@@ -17,7 +17,7 @@ pub struct PxeProfile {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreatePxeProfile operation.
 pub struct CreatePxeProfileRequest {
     pub name: String,
@@ -28,12 +28,13 @@ pub struct CreatePxeProfileRequest {
     pub is_default: Option<bool>,
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 /// Represents a pxe asset.
 pub struct PxeAsset {
     pub id: Uuid,
     pub mac_address: String,
     pub hostname: Option<String>,
+    #[schema(value_type = Option<String>)]
     pub ip_address: Option<ipnetwork::IpNetwork>,
     pub status: String,
     pub profile_id: Option<Uuid>,
@@ -44,7 +45,7 @@ pub struct PxeAsset {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 /// Request payload for RegisterPxeAsset operation.
 pub struct RegisterPxeAssetRequest {
     pub mac_address: String,
@@ -52,7 +53,7 @@ pub struct RegisterPxeAssetRequest {
     pub profile_id: Option<Uuid>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdatePxeProfile operation.
 pub struct UpdatePxeProfileRequest {
     pub name: Option<String>,
@@ -63,7 +64,7 @@ pub struct UpdatePxeProfileRequest {
     pub is_default: Option<bool>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdatePxeAsset operation.
 pub struct UpdatePxeAssetRequest {
     pub hostname: Option<String>,

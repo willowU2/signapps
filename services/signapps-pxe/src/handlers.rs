@@ -16,6 +16,16 @@ use crate::AppState;
 // Profiles
 // ============================================================================
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/pxe/profiles",
+    responses(
+        (status = 200, description = "List of PXE profiles", body = Vec<crate::models::PxeProfile>),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-profiles"
+)]
 pub async fn list_profiles(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<PxeProfile>>, (StatusCode, String)> {
@@ -36,6 +46,18 @@ pub async fn list_profiles(
     Ok(Json(profiles))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/pxe/profiles/{id}",
+    params(("id" = Uuid, Path, description = "Profile UUID")),
+    responses(
+        (status = 200, description = "PXE profile found", body = crate::models::PxeProfile),
+        (status = 404, description = "Profile not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-profiles"
+)]
 pub async fn get_profile(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -55,6 +77,17 @@ pub async fn get_profile(
     Ok(Json(profile))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/pxe/profiles",
+    request_body = crate::models::CreatePxeProfileRequest,
+    responses(
+        (status = 201, description = "Profile created", body = crate::models::PxeProfile),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-profiles"
+)]
 pub async fn create_profile(
     State(state): State<AppState>,
     Json(payload): Json<CreatePxeProfileRequest>,
@@ -89,6 +122,19 @@ pub async fn create_profile(
     Ok((StatusCode::CREATED, Json(profile)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/pxe/profiles/{id}",
+    params(("id" = Uuid, Path, description = "Profile UUID")),
+    request_body = crate::models::UpdatePxeProfileRequest,
+    responses(
+        (status = 200, description = "Profile updated", body = crate::models::PxeProfile),
+        (status = 404, description = "Profile not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-profiles"
+)]
 pub async fn update_profile(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -139,6 +185,18 @@ pub async fn update_profile(
     Ok(Json(profile))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/pxe/profiles/{id}",
+    params(("id" = Uuid, Path, description = "Profile UUID")),
+    responses(
+        (status = 204, description = "Profile deleted"),
+        (status = 404, description = "Profile not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-profiles"
+)]
 pub async fn delete_profile(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -160,6 +218,16 @@ pub async fn delete_profile(
 // Assets
 // ============================================================================
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/pxe/assets",
+    responses(
+        (status = 200, description = "List of PXE assets", body = Vec<crate::models::PxeAsset>),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-assets"
+)]
 pub async fn list_assets(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<PxeAsset>>, (StatusCode, String)> {
@@ -180,6 +248,18 @@ pub async fn list_assets(
     Ok(Json(assets))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/pxe/assets/{id}",
+    params(("id" = Uuid, Path, description = "Asset UUID")),
+    responses(
+        (status = 200, description = "PXE asset found", body = crate::models::PxeAsset),
+        (status = 404, description = "Asset not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-assets"
+)]
 pub async fn get_asset(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -199,6 +279,17 @@ pub async fn get_asset(
     Ok(Json(asset))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/pxe/assets",
+    request_body = crate::models::RegisterPxeAssetRequest,
+    responses(
+        (status = 201, description = "Asset registered or updated", body = crate::models::PxeAsset),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-assets"
+)]
 pub async fn register_asset(
     State(state): State<AppState>,
     Json(payload): Json<RegisterPxeAssetRequest>,
@@ -229,6 +320,19 @@ pub async fn register_asset(
     Ok((StatusCode::CREATED, Json(asset)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/pxe/assets/{id}",
+    params(("id" = Uuid, Path, description = "Asset UUID")),
+    request_body = crate::models::UpdatePxeAssetRequest,
+    responses(
+        (status = 200, description = "Asset updated", body = crate::models::PxeAsset),
+        (status = 404, description = "Asset not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-assets"
+)]
 pub async fn update_asset(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -267,6 +371,18 @@ pub async fn update_asset(
     Ok(Json(asset))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/pxe/assets/{id}",
+    params(("id" = Uuid, Path, description = "Asset UUID")),
+    responses(
+        (status = 204, description = "Asset deleted"),
+        (status = 404, description = "Asset not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-assets"
+)]
 pub async fn delete_asset(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -294,6 +410,16 @@ pub struct IpxeQuery {
     pub mac: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/pxe/boot.ipxe",
+    params(("mac" = String, Query, description = "MAC address of the booting machine")),
+    responses(
+        (status = 200, description = "iPXE boot script (text/plain)", content_type = "text/plain"),
+        (status = 500, description = "Database error"),
+    ),
+    tag = "pxe-boot"
+)]
 pub async fn generate_ipxe_script(
     State(state): State<AppState>,
     Query(query): Query<IpxeQuery>,

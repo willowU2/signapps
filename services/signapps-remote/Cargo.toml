@@ -25,3 +25,5 @@ signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
 futures.workspace = true
 tokio-tungstenite = "0.28.0"
+utoipa.workspace = true
+utoipa-swagger-ui.workspace = true

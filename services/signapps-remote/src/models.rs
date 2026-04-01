@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 /// Represents a remote connection.
 pub struct RemoteConnection {
     pub id: Uuid,
@@ -24,7 +24,7 @@ pub struct RemoteConnection {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateConnection operation.
 pub struct CreateConnectionRequest {
     pub hardware_id: Option<Uuid>,
@@ -38,7 +38,7 @@ pub struct CreateConnectionRequest {
     pub parameters: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdateConnection operation.
 pub struct UpdateConnectionRequest {
     pub name: Option<String>,
