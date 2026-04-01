@@ -55,3 +55,9 @@ pdfium-render = { version = "0.8.37", features = ["thread_safe"] }
 # Cryptographic hashing for file deduplication
 sha2 = { workspace = true }
 hex = { workspace = true }
+
+[dev-dependencies]
+axum = { workspace = true }
+tokio = { workspace = true }
+serde_json = { workspace = true }
+tower = { workspace = true }
