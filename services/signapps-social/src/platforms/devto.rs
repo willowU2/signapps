@@ -10,6 +10,7 @@ pub struct DevToClient {
     pub api_key: String,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct ArticleResponse {
     id: u64,

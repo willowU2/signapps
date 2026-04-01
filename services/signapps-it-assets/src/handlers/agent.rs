@@ -16,6 +16,7 @@ const AGENT_LATEST_VERSION: &str = "1.0.0";
 // ─── Request / Response Types ────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 /// Represents a register agent req.
 pub struct RegisterAgentReq {
     pub hostname: String,
@@ -42,6 +43,7 @@ pub struct AgentConfig {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 /// Represents a heartbeat req.
 pub struct HeartbeatReq {
     pub agent_id: Uuid,
@@ -93,6 +95,7 @@ pub struct PendingPatch {
 // ─── Hardware Inventory ───────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 /// Represents a hardware inventory req.
 pub struct HardwareInventoryReq {
     pub agent_id: Uuid,
@@ -132,6 +135,7 @@ pub struct SoftwareEntry {
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
+#[allow(dead_code)]
 /// Represents a software inventory row.
 pub struct SoftwareInventoryRow {
     pub id: Uuid,

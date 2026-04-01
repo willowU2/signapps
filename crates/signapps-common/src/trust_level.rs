@@ -9,16 +9,23 @@ use axum::{extract::Request, http::StatusCode, middleware::Next, response::Respo
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
 )]
 #[repr(u8)]
-/// Enum representing TrustLevel variants.
 pub enum TrustLevel {
+    /// Unauthenticated or anonymous visitor — minimal access.
     Guest = 0,
+    /// Authenticated regular user — standard read/write access to own resources.
     User = 1,
+    /// Content editor — can create and modify shared content.
     Editor = 2,
+    /// Service or tenant administrator — can manage users and settings.
     Admin = 3,
+    /// Platform super-administrator — unrestricted access to all resources.
     SuperAdmin = 4,
 }
 
 impl TrustLevel {
+    /// Convert a raw `u8` discriminant to a `TrustLevel`.
+    ///
+    /// Values outside the `0..=4` range default to [`TrustLevel::Guest`].
     pub fn from_u8(v: u8) -> Self {
         match v {
             0 => Self::Guest,
@@ -30,6 +37,7 @@ impl TrustLevel {
         }
     }
 
+    /// Return the lowercase string label for this trust level.
     pub fn label(&self) -> &'static str {
         match self {
             Self::Guest => "guest",

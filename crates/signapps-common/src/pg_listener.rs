@@ -1,14 +1,21 @@
+//! PostgreSQL NOTIFY listener — bridges `pg_notify` events into a Tokio broadcast channel.
+
 use serde::Deserialize;
 use sqlx::PgPool;
 use tokio::sync::broadcast;
 
+/// Deserialized payload from a PostgreSQL `NOTIFY` channel.
 #[derive(Debug, Clone, Deserialize)]
-/// Represents a pg event.
 pub struct PgEvent {
+    /// Name of the database table that triggered the notification.
     pub table: Option<String>,
+    /// DML action that caused the notification (e.g. `"INSERT"`, `"UPDATE"`).
     pub action: Option<String>,
+    /// Primary-key UUID of the affected row.
     pub id: Option<uuid::Uuid>,
+    /// Outbox envelope ID, used to correlate with the transactional outbox pattern.
     pub envelope_id: Option<uuid::Uuid>,
+    /// Current processing status of the event (e.g. `"PENDING"`, `"COMPLETED"`).
     pub status: Option<String>,
 }
 

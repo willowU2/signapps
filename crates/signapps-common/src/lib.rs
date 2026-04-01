@@ -63,6 +63,7 @@ pub mod config;
 pub mod data_connectors;
 pub mod dlp;
 pub mod e2e_crypto;
+/// Email template engine with `{{variable}}` substitution for transactional emails.
 pub mod email_templates;
 pub mod error;
 pub mod events;
@@ -73,7 +74,9 @@ pub mod marketplace;
 pub mod middleware;
 pub mod openapi;
 pub mod pg_events;
+/// PostgreSQL NOTIFY listener that forwards database events to a broadcast channel.
 pub mod pg_listener;
+/// PII cipher (AES-256-GCM) for encrypting personally identifiable fields before database storage.
 pub mod pii;
 pub mod plugins;
 pub mod qrcode_gen;
@@ -85,6 +88,7 @@ pub mod search;
 pub mod sql_dashboard;
 pub mod sso;
 pub mod tenant;
+/// Shared traits for database crawling and cross-service entity linking.
 pub mod traits;
 pub mod triggers;
 pub mod trust_level;

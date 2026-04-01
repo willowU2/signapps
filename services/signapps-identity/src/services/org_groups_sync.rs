@@ -8,6 +8,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 /// Called when an org node is created — creates a corresponding `identity.group`.
+#[allow(dead_code)]
 pub async fn on_node_created(
     pool: &PgPool,
     node_id: Uuid,
@@ -30,6 +31,7 @@ pub async fn on_node_created(
 }
 
 /// Called when an org node is deleted — removes the corresponding `identity.group`.
+#[allow(dead_code)]
 pub async fn on_node_deleted(pool: &PgPool, node_id: Uuid) -> Result<(), Error> {
     sqlx::query("DELETE FROM identity.groups WHERE source = 'org' AND external_id = $1")
         .bind(node_id.to_string())
@@ -41,6 +43,7 @@ pub async fn on_node_deleted(pool: &PgPool, node_id: Uuid) -> Result<(), Error> 
 
 /// Called when an assignment is created — adds the user to the node's group and
 /// all ancestor groups (via the closure table).
+#[allow(dead_code)]
 pub async fn on_assignment_created(
     pool: &PgPool,
     person_id: Uuid,
@@ -97,6 +100,7 @@ pub async fn on_assignment_created(
 
 /// Called when an assignment ends — removes the user from the node's group and
 /// ancestor groups, but only when no other active assignment covers that ancestor.
+#[allow(dead_code)]
 pub async fn on_assignment_ended(
     pool: &PgPool,
     person_id: Uuid,
@@ -170,6 +174,7 @@ pub async fn on_assignment_ended(
 /// Full re-sync: rebuilds all org auto-groups and memberships for the given tenant.
 ///
 /// Returns the number of groups (re)created.
+#[allow(dead_code)]
 pub async fn full_resync(pool: &PgPool, tenant_id: Uuid) -> Result<u32, Error> {
     // 1. Delete all org auto-groups for this tenant's nodes
     sqlx::query(

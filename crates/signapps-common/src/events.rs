@@ -36,43 +36,66 @@ use uuid::Uuid;
 #[serde(tag = "type", content = "data")]
 pub enum DomainEvent {
     // Document events
+    /// A new document was created.
     DocumentCreated {
+        /// Unique identifier of the new document.
         id: Uuid,
+        /// User who created the document.
         user_id: Uuid,
     },
+    /// An existing document's content or metadata was modified.
     DocumentUpdated {
+        /// Unique identifier of the updated document.
         id: Uuid,
+        /// User who performed the update.
         user_id: Uuid,
     },
 
     // File/storage events
+    /// A file was successfully uploaded to storage.
     FileUploaded {
+        /// Unique identifier of the uploaded file.
         id: Uuid,
+        /// User who uploaded the file.
         user_id: Uuid,
+        /// Size of the uploaded file in bytes.
         size: i64,
     },
+    /// A file was removed from storage.
     FileDeleted {
+        /// Unique identifier of the deleted file.
         id: Uuid,
+        /// User who deleted the file.
         user_id: Uuid,
     },
 
     // User events
+    /// A new user account was registered.
     UserCreated {
+        /// Unique identifier of the new user.
         id: Uuid,
     },
+    /// A user's profile or settings were modified.
     UserUpdated {
+        /// Unique identifier of the updated user.
         id: Uuid,
     },
 
     // Calendar events
+    /// A new event was added to a calendar.
     CalendarEventCreated {
+        /// Unique identifier of the new calendar event.
         id: Uuid,
+        /// User who created the calendar event.
         user_id: Uuid,
     },
 
     // Extensible catch-all for service-specific events
+    /// Service-specific event that does not have a dedicated variant.
     Custom {
+        /// Application-defined event type identifier (e.g. `"invoice.created"`).
         event_type: String,
+        /// Arbitrary JSON payload for the event.
         payload: serde_json::Value,
     },
 }

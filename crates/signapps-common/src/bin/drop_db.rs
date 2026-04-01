@@ -1,3 +1,4 @@
+//! Utility binary to drop all SignApps database schemas (development/reset tool).
 use sqlx::postgres::PgPoolOptions;
 use std::time::Duration;
 

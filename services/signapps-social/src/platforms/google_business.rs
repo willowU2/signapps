@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use serde::Deserialize;
-use uuid::Uuid;
 
 use super::{PlatformError, PlatformResult, SocialPlatform};
 use crate::models::{AccountAnalytics, InboxItem, PlatformPost};
@@ -21,12 +20,14 @@ struct LocalPostResponse {
     search_url: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct MetricsResponse {
     #[serde(rename = "metricValues")]
     metric_values: Option<Vec<MetricValue>>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct MetricValue {
     metric: Option<String>,
@@ -34,6 +35,7 @@ struct MetricValue {
     total_value: Option<MetricDimension>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct MetricDimension {
     value: Option<String>,

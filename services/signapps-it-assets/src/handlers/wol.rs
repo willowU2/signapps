@@ -77,7 +77,7 @@ pub async fn wake_on_lan(
     let packet = build_magic_packet(&mac).map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e))?;
 
     // Send via UDP broadcast on port 9
-    let result = tokio::task::spawn_blocking(move || -> Result<(), String> {
+    tokio::task::spawn_blocking(move || -> Result<(), String> {
         let socket = UdpSocket::bind("0.0.0.0:0")
             .map_err(|e| format!("Failed to bind UDP socket: {}", e))?;
         socket
@@ -93,8 +93,6 @@ pub async fn wake_on_lan(
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
-
-    let _ = result;
 
     tracing::info!(
         "Sent WoL magic packet to MAC {} for hardware {}",

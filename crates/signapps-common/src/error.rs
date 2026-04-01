@@ -18,96 +18,124 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Error, Debug)]
 pub enum Error {
     // Authentication errors
+    /// Credentials (username/password) did not match any known account.
     #[error("Invalid credentials")]
     InvalidCredentials,
 
+    /// The JWT or session token has passed its expiry time.
     #[error("Token expired")]
     TokenExpired,
 
+    /// The supplied token is malformed or its signature is invalid.
     #[error("Invalid token")]
     InvalidToken,
 
+    /// The request is missing authentication entirely.
     #[error("Unauthorized")]
     Unauthorized,
 
+    /// The caller is authenticated but lacks permission for this action.
     #[error("Forbidden: {0}")]
     Forbidden(String),
 
+    /// A second factor is required before the operation can proceed.
     #[error("MFA required")]
     MfaRequired,
 
+    /// The supplied TOTP/HOTP code is incorrect or expired.
     #[error("Invalid MFA code")]
     InvalidMfaCode,
 
     // LDAP/Active Directory errors
+    /// Could not establish a TCP/TLS connection to the LDAP server.
     #[error("LDAP connection failed: {0}")]
     LdapConnectionFailed(String),
 
+    /// LDAP bind (authentication) was rejected by the directory server.
     #[error("LDAP bind failed: {0}")]
     LdapBindFailed(String),
 
+    /// The queried user does not exist in the LDAP directory.
     #[error("LDAP user not found")]
     LdapUserNotFound,
 
     // Group management errors
+    /// The requested group does not exist.
     #[error("Group not found: {0}")]
     GroupNotFound(String),
 
+    /// The caller does not have the required permission on the group.
     #[error("Group permission denied: {0}")]
     GroupPermissionDenied(String),
 
     // Container ownership errors
+    /// The specified container is not owned by the authenticated user.
     #[error("Container not owned by user: {0}")]
     ContainerNotOwned(String),
 
     // Resource errors
+    /// The requested resource does not exist (maps to HTTP 404).
     #[error("Resource not found: {0}")]
     NotFound(String),
 
+    /// A resource with the same unique key already exists (maps to HTTP 409).
     #[error("Resource already exists: {0}")]
     AlreadyExists(String),
 
+    /// A state conflict prevents the operation from completing.
     #[error("Conflict: {0}")]
     Conflict(String),
 
     // Validation errors
+    /// Input failed schema or business-rule validation.
     #[error("Validation error: {0}")]
     Validation(String),
 
+    /// The request is syntactically or semantically malformed.
     #[error("Bad request: {0}")]
     BadRequest(String),
 
     // Database errors
+    /// A database query or connection error occurred.
     #[error("Database error: {0}")]
     Database(String),
 
     // External service errors
+    /// An upstream HTTP or RPC service returned an error.
     #[error("External service error: {0}")]
     ExternalService(String),
 
+    /// The Docker daemon or API returned an error.
     #[error("Docker error: {0}")]
     Docker(String),
 
+    /// The object-storage backend (FS or S3) returned an error.
     #[error("Storage error: {0}")]
     Storage(String),
 
+    /// The AI inference backend returned an error.
     #[error("AI service error: {0}")]
     AiService(String),
 
     // RAID errors
+    /// A RAID array operation failed.
     #[error("RAID error: {0}")]
     Raid(String),
 
+    /// The referenced disk device was not found in the system.
     #[error("Disk not found: {0}")]
     DiskNotFound(String),
 
     // Internal errors
+    /// An unexpected internal server error occurred.
     #[error("Internal error: {0}")]
     Internal(String),
 
+    /// The service is misconfigured and cannot satisfy the request.
     #[error("Configuration error: {0}")]
     Configuration(String),
 
+    /// Transparent wrapper for arbitrary `anyhow` errors.
     #[error(transparent)]
     Anyhow(#[from] anyhow::Error),
 }

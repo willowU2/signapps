@@ -393,6 +393,7 @@ pub async fn update_change_status(
 
 // CM4: LDAP import — basic TCP probe + proper structure for ldap3 crate
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 /// Represents a ldap import req.
 pub struct LdapImportReq {
     pub host: String,

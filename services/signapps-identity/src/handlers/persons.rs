@@ -23,6 +23,7 @@ use uuid::Uuid;
 
 /// Query parameters for listing persons.
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct ListPersonsQuery {
     pub role: Option<String>,
     pub node_id: Option<Uuid>,

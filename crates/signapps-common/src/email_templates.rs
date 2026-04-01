@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 /// Simple Handlebars-like template engine for email notifications.
-/// Supports {{variable}} substitution.
+/// Supports `{{variable}}` substitution.
 pub struct EmailTemplate {
     subject: String,
     html_body: String,
@@ -9,6 +9,7 @@ pub struct EmailTemplate {
 }
 
 impl EmailTemplate {
+    /// Create a new template from raw subject, HTML body, and plain-text body strings.
     pub fn new(subject: &str, html_body: &str, text_body: &str) -> Self {
         Self {
             subject: subject.to_string(),
@@ -17,6 +18,7 @@ impl EmailTemplate {
         }
     }
 
+    /// Render the template by substituting all `{{key}}` placeholders with values from `vars`.
     pub fn render(&self, vars: &HashMap<String, String>) -> RenderedEmail {
         RenderedEmail {
             subject: self.substitute(&self.subject, vars),
@@ -34,10 +36,13 @@ impl EmailTemplate {
     }
 }
 
-/// Represents a rendered email.
+/// Represents a rendered email with all variables substituted.
 pub struct RenderedEmail {
+    /// The fully rendered email subject line.
     pub subject: String,
+    /// The fully rendered HTML body of the email.
     pub html_body: String,
+    /// The fully rendered plain-text body of the email.
     pub text_body: String,
 }
 
@@ -55,6 +60,7 @@ pub fn signature_request_template() -> EmailTemplate {
     )
 }
 
+/// Generic notification email template for platform alerts and in-app messages.
 pub fn notification_template() -> EmailTemplate {
     EmailTemplate::new(
         "[SignApps] {{title}}",
@@ -67,6 +73,7 @@ pub fn notification_template() -> EmailTemplate {
     )
 }
 
+/// Welcome email template sent to new users after account creation.
 pub fn welcome_template() -> EmailTemplate {
     EmailTemplate::new(
         "Bienvenue sur SignApps, {{user_name}}!",

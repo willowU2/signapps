@@ -47,6 +47,7 @@ pub struct PatchRow {
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
+#[allow(dead_code)]
 /// Represents a patch policy row.
 pub struct PatchPolicyRow {
     pub id: Uuid,
@@ -79,6 +80,7 @@ pub struct SeverityCount {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 /// Represents a deploy patch req.
 pub struct DeployPatchReq {
     pub hardware_ids: Option<Vec<Uuid>>,

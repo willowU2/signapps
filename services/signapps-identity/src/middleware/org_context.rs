@@ -46,7 +46,7 @@ pub struct OrgContext {
 /// zeroed-out context so callers can continue without crashing.
 pub async fn get_org_context(pool: &DatabasePool, user_id: Uuid) -> OrgContext {
     // Deref DatabasePool → PgPool for sqlx compatibility
-    let pg: &sqlx::PgPool = &**pool;
+    let pg: &sqlx::PgPool = pool;
 
     // 1. Find person linked to this user
     let person_id: Option<Uuid> = sqlx::query_scalar(

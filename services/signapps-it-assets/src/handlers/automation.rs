@@ -64,6 +64,7 @@ pub struct AutomationExecution {
 
 /// Payload sent by the monitoring subsystem when an alert fires.
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct AlertFiredEvent {
     pub rule_id: Uuid,
     pub hardware_id: Uuid,
@@ -219,6 +220,7 @@ pub async fn list_executions(
 // Evaluates all enabled automation rules with trigger_type matching the event.
 // Respects cooldown windows. Creates an execution record for each triggered rule.
 
+#[allow(dead_code)]
 pub async fn evaluate_alert_rules(pool: &DatabasePool, event: &AlertFiredEvent) {
     let trigger_types: Vec<&str> = match event.metric.as_str() {
         m if m.contains("cpu") => vec!["alert_fired", "cpu_high"],
@@ -255,6 +257,7 @@ pub async fn evaluate_alert_rules(pool: &DatabasePool, event: &AlertFiredEvent) 
     }
 }
 
+#[allow(dead_code)]
 async fn execute_automation_action(
     pool: &DatabasePool,
     rule: &AutomationRule,
@@ -311,6 +314,7 @@ async fn execute_automation_action(
             .await;
 }
 
+#[allow(dead_code)]
 async fn dispatch_action(
     action_type: &str,
     action_config: &Value,

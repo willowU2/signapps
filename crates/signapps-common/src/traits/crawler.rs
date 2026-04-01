@@ -8,9 +8,13 @@ use sqlx::PgPool;
 
 /// Represents a raw document ready to be split, embedded, and tagged
 pub struct CrawledDocument {
+    /// Name of the database table from which this document was extracted.
     pub source_table: String,
+    /// UUID of the source row that produced this document.
     pub record_id: Uuid,
+    /// Extracted plain-text content to be chunked and embedded.
     pub content: String,
+    /// Optional RBAC/security metadata attached to the document for access-controlled retrieval.
     pub security_tags: Option<Value>,
 }
 

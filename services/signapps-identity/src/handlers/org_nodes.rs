@@ -16,7 +16,6 @@ use signapps_db::models::core_org::{
 };
 use signapps_db::repositories::{
     AssignmentRepository, OrgNodeRepository, OrgTreeRepository, PermissionProfileRepository,
-    PersonRepository,
 };
 use uuid::Uuid;
 

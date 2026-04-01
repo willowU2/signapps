@@ -11,11 +11,17 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ComparisonOperator {
+    /// Triggers when the metric value is strictly greater than the threshold.
     GreaterThan,
+    /// Triggers when the metric value is greater than or equal to the threshold.
     GreaterThanOrEqual,
+    /// Triggers when the metric value is strictly less than the threshold.
     LessThan,
+    /// Triggers when the metric value is less than or equal to the threshold.
     LessThanOrEqual,
+    /// Triggers when the metric value equals the threshold (within `f64::EPSILON`).
     Equal,
+    /// Triggers when the metric value differs from the threshold (outside `f64::EPSILON`).
     NotEqual,
 }
 

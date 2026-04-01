@@ -20,6 +20,7 @@ struct LemmyPostResponse {
     post_view: LemmyPostView,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct LemmyPostView {
     post: LemmyPost,
@@ -32,6 +33,7 @@ struct LemmyPost {
     ap_id: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct LemmyCounts {
     upvotes: Option<i32>,

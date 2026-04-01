@@ -55,10 +55,15 @@ pub enum WorkflowTrigger {
 /// Comparison operators used inside [`Condition`].
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ConditionOp {
+    /// Field value must exactly equal the condition value.
     Equals,
+    /// Field value must differ from the condition value.
     NotEquals,
+    /// Field string value must contain the condition string value as a substring.
     Contains,
+    /// Field numeric value must be strictly greater than the threshold.
     GreaterThan,
+    /// Field numeric value must be strictly less than the threshold.
     LessThan,
 }
 
@@ -68,8 +73,11 @@ pub enum ConditionOp {
 /// payload (e.g. `"data.size"`). The `operator` + `value` define the test.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Condition {
+    /// Dot-separated JSON path into the event payload (e.g. `"data.size"`).
     pub field: String,
+    /// Comparison operator applied between the resolved field value and `value`.
     pub operator: ConditionOp,
+    /// The right-hand side value used in the comparison.
     pub value: serde_json::Value,
 }
 
@@ -80,28 +88,46 @@ pub struct Condition {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "action")]
 pub enum WorkflowAction {
+    /// Send an in-app notification to a specific user.
     SendNotification {
+        /// Recipient user UUID.
         user_id: Uuid,
+        /// Notification message body.
         message: String,
     },
+    /// Move a file from one storage path to another.
     MoveFile {
+        /// Source storage path.
         from: String,
+        /// Destination storage path.
         to: String,
     },
+    /// Create a task and assign it to a user.
     CreateTask {
+        /// Title of the new task.
         title: String,
+        /// UUID of the user the task should be assigned to.
         assignee: Uuid,
     },
+    /// Invoke an AI model with a prompt.
     CallAI {
+        /// The prompt to send to the AI model.
         prompt: String,
+        /// Identifier of the AI model to use (e.g. `"llama3"`).
         model: String,
     },
+    /// Deliver an HTTP webhook request to an external URL.
     CallWebhook {
+        /// Target URL for the webhook POST request.
         url: String,
+        /// JSON body to send with the request.
         payload: serde_json::Value,
     },
+    /// Application-defined action with arbitrary parameters.
     Custom {
+        /// Application-defined action type identifier.
         action_type: String,
+        /// Arbitrary JSON parameters for the action handler.
         params: serde_json::Value,
     },
 }
@@ -109,21 +135,32 @@ pub enum WorkflowAction {
 /// Complete definition of an automation workflow.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkflowDefinition {
+    /// Unique identifier for this workflow definition.
     pub id: Uuid,
+    /// Human-readable name displayed in the UI.
     pub name: String,
+    /// The event or schedule that causes this workflow to evaluate.
     pub trigger: WorkflowTrigger,
+    /// All conditions that must pass before actions are executed.
     pub conditions: Vec<Condition>,
+    /// Ordered list of actions to perform when the workflow fires.
     pub actions: Vec<WorkflowAction>,
+    /// When `false`, this workflow is skipped during evaluation.
     pub enabled: bool,
+    /// UUID of the user who created this workflow.
     pub created_by: Uuid,
 }
 
 /// Result of evaluating a single workflow against an event.
 #[derive(Debug, Clone)]
 pub struct WorkflowExecution {
+    /// UUID of the workflow definition that was triggered.
     pub workflow_id: Uuid,
+    /// Name of the workflow at the time it was triggered.
     pub workflow_name: String,
+    /// UTC timestamp when the workflow was evaluated.
     pub triggered_at: DateTime<Utc>,
+    /// The actions that were logged (but not yet executed in the foundation phase).
     pub actions_logged: Vec<WorkflowAction>,
 }
 

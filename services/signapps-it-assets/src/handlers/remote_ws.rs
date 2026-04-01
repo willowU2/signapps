@@ -115,7 +115,7 @@ async fn handle_agent_ws(socket: WebSocket, agent_id: Uuid, state: AppState) {
     // Forward commands from admins → agent
     let send_task = tokio::spawn(async move {
         while let Ok(msg) = cmd_rx.recv().await {
-            if ws_sink.send(Message::Text(msg.into())).await.is_err() {
+            if ws_sink.send(Message::Text(msg)).await.is_err() {
                 break;
             }
         }
@@ -198,7 +198,7 @@ async fn handle_admin_viewer(socket: WebSocket, hw_id: Uuid, state: AppState) {
     // Forward frames from agent → admin browser
     let send_task = tokio::spawn(async move {
         while let Ok(frame) = frame_rx.recv().await {
-            if ws_sink.send(Message::Text(frame.into())).await.is_err() {
+            if ws_sink.send(Message::Text(frame)).await.is_err() {
                 break;
             }
         }

@@ -39,6 +39,7 @@ pub struct RateLimiter {
 }
 
 impl RateLimiter {
+    /// Create a new rate limiter with the given token-bucket configuration.
     pub fn new(config: RateLimiterConfig) -> Self {
         Self {
             buckets: Arc::new(Mutex::new(HashMap::new())),

@@ -28,21 +28,25 @@ struct SubmitData {
     url: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct InfoResponse {
     data: Option<InfoData>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct InfoData {
     children: Option<Vec<InfoChild>>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct InfoChild {
     data: Option<InfoPost>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct InfoPost {
     ups: Option<i32>,

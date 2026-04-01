@@ -175,7 +175,7 @@ fn is_pxe_client(options: &[u8]) -> bool {
     false
 }
 
-fn get_option<'a>(options: &'a [u8], code: u8) -> Option<&'a [u8]> {
+fn get_option(options: &[u8], code: u8) -> Option<&[u8]> {
     let mut i = 0;
     while i < options.len() {
         let opt_code = options[i];

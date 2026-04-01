@@ -620,7 +620,7 @@ pub async fn update_account(
     Json(payload): Json<UpdateAccountRequest>,
 ) -> impl IntoResponse {
     if let Some(interval) = payload.sync_interval_minutes {
-        if interval < 1 || interval > 1440 {
+        if !(1..=1440).contains(&interval) {
             return (StatusCode::BAD_REQUEST, Json(serde_json::json!({ "error": "sync_interval_minutes must be between 1 and 1440" }))).into_response();
         }
     }

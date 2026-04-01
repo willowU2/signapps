@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use serde::Deserialize;
-use uuid::Uuid;
 
 use super::{PlatformError, PlatformResult, SocialPlatform};
 use crate::models::{AccountAnalytics, InboxItem, PlatformPost};

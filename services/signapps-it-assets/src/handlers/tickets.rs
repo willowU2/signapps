@@ -610,6 +610,7 @@ pub struct UpdatePsaIntegrationReq {
 
 /// Minimal ticket event payload forwarded to PSA webhooks.
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[allow(dead_code)]
 pub struct TicketEventPayload {
     pub event_type: String, // "created" | "updated"
     pub ticket_id: Option<Uuid>,
@@ -716,6 +717,7 @@ pub async fn delete_psa_integration(
 //
 // Called after create_ticket / update_ticket to fan-out to all enabled PSA webhooks.
 
+#[allow(dead_code)]
 pub async fn forward_ticket_event(pool: &DatabasePool, event: &TicketEventPayload) {
     let integrations = match sqlx::query_as::<_, PsaIntegrationRow>(
         r#"SELECT id, name, "type", webhook_url, api_key, mapping_config, enabled, created_at, updated_at

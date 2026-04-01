@@ -88,6 +88,7 @@ pub struct ComplianceReport {
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
+#[allow(dead_code)]
 /// Represents a policy compliance.
 pub struct PolicyCompliance {
     pub id: Uuid,
@@ -379,7 +380,7 @@ pub async fn get_agent_policies(
 
     for policy in &direct_policies {
         // Fetch ancestor chain to apply inheritance bottom-up (parent first)
-        let ancestors = get_ancestor_chain(pool.inner(), &policy).await?;
+        let ancestors = get_ancestor_chain(pool.inner(), policy).await?;
         for ancestor in ancestors {
             if let Value::Object(ref map) = ancestor.settings {
                 for (k, v) in map {

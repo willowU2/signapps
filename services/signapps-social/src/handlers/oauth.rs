@@ -911,7 +911,7 @@ async fn exchange_code_for_tokens(
         "mastodon" => {
             // stored_platform format: "mastodon:<instance_url>:<client_id>:<client_secret>"
             // (set during auto-registration in oauth_authorize)
-            let parts: Vec<&str> = stored_platform.splitn(4, ':').collect();
+            let _parts: Vec<&str> = stored_platform.splitn(4, ':').collect();
             // parts[0] = "mastodon", parts[1..] reconstructed = instance_url, client_id, secret
             // But instance_url itself starts with "https:" so we need to re-join properly.
             // Format was: "mastodon:{instance_url}:{client_id}:{client_secret}"

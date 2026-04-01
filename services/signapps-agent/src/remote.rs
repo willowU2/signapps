@@ -15,8 +15,8 @@
 //!
 //! Input injection backends:
 //! - Windows: SendInput(MOUSEINPUT / KEYBDINPUT)
-//! - Linux:   XTest extension (XTestFakeMotionEvent / XTestFakeKeyEvent)
-//!            or uinput (/dev/uinput) for Wayland
+//! - Linux:   XTest extension (XTestFakeMotionEvent / XTestFakeKeyEvent),
+//!   or uinput (/dev/uinput) for Wayland
 //! - macOS:   CGEvent (CGEventCreateMouseEvent / CGEventCreateKeyboardEvent)
 //!
 //! Modes:
@@ -91,6 +91,7 @@ enum RemoteMessage {
 
 #[derive(Debug)]
 struct RawFrame {
+    #[allow(dead_code)] // Used by platform-specific encode backends (stub in dev)
     pixels: Vec<u8>, // BGRA or RGBA depending on platform
     width: u32,
     height: u32,
@@ -316,7 +317,7 @@ pub async fn remote_access_server(config: Arc<RwLock<AgentConfig>>) {
 
                                         let _ = write
                                             .send(tokio_tungstenite::tungstenite::Message::Text(
-                                                started.into(),
+                                                started,
                                             ))
                                             .await;
 
@@ -334,7 +335,7 @@ pub async fn remote_access_server(config: Arc<RwLock<AgentConfig>>) {
                                             let _ = write
                                                 .send(
                                                     tokio_tungstenite::tungstenite::Message::Text(
-                                                        frame_msg.into(),
+                                                        frame_msg,
                                                     ),
                                                 )
                                                 .await;

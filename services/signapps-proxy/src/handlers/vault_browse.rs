@@ -21,6 +21,7 @@ use crate::AppState;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, FromRow)]
+#[allow(dead_code)]
 struct BrowseSession {
     id: Uuid,
     item_id: Uuid,
@@ -160,8 +161,7 @@ fn rewrite_html_urls(html: &str, token: &str, target_origin: &str) -> String {
         let url_val = &rest[..end_quote];
 
         // Only rewrite if it starts with the target origin
-        if url_val.starts_with(target_origin) {
-            let path_part = &url_val[target_origin.len()..];
+        if let Some(path_part) = url_val.strip_prefix(target_origin) {
             let path_part = if path_part.is_empty() { "/" } else { path_part };
             out.push_str(&proxy_prefix);
             out.push_str(path_part);
@@ -242,7 +242,7 @@ fn plain_response(status: StatusCode, body: impl Into<String>) -> Response {
 // ---------------------------------------------------------------------------
 
 async fn proxy_vault_request(
-    state: &AppState,
+    _state: &AppState,
     session: &BrowseSession,
     target_url: &str,
     token: &str,
@@ -360,7 +360,7 @@ pub async fn vault_browse(
     Path(token): Path<String>,
     headers: HeaderMap,
 ) -> Response {
-    tracing::Span::current().record("token", &token.as_str());
+    tracing::Span::current().record("token", token.as_str());
 
     let session = match lookup_session(&state, &token).await {
         Ok(s) => s,
@@ -394,8 +394,8 @@ pub async fn vault_browse_sub(
     Path((token, sub_path)): Path<(String, String)>,
     headers: HeaderMap,
 ) -> Response {
-    tracing::Span::current().record("token", &token.as_str());
-    tracing::Span::current().record("path", &sub_path.as_str());
+    tracing::Span::current().record("token", token.as_str());
+    tracing::Span::current().record("path", sub_path.as_str());
 
     let session = match lookup_session(&state, &token).await {
         Ok(s) => s,

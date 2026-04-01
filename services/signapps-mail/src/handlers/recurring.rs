@@ -112,7 +112,7 @@ pub async fn create_recurring(
     }
 
     // Validate cron expression format (basic: must have 5-6 space-separated fields)
-    let fields: Vec<&str> = payload.cron_expr.trim().split_whitespace().collect();
+    let fields: Vec<&str> = payload.cron_expr.split_whitespace().collect();
     if fields.len() < 5 || fields.len() > 6 {
         return (
             StatusCode::BAD_REQUEST,

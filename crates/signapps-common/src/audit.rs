@@ -26,13 +26,21 @@ use crate::Claims;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum AuditAction {
+    /// A new resource was created (POST).
     Create,
+    /// A resource was read or listed (GET).
     Read,
+    /// An existing resource was modified (PUT/PATCH).
     Update,
+    /// A resource was permanently deleted (DELETE).
     Delete,
+    /// A user authenticated and started a session.
     Login,
+    /// A user explicitly ended their session.
     Logout,
+    /// Data was exported from the system.
     Export,
+    /// An application-defined action not covered by the standard variants.
     Custom(String),
 }
 

@@ -205,6 +205,7 @@ pub async fn delete_package(
 // ============================================================================
 
 #[tracing::instrument(skip_all)]
+#[allow(clippy::type_complexity)]
 pub async fn deploy_package(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,

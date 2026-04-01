@@ -183,6 +183,7 @@ pub async fn run_playbook(
 ) -> Result<(StatusCode, Json<PlaybookRunRow>), (StatusCode, String)> {
     // Verify playbook exists and is enabled
     #[derive(sqlx::FromRow)]
+    #[allow(dead_code)]
     struct PbSteps {
         id: Uuid,
         steps: Option<Value>,

@@ -35,12 +35,16 @@ pub fn uptime_seconds() -> u64 {
     START_TIME.get().map(|t| t.elapsed().as_secs()).unwrap_or(0)
 }
 
+/// Response payload returned by the `/health` endpoint.
 #[derive(Debug, Serialize)]
-/// Response payload for Health operation.
 pub struct HealthResponse {
+    /// Fixed string `"ok"` when the service is healthy.
     pub status: &'static str,
+    /// Name of the service (e.g. `"signapps-identity"`).
     pub service: String,
+    /// Semver version string from `CARGO_PKG_VERSION`.
     pub version: &'static str,
+    /// Seconds elapsed since `init_start_time` was called at process startup.
     pub uptime_seconds: u64,
 }
 

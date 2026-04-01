@@ -189,7 +189,7 @@ pub async fn list_purchase_orders(
                 r.data
                     .get("status")
                     .and_then(|v| v.as_str())
-                    .map_or(false, |st| st == s)
+                    .is_some_and(|st| st == s)
             })
         })
         .map(ScRecord::from)

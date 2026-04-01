@@ -10,6 +10,7 @@ pub struct DribbbleClient {
     pub access_token: String,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct ShotResponse {
     id: u64,

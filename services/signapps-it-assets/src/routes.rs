@@ -1,6 +1,6 @@
 use axum::{
     extract::FromRef,
-    routing::{delete, get, patch, post, put},
+    routing::{delete, get, post, put},
     Json, Router,
 };
 use signapps_db::DatabasePool;

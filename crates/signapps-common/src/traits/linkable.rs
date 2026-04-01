@@ -4,8 +4,11 @@ use uuid::Uuid;
 
 /// Trait for entities that can be linked cross-service and tracked in activity/audit.
 pub trait Linkable {
+    /// Returns the entity type label used in audit and activity records (e.g. `"document"`, `"user"`).
     fn entity_type(&self) -> &'static str;
+    /// Returns the unique identifier of this entity.
     fn entity_id(&self) -> Uuid;
+    /// Returns a human-readable title for display in activity feeds and audit logs.
     fn entity_title(&self) -> String;
 }
 

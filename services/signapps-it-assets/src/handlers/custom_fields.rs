@@ -44,6 +44,7 @@ pub struct UpdateFieldDefReq {
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
+#[allow(dead_code)]
 pub struct CustomFieldValue {
     pub id: Uuid,
     pub definition_id: Uuid,

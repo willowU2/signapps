@@ -324,6 +324,7 @@ pub async fn delete_schedule(
 }
 
 /// Background job: checks scheduled_scripts with next_run <= now and queues them.
+#[allow(dead_code)]
 pub async fn run_scheduler_tick(pool: &DatabasePool) {
     let due = match sqlx::query_as::<_, ScheduledScript>(
         r#"

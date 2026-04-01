@@ -158,13 +158,12 @@ fn probe_host(ip: IpAddr, timeout_ms: u64) -> Option<DiscoveryEntry> {
     // Try ping-like: connect to any port to detect host
     if !is_alive {
         let addr = SocketAddr::new(ip, 65535);
-        if let Ok(_) | Err(_) = TcpStream::connect_timeout(&addr, Duration::from_millis(50)) {
-            // If we get connection refused quickly, host is alive
-            // If we timeout, host is likely down
-            // We check by elapsed time: < timeout/2 means host responded (refused or accepted)
-            if start.elapsed().as_millis() < (timeout_ms / 2) as u128 {
-                is_alive = true;
-            }
+        let _ = TcpStream::connect_timeout(&addr, Duration::from_millis(50));
+        // If we get connection refused quickly, host is alive
+        // If we timeout, host is likely down
+        // We check by elapsed time: < timeout/2 means host responded (refused or accepted)
+        if start.elapsed().as_millis() < (timeout_ms / 2) as u128 {
+            is_alive = true;
         }
     }
 

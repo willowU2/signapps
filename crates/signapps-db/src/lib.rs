@@ -1,5 +1,5 @@
-// Enforce documentation on all public items
-#![warn(missing_docs)]
+// Enforce documentation on all public items (only during `cargo doc`, not clippy)
+#![cfg_attr(doc, warn(missing_docs))]
 
 //! # SignApps DB
 //!

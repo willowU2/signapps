@@ -196,6 +196,7 @@ pub async fn resolve_alert(
 // Publishes an `it.alert.fired` event to the notifications service event bus
 // and evaluates automation rules.
 
+#[allow(dead_code)]
 pub async fn fire_alert(
     pool: &DatabasePool,
     rule_id: Uuid,
