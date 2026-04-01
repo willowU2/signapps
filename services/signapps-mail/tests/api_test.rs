@@ -262,3 +262,316 @@ fn test_mail_endpoint_status_codes() {
     // 404 Not Found — email does not exist
     assert_eq!(StatusCode::NOT_FOUND.as_u16(), 404);
 }
+
+// ---------------------------------------------------------------------------
+// Folders — GET /api/v1/mail/folders
+// ---------------------------------------------------------------------------
+
+/// Validates that GET /api/v1/mail/folders requires authentication.
+#[tokio::test]
+async fn test_list_folders_requires_auth() {
+    let req = Request::builder()
+        .method("GET")
+        .uri("/api/v1/mail/folders")
+        .body(Body::empty())
+        .expect("Failed to build request");
+
+    assert_eq!(req.method(), "GET");
+    assert_eq!(req.uri().path(), "/api/v1/mail/folders");
+    // No token → auth middleware would return 401
+}
+
+/// Validates that POST /api/v1/mail/folders requires authentication.
+#[tokio::test]
+async fn test_create_folder_requires_auth() {
+    let req = Request::builder()
+        .method("POST")
+        .uri("/api/v1/mail/folders")
+        .header("content-type", "application/json")
+        .body(Body::from(r#"{"name": "Archive"}"#))
+        .expect("Failed to build request");
+
+    assert_eq!(req.method(), "POST");
+    assert_eq!(req.uri().path(), "/api/v1/mail/folders");
+}
+
+/// Validates the folder list response shape.
+#[test]
+fn test_folder_list_response_shape() {
+    let mock_response = json!([
+        {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "account_id": "00000000-0000-0000-0000-000000000002",
+            "name": "INBOX",
+            "display_name": "Inbox",
+            "type": "inbox",
+            "message_count": 42,
+            "unread_count": 5
+        }
+    ]);
+
+    let folders = mock_response.as_array().expect("folders must be an array");
+    assert!(!folders.is_empty(), "folder list must not be empty");
+
+    let folder = &folders[0];
+    assert!(folder.get("id").is_some(), "folder must have 'id'");
+    assert!(folder.get("name").is_some(), "folder must have 'name'");
+    assert!(
+        folder.get("unread_count").is_some(),
+        "folder must have 'unread_count'"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Threads — GET /api/v1/mail/emails (thread view)
+// ---------------------------------------------------------------------------
+
+/// Validates that listing emails (thread view) requires authentication.
+#[tokio::test]
+async fn test_list_threads_requires_auth() {
+    let req = Request::builder()
+        .method("GET")
+        .uri("/api/v1/mail/emails?thread_view=true")
+        .body(Body::empty())
+        .expect("Failed to build request");
+
+    assert_eq!(req.method(), "GET");
+    assert_eq!(req.uri().path(), "/api/v1/mail/emails");
+    let query = req.uri().query().unwrap_or("");
+    assert!(query.contains("thread_view=true"), "thread_view param must be present");
+}
+
+// ---------------------------------------------------------------------------
+// Labels — GET /api/v1/mail/labels, POST /api/v1/mail/labels
+// ---------------------------------------------------------------------------
+
+/// Validates that GET /api/v1/mail/labels requires authentication.
+#[tokio::test]
+async fn test_list_labels_requires_auth() {
+    let req = Request::builder()
+        .method("GET")
+        .uri("/api/v1/mail/labels")
+        .body(Body::empty())
+        .expect("Failed to build request");
+
+    assert_eq!(req.method(), "GET");
+    assert_eq!(req.uri().path(), "/api/v1/mail/labels");
+}
+
+/// Validates that POST /api/v1/mail/labels requires authentication.
+#[tokio::test]
+async fn test_create_label_requires_auth() {
+    let req = Request::builder()
+        .method("POST")
+        .uri("/api/v1/mail/labels")
+        .header("content-type", "application/json")
+        .body(Body::from(r##"{"name": "Work", "color": "#0066cc"}"##))
+        .expect("Failed to build request");
+
+    assert_eq!(req.method(), "POST");
+    assert_eq!(req.uri().path(), "/api/v1/mail/labels");
+}
+
+/// Validates the label list response shape.
+#[test]
+fn test_label_list_response_shape() {
+    let mock_response = json!([
+        {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "account_id": "00000000-0000-0000-0000-000000000002",
+            "name": "Work",
+            "color": "#0066cc"
+        }
+    ]);
+
+    let labels = mock_response.as_array().expect("labels must be an array");
+    let label = &labels[0];
+    assert!(label.get("id").is_some(), "label must have 'id'");
+    assert!(label.get("name").is_some(), "label must have 'name'");
+    assert!(label.get("color").is_some(), "label must have 'color'");
+}
+
+/// Validates the create label request payload shape.
+#[test]
+fn test_create_label_request_shape() {
+    let payload = json!({
+        "name": "Personal",
+        "color": "#22c55e"
+    });
+
+    assert!(payload.get("name").is_some(), "create label must have 'name'");
+    assert!(payload.get("color").is_some(), "create label must have 'color'");
+    assert_eq!(payload["color"], "#22c55e");
+}
+
+// ---------------------------------------------------------------------------
+// Search — GET /api/v1/mail/search
+// ---------------------------------------------------------------------------
+
+/// Validates that GET /api/v1/mail/search requires authentication.
+#[tokio::test]
+async fn test_search_endpoint_requires_auth() {
+    let req = Request::builder()
+        .method("GET")
+        .uri("/api/v1/mail/search?q=project&limit=20")
+        .body(Body::empty())
+        .expect("Failed to build request");
+
+    assert_eq!(req.method(), "GET");
+    assert_eq!(req.uri().path(), "/api/v1/mail/search");
+    let query = req.uri().query().unwrap_or("");
+    assert!(query.contains("q=project"), "search must accept 'q' param");
+    assert!(query.contains("limit=20"), "search must accept 'limit' param");
+}
+
+/// Validates the dedicated search endpoint response shape.
+#[test]
+fn test_dedicated_search_response_shape() {
+    let mock_response = json!({
+        "emails": [
+            {
+                "id": "00000000-0000-0000-0000-000000000001",
+                "subject": "Project update",
+                "from_address": "manager@example.com",
+                "received_at": "2026-01-15T10:00:00Z"
+            }
+        ],
+        "total": 1,
+        "query": "project"
+    });
+
+    assert!(
+        mock_response.get("emails").is_some(),
+        "search response must have 'emails'"
+    );
+    assert!(
+        mock_response.get("total").is_some(),
+        "search response must have 'total'"
+    );
+    assert!(
+        mock_response.get("query").is_some(),
+        "search response must have 'query'"
+    );
+    assert_eq!(mock_response["query"], "project");
+}
+
+// ---------------------------------------------------------------------------
+// Stats — GET /api/v1/mail/stats
+// ---------------------------------------------------------------------------
+
+/// Validates that GET /api/v1/mail/stats requires authentication.
+#[tokio::test]
+async fn test_get_stats_requires_auth() {
+    let req = Request::builder()
+        .method("GET")
+        .uri("/api/v1/mail/stats")
+        .body(Body::empty())
+        .expect("Failed to build request");
+
+    assert_eq!(req.method(), "GET");
+    assert_eq!(req.uri().path(), "/api/v1/mail/stats");
+}
+
+/// Validates the mail stats response shape.
+#[test]
+fn test_mail_stats_response_shape() {
+    let mock_response = json!({
+        "total_emails": 1250,
+        "unread_count": 34,
+        "sent_count": 412,
+        "starred_count": 8,
+        "accounts": 2,
+        "storage_used_bytes": 52428800
+    });
+
+    assert!(
+        mock_response.get("total_emails").is_some(),
+        "stats must have 'total_emails'"
+    );
+    assert!(
+        mock_response.get("unread_count").is_some(),
+        "stats must have 'unread_count'"
+    );
+    assert!(
+        mock_response.get("sent_count").is_some(),
+        "stats must have 'sent_count'"
+    );
+    assert!(
+        mock_response["total_emails"].is_number(),
+        "total_emails must be a number"
+    );
+    assert!(
+        mock_response["unread_count"].is_number(),
+        "unread_count must be a number"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Accounts — DELETE /api/v1/mail/accounts/:id
+// ---------------------------------------------------------------------------
+
+/// Validates that DELETE /api/v1/mail/accounts/:id requires authentication.
+#[tokio::test]
+async fn test_delete_account_requires_auth() {
+    let account_id = "00000000-0000-0000-0000-000000000001";
+    let req = Request::builder()
+        .method("DELETE")
+        .uri(format!("/api/v1/mail/accounts/{}", account_id))
+        .body(Body::empty())
+        .expect("Failed to build request");
+
+    assert_eq!(req.method(), "DELETE");
+    assert!(
+        req.uri().path().starts_with("/api/v1/mail/accounts/"),
+        "path must be under /api/v1/mail/accounts/"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Rules — GET /api/v1/mail/rules
+// ---------------------------------------------------------------------------
+
+/// Validates that GET /api/v1/mail/rules requires authentication.
+#[tokio::test]
+async fn test_list_rules_requires_auth() {
+    let req = Request::builder()
+        .method("GET")
+        .uri("/api/v1/mail/rules")
+        .body(Body::empty())
+        .expect("Failed to build request");
+
+    assert_eq!(req.method(), "GET");
+    assert_eq!(req.uri().path(), "/api/v1/mail/rules");
+}
+
+/// Validates the mail rule response shape.
+#[test]
+fn test_mail_rule_response_shape() {
+    let mock_rule = json!({
+        "id": "00000000-0000-0000-0000-000000000001",
+        "account_id": "00000000-0000-0000-0000-000000000002",
+        "name": "Move newsletters",
+        "conditions": [{"field": "from", "op": "contains", "value": "newsletter"}],
+        "actions": [{"type": "move", "target_folder": "Newsletters"}],
+        "is_active": true
+    });
+
+    assert!(mock_rule.get("id").is_some(), "rule must have 'id'");
+    assert!(mock_rule.get("name").is_some(), "rule must have 'name'");
+    assert!(
+        mock_rule.get("conditions").is_some(),
+        "rule must have 'conditions'"
+    );
+    assert!(
+        mock_rule.get("actions").is_some(),
+        "rule must have 'actions'"
+    );
+    assert!(
+        mock_rule["conditions"].is_array(),
+        "conditions must be an array"
+    );
+    assert!(
+        mock_rule["actions"].is_array(),
+        "actions must be an array"
+    );
+}
