@@ -15,7 +15,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 /// MFA setup response with secret and QR code.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for MfaSetup.
 pub struct MfaSetupResponse {
     /// Base32-encoded secret for manual entry
@@ -27,7 +27,7 @@ pub struct MfaSetupResponse {
 }
 
 /// MFA verification request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for MfaVerify.
 pub struct MfaVerifyRequest {
     /// 6-digit TOTP code
@@ -35,7 +35,7 @@ pub struct MfaVerifyRequest {
 }
 
 /// MFA verification response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for MfaVerify.
 pub struct MfaVerifyResponse {
     pub success: bool,
@@ -43,7 +43,7 @@ pub struct MfaVerifyResponse {
 }
 
 /// MFA disable request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for MfaDisable.
 pub struct MfaDisableRequest {
     /// Current password for verification
@@ -52,10 +52,28 @@ pub struct MfaDisableRequest {
     pub code: String,
 }
 
+/// MFA status response.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+/// Response for MfaStatus.
+pub struct MfaStatusResponse {
+    pub enabled: bool,
+}
+
 /// Setup MFA for current user.
 ///
 /// Generates a new TOTP secret and returns it with a QR code.
 /// The user must verify a code before MFA is enabled.
+#[utoipa::path(
+    post,
+    path = "/api/v1/auth/mfa/setup",
+    tag = "mfa",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "MFA setup initiated — verify the returned code to complete", body = MfaSetupResponse),
+        (status = 400, description = "MFA is already enabled"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn setup(
@@ -123,6 +141,18 @@ pub async fn setup(
 /// Verify MFA code and confirm MFA setup.
 ///
 /// This must be called after setup to confirm MFA is working.
+#[utoipa::path(
+    post,
+    path = "/api/v1/auth/mfa/verify",
+    tag = "mfa",
+    security(("bearerAuth" = [])),
+    request_body = MfaVerifyRequest,
+    responses(
+        (status = 200, description = "Verification result", body = MfaVerifyResponse),
+        (status = 400, description = "Setup not found or expired"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn verify(
@@ -190,6 +220,18 @@ pub async fn verify(
 }
 
 /// Disable MFA for current user.
+#[utoipa::path(
+    post,
+    path = "/api/v1/auth/mfa/disable",
+    tag = "mfa",
+    security(("bearerAuth" = [])),
+    request_body = MfaDisableRequest,
+    responses(
+        (status = 200, description = "MFA disabled", body = MfaVerifyResponse),
+        (status = 400, description = "Wrong password or code"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn disable(
@@ -249,6 +291,16 @@ pub async fn disable(
 }
 
 /// Get MFA status for current user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/auth/mfa/status",
+    tag = "mfa",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "MFA status", body = MfaStatusResponse),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn status(
@@ -262,13 +314,6 @@ pub async fn status(
     Ok(Json(MfaStatusResponse {
         enabled: user.mfa_enabled,
     }))
-}
-
-/// MFA status response.
-#[derive(Debug, Serialize)]
-/// Response for MfaStatus.
-pub struct MfaStatusResponse {
-    pub enabled: bool,
 }
 
 /// Generate random backup codes (plaintext — only returned once to the user).

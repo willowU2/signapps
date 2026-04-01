@@ -18,7 +18,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 /// API key creation request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for CreateApiKey.
 pub struct CreateApiKeyRequest {
     pub name: String,
@@ -27,7 +27,7 @@ pub struct CreateApiKeyRequest {
 }
 
 /// API key creation response (includes the full key — shown only once).
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for CreateApiKey.
 pub struct CreateApiKeyResponse {
     pub id: Uuid,
@@ -40,7 +40,7 @@ pub struct CreateApiKeyResponse {
 }
 
 /// API key list item (no full key visible).
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// ApiKeyItem data transfer object.
 pub struct ApiKeyItem {
     pub id: Uuid,
@@ -51,6 +51,14 @@ pub struct ApiKeyItem {
     pub last_used: Option<DateTime<Utc>>,
     pub is_active: bool,
     pub created_at: DateTime<Utc>,
+}
+
+/// PATCH request body for updating an API key.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+/// Request body for PatchApiKey.
+pub struct PatchApiKeyRequest {
+    pub name: Option<String>,
+    pub is_active: Option<bool>,
 }
 
 /// Generate a cryptographically random API key (hex-encoded using format!).
@@ -70,6 +78,18 @@ fn hash_key(key: &str) -> String {
 }
 
 /// POST /api/v1/api-keys — Create a new API key.
+#[utoipa::path(
+    post,
+    path = "/api/v1/api-keys",
+    tag = "api_keys",
+    security(("bearerAuth" = [])),
+    request_body = CreateApiKeyRequest,
+    responses(
+        (status = 200, description = "API key created (full key shown only once)", body = CreateApiKeyResponse),
+        (status = 400, description = "Validation error"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn create(
@@ -119,6 +139,16 @@ pub async fn create(
 }
 
 /// GET /api/v1/api-keys — List user's API keys.
+#[utoipa::path(
+    get,
+    path = "/api/v1/api-keys",
+    tag = "api_keys",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "API key list", body = Vec<ApiKeyItem>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list(
@@ -165,6 +195,18 @@ pub async fn list(
 }
 
 /// DELETE /api/v1/api-keys/:id — Revoke an API key.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/api-keys/{id}",
+    tag = "api_keys",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "API key UUID")),
+    responses(
+        (status = 204, description = "API key revoked"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "API key not found"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn revoke(
@@ -188,15 +230,21 @@ pub async fn revoke(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// PATCH request body for updating an API key.
-#[derive(Debug, Deserialize)]
-/// Request body for PatchApiKey.
-pub struct PatchApiKeyRequest {
-    pub name: Option<String>,
-    pub is_active: Option<bool>,
-}
-
 /// PATCH /api/v1/api-keys/:id — Rename or toggle an API key.
+#[utoipa::path(
+    patch,
+    path = "/api/v1/api-keys/{id}",
+    tag = "api_keys",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "API key UUID")),
+    request_body = PatchApiKeyRequest,
+    responses(
+        (status = 200, description = "API key updated", body = ApiKeyItem),
+        (status = 400, description = "Validation error"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "API key not found"),
+    )
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn patch(

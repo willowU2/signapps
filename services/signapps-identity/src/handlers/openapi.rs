@@ -53,6 +53,20 @@ use utoipa::OpenApi;
         crate::handlers::roles::create,
         crate::handlers::roles::update,
         crate::handlers::roles::delete,
+        // MFA
+        crate::handlers::mfa::setup,
+        crate::handlers::mfa::verify,
+        crate::handlers::mfa::disable,
+        crate::handlers::mfa::status,
+        // Sessions
+        crate::handlers::sessions::list,
+        crate::handlers::sessions::revoke,
+        crate::handlers::sessions::revoke_all,
+        // API Keys
+        crate::handlers::api_keys::create,
+        crate::handlers::api_keys::list,
+        crate::handlers::api_keys::revoke,
+        crate::handlers::api_keys::patch,
     ),
     components(
         schemas(
@@ -78,6 +92,19 @@ use utoipa::OpenApi;
             // Role schemas
             crate::handlers::roles::RoleResponse,
             signapps_db::models::CreateRole,
+            // MFA schemas
+            crate::handlers::mfa::MfaSetupResponse,
+            crate::handlers::mfa::MfaVerifyRequest,
+            crate::handlers::mfa::MfaVerifyResponse,
+            crate::handlers::mfa::MfaDisableRequest,
+            crate::handlers::mfa::MfaStatusResponse,
+            // Session schemas
+            crate::handlers::sessions::SessionItem,
+            // API key schemas
+            crate::handlers::api_keys::CreateApiKeyRequest,
+            crate::handlers::api_keys::CreateApiKeyResponse,
+            crate::handlers::api_keys::ApiKeyItem,
+            crate::handlers::api_keys::PatchApiKeyRequest,
         )
     ),
     tags(
@@ -86,6 +113,9 @@ use utoipa::OpenApi;
         (name = "users", description = "User management (admin)"),
         (name = "groups", description = "Group management (RBAC)"),
         (name = "roles", description = "Role management (RBAC)"),
+        (name = "mfa", description = "Multi-factor authentication"),
+        (name = "sessions", description = "Session management"),
+        (name = "api_keys", description = "API key management"),
     ),
     modifiers(&SecurityAddon),
 )]

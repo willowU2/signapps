@@ -16,7 +16,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 /// Session item returned to the client.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// SessionItem data transfer object.
 pub struct SessionItem {
     pub id: Uuid,
@@ -28,6 +28,16 @@ pub struct SessionItem {
 }
 
 /// GET /api/v1/auth/sessions — List current user's active sessions.
+#[utoipa::path(
+    get,
+    path = "/api/v1/auth/sessions",
+    tag = "sessions",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "Active session list", body = Vec<SessionItem>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list(
@@ -70,6 +80,18 @@ pub async fn list(
 }
 
 /// DELETE /api/v1/auth/sessions/:id — Revoke a specific session.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/auth/sessions/{id}",
+    tag = "sessions",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Session UUID")),
+    responses(
+        (status = 204, description = "Session revoked"),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Session not found"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn revoke(
@@ -92,6 +114,16 @@ pub async fn revoke(
 }
 
 /// DELETE /api/v1/auth/sessions — Revoke all sessions except current.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/auth/sessions",
+    tag = "sessions",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "Number of revoked sessions", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn revoke_all(
