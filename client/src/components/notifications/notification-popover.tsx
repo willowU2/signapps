@@ -281,10 +281,10 @@ export function NotificationPopover() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="flex items-center justify-between border-b p-3">
+      <PopoverContent className="w-[380px] p-0 shadow-lg border-border/60" align="end">
+        <div className="flex items-center justify-between border-b border-border/60 bg-muted/20 p-4">
           <div className="flex items-center gap-2">
-            <h4 className="font-semibold">Notifications</h4>
+            <h4 className="text-sm font-semibold tracking-tight">Notifications</h4>
             {unreadCount > 0 && (
               <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
                 {unreadCount}
@@ -301,7 +301,7 @@ export function NotificationPopover() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
+                className="h-7 px-2 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                 onClick={clearAll}
                 title="Tout effacer"
               >
@@ -327,70 +327,67 @@ export function NotificationPopover() {
               {notifications.map((notification) => {
                 const Icon = getIcon(notification.type);
                 const href = getNotificationHref(notification);
+                
+                const statusColorClass = notification.status === 'success' ? 'bg-green-500/15 text-green-600 dark:text-green-400' :
+                                         notification.status === 'warning' ? 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400' :
+                                         notification.status === 'error' ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
+                                         'bg-primary/10 text-primary';
+
                 return (
                   <div
                     key={notification.id}
-                    className={`relative flex gap-3 p-3 hover:bg-muted/50 cursor-pointer group/item transition-colors ${
-                      !notification.read ? 'bg-muted/30' : ''
+                    className={`relative flex gap-4 p-4 hover:bg-muted/50 cursor-pointer group/item transition-all duration-200 border-l-2 ${
+                      !notification.read ? 'bg-primary/[0.02] border-primary' : 'border-transparent'
                     }`}
                     onClick={() => handleNotificationClick(notification)}
                   >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
-                      <Icon className="h-4 w-4" />
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${statusColorClass} shadow-sm border border-background/20`}>
+                      <Icon className="h-5 w-5" />
                     </div>
-                    <div className="flex-1 space-y-1">
+                    <div className="flex-1 space-y-1.5 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(notification.status)}
-                          <p className="text-sm font-medium leading-none">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <p className={`text-sm font-medium leading-none truncate ${!notification.read ? 'text-foreground' : 'text-foreground/80'}`}>
                             {notification.title}
                           </p>
                         </div>
-                        <div className="flex gap-0.5 shrink-0 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                        <div className="flex gap-1 shrink-0 opacity-0 group-hover/item:opacity-100 transition-opacity">
                           {!notification.read && (
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-5 w-5"
+                              className="h-6 w-6 hover:bg-background/80"
                               title="Marquer comme lu"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 markAsRead(notification.id);
                               }}
                             >
-                              <Check className="h-3 w-3" />
+                              <Check className="h-3.5 w-3.5 text-muted-foreground" />
                             </Button>
                           )}
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-5 w-5"
+                            className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive"
                             onClick={(e) => {
                               e.stopPropagation();
                               removeNotification(notification.id);
                             }}
                           >
-                            <X className="h-3 w-3" />
+                            <X className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                         {notification.message}
                       </p>
-                      <div className="flex items-center gap-2">
-                        <p className="text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <p className="text-[10px] uppercase font-medium tracking-wider text-muted-foreground/80">
                           {formatTime(notification.timestamp)}
                         </p>
-                        {href && (
-                          <span className="text-[10px] text-primary/70">
-                            Cliquer pour voir
-                          </span>
-                        )}
                       </div>
                     </div>
-                    {!notification.read && (
-                      <div className="absolute left-1 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-primary" />
-                    )}
                   </div>
                 );
               })}
@@ -399,11 +396,11 @@ export function NotificationPopover() {
         </ScrollArea>
 
         {notifications.length > 0 && (
-          <div className="border-t p-2">
+          <div className="border-t border-border/60 bg-muted/10 p-2">
             <Button
               variant="ghost"
               size="sm"
-              className="w-full text-muted-foreground"
+              className="w-full text-xs font-medium text-muted-foreground hover:bg-muted/50"
               onClick={clearAll}
             >
               Tout effacer

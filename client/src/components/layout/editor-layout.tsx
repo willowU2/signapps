@@ -58,7 +58,7 @@ export function EditorLayout({ documentId, documentName, icon, children }: Edito
             header={<GlobalHeader />}
         >
             <main className="flex-1 overflow-hidden relative p-4">
-                <div className="absolute inset-4 glass-panel rounded-2xl shadow-premium border border-border/50 overflow-hidden">
+                <div className="absolute inset-4 bg-background rounded-2xl shadow-premium border border-border/50 overflow-hidden">
                     <Button
                         variant="ghost"
                         size="icon"

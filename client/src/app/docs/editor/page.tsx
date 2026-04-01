@@ -54,7 +54,7 @@ function BottomPanel({ entityId, entityName }: { entityId: string; entityName: s
     const [open, setOpen] = useState(false);
 
     return (
-        <div className="border-t border-border bg-background/50 relative">
+        <div className="border-t border-border bg-background relative">
             {/* Toggle bar — always visible */}
             <button
                 onClick={() => setOpen(!open)}
@@ -103,7 +103,7 @@ function EditorContent() {
     return (
         <EditorLayout documentId={id} documentName={name || 'Sans titre'} icon={<FileText className="w-5 h-5 text-blue-600" />}>
             <div className="flex flex-col h-full">
-                <div className="px-4 pt-3 pb-1 border-b bg-background/50 shrink-0 flex items-center justify-between gap-2 flex-wrap">
+                <div className="px-4 pt-3 pb-1 border-b bg-background shrink-0 flex items-center justify-between gap-2 flex-wrap">
                     <Link href="/docs" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
                         <ArrowLeft className="h-4 w-4" /> Documents
                     </Link>
