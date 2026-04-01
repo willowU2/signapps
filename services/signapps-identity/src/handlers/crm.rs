@@ -198,6 +198,7 @@ async fn ensure_tables(pool: &signapps_db::DatabasePool) -> Result<()> {
 // ── Deal handlers ─────────────────────────────────────────────────────────────
 
 /// `GET /api/v1/crm/deals` — list deals owned by caller, optional stage filter.
+#[tracing::instrument(skip(state, q), fields(user_id = %claims.sub))]
 pub async fn list_deals(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -237,6 +238,7 @@ pub async fn list_deals(
 }
 
 /// `GET /api/v1/crm/deals/:id` — get a single deal.
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub, deal_id = %id))]
 pub async fn get_deal(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -255,6 +257,7 @@ pub async fn get_deal(
 }
 
 /// `POST /api/v1/crm/deals` — create a deal.
+#[tracing::instrument(skip(state, body), fields(user_id = %claims.sub))]
 pub async fn create_deal(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -289,6 +292,7 @@ pub async fn create_deal(
 }
 
 /// `PUT /api/v1/crm/deals/:id` — update a deal.
+#[tracing::instrument(skip(state, body), fields(user_id = %claims.sub, deal_id = %id))]
 pub async fn update_deal(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -344,6 +348,7 @@ pub async fn update_deal(
 }
 
 /// `DELETE /api/v1/crm/deals/:id` — delete a deal.
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub, deal_id = %id))]
 pub async fn delete_deal(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -367,6 +372,7 @@ pub async fn delete_deal(
 // ── Lead handlers ─────────────────────────────────────────────────────────────
 
 /// `GET /api/v1/crm/leads` — list leads owned by caller.
+#[tracing::instrument(skip(state, q), fields(user_id = %claims.sub))]
 pub async fn list_leads(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -406,6 +412,7 @@ pub async fn list_leads(
 }
 
 /// `GET /api/v1/crm/leads/:id` — get a single lead.
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub, lead_id = %id))]
 pub async fn get_lead(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -424,6 +431,7 @@ pub async fn get_lead(
 }
 
 /// `POST /api/v1/crm/leads` — create a lead.
+#[tracing::instrument(skip(state, body), fields(user_id = %claims.sub))]
 pub async fn create_lead(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -456,6 +464,7 @@ pub async fn create_lead(
 }
 
 /// `PUT /api/v1/crm/leads/:id` — update a lead.
+#[tracing::instrument(skip(state, body), fields(user_id = %claims.sub, lead_id = %id))]
 pub async fn update_lead(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -506,6 +515,7 @@ pub async fn update_lead(
 }
 
 /// `DELETE /api/v1/crm/leads/:id` — delete a lead.
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub, lead_id = %id))]
 pub async fn delete_lead(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -529,6 +539,7 @@ pub async fn delete_lead(
 // ── Pipeline summary ──────────────────────────────────────────────────────────
 
 /// `GET /api/v1/crm/pipeline` — count + total amount per stage for the caller.
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
 pub async fn get_pipeline(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

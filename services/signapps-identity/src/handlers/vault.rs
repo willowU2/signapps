@@ -50,6 +50,7 @@ async fn audit(
 // ---------------------------------------------------------------------------
 
 /// `POST /api/v1/vault/keys` — Initialise the user's key bundle.
+#[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
 pub async fn init_keys(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -64,6 +65,7 @@ pub async fn init_keys(
 }
 
 /// `GET /api/v1/vault/keys` — Get the current user's key bundle.
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
 pub async fn get_keys(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -76,6 +78,7 @@ pub async fn get_keys(
 }
 
 /// `PUT /api/v1/vault/keys` — Replace the user's key bundle (re-key operation).
+#[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
 pub async fn update_keys(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -91,6 +94,7 @@ pub async fn update_keys(
 // ---------------------------------------------------------------------------
 
 /// `GET /api/v1/vault/items` — List all items owned by the current user.
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
 pub async fn list_items(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -100,6 +104,7 @@ pub async fn list_items(
 }
 
 /// `POST /api/v1/vault/items` — Create a new vault item.
+#[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
 pub async fn create_item(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -120,6 +125,7 @@ pub async fn create_item(
 }
 
 /// `PUT /api/v1/vault/items/:id` — Update a vault item.
+#[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub, item_id = %id))]
 pub async fn update_item(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -140,6 +146,7 @@ pub async fn update_item(
 }
 
 /// `DELETE /api/v1/vault/items/:id` — Delete a vault item.
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub, item_id = %id))]
 pub async fn delete_item(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -158,6 +165,7 @@ pub async fn delete_item(
 // ---------------------------------------------------------------------------
 
 /// `GET /api/v1/vault/folders` — List all folders.
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
 pub async fn list_folders(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -167,6 +175,7 @@ pub async fn list_folders(
 }
 
 /// `POST /api/v1/vault/folders` — Create a folder.
+#[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
 pub async fn create_folder(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -180,6 +189,7 @@ pub async fn create_folder(
 }
 
 /// `PUT /api/v1/vault/folders/:id` — Rename a folder.
+#[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub, folder_id = %id))]
 pub async fn update_folder(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -193,6 +203,7 @@ pub async fn update_folder(
 }
 
 /// `DELETE /api/v1/vault/folders/:id` — Delete a folder.
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub, folder_id = %id))]
 pub async fn delete_folder(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -221,6 +232,7 @@ pub struct CreateShareRequest {
 }
 
 /// `POST /api/v1/vault/shares` — Share an item with a person or group.
+#[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
 pub async fn create_share(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -255,6 +267,7 @@ pub async fn create_share(
 }
 
 /// `DELETE /api/v1/vault/shares/:id` — Revoke a share.
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub, share_id = %id))]
 pub async fn delete_share(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -273,6 +286,7 @@ pub async fn delete_share(
 }
 
 /// `GET /api/v1/vault/shared-with-me` — List items shared with the current user.
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
 pub async fn shared_with_me(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -305,6 +319,7 @@ pub struct TotpRequest {
 }
 
 /// `POST /api/v1/vault/items/:id/totp` — Generate TOTP code from client-supplied secret.
+#[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub, item_id = %id))]
 pub async fn get_totp_code(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -361,6 +376,7 @@ pub struct GeneratedPasswordResponse {
 }
 
 /// `GET /api/v1/vault/generate-password` — Generate a strong random password.
+#[tracing::instrument(skip(q))]
 pub async fn generate_password(
     Extension(_claims): Extension<Claims>,
     Query(q): Query<GeneratePasswordQuery>,
@@ -385,6 +401,7 @@ pub async fn generate_password(
 // ---------------------------------------------------------------------------
 
 /// `PUT /api/v1/vault/org-keys` — Upsert an org key for a group member.
+#[tracing::instrument(skip(state, payload))]
 pub async fn upsert_org_key(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -398,6 +415,7 @@ pub async fn upsert_org_key(
 }
 
 /// `GET /api/v1/vault/org-keys/:group_id` — Get the org key for the current user in a group.
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub, group_id = %group_id))]
 pub async fn get_org_key(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -425,6 +443,7 @@ pub struct AuditQuery {
 ///
 /// If `item_id` is supplied, returns entries for that item (owner-checked).
 /// Otherwise returns entries for the current actor.
+#[tracing::instrument(skip(state, q), fields(user_id = %claims.sub))]
 pub async fn list_audit(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -462,6 +481,7 @@ pub struct BrowseSessionResponse {
 ///
 /// Verifies the user has access to the item (as owner or with use_only/full share),
 /// then creates a short-lived session with a random token.
+#[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
 pub async fn start_browse(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -520,6 +540,7 @@ pub async fn start_browse(
 }
 
 /// `DELETE /api/v1/vault/browse/:token` — End a browse session.
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
 pub async fn end_browse(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
