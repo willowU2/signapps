@@ -89,6 +89,21 @@ interface TimesheetData {
   rows: CategoryRow[];
 }
 
+interface TimesheetApiEntry {
+  id?: string;
+  date?: string;
+  category_id?: string;
+  category?: string;
+  hours?: number;
+  auto_generated?: boolean;
+  status?: string;
+  generated_at?: string;
+  validated_at?: string;
+  exported_at?: string;
+  timesheet_id?: string;
+  entries?: TimesheetApiEntry[];
+}
+
 // ============================================================================
 // Helpers
 // ============================================================================
@@ -155,7 +170,7 @@ function buildEmptyRow(category: TimesheetCategory, days: Date[]): CategoryRow {
 // Merge API data into rows structure
 function mergeApiEntries(
   rows: CategoryRow[],
-  apiEntries: any[],
+  apiEntries: TimesheetApiEntry[],
   days: Date[],
 ): CategoryRow[] {
   const merged = rows.map((row) => ({
@@ -163,7 +178,7 @@ function mergeApiEntries(
     dayEntries: { ...row.dayEntries },
   }));
 
-  apiEntries.forEach((entry: any) => {
+  apiEntries.forEach((entry: TimesheetApiEntry) => {
     const dateKey = entry.date
       ? format(parseISO(entry.date), "yyyy-MM-dd")
       : null;
@@ -343,18 +358,22 @@ export function TimesheetView() {
   useEffect(() => {
     categoriesApi
       .list()
-      .then((res: any) => {
-        const data = res.data;
-        if (Array.isArray(data) && data.length > 0) {
-          setCategories(
-            data.map((c: any) => ({
-              id: c.id,
-              name: c.name,
-              color: c.color,
-            })),
-          );
-        }
-      })
+      .then(
+        (res: {
+          data: Array<{ id: string; name: string; color?: string }>;
+        }) => {
+          const data = res.data;
+          if (Array.isArray(data) && data.length > 0) {
+            setCategories(
+              data.map((c) => ({
+                id: c.id,
+                name: c.name,
+                color: c.color,
+              })),
+            );
+          }
+        },
+      )
       .catch(() => {
         // Fall back to defaults silently
       });
@@ -370,20 +389,20 @@ export function TimesheetView() {
 
       try {
         const res = await timesheetsApi.list({ week: weekKey });
-        const data: any = res.data;
+        const data: TimesheetApiEntry | TimesheetApiEntry[] = res.data;
 
         let status: TimesheetStatus = "pending";
         let id: string | undefined;
         let generatedAt: string | undefined;
         let validatedAt: string | undefined;
         let exportedAt: string | undefined;
-        let entries: any[] = [];
+        let entries: TimesheetApiEntry[] = [];
 
         if (Array.isArray(data)) {
           // List of entries
           entries = data;
-          const validated = data.some((e: any) => e.status === "validated");
-          const exported = data.some((e: any) => e.status === "exported");
+          const validated = data.some((e) => e.status === "validated");
+          const exported = data.some((e) => e.status === "exported");
           status = exported ? "exported" : validated ? "validated" : "pending";
           generatedAt = data[0]?.generated_at;
           validatedAt = data[0]?.validated_at;

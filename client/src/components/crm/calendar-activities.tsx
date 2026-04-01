@@ -1,73 +1,90 @@
-"use client"
-import { useQuery } from "@tanstack/react-query"
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Calendar, Check, RefreshCw } from "lucide-react"
-import { calendarApi } from "@/lib/api/calendar"
-import { activitiesApi, dealsApi, type Deal } from "@/lib/api/crm"
-import { useEffect } from "react"
-import { format, parseISO } from "date-fns"
-import { fr } from "date-fns/locale"
-import { toast } from "sonner"
+"use client";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Check, RefreshCw } from "lucide-react";
+import { calendarApi } from "@/lib/api/calendar";
+import type { Event as CalEvent } from "@/types/calendar";
+import { activitiesApi, dealsApi, type Deal } from "@/lib/api/crm";
+import { useEffect } from "react";
+import { format, parseISO } from "date-fns";
+import { fr } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface Props {
-  dealId?: string
+  dealId?: string;
 }
 
 export function CalendarActivities({ dealId }: Props) {
-  const [loggedIds, setLoggedIds] = useState<Set<string>>(new Set())
-  const [dealLinks, setDealLinks] = useState<Record<string, string>>({})
-  const [deals, setDeals] = useState<Deal[]>([])
-  useEffect(() => { dealsApi.list().then(setDeals) }, [])
+  const [loggedIds, setLoggedIds] = useState<Set<string>>(new Set());
+  const [dealLinks, setDealLinks] = useState<Record<string, string>>({});
+  const [deals, setDeals] = useState<Deal[]>([]);
+  useEffect(() => {
+    dealsApi.list().then(setDeals);
+  }, []);
 
   const { data: calendars = [], isLoading: calendarsLoading } = useQuery({
     queryKey: ["crm-calendars"],
-    queryFn: () => calendarApi.listCalendars().then(r => r.data ?? []),
+    queryFn: () => calendarApi.listCalendars().then((r) => r.data ?? []),
     staleTime: 120000,
-  })
+  });
 
-  const { data: events = [], isLoading: eventsLoading, refetch } = useQuery({
-    queryKey: ["crm-events", calendars.map((c: any) => c.id)],
+  const {
+    data: events = [],
+    isLoading: eventsLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["crm-events", calendars.map((c) => c.id)],
     queryFn: async () => {
-      const now = new Date()
-      const end = new Date(now.getTime() + 30 * 86400000)
-      const all: any[] = []
+      const now = new Date();
+      const end = new Date(now.getTime() + 30 * 86400000);
+      const all: (CalEvent & { _calendarName?: string })[] = [];
       // Fetch from up to 3 calendars
       for (const cal of calendars.slice(0, 3)) {
         try {
-          const r = await calendarApi.listEvents(cal.id, now, end)
-          const evs = r.data ?? []
-          evs.forEach((e: any) => { e._calendarName = cal.name })
-          all.push(...evs)
+          const r = await calendarApi.listEvents(cal.id, now, end);
+          const evs = r.data ?? [];
+          evs.forEach((e) => {
+            (e as CalEvent & { _calendarName?: string })._calendarName =
+              cal.name;
+          });
+          all.push(...(evs as (CalEvent & { _calendarName?: string })[]));
         } catch {
           // ignore calendar errors
         }
       }
       return all.sort(
-        (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-      )
+        (a, b) =>
+          new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+      );
     },
     enabled: calendars.length > 0,
     staleTime: 60000,
-  })
+  });
 
-  const logEvent = (event: any) => {
-    const targetDealId = dealId ?? dealLinks[event.id]
+  const logEvent = (event: CalEvent & { _calendarName?: string }) => {
+    const targetDealId = dealId ?? dealLinks[event.id];
     activitiesApi.create({
       dealId: targetDealId,
       type: "meeting",
       content: [event.title, event.description].filter(Boolean).join("\n"),
       date: event.start_time,
       calendarEventId: event.id,
-    })
-    setLoggedIds(s => new Set(s).add(event.id))
-    toast.success(`Réunion "${event.title}" enregistrée comme activité.`)
-  }
+    });
+    setLoggedIds((s) => new Set(s).add(event.id));
+    toast.success(`Réunion "${event.title}" enregistrée comme activité.`);
+  };
 
-  const isLoading = calendarsLoading || eventsLoading
+  const isLoading = calendarsLoading || eventsLoading;
 
   return (
     <Card>
@@ -76,8 +93,15 @@ export function CalendarActivities({ dealId }: Props) {
           <Calendar className="h-4 w-4 text-primary" />
           Réunions à venir (30 jours)
         </CardTitle>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refetch()}>
-          <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={() => refetch()}
+        >
+          <RefreshCw
+            className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`}
+          />
         </Button>
       </CardHeader>
 
@@ -90,7 +114,8 @@ export function CalendarActivities({ dealId }: Props) {
 
         {!isLoading && calendars.length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-4">
-            Aucun agenda configuré. Ajoutez des agendas dans l'application Calendrier.
+            Aucun agenda configuré. Ajoutez des agendas dans l'application
+            Calendrier.
           </p>
         )}
 
@@ -100,7 +125,7 @@ export function CalendarActivities({ dealId }: Props) {
           </p>
         )}
 
-        {events.slice(0, 12).map((event: any) => (
+        {events.slice(0, 12).map((event) => (
           <div
             key={event.id}
             className="flex items-center justify-between gap-2 p-3 border rounded-md hover:bg-muted/30 transition-colors"
@@ -108,9 +133,15 @@ export function CalendarActivities({ dealId }: Props) {
             <div className="flex-1 min-w-0 space-y-0.5">
               <p className="text-sm font-medium truncate">{event.title}</p>
               <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                <span>{format(parseISO(event.start_time), "d MMM yyyy, HH:mm", { locale: fr })}</span>
+                <span>
+                  {format(parseISO(event.start_time), "d MMM yyyy, HH:mm", {
+                    locale: fr,
+                  })}
+                </span>
                 {event._calendarName && (
-                  <Badge variant="outline" className="text-[10px] py-0">{event._calendarName}</Badge>
+                  <Badge variant="outline" className="text-[10px] py-0">
+                    {event._calendarName}
+                  </Badge>
                 )}
               </div>
             </div>
@@ -118,14 +149,18 @@ export function CalendarActivities({ dealId }: Props) {
             {!dealId && (
               <Select
                 value={dealLinks[event.id] ?? ""}
-                onValueChange={v => setDealLinks(m => ({ ...m, [event.id]: v }))}
+                onValueChange={(v) =>
+                  setDealLinks((m) => ({ ...m, [event.id]: v }))
+                }
               >
                 <SelectTrigger className="h-7 w-40 text-xs">
                   <SelectValue placeholder="Lier à un deal…" />
                 </SelectTrigger>
                 <SelectContent>
                   {deals.map((d: Deal) => (
-                    <SelectItem key={d.id} value={d.id}>{d.title}</SelectItem>
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.title}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -151,5 +186,5 @@ export function CalendarActivities({ dealId }: Props) {
         ))}
       </CardContent>
     </Card>
-  )
+  );
 }

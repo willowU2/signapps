@@ -56,6 +56,20 @@ interface ExportPreview {
   pendingCount: number;
 }
 
+interface RawTimesheetEntry {
+  user_id?: string;
+  employee?: string;
+  employee_name?: string;
+  username?: string;
+  week?: string;
+  week_key?: string;
+  status?: string;
+  category?: string;
+  category_name?: string;
+  hours?: number;
+  entries?: RawTimesheetEntry[];
+}
+
 // ============================================================================
 // Helpers
 // ============================================================================
@@ -125,14 +139,16 @@ function triggerDownload(content: string, filename: string, mime: string) {
   document.body.removeChild(a);
 }
 
-function parseRawToPreview(raw: any): TimesheetSummaryRow[] {
+function parseRawToPreview(
+  raw: RawTimesheetEntry | RawTimesheetEntry[] | null | undefined,
+): TimesheetSummaryRow[] {
   if (!raw) return [];
 
   // Backend returns array of timesheet entries
   if (Array.isArray(raw)) {
     // Group by employee + week
     const grouped: Record<string, TimesheetSummaryRow> = {};
-    raw.forEach((entry: any) => {
+    raw.forEach((entry: RawTimesheetEntry) => {
       const key = `${entry.user_id ?? entry.employee ?? "?"}_${entry.week ?? "?"}`;
       if (!grouped[key]) {
         grouped[key] = {
@@ -224,7 +240,7 @@ export function TimesheetExportDialog({
     setError(null);
     try {
       const res = await timesheetsApi.list({});
-      const raw: any = res.data;
+      const raw = res.data as RawTimesheetEntry | RawTimesheetEntry[];
       const rows = parseRawToPreview(raw);
 
       // Filter by date range
@@ -283,7 +299,7 @@ export function TimesheetExportDialog({
     try {
       // Call the export API endpoint
       const res = await timesheetsApi.export(startDate, endDate);
-      const raw: any = res.data;
+      const raw = res.data as RawTimesheetEntry | RawTimesheetEntry[] | string;
 
       let content: string;
       let filename: string;
