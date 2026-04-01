@@ -3,6 +3,7 @@
 
 use axum::{extract::DefaultBodyLimit, middleware, Router};
 use dashmap::DashMap;
+use handlers::openapi::CalendarApiDoc;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::pg_events::{PgEventBus, PlatformEvent};
@@ -11,6 +12,8 @@ use signapps_db::DatabasePool;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tower_http::trace::TraceLayer;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 use yrs::Doc;
 
 use crate::services::presence::PresenceManager;
@@ -122,8 +125,13 @@ fn build_router(state: AppState) -> Router {
         recurrence, resources, shares, tasks, timesheets, timezones, websocket,
     };
 
+    // OpenAPI docs routes
+    let openapi_routes =
+        SwaggerUi::new("/swagger-ui").url("/api/v1/openapi.json", CalendarApiDoc::openapi());
+
     // Public routes (no auth required)
     let public_routes = Router::new()
+        .merge(openapi_routes)
         .route("/health", get(health_check))
         .route(
             "/api/v1/notifications/push/vapid-key",

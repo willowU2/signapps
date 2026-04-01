@@ -152,7 +152,7 @@ rcgen = "0.13"
 instant-acme = "0.7"
 
 # OpenAPI documentation
-utoipa = { version = "5", features = ["axum_extras", "uuid"] }
+utoipa = { version = "5", features = ["axum_extras", "uuid", "chrono"] }
 utoipa-swagger-ui = { version = "8", features = ["axum"] }
 
 # QR Code generation

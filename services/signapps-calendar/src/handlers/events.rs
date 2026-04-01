@@ -43,7 +43,20 @@ pub struct DateRangeQuery {
     pub end: Option<DateTime<Utc>>,
 }
 
-/// Create a new event.
+/// Create a new calendar event.
+#[utoipa::path(
+    post,
+    path = "/api/v1/calendars/{calendar_id}/events",
+    tag = "events",
+    security(("bearerAuth" = [])),
+    params(("calendar_id" = Uuid, Path, description = "Calendar UUID")),
+    request_body = signapps_db::models::CreateEvent,
+    responses(
+        (status = 201, description = "Event created", body = signapps_db::models::Event),
+        (status = 400, description = "end_time must be after start_time"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[instrument(skip(state, payload), fields(user_id = %claims.sub, calendar_id = %calendar_id))]
 pub async fn create_event(
     State(state): State<AppState>,
@@ -103,7 +116,22 @@ pub async fn create_event(
     Ok((StatusCode::CREATED, Json(event)))
 }
 
-/// Get events in a calendar within a date range.
+/// List events in a calendar, optionally filtered by date range.
+#[utoipa::path(
+    get,
+    path = "/api/v1/calendars/{calendar_id}/events",
+    tag = "events",
+    security(("bearerAuth" = [])),
+    params(
+        ("calendar_id" = Uuid, Path, description = "Calendar UUID"),
+        ("start" = Option<String>, Query, description = "Start filter (RFC 3339)"),
+        ("end" = Option<String>, Query, description = "End filter (RFC 3339)"),
+    ),
+    responses(
+        (status = 200, description = "List of events", body = Vec<signapps_db::models::Event>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[instrument(skip(state, query), fields(calendar_id = %calendar_id))]
 pub async fn list_events(
     State(state): State<AppState>,
@@ -141,7 +169,18 @@ pub async fn list_events(
     Ok(Json(events))
 }
 
-/// Get event by ID.
+/// Get a single event by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/events/{id}",
+    tag = "events",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Event UUID")),
+    responses(
+        (status = 200, description = "Event found", body = signapps_db::models::Event),
+        (status = 404, description = "Event not found"),
+    )
+)]
 #[instrument(skip(state), fields(event_id = %id))]
 pub async fn get_event(
     State(state): State<AppState>,
@@ -157,7 +196,20 @@ pub async fn get_event(
     Ok(Json(event))
 }
 
-/// Update an event.
+/// Update an existing event.
+#[utoipa::path(
+    put,
+    path = "/api/v1/events/{id}",
+    tag = "events",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Event UUID")),
+    request_body = signapps_db::models::UpdateEvent,
+    responses(
+        (status = 200, description = "Event updated", body = signapps_db::models::Event),
+        (status = 400, description = "Invalid date range"),
+        (status = 404, description = "Event not found"),
+    )
+)]
 #[instrument(skip(state, payload), fields(user_id = %claims.sub, event_id = %id))]
 pub async fn update_event(
     State(state): State<AppState>,
@@ -207,7 +259,18 @@ pub async fn update_event(
     Ok(Json(event))
 }
 
-/// Delete an event (soft delete).
+/// Delete an event (soft delete — sets is_deleted = true).
+#[utoipa::path(
+    delete,
+    path = "/api/v1/events/{id}",
+    tag = "events",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Event UUID")),
+    responses(
+        (status = 204, description = "Event deleted"),
+        (status = 404, description = "Event not found"),
+    )
+)]
 #[instrument(skip(state), fields(user_id = %claims.sub, event_id = %id))]
 pub async fn delete_event(
     State(state): State<AppState>,
@@ -236,6 +299,19 @@ pub async fn delete_event(
 ///
 /// Either `user_id` (internal user) or `email` (external attendee) must be supplied.
 /// The attendee is created with `rsvp_status = "pending"`.
+#[utoipa::path(
+    post,
+    path = "/api/v1/events/{event_id}/attendees",
+    tag = "events",
+    security(("bearerAuth" = [])),
+    params(("event_id" = Uuid, Path, description = "Event UUID")),
+    request_body = signapps_db::models::AddEventAttendee,
+    responses(
+        (status = 201, description = "Attendee added", body = signapps_db::models::EventAttendee),
+        (status = 400, description = "user_id or email required"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[instrument(skip(state, payload), fields(event_id = %event_id))]
 pub async fn add_attendee(
     State(state): State<AppState>,
@@ -258,6 +334,17 @@ pub async fn add_attendee(
 }
 
 /// Get attendees for an event.
+#[utoipa::path(
+    get,
+    path = "/api/v1/events/{event_id}/attendees",
+    tag = "events",
+    security(("bearerAuth" = [])),
+    params(("event_id" = Uuid, Path, description = "Event UUID")),
+    responses(
+        (status = 200, description = "List of attendees", body = Vec<signapps_db::models::EventAttendee>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[instrument(skip(state), fields(event_id = %event_id))]
 pub async fn list_attendees(
     State(state): State<AppState>,
@@ -275,6 +362,19 @@ pub async fn list_attendees(
 /// Update attendee RSVP status.
 ///
 /// Accepts `{ "rsvp_status": "accepted" | "declined" | "tentative" | "pending" }`.
+#[utoipa::path(
+    patch,
+    path = "/api/v1/events/attendees/{attendee_id}/rsvp",
+    tag = "events",
+    security(("bearerAuth" = [])),
+    params(("attendee_id" = Uuid, Path, description = "Attendee UUID")),
+    request_body = signapps_db::models::UpdateAttendeeRsvp,
+    responses(
+        (status = 200, description = "RSVP updated"),
+        (status = 400, description = "Invalid rsvp_status value"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[instrument(skip(state, payload), fields(attendee_id = %attendee_id))]
 pub async fn update_rsvp(
     State(state): State<AppState>,
@@ -299,6 +399,17 @@ pub async fn update_rsvp(
 }
 
 /// Remove an attendee from an event.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/events/attendees/{attendee_id}",
+    tag = "events",
+    security(("bearerAuth" = [])),
+    params(("attendee_id" = Uuid, Path, description = "Attendee UUID")),
+    responses(
+        (status = 204, description = "Attendee removed"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[instrument(skip(state), fields(attendee_id = %attendee_id))]
 pub async fn remove_attendee(
     State(state): State<AppState>,

@@ -14,6 +14,7 @@ pub mod leave;
 pub mod meeting_suggestions;
 pub mod notifications;
 pub mod ooo;
+pub mod openapi;
 pub mod polls;
 pub mod presence;
 pub mod push;

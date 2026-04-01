@@ -19,6 +19,17 @@ pub struct UpdateRoleRequest {
 }
 
 /// Create a new calendar.
+#[utoipa::path(
+    post,
+    path = "/api/v1/calendars",
+    tag = "calendars",
+    security(("bearerAuth" = [])),
+    request_body = signapps_db::models::CreateCalendar,
+    responses(
+        (status = 201, description = "Calendar created", body = signapps_db::models::Calendar),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_calendar(
     State(state): State<AppState>,
@@ -35,6 +46,16 @@ pub async fn create_calendar(
 }
 
 /// Get all calendars for current user (owned + shared).
+#[utoipa::path(
+    get,
+    path = "/api/v1/calendars",
+    tag = "calendars",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "List of calendars", body = Vec<signapps_db::models::Calendar>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_calendars(
     State(state): State<AppState>,
@@ -50,6 +71,17 @@ pub async fn list_calendars(
 }
 
 /// Get calendar by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/calendars/{id}",
+    tag = "calendars",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Calendar UUID")),
+    responses(
+        (status = 200, description = "Calendar found", body = signapps_db::models::Calendar),
+        (status = 404, description = "Calendar not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_calendar(
     State(state): State<AppState>,
@@ -66,6 +98,18 @@ pub async fn get_calendar(
 }
 
 /// Update a calendar.
+#[utoipa::path(
+    put,
+    path = "/api/v1/calendars/{id}",
+    tag = "calendars",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Calendar UUID")),
+    request_body = signapps_db::models::UpdateCalendar,
+    responses(
+        (status = 200, description = "Calendar updated", body = signapps_db::models::Calendar),
+        (status = 404, description = "Calendar not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_calendar(
     State(state): State<AppState>,
@@ -82,6 +126,17 @@ pub async fn update_calendar(
 }
 
 /// Delete a calendar.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/calendars/{id}",
+    tag = "calendars",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Calendar UUID")),
+    responses(
+        (status = 204, description = "Calendar deleted"),
+        (status = 404, description = "Calendar not found"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_calendar(
     State(state): State<AppState>,
@@ -96,6 +151,17 @@ pub async fn delete_calendar(
 }
 
 /// Get all members of a calendar.
+#[utoipa::path(
+    get,
+    path = "/api/v1/calendars/{id}/members",
+    tag = "calendars",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Calendar UUID")),
+    responses(
+        (status = 200, description = "List of members", body = Vec<signapps_db::models::CalendarMemberWithUser>),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_members(
     State(state): State<AppState>,
@@ -111,6 +177,18 @@ pub async fn list_members(
 }
 
 /// Add a member to a calendar (share).
+#[utoipa::path(
+    post,
+    path = "/api/v1/calendars/{id}/members",
+    tag = "calendars",
+    security(("bearerAuth" = [])),
+    params(("id" = Uuid, Path, description = "Calendar UUID")),
+    request_body = signapps_db::models::AddCalendarMember,
+    responses(
+        (status = 201, description = "Member added", body = signapps_db::models::CalendarMember),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn add_member(
     State(state): State<AppState>,
@@ -127,6 +205,20 @@ pub async fn add_member(
 }
 
 /// Remove a member from a calendar.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/calendars/{calendar_id}/members/{user_id}",
+    tag = "calendars",
+    security(("bearerAuth" = [])),
+    params(
+        ("calendar_id" = Uuid, Path, description = "Calendar UUID"),
+        ("user_id" = Uuid, Path, description = "User UUID"),
+    ),
+    responses(
+        (status = 204, description = "Member removed"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_member(
     State(state): State<AppState>,

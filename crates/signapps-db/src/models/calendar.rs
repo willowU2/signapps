@@ -10,6 +10,7 @@ use uuid::Uuid;
 // ============================================================================
 /// A personal or shared calendar belonging to a user.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Calendar {
     pub id: Uuid,
     pub owner_id: Uuid,
@@ -25,6 +26,7 @@ pub struct Calendar {
 
 /// Request to create a new calendar.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreateCalendar {
     pub name: String,
     pub description: Option<String>,
@@ -35,6 +37,7 @@ pub struct CreateCalendar {
 
 /// Request to update an existing calendar.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpdateCalendar {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -48,6 +51,7 @@ pub struct UpdateCalendar {
 // ============================================================================
 /// A user who has been granted access to a shared calendar with a specific role.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CalendarMember {
     pub id: Uuid,
     pub calendar_id: Uuid,
@@ -59,6 +63,7 @@ pub struct CalendarMember {
 
 /// Request to add a user to a calendar with a given role.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct AddCalendarMember {
     pub user_id: Uuid,
     pub role: String,
@@ -73,6 +78,7 @@ pub struct CalendarWithMembers {
 
 /// A calendar member row joined with basic user profile data.
 #[derive(Debug, Clone, FromRow, Serialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CalendarMemberWithUser {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -86,6 +92,7 @@ pub struct CalendarMemberWithUser {
 // ============================================================================
 /// A calendar event with optional recurrence rules, type metadata, and attendee support.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Event {
     pub id: Uuid,
     pub calendar_id: Uuid,
@@ -124,6 +131,7 @@ pub struct Event {
 
 /// Request to create a new calendar event.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CreateEvent {
     pub title: String,
     pub description: Option<String>,
@@ -155,6 +163,7 @@ pub struct CreateEvent {
 
 /// Request to update an existing calendar event.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpdateEvent {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -189,6 +198,7 @@ pub struct UpdateEvent {
 // ============================================================================
 /// An event bundled with its attendees, booked resources, and custom metadata.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct EventWithDetails {
     pub event: Event,
     pub attendees: Vec<EventAttendee>,
@@ -201,6 +211,7 @@ pub struct EventWithDetails {
 // ============================================================================
 /// An attendee (user or external email) invited to a calendar event with an RSVP status.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct EventAttendee {
     pub id: Uuid,
     pub event_id: Uuid,
@@ -214,6 +225,7 @@ pub struct EventAttendee {
 
 /// Request to add an attendee to an event.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct AddEventAttendee {
     pub user_id: Option<Uuid>,
     pub email: Option<String>,
@@ -221,6 +233,7 @@ pub struct AddEventAttendee {
 
 /// Request to update an attendee's RSVP status.
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UpdateAttendeeRsvp {
     pub rsvp_status: String,
 }
@@ -230,6 +243,7 @@ pub struct UpdateAttendeeRsvp {
 // ============================================================================
 /// A key-value metadata entry attached to a calendar event.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct EventMetadata {
     pub id: Uuid,
     pub event_id: Uuid,
@@ -271,6 +285,7 @@ pub struct CreateResource {
 // ============================================================================
 /// A link between a calendar event and a booked resource.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct EventResource {
     pub id: Uuid,
     pub event_id: Uuid,

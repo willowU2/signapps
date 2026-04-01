@@ -9918,6 +9918,8 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "urlencoding",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
  "yrs",
 ]
@@ -10088,6 +10090,7 @@ dependencies = [
  "tokio",
  "tokio-test",
  "tracing",
+ "utoipa",
  "uuid",
 ]
 
@@ -10205,6 +10208,8 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "url",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
  "validator",
 ]
@@ -13582,6 +13587,7 @@ dependencies = [
  "quote",
  "regex",
  "syn 2.0.114",
+ "uuid",
 ]
 
 [[package]]

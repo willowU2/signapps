@@ -28,6 +28,12 @@ tracing = { workspace = true }
 # Internal
 signapps-common = { path = "../signapps-common" }
 
+# OpenAPI schema derivation (optional feature)
+utoipa = { workspace = true, optional = true }
+
+[features]
+openapi = ["utoipa"]
+
 [dev-dependencies]
 tokio-test = { workspace = true }
 argon2 = { workspace = true }
