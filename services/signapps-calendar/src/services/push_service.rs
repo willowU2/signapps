@@ -218,9 +218,9 @@ mod tests {
     }
 
     #[test]
-    fn test_vapid_keys_load_or_demo() {
-        let keys = VapidKeys::load_or_demo();
-        assert!(!keys.public_key.is_empty());
-        assert!(!keys.private_key.is_empty());
+    fn test_vapid_keys_load_or_skip() {
+        // load_or_skip returns None when env vars are absent (which is the case in unit tests)
+        // We only verify it doesn't panic.
+        let _keys = VapidKeys::load_or_skip();
     }
 }

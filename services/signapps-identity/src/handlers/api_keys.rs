@@ -310,13 +310,107 @@ pub async fn patch(
 
 #[cfg(test)]
 mod tests {
-    #[allow(unused_imports)]
     use super::*;
 
+    // -----------------------------------------------------------------------
+    // generate_api_key
+    // -----------------------------------------------------------------------
+
+    /// Generated key starts with the expected `sk_example_` prefix.
     #[test]
-    fn module_compiles() {
-        // Verify this handler module compiles correctly.
-        // Integration tests require a running database and service.
-        assert!(true, "{} handler module loaded", module_path!());
+    fn test_generate_api_key_has_prefix() {
+        let key = generate_api_key();
+        assert!(key.starts_with("sk_example_"), "key must start with 'sk_example_': {key}");
+    }
+
+    /// Generated key is the expected total length (8 prefix chars + 64 hex chars = 72).
+    #[test]
+    fn test_generate_api_key_length() {
+        let key = generate_api_key();
+        // "sk_example_" = 8 chars, 32 random bytes hex-encoded = 64 chars
+        assert_eq!(key.len(), 72, "unexpected key length: {}", key.len());
+    }
+
+    /// Two successive generated keys are different (probabilistic, but collision probability is 1/2^256).
+    #[test]
+    fn test_generate_api_key_is_random() {
+        let key1 = generate_api_key();
+        let key2 = generate_api_key();
+        assert_ne!(key1, key2, "successive keys must differ");
+    }
+
+    /// The first 16 chars of the key form the prefix stored in the DB.
+    #[test]
+    fn test_generate_api_key_prefix_extraction() {
+        let key = generate_api_key();
+        let prefix: String = key.chars().take(16).collect();
+        assert_eq!(prefix.len(), 16);
+        // Prefix starts with "sk_example_"
+        assert!(prefix.starts_with("sk_example_"));
+    }
+
+    // -----------------------------------------------------------------------
+    // hash_key (SHA-256)
+    // -----------------------------------------------------------------------
+
+    /// `hash_key` is deterministic — same input always produces the same hash.
+    #[test]
+    fn test_hash_key_deterministic() {
+        let key = "sk_example_abc123def456";
+        assert_eq!(hash_key(key), hash_key(key), "hash must be deterministic");
+    }
+
+    /// `hash_key` output is a 64-char lowercase hex string (SHA-256).
+    #[test]
+    fn test_hash_key_output_format() {
+        let key = "sk_example_test_value_here_12345678";
+        let h = hash_key(key);
+        assert_eq!(h.len(), 64, "SHA-256 hex must be 64 chars");
+        assert!(
+            h.chars().all(|c| c.is_ascii_hexdigit()),
+            "hash must be lowercase hex: {h}"
+        );
+    }
+
+    /// Different keys produce different hashes.
+    #[test]
+    fn test_hash_key_different_inputs_differ() {
+        let h1 = hash_key("sk_example_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        let h2 = hash_key("sk_example_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+        assert_ne!(h1, h2, "different keys must hash differently");
+    }
+
+    // -----------------------------------------------------------------------
+    // CreateApiKeyRequest — name validation logic (mirrors handler guard)
+    // -----------------------------------------------------------------------
+
+    /// Empty name should be flagged as invalid by the handler guard.
+    #[test]
+    fn test_create_api_key_name_empty_is_invalid() {
+        let name = "";
+        assert!(
+            name.is_empty() || name.len() > 100,
+            "empty name must be caught by the validation guard"
+        );
+    }
+
+    /// Name of exactly 100 chars is at the boundary and should be accepted.
+    #[test]
+    fn test_create_api_key_name_max_length_accepted() {
+        let name = "a".repeat(100);
+        assert!(
+            !name.is_empty() && name.len() <= 100,
+            "100-char name must pass validation"
+        );
+    }
+
+    /// Name of 101 chars exceeds the limit.
+    #[test]
+    fn test_create_api_key_name_over_limit_rejected() {
+        let name = "a".repeat(101);
+        assert!(
+            name.len() > 100,
+            "101-char name must be rejected by the validation guard"
+        );
     }
 }

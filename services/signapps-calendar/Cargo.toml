@@ -11,6 +11,10 @@ description = "Calendar and task management service for SignApps Platform"
 name = "signapps-calendar"
 path = "src/main.rs"
 
+[lib]
+name = "signapps_calendar"
+path = "src/lib.rs"
+
 [dependencies]
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }

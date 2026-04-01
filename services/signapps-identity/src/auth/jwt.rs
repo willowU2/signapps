@@ -99,3 +99,93 @@ pub fn verify_token(token: &str, secret: &str) -> Result<Claims> {
 
     Ok(token_data.claims)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const TEST_SECRET: &str = "test-jwt-secret-that-is-long-enough-for-tests";
+
+    fn test_user_id() -> Uuid {
+        Uuid::parse_str("00000000-0000-0000-0000-000000000001").expect("valid uuid")
+    }
+
+    /// `create_tokens` produces a token pair where the access token expires in 900s.
+    #[test]
+    fn test_create_tokens_access_expires_in_900() {
+        let pair =
+            create_tokens(test_user_id(), "alice", 1, None, None, TEST_SECRET).expect("should succeed");
+        assert_eq!(pair.expires_in, 900, "access token TTL must be 900 seconds");
+    }
+
+    /// `create_tokens` encodes the username, role, and token_type into the claims.
+    #[test]
+    fn test_create_tokens_access_claims_roundtrip() {
+        let tenant_id = Uuid::new_v4();
+        let pair = create_tokens(
+            test_user_id(),
+            "bob",
+            2,
+            Some(tenant_id),
+            None,
+            TEST_SECRET,
+        )
+        .expect("should succeed");
+
+        let claims = verify_token(&pair.access_token, TEST_SECRET).expect("should decode");
+        assert_eq!(claims.sub, test_user_id());
+        assert_eq!(claims.username, "bob");
+        assert_eq!(claims.role, 2);
+        assert_eq!(claims.tenant_id, Some(tenant_id));
+        assert_eq!(claims.token_type, "access");
+    }
+
+    /// The refresh token carries `token_type = "refresh"`.
+    #[test]
+    fn test_create_tokens_refresh_type() {
+        let pair =
+            create_tokens(test_user_id(), "carol", 1, None, None, TEST_SECRET).expect("should succeed");
+        let claims = verify_token(&pair.refresh_token, TEST_SECRET).expect("should decode");
+        assert_eq!(claims.token_type, "refresh");
+    }
+
+    /// `verify_token` with the wrong secret returns an error.
+    #[test]
+    fn test_verify_token_wrong_secret_fails() {
+        let pair =
+            create_tokens(test_user_id(), "dave", 1, None, None, TEST_SECRET).expect("should succeed");
+        let result = verify_token(&pair.access_token, "completely-wrong-secret-value");
+        assert!(result.is_err(), "wrong secret must be rejected");
+    }
+
+    /// Workspace IDs are preserved in the claims after round-trip.
+    #[test]
+    fn test_create_tokens_workspace_ids_preserved() {
+        let ws1 = Uuid::new_v4();
+        let ws2 = Uuid::new_v4();
+        let pair = create_tokens(
+            test_user_id(),
+            "eve",
+            1,
+            None,
+            Some(vec![ws1, ws2]),
+            TEST_SECRET,
+        )
+        .expect("should succeed");
+        let claims = verify_token(&pair.access_token, TEST_SECRET).expect("should decode");
+        let ids = claims.workspace_ids.expect("workspace_ids must be present");
+        assert!(ids.contains(&ws1));
+        assert!(ids.contains(&ws2));
+    }
+
+    /// Access and refresh tokens differ from each other.
+    #[test]
+    fn test_create_tokens_access_and_refresh_are_different() {
+        let pair =
+            create_tokens(test_user_id(), "frank", 1, None, None, TEST_SECRET).expect("should succeed");
+        assert_ne!(
+            pair.access_token, pair.refresh_token,
+            "access and refresh tokens must be distinct"
+        );
+    }
+}

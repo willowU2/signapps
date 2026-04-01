@@ -883,13 +883,144 @@ fn decrypt_ldap_password(encrypted: &str) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    #[allow(unused_imports)]
     use super::*;
 
+    // -----------------------------------------------------------------------
+    // decrypt_ldap_password
+    // -----------------------------------------------------------------------
+
+    /// When no LDAP_ENCRYPTION_KEY is set, the function performs plain base64 decode.
     #[test]
-    fn module_compiles() {
-        // Verify this handler module compiles correctly.
-        // Integration tests require a running database and service.
-        assert!(true, "{} handler module loaded", module_path!());
+    fn test_decrypt_ldap_password_plain_base64_fallback() {
+        // Remove key so the fallback path is taken.
+        std::env::remove_var("LDAP_ENCRYPTION_KEY");
+
+        use base64::Engine;
+        let plaintext = "service_account_password";
+        let encoded = base64::engine::general_purpose::STANDARD.encode(plaintext);
+
+        let result = decrypt_ldap_password(&encoded).expect("should decode");
+        assert_eq!(result, plaintext);
+    }
+
+    /// When an LDAP_ENCRYPTION_KEY is set, XOR decryption is applied.
+    #[test]
+    fn test_decrypt_ldap_password_xor_with_key() {
+        use base64::Engine;
+
+        let key = "mysecretkey";
+        std::env::set_var("LDAP_ENCRYPTION_KEY", key);
+
+        let plaintext = "admin_password";
+        let key_bytes = key.as_bytes();
+        let cipher: Vec<u8> = plaintext
+            .as_bytes()
+            .iter()
+            .enumerate()
+            .map(|(i, &b)| b ^ key_bytes[i % key_bytes.len()])
+            .collect();
+        let encoded = base64::engine::general_purpose::STANDARD.encode(&cipher);
+
+        let result = decrypt_ldap_password(&encoded).expect("should decrypt");
+        assert_eq!(result, plaintext);
+
+        std::env::remove_var("LDAP_ENCRYPTION_KEY");
+    }
+
+    /// Invalid base64 returns an error.
+    #[test]
+    fn test_decrypt_ldap_password_invalid_base64() {
+        std::env::remove_var("LDAP_ENCRYPTION_KEY");
+        let result = decrypt_ldap_password("!!!not-valid-base64!!!");
+        assert!(result.is_err(), "invalid base64 must return an error");
+    }
+
+    // -----------------------------------------------------------------------
+    // LoginRequest validation (via `validator::Validate`)
+    // -----------------------------------------------------------------------
+
+    /// Empty username fails validation.
+    #[test]
+    fn test_login_request_empty_username_rejected() {
+        let req = LoginRequest {
+            username: String::new(),
+            password: "SomePassword1".to_string(),
+            mfa_code: None,
+        };
+        assert!(req.validate().is_err(), "empty username must fail validation");
+    }
+
+    /// Empty password fails validation.
+    #[test]
+    fn test_login_request_empty_password_rejected() {
+        let req = LoginRequest {
+            username: "admin".to_string(),
+            password: String::new(),
+            mfa_code: None,
+        };
+        assert!(req.validate().is_err(), "empty password must fail validation");
+    }
+
+    /// Valid credentials pass validation.
+    #[test]
+    fn test_login_request_valid_passes_validation() {
+        let req = LoginRequest {
+            username: "admin".to_string(),
+            password: "correct-horse-battery".to_string(),
+            mfa_code: None,
+        };
+        assert!(req.validate().is_ok(), "valid login request must pass validation");
+    }
+
+    // -----------------------------------------------------------------------
+    // RegisterRequest validation
+    // -----------------------------------------------------------------------
+
+    /// Username shorter than 3 chars is rejected.
+    #[test]
+    fn test_register_request_short_username_rejected() {
+        let req = RegisterRequest {
+            username: "ab".to_string(),
+            email: None,
+            password: "SecurePass1".to_string(),
+            display_name: None,
+        };
+        assert!(req.validate().is_err(), "username < 3 chars must fail");
+    }
+
+    /// Invalid email format is rejected.
+    #[test]
+    fn test_register_request_invalid_email_rejected() {
+        let req = RegisterRequest {
+            username: "alice".to_string(),
+            email: Some("not-an-email".to_string()),
+            password: "SecurePass1".to_string(),
+            display_name: None,
+        };
+        assert!(req.validate().is_err(), "invalid email must fail validation");
+    }
+
+    /// A password shorter than 8 chars is rejected.
+    #[test]
+    fn test_register_request_short_password_rejected() {
+        let req = RegisterRequest {
+            username: "alice".to_string(),
+            email: None,
+            password: "short".to_string(),
+            display_name: None,
+        };
+        assert!(req.validate().is_err(), "password < 8 chars must fail");
+    }
+
+    /// A fully valid registration request passes.
+    #[test]
+    fn test_register_request_valid_passes() {
+        let req = RegisterRequest {
+            username: "alice".to_string(),
+            email: Some("alice@example.com".to_string()),
+            password: "SecurePass1".to_string(),
+            display_name: Some("Alice".to_string()),
+        };
+        assert!(req.validate().is_ok(), "valid register request must pass");
     }
 }
