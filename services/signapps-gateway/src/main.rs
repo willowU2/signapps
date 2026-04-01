@@ -287,6 +287,8 @@ async fn main() -> anyhow::Result<()> {
     let scheduler_url = env_or("SCHEDULER_SERVICE_URL", "http://127.0.0.1:3007");
     let securelink_url = env_or("SECURELINK_SERVICE_URL", "http://127.0.0.1:3006");
     let it_assets_url = env_or("IT_ASSETS_SERVICE_URL", "http://127.0.0.1:3015");
+    let containers_url = env_or("CONTAINERS_SERVICE_URL", "http://127.0.0.1:3002");
+    let pxe_url = env_or("PXE_SERVICE_URL", "http://127.0.0.1:3016");
 
     // Ordered: more-specific prefixes first
     let service_map = Arc::new(ServiceMap::new(vec![
@@ -320,7 +322,21 @@ async fn main() -> anyhow::Result<()> {
         ("/api/v1/scheduler", &scheduler_url),
         ("/api/v1/securelink", &securelink_url),
         ("/api/v1/it-assets", &it_assets_url),
-        // Fallback: identity health
+        // Containers service
+        ("/api/v1/containers", &containers_url),
+        ("/api/v1/images", &containers_url),
+        ("/api/v1/networks", &containers_url),
+        ("/api/v1/quotas", &containers_url),
+        ("/api/v1/store", &containers_url),
+        ("/api/v1/compose", &containers_url),
+        // PXE service
+        ("/api/v1/pxe", &pxe_url),
+        // Storage supplemental paths
+        ("/api/v1/drive", &storage_url),
+        ("/api/v1/tags", &storage_url),
+        // Identity catch-all: any /api/v1/* not matched above → identity
+        ("/api/v1", &identity_url),
+        // Health check fallback
         ("/health", &identity_url),
     ]));
 
