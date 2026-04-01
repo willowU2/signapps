@@ -6,6 +6,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
+import { CALENDAR_URL } from "@/lib/api/core";
 
 interface CalendarPresence {
   user_id: string;
@@ -55,10 +56,8 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
 
       // Build WebSocket URL - use calendar service (port 3011), not the frontend
       const calendarHost =
-        process.env.NEXT_PUBLIC_CALENDAR_URL?.replace(
-          /^https?:\/\//,
-          "",
-        ).replace(/\/api\/v1$/, "") || "localhost:3011";
+        CALENDAR_URL.replace(/^https?:\/\//, "").replace(/\/api\/v1$/, "") ||
+        "localhost:3011";
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${calendarHost}/api/v1/calendars/${calendar_id}/ws`;
 
