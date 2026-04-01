@@ -13,7 +13,7 @@ use signapps_common::Result;
 
 use crate::AppState;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Transcription.
 pub struct TranscriptionResponse {
     pub text: String,
@@ -23,7 +23,7 @@ pub struct TranscriptionResponse {
     pub source: TranscriptionSource,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 /// Enum representing TranscriptionSource variants.
 pub enum TranscriptionSource {
@@ -36,6 +36,21 @@ pub enum TranscriptionSource {
 /// Accepts `multipart/form-data` with:
 /// - `audio`: audio blob (webm, ogg, wav, mp4, mp3)
 /// - `language`: optional ISO-639-1 language hint (e.g. "fr", "en")
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/transcribe",
+    request_body(
+        content_type = "multipart/form-data",
+        description = "Audio file and optional language hint",
+        content = String,
+    ),
+    responses(
+        (status = 200, description = "Transcription result", body = TranscriptionResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "audio"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn transcribe_audio(

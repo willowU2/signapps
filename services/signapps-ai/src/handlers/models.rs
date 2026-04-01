@@ -10,7 +10,7 @@ use signapps_common::Result;
 use crate::AppState;
 
 /// Model info.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// ModelInfo data transfer object.
 pub struct ModelInfo {
     pub id: String,
@@ -19,20 +19,31 @@ pub struct ModelInfo {
 }
 
 /// Models list response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Models.
 pub struct ModelsResponse {
     pub models: Vec<ModelInfo>,
 }
 
 /// Query parameters for list_models.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 /// Query parameters for filtering results.
 pub struct ModelsQuery {
     pub provider: Option<String>,
 }
 
 /// List available models (optionally for a specific provider).
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/models",
+    params(ModelsQuery),
+    responses(
+        (status = 200, description = "List of available models", body = ModelsResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "models"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_models(

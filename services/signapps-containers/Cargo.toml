@@ -13,7 +13,7 @@ path = "src/main.rs"
 
 [dependencies]
 signapps-common = { path = "../../crates/signapps-common" }
-signapps-db = { path = "../../crates/signapps-db" }
+signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 axum = { workspace = true }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }
@@ -37,3 +37,5 @@ async-stream = { workspace = true }
 dashmap = { workspace = true }
 jsonwebtoken = { workspace = true }
 rand = { workspace = true }
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }

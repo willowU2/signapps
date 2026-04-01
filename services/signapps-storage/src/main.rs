@@ -14,6 +14,7 @@ use signapps_common::{AiIndexerClient, AuthState, JwtConfig};
 use signapps_db::DatabasePool;
 use tower::ServiceBuilder;
 use tower_http::cors::{AllowOrigin, CorsLayer};
+use utoipa_swagger_ui::SwaggerUi;
 
 mod handlers;
 mod jobs;
@@ -25,6 +26,8 @@ use handlers::{
     acl, audit, backups, buckets, drive, external, favorites, files, health, mounts, permissions,
     preview, quotas, raid, search, shares, stats, storage_settings, trash, webdav,
 };
+use handlers::openapi::StorageApiDoc;
+use utoipa::OpenApi as _;
 use storage::StorageBackend;
 
 /// Application state shared across handlers.
@@ -509,9 +512,13 @@ fn create_router(state: AppState) -> Router {
     // Root-level health check (outside /api/v1 nest so it's reachable at /health)
     let root_health = Router::new().route("/health", get(health::health_check));
 
+    let openapi_routes =
+        SwaggerUi::new("/swagger-ui").url("/api/v1/openapi.json", StorageApiDoc::openapi());
+
     Router::new()
         .merge(root_health)
         .merge(webdav_routes)
+        .merge(openapi_routes)
         .nest("/api/v1", v1_routes)
         .layer(
             ServiceBuilder::new()

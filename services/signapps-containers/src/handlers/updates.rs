@@ -12,8 +12,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 /// Check-update response.
-#[derive(Debug, Serialize)]
-/// Response for CheckUpdate.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct CheckUpdateResponse {
     pub update_available: bool,
     pub current_digest: Option<String>,
@@ -21,22 +20,19 @@ pub struct CheckUpdateResponse {
 }
 
 /// Auto-update toggle request.
-#[derive(Debug, Deserialize)]
-/// Request body for SetAutoUpdate.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct SetAutoUpdateRequest {
     pub auto_update: bool,
 }
 
 /// Auto-update toggle response.
-#[derive(Debug, Serialize)]
-/// Response for AutoUpdate.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct AutoUpdateResponse {
     pub auto_update: bool,
 }
 
 /// Update status for a single container.
-#[derive(Debug, Serialize)]
-/// ContainerUpdateStatus data transfer object.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ContainerUpdateStatus {
     pub id: Uuid,
     pub name: String,
@@ -47,13 +43,26 @@ pub struct ContainerUpdateStatus {
 }
 
 /// Global update status response.
-#[derive(Debug, Serialize)]
-/// Response for UpdatesStatus.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct UpdatesStatusResponse {
     pub containers: Vec<ContainerUpdateStatus>,
 }
 
 /// Check if an update is available for a specific container.
+#[utoipa::path(
+    post,
+    path = "/api/v1/containers/{id}/check-update",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Container ID"),
+    ),
+    responses(
+        (status = 200, description = "Update check result", body = CheckUpdateResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Container not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "updates"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn check_update(
@@ -81,6 +90,21 @@ pub async fn check_update(
 }
 
 /// Toggle auto-update for a container.
+#[utoipa::path(
+    put,
+    path = "/api/v1/containers/{id}/auto-update",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Container ID"),
+    ),
+    request_body = SetAutoUpdateRequest,
+    responses(
+        (status = 200, description = "Auto-update setting updated", body = AutoUpdateResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Container not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "updates"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn set_auto_update(
@@ -115,6 +139,16 @@ pub async fn set_auto_update(
 }
 
 /// Get update status for all containers.
+#[utoipa::path(
+    get,
+    path = "/api/v1/updates/status",
+    responses(
+        (status = 200, description = "Update status for all containers", body = UpdatesStatusResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "updates"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn updates_status(State(state): State<AppState>) -> Result<Json<UpdatesStatusResponse>> {

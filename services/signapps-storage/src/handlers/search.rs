@@ -68,7 +68,7 @@ pub enum SortOrder {
 }
 
 /// Search result.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// SearchResult data transfer object.
 pub struct SearchResult {
     pub bucket: String,
@@ -87,7 +87,7 @@ pub struct SearchResult {
 }
 
 /// Search highlight.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// SearchHighlight data transfer object.
 pub struct SearchHighlight {
     pub field: String,
@@ -95,7 +95,7 @@ pub struct SearchHighlight {
 }
 
 /// File preview info.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// FilePreview data transfer object.
 pub struct FilePreview {
     pub thumbnail_url: Option<String>,
@@ -103,7 +103,7 @@ pub struct FilePreview {
 }
 
 /// Search response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Search.
 pub struct SearchResponse {
     pub results: Vec<SearchResult>,
@@ -114,7 +114,7 @@ pub struct SearchResponse {
 }
 
 /// Search facets for filtering.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// SearchFacets data transfer object.
 pub struct SearchFacets {
     pub buckets: Vec<FacetCount>,
@@ -123,7 +123,7 @@ pub struct SearchFacets {
 }
 
 /// Facet count.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// FacetCount data transfer object.
 pub struct FacetCount {
     pub value: String,
@@ -131,7 +131,7 @@ pub struct FacetCount {
 }
 
 /// Size range facet.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// SizeRangeFacet data transfer object.
 pub struct SizeRangeFacet {
     pub label: String,
@@ -149,7 +149,7 @@ pub struct QuickSearchQuery {
 }
 
 /// Quick search result.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// QuickSearchResult data transfer object.
 pub struct QuickSearchResult {
     pub bucket: String,
@@ -160,7 +160,7 @@ pub struct QuickSearchResult {
 }
 
 /// Quick search response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for QuickSearch.
 pub struct QuickSearchResponse {
     pub results: Vec<QuickSearchResult>,
@@ -200,6 +200,16 @@ fn row_to_search_result(row: &PgRow) -> SearchResult {
 ///  - Sorting: name / size / modified_at (default: modified_at DESC)
 ///  - Pagination via LIMIT / OFFSET
 ///  - Facets computed separately for buckets and file-type categories.
+#[utoipa::path(
+    get,
+    path = "/api/v1/search",
+    responses(
+        (status = 200, description = "Search results", body = SearchResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "search"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn search(
@@ -454,6 +464,20 @@ fn build_size_range_facets(rows: &[PgRow]) -> Vec<SizeRangeFacet> {
 ///
 /// Returns up to `limit` files (default 10, max 50) whose key contains the
 /// query string (case-insensitive).  Searches all buckets for the user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/search/quick",
+    params(
+        ("q" = String, Query, description = "Search query"),
+        ("limit" = Option<i32>, Query, description = "Maximum results (max 50)"),
+    ),
+    responses(
+        (status = 200, description = "Quick search results", body = QuickSearchResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "search"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn quick_search(
@@ -511,6 +535,16 @@ pub struct RecentFilesQuery {
 }
 
 /// Get the 20 most recently updated files for the current user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/search/recent",
+    responses(
+        (status = 200, description = "Recently updated files"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "search"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn recent_files(
@@ -559,6 +593,16 @@ pub async fn recent_files(
 ///
 /// Matches the last path component (filename) using ILIKE, returns distinct
 /// filenames sorted alphabetically.  Useful for autocomplete dropdowns.
+#[utoipa::path(
+    get,
+    path = "/api/v1/search/suggest",
+    responses(
+        (status = 200, description = "Autocomplete suggestions"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "search"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn suggest(
@@ -656,7 +700,7 @@ pub struct OmniSearchQuery {
 }
 
 /// Omni search result item.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// OmniSearchResult data transfer object.
 pub struct OmniSearchResult {
     pub id: uuid::Uuid,
@@ -668,7 +712,7 @@ pub struct OmniSearchResult {
 }
 
 /// Omni search response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for OmniSearch.
 pub struct OmniSearchResponse {
     pub results: Vec<OmniSearchResult>,
@@ -676,6 +720,16 @@ pub struct OmniSearchResponse {
 }
 
 /// Omni-search: Search across ALL entities (Docs, Mail, Files) via global index
+#[utoipa::path(
+    get,
+    path = "/api/v1/search/omni",
+    responses(
+        (status = 200, description = "Omni search results", body = OmniSearchResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "search"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn omni_search(

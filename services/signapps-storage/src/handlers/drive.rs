@@ -77,6 +77,17 @@ pub async fn list_nodes(
 }
 
 /// Create a new folder or link an existing file/document
+#[utoipa::path(
+    post,
+    path = "/api/v1/drive/nodes",
+    responses(
+        (status = 200, description = "Created drive node"),
+        (status = 400, description = "Invalid node_type"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "drive"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_node(
     State(state): State<AppState>,
@@ -121,6 +132,18 @@ pub async fn create_node(
 }
 
 /// Rename or move a node
+#[utoipa::path(
+    put,
+    path = "/api/v1/drive/nodes/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Node ID")),
+    responses(
+        (status = 200, description = "Updated drive node"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Node not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "drive"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_node(
     State(state): State<AppState>,
@@ -163,6 +186,17 @@ pub async fn update_node(
 }
 
 /// Soft delete a node
+#[utoipa::path(
+    delete,
+    path = "/api/v1/drive/nodes/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Node ID")),
+    responses(
+        (status = 200, description = "Node soft-deleted"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "drive"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_node(
     State(state): State<AppState>,

@@ -21,7 +21,7 @@ pub struct ListQuery {
 }
 
 /// Array response with disks.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Array.
 pub struct ArrayResponse {
     #[serde(flatten)]
@@ -31,7 +31,7 @@ pub struct ArrayResponse {
 }
 
 /// Disk action request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for DiskAction.
 pub struct DiskActionRequest {
     pub disk_path: String,
@@ -42,6 +42,16 @@ pub struct DiskActionRequest {
 // =========================================================================
 
 /// List all RAID arrays.
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid/arrays",
+    responses(
+        (status = 200, description = "List of RAID arrays", body = Vec<ArrayResponse>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "raid"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_arrays(State(state): State<AppState>) -> Result<Json<Vec<ArrayResponse>>> {
@@ -68,6 +78,18 @@ pub async fn list_arrays(State(state): State<AppState>) -> Result<Json<Vec<Array
 }
 
 /// Get array by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid/arrays/{id}",
+    params(("id" = Uuid, Path, description = "Array ID")),
+    responses(
+        (status = 200, description = "RAID array details", body = ArrayResponse),
+        (status = 404, description = "Array not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "raid"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_array(
@@ -96,6 +118,18 @@ pub async fn get_array(
 }
 
 /// Get array by name.
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid/arrays/by-name/{name}",
+    params(("name" = String, Path, description = "Array name")),
+    responses(
+        (status = 200, description = "RAID array details", body = ArrayResponse),
+        (status = 404, description = "Array not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "raid"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_array_by_name(
@@ -124,6 +158,18 @@ pub async fn get_array_by_name(
 }
 
 /// Delete array (removes from monitoring, not actual array).
+#[utoipa::path(
+    delete,
+    path = "/api/v1/raid/arrays/{id}",
+    params(("id" = Uuid, Path, description = "Array ID")),
+    responses(
+        (status = 204, description = "Array removed from monitoring"),
+        (status = 404, description = "Array not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "raid"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_array(
@@ -149,6 +195,16 @@ pub async fn delete_array(
 // =========================================================================
 
 /// List all disks.
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid/disks",
+    responses(
+        (status = 200, description = "List of disks"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "raid"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_disks(State(state): State<AppState>) -> Result<Json<Vec<Disk>>> {
@@ -158,6 +214,18 @@ pub async fn list_disks(State(state): State<AppState>) -> Result<Json<Vec<Disk>>
 }
 
 /// Get disk by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid/disks/{id}",
+    params(("id" = Uuid, Path, description = "Disk ID")),
+    responses(
+        (status = 200, description = "Disk details"),
+        (status = 404, description = "Disk not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "raid"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_disk(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<Json<Disk>> {
@@ -172,6 +240,16 @@ pub async fn get_disk(State(state): State<AppState>, Path(id): Path<Uuid>) -> Re
 }
 
 /// Scan for disks (refresh disk list).
+#[utoipa::path(
+    post,
+    path = "/api/v1/raid/disks/scan",
+    responses(
+        (status = 200, description = "Updated list of disks after scan"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "raid"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn scan_disks(State(state): State<AppState>) -> Result<Json<Vec<Disk>>> {
@@ -207,6 +285,17 @@ pub async fn scan_disks(State(state): State<AppState>) -> Result<Json<Vec<Disk>>
 // =========================================================================
 
 /// List recent RAID events.
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid/events",
+    params(("limit" = Option<i64>, Query, description = "Max number of events (default 50)")),
+    responses(
+        (status = 200, description = "List of RAID events"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "raid"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_events(
@@ -220,6 +309,21 @@ pub async fn list_events(
 }
 
 /// Get array events.
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid/arrays/{id}/events",
+    params(
+        ("id" = Uuid, Path, description = "Array ID"),
+        ("limit" = Option<i64>, Query, description = "Max number of events"),
+    ),
+    responses(
+        (status = 200, description = "List of events for the array"),
+        (status = 404, description = "Array not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "raid"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_array_events(
@@ -250,6 +354,16 @@ pub async fn get_array_events(
 // =========================================================================
 
 /// Get overall RAID health.
+#[utoipa::path(
+    get,
+    path = "/api/v1/raid/health",
+    responses(
+        (status = 200, description = "RAID health summary"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "raid"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_health(State(state): State<AppState>) -> Result<Json<RaidHealth>> {
@@ -263,6 +377,18 @@ pub async fn get_health(State(state): State<AppState>) -> Result<Json<RaidHealth
 // =========================================================================
 
 /// Trigger array rebuild.
+#[utoipa::path(
+    post,
+    path = "/api/v1/raid/arrays/{id}/rebuild",
+    params(("id" = Uuid, Path, description = "Array ID")),
+    responses(
+        (status = 200, description = "Rebuild requested successfully"),
+        (status = 404, description = "Array not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "raid"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn rebuild_array(
@@ -297,6 +423,20 @@ pub async fn rebuild_array(
 }
 
 /// Add disk to array.
+#[utoipa::path(
+    post,
+    path = "/api/v1/raid/arrays/{id}/disks",
+    params(("id" = Uuid, Path, description = "Array ID")),
+    request_body = DiskActionRequest,
+    responses(
+        (status = 200, description = "Disk added to array"),
+        (status = 400, description = "Disk already in an array"),
+        (status = 404, description = "Array or disk not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "raid"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn add_disk_to_array(
@@ -352,6 +492,22 @@ pub async fn add_disk_to_array(
 }
 
 /// Remove disk from array.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/raid/arrays/{array_id}/disks/{disk_id}",
+    params(
+        ("array_id" = Uuid, Path, description = "Array ID"),
+        ("disk_id" = Uuid, Path, description = "Disk ID"),
+    ),
+    responses(
+        (status = 200, description = "Disk removed from array"),
+        (status = 400, description = "Disk not in this array"),
+        (status = 404, description = "Array or disk not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "raid"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_disk_from_array(

@@ -14,7 +14,7 @@ use crate::memory::ConversationMemory;
 use crate::AppState;
 
 /// Query parameters for listing conversations.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 /// Query parameters for filtering results.
 pub struct ListParams {
     /// Maximum number of conversations to return (default 50).
@@ -22,7 +22,7 @@ pub struct ListParams {
 }
 
 /// Query parameters for fetching messages.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 /// Query parameters for filtering results.
 pub struct MessagesParams {
     /// Maximum number of messages to return (default 100).
@@ -30,22 +30,40 @@ pub struct MessagesParams {
 }
 
 /// Response for listing conversations.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Conversations.
 pub struct ConversationsResponse {
+    /// List of conversations for the current user.
+    #[schema(value_type = Vec<serde_json::Value>)]
     pub conversations: Vec<Conversation>,
+    /// Total number of conversations.
     pub count: usize,
 }
 
 /// Response for a single conversation with its messages.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// ConversationDetail data transfer object.
 pub struct ConversationDetail {
+    /// The conversation metadata.
+    #[schema(value_type = serde_json::Value)]
     pub conversation: Conversation,
+    /// Messages in the conversation.
+    #[schema(value_type = Vec<serde_json::Value>)]
     pub messages: Vec<ConversationMessage>,
 }
 
 /// List conversations for the authenticated user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/conversations",
+    params(ListParams),
+    responses(
+        (status = 200, description = "List of conversations", body = ConversationsResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "conversations"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_conversations(
@@ -65,6 +83,21 @@ pub async fn list_conversations(
 }
 
 /// Get a single conversation with its messages.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/conversations/{id}",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Conversation UUID"),
+        MessagesParams,
+    ),
+    responses(
+        (status = 200, description = "Conversation with messages", body = ConversationDetail),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Conversation not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "conversations"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_conversation(
@@ -87,6 +120,20 @@ pub async fn get_conversation(
 }
 
 /// Delete a conversation and all its messages.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/ai/conversations/{id}",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Conversation UUID"),
+    ),
+    responses(
+        (status = 204, description = "Conversation deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Conversation not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "conversations"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_conversation(

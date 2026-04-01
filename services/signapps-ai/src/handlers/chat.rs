@@ -17,7 +17,7 @@ use crate::tools::executor::ToolCallEvent;
 use crate::AppState;
 
 /// Chat request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for Chat.
 pub struct ChatRequest {
     /// User question.
@@ -52,7 +52,7 @@ fn default_enable_tools() -> bool {
 }
 
 /// Source reference.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// SourceReference data transfer object.
 pub struct SourceReference {
     pub document_id: Uuid,
@@ -62,7 +62,7 @@ pub struct SourceReference {
 }
 
 /// Chat response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Chat.
 pub struct ChatResponse {
     pub answer: String,
@@ -114,6 +114,19 @@ fn extract_jwt(headers: &HeaderMap) -> Option<String> {
 }
 
 /// Chat with RAG (non-streaming).
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/chat",
+    request_body = ChatRequest,
+    responses(
+        (status = 200, description = "AI answer with optional source references", body = ChatResponse),
+        (status = 400, description = "Invalid request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "chat"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn chat(
@@ -160,6 +173,18 @@ pub async fn chat(
 }
 
 /// Chat with RAG + tool calling (streaming via SSE).
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/chat/stream",
+    request_body = ChatRequest,
+    responses(
+        (status = 200, description = "Server-sent event stream of ChatEvent tokens"),
+        (status = 400, description = "Invalid request"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "chat"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn chat_stream(

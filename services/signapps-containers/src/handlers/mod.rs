@@ -6,6 +6,7 @@ pub mod containers;
 pub mod health;
 pub mod images;
 pub mod networks;
+pub mod openapi;
 pub mod quotas;
 pub mod store;
 pub mod updates;

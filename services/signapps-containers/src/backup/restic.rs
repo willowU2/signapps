@@ -12,7 +12,7 @@ pub struct ResticClient {
 }
 
 /// A restic snapshot.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct Snapshot {
     pub id: String,
     pub short_id: String,

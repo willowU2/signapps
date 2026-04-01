@@ -10,45 +10,67 @@ use signapps_runtime::{HardwareProfile, ModelEntry};
 
 use crate::AppState;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for LocalModels.
 pub struct LocalModelsResponse {
+    /// List of downloaded and ready models.
+    #[schema(value_type = Vec<serde_json::Value>)]
     pub models: Vec<ModelEntry>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for AvailableModels.
 pub struct AvailableModelsResponse {
+    /// List of all known models (including not yet downloaded).
+    #[schema(value_type = Vec<serde_json::Value>)]
     pub models: Vec<ModelEntry>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 /// Query parameters for filtering results.
 pub struct SearchQuery {
+    /// Search query string.
     pub q: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for DownloadModel.
 pub struct DownloadModelRequest {
+    /// Model identifier to download.
     pub model_id: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for DownloadModel.
 pub struct DownloadModelResponse {
+    /// Model identifier.
     pub model_id: String,
+    /// Download status ("ready" or "downloading").
     pub status: String,
+    /// Local path if already downloaded.
     pub path: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Hardware.
 pub struct HardwareResponse {
+    /// Detected hardware profile.
+    #[schema(value_type = serde_json::Value)]
     pub hardware: HardwareProfile,
 }
 
 /// List downloaded/ready models.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/models/local",
+    responses(
+        (status = 200, description = "List of downloaded models", body = LocalModelsResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "Model manager not initialized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "models"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_local_models(
@@ -74,6 +96,17 @@ pub async fn list_local_models(
 }
 
 /// List all available models (including not-yet-downloaded).
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/models/available",
+    responses(
+        (status = 200, description = "List of all known models", body = AvailableModelsResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "Model manager not initialized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "models"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_available_models(
@@ -114,6 +147,19 @@ pub async fn search_models(
 }
 
 /// Download a model (async — spawns background task and returns immediately).
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/models/download",
+    request_body = DownloadModelRequest,
+    responses(
+        (status = 200, description = "Download initiated or model already ready", body = DownloadModelResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Model not found in registry"),
+        (status = 503, description = "Model manager not initialized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "models"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn download_model(
@@ -159,6 +205,21 @@ pub async fn download_model(
 }
 
 /// Get status of a single model.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/models/{model_id}",
+    params(
+        ("model_id" = String, Path, description = "Model identifier"),
+    ),
+    responses(
+        (status = 200, description = "Model entry with status"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Model not found"),
+        (status = 503, description = "Model manager not initialized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "models"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_model_status(
@@ -179,6 +240,20 @@ pub async fn get_model_status(
 }
 
 /// Delete a downloaded model.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/ai/models/{model_id}",
+    params(
+        ("model_id" = String, Path, description = "Model identifier"),
+    ),
+    responses(
+        (status = 200, description = "Model deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "Model manager not initialized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "models"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_model(
@@ -204,6 +279,17 @@ pub async fn delete_model(
 }
 
 /// Get detected hardware profile.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/hardware",
+    responses(
+        (status = 200, description = "Detected hardware profile", body = HardwareResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "Hardware detection not available"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "models"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_hardware(

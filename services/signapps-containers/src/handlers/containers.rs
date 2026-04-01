@@ -24,8 +24,7 @@ pub struct ListQuery {
 }
 
 /// Container response with DB and Docker info.
-#[derive(Debug, Serialize)]
-/// Response for Container.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ContainerResponse {
     pub id: Uuid,
     pub docker_id: Option<String>,
@@ -75,16 +74,14 @@ fn extract_store_meta(
 }
 
 /// Container action response.
-#[derive(Debug, Serialize)]
-/// Response for Action.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ActionResponse {
     pub success: bool,
     pub message: String,
 }
 
 /// Stop container request.
-#[derive(Debug, Deserialize)]
-/// Request body for Stop.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct StopRequest {
     pub timeout_secs: Option<i64>,
 }
@@ -98,6 +95,21 @@ pub struct LogsQuery {
 
 /// List containers from database with Docker info enrichment.
 /// Admin (role >= 2) sees all containers, regular users see only their own.
+#[utoipa::path(
+    get,
+    path = "/api/v1/containers",
+    params(
+        ("all" = Option<bool>, Query, description = "Include stopped containers"),
+        ("limit" = Option<i64>, Query, description = "Maximum number of results"),
+        ("offset" = Option<i64>, Query, description = "Pagination offset"),
+    ),
+    responses(
+        (status = 200, description = "List of containers", body = Vec<ContainerResponse>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list(
@@ -207,6 +219,23 @@ pub async fn list(
 
 /// List containers for a specific user (admin only).
 /// Filters by user_id path parameter.
+#[utoipa::path(
+    get,
+    path = "/api/v1/users/{user_id}/containers",
+    params(
+        ("user_id" = uuid::Uuid, Path, description = "User ID"),
+        ("all" = Option<bool>, Query, description = "Include stopped containers"),
+        ("limit" = Option<i64>, Query, description = "Maximum number of results"),
+        ("offset" = Option<i64>, Query, description = "Pagination offset"),
+    ),
+    responses(
+        (status = 200, description = "List of containers for the user", body = Vec<ContainerResponse>),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — admin only"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list_by_user(
@@ -293,6 +322,21 @@ pub async fn list_docker(
 }
 
 /// Get container by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/containers/{id}",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Container ID"),
+    ),
+    responses(
+        (status = 200, description = "Container details", body = ContainerResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Container not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn get(
@@ -349,6 +393,19 @@ pub async fn get(
 }
 
 /// Create a new container.
+#[utoipa::path(
+    post,
+    path = "/api/v1/containers",
+    request_body = crate::docker::ContainerConfig,
+    responses(
+        (status = 200, description = "Container created and started", body = ContainerResponse),
+        (status = 400, description = "Invalid configuration"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Quota exceeded"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn create(
@@ -431,6 +488,21 @@ pub async fn create(
 
 /// Start a container.
 /// If the container has no docker_id but has a saved config, create it first.
+#[utoipa::path(
+    post,
+    path = "/api/v1/containers/{id}/start",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Container ID"),
+    ),
+    responses(
+        (status = 200, description = "Container started", body = ActionResponse),
+        (status = 400, description = "Container not linked to Docker"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Container not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn start(
@@ -483,6 +555,22 @@ pub async fn start(
 }
 
 /// Stop a container.
+#[utoipa::path(
+    post,
+    path = "/api/v1/containers/{id}/stop",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Container ID"),
+    ),
+    request_body(content = Option<StopRequest>, description = "Optional stop parameters"),
+    responses(
+        (status = 200, description = "Container stopped", body = ActionResponse),
+        (status = 400, description = "Container not linked to Docker"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Container not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn stop(
@@ -512,6 +600,21 @@ pub async fn stop(
 }
 
 /// Restart a container.
+#[utoipa::path(
+    post,
+    path = "/api/v1/containers/{id}/restart",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Container ID"),
+    ),
+    responses(
+        (status = 200, description = "Container restarted", body = ActionResponse),
+        (status = 400, description = "Container not linked to Docker"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Container not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn restart(
@@ -589,6 +692,21 @@ async fn deprovision_app_database(pool: &signapps_db::DatabasePool, app_id: &str
 }
 
 /// Delete a container.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/containers/{id}",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Container ID"),
+    ),
+    responses(
+        (status = 204, description = "Container deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Container not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn delete(
@@ -652,6 +770,22 @@ pub async fn delete(
 }
 
 /// Update a container (pull latest image and recreate).
+#[utoipa::path(
+    post,
+    path = "/api/v1/containers/{id}/update",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Container ID"),
+    ),
+    responses(
+        (status = 200, description = "Container updated with latest image", body = ContainerResponse),
+        (status = 400, description = "Container not linked to Docker or no saved config"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Container not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn update(
@@ -736,6 +870,22 @@ pub async fn update(
 }
 
 /// Get container logs.
+#[utoipa::path(
+    get,
+    path = "/api/v1/containers/{id}/logs",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Container ID"),
+        ("tail" = Option<usize>, Query, description = "Number of log lines to return from the end"),
+    ),
+    responses(
+        (status = 200, description = "Log lines", body = Vec<String>),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Container not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn logs(
@@ -772,6 +922,21 @@ pub async fn logs(
 }
 
 /// Get container stats.
+#[utoipa::path(
+    get,
+    path = "/api/v1/containers/{id}/stats",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Container ID"),
+    ),
+    responses(
+        (status = 200, description = "Container resource stats", body = crate::docker::ContainerStats),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Container not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn stats(
@@ -807,6 +972,20 @@ pub async fn stats(
 }
 
 /// Start a Docker container directly by docker_id.
+#[utoipa::path(
+    post,
+    path = "/api/v1/containers/docker/{docker_id}/start",
+    params(
+        ("docker_id" = String, Path, description = "Docker container ID"),
+    ),
+    responses(
+        (status = 200, description = "Docker container started", body = ActionResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — system containers cannot be modified"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn start_docker(
@@ -838,6 +1017,20 @@ pub async fn start_docker(
 }
 
 /// Restart a Docker container directly by docker_id.
+#[utoipa::path(
+    post,
+    path = "/api/v1/containers/docker/{docker_id}/restart",
+    params(
+        ("docker_id" = String, Path, description = "Docker container ID"),
+    ),
+    responses(
+        (status = 200, description = "Docker container restarted", body = ActionResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — system containers cannot be modified"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn restart_docker(
@@ -869,6 +1062,20 @@ pub async fn restart_docker(
 }
 
 /// Get logs from a Docker container directly by docker_id.
+#[utoipa::path(
+    get,
+    path = "/api/v1/containers/docker/{docker_id}/logs",
+    params(
+        ("docker_id" = String, Path, description = "Docker container ID"),
+        ("tail" = Option<usize>, Query, description = "Number of log lines from the end"),
+    ),
+    responses(
+        (status = 200, description = "Log lines", body = Vec<String>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn logs_docker(
@@ -881,6 +1088,19 @@ pub async fn logs_docker(
 }
 
 /// Get stats from a Docker container directly by docker_id.
+#[utoipa::path(
+    get,
+    path = "/api/v1/containers/docker/{docker_id}/stats",
+    params(
+        ("docker_id" = String, Path, description = "Docker container ID"),
+    ),
+    responses(
+        (status = 200, description = "Container resource stats", body = crate::docker::ContainerStats),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn stats_docker(
@@ -892,6 +1112,19 @@ pub async fn stats_docker(
 }
 
 /// Inspect a Docker container directly by docker_id (for unmanaged containers).
+#[utoipa::path(
+    get,
+    path = "/api/v1/containers/docker/{docker_id}/inspect",
+    params(
+        ("docker_id" = String, Path, description = "Docker container ID"),
+    ),
+    responses(
+        (status = 200, description = "Container details", body = crate::docker::ContainerInfo),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn inspect_docker(
@@ -903,6 +1136,21 @@ pub async fn inspect_docker(
 }
 
 /// Stop a Docker container directly by docker_id.
+#[utoipa::path(
+    post,
+    path = "/api/v1/containers/docker/{docker_id}/stop",
+    params(
+        ("docker_id" = String, Path, description = "Docker container ID"),
+    ),
+    request_body(content = Option<StopRequest>, description = "Optional stop parameters"),
+    responses(
+        (status = 200, description = "Docker container stopped", body = ActionResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — system containers cannot be modified"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn stop_docker(
@@ -936,6 +1184,20 @@ pub async fn stop_docker(
 }
 
 /// Remove a Docker container directly by docker_id.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/containers/docker/{docker_id}",
+    params(
+        ("docker_id" = String, Path, description = "Docker container ID"),
+    ),
+    responses(
+        (status = 204, description = "Docker container removed"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — system containers cannot be modified"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "containers"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn remove_docker(

@@ -17,6 +17,17 @@ where
     (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/files/{file_id}/versions",
+    params(("file_id" = Uuid, Path, description = "File ID")),
+    responses(
+        (status = 200, description = "List of file versions"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "versions"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_versions(
@@ -31,6 +42,22 @@ pub async fn list_versions(
     Ok(Json(versions))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/files/{file_id}/versions/{version_id}/restore",
+    params(
+        ("file_id" = Uuid, Path, description = "File ID"),
+        ("version_id" = Uuid, Path, description = "Version ID"),
+    ),
+    responses(
+        (status = 200, description = "Version restored successfully"),
+        (status = 400, description = "Version does not belong to this file"),
+        (status = 404, description = "File or version not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "versions"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn restore_version(

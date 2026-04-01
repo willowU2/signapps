@@ -999,6 +999,16 @@ async fn handle_copy(
 // ─── WebDAV admin config handlers ─────────────────────────────────────────────
 
 /// `GET /api/v1/webdav/config` — return global WebDAV configuration.
+#[utoipa::path(
+    get,
+    path = "/api/v1/webdav/config",
+    responses(
+        (status = 200, description = "WebDAV configuration"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "webdav"
+)]
 #[tracing::instrument(skip(state), name = "get_webdav_config")]
 pub async fn get_webdav_config(
     State(state): State<AppState>,
@@ -1025,6 +1035,16 @@ pub async fn get_webdav_config(
 }
 
 /// `PUT /api/v1/webdav/config` — update global WebDAV enabled flag.
+#[utoipa::path(
+    put,
+    path = "/api/v1/webdav/config",
+    responses(
+        (status = 200, description = "Updated WebDAV configuration"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "webdav"
+)]
 #[tracing::instrument(skip(state, payload), name = "update_webdav_config")]
 pub async fn update_webdav_config(
     State(state): State<AppState>,

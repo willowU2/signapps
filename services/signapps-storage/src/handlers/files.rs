@@ -232,7 +232,7 @@ async fn trigger_ai_indexing(
 }
 
 /// Upload response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Upload.
 pub struct UploadResponse {
     pub id: Uuid,
@@ -243,13 +243,29 @@ pub struct UploadResponse {
 }
 
 /// Delete files request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for DeleteFiles.
 pub struct DeleteFilesRequest {
     pub keys: Vec<String>,
 }
 
 /// List files in a bucket.
+#[utoipa::path(
+    get,
+    path = "/api/v1/files/{bucket}",
+    params(
+        ("bucket" = String, Path, description = "Bucket name"),
+        ("prefix" = Option<String>, Query, description = "Path prefix filter"),
+        ("max_keys" = Option<u32>, Query, description = "Maximum number of results"),
+        ("continuation_token" = Option<String>, Query, description = "Pagination token"),
+    ),
+    responses(
+        (status = 200, description = "List of files in bucket"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "files"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list(
@@ -262,6 +278,21 @@ pub async fn list(
 }
 
 /// Get file info.
+#[utoipa::path(
+    get,
+    path = "/api/v1/files/{bucket}/info/{key}",
+    params(
+        ("bucket" = String, Path, description = "Bucket name"),
+        ("key" = String, Path, description = "Object key"),
+    ),
+    responses(
+        (status = 200, description = "File metadata"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "File not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "files"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_info(
@@ -273,6 +304,21 @@ pub async fn get_info(
 }
 
 /// Download a file.
+#[utoipa::path(
+    get,
+    path = "/api/v1/files/{bucket}/{key}",
+    params(
+        ("bucket" = String, Path, description = "Bucket name"),
+        ("key" = String, Path, description = "Object key"),
+    ),
+    responses(
+        (status = 200, description = "File content (binary download)"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "File not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "files"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn download(
@@ -307,6 +353,19 @@ pub async fn download(
 const MAX_UPLOAD_SIZE: usize = 500 * 1024 * 1024;
 
 /// Upload a file via multipart form.
+#[utoipa::path(
+    post,
+    path = "/api/v1/files/{bucket}",
+    params(("bucket" = String, Path, description = "Target bucket")),
+    responses(
+        (status = 200, description = "Uploaded files list", body = Vec<UploadResponse>),
+        (status = 400, description = "Invalid multipart or file too large"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Quota exceeded"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "files"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn upload(
@@ -470,6 +529,23 @@ pub async fn upload(
 }
 
 /// Upload a file with explicit key.
+#[utoipa::path(
+    put,
+    path = "/api/v1/files/{bucket}/{key}",
+    params(
+        ("bucket" = String, Path, description = "Target bucket"),
+        ("key" = String, Path, description = "Object key"),
+    ),
+    request_body(content_type = "application/octet-stream", description = "Raw file bytes"),
+    responses(
+        (status = 200, description = "Upload result", body = UploadResponse),
+        (status = 400, description = "File too large"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Quota exceeded"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "files"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn upload_with_key(
@@ -594,6 +670,21 @@ pub async fn upload_with_key(
 }
 
 /// Delete a file.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/files/{bucket}/{key}",
+    params(
+        ("bucket" = String, Path, description = "Bucket name"),
+        ("key" = String, Path, description = "Object key"),
+    ),
+    responses(
+        (status = 204, description = "File deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "File not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "files"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(
@@ -627,6 +718,18 @@ pub async fn delete(
 }
 
 /// Delete multiple files.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/files/{bucket}/batch",
+    params(("bucket" = String, Path, description = "Bucket name")),
+    request_body = DeleteFilesRequest,
+    responses(
+        (status = 204, description = "Files deleted"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "files"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_many(
@@ -656,6 +759,18 @@ pub async fn delete_many(
 }
 
 /// Copy a file.
+#[utoipa::path(
+    post,
+    path = "/api/v1/files/copy",
+    responses(
+        (status = 200, description = "File copied"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Quota exceeded"),
+        (status = 404, description = "Source file not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "files"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn copy(
@@ -723,6 +838,17 @@ pub async fn copy(
 }
 
 /// Move a file.
+#[utoipa::path(
+    post,
+    path = "/api/v1/files/move",
+    responses(
+        (status = 200, description = "File moved"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Source file not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "files"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn move_file(

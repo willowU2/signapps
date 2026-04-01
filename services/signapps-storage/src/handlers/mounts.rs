@@ -30,7 +30,7 @@ fn is_valid_mount_option(opt: &str) -> bool {
 }
 
 /// Mount point information.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 /// MountPoint data transfer object.
 pub struct MountPoint {
     pub id: Uuid,
@@ -47,7 +47,7 @@ pub struct MountPoint {
 }
 
 /// Request to mount a device.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for Mount.
 pub struct MountRequest {
     /// Device path (e.g., /dev/sdb1)
@@ -61,7 +61,7 @@ pub struct MountRequest {
 }
 
 /// Response after a mount operation.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Mount.
 pub struct MountResponse {
     pub success: bool,
@@ -70,6 +70,16 @@ pub struct MountResponse {
 }
 
 /// List all mount points.
+#[utoipa::path(
+    get,
+    path = "/api/v1/mounts",
+    responses(
+        (status = 200, description = "List of mount points", body = Vec<MountPoint>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "mounts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_mounts(State(_state): State<AppState>) -> Result<Json<Vec<MountPoint>>> {
@@ -78,6 +88,18 @@ pub async fn list_mounts(State(_state): State<AppState>) -> Result<Json<Vec<Moun
 }
 
 /// Mount a device.
+#[utoipa::path(
+    post,
+    path = "/api/v1/mounts",
+    request_body = MountRequest,
+    responses(
+        (status = 200, description = "Mount result", body = MountResponse),
+        (status = 400, description = "Invalid mount parameters"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "mounts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn mount(
@@ -187,6 +209,18 @@ pub async fn mount(
 }
 
 /// Unmount a filesystem.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/mounts/{path}",
+    params(("path" = String, Path, description = "URL-encoded mount path")),
+    responses(
+        (status = 204, description = "Filesystem unmounted"),
+        (status = 400, description = "Protected path or not mounted"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "mounts"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn unmount(

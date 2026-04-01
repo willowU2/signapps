@@ -2,9 +2,10 @@ use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a hardware asset.
 pub struct HardwareAsset {
+    #[schema(value_type = uuid::Uuid)]
     pub id: DefaultUuidField,
     pub name: String,
     pub r#type: String,
@@ -24,7 +25,7 @@ pub struct HardwareAsset {
 // Handling postgres optional uuid type mappings that sqlx might complain about
 pub type DefaultUuidField = Uuid;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a create hardware req.
 pub struct CreateHardwareReq {
     pub name: String,
@@ -39,7 +40,7 @@ pub struct CreateHardwareReq {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a update hardware req.
 pub struct UpdateHardwareReq {
     pub name: Option<String>,

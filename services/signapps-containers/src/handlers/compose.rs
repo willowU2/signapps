@@ -16,8 +16,7 @@ use crate::AppState;
 use super::containers::ContainerResponse;
 
 /// Import compose request body.
-#[derive(Debug, serde::Deserialize)]
-/// Request body for ImportCompose.
+#[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
 pub struct ImportComposeRequest {
     /// Raw YAML or JSON content of the compose file.
     pub yaml: String,
@@ -26,15 +25,13 @@ pub struct ImportComposeRequest {
 }
 
 /// Preview response showing parsed services before install.
-#[derive(Debug, serde::Serialize)]
-/// ComposePreview data transfer object.
+#[derive(Debug, serde::Serialize, utoipa::ToSchema)]
 pub struct ComposePreview {
     pub services: Vec<ServicePreview>,
 }
 
 /// Preview of a single service parsed from compose.
-#[derive(Debug, serde::Serialize)]
-/// ServicePreview data transfer object.
+#[derive(Debug, serde::Serialize, utoipa::ToSchema)]
 pub struct ServicePreview {
     pub service_name: String,
     pub image: String,
@@ -43,29 +40,41 @@ pub struct ServicePreview {
     pub volumes: Vec<VolumePreview>,
 }
 
-#[derive(Debug, serde::Serialize)]
-/// PortPreview data transfer object.
+/// Port preview.
+#[derive(Debug, serde::Serialize, utoipa::ToSchema)]
 pub struct PortPreview {
     pub host: u16,
     pub container: u16,
     pub protocol: String,
 }
 
-#[derive(Debug, serde::Serialize)]
-/// EnvPreview data transfer object.
+/// Environment variable preview.
+#[derive(Debug, serde::Serialize, utoipa::ToSchema)]
 pub struct EnvPreview {
     pub key: String,
     pub default: Option<String>,
 }
 
-#[derive(Debug, serde::Serialize)]
-/// VolumePreview data transfer object.
+/// Volume preview.
+#[derive(Debug, serde::Serialize, utoipa::ToSchema)]
 pub struct VolumePreview {
     pub source: String,
     pub target: String,
 }
 
 /// Preview a compose file without installing.
+#[utoipa::path(
+    post,
+    path = "/api/v1/compose/preview",
+    request_body = ImportComposeRequest,
+    responses(
+        (status = 200, description = "Parsed compose preview", body = ComposePreview),
+        (status = 400, description = "Invalid compose file"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "compose"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn preview_compose(
@@ -79,6 +88,18 @@ pub async fn preview_compose(
 }
 
 /// Import and install containers from a raw compose file.
+#[utoipa::path(
+    post,
+    path = "/api/v1/compose/import",
+    request_body = ImportComposeRequest,
+    responses(
+        (status = 200, description = "Containers created from compose", body = Vec<crate::handlers::containers::ContainerResponse>),
+        (status = 400, description = "Invalid compose file or quota exceeded"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "compose"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn import_compose(

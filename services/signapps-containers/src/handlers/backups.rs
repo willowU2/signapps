@@ -15,28 +15,28 @@ use crate::AppState;
 
 // === Responses ===
 
-#[derive(Debug, Serialize)]
-/// Response for ProfileList.
+/// Profile list response.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ProfileListResponse {
     pub profiles: Vec<BackupProfile>,
 }
 
-#[derive(Debug, Serialize)]
-/// Response for RunList.
+/// Run list response.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct RunListResponse {
     pub runs: Vec<BackupRun>,
 }
 
-#[derive(Debug, Serialize)]
-/// Response for SnapshotList.
+/// Snapshot list response.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SnapshotListResponse {
     pub snapshots: Vec<crate::backup::restic::Snapshot>,
 }
 
 // === Requests ===
 
-#[derive(Debug, Deserialize)]
-/// Request body for Restore.
+/// Restore request.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct RestoreRequest {
     pub snapshot_id: String,
     pub target_path: Option<String>,
@@ -45,6 +45,16 @@ pub struct RestoreRequest {
 // === Handlers ===
 
 /// List all backup profiles.
+#[utoipa::path(
+    get,
+    path = "/api/v1/backups",
+    responses(
+        (status = 200, description = "List of backup profiles", body = ProfileListResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_profiles(
@@ -64,6 +74,20 @@ pub async fn list_profiles(
 }
 
 /// Get a single backup profile.
+#[utoipa::path(
+    get,
+    path = "/api/v1/backups/{id}",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Backup profile ID"),
+    ),
+    responses(
+        (status = 200, description = "Backup profile", body = signapps_db::models::BackupProfile),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Backup profile not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_profile(
@@ -80,6 +104,18 @@ pub async fn get_profile(
 }
 
 /// Create a new backup profile.
+#[utoipa::path(
+    post,
+    path = "/api/v1/backups",
+    request_body = signapps_db::models::CreateBackupProfile,
+    responses(
+        (status = 200, description = "Backup profile created", body = signapps_db::models::BackupProfile),
+        (status = 400, description = "Invalid configuration"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_profile(
@@ -112,6 +148,21 @@ pub async fn create_profile(
 }
 
 /// Update a backup profile.
+#[utoipa::path(
+    put,
+    path = "/api/v1/backups/{id}",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Backup profile ID"),
+    ),
+    request_body = signapps_db::models::UpdateBackupProfile,
+    responses(
+        (status = 200, description = "Backup profile updated", body = signapps_db::models::BackupProfile),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Backup profile not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_profile(
@@ -132,6 +183,20 @@ pub async fn update_profile(
 }
 
 /// Delete a backup profile.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/backups/{id}",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Backup profile ID"),
+    ),
+    responses(
+        (status = 200, description = "Backup profile deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Backup profile not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_profile(
@@ -152,6 +217,20 @@ pub async fn delete_profile(
 }
 
 /// Run a backup now.
+#[utoipa::path(
+    post,
+    path = "/api/v1/backups/{id}/run",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Backup profile ID"),
+    ),
+    responses(
+        (status = 200, description = "Backup run initiated", body = signapps_db::models::BackupRun),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Backup profile not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn run_backup(
@@ -193,6 +272,20 @@ pub async fn run_backup(
 }
 
 /// List snapshots for a backup profile.
+#[utoipa::path(
+    get,
+    path = "/api/v1/backups/{id}/snapshots",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Backup profile ID"),
+    ),
+    responses(
+        (status = 200, description = "List of restic snapshots", body = SnapshotListResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Backup profile not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_snapshots(
@@ -219,6 +312,21 @@ pub async fn list_snapshots(
 }
 
 /// Restore a snapshot.
+#[utoipa::path(
+    post,
+    path = "/api/v1/backups/{id}/restore",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Backup profile ID"),
+    ),
+    request_body = RestoreRequest,
+    responses(
+        (status = 200, description = "Snapshot restored"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Backup profile not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn restore_snapshot(
@@ -263,6 +371,19 @@ pub async fn restore_snapshot(
 }
 
 /// List backup runs for a profile.
+#[utoipa::path(
+    get,
+    path = "/api/v1/backups/{id}/runs",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Backup profile ID"),
+    ),
+    responses(
+        (status = 200, description = "List of backup runs", body = RunListResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_runs(

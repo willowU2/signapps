@@ -35,6 +35,17 @@ fn parse_capability(s: &str) -> Result<Capability, (StatusCode, String)> {
 }
 
 /// List all registered capabilities with backend information.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/capabilities",
+    responses(
+        (status = 200, description = "List of registered AI capabilities"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "Gateway not initialized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "capabilities"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_capabilities(
@@ -50,6 +61,22 @@ pub async fn list_capabilities(
 }
 
 /// Get quality advice for a specific capability (local vs cloud comparison).
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/capabilities/{cap_name}/advice",
+    params(
+        ("cap_name" = String, Path, description = "Capability name (llm, vision, image_gen, etc.)"),
+    ),
+    responses(
+        (status = 200, description = "Quality advice for the capability"),
+        (status = 400, description = "Unknown capability"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "No workers for capability"),
+        (status = 503, description = "Gateway not initialized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "capabilities"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_capability_advice(

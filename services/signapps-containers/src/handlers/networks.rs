@@ -7,6 +7,17 @@ use crate::docker::{NetworkInfo, VolumeInfo};
 use crate::AppState;
 
 /// List all Docker networks.
+#[utoipa::path(
+    get,
+    path = "/api/v1/networks",
+    responses(
+        (status = 200, description = "List of Docker networks", body = Vec<crate::docker::NetworkInfo>),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — admin only"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "networks"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list_networks(State(state): State<AppState>) -> Result<Json<Vec<NetworkInfo>>> {
@@ -15,6 +26,17 @@ pub async fn list_networks(State(state): State<AppState>) -> Result<Json<Vec<Net
 }
 
 /// List all Docker volumes.
+#[utoipa::path(
+    get,
+    path = "/api/v1/volumes",
+    responses(
+        (status = 200, description = "List of Docker volumes", body = Vec<crate::docker::VolumeInfo>),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — admin only"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "networks"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list_volumes(State(state): State<AppState>) -> Result<Json<Vec<VolumeInfo>>> {

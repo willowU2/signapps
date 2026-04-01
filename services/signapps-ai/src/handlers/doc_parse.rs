@@ -14,10 +14,13 @@ use crate::workers::{DocParseWorker, ParsedDocument, ParsedTable};
 // ---------------------------------------------------------------------------
 
 /// Response for the table extraction endpoint.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for ExtractTables.
 pub struct ExtractTablesResponse {
+    /// Extracted tables from the document.
+    #[schema(value_type = Vec<serde_json::Value>)]
     pub tables: Vec<ParsedTable>,
+    /// Number of tables extracted.
     pub count: usize,
 }
 
@@ -53,6 +56,23 @@ fn create_docparse_worker() -> Box<dyn DocParseWorker + Send + Sync> {
 ///
 /// Accepts `multipart/form-data` with:
 /// - `document` — the document file (required)
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/doc/parse",
+    request_body(
+        content_type = "multipart/form-data",
+        description = "Document file to parse",
+        content = String,
+    ),
+    responses(
+        (status = 200, description = "Parsed document structure"),
+        (status = 400, description = "Missing or empty document"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Parsing failed"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "documents"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn parse_document(
@@ -119,6 +139,23 @@ pub async fn parse_document(
 ///
 /// Accepts `multipart/form-data` with:
 /// - `document` — the document file (required)
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/doc/tables",
+    request_body(
+        content_type = "multipart/form-data",
+        description = "Document file to extract tables from",
+        content = String,
+    ),
+    responses(
+        (status = 200, description = "Extracted tables", body = ExtractTablesResponse),
+        (status = 400, description = "Missing or empty document"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Table extraction failed"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "documents"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn extract_tables(

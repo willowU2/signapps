@@ -9,16 +9,33 @@ use crate::models::GpuState;
 use crate::AppState;
 
 /// Response for the GPU status endpoint.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for GpuStatus.
 pub struct GpuStatusResponse {
+    /// List of GPU devices with loaded model info.
+    #[schema(value_type = Vec<serde_json::Value>)]
     pub gpus: Vec<GpuState>,
+    /// Total VRAM in megabytes.
     pub total_vram_mb: u64,
+    /// Free VRAM in megabytes.
     pub free_vram_mb: u64,
+    /// Hardware tier classification.
+    #[schema(value_type = String)]
     pub tier: HardwareTier,
 }
 
 /// Get current GPU status including loaded models and VRAM usage.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/gpu/status",
+    responses(
+        (status = 200, description = "Current GPU status", body = GpuStatusResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "Gateway not initialized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "gpu"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_gpu_status(
@@ -46,6 +63,16 @@ pub async fn get_gpu_status(
 }
 
 /// List load profiles for all hardware tiers.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/gpu/profiles",
+    responses(
+        (status = 200, description = "Load profiles for all hardware tiers"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "gpu"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_profiles() -> Json<Vec<LoadProfile>> {
@@ -62,6 +89,17 @@ pub async fn list_profiles() -> Json<Vec<LoadProfile>> {
 }
 
 /// Get recommended models based on detected hardware.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/gpu/recommended",
+    responses(
+        (status = 200, description = "Recommended model load profile for current hardware"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "Gateway not initialized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "gpu"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_recommended_models(

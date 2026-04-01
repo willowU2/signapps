@@ -16,7 +16,7 @@ fn is_valid_target(target: &str) -> bool {
 }
 
 /// Request to execute a natural language action.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for Action.
 pub struct ActionRequest {
     pub prompt: String,
@@ -25,7 +25,7 @@ pub struct ActionRequest {
 }
 
 /// Response from an executed action.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Action.
 pub struct ActionResponse {
     pub success: bool,
@@ -35,6 +35,19 @@ pub struct ActionResponse {
 }
 
 /// Execute a natural language action using Claude Opus as an orchestrator.
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/action",
+    request_body = ActionRequest,
+    responses(
+        (status = 200, description = "Action executed or rejected", body = ActionResponse),
+        (status = 400, description = "Invalid target or request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "actions"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn execute_action(

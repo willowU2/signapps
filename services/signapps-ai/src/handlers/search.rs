@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 /// Search query parameters.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 /// Query parameters for filtering results.
 pub struct SearchQuery {
     /// Search query text.
@@ -26,7 +26,7 @@ pub struct SearchQuery {
 }
 
 /// Search result item.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// SearchResultItem data transfer object.
 pub struct SearchResultItem {
     pub id: Uuid,
@@ -37,7 +37,7 @@ pub struct SearchResultItem {
 }
 
 /// Search response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Search.
 pub struct SearchResponse {
     pub query: String,
@@ -46,6 +46,18 @@ pub struct SearchResponse {
 }
 
 /// Semantic search endpoint.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/search",
+    params(SearchQuery),
+    responses(
+        (status = 200, description = "Semantic search results", body = SearchResponse),
+        (status = 400, description = "Invalid query"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "search"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn search(

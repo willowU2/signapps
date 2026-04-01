@@ -13,7 +13,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 /// Index document request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for Index.
 pub struct IndexRequest {
     /// Document content to index.
@@ -53,7 +53,7 @@ pub struct DirectIndexRequest {
 }
 
 /// Index response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Index.
 pub struct IndexResponse {
     pub document_id: Uuid,
@@ -62,7 +62,7 @@ pub struct IndexResponse {
 }
 
 /// Stats response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Stats.
 pub struct StatsResponse {
     pub documents_count: u64,
@@ -72,6 +72,18 @@ pub struct StatsResponse {
 }
 
 /// Index a document.
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/index",
+    request_body = IndexRequest,
+    responses(
+        (status = 200, description = "Document indexed successfully", body = IndexResponse),
+        (status = 400, description = "Invalid request"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "index"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn index_document(
@@ -202,6 +214,20 @@ pub async fn index_direct_document(
 }
 
 /// Remove a document from the index.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/ai/index/{document_id}",
+    params(
+        ("document_id" = uuid::Uuid, Path, description = "Document UUID to remove"),
+    ),
+    responses(
+        (status = 204, description = "Document removed"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Document not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "index"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_document(
@@ -216,6 +242,16 @@ pub async fn remove_document(
 }
 
 /// Get indexing stats.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/stats",
+    responses(
+        (status = 200, description = "Indexing statistics", body = StatsResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "index"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StatsResponse>> {
@@ -242,6 +278,17 @@ pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StatsRespon
 /// Spawns a background task that fetches all indexed document paths from the
 /// ai.document_vectors table, re-reads each file via OpenDAL, and upserts
 /// freshly-computed embeddings. Returns immediately with a task ID.
+#[utoipa::path(
+    post,
+    path = "/api/v1/admin/ai/reindex",
+    responses(
+        (status = 200, description = "Reindex task started"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "admin"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn reindex_all(

@@ -13,7 +13,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 /// Storage Rule Model
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 /// StorageRule data transfer object.
 pub struct StorageRule {
     pub id: Uuid,
@@ -25,7 +25,7 @@ pub struct StorageRule {
 }
 
 /// Create/Update Storage Rule Request
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// UpsertStorageRule data transfer object.
 pub struct UpsertStorageRule {
     pub file_type: String,
@@ -36,7 +36,7 @@ pub struct UpsertStorageRule {
 }
 
 /// AI Indexing Rule Model
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 /// IndexingRule data transfer object.
 pub struct IndexingRule {
     pub id: Uuid,
@@ -49,7 +49,7 @@ pub struct IndexingRule {
 }
 
 /// Create/Update AI Indexing Rule Request
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// UpsertIndexingRule data transfer object.
 pub struct UpsertIndexingRule {
     pub folder_path: String,
@@ -65,6 +65,16 @@ pub struct UpsertIndexingRule {
 // =========================================================================
 
 /// List all storage rules
+#[utoipa::path(
+    get,
+    path = "/api/v1/admin/storage-rules",
+    responses(
+        (status = 200, description = "List of storage routing rules", body = Vec<StorageRule>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "storage_settings"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_storage_rules(State(state): State<AppState>) -> Result<Json<Vec<StorageRule>>> {
@@ -83,6 +93,17 @@ pub async fn list_storage_rules(State(state): State<AppState>) -> Result<Json<Ve
 }
 
 /// Create a new storage rule
+#[utoipa::path(
+    post,
+    path = "/api/v1/admin/storage-rules",
+    request_body = UpsertStorageRule,
+    responses(
+        (status = 200, description = "Created storage rule", body = StorageRule),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "storage_settings"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_storage_rule(
@@ -109,6 +130,18 @@ pub async fn create_storage_rule(
 }
 
 /// Update a storage rule
+#[utoipa::path(
+    put,
+    path = "/api/v1/admin/storage-rules/{id}",
+    params(("id" = Uuid, Path, description = "Storage rule ID")),
+    request_body = UpsertStorageRule,
+    responses(
+        (status = 200, description = "Updated storage rule", body = StorageRule),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "storage_settings"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_storage_rule(
@@ -138,6 +171,17 @@ pub async fn update_storage_rule(
 }
 
 /// Delete a storage rule
+#[utoipa::path(
+    delete,
+    path = "/api/v1/admin/storage-rules/{id}",
+    params(("id" = Uuid, Path, description = "Storage rule ID")),
+    responses(
+        (status = 204, description = "Storage rule deleted"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "storage_settings"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_storage_rule(
@@ -162,6 +206,16 @@ pub async fn delete_storage_rule(
 // =========================================================================
 
 /// List all AI indexing rules
+#[utoipa::path(
+    get,
+    path = "/api/v1/admin/indexing-rules",
+    responses(
+        (status = 200, description = "List of AI indexing rules", body = Vec<IndexingRule>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "storage_settings"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_indexing_rules(State(state): State<AppState>) -> Result<Json<Vec<IndexingRule>>> {
@@ -180,6 +234,17 @@ pub async fn list_indexing_rules(State(state): State<AppState>) -> Result<Json<V
 }
 
 /// Create a new indexing rule
+#[utoipa::path(
+    post,
+    path = "/api/v1/admin/indexing-rules",
+    request_body = UpsertIndexingRule,
+    responses(
+        (status = 200, description = "Created indexing rule", body = IndexingRule),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "storage_settings"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_indexing_rule(
@@ -207,6 +272,18 @@ pub async fn create_indexing_rule(
 }
 
 /// Update an indexing rule
+#[utoipa::path(
+    put,
+    path = "/api/v1/admin/indexing-rules/{id}",
+    params(("id" = Uuid, Path, description = "Indexing rule ID")),
+    request_body = UpsertIndexingRule,
+    responses(
+        (status = 200, description = "Updated indexing rule", body = IndexingRule),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "storage_settings"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_indexing_rule(
@@ -237,6 +314,17 @@ pub async fn update_indexing_rule(
 }
 
 /// Delete an indexing rule
+#[utoipa::path(
+    delete,
+    path = "/api/v1/admin/indexing-rules/{id}",
+    params(("id" = Uuid, Path, description = "Indexing rule ID")),
+    responses(
+        (status = 204, description = "Indexing rule deleted"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "storage_settings"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_indexing_rule(
@@ -257,14 +345,14 @@ pub async fn delete_indexing_rule(
 }
 
 /// System Setting Model
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 /// SystemSetting data transfer object.
 pub struct SystemSetting {
     pub setting_value: String,
 }
 
 /// Create/Update System Setting Request
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// UpsertSystemSetting data transfer object.
 pub struct UpsertSystemSetting {
     pub setting_value: String,
@@ -275,6 +363,17 @@ pub struct UpsertSystemSetting {
 // =========================================================================
 
 /// Get a specific system setting
+#[utoipa::path(
+    get,
+    path = "/api/v1/admin/settings/{key}",
+    params(("key" = String, Path, description = "Setting key")),
+    responses(
+        (status = 200, description = "System setting value", body = SystemSetting),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "storage_settings"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_system_setting(
@@ -307,6 +406,18 @@ pub async fn get_system_setting(
 }
 
 /// Update a specific system setting
+#[utoipa::path(
+    put,
+    path = "/api/v1/admin/settings/{key}",
+    params(("key" = String, Path, description = "Setting key")),
+    request_body = UpsertSystemSetting,
+    responses(
+        (status = 200, description = "Updated system setting", body = SystemSetting),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "storage_settings"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_system_setting(

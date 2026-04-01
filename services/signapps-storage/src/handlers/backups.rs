@@ -29,14 +29,14 @@ pub struct SnapshotListQuery {
 // Response types
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SnapshotDetailResponse {
     #[serde(flatten)]
     pub snapshot: BackupSnapshot,
     pub entries: Vec<BackupEntry>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct RestoreResponse {
     pub message: String,
     pub restored_files: usize,
@@ -47,6 +47,16 @@ pub struct RestoreResponse {
 // ---------------------------------------------------------------------------
 
 /// GET /api/v1/backups/plans — list all backup plans.
+#[utoipa::path(
+    get,
+    path = "/api/v1/backups/plans",
+    responses(
+        (status = 200, description = "List of backup plans"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_plans(State(state): State<AppState>) -> Result<Json<Vec<BackupPlan>>> {
     let repo = DriveBackupRepository::new(&state.pool);
@@ -55,6 +65,16 @@ pub async fn list_plans(State(state): State<AppState>) -> Result<Json<Vec<Backup
 }
 
 /// POST /api/v1/backups/plans — create a backup plan.
+#[utoipa::path(
+    post,
+    path = "/api/v1/backups/plans",
+    responses(
+        (status = 201, description = "Created backup plan"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_plan(
     State(state): State<AppState>,
@@ -66,6 +86,18 @@ pub async fn create_plan(
 }
 
 /// PUT /api/v1/backups/plans/:id — update a backup plan.
+#[utoipa::path(
+    put,
+    path = "/api/v1/backups/plans/{id}",
+    params(("id" = Uuid, Path, description = "Backup plan ID")),
+    responses(
+        (status = 200, description = "Updated backup plan"),
+        (status = 404, description = "Plan not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_plan(
     State(state): State<AppState>,
@@ -82,6 +114,18 @@ pub async fn update_plan(
 }
 
 /// DELETE /api/v1/backups/plans/:id — delete a backup plan.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/backups/plans/{id}",
+    params(("id" = Uuid, Path, description = "Backup plan ID")),
+    responses(
+        (status = 204, description = "Backup plan deleted"),
+        (status = 404, description = "Plan not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_plan(
     State(state): State<AppState>,
@@ -96,6 +140,18 @@ pub async fn delete_plan(
 }
 
 /// POST /api/v1/backups/plans/:id/run — trigger a manual backup run.
+#[utoipa::path(
+    post,
+    path = "/api/v1/backups/plans/{id}/run",
+    params(("id" = Uuid, Path, description = "Backup plan ID")),
+    responses(
+        (status = 202, description = "Backup run started"),
+        (status = 404, description = "Plan not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn run_plan(
     State(state): State<AppState>,
@@ -151,6 +207,17 @@ pub async fn run_plan(
 // ---------------------------------------------------------------------------
 
 /// GET /api/v1/backups/snapshots — list snapshots (optionally filtered by plan_id).
+#[utoipa::path(
+    get,
+    path = "/api/v1/backups/snapshots",
+    params(("plan_id" = Option<Uuid>, Query, description = "Filter by plan ID")),
+    responses(
+        (status = 200, description = "List of backup snapshots"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_snapshots(
     State(state): State<AppState>,
@@ -162,6 +229,18 @@ pub async fn list_snapshots(
 }
 
 /// GET /api/v1/backups/snapshots/:id — get snapshot detail with entries.
+#[utoipa::path(
+    get,
+    path = "/api/v1/backups/snapshots/{id}",
+    params(("id" = Uuid, Path, description = "Snapshot ID")),
+    responses(
+        (status = 200, description = "Snapshot detail with entries", body = SnapshotDetailResponse),
+        (status = 404, description = "Snapshot not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_snapshot(
     State(state): State<AppState>,
@@ -177,6 +256,18 @@ pub async fn get_snapshot(
 }
 
 /// DELETE /api/v1/backups/snapshots/:id — delete a snapshot.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/backups/snapshots/{id}",
+    params(("id" = Uuid, Path, description = "Snapshot ID")),
+    responses(
+        (status = 204, description = "Snapshot deleted"),
+        (status = 404, description = "Snapshot not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_snapshot(
     State(state): State<AppState>,
@@ -195,6 +286,18 @@ pub async fn delete_snapshot(
 // ---------------------------------------------------------------------------
 
 /// POST /api/v1/backups/restore — restore files from a snapshot.
+#[utoipa::path(
+    post,
+    path = "/api/v1/backups/restore",
+    responses(
+        (status = 200, description = "Restore operation result", body = RestoreResponse),
+        (status = 400, description = "Snapshot not completed"),
+        (status = 404, description = "Snapshot not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "backups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn restore(
     State(state): State<AppState>,

@@ -12,16 +12,14 @@ use crate::docker::ImageInfo;
 use crate::AppState;
 
 /// Pull image request.
-#[derive(Debug, Deserialize)]
-/// Request body for Pull.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct PullRequest {
     /// Image name with optional tag (e.g., "nginx:latest")
     pub image: String,
 }
 
 /// Pull response.
-#[derive(Debug, Serialize)]
-/// Response for Pull.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct PullResponse {
     pub success: bool,
     pub image: String,
@@ -29,6 +27,17 @@ pub struct PullResponse {
 }
 
 /// List all Docker images.
+#[utoipa::path(
+    get,
+    path = "/api/v1/images",
+    responses(
+        (status = 200, description = "List of Docker images", body = Vec<crate::docker::ImageInfo>),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — admin only"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "images"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<ImageInfo>>> {
@@ -37,6 +46,18 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<ImageInfo>>>
 }
 
 /// Pull a Docker image.
+#[utoipa::path(
+    post,
+    path = "/api/v1/images/pull",
+    request_body = PullRequest,
+    responses(
+        (status = 200, description = "Image pulled successfully", body = PullResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — admin only"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "images"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn pull(
@@ -53,6 +74,20 @@ pub async fn pull(
 }
 
 /// Delete a Docker image.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/images/{id}",
+    params(
+        ("id" = String, Path, description = "Image ID or name"),
+    ),
+    responses(
+        (status = 204, description = "Image deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — admin only"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "images"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<String>) -> Result<StatusCode> {
@@ -61,6 +96,20 @@ pub async fn delete(State(state): State<AppState>, Path(id): Path<String>) -> Re
 }
 
 /// Force delete a Docker image.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/images/{id}/force",
+    params(
+        ("id" = String, Path, description = "Image ID or name"),
+    ),
+    responses(
+        (status = 204, description = "Image force-deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — admin only"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "images"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn force_delete(

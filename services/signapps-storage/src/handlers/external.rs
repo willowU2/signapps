@@ -16,7 +16,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 /// Type of external storage.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum ExternalStorageType {
     Usb,
@@ -39,7 +39,7 @@ impl std::fmt::Display for ExternalStorageType {
 }
 
 /// Status of an external storage connection.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum ConnectionStatus {
     Connected,
@@ -49,7 +49,7 @@ pub enum ConnectionStatus {
 }
 
 /// External storage information.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 /// ExternalStorage data transfer object.
 pub struct ExternalStorage {
     pub id: Uuid,
@@ -69,7 +69,7 @@ pub struct ExternalStorage {
 }
 
 /// Request to connect external storage.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for Connect.
 pub struct ConnectRequest {
     /// Human-readable name for this storage
@@ -91,7 +91,7 @@ pub struct ConnectRequest {
 }
 
 /// Additional connection options.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// ConnectOptions data transfer object.
 pub struct ConnectOptions {
     /// Mount as read-only
@@ -113,7 +113,7 @@ pub struct ConnectOptions {
 }
 
 /// Response after connecting storage.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Connect.
 pub struct ConnectResponse {
     pub success: bool,
@@ -129,6 +129,16 @@ static EXTERNAL_STORAGES: Lazy<RwLock<Vec<ExternalStorage>>> =
     Lazy::new(|| RwLock::new(Vec::new()));
 
 /// List all external storage (USB, NAS, etc.).
+#[utoipa::path(
+    get,
+    path = "/api/v1/external",
+    responses(
+        (status = 200, description = "List of external storage connections", body = Vec<ExternalStorage>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "external"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_external(State(_state): State<AppState>) -> Result<Json<Vec<ExternalStorage>>> {
@@ -173,6 +183,18 @@ pub async fn list_external(State(_state): State<AppState>) -> Result<Json<Vec<Ex
 }
 
 /// Connect external storage (NFS, SMB, S3).
+#[utoipa::path(
+    post,
+    path = "/api/v1/external",
+    request_body = ConnectRequest,
+    responses(
+        (status = 200, description = "Connection result", body = ConnectResponse),
+        (status = 400, description = "Invalid connection parameters"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "external"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn connect_external(
@@ -281,6 +303,19 @@ pub async fn connect_external(
 }
 
 /// Disconnect external storage.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/external/{id}",
+    params(("id" = uuid::Uuid, Path, description = "External storage ID")),
+    responses(
+        (status = 204, description = "Storage disconnected"),
+        (status = 400, description = "Cannot disconnect USB device"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "External storage not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "external"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn disconnect_external(

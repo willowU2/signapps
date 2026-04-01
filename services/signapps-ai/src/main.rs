@@ -16,6 +16,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tower::ServiceBuilder;
 use tower_http::cors::{AllowOrigin, CorsLayer};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 mod embeddings;
 mod gateway;
@@ -31,6 +33,7 @@ mod vectors;
 mod workers;
 
 use embeddings::EmbeddingsClient;
+use handlers::openapi::AiApiDoc;
 use handlers::{chat, collections, health, index, model_management, providers, search};
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
@@ -443,9 +446,14 @@ fn create_router(state: AppState) -> Router {
     // Root-level health check (outside /api/v1 nest so it's reachable at /health)
     let root_health = Router::new().route("/health", get(health::health_check));
 
+    // OpenAPI / Swagger UI
+    let openapi_routes =
+        SwaggerUi::new("/swagger-ui").url("/api/v1/openapi.json", AiApiDoc::openapi());
+
     // Combine all routes
     Router::new()
         .merge(root_health)
+        .merge(openapi_routes)
         .nest("/api/v1", public_routes)
         .nest("/api/v1/ai", ai_routes)
         .nest("/api/v1/admin/ai", admin_routes)

@@ -17,6 +17,20 @@ use crate::AppState;
 use super::containers::ContainerResponse;
 
 /// List all apps from the store catalog.
+#[utoipa::path(
+    get,
+    path = "/api/v1/store/apps",
+    params(
+        ("search" = Option<String>, Query, description = "Search query"),
+        ("category" = Option<String>, Query, description = "Filter by category"),
+    ),
+    responses(
+        (status = 200, description = "List of store apps", body = Vec<crate::store::types::StoreApp>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "store"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_apps(
@@ -31,6 +45,21 @@ pub async fn list_apps(
 }
 
 /// Get app details including parsed compose config.
+#[utoipa::path(
+    get,
+    path = "/api/v1/store/sources/{source_id}/apps/{app_id}/details",
+    params(
+        ("source_id" = uuid::Uuid, Path, description = "Source ID"),
+        ("app_id" = String, Path, description = "App ID"),
+    ),
+    responses(
+        (status = 200, description = "App details with compose config", body = crate::store::types::AppDetails),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "App not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "store"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_app_details(
@@ -53,6 +82,19 @@ pub async fn get_app_details(
 }
 
 /// Install an app (single-service, backwards-compatible).
+#[utoipa::path(
+    post,
+    path = "/api/v1/store/install",
+    request_body = crate::store::types::InstallRequest,
+    responses(
+        (status = 200, description = "App installed as container", body = crate::handlers::containers::ContainerResponse),
+        (status = 400, description = "Invalid request or quota exceeded"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "App not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "store"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn install_app(
@@ -399,6 +441,19 @@ pub async fn install_app(
 
 /// Install a multi-service app.
 /// Creates an install group, spawns background install, returns install_id.
+#[utoipa::path(
+    post,
+    path = "/api/v1/store/install-multi",
+    request_body = crate::store::types::MultiServiceInstallRequest,
+    responses(
+        (status = 200, description = "Multi-service install started", body = crate::store::types::InstallStarted),
+        (status = 400, description = "Invalid request or quota exceeded"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "App not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "store"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn install_multi(
@@ -1102,6 +1157,20 @@ async fn rollback(docker: &crate::docker::DockerClient, docker_ids: &[String], n
 }
 
 /// SSE endpoint for install progress.
+#[utoipa::path(
+    get,
+    path = "/api/v1/store/install/{id}/progress",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Install session ID"),
+        ("token" = Option<String>, Query, description = "JWT token (required, EventSource cannot send headers)"),
+    ),
+    responses(
+        (status = 200, description = "Server-sent events stream of install progress"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Install session not found"),
+    ),
+    tag = "store"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn install_progress(
@@ -1151,6 +1220,19 @@ pub async fn install_progress(
 }
 
 /// Check port conflicts with running containers.
+#[utoipa::path(
+    get,
+    path = "/api/v1/store/check-ports",
+    params(
+        ("ports" = String, Query, description = "Comma-separated list of ports to check"),
+    ),
+    responses(
+        (status = 200, description = "Port conflict report", body = Vec<crate::store::types::PortConflict>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "store"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn check_ports(
@@ -1191,6 +1273,18 @@ pub async fn check_ports(
 }
 
 /// Validate a source URL.
+#[utoipa::path(
+    post,
+    path = "/api/v1/store/sources/validate",
+    request_body = crate::store::types::AddSourceRequest,
+    responses(
+        (status = 200, description = "Source validation result", body = crate::store::types::SourceValidation),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — admin only"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "store"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn validate_source(
@@ -1202,6 +1296,16 @@ pub async fn validate_source(
 }
 
 /// List all sources.
+#[utoipa::path(
+    get,
+    path = "/api/v1/store/sources",
+    responses(
+        (status = 200, description = "List of app sources", body = Vec<crate::store::types::AppSource>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "store"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_sources(State(state): State<AppState>) -> Result<Json<Vec<AppSource>>> {
@@ -1214,6 +1318,19 @@ pub async fn list_sources(State(state): State<AppState>) -> Result<Json<Vec<AppS
 }
 
 /// Add a new source (admin only).
+#[utoipa::path(
+    post,
+    path = "/api/v1/store/sources",
+    request_body = crate::store::types::AddSourceRequest,
+    responses(
+        (status = 200, description = "Source added", body = crate::store::types::AppSource),
+        (status = 400, description = "Invalid URL"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — admin only"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "store"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn add_source(
@@ -1239,6 +1356,20 @@ pub async fn add_source(
 }
 
 /// Delete a source (admin only).
+#[utoipa::path(
+    delete,
+    path = "/api/v1/store/sources/{id}",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Source ID"),
+    ),
+    responses(
+        (status = 200, description = "Source deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — admin only"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "store"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_source(
@@ -1254,6 +1385,20 @@ pub async fn delete_source(
 }
 
 /// Refresh a single source (admin only).
+#[utoipa::path(
+    post,
+    path = "/api/v1/store/sources/{id}/refresh",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Source ID"),
+    ),
+    responses(
+        (status = 200, description = "Source refreshed"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — admin only"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "store"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn refresh_source(
@@ -1271,6 +1416,17 @@ pub async fn refresh_source(
 }
 
 /// Refresh all sources (admin only).
+#[utoipa::path(
+    post,
+    path = "/api/v1/store/sources/refresh",
+    responses(
+        (status = 200, description = "All sources refreshed"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — admin only"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "store"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn refresh_all(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {

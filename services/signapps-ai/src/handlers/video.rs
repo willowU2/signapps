@@ -24,7 +24,7 @@ use crate::AppState;
 // ---------------------------------------------------------------------------
 
 /// Response for video generation endpoints.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for VideoGen.
 pub struct VideoGenResponse {
     pub video_url: String,
@@ -34,7 +34,7 @@ pub struct VideoGenResponse {
 }
 
 /// Response for frame extraction.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// FrameInfo data transfer object.
 pub struct FrameInfo {
     pub index: usize,
@@ -44,7 +44,7 @@ pub struct FrameInfo {
 }
 
 /// Response for the extract-frames endpoint.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for ExtractFrames.
 pub struct ExtractFramesResponse {
     pub frames: Vec<FrameInfo>,
@@ -52,10 +52,13 @@ pub struct ExtractFramesResponse {
 }
 
 /// Response for listing available models.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for VideoModels.
 pub struct VideoModelsResponse {
+    /// Available video generation models.
+    #[schema(value_type = Vec<serde_json::Value>)]
     pub models: Vec<ModelInfo>,
+    /// Number of available models.
     pub count: usize,
 }
 
@@ -64,7 +67,7 @@ pub struct VideoModelsResponse {
 // ---------------------------------------------------------------------------
 
 /// JSON request body for the text-to-video endpoint.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for GenerateVideo.
 pub struct GenerateVideoRequest {
     pub prompt: String,
@@ -157,6 +160,19 @@ async fn store_video(state: &AppState, video_bytes: &[u8]) -> Result<String, (St
 /// - `fps` — frames per second (optional)
 /// - `width` / `height` — video dimensions (optional)
 /// - `model` — model name override (optional)
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/video/generate",
+    request_body = GenerateVideoRequest,
+    responses(
+        (status = 200, description = "Generated video URL and metadata", body = VideoGenResponse),
+        (status = 400, description = "Empty prompt"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No video generation backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "video"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn generate_video(
@@ -205,6 +221,23 @@ pub async fn generate_video(
 /// - `prompt` — optional text guidance
 /// - `duration_seconds` — video duration (optional)
 /// - `model` — model name override (optional)
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/video/img2video",
+    request_body(
+        content_type = "multipart/form-data",
+        description = "Source image and optional guidance",
+        content = String,
+    ),
+    responses(
+        (status = 200, description = "Generated video URL and metadata", body = VideoGenResponse),
+        (status = 400, description = "Missing or empty image"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No video generation backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "video"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn img_to_video(
@@ -296,6 +329,23 @@ pub async fn img_to_video(
 /// Accepts `multipart/form-data` with:
 /// - `video` — the video file (required)
 /// - `prompt` — optional analysis prompt
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/video/analyze",
+    request_body(
+        content_type = "multipart/form-data",
+        description = "Video file and optional analysis prompt",
+        content = String,
+    ),
+    responses(
+        (status = 200, description = "Video analysis result"),
+        (status = 400, description = "Missing or empty video"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No video understanding backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "video"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn analyze_video(
@@ -365,6 +415,23 @@ pub async fn analyze_video(
 /// - `video` — the video file (required)
 /// - `max_frames` — maximum number of frames to extract (optional, default 10)
 /// - `interval_seconds` — interval between frames in seconds (optional)
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/video/frames",
+    request_body(
+        content_type = "multipart/form-data",
+        description = "Video file and extraction options",
+        content = String,
+    ),
+    responses(
+        (status = 200, description = "Extracted frame metadata", body = ExtractFramesResponse),
+        (status = 400, description = "Missing or empty video"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No video understanding backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "video"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn extract_frames(
@@ -467,6 +534,23 @@ pub async fn extract_frames(
 ///
 /// Accepts `multipart/form-data` with:
 /// - `video` — the video file (required)
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/video/transcribe",
+    request_body(
+        content_type = "multipart/form-data",
+        description = "Video file",
+        content = String,
+    ),
+    responses(
+        (status = 200, description = "Video transcript"),
+        (status = 400, description = "Missing or empty video"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No video understanding backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "video"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn transcribe_video(
@@ -524,6 +608,17 @@ pub async fn transcribe_video(
 }
 
 /// List available video generation models.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/video/models",
+    responses(
+        (status = 200, description = "List of available video models", body = VideoModelsResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No video generation backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "video"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_models() -> Result<Json<VideoModelsResponse>, (StatusCode, String)> {

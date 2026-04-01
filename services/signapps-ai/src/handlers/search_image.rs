@@ -18,7 +18,7 @@ use crate::workers::MultimodalEmbedWorker;
 use crate::AppState;
 
 /// Response from the image search endpoint.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for ImageSearch.
 pub struct ImageSearchResponse {
     pub results: Vec<ImageSearchResultItem>,
@@ -26,7 +26,7 @@ pub struct ImageSearchResponse {
 }
 
 /// A single image search result.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// ImageSearchResultItem data transfer object.
 pub struct ImageSearchResultItem {
     pub document_id: Uuid,
@@ -44,6 +44,23 @@ pub struct ImageSearchResultItem {
 /// - `image` — the image file (required)
 /// - `limit` — optional result count, default 10
 /// - `collections` — optional comma-separated collection names
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/search/image",
+    request_body(
+        content_type = "multipart/form-data",
+        description = "Image file to search by",
+        content = String,
+    ),
+    responses(
+        (status = 200, description = "Visually similar content results", body = ImageSearchResponse),
+        (status = 400, description = "Missing or empty image"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Embedding or search failed"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "search"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn search_by_image(

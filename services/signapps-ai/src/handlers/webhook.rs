@@ -10,7 +10,7 @@ use crate::llm::types::ChatMessage;
 use crate::AppState;
 
 /// Webhook ingest response.
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Serialize, utoipa::ToSchema)]
 /// Response for Webhook.
 pub struct WebhookResponse {
     pub document_id: Uuid,
@@ -19,6 +19,25 @@ pub struct WebhookResponse {
 }
 
 /// Ingest arbitrary JSON from external services.
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/webhooks/{source_type}",
+    params(
+        ("source_type" = String, Path, description = "Source type identifier (e.g. odoo_ticket, github_issue)"),
+    ),
+    request_body(
+        content_type = "application/json",
+        description = "Arbitrary JSON payload from the source system",
+        content = serde_json::Value,
+    ),
+    responses(
+        (status = 200, description = "Payload indexed into AI memory", body = WebhookResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "webhooks"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn ingest_webhook(

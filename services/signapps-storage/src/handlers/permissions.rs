@@ -25,7 +25,7 @@ use crate::AppState;
 /// - `755` = rwxr-xr-x (owner can do all, group and others can read/execute)
 /// - `644` = rw-r--r-- (owner can read/write, others can read)
 /// - `700` = rwx------ (only owner can access)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct FilePermissions {
     pub bucket: String,
     pub key: String,
@@ -33,7 +33,7 @@ pub struct FilePermissions {
 }
 
 /// Request to set file permissions.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for SetPermissions.
 pub struct SetPermissionsRequest {
     /// POSIX mode (755, 644, 700, etc.)
@@ -41,7 +41,7 @@ pub struct SetPermissionsRequest {
 }
 
 /// Response with current permissions.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Permissions.
 pub struct PermissionsResponse {
     pub bucket: String,
@@ -110,6 +110,20 @@ fn validate_mode(mode: u32) -> Result<()> {
 }
 
 /// Get file permissions.
+#[utoipa::path(
+    get,
+    path = "/api/v1/permissions/{bucket}/{key}",
+    params(
+        ("bucket" = String, Path, description = "Bucket name"),
+        ("key" = String, Path, description = "Object key"),
+    ),
+    responses(
+        (status = 200, description = "File permissions", body = PermissionsResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "permissions"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_permissions(
@@ -135,6 +149,22 @@ pub async fn get_permissions(
 }
 
 /// Set file permissions.
+#[utoipa::path(
+    put,
+    path = "/api/v1/permissions/{bucket}/{key}",
+    params(
+        ("bucket" = String, Path, description = "Bucket name"),
+        ("key" = String, Path, description = "Object key"),
+    ),
+    request_body = SetPermissionsRequest,
+    responses(
+        (status = 200, description = "Updated permissions", body = PermissionsResponse),
+        (status = 400, description = "Invalid mode"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "permissions"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn set_permissions(
@@ -164,6 +194,20 @@ pub async fn set_permissions(
 }
 
 /// Reset file permissions to default.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/permissions/{bucket}/{key}",
+    params(
+        ("bucket" = String, Path, description = "Bucket name"),
+        ("key" = String, Path, description = "Object key"),
+    ),
+    responses(
+        (status = 204, description = "Permissions reset to default"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "permissions"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn reset_permissions(

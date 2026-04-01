@@ -23,6 +23,16 @@ where
 // Global User Tags
 // ---------------------------------------------------------
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/tags",
+    responses(
+        (status = 200, description = "List of user tags"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "tags"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_tags(
@@ -36,6 +46,16 @@ pub async fn list_tags(
     Ok(Json(tags))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/tags",
+    responses(
+        (status = 201, description = "Created tag"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "tags"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_tag(
@@ -50,6 +70,17 @@ pub async fn create_tag(
     Ok((StatusCode::CREATED, Json(tag)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/tags/{tag_id}",
+    params(("tag_id" = Uuid, Path, description = "Tag ID")),
+    responses(
+        (status = 200, description = "Updated tag"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "tags"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_tag(
@@ -65,6 +96,18 @@ pub async fn update_tag(
     Ok(Json(tag))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/tags/{tag_id}",
+    params(("tag_id" = Uuid, Path, description = "Tag ID")),
+    responses(
+        (status = 204, description = "Tag deleted"),
+        (status = 404, description = "Tag not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "tags"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_tag(
@@ -87,6 +130,17 @@ pub async fn delete_tag(
 // File <-> Tags Association
 // ---------------------------------------------------------
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/files/{file_id}/tags",
+    params(("file_id" = Uuid, Path, description = "File ID")),
+    responses(
+        (status = 200, description = "List of tags for the file"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "tags"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_file_tags(
@@ -101,6 +155,20 @@ pub async fn list_file_tags(
     Ok(Json(tags))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/files/{file_id}/tags/{tag_id}",
+    params(
+        ("file_id" = Uuid, Path, description = "File ID"),
+        ("tag_id" = Uuid, Path, description = "Tag ID"),
+    ),
+    responses(
+        (status = 201, description = "Tag associated with file"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "tags"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn add_file_tag(
@@ -114,6 +182,21 @@ pub async fn add_file_tag(
     Ok(StatusCode::CREATED)
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/files/{file_id}/tags/{tag_id}",
+    params(
+        ("file_id" = Uuid, Path, description = "File ID"),
+        ("tag_id" = Uuid, Path, description = "Tag ID"),
+    ),
+    responses(
+        (status = 204, description = "Tag removed from file"),
+        (status = 404, description = "Tag not associated with file"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "tags"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_file_tag(

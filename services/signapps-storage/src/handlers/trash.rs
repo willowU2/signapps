@@ -16,7 +16,7 @@ use crate::handlers::quotas;
 use crate::AppState;
 
 /// Trash item information.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 /// TrashItem data transfer object.
 pub struct TrashItem {
     pub id: Uuid,
@@ -32,7 +32,7 @@ pub struct TrashItem {
 }
 
 /// Move to trash request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for MoveToTrash.
 pub struct MoveToTrashRequest {
     pub bucket: String,
@@ -40,7 +40,7 @@ pub struct MoveToTrashRequest {
 }
 
 /// Move to trash response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for MoveToTrash.
 pub struct MoveToTrashResponse {
     pub moved: Vec<TrashItem>,
@@ -48,7 +48,7 @@ pub struct MoveToTrashResponse {
 }
 
 /// Trash operation failure.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// TrashFailure data transfer object.
 pub struct TrashFailure {
     pub key: String,
@@ -56,7 +56,7 @@ pub struct TrashFailure {
 }
 
 /// Restore from trash request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for Restore.
 pub struct RestoreRequest {
     pub items: Vec<Uuid>,
@@ -65,7 +65,7 @@ pub struct RestoreRequest {
 }
 
 /// Restore destination.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// RestoreDestination data transfer object.
 pub struct RestoreDestination {
     pub bucket: String,
@@ -73,7 +73,7 @@ pub struct RestoreDestination {
 }
 
 /// Restore response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Restore.
 pub struct RestoreResponse {
     pub restored: Vec<RestoredItem>,
@@ -81,7 +81,7 @@ pub struct RestoreResponse {
 }
 
 /// Restored item info.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// RestoredItem data transfer object.
 pub struct RestoredItem {
     pub id: Uuid,
@@ -90,7 +90,7 @@ pub struct RestoredItem {
 }
 
 /// Restore failure.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// RestoreFailure data transfer object.
 pub struct RestoreFailure {
     pub id: Uuid,
@@ -110,7 +110,7 @@ pub struct ListTrashQuery {
 }
 
 /// List trash response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for ListTrash.
 pub struct ListTrashResponse {
     pub items: Vec<TrashItem>,
@@ -119,7 +119,7 @@ pub struct ListTrashResponse {
 }
 
 /// Trash stats.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// TrashStats data transfer object.
 pub struct TrashStats {
     pub total_items: i64,
@@ -132,6 +132,17 @@ const TRASH_BUCKET: &str = "signapps-trash";
 const TRASH_RETENTION_DAYS: i64 = 30;
 
 /// Move files to trash (soft delete).
+#[utoipa::path(
+    post,
+    path = "/api/v1/trash",
+    request_body = MoveToTrashRequest,
+    responses(
+        (status = 200, description = "Files moved to trash", body = MoveToTrashResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "trash"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn move_to_trash(
@@ -238,6 +249,16 @@ async fn move_single_to_trash(
 }
 
 /// List items in trash.
+#[utoipa::path(
+    get,
+    path = "/api/v1/trash",
+    responses(
+        (status = 200, description = "Trash items list", body = ListTrashResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "trash"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_trash(
@@ -307,6 +328,16 @@ pub async fn list_trash(
 }
 
 /// Get trash statistics.
+#[utoipa::path(
+    get,
+    path = "/api/v1/trash/stats",
+    responses(
+        (status = 200, description = "Trash statistics", body = TrashStats),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "trash"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_trash_stats(
@@ -337,6 +368,17 @@ pub async fn get_trash_stats(
 }
 
 /// Restore items from trash.
+#[utoipa::path(
+    post,
+    path = "/api/v1/trash/restore",
+    request_body = RestoreRequest,
+    responses(
+        (status = 200, description = "Restore result", body = RestoreResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "trash"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn restore_from_trash(
@@ -468,6 +510,16 @@ async fn restore_single_item(
 }
 
 /// Permanently delete items from trash.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/trash",
+    responses(
+        (status = 204, description = "Trash emptied"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "trash"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn empty_trash(
@@ -552,6 +604,18 @@ async fn delete_trash_item(state: &AppState, id: Uuid, user_id: Uuid) -> Result<
 }
 
 /// Get a specific trash item.
+#[utoipa::path(
+    get,
+    path = "/api/v1/trash/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Trash item ID")),
+    responses(
+        (status = 200, description = "Trash item", body = TrashItem),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Trash item not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "trash"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_trash_item(
@@ -594,6 +658,18 @@ pub async fn get_trash_item(
 }
 
 /// Permanently delete a single trash item.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/trash/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Trash item ID")),
+    responses(
+        (status = 204, description = "Trash item permanently deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Trash item not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "trash"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_trash_item_handler(

@@ -12,14 +12,14 @@ use crate::storage::{BucketInfo, StorageStats};
 use crate::AppState;
 
 /// Create bucket request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for CreateBucket.
 pub struct CreateBucketRequest {
     pub name: String,
 }
 
 /// Bucket response with stats.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Bucket.
 pub struct BucketResponse {
     pub name: String,
@@ -29,6 +29,16 @@ pub struct BucketResponse {
 }
 
 /// List all buckets.
+#[utoipa::path(
+    get,
+    path = "/api/v1/buckets",
+    responses(
+        (status = 200, description = "List of storage buckets"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "buckets"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<BucketInfo>>> {
@@ -37,6 +47,18 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<BucketInfo>>
 }
 
 /// Get bucket info with stats.
+#[utoipa::path(
+    get,
+    path = "/api/v1/buckets/{name}",
+    params(("name" = String, Path, description = "Bucket name")),
+    responses(
+        (status = 200, description = "Bucket details", body = BucketResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Bucket not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "buckets"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get(
@@ -58,6 +80,19 @@ pub async fn get(
 }
 
 /// Create a new bucket.
+#[utoipa::path(
+    post,
+    path = "/api/v1/buckets",
+    request_body = CreateBucketRequest,
+    responses(
+        (status = 200, description = "Bucket created", body = BucketResponse),
+        (status = 400, description = "Invalid bucket name"),
+        (status = 401, description = "Unauthorized"),
+        (status = 409, description = "Bucket already exists"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "buckets"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create(
@@ -98,6 +133,19 @@ pub async fn create(
 }
 
 /// Delete a bucket.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/buckets/{name}",
+    params(("name" = String, Path, description = "Bucket name")),
+    responses(
+        (status = 204, description = "Bucket deleted"),
+        (status = 400, description = "Bucket not empty"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Bucket not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "buckets"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(State(state): State<AppState>, Path(name): Path<String>) -> Result<StatusCode> {

@@ -8,7 +8,7 @@ use sysinfo::Disks;
 
 use crate::AppState;
 
-#[derive(Serialize)]
+#[derive(Serialize, utoipa::ToSchema)]
 /// Response for StorageStats.
 pub struct StorageStatsResponse {
     pub total_bytes: i64,
@@ -21,6 +21,16 @@ pub struct StorageStatsResponse {
 }
 
 /// Get aggregated storage statistics.
+#[utoipa::path(
+    get,
+    path = "/api/v1/stats",
+    responses(
+        (status = 200, description = "Aggregated storage statistics", body = StorageStatsResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "stats"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StorageStatsResponse>> {

@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 // ── Database model ──────────────────────────────────────────────
 
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a app source.
 pub struct AppSource {
     pub id: Uuid,
@@ -37,7 +37,7 @@ pub struct AppInstallGroup {
 
 // ── Store app (metadata shown in the catalog) ───────────────────
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 /// Represents a store app.
 pub struct StoreApp {
     pub id: String,
@@ -62,7 +62,7 @@ fn is_zero(v: &usize) -> bool {
     *v == 0
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 /// Represents a source info.
 pub struct SourceInfo {
     pub source_id: Uuid,
@@ -163,13 +163,13 @@ pub enum ComposeCommand {
 
 // ── Parsed config (ready for install form) ──────────────────────
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 /// Configuration for ParsedApp.
 pub struct ParsedAppConfig {
     pub services: Vec<ParsedService>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 /// ParsedService implementation.
 pub struct ParsedService {
     pub service_name: String,
@@ -185,14 +185,14 @@ pub struct ParsedService {
     pub depends_on: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 /// Represents a env var.
 pub struct EnvVar {
     pub key: String,
     pub default: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 /// Represents a app port.
 pub struct AppPort {
     pub host: u16,
@@ -200,7 +200,7 @@ pub struct AppPort {
     pub protocol: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 /// Represents a app volume.
 pub struct AppVolume {
     pub source: String,
@@ -211,7 +211,7 @@ pub struct AppVolume {
 // ── API request / response types ────────────────────────────────
 
 /// Single-service install request (backwards-compatible).
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct InstallRequest {
     pub app_id: String,
     pub source_id: Uuid,
@@ -224,7 +224,7 @@ pub struct InstallRequest {
 }
 
 /// Multi-service install request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct MultiServiceInstallRequest {
     pub app_id: String,
     pub source_id: Uuid,
@@ -233,7 +233,7 @@ pub struct MultiServiceInstallRequest {
     pub auto_start: Option<bool>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// ServiceOverride implementation.
 pub struct ServiceOverride {
     pub service_name: String,
@@ -244,7 +244,7 @@ pub struct ServiceOverride {
     pub labels: Option<HashMap<String, String>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a port override.
 pub struct PortOverride {
     pub host: u16,
@@ -252,14 +252,14 @@ pub struct PortOverride {
     pub protocol: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a volume override.
 pub struct VolumeOverride {
     pub source: String,
     pub target: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for AddSource operation.
 pub struct AddSourceRequest {
     pub name: String,
@@ -273,7 +273,7 @@ pub struct ListAppsQuery {
     pub category: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a app details.
 pub struct AppDetails {
     #[serde(flatten)]
@@ -287,7 +287,7 @@ pub struct CheckPortsQuery {
     pub ports: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a port conflict.
 pub struct PortConflict {
     pub port: u16,
@@ -297,6 +297,7 @@ pub struct PortConflict {
 
 #[derive(Debug, Serialize)]
 /// Represents a source validation.
+#[derive(utoipa::ToSchema)]
 pub struct SourceValidation {
     pub valid: bool,
     pub app_count: Option<usize>,
@@ -340,7 +341,7 @@ pub enum InstallEvent {
 }
 
 /// Response for install initiation.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct InstallStarted {
     pub install_id: Uuid,
 }

@@ -31,6 +31,17 @@ use crate::AppState;
 /// GET /api/v1/drive/nodes/:id/acl
 ///
 /// Returns all non-expired ACL grants directly attached to this node.
+#[utoipa::path(
+    get,
+    path = "/api/v1/drive/nodes/{id}/acl",
+    params(("id" = uuid::Uuid, Path, description = "Node ID")),
+    responses(
+        (status = 200, description = "ACL grants for the node"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "drive_acl"
+)]
 #[tracing::instrument(skip_all, fields(node_id = %id))]
 pub async fn list_acl(
     State(state): State<AppState>,
@@ -62,6 +73,17 @@ pub async fn list_acl(
 /// POST /api/v1/drive/nodes/:id/acl
 ///
 /// Grant a new permission to a user, group, or everyone on this node.
+#[utoipa::path(
+    post,
+    path = "/api/v1/drive/nodes/{id}/acl",
+    params(("id" = uuid::Uuid, Path, description = "Node ID")),
+    responses(
+        (status = 201, description = "ACL grant created"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "drive_acl"
+)]
 #[tracing::instrument(skip_all, fields(node_id = %id))]
 pub async fn create_acl(
     State(state): State<AppState>,
@@ -94,6 +116,21 @@ pub async fn create_acl(
 /// PUT /api/v1/drive/nodes/:id/acl/:acl_id
 ///
 /// Update the role, inheritance flag, or expiry of an existing ACL grant.
+#[utoipa::path(
+    put,
+    path = "/api/v1/drive/nodes/{id}/acl/{acl_id}",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Node ID"),
+        ("acl_id" = uuid::Uuid, Path, description = "ACL grant ID"),
+    ),
+    responses(
+        (status = 200, description = "ACL grant updated"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "ACL grant not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "drive_acl"
+)]
 #[tracing::instrument(skip_all, fields(node_id = %id, acl_id = %acl_id))]
 pub async fn update_acl(
     State(state): State<AppState>,
@@ -126,6 +163,20 @@ pub async fn update_acl(
 /// DELETE /api/v1/drive/nodes/:id/acl/:acl_id
 ///
 /// Revoke an ACL grant by its ID.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/drive/nodes/{id}/acl/{acl_id}",
+    params(
+        ("id" = uuid::Uuid, Path, description = "Node ID"),
+        ("acl_id" = uuid::Uuid, Path, description = "ACL grant ID"),
+    ),
+    responses(
+        (status = 200, description = "ACL grant deleted"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "drive_acl"
+)]
 #[tracing::instrument(skip_all, fields(node_id = %id, acl_id = %acl_id))]
 pub async fn delete_acl(
     State(state): State<AppState>,
@@ -158,6 +209,17 @@ pub async fn delete_acl(
 ///
 /// Disable permission inheritance for this node (set `inherit_permissions = false`).
 /// Future permission resolution will stop at this node and not walk further up.
+#[utoipa::path(
+    post,
+    path = "/api/v1/drive/nodes/{id}/acl/break",
+    params(("id" = uuid::Uuid, Path, description = "Node ID")),
+    responses(
+        (status = 200, description = "Inheritance disabled"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "drive_acl"
+)]
 #[tracing::instrument(skip_all, fields(node_id = %id))]
 pub async fn break_inheritance(
     State(state): State<AppState>,
@@ -192,6 +254,17 @@ pub async fn break_inheritance(
 /// POST /api/v1/drive/nodes/:id/acl/restore
 ///
 /// Re-enable permission inheritance for this node (set `inherit_permissions = true`).
+#[utoipa::path(
+    post,
+    path = "/api/v1/drive/nodes/{id}/acl/restore",
+    params(("id" = uuid::Uuid, Path, description = "Node ID")),
+    responses(
+        (status = 200, description = "Inheritance restored"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "drive_acl"
+)]
 #[tracing::instrument(skip_all, fields(node_id = %id))]
 pub async fn restore_inheritance(
     State(state): State<AppState>,
@@ -227,6 +300,17 @@ pub async fn restore_inheritance(
 ///
 /// Resolve the caller's effective role on this node via the full tree-walk
 /// inheritance algorithm (see `acl_resolver::resolve_effective_role`).
+#[utoipa::path(
+    get,
+    path = "/api/v1/drive/nodes/{id}/effective-acl",
+    params(("id" = uuid::Uuid, Path, description = "Node ID")),
+    responses(
+        (status = 200, description = "Effective ACL for the caller"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "drive_acl"
+)]
 #[tracing::instrument(skip_all, fields(node_id = %id))]
 pub async fn effective_acl(
     State(state): State<AppState>,

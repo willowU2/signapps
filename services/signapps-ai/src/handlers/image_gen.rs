@@ -22,7 +22,7 @@ use crate::AppState;
 // ---------------------------------------------------------------------------
 
 /// Response for image generation endpoints.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for ImageGen.
 pub struct ImageGenResponse {
     pub image_url: String,
@@ -33,10 +33,13 @@ pub struct ImageGenResponse {
 }
 
 /// Response for listing available models.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for ImageModels.
 pub struct ImageModelsResponse {
+    /// Available image generation models.
+    #[schema(value_type = Vec<serde_json::Value>)]
     pub models: Vec<ModelInfo>,
+    /// Number of available models.
     pub count: usize,
 }
 
@@ -45,7 +48,7 @@ pub struct ImageModelsResponse {
 // ---------------------------------------------------------------------------
 
 /// JSON request body for the text-to-image endpoint.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for Generate.
 pub struct GenerateRequest {
     pub prompt: String,
@@ -113,6 +116,19 @@ async fn store_image(state: &AppState, image_bytes: &[u8]) -> Result<String, (St
 /// - `seed` — random seed for reproducibility (optional)
 /// - `model` — model name override (optional)
 /// - `style` — prepended to prompt as a style prefix (optional)
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/image/generate",
+    request_body = GenerateRequest,
+    responses(
+        (status = 200, description = "Generated image URL and metadata", body = ImageGenResponse),
+        (status = 400, description = "Empty prompt"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No image generation backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "image"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn generate_image(
@@ -183,6 +199,23 @@ pub async fn generate_image(
 /// - `mask` — the mask image file (required; white = inpaint region)
 /// - `prompt` — text description of the fill (required)
 /// - `model` — model name override (optional)
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/image/inpaint",
+    request_body(
+        content_type = "multipart/form-data",
+        description = "Image, mask, and prompt",
+        content = String,
+    ),
+    responses(
+        (status = 200, description = "Inpainted image URL and metadata", body = ImageGenResponse),
+        (status = 400, description = "Missing fields or empty image"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No image generation backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "image"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn inpaint_image(
@@ -319,6 +352,23 @@ pub async fn inpaint_image(
 /// - `prompt` — text description of the transformation (required)
 /// - `strength` — denoising strength 0.0..1.0 (optional, default 0.75)
 /// - `model` — model name override (optional)
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/image/img2img",
+    request_body(
+        content_type = "multipart/form-data",
+        description = "Source image and transformation prompt",
+        content = String,
+    ),
+    responses(
+        (status = 200, description = "Transformed image URL and metadata", body = ImageGenResponse),
+        (status = 400, description = "Missing fields or empty image"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No image generation backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "image"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn img2img(
@@ -435,6 +485,23 @@ pub async fn img2img(
 /// Accepts `multipart/form-data` with:
 /// - `image` — the image file to upscale (required)
 /// - `scale` — scale factor, e.g. 2 or 4 (optional, default 2)
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/image/upscale",
+    request_body(
+        content_type = "multipart/form-data",
+        description = "Image file and optional scale factor",
+        content = String,
+    ),
+    responses(
+        (status = 200, description = "Upscaled image URL and metadata", body = ImageGenResponse),
+        (status = 400, description = "Missing or empty image"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No image generation backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "image"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn upscale_image(
@@ -525,6 +592,17 @@ pub async fn upscale_image(
 }
 
 /// List available image generation models.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/image/models",
+    responses(
+        (status = 200, description = "List of available image generation models", body = ImageModelsResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No image generation backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "image"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_image_models() -> Result<Json<ImageModelsResponse>, (StatusCode, String)> {

@@ -13,7 +13,7 @@ use signapps_common::{Error, Result};
 use signapps_db::repositories::StorageTier3Repository;
 use uuid::Uuid;
 /// Share link information.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 /// ShareLink data transfer object.
 pub struct ShareLink {
     pub id: Uuid,
@@ -31,7 +31,7 @@ pub struct ShareLink {
 }
 
 /// Share access type.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, utoipa::ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum ShareAccessType {
     View, // Can only view/preview
@@ -63,7 +63,7 @@ impl std::fmt::Display for ShareAccessType {
 }
 
 /// Create share request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for CreateShare.
 pub struct CreateShareRequest {
     pub bucket: String,
@@ -80,7 +80,7 @@ pub struct CreateShareRequest {
 }
 
 /// Create share response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for CreateShare.
 pub struct CreateShareResponse {
     pub id: Uuid,
@@ -90,7 +90,7 @@ pub struct CreateShareResponse {
 }
 
 /// Update share request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for UpdateShare.
 pub struct UpdateShareRequest {
     pub expires_in_hours: Option<i64>,
@@ -112,7 +112,7 @@ pub struct ListSharesQuery {
 }
 
 /// List shares response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for ListShares.
 pub struct ListSharesResponse {
     pub shares: Vec<ShareLink>,
@@ -120,14 +120,14 @@ pub struct ListSharesResponse {
 }
 
 /// Access share request (for password-protected shares).
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for AccessShare.
 pub struct AccessShareRequest {
     pub password: Option<String>,
 }
 
 /// Access share response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for AccessShare.
 pub struct AccessShareResponse {
     pub bucket: String,
@@ -141,6 +141,18 @@ pub struct AccessShareResponse {
 }
 
 /// Create a new share link.
+#[utoipa::path(
+    post,
+    path = "/api/v1/shares",
+    request_body = CreateShareRequest,
+    responses(
+        (status = 200, description = "Share link created", body = CreateShareResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "File not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "shares"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_share(
@@ -207,6 +219,16 @@ pub async fn create_share(
 }
 
 /// List shares for the current user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/shares",
+    responses(
+        (status = 200, description = "List of share links", body = ListSharesResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "shares"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_shares(
@@ -237,6 +259,18 @@ pub async fn list_shares(
 }
 
 /// Get share details.
+#[utoipa::path(
+    get,
+    path = "/api/v1/shares/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Share ID")),
+    responses(
+        (status = 200, description = "Share details", body = ShareLink),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Share not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "shares"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_share(
@@ -256,6 +290,19 @@ pub async fn get_share(
 }
 
 /// Update share settings.
+#[utoipa::path(
+    put,
+    path = "/api/v1/shares/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Share ID")),
+    request_body = UpdateShareRequest,
+    responses(
+        (status = 200, description = "Updated share", body = ShareLink),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Share not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "shares"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_share(
@@ -298,6 +345,17 @@ pub async fn update_share(
 }
 
 /// Delete/revoke a share.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/shares/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Share ID")),
+    responses(
+        (status = 204, description = "Share revoked"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "shares"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_share(
@@ -348,6 +406,18 @@ fn validate_public_share(
 }
 
 /// Access a shared file (public endpoint).
+#[utoipa::path(
+    post,
+    path = "/api/v1/shares/{token}/access",
+    params(("token" = String, Path, description = "Share token")),
+    request_body = AccessShareRequest,
+    responses(
+        (status = 200, description = "Share access info", body = AccessShareResponse),
+        (status = 401, description = "Invalid or missing password"),
+        (status = 404, description = "Share not found or expired"),
+    ),
+    tag = "shares"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn access_share(
@@ -411,6 +481,21 @@ pub struct DownloadSharedQuery {
 }
 
 /// Download shared file directly.
+#[utoipa::path(
+    get,
+    path = "/api/v1/shares/{token}/download",
+    params(
+        ("token" = String, Path, description = "Share token"),
+        ("access_token" = Option<String>, Query, description = "Time-limited access token"),
+        ("password" = Option<String>, Query, description = "Share password (fallback)"),
+    ),
+    responses(
+        (status = 200, description = "File content (binary download)"),
+        (status = 401, description = "Invalid access token or password"),
+        (status = 404, description = "Share not found"),
+    ),
+    tag = "shares"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn download_shared(

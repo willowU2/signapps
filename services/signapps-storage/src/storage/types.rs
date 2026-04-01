@@ -45,7 +45,7 @@ pub struct PresignedUrlResponse {
 }
 
 /// Copy request.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 pub struct CopyRequest {
     pub source_bucket: String,
     pub source_key: String,
@@ -54,7 +54,7 @@ pub struct CopyRequest {
 }
 
 /// Storage stats.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct StorageStats {
     pub total_buckets: usize,
     pub total_objects: usize,

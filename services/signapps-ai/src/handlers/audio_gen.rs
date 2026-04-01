@@ -15,7 +15,7 @@ use crate::AppState;
 // ---------------------------------------------------------------------------
 
 /// Response for audio generation endpoints.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for AudioGen.
 pub struct AudioGenResponse {
     pub audio_url: String,
@@ -25,10 +25,13 @@ pub struct AudioGenResponse {
 }
 
 /// Response for listing available models.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for AudioModels.
 pub struct AudioModelsResponse {
+    /// Available audio generation models.
+    #[schema(value_type = Vec<serde_json::Value>)]
     pub models: Vec<ModelInfo>,
+    /// Number of available models.
     pub count: usize,
 }
 
@@ -37,7 +40,7 @@ pub struct AudioModelsResponse {
 // ---------------------------------------------------------------------------
 
 /// JSON request body for the music generation endpoint.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for GenerateMusic.
 pub struct GenerateMusicRequest {
     pub prompt: String,
@@ -47,7 +50,7 @@ pub struct GenerateMusicRequest {
 }
 
 /// JSON request body for the sound-effect generation endpoint.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for GenerateSfx.
 pub struct GenerateSfxRequest {
     pub prompt: String,
@@ -119,6 +122,19 @@ async fn store_audio(state: &AppState, audio_bytes: &[u8]) -> Result<String, (St
 /// - `duration_seconds` — audio duration (optional)
 /// - `temperature` — generation temperature (optional)
 /// - `model` — model name override (optional)
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/audio/music",
+    request_body = GenerateMusicRequest,
+    responses(
+        (status = 200, description = "Generated audio URL and metadata", body = AudioGenResponse),
+        (status = 400, description = "Empty prompt"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No audio backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "audio"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn generate_music(
@@ -163,6 +179,19 @@ pub async fn generate_music(
 /// - `prompt` — text description of the sound effect (required)
 /// - `duration_seconds` — audio duration (optional)
 /// - `model` — model name override (optional)
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/audio/sfx",
+    request_body = GenerateSfxRequest,
+    responses(
+        (status = 200, description = "Generated sound effect URL and metadata", body = AudioGenResponse),
+        (status = 400, description = "Empty prompt"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No audio backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "audio"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn generate_sfx(
@@ -201,6 +230,17 @@ pub async fn generate_sfx(
 }
 
 /// List available audio generation models.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/audio/models",
+    responses(
+        (status = 200, description = "List of available audio models", body = AudioModelsResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No audio backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "audio"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_models() -> Result<Json<AudioModelsResponse>, (StatusCode, String)> {

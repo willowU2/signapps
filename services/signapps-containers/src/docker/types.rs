@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// Container creation configuration.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, utoipa::ToSchema)]
 pub struct ContainerConfig {
     /// Container name
     pub name: String,
@@ -39,7 +39,7 @@ pub struct ContainerConfig {
 }
 
 /// Port mapping configuration.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, utoipa::ToSchema)]
 pub struct PortMapping {
     /// Host port
     pub host: u16,
@@ -57,7 +57,7 @@ fn default_protocol() -> String {
 }
 
 /// Volume mount configuration.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, utoipa::ToSchema)]
 pub struct VolumeMount {
     /// Host path or volume name
     pub source: String,
@@ -69,7 +69,7 @@ pub struct VolumeMount {
 }
 
 /// Restart policy.
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum RestartPolicy {
     #[default]
@@ -80,7 +80,7 @@ pub enum RestartPolicy {
 }
 
 /// Resource limits for a container.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, utoipa::ToSchema)]
 pub struct ResourceLimits {
     /// CPU cores limit (e.g., 0.5 for half a core)
     pub cpu_cores: Option<f64>,
@@ -91,7 +91,7 @@ pub struct ResourceLimits {
 }
 
 /// Mount point information from Docker inspect.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct MountInfo {
     pub source: Option<String>,
     pub destination: String,
@@ -100,7 +100,7 @@ pub struct MountInfo {
 }
 
 /// Resource usage/limits from Docker inspect.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct ResourceInfo {
     pub memory_limit: Option<i64>,
     pub nano_cpus: Option<i64>,
@@ -108,7 +108,7 @@ pub struct ResourceInfo {
 }
 
 /// Health check status from Docker inspect.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct HealthInfo {
     pub status: String,
     pub failing_streak: i64,
@@ -116,7 +116,7 @@ pub struct HealthInfo {
 }
 
 /// Container information returned by Docker.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct ContainerInfo {
     pub id: String,
     pub name: String,
@@ -152,7 +152,7 @@ pub struct ContainerInfo {
 }
 
 /// Port information.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct PortInfo {
     pub container_port: u16,
     pub host_port: Option<u16>,
@@ -161,7 +161,7 @@ pub struct PortInfo {
 }
 
 /// Container stats snapshot.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct ContainerStats {
     pub container_id: String,
     pub cpu_percent: f64,
@@ -177,7 +177,7 @@ pub struct ContainerStats {
 }
 
 /// Docker image information.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct ImageInfo {
     pub id: String,
     pub repo_tags: Vec<String>,
@@ -195,7 +195,7 @@ pub struct PullProgress {
 }
 
 /// Network information.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct NetworkInfo {
     pub id: String,
     pub name: String,
@@ -206,7 +206,7 @@ pub struct NetworkInfo {
 }
 
 /// Volume information.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct VolumeInfo {
     pub name: String,
     pub driver: String,

@@ -22,7 +22,7 @@ use crate::AppState;
 // ─── Response types ──────────────────────────────────────────────────────────
 
 /// Quota usage summary returned to callers.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// QuotaUsage data transfer object.
 pub struct QuotaUsage {
     pub user_id: Uuid,
@@ -32,7 +32,7 @@ pub struct QuotaUsage {
 }
 
 /// Usage info for a single resource dimension.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// UsageInfo data transfer object.
 pub struct UsageInfo {
     pub used: i64,
@@ -42,7 +42,7 @@ pub struct UsageInfo {
 }
 
 /// Per-bucket usage (populated on demand; empty in basic path).
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// BucketUsage data transfer object.
 pub struct BucketUsage {
     pub bucket: String,
@@ -51,7 +51,7 @@ pub struct BucketUsage {
 }
 
 /// Quota alert.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// QuotaAlert data transfer object.
 pub struct QuotaAlert {
     pub alert_type: QuotaAlertType,
@@ -63,7 +63,7 @@ pub struct QuotaAlert {
 }
 
 /// Severity of a quota alert.
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QuotaAlertType {
     Warning,  // > 80 %
@@ -74,7 +74,7 @@ pub enum QuotaAlertType {
 // ─── Request types ────────────────────────────────────────────────────────────
 
 /// Admin request to configure limits for a user.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for SetQuota.
 pub struct SetQuotaRequest {
     pub max_storage_bytes: Option<i64>,
@@ -184,6 +184,16 @@ async fn update_quota_impl(
 // ─── HTTP handlers ────────────────────────────────────────────────────────────
 
 /// GET /quotas/me — current user's quota usage.
+#[utoipa::path(
+    get,
+    path = "/api/v1/quotas/me",
+    responses(
+        (status = 200, description = "Current user quota usage", body = QuotaUsage),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "quotas"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_my_quota(
@@ -194,6 +204,17 @@ pub async fn get_my_quota(
 }
 
 /// GET /quotas/users/:user_id — admin: fetch any user's quota usage.
+#[utoipa::path(
+    get,
+    path = "/api/v1/quotas/users/{user_id}",
+    params(("user_id" = uuid::Uuid, Path, description = "User ID")),
+    responses(
+        (status = 200, description = "User quota usage", body = QuotaUsage),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "quotas"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_user_quota(
@@ -204,6 +225,18 @@ pub async fn get_user_quota(
 }
 
 /// PUT /quotas/users/:user_id — admin: set quota limits for a user.
+#[utoipa::path(
+    put,
+    path = "/api/v1/quotas/users/{user_id}",
+    params(("user_id" = uuid::Uuid, Path, description = "User ID")),
+    request_body = SetQuotaRequest,
+    responses(
+        (status = 200, description = "Updated quota configuration"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "quotas"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn set_user_quota(
@@ -227,6 +260,18 @@ pub async fn set_user_quota(
 }
 
 /// DELETE /quotas/users/:user_id — admin: remove quota row (user reverts to defaults).
+#[utoipa::path(
+    delete,
+    path = "/api/v1/quotas/users/{user_id}",
+    params(("user_id" = uuid::Uuid, Path, description = "User ID")),
+    responses(
+        (status = 204, description = "Quota row deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Quota not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "quotas"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_user_quota(
@@ -246,6 +291,16 @@ pub async fn delete_user_quota(
 }
 
 /// GET /quotas/me/alerts — active quota alerts for the current user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/quotas/me/alerts",
+    responses(
+        (status = 200, description = "Active quota alerts", body = Vec<QuotaAlert>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "quotas"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_quota_alerts(
@@ -287,6 +342,17 @@ pub async fn get_quota_alerts(
 }
 
 /// POST /quotas/users/:user_id/recalculate — admin: recalculate usage from storage.files.
+#[utoipa::path(
+    post,
+    path = "/api/v1/quotas/users/{user_id}/recalculate",
+    params(("user_id" = uuid::Uuid, Path, description = "User ID")),
+    responses(
+        (status = 200, description = "Recalculated quota usage", body = QuotaUsage),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "quotas"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn recalculate_usage(
@@ -299,6 +365,16 @@ pub async fn recalculate_usage(
 }
 
 /// GET /quotas/over-limit — admin: list users who have exceeded their quota.
+#[utoipa::path(
+    get,
+    path = "/api/v1/quotas/over-limit",
+    responses(
+        (status = 200, description = "Users over quota", body = Vec<QuotaUsage>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "quotas"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_users_over_quota(State(state): State<AppState>) -> Result<Json<Vec<QuotaUsage>>> {

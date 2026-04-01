@@ -65,7 +65,7 @@ pub struct PreviewQuery {
 }
 
 /// Preview info response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// PreviewInfo data transfer object.
 pub struct PreviewInfo {
     pub previewable: bool,
@@ -76,7 +76,7 @@ pub struct PreviewInfo {
 }
 
 /// Preview types.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum PreviewType {
     Image,
@@ -90,6 +90,23 @@ pub enum PreviewType {
 }
 
 /// Get thumbnail for a file.
+#[utoipa::path(
+    get,
+    path = "/api/v1/preview/{bucket}/{key}/thumbnail",
+    params(
+        ("bucket" = String, Path, description = "Bucket name"),
+        ("key" = String, Path, description = "Object key"),
+        ("size" = Option<String>, Query, description = "Thumbnail size: small, medium, large"),
+        ("format" = Option<String>, Query, description = "Output format: webp, png, jpeg"),
+    ),
+    responses(
+        (status = 200, description = "Thumbnail image binary"),
+        (status = 404, description = "File not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "preview"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_thumbnail(
@@ -657,6 +674,21 @@ struct PreviewNotAvailable {
 /// - Images (`image/*`): resized to max 800 px width, returned as WebP.
 /// - Text files (`text/*`): first 1 000 characters returned as `text/plain`.
 /// - Everything else: JSON `{"previewable":false,"message":"preview not available"}`.
+#[utoipa::path(
+    get,
+    path = "/api/v1/preview/{bucket}/{key}/generate",
+    params(
+        ("bucket" = String, Path, description = "Bucket name"),
+        ("key" = String, Path, description = "Object key"),
+    ),
+    responses(
+        (status = 200, description = "Generated preview"),
+        (status = 404, description = "File not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "preview"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn generate_preview(
@@ -732,6 +764,24 @@ pub async fn generate_preview(
 }
 
 /// Get preview for a file.
+#[utoipa::path(
+    get,
+    path = "/api/v1/preview/{bucket}/{key}",
+    params(
+        ("bucket" = String, Path, description = "Bucket name"),
+        ("key" = String, Path, description = "Object key"),
+        ("page" = Option<u32>, Query, description = "Page number (for PDFs)"),
+        ("width" = Option<u32>, Query, description = "Max width"),
+        ("height" = Option<u32>, Query, description = "Max height"),
+    ),
+    responses(
+        (status = 200, description = "File preview"),
+        (status = 404, description = "File not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "preview"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_preview(
@@ -882,6 +932,21 @@ pub async fn get_preview(
 }
 
 /// Get preview info for a file.
+#[utoipa::path(
+    get,
+    path = "/api/v1/preview/{bucket}/{key}/info",
+    params(
+        ("bucket" = String, Path, description = "Bucket name"),
+        ("key" = String, Path, description = "Object key"),
+    ),
+    responses(
+        (status = 200, description = "Preview info for the file", body = PreviewInfo),
+        (status = 404, description = "File not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "preview"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_preview_info(
@@ -993,6 +1058,21 @@ pub struct ArchiveListResponse {
 }
 
 /// Get archive listing (ZIP files).
+#[utoipa::path(
+    get,
+    path = "/api/v1/preview/{bucket}/{key}/archive",
+    params(
+        ("bucket" = String, Path, description = "Bucket name"),
+        ("key" = String, Path, description = "Object key"),
+    ),
+    responses(
+        (status = 200, description = "Archive file listing"),
+        (status = 400, description = "Not a supported archive format"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "preview"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_archive_listing(
@@ -1068,6 +1148,21 @@ pub struct DocumentMetadata {
 }
 
 /// Get document metadata.
+#[utoipa::path(
+    get,
+    path = "/api/v1/preview/{bucket}/{key}/metadata",
+    params(
+        ("bucket" = String, Path, description = "Bucket name"),
+        ("key" = String, Path, description = "Object key"),
+    ),
+    responses(
+        (status = 200, description = "Document metadata"),
+        (status = 404, description = "File not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "preview"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_document_metadata(

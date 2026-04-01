@@ -13,6 +13,7 @@ pub mod image_gen;
 pub mod index;
 pub mod model_management;
 pub mod models;
+pub mod openapi;
 pub mod providers;
 pub mod search;
 pub mod search_image;

@@ -11,7 +11,7 @@ use signapps_common::{Error, Result};
 use crate::AppState;
 
 /// Create collection request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for CreateCollection.
 pub struct CreateCollectionRequest {
     pub name: String,
@@ -19,9 +19,11 @@ pub struct CreateCollectionRequest {
 }
 
 /// Collection list response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for CollectionList.
 pub struct CollectionListResponse {
+    /// List of knowledge base collections with statistics.
+    #[schema(value_type = Vec<serde_json::Value>)]
     pub collections: Vec<signapps_db::models::CollectionWithStats>,
 }
 
@@ -46,6 +48,16 @@ fn validate_collection_name(name: &str) -> Result<()> {
 }
 
 /// List all collections.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/collections",
+    responses(
+        (status = 200, description = "List of knowledge base collections", body = CollectionListResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "collections"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_collections(
@@ -56,6 +68,20 @@ pub async fn list_collections(
 }
 
 /// Get a single collection.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/collections/{name}",
+    params(
+        ("name" = String, Path, description = "Collection name"),
+    ),
+    responses(
+        (status = 200, description = "Collection details"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Collection not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "collections"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_collection(
@@ -67,6 +93,18 @@ pub async fn get_collection(
 }
 
 /// Create a new collection.
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/collections",
+    request_body = CreateCollectionRequest,
+    responses(
+        (status = 201, description = "Collection created"),
+        (status = 400, description = "Invalid name"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "collections"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_collection(
@@ -82,6 +120,21 @@ pub async fn create_collection(
 }
 
 /// Delete a collection.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/ai/collections/{name}",
+    params(
+        ("name" = String, Path, description = "Collection name"),
+    ),
+    responses(
+        (status = 204, description = "Collection deleted"),
+        (status = 400, description = "Cannot delete default collection"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Collection not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "collections"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_collection(
@@ -98,6 +151,20 @@ pub async fn delete_collection(
 }
 
 /// Get detailed stats for a collection.
+#[utoipa::path(
+    get,
+    path = "/api/v1/ai/collections/{name}/stats",
+    params(
+        ("name" = String, Path, description = "Collection name"),
+    ),
+    responses(
+        (status = 200, description = "Detailed collection statistics"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Collection not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "collections"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_collection_stats(

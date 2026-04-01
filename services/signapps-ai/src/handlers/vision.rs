@@ -14,10 +14,13 @@ use crate::workers::{VisionResult, VisionWorker};
 // ---------------------------------------------------------------------------
 
 /// Response for the batch describe endpoint.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for BatchDescribe.
 pub struct BatchDescribeResponse {
+    /// Vision analysis results for each image.
+    #[schema(value_type = Vec<serde_json::Value>)]
     pub results: Vec<VisionResult>,
+    /// Number of results.
     pub count: usize,
 }
 
@@ -64,6 +67,23 @@ fn create_vision_worker() -> Result<Box<dyn VisionWorker + Send + Sync>, String>
 /// Accepts `multipart/form-data` with:
 /// - `image` — the image file (required)
 /// - `prompt` — optional text prompt guiding the description
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/vision/describe",
+    request_body(
+        content_type = "multipart/form-data",
+        description = "Image file and optional description prompt",
+        content = String,
+    ),
+    responses(
+        (status = 200, description = "Image description"),
+        (status = 400, description = "Missing or empty image"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No vision backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "vision"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn describe_image(
@@ -126,6 +146,23 @@ pub async fn describe_image(
 /// Accepts `multipart/form-data` with:
 /// - `image` — the image file (required)
 /// - `question` — the question to answer (required)
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/vision/vqa",
+    request_body(
+        content_type = "multipart/form-data",
+        description = "Image file and question",
+        content = String,
+    ),
+    responses(
+        (status = 200, description = "Answer to the visual question"),
+        (status = 400, description = "Missing image or question"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No vision backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "vision"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn visual_qa(
@@ -201,6 +238,23 @@ pub async fn visual_qa(
 ///
 /// Accepts `multipart/form-data` with:
 /// - `images` — one or more image files (each as a separate `images` field)
+#[utoipa::path(
+    post,
+    path = "/api/v1/ai/vision/batch",
+    request_body(
+        content_type = "multipart/form-data",
+        description = "One or more image files (field name: 'images')",
+        content = String,
+    ),
+    responses(
+        (status = 200, description = "Batch image descriptions", body = BatchDescribeResponse),
+        (status = 400, description = "No images provided"),
+        (status = 401, description = "Unauthorized"),
+        (status = 503, description = "No vision backend configured"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "vision"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn batch_describe(

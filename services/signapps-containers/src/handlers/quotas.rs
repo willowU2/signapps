@@ -13,8 +13,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 /// Quota response.
-#[derive(Debug, Serialize)]
-/// Response for Quota.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct QuotaResponse {
     pub user_id: Uuid,
     pub max_containers: i32,
@@ -29,8 +28,7 @@ pub struct QuotaResponse {
 }
 
 /// Usage percentages.
-#[derive(Debug, Serialize)]
-/// QuotaUsagePercent data transfer object.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct QuotaUsagePercent {
     pub containers: f64,
     pub cpu: f64,
@@ -39,6 +37,17 @@ pub struct QuotaUsagePercent {
 }
 
 /// Get current user's quota.
+#[utoipa::path(
+    get,
+    path = "/api/v1/quotas/me",
+    responses(
+        (status = 200, description = "Current user quota", body = QuotaResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Quota not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "quotas"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn get_my_quota(
@@ -74,6 +83,21 @@ pub async fn get_my_quota(
 }
 
 /// Get a user's quota (admin only).
+#[utoipa::path(
+    get,
+    path = "/api/v1/users/{user_id}/quotas",
+    params(
+        ("user_id" = uuid::Uuid, Path, description = "User ID"),
+    ),
+    responses(
+        (status = 200, description = "User quota", body = QuotaResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — admin only"),
+        (status = 404, description = "Quota not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "quotas"
+)]
 #[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn get_user_quota(
@@ -109,6 +133,21 @@ pub async fn get_user_quota(
 }
 
 /// Update a user's quota (admin only).
+#[utoipa::path(
+    put,
+    path = "/api/v1/users/{user_id}/quotas",
+    params(
+        ("user_id" = uuid::Uuid, Path, description = "User ID"),
+    ),
+    request_body = signapps_db::models::UpdateQuota,
+    responses(
+        (status = 200, description = "Quota updated", body = QuotaResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — admin only"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "quotas"
+)]
 #[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn update_user_quota(

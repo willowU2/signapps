@@ -15,7 +15,7 @@ use uuid::Uuid;
 use crate::AppState;
 
 /// Favorite item.
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Favorite data transfer object.
 pub struct Favorite {
     pub id: Uuid,
@@ -30,7 +30,7 @@ pub struct Favorite {
 }
 
 /// Add favorite request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for AddFavorite.
 pub struct AddFavoriteRequest {
     pub bucket: String,
@@ -41,7 +41,7 @@ pub struct AddFavoriteRequest {
 }
 
 /// Update favorite request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for UpdateFavorite.
 pub struct UpdateFavoriteRequest {
     pub display_name: Option<String>,
@@ -50,7 +50,7 @@ pub struct UpdateFavoriteRequest {
 }
 
 /// Reorder favorites request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for ReorderFavorites.
 pub struct ReorderFavoritesRequest {
     pub order: Vec<Uuid>,
@@ -66,7 +66,7 @@ pub struct ListFavoritesQuery {
 }
 
 /// List favorites response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for ListFavorites.
 pub struct ListFavoritesResponse {
     pub favorites: Vec<FavoriteWithInfo>,
@@ -74,7 +74,7 @@ pub struct ListFavoritesResponse {
 }
 
 /// Favorite with file info.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// FavoriteWithInfo data transfer object.
 pub struct FavoriteWithInfo {
     #[serde(flatten)]
@@ -101,6 +101,17 @@ fn map_row_to_favorite(row: &sqlx::postgres::PgRow) -> Result<Favorite> {
 }
 
 /// Add a file or folder to favorites.
+#[utoipa::path(
+    post,
+    path = "/api/v1/favorites",
+    request_body = AddFavoriteRequest,
+    responses(
+        (status = 200, description = "Favorite added", body = Favorite),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "favorites"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn add_favorite(
@@ -149,6 +160,16 @@ pub async fn add_favorite(
 }
 
 /// List favorites for current user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/favorites",
+    responses(
+        (status = 200, description = "Favorites list", body = ListFavoritesResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "favorites"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_favorites(
@@ -222,6 +243,18 @@ pub async fn list_favorites(
 }
 
 /// Get a specific favorite.
+#[utoipa::path(
+    get,
+    path = "/api/v1/favorites/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Favorite ID")),
+    responses(
+        (status = 200, description = "Favorite with file info", body = FavoriteWithInfo),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Favorite not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "favorites"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_favorite(
@@ -277,6 +310,19 @@ pub async fn get_favorite(
 }
 
 /// Update a favorite.
+#[utoipa::path(
+    put,
+    path = "/api/v1/favorites/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Favorite ID")),
+    request_body = UpdateFavoriteRequest,
+    responses(
+        (status = 200, description = "Updated favorite", body = Favorite),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Favorite not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "favorites"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_favorite(
@@ -311,6 +357,18 @@ pub async fn update_favorite(
 }
 
 /// Remove from favorites.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/favorites/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Favorite ID")),
+    responses(
+        (status = 204, description = "Favorite removed"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Favorite not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "favorites"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_favorite(
@@ -333,6 +391,21 @@ pub async fn remove_favorite(
 }
 
 /// Remove favorite by path.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/favorites/path/{bucket}/{key}",
+    params(
+        ("bucket" = String, Path, description = "Bucket name"),
+        ("key" = String, Path, description = "Object key"),
+    ),
+    responses(
+        (status = 204, description = "Favorite removed"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Favorite not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "favorites"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_favorite_by_path(
@@ -360,6 +433,17 @@ pub async fn remove_favorite_by_path(
 }
 
 /// Reorder favorites.
+#[utoipa::path(
+    post,
+    path = "/api/v1/favorites/reorder",
+    request_body = ReorderFavoritesRequest,
+    responses(
+        (status = 200, description = "Favorites reordered"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "favorites"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn reorder_favorites(
@@ -385,6 +469,20 @@ pub async fn reorder_favorites(
 }
 
 /// Check if a path is favorited.
+#[utoipa::path(
+    get,
+    path = "/api/v1/favorites/check/{bucket}/{key}",
+    params(
+        ("bucket" = String, Path, description = "Bucket name"),
+        ("key" = String, Path, description = "Object key"),
+    ),
+    responses(
+        (status = 200, description = "Whether the path is favorited (bool)"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "favorites"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn check_favorite(

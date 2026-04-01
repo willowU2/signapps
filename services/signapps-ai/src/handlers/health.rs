@@ -5,24 +5,39 @@ use serde::Serialize;
 
 use crate::AppState;
 
-#[derive(Serialize)]
+#[derive(Serialize, utoipa::ToSchema)]
 /// Response for Health.
 pub struct HealthResponse {
+    /// Service health status ("healthy" or "degraded").
     pub status: String,
+    /// Service name.
     pub service: String,
+    /// Service version.
     pub version: String,
+    /// Individual component health.
     pub components: ComponentsHealth,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, utoipa::ToSchema)]
 /// ComponentsHealth data transfer object.
 pub struct ComponentsHealth {
+    /// Whether the vector store is reachable.
     pub vectors: bool,
+    /// Whether the embeddings service is reachable.
     pub embeddings: bool,
+    /// Whether the default LLM provider is reachable.
     pub llm: bool,
 }
 
 /// Health check endpoint.
+#[utoipa::path(
+    get,
+    path = "/health",
+    responses(
+        (status = 200, description = "Service health status", body = HealthResponse),
+    ),
+    tag = "health"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {

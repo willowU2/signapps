@@ -13,6 +13,9 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
+use handlers::openapi::ContainersApiDoc;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 use dashmap::DashMap;
 use signapps_common::bootstrap::{env_or, init_tracing_with_filter, load_env, ServiceConfig};
 use signapps_common::middleware::{
@@ -341,11 +344,15 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    let openapi_routes =
+        SwaggerUi::new("/swagger-ui").url("/api/v1/openapi.json", ContainersApiDoc::openapi());
+
     // Combine all routes
     Router::new()
         .merge(public_routes)
         .merge(protected_routes)
         .merge(admin_routes)
+        .merge(openapi_routes)
         .layer(middleware::from_fn(logging_middleware))
         .layer(middleware::from_fn(request_id_middleware))
         .layer(TraceLayer::new_for_http())

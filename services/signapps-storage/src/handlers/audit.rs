@@ -78,6 +78,16 @@ pub struct AlertQuery {
 ///
 /// Returns recent forensic audit log entries with optional filtering.
 /// Requires at least admin role (enforced by the admin route layer in main.rs).
+#[utoipa::path(
+    get,
+    path = "/api/v1/drive/audit",
+    responses(
+        (status = 200, description = "List of forensic audit log entries"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "audit"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_audit(
     State(state): State<AppState>,
@@ -110,6 +120,16 @@ pub async fn list_audit(
 /// Verifies the forensic integrity of the entire audit chain.
 /// Returns whether the chain is intact and, if not, the index of the first
 /// corrupted entry.
+#[utoipa::path(
+    get,
+    path = "/api/v1/drive/audit/verify",
+    responses(
+        (status = 200, description = "Audit chain verification result"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "audit"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn verify_chain(
     State(state): State<AppState>,
@@ -127,6 +147,16 @@ pub async fn verify_chain(
 ///
 /// Exports a window of the audit log as JSON or CSV.
 /// Returns the content as a JSON array (format=json) or plain CSV text.
+#[utoipa::path(
+    post,
+    path = "/api/v1/drive/audit/export",
+    responses(
+        (status = 200, description = "Exported audit log data"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "audit"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn export_audit(
     State(state): State<AppState>,
@@ -191,6 +221,16 @@ pub async fn export_audit(
 ///
 /// Returns recent audit log entries that match alert conditions —
 /// specifically `access_denied` events in the last 24 hours.
+#[utoipa::path(
+    get,
+    path = "/api/v1/drive/audit/alerts",
+    responses(
+        (status = 200, description = "List of recent audit alerts"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "audit"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_alerts(
     State(state): State<AppState>,
@@ -219,6 +259,16 @@ pub async fn list_alerts(
 /// GET /api/v1/drive/audit/alerts/config
 ///
 /// Returns all alert configurations for the organisation.
+#[utoipa::path(
+    get,
+    path = "/api/v1/drive/audit/alerts/config",
+    responses(
+        (status = 200, description = "List of audit alert configurations"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "audit"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_alert_config(
     State(state): State<AppState>,
@@ -242,7 +292,7 @@ pub async fn get_alert_config(
 ///
 /// Updates an alert configuration by its ID (passed as a query parameter or
 /// in the request body).
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdateAlertConfigRequest {
     /// UUID of the alert config row to update.
     pub id: Uuid,
@@ -251,6 +301,17 @@ pub struct UpdateAlertConfigRequest {
 }
 
 /// PUT /api/v1/drive/audit/alerts/config
+#[utoipa::path(
+    put,
+    path = "/api/v1/drive/audit/alerts/config",
+    request_body = UpdateAlertConfigRequest,
+    responses(
+        (status = 200, description = "Updated audit alert configuration"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "audit"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_alert_config(
     State(state): State<AppState>,
