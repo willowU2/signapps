@@ -31,7 +31,7 @@ use utoipa::OpenApi;
         // Emails
         crate::handlers::emails::list_emails,
         crate::handlers::emails::get_email,
-        crate::handlers::emails::send_email,
+        crate::handlers::email_send::send_email,
         crate::handlers::emails::update_email,
         crate::handlers::emails::delete_email,
         crate::handlers::emails::list_attachments,
@@ -50,7 +50,7 @@ use utoipa::OpenApi;
             crate::models::MailLabel,
             crate::handlers::accounts::CreateAccountRequest,
             crate::handlers::accounts::UpdateAccountRequest,
-            crate::handlers::emails::SendEmailRequest,
+            crate::handlers::email_send::SendEmailRequest,
             crate::handlers::emails::UpdateEmailRequest,
             crate::handlers::labels::CreateLabelRequest,
             crate::handlers::labels::UpdateLabelRequest,

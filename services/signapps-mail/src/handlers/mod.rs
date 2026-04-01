@@ -1,7 +1,9 @@
 pub mod accounts;
+pub(crate) mod accounts_connection;
 pub mod aliases;
 pub mod categorize;
 pub mod delegation;
+pub mod email_send;
 pub mod emails;
 pub mod folders;
 pub mod import_export;
@@ -15,6 +17,7 @@ pub mod scheduled;
 pub mod search;
 pub mod signatures;
 pub mod spam;
+pub(crate) mod spam_bayes;
 pub mod stats;
 pub mod templates;
 pub mod threads;
