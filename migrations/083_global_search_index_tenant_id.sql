@@ -18,7 +18,7 @@ DECLARE
     v_tenant_id UUID;
 BEGIN
     IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
-        SELECT tenant_id INTO v_tenant_id FROM users WHERE id = NEW.created_by;
+        SELECT tenant_id INTO v_tenant_id FROM identity.users WHERE id = NEW.created_by;
 
         INSERT INTO global_search_index (id, entity_type, user_id, tenant_id, title, snippet, url, updated_at)
         VALUES (
@@ -54,7 +54,7 @@ DECLARE
 BEGIN
     IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
         v_filename  := split_part(NEW.key, '/', -1);
-        SELECT tenant_id INTO v_tenant_id FROM users WHERE id = NEW.user_id;
+        SELECT tenant_id INTO v_tenant_id FROM identity.users WHERE id = NEW.user_id;
 
         INSERT INTO global_search_index (id, entity_type, user_id, tenant_id, title, snippet, url, updated_at)
         VALUES (
@@ -92,7 +92,7 @@ BEGIN
         SELECT a.user_id, u.tenant_id
         INTO   v_user_id, v_tenant_id
         FROM   mail.accounts a
-        JOIN   users u ON u.id = a.user_id
+        JOIN   identity.users u ON u.id = a.user_id
         WHERE  a.id = NEW.account_id;
 
         IF v_user_id IS NOT NULL THEN
@@ -125,6 +125,6 @@ $$ LANGUAGE plpgsql;
 -- 4. Back-fill tenant_id for existing rows where possible
 UPDATE public.global_search_index gsi
 SET    tenant_id = u.tenant_id
-FROM   users u
+FROM   identity.users u
 WHERE  gsi.user_id = u.id
   AND  gsi.tenant_id IS NULL;

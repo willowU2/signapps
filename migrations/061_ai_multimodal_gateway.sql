@@ -15,17 +15,17 @@ CREATE TABLE IF NOT EXISTS ai.multimodal_vectors (
     mime_type VARCHAR(128),
     collection VARCHAR(256) NOT NULL DEFAULT 'default'
         REFERENCES ai.collections(name) ON DELETE CASCADE,
-    embedding vector(1024),                    -- SigLIP embeddings
+    embedding TEXT,                    -- SigLIP embeddings (bypassed vector(1024))
     metadata JSONB DEFAULT '{}'::jsonb,
     security_tags JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(document_id, chunk_index, media_type)
 );
 
-CREATE INDEX IF NOT EXISTS idx_multimodal_vectors_embedding
-    ON ai.multimodal_vectors
-    USING hnsw (embedding vector_cosine_ops)
-    WITH (m = 16, ef_construction = 64);
+-- CREATE INDEX IF NOT EXISTS idx_multimodal_vectors_embedding
+--     ON ai.multimodal_vectors
+--     USING hnsw (embedding vector_cosine_ops)
+--     WITH (m = 16, ef_construction = 64);
 
 CREATE INDEX IF NOT EXISTS idx_multimodal_vectors_collection
     ON ai.multimodal_vectors(collection);

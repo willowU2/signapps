@@ -3,7 +3,7 @@
 
 -- Table: persisted events (outbox)
 CREATE TABLE IF NOT EXISTS platform.events (
-    id UUID PRIMARY KEY DEFAULT gen_uuid_v7(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     event_type VARCHAR(100) NOT NULL,
     source_service VARCHAR(50) NOT NULL,
     entity_type VARCHAR(50) NOT NULL,

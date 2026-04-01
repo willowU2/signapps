@@ -1,4 +1,6 @@
 -- Migration 068: Custom document templates (DB-persisted)
+CREATE SCHEMA IF NOT EXISTS docs;
+
 CREATE TABLE IF NOT EXISTS docs.custom_templates (
     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     slug       TEXT NOT NULL UNIQUE,

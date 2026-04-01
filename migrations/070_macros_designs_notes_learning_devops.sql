@@ -47,6 +47,8 @@ CREATE INDEX IF NOT EXISTS idx_quick_notes_user_id ON docs.quick_notes(user_id);
 -- workforce schema extensions
 -- ============================================================
 
+CREATE SCHEMA IF NOT EXISTS workforce;
+
 -- Learning courses
 CREATE TABLE IF NOT EXISTS workforce.courses (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

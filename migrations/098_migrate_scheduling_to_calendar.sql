@@ -50,9 +50,15 @@ IF EXISTS (
     SELECT 1 FROM information_schema.tables
     WHERE table_schema = 'scheduling' AND table_name = 'time_items'
 ) THEN
-    -- Ensure migrated events land in the owner's default calendar.
-    -- For each distinct owner we either find their first calendar or create one.
-    -- We do this by inserting a staging calendar only when necessary.
+
+    -- Ensure every owner has at least one calendar before inserting
+    INSERT INTO calendar.calendars (owner_id, name, description, timezone, color, is_shared)
+    SELECT DISTINCT ti.owner_id, 'Migré depuis Scheduler', 'Calendrier créé lors de la migration 098', 'UTC', '#6366f1', false
+    FROM scheduling.time_items ti
+    WHERE NOT EXISTS (
+        SELECT 1 FROM calendar.calendars c WHERE c.owner_id = ti.owner_id
+    );
+
     INSERT INTO calendar.events (
         id,
         calendar_id,
@@ -75,18 +81,12 @@ IF EXISTS (
     )
     SELECT
         ti.id,
-        -- Resolve target calendar: owner's first calendar, else a fallback
-        COALESCE(
-            (SELECT c.id
-             FROM calendar.calendars c
-             WHERE c.owner_id = ti.owner_id
-             ORDER BY c.created_at
-             LIMIT 1),
-            -- Insert a migration calendar on the fly and return its id
-            (INSERT INTO calendar.calendars (owner_id, name, description, timezone, color, is_shared)
-             VALUES (ti.owner_id, 'Migré depuis Scheduler', 'Calendrier créé lors de la migration 098', 'UTC', '#6366f1', false)
-             RETURNING id)
-        ),
+        -- Resolve target calendar: owner's first calendar
+        (SELECT c.id
+         FROM calendar.calendars c
+         WHERE c.owner_id = ti.owner_id
+         ORDER BY c.created_at
+         LIMIT 1),
         ti.title,
         ti.description,
         COALESCE(ti.start_time, NOW()),

@@ -6,6 +6,11 @@
 -- Create missing schemas
 CREATE SCHEMA IF NOT EXISTS docs;
 CREATE SCHEMA IF NOT EXISTS workforce;
+CREATE SCHEMA IF NOT EXISTS billing;
+
+CREATE TABLE IF NOT EXISTS billing.invoices (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+);
 
 -- Drop and recreate billing.line_items to match Rust LineItem struct exactly:
 -- id, invoice_id, description, quantity, unit_price_cents, total_cents,

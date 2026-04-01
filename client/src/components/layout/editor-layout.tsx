@@ -54,7 +54,7 @@ export function EditorLayout({ documentId, documentName, icon, children }: Edito
 
     return (
         <WorkspaceShell
-            className="bg-background relative"
+            className="bg-muted/40 relative"
             header={<GlobalHeader />}
         >
             <main className="flex-1 overflow-hidden relative p-4">
