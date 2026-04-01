@@ -27,3 +27,5 @@ ipnetwork = { version = "0.20", features = ["serde"] }
 dashmap.workspace = true
 futures.workspace = true
 reqwest.workspace = true
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }

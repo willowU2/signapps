@@ -13,7 +13,7 @@ use uuid::Uuid;
 // Models
 // ============================================================================
 
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a software package.
 pub struct SoftwarePackage {
     pub id: Uuid,
@@ -29,7 +29,7 @@ pub struct SoftwarePackage {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreatePackage operation.
 pub struct CreatePackageRequest {
     pub name: String,
@@ -43,7 +43,7 @@ pub struct CreatePackageRequest {
     pub file_size: Option<i64>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdatePackage operation.
 pub struct UpdatePackageRequest {
     pub name: Option<String>,
@@ -55,7 +55,7 @@ pub struct UpdatePackageRequest {
     pub file_size: Option<i64>,
 }
 
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a deployment.
 pub struct Deployment {
     pub id: Uuid,
@@ -69,14 +69,14 @@ pub struct Deployment {
     pub output: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for Deploy operation.
 pub struct DeployRequest {
     pub hardware_ids: Vec<Uuid>,
     pub scheduled_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a pending install.
 pub struct PendingInstall {
     pub deployment_id: Uuid,
@@ -88,6 +88,15 @@ pub struct PendingInstall {
 // SD1: Package CRUD
 // ============================================================================
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/packages",
+    responses(
+        (status = 200, description = "Software packages list", body = Vec<SoftwarePackage>),
+    ),
+    security(("bearer" = [])),
+    tag = "Packages"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_packages(
     State(pool): State<DatabasePool>,
@@ -102,6 +111,17 @@ pub async fn list_packages(
     Ok(Json(packages))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/packages/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Package UUID")),
+    responses(
+        (status = 200, description = "Software package", body = SoftwarePackage),
+        (status = 404, description = "Package not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Packages"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_package(
     State(pool): State<DatabasePool>,
@@ -119,6 +139,17 @@ pub async fn get_package(
     Ok(Json(pkg))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/packages",
+    request_body = CreatePackageRequest,
+    responses(
+        (status = 201, description = "Package created", body = SoftwarePackage),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Packages"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_package(
     State(pool): State<DatabasePool>,
@@ -147,6 +178,19 @@ pub async fn create_package(
     Ok((StatusCode::CREATED, Json(pkg)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/packages/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Package UUID")),
+    request_body = UpdatePackageRequest,
+    responses(
+        (status = 200, description = "Package updated", body = SoftwarePackage),
+        (status = 404, description = "Package not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Packages"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_package(
     State(pool): State<DatabasePool>,
@@ -183,6 +227,17 @@ pub async fn update_package(
     Ok(Json(pkg))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/packages/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Package UUID")),
+    responses(
+        (status = 204, description = "Package deleted"),
+        (status = 404, description = "Package not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Packages"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_package(
     State(pool): State<DatabasePool>,
@@ -204,6 +259,19 @@ pub async fn delete_package(
 // SD2: Schedule deployment to machines
 // ============================================================================
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/packages/{id}/deploy",
+    params(("id" = uuid::Uuid, Path, description = "Package UUID")),
+    request_body = DeployRequest,
+    responses(
+        (status = 201, description = "Deployments created", body = Vec<Deployment>),
+        (status = 404, description = "Package not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Packages"
+)]
 #[tracing::instrument(skip_all)]
 #[allow(clippy::type_complexity)]
 pub async fn deploy_package(
@@ -247,6 +315,17 @@ pub async fn deploy_package(
 // SD3: Agent polls for pending packages
 // ============================================================================
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/agent/packages/pending/{agent_id}",
+    params(("agent_id" = uuid::Uuid, Path, description = "Agent UUID")),
+    responses(
+        (status = 200, description = "Pending packages for agent", body = Vec<PendingInstall>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Packages"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_agent_pending_packages(
     State(pool): State<DatabasePool>,
@@ -306,7 +385,7 @@ pub async fn get_agent_pending_packages(
 }
 
 // Agent updates deployment status
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for UpdateDeploymentStatus operation.
 pub struct UpdateDeploymentStatusRequest {
     pub status: String, // "running" | "completed" | "failed"
@@ -314,6 +393,18 @@ pub struct UpdateDeploymentStatusRequest {
     pub output: Option<String>,
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/agent/packages/deployments/{deployment_id}/status",
+    params(("deployment_id" = uuid::Uuid, Path, description = "Deployment UUID")),
+    request_body = UpdateDeploymentStatusRequest,
+    responses(
+        (status = 204, description = "Deployment status updated"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Packages"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_deployment_status(
     State(pool): State<DatabasePool>,

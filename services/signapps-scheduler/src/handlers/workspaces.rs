@@ -10,6 +10,17 @@ use uuid::Uuid;
 
 use crate::AppState;
 
+/// List workspaces for the current tenant.
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces",
+    responses(
+        (status = 200, description = "List of workspaces"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workspaces"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_workspaces(
@@ -26,6 +37,18 @@ pub async fn list_workspaces(
     })))
 }
 
+/// Get a workspace by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces/{id}",
+    params(("id" = Uuid, Path, description = "Workspace ID")),
+    responses(
+        (status = 200, description = "Workspace details"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workspaces"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_workspace(

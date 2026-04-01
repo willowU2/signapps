@@ -16,7 +16,7 @@ use signapps_common::Claims;
 // Changelog types
 // ============================================================================
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, utoipa::ToSchema)]
 /// ChangelogEntry data transfer object.
 pub struct ChangelogEntry {
     pub id: Uuid,
@@ -27,7 +27,7 @@ pub struct ChangelogEntry {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for CreateChangelog.
 pub struct CreateChangelogRequest {
     pub version: String,
@@ -40,7 +40,7 @@ pub struct CreateChangelogRequest {
 // Pipeline types
 // ============================================================================
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, utoipa::ToSchema)]
 /// Pipeline data transfer object.
 pub struct Pipeline {
     pub id: Uuid,
@@ -52,7 +52,7 @@ pub struct Pipeline {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for CreatePipeline.
 pub struct CreatePipelineRequest {
     pub repo_name: String,
@@ -60,7 +60,7 @@ pub struct CreatePipelineRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for UpdatePipeline.
 pub struct UpdatePipelineRequest {
     pub status: Option<String>,
@@ -72,7 +72,7 @@ pub struct UpdatePipelineRequest {
 // Deployment types
 // ============================================================================
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, utoipa::ToSchema)]
 /// Deployment data transfer object.
 pub struct Deployment {
     pub id: Uuid,
@@ -84,7 +84,7 @@ pub struct Deployment {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for CreateDeployment.
 pub struct CreateDeploymentRequest {
     pub service_name: String,
@@ -97,7 +97,18 @@ pub struct CreateDeploymentRequest {
 // Changelog handlers
 // ============================================================================
 
-/// GET /api/v1/devops/changelog
+/// List changelog entries.
+#[utoipa::path(
+    get,
+    path = "/api/v1/devops/changelog",
+    responses(
+        (status = 200, description = "Changelog entries", body = Vec<ChangelogEntry>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "DevOps"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_changelog(
@@ -120,7 +131,20 @@ pub async fn list_changelog(
     Ok(Json(serde_json::json!({ "data": rows })))
 }
 
-/// POST /api/v1/devops/changelog
+/// Create a changelog entry.
+#[utoipa::path(
+    post,
+    path = "/api/v1/devops/changelog",
+    request_body = CreateChangelogRequest,
+    responses(
+        (status = 201, description = "Changelog entry created", body = ChangelogEntry),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "DevOps"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_changelog(
@@ -163,7 +187,18 @@ pub async fn create_changelog(
 // Pipeline handlers
 // ============================================================================
 
-/// GET /api/v1/devops/pipelines
+/// List CI/CD pipelines.
+#[utoipa::path(
+    get,
+    path = "/api/v1/devops/pipelines",
+    responses(
+        (status = 200, description = "Pipeline list", body = Vec<Pipeline>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "DevOps"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_pipelines(
@@ -186,7 +221,20 @@ pub async fn list_pipelines(
     Ok(Json(serde_json::json!({ "data": rows })))
 }
 
-/// POST /api/v1/devops/pipelines
+/// Create a pipeline.
+#[utoipa::path(
+    post,
+    path = "/api/v1/devops/pipelines",
+    request_body = CreatePipelineRequest,
+    responses(
+        (status = 201, description = "Pipeline created", body = Pipeline),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "DevOps"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_pipeline(
@@ -222,7 +270,21 @@ pub async fn create_pipeline(
     ))
 }
 
-/// PUT /api/v1/devops/pipelines/:id
+/// Update a pipeline.
+#[utoipa::path(
+    put,
+    path = "/api/v1/devops/pipelines/{id}",
+    params(("id" = Uuid, Path, description = "Pipeline ID")),
+    request_body = UpdatePipelineRequest,
+    responses(
+        (status = 200, description = "Pipeline updated", body = Pipeline),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "DevOps"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_pipeline(
@@ -258,7 +320,18 @@ pub async fn update_pipeline(
 // Deployment handlers
 // ============================================================================
 
-/// GET /api/v1/devops/deployments
+/// List deployments.
+#[utoipa::path(
+    get,
+    path = "/api/v1/devops/deployments",
+    responses(
+        (status = 200, description = "Deployment list", body = Vec<Deployment>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "DevOps"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_deployments(
@@ -281,7 +354,20 @@ pub async fn list_deployments(
     Ok(Json(serde_json::json!({ "data": rows })))
 }
 
-/// POST /api/v1/devops/deployments
+/// Create a deployment.
+#[utoipa::path(
+    post,
+    path = "/api/v1/devops/deployments",
+    request_body = CreateDeploymentRequest,
+    responses(
+        (status = 201, description = "Deployment created", body = Deployment),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "DevOps"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_deployment(

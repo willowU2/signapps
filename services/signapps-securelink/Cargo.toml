@@ -20,6 +20,10 @@ mesh-vpn = ["signapps-db", "sqlx"]
 # Common (error types, result)
 signapps-common = { path = "../../crates/signapps-common" }
 
+# OpenAPI documentation
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }
+
 # Core
 axum = { workspace = true }
 tokio = { workspace = true }

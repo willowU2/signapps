@@ -8,6 +8,15 @@ use uuid::Uuid;
 
 use crate::models::{CreateHardwareReq, HardwareAsset, UpdateHardwareReq};
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware",
+    responses(
+        (status = 200, description = "Hardware assets list", body = Vec<HardwareAsset>),
+    ),
+    security(("bearer" = [])),
+    tag = "Hardware"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_hardware(
     State(pool): State<DatabasePool>,
@@ -21,6 +30,17 @@ pub async fn list_hardware(
     Ok(Json(assets))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 200, description = "Hardware asset", body = HardwareAsset),
+        (status = 404, description = "Asset not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Hardware"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_hardware(
     State(pool): State<DatabasePool>,
@@ -36,6 +56,17 @@ pub async fn get_hardware(
     Ok(Json(asset))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/hardware",
+    request_body = CreateHardwareReq,
+    responses(
+        (status = 201, description = "Hardware asset created", body = HardwareAsset),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Hardware"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_hardware(
     State(pool): State<DatabasePool>,
@@ -64,6 +95,19 @@ pub async fn create_hardware(
     Ok((StatusCode::CREATED, Json(asset)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/hardware/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    request_body = UpdateHardwareReq,
+    responses(
+        (status = 200, description = "Hardware asset updated", body = HardwareAsset),
+        (status = 404, description = "Asset not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Hardware"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_hardware(
     State(pool): State<DatabasePool>,
@@ -104,6 +148,17 @@ pub async fn update_hardware(
     Ok(Json(asset))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/hardware/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 204, description = "Hardware asset deleted"),
+        (status = 404, description = "Asset not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Hardware"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_hardware(
     State(pool): State<DatabasePool>,

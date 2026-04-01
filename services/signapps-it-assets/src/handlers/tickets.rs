@@ -16,7 +16,7 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct Ticket {
     pub id: Uuid,
     pub number: i32,
@@ -42,7 +42,7 @@ pub struct Ticket {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct TicketComment {
     pub id: Uuid,
     pub ticket_id: Uuid,
@@ -54,7 +54,7 @@ pub struct TicketComment {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct TicketTimeEntry {
     pub id: Uuid,
     pub ticket_id: Uuid,
@@ -65,14 +65,14 @@ pub struct TicketTimeEntry {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct TicketDetail {
     pub ticket: Ticket,
     pub comments: Vec<TicketComment>,
     pub time_entries: Vec<TicketTimeEntry>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateTicketReq {
     pub title: String,
     pub description: Option<String>,
@@ -88,7 +88,7 @@ pub struct CreateTicketReq {
     pub metadata: Option<Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdateTicketReq {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -101,7 +101,7 @@ pub struct UpdateTicketReq {
     pub metadata: Option<Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct TicketListQuery {
     pub status: Option<String>,
     pub priority: Option<String>,
@@ -109,7 +109,7 @@ pub struct TicketListQuery {
     pub hardware_id: Option<Uuid>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct AddCommentReq {
     pub content: String,
     pub author_id: Option<Uuid>,
@@ -118,7 +118,7 @@ pub struct AddCommentReq {
     pub attachments: Option<Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct AddTimeEntryReq {
     pub duration_minutes: i32,
     pub description: Option<String>,
@@ -134,7 +134,7 @@ struct SlaPolicy {
 
 // ─── Stats types ─────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct TicketStats {
     pub total_open: i64,
     pub by_priority: Vec<PriorityCount>,
@@ -143,7 +143,7 @@ pub struct TicketStats {
     pub overdue_count: i64,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct PriorityCount {
     pub priority: String,
     pub count: i64,
@@ -164,6 +164,18 @@ fn valid_priority(p: &str) -> bool {
 
 // ─── POST /tickets — create ticket ────────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/tickets",
+    request_body = CreateTicketReq,
+    responses(
+        (status = 201, description = "Ticket created", body = Ticket),
+        (status = 400, description = "Invalid input"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tickets"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_ticket(
     State(pool): State<DatabasePool>,
@@ -238,6 +250,22 @@ pub async fn create_ticket(
 
 // ─── GET /tickets — list with filters ─────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/tickets",
+    params(
+        ("status" = Option<String>, Query, description = "Filter by status"),
+        ("priority" = Option<String>, Query, description = "Filter by priority"),
+        ("assigned_to" = Option<uuid::Uuid>, Query, description = "Filter by assignee"),
+        ("hardware_id" = Option<uuid::Uuid>, Query, description = "Filter by hardware"),
+    ),
+    responses(
+        (status = 200, description = "Tickets list", body = Vec<Ticket>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tickets"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_tickets(
     State(pool): State<DatabasePool>,
@@ -279,6 +307,16 @@ pub async fn list_tickets(
 
 // ─── GET /tickets/stats — dashboard stats ─────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/tickets/stats",
+    responses(
+        (status = 200, description = "Ticket statistics", body = TicketStats),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tickets"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn ticket_stats(
     State(pool): State<DatabasePool>,
@@ -350,6 +388,17 @@ pub async fn ticket_stats(
 
 // ─── GET /tickets/:id — get with comments + time entries ─────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/tickets/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Ticket UUID")),
+    responses(
+        (status = 200, description = "Ticket detail", body = TicketDetail),
+        (status = 404, description = "Ticket not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tickets"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_ticket(
     State(pool): State<DatabasePool>,
@@ -396,6 +445,19 @@ pub async fn get_ticket(
 
 // ─── PATCH /tickets/:id — update ──────────────────────────────────────────────
 
+#[utoipa::path(
+    patch,
+    path = "/api/v1/it-assets/tickets/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Ticket UUID")),
+    request_body = UpdateTicketReq,
+    responses(
+        (status = 200, description = "Ticket updated", body = Ticket),
+        (status = 400, description = "Invalid status or priority"),
+        (status = 404, description = "Ticket not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tickets"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_ticket(
     State(pool): State<DatabasePool>,
@@ -463,6 +525,18 @@ pub async fn update_ticket(
 
 // ─── DELETE /tickets/:id — delete closed/resolved ticket ──────────────────────
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/tickets/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Ticket UUID")),
+    responses(
+        (status = 204, description = "Ticket deleted"),
+        (status = 404, description = "Ticket not found"),
+        (status = 422, description = "Cannot delete non-closed/resolved ticket"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tickets"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_ticket(
     State(pool): State<DatabasePool>,
@@ -495,6 +569,19 @@ pub async fn delete_ticket(
 
 // ─── POST /tickets/:id/comments — add comment ─────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/tickets/{id}/comments",
+    params(("id" = uuid::Uuid, Path, description = "Ticket UUID")),
+    request_body = AddCommentReq,
+    responses(
+        (status = 201, description = "Comment added", body = TicketComment),
+        (status = 400, description = "Empty comment content"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tickets"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn add_comment(
     State(pool): State<DatabasePool>,
@@ -539,6 +626,19 @@ pub async fn add_comment(
 
 // ─── POST /tickets/:id/time — log time entry ──────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/tickets/{id}/time",
+    params(("id" = uuid::Uuid, Path, description = "Ticket UUID")),
+    request_body = AddTimeEntryReq,
+    responses(
+        (status = 201, description = "Time entry logged", body = TicketTimeEntry),
+        (status = 400, description = "Duration must be > 0"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tickets"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn log_time_entry(
     State(pool): State<DatabasePool>,
@@ -575,7 +675,7 @@ pub async fn log_time_entry(
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct PsaIntegrationRow {
     pub id: Uuid,
     pub name: String,
@@ -589,7 +689,7 @@ pub struct PsaIntegrationRow {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreatePsaIntegrationReq {
     pub name: String,
     #[serde(rename = "type")]
@@ -599,7 +699,7 @@ pub struct CreatePsaIntegrationReq {
     pub mapping_config: Option<Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdatePsaIntegrationReq {
     pub name: Option<String>,
     pub webhook_url: Option<String>,
@@ -623,6 +723,16 @@ pub struct TicketEventPayload {
 
 // ─── TK-PSA-1: List PSA integrations ─────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/psa-integrations",
+    responses(
+        (status = 200, description = "PSA integrations list", body = Vec<PsaIntegrationRow>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tickets"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_psa_integrations(
     State(pool): State<DatabasePool>,
@@ -639,6 +749,17 @@ pub async fn list_psa_integrations(
 
 // ─── TK-PSA-2: Create PSA integration ────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/psa-integrations",
+    request_body = CreatePsaIntegrationReq,
+    responses(
+        (status = 201, description = "PSA integration created", body = PsaIntegrationRow),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tickets"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_psa_integration(
     State(pool): State<DatabasePool>,
@@ -662,6 +783,19 @@ pub async fn create_psa_integration(
 
 // ─── TK-PSA-3: Update PSA integration ────────────────────────────────────────
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/psa-integrations/{id}",
+    params(("id" = uuid::Uuid, Path, description = "PSA integration UUID")),
+    request_body = UpdatePsaIntegrationReq,
+    responses(
+        (status = 200, description = "PSA integration updated", body = PsaIntegrationRow),
+        (status = 404, description = "PSA integration not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tickets"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_psa_integration(
     State(pool): State<DatabasePool>,
@@ -694,6 +828,17 @@ pub async fn update_psa_integration(
 
 // ─── TK-PSA-4: Delete PSA integration ────────────────────────────────────────
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/psa-integrations/{id}",
+    params(("id" = uuid::Uuid, Path, description = "PSA integration UUID")),
+    responses(
+        (status = 204, description = "PSA integration deleted"),
+        (status = 404, description = "PSA integration not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tickets"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_psa_integration(
     State(pool): State<DatabasePool>,

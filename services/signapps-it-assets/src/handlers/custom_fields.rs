@@ -15,7 +15,7 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct CustomFieldDef {
     pub id: Uuid,
     pub name: String,
@@ -25,7 +25,7 @@ pub struct CustomFieldDef {
     pub sort_order: i32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateFieldDefReq {
     pub name: String,
     pub field_type: Option<String>,
@@ -34,7 +34,7 @@ pub struct CreateFieldDefReq {
     pub sort_order: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdateFieldDefReq {
     pub name: Option<String>,
     pub field_type: Option<String>,
@@ -43,7 +43,7 @@ pub struct UpdateFieldDefReq {
     pub sort_order: Option<i32>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 #[allow(dead_code)]
 pub struct CustomFieldValue {
     pub id: Uuid,
@@ -52,19 +52,28 @@ pub struct CustomFieldValue {
     pub value: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct HardwareCustomFields {
     pub definition: CustomFieldDef,
     pub value: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct SetFieldValueReq {
     pub value: Option<String>,
 }
 
 // ─── CF1: Definition CRUD ────────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/custom-fields/definitions",
+    responses(
+        (status = 200, description = "Custom field definitions list", body = Vec<CustomFieldDef>),
+    ),
+    security(("bearer" = [])),
+    tag = "CustomFields"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_field_defs(
     State(pool): State<DatabasePool>,
@@ -78,6 +87,17 @@ pub async fn list_field_defs(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/custom-fields/definitions",
+    request_body = CreateFieldDefReq,
+    responses(
+        (status = 201, description = "Field definition created", body = CustomFieldDef),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "CustomFields"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_field_def(
     State(pool): State<DatabasePool>,
@@ -101,6 +121,19 @@ pub async fn create_field_def(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/custom-fields/definitions/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Field definition UUID")),
+    request_body = UpdateFieldDefReq,
+    responses(
+        (status = 200, description = "Field definition updated", body = CustomFieldDef),
+        (status = 404, description = "Field definition not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "CustomFields"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_field_def(
     State(pool): State<DatabasePool>,
@@ -135,6 +168,18 @@ pub async fn update_field_def(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/custom-fields/definitions/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Field definition UUID")),
+    responses(
+        (status = 204, description = "Field definition deleted"),
+        (status = 404, description = "Field definition not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "CustomFields"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_field_def(
     State(pool): State<DatabasePool>,
@@ -156,6 +201,17 @@ pub async fn delete_field_def(
 
 // ─── CF2: Values per hardware ────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{hardware_id}/custom-fields",
+    params(("hardware_id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 200, description = "Hardware custom fields", body = Vec<HardwareCustomFields>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "CustomFields"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_hardware_fields(
     State(pool): State<DatabasePool>,
@@ -189,6 +245,21 @@ pub async fn get_hardware_fields(
     Ok(Json(result))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/hardware/{hardware_id}/custom-fields/{definition_id}",
+    params(
+        ("hardware_id" = uuid::Uuid, Path, description = "Hardware UUID"),
+        ("definition_id" = uuid::Uuid, Path, description = "Field definition UUID"),
+    ),
+    request_body = SetFieldValueReq,
+    responses(
+        (status = 204, description = "Field value set"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "CustomFields"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn set_field_value(
     State(pool): State<DatabasePool>,

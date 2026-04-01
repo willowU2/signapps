@@ -10,6 +10,17 @@ use uuid::Uuid;
 
 use crate::AppState;
 
+/// List resources.
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources",
+    responses(
+        (status = 200, description = "List of resources"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Resources"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_resources(
@@ -23,6 +34,18 @@ pub async fn list_resources(
     })))
 }
 
+/// Get a resource by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/resources/{id}",
+    params(("id" = Uuid, Path, description = "Resource ID")),
+    responses(
+        (status = 200, description = "Resource details"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Resources"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_resource(

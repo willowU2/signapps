@@ -18,7 +18,7 @@ use crate::AppState;
 // Request/Response types
 // ============================================================================
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for AddAttachment.
 pub struct AddAttachmentRequest {
     pub file_url: String,
@@ -26,7 +26,7 @@ pub struct AddAttachmentRequest {
     pub file_size_bytes: Option<i32>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for TaskAttachment.
 pub struct TaskAttachmentResponse {
     pub id: Uuid,
@@ -41,6 +41,18 @@ pub struct TaskAttachmentResponse {
 // CRUD handlers
 // ============================================================================
 
+/// List tasks.
+#[utoipa::path(
+    get,
+    path = "/api/v1/tasks",
+    responses(
+        (status = 200, description = "List of tasks"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tasks"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list(
@@ -62,6 +74,7 @@ pub async fn list(
     }
 }
 
+/// Create a task.
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create(
@@ -85,6 +98,20 @@ pub async fn create(
     }
 }
 
+/// Get a task by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/tasks/{id}",
+    params(("id" = Uuid, Path, description = "Task ID")),
+    responses(
+        (status = 200, description = "Task details"),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tasks"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_by_id(
@@ -110,6 +137,7 @@ pub async fn get_by_id(
     }
 }
 
+/// Update a task.
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update(
@@ -129,6 +157,19 @@ pub async fn update(
     }
 }
 
+/// Delete a task.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/tasks/{id}",
+    params(("id" = Uuid, Path, description = "Task ID")),
+    responses(
+        (status = 204, description = "Task deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tasks"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(
@@ -152,6 +193,19 @@ pub async fn delete(
 // ============================================================================
 
 /// Add an attachment to a task.
+#[utoipa::path(
+    post,
+    path = "/api/v1/tasks/{id}/attachments",
+    params(("id" = Uuid, Path, description = "Task ID")),
+    request_body = AddAttachmentRequest,
+    responses(
+        (status = 201, description = "Attachment added", body = TaskAttachmentResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tasks"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn add_attachment(
@@ -188,6 +242,18 @@ pub async fn add_attachment(
 }
 
 /// List all attachments for a task.
+#[utoipa::path(
+    get,
+    path = "/api/v1/tasks/{id}/attachments",
+    params(("id" = Uuid, Path, description = "Task ID")),
+    responses(
+        (status = 200, description = "List of attachments", body = Vec<TaskAttachmentResponse>),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tasks"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_attachments(
@@ -218,6 +284,22 @@ pub async fn list_attachments(
 }
 
 /// Delete an attachment.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/tasks/{id}/attachments/{attachment_id}",
+    params(
+        ("id" = Uuid, Path, description = "Task ID"),
+        ("attachment_id" = Uuid, Path, description = "Attachment ID"),
+    ),
+    responses(
+        (status = 204, description = "Attachment deleted"),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tasks"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_attachment(

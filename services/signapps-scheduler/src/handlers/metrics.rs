@@ -10,14 +10,25 @@ use signapps_db::repositories::{MetricsRepository, ResourceMetrics, WorkloadMetr
 
 use crate::AppState;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::IntoParams)]
 /// Query parameters for filtering results.
 pub struct MetricsQuery {
     pub start_date: Option<DateTime<Utc>>,
     pub end_date: Option<DateTime<Utc>>,
 }
 
-/// Retrieve workload metrics for the authenticated user
+/// Retrieve workload metrics for the authenticated user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics/workload",
+    params(MetricsQuery),
+    responses(
+        (status = 200, description = "Workload metrics"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_workload(
@@ -35,7 +46,17 @@ pub async fn get_workload(
     Ok(Json(metrics))
 }
 
-/// Retrieve resource metrics for the authenticated user
+/// Retrieve resource metrics for the authenticated user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics/resources",
+    responses(
+        (status = 200, description = "Resource metrics"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Metrics"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_resources(

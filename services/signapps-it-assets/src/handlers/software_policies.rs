@@ -13,7 +13,7 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
     (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct SoftwarePolicy {
     pub id: Uuid,
     pub name: String,
@@ -25,7 +25,7 @@ pub struct SoftwarePolicy {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateSoftwarePolicyReq {
     pub name: String,
     pub mode: String, // "whitelist" | "blacklist"
@@ -33,13 +33,13 @@ pub struct CreateSoftwarePolicyReq {
     pub action: String, // "alert" | "remove"
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SoftwarePolicyCheckResult {
     pub hardware_id: Uuid,
     pub violations: Vec<PolicyViolation>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct PolicyViolation {
     pub policy_id: Uuid,
     pub policy_name: String,
@@ -50,6 +50,16 @@ pub struct PolicyViolation {
 }
 
 /// GET /api/v1/it-assets/software-policies
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/software-policies",
+    responses(
+        (status = 200, description = "Software policies list", body = Vec<SoftwarePolicy>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "SoftwarePolicies"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_software_policies(
     State(pool): State<DatabasePool>,
@@ -65,6 +75,18 @@ pub async fn list_software_policies(
 }
 
 /// POST /api/v1/it-assets/software-policies
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/software-policies",
+    request_body = CreateSoftwarePolicyReq,
+    responses(
+        (status = 201, description = "Software policy created", body = SoftwarePolicy),
+        (status = 400, description = "Invalid mode or action"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "SoftwarePolicies"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_software_policy(
     State(pool): State<DatabasePool>,
@@ -101,6 +123,17 @@ pub async fn create_software_policy(
 
 /// GET /api/v1/it-assets/hardware/:hw_id/software-check
 /// Check installed software on a device against all enabled policies
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{hw_id}/software-check",
+    params(("hw_id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 200, description = "Software compliance check result", body = SoftwarePolicyCheckResult),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "SoftwarePolicies"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn check_software_compliance(
     State(pool): State<DatabasePool>,

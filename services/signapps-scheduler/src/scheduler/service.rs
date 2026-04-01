@@ -20,7 +20,7 @@ pub struct SchedulerService {
 }
 
 /// Information about a running job.
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, utoipa::ToSchema)]
 pub struct RunningJob {
     pub job_id: Uuid,
     pub run_id: Uuid,

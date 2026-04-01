@@ -10,14 +10,14 @@ use uuid::Uuid;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a report patches req.
 pub struct ReportPatchesReq {
     pub agent_id: Uuid,
     pub patches: Vec<PatchEntry>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a patch entry.
 pub struct PatchEntry {
     pub patch_id: String,
@@ -28,7 +28,7 @@ pub struct PatchEntry {
     pub size_bytes: Option<i64>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a patch row.
 pub struct PatchRow {
     pub id: Uuid,
@@ -61,7 +61,7 @@ pub struct PatchPolicyRow {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a compliance stats.
 pub struct ComplianceStats {
     pub total_machines: i64,
@@ -72,14 +72,14 @@ pub struct ComplianceStats {
     pub by_severity: Vec<SeverityCount>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a severity count.
 pub struct SeverityCount {
     pub severity: String,
     pub count: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 #[allow(dead_code)]
 /// Represents a deploy patch req.
 pub struct DeployPatchReq {
@@ -93,6 +93,18 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
 
 // ─── PM1: Agent reports available patches ────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/agent/patches/report",
+    request_body = ReportPatchesReq,
+    responses(
+        (status = 204, description = "Patches reported"),
+        (status = 404, description = "Agent not registered"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Patches"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn report_available_patches(
     State(pool): State<DatabasePool>,
@@ -135,6 +147,16 @@ pub async fn report_available_patches(
 
 // ─── PM2: Admin lists all patches across fleet ───────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/patches",
+    responses(
+        (status = 200, description = "Patches list", body = Vec<PatchRow>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Patches"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_patches(
     State(pool): State<DatabasePool>,
@@ -151,6 +173,17 @@ pub async fn list_patches(
 
 // ─── PM3: Approve patch ───────────────────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/patches/{id}/approve",
+    params(("id" = uuid::Uuid, Path, description = "Patch UUID")),
+    responses(
+        (status = 204, description = "Patch approved"),
+        (status = 404, description = "Patch not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Patches"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn approve_patch(
     State(pool): State<DatabasePool>,
@@ -174,6 +207,17 @@ pub async fn approve_patch(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/patches/{id}/reject",
+    params(("id" = uuid::Uuid, Path, description = "Patch UUID")),
+    responses(
+        (status = 204, description = "Patch rejected"),
+        (status = 404, description = "Patch not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Patches"
+)]
 /// Reject (deny) a patch — sets status back to 'rejected'
 #[tracing::instrument(skip_all)]
 pub async fn reject_patch(
@@ -197,6 +241,18 @@ pub async fn reject_patch(
 
 // ─── PM4: Deploy patch ────────────────────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/patches/{id}/deploy",
+    params(("id" = uuid::Uuid, Path, description = "Patch UUID")),
+    request_body = DeployPatchReq,
+    responses(
+        (status = 204, description = "Patch deployed"),
+        (status = 404, description = "Patch not found or not approved"),
+    ),
+    security(("bearer" = [])),
+    tag = "Patches"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn deploy_patch(
     State(pool): State<DatabasePool>,
@@ -224,6 +280,16 @@ pub async fn deploy_patch(
 
 // ─── PM5: Compliance stats ────────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/patches/compliance",
+    responses(
+        (status = 200, description = "Patch compliance stats", body = ComplianceStats),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Patches"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn patch_compliance(
     State(pool): State<DatabasePool>,
@@ -295,6 +361,18 @@ pub async fn patch_compliance(
 // POST /api/v1/it-assets/patches/:id/rollback
 // Queues a rollback command: wusa /uninstall (Windows) or apt downgrade (Linux).
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/patches/{id}/rollback",
+    params(("id" = uuid::Uuid, Path, description = "Patch UUID")),
+    responses(
+        (status = 202, description = "Rollback queued"),
+        (status = 404, description = "Patch not found or not installed"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Patches"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn rollback_patch(
     State(pool): State<DatabasePool>,

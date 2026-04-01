@@ -15,7 +15,7 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct DeviceGroup {
     pub id: Uuid,
     pub name: String,
@@ -24,45 +24,54 @@ pub struct DeviceGroup {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateGroupReq {
     pub name: String,
     pub description: Option<String>,
     pub parent_id: Option<Uuid>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdateGroupReq {
     pub name: Option<String>,
     pub description: Option<String>,
     pub parent_id: Option<Uuid>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct DeviceTag {
     pub id: Uuid,
     pub name: String,
     pub color: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateTagReq {
     pub name: String,
     pub color: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct MembershipReq {
     pub hardware_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct TagAssignReq {
     pub hardware_id: Uuid,
 }
 
 // ─── GR1: Group CRUD ─────────────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/groups",
+    responses(
+        (status = 200, description = "Device groups list", body = Vec<DeviceGroup>),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_groups(
     State(pool): State<DatabasePool>,
@@ -76,6 +85,17 @@ pub async fn list_groups(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/groups",
+    request_body = CreateGroupReq,
+    responses(
+        (status = 201, description = "Group created", body = DeviceGroup),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_group(
     State(pool): State<DatabasePool>,
@@ -97,6 +117,17 @@ pub async fn create_group(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/groups/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Group UUID")),
+    responses(
+        (status = 200, description = "Device group", body = DeviceGroup),
+        (status = 404, description = "Group not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_group(
     State(pool): State<DatabasePool>,
@@ -113,6 +144,18 @@ pub async fn get_group(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/groups/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Group UUID")),
+    request_body = UpdateGroupReq,
+    responses(
+        (status = 200, description = "Group updated", body = DeviceGroup),
+        (status = 404, description = "Group not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_group(
     State(pool): State<DatabasePool>,
@@ -140,6 +183,17 @@ pub async fn update_group(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/groups/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Group UUID")),
+    responses(
+        (status = 204, description = "Group deleted"),
+        (status = 404, description = "Group not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_group(
     State(pool): State<DatabasePool>,
@@ -158,6 +212,18 @@ pub async fn delete_group(
 
 // ─── GR2: Group membership ───────────────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/groups/{group_id}/members",
+    params(("group_id" = uuid::Uuid, Path, description = "Group UUID")),
+    request_body = MembershipReq,
+    responses(
+        (status = 204, description = "Member added"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn add_member(
     State(pool): State<DatabasePool>,
@@ -175,6 +241,20 @@ pub async fn add_member(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/groups/{group_id}/members/{hardware_id}",
+    params(
+        ("group_id" = uuid::Uuid, Path, description = "Group UUID"),
+        ("hardware_id" = uuid::Uuid, Path, description = "Hardware UUID"),
+    ),
+    responses(
+        (status = 204, description = "Member removed"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_member(
     State(pool): State<DatabasePool>,
@@ -189,12 +269,23 @@ pub async fn remove_member(
     Ok(StatusCode::NO_CONTENT)
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct GroupMember {
     pub hardware_id: Uuid,
     pub name: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/groups/{group_id}/members",
+    params(("group_id" = uuid::Uuid, Path, description = "Group UUID")),
+    responses(
+        (status = 200, description = "Group members list", body = Vec<GroupMember>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_members(
     State(pool): State<DatabasePool>,
@@ -218,6 +309,15 @@ pub async fn list_members(
 
 // ─── GR3: Tag CRUD ───────────────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/tags",
+    responses(
+        (status = 200, description = "Device tags list", body = Vec<DeviceTag>),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_tags(
     State(pool): State<DatabasePool>,
@@ -230,6 +330,17 @@ pub async fn list_tags(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/tags",
+    request_body = CreateTagReq,
+    responses(
+        (status = 201, description = "Tag created", body = DeviceTag),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_tag(
     State(pool): State<DatabasePool>,
@@ -250,6 +361,17 @@ pub async fn create_tag(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/tags/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Tag UUID")),
+    responses(
+        (status = 204, description = "Tag deleted"),
+        (status = 404, description = "Tag not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_tag(
     State(pool): State<DatabasePool>,
@@ -268,6 +390,18 @@ pub async fn delete_tag(
 
 // ─── GR4: Tag assignments ────────────────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/tags/{tag_id}/assign",
+    params(("tag_id" = uuid::Uuid, Path, description = "Tag UUID")),
+    request_body = TagAssignReq,
+    responses(
+        (status = 204, description = "Tag assigned"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn assign_tag(
     State(pool): State<DatabasePool>,
@@ -285,6 +419,20 @@ pub async fn assign_tag(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/tags/{tag_id}/assign/{hardware_id}",
+    params(
+        ("tag_id" = uuid::Uuid, Path, description = "Tag UUID"),
+        ("hardware_id" = uuid::Uuid, Path, description = "Hardware UUID"),
+    ),
+    responses(
+        (status = 204, description = "Tag unassigned"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn unassign_tag(
     State(pool): State<DatabasePool>,
@@ -299,13 +447,24 @@ pub async fn unassign_tag(
     Ok(StatusCode::NO_CONTENT)
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct HardwareTag {
     pub tag_id: Uuid,
     pub name: String,
     pub color: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{hardware_id}/tags",
+    params(("hardware_id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 200, description = "Hardware tags list", body = Vec<HardwareTag>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Groups"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_hardware_tags(
     State(pool): State<DatabasePool>,

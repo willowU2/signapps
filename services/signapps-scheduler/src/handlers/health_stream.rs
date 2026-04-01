@@ -15,7 +15,7 @@ use std::time::Duration;
 use crate::AppState;
 
 /// Status of a single downstream service.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 /// ServiceStatus data transfer object.
 pub struct ServiceStatus {
     pub name: String,
@@ -25,7 +25,7 @@ pub struct ServiceStatus {
 }
 
 /// Payload pushed via SSE.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 /// HealthSnapshot data transfer object.
 pub struct HealthSnapshot {
     pub services: Vec<ServiceStatus>,
@@ -85,10 +85,18 @@ async fn collect_snapshot() -> HealthSnapshot {
     }
 }
 
-/// SSE handler — streams health snapshots every 10 seconds.
+/// SSE endpoint streaming health snapshots every 10 seconds.
 ///
 /// No auth required so monitoring dashboards can connect without a token,
 /// but you can layer auth middleware on the route registration if needed.
+#[utoipa::path(
+    get,
+    path = "/api/v1/scheduler/health-stream",
+    responses(
+        (status = 200, description = "SSE stream of health snapshots"),
+    ),
+    tag = "Health"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn health_stream(

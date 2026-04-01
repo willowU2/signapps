@@ -10,12 +10,15 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
+use handlers::openapi::SchedulerApiDoc;
 use signapps_common::bootstrap::{env_or, init_tracing, load_env, ServiceConfig};
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tokio_stream::StreamExt;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 mod crawlers;
 mod handlers;
@@ -509,6 +512,7 @@ fn create_router(state: AppState) -> Router {
 
     // Combine all routes
     Router::new()
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", SchedulerApiDoc::openapi()))
         .nest("/api/v1/jobs", job_routes)
         .nest("/api/v1/runs", run_routes)
         .nest("/api/v1/tenants", tenant_routes)

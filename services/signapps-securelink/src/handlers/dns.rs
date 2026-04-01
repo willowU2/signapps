@@ -19,7 +19,20 @@ use crate::AppState;
 use signapps_common::Result;
 
 /// Get current DNS configuration.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `401` if unauthenticated.
+#[utoipa::path(
+    get,
+    path = "/api/v1/dns/config",
+    responses(
+        (status = 200, description = "Current DNS configuration", body = DnsServiceConfig),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "DNS"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_dns_config(State(state): State<AppState>) -> Result<Json<DnsServiceConfig>> {
     let config = state.dns_config.read().await;
@@ -27,7 +40,22 @@ pub async fn get_dns_config(State(state): State<AppState>) -> Result<Json<DnsSer
 }
 
 /// Update DNS configuration.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `400` for invalid upstream DNS servers, `401` if unauthenticated.
+#[utoipa::path(
+    put,
+    path = "/api/v1/dns/config",
+    request_body = UpdateDnsConfigRequest,
+    responses(
+        (status = 200, description = "Updated DNS configuration", body = DnsServiceConfig),
+        (status = 400, description = "Invalid DNS server address"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "DNS"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_dns_config(
     State(state): State<AppState>,
@@ -72,7 +100,7 @@ pub async fn update_dns_config(
 }
 
 /// Request to update DNS configuration.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for UpdateDnsConfig.
 pub struct UpdateDnsConfigRequest {
     pub enabled: Option<bool>,
@@ -83,7 +111,20 @@ pub struct UpdateDnsConfigRequest {
 }
 
 /// Get all DNS blocklists.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `401` if unauthenticated.
+#[utoipa::path(
+    get,
+    path = "/api/v1/dns/blocklists",
+    responses(
+        (status = 200, description = "List of DNS blocklists", body = Vec<DnsBlocklist>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "DNS"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_blocklists(State(state): State<AppState>) -> Result<Json<Vec<DnsBlocklist>>> {
     let blocklists = state.blocklists.read().await;
@@ -91,7 +132,24 @@ pub async fn list_blocklists(State(state): State<AppState>) -> Result<Json<Vec<D
 }
 
 /// Get a specific blocklist.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `404` if the blocklist is not found, `401` if unauthenticated.
+#[utoipa::path(
+    get,
+    path = "/api/v1/dns/blocklists/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Blocklist UUID"),
+    ),
+    responses(
+        (status = 200, description = "Blocklist details", body = DnsBlocklist),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Blocklist not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "DNS"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_blocklist(
     State(state): State<AppState>,
@@ -106,7 +164,7 @@ pub async fn get_blocklist(
 }
 
 /// Request to create a blocklist.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for CreateBlocklist.
 pub struct CreateBlocklistRequest {
     pub name: String,
@@ -120,7 +178,22 @@ fn default_true() -> bool {
 }
 
 /// Add a new blocklist.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `400` if the URL is not a valid HTTP(S) URL, `401` if unauthenticated.
+#[utoipa::path(
+    post,
+    path = "/api/v1/dns/blocklists",
+    request_body = CreateBlocklistRequest,
+    responses(
+        (status = 201, description = "Blocklist added", body = DnsBlocklist),
+        (status = 400, description = "Invalid blocklist URL"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "DNS"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn add_blocklist(
     State(state): State<AppState>,
@@ -155,8 +228,26 @@ pub async fn add_blocklist(
 }
 
 /// Update a blocklist.
+///
+/// # Errors
+///
+/// Returns `404` if the blocklist is not found, `401` if unauthenticated.
 #[allow(dead_code)]
-#[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/dns/blocklists/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Blocklist UUID"),
+    ),
+    request_body = UpdateBlocklistRequest,
+    responses(
+        (status = 200, description = "Blocklist updated", body = DnsBlocklist),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Blocklist not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "DNS"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_blocklist(
     State(state): State<AppState>,
@@ -181,7 +272,7 @@ pub async fn update_blocklist(
 
 /// Request to update a blocklist.
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for UpdateBlocklist.
 pub struct UpdateBlocklistRequest {
     pub name: Option<String>,
@@ -189,7 +280,24 @@ pub struct UpdateBlocklistRequest {
 }
 
 /// Delete a blocklist.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `404` if the blocklist is not found, `401` if unauthenticated.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/dns/blocklists/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Blocklist UUID"),
+    ),
+    responses(
+        (status = 204, description = "Blocklist deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Blocklist not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "DNS"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_blocklist(
     State(state): State<AppState>,
@@ -208,7 +316,24 @@ pub async fn delete_blocklist(
 }
 
 /// Refresh a blocklist (re-download).
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `404` if the blocklist is not found, `401` if unauthenticated.
+#[utoipa::path(
+    post,
+    path = "/api/v1/dns/blocklists/{id}/refresh",
+    params(
+        ("id" = Uuid, Path, description = "Blocklist UUID"),
+    ),
+    responses(
+        (status = 200, description = "Blocklist refreshed", body = RefreshBlocklistResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Blocklist not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "DNS"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn refresh_blocklist(
     State(state): State<AppState>,
@@ -237,7 +362,7 @@ pub async fn refresh_blocklist(
 }
 
 /// Response for blocklist refresh.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for RefreshBlocklist.
 pub struct RefreshBlocklistResponse {
     pub message: String,
@@ -245,7 +370,20 @@ pub struct RefreshBlocklistResponse {
 }
 
 /// Get DNS statistics.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `401` if unauthenticated.
+#[utoipa::path(
+    get,
+    path = "/api/v1/dns/stats",
+    responses(
+        (status = 200, description = "DNS query statistics", body = DnsStats),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "DNS"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_dns_stats(State(state): State<AppState>) -> Result<Json<DnsStats>> {
     let stats = state.dns_stats.read().await;
@@ -253,7 +391,20 @@ pub async fn get_dns_stats(State(state): State<AppState>) -> Result<Json<DnsStat
 }
 
 /// Reset DNS statistics.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `401` if unauthenticated.
+#[utoipa::path(
+    post,
+    path = "/api/v1/dns/stats/reset",
+    responses(
+        (status = 200, description = "Statistics reset", body = ResetStatsResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "DNS"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn reset_dns_stats(State(state): State<AppState>) -> Result<Json<ResetStatsResponse>> {
     let mut stats = state.dns_stats.write().await;
@@ -267,14 +418,27 @@ pub async fn reset_dns_stats(State(state): State<AppState>) -> Result<Json<Reset
 }
 
 /// Response for stats reset.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for ResetStats.
 pub struct ResetStatsResponse {
     pub message: String,
 }
 
 /// Get custom DNS records.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `401` if unauthenticated.
+#[utoipa::path(
+    get,
+    path = "/api/v1/dns/records",
+    responses(
+        (status = 200, description = "List of custom DNS records", body = Vec<DnsRecord>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "DNS"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_dns_records(State(state): State<AppState>) -> Result<Json<Vec<DnsRecord>>> {
     let config = state.dns_config.read().await;
@@ -282,7 +446,7 @@ pub async fn list_dns_records(State(state): State<AppState>) -> Result<Json<Vec<
 }
 
 /// Request to add a DNS record.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for AddDnsRecord.
 pub struct AddDnsRecordRequest {
     pub name: String,
@@ -297,7 +461,24 @@ fn default_ttl() -> u32 {
 }
 
 /// Add a custom DNS record.
-#[tracing::instrument(skip_all)]
+///
+/// Valid record types: A, AAAA, CNAME, TXT, MX.
+///
+/// # Errors
+///
+/// Returns `400` for invalid record type or duplicate record, `401` if unauthenticated.
+#[utoipa::path(
+    post,
+    path = "/api/v1/dns/records",
+    request_body = AddDnsRecordRequest,
+    responses(
+        (status = 201, description = "DNS record added", body = DnsRecord),
+        (status = 400, description = "Invalid record type or duplicate"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "DNS"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn add_dns_record(
     State(state): State<AppState>,
@@ -346,7 +527,22 @@ pub async fn add_dns_record(
 }
 
 /// Delete a custom DNS record.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `404` if the record is not found, `401` if unauthenticated.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/dns/records",
+    request_body = DeleteDnsRecordRequest,
+    responses(
+        (status = 204, description = "DNS record deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "DNS record not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "DNS"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_dns_record(
     State(state): State<AppState>,
@@ -377,7 +573,7 @@ pub async fn delete_dns_record(
 }
 
 /// Request to delete a DNS record.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for DeleteDnsRecord.
 pub struct DeleteDnsRecordRequest {
     pub name: String,
@@ -402,7 +598,22 @@ fn is_valid_dns_server(server: &str) -> bool {
 /// Uses the upstream resolvers configured in `DnsConfig`. Performs a real
 /// `A`/`AAAA` lookup via `hickory-resolver` for those record types and falls
 /// back to `std::net::ToSocketAddrs` for others.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `500` if the DNS resolver fails, `401` if unauthenticated.
+#[utoipa::path(
+    post,
+    path = "/api/v1/dns/query",
+    request_body = DnsQueryRequest,
+    responses(
+        (status = 200, description = "DNS query result", body = DnsQueryResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "DNS resolution failed"),
+    ),
+    security(("bearer" = [])),
+    tag = "DNS"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn query_dns(
     State(state): State<AppState>,
@@ -519,7 +730,7 @@ pub async fn query_dns(
 }
 
 /// Request for DNS query.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for DnsQuery.
 pub struct DnsQueryRequest {
     pub domain: String,
@@ -532,7 +743,7 @@ fn default_record_type() -> String {
 }
 
 /// Response for DNS query.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for DnsQuery.
 pub struct DnsQueryResponse {
     pub domain: String,
@@ -543,7 +754,20 @@ pub struct DnsQueryResponse {
 }
 
 /// Flush DNS cache.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `401` if unauthenticated.
+#[utoipa::path(
+    post,
+    path = "/api/v1/dns/cache/flush",
+    responses(
+        (status = 200, description = "DNS cache flushed", body = FlushCacheResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "DNS"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn flush_dns_cache(State(_state): State<AppState>) -> Result<Json<FlushCacheResponse>> {
     // In a real implementation, this would clear the DNS cache
@@ -556,7 +780,7 @@ pub async fn flush_dns_cache(State(_state): State<AppState>) -> Result<Json<Flus
 }
 
 /// Response for cache flush.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for FlushCache.
 pub struct FlushCacheResponse {
     pub message: String,

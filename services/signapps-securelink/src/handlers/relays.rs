@@ -16,7 +16,20 @@ use crate::AppState;
 use signapps_common::Result;
 
 /// List all configured relays.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `401` if unauthenticated.
+#[utoipa::path(
+    get,
+    path = "/api/v1/relays",
+    responses(
+        (status = 200, description = "List of relays", body = Vec<Relay>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Relays"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_relays(State(state): State<AppState>) -> Result<Json<Vec<Relay>>> {
     let relays = state.tunnel_client.list_relays().await;
@@ -24,7 +37,24 @@ pub async fn list_relays(State(state): State<AppState>) -> Result<Json<Vec<Relay
 }
 
 /// Get a specific relay by ID.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `404` if the relay is not found, `401` if unauthenticated.
+#[utoipa::path(
+    get,
+    path = "/api/v1/relays/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Relay UUID"),
+    ),
+    responses(
+        (status = 200, description = "Relay details", body = Relay),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Relay not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Relays"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_relay(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<Json<Relay>> {
     let relay = state
@@ -36,7 +66,22 @@ pub async fn get_relay(State(state): State<AppState>, Path(id): Path<Uuid>) -> R
 }
 
 /// Create a new relay.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `400` if the URL is not a valid WebSocket URL, `401` if unauthenticated.
+#[utoipa::path(
+    post,
+    path = "/api/v1/relays",
+    request_body = CreateRelay,
+    responses(
+        (status = 201, description = "Relay created", body = Relay),
+        (status = 400, description = "Invalid relay URL"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Relays"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_relay(
     State(state): State<AppState>,
@@ -88,8 +133,27 @@ pub async fn create_relay(
 }
 
 /// Update an existing relay.
+///
+/// # Errors
+///
+/// Returns `404` if the relay is not found, `400` for invalid URL, `401` if unauthenticated.
 #[allow(dead_code)]
-#[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/relays/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Relay UUID"),
+    ),
+    request_body = UpdateRelay,
+    responses(
+        (status = 200, description = "Relay updated", body = Relay),
+        (status = 400, description = "Invalid relay URL"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Relay not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Relays"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_relay(
     State(state): State<AppState>,
@@ -138,7 +202,25 @@ pub async fn update_relay(
 }
 
 /// Delete a relay.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `404` if the relay is not found, `400` if tunnels depend on it, `401` if unauthenticated.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/relays/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Relay UUID"),
+    ),
+    responses(
+        (status = 204, description = "Relay deleted"),
+        (status = 400, description = "Relay has dependent tunnels"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Relay not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Relays"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_relay(
     State(state): State<AppState>,
@@ -172,7 +254,24 @@ pub async fn delete_relay(
 }
 
 /// Test connection to a relay.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `404` if the relay is not found, `401` if unauthenticated.
+#[utoipa::path(
+    post,
+    path = "/api/v1/relays/{id}/test",
+    params(
+        ("id" = Uuid, Path, description = "Relay UUID"),
+    ),
+    responses(
+        (status = 200, description = "Relay test result", body = RelayTestResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Relay not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Relays"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn test_relay(
     State(state): State<AppState>,
@@ -209,7 +308,24 @@ pub async fn test_relay(
 }
 
 /// Connect to a relay and start all tunnels.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `404` if the relay is not found, `401` if unauthenticated.
+#[utoipa::path(
+    post,
+    path = "/api/v1/relays/{id}/connect",
+    params(
+        ("id" = Uuid, Path, description = "Relay UUID"),
+    ),
+    responses(
+        (status = 200, description = "Connection initiated", body = ConnectResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Relay not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Relays"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn connect_relay(
     State(state): State<AppState>,
@@ -233,7 +349,23 @@ pub async fn connect_relay(
 }
 
 /// Disconnect from a relay.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `401` if unauthenticated.
+#[utoipa::path(
+    post,
+    path = "/api/v1/relays/{id}/disconnect",
+    params(
+        ("id" = Uuid, Path, description = "Relay UUID"),
+    ),
+    responses(
+        (status = 200, description = "Disconnect signal sent", body = DisconnectResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Relays"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn disconnect_relay(
     State(_state): State<AppState>,
@@ -251,7 +383,7 @@ pub async fn disconnect_relay(
 }
 
 /// Response for relay test.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for RelayTest.
 pub struct RelayTestResponse {
     pub relay_id: Uuid,
@@ -260,7 +392,7 @@ pub struct RelayTestResponse {
 }
 
 /// Response for connect request.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Connect.
 pub struct ConnectResponse {
     pub message: String,
@@ -268,7 +400,7 @@ pub struct ConnectResponse {
 }
 
 /// Response for disconnect request.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Disconnect.
 pub struct DisconnectResponse {
     pub message: String,
@@ -276,7 +408,24 @@ pub struct DisconnectResponse {
 }
 
 /// Get relay statistics.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `404` if the relay is not found, `401` if unauthenticated.
+#[utoipa::path(
+    get,
+    path = "/api/v1/relays/{id}/stats",
+    params(
+        ("id" = Uuid, Path, description = "Relay UUID"),
+    ),
+    responses(
+        (status = 200, description = "Relay statistics", body = RelayStats),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Relay not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Relays"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_relay_stats(
     State(state): State<AppState>,
@@ -309,7 +458,7 @@ pub async fn get_relay_stats(
 }
 
 /// Statistics for a relay.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// RelayStats data transfer object.
 pub struct RelayStats {
     pub relay_id: Uuid,

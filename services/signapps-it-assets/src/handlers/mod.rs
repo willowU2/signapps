@@ -1,6 +1,7 @@
 pub mod agent;
 pub mod automation;
 pub mod cmdb;
+pub mod openapi;
 pub mod commands;
 pub mod custom_fields;
 pub mod device_docs;

@@ -2,6 +2,8 @@ use axum::Router;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 mod handlers;
 mod models;
@@ -47,6 +49,10 @@ async fn main() -> anyhow::Result<()> {
         ]);
 
     let app = Router::new()
+        .merge(
+            SwaggerUi::new("/swagger-ui")
+                .url("/api-docs/openapi.json", handlers::openapi::ItAssetsApiDoc::openapi()),
+        )
         .merge(routes::public_routes().with_state(state.pool.clone()))
         .nest("/api/v1/it-assets", routes::api_routes())
         .with_state(state)

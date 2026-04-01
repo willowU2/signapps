@@ -11,6 +11,19 @@ use uuid::Uuid;
 
 use crate::AppState;
 
+/// List all tenants (super-admin only).
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenants",
+    responses(
+        (status = 200, description = "List of tenants"),
+        (status = 403, description = "Forbidden"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tenants"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_tenants(
@@ -32,6 +45,21 @@ pub async fn list_tenants(
     Ok(Json(json!({ "data": tenants })))
 }
 
+/// Get a tenant by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/tenants/{id}",
+    params(("id" = Uuid, Path, description = "Tenant ID")),
+    responses(
+        (status = 200, description = "Tenant details"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tenants"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_tenant(

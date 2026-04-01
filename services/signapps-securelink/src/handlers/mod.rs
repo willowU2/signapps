@@ -1,6 +1,7 @@
 //! HTTP handlers for SecureLink service (Standalone Mode).
 
 pub mod dns;
+pub mod openapi;
 pub mod relays;
 pub mod tunnels;
 
@@ -12,7 +13,7 @@ use axum::Json;
 use serde::Serialize;
 
 /// Health check response for standalone mode.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Health.
 pub struct HealthResponse {
     pub status: String,
@@ -21,14 +22,14 @@ pub struct HealthResponse {
     pub dns: DnsHealth,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// TunnelHealth data transfer object.
 pub struct TunnelHealth {
     pub total: usize,
     pub connected: usize,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// DnsHealth data transfer object.
 pub struct DnsHealth {
     pub adblock_enabled: bool,
@@ -36,7 +37,18 @@ pub struct DnsHealth {
 }
 
 /// Health check endpoint (standalone mode - no database).
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns an error if the application state cannot be read.
+#[utoipa::path(
+    get,
+    path = "/health",
+    responses(
+        (status = 200, description = "Service health status", body = HealthResponse),
+    ),
+    tag = "Health"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn health_check_standalone(
     axum::extract::State(state): axum::extract::State<crate::AppState>,

@@ -48,6 +48,17 @@ async fn log_time_item_activity(
 // ============================================================================
 
 /// List time items with filters.
+#[utoipa::path(
+    get,
+    path = "/api/v1/time-items",
+    responses(
+        (status = 200, description = "List of time items"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "TimeItems"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_time_items(
@@ -68,6 +79,19 @@ pub async fn list_time_items(
 }
 
 /// Get a single time item by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/time-items/{id}",
+    params(("id" = Uuid, Path, description = "Time item ID")),
+    responses(
+        (status = 200, description = "Time item details"),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "TimeItems"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_time_item(
@@ -179,6 +203,18 @@ pub async fn move_time_item(
 }
 
 /// Delete a time item (soft delete).
+#[utoipa::path(
+    delete,
+    path = "/api/v1/time-items/{id}",
+    params(("id" = Uuid, Path, description = "Time item ID")),
+    responses(
+        (status = 204, description = "Time item deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "TimeItems"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_time_item(
@@ -210,12 +246,26 @@ pub async fn delete_time_item(
 }
 
 /// Update time item status.
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, utoipa::ToSchema)]
 /// UpdateStatusInput data transfer object.
 pub struct UpdateStatusInput {
     pub status: String,
 }
 
+/// Update the status of a time item.
+#[utoipa::path(
+    put,
+    path = "/api/v1/time-items/{id}/status",
+    params(("id" = Uuid, Path, description = "Time item ID")),
+    request_body = UpdateStatusInput,
+    responses(
+        (status = 200, description = "Status updated"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "TimeItems"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_time_item_status(
@@ -240,7 +290,7 @@ pub async fn update_time_item_status(
 // Multi-User Availability
 // ============================================================================
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, utoipa::ToSchema)]
 /// Query parameters for filtering results.
 pub struct QueryUsersEventsInput {
     pub user_ids: Vec<Uuid>,
@@ -249,6 +299,18 @@ pub struct QueryUsersEventsInput {
 }
 
 /// Fetch events for multiple users to compute availability.
+#[utoipa::path(
+    post,
+    path = "/api/v1/time-items/availability",
+    request_body = QueryUsersEventsInput,
+    responses(
+        (status = 200, description = "Events for the given users"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "TimeItems"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn query_users_events(
@@ -276,6 +338,18 @@ pub async fn query_users_events(
 // ============================================================================
 
 /// List children of a time item.
+#[utoipa::path(
+    get,
+    path = "/api/v1/time-items/{id}/children",
+    params(("id" = Uuid, Path, description = "Parent time item ID")),
+    responses(
+        (status = 200, description = "Child time items"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "TimeItems"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_children(
@@ -299,7 +373,19 @@ pub async fn list_children(
 // TimeItem Users (Participants)
 // ============================================================================
 
-/// List users for a time item.
+/// List users assigned to a time item.
+#[utoipa::path(
+    get,
+    path = "/api/v1/time-items/{id}/users",
+    params(("id" = Uuid, Path, description = "Time item ID")),
+    responses(
+        (status = 200, description = "Users assigned to the time item"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "TimeItems"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_time_item_users(
@@ -377,6 +463,21 @@ pub async fn add_time_item_user(
 }
 
 /// Remove a user from a time item.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/time-items/{id}/users/{user_id}",
+    params(
+        ("id" = Uuid, Path, description = "Time item ID"),
+        ("user_id" = Uuid, Path, description = "User ID"),
+    ),
+    responses(
+        (status = 204, description = "User removed"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "TimeItems"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_time_item_user(
@@ -397,12 +498,26 @@ pub async fn remove_time_item_user(
 }
 
 /// Update RSVP status.
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, utoipa::ToSchema)]
 /// UpdateRsvpInput data transfer object.
 pub struct UpdateRsvpInput {
     pub status: String,
 }
 
+/// Update RSVP status for a time item.
+#[utoipa::path(
+    put,
+    path = "/api/v1/time-items/{id}/rsvp",
+    params(("id" = Uuid, Path, description = "Time item ID")),
+    request_body = UpdateRsvpInput,
+    responses(
+        (status = 200, description = "RSVP updated"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "TimeItems"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_rsvp(
@@ -428,6 +543,18 @@ pub async fn update_rsvp(
 // ============================================================================
 
 /// List groups for a time item.
+#[utoipa::path(
+    get,
+    path = "/api/v1/time-items/{id}/groups",
+    params(("id" = Uuid, Path, description = "Time item ID")),
+    responses(
+        (status = 200, description = "Groups for the time item"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "TimeItems"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_time_item_groups(
@@ -469,6 +596,21 @@ pub async fn add_time_item_group(
 }
 
 /// Remove a group from a time item.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/time-items/{id}/groups/{group_id}",
+    params(
+        ("id" = Uuid, Path, description = "Time item ID"),
+        ("group_id" = Uuid, Path, description = "Group ID"),
+    ),
+    responses(
+        (status = 204, description = "Group removed"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "TimeItems"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_time_item_group(
@@ -527,6 +669,18 @@ pub async fn share_time_item(
 // ============================================================================
 
 /// List dependencies for a time item.
+#[utoipa::path(
+    get,
+    path = "/api/v1/time-items/{id}/dependencies",
+    params(("id" = Uuid, Path, description = "Time item ID")),
+    responses(
+        (status = 200, description = "Dependencies of the time item"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "TimeItems"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_dependencies(
@@ -568,6 +722,21 @@ pub async fn add_dependency(
 }
 
 /// Remove a dependency.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/time-items/{id}/dependencies/{depends_on_id}",
+    params(
+        ("id" = Uuid, Path, description = "Time item ID"),
+        ("depends_on_id" = Uuid, Path, description = "Dependency time item ID"),
+    ),
+    responses(
+        (status = 204, description = "Dependency removed"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "TimeItems"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_dependency(
@@ -592,6 +761,19 @@ pub async fn remove_dependency(
 // ============================================================================
 
 /// Get recurrence rule for a time item.
+#[utoipa::path(
+    get,
+    path = "/api/v1/time-items/{id}/recurrence",
+    params(("id" = Uuid, Path, description = "Time item ID")),
+    responses(
+        (status = 200, description = "Recurrence rule"),
+        (status = 404, description = "No recurrence rule"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "TimeItems"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_recurrence(
@@ -613,6 +795,18 @@ pub async fn get_recurrence(
 }
 
 /// Delete recurrence rule.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/time-items/{id}/recurrence",
+    params(("id" = Uuid, Path, description = "Time item ID")),
+    responses(
+        (status = 204, description = "Recurrence rule deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "TimeItems"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_recurrence(
@@ -637,6 +831,17 @@ pub async fn delete_recurrence(
 // ============================================================================
 
 /// List scheduling resources.
+#[utoipa::path(
+    get,
+    path = "/api/v1/scheduling/resources",
+    responses(
+        (status = 200, description = "List of scheduling resources"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Scheduling"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_scheduling_resources(
@@ -656,6 +861,19 @@ pub async fn list_scheduling_resources(
 }
 
 /// Get a scheduling resource.
+#[utoipa::path(
+    get,
+    path = "/api/v1/scheduling/resources/{id}",
+    params(("id" = Uuid, Path, description = "Resource ID")),
+    responses(
+        (status = 200, description = "Scheduling resource details"),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Scheduling"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_scheduling_resource(
@@ -697,6 +915,18 @@ pub async fn create_scheduling_resource(
 }
 
 /// Delete a scheduling resource.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/scheduling/resources/{id}",
+    params(("id" = Uuid, Path, description = "Resource ID")),
+    responses(
+        (status = 204, description = "Resource deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Scheduling"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_scheduling_resource(
@@ -721,6 +951,17 @@ pub async fn delete_scheduling_resource(
 // ============================================================================
 
 /// List scheduling templates.
+#[utoipa::path(
+    get,
+    path = "/api/v1/scheduling/templates",
+    responses(
+        (status = 200, description = "List of scheduling templates"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Scheduling"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_templates(
@@ -740,6 +981,19 @@ pub async fn list_templates(
 }
 
 /// Get a scheduling template.
+#[utoipa::path(
+    get,
+    path = "/api/v1/scheduling/templates/{id}",
+    params(("id" = Uuid, Path, description = "Template ID")),
+    responses(
+        (status = 200, description = "Template details"),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Scheduling"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_template(
@@ -781,6 +1035,18 @@ pub async fn create_template(
 }
 
 /// Delete a scheduling template.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/scheduling/templates/{id}",
+    params(("id" = Uuid, Path, description = "Template ID")),
+    responses(
+        (status = 204, description = "Template deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Scheduling"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_template(
@@ -805,6 +1071,17 @@ pub async fn delete_template(
 // ============================================================================
 
 /// Get user scheduling preferences.
+#[utoipa::path(
+    get,
+    path = "/api/v1/scheduling/preferences",
+    responses(
+        (status = 200, description = "User scheduling preferences"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Scheduling"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_preferences(

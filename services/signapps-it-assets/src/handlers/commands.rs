@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 // ─── Agent Commands (RM3) ─────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a agent command.
 pub struct AgentCommand {
     pub id: Uuid,
@@ -27,7 +27,7 @@ pub struct AgentCommand {
     pub result: Value,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a queue command req.
 pub struct QueueCommandReq {
     pub hardware_id: Uuid,
@@ -35,7 +35,7 @@ pub struct QueueCommandReq {
     pub parameters: Option<Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a update command status req.
 pub struct UpdateCommandStatusReq {
     pub status: String, // 'acknowledged', 'done', 'failed'
@@ -44,6 +44,19 @@ pub struct UpdateCommandStatusReq {
 
 const ALLOWED_COMMANDS: &[&str] = &["reboot", "shutdown", "lock", "run_script", "message"];
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/agent/commands/queue",
+    request_body = QueueCommandReq,
+    responses(
+        (status = 201, description = "Command queued", body = AgentCommand),
+        (status = 400, description = "Invalid command"),
+        (status = 404, description = "Hardware not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Commands"
+)]
 /// POST /api/v1/it-assets/agent/commands/queue
 /// Admin queues a command for a managed machine.
 #[tracing::instrument(skip_all)]
@@ -97,6 +110,17 @@ pub async fn queue_agent_command(
     Ok((StatusCode::CREATED, Json(cmd)))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/agent/commands/pending/{agent_id}",
+    params(("agent_id" = uuid::Uuid, Path, description = "Agent UUID")),
+    responses(
+        (status = 200, description = "Pending commands", body = Vec<AgentCommand>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Commands"
+)]
 /// GET /api/v1/it-assets/agent/commands/pending/:agent_id
 /// Agent polls for pending commands.
 #[tracing::instrument(skip_all)]
@@ -146,6 +170,20 @@ pub async fn get_pending_commands(
     Ok(Json(cmds))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/agent/commands/{id}/status",
+    params(("id" = uuid::Uuid, Path, description = "Command UUID")),
+    request_body = UpdateCommandStatusReq,
+    responses(
+        (status = 200, description = "Command status updated", body = AgentCommand),
+        (status = 400, description = "Invalid status"),
+        (status = 404, description = "Command not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Commands"
+)]
 /// PUT /api/v1/it-assets/agent/commands/:id/status
 /// Agent reports completion of a command.
 #[tracing::instrument(skip_all)]
@@ -186,6 +224,17 @@ pub async fn update_command_status(
     Ok(Json(cmd))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{id}/commands",
+    params(("id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 200, description = "Hardware commands list", body = Vec<AgentCommand>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Commands"
+)]
 /// GET /api/v1/it-assets/hardware/:id/commands
 /// List all commands for a hardware asset (admin view).
 #[tracing::instrument(skip_all)]

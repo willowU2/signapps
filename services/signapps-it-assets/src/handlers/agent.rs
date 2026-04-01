@@ -15,7 +15,7 @@ const AGENT_LATEST_VERSION: &str = "1.0.0";
 
 // ─── Request / Response Types ────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 #[allow(dead_code)]
 /// Represents a register agent req.
 pub struct RegisterAgentReq {
@@ -26,7 +26,7 @@ pub struct RegisterAgentReq {
     pub enrollment_token: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a register agent resp.
 pub struct RegisterAgentResp {
     pub agent_id: Uuid,
@@ -34,7 +34,7 @@ pub struct RegisterAgentResp {
     pub config: AgentConfig,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Configuration for Agent.
 pub struct AgentConfig {
     pub poll_interval_seconds: u32,
@@ -42,7 +42,7 @@ pub struct AgentConfig {
     pub agent_latest_version: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 #[allow(dead_code)]
 /// Represents a heartbeat req.
 pub struct HeartbeatReq {
@@ -54,7 +54,7 @@ pub struct HeartbeatReq {
     pub disk_usage: Option<f32>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a heartbeat resp.
 pub struct HeartbeatResp {
     pub ok: bool,
@@ -63,7 +63,7 @@ pub struct HeartbeatResp {
     pub agent_latest_version: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Configuration for AgentFull.
 pub struct AgentFullConfig {
     pub agent_id: Uuid,
@@ -73,7 +73,7 @@ pub struct AgentFullConfig {
     pub pending_patches: Vec<PendingPatch>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a pending script.
 pub struct PendingScript {
     pub id: Uuid,
@@ -82,7 +82,7 @@ pub struct PendingScript {
     pub timeout_seconds: i32,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a pending patch.
 pub struct PendingPatch {
     pub id: Uuid,
@@ -94,7 +94,7 @@ pub struct PendingPatch {
 
 // ─── Hardware Inventory ───────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 #[allow(dead_code)]
 /// Represents a hardware inventory req.
 pub struct HardwareInventoryReq {
@@ -107,7 +107,7 @@ pub struct HardwareInventoryReq {
     pub bios_version: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, utoipa::ToSchema)]
 /// Represents a disk info.
 pub struct DiskInfo {
     pub name: String,
@@ -117,14 +117,14 @@ pub struct DiskInfo {
 
 // ─── Software Inventory ───────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a software inventory req.
 pub struct SoftwareInventoryReq {
     pub agent_id: Uuid,
     pub software: Vec<SoftwareEntry>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a software entry.
 pub struct SoftwareEntry {
     pub name: String,
@@ -134,7 +134,7 @@ pub struct SoftwareEntry {
     pub size_bytes: Option<i64>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 #[allow(dead_code)]
 /// Represents a software inventory row.
 pub struct SoftwareInventoryRow {
@@ -150,7 +150,7 @@ pub struct SoftwareInventoryRow {
 
 // ─── Script Queue ────────────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a queue script req.
 pub struct QueueScriptReq {
     pub hardware_id: Uuid,
@@ -159,7 +159,7 @@ pub struct QueueScriptReq {
     pub timeout_seconds: Option<i32>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a script queue row.
 pub struct ScriptQueueRow {
     pub id: Uuid,
@@ -176,7 +176,7 @@ pub struct ScriptQueueRow {
     pub completed_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a script result req.
 pub struct ScriptResultReq {
     pub script_id: Uuid,
@@ -188,14 +188,14 @@ pub struct ScriptResultReq {
 
 // ─── Enrollment Tokens (EA6) ──────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a create enrollment token req.
 pub struct CreateEnrollmentTokenReq {
     pub label: Option<String>,
     pub expires_in_hours: Option<i64>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a enrollment token row.
 pub struct EnrollmentTokenRow {
     pub id: Uuid,
@@ -215,6 +215,17 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
 
 // ─── EA1: Register agent ──────────────────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/agent/register",
+    request_body = RegisterAgentReq,
+    responses(
+        (status = 201, description = "Agent registered", body = RegisterAgentResp),
+        (status = 401, description = "Invalid enrollment token"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Agents"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn register_agent(
     State(pool): State<DatabasePool>,
@@ -283,6 +294,17 @@ pub async fn register_agent(
 
 // ─── EA1: Heartbeat ───────────────────────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/agent/{agent_id}/heartbeat",
+    params(("agent_id" = uuid::Uuid, Path, description = "Agent UUID")),
+    request_body = HeartbeatReq,
+    responses(
+        (status = 200, description = "Heartbeat accepted", body = HeartbeatResp),
+        (status = 404, description = "Agent not registered"),
+    ),
+    tag = "Agents"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn agent_heartbeat(
     State(pool): State<DatabasePool>,
@@ -354,6 +376,16 @@ pub async fn agent_heartbeat(
 
 // ─── EA1 + EA5: Get agent config ──────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/agent/{agent_id}/config",
+    params(("agent_id" = uuid::Uuid, Path, description = "Agent UUID")),
+    responses(
+        (status = 200, description = "Agent configuration", body = AgentFullConfig),
+        (status = 404, description = "Agent not registered"),
+    ),
+    tag = "Agents"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_agent_config(
     State(pool): State<DatabasePool>,
@@ -394,6 +426,17 @@ pub async fn get_agent_config(
 
 // ─── EA2: Hardware inventory ──────────────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/agent/{agent_id}/hardware",
+    params(("agent_id" = uuid::Uuid, Path, description = "Agent UUID")),
+    request_body = HardwareInventoryReq,
+    responses(
+        (status = 204, description = "Hardware inventory accepted"),
+        (status = 404, description = "Agent not registered"),
+    ),
+    tag = "Agents"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn report_hardware_inventory(
     State(pool): State<DatabasePool>,
@@ -448,6 +491,17 @@ pub async fn report_hardware_inventory(
 
 // ─── EA3: Software inventory ──────────────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/agent/{agent_id}/software",
+    params(("agent_id" = uuid::Uuid, Path, description = "Agent UUID")),
+    request_body = SoftwareInventoryReq,
+    responses(
+        (status = 204, description = "Software inventory accepted"),
+        (status = 404, description = "Agent not registered"),
+    ),
+    tag = "Agents"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn report_software_inventory(
     State(pool): State<DatabasePool>,
@@ -492,6 +546,18 @@ pub async fn report_software_inventory(
 
 // ─── EA4: Script queue ────────────────────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/agent/{agent_id}/scripts",
+    params(("agent_id" = uuid::Uuid, Path, description = "Agent UUID")),
+    request_body = QueueScriptReq,
+    responses(
+        (status = 201, description = "Script queued", body = ScriptQueueRow),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Agents"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn queue_script(
     State(pool): State<DatabasePool>,
@@ -515,6 +581,16 @@ pub async fn queue_script(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/agent/{agent_id}/scripts",
+    params(("agent_id" = uuid::Uuid, Path, description = "Agent UUID")),
+    responses(
+        (status = 200, description = "Pending scripts", body = Vec<ScriptQueueRow>),
+        (status = 404, description = "Agent not registered"),
+    ),
+    tag = "Agents"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_pending_scripts(
     State(pool): State<DatabasePool>,
@@ -537,6 +613,17 @@ pub async fn get_pending_scripts(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/agent/{agent_id}/scripts/result",
+    params(("agent_id" = uuid::Uuid, Path, description = "Agent UUID")),
+    request_body = ScriptResultReq,
+    responses(
+        (status = 204, description = "Script result accepted"),
+        (status = 404, description = "Agent or script not found"),
+    ),
+    tag = "Agents"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn report_script_result(
     State(pool): State<DatabasePool>,
@@ -581,6 +668,17 @@ pub async fn report_script_result(
 
 // ─── EA6: Enrollment tokens ───────────────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/enrollment/token",
+    request_body = CreateEnrollmentTokenReq,
+    responses(
+        (status = 201, description = "Enrollment token created", body = EnrollmentTokenRow),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Agents"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_enrollment_token(
     State(pool): State<DatabasePool>,
@@ -628,6 +726,16 @@ struct AgentDownloadInfo {
     checksum_url: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/agent/download/{platform}",
+    params(("platform" = String, Path, description = "Target platform: windows, linux, macos")),
+    responses(
+        (status = 200, description = "Agent download info"),
+        (status = 404, description = "Unknown platform"),
+    ),
+    tag = "Agents"
+)]
 pub async fn download_agent(
     Path(platform): Path<String>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
@@ -722,7 +830,7 @@ launchctl list | grep signapps
 
 // ─── EA-SVC: Agent reports running services (Feature 24) ─────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct ServiceEntry {
     pub name: String,
     pub status: String,
@@ -730,7 +838,7 @@ pub struct ServiceEntry {
     pub pid: Option<i32>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct ServiceRow {
     pub id: Uuid,
     pub hardware_id: Uuid,
@@ -741,11 +849,22 @@ pub struct ServiceRow {
     pub reported_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct ReportServicesReq {
     pub services: Vec<ServiceEntry>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/agent/{agent_id}/services",
+    params(("agent_id" = uuid::Uuid, Path, description = "Agent UUID")),
+    request_body = ReportServicesReq,
+    responses(
+        (status = 204, description = "Services reported"),
+        (status = 404, description = "Agent not registered"),
+    ),
+    tag = "Agents"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn report_services(
     State(pool): State<DatabasePool>,
@@ -785,6 +904,17 @@ pub async fn report_services(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{hw_id}/services",
+    params(("hw_id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 200, description = "Services list", body = Vec<ServiceRow>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Agents"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_hardware_services(
     State(pool): State<DatabasePool>,

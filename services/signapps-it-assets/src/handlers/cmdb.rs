@@ -16,7 +16,7 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
 
 // ─── CM1: Configuration items ────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Configuration for urationItem.
 pub struct ConfigurationItem {
     pub id: Uuid,
@@ -29,7 +29,7 @@ pub struct ConfigurationItem {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a create ci req.
 pub struct CreateCiReq {
     pub name: String,
@@ -39,7 +39,7 @@ pub struct CreateCiReq {
     pub metadata: Option<Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a update ci req.
 pub struct UpdateCiReq {
     pub name: Option<String>,
@@ -49,6 +49,13 @@ pub struct UpdateCiReq {
     pub metadata: Option<Value>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/cmdb/cis",
+    responses((status = 200, description = "CI list", body = Vec<ConfigurationItem>)),
+    security(("bearer" = [])),
+    tag = "CMDB"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_cis(
     State(pool): State<DatabasePool>,
@@ -62,6 +69,17 @@ pub async fn list_cis(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/cmdb/cis/{id}",
+    params(("id" = uuid::Uuid, Path, description = "CI UUID")),
+    responses(
+        (status = 200, description = "Configuration item", body = ConfigurationItem),
+        (status = 404, description = "CI not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "CMDB"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_ci(
     State(pool): State<DatabasePool>,
@@ -78,6 +96,17 @@ pub async fn get_ci(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/cmdb/cis",
+    request_body = CreateCiReq,
+    responses(
+        (status = 201, description = "CI created", body = ConfigurationItem),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "CMDB"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_ci(
     State(pool): State<DatabasePool>,
@@ -106,6 +135,18 @@ pub async fn create_ci(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/cmdb/cis/{id}",
+    params(("id" = uuid::Uuid, Path, description = "CI UUID")),
+    request_body = UpdateCiReq,
+    responses(
+        (status = 200, description = "CI updated", body = ConfigurationItem),
+        (status = 404, description = "CI not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "CMDB"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_ci(
     State(pool): State<DatabasePool>,
@@ -138,6 +179,17 @@ pub async fn update_ci(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/cmdb/cis/{id}",
+    params(("id" = uuid::Uuid, Path, description = "CI UUID")),
+    responses(
+        (status = 204, description = "CI deleted"),
+        (status = 404, description = "CI not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "CMDB"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_ci(
     State(pool): State<DatabasePool>,
@@ -156,7 +208,7 @@ pub async fn delete_ci(
 
 // ─── CM1: CI relationships ────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a ci relationship.
 pub struct CiRelationship {
     pub id: Uuid,
@@ -166,7 +218,7 @@ pub struct CiRelationship {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a create ci rel req.
 pub struct CreateCiRelReq {
     pub source_ci_id: Uuid,
@@ -174,6 +226,14 @@ pub struct CreateCiRelReq {
     pub relationship_type: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/cmdb/cis/{ci_id}/relationships",
+    params(("ci_id" = uuid::Uuid, Path, description = "CI UUID")),
+    responses((status = 200, description = "CI relationships", body = Vec<CiRelationship>)),
+    security(("bearer" = [])),
+    tag = "CMDB"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_ci_relationships(
     State(pool): State<DatabasePool>,
@@ -189,6 +249,17 @@ pub async fn list_ci_relationships(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/cmdb/relationships",
+    request_body = CreateCiRelReq,
+    responses(
+        (status = 201, description = "Relationship created", body = CiRelationship),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "CMDB"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_ci_relationship(
     State(pool): State<DatabasePool>,
@@ -210,6 +281,17 @@ pub async fn create_ci_relationship(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/cmdb/relationships/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Relationship UUID")),
+    responses(
+        (status = 204, description = "Relationship deleted"),
+        (status = 404, description = "Relationship not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "CMDB"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_ci_relationship(
     State(pool): State<DatabasePool>,
@@ -227,6 +309,14 @@ pub async fn delete_ci_relationship(
 }
 
 // Impact analysis — fetch all CIs that depend (directly or indirectly) on a given CI
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/cmdb/cis/{id}/impact",
+    params(("id" = uuid::Uuid, Path, description = "CI UUID")),
+    responses((status = 200, description = "Dependent CIs", body = Vec<ConfigurationItem>)),
+    security(("bearer" = [])),
+    tag = "CMDB"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn ci_impact(
     State(pool): State<DatabasePool>,
@@ -255,7 +345,7 @@ pub async fn ci_impact(
 
 // ─── CM3: Change requests ─────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Request payload for Change operation.
 pub struct ChangeRequest {
     pub id: Uuid,
@@ -274,7 +364,7 @@ pub struct ChangeRequest {
     pub verified_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a create change req.
 pub struct CreateChangeReq {
     pub title: String,
@@ -285,13 +375,20 @@ pub struct CreateChangeReq {
     pub ci_ids: Option<Vec<Uuid>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a update change status req.
 pub struct UpdateChangeStatusReq {
     pub status: String,
     pub actor_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/changes",
+    responses((status = 200, description = "Change requests list", body = Vec<ChangeRequest>)),
+    security(("bearer" = [])),
+    tag = "CMDB"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_change_requests(
     State(pool): State<DatabasePool>,
@@ -305,6 +402,17 @@ pub async fn list_change_requests(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/changes/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Change request UUID")),
+    responses(
+        (status = 200, description = "Change request", body = ChangeRequest),
+        (status = 404, description = "Not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "CMDB"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_change_request(
     State(pool): State<DatabasePool>,
@@ -321,6 +429,17 @@ pub async fn get_change_request(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/changes",
+    request_body = CreateChangeReq,
+    responses(
+        (status = 201, description = "Change request created", body = ChangeRequest),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "CMDB"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_change_request(
     State(pool): State<DatabasePool>,
@@ -359,6 +478,18 @@ pub async fn create_change_request(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/changes/{id}/status",
+    params(("id" = uuid::Uuid, Path, description = "Change request UUID")),
+    request_body = UpdateChangeStatusReq,
+    responses(
+        (status = 200, description = "Change status updated", body = ChangeRequest),
+        (status = 404, description = "Not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "CMDB"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_change_status(
     State(pool): State<DatabasePool>,
@@ -392,7 +523,7 @@ pub async fn update_change_status(
 }
 
 // CM4: LDAP import — basic TCP probe + proper structure for ldap3 crate
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 #[allow(dead_code)]
 /// Represents a ldap import req.
 pub struct LdapImportReq {
@@ -407,7 +538,7 @@ pub struct LdapImportReq {
     pub attributes: Option<Vec<String>>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a ldap import result.
 pub struct LdapImportResult {
     pub status: String,
@@ -417,6 +548,17 @@ pub struct LdapImportResult {
     pub note: String,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/import/ldap",
+    request_body = LdapImportReq,
+    responses(
+        (status = 200, description = "LDAP import result", body = LdapImportResult),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "CMDB"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn import_ldap(
     Json(payload): Json<LdapImportReq>,

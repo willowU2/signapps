@@ -13,7 +13,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, utoipa::IntoParams)]
 /// Query parameters for filtering results.
 pub struct ProjectListQuery {
     pub workspace_id: Option<Uuid>,
@@ -21,6 +21,19 @@ pub struct ProjectListQuery {
     pub offset: Option<i64>,
 }
 
+/// List projects.
+#[utoipa::path(
+    get,
+    path = "/api/v1/projects",
+    params(ProjectListQuery),
+    responses(
+        (status = 200, description = "List of projects"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Projects"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list(
@@ -49,6 +62,7 @@ pub async fn list(
     }
 }
 
+/// Create a project.
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create(
@@ -66,6 +80,20 @@ pub async fn create(
     }
 }
 
+/// Get a project by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/projects/{id}",
+    params(("id" = Uuid, Path, description = "Project ID")),
+    responses(
+        (status = 200, description = "Project details"),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Projects"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_by_id(
@@ -89,6 +117,7 @@ pub async fn get_by_id(
     }
 }
 
+/// Update a project.
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update(
@@ -107,6 +136,19 @@ pub async fn update(
     }
 }
 
+/// Delete a project.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/projects/{id}",
+    params(("id" = Uuid, Path, description = "Project ID")),
+    responses(
+        (status = 204, description = "Project deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Projects"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(

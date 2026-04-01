@@ -14,13 +14,29 @@ use uuid::Uuid;
 
 use crate::AppState;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::IntoParams)]
 /// Query parameters for filtering results.
 pub struct DateRangeParams {
     pub start: Option<DateTime<Utc>>,
     pub end: Option<DateTime<Utc>>,
 }
 
+/// List events for a calendar.
+#[utoipa::path(
+    get,
+    path = "/api/v1/calendars/{calendar_id}/events",
+    params(
+        ("calendar_id" = Uuid, Path, description = "Calendar ID"),
+        DateRangeParams,
+    ),
+    responses(
+        (status = 200, description = "List of events"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Events"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_events(
@@ -48,6 +64,20 @@ pub async fn list_events(
     }
 }
 
+/// Get an event by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/events/{id}",
+    params(("id" = Uuid, Path, description = "Event ID")),
+    responses(
+        (status = 200, description = "Event details"),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Events"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_event(
@@ -67,6 +97,7 @@ pub async fn get_event(
     }
 }
 
+/// Create an event in a calendar.
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_event(
@@ -87,6 +118,7 @@ pub async fn create_event(
     }
 }
 
+/// Update an event.
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_event(
@@ -106,6 +138,19 @@ pub async fn update_event(
     }
 }
 
+/// Delete an event.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/events/{id}",
+    params(("id" = Uuid, Path, description = "Event ID")),
+    responses(
+        (status = 204, description = "Event deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Events"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_event(
@@ -124,6 +169,19 @@ pub async fn delete_event(
     }
 }
 
+/// List attendees for an event.
+#[utoipa::path(
+    get,
+    path = "/api/v1/events/{id}/attendees",
+    params(("id" = Uuid, Path, description = "Event ID")),
+    responses(
+        (status = 200, description = "List of attendees"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Events"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_attendees(
@@ -142,6 +200,7 @@ pub async fn list_attendees(
     }
 }
 
+/// Add an attendee to an event.
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn add_attendee(
@@ -161,12 +220,26 @@ pub async fn add_attendee(
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 /// UpdateRsvpPayload data transfer object.
 pub struct UpdateRsvpPayload {
     pub rsvp_status: String,
 }
 
+/// Update RSVP status for an attendee.
+#[utoipa::path(
+    put,
+    path = "/api/v1/attendees/{id}/rsvp",
+    params(("id" = Uuid, Path, description = "Attendee ID")),
+    request_body = UpdateRsvpPayload,
+    responses(
+        (status = 200, description = "RSVP updated"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Events"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_rsvp(
@@ -186,6 +259,19 @@ pub async fn update_rsvp(
     }
 }
 
+/// Remove an attendee from an event.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/attendees/{id}",
+    params(("id" = Uuid, Path, description = "Attendee ID")),
+    responses(
+        (status = 204, description = "Attendee removed"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Events"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_attendee(

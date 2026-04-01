@@ -14,11 +14,12 @@ use uuid::Uuid;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a network discovery.
 pub struct NetworkDiscovery {
     pub id: Uuid,
     pub subnet: String,
+    #[schema(value_type = String)]
     pub ip_address: ipnetwork::IpNetwork,
     pub mac_address: Option<String>,
     pub hostname: Option<String>,
@@ -30,7 +31,7 @@ pub struct NetworkDiscovery {
     pub hardware_id: Option<Uuid>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a scan subnet req.
 pub struct ScanSubnetReq {
     /// CIDR subnet, e.g. "192.168.1.0/24"
@@ -39,7 +40,7 @@ pub struct ScanSubnetReq {
     pub timeout_ms: Option<u64>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a scan result.
 pub struct ScanResult {
     pub subnet: String,
@@ -48,7 +49,7 @@ pub struct ScanResult {
     pub discoveries: Vec<DiscoveryEntry>,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, utoipa::ToSchema)]
 /// Represents a discovery entry.
 pub struct DiscoveryEntry {
     pub ip: String,
@@ -59,7 +60,7 @@ pub struct DiscoveryEntry {
     pub open_ports: Vec<u16>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a port scan req.
 pub struct PortScanReq {
     pub ip: String,
@@ -67,7 +68,7 @@ pub struct PortScanReq {
     pub timeout_ms: Option<u64>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a port scan result.
 pub struct PortScanResult {
     pub ip: String,
@@ -76,7 +77,7 @@ pub struct PortScanResult {
     pub duration_ms: u64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a add to inventory req.
 pub struct AddToInventoryReq {
     #[allow(dead_code)]
@@ -212,6 +213,18 @@ fn guess_os(open_ports: &[u16]) -> Option<String> {
 
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/network/scan",
+    request_body = ScanSubnetReq,
+    responses(
+        (status = 200, description = "Network scan result", body = ScanResult),
+        (status = 400, description = "Invalid subnet"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Network"
+)]
 /// POST /api/v1/it-assets/network/scan
 /// Perform an ARP/ping sweep on a subnet and store results.
 #[tracing::instrument(skip_all)]
@@ -287,6 +300,16 @@ pub async fn scan_network(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/network/discoveries",
+    responses(
+        (status = 200, description = "Network discoveries list", body = Vec<NetworkDiscovery>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Network"
+)]
 /// GET /api/v1/it-assets/network/discoveries
 /// List all network discoveries.
 #[tracing::instrument(skip_all)]
@@ -308,6 +331,19 @@ pub async fn list_discoveries(
     Ok(Json(discoveries))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/network/discoveries/{id}/add-to-inventory",
+    params(("id" = uuid::Uuid, Path, description = "Discovery UUID")),
+    request_body = AddToInventoryReq,
+    responses(
+        (status = 201, description = "Added to inventory"),
+        (status = 404, description = "Discovery not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Network"
+)]
 /// POST /api/v1/it-assets/network/discoveries/:id/add-to-inventory
 /// Add a discovered host to the IT hardware inventory.
 #[tracing::instrument(skip_all)]
@@ -365,6 +401,18 @@ pub async fn add_discovery_to_inventory(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/network/port-scan",
+    request_body = PortScanReq,
+    responses(
+        (status = 200, description = "Port scan result", body = PortScanResult),
+        (status = 400, description = "Bad request"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Network"
+)]
 /// POST /api/v1/it-assets/network/port-scan (ND4)
 /// TCP port scan on a specific IP.
 #[tracing::instrument(skip_all)]
@@ -417,6 +465,18 @@ pub async fn port_scan(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/network/snmp/{ip}",
+    params(("ip" = String, Path, description = "Target IP address")),
+    responses(
+        (status = 200, description = "SNMP query result"),
+        (status = 400, description = "Invalid IP"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Network"
+)]
 /// GET /api/v1/it-assets/network/snmp/:ip (ND2)
 /// Query common SNMP OIDs for a given IP via raw UDP SNMPv1 GET.
 /// Falls back gracefully if port 161 is unreachable (timeout or refused).

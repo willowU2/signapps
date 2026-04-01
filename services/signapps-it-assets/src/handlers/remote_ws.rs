@@ -61,7 +61,7 @@ pub struct AgentWsQuery {
 }
 
 /// Request body for starting a remote session.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct StartSessionReq {
     pub mode: Option<String>,
     pub admin_name: Option<String>,
@@ -70,7 +70,7 @@ pub struct StartSessionReq {
 }
 
 /// Response for session creation.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SessionResp {
     pub session_id: Uuid,
     pub status: String,
@@ -88,6 +88,20 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
 // The agent connects here at startup and keeps the connection alive.
 // The server uses this channel to push remote session commands.
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/agent/{agent_id}/remote-ws",
+    params(
+        ("agent_id" = uuid::Uuid, Path, description = "Agent UUID"),
+        ("token" = String, Query, description = "JWT token"),
+    ),
+    responses(
+        (status = 101, description = "WebSocket upgrade"),
+        (status = 401, description = "Missing token"),
+    ),
+    security(("bearer" = [])),
+    tag = "Remote"
+)]
 pub async fn agent_remote_ws(
     Path(agent_id): Path<Uuid>,
     Query(params): Query<AgentWsQuery>,
@@ -160,6 +174,16 @@ async fn handle_agent_ws(socket: WebSocket, agent_id: Uuid, state: AppState) {
 //
 // Admin browser connects here. Receives frames from agent, sends input events.
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{hw_id}/remote-session",
+    params(("hw_id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 101, description = "WebSocket upgrade"),
+    ),
+    security(("bearer" = [])),
+    tag = "Remote"
+)]
 pub async fn admin_remote_viewer(
     Path(hw_id): Path<Uuid>,
     State(state): State<AppState>,
@@ -228,6 +252,19 @@ async fn handle_admin_viewer(socket: WebSocket, hw_id: Uuid, state: AppState) {
 // Sends `start_session` command to the connected agent.
 // Records the session in DB.
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/hardware/{hw_id}/remote-session/start",
+    params(("hw_id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    request_body = StartSessionReq,
+    responses(
+        (status = 201, description = "Remote session started", body = SessionResp),
+        (status = 404, description = "No agent found for hardware"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Remote"
+)]
 pub async fn start_remote_session(
     Path(hw_id): Path<Uuid>,
     State(state): State<AppState>,
@@ -312,7 +349,7 @@ pub async fn start_remote_session(
 //
 // GET /:hw_id/recordings
 
-#[derive(Debug, serde::Serialize, sqlx::FromRow)]
+#[derive(Debug, serde::Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct RecordingRow {
     pub id: Uuid,
     pub hardware_id: Uuid,
@@ -323,6 +360,17 @@ pub struct RecordingRow {
     pub ended_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{hw_id}/recordings",
+    params(("hw_id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 200, description = "Session recordings list", body = Vec<RecordingRow>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Remote"
+)]
 pub async fn list_recordings(
     Path(hw_id): Path<Uuid>,
     State(state): State<AppState>,
@@ -349,6 +397,18 @@ pub async fn list_recordings(
 //
 // POST /:hw_id/remote-session/stop
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/hardware/{hw_id}/remote-session/stop",
+    params(("hw_id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 204, description = "Session stopped"),
+        (status = 404, description = "No agent found for hardware"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Remote"
+)]
 pub async fn stop_remote_session(
     Path(hw_id): Path<Uuid>,
     State(state): State<AppState>,

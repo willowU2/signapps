@@ -14,6 +14,16 @@ use signapps_common::Result;
 use signapps_db::models::{CreateJob, Job, JobRun, JobStats, UpdateJob};
 
 /// List all jobs.
+#[utoipa::path(
+    get,
+    path = "/api/v1/jobs",
+    responses(
+        (status = 200, description = "List of jobs"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Jobs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_jobs(State(state): State<AppState>) -> Result<Json<Vec<Job>>> {
@@ -22,6 +32,18 @@ pub async fn list_jobs(State(state): State<AppState>) -> Result<Json<Vec<Job>>> 
 }
 
 /// Get a job by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/jobs/{id}",
+    params(("id" = Uuid, Path, description = "Job ID")),
+    responses(
+        (status = 200, description = "Job details"),
+        (status = 404, description = "Job not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Jobs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_job(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<Json<Job>> {
@@ -57,6 +79,18 @@ pub async fn update_job(
 }
 
 /// Delete a job.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/jobs/{id}",
+    params(("id" = Uuid, Path, description = "Job ID")),
+    responses(
+        (status = 204, description = "Job deleted"),
+        (status = 404, description = "Job not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Jobs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_job(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
@@ -65,6 +99,18 @@ pub async fn delete_job(State(state): State<AppState>, Path(id): Path<Uuid>) -> 
 }
 
 /// Enable a job.
+#[utoipa::path(
+    post,
+    path = "/api/v1/jobs/{id}/enable",
+    params(("id" = Uuid, Path, description = "Job ID")),
+    responses(
+        (status = 200, description = "Job enabled"),
+        (status = 404, description = "Job not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Jobs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn enable_job(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<Json<Job>> {
@@ -73,6 +119,18 @@ pub async fn enable_job(State(state): State<AppState>, Path(id): Path<Uuid>) -> 
 }
 
 /// Disable a job.
+#[utoipa::path(
+    post,
+    path = "/api/v1/jobs/{id}/disable",
+    params(("id" = Uuid, Path, description = "Job ID")),
+    responses(
+        (status = 200, description = "Job disabled"),
+        (status = 404, description = "Job not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Jobs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn disable_job(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<Json<Job>> {
@@ -81,6 +139,18 @@ pub async fn disable_job(State(state): State<AppState>, Path(id): Path<Uuid>) ->
 }
 
 /// Run a job immediately.
+#[utoipa::path(
+    post,
+    path = "/api/v1/jobs/{id}/run",
+    params(("id" = Uuid, Path, description = "Job ID")),
+    responses(
+        (status = 200, description = "Job run result", body = RunJobResponse),
+        (status = 404, description = "Job not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Jobs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn run_job(
@@ -97,7 +167,7 @@ pub async fn run_job(
 }
 
 /// Run job response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for RunJob.
 pub struct RunJobResponse {
     pub status: String,
@@ -107,7 +177,7 @@ pub struct RunJobResponse {
 }
 
 /// Query params for job runs.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 /// Query parameters for filtering results.
 pub struct JobRunsQuery {
     #[serde(default = "default_limit")]
@@ -119,6 +189,20 @@ fn default_limit() -> i64 {
 }
 
 /// Get job runs.
+#[utoipa::path(
+    get,
+    path = "/api/v1/jobs/{id}/runs",
+    params(
+        ("id" = Uuid, Path, description = "Job ID"),
+        JobRunsQuery,
+    ),
+    responses(
+        (status = 200, description = "Job run history"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Jobs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_job_runs(
@@ -131,6 +215,18 @@ pub async fn get_job_runs(
 }
 
 /// Get a specific run.
+#[utoipa::path(
+    get,
+    path = "/api/v1/runs/{id}",
+    params(("id" = Uuid, Path, description = "Run ID")),
+    responses(
+        (status = 200, description = "Run details"),
+        (status = 404, description = "Run not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Jobs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_run(
@@ -146,6 +242,16 @@ pub async fn get_run(
 }
 
 /// Get scheduler statistics.
+#[utoipa::path(
+    get,
+    path = "/api/v1/jobs/stats",
+    responses(
+        (status = 200, description = "Scheduler statistics"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Jobs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<JobStats>> {
@@ -154,6 +260,16 @@ pub async fn get_stats(State(state): State<AppState>) -> Result<Json<JobStats>> 
 }
 
 /// Get currently running jobs.
+#[utoipa::path(
+    get,
+    path = "/api/v1/jobs/running",
+    responses(
+        (status = 200, description = "Currently running jobs", body = Vec<RunningJob>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Jobs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_running(State(state): State<AppState>) -> Result<Json<Vec<RunningJob>>> {
@@ -162,7 +278,7 @@ pub async fn get_running(State(state): State<AppState>) -> Result<Json<Vec<Runni
 }
 
 /// Cleanup old job runs.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for Cleanup.
 pub struct CleanupRequest {
     #[serde(default = "default_days")]
@@ -173,6 +289,18 @@ fn default_days() -> i32 {
     30
 }
 
+/// Cleanup old job runs.
+#[utoipa::path(
+    post,
+    path = "/api/v1/jobs/cleanup",
+    request_body = CleanupRequest,
+    responses(
+        (status = 200, description = "Cleanup result", body = CleanupResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Jobs"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn cleanup_runs(
@@ -186,13 +314,22 @@ pub async fn cleanup_runs(
 }
 
 /// Cleanup response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Cleanup.
 pub struct CleanupResponse {
     pub deleted_runs: i64,
 }
 
 /// Health check.
+#[utoipa::path(
+    get,
+    path = "/health",
+    responses(
+        (status = 200, description = "Service health", body = HealthResponse),
+        (status = 500, description = "Service unhealthy"),
+    ),
+    tag = "Health"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn health_check(State(state): State<AppState>) -> Result<Json<HealthResponse>> {
@@ -208,7 +345,7 @@ pub async fn health_check(State(state): State<AppState>) -> Result<Json<HealthRe
 }
 
 /// Health response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Health.
 pub struct HealthResponse {
     pub status: String,

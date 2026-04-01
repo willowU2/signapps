@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 // ─── File Transfer (RM4) ──────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a file transfer.
 pub struct FileTransfer {
     pub id: Uuid,
@@ -29,7 +29,7 @@ pub struct FileTransfer {
 }
 
 /// Request: admin pushes a file to a machine
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct PushFileReq {
     pub hardware_id: Uuid,
     pub filename: String,
@@ -40,7 +40,7 @@ pub struct PushFileReq {
 }
 
 /// Request: agent uploads a file from managed machine to server
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct AgentUploadReq {
     pub agent_id: Uuid,
     pub filename: String,
@@ -49,6 +49,19 @@ pub struct AgentUploadReq {
     pub mime_type: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/agent/files/push",
+    request_body = PushFileReq,
+    responses(
+        (status = 201, description = "File push scheduled", body = FileTransfer),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Hardware not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Files"
+)]
 /// POST /api/v1/it-assets/agent/files/push
 /// Admin schedules a file to be delivered to a machine via the agent.
 #[tracing::instrument(skip_all)]
@@ -100,6 +113,19 @@ pub async fn push_file_to_machine(
     Ok((StatusCode::CREATED, Json(transfer)))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/agent/files/upload",
+    request_body = AgentUploadReq,
+    responses(
+        (status = 201, description = "File uploaded by agent", body = FileTransfer),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Agent not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Files"
+)]
 /// POST /api/v1/it-assets/agent/files/upload
 /// Agent uploads a file from the managed machine to the server.
 #[tracing::instrument(skip_all)]
@@ -159,6 +185,18 @@ pub async fn agent_upload_file(
     Ok((StatusCode::CREATED, Json(transfer)))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/agent/files/download/{file_id}",
+    params(("file_id" = uuid::Uuid, Path, description = "File transfer UUID")),
+    responses(
+        (status = 200, description = "File transfer info", body = FileTransfer),
+        (status = 404, description = "Transfer not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Files"
+)]
 /// GET /api/v1/it-assets/agent/files/download/:file_id
 /// Agent downloads a file staged for it by an admin.
 #[tracing::instrument(skip_all)]
@@ -192,6 +230,17 @@ pub async fn agent_download_file(
     Ok(Json(transfer))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{id}/files",
+    params(("id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 200, description = "File transfers list", body = Vec<FileTransfer>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Files"
+)]
 /// GET /api/v1/it-assets/hardware/:id/files
 /// List all file transfers for a hardware asset.
 #[tracing::instrument(skip_all)]

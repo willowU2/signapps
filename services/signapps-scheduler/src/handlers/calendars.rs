@@ -12,6 +12,18 @@ use uuid::Uuid;
 
 use crate::AppState;
 
+/// List calendars for the authenticated user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/calendars",
+    responses(
+        (status = 200, description = "List of calendars"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Calendars"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_calendars(
@@ -30,6 +42,20 @@ pub async fn list_calendars(
     }
 }
 
+/// Get a calendar by ID.
+#[utoipa::path(
+    get,
+    path = "/api/v1/calendars/{id}",
+    params(("id" = Uuid, Path, description = "Calendar ID")),
+    responses(
+        (status = 200, description = "Calendar details"),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Calendars"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_calendar(
@@ -49,6 +75,7 @@ pub async fn get_calendar(
     }
 }
 
+/// Create a calendar.
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_calendar(
@@ -68,6 +95,7 @@ pub async fn create_calendar(
     }
 }
 
+/// Update a calendar.
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_calendar(
@@ -87,6 +115,19 @@ pub async fn update_calendar(
     }
 }
 
+/// Delete a calendar.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/calendars/{id}",
+    params(("id" = Uuid, Path, description = "Calendar ID")),
+    responses(
+        (status = 204, description = "Calendar deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Calendars"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_calendar(

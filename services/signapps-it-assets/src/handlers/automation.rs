@@ -16,7 +16,7 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct AutomationRule {
     pub id: Uuid,
     pub name: String,
@@ -30,7 +30,7 @@ pub struct AutomationRule {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateRuleReq {
     pub name: String,
     pub enabled: Option<bool>,
@@ -41,7 +41,7 @@ pub struct CreateRuleReq {
     pub cooldown_minutes: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdateRuleReq {
     pub name: Option<String>,
     pub enabled: Option<bool>,
@@ -52,7 +52,7 @@ pub struct UpdateRuleReq {
     pub cooldown_minutes: Option<i32>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct AutomationExecution {
     pub id: Uuid,
     pub rule_id: Uuid,
@@ -75,6 +75,15 @@ pub struct AlertFiredEvent {
 
 // ─── AT1: Rule CRUD ──────────────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/automation/rules",
+    responses(
+        (status = 200, description = "Automation rules list", body = Vec<AutomationRule>),
+    ),
+    security(("bearer" = [])),
+    tag = "Automation"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_rules(
     State(pool): State<DatabasePool>,
@@ -93,6 +102,17 @@ pub async fn list_rules(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/automation/rules",
+    request_body = CreateRuleReq,
+    responses(
+        (status = 201, description = "Rule created", body = AutomationRule),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Automation"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_rule(
     State(pool): State<DatabasePool>,
@@ -120,6 +140,17 @@ pub async fn create_rule(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/automation/rules/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Rule UUID")),
+    responses(
+        (status = 200, description = "Automation rule", body = AutomationRule),
+        (status = 404, description = "Rule not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Automation"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_rule(
     State(pool): State<DatabasePool>,
@@ -140,6 +171,18 @@ pub async fn get_rule(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/automation/rules/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Rule UUID")),
+    request_body = UpdateRuleReq,
+    responses(
+        (status = 200, description = "Rule updated", body = AutomationRule),
+        (status = 404, description = "Rule not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Automation"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_rule(
     State(pool): State<DatabasePool>,
@@ -176,6 +219,17 @@ pub async fn update_rule(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/automation/rules/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Rule UUID")),
+    responses(
+        (status = 204, description = "Rule deleted"),
+        (status = 404, description = "Rule not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Automation"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_rule(
     State(pool): State<DatabasePool>,
@@ -194,6 +248,16 @@ pub async fn delete_rule(
 
 // ─── AT2: Execution history ───────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/automation/rules/{rule_id}/executions",
+    params(("rule_id" = uuid::Uuid, Path, description = "Rule UUID")),
+    responses(
+        (status = 200, description = "Execution history", body = Vec<AutomationExecution>),
+    ),
+    security(("bearer" = [])),
+    tag = "Automation"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_executions(
     State(pool): State<DatabasePool>,

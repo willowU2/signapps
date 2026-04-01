@@ -23,7 +23,7 @@ use signapps_db::repositories::JobRepository;
 // Domain types
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 /// Enum representing BackupType variants.
 pub enum BackupType {
@@ -33,7 +33,7 @@ pub enum BackupType {
     StorageOnly,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 /// Enum representing BackupStatus variants.
 pub enum BackupStatus {
@@ -43,7 +43,7 @@ pub enum BackupStatus {
     Failed,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 /// BackupJob data transfer object.
 pub struct BackupJob {
     pub id: Uuid,
@@ -55,7 +55,7 @@ pub struct BackupJob {
     pub path: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 /// BackupConfig data transfer object.
 pub struct BackupConfig {
     pub enabled: bool,
@@ -105,7 +105,7 @@ pub fn new_backup_store(pool: signapps_db::DatabasePool) -> SharedBackupStore {
 // Request / response helpers
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for TriggerBackup.
 pub struct TriggerBackupRequest {
     pub backup_type: Option<BackupType>,
@@ -115,7 +115,17 @@ pub struct TriggerBackupRequest {
 // Handlers
 // ---------------------------------------------------------------------------
 
-/// GET /api/v1/admin/backups — list backup history (most recent first).
+/// List backup history (most recent first).
+#[utoipa::path(
+    get,
+    path = "/api/v1/admin/backups",
+    responses(
+        (status = 200, description = "Backup history", body = Vec<BackupJob>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Backups"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_backups(State(store): State<SharedBackupStore>) -> Result<Json<Vec<BackupJob>>> {
@@ -125,9 +135,20 @@ pub async fn list_backups(State(store): State<SharedBackupStore>) -> Result<Json
     Ok(Json(jobs))
 }
 
-/// POST /api/v1/admin/backups — trigger a manual backup.
+/// Trigger a manual backup.
 ///
 /// Spawns pg_dump in background, saves to BACKUP_DIR.
+#[utoipa::path(
+    post,
+    path = "/api/v1/admin/backups",
+    request_body = TriggerBackupRequest,
+    responses(
+        (status = 201, description = "Backup triggered", body = BackupJob),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Backups"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn trigger_backup(
@@ -189,7 +210,19 @@ pub async fn trigger_backup(
     Ok((StatusCode::CREATED, Json(job)))
 }
 
-/// GET /api/v1/admin/backups/:id — get backup details.
+/// Get backup details.
+#[utoipa::path(
+    get,
+    path = "/api/v1/admin/backups/{id}",
+    params(("id" = Uuid, Path, description = "Backup ID")),
+    responses(
+        (status = 200, description = "Backup details", body = BackupJob),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Backups"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_backup(
@@ -205,9 +238,19 @@ pub async fn get_backup(
     Ok(Json(job))
 }
 
-/// DELETE /api/v1/admin/backups/:id — delete a backup record.
-///
-/// Deletes backup record and associated file from disk.
+/// Delete a backup record and associated file from disk.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/admin/backups/{id}",
+    params(("id" = Uuid, Path, description = "Backup ID")),
+    responses(
+        (status = 204, description = "Backup deleted"),
+        (status = 404, description = "Not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Backups"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_backup(
@@ -232,10 +275,21 @@ pub async fn delete_backup(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// PUT /api/v1/admin/backups/config — update backup schedule configuration.
+/// Update backup schedule configuration.
 ///
 /// After persisting the new config, re-registers (or creates) the `signapps-backup`
 /// cron job in the scheduler so the new expression takes effect immediately.
+#[utoipa::path(
+    put,
+    path = "/api/v1/admin/backups/config",
+    request_body = BackupConfig,
+    responses(
+        (status = 200, description = "Config updated", body = BackupConfig),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Backups"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_backup_config(
@@ -301,7 +355,17 @@ pub async fn update_backup_config(
     Ok(Json(config))
 }
 
-/// GET /api/v1/admin/backups/config — retrieve current backup configuration.
+/// Retrieve current backup configuration.
+#[utoipa::path(
+    get,
+    path = "/api/v1/admin/backups/config",
+    responses(
+        (status = 200, description = "Current backup configuration", body = BackupConfig),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Backups"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_backup_config(

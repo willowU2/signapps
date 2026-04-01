@@ -9,6 +9,17 @@ use signapps_common::Claims;
 
 use crate::AppState;
 
+/// List users for the current tenant.
+#[utoipa::path(
+    get,
+    path = "/api/v1/users",
+    responses(
+        (status = 200, description = "List of users"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Users"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_users(

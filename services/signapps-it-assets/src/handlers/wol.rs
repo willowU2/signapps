@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 // ─── Wake-on-LAN (RM2) ───────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response payload for Wol operation.
 pub struct WolResponse {
     pub ok: bool,
@@ -40,6 +40,19 @@ fn build_magic_packet(mac: &str) -> Result<Vec<u8>, String> {
 
 /// POST /api/v1/it-assets/hardware/:id/wake
 /// Looks up the primary MAC address and sends a WoL magic packet via UDP broadcast.
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/hardware/{id}/wake",
+    params(("id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 200, description = "WoL packet sent", body = WolResponse),
+        (status = 404, description = "Hardware not found"),
+        (status = 422, description = "No MAC address registered"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Remote"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn wake_on_lan(
     State(pool): State<DatabasePool>,

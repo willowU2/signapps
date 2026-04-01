@@ -13,7 +13,7 @@ path = "src/main.rs"
 
 [dependencies]
 signapps-common = { path = "../../crates/signapps-common" }
-signapps-db = { path = "../../crates/signapps-db" }
+signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 axum = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
@@ -32,3 +32,5 @@ futures = { workspace = true }
 tokio-stream = { workspace = true, features = ["sync"] }
 redis = { workspace = true }
 async-stream = { workspace = true }
+utoipa = { version = "5", features = ["uuid", "chrono"] }
+utoipa-swagger-ui = { workspace = true }

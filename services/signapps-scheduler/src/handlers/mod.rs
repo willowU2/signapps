@@ -8,6 +8,7 @@ pub mod health_stream;
 pub mod jobs;
 pub mod metrics;
 pub mod notifications;
+pub mod openapi;
 pub mod projects;
 pub mod resources;
 pub mod tasks;

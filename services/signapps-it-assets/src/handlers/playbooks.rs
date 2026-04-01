@@ -16,7 +16,7 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct PlaybookRow {
     pub id: Uuid,
     pub name: String,
@@ -27,7 +27,7 @@ pub struct PlaybookRow {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreatePlaybookReq {
     pub name: String,
     pub description: Option<String>,
@@ -35,7 +35,7 @@ pub struct CreatePlaybookReq {
     pub steps: Value,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdatePlaybookReq {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -43,7 +43,7 @@ pub struct UpdatePlaybookReq {
     pub enabled: Option<bool>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct PlaybookRunRow {
     pub id: Uuid,
     pub playbook_id: Uuid,
@@ -54,7 +54,7 @@ pub struct PlaybookRunRow {
     pub completed_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct RunPlaybookReq {
     /// Target hardware to run playbook on (optional — some steps are server-side)
     pub hardware_id: Option<Uuid>,
@@ -62,6 +62,15 @@ pub struct RunPlaybookReq {
 
 // ─── PB1: List playbooks ─────────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/playbooks",
+    responses(
+        (status = 200, description = "Playbooks list", body = Vec<PlaybookRow>),
+    ),
+    security(("bearer" = [])),
+    tag = "Playbooks"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_playbooks(
     State(pool): State<DatabasePool>,
@@ -79,6 +88,17 @@ pub async fn list_playbooks(
 
 // ─── PB2: Create playbook ────────────────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/playbooks",
+    request_body = CreatePlaybookReq,
+    responses(
+        (status = 201, description = "Playbook created", body = PlaybookRow),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Playbooks"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_playbook(
     State(pool): State<DatabasePool>,
@@ -103,6 +123,17 @@ pub async fn create_playbook(
 
 // ─── PB3: Get playbook ───────────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/playbooks/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Playbook UUID")),
+    responses(
+        (status = 200, description = "Playbook", body = PlaybookRow),
+        (status = 404, description = "Playbook not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Playbooks"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_playbook(
     State(pool): State<DatabasePool>,
@@ -123,6 +154,19 @@ pub async fn get_playbook(
 
 // ─── PB3: Update playbook ────────────────────────────────────────────────────
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/playbooks/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Playbook UUID")),
+    request_body = UpdatePlaybookReq,
+    responses(
+        (status = 200, description = "Playbook updated", body = PlaybookRow),
+        (status = 404, description = "Playbook not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Playbooks"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_playbook(
     State(pool): State<DatabasePool>,
@@ -156,6 +200,17 @@ pub async fn update_playbook(
 
 // ─── PB4: Delete playbook ────────────────────────────────────────────────────
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/playbooks/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Playbook UUID")),
+    responses(
+        (status = 204, description = "Playbook deleted"),
+        (status = 404, description = "Playbook not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Playbooks"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_playbook(
     State(pool): State<DatabasePool>,
@@ -175,6 +230,19 @@ pub async fn delete_playbook(
 
 // ─── PB5: Run playbook ───────────────────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/playbooks/{id}/run",
+    params(("id" = uuid::Uuid, Path, description = "Playbook UUID")),
+    request_body = RunPlaybookReq,
+    responses(
+        (status = 201, description = "Playbook run started", body = PlaybookRunRow),
+        (status = 404, description = "Playbook not found or disabled"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Playbooks"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn run_playbook(
     State(pool): State<DatabasePool>,
@@ -243,6 +311,17 @@ pub async fn run_playbook(
 
 // ─── PB6: List runs for a playbook ───────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/playbooks/{id}/runs",
+    params(("id" = uuid::Uuid, Path, description = "Playbook UUID")),
+    responses(
+        (status = 200, description = "Playbook runs list", body = Vec<PlaybookRunRow>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Playbooks"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_playbook_runs(
     State(pool): State<DatabasePool>,

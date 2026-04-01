@@ -16,7 +16,20 @@ use crate::AppState;
 use signapps_common::Result;
 
 /// List all configured tunnels.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `401` if the request is not authenticated.
+#[utoipa::path(
+    get,
+    path = "/api/v1/tunnels",
+    responses(
+        (status = 200, description = "List of tunnels", body = Vec<Tunnel>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tunnels"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_tunnels(State(state): State<AppState>) -> Result<Json<Vec<Tunnel>>> {
     let tunnels = state.tunnel_client.list_tunnels().await;
@@ -24,7 +37,24 @@ pub async fn list_tunnels(State(state): State<AppState>) -> Result<Json<Vec<Tunn
 }
 
 /// Get a specific tunnel by ID.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `404` if the tunnel is not found, `401` if unauthenticated.
+#[utoipa::path(
+    get,
+    path = "/api/v1/tunnels/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Tunnel UUID"),
+    ),
+    responses(
+        (status = 200, description = "Tunnel details", body = Tunnel),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Tunnel not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tunnels"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_tunnel(
     State(state): State<AppState>,
@@ -39,7 +69,22 @@ pub async fn get_tunnel(
 }
 
 /// Create a new tunnel.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `400` if the relay does not exist, `401` if unauthenticated.
+#[utoipa::path(
+    post,
+    path = "/api/v1/tunnels",
+    request_body = CreateTunnel,
+    responses(
+        (status = 201, description = "Tunnel created", body = Tunnel),
+        (status = 400, description = "Invalid input or relay not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tunnels"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_tunnel(
     State(state): State<AppState>,
@@ -84,8 +129,26 @@ pub async fn create_tunnel(
 }
 
 /// Update an existing tunnel.
+///
+/// # Errors
+///
+/// Returns `404` if the tunnel is not found, `401` if unauthenticated.
 #[allow(dead_code)]
-#[tracing::instrument(skip_all)]
+#[utoipa::path(
+    put,
+    path = "/api/v1/tunnels/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Tunnel UUID"),
+    ),
+    request_body = UpdateTunnel,
+    responses(
+        (status = 200, description = "Tunnel updated", body = Tunnel),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Tunnel not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tunnels"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_tunnel(
     State(state): State<AppState>,
@@ -117,7 +180,24 @@ pub async fn update_tunnel(
 }
 
 /// Delete a tunnel.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `404` if the tunnel is not found, `401` if unauthenticated.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/tunnels/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Tunnel UUID"),
+    ),
+    responses(
+        (status = 204, description = "Tunnel deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Tunnel not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tunnels"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_tunnel(
     State(state): State<AppState>,
@@ -139,7 +219,24 @@ pub async fn delete_tunnel(
 }
 
 /// Get the status of a specific tunnel.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `404` if the tunnel is not found, `401` if unauthenticated.
+#[utoipa::path(
+    get,
+    path = "/api/v1/tunnels/{id}/status",
+    params(
+        ("id" = Uuid, Path, description = "Tunnel UUID"),
+    ),
+    responses(
+        (status = 200, description = "Tunnel status", body = TunnelStatusResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Tunnel not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tunnels"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_tunnel_status(
     State(state): State<AppState>,
@@ -161,7 +258,24 @@ pub async fn get_tunnel_status(
 }
 
 /// Reconnect a tunnel.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `404` if the tunnel is not found, `401` if unauthenticated.
+#[utoipa::path(
+    post,
+    path = "/api/v1/tunnels/{id}/reconnect",
+    params(
+        ("id" = Uuid, Path, description = "Tunnel UUID"),
+    ),
+    responses(
+        (status = 200, description = "Reconnection initiated", body = ReconnectResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Tunnel not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tunnels"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn reconnect_tunnel(
     State(state): State<AppState>,
@@ -190,7 +304,7 @@ pub async fn reconnect_tunnel(
 }
 
 /// Response for tunnel status.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for TunnelStatus.
 pub struct TunnelStatusResponse {
     pub id: Uuid,
@@ -201,7 +315,7 @@ pub struct TunnelStatusResponse {
 }
 
 /// Response for reconnect request.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for Reconnect.
 pub struct ReconnectResponse {
     pub message: String,
@@ -209,7 +323,7 @@ pub struct ReconnectResponse {
 }
 
 /// Bulk action on tunnels.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// BulkTunnelAction data transfer object.
 pub struct BulkTunnelAction {
     /// List of tunnel IDs to act on.
@@ -219,7 +333,23 @@ pub struct BulkTunnelAction {
 }
 
 /// Perform bulk action on tunnels.
-#[tracing::instrument(skip_all)]
+///
+/// Supported actions: `enable`, `disable`, `reconnect`.
+///
+/// # Errors
+///
+/// Returns `401` if unauthenticated.
+#[utoipa::path(
+    post,
+    path = "/api/v1/tunnels/bulk",
+    request_body = BulkTunnelAction,
+    responses(
+        (status = 200, description = "Bulk action result", body = BulkActionResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tunnels"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn bulk_tunnel_action(
     State(state): State<AppState>,
@@ -274,7 +404,7 @@ pub async fn bulk_tunnel_action(
 }
 
 /// Response for bulk action.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for BulkAction.
 pub struct BulkActionResponse {
     pub success_count: usize,
@@ -282,14 +412,29 @@ pub struct BulkActionResponse {
 }
 
 /// Quick connect request.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request body for QuickConnect.
 pub struct QuickConnectRequest {
     pub local_addr: Option<String>,
 }
 
 /// Quick connect: create a tunnel with minimal config using the first available relay.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `400` if no relays are configured, `401` if unauthenticated.
+#[utoipa::path(
+    post,
+    path = "/api/v1/tunnels/quick",
+    request_body = QuickConnectRequest,
+    responses(
+        (status = 201, description = "Quick tunnel created", body = Tunnel),
+        (status = 400, description = "No relays configured"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tunnels"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn quick_connect(
     State(state): State<AppState>,
@@ -336,7 +481,7 @@ pub async fn quick_connect(
 }
 
 /// Dashboard stats response.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Response for DashboardStats.
 pub struct DashboardStatsResponse {
     pub tunnels_active: usize,
@@ -351,7 +496,19 @@ pub struct DashboardStatsResponse {
 }
 
 /// Get dashboard stats.
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `401` if unauthenticated.
+#[utoipa::path(
+    get,
+    path = "/api/v1/dashboard/stats",
+    responses(
+        (status = 200, description = "Dashboard statistics", body = DashboardStatsResponse),
+        (status = 401, description = "Unauthorized"),
+    ),
+    tag = "Dashboard"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn dashboard_stats(
     State(state): State<AppState>,
@@ -400,7 +557,19 @@ pub async fn dashboard_stats(
 pub use crate::TrafficPoint;
 
 /// Get rolling traffic history (last 60 minutes, one point per minute).
-#[tracing::instrument(skip_all)]
+///
+/// # Errors
+///
+/// Returns `401` if unauthenticated.
+#[utoipa::path(
+    get,
+    path = "/api/v1/dashboard/traffic",
+    responses(
+        (status = 200, description = "Traffic history (last 60 min)", body = Vec<TrafficPoint>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    tag = "Dashboard"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn dashboard_traffic(State(state): State<AppState>) -> Result<Json<Vec<TrafficPoint>>> {
     let history = state.traffic_history.read().await;

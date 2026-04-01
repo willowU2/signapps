@@ -13,7 +13,7 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
     (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct DeviceDoc {
     pub id: Uuid,
     pub hardware_id: Uuid,
@@ -25,7 +25,7 @@ pub struct DeviceDoc {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateDocReq {
     pub title: String,
     pub content: Option<String>,
@@ -33,6 +33,17 @@ pub struct CreateDocReq {
     pub created_by: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{hw_id}/docs",
+    params(("hw_id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 200, description = "Device documentation list", body = Vec<DeviceDoc>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "DeviceDocs"
+)]
 /// GET /api/v1/it-assets/hardware/:hw_id/docs
 #[tracing::instrument(skip_all)]
 pub async fn list_device_docs(
@@ -51,6 +62,19 @@ pub async fn list_device_docs(
     Ok(Json(docs))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/hardware/{hw_id}/docs",
+    params(("hw_id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    request_body = CreateDocReq,
+    responses(
+        (status = 201, description = "Device document created", body = DeviceDoc),
+        (status = 400, description = "Bad request"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "DeviceDocs"
+)]
 /// POST /api/v1/it-assets/hardware/:hw_id/docs
 #[tracing::instrument(skip_all)]
 pub async fn create_device_doc(

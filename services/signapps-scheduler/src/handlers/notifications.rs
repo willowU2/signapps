@@ -9,6 +9,17 @@ use tokio_stream::{wrappers::BroadcastStream, StreamExt};
 
 use crate::AppState;
 
+/// SSE endpoint streaming real-time notifications for the authenticated user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/notifications/stream",
+    responses(
+        (status = 200, description = "SSE stream of notifications"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Notifications"
+)]
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn sse_handler(

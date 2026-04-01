@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Status of a tunnel connection.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum TunnelStatus {
     /// Tunnel is connected and working
@@ -21,7 +21,7 @@ pub enum TunnelStatus {
 }
 
 /// Status of a relay connection.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum RelayStatus {
     /// Relay is online and reachable
@@ -34,7 +34,7 @@ pub enum RelayStatus {
 }
 
 /// A tunnel configuration for exposing a local service.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct Tunnel {
     /// Unique identifier.
     pub id: Uuid,
@@ -76,7 +76,7 @@ fn default_true() -> bool {
 }
 
 /// Request to create a new tunnel.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 pub struct CreateTunnel {
     /// Human-readable name.
     pub name: String,
@@ -92,7 +92,7 @@ pub struct CreateTunnel {
 }
 
 /// Request to update a tunnel.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 pub struct UpdateTunnel {
     /// New name (optional).
     pub name: Option<String>,
@@ -103,7 +103,7 @@ pub struct UpdateTunnel {
 }
 
 /// A relay/beacon server configuration.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct Relay {
     /// Unique identifier.
     pub id: Uuid,
@@ -134,7 +134,7 @@ pub struct Relay {
 }
 
 /// Request to create a new relay.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 pub struct CreateRelay {
     /// Human-readable name.
     pub name: String,
@@ -150,7 +150,7 @@ pub struct CreateRelay {
 }
 
 /// Request to update a relay.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 pub struct UpdateRelay {
     /// New name (optional).
     pub name: Option<String>,
@@ -163,7 +163,7 @@ pub struct UpdateRelay {
 }
 
 /// Result of testing a relay connection.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct RelayTestResult {
     /// Whether the relay is reachable.
     pub success: bool,
@@ -176,7 +176,7 @@ pub struct RelayTestResult {
 }
 
 /// DNS configuration for the tunnel service.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct DnsServiceConfig {
     /// Whether DNS service is enabled.
     #[serde(default)]
@@ -220,7 +220,7 @@ impl Default for DnsServiceConfig {
 }
 
 /// A custom DNS record.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct DnsRecord {
     /// Record name (e.g., "app.local").
     pub name: String,
@@ -238,7 +238,7 @@ fn default_record_ttl() -> u32 {
 }
 
 /// A DNS blocklist configuration.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct DnsBlocklist {
     /// Unique identifier.
     pub id: Uuid,
@@ -270,7 +270,7 @@ pub struct CreateBlocklist {
 }
 
 /// DNS statistics.
-#[derive(Debug, Clone, Serialize, Default)]
+#[derive(Debug, Clone, Serialize, Default, utoipa::ToSchema)]
 pub struct DnsStats {
     /// Total queries received.
     pub total_queries: u64,
@@ -289,7 +289,7 @@ pub struct DnsStats {
 }
 
 /// Statistics for a blocked domain.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct BlockedDomainStat {
     /// Domain name.
     pub domain: String,

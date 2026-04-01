@@ -19,6 +19,8 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 mod dns;
 mod handlers;
@@ -32,7 +34,7 @@ use dns::{Blocklist as DnsBlocklist, DnsConfig as DnsServiceConfig, DnsStats};
 use tunnel::{TunnelClient, TunnelClientConfig};
 
 /// A single traffic data point (one per minute, rolling window of 60 minutes).
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 pub struct TrafficPoint {
     /// ISO-8601 timestamp.
     pub timestamp: String,
@@ -334,9 +336,17 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    // Swagger UI (unauthenticated)
+    let swagger = SwaggerUi::new("/swagger-ui")
+        .url(
+            "/api-docs/openapi.json",
+            handlers::openapi::SecurelinkApiDoc::openapi(),
+        );
+
     // Combine all routes
     public_routes
         .merge(protected_routes)
+        .merge(swagger)
         .layer(TraceLayer::new_for_http())
         .layer(cors)
         .with_state(state)

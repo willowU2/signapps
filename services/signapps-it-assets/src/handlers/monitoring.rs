@@ -17,13 +17,13 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
 
 // ─── MD1: Agent metrics query ────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Query parameters for filtering and pagination.
 pub struct MetricsQuery {
     pub range: Option<String>, // e.g. "24h", "7d"
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a metric row.
 pub struct MetricRow {
     pub id: Uuid,
@@ -35,6 +35,20 @@ pub struct MetricRow {
     pub collected_at: DateTime<Utc>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{hw_id}/metrics",
+    params(
+        ("hw_id" = uuid::Uuid, Path, description = "Hardware UUID"),
+        ("range" = Option<String>, Query, description = "Time range: 24h, 7d, 30d"),
+    ),
+    responses(
+        (status = 200, description = "Hardware metrics", body = Vec<MetricRow>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_metrics(
     State(pool): State<DatabasePool>,
@@ -67,7 +81,7 @@ pub async fn get_metrics(
 
 // ─── MD2: Alert rules CRUD ───────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a alert rule.
 pub struct AlertRule {
     pub id: Uuid,
@@ -81,7 +95,7 @@ pub struct AlertRule {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a create alert rule req.
 pub struct CreateAlertRuleReq {
     pub hardware_id: Option<Uuid>,
@@ -92,7 +106,7 @@ pub struct CreateAlertRuleReq {
     pub severity: Option<String>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a alert row.
 pub struct AlertRow {
     pub id: Uuid,
@@ -103,6 +117,15 @@ pub struct AlertRow {
     pub value: Option<f32>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/monitoring/alert-rules",
+    responses(
+        (status = 200, description = "Alert rules list", body = Vec<AlertRule>),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_alert_rules(
     State(pool): State<DatabasePool>,
@@ -116,6 +139,17 @@ pub async fn list_alert_rules(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/monitoring/alert-rules",
+    request_body = CreateAlertRuleReq,
+    responses(
+        (status = 201, description = "Alert rule created", body = AlertRule),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_alert_rule(
     State(pool): State<DatabasePool>,
@@ -140,6 +174,17 @@ pub async fn create_alert_rule(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/monitoring/alert-rules/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Alert rule UUID")),
+    responses(
+        (status = 204, description = "Alert rule deleted"),
+        (status = 404, description = "Alert rule not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_alert_rule(
     State(pool): State<DatabasePool>,
@@ -156,6 +201,15 @@ pub async fn delete_alert_rule(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/monitoring/alerts",
+    responses(
+        (status = 200, description = "Alerts list", body = Vec<AlertRow>),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_alerts(
     State(pool): State<DatabasePool>,
@@ -169,6 +223,17 @@ pub async fn list_alerts(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/monitoring/alerts/{id}/resolve",
+    params(("id" = uuid::Uuid, Path, description = "Alert UUID")),
+    responses(
+        (status = 204, description = "Alert resolved"),
+        (status = 404, description = "Alert not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn resolve_alert(
     State(pool): State<DatabasePool>,
@@ -261,7 +326,7 @@ pub async fn fire_alert(
 
 // ─── MD3: Event logs ─────────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a log entry.
 pub struct LogEntry {
     pub level: Option<String>,
@@ -271,14 +336,14 @@ pub struct LogEntry {
     pub occurred_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a ingest logs req.
 pub struct IngestLogsReq {
     pub agent_id: Uuid,
     pub logs: Vec<LogEntry>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a event log row.
 pub struct EventLogRow {
     pub id: Uuid,
@@ -290,7 +355,7 @@ pub struct EventLogRow {
     pub occurred_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Query parameters for filtering and pagination.
 pub struct LogQuery {
     pub level: Option<String>,
@@ -298,6 +363,18 @@ pub struct LogQuery {
     pub limit: Option<i64>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/agent/logs",
+    request_body = IngestLogsReq,
+    responses(
+        (status = 204, description = "Logs ingested"),
+        (status = 404, description = "Agent not registered"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn ingest_event_logs(
     State(pool): State<DatabasePool>,
@@ -333,6 +410,22 @@ pub async fn ingest_event_logs(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{hw_id}/logs",
+    params(
+        ("hw_id" = uuid::Uuid, Path, description = "Hardware UUID"),
+        ("level" = Option<String>, Query, description = "Log level filter"),
+        ("search" = Option<String>, Query, description = "Search in message"),
+        ("limit" = Option<i64>, Query, description = "Max results"),
+    ),
+    responses(
+        (status = 200, description = "Event logs", body = Vec<EventLogRow>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_event_logs(
     State(pool): State<DatabasePool>,
@@ -363,7 +456,7 @@ pub async fn get_event_logs(
 
 // ─── MD4: Fleet overview ─────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a fleet overview.
 pub struct FleetOverview {
     pub total: i64,
@@ -375,21 +468,21 @@ pub struct FleetOverview {
     pub recently_offline: Vec<MachineRow>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a os count.
 pub struct OsCount {
     pub os_type: String,
     pub count: i64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a status count.
 pub struct StatusCount {
     pub status: String,
     pub count: i64,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a machine row.
 pub struct MachineRow {
     pub id: Uuid,
@@ -399,6 +492,16 @@ pub struct MachineRow {
     pub last_heartbeat: Option<DateTime<Utc>>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/monitoring/fleet-overview",
+    responses(
+        (status = 200, description = "Fleet overview stats", body = FleetOverview),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn fleet_overview(
     State(pool): State<DatabasePool>,
@@ -487,7 +590,7 @@ pub async fn fleet_overview(
 
 // ─── BK1: Hardware components CRUD ──────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a component row.
 pub struct ComponentRow {
     pub id: Uuid,
@@ -499,7 +602,7 @@ pub struct ComponentRow {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a create component req.
 pub struct CreateComponentReq {
     #[serde(rename = "type")]
@@ -508,7 +611,7 @@ pub struct CreateComponentReq {
     pub details: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a update component req.
 pub struct UpdateComponentReq {
     #[serde(rename = "type")]
@@ -517,6 +620,17 @@ pub struct UpdateComponentReq {
     pub details: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{hw_id}/components",
+    params(("hw_id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 200, description = "Hardware components list", body = Vec<ComponentRow>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_components(
     State(pool): State<DatabasePool>,
@@ -532,6 +646,18 @@ pub async fn list_components(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/hardware/{hw_id}/components",
+    params(("hw_id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    request_body = CreateComponentReq,
+    responses(
+        (status = 201, description = "Component created", body = ComponentRow),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_component(
     State(pool): State<DatabasePool>,
@@ -555,6 +681,19 @@ pub async fn create_component(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/hardware/components/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Component UUID")),
+    request_body = UpdateComponentReq,
+    responses(
+        (status = 200, description = "Component updated", body = ComponentRow),
+        (status = 404, description = "Component not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_component(
     State(pool): State<DatabasePool>,
@@ -583,6 +722,17 @@ pub async fn update_component(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/hardware/components/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Component UUID")),
+    responses(
+        (status = 204, description = "Component deleted"),
+        (status = 404, description = "Component not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_component(
     State(pool): State<DatabasePool>,
@@ -601,7 +751,7 @@ pub async fn delete_component(
 
 // ─── BK2: Software licenses CRUD ─────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a license row.
 pub struct LicenseRow {
     pub id: Uuid,
@@ -617,7 +767,7 @@ pub struct LicenseRow {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a license with usage.
 pub struct LicenseWithUsage {
     #[serde(flatten)]
@@ -625,7 +775,7 @@ pub struct LicenseWithUsage {
     pub seats_used: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a create license req.
 pub struct CreateLicenseReq {
     pub software_name: String,
@@ -638,7 +788,7 @@ pub struct CreateLicenseReq {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a update license req.
 pub struct UpdateLicenseReq {
     pub software_name: Option<String>,
@@ -651,6 +801,16 @@ pub struct UpdateLicenseReq {
     pub notes: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/licenses",
+    responses(
+        (status = 200, description = "Software licenses list", body = Vec<LicenseWithUsage>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_licenses(
     State(pool): State<DatabasePool>,
@@ -694,6 +854,17 @@ pub async fn list_licenses(
     Ok(Json(result))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/licenses/{id}",
+    params(("id" = uuid::Uuid, Path, description = "License UUID")),
+    responses(
+        (status = 200, description = "License", body = LicenseRow),
+        (status = 404, description = "License not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_license(
     State(pool): State<DatabasePool>,
@@ -710,6 +881,17 @@ pub async fn get_license(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/licenses",
+    request_body = CreateLicenseReq,
+    responses(
+        (status = 201, description = "License created", body = LicenseRow),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_license(
     State(pool): State<DatabasePool>,
@@ -736,6 +918,19 @@ pub async fn create_license(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/licenses/{id}",
+    params(("id" = uuid::Uuid, Path, description = "License UUID")),
+    request_body = UpdateLicenseReq,
+    responses(
+        (status = 200, description = "License updated", body = LicenseRow),
+        (status = 404, description = "License not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_license(
     State(pool): State<DatabasePool>,
@@ -774,6 +969,17 @@ pub async fn update_license(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/licenses/{id}",
+    params(("id" = uuid::Uuid, Path, description = "License UUID")),
+    responses(
+        (status = 204, description = "License deleted"),
+        (status = 404, description = "License not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_license(
     State(pool): State<DatabasePool>,
@@ -792,7 +998,7 @@ pub async fn delete_license(
 
 // ─── BK3: Network interfaces CRUD ────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a network interface row.
 pub struct NetworkInterfaceRow {
     pub id: Uuid,
@@ -806,7 +1012,7 @@ pub struct NetworkInterfaceRow {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a create network interface req.
 pub struct CreateNetworkInterfaceReq {
     pub name: String,
@@ -817,7 +1023,7 @@ pub struct CreateNetworkInterfaceReq {
     pub is_active: Option<bool>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a update network interface req.
 pub struct UpdateNetworkInterfaceReq {
     pub name: Option<String>,
@@ -828,6 +1034,17 @@ pub struct UpdateNetworkInterfaceReq {
     pub is_active: Option<bool>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{hw_id}/network-interfaces",
+    params(("hw_id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 200, description = "Network interfaces list", body = Vec<NetworkInterfaceRow>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_network_interfaces(
     State(pool): State<DatabasePool>,
@@ -849,6 +1066,18 @@ pub async fn list_network_interfaces(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/hardware/{hw_id}/network-interfaces",
+    params(("hw_id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    request_body = CreateNetworkInterfaceReq,
+    responses(
+        (status = 201, description = "Network interface created", body = NetworkInterfaceRow),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_network_interface(
     State(pool): State<DatabasePool>,
@@ -878,6 +1107,19 @@ pub async fn create_network_interface(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/hardware/network-interfaces/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Network interface UUID")),
+    request_body = UpdateNetworkInterfaceReq,
+    responses(
+        (status = 200, description = "Network interface updated", body = NetworkInterfaceRow),
+        (status = 404, description = "Interface not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_network_interface(
     State(pool): State<DatabasePool>,
@@ -913,6 +1155,17 @@ pub async fn update_network_interface(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/hardware/network-interfaces/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Network interface UUID")),
+    responses(
+        (status = 204, description = "Network interface deleted"),
+        (status = 404, description = "Interface not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_network_interface(
     State(pool): State<DatabasePool>,
@@ -931,7 +1184,7 @@ pub async fn delete_network_interface(
 
 // ─── BK4: Maintenance windows CRUD ───────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a maintenance window row.
 pub struct MaintenanceWindowRow {
     pub id: Uuid,
@@ -943,7 +1196,7 @@ pub struct MaintenanceWindowRow {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a create maintenance window req.
 pub struct CreateMaintenanceWindowReq {
     pub name: String,
@@ -953,7 +1206,7 @@ pub struct CreateMaintenanceWindowReq {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a update maintenance window req.
 pub struct UpdateMaintenanceWindowReq {
     pub name: Option<String>,
@@ -962,6 +1215,15 @@ pub struct UpdateMaintenanceWindowReq {
     pub description: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/maintenance-windows",
+    responses(
+        (status = 200, description = "Maintenance windows list", body = Vec<MaintenanceWindowRow>),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_maintenance_windows(
     State(pool): State<DatabasePool>,
@@ -975,6 +1237,17 @@ pub async fn list_maintenance_windows(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/maintenance-windows",
+    request_body = CreateMaintenanceWindowReq,
+    responses(
+        (status = 201, description = "Maintenance window created", body = MaintenanceWindowRow),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_maintenance_window(
     State(pool): State<DatabasePool>,
@@ -998,6 +1271,19 @@ pub async fn create_maintenance_window(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/maintenance-windows/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Maintenance window UUID")),
+    request_body = UpdateMaintenanceWindowReq,
+    responses(
+        (status = 200, description = "Maintenance window updated", body = MaintenanceWindowRow),
+        (status = 404, description = "Maintenance window not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_maintenance_window(
     State(pool): State<DatabasePool>,
@@ -1030,6 +1316,17 @@ pub async fn update_maintenance_window(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/maintenance-windows/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Maintenance window UUID")),
+    responses(
+        (status = 204, description = "Maintenance window deleted"),
+        (status = 404, description = "Maintenance window not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_maintenance_window(
     State(pool): State<DatabasePool>,
@@ -1051,7 +1348,7 @@ pub async fn delete_maintenance_window(
 
 // ─── #12: Unified device health score ────────────────────────────────────────
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct HealthScore {
     pub hardware_id: Uuid,
     pub score: f32,
@@ -1062,6 +1359,17 @@ pub struct HealthScore {
     pub uptime_score: f32,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{hw_id}/health-score",
+    params(("hw_id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 200, description = "Device health score", body = HealthScore),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Monitoring"
+)]
 /// GET /api/v1/it-assets/hardware/:hw_id/health-score
 /// Compute a composite 0-100 health score from patch, AV, encryption, policy, and uptime signals.
 #[tracing::instrument(skip_all)]

@@ -16,7 +16,7 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct ScriptLibraryEntry {
     pub id: Uuid,
     pub name: String,
@@ -31,7 +31,7 @@ pub struct ScriptLibraryEntry {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateScriptReq {
     pub name: String,
     pub description: Option<String>,
@@ -42,7 +42,7 @@ pub struct CreateScriptReq {
     pub created_by: Option<Uuid>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdateScriptReq {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -52,13 +52,13 @@ pub struct UpdateScriptReq {
     pub parameters: Option<Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct RunScriptFromLibraryReq {
     pub hardware_ids: Vec<Uuid>,
     pub parameters: Option<Value>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct ScheduledScript {
     pub id: Uuid,
     pub script_id: Option<Uuid>,
@@ -71,7 +71,7 @@ pub struct ScheduledScript {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateScheduleReq {
     pub script_id: Uuid,
     pub hardware_id: Option<Uuid>,
@@ -83,6 +83,16 @@ pub struct CreateScheduleReq {
 
 // ─── SL1: Library CRUD ───────────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/script-library",
+    responses(
+        (status = 200, description = "Script library list", body = Vec<ScriptLibraryEntry>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "ScriptLibrary"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_scripts(
     State(pool): State<DatabasePool>,
@@ -101,6 +111,17 @@ pub async fn list_scripts(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/script-library",
+    request_body = CreateScriptReq,
+    responses(
+        (status = 201, description = "Script created", body = ScriptLibraryEntry),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "ScriptLibrary"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_script(
     State(pool): State<DatabasePool>,
@@ -128,6 +149,17 @@ pub async fn create_script(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/script-library/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Script UUID")),
+    responses(
+        (status = 200, description = "Script", body = ScriptLibraryEntry),
+        (status = 404, description = "Script not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "ScriptLibrary"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_script(
     State(pool): State<DatabasePool>,
@@ -148,6 +180,19 @@ pub async fn get_script(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/it-assets/script-library/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Script UUID")),
+    request_body = UpdateScriptReq,
+    responses(
+        (status = 200, description = "Script updated", body = ScriptLibraryEntry),
+        (status = 404, description = "Script not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "ScriptLibrary"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn update_script(
     State(pool): State<DatabasePool>,
@@ -184,6 +229,17 @@ pub async fn update_script(
     Ok(Json(row))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/script-library/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Script UUID")),
+    responses(
+        (status = 204, description = "Script deleted"),
+        (status = 404, description = "Script not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "ScriptLibrary"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_script(
     State(pool): State<DatabasePool>,
@@ -202,6 +258,19 @@ pub async fn delete_script(
 
 // ─── SL2: Run script from library ────────────────────────────────────────────
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/script-library/{id}/run",
+    params(("id" = uuid::Uuid, Path, description = "Script UUID")),
+    request_body = RunScriptFromLibraryReq,
+    responses(
+        (status = 200, description = "Script queued"),
+        (status = 404, description = "Script not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "ScriptLibrary"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn run_library_script(
     State(pool): State<DatabasePool>,
@@ -263,6 +332,16 @@ fn inject_parameters(content: &str, params: &Value) -> String {
 
 // ─── SL3: Scheduled scripts ───────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/script-library/schedules",
+    responses(
+        (status = 200, description = "Scheduled scripts list", body = Vec<ScheduledScript>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "ScriptLibrary"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn list_schedules(
     State(pool): State<DatabasePool>,
@@ -281,6 +360,17 @@ pub async fn list_schedules(
     Ok(Json(rows))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/script-library/schedules",
+    request_body = CreateScheduleReq,
+    responses(
+        (status = 201, description = "Schedule created", body = ScheduledScript),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "ScriptLibrary"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn create_schedule(
     State(pool): State<DatabasePool>,
@@ -307,6 +397,17 @@ pub async fn create_schedule(
     Ok((StatusCode::CREATED, Json(row)))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/v1/it-assets/script-library/schedules/{id}",
+    params(("id" = uuid::Uuid, Path, description = "Schedule UUID")),
+    responses(
+        (status = 204, description = "Schedule deleted"),
+        (status = 404, description = "Schedule not found"),
+    ),
+    security(("bearer" = [])),
+    tag = "ScriptLibrary"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_schedule(
     State(pool): State<DatabasePool>,

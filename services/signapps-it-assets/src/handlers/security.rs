@@ -15,7 +15,7 @@ fn internal_err(e: impl std::fmt::Display) -> (StatusCode, String) {
 
 // ─── SE1: AV/EDR status ──────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a report antivirus req.
 pub struct ReportAntivirusReq {
     pub agent_id: Uuid,
@@ -27,7 +27,7 @@ pub struct ReportAntivirusReq {
     pub status: Option<String>, // "protected", "outdated", "disabled"
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a antivirus status row.
 pub struct AntivirusStatusRow {
     pub id: Uuid,
@@ -41,6 +41,18 @@ pub struct AntivirusStatusRow {
     pub reported_at: DateTime<Utc>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/agent/security/antivirus",
+    request_body = ReportAntivirusReq,
+    responses(
+        (status = 204, description = "AV status reported"),
+        (status = 404, description = "Agent not registered"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Security"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn report_antivirus(
     State(pool): State<DatabasePool>,
@@ -83,6 +95,17 @@ pub async fn report_antivirus(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{id}/security/antivirus",
+    params(("id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 200, description = "AV status", body = AntivirusStatusRow),
+        (status = 404, description = "No AV status for this machine"),
+    ),
+    security(("bearer" = [])),
+    tag = "Security"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_antivirus_status(
     State(pool): State<DatabasePool>,
@@ -100,7 +123,7 @@ pub async fn get_antivirus_status(
 }
 
 // Fleet AV compliance summary
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a av fleet summary.
 pub struct AvFleetSummary {
     pub total_machines: i64,
@@ -110,6 +133,16 @@ pub struct AvFleetSummary {
     pub unknown: i64,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/fleet/security/av",
+    responses(
+        (status = 200, description = "Fleet AV compliance summary", body = AvFleetSummary),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Security"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn av_fleet_summary(
     State(pool): State<DatabasePool>,
@@ -156,14 +189,14 @@ pub async fn av_fleet_summary(
 
 // ─── SE2: Disk encryption status ─────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a report encryption req.
 pub struct ReportEncryptionReq {
     pub agent_id: Uuid,
     pub drives: Vec<DriveEncryptionEntry>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Represents a drive encryption entry.
 pub struct DriveEncryptionEntry {
     pub drive: String,
@@ -171,7 +204,7 @@ pub struct DriveEncryptionEntry {
     pub method: Option<String>, // "BitLocker", "LUKS", "FileVault"
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 /// Represents a encryption status row.
 pub struct EncryptionStatusRow {
     pub id: Uuid,
@@ -182,6 +215,18 @@ pub struct EncryptionStatusRow {
     pub reported_at: DateTime<Utc>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/it-assets/agent/security/encryption",
+    request_body = ReportEncryptionReq,
+    responses(
+        (status = 204, description = "Encryption status reported"),
+        (status = 404, description = "Agent not registered"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Security"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn report_encryption(
     State(pool): State<DatabasePool>,
@@ -221,6 +266,17 @@ pub async fn report_encryption(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/hardware/{id}/security/encryption",
+    params(("id" = uuid::Uuid, Path, description = "Hardware UUID")),
+    responses(
+        (status = 200, description = "Encryption status", body = Vec<EncryptionStatusRow>),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Security"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn get_encryption_status(
     State(pool): State<DatabasePool>,
@@ -237,7 +293,7 @@ pub async fn get_encryption_status(
 }
 
 // Fleet encryption compliance
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 /// Represents a encryption fleet summary.
 pub struct EncryptionFleetSummary {
     pub total_machines: i64,
@@ -247,6 +303,16 @@ pub struct EncryptionFleetSummary {
     pub compliance_pct: f64,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/it-assets/fleet/security/encryption",
+    responses(
+        (status = 200, description = "Fleet encryption compliance summary", body = EncryptionFleetSummary),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Security"
+)]
 #[tracing::instrument(skip_all)]
 pub async fn encryption_fleet_summary(
     State(pool): State<DatabasePool>,
