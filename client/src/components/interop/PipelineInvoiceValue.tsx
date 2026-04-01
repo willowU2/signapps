@@ -2,7 +2,7 @@
 // Feature 8: CRM pipeline → show total invoice value per stage
 // Feature 20: CRM report → include billing revenue data
 
-import { useMemo } from "react"
+import { useState, useEffect } from "react"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getCrmRevenueSummary } from "@/lib/api/interop"
@@ -24,13 +24,18 @@ const fmtFull = (v: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v)
 
 export function PipelineInvoiceValue() {
-  const data = useMemo(() => {
-    return getCrmRevenueSummary()
-      .filter(r => r.dealCount > 0 || r.invoicedAmount > 0)
-      .map(r => ({
-        ...r,
-        stageName: STAGE_LABELS[r.stage as keyof typeof STAGE_LABELS] ?? r.stage,
-      }))
+  const [data, setData] = useState<{ stage: string; dealCount: number; dealValue: number; invoicedAmount: number; paidAmount: number; stageName: string }[]>([])
+  useEffect(() => {
+    getCrmRevenueSummary().then(summary => {
+      setData(
+        summary
+          .filter(r => r.dealCount > 0 || r.invoicedAmount > 0)
+          .map(r => ({
+            ...r,
+            stageName: STAGE_LABELS[r.stage as keyof typeof STAGE_LABELS] ?? r.stage,
+          }))
+      )
+    })
   }, [])
 
   const totalInvoiced = data.reduce((s, r) => s + r.invoicedAmount, 0)

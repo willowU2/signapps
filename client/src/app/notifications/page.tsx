@@ -172,10 +172,27 @@ export default function NotificationsPage() {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markRead = (id: string) => setReadIds(prev => { const s = new Set(prev); s.add(id); return s; });
-  const markAllRead = () => {
+  const markRead = async (id: string) => {
+    // Optimistic update
+    setReadIds(prev => { const s = new Set(prev); s.add(id); return s; });
+    try {
+      await notificationsApi.markRead(id);
+    } catch {
+      // Revert optimistic update on failure
+      setReadIds(prev => { const s = new Set(prev); s.delete(id); return s; });
+    }
+  };
+
+  const markAllRead = async () => {
+    const prevReadIds = readIds;
     setReadIds(new Set(all.map(n => n.id)));
-    toast.success("Toutes les notifications marquées comme lues.");
+    try {
+      await notificationsApi.markAllRead();
+      toast.success("Toutes les notifications marquées comme lues.");
+    } catch {
+      setReadIds(prevReadIds);
+      toast.error("Impossible de marquer toutes les notifications comme lues.");
+    }
   };
 
   const deleteOld = () => {
@@ -183,6 +200,7 @@ export default function NotificationsPage() {
       .filter(n => getDateGroup(n.created_at) === "Plus ancien")
       .map(n => n.id);
     if (oldIds.length === 0) { toast.info("Aucune ancienne notification."); return; }
+    // Client-side hide (backend doesn't expose a bulk delete endpoint)
     setDeletedIds(prev => { const s = new Set(prev); oldIds.forEach(id => s.add(id)); return s; });
     toast.success(`${oldIds.length} notification${oldIds.length > 1 ? 's' : ''} supprimée${oldIds.length > 1 ? 's' : ''}.`);
   };

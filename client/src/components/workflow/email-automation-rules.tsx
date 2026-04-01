@@ -2,7 +2,7 @@
 
 // IDEA-127: Email automation rules — if sender X → move to folder Y, label Z, forward to W
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Plus, Trash2, Zap, Mail } from 'lucide-react';
 import { toast } from 'sonner';
+import { rulesApi } from '@/lib/api-mail';
 
 export type RuleConditionField = 'from' | 'to' | 'subject' | 'body';
 export type RuleConditionOp = 'contains' | 'equals' | 'starts_with' | 'ends_with';
@@ -44,20 +45,7 @@ export interface EmailRule {
   createdAt: string;
 }
 
-const STORAGE_KEY = 'mail_automation_rules';
-
-function loadRules(): EmailRule[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveRules(rules: EmailRule[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(rules));
-}
+// localStorage fallback removed — all persistence goes through rulesApi → backend
 
 const CONDITION_FIELDS: { value: RuleConditionField; label: string }[] = [
   { value: 'from', label: 'Expéditeur' },
@@ -225,33 +213,84 @@ function EmailRuleEditor({ rule, onChange, onDelete }: EmailRuleEditorProps) {
   );
 }
 
+// Map a backend MailRule to the UI EmailRule shape
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function backendToUiRule(r: any): EmailRule {
+  return {
+    id: r.id,
+    name: r.name ?? 'Règle',
+    enabled: r.enabled ?? true,
+    conditions: Array.isArray(r.conditions) ? r.conditions : [],
+    actions: Array.isArray(r.actions) ? r.actions : [],
+    createdAt: r.created_at ?? new Date().toISOString(),
+  };
+}
+
 export function EmailAutomationRules() {
   const [rules, setRules] = useState<EmailRule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    setRules(loadRules());
+  const loadRulesFromApi = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await rulesApi.list();
+      setRules(data.map(backendToUiRule));
+    } catch {
+      toast.error('Impossible de charger les règles.');
+      setRules([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const updateRule = (id: string, updated: EmailRule) => {
-    const next = rules.map((r) => (r.id === id ? updated : r));
-    setRules(next);
-    saveRules(next);
+  useEffect(() => { loadRulesFromApi(); }, [loadRulesFromApi]);
+
+  const updateRule = async (id: string, updated: EmailRule) => {
+    // Optimistic UI update
+    setRules(prev => prev.map(r => r.id === id ? updated : r));
+    try {
+      await rulesApi.update(id, {
+        name: updated.name,
+        enabled: updated.enabled,
+        conditions: updated.conditions,
+        actions: updated.actions,
+      });
+    } catch {
+      toast.error('Impossible de mettre à jour la règle.');
+      await loadRulesFromApi();
+    }
   };
 
-  const deleteRule = (id: string) => {
-    const next = rules.filter((r) => r.id !== id);
-    setRules(next);
-    saveRules(next);
+  const deleteRule = async (id: string) => {
+    setRules(prev => prev.filter(r => r.id !== id));
+    try {
+      await rulesApi.delete(id);
+    } catch {
+      toast.error('Impossible de supprimer la règle.');
+      await loadRulesFromApi();
+    }
   };
 
-  const addRule = () => {
-    const next = [...rules, newRule()];
-    setRules(next);
-    saveRules(next);
+  const addRule = async () => {
+    const draft = newRule();
+    setRules(prev => [...prev, draft]);
+    try {
+      const created = await rulesApi.create({
+        name: draft.name,
+        conditions: draft.conditions,
+        actions: draft.actions,
+        enabled: draft.enabled,
+      });
+      // Replace optimistic entry with server-assigned id
+      setRules(prev => prev.map(r => r.id === draft.id ? backendToUiRule(created) : r));
+    } catch {
+      toast.error('Impossible de créer la règle.');
+      setRules(prev => prev.filter(r => r.id !== draft.id));
+    }
   };
 
   const handleSave = () => {
-    saveRules(rules);
     toast.success('Règles sauvegardées');
   };
 
@@ -268,17 +307,21 @@ export function EmailAutomationRules() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={addRule} className="gap-1.5">
+          <Button variant="outline" size="sm" onClick={addRule} disabled={saving || loading} className="gap-1.5">
             <Plus className="h-4 w-4" />
             Ajouter
           </Button>
-          <Button size="sm" onClick={handleSave} className="gap-1.5">
-            Sauvegarder
+          <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1.5">
+            {saving ? 'Sauvegarde…' : 'Sauvegarder'}
           </Button>
         </div>
       </div>
 
-      {rules.length === 0 ? (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground border rounded-xl">
+          <p className="text-sm">Chargement des règles…</p>
+        </div>
+      ) : rules.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground border rounded-xl">
           <Mail className="h-10 w-10 mb-3 opacity-30" />
           <p className="text-sm font-medium">Aucune règle</p>

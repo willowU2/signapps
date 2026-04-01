@@ -163,8 +163,8 @@ export const socialProfilesApi = {
 // ─── Cross-module helpers ─────────────────────────────────────────────────────
 
 /** Feature 1: Deals linked to a contact */
-export function getDealsForContact(contactId: string, contactEmail?: string): Deal[] {
-  const all = dealsApi.list()
+export async function getDealsForContact(contactId: string, contactEmail?: string): Promise<Deal[]> {
+  const all = await dealsApi.list()
   return all.filter(d =>
     d.contactId === contactId ||
     (contactEmail && d.contactEmail?.toLowerCase() === contactEmail.toLowerCase())
@@ -184,8 +184,8 @@ export function getCompanyContacts<T extends { id: string; company?: string }>(
 }
 
 /** Feature 8: Total invoice value per stage */
-export function getInvoiceValueByStage(): Record<string, number> {
-  const deals = dealsApi.list()
+export async function getInvoiceValueByStage(): Promise<Record<string, number>> {
+  const deals = await dealsApi.list()
   const invoices = localInvoicesApi.list()
   const result: Record<string, number> = {}
   for (const deal of deals) {
@@ -197,12 +197,14 @@ export function getInvoiceValueByStage(): Record<string, number> {
 }
 
 /** Feature 11: Overdue invoices with their linked deals */
-export function getOverdueInvoicesWithDeals(): { invoice: LocalInvoice; deal?: Deal }[] {
+export async function getOverdueInvoicesWithDeals(): Promise<{ invoice: LocalInvoice; deal?: Deal }[]> {
   const invoices = localInvoicesApi.list().filter(i => i.status === "overdue")
-  return invoices.map(invoice => ({
-    invoice,
-    deal: invoice.dealId ? dealsApi.get(invoice.dealId) : undefined,
-  }))
+  const results: { invoice: LocalInvoice; deal?: Deal }[] = []
+  for (const invoice of invoices) {
+    const deal = invoice.dealId ? await dealsApi.get(invoice.dealId) : undefined
+    results.push({ invoice, deal })
+  }
+  return results
 }
 
 /** Feature 14: Payment history for a contact */
@@ -221,14 +223,14 @@ export function getContactPaymentHistory(
 }
 
 /** Feature 20: CRM revenue summary with billing data */
-export function getCrmRevenueSummary(): {
+export async function getCrmRevenueSummary(): Promise<{
   stage: string
   dealCount: number
   dealValue: number
   invoicedAmount: number
   paidAmount: number
-}[] {
-  const deals = dealsApi.list()
+}[]> {
+  const deals = await dealsApi.list()
   const invoices = localInvoicesApi.list()
   const stages = ["prospect", "qualified", "proposal", "negotiation", "won", "lost"]
   return stages.map(stage => {
@@ -247,18 +249,19 @@ export function getCrmRevenueSummary(): {
 }
 
 /** Feature 25: CRM forecast enriched with billing history */
-export function getBillingEnrichedForecast(contactEmail?: string): {
+export async function getBillingEnrichedForecast(contactEmail?: string): Promise<{
   avgDealValue: number
   totalPaid: number
   wonDealsCount: number
   paymentRate: number
-} {
+}> {
   const invoices = contactEmail
     ? localInvoicesApi.byContactEmail(contactEmail)
     : localInvoicesApi.list()
+  const allDeals = await dealsApi.list()
   const deals = contactEmail
-    ? dealsApi.list().filter(d => d.contactEmail?.toLowerCase() === contactEmail.toLowerCase())
-    : dealsApi.list()
+    ? allDeals.filter(d => d.contactEmail?.toLowerCase() === contactEmail.toLowerCase())
+    : allDeals
 
   const wonDeals = deals.filter(d => d.stage === "won")
   const totalPaid = invoices.filter(i => i.status === "paid").reduce((s, i) => s + i.amount, 0)
@@ -281,18 +284,18 @@ export function autoCreateInvoiceForWonDeal(deal: Deal): LocalInvoice | null {
 }
 
 /** Feature 27: Payment received → update deal status */
-export function onInvoicePaid(invoiceId: string): Deal | undefined {
+export async function onInvoicePaid(invoiceId: string): Promise<Deal | undefined> {
   const inv = localInvoicesApi.get(invoiceId)
   if (!inv?.dealId) return undefined
-  const deal = dealsApi.get(inv.dealId)
+  const deal = await dealsApi.get(inv.dealId)
   if (!deal || deal.stage === "won") return undefined
   return dealsApi.update(inv.dealId, { stage: "won" })
 }
 
 /** Feature 15: Contact import → auto-create CRM lead */
-export function autoCreateLeadFromContact(contact: {
+export async function autoCreateLeadFromContact(contact: {
   id: string; name: string; email: string; company?: string
-}): Deal {
+}): Promise<Deal> {
   return dealsApi.create({
     title: `Nouveau lead — ${contact.name}`,
     company: contact.company ?? "À définir",
@@ -305,12 +308,12 @@ export function autoCreateLeadFromContact(contact: {
 }
 
 /** Feature 19: Contact merge → update CRM and billing references */
-export function mergeContactReferences(keepId: string, removeId: string, keepEmail: string): void {
+export async function mergeContactReferences(keepId: string, removeId: string, keepEmail: string): Promise<void> {
   // Update deals
-  const deals = dealsApi.list()
-  deals.filter(d => d.contactId === removeId).forEach(d => {
+  const deals = await dealsApi.list()
+  await Promise.all(deals.filter(d => d.contactId === removeId).map(d =>
     dealsApi.update(d.id, { contactId: keepId })
-  })
+  ))
   // Update activities
   const acts = activitiesApi.list()
   acts.filter(a => a.contactId === removeId).forEach(a => {
@@ -331,10 +334,10 @@ export function mergeContactReferences(keepId: string, removeId: string, keepEma
 }
 
 /** Feature 29: Export deals with contact info as CSV */
-export function exportDealsWithContactsCsv<T extends { id: string; name: string; email: string; company?: string }>(
+export async function exportDealsWithContactsCsv<T extends { id: string; name: string; email: string; company?: string }>(
   contacts: T[]
-): string {
-  const deals = dealsApi.list()
+): Promise<string> {
+  const deals = await dealsApi.list()
   const contactMap = new Map(contacts.map(c => [c.id, c]))
   const emailMap = new Map(contacts.map(c => [c.email.toLowerCase(), c]))
 

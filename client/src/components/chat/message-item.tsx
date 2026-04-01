@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -13,10 +13,11 @@ import {
 import { ChatToTaskDialog } from "./chat-to-task-dialog";
 import { cn } from "@/lib/utils";
 import { useUsersMap } from "@/lib/store/chat-store";
-import { ChatAttachment as Attachment } from "@/lib/api/chat";
+import { ChatAttachment as Attachment, chatApi } from "@/lib/api/chat";
 import { ChatMarkdown } from "./chat-markdown";
 import { AttachmentPreview } from "./file-attachment";
 import { VoiceMessagePlayer } from "./voice-message";
+import { toast } from "sonner";
 
 export interface ChatMessage {
     id: string;
@@ -35,11 +36,14 @@ interface MessageItemProps {
     message: ChatMessage;
     isMe: boolean;
     showAvatar: boolean;
+    channelId?: string;
     onReplyInThread?: (msgId: string) => void;
     onAddReaction?: (msgId: string, emoji: string) => void;
     onPin?: (msgId: string) => void;
     onUnpin?: (msgId: string) => void;
     canPin?: boolean;
+    onMessageEdited?: (msgId: string, newContent: string) => void;
+    onMessageDeleted?: (msgId: string) => void;
 }
 
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "🎉"];
@@ -48,15 +52,62 @@ export function MessageItem({
     message,
     isMe,
     showAvatar,
+    channelId,
     onReplyInThread,
     onAddReaction,
     onPin,
     onUnpin,
     canPin = true,
+    onMessageEdited,
+    onMessageDeleted,
 }: MessageItemProps) {
     const usersMap = useUsersMap();
     const [isHovered, setIsHovered] = useState(false);
     const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editContent, setEditContent] = useState("");
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const editRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        if (isEditing && editRef.current) {
+            editRef.current.focus();
+            editRef.current.selectionStart = editRef.current.value.length;
+        }
+    }, [isEditing]);
+
+    const handleStartEdit = () => {
+        setEditContent(message.content);
+        setIsEditing(true);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!channelId || !editContent.trim()) return;
+        try {
+            await chatApi.editMessage(channelId, message.id, editContent.trim());
+            onMessageEdited?.(message.id, editContent.trim());
+            toast.success("Message modifié");
+        } catch {
+            toast.error("Impossible de modifier le message");
+        }
+        setIsEditing(false);
+    };
+
+    const handleDeleteMessage = async () => {
+        if (!channelId) return;
+        setDeleting(true);
+        try {
+            await chatApi.deleteMessage(channelId, message.id);
+            onMessageDeleted?.(message.id);
+            toast.success("Message supprimé");
+        } catch {
+            toast.error("Impossible de supprimer le message");
+        } finally {
+            setDeleting(false);
+            setShowDeleteConfirm(false);
+        }
+    };
 
     const date = new Date(message.timestamp);
     const timeString = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -73,6 +124,30 @@ export function MessageItem({
             onOpenChange={setTaskDialogOpen}
             message={{ content: message.content, author: message.senderName, channel: "chat" }}
         />
+        {/* Delete confirmation */}
+        {showDeleteConfirm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div className="bg-background rounded-xl shadow-xl w-full max-w-sm p-6 mx-4">
+                    <h2 className="text-base font-semibold mb-2">Supprimer ce message ?</h2>
+                    <p className="text-sm text-muted-foreground mb-4">Cette action est irréversible.</p>
+                    <div className="flex justify-end gap-3">
+                        <button
+                            onClick={() => setShowDeleteConfirm(false)}
+                            className="px-4 py-2 rounded-lg border text-sm hover:bg-accent"
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            onClick={handleDeleteMessage}
+                            disabled={deleting}
+                            className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 disabled:opacity-50"
+                        >
+                            {deleting ? "Suppression..." : "Supprimer"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         <div
             className={cn(
                 "group relative flex gap-3 px-2 py-1.5 transition-colors hover:bg-muted/30 rounded-lg",
@@ -157,13 +232,16 @@ export function MessageItem({
                                 {isMe && (
                                     <>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem>
+                                        <DropdownMenuItem onClick={handleStartEdit}>
                                             <Edit2 className="mr-2 h-4 w-4" />
-                                            Edit message
+                                            Modifier
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem className="text-destructive focus:text-destructive">
+                                        <DropdownMenuItem
+                                            className="text-destructive focus:text-destructive"
+                                            onClick={() => setShowDeleteConfirm(true)}
+                                        >
                                             <Trash2 className="mr-2 h-4 w-4" />
-                                            Delete message
+                                            Supprimer
                                         </DropdownMenuItem>
                                     </>
                                 )}
@@ -206,14 +284,45 @@ export function MessageItem({
                     </div>
                 )}
 
-                {/* Content — IDEA-143: render markdown */}
-                {!isVoice && message.content && (
-                    <div className="text-[15px] text-foreground/90 leading-relaxed break-words">
-                        <ChatMarkdown content={message.content} />
-                        {message.isEdited && (
-                            <span className="text-[10px] text-muted-foreground ml-2 select-none">(edited)</span>
-                        )}
-                    </div>
+                {/* Content — IDEA-143: render markdown / inline edit */}
+                {!isVoice && (
+                    isEditing ? (
+                        <div className="flex flex-col gap-2 mt-1">
+                            <textarea
+                                ref={editRef}
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSaveEdit(); }
+                                    if (e.key === "Escape") setIsEditing(false);
+                                }}
+                                rows={Math.max(2, editContent.split("\n").length)}
+                                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                            />
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span>Entrée pour enregistrer · Échap pour annuler</span>
+                                <button
+                                    onClick={handleSaveEdit}
+                                    className="ml-auto px-2 py-1 rounded bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90"
+                                >
+                                    Sauvegarder
+                                </button>
+                                <button
+                                    onClick={() => setIsEditing(false)}
+                                    className="px-2 py-1 rounded border text-xs hover:bg-accent"
+                                >
+                                    Annuler
+                                </button>
+                            </div>
+                        </div>
+                    ) : message.content ? (
+                        <div className="text-[15px] text-foreground/90 leading-relaxed break-words">
+                            <ChatMarkdown content={message.content} />
+                            {message.isEdited && (
+                                <span className="text-[10px] text-muted-foreground ml-2 select-none">(modifié)</span>
+                            )}
+                        </div>
+                    ) : null
                 )}
 
                 {/* File attachment (IDEA-134) */}

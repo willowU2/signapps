@@ -29,7 +29,7 @@ export function DealStageNotifier({ deal, onUpdate }: Props) {
   const handleStageChange = async (newStage: DealStage) => {
     if (newStage === stage) return
     setSaving(true)
-    const updated = dealsApi.update(deal.id, { stage: newStage })
+    const updated = await dealsApi.update(deal.id, { stage: newStage })
     if (updated) {
       setStage(newStage)
       onUpdate?.(updated)

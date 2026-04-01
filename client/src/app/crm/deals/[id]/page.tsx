@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
@@ -39,10 +39,14 @@ export default function DealDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
 
-  const [deal, setDeal] = useState<Deal | undefined>(() => dealsApi.get(id))
+  const [deal, setDeal] = useState<Deal | undefined>(undefined)
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState<Partial<Deal>>({})
   const [deleteOpen, setDeleteOpen] = useState(false)
+
+  useEffect(() => {
+    dealsApi.get(id).then(d => setDeal(d))
+  }, [id])
 
   if (!deal) {
     return (
@@ -70,16 +74,16 @@ export default function DealDetailPage() {
     setForm({})
   }
 
-  const save = () => {
-    const updated = dealsApi.update(id, form)
+  const save = async () => {
+    const updated = await dealsApi.update(id, form)
     if (updated) setDeal(updated)
     setEditing(false)
     setForm({})
     toast.success("Opportunité mise à jour.")
   }
 
-  const handleDelete = () => {
-    dealsApi.delete(id)
+  const handleDelete = async () => {
+    await dealsApi.delete(id)
     toast.success("Opportunité supprimée.")
     router.push("/crm")
   }

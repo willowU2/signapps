@@ -1,5 +1,5 @@
 "use client"
-import { useMemo } from "react"
+import { useMemo, useState, useEffect } from "react"
 import {
   LineChart,
   Line,
@@ -11,7 +11,7 @@ import {
   Legend,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { dealsApi, type DealStage } from "@/lib/api/crm"
+import { dealsApi, type Deal, type DealStage } from "@/lib/api/crm"
 import { format, parseISO } from "date-fns"
 import { fr } from "date-fns/locale"
 
@@ -33,7 +33,8 @@ interface MonthPoint {
 }
 
 export function RevenueForecast() {
-  const deals = useMemo(() => dealsApi.list(), [])
+  const [deals, setDeals] = useState<Deal[]>([])
+  useEffect(() => { dealsApi.list().then(setDeals) }, [])
 
   const data = useMemo<MonthPoint[]>(() => {
     const byMonth: Record<string, MonthPoint> = {}

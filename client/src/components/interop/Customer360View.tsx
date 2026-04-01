@@ -1,7 +1,7 @@
 "use client"
 // Feature 30: Unified customer 360° view: contact + deals + invoices + emails + events
 
-import { useState, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { Users, TrendingUp, FileText, Mail, Calendar, ChevronDown, ChevronUp } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -33,15 +33,12 @@ interface Props {
 export function Customer360View({ contact, defaultOpen = false }: Props) {
   const [open, setOpen] = useState(defaultOpen)
 
-  const deals = useMemo(
-    () => getDealsForContact(contact.id, contact.email),
-    [contact.id, contact.email]
-  )
+  const [deals, setDeals] = useState<Awaited<ReturnType<typeof getDealsForContact>>>([])
+  const invoices = getContactPaymentHistory(contact.id, contact.email)
 
-  const invoices = useMemo(
-    () => getContactPaymentHistory(contact.id, contact.email),
-    [contact.id, contact.email]
-  )
+  useEffect(() => {
+    getDealsForContact(contact.id, contact.email).then(setDeals)
+  }, [contact.id, contact.email])
 
   const openDeals = deals.filter(d => d.stage !== "lost" && d.stage !== "won")
   const wonDeals = deals.filter(d => d.stage === "won")

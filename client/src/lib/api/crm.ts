@@ -1,8 +1,13 @@
 /**
- * CRM API — localStorage-backed persistence
- * Deals, Activities, Tasks, Quotas, LeadScores
- * No backend service required — all client-side.
+ * CRM API — real backend persistence via signapps-identity service.
+ * Deals and Leads are stored in crm.deals / crm.leads (PostgreSQL).
+ * The interface is intentionally kept compatible with the old localStorage API
+ * so UI components require no changes.
  */
+
+import { getClient, ServiceName } from './factory';
+
+const identityClient = getClient(ServiceName.IDENTITY);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -11,15 +16,34 @@ export type DealStage = "prospect" | "qualified" | "proposal" | "negotiation" | 
 export interface Deal {
   id: string
   title: string
+  /** Maps to contact_name in the backend */
   company: string
   contactId?: string
   contactEmail?: string
+  /** Maps to amount in the backend (stored as BIGINT cents/units) */
   value: number
   probability: number
   stage: DealStage
   closeDate?: string
+  /** Maps to owner_id in the backend */
   assignedTo?: string
   tags?: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Lead {
+  id: string
+  name: string
+  email?: string
+  phone?: string
+  company?: string
+  source?: string
+  status: string
+  score: number
+  ownerId: string
+  tenantId?: string
+  notes?: string
   createdAt: string
   updatedAt: string
 }
@@ -55,9 +79,185 @@ export interface Quota {
   achieved: number
 }
 
-// ─── Storage helpers ──────────────────────────────────────────────────────────
+export interface PipelineStage {
+  stage: string
+  count: number
+  total_amount: number
+}
 
-function load<T>(key: string): T[] {
+// ─── Backend ↔ frontend mappers ───────────────────────────────────────────────
+
+// Backend returns snake_case; map to the camelCase Deal interface.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapDeal(d: any): Deal {
+  return {
+    id: d.id,
+    title: d.title,
+    company: d.contact_name ?? "",
+    contactId: d.contact_id ?? undefined,
+    contactEmail: d.contact_email ?? undefined,
+    value: d.amount ?? 0,
+    probability: d.probability ?? 10,
+    stage: (d.stage ?? "prospect") as DealStage,
+    closeDate: d.close_date ?? undefined,
+    assignedTo: d.owner_id,
+    tags: [],
+    createdAt: d.created_at,
+    updatedAt: d.updated_at,
+  }
+}
+
+// Map Deal (UI) → backend create/update payload
+function dealToPayload(data: Partial<Deal>) {
+  return {
+    ...(data.title !== undefined && { title: data.title }),
+    ...(data.stage !== undefined && { stage: data.stage }),
+    ...(data.value !== undefined && { amount: data.value }),
+    ...(data.company !== undefined && { contact_name: data.company }),
+    ...(data.contactId !== undefined && { contact_id: data.contactId }),
+    ...(data.contactEmail !== undefined && { contact_email: data.contactEmail }),
+    ...(data.closeDate !== undefined && { close_date: data.closeDate }),
+    ...(data.probability !== undefined && { probability: data.probability }),
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapLead(l: any): Lead {
+  return {
+    id: l.id,
+    name: l.name,
+    email: l.email ?? undefined,
+    phone: l.phone ?? undefined,
+    company: l.company ?? undefined,
+    source: l.source ?? undefined,
+    status: l.status ?? "new",
+    score: l.score ?? 0,
+    ownerId: l.owner_id,
+    tenantId: l.tenant_id ?? undefined,
+    notes: l.notes ?? undefined,
+    createdAt: l.created_at,
+    updatedAt: l.updated_at,
+  }
+}
+
+// ─── Deals API ────────────────────────────────────────────────────────────────
+
+export const dealsApi = {
+  list: async (stage?: string): Promise<Deal[]> => {
+    const params = stage ? { stage } : {}
+    const res = await identityClient.get('/api/v1/crm/deals', { params })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (res.data as any[]).map(mapDeal)
+  },
+
+  get: async (id: string): Promise<Deal | undefined> => {
+    try {
+      const res = await identityClient.get(`/api/v1/crm/deals/${id}`)
+      return mapDeal(res.data)
+    } catch {
+      return undefined
+    }
+  },
+
+  create: async (data: Omit<Deal, "id" | "createdAt" | "updatedAt">): Promise<Deal> => {
+    const res = await identityClient.post('/api/v1/crm/deals', dealToPayload(data))
+    return mapDeal(res.data)
+  },
+
+  update: async (id: string, data: Partial<Deal>): Promise<Deal | undefined> => {
+    try {
+      const res = await identityClient.put(`/api/v1/crm/deals/${id}`, dealToPayload(data))
+      return mapDeal(res.data)
+    } catch {
+      return undefined
+    }
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await identityClient.delete(`/api/v1/crm/deals/${id}`)
+  },
+
+  importMany: async (deals: Omit<Deal, "id" | "createdAt" | "updatedAt">[]): Promise<Deal[]> => {
+    const results: Deal[] = []
+    for (const d of deals) {
+      try {
+        results.push(await dealsApi.create(d))
+      } catch {
+        // skip failed imports
+      }
+    }
+    return results
+  },
+}
+
+// ─── Leads API ────────────────────────────────────────────────────────────────
+
+export const leadsApi = {
+  list: async (status?: string): Promise<Lead[]> => {
+    const params = status ? { status } : {}
+    const res = await identityClient.get('/api/v1/crm/leads', { params })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (res.data as any[]).map(mapLead)
+  },
+
+  get: async (id: string): Promise<Lead | undefined> => {
+    try {
+      const res = await identityClient.get(`/api/v1/crm/leads/${id}`)
+      return mapLead(res.data)
+    } catch {
+      return undefined
+    }
+  },
+
+  create: async (data: Omit<Lead, "id" | "createdAt" | "updatedAt" | "ownerId">): Promise<Lead> => {
+    const res = await identityClient.post('/api/v1/crm/leads', {
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      company: data.company,
+      source: data.source,
+      status: data.status,
+      score: data.score,
+      notes: data.notes,
+    })
+    return mapLead(res.data)
+  },
+
+  update: async (id: string, data: Partial<Lead>): Promise<Lead | undefined> => {
+    try {
+      const res = await identityClient.put(`/api/v1/crm/leads/${id}`, {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.email !== undefined && { email: data.email }),
+        ...(data.phone !== undefined && { phone: data.phone }),
+        ...(data.company !== undefined && { company: data.company }),
+        ...(data.source !== undefined && { source: data.source }),
+        ...(data.status !== undefined && { status: data.status }),
+        ...(data.score !== undefined && { score: data.score }),
+        ...(data.notes !== undefined && { notes: data.notes }),
+      })
+      return mapLead(res.data)
+    } catch {
+      return undefined
+    }
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await identityClient.delete(`/api/v1/crm/leads/${id}`)
+  },
+}
+
+// ─── Pipeline API ─────────────────────────────────────────────────────────────
+
+export const pipelineApi = {
+  getStages: async (): Promise<PipelineStage[]> => {
+    const res = await identityClient.get('/api/v1/crm/pipeline')
+    return res.data as PipelineStage[]
+  },
+}
+
+// ─── Activities (kept local — no backend table yet) ───────────────────────────
+
+function loadLocal<T>(key: string): T[] {
   if (typeof window === "undefined") return []
   try {
     return JSON.parse(localStorage.getItem(key) ?? "[]") as T[]
@@ -66,82 +266,36 @@ function load<T>(key: string): T[] {
   }
 }
 
-function save<T>(key: string, data: T[]) {
+function saveLocal<T>(key: string, data: T[]) {
   if (typeof window === "undefined") return
   localStorage.setItem(key, JSON.stringify(data))
 }
 
-// ─── Deals ────────────────────────────────────────────────────────────────────
-
-export const dealsApi = {
-  list: (): Deal[] => load<Deal>("crm:deals"),
-
-  get: (id: string): Deal | undefined =>
-    load<Deal>("crm:deals").find(d => d.id === id),
-
-  create: (data: Omit<Deal, "id" | "createdAt" | "updatedAt">): Deal => {
-    const deal: Deal = {
-      ...data,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-    save<Deal>("crm:deals", [...load<Deal>("crm:deals"), deal])
-    return deal
-  },
-
-  update: (id: string, data: Partial<Deal>): Deal | undefined => {
-    const deals = load<Deal>("crm:deals").map(d =>
-      d.id === id ? { ...d, ...data, updatedAt: new Date().toISOString() } : d
-    )
-    save<Deal>("crm:deals", deals)
-    return deals.find(d => d.id === id)
-  },
-
-  delete: (id: string) => {
-    save<Deal>("crm:deals", load<Deal>("crm:deals").filter(d => d.id !== id))
-  },
-
-  importMany: (deals: Omit<Deal, "id" | "createdAt" | "updatedAt">[]): Deal[] => {
-    const existing = load<Deal>("crm:deals")
-    const newDeals: Deal[] = deals.map(d => ({
-      ...d,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }))
-    save<Deal>("crm:deals", [...existing, ...newDeals])
-    return newDeals
-  },
-}
-
-// ─── Activities ───────────────────────────────────────────────────────────────
-
 export const activitiesApi = {
-  list: (): Activity[] => load<Activity>("crm:activities"),
+  list: (): Activity[] => loadLocal<Activity>("crm:activities"),
 
   byDeal: (dealId: string): Activity[] =>
-    load<Activity>("crm:activities").filter(a => a.dealId === dealId),
+    loadLocal<Activity>("crm:activities").filter(a => a.dealId === dealId),
 
   byContact: (contactId: string): Activity[] =>
-    load<Activity>("crm:activities").filter(a => a.contactId === contactId),
+    loadLocal<Activity>("crm:activities").filter(a => a.contactId === contactId),
 
   create: (data: Omit<Activity, "id">): Activity => {
     const act: Activity = { ...data, id: crypto.randomUUID() }
-    save<Activity>("crm:activities", [...load<Activity>("crm:activities"), act])
+    saveLocal<Activity>("crm:activities", [...loadLocal<Activity>("crm:activities"), act])
     return act
   },
 
   delete: (id: string) => {
-    save<Activity>("crm:activities", load<Activity>("crm:activities").filter(a => a.id !== id))
+    saveLocal<Activity>("crm:activities", loadLocal<Activity>("crm:activities").filter(a => a.id !== id))
   },
 }
 
-// ─── Tasks ────────────────────────────────────────────────────────────────────
+// ─── Tasks (kept local — no backend table yet) ────────────────────────────────
 
 export const crmTasksApi = {
   byDeal: (dealId: string): CrmTask[] =>
-    load<CrmTask>("crm:tasks").filter(t => t.dealId === dealId),
+    loadLocal<CrmTask>("crm:tasks").filter(t => t.dealId === dealId),
 
   create: (data: Omit<CrmTask, "id" | "createdAt">): CrmTask => {
     const task: CrmTask = {
@@ -149,47 +303,47 @@ export const crmTasksApi = {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
     }
-    save<CrmTask>("crm:tasks", [...load<CrmTask>("crm:tasks"), task])
+    saveLocal<CrmTask>("crm:tasks", [...loadLocal<CrmTask>("crm:tasks"), task])
     return task
   },
 
   toggle: (id: string) => {
-    const tasks = load<CrmTask>("crm:tasks").map(t =>
+    const tasks = loadLocal<CrmTask>("crm:tasks").map(t =>
       t.id === id ? { ...t, done: !t.done } : t
     )
-    save<CrmTask>("crm:tasks", tasks)
+    saveLocal<CrmTask>("crm:tasks", tasks)
   },
 
   delete: (id: string) => {
-    save<CrmTask>("crm:tasks", load<CrmTask>("crm:tasks").filter(t => t.id !== id))
+    saveLocal<CrmTask>("crm:tasks", loadLocal<CrmTask>("crm:tasks").filter(t => t.id !== id))
   },
 }
 
-// ─── Quotas ───────────────────────────────────────────────────────────────────
+// ─── Quotas (kept local — no backend table yet) ───────────────────────────────
 
 export const quotasApi = {
-  list: (): Quota[] => load<Quota>("crm:quotas"),
+  list: (): Quota[] => loadLocal<Quota>("crm:quotas"),
 
   listByPeriod: (period: string): Quota[] =>
-    load<Quota>("crm:quotas").filter(q => q.period === period),
+    loadLocal<Quota>("crm:quotas").filter(q => q.period === period),
 
   upsert: (data: Omit<Quota, "id">): Quota => {
-    const existing = load<Quota>("crm:quotas")
+    const existing = loadLocal<Quota>("crm:quotas")
     const idx = existing.findIndex(
       q => q.salesperson === data.salesperson && q.period === data.period
     )
     if (idx >= 0) {
       existing[idx] = { ...existing[idx], ...data }
-      save<Quota>("crm:quotas", existing)
+      saveLocal<Quota>("crm:quotas", existing)
       return existing[idx]
     }
     const q: Quota = { ...data, id: crypto.randomUUID() }
-    save<Quota>("crm:quotas", [...existing, q])
+    saveLocal<Quota>("crm:quotas", [...existing, q])
     return q
   },
 
   delete: (id: string) => {
-    save<Quota>("crm:quotas", load<Quota>("crm:quotas").filter(q => q.id !== id))
+    saveLocal<Quota>("crm:quotas", loadLocal<Quota>("crm:quotas").filter(q => q.id !== id))
   },
 }
 
@@ -198,12 +352,10 @@ export const quotasApi = {
 export function computeLeadScore(deal: Deal): number {
   let score = 0
 
-  // Value score
   if (deal.value > 50000) score += 30
   else if (deal.value > 10000) score += 20
   else if (deal.value > 1000) score += 10
 
-  // Stage score
   const stageScores: Record<DealStage, number> = {
     prospect: 10,
     qualified: 20,
@@ -214,17 +366,13 @@ export function computeLeadScore(deal: Deal): number {
   }
   score += stageScores[deal.stage]
 
-  // Close date urgency
   if (deal.closeDate) {
     const daysUntil = (new Date(deal.closeDate).getTime() - Date.now()) / 86400000
     if (daysUntil < 7) score += 20
     else if (daysUntil < 30) score += 10
   }
 
-  // Activity bonus (count activities)
-  const activityCount = load<Activity>("crm:activities").filter(
-    a => a.dealId === deal.id
-  ).length
+  const activityCount = activitiesApi.byDeal(deal.id).length
   score += Math.min(activityCount * 5, 20)
 
   return Math.min(score, 100)

@@ -5,6 +5,7 @@
  * @see factory.ts for client creation details
  */
 import { getClient, ServiceName } from './factory';
+import { storageApi } from './storage';
 
 // Get the storage service client (cached)
 const storageClient = getClient(ServiceName.STORAGE);
@@ -63,15 +64,23 @@ export const driveApi = {
     await storageClient.delete(`/drive/nodes/${id}`);
   },
 
-  // Upload a file into the drive (optionally under a parent folder)
+  // Upload a file into the drive (optionally under a parent folder).
+  // Uses storageApi.uploadFile('drive', file) then creates a drive node pointing to
+  // the uploaded object so the file appears in the drive tree.
   uploadFile: async (file: File, parentId: string | null) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    if (parentId) formData.append('parent_id', parentId);
-    const response = await storageClient.post<DriveNode>('/drive/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    // Step 1: upload the binary to the 'drive' bucket
+    const uploadRes = await storageApi.uploadFile('drive', file);
+    const uploaded = Array.isArray(uploadRes.data) ? uploadRes.data[0] : uploadRes.data;
+    // Step 2: create a drive node entry for the uploaded file
+    const nodeRes = await storageClient.post<DriveNode>('/drive/nodes', {
+      parent_id: parentId,
+      name: file.name,
+      node_type: 'file',
+      target_id: uploaded?.id ?? null,
+      size: file.size,
+      mime_type: file.type || null,
     });
-    return response.data;
+    return nodeRes.data;
   },
 };
 

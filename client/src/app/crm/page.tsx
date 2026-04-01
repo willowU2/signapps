@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { usePageTitle } from "@/hooks/use-page-title"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -25,15 +25,20 @@ import { toast } from "sonner"
 
 export default function CRMPage() {
   usePageTitle('CRM')
-  const [deals, setDeals] = useState<Deal[]>(() => dealsApi.list())
+  const [deals, setDeals] = useState<Deal[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [form, setForm] = useState<Partial<Deal>>({ stage: "prospect", probability: 20, value: 0 })
 
-  const reload = useCallback(() => setDeals(dealsApi.list()), [])
+  const reload = useCallback(async () => {
+    const data = await dealsApi.list()
+    setDeals(data)
+  }, [])
 
-  const createDeal = () => {
+  useEffect(() => { reload() }, [reload])
+
+  const createDeal = async () => {
     if (!form.title?.trim() || !form.company?.trim()) return
-    dealsApi.create({
+    await dealsApi.create({
       title: form.title.trim(),
       company: form.company.trim(),
       value: form.value ?? 0,
@@ -43,20 +48,20 @@ export default function CRMPage() {
       closeDate: form.closeDate,
       contactEmail: form.contactEmail,
     })
-    reload()
+    await reload()
     setIsOpen(false)
     setForm({ stage: "prospect", probability: 20, value: 0 })
     toast.success("Opportunité créée.")
   }
 
-  const moveDeal = useCallback((id: string, stage: DealStage) => {
-    dealsApi.update(id, { stage })
-    reload()
+  const moveDeal = useCallback(async (id: string, stage: DealStage) => {
+    await dealsApi.update(id, { stage })
+    await reload()
   }, [reload])
 
-  const deleteDeal = useCallback((id: string) => {
-    dealsApi.delete(id)
-    reload()
+  const deleteDeal = useCallback(async (id: string) => {
+    await dealsApi.delete(id)
+    await reload()
   }, [reload])
 
   const activeDeals = deals.filter(d => d.stage !== "lost")

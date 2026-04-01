@@ -1,7 +1,7 @@
 "use client"
 // Feature 26: Contact → birthday reminder with CRM context
 
-import { useMemo } from "react"
+import { useState, useEffect } from "react"
 import { Gift, TrendingUp, DollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -34,15 +34,12 @@ const fmt = (v: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v)
 
 export function ContactBirthdayCrmContext({ contact }: Props) {
-  const deals = useMemo(
-    () => getDealsForContact(contact.id, contact.email),
-    [contact.id, contact.email]
-  )
+  const [deals, setDeals] = useState<Awaited<ReturnType<typeof getDealsForContact>>>([])
+  const invoices = getContactPaymentHistory(contact.id, contact.email)
 
-  const invoices = useMemo(
-    () => getContactPaymentHistory(contact.id, contact.email),
-    [contact.id, contact.email]
-  )
+  useEffect(() => {
+    getDealsForContact(contact.id, contact.email).then(setDeals)
+  }, [contact.id, contact.email])
 
   const daysUntil = contact.birthday ? daysUntilBirthday(contact.birthday) : null
   const totalRevenue = invoices.filter(i => i.status === "paid").reduce((s, i) => s + i.amount, 0)

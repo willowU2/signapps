@@ -53,7 +53,21 @@ import {
     useMailSelectionActions,
     useMailDataActions,
 } from "@/lib/store/mail-store"
-import { mailApi, accountApi, searchApi, labelApi, statsApi, folderApi, type MailLabel, type MailStats } from "@/lib/api-mail"
+import { mailApi, accountApi, searchApi, labelApi, statsApi, folderApi, type MailLabel, type MailStats, type CreateLabelRequest } from "@/lib/api-mail"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { MoreHorizontal, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { WorkspaceShell } from "@/components/layout/workspace-shell"
 import { getMailCache, setMailCache } from "@/lib/mail/mail-cache"
@@ -121,6 +135,14 @@ export default function MailPage() {
 
     const [labels, setLabels] = useState<MailLabel[]>([])
     const [labelsLoading, setLabelsLoading] = useState(false)
+
+    // Label CRUD dialog state
+    const [labelDialogOpen, setLabelDialogOpen] = useState(false)
+    const [labelDialogMode, setLabelDialogMode] = useState<"create" | "edit">("create")
+    const [labelDialogTarget, setLabelDialogTarget] = useState<MailLabel | null>(null)
+    const [labelDialogName, setLabelDialogName] = useState("")
+    const [labelDialogColor, setLabelDialogColor] = useState("#6366f1")
+    const [labelDialogSaving, setLabelDialogSaving] = useState(false)
 
     // Idea 13: Collapsible sidebar
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -345,20 +367,74 @@ export default function MailPage() {
         }, 300)
     }, [])
 
-    useEffect(() => {
-        const loadLabels = async () => {
-            setLabelsLoading(true)
-            try {
-                const fetchedLabels = await labelApi.list()
-                setLabels(fetchedLabels)
-            } catch {
-                // Keep empty on error
-            } finally {
-                setLabelsLoading(false)
-            }
+    const reloadLabels = useCallback(async () => {
+        setLabelsLoading(true)
+        try {
+            const fetchedLabels = await labelApi.list()
+            setLabels(fetchedLabels)
+        } catch {
+            // Keep empty on error
+        } finally {
+            setLabelsLoading(false)
         }
-        loadLabels()
     }, [])
+
+    useEffect(() => { reloadLabels() }, [reloadLabels])
+
+    const openCreateLabelDialog = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        setLabelDialogMode("create")
+        setLabelDialogTarget(null)
+        setLabelDialogName("")
+        setLabelDialogColor("#6366f1")
+        setLabelDialogOpen(true)
+    }
+
+    const openEditLabelDialog = (label: MailLabel) => {
+        setLabelDialogMode("edit")
+        setLabelDialogTarget(label)
+        setLabelDialogName(label.name)
+        setLabelDialogColor(label.color || "#6366f1")
+        setLabelDialogOpen(true)
+    }
+
+    const handleLabelDialogSave = async () => {
+        if (!labelDialogName.trim()) return
+        setLabelDialogSaving(true)
+        try {
+            if (labelDialogMode === "create") {
+                const payload: CreateLabelRequest = {
+                    account_id: activeAccountId ?? "",
+                    name: labelDialogName.trim(),
+                    color: labelDialogColor,
+                }
+                await labelApi.create(payload)
+                toast.success(`Libellé "${labelDialogName.trim()}" créé.`)
+            } else if (labelDialogTarget) {
+                await labelApi.update(labelDialogTarget.id, {
+                    name: labelDialogName.trim(),
+                    color: labelDialogColor,
+                })
+                toast.success(`Libellé mis à jour.`)
+            }
+            setLabelDialogOpen(false)
+            await reloadLabels()
+        } catch {
+            toast.error("Impossible de sauvegarder le libellé.")
+        } finally {
+            setLabelDialogSaving(false)
+        }
+    }
+
+    const handleDeleteLabel = async (label: MailLabel) => {
+        try {
+            await labelApi.delete(label.id)
+            toast.success(`Libellé "${label.name}" supprimé.`)
+            await reloadLabels()
+        } catch {
+            toast.error("Impossible de supprimer le libellé.")
+        }
+    }
 
     const loadData = useCallback(async () => {
         setLoadError(null)
@@ -781,7 +857,10 @@ export default function MailPage() {
                                         Libellés
                                     </span>
                                     <div className="flex items-center gap-1">
-                                        <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-muted rounded" />
+                                        <Plus
+                                            onClick={openCreateLabelDialog}
+                                            className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-muted rounded"
+                                        />
                                         {labelsExpanded ? (
                                             <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                         ) : (
@@ -805,18 +884,42 @@ export default function MailPage() {
                                             <p className="px-6 py-2 text-[13px] text-muted-foreground">Aucun libellé</p>
                                         ) : (
                                             labels.map((label) => (
-                                                <button
-                                                    key={label.id}
-                                                    className="flex items-center gap-3 px-6 py-2 text-[13px] text-foreground/80 hover:bg-muted dark:hover:bg-gray-800 rounded-r-full transition-colors text-left"
-                                                >
-                                                    {/* Idea 29: Colored dot next to label */}
-                                                    <span
-                                                        className="h-2.5 w-2.5 rounded-full shrink-0 flex-none"
-                                                        style={{ backgroundColor: label.color || "hsl(var(--muted-foreground))" }}
-                                                    />
-                                                    <Tag className="h-4 w-4" style={label.color ? { color: label.color } : undefined} />
-                                                    <span className="truncate">{label.name}</span>
-                                                </button>
+                                                <div key={label.id} className="group/label flex items-center gap-1 pr-1">
+                                                    <button
+                                                        className="flex flex-1 items-center gap-3 px-6 py-2 text-[13px] text-foreground/80 hover:bg-muted dark:hover:bg-gray-800 rounded-r-full transition-colors text-left"
+                                                    >
+                                                        {/* Idea 29: Colored dot next to label */}
+                                                        <span
+                                                            className="h-2.5 w-2.5 rounded-full shrink-0 flex-none"
+                                                            style={{ backgroundColor: label.color || "hsl(var(--muted-foreground))" }}
+                                                        />
+                                                        <Tag className="h-4 w-4" style={label.color ? { color: label.color } : undefined} />
+                                                        <span className="truncate">{label.name}</span>
+                                                    </button>
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <button
+                                                                className="opacity-0 group-hover/label:opacity-100 transition-opacity p-1 rounded hover:bg-muted"
+                                                                title="Options du libellé"
+                                                            >
+                                                                <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+                                                            </button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end" className="w-40">
+                                                            <DropdownMenuItem onClick={() => openEditLabelDialog(label)}>
+                                                                <Pencil className="h-3.5 w-3.5 mr-2" />
+                                                                Renommer
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleDeleteLabel(label)}
+                                                                className="text-destructive focus:text-destructive"
+                                                            >
+                                                                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                                                Supprimer
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
                                             ))
                                         )}
                                     </nav>
@@ -1058,6 +1161,49 @@ export default function MailPage() {
 
             <ComposeAiDialog open={composeAiOpen} onOpenChange={setComposeAiOpen} accountId={activeAccountId} />
             <ComposeRichDialog open={composeRichOpen} onOpenChange={setComposeRichOpen} accountId={activeAccountId} />
+
+            {/* Label create / edit dialog */}
+            <Dialog open={labelDialogOpen} onOpenChange={setLabelDialogOpen}>
+                <DialogContent className="sm:max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {labelDialogMode === "create" ? "Nouveau libellé" : "Modifier le libellé"}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium">Nom</label>
+                            <Input
+                                autoFocus
+                                value={labelDialogName}
+                                onChange={e => setLabelDialogName(e.target.value)}
+                                placeholder="Nom du libellé…"
+                                onKeyDown={e => { if (e.key === "Enter") handleLabelDialogSave() }}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium">Couleur</label>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="color"
+                                    value={labelDialogColor}
+                                    onChange={e => setLabelDialogColor(e.target.value)}
+                                    className="h-8 w-14 cursor-pointer rounded border border-input bg-background p-0.5"
+                                />
+                                <span className="text-sm text-muted-foreground">{labelDialogColor}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setLabelDialogOpen(false)} disabled={labelDialogSaving}>
+                            Annuler
+                        </Button>
+                        <Button onClick={handleLabelDialogSave} disabled={labelDialogSaving || !labelDialogName.trim()}>
+                            {labelDialogSaving ? "Sauvegarde…" : "Sauvegarder"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </TooltipProvider>
     )
 }

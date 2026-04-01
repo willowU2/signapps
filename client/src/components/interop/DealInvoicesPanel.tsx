@@ -2,7 +2,7 @@
 // Feature 2: CRM deal → show linked invoices from billing
 // Feature 6: Billing invoice → link to CRM deal
 
-import { useState, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { FileText, Plus, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -33,7 +33,8 @@ export function DealInvoicesPanel({ dealId, onRefresh }: Props) {
     localInvoicesApi.byDeal(dealId)
   )
 
-  const deal = useMemo(() => dealsApi.get(dealId), [dealId])
+  const [deal, setDeal] = useState<Deal | undefined>(undefined)
+  useEffect(() => { dealsApi.get(dealId).then(setDeal) }, [dealId])
 
   const refresh = () => {
     setInvoices(localInvoicesApi.byDeal(dealId))

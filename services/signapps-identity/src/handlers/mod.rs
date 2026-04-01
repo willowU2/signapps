@@ -12,6 +12,7 @@ pub mod branding;
 pub mod bulk_users;
 pub mod comms;
 pub mod compliance;
+pub mod crm;
 pub mod data_export;
 pub mod entity_links;
 pub mod feature_flags;

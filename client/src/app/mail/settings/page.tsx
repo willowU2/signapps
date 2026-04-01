@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import Link from "next/link";
 import {
   Plus,
   Trash2,
@@ -13,6 +14,8 @@ import {
   TestTube,
   ShieldCheck,
   Settings2,
+  FileText,
+  ChevronRight,
 } from "lucide-react";
 import {
   accountApi,
@@ -1129,6 +1132,25 @@ export default function MailSettingsPage() {
         {/* IDEA-127: Email automation rules */}
         <div className="pt-6 border-t mt-6">
           <EmailAutomationRules />
+        </div>
+
+        {/* Mail Templates link */}
+        <div className="pt-6 border-t mt-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm font-medium">Modèles d&apos;email</p>
+                <p className="text-xs text-muted-foreground">Créez et gérez vos modèles réutilisables avec variables dynamiques.</p>
+              </div>
+            </div>
+            <Link href="/mail/templates">
+              <button className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted transition-colors">
+                Gérer les modèles
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </Link>
+          </div>
         </div>
       </div>
   );

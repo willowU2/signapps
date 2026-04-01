@@ -1,7 +1,7 @@
 "use client"
 // Feature 1: Contact → show linked CRM deals
 
-import { useMemo } from "react"
+import { useState, useEffect } from "react"
 import { TrendingUp, ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { getDealsForContact } from "@/lib/api/interop"
@@ -26,10 +26,10 @@ interface Props {
 }
 
 export function ContactDealsPanel({ contactId, contactEmail }: Props) {
-  const deals = useMemo(
-    () => getDealsForContact(contactId, contactEmail),
-    [contactId, contactEmail]
-  )
+  const [deals, setDeals] = useState<Deal[]>([])
+  useEffect(() => {
+    getDealsForContact(contactId, contactEmail).then(setDeals)
+  }, [contactId, contactEmail])
 
   if (deals.length === 0) {
     return (

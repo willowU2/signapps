@@ -155,6 +155,12 @@ export const chatApi = {
     sendMessage: (channelId: string, data: SendMessageRequest) =>
         chatClient.post<ChatMessage>(`/channels/${channelId}/messages`, data),
 
+    editMessage: (channelId: string, messageId: string, content: string) =>
+        chatClient.patch<ChatMessage>(`/channels/${channelId}/messages/${messageId}`, { content }),
+
+    deleteMessage: (channelId: string, messageId: string) =>
+        chatClient.delete(`/channels/${channelId}/messages/${messageId}`),
+
     // ========================================================================
     // File sharing (IDEA-134)
     // ========================================================================

@@ -1,11 +1,11 @@
 "use client"
 // Feature 25: CRM forecast → based on billing history
 
-import { useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { TrendingUp, BarChart2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { getBillingEnrichedForecast } from "@/lib/api/interop"
-import { dealsApi } from "@/lib/api/crm"
+import { dealsApi, type Deal } from "@/lib/api/crm"
 
 const fmt = (v: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v)
@@ -16,19 +16,27 @@ interface Props {
   contactEmail?: string
 }
 
+const DEFAULT_FORECAST = { avgDealValue: 0, totalPaid: 0, wonDealsCount: 0, paymentRate: 0 }
+
 export function BillingForecast({ contactEmail }: Props) {
-  const forecast = useMemo(
-    () => getBillingEnrichedForecast(contactEmail),
-    [contactEmail]
-  )
+  const [forecast, setForecast] = useState(DEFAULT_FORECAST)
+  const [allDeals, setAllDeals] = useState<Deal[]>([])
+
+  useEffect(() => {
+    getBillingEnrichedForecast(contactEmail).then(setForecast)
+  }, [contactEmail])
+
+  useEffect(() => {
+    dealsApi.list().then(setAllDeals)
+  }, [])
 
   const activeDeals = useMemo(() => {
-    const all = dealsApi.list().filter(d => d.stage !== "lost" && d.stage !== "won")
+    const active = allDeals.filter(d => d.stage !== "lost" && d.stage !== "won")
     if (contactEmail) {
-      return all.filter(d => d.contactEmail?.toLowerCase() === contactEmail.toLowerCase())
+      return active.filter(d => d.contactEmail?.toLowerCase() === contactEmail.toLowerCase())
     }
-    return all
-  }, [contactEmail])
+    return active
+  }, [allDeals, contactEmail])
 
   const weightedForecast = activeDeals.reduce((s, d) => s + (d.value * d.probability) / 100, 0)
   const bestCase = activeDeals.reduce((s, d) => s + d.value, 0)

@@ -43,6 +43,12 @@ export const notificationsApi = {
   health: () =>
     notifClient.get('/health'),
 
+  markRead: (id: string) =>
+    notifClient.patch(`/notifications/${id}/read`, {}),
+
+  markAllRead: () =>
+    notifClient.post('/notifications/read-all', {}),
+
   getPreferences: () =>
     notifClient.get<NotificationPreferences>('/notifications/preferences'),
 

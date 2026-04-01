@@ -50,9 +50,10 @@ export function SharedContactNotes({ contactId, dealId, source }: Props) {
     refresh()
   }
 
-  const dealTitles = Object.fromEntries(
-    dealsApi.list().map(d => [d.id, d.title])
-  )
+  const [dealTitles, setDealTitles] = useState<Record<string, string>>({})
+  useEffect(() => {
+    dealsApi.list().then(ds => setDealTitles(Object.fromEntries(ds.map(d => [d.id, d.title]))))
+  }, [])
 
   const filtered = notes.filter(n => filter === "all" || n.source === filter)
 

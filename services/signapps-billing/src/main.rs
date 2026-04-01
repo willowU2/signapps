@@ -321,10 +321,14 @@ async fn get_invoice(
     Ok(Json(InvoiceResponse::from(invoice)))
 }
 
-/// Patch request for invoice status update
+/// Patch request for invoice update
 #[derive(Debug, Deserialize)]
 pub struct PatchInvoiceRequest {
     pub status: Option<String>,
+    pub amount_cents: Option<i32>,
+    pub currency: Option<String>,
+    pub due_at: Option<DateTime<Utc>>,
+    pub metadata: Option<serde_json::Value>,
 }
 
 async fn patch_invoice(
@@ -332,17 +336,28 @@ async fn patch_invoice(
     Path(id): Path<Uuid>,
     Json(payload): Json<PatchInvoiceRequest>,
 ) -> Result<Json<InvoiceResponse>, (StatusCode, String)> {
-    if let Some(status) = payload.status {
-        sqlx::query("UPDATE billing.invoices SET status = $1 WHERE id = $2")
-            .bind(&status)
-            .bind(id)
-            .execute(&state.pool)
-            .await
-            .map_err(|e| {
-                tracing::error!("Failed to patch invoice {}: {}", id, e);
-                (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
-            })?;
-    }
+    sqlx::query(
+        r#"UPDATE billing.invoices SET
+            status      = COALESCE($2, status),
+            amount_cents = COALESCE($3, amount_cents),
+            currency    = COALESCE($4, currency),
+            due_at      = COALESCE($5, due_at),
+            metadata    = COALESCE($6, metadata)
+           WHERE id = $1"#,
+    )
+    .bind(id)
+    .bind(&payload.status)
+    .bind(payload.amount_cents)
+    .bind(&payload.currency)
+    .bind(payload.due_at)
+    .bind(&payload.metadata)
+    .execute(&state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to patch invoice {}: {}", id, e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })?;
+
     let invoice = sqlx::query_as::<_, Invoice>("SELECT * FROM billing.invoices WHERE id = $1")
         .bind(id)
         .fetch_optional(&state.pool)
@@ -352,20 +367,152 @@ async fn patch_invoice(
     Ok(Json(InvoiceResponse::from(invoice)))
 }
 
+async fn delete_invoice(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    // Only allow deletion of draft invoices
+    let invoice = sqlx::query_as::<_, Invoice>("SELECT * FROM billing.invoices WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or_else(|| (StatusCode::NOT_FOUND, "Invoice not found".to_string()))?;
+
+    if invoice.status != "draft" {
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "Only draft invoices can be deleted".to_string(),
+        ));
+    }
+
+    sqlx::query("DELETE FROM billing.invoices WHERE id = $1")
+        .bind(id)
+        .execute(&state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to delete invoice {}: {}", id, e);
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+        })?;
+
+    tracing::info!(id = %id, "Invoice deleted");
+    Ok(StatusCode::NO_CONTENT)
+}
+
 async fn list_plans(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<Plan>>, (StatusCode, String)> {
-    let plans = sqlx::query_as::<_, Plan>(
-        "SELECT * FROM billing.plans WHERE is_active = true ORDER BY price_cents ASC",
-    )
-    .fetch_all(&state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to list plans: {}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
-    })?;
+    let plans = sqlx::query_as::<_, Plan>("SELECT * FROM billing.plans ORDER BY price_cents ASC")
+        .fetch_all(&state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to list plans: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+        })?;
 
     Ok(Json(plans))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreatePlanRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub price_cents: i32,
+    pub currency: Option<String>,
+    pub features: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdatePlanRequest {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub price_cents: Option<i32>,
+    pub currency: Option<String>,
+    pub features: Option<serde_json::Value>,
+    pub is_active: Option<bool>,
+}
+
+async fn create_plan(
+    State(state): State<AppState>,
+    Json(payload): Json<CreatePlanRequest>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    if payload.name.trim().is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Plan name cannot be empty".to_string(),
+        ));
+    }
+    let plan = sqlx::query_as::<_, Plan>(
+        r#"INSERT INTO billing.plans (name, description, price_cents, currency, features)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING *"#,
+    )
+    .bind(&payload.name)
+    .bind(&payload.description)
+    .bind(payload.price_cents)
+    .bind(payload.currency.as_deref().unwrap_or("EUR"))
+    .bind(payload.features.unwrap_or(serde_json::json!([])))
+    .fetch_one(&state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to create plan: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })?;
+    tracing::info!(id = %plan.id, name = %plan.name, "Plan created");
+    Ok((StatusCode::CREATED, Json(plan)))
+}
+
+async fn update_plan(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdatePlanRequest>,
+) -> Result<Json<Plan>, (StatusCode, String)> {
+    let plan = sqlx::query_as::<_, Plan>(
+        r#"UPDATE billing.plans SET
+            name        = COALESCE($2, name),
+            description = COALESCE($3, description),
+            price_cents = COALESCE($4, price_cents),
+            currency    = COALESCE($5, currency),
+            features    = COALESCE($6, features),
+            is_active   = COALESCE($7, is_active)
+           WHERE id = $1
+           RETURNING *"#,
+    )
+    .bind(id)
+    .bind(&payload.name)
+    .bind(&payload.description)
+    .bind(payload.price_cents)
+    .bind(&payload.currency)
+    .bind(&payload.features)
+    .bind(payload.is_active)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to update plan {}: {}", id, e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })?
+    .ok_or_else(|| (StatusCode::NOT_FOUND, "Plan not found".to_string()))?;
+    tracing::info!(id = %id, "Plan updated");
+    Ok(Json(plan))
+}
+
+async fn delete_plan(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    let r = sqlx::query("DELETE FROM billing.plans WHERE id = $1")
+        .bind(id)
+        .execute(&state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to delete plan {}: {}", id, e);
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+        })?;
+    if r.rows_affected() == 0 {
+        return Err((StatusCode::NOT_FOUND, "Plan not found".to_string()));
+    }
+    tracing::info!(id = %id, "Plan deleted");
+    Ok(StatusCode::NO_CONTENT)
 }
 
 // ---------------------------------------------------------------------------
@@ -773,13 +920,20 @@ fn create_router(state: AppState) -> Router {
 
     let public_routes = Router::new()
         .route("/health", get(health))
-        .route("/api/v1/plans", get(list_plans))
         // EX3: Stripe webhook (unauthenticated — verified by HMAC signature)
         .route("/api/v1/billing/stripe/webhook", post(stripe_webhook));
 
     let protected_routes = Router::new()
+        .route("/api/v1/plans", get(list_plans).post(create_plan))
+        .route(
+            "/api/v1/plans/:id",
+            axum::routing::put(update_plan).delete(delete_plan),
+        )
         .route("/api/v1/invoices", get(list_invoices).post(create_invoice))
-        .route("/api/v1/invoices/:id", get(get_invoice).patch(patch_invoice))
+        .route(
+            "/api/v1/invoices/:id",
+            get(get_invoice).patch(patch_invoice).delete(delete_invoice),
+        )
         // Usage endpoint (SYNC-BILLING-PREFIX)
         .route("/api/v1/usage", get(get_usage))
         // Line items — AQ-BILLDB

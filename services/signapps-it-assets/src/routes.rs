@@ -80,9 +80,9 @@ use crate::handlers::software_policies::{
     check_software_compliance, create_software_policy, list_software_policies,
 };
 use crate::handlers::tickets::{
-    add_comment, create_psa_integration, create_ticket, delete_psa_integration, get_ticket,
-    list_psa_integrations, list_tickets, log_time_entry, ticket_stats, update_psa_integration,
-    update_ticket,
+    add_comment, create_psa_integration, create_ticket, delete_psa_integration, delete_ticket,
+    get_ticket, list_psa_integrations, list_tickets, log_time_entry, ticket_stats,
+    update_psa_integration, update_ticket,
 };
 use crate::handlers::wol::wake_on_lan;
 use crate::handlers::{
@@ -317,7 +317,10 @@ pub fn api_routes() -> Router<AppState> {
         // #51: PSA Ticketing
         .route("/tickets", get(list_tickets).post(create_ticket))
         .route("/tickets/stats", get(ticket_stats))
-        .route("/tickets/:id", get(get_ticket).patch(update_ticket))
+        .route(
+            "/tickets/:id",
+            get(get_ticket).patch(update_ticket).delete(delete_ticket),
+        )
         .route("/tickets/:id/comments", post(add_comment))
         .route("/tickets/:id/time", post(log_time_entry))
         // #11: Per-device documentation

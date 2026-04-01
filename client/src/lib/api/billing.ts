@@ -94,6 +94,14 @@ export interface BillingPlan {
   created_at: string;
 }
 
+export interface CreatePlanRequest {
+  name: string;
+  description?: string;
+  price_cents: number;
+  currency?: string;
+  features?: string[] | Record<string, unknown>;
+}
+
 export interface BillingUsage {
   storage_used_bytes: number;
   storage_limit_bytes: number;
@@ -110,6 +118,15 @@ export const billingApi = {
   listPlans: () =>
     billingClient.get<BillingPlan[]>('/plans'),
 
+  createPlan: (data: CreatePlanRequest) =>
+    billingClient.post<BillingPlan>('/plans', data),
+
+  updatePlan: (id: string, data: Partial<CreatePlanRequest>) =>
+    billingClient.put<BillingPlan>(`/plans/${id}`, data),
+
+  deletePlan: (id: string) =>
+    billingClient.delete(`/plans/${id}`),
+
   // Invoices
   listInvoices: () =>
     billingClient.get<Invoice[]>('/invoices'),
@@ -122,6 +139,12 @@ export const billingApi = {
 
   updateInvoiceStatus: (id: string, status: string) =>
     billingClient.patch<Invoice>(`/invoices/${id}`, { status }),
+
+  updateInvoice: (id: string, data: Partial<CreateInvoiceRequest> & { status?: string }) =>
+    billingClient.patch<Invoice>(`/invoices/${id}`, data),
+
+  deleteInvoice: (id: string) =>
+    billingClient.delete(`/invoices/${id}`),
 
   // Line Items — AQ-BILLDB
   listLineItems: (invoiceId: string) =>

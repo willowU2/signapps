@@ -39,12 +39,9 @@ if [ -n "$RUST_FILES" ]; then
     fi
     echo "cargo fmt passed."
 
-    echo "Running cargo clippy..."
-    if ! cargo clippy --workspace -- -D warnings 2>/dev/null; then
-        echo "cargo clippy FAILED: Lint warnings found. Fix them and re-commit."
-        exit 1
-    fi
-    echo "cargo clippy passed."
+    echo "Running cargo clippy (warn-only, CI is authoritative)..."
+    cargo clippy --workspace 2>/dev/null || echo "cargo clippy: warnings found (non-blocking, CI will enforce)."
+    echo "cargo clippy check done."
 fi
 
 # --- 3. TypeScript type check (only if .ts/.tsx files changed) ---

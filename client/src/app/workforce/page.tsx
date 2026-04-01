@@ -25,6 +25,7 @@ import {
   Filter,
   Download,
   Upload,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,17 @@ import { CoverageEditor } from '@/components/workforce/coverage-editor';
 import { orgNodesApi, employeesApi, validationApi } from '@/lib/api/workforce';
 import type { OrgNodeWithStats, EmployeeWithDetails, ValidateCoverageResponse, WeeklyPattern } from '@/types/workforce';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Empty pattern for coverage editor
 const EMPTY_COVERAGE_PATTERN: WeeklyPattern = {
@@ -112,11 +124,16 @@ function ClockInButton() {
 
 export default function WorkforcePage() {
   usePageTitle('Effectifs');
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = React.useState<ActiveTab>('org-tree');
   const [selectedNode, setSelectedNode] = React.useState<OrgNodeWithStats | null>(null);
   const [selectedEmployee, setSelectedEmployee] = React.useState<EmployeeWithDetails | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [coveragePattern, setCoveragePattern] = React.useState<WeeklyPattern>(EMPTY_COVERAGE_PATTERN);
+
+  // Delete confirmation states
+  const [deleteEmployeeTarget, setDeleteEmployeeTarget] = React.useState<EmployeeWithDetails | null>(null);
+  const [deleteNodeTarget, setDeleteNodeTarget] = React.useState<OrgNodeWithStats | null>(null);
 
   // Sheet states
   const [isNodeSheetOpen, setIsNodeSheetOpen] = React.useState(false);
@@ -191,6 +208,32 @@ export default function WorkforcePage() {
   const handleEditCoverage = (node: OrgNodeWithStats) => {
     setSelectedNode(node);
     setIsCoverageSheetOpen(true);
+  };
+
+  const handleDeleteEmployee = async () => {
+    if (!deleteEmployeeTarget) return;
+    const id = deleteEmployeeTarget.id;
+    setDeleteEmployeeTarget(null);
+    try {
+      await employeesApi.delete(id);
+      queryClient.invalidateQueries({ queryKey: ['workforce', 'employees'] });
+      toast.success('Employé supprimé.');
+    } catch {
+      toast.error('Impossible de supprimer l\'employé.');
+    }
+  };
+
+  const handleDeleteNode = async () => {
+    if (!deleteNodeTarget) return;
+    const id = deleteNodeTarget.id;
+    setDeleteNodeTarget(null);
+    try {
+      await orgNodesApi.delete(id);
+      queryClient.invalidateQueries({ queryKey: ['workforce', 'tree'] });
+      toast.success('Nœud supprimé. Les enfants ont été déplacés vers le parent.');
+    } catch {
+      toast.error('Impossible de supprimer ce nœud.');
+    }
   };
 
   return (
@@ -338,6 +381,7 @@ export default function WorkforcePage() {
                   onSelectNode={handleSelectNode}
                   onAddNode={handleAddNode}
                   onEditNode={handleEditNode}
+                  onDeleteNode={(node) => setDeleteNodeTarget(node)}
                   showEmployeeCounts
                 />
               )}
@@ -464,6 +508,7 @@ export default function WorkforcePage() {
                     <EmployeeList
                       employees={employeesData?.data?.employees || []}
                       onEdit={handleEditEmployee}
+                      onDelete={(emp) => setDeleteEmployeeTarget(emp)}
                       onSelect={setSelectedEmployee}
                     />
                   )}
@@ -536,6 +581,42 @@ export default function WorkforcePage() {
         employee={selectedEmployee}
         defaultOrgNodeId={selectedNode?.id}
       />
+
+      {/* Delete employee confirmation */}
+      <AlertDialog open={deleteEmployeeTarget !== null} onOpenChange={(open) => { if (!open) setDeleteEmployeeTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cet employé ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteEmployeeTarget && (
+                <>Supprimer <strong>{deleteEmployeeTarget.first_name} {deleteEmployeeTarget.last_name}</strong> ? Cette action est irréversible.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteEmployee}>Supprimer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete org node confirmation */}
+      <AlertDialog open={deleteNodeTarget !== null} onOpenChange={(open) => { if (!open) setDeleteNodeTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce nœud ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteNodeTarget && (
+                <>Supprimer <strong>{deleteNodeTarget.name}</strong> ? Cela déplacera les enfants vers le parent.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteNode}>Supprimer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
     </AppLayout>
   );

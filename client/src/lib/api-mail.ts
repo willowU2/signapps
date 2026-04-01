@@ -608,3 +608,64 @@ export function emailToUIMail(email: Email): UIMail {
     }
 }
 
+// ============================================================================
+// Automation Rules API
+// Maps to /api/v1/mail/rules on signapps-mail service.
+// ============================================================================
+
+export interface MailRule {
+    id: string
+    account_id: string
+    name: string
+    enabled: boolean
+    priority: number
+    stop_processing: boolean
+    conditions: unknown
+    actions: unknown
+    created_at: string
+    updated_at: string
+}
+
+export interface CreateRulePayload {
+    name: string
+    conditions: unknown
+    actions: unknown
+    enabled?: boolean
+    priority?: number
+    stop_processing?: boolean
+}
+
+export interface UpdateRulePayload {
+    name?: string
+    conditions?: unknown
+    actions?: unknown
+    enabled?: boolean
+    priority?: number
+    stop_processing?: boolean
+}
+
+export const rulesApi = {
+    list: async (): Promise<MailRule[]> => {
+        const res = await mailClient.get('/api/v1/mail/rules')
+        return res.data
+    },
+
+    get: async (id: string): Promise<MailRule> => {
+        const res = await mailClient.get(`/api/v1/mail/rules/${id}`)
+        return res.data
+    },
+
+    create: async (data: CreateRulePayload): Promise<MailRule> => {
+        const res = await mailClient.post('/api/v1/mail/rules', data)
+        return res.data
+    },
+
+    update: async (id: string, data: UpdateRulePayload): Promise<MailRule> => {
+        const res = await mailClient.put(`/api/v1/mail/rules/${id}`, data)
+        return res.data
+    },
+
+    delete: async (id: string): Promise<void> => {
+        await mailClient.delete(`/api/v1/mail/rules/${id}`)
+    },
+}

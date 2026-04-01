@@ -34,6 +34,22 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 import { getClient, ServiceName } from "@/lib/api/factory"
 import { contactsApi } from "@/lib/api/contacts"
@@ -103,6 +119,16 @@ export default function ContactsPage() {
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [emailPanelContactId, setEmailPanelContactId] = useState<string | null>(null)
   const [inlineEdit, setInlineEdit] = useState<{ contactId: string; field: 'name' | 'email' | 'phone'; value: string } | null>(null)
+
+  // ── Group management dialog state ────────────────────────────────────────────
+  const [isGroupsDialogOpen, setIsGroupsDialogOpen] = useState(false)
+  const [apiGroups, setApiGroups] = useState<{ id: string; name: string; color?: string }[]>([])
+  const [newGroupName, setNewGroupName] = useState("")
+  const [newGroupColor, setNewGroupColor] = useState("#6366f1")
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null)
+  const [editingGroupName, setEditingGroupName] = useState("")
+  const [editingGroupColor, setEditingGroupColor] = useState("#6366f1")
+  const [groupDeleteTarget, setGroupDeleteTarget] = useState<string | null>(null)
 
   const { data: contacts = SEED_CONTACTS, isLoading, isError, refetch } = useQuery<Contact[]>({
     queryKey: ['contacts'],
@@ -210,7 +236,7 @@ export default function ContactsPage() {
 
     // Feature 15: Contact import → auto-create CRM lead (only for new contacts)
     if (isNew && payload.tags?.includes("prospect")) {
-      autoCreateLeadFromContact({
+      await autoCreateLeadFromContact({
         id: payload.id,
         name: payload.name,
         email: payload.email,
@@ -324,16 +350,92 @@ export default function ContactsPage() {
     }
   }
 
-  const handleMerge = (keepId: string, removeId: string, merged: MergeableContact) => {
+  const handleMerge = async (keepId: string, removeId: string, merged: MergeableContact) => {
     // Feature 19: Contact merge → update CRM and billing references
     const keepContact = contacts.find(c => c.id === keepId)
-    mergeContactReferences(keepId, removeId, keepContact?.email ?? merged.email)
+    await mergeContactReferences(keepId, removeId, keepContact?.email ?? merged.email)
     queryClient.setQueryData<Contact[]>(['contacts'], (prev = []) =>
       prev.filter(c => c.id !== removeId).map(c => c.id === keepId ? { ...c, ...merged } : c)
     )
   }
 
   const handleContactGroupsChange = (newGroups: Group[]) => setContactGroups(newGroups)
+
+  // ── Group management API helpers ─────────────────────────────────────────────
+
+  const loadApiGroups = useCallback(async () => {
+    try {
+      const client = getClient(ServiceName.CONTACTS)
+      const res = await client.get<{ id: string; name: string; color?: string }[]>("/contacts/groups")
+      setApiGroups(res.data ?? [])
+    } catch {
+      // ignore — groups remain as-is
+    }
+  }, [])
+
+  const handleCreateGroup = async () => {
+    if (!newGroupName.trim()) return
+    try {
+      const client = getClient(ServiceName.CONTACTS)
+      await client.post("/contacts/groups", { name: newGroupName.trim(), color: newGroupColor })
+      setNewGroupName("")
+      setNewGroupColor("#6366f1")
+      await loadApiGroups()
+      toast.success("Groupe créé.")
+    } catch {
+      toast.error("Impossible de créer le groupe.")
+    }
+  }
+
+  const handleUpdateGroup = async (id: string) => {
+    if (!editingGroupName.trim()) return
+    try {
+      const client = getClient(ServiceName.CONTACTS)
+      await client.put(`/contacts/groups/${id}`, { name: editingGroupName.trim(), color: editingGroupColor })
+      setEditingGroupId(null)
+      await loadApiGroups()
+      toast.success("Groupe mis à jour.")
+    } catch {
+      toast.error("Impossible de modifier le groupe.")
+    }
+  }
+
+  const handleDeleteGroup = async (id: string) => {
+    try {
+      const client = getClient(ServiceName.CONTACTS)
+      await client.delete(`/contacts/groups/${id}`)
+      setGroupDeleteTarget(null)
+      await loadApiGroups()
+      toast.success("Groupe supprimé.")
+    } catch {
+      toast.error("Impossible de supprimer le groupe.")
+    }
+  }
+
+  const handleAssignGroup = async (contactId: string, groupId: string) => {
+    try {
+      const client = getClient(ServiceName.CONTACTS)
+      await client.post(`/contacts/groups/${groupId}/members`, { contact_id: contactId })
+      toast.success("Contact ajouté au groupe.")
+    } catch {
+      toast.error("Impossible d'assigner le groupe.")
+    }
+  }
+
+  const handleRemoveFromGroup = async (contactId: string, groupId: string) => {
+    try {
+      const client = getClient(ServiceName.CONTACTS)
+      await client.delete(`/contacts/groups/${groupId}/members/${contactId}`)
+      toast.success("Contact retiré du groupe.")
+    } catch {
+      toast.error("Impossible de retirer du groupe.")
+    }
+  }
+
+  const openGroupsDialog = () => {
+    loadApiGroups()
+    setIsGroupsDialogOpen(true)
+  }
 
   const handleCompanyUpdate = (contactId: string, companyId: string | undefined) => {
     queryClient.setQueryData<Contact[]>(['contacts'], (prev = []) =>
@@ -565,6 +667,10 @@ ${header}
                 }}
               />
             </label>
+            <Button variant="outline" onClick={openGroupsDialog}>
+              <UsersRound className="h-4 w-4 mr-2" />
+              Gérer les groupes
+            </Button>
             <Button onClick={() => { resetForm(); setIsCreating(v => !v) }} className="shadow-lg shadow-primary/20">
               <Plus className="h-4 w-4 mr-2" />
               {isCreating && !editingId ? "Annuler" : "Nouveau Contact"}
@@ -855,6 +961,34 @@ ${header}
                               <Button size="icon" variant="ghost" title="Favori" onClick={() => toggleFavorite(c)}>
                                 {c.favorite ? <Star className="h-4 w-4 text-amber-500" /> : <StarOff className="h-4 w-4" />}
                               </Button>
+                              {/* Group assignment dropdown */}
+                              {apiGroups.length > 0 && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button size="icon" variant="ghost" title="Groupes" onClick={e => e.stopPropagation()}>
+                                      <UsersRound className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
+                                    <DropdownMenuLabel>Assigner à un groupe</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {apiGroups.map(g => (
+                                      <DropdownMenuItem key={g.id} onClick={() => handleAssignGroup(c.id, g.id)}>
+                                        {g.color && <span className="mr-2 inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: g.color }} />}
+                                        {g.name}
+                                      </DropdownMenuItem>
+                                    ))}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuLabel className="text-xs text-muted-foreground">Retirer d&apos;un groupe</DropdownMenuLabel>
+                                    {apiGroups.map(g => (
+                                      <DropdownMenuItem key={`rm-${g.id}`} className="text-destructive focus:text-destructive" onClick={() => handleRemoveFromGroup(c.id, g.id)}>
+                                        <X className="mr-2 h-3.5 w-3.5" />
+                                        {g.name}
+                                      </DropdownMenuItem>
+                                    ))}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
                               <Button size="icon" variant="ghost" title="Modifier" onClick={() => handleEdit(c)}>
                                 <Pencil className="h-4 w-4" />
                               </Button>
@@ -1102,6 +1236,120 @@ ${header}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Group delete confirmation */}
+      <AlertDialog open={groupDeleteTarget !== null} onOpenChange={open => { if (!open) setGroupDeleteTarget(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce groupe ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Les contacts seront désassignés de ce groupe mais ne seront pas supprimés.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => groupDeleteTarget && handleDeleteGroup(groupDeleteTarget)}>
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Groups management dialog */}
+      <Dialog open={isGroupsDialogOpen} onOpenChange={setIsGroupsDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UsersRound className="h-5 w-5" />
+              Gérer les groupes
+            </DialogTitle>
+            <DialogDescription>
+              Créez, renommez ou supprimez des groupes de contacts.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Existing groups */}
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {apiGroups.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">Aucun groupe créé.</p>
+            )}
+            {apiGroups.map(g => (
+              <div key={g.id} className="flex items-center gap-2 rounded-md border px-3 py-2">
+                {editingGroupId === g.id ? (
+                  <>
+                    <input
+                      type="color"
+                      value={editingGroupColor}
+                      onChange={e => setEditingGroupColor(e.target.value)}
+                      className="h-7 w-7 cursor-pointer rounded border-0 p-0"
+                    />
+                    <Input
+                      autoFocus
+                      className="h-7 flex-1 text-sm"
+                      value={editingGroupName}
+                      onChange={e => setEditingGroupName(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") handleUpdateGroup(g.id); if (e.key === "Escape") setEditingGroupId(null) }}
+                    />
+                    <Button size="sm" onClick={() => handleUpdateGroup(g.id)}>OK</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditingGroupId(null)}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {g.color && <span className="inline-block h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: g.color }} />}
+                    <span className="flex-1 text-sm font-medium truncate">{g.name}</span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      onClick={() => { setEditingGroupId(g.id); setEditingGroupName(g.name); setEditingGroupColor(g.color ?? "#6366f1") }}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={() => setGroupDeleteTarget(g.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Create new group */}
+          <div className="border-t pt-4">
+            <p className="text-sm font-medium mb-2">Nouveau groupe</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={newGroupColor}
+                onChange={e => setNewGroupColor(e.target.value)}
+                className="h-8 w-8 cursor-pointer rounded border-0 p-0 shrink-0"
+              />
+              <Input
+                placeholder="Nom du groupe..."
+                value={newGroupName}
+                onChange={e => setNewGroupName(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") handleCreateGroup() }}
+                className="flex-1"
+              />
+              <Button onClick={handleCreateGroup} disabled={!newGroupName.trim()}>
+                <Plus className="h-4 w-4 mr-1" />
+                Créer
+              </Button>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsGroupsDialogOpen(false)}>Fermer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   )
 }

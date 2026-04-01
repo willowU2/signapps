@@ -753,6 +753,34 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    // CRM routes (protected)
+    let crm_routes = Router::new()
+        .route(
+            "/api/v1/crm/deals",
+            get(handlers::crm::list_deals).post(handlers::crm::create_deal),
+        )
+        .route(
+            "/api/v1/crm/deals/:id",
+            get(handlers::crm::get_deal)
+                .put(handlers::crm::update_deal)
+                .delete(handlers::crm::delete_deal),
+        )
+        .route(
+            "/api/v1/crm/leads",
+            get(handlers::crm::list_leads).post(handlers::crm::create_lead),
+        )
+        .route(
+            "/api/v1/crm/leads/:id",
+            get(handlers::crm::get_lead)
+                .put(handlers::crm::update_lead)
+                .delete(handlers::crm::delete_lead),
+        )
+        .route("/api/v1/crm/pipeline", get(handlers::crm::get_pipeline))
+        .layer(axum_middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
     // Combine all routes
     Router::new()
         .merge(public_routes)
@@ -765,6 +793,7 @@ fn create_router(state: AppState) -> Router {
         .merge(accounting_routes)
         .merge(org_routes)
         .merge(vault_routes)
+        .merge(crm_routes)
         .layer(axum_middleware::from_fn(logging_middleware))
         .layer(axum_middleware::from_fn(request_id_middleware))
         .layer(axum_middleware::from_fn(security_headers_middleware))

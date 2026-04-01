@@ -22,8 +22,8 @@ interface Props {
 export function DealsExportCsv({ contacts, compact = false }: Props) {
   const [exported, setExported] = useState(false)
 
-  const handleExport = () => {
-    const csv = exportDealsWithContactsCsv(contacts)
+  const handleExport = async () => {
+    const csv = await exportDealsWithContactsCsv(contacts)
     if (!csv.trim() || csv.split("\n").length <= 1) {
       toast.error("Aucun deal à exporter.")
       return

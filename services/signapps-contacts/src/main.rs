@@ -79,6 +79,28 @@ pub struct UpdateContactRequest {
     pub group_ids: Option<Vec<Uuid>>,
 }
 
+#[derive(Debug, Deserialize)]
+/// Request payload for CreateGroup operation.
+pub struct CreateGroupRequest {
+    pub name: String,
+    pub color: Option<String>,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+/// Request payload for UpdateGroup operation.
+pub struct UpdateGroupRequest {
+    pub name: Option<String>,
+    pub color: Option<String>,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+/// Request payload for AddGroupMember operation.
+pub struct AddGroupMemberRequest {
+    pub contact_id: Uuid,
+}
+
 // ---------------------------------------------------------------------------
 // Application state (in-memory for skeleton)
 // ---------------------------------------------------------------------------
@@ -378,6 +400,141 @@ async fn list_groups(State(state): State<AppState>) -> impl IntoResponse {
     Json(groups.clone())
 }
 
+async fn create_group(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(payload): Json<CreateGroupRequest>,
+) -> impl IntoResponse {
+    if payload.name.trim().is_empty() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": "Group name cannot be empty" })),
+        );
+    }
+    let now = Utc::now().to_rfc3339();
+    let group = ContactGroup {
+        id: Uuid::new_v4(),
+        owner_id: claims.sub,
+        name: payload.name,
+        description: payload.description,
+        color: payload.color,
+        created_at: now.clone(),
+        updated_at: now,
+    };
+    state
+        .groups
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .push(group.clone());
+    tracing::info!(id = %group.id, "Contact group created");
+    (
+        StatusCode::CREATED,
+        Json(serde_json::to_value(group).unwrap_or_default()),
+    )
+}
+
+async fn update_group(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateGroupRequest>,
+) -> impl IntoResponse {
+    let mut groups = state.groups.lock().unwrap_or_else(|e| e.into_inner());
+    match groups.iter_mut().find(|g| g.id == id) {
+        Some(g) => {
+            if let Some(name) = payload.name {
+                if name.trim().is_empty() {
+                    return (
+                        StatusCode::BAD_REQUEST,
+                        Json(serde_json::json!({ "error": "Group name cannot be empty" })),
+                    );
+                }
+                g.name = name;
+            }
+            if payload.color.is_some() {
+                g.color = payload.color;
+            }
+            if payload.description.is_some() {
+                g.description = payload.description;
+            }
+            g.updated_at = Utc::now().to_rfc3339();
+            (
+                StatusCode::OK,
+                Json(serde_json::to_value(&*g).unwrap_or_default()),
+            )
+        },
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Group not found" })),
+        ),
+    }
+}
+
+async fn delete_group(State(state): State<AppState>, Path(id): Path<Uuid>) -> StatusCode {
+    // Unassign this group from all contacts first
+    {
+        let mut contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
+        for contact in contacts.iter_mut() {
+            contact.group_ids.retain(|gid| *gid != id);
+        }
+    }
+    let mut groups = state.groups.lock().unwrap_or_else(|e| e.into_inner());
+    let before = groups.len();
+    groups.retain(|g| g.id != id);
+    if groups.len() < before {
+        tracing::info!(id = %id, "Contact group deleted");
+        StatusCode::NO_CONTENT
+    } else {
+        StatusCode::NOT_FOUND
+    }
+}
+
+async fn add_group_member(
+    State(state): State<AppState>,
+    Path(group_id): Path<Uuid>,
+    Json(payload): Json<AddGroupMemberRequest>,
+) -> impl IntoResponse {
+    // Verify group exists
+    {
+        let groups = state.groups.lock().unwrap_or_else(|e| e.into_inner());
+        if !groups.iter().any(|g| g.id == group_id) {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": "Group not found" })),
+            );
+        }
+    }
+    // Add group_id to contact
+    let mut contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
+    match contacts.iter_mut().find(|c| c.id == payload.contact_id) {
+        Some(c) => {
+            if !c.group_ids.contains(&group_id) {
+                c.group_ids.push(group_id);
+                c.updated_at = Utc::now().to_rfc3339();
+            }
+            (StatusCode::OK, Json(serde_json::json!({ "ok": true })))
+        },
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Contact not found" })),
+        ),
+    }
+}
+
+async fn remove_group_member(
+    State(state): State<AppState>,
+    Path((group_id, contact_id)): Path<(Uuid, Uuid)>,
+) -> StatusCode {
+    let mut contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
+    match contacts.iter_mut().find(|c| c.id == contact_id) {
+        Some(c) => {
+            c.group_ids.retain(|gid| *gid != group_id);
+            c.updated_at = Utc::now().to_rfc3339();
+            StatusCode::NO_CONTENT
+        },
+        None => StatusCode::NOT_FOUND,
+    }
+}
+
 async fn health_check() -> axum::Json<serde_json::Value> {
     axum::Json(serde_json::json!({
         "status": "ok",
@@ -418,7 +575,22 @@ fn create_router(state: AppState) -> Router {
 
     let protected_routes = Router::new()
         .route("/api/v1/contacts", get(list_contacts).post(create_contact))
-        .route("/api/v1/contacts/groups", get(list_groups))
+        .route(
+            "/api/v1/contacts/groups",
+            get(list_groups).post(create_group),
+        )
+        .route(
+            "/api/v1/contacts/groups/:id",
+            axum::routing::put(update_group).delete(delete_group),
+        )
+        .route(
+            "/api/v1/contacts/groups/:id/members",
+            post(add_group_member),
+        )
+        .route(
+            "/api/v1/contacts/groups/:id/members/:contact_id",
+            axum::routing::delete(remove_group_member),
+        )
         .route("/api/v1/contacts/import/csv", post(import_contacts_csv))
         .route("/api/v1/contacts/export/vcf", get(carddav::export_vcf))
         .route("/api/v1/contacts/import/vcf", post(carddav::import_vcf))

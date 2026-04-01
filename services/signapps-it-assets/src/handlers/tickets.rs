@@ -461,6 +461,38 @@ pub async fn update_ticket(
     Ok(Json(ticket))
 }
 
+// ─── DELETE /tickets/:id — delete closed/resolved ticket ──────────────────────
+
+#[tracing::instrument(skip_all)]
+pub async fn delete_ticket(
+    State(pool): State<DatabasePool>,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    // Only allow deletion of closed or resolved tickets
+    let ticket: Option<(String,)> = sqlx::query_as("SELECT status FROM it.tickets WHERE id = $1")
+        .bind(id)
+        .fetch_optional(pool.inner())
+        .await
+        .map_err(internal_err)?;
+
+    match ticket {
+        None => Err((StatusCode::NOT_FOUND, "Ticket not found".to_string())),
+        Some((status,)) if !matches!(status.as_str(), "closed" | "resolved") => Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            format!("Cannot delete ticket with status '{}'. Only closed or resolved tickets can be deleted.", status),
+        )),
+        Some(_) => {
+            sqlx::query("DELETE FROM it.tickets WHERE id = $1")
+                .bind(id)
+                .execute(pool.inner())
+                .await
+                .map_err(internal_err)?;
+            tracing::info!(id = %id, "Ticket deleted");
+            Ok(StatusCode::NO_CONTENT)
+        },
+    }
+}
+
 // ─── POST /tickets/:id/comments — add comment ─────────────────────────────────
 
 #[tracing::instrument(skip_all)]

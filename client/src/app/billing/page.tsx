@@ -3,10 +3,19 @@
 import { useEffect, useState } from "react";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { AppLayout } from "@/components/layout/app-layout";
-import { billingApi, type BillingUsage, type Invoice, type InvoiceStatus } from "@/lib/api/billing";
+import {
+  billingApi,
+  type BillingUsage,
+  type Invoice,
+  type InvoiceStatus,
+  type BillingPlan,
+  type CreateInvoiceRequest,
+  type CreatePlanRequest,
+} from "@/lib/api/billing";
 import { OverdueInvoicesCrmFlag } from "@/components/interop/OverdueInvoicesCrmFlag";
 import { InvoiceEmailSender } from "@/components/interop/InvoiceEmailSender";
 import { localInvoicesApi } from "@/lib/api/interop";
+import { toast } from "sonner";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -115,9 +124,503 @@ function CheckIcon() {
   );
 }
 
+// ─── Invoice Dialog ───────────────────────────────────────────────────────────
+
+interface InvoiceDialogProps {
+  open: boolean;
+  invoice?: Invoice | null;
+  onClose: () => void;
+  onSaved: (inv: Invoice) => void;
+}
+
+function InvoiceDialog({ open, invoice, onClose, onSaved }: InvoiceDialogProps) {
+  const isEdit = !!invoice;
+  const [clientName, setClientName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState("EUR");
+  const [dueDate, setDueDate] = useState("");
+  const [status, setStatus] = useState("draft");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (invoice) {
+      setClientName((invoice.metadata?.client_name as string) || invoice.client_name || "");
+      setAmount(String((invoice.amount_cents / 100).toFixed(2)));
+      setCurrency(invoice.currency || "EUR");
+      setDueDate(invoice.due_at ? invoice.due_at.substring(0, 10) : "");
+      setStatus(invoice.status || "draft");
+    } else {
+      setClientName("");
+      setAmount("");
+      setCurrency("EUR");
+      setDueDate("");
+      setStatus("draft");
+    }
+  }, [invoice, open]);
+
+  if (!open) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amountCents = Math.round(parseFloat(amount) * 100);
+    if (isNaN(amountCents) || amountCents <= 0) {
+      toast.error("Montant invalide");
+      return;
+    }
+    setSaving(true);
+    try {
+      if (isEdit && invoice) {
+        const res = await billingApi.updateInvoice(invoice.id, {
+          amount_cents: amountCents,
+          currency,
+          due_at: dueDate ? new Date(dueDate).toISOString() : undefined,
+          status,
+          metadata: { ...invoice.metadata, client_name: clientName },
+        });
+        onSaved(res.data);
+        toast.success("Facture mise à jour");
+      } else {
+        const number = `INV-${Date.now()}`;
+        const payload: CreateInvoiceRequest = {
+          number,
+          amount_cents: amountCents,
+          currency,
+          due_at: dueDate ? new Date(dueDate).toISOString() : undefined,
+          metadata: { client_name: clientName },
+        };
+        const res = await billingApi.createInvoice(payload);
+        onSaved(res.data);
+        toast.success("Facture créée");
+      }
+      onClose();
+    } catch {
+      toast.error(isEdit ? "Impossible de modifier la facture" : "Impossible de créer la facture");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-background rounded-xl shadow-xl w-full max-w-md p-6 mx-4">
+        <h2 className="text-lg font-semibold mb-4">
+          {isEdit ? "Modifier la facture" : "Nouvelle facture"}
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-sm font-medium">Nom du client</label>
+            <input
+              className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              placeholder="Acme Corp"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium">Montant (TTC)</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="100.00"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Devise</label>
+              <select
+                className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+              >
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+                <option value="CHF">CHF</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium">Date d&apos;échéance</label>
+            <input
+              type="date"
+              className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
+          </div>
+          {isEdit && (
+            <div>
+              <label className="text-sm font-medium">Statut</label>
+              <select
+                className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="draft">Brouillon</option>
+                <option value="sent">Envoyée</option>
+                <option value="paid">Payée</option>
+                <option value="overdue">En retard</option>
+              </select>
+            </div>
+          )}
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg border text-sm hover:bg-accent transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {saving ? "Enregistrement..." : isEdit ? "Mettre à jour" : "Créer"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── Delete Confirm Dialog ────────────────────────────────────────────────────
+
+function ConfirmDialog({
+  open,
+  title,
+  description,
+  onConfirm,
+  onCancel,
+  loading,
+}: {
+  open: boolean;
+  title: string;
+  description: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  loading?: boolean;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-background rounded-xl shadow-xl w-full max-w-sm p-6 mx-4">
+        <h2 className="text-lg font-semibold mb-2">{title}</h2>
+        <p className="text-sm text-muted-foreground mb-5">{description}</p>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 rounded-lg border text-sm hover:bg-accent transition-colors"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors disabled:opacity-50"
+          >
+            {loading ? "Suppression..." : "Supprimer"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Plan Dialog ──────────────────────────────────────────────────────────────
+
+interface PlanDialogProps {
+  open: boolean;
+  plan?: BillingPlan | null;
+  onClose: () => void;
+  onSaved: (plan: BillingPlan) => void;
+}
+
+function PlanDialog({ open, plan, onClose, onSaved }: PlanDialogProps) {
+  const isEdit = !!plan;
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [priceCents, setPriceCents] = useState("");
+  const [currency, setCurrency] = useState("EUR");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (plan) {
+      setName(plan.name);
+      setDescription(plan.description || "");
+      setPriceCents(String((plan.price_cents / 100).toFixed(2)));
+      setCurrency(plan.currency || "EUR");
+    } else {
+      setName("");
+      setDescription("");
+      setPriceCents("");
+      setCurrency("EUR");
+    }
+  }, [plan, open]);
+
+  if (!open) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cents = Math.round(parseFloat(priceCents) * 100);
+    if (isNaN(cents) || cents < 0) {
+      toast.error("Prix invalide");
+      return;
+    }
+    setSaving(true);
+    try {
+      if (isEdit && plan) {
+        const res = await billingApi.updatePlan(plan.id, {
+          name,
+          description: description || undefined,
+          price_cents: cents,
+          currency,
+        });
+        onSaved(res.data);
+        toast.success("Plan mis à jour");
+      } else {
+        const payload: CreatePlanRequest = {
+          name,
+          description: description || undefined,
+          price_cents: cents,
+          currency,
+        };
+        const res = await billingApi.createPlan(payload);
+        onSaved(res.data);
+        toast.success("Plan créé");
+      }
+      onClose();
+    } catch {
+      toast.error(isEdit ? "Impossible de modifier le plan" : "Impossible de créer le plan");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-background rounded-xl shadow-xl w-full max-w-md p-6 mx-4">
+        <h2 className="text-lg font-semibold mb-4">
+          {isEdit ? "Modifier le plan" : "Nouveau plan"}
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-sm font-medium">Nom du plan</label>
+            <input
+              className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Pro"
+              required
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Description</label>
+            <input
+              className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Description du plan"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium">Prix mensuel</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                value={priceCents}
+                onChange={(e) => setPriceCents(e.target.value)}
+                placeholder="29.99"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Devise</label>
+              <select
+                className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+              >
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+                <option value="CHF">CHF</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg border text-sm hover:bg-accent transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {saving ? "Enregistrement..." : isEdit ? "Mettre à jour" : "Créer"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── Plans Tab ────────────────────────────────────────────────────────────────
+
+function PlansTab() {
+  const [plans, setPlans] = useState<BillingPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [planDialog, setPlanDialog] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<BillingPlan | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<BillingPlan | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    billingApi
+      .listPlans()
+      .then((res) => setPlans(res.data ?? []))
+      .catch(() => setPlans([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSaved = (plan: BillingPlan) => {
+    setPlans((prev) => {
+      const idx = prev.findIndex((p) => p.id === plan.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = plan;
+        return next;
+      }
+      return [plan, ...prev];
+    });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await billingApi.deletePlan(deleteTarget.id);
+      setPlans((prev) => prev.filter((p) => p.id !== deleteTarget.id));
+      toast.success("Plan supprimé");
+      setDeleteTarget(null);
+    } catch {
+      toast.error("Impossible de supprimer le plan");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Plans tarifaires
+        </h2>
+        <button
+          onClick={() => { setEditingPlan(null); setPlanDialog(true); }}
+          className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+        >
+          + Nouveau plan
+        </button>
+      </div>
+
+      {loading ? (
+        <LoadingSkeleton />
+      ) : plans.length === 0 ? (
+        <EmptyState
+          label="Aucun plan pour le moment"
+          hint="Créez votre premier plan tarifaire"
+        />
+      ) : (
+        <div className="border rounded-xl overflow-hidden shadow-sm">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Nom</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Description</th>
+                <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Prix / mois</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Statut</th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody>
+              {plans.map((plan) => (
+                <tr key={plan.id} className="border-t hover:bg-accent/40 transition-colors">
+                  <td className="px-4 py-3 font-medium">{plan.name}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{plan.description || "—"}</td>
+                  <td className="px-4 py-3 text-right font-mono">
+                    {formatCurrency(plan.price_cents / 100, plan.currency)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        plan.is_active
+                          ? "bg-green-500/15 text-green-500"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {plan.is_active ? "Actif" : "Inactif"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2 justify-end">
+                      <button
+                        onClick={() => { setEditingPlan(plan); setPlanDialog(true); }}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        onClick={() => setDeleteTarget(plan)}
+                        className="text-xs text-destructive hover:underline"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <PlanDialog
+        open={planDialog}
+        plan={editingPlan}
+        onClose={() => { setPlanDialog(false); setEditingPlan(null); }}
+        onSaved={handleSaved}
+      />
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Supprimer ce plan ?"
+        description={`Le plan « ${deleteTarget?.name} » sera définitivement supprimé.`}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
+    </>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-type Tab = "invoices" | "quotes";
+type Tab = "invoices" | "quotes" | "plans";
 
 export default function BillingPage() {
   usePageTitle('Facturation');
@@ -127,6 +630,12 @@ export default function BillingPage() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("invoices");
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all");
+
+  // Invoice dialog state
+  const [invoiceDialog, setInvoiceDialog] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Invoice | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -168,6 +677,33 @@ export default function BillingPage() {
     return true;
   });
 
+  const handleInvoiceSaved = (inv: Invoice) => {
+    setInvoices((prev) => {
+      const idx = prev.findIndex((i) => i.id === inv.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = inv;
+        return next;
+      }
+      return [inv, ...prev];
+    });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await billingApi.deleteInvoice(deleteTarget.id);
+      setInvoices((prev) => prev.filter((i) => i.id !== deleteTarget.id));
+      toast.success("Facture supprimée");
+      setDeleteTarget(null);
+    } catch {
+      toast.error("Impossible de supprimer la facture");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <AppLayout>
     <div className="w-full space-y-8">
@@ -179,7 +715,10 @@ export default function BillingPage() {
             Gérez vos factures et suivez votre utilisation
           </p>
         </div>
-        <button className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
+        <button
+          onClick={() => { setEditingInvoice(null); setInvoiceDialog(true); }}
+          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+        >
           + Nouvelle facture
         </button>
       </div>
@@ -269,11 +808,11 @@ export default function BillingPage() {
         <OverdueInvoicesCrmFlag />
       </section>
 
-      {/* Invoices table */}
+      {/* Tabs section */}
       <section>
         {/* Tabs */}
         <div className="flex items-center gap-2 mb-4">
-          {(["invoices", "quotes"] as const).map((t) => (
+          {(["invoices", "quotes", "plans"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -283,7 +822,7 @@ export default function BillingPage() {
                   : "bg-muted text-muted-foreground hover:bg-accent"
               }`}
             >
-              {t === "invoices" ? "Factures" : "Devis"}
+              {t === "invoices" ? "Factures" : t === "quotes" ? "Devis" : "Plans"}
             </button>
           ))}
 
@@ -311,7 +850,9 @@ export default function BillingPage() {
           )}
         </div>
 
-        {loading ? (
+        {tab === "plans" ? (
+          <PlansTab />
+        ) : loading ? (
           <LoadingSkeleton />
         ) : error ? (
           <ErrorBanner message={error} />
@@ -331,17 +872,45 @@ export default function BillingPage() {
             }
           />
         ) : (
-          <InvoiceTable invoices={filtered} />
+          <InvoiceTable
+            invoices={filtered}
+            onEdit={(inv) => { setEditingInvoice(inv); setInvoiceDialog(true); }}
+            onDelete={setDeleteTarget}
+          />
         )}
       </section>
     </div>
+
+    {/* Dialogs */}
+    <InvoiceDialog
+      open={invoiceDialog}
+      invoice={editingInvoice}
+      onClose={() => { setInvoiceDialog(false); setEditingInvoice(null); }}
+      onSaved={handleInvoiceSaved}
+    />
+    <ConfirmDialog
+      open={!!deleteTarget}
+      title="Supprimer cette facture ?"
+      description={`La facture ${deleteTarget?.number} sera définitivement supprimée. Seules les factures en brouillon peuvent être supprimées.`}
+      onConfirm={handleDeleteConfirm}
+      onCancel={() => setDeleteTarget(null)}
+      loading={deleting}
+    />
     </AppLayout>
   );
 }
 
 // ─── Invoice Table ────────────────────────────────────────────────────────────
 
-function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
+function InvoiceTable({
+  invoices,
+  onEdit,
+  onDelete,
+}: {
+  invoices: Invoice[];
+  onEdit: (inv: Invoice) => void;
+  onDelete: (inv: Invoice) => void;
+}) {
   return (
     <div className="border rounded-xl overflow-hidden shadow-sm">
       <table className="w-full text-sm">
@@ -387,7 +956,7 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
                 className="border-t hover:bg-accent/40 transition-colors"
               >
                 <td className="px-4 py-3 font-mono text-xs">{inv.number}</td>
-                <td className="px-4 py-3">{inv.client_name}</td>
+                <td className="px-4 py-3">{inv.client_name || "—"}</td>
                 <td className="px-4 py-3 text-right font-mono">
                   {formatCurrency(inv.total_ttc, inv.currency || "EUR")}
                 </td>
@@ -418,21 +987,37 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
                     <span className="text-muted-foreground text-xs">—</span>
                   )}
                 </td>
-                {/* Feature 22: Email invoice to contact */}
+                {/* Feature 22: Email invoice to contact + Edit/Delete */}
                 <td className="px-4 py-3">
-                  {localInv ? (
-                    <InvoiceEmailSender
-                      invoice={localInv}
-                      contactEmail={localInv.contactEmail}
-                    />
-                  ) : (
-                    <a
-                      href={`mailto:?subject=Facture ${inv.number}`}
+                  <div className="flex items-center gap-2">
+                    {localInv ? (
+                      <InvoiceEmailSender
+                        invoice={localInv}
+                        contactEmail={localInv.contactEmail}
+                      />
+                    ) : (
+                      <a
+                        href={`mailto:?subject=Facture ${inv.number}`}
+                        className="text-primary text-xs hover:underline"
+                      >
+                        Envoyer
+                      </a>
+                    )}
+                    <button
+                      onClick={() => onEdit(inv)}
                       className="text-primary text-xs hover:underline"
                     >
-                      Envoyer
-                    </a>
-                  )}
+                      Modifier
+                    </button>
+                    {inv.status === "draft" && (
+                      <button
+                        onClick={() => onDelete(inv)}
+                        className="text-destructive text-xs hover:underline"
+                      >
+                        Supprimer
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             );

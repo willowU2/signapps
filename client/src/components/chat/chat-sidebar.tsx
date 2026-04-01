@@ -61,6 +61,15 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
     const [dmDialogOpen, setDmDialogOpen] = useState(false)
     const [isCreatingDm, setIsCreatingDm] = useState(false)
 
+    // Channel context menu (right-click)
+    const [contextMenu, setContextMenu] = useState<{ channelId: string; channelName: string; x: number; y: number } | null>(null)
+    const [renameDialogOpen, setRenameDialogOpen] = useState(false)
+    const [renameTarget, setRenameTarget] = useState<{ id: string; name: string } | null>(null)
+    const [renameValue, setRenameValue] = useState("")
+    const [isRenaming, setIsRenaming] = useState(false)
+    const [deleteChannelTarget, setDeleteChannelTarget] = useState<{ id: string; name: string } | null>(null)
+    const [isDeletingChannel, setIsDeletingChannel] = useState(false)
+
     const loadData = useCallback(async () => {
         setIsLoading(true)
         try {
@@ -188,6 +197,44 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
         hideDm(dmId)
         if (selectedChannel === dmId) onSelectChannel("accueil", "Accueil", false)
         toast.success("Conversation supprimée")
+    }
+
+    const handleChannelContextMenu = (e: React.MouseEvent, channel: Channel) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setContextMenu({ channelId: channel.id, channelName: channel.name, x: e.clientX, y: e.clientY })
+    }
+
+    const handleRenameChannel = async () => {
+        if (!renameTarget || !renameValue.trim()) return
+        setIsRenaming(true)
+        try {
+            const res = await chatApi.updateChannel(renameTarget.id, { name: renameValue.trim() })
+            setChannels((prev) => prev.map((c) => c.id === renameTarget.id ? { ...c, name: res.data?.name ?? renameValue.trim() } : c))
+            toast.success("Canal renommé")
+        } catch {
+            toast.error("Impossible de renommer le canal")
+        } finally {
+            setIsRenaming(false)
+            setRenameDialogOpen(false)
+            setRenameTarget(null)
+        }
+    }
+
+    const handleDeleteChannel = async () => {
+        if (!deleteChannelTarget) return
+        setIsDeletingChannel(true)
+        try {
+            await chatApi.deleteChannel(deleteChannelTarget.id)
+            setChannels((prev) => prev.filter((c) => c.id !== deleteChannelTarget.id))
+            if (selectedChannel === deleteChannelTarget.id) onSelectChannel("accueil", "Accueil", false)
+            toast.success("Canal supprimé")
+        } catch {
+            toast.error("Impossible de supprimer le canal")
+        } finally {
+            setIsDeletingChannel(false)
+            setDeleteChannelTarget(null)
+        }
     }
 
     const filteredChannels = channels.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -340,6 +387,7 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
                                                 selectedChannel === channel.id ? "bg-primary/15 text-primary font-semibold dark:bg-primary/20" : "text-muted-foreground hover:bg-muted"
                                             )}
                                             onClick={() => onSelectChannel(channel.id, channel.name, false, channel.is_private)}
+                                            onContextMenu={(e) => handleChannelContextMenu(e, channel)}
                                         >
                                             {/* IDEA-141: private/public icon */}
                                             <div className="flex items-center justify-center w-6 h-6 rounded bg-muted text-muted-foreground shrink-0">
@@ -405,6 +453,83 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Channel context menu */}
+            {contextMenu && (
+                <>
+                    <div className="fixed inset-0 z-40" onClick={() => setContextMenu(null)} />
+                    <div
+                        className="fixed z-50 bg-background border rounded-lg shadow-lg py-1 min-w-[160px]"
+                        style={{ left: contextMenu.x, top: contextMenu.y }}
+                    >
+                        <button
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
+                            onClick={() => {
+                                setRenameTarget({ id: contextMenu.channelId, name: contextMenu.channelName })
+                                setRenameValue(contextMenu.channelName)
+                                setRenameDialogOpen(true)
+                                setContextMenu(null)
+                            }}
+                        >
+                            Renommer
+                        </button>
+                        <button
+                            className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                            onClick={() => {
+                                setDeleteChannelTarget({ id: contextMenu.channelId, name: contextMenu.channelName })
+                                setContextMenu(null)
+                            }}
+                        >
+                            Supprimer
+                        </button>
+                    </div>
+                </>
+            )}
+
+            {/* Rename Channel Dialog */}
+            <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+                <DialogContent className="sm:max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>Renommer le canal</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Input
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            placeholder="Nouveau nom"
+                            onKeyDown={(e) => { if (e.key === "Enter") handleRenameChannel() }}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>Annuler</Button>
+                        <Button onClick={handleRenameChannel} disabled={isRenaming || !renameValue.trim()}>
+                            {isRenaming ? "Renommage..." : "Renommer"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Channel Confirm */}
+            {deleteChannelTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="bg-background rounded-xl shadow-xl w-full max-w-sm p-6 mx-4">
+                        <h2 className="text-base font-semibold mb-2">Supprimer &laquo;{deleteChannelTarget.name}&raquo; ?</h2>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            Tous les messages de ce canal seront définitivement supprimés.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setDeleteChannelTarget(null)}>Annuler</Button>
+                            <Button
+                                variant="destructive"
+                                onClick={handleDeleteChannel}
+                                disabled={isDeletingChannel}
+                            >
+                                {isDeletingChannel ? "Suppression..." : "Supprimer"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Create DM Dialog */}
             <Dialog open={dmDialogOpen} onOpenChange={setDmDialogOpen}>

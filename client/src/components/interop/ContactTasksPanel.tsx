@@ -1,11 +1,11 @@
 "use client"
 // Feature 12: Contact → show tasks assigned to them
 
-import { useState, useMemo } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { CheckSquare, Square, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { crmTasksApi, dealsApi, type CrmTask } from "@/lib/api/crm"
+import { crmTasksApi, dealsApi, type Deal, type CrmTask } from "@/lib/api/crm"
 import { toast } from "sonner"
 
 interface Props {
@@ -14,33 +14,31 @@ interface Props {
 }
 
 export function ContactTasksPanel({ contactId, contactEmail }: Props) {
-  const [tasks, setTasks] = useState<(CrmTask & { dealTitle?: string })[]>(() => {
-    const deals = dealsApi.list().filter(
-      d => d.contactId === contactId ||
-        (contactEmail && d.contactEmail?.toLowerCase() === contactEmail?.toLowerCase())
-    )
-    return deals.flatMap(deal =>
-      crmTasksApi.byDeal(deal.id).map(t => ({ ...t, dealTitle: deal.title }))
-    )
-  })
-
+  const [tasks, setTasks] = useState<(CrmTask & { dealTitle?: string })[]>([])
+  const [deals, setDeals] = useState<Deal[]>([])
   const [adding, setAdding] = useState(false)
   const [newTitle, setNewTitle] = useState("")
 
-  const deals = useMemo(
-    () => dealsApi.list().filter(
-      d => d.contactId === contactId ||
-        (contactEmail && d.contactEmail?.toLowerCase() === contactEmail?.toLowerCase())
-    ),
-    [contactId, contactEmail]
-  )
+  useEffect(() => {
+    dealsApi.list().then(all => {
+      const filtered = all.filter(
+        d => d.contactId === contactId ||
+          (contactEmail && d.contactEmail?.toLowerCase() === contactEmail?.toLowerCase())
+      )
+      setDeals(filtered)
+      const t = filtered.flatMap(deal =>
+        crmTasksApi.byDeal(deal.id).map(t => ({ ...t, dealTitle: deal.title }))
+      )
+      setTasks(t)
+    })
+  }, [contactId, contactEmail])
 
-  const refresh = () => {
+  const refresh = useCallback(() => {
     const updated = deals.flatMap(deal =>
       crmTasksApi.byDeal(deal.id).map(t => ({ ...t, dealTitle: deal.title }))
     )
     setTasks(updated)
-  }
+  }, [deals])
 
   const handleToggle = (id: string) => {
     crmTasksApi.toggle(id)

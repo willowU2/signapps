@@ -2,7 +2,7 @@
 // Feature 11: Billing overdue invoice → flag in CRM
 // Feature 27: Payment received → update CRM deal status
 
-import { useState, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { AlertTriangle, CheckCircle, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -19,14 +19,16 @@ interface Props {
 }
 
 export function OverdueInvoicesCrmFlag({ compact = false }: Props) {
-  const [items, setItems] = useState(() => getOverdueInvoicesWithDeals())
+  const [items, setItems] = useState<Awaited<ReturnType<typeof getOverdueInvoicesWithDeals>>>([])
 
-  const refresh = () => setItems(getOverdueInvoicesWithDeals())
+  const refresh = () => getOverdueInvoicesWithDeals().then(setItems)
 
-  const handleMarkPaid = (invoiceId: string) => {
+  useEffect(() => { refresh() }, [])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleMarkPaid = async (invoiceId: string) => {
     localInvoicesApi.update(invoiceId, { status: "paid" })
     // Feature 27: payment received → update deal
-    const updatedDeal = onInvoicePaid(invoiceId)
+    const updatedDeal = await onInvoicePaid(invoiceId)
     if (updatedDeal) {
       toast.success(`Facture payée. Deal "${updatedDeal.title}" mis à jour → Gagné.`)
     } else {

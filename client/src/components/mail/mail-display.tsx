@@ -193,12 +193,14 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete, accountId, al
                 : null
             if (!match) return
             // Scan all deals for ones linked to this contact
-            const deals = dealsApi.list().filter(
-                (d) =>
-                    d.contactId === match.id ||
-                    d.contactEmail?.toLowerCase() === senderEmail
-            )
-            setCrmDeals(deals)
+            dealsApi.list().then(allDeals => {
+                const deals = allDeals.filter(
+                    (d) =>
+                        d.contactId === match.id ||
+                        d.contactEmail?.toLowerCase() === senderEmail
+                )
+                setCrmDeals(deals)
+            })
         }).catch(() => { /* silent — CRM context is optional */ })
     }, [mail?.email])
 

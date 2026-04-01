@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, Check, RefreshCw } from "lucide-react"
 import { calendarApi } from "@/lib/api/calendar"
 import { activitiesApi, dealsApi, type Deal } from "@/lib/api/crm"
+import { useEffect } from "react"
 import { format, parseISO } from "date-fns"
 import { fr } from "date-fns/locale"
 import { toast } from "sonner"
@@ -19,7 +20,8 @@ interface Props {
 export function CalendarActivities({ dealId }: Props) {
   const [loggedIds, setLoggedIds] = useState<Set<string>>(new Set())
   const [dealLinks, setDealLinks] = useState<Record<string, string>>({})
-  const deals = dealsApi.list()
+  const [deals, setDeals] = useState<Deal[]>([])
+  useEffect(() => { dealsApi.list().then(setDeals) }, [])
 
   const { data: calendars = [], isLoading: calendarsLoading } = useQuery({
     queryKey: ["crm-calendars"],

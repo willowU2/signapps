@@ -12,7 +12,7 @@ use axum::{
     http::StatusCode,
     middleware,
     response::IntoResponse,
-    routing::{delete, get, post},
+    routing::{delete, get, patch, post},
     Json, Router,
 };
 use chrono::Utc;
@@ -164,6 +164,12 @@ pub struct SendMessageRequest {
 /// Request payload for AddReaction operation.
 pub struct AddReactionRequest {
     pub emoji: String,
+}
+
+#[derive(Debug, Deserialize)]
+/// Request payload for EditMessage operation.
+pub struct EditMessageRequest {
+    pub content: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -559,6 +565,141 @@ async fn send_message(
             )
         },
     }
+}
+
+// ---------------------------------------------------------------------------
+// Handlers — Edit & Delete Messages
+// ---------------------------------------------------------------------------
+
+async fn edit_message(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path((channel_id, message_id)): Path<(Uuid, Uuid)>,
+    Json(payload): Json<EditMessageRequest>,
+) -> impl IntoResponse {
+    if payload.content.trim().is_empty() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": "Content cannot be empty" })),
+        );
+    }
+
+    // Try DB-backed channel messages first (only own messages)
+    let result = sqlx::query_as::<_, MessageRow>(
+        r#"
+        UPDATE chat.messages
+        SET content = $1, updated_at = NOW()
+        WHERE id = $2 AND channel_id = $3 AND user_id = $4
+        RETURNING id, channel_id, user_id, username, content, parent_id,
+                  reactions, attachment, is_pinned, created_at, updated_at
+        "#,
+    )
+    .bind(&payload.content)
+    .bind(message_id)
+    .bind(channel_id)
+    .bind(claims.sub)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(row)) => {
+            let msg = ChatMessage::from(row);
+            broadcast(
+                &state,
+                "message_edited",
+                serde_json::to_value(&msg).unwrap_or_default(),
+            );
+            return (
+                StatusCode::OK,
+                Json(serde_json::to_value(&msg).unwrap_or_default()),
+            );
+        },
+        Ok(None) => {},
+        Err(e) => {
+            tracing::error!("edit_message DB error: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            );
+        },
+    }
+
+    // Try DM in-memory
+    for mut entry in state.dm_messages.iter_mut() {
+        if let Some(msg) = entry
+            .value_mut()
+            .iter_mut()
+            .find(|m| m.id == message_id && m.user_id == claims.sub)
+        {
+            msg.content = payload.content.clone();
+            msg.updated_at = Utc::now().to_rfc3339();
+            let val = serde_json::to_value(msg.clone()).unwrap_or_default();
+            broadcast(&state, "message_edited", val.clone());
+            return (StatusCode::OK, Json(val));
+        }
+    }
+
+    (
+        StatusCode::NOT_FOUND,
+        Json(serde_json::json!({ "error": "Message not found or not yours" })),
+    )
+}
+
+async fn delete_message(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path((channel_id, message_id)): Path<(Uuid, Uuid)>,
+) -> impl IntoResponse {
+    // Try DB-backed channel messages first (only own messages)
+    let result =
+        sqlx::query("DELETE FROM chat.messages WHERE id = $1 AND channel_id = $2 AND user_id = $3")
+            .bind(message_id)
+            .bind(channel_id)
+            .bind(claims.sub)
+            .execute(&state.pool)
+            .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => {
+            tracing::info!(id = %message_id, channel = %channel_id, "Message deleted");
+            broadcast(
+                &state,
+                "message_deleted",
+                serde_json::json!({ "message_id": message_id, "channel_id": channel_id }),
+            );
+            return (StatusCode::NO_CONTENT, Json(serde_json::json!({})));
+        },
+        Ok(_) => {},
+        Err(e) => {
+            tracing::error!("delete_message DB error: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            );
+        },
+    }
+
+    // Try DM in-memory
+    for mut entry in state.dm_messages.iter_mut() {
+        let msgs = entry.value_mut();
+        if let Some(pos) = msgs
+            .iter()
+            .position(|m| m.id == message_id && m.user_id == claims.sub)
+        {
+            msgs.remove(pos);
+            broadcast(
+                &state,
+                "message_deleted",
+                serde_json::json!({ "message_id": message_id }),
+            );
+            return (StatusCode::NO_CONTENT, Json(serde_json::json!({})));
+        }
+    }
+
+    (
+        StatusCode::NOT_FOUND,
+        Json(serde_json::json!({ "error": "Message not found or not yours" })),
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -1217,6 +1358,10 @@ fn create_router(state: AppState) -> Router {
         )
         // Messages
         .route("/api/v1/channels/:id/messages", get(list_messages).post(send_message))
+        .route(
+            "/api/v1/channels/:channel_id/messages/:message_id",
+            patch(edit_message).delete(delete_message),
+        )
         // File upload per channel
         .route("/api/v1/channels/:id/upload", post(upload_file))
         // Pins (IDEA-132)
