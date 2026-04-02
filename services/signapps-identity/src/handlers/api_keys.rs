@@ -66,7 +66,7 @@ fn generate_api_key() -> String {
     let mut rng = rand::thread_rng();
     let bytes: Vec<u8> = (0..32).map(|_| rng.gen::<u8>()).collect();
     let encoded: String = bytes.iter().map(|b| format!("{:02x}", b)).collect();
-    format!("sk_example_{}", encoded)
+    format!("signapps_sk_{}", encoded)
 }
 
 /// Hash an API key using SHA-256, returned as lowercase hex.
@@ -316,19 +316,19 @@ mod tests {
     // generate_api_key
     // -----------------------------------------------------------------------
 
-    /// Generated key starts with the expected `sk_example_` prefix.
+    /// Generated key starts with the expected `signapps_sk_` prefix.
     #[test]
     fn test_generate_api_key_has_prefix() {
         let key = generate_api_key();
-        assert!(key.starts_with("sk_example_"), "key must start with 'sk_example_': {key}");
+        assert!(key.starts_with("signapps_sk_"), "key must start with 'signapps_sk_': {key}");
     }
 
     /// Generated key is the expected total length (8 prefix chars + 64 hex chars = 72).
     #[test]
     fn test_generate_api_key_length() {
         let key = generate_api_key();
-        // "sk_example_" = 8 chars, 32 random bytes hex-encoded = 64 chars
-        assert_eq!(key.len(), 72, "unexpected key length: {}", key.len());
+        // "signapps_sk_" = 12 chars, 32 random bytes hex-encoded = 64 chars = 76 total
+        assert_eq!(key.len(), 76, "unexpected key length: {}", key.len());
     }
 
     /// Two successive generated keys are different (probabilistic, but collision probability is 1/2^256).
@@ -345,8 +345,8 @@ mod tests {
         let key = generate_api_key();
         let prefix: String = key.chars().take(16).collect();
         assert_eq!(prefix.len(), 16);
-        // Prefix starts with "sk_example_"
-        assert!(prefix.starts_with("sk_example_"));
+        // Prefix starts with "signapps_sk_"
+        assert!(prefix.starts_with("signapps_sk_"));
     }
 
     // -----------------------------------------------------------------------
@@ -356,14 +356,14 @@ mod tests {
     /// `hash_key` is deterministic — same input always produces the same hash.
     #[test]
     fn test_hash_key_deterministic() {
-        let key = "sk_example_abc123def456";
+        let key = "signapps_sk_abc123def456";
         assert_eq!(hash_key(key), hash_key(key), "hash must be deterministic");
     }
 
     /// `hash_key` output is a 64-char lowercase hex string (SHA-256).
     #[test]
     fn test_hash_key_output_format() {
-        let key = "sk_example_test_value_here_12345678";
+        let key = "signapps_sk_test_value_here_12345678";
         let h = hash_key(key);
         assert_eq!(h.len(), 64, "SHA-256 hex must be 64 chars");
         assert!(
@@ -375,8 +375,8 @@ mod tests {
     /// Different keys produce different hashes.
     #[test]
     fn test_hash_key_different_inputs_differ() {
-        let h1 = hash_key("sk_example_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-        let h2 = hash_key("sk_example_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+        let h1 = hash_key("signapps_sk_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        let h2 = hash_key("signapps_sk_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
         assert_ne!(h1, h2, "different keys must hash differently");
     }
 

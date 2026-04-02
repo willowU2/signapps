@@ -317,16 +317,16 @@ fn test_mfa_code_format_empty_invalid() {
 /// First 16 chars of the key are used as the visible prefix.
 #[test]
 fn test_api_key_prefix_is_first_16_chars() {
-    let key = "sk_example_abcdef0123456789";
+    let key = "signapps_sk_abcdef0123456789";
     let prefix: String = key.chars().take(16).collect();
-    assert_eq!(prefix, "sk_example_abcdef01");
+    assert_eq!(prefix, "signapps_sk_abcdef01");
     assert_eq!(prefix.len(), 16);
 }
 
-/// The prefix always starts with `sk_example_` when the key does.
+/// The prefix always starts with `signapps_sk_` when the key does.
 #[test]
 fn test_api_key_prefix_starts_with_sk_live() {
-    let key = "sk_example_00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff";
+    let key = "signapps_sk_00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff";
     let prefix: String = key.chars().take(16).collect();
-    assert!(prefix.starts_with("sk_example_"));
+    assert!(prefix.starts_with("signapps_sk_"));
 }
