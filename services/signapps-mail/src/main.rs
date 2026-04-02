@@ -37,6 +37,11 @@ impl AuthState for AppState {
 
 #[tokio::main]
 async fn main() {
+    // Install rustls crypto provider before any TLS operation
+    rustls::crypto::ring::default_provider()
+        .install_default()
+        .expect("Failed to install rustls CryptoProvider");
+
     // Initialize using bootstrap helpers
     init_tracing("signapps_mail");
     load_env();

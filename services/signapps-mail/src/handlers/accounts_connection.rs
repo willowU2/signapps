@@ -52,16 +52,8 @@ pub async fn test_imap_connection(
 
     let imap_port = account.imap_port.unwrap_or(993) as u16;
 
-    // Build TLS connector
-    let tls_result = native_tls::TlsConnector::builder()
-        .danger_accept_invalid_certs(true)
-        .danger_accept_invalid_hostnames(true)
-        .build();
-
-    let tls = match tls_result {
-        Ok(tls) => tokio_native_tls::TlsConnector::from(tls),
-        Err(e) => return (false, Some(format!("TLS error: {}", e)), None),
-    };
+    // Build TLS connector (rustls — reliable on Windows)
+    let tls = crate::sync_service::build_native_tls_connector(false);
 
     // Connect to IMAP server
     let tcp_stream = match tokio::net::TcpStream::connect((imap_server.as_str(), imap_port)).await {
@@ -69,10 +61,11 @@ pub async fn test_imap_connection(
         Err(e) => return (false, Some(format!("Connection failed: {}", e)), None),
     };
 
-    let tls_stream = match tls.connect(imap_server.as_str(), tcp_stream).await {
-        Ok(stream) => stream,
-        Err(e) => return (false, Some(format!("TLS handshake failed: {}", e)), None),
-    };
+    let tls_stream =
+        match crate::sync_service::tls_connect(&tls, imap_server, tcp_stream).await {
+            Ok(stream) => stream,
+            Err(e) => return (false, Some(format!("TLS handshake failed: {}", e)), None),
+        };
 
     let client = async_imap::Client::new(tls_stream);
 

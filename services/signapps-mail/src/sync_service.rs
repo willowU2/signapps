@@ -1,10 +1,6 @@
 use crate::handlers::categorize::{categorize_email, ensure_label_and_apply};
 use crate::models::{MailAccount, MailFolder};
-use async_imap::extensions::idle::IdleResponse;
-use async_imap::Authenticator;
-use base64::Engine as _;
 use chrono::Utc;
-use futures_util::stream::StreamExt;
 use mailparse::parse_mail;
 use reqwest;
 use signapps_common::pg_events::{NewEvent, PgEventBus};
@@ -12,19 +8,131 @@ use sqlx::{Pool, Postgres};
 use tokio::time::Duration;
 use uuid::Uuid;
 
-// ---------------------------------------------------------------------------
-// XOAUTH2 authenticator for Gmail / Outlook IMAP OAuth2
-// ---------------------------------------------------------------------------
-
-struct XOAuth2Authenticator {
-    response: String,
+/// Check whether to accept invalid TLS certificates (for dev/self-signed).
+fn accept_invalid_certs() -> bool {
+    std::env::var("IMAP_ACCEPT_INVALID_CERTS")
+        .map(|v| v == "true" || v == "1")
+        .unwrap_or(false)
 }
 
-impl Authenticator for XOAuth2Authenticator {
-    type Response = String;
-    fn process(&mut self, _challenge: &[u8]) -> Self::Response {
-        self.response.clone()
+/// TLS handshake timeout (seconds).
+#[allow(dead_code)]
+const TLS_CONNECT_TIMEOUT_SECS: u64 = 10;
+
+/// Global sync_account timeout (seconds).
+const SYNC_ACCOUNT_TIMEOUT_SECS: u64 = 120;
+
+/// Build a native-tls connector for IMAP connections.
+/// Build a native-tls connector (used by async_imap which requires it).
+pub fn build_native_tls_connector(accept_invalid: bool) -> tokio_native_tls::TlsConnector {
+    tokio_native_tls::TlsConnector::from(
+        native_tls::TlsConnector::builder()
+            .danger_accept_invalid_certs(accept_invalid)
+            .danger_accept_invalid_hostnames(accept_invalid)
+            .build()
+            .expect("Failed to build TLS connector"),
+    )
+}
+
+/// Perform a TLS handshake with a timeout using native-tls.
+///
+/// Wraps the TLS connect in a timeout to prevent indefinite blocking.
+pub async fn tls_connect(
+    connector: &tokio_native_tls::TlsConnector,
+    domain: &str,
+    tcp_stream: tokio::net::TcpStream,
+) -> Result<tokio_native_tls::TlsStream<tokio::net::TcpStream>, Box<dyn std::error::Error + Send + Sync>>
+{
+    let tls_stream = tokio::time::timeout(
+        Duration::from_secs(TLS_CONNECT_TIMEOUT_SECS),
+        connector.connect(domain, tcp_stream),
+    )
+    .await
+    .map_err(|_| {
+        format!(
+            "TLS handshake timed out after {}s for {}",
+            TLS_CONNECT_TIMEOUT_SECS, domain
+        )
+    })?
+    .map_err(|e| format!("TLS handshake failed for {}: {}", domain, e))?;
+    Ok(tls_stream)
+}
+
+// ---------------------------------------------------------------------------
+// XOAUTH2 authenticator for the synchronous `imap` crate (v2.x)
+// ---------------------------------------------------------------------------
+
+/// XOAUTH2 authenticator for use with the synchronous `imap` crate.
+///
+/// The SASL XOAUTH2 initial response is pre-built and base64-encoded.
+/// The `process` method returns the raw bytes (the `imap` crate handles
+/// base64 encoding internally, so we return the *decoded* auth string).
+struct XOAuth2Auth {
+    /// Raw XOAUTH2 auth string: `user=<email>\x01auth=Bearer <token>\x01\x01`
+    auth_string: Vec<u8>,
+}
+
+impl imap::Authenticator for XOAuth2Auth {
+    type Response = Vec<u8>;
+
+    fn process(&self, _challenge: &[u8]) -> Self::Response {
+        self.auth_string.clone()
     }
+}
+
+// ---------------------------------------------------------------------------
+// Data structures for passing fetched mail data out of spawn_blocking
+// ---------------------------------------------------------------------------
+
+/// Represents a single fetched email message from IMAP (pre-parsed).
+struct FetchedMessage {
+    uid: u32,
+    subject: Option<String>,
+    from: Option<String>,
+    to: Option<String>,
+    cc: Option<String>,
+    message_id: Option<String>,
+    in_reply_to: Option<String>,
+    sender_name: Option<String>,
+    sender_email: Option<String>,
+    body_text: Option<String>,
+    body_html: Option<String>,
+    snippet: Option<String>,
+    is_read: bool,
+    received_at: Option<chrono::DateTime<Utc>>,
+    has_attachments: bool,
+    attachments: Vec<AttachmentInfo>,
+}
+
+/// Represents a folder's sync results from IMAP.
+struct FolderSyncResult {
+    imap_path: String,
+    folder_type: String,
+    display_name: String,
+    messages: Vec<FetchedMessage>,
+    /// UIDs fetched during initial sync (first sync, no last_synced_uid).
+    initial_uids: Vec<u32>,
+}
+
+/// Result of the IMAP operations performed inside `spawn_blocking`.
+struct ImapSyncResult {
+    folders: Vec<FolderSyncResult>,
+}
+
+// ---------------------------------------------------------------------------
+// IMAP IDLE outcome for the sync crate
+// ---------------------------------------------------------------------------
+
+/// Outcome from an IDLE wait inside `spawn_blocking`.
+enum IdleOutcome {
+    /// Mailbox changed — trigger incremental sync.
+    MailboxChanged,
+    /// IDLE timed out — re-enter IDLE.
+    TimedOut,
+    /// IDLE not supported — fall back to polling.
+    NotSupported,
+    /// An error occurred.
+    Error(String),
 }
 
 /// Run the periodic IMAP sync loop (every 30 seconds).
@@ -51,7 +159,8 @@ pub async fn start_sync_scheduler(pool: Pool<Postgres>, event_bus: PgEventBus) {
     }
 }
 
-/// Attempt IMAP IDLE on INBOX for a single account.
+/// Attempt IMAP IDLE on INBOX for a single account using the synchronous
+/// `imap` crate inside `spawn_blocking`.
 ///
 /// When the server signals a change the function triggers an incremental sync
 /// and then re-enters IDLE. If the server does not support IDLE the function
@@ -85,233 +194,214 @@ pub async fn idle_inbox(pool: Pool<Postgres>, event_bus: PgEventBus, account: Ma
     }
 
     loop {
-        // ---- connect --------------------------------------------------------
-        let tcp_stream =
-            match tokio::net::TcpStream::connect((&imap_server as &str, imap_port)).await {
-                Ok(s) => s,
-                Err(e) => {
-                    tracing::warn!(
-                        "IDLE: TCP connect failed for {}: {}",
-                        account.email_address,
-                        e
-                    );
-                    tokio::time::sleep(Duration::from_secs(60)).await;
-                    continue;
-                },
-            };
-
-        let accept_invalid = std::env::var("IMAP_ACCEPT_INVALID_CERTS")
-            .map(|v| v == "true" || v == "1")
-            .unwrap_or(false);
-        let tls_connector = match native_tls::TlsConnector::builder()
-            .danger_accept_invalid_certs(accept_invalid)
-            .danger_accept_invalid_hostnames(accept_invalid)
-            .build()
-        {
-            Ok(c) => tokio_native_tls::TlsConnector::from(c),
-            Err(e) => {
-                tracing::warn!("IDLE: TLS builder failed: {}", e);
-                return;
-            },
-        };
-
-        let tls_stream = match tls_connector.connect(&imap_server, tcp_stream).await {
-            Ok(s) => s,
-            Err(e) => {
-                tracing::warn!(
-                    "IDLE: TLS handshake failed for {}: {}",
-                    account.email_address,
-                    e
-                );
-                tokio::time::sleep(Duration::from_secs(60)).await;
-                continue;
-            },
-        };
-
-        let client = async_imap::Client::new(tls_stream);
-        // Try XOAUTH2 first if OAuth token is available, otherwise fall back to password.
-        let mut session = if let Some(ref oauth_token) = account.oauth_token {
-            let auth_string = format!(
-                "user={}\x01auth=Bearer {}\x01\x01",
-                account.email_address, oauth_token
-            );
-            let encoded = base64::engine::general_purpose::STANDARD.encode(auth_string.as_bytes());
-            match client
-                .authenticate("XOAUTH2", XOAuth2Authenticator { response: encoded })
-                .await
+        // Refresh OAuth token if needed before connecting
+        let effective_oauth_token: Option<String> =
+            if let (Some(ref token), Some(expires)) = (&account.oauth_token, account.oauth_expires_at)
             {
-                Ok(s) => {
+                if expires < Utc::now() {
                     tracing::info!(
-                        "IDLE: XOAUTH2 login succeeded for {}",
+                        "IDLE: OAuth token expired for {}, attempting refresh",
                         account.email_address
                     );
-                    s
-                },
-                Err((e, _c)) => {
-                    tracing::warn!(
-                        "IDLE: XOAUTH2 failed for {}, trying password: {}",
-                        account.email_address,
-                        e
-                    );
-                    // Reconnect for password fallback
-                    let tcp2 =
-                        match tokio::net::TcpStream::connect((&imap_server as &str, imap_port))
-                            .await
-                        {
-                            Ok(s) => s,
+                    if let Some(ref refresh_token) = account.oauth_refresh_token {
+                        match refresh_google_token(refresh_token).await {
+                            Ok((new_token, new_expires)) => {
+                                let _ = sqlx::query(
+                                    "UPDATE mail.accounts SET oauth_token = $1, oauth_expires_at = $2, updated_at = NOW() WHERE id = $3",
+                                )
+                                .bind(&new_token)
+                                .bind(new_expires)
+                                .bind(account.id)
+                                .execute(&pool)
+                                .await;
+                                tracing::info!(
+                                    "IDLE: OAuth token refreshed for {}",
+                                    account.email_address
+                                );
+                                Some(new_token)
+                            },
                             Err(e) => {
-                                tracing::warn!(
-                                    "IDLE: reconnect failed for {}: {}",
+                                tracing::error!(
+                                    "IDLE: Token refresh failed for {}: {}",
                                     account.email_address,
                                     e
                                 );
-                                tokio::time::sleep(Duration::from_secs(60)).await;
-                                continue;
+                                Some(token.clone())
                             },
-                        };
-                    let tls2_stream = match tls_connector.connect(&imap_server, tcp2).await {
-                        Ok(s) => s,
-                        Err(e) => {
-                            tracing::warn!(
-                                "IDLE: TLS reconnect failed for {}: {}",
-                                account.email_address,
-                                e
-                            );
-                            tokio::time::sleep(Duration::from_secs(60)).await;
-                            continue;
-                        },
-                    };
-                    let client2 = async_imap::Client::new(tls2_stream);
-                    match password {
-                        Some(ref pw) => match client2
-                            .login(&account.email_address, pw)
-                            .await
-                            .map_err(|e| e.0)
-                        {
-                            Ok(s) => s,
-                            Err(e) => {
-                                tracing::warn!(
-                                    "IDLE: password login also failed for {}: {}",
-                                    account.email_address,
-                                    e
-                                );
-                                tokio::time::sleep(Duration::from_secs(60)).await;
-                                continue;
-                            },
-                        },
-                        None => {
-                            tracing::warn!(
-                                "IDLE: XOAUTH2 failed and no password for {}",
-                                account.email_address
-                            );
-                            tokio::time::sleep(Duration::from_secs(60)).await;
-                            continue;
-                        },
+                        }
+                    } else {
+                        Some(token.clone())
                     }
-                },
-            }
-        } else {
-            match password {
-                Some(ref pw) => match client
-                    .login(&account.email_address, pw)
-                    .await
-                    .map_err(|e| e.0)
-                {
-                    Ok(s) => s,
-                    Err(e) => {
-                        tracing::warn!("IDLE: login failed for {}: {}", account.email_address, e);
-                        tokio::time::sleep(Duration::from_secs(60)).await;
-                        continue;
-                    },
-                },
-                None => {
-                    tracing::warn!("IDLE: no credentials for {}", account.email_address);
-                    tokio::time::sleep(Duration::from_secs(60)).await;
-                    continue;
-                },
-            }
-        };
+                } else {
+                    Some(token.clone())
+                }
+            } else {
+                account.oauth_token.clone()
+            };
 
-        // ---- select INBOX (required before IDLE) ----------------------------
-        if let Err(e) = session.select("INBOX").await {
-            tracing::warn!(
-                "IDLE: SELECT INBOX failed for {}: {}",
-                account.email_address,
-                e
-            );
-            let _ = session.logout().await;
-            tokio::time::sleep(Duration::from_secs(60)).await;
-            continue;
-        }
-
-        // ---- enter IDLE -----------------------------------------------------
-        // `session.idle()` consumes the session and returns a Handle.
-        let mut handle = session.idle();
-        if let Err(e) = handle.init().await {
-            // Server does not support IDLE — fall back gracefully to polling.
-            tracing::warn!(
-                "IDLE not supported for {} ({}); polling loop remains active",
-                account.email_address,
-                e
-            );
-            if let Ok(mut s) = handle.done().await {
-                let _ = s.logout().await;
-            }
-            return; // Exit this task; start_sync_scheduler continues polling.
-        }
-
-        tracing::debug!("IDLE active on INBOX for {}", account.email_address);
-
-        // Wait up to 25 minutes for a server notification (RFC 2177: < 29 min).
+        // Clone values for the spawn_blocking closure
+        let server = imap_server.clone();
+        let email = account.email_address.clone();
+        let pw = password.clone();
+        let oauth = effective_oauth_token.clone();
+        let invalid_certs = accept_invalid_certs();
         let idle_timeout_mins: u64 = std::env::var("IMAP_IDLE_TIMEOUT_MINS")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(25);
-        let (wait_fut, _stop) =
-            handle.wait_with_timeout(Duration::from_secs(idle_timeout_mins * 60));
-        let idle_result = wait_fut.await;
 
-        // ---- exit IDLE and recover session ----------------------------------
-        let mut session = match handle.done().await {
-            Ok(s) => s,
-            Err(e) => {
-                tracing::warn!("IDLE: DONE failed for {}: {}", account.email_address, e);
-                tokio::time::sleep(Duration::from_secs(10)).await;
-                continue;
-            },
-        };
+        // ---- Run synchronous IMAP IDLE inside spawn_blocking --------------------
+        let idle_result = tokio::task::spawn_blocking(move || -> IdleOutcome {
+            // Build sync TLS connector
+            let tls = native_tls::TlsConnector::builder()
+                .danger_accept_invalid_certs(invalid_certs)
+                .danger_accept_invalid_hostnames(invalid_certs)
+                .build()
+                .map_err(|e| format!("TLS builder error: {e}"));
+            let tls = match tls {
+                Ok(t) => t,
+                Err(e) => return IdleOutcome::Error(e),
+            };
+
+            // Connect
+            let client = match imap::connect((&server as &str, imap_port), &server, &tls) {
+                Ok(c) => c,
+                Err(e) => {
+                    return IdleOutcome::Error(format!("IDLE: IMAP connect failed: {e}"));
+                },
+            };
+
+            // Authenticate
+            let mut session = if let Some(ref oauth_token) = oauth {
+                let auth_string = format!(
+                    "user={}\x01auth=Bearer {}\x01\x01",
+                    email, oauth_token
+                );
+                let auth = XOAuth2Auth {
+                    auth_string: auth_string.into_bytes(),
+                };
+                match client.authenticate("XOAUTH2", &auth) {
+                    Ok(s) => s,
+                    Err((e, client2)) => {
+                        // Try password fallback
+                        if let Some(ref pw_str) = pw {
+                            match client2.login(&email, pw_str) {
+                                Ok(s) => s,
+                                Err((e2, _)) => {
+                                    return IdleOutcome::Error(format!(
+                                        "IDLE: XOAUTH2 failed ({e}), password also failed: {e2}"
+                                    ));
+                                },
+                            }
+                        } else {
+                            return IdleOutcome::Error(format!(
+                                "IDLE: XOAUTH2 failed and no password: {e}"
+                            ));
+                        }
+                    },
+                }
+            } else if let Some(ref pw_str) = pw {
+                match client.login(&email, pw_str) {
+                    Ok(s) => s,
+                    Err((e, _)) => {
+                        return IdleOutcome::Error(format!("IDLE: login failed: {e}"));
+                    },
+                }
+            } else {
+                return IdleOutcome::Error("IDLE: no credentials".to_string());
+            };
+
+            // Select INBOX
+            if let Err(e) = session.select("INBOX") {
+                let _ = session.logout();
+                return IdleOutcome::Error(format!("IDLE: SELECT INBOX failed: {e}"));
+            }
+
+            // Enter IDLE
+            let idle_handle = match session.idle() {
+                Ok(h) => h,
+                Err(_e) => {
+                    return IdleOutcome::NotSupported;
+                },
+            };
+
+            // Wait with timeout
+            let outcome = match idle_handle
+                .wait_with_timeout(std::time::Duration::from_secs(idle_timeout_mins * 60))
+            {
+                Ok(imap::extensions::idle::WaitOutcome::MailboxChanged) => {
+                    IdleOutcome::MailboxChanged
+                },
+                Ok(imap::extensions::idle::WaitOutcome::TimedOut) => IdleOutcome::TimedOut,
+                Err(e) => {
+                    IdleOutcome::Error(format!("IDLE wait error: {e}"))
+                },
+            };
+
+            // wait_with_timeout consumes the handle and returns the session
+            // (implicitly via Drop), so we don't need to call logout here.
+            // The session is dropped and the connection closed.
+
+            outcome
+        })
+        .await;
 
         match idle_result {
-            Ok(IdleResponse::NewData(_)) => {
+            Ok(IdleOutcome::MailboxChanged) => {
                 tracing::debug!(
                     "IDLE: server signalled change for {}, running incremental sync",
                     account.email_address
                 );
-                if let Err(e) = session.select("INBOX").await {
-                    tracing::warn!("IDLE post-notification SELECT failed: {}", e);
-                } else if let Err(e) = sync_account(&pool, &account, &event_bus).await {
-                    tracing::warn!(
-                        "IDLE post-notification sync failed for {}: {}",
-                        account.email_address,
-                        e
-                    );
+                match tokio::time::timeout(
+                    Duration::from_secs(SYNC_ACCOUNT_TIMEOUT_SECS),
+                    sync_account(&pool, &account, &event_bus),
+                )
+                .await
+                {
+                    Ok(Err(e)) => {
+                        tracing::warn!(
+                            "IDLE post-notification sync failed for {}: {}",
+                            account.email_address,
+                            e
+                        );
+                    },
+                    Err(_) => {
+                        tracing::error!(
+                            "IDLE post-notification sync timed out after {}s for {}",
+                            SYNC_ACCOUNT_TIMEOUT_SECS,
+                            account.email_address
+                        );
+                    },
+                    Ok(Ok(())) => {},
                 }
             },
-            Ok(IdleResponse::Timeout) => {
+            Ok(IdleOutcome::TimedOut) => {
                 tracing::debug!(
                     "IDLE 25-min timeout for {}, re-entering IDLE",
                     account.email_address
                 );
             },
-            Ok(IdleResponse::ManualInterrupt) | Err(_) => {
-                tracing::debug!(
-                    "IDLE interrupted for {}, reconnecting",
+            Ok(IdleOutcome::NotSupported) => {
+                tracing::warn!(
+                    "IDLE not supported for {}; polling loop remains active",
                     account.email_address
                 );
+                return; // Exit this task; start_sync_scheduler continues polling.
+            },
+            Ok(IdleOutcome::Error(msg)) => {
+                tracing::warn!("IDLE error for {}: {}", account.email_address, msg);
+                tokio::time::sleep(Duration::from_secs(60)).await;
+            },
+            Err(join_err) => {
+                tracing::error!(
+                    "IDLE spawn_blocking panicked for {}: {}",
+                    account.email_address,
+                    join_err
+                );
+                tokio::time::sleep(Duration::from_secs(60)).await;
             },
         }
 
-        let _ = session.logout().await;
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
 }
@@ -367,13 +457,38 @@ async fn sync_all_accounts(
         });
 
         if should_sync {
-            if let Err(e) = sync_account(pool, &account, event_bus).await {
-                tracing::error!("Failed to sync account {}: {:?}", account.email_address, e);
-                // Update account with error
+            let sync_result = tokio::time::timeout(
+                Duration::from_secs(SYNC_ACCOUNT_TIMEOUT_SECS),
+                sync_account(pool, &account, event_bus),
+            )
+            .await;
+            let err_msg = match sync_result {
+                Ok(Ok(())) => None,
+                Ok(Err(e)) => {
+                    tracing::error!(
+                        "Failed to sync account {}: {:?}",
+                        account.email_address,
+                        e
+                    );
+                    Some(e.to_string())
+                },
+                Err(_) => {
+                    tracing::error!(
+                        "Sync timed out after {}s for account {}",
+                        SYNC_ACCOUNT_TIMEOUT_SECS,
+                        account.email_address
+                    );
+                    Some(format!(
+                        "Sync timed out after {}s",
+                        SYNC_ACCOUNT_TIMEOUT_SECS
+                    ))
+                },
+            };
+            if let Some(msg) = err_msg {
                 let _ = sqlx::query(
                     "UPDATE mail.accounts SET last_error = $1, status = 'error', updated_at = NOW() WHERE id = $2"
                 )
-                .bind(e.to_string())
+                .bind(msg)
                 .bind(account.id)
                 .execute(pool)
                 .await;
@@ -454,10 +569,10 @@ async fn refresh_google_token(
 
 /// Perform a full IMAP sync for a single mail account.
 ///
-/// Connects to the IMAP server, lists all folders, and fetches new messages
-/// since `last_synced_uid` for each folder. OAuth tokens are refreshed
-/// automatically if expired. Downloaded emails are categorized and persisted
-/// to the database, and a real-time event is emitted via `event_bus`.
+/// Uses the synchronous `imap` crate inside `tokio::task::spawn_blocking`
+/// to avoid the async-imap XOAUTH2 blocking bug on Windows. IMAP
+/// operations (connect, auth, folder listing, message fetching) run
+/// synchronously, then database writes happen in the async context.
 ///
 /// # Errors
 ///
@@ -529,368 +644,455 @@ pub async fn sync_account(
 
     tracing::info!("Syncing account: {}", account.email_address);
 
-    // Connect to IMAP
-    let accept_invalid = std::env::var("IMAP_ACCEPT_INVALID_CERTS")
-        .map(|v| v == "true" || v == "1")
-        .unwrap_or(false);
-    let tls = tokio_native_tls::TlsConnector::from(
-        native_tls::TlsConnector::builder()
-            .danger_accept_invalid_certs(accept_invalid)
-            .danger_accept_invalid_hostnames(accept_invalid)
-            .build()?,
-    );
-
-    let connect_timeout = Duration::from_secs(
-        std::env::var("IMAP_CONNECT_TIMEOUT_SECS")
-            .ok()
-            .and_then(|v| v.parse().ok())
-            .unwrap_or(30),
-    );
-    let tcp_stream = match tokio::time::timeout(
-        connect_timeout,
-        tokio::net::TcpStream::connect((imap_server, imap_port)),
+    // -------------------------------------------------------------------------
+    // Load existing folders from DB to get last_synced_uid for incremental sync
+    // -------------------------------------------------------------------------
+    let db_folders: Vec<MailFolder> = sqlx::query_as(
+        "SELECT * FROM mail.folders WHERE account_id = $1",
     )
+    .bind(account.id)
+    .fetch_all(pool)
     .await
-    {
-        Ok(Ok(s)) => s,
-        Ok(Err(e)) => return Err(format!("TCP connect failed: {}", e).into()),
-        Err(_) => return Err("IMAP connection timed out".into()),
-    };
-    let tls_stream = tls.connect(imap_server, tcp_stream).await?;
-    let client = async_imap::Client::new(tls_stream);
+    .unwrap_or_default();
+
+    // Build a map: imap_path -> last_synced_uid
+    let folder_uid_map: std::collections::HashMap<String, Option<i64>> = db_folders
+        .iter()
+        .filter_map(|f| {
+            f.imap_path
+                .as_ref()
+                .map(|p| (p.clone(), f.last_synced_uid))
+        })
+        .collect();
 
     // -------------------------------------------------------------------------
-    // Part 1: Try XOAUTH2 first if token available, fall back to password
+    // Clone data for spawn_blocking
     // -------------------------------------------------------------------------
-    let mut session = if let Some(ref oauth_token) = effective_oauth_token {
-        let auth_string = format!(
-            "user={}\x01auth=Bearer {}\x01\x01",
-            account.email_address, oauth_token
-        );
-        let encoded = base64::engine::general_purpose::STANDARD.encode(auth_string.as_bytes());
-
-        match client
-            .authenticate("XOAUTH2", XOAuth2Authenticator { response: encoded })
-            .await
-        {
-            Ok(s) => {
-                tracing::info!("XOAUTH2 login succeeded for {}", account.email_address);
-                s
-            },
-            Err((e, _client)) => {
-                tracing::warn!(
-                    "XOAUTH2 failed for {}, trying password: {}",
-                    account.email_address,
-                    e
-                );
-                // Reconnect and try password
-                let tcp2 = tokio::net::TcpStream::connect((imap_server, imap_port)).await?;
-                let tls_stream2 = tls.connect(imap_server, tcp2).await?;
-                let client2 = async_imap::Client::new(tls_stream2);
-                let pw = account
-                    .app_password
-                    .as_deref()
-                    .ok_or("XOAUTH2 failed and no password fallback available")?;
-                client2
-                    .login(&account.email_address, pw)
-                    .await
-                    .map_err(|e| e.0)?
-            },
-        }
-    } else {
-        let pw = account.app_password.as_deref().ok_or("No password set")?;
-        client
-            .login(&account.email_address, pw)
-            .await
-            .map_err(|e| e.0)?
-    };
+    let server = imap_server.to_string();
+    let email = account.email_address.clone();
+    let pw = account.app_password.clone();
+    let oauth = effective_oauth_token.clone();
+    let invalid_certs = accept_invalid_certs();
+    let batch_size: usize = std::env::var("IMAP_SYNC_BATCH_SIZE")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(20);
 
     // -------------------------------------------------------------------------
-    // Bug 5: List ALL folders from IMAP server
+    // Run all IMAP operations synchronously inside spawn_blocking
     // -------------------------------------------------------------------------
-    let folder_list = session.list(Some(""), Some("*")).await?;
-    let mut imap_folders: Vec<String> = Vec::new();
-    let mut fl_stream = folder_list;
-    while let Some(name_result) = fl_stream.next().await {
-        match name_result {
-            Ok(name) => {
-                imap_folders.push(name.name().to_string());
-            },
-            Err(e) => {
-                tracing::warn!("Error listing folder: {:?}", e);
-            },
-        }
-    }
-    drop(fl_stream);
-
-    // Ensure INBOX is always present
-    if imap_folders.is_empty() {
-        imap_folders.push("INBOX".to_string());
-    }
+    let connect_timeout_secs: u64 = std::env::var("IMAP_CONNECT_TIMEOUT_SECS")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(15);
 
     tracing::info!(
-        "Found {} IMAP folders for {}",
-        imap_folders.len(),
-        account.email_address
+        "Connecting to IMAP {}:{} (timeout {}s)",
+        server,
+        imap_port,
+        connect_timeout_secs
     );
 
+    let imap_result: Result<ImapSyncResult, String> = tokio::task::spawn_blocking(move || {
+        // Build sync TLS connector
+        let tls = native_tls::TlsConnector::builder()
+            .danger_accept_invalid_certs(invalid_certs)
+            .danger_accept_invalid_hostnames(invalid_certs)
+            .build()
+            .map_err(|e| format!("TLS builder error: {e}"))?;
+
+        // Connect with a TCP-level timeout using std::net
+        let addr = format!("{}:{}", server, imap_port);
+        let tcp_stream = std::net::TcpStream::connect_timeout(
+            &addr
+                .parse::<std::net::SocketAddr>()
+                .or_else(|_| {
+                    // Resolve hostname manually
+                    use std::net::ToSocketAddrs;
+                    addr.to_socket_addrs()
+                        .map_err(|e| format!("DNS resolution failed for {addr}: {e}"))?
+                        .next()
+                        .ok_or_else(|| format!("No addresses found for {addr}"))
+                })
+                .map_err(|e| format!("Address parse error: {e}"))?,
+            std::time::Duration::from_secs(connect_timeout_secs),
+        )
+        .map_err(|e| format!("TCP connect failed to {addr}: {e}"))?;
+
+        // Set read/write timeouts on the TCP stream
+        let _ = tcp_stream.set_read_timeout(Some(std::time::Duration::from_secs(30)));
+        let _ = tcp_stream.set_write_timeout(Some(std::time::Duration::from_secs(30)));
+
+        // TLS handshake
+        let tls_stream = tls
+            .connect(&server, tcp_stream)
+            .map_err(|e| format!("TLS handshake failed for {server}: {e}"))?;
+
+        // Build IMAP client from TLS stream
+        let client = imap::Client::new(tls_stream);
+
+        // Authenticate
+        let mut session = if let Some(ref oauth_token) = oauth {
+            let auth_string = format!(
+                "user={}\x01auth=Bearer {}\x01\x01",
+                email, oauth_token
+            );
+            let auth = XOAuth2Auth {
+                auth_string: auth_string.into_bytes(),
+            };
+            match client.authenticate("XOAUTH2", &auth) {
+                Ok(s) => {
+                    // Log success from inside spawn_blocking (tracing works across threads)
+                    tracing::info!("XOAUTH2 login succeeded for {}", email);
+                    s
+                },
+                Err((e, client2)) => {
+                    tracing::warn!(
+                        "XOAUTH2 failed for {}, trying password: {}",
+                        email,
+                        e
+                    );
+                    // Try password fallback with the same client (no reconnect needed
+                    // since sync imap crate returns the client on auth failure)
+                    if let Some(ref pw_str) = pw {
+                        client2.login(&email, pw_str).map_err(|(e2, _)| {
+                            format!(
+                                "XOAUTH2 failed ({e}), password also failed for {email}: {e2}"
+                            )
+                        })?
+                    } else {
+                        return Err(format!(
+                            "XOAUTH2 failed and no password fallback for {email}: {e}"
+                        ));
+                    }
+                },
+            }
+        } else if let Some(ref pw_str) = pw {
+            tracing::info!("Attempting password login for {}", email);
+            client.login(&email, pw_str).map_err(|(e, _)| {
+                format!("Password login failed for {email}: {e}")
+            })?
+        } else {
+            return Err(format!("No credentials for {email}"));
+        };
+
+        // List all folders
+        let folder_names = session
+            .list(Some(""), Some("*"))
+            .map_err(|e| format!("LIST folders failed: {e}"))?;
+        let mut imap_folders: Vec<String> = folder_names.iter().map(|n| n.name().to_string()).collect();
+
+        if imap_folders.is_empty() {
+            imap_folders.push("INBOX".to_string());
+        }
+
+        tracing::info!(
+            "Found {} IMAP folders for {}",
+            imap_folders.len(),
+            email
+        );
+
+        // Sync each folder
+        let mut folders_result: Vec<FolderSyncResult> = Vec::new();
+
+        for imap_path in &imap_folders {
+            let folder_type = imap_name_to_folder_type(imap_path);
+            let display_name = folder_display_name(folder_type, imap_path);
+
+            // Try selecting the folder; some may not be selectable
+            if let Err(e) = session.select(imap_path) {
+                tracing::debug!("Skipping unselectable folder '{}': {:?}", imap_path, e);
+                continue;
+            }
+
+            // Determine last_synced_uid from the pre-loaded DB data
+            let last_uid: Option<i64> = folder_uid_map.get(imap_path).copied().flatten();
+
+            let mut folder_result = FolderSyncResult {
+                imap_path: imap_path.clone(),
+                folder_type: folder_type.to_string(),
+                display_name,
+                messages: Vec::new(),
+                initial_uids: Vec::new(),
+            };
+
+            let uids_to_fetch: Vec<u32> = if let Some(last) = last_uid {
+                // Incremental: fetch UIDs > last_synced_uid
+                let search_range = format!("{}:*", last + 1);
+                let uid_set = match session.uid_search(search_range) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        tracing::warn!("UID SEARCH failed on '{}': {:?}", imap_path, e);
+                        continue;
+                    },
+                };
+                uid_set
+                    .into_iter()
+                    .filter(|&uid| uid as i64 > last)
+                    .collect()
+            } else {
+                // First sync: fetch the last 50 messages by sequence number
+                let messages = match session.fetch("1:50", "(RFC822.HEADER UID FLAGS)") {
+                    Ok(m) => m,
+                    Err(e) => {
+                        tracing::warn!("Failed to fetch from '{}': {:?}", imap_path, e);
+                        continue;
+                    },
+                };
+                let header_uids: Vec<u32> = messages
+                    .iter()
+                    .filter_map(|f| f.uid.filter(|&u| u > 0))
+                    .collect();
+                // Store these UIDs for DB dedup check later
+                folder_result.initial_uids = header_uids.clone();
+                header_uids
+            };
+
+            // Fetch full messages for new UIDs (limit batch_size per folder per sync)
+            for uid in uids_to_fetch.iter().take(batch_size) {
+                let fetched = match session.uid_fetch(uid.to_string(), "(BODY.PEEK[] FLAGS)") {
+                    Ok(s) => s,
+                    Err(e) => {
+                        tracing::warn!("Failed to uid_fetch UID {} body: {:?}", uid, e);
+                        continue;
+                    },
+                };
+
+                if let Some(m) = fetched.iter().next() {
+                    if let Some(body) = m.body() {
+                        if let Ok(parsed) = parse_mail(body) {
+                            let subject = get_header(&parsed, "Subject");
+                            let from = get_header(&parsed, "From");
+                            let to = get_header(&parsed, "To");
+                            let cc = get_header(&parsed, "Cc");
+                            let message_id = get_header(&parsed, "Message-ID");
+                            let in_reply_to = get_header(&parsed, "In-Reply-To");
+                            let date_str = get_header(&parsed, "Date");
+
+                            let (sender_name, sender_email) = parse_address(&from);
+                            let (body_text, body_html) = extract_body(&parsed);
+
+                            let snippet = body_text
+                                .as_ref()
+                                .map(|t| t.chars().take(200).collect::<String>());
+
+                            let is_read = m
+                                .flags()
+                                .iter()
+                                .any(|f| matches!(f, imap::types::Flag::Seen));
+
+                            let received_at = date_str
+                                .and_then(|d| chrono::DateTime::parse_from_rfc2822(&d).ok())
+                                .map(|d| d.with_timezone(&Utc));
+
+                            let attachments = extract_attachments(&parsed);
+                            let has_attachments = !attachments.is_empty();
+
+                            folder_result.messages.push(FetchedMessage {
+                                uid: *uid,
+                                subject,
+                                from,
+                                to,
+                                cc,
+                                message_id,
+                                in_reply_to,
+                                sender_name,
+                                sender_email,
+                                body_text,
+                                body_html,
+                                snippet,
+                                is_read,
+                                received_at,
+                                has_attachments,
+                                attachments,
+                            });
+                        }
+                    }
+                }
+            }
+
+            folders_result.push(folder_result);
+        }
+
+        // Logout
+        let _ = session.logout();
+
+        Ok(ImapSyncResult {
+            folders: folders_result,
+        })
+    })
+    .await
+    .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> {
+        format!("IMAP spawn_blocking panicked: {e}").into()
+    })?;
+
+    let sync_result = imap_result.map_err(|e| -> Box<dyn std::error::Error + Send + Sync> {
+        e.into()
+    })?;
+
+    // -------------------------------------------------------------------------
+    // Process fetched data in async context (database writes)
+    // -------------------------------------------------------------------------
     let mut total_new_messages = 0usize;
 
-    // -------------------------------------------------------------------------
-    // Sync each folder
-    // -------------------------------------------------------------------------
-    for imap_path in &imap_folders {
-        let folder_type = imap_name_to_folder_type(imap_path);
-        let display_name = folder_display_name(folder_type, imap_path);
-
+    for folder_data in &sync_result.folders {
         // Get or create the folder record in DB
         let folder = match get_or_create_folder_by_path(
             pool,
             account.id,
-            folder_type,
-            &display_name,
-            imap_path,
+            &folder_data.folder_type,
+            &folder_data.display_name,
+            &folder_data.imap_path,
         )
         .await
         {
             Ok(f) => f,
             Err(e) => {
-                tracing::warn!("Failed to get/create folder '{}': {:?}", imap_path, e);
+                tracing::warn!(
+                    "Failed to get/create folder '{}': {:?}",
+                    folder_data.imap_path,
+                    e
+                );
                 continue;
             },
         };
 
-        // Try selecting the folder; some may not be selectable (e.g. \Noselect)
-        if let Err(e) = session.select(imap_path).await {
-            tracing::debug!("Skipping unselectable folder '{}': {:?}", imap_path, e);
-            continue;
-        }
-
-        // -----------------------------------------------------------------------
-        // Idea 50: Incremental IMAP sync — only fetch UIDs we haven't seen yet.
-        // On first sync (no last_synced_uid), fall back to fetching sequence 1:50.
-        // -----------------------------------------------------------------------
-        let last_uid = folder.last_synced_uid;
-
-        let uids_to_fetch: Vec<u32> = if let Some(last) = last_uid {
-            // Ask the server for all UIDs > last_synced_uid
-            let search_range = format!("{}:*", last + 1);
-            let uid_set = match session.uid_search(search_range).await {
-                Ok(s) => s,
-                Err(e) => {
-                    tracing::warn!("UID SEARCH failed on '{}': {:?}", imap_path, e);
-                    continue;
-                },
-            };
-            // Filter out the sentinel UID the server echoes when the range is empty
-            uid_set
-                .into_iter()
-                .filter(|&uid| uid as i64 > last)
-                .collect()
-        } else {
-            // First sync: fetch the last 50 messages by sequence number and collect their UIDs
-            let messages = match session.fetch("1:50", "(RFC822.HEADER UID FLAGS)").await {
-                Ok(m) => m,
-                Err(e) => {
-                    tracing::warn!("Failed to fetch from '{}': {:?}", imap_path, e);
-                    continue;
-                },
-            };
-            let mut stream = messages;
-            let mut header_uids: Vec<u32> = Vec::new();
-            while let Some(msg) = stream.next().await {
-                if let Ok(fetch) = msg {
-                    let uid = fetch.uid.unwrap_or(0);
-                    if uid > 0 {
-                        header_uids.push(uid);
+        // For initial sync, filter out UIDs already in DB
+        let initial_uid_filter: std::collections::HashSet<u32> =
+            if !folder_data.initial_uids.is_empty() {
+                let mut new_uids = std::collections::HashSet::new();
+                for uid in &folder_data.initial_uids {
+                    let exists: (i64,) = match sqlx::query_as(
+                        "SELECT COUNT(*) FROM mail.emails WHERE account_id = $1 AND imap_uid = $2",
+                    )
+                    .bind(account.id)
+                    .bind(*uid as i64)
+                    .fetch_one(pool)
+                    .await
+                    {
+                        Ok(r) => r,
+                        Err(e) => {
+                            tracing::warn!("DB error checking UID {}: {:?}", uid, e);
+                            continue;
+                        },
+                    };
+                    if exists.0 == 0 {
+                        new_uids.insert(*uid);
                     }
                 }
-            }
-            drop(stream);
+                new_uids
+            } else {
+                // For incremental sync, all UIDs are new
+                folder_data.messages.iter().map(|m| m.uid).collect()
+            };
 
-            // Exclude UIDs already stored in DB (safety net for the first-run case)
-            let mut new_uids = Vec::new();
-            for uid in header_uids {
-                let exists: (i64,) = match sqlx::query_as(
-                    "SELECT COUNT(*) FROM mail.emails WHERE account_id = $1 AND imap_uid = $2",
-                )
-                .bind(account.id)
-                .bind(uid as i64)
-                .fetch_one(pool)
-                .await
-                {
-                    Ok(r) => r,
-                    Err(e) => {
-                        tracing::warn!("DB error checking UID {}: {:?}", uid, e);
-                        continue;
-                    },
-                };
-                if exists.0 == 0 {
-                    new_uids.push(uid);
-                }
-            }
-            new_uids
-        };
-
-        // Track the highest UID we process so we can update last_synced_uid afterwards
         let mut max_uid_this_sync: Option<i64> = None;
 
-        // Fetch full messages for new UIDs (limit 20 per folder per sync).
-        // Always use uid_fetch so the set refers to IMAP UIDs, not sequence numbers.
-        let batch_size: usize = std::env::var("IMAP_SYNC_BATCH_SIZE")
-            .ok()
-            .and_then(|v| v.parse().ok())
-            .unwrap_or(20);
-        for uid in uids_to_fetch.iter().take(batch_size) {
-            let full_msg_stream = match session
-                .uid_fetch(uid.to_string(), "(BODY.PEEK[] FLAGS)")
-                .await
-            {
-                Ok(s) => s,
-                Err(e) => {
-                    tracing::warn!("Failed to uid_fetch UID {} body: {:?}", uid, e);
-                    continue;
-                },
-            };
-            let mut fm_stream = full_msg_stream;
+        for msg in &folder_data.messages {
+            // Skip UIDs that are already in DB (for initial sync)
+            if !initial_uid_filter.contains(&msg.uid) {
+                continue;
+            }
 
-            if let Some(Ok(m)) = fm_stream.next().await {
-                if let Some(body) = m.body() {
-                    if let Ok(parsed) = parse_mail(body) {
-                        let subject = get_header(&parsed, "Subject");
-                        let from = get_header(&parsed, "From");
-                        let to = get_header(&parsed, "To");
-                        let cc = get_header(&parsed, "Cc");
-                        let message_id = get_header(&parsed, "Message-ID");
-                        let in_reply_to = get_header(&parsed, "In-Reply-To");
-                        let date_str = get_header(&parsed, "Date");
+            // Insert email
+            let inserted: Option<(Uuid,)> = sqlx::query_as(
+                r#"
+                INSERT INTO mail.emails (
+                    account_id, folder_id, imap_uid, message_id, in_reply_to,
+                    sender, sender_name, recipient, cc, subject,
+                    body_text, body_html, snippet, is_read, received_at, has_attachments
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                ON CONFLICT DO NOTHING
+                RETURNING id
+                "#,
+            )
+            .bind(account.id)
+            .bind(folder.id)
+            .bind(msg.uid as i64)
+            .bind(&msg.message_id)
+            .bind(&msg.in_reply_to)
+            .bind(
+                msg.sender_email
+                    .clone()
+                    .unwrap_or(msg.from.clone().unwrap_or_default()),
+            )
+            .bind(&msg.sender_name)
+            .bind(&msg.to)
+            .bind(&msg.cc)
+            .bind(&msg.subject)
+            .bind(&msg.body_text)
+            .bind(&msg.body_html)
+            .bind(&msg.snippet)
+            .bind(msg.is_read)
+            .bind(msg.received_at)
+            .bind(msg.has_attachments)
+            .fetch_optional(pool)
+            .await
+            .unwrap_or(None);
 
-                        // Parse sender name from "Name <email>" format
-                        let (sender_name, sender_email) = parse_address(&from);
+            if let Some((email_id,)) = inserted {
+                total_new_messages += 1;
 
-                        // Get body content
-                        let (body_text, body_html) = extract_body(&parsed);
-
-                        // Create snippet
-                        let snippet = body_text
-                            .as_ref()
-                            .map(|t| t.chars().take(200).collect::<String>());
-
-                        // Check if read (from FLAGS)
-                        let is_read = m
-                            .flags()
-                            .any(|f| matches!(f, async_imap::types::Flag::Seen));
-
-                        // Parse received date
-                        let received_at = date_str
-                            .and_then(|d| chrono::DateTime::parse_from_rfc2822(&d).ok())
-                            .map(|d| d.with_timezone(&Utc));
-
-                        // Collect attachments before insert
-                        let attachments = extract_attachments(&parsed);
-                        let has_attachments = !attachments.is_empty();
-
-                        // Insert email
-                        let inserted: Option<(Uuid,)> = sqlx::query_as(
-                            r#"
-                            INSERT INTO mail.emails (
-                                account_id, folder_id, imap_uid, message_id, in_reply_to,
-                                sender, sender_name, recipient, cc, subject,
-                                body_text, body_html, snippet, is_read, received_at, has_attachments
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-                            ON CONFLICT DO NOTHING
-                            RETURNING id
-                            "#,
-                        )
-                        .bind(account.id)
-                        .bind(folder.id)
-                        .bind(*uid as i64)
-                        .bind(&message_id)
-                        .bind(&in_reply_to)
-                        .bind(sender_email.clone().unwrap_or(from.clone().unwrap_or_default()))
-                        .bind(&sender_name)
-                        .bind(&to)
-                        .bind(&cc)
-                        .bind(&subject)
-                        .bind(&body_text)
-                        .bind(&body_html)
-                        .bind(&snippet)
-                        .bind(is_read)
-                        .bind(received_at)
-                        .bind(has_attachments)
-                        .fetch_optional(pool)
-                        .await
-                        .unwrap_or(None);
-
-                        if let Some((email_id,)) = inserted {
-                            total_new_messages += 1;
-
-                            // Idea #33: Auto-label on incoming emails using keyword categorization
-                            {
-                                let category = categorize_email(
-                                    sender_email
-                                        .as_deref()
-                                        .unwrap_or_else(|| from.as_deref().unwrap_or("")),
-                                    subject.as_deref().unwrap_or(""),
-                                    body_text.as_deref().unwrap_or(""),
-                                );
-                                if let Err(e) =
-                                    ensure_label_and_apply(pool, email_id, &[], &category).await
-                                {
-                                    tracing::warn!(
-                                        "Auto-label failed for email {}: {:?}",
-                                        email_id,
-                                        e
-                                    );
-                                }
-                            }
-
-                            // Track highest UID for incremental sync (Idea 50)
-                            let uid_i64 = *uid as i64;
-                            max_uid_this_sync = Some(
-                                max_uid_this_sync.map_or(uid_i64, |prev: i64| prev.max(uid_i64)),
-                            );
-
-                            // -------------------------------------------------
-                            // Bug 6: Insert attachments into mail.attachments
-                            // -------------------------------------------------
-                            for att in attachments {
-                                let _ = sqlx::query(
-                                    r#"
-                                    INSERT INTO mail.attachments
-                                        (email_id, filename, mime_type, size_bytes, is_inline, content_id)
-                                    VALUES ($1, $2, $3, $4, $5, $6)
-                                    "#,
-                                )
-                                .bind(email_id)
-                                .bind(&att.filename)
-                                .bind(&att.content_type)
-                                .bind(att.size_bytes)
-                                .bind(att.is_inline)
-                                .bind(&att.content_id)
-                                .execute(pool)
-                                .await;
-                            }
-
-                            let _ = event_bus
-                                .publish(NewEvent {
-                                    event_type: "mail.received".into(),
-                                    aggregate_id: Some(email_id),
-                                    payload: serde_json::json!({
-                                        "account_id": account.id,
-                                        "subject": subject,
-                                        "folder": imap_path,
-                                    }),
-                                })
-                                .await;
-                        }
+                // Auto-label on incoming emails using keyword categorization
+                {
+                    let category = categorize_email(
+                        msg.sender_email
+                            .as_deref()
+                            .unwrap_or(msg.from.as_deref().unwrap_or("")),
+                        msg.subject.as_deref().unwrap_or(""),
+                        msg.body_text.as_deref().unwrap_or(""),
+                    );
+                    if let Err(e) =
+                        ensure_label_and_apply(pool, email_id, &[], &category).await
+                    {
+                        tracing::warn!(
+                            "Auto-label failed for email {}: {:?}",
+                            email_id,
+                            e
+                        );
                     }
                 }
+
+                // Track highest UID for incremental sync
+                let uid_i64 = msg.uid as i64;
+                max_uid_this_sync = Some(
+                    max_uid_this_sync.map_or(uid_i64, |prev: i64| prev.max(uid_i64)),
+                );
+
+                // Insert attachments
+                for att in &msg.attachments {
+                    let _ = sqlx::query(
+                        r#"
+                        INSERT INTO mail.attachments
+                            (email_id, filename, mime_type, size_bytes, is_inline, content_id)
+                        VALUES ($1, $2, $3, $4, $5, $6)
+                        "#,
+                    )
+                    .bind(email_id)
+                    .bind(&att.filename)
+                    .bind(&att.content_type)
+                    .bind(att.size_bytes)
+                    .bind(att.is_inline)
+                    .bind(&att.content_id)
+                    .execute(pool)
+                    .await;
+                }
+
+                let _ = event_bus
+                    .publish(NewEvent {
+                        event_type: "mail.received".into(),
+                        aggregate_id: Some(email_id),
+                        payload: serde_json::json!({
+                            "account_id": account.id,
+                            "subject": msg.subject,
+                            "folder": folder_data.imap_path,
+                        }),
+                    })
+                    .await;
             }
-            drop(fm_stream);
         }
 
-        // Idea 50: Persist last_synced_uid so the next cycle only fetches new messages
+        // Persist last_synced_uid so the next cycle only fetches new messages
         if let Some(max_uid) = max_uid_this_sync {
             let _ = sqlx::query(
                 "UPDATE mail.folders SET last_synced_uid = $1, updated_at = NOW() WHERE id = $2",
@@ -905,13 +1107,11 @@ pub async fn sync_account(
         if let Err(e) = update_folder_counts(pool, folder.id).await {
             tracing::warn!(
                 "Failed to update counts for folder '{}': {:?}",
-                imap_path,
+                folder_data.imap_path,
                 e
             );
         }
     }
-
-    session.logout().await?;
 
     // Update last sync time
     sqlx::query(
@@ -925,7 +1125,7 @@ pub async fn sync_account(
         "Sync complete for {}: {} new messages across {} folders",
         account.email_address,
         total_new_messages,
-        imap_folders.len()
+        sync_result.folders.len()
     );
 
     Ok(())
@@ -1127,7 +1327,7 @@ fn collect_attachments(part: &mailparse::ParsedMail, out: &mut Vec<AttachmentInf
         .find(|h| h.get_key().eq_ignore_ascii_case("Content-ID"))
         .map(|h| {
             let v = h.get_value();
-            // Strip angle brackets: <id@domain> → id@domain
+            // Strip angle brackets: <id@domain> -> id@domain
             v.trim().trim_matches('<').trim_matches('>').to_string()
         });
 
@@ -1149,7 +1349,7 @@ fn extract_filename_from_disposition(disposition: &str) -> Option<String> {
     for param in disposition.split(';') {
         let param = param.trim();
         if let Some(rest) = param.strip_prefix("filename*=") {
-            // RFC 5987 encoded — best effort: grab value after ''
+            // RFC 5987 encoded -- best effort: grab value after ''
             let val = rest.splitn(3, '\'').nth(2).unwrap_or(rest);
             return Some(val.trim_matches('"').to_string());
         }

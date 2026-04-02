@@ -132,7 +132,7 @@ async fn main() {
         .route("/api/v1/office/jobs/:id", get(handlers::jobs::get_job_status))
 
         // OpenAPI / Swagger UI
-        .merge(SwaggerUi::new("/swagger-ui/{_:.*}")
+        .merge(SwaggerUi::new("/swagger-ui")
             .url("/api-docs/openapi.json", handlers::openapi::OfficeApiDoc::openapi()))
 
         // Middleware

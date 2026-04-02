@@ -81,7 +81,7 @@ export default function NotificationSettingsPage() {
     const loadPreferences = async () => {
       try {
         const response = await calendarApi.get("/notifications/preferences");
-        setPrefs(response.data);
+        setPrefs(response.data as NotificationPreferences);
         checkPushRegistration();
       } catch {
         setError("Failed to load notification preferences");

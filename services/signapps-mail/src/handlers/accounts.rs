@@ -376,12 +376,32 @@ pub async fn sync_account_now(
         },
     };
 
-    // Trigger sync in background
+    // Trigger sync in background with a global timeout
     let pool = state.pool.clone();
     let event_bus = state.event_bus.clone();
     tokio::spawn(async move {
-        if let Err(e) = crate::sync_service::sync_account(&pool, &account, &event_bus).await {
-            tracing::error!("Sync failed for account {}: {:?}", account.email_address, e);
+        let timeout_secs = 120u64;
+        match tokio::time::timeout(
+            std::time::Duration::from_secs(timeout_secs),
+            crate::sync_service::sync_account(&pool, &account, &event_bus),
+        )
+        .await
+        {
+            Ok(Ok(())) => {},
+            Ok(Err(e)) => {
+                tracing::error!(
+                    "Sync failed for account {}: {:?}",
+                    account.email_address,
+                    e
+                );
+            },
+            Err(_) => {
+                tracing::error!(
+                    "Sync timed out after {}s for account {}",
+                    timeout_secs,
+                    account.email_address
+                );
+            },
         }
     });
 

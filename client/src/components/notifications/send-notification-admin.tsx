@@ -1,28 +1,40 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
-import { Send } from 'lucide-react';
-import { calendarApi } from '@/lib/api';
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { Send } from "lucide-react";
+import { calendarApi } from "@/lib/api";
 
 export function SendNotificationAdmin() {
   const [loading, setLoading] = useState(false);
-  const [channel, setChannel] = useState('push');
-  const [type, setType] = useState('event_reminder');
-  const [title, setTitle] = useState('');
-  const [message, setMessage] = useState('');
+  const [channel, setChannel] = useState("push");
+  const [type, setType] = useState("event_reminder");
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleSendTest = async () => {
     if (!title || !message) {
-      toast.error('Please enter a title and message');
+      toast.error("Please enter a title and message");
       return;
     }
 
@@ -31,27 +43,30 @@ export function SendNotificationAdmin() {
       const response = await calendarApi.post<{
         successful: number;
         failed: number;
-      }>('/notifications/push/send', {
+      }>("/notifications/push/send", {
         title,
         body: message, // API expects "body"
         notification_type: type,
         channel,
-        recipient: 'self', // Send to current user
+        recipient: "self", // Send to current user
         send_to_all: true,
       });
-      const result = response.data;
+      const result = response.data as { successful: number; failed: number };
       if (result.successful > 0) {
-        toast.success(`Notification sent to ${result.successful} subscription(s)`);
+        toast.success(
+          `Notification sent to ${result.successful} subscription(s)`,
+        );
       } else if (result.failed > 0) {
         toast.warning(`No notifications delivered. ${result.failed} failed.`);
       } else {
-        toast.info('Notification queued');
+        toast.info("Notification queued");
       }
-      setTitle('');
-      setMessage('');
+      setTitle("");
+      setMessage("");
     } catch (error: unknown) {
       const err = error as { response?: { data?: { error?: string } } };
-      const errorMsg = err?.response?.data?.error || 'Failed to send notification';
+      const errorMsg =
+        err?.response?.data?.error || "Failed to send notification";
       toast.error(errorMsg);
     } finally {
       setLoading(false);
@@ -121,7 +136,13 @@ export function SendNotificationAdmin() {
           className="w-full"
         >
           {loading ? (
-            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 mr-2 " />
+            <SpinnerInfinity
+              size={24}
+              secondaryColor="rgba(128,128,128,0.2)"
+              color="currentColor"
+              speed={120}
+              className="h-4 w-4 mr-2 "
+            />
           ) : (
             <Send className="h-4 w-4 mr-2" />
           )}

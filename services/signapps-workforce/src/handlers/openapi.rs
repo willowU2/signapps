@@ -147,6 +147,6 @@ impl Modify for SecurityAddon {
 pub struct WorkforceApiDoc;
 
 pub fn swagger_router() -> utoipa_swagger_ui::SwaggerUi {
-    utoipa_swagger_ui::SwaggerUi::new("/swagger-ui/{_:.*}")
+    utoipa_swagger_ui::SwaggerUi::new("/swagger-ui")
         .url("/api-docs/openapi.json", WorkforceApiDoc::openapi())
 }

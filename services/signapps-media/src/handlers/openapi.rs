@@ -88,5 +88,5 @@ impl utoipa::Modify for SecurityAddon {
 
 /// Returns a `SwaggerUi` router serving the OpenAPI spec and Swagger UI.
 pub fn swagger_router() -> SwaggerUi {
-    SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", MediaApiDoc::openapi())
+    SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", MediaApiDoc::openapi())
 }

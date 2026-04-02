@@ -68,10 +68,7 @@ export const useEntityStore = create<EntityState>((set, get) => ({
       set((state) => ({
         workspaces: data,
         selectedWorkspaceId:
-          state.selectedWorkspaceId ||
-          (data.length > 0
-            ? ((data[0] as Record<string, unknown>).id as string)
-            : null),
+          state.selectedWorkspaceId || (data.length > 0 ? data[0].id : null),
         isLoading: false,
       }));
     } catch (error: unknown) {

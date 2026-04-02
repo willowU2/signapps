@@ -144,7 +144,7 @@ async fn main() -> anyhow::Result<()> {
     let app = public_routes
         .merge(protected_routes)
         .merge(
-            SwaggerUi::new("/swagger-ui/{_:.*}")
+            SwaggerUi::new("/swagger-ui")
                 .url("/api-docs/openapi.json", handlers::openapi::DocsApiDoc::openapi()),
         )
         // Global middleware

@@ -76,5 +76,5 @@ impl utoipa::Modify for SecurityAddon {
 
 /// Returns the SwaggerUi router to be merged into the main Axum router.
 pub fn swagger_router() -> SwaggerUi {
-    SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", FormsApiDoc::openapi())
+    SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", FormsApiDoc::openapi())
 }

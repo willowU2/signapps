@@ -96,6 +96,6 @@ pub struct MeetApiDoc;
 
 /// Returns a router that serves Swagger UI and the OpenAPI JSON schema.
 pub fn swagger_router() -> SwaggerUi {
-    SwaggerUi::new("/swagger-ui/{_:.*}")
+    SwaggerUi::new("/swagger-ui")
         .url("/api-docs/openapi.json", MeetApiDoc::openapi())
 }

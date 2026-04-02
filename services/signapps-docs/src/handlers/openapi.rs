@@ -151,6 +151,6 @@ pub struct DocsApiDoc;
 /// Returns a `SwaggerUi` router for the Docs service.
 #[allow(dead_code)]
 pub fn swagger_router() -> SwaggerUi {
-    SwaggerUi::new("/swagger-ui/{_:.*}")
+    SwaggerUi::new("/swagger-ui")
         .url("/api-docs/openapi.json", DocsApiDoc::openapi())
 }
