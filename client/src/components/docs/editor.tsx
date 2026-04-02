@@ -1430,12 +1430,17 @@ const Editor = ({
 
             const docxBlob = await res.blob();
             saveAs(docxBlob, `${documentName.replace(/\.docx$/, '') || 'document'}.docx`);
+            toast.success(`Exporté en DOCX`);
         } else if (type === 'pdf') {
-            // For PDF, typically you'd send HTML to a server-side renderer or use a client-side library
-            // For simplicity, we'll just trigger print for now as a client-side PDF "export"
-            window.print();
+            const title = documentName.replace(/\.(docx|html|epub)$/, '') || 'document';
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+                printWindow.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title><style>@page { margin: 2cm; size: A4; } body { font-family: sans-serif; font-size: 11pt; line-height: 1.5; color: #000; } img { max-width: 100%; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #ccc; padding: 4px 8px; }</style></head><body>${htmlString}<script>window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 300); }</script></body></html>`);
+                printWindow.document.close();
+            } else {
+                toast.error("Veuillez autoriser les fenêtres pop-up");
+            }
         }
-        toast.success(`Exporté en ${type.toUpperCase()}`);
     }, [editor, documentName]);
 
     // IDEA-007: EPUB export
@@ -2032,7 +2037,7 @@ ${html}
             return;
         }
         if (action === 'print') {
-            window.print();
+            exportHtmlDocument('pdf');
             return;
         }
         if (action === 'saveToDrive') {
@@ -2083,8 +2088,8 @@ ${html}
             return;
         }
         if (action === 'downloadPdf') {
-            toast.info("G\én\ération du PDF via le gestionnaire d'impression...");
-            window.print();
+            toast.info("Génération du PDF...");
+            exportHtmlDocument('pdf');
         }
         if (action === 'download_docx') {
             await exportHtmlDocument('docx');
