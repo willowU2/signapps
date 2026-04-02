@@ -280,25 +280,19 @@ export default function FormsPage() {
                                                 <Button size="sm" variant="outline" className="w-full text-xs whitespace-nowrap overflow-hidden text-ellipsis px-2" onClick={() => openEdit(form)}>
                                                     Paramètres
                                                 </Button>
-                                                <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => togglePublish(form)}>
+                                                <Button size="sm" variant="outline" className={`w-full text-xs ${form.status === "draft" ? "col-span-2" : ""}`} onClick={() => togglePublish(form)}>
                                                     <Globe className="h-3 w-3 mr-1" />
                                                     {form.status === "published" ? "Dépublier" : "Publier"}
                                                 </Button>
-                                                {form.status === "published" ? (
+                                                {form.status === "published" && (
                                                     <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => copyLink(form)}>
                                                         <LinkIcon className="h-3 w-3 mr-1" />
                                                         {copiedId === form.id ? "Copié" : "Lien"}
                                                     </Button>
-                                                ) : (
-                                                    <Button size="sm" variant="outline" className="w-full text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(form.id)}>
-                                                        <Trash className="h-3 w-3 mr-1" /> Supprimer
-                                                    </Button>
                                                 )}
-                                                {form.status === "published" && (
-                                                    <Button size="sm" variant="ghost" className="col-span-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 mt-1" onClick={() => handleDelete(form.id)}>
-                                                        <Trash className="h-3 w-3 mr-1" /> Mettre à la corbeille
-                                                    </Button>
-                                                )}
+                                                <Button size="sm" variant="ghost" className="col-span-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 mt-1" onClick={() => handleDelete(form.id)}>
+                                                    <Trash className="h-3 w-3 mr-1" /> Mettre à la corbeille
+                                                </Button>
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -370,12 +364,12 @@ export default function FormsPage() {
             <AlertDialog open={!!deleteFormId} onOpenChange={() => setDeleteFormId(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Supprimer ce formulaire ?</AlertDialogTitle>
+                        <AlertDialogTitle>Mettre ce formulaire à la corbeille ?</AlertDialogTitle>
                         <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Annuler</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteConfirm}>Supprimer</AlertDialogAction>
+                        <AlertDialogAction onClick={handleDeleteConfirm}>Mettre à la corbeille</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
