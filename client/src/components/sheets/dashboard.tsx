@@ -137,8 +137,10 @@ export default function SheetsDashboard() {
             setPendingTemplateContent(null);
             router.push(`/sheets/editor?id=${finalTargetId}&name=${encodeURIComponent(newNode.name)}`);
         } catch (error: any) {
-            console.error("Impossible de créer spreadsheet", error);
-            toast.error(error.response?.data?.message || "Erreur serveur lors de la cr\u00e9ation");
+            console.error("Impossible de créer spreadsheet:", error?.message);
+            const is500 = error.response?.status === 500;
+            const message = error.response?.data?.message || (is500 ? "Un fichier avec ce nom existe déjà. Le nom de la feuille doit être unique dans ce dossier." : "Erreur lors de la création");
+            toast.error(message);
             setIsCreating(false);
         }
     };
