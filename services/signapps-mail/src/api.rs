@@ -13,6 +13,10 @@ use crate::handlers::aliases::{
 };
 use crate::handlers::categorize::{categorize_inbox, save_categorize_settings};
 use crate::handlers::delegation::{create_delegation, list_delegations, revoke_delegation};
+use crate::handlers::domains::{
+    create_domain, delete_domain, get_dns_records, get_domain, list_domains, update_domain,
+    verify_dns,
+};
 use crate::handlers::emails::{
     delete_email, get_email, list_attachments, list_emails, send_email, update_email,
 };
@@ -20,14 +24,24 @@ use crate::handlers::folders::{get_folder, list_folders};
 use crate::handlers::import_export::import_mbox;
 use crate::handlers::labels::{create_label, delete_label, list_labels, update_label};
 use crate::handlers::mailing_lists::{list_mailing_lists, mass_unsubscribe};
+use crate::handlers::ms_accounts::{
+    change_password, create_ms_account, delete_ms_account, get_quota, list_ms_accounts,
+};
 use crate::handlers::newsletter::send_newsletter;
 use crate::handlers::pgp::{delete_pgp_config, get_pgp_config, upsert_pgp_config};
+use crate::handlers::queue_admin::{
+    delete_queue_entry, list_queue, queue_stats, retry_queue_entry,
+};
 use crate::handlers::recurring::{
     create_recurring, delete_recurring, list_recurring, update_recurring,
 };
 use crate::handlers::rules::{create_rule, delete_rule, get_rule, list_rules, update_rule};
 use crate::handlers::scheduled::cancel_send;
 use crate::handlers::search::search_emails;
+use crate::handlers::sieve_admin::{
+    activate_sieve_script, create_sieve_script, delete_sieve_script, list_sieve_scripts,
+    update_sieve_script,
+};
 use crate::handlers::signatures::{get_signature, upsert_signature};
 use crate::handlers::spam::{classify_email, get_spam_settings, train_spam, update_spam_settings};
 use crate::handlers::stats::{get_stats, mail_analytics};
@@ -210,6 +224,70 @@ pub fn router() -> Router<AppState> {
         .route("/api/v1/mail/threads", get(list_threads))
         // Undo-send: cancel a pending scheduled email
         .route("/api/v1/mail/emails/:id/cancel-send", post(cancel_send))
+        // ── Mailserver admin: Domains ─────────────────────────────────────
+        .route(
+            "/api/v1/mailserver/domains",
+            get(list_domains).post(create_domain),
+        )
+        .route(
+            "/api/v1/mailserver/domains/:id",
+            get(get_domain)
+                .put(update_domain)
+                .delete(delete_domain),
+        )
+        .route(
+            "/api/v1/mailserver/domains/:id/verify-dns",
+            post(verify_dns),
+        )
+        .route(
+            "/api/v1/mailserver/domains/:id/dns-records",
+            get(get_dns_records),
+        )
+        // ── Mailserver admin: Accounts ───────────────────────────────────
+        .route(
+            "/api/v1/mailserver/accounts",
+            get(list_ms_accounts).post(create_ms_account),
+        )
+        .route(
+            "/api/v1/mailserver/accounts/:id",
+            axum::routing::delete(delete_ms_account),
+        )
+        .route(
+            "/api/v1/mailserver/accounts/:id/password",
+            axum::routing::put(change_password),
+        )
+        .route(
+            "/api/v1/mailserver/accounts/:id/quota",
+            get(get_quota),
+        )
+        // ── Mailserver admin: Queue ──────────────────────────────────────
+        .route("/api/v1/mailserver/queue", get(list_queue))
+        .route(
+            "/api/v1/mailserver/queue/stats",
+            get(queue_stats),
+        )
+        .route(
+            "/api/v1/mailserver/queue/:id/retry",
+            post(retry_queue_entry),
+        )
+        .route(
+            "/api/v1/mailserver/queue/:id",
+            axum::routing::delete(delete_queue_entry),
+        )
+        // ── Mailserver admin: Sieve ──────────────────────────────────────
+        .route(
+            "/api/v1/mailserver/sieve/:account_id",
+            get(list_sieve_scripts).post(create_sieve_script),
+        )
+        .route(
+            "/api/v1/mailserver/sieve/:account_id/:id",
+            axum::routing::put(update_sieve_script)
+                .delete(delete_sieve_script),
+        )
+        .route(
+            "/api/v1/mailserver/sieve/:account_id/:id/activate",
+            post(activate_sieve_script),
+        )
         // ── JMAP (RFC 8620/8621) endpoints ──────────────────────────────────
         .route("/.well-known/jmap", get(jmap::session::well_known))
         .route("/jmap", post(jmap::api::handle))

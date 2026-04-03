@@ -1,12 +1,14 @@
 pub mod api;
 pub mod auth;
 pub mod dav;
+pub mod dns;
 pub mod handlers;
 pub mod imap;
 pub mod jmap;
 pub mod models;
 pub mod openapi;
 pub mod queue;
+pub mod sieve;
 pub mod smtp;
 pub mod state;
 pub mod sync_service;
@@ -194,6 +196,13 @@ async fn main() {
     let dav_state = mail_server_state.clone();
     tokio::spawn(async move {
         dav::server::start(dav_state, dav_port).await;
+    });
+
+    // ManageSieve server (port 4190) — manages Sieve scripts via RFC 5804
+    let sieve_port: u16 = env_or("SIEVE_PORT", "4190").parse().unwrap_or(4190);
+    let sieve_state = mail_server_state.clone();
+    tokio::spawn(async move {
+        sieve::server::start(sieve_state, sieve_port).await;
     });
 
     // Outbound queue worker — delivers queued messages to remote SMTP servers

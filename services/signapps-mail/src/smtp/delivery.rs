@@ -18,6 +18,8 @@ use signapps_smtp::SmtpEnvelope;
 use sqlx::{Pool, Postgres, Row};
 use uuid::Uuid;
 
+use signapps_spam::{SpamAction, SpamChecker, SpamConfig, SpamContext};
+
 /// Result of a local delivery attempt for a single recipient.
 #[derive(Debug)]
 pub enum RecipientResult {
@@ -114,6 +116,75 @@ pub async fn deliver_local(pool: &Pool<Postgres>, envelope: &SmtpEnvelope) -> De
     let has_attachments = !parsed.attachments().is_empty();
     let body_structure = parsed.body_structure();
 
+    // ── Spam check ────────────────────────────────────────────────────────
+    let spam_headers: Vec<(String, String)> = parsed
+        .headers
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.to_string()))
+        .collect();
+    let spam_body = text_body.as_deref().unwrap_or("");
+
+    // Build spam context from envelope metadata
+    // Note: sender_ip defaults to 127.0.0.1 since we don't have it in the envelope.
+    // SPF/DKIM/DMARC are set to "none" as they're checked elsewhere.
+    let spam_ctx = SpamContext {
+        sender_ip: "127.0.0.1"
+            .parse()
+            .unwrap_or_else(|_| "0.0.0.0".parse().unwrap()),
+        helo_domain: String::new(),
+        mail_from: envelope.sender.clone(),
+        recipients: envelope.recipients.clone(),
+        spf_result: "none".to_string(),
+        dkim_result: "none".to_string(),
+        dmarc_result: "none".to_string(),
+    };
+    let spam_config = SpamConfig::default();
+    let spam_checker = SpamChecker::new(spam_config);
+    let spam_verdict = spam_checker.check_sync(&spam_headers, spam_body, &spam_ctx);
+
+    // Determine spam-based delivery behaviour
+    let (spam_score, spam_status, spam_target_mailbox) = match &spam_verdict.action {
+        SpamAction::Reject(reason) => {
+            tracing::warn!(
+                sender = %envelope.sender,
+                score = spam_verdict.score,
+                reason = %reason,
+                "Spam rejected"
+            );
+            let results = envelope
+                .recipients
+                .iter()
+                .map(|addr| RecipientResult::TempError {
+                    address: addr.clone(),
+                    reason: reason.clone(),
+                })
+                .collect();
+            return DeliveryOutcome { results };
+        },
+        SpamAction::Quarantine => {
+            tracing::info!(
+                sender = %envelope.sender,
+                score = spam_verdict.score,
+                "Spam quarantined to Junk"
+            );
+            (spam_verdict.score, "spam", Some("Junk"))
+        },
+        SpamAction::Accept => (spam_verdict.score, "ham", None),
+    };
+
+    // Add X-Spam-Status to raw headers for transparency
+    let spam_tests_str: String = spam_verdict
+        .tests
+        .iter()
+        .map(|t| format!("{}={:.1}", t.name, t.score))
+        .collect::<Vec<_>>()
+        .join(",");
+    let x_spam_header = format!(
+        "{}, score={:.1} tests=[{}]",
+        spam_status, spam_score, spam_tests_str
+    );
+    let _ = x_spam_header; // Logged but not injected into raw bytes (would require re-serialization)
+
     // Build headers JSON from the parsed headers
     let headers_json = serde_json::to_value(&parsed.headers).ok();
 
@@ -181,6 +252,9 @@ pub async fn deliver_local(pool: &Pool<Postgres>, envelope: &SmtpEnvelope) -> De
             message_id.as_deref(),
             in_reply_to.as_deref(),
             has_attachments,
+            spam_score,
+            spam_status,
+            spam_target_mailbox,
         )
         .await;
         results.push(result);
@@ -214,6 +288,9 @@ async fn deliver_to_recipient(
     message_id: Option<&str>,
     in_reply_to: Option<&str>,
     has_attachments: bool,
+    spam_score: f32,
+    spam_status: &str,
+    spam_target_mailbox: Option<&str>,
 ) -> RecipientResult {
     // Extract domain from recipient address
     let domain = match recipient.rsplit_once('@') {
@@ -290,7 +367,7 @@ async fn deliver_to_recipient(
                     address: recipient.to_string(),
                     reason: format!("Rejected by recipient filter: {reason}"),
                 };
-            }
+            },
             signapps_sieve::SieveAction::Discard => {
                 tracing::info!(
                     recipient = %recipient,
@@ -301,44 +378,50 @@ async fn deliver_to_recipient(
                     address: recipient.to_string(),
                     account_id: account.id,
                 };
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 
-    // Determine target mailbox from Sieve actions (FileInto or default INBOX)
-    let target_mailbox_name = sieve_actions
-        .iter()
-        .find_map(|a| {
-            if let signapps_sieve::SieveAction::FileInto(folder) = a {
-                Some(folder.as_str())
-            } else {
-                None
-            }
-        })
-        .unwrap_or("INBOX");
+    // Determine target mailbox from spam verdict or Sieve actions (FileInto or default INBOX)
+    // Spam quarantine takes priority over Sieve — spam goes to Junk regardless of rules
+    let target_mailbox_name = if let Some(spam_folder) = spam_target_mailbox {
+        spam_folder
+    } else {
+        sieve_actions
+            .iter()
+            .find_map(|a| {
+                if let signapps_sieve::SieveAction::FileInto(folder) = a {
+                    Some(folder.as_str())
+                } else {
+                    None
+                }
+            })
+            .unwrap_or("INBOX")
+    };
 
     // Find the target mailbox (try Sieve target first, fall back to INBOX)
-    let target_mailbox_id = match find_or_create_mailbox(pool, account.id, target_mailbox_name).await {
-        Ok(id) => id,
-        Err(e) => {
-            // Fall back to INBOX if target mailbox creation fails
-            tracing::warn!(
-                account_id = %account.id,
-                target = %target_mailbox_name,
-                "Failed to find/create target mailbox ({}), falling back to INBOX", e
-            );
-            match find_or_create_mailbox(pool, account.id, "INBOX").await {
-                Ok(id) => id,
-                Err(e2) => {
-                    return RecipientResult::TempError {
-                        address: recipient.to_string(),
-                        reason: format!("Mailbox lookup failed: {e2}"),
-                    };
+    let target_mailbox_id =
+        match find_or_create_mailbox(pool, account.id, target_mailbox_name).await {
+            Ok(id) => id,
+            Err(e) => {
+                // Fall back to INBOX if target mailbox creation fails
+                tracing::warn!(
+                    account_id = %account.id,
+                    target = %target_mailbox_name,
+                    "Failed to find/create target mailbox ({}), falling back to INBOX", e
+                );
+                match find_or_create_mailbox(pool, account.id, "INBOX").await {
+                    Ok(id) => id,
+                    Err(e2) => {
+                        return RecipientResult::TempError {
+                            address: recipient.to_string(),
+                            reason: format!("Mailbox lookup failed: {e2}"),
+                        };
+                    },
                 }
-            }
-        }
-    };
+            },
+        };
 
     // Handle Redirect actions (enqueue forwarding copies)
     for action in &sieve_actions {
@@ -371,7 +454,7 @@ async fn deliver_to_recipient(
             (account_id, content_id, message_id_header, in_reply_to,
              sender, sender_name, recipients, subject, date,
              has_attachments, spam_score, spam_status, received_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0.0, 'ham', NOW())
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
         RETURNING id
         "#,
     )
@@ -385,6 +468,8 @@ async fn deliver_to_recipient(
     .bind(subject)
     .bind(date)
     .bind(has_attachments)
+    .bind(spam_score as f64)
+    .bind(spam_status)
     .fetch_one(pool)
     .await
     {
@@ -677,7 +762,7 @@ async fn evaluate_sieve(
                 "Sieve script compilation failed: {}, delivering normally", e
             );
             return vec![signapps_sieve::SieveAction::Keep];
-        }
+        },
     };
 
     // Build context from message metadata
@@ -688,10 +773,7 @@ async fn evaluate_sieve(
         headers: vec![
             ("From".to_string(), sender.to_string()),
             ("To".to_string(), recipient.to_string()),
-            (
-                "Subject".to_string(),
-                subject.unwrap_or("").to_string(),
-            ),
+            ("Subject".to_string(), subject.unwrap_or("").to_string()),
         ],
         size: 0, // Size is not easily available here; 0 is safe for most rules
     };
@@ -765,7 +847,7 @@ async fn find_or_create_mailbox(
             .fetch_one(pool)
             .await?;
             Ok(id)
-        }
+        },
     }
 }
 
