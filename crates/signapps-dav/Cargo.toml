@@ -1,0 +1,16 @@
+[package]
+name = "signapps-dav"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Pure WebDAV/CalDAV/CardDAV protocol library — iCal/vCard parsing, XML request/response helpers"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+quick-xml = { version = "0.37", features = ["serialize"] }
+thiserror = { workspace = true }

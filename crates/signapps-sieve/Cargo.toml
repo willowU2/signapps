@@ -1,0 +1,13 @@
+[package]
+name = "signapps-sieve"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Simple Sieve script engine (RFC 5228) — parse and execute email filtering rules"
+
+[dependencies]
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

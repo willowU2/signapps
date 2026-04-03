@@ -271,38 +271,98 @@ async fn deliver_to_recipient(
         }
     };
 
-    // Find the INBOX mailbox
-    let inbox_id = match sqlx::query_scalar::<_, Uuid>(
-        "SELECT id FROM mailserver.mailboxes WHERE account_id = $1 AND (name = 'INBOX' OR special_use = '\\Inbox') LIMIT 1"
-    )
-    .bind(account.id)
-    .fetch_optional(pool)
-    .await
-    {
-        Ok(Some(id)) => id,
-        Ok(None) => {
+    // ── Sieve filtering ──────────────────────────────────────────────────
+    // Load active Sieve script for the recipient and evaluate it.
+    // Actions determine target mailbox (FileInto), rejection (Reject),
+    // or silent discard (Discard). Redirect enqueues a forwarding copy.
+    let sieve_actions = evaluate_sieve(pool, account.id, sender_addr, recipient, subject).await;
+
+    // Check for Reject / Discard before proceeding
+    for action in &sieve_actions {
+        match action {
+            signapps_sieve::SieveAction::Reject(reason) => {
+                tracing::info!(
+                    recipient = %recipient,
+                    reason = %reason,
+                    "Sieve: message rejected"
+                );
+                return RecipientResult::TempError {
+                    address: recipient.to_string(),
+                    reason: format!("Rejected by recipient filter: {reason}"),
+                };
+            }
+            signapps_sieve::SieveAction::Discard => {
+                tracing::info!(
+                    recipient = %recipient,
+                    "Sieve: message discarded"
+                );
+                // Silently accept but don't deliver
+                return RecipientResult::Delivered {
+                    address: recipient.to_string(),
+                    account_id: account.id,
+                };
+            }
+            _ => {}
+        }
+    }
+
+    // Determine target mailbox from Sieve actions (FileInto or default INBOX)
+    let target_mailbox_name = sieve_actions
+        .iter()
+        .find_map(|a| {
+            if let signapps_sieve::SieveAction::FileInto(folder) = a {
+                Some(folder.as_str())
+            } else {
+                None
+            }
+        })
+        .unwrap_or("INBOX");
+
+    // Find the target mailbox (try Sieve target first, fall back to INBOX)
+    let target_mailbox_id = match find_or_create_mailbox(pool, account.id, target_mailbox_name).await {
+        Ok(id) => id,
+        Err(e) => {
+            // Fall back to INBOX if target mailbox creation fails
             tracing::warn!(
                 account_id = %account.id,
-                "No INBOX mailbox found, attempting to create default mailboxes"
+                target = %target_mailbox_name,
+                "Failed to find/create target mailbox ({}), falling back to INBOX", e
             );
-            // Try to create default mailboxes
-            match create_inbox(pool, account.id).await {
+            match find_or_create_mailbox(pool, account.id, "INBOX").await {
                 Ok(id) => id,
-                Err(e) => {
+                Err(e2) => {
                     return RecipientResult::TempError {
                         address: recipient.to_string(),
-                        reason: format!("INBOX creation failed: {e}"),
+                        reason: format!("Mailbox lookup failed: {e2}"),
                     };
                 }
             }
         }
-        Err(e) => {
-            return RecipientResult::TempError {
-                address: recipient.to_string(),
-                reason: format!("Mailbox lookup failed: {e}"),
-            };
-        }
     };
+
+    // Handle Redirect actions (enqueue forwarding copies)
+    for action in &sieve_actions {
+        if let signapps_sieve::SieveAction::Redirect(forward_addr) = action {
+            tracing::info!(
+                recipient = %recipient,
+                forward_to = %forward_addr,
+                "Sieve: message redirected"
+            );
+            // Best-effort: insert redirect into outbound queue
+            let _ = sqlx::query(
+                r#"INSERT INTO mailserver.outbound_queue
+                       (sender, recipient, subject, status)
+                   VALUES ($1, $2, $3, 'pending')"#,
+            )
+            .bind(sender_addr)
+            .bind(forward_addr)
+            .bind(subject.unwrap_or("(no subject)"))
+            .execute(pool)
+            .await;
+        }
+    }
+
+    let inbox_id = target_mailbox_id;
 
     // Insert the message record
     let message_id_result = match sqlx::query_scalar::<_, Uuid>(
@@ -563,6 +623,150 @@ pub async fn is_local_domain(pool: &Pool<Postgres>, domain: &str) -> Result<bool
     .fetch_one(pool)
     .await?;
     Ok(exists)
+}
+
+// ── Sieve integration ────────────────────────────────────────────────────────
+
+/// Sieve script row from the database.
+#[derive(Debug, sqlx::FromRow)]
+struct SieveScriptRow {
+    #[allow(dead_code)]
+    id: Uuid,
+    script_source: String,
+}
+
+/// Load and evaluate the active Sieve script for a recipient account.
+///
+/// Returns the list of actions to apply. If no active script is found or
+/// compilation fails, returns `[Keep]` (deliver normally).
+///
+/// # Panics
+///
+/// None.
+async fn evaluate_sieve(
+    pool: &Pool<Postgres>,
+    account_id: Uuid,
+    sender: &str,
+    recipient: &str,
+    subject: Option<&str>,
+) -> Vec<signapps_sieve::SieveAction> {
+    // Load active Sieve script for this account
+    let script_row: Option<SieveScriptRow> = sqlx::query_as(
+        r#"SELECT id, script_source
+           FROM mailserver.sieve_scripts
+           WHERE account_id = $1 AND is_active = true
+           ORDER BY created_at DESC
+           LIMIT 1"#,
+    )
+    .bind(account_id)
+    .fetch_optional(pool)
+    .await
+    .unwrap_or(None);
+
+    let script_row = match script_row {
+        Some(r) => r,
+        None => return vec![signapps_sieve::SieveAction::Keep],
+    };
+
+    // Compile the script
+    let compiled = match signapps_sieve::SieveScript::compile(&script_row.script_source) {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::warn!(
+                account_id = %account_id,
+                "Sieve script compilation failed: {}, delivering normally", e
+            );
+            return vec![signapps_sieve::SieveAction::Keep];
+        }
+    };
+
+    // Build context from message metadata
+    let ctx = signapps_sieve::SieveContext {
+        from: sender.to_string(),
+        to: vec![recipient.to_string()],
+        subject: subject.unwrap_or("").to_string(),
+        headers: vec![
+            ("From".to_string(), sender.to_string()),
+            ("To".to_string(), recipient.to_string()),
+            (
+                "Subject".to_string(),
+                subject.unwrap_or("").to_string(),
+            ),
+        ],
+        size: 0, // Size is not easily available here; 0 is safe for most rules
+    };
+
+    let actions = compiled.execute(&ctx);
+    tracing::debug!(
+        account_id = %account_id,
+        actions = ?actions,
+        "Sieve evaluation complete"
+    );
+    actions
+}
+
+/// Find a mailbox by name, or create it if it doesn't exist.
+///
+/// Used by Sieve `fileinto` to deliver to non-INBOX mailboxes.
+///
+/// # Errors
+///
+/// Returns `sqlx::Error` on database failure.
+///
+/// # Panics
+///
+/// None.
+async fn find_or_create_mailbox(
+    pool: &Pool<Postgres>,
+    account_id: Uuid,
+    mailbox_name: &str,
+) -> Result<Uuid, sqlx::Error> {
+    // Try to find existing mailbox
+    let existing: Option<Uuid> = sqlx::query_scalar(
+        "SELECT id FROM mailserver.mailboxes WHERE account_id = $1 AND (name = $2 OR special_use = $3) LIMIT 1",
+    )
+    .bind(account_id)
+    .bind(mailbox_name)
+    .bind(if mailbox_name == "INBOX" { "\\Inbox" } else { "" })
+    .fetch_optional(pool)
+    .await?;
+
+    if let Some(id) = existing {
+        return Ok(id);
+    }
+
+    // For INBOX, create with special_use
+    if mailbox_name.eq_ignore_ascii_case("INBOX") {
+        return create_inbox(pool, account_id).await;
+    }
+
+    // Create new mailbox for Sieve fileinto target
+    let row = sqlx::query(
+        r#"INSERT INTO mailserver.mailboxes
+               (account_id, name, uid_validity, sort_order)
+           VALUES ($1, $2, (EXTRACT(EPOCH FROM NOW())::INT), 99)
+           ON CONFLICT DO NOTHING
+           RETURNING id"#,
+    )
+    .bind(account_id)
+    .bind(mailbox_name)
+    .fetch_optional(pool)
+    .await?;
+
+    match row {
+        Some(r) => Ok(r.get("id")),
+        None => {
+            // Race condition — fetch existing
+            let id = sqlx::query_scalar::<_, Uuid>(
+                "SELECT id FROM mailserver.mailboxes WHERE account_id = $1 AND name = $2 LIMIT 1",
+            )
+            .bind(account_id)
+            .bind(mailbox_name)
+            .fetch_one(pool)
+            .await?;
+            Ok(id)
+        }
+    }
 }
 
 #[cfg(test)]
