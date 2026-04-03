@@ -32,6 +32,7 @@ pub mod tenant;
 pub mod user;
 pub mod user_preferences;
 pub mod vault;
+pub mod mailserver;
 
 pub use audit_log::*;
 pub use backup::*;
