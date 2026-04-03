@@ -20,6 +20,11 @@ chrono = { version = "0.4", features = ["serde"] }
 # Authentication
 signapps-common = { path = "../../crates/signapps-common" }
 
+# Mail protocol crates
+signapps-smtp = { path = "../../crates/signapps-smtp" }
+signapps-mime = { path = "../../crates/signapps-mime" }
+signapps-dkim = { path = "../../crates/signapps-dkim" }
+
 # IMAP/SMTP Backend
 async-imap = { version = "0.11", default-features = false, features = ["runtime-tokio"] }
 imap = { version = "2.4", default-features = false, features = ["tls"] }

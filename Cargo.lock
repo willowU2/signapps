@@ -10402,6 +10402,9 @@ dependencies = [
  "serde",
  "serde_json",
  "signapps-common",
+ "signapps-dkim",
+ "signapps-mime",
+ "signapps-smtp",
  "sqlx",
  "thiserror 1.0.69",
  "tokio",
@@ -10763,6 +10766,14 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "windows-service",
+]
+
+[[package]]
+name = "signapps-smtp"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "thiserror 1.0.69",
 ]
 
 [[package]]

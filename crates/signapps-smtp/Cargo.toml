@@ -1,0 +1,12 @@
+[package]
+name = "signapps-smtp"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Pure SMTP command parser, state machine, and SASL auth — no I/O, no network"
+
+[dependencies]
+base64 = { workspace = true }
+thiserror = { workspace = true }

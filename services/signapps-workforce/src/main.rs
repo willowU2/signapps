@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
     init_tracing("signapps_workforce");
     load_env();
 
-    let config = ServiceConfig::from_env("signapps-workforce", 3019);
+    let config = ServiceConfig::from_env("signapps-workforce", 3024);
     config.log_startup();
 
     // Create database pool

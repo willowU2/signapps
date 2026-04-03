@@ -30,6 +30,7 @@ pub struct Policy {
 }
 
 #[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
+#[schema(no_recursion)]
 /// Represents a policy with children.
 pub struct PolicyWithChildren {
     #[serde(flatten)]

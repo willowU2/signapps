@@ -610,6 +610,157 @@ function GoogleOAuthSetupWizard({
   );
 }
 
+// ─��─ Microsoft OAuth Setup Wizard ───���────────────────────────────────────────
+
+function MicrosoftOAuthSetupWizard({
+  onClose,
+  onSaved,
+}: {
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [clientId, setClientId] = useState("");
+  const [clientSecret, setClientSecret] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    accountApi
+      .getOAuthConfig("microsoft")
+      .then((cfg) => {
+        if (cfg.client_id) setClientId(cfg.client_id);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    if (!clientId.trim() || !clientSecret.trim()) {
+      toast.error("Client ID et Client Secret requis");
+      return;
+    }
+    setSaving(true);
+    try {
+      await accountApi.saveOAuthConfig(
+        "microsoft",
+        clientId.trim(),
+        clientSecret.trim(),
+      );
+      toast.success("Configuration Microsoft OAuth enregistree");
+      onSaved();
+      onClose();
+    } catch {
+      toast.error("Impossible d'enregistrer la configuration");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border bg-card p-6 space-y-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Settings2 className="h-5 w-5 text-primary" />
+          <div>
+            <h2 className="text-lg font-semibold">
+              Configuration Microsoft OAuth
+            </h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Entrez vos identifiants Azure AD pour activer OAuth Microsoft 365.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          Annuler
+        </button>
+      </div>
+
+      <div className="rounded-lg bg-muted/50 p-4 text-sm space-y-2 text-muted-foreground">
+        <p className="font-medium text-foreground">
+          Comment obtenir vos identifiants :
+        </p>
+        <ol className="list-decimal list-inside space-y-1">
+          <li>
+            Allez sur{" "}
+            <a
+              href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Azure AD &mdash; Inscriptions d&apos;applications
+            </a>
+          </li>
+          <li>
+            Creez une nouvelle inscription (type: Comptes dans un annuaire
+            organisationnel et comptes Microsoft personnels)
+          </li>
+          <li>
+            Ajoutez{" "}
+            <code className="bg-muted px-1 rounded text-xs">
+              http://localhost:3000/mail/callback/microsoft
+            </code>{" "}
+            comme URI de redirection (Web)
+          </li>
+          <li>
+            Dans &quot;Certificats et secrets&quot;, creez un secret client
+          </li>
+          <li>
+            Ajoutez les permissions API : IMAP.AccessAsUser.All, SMTP.Send
+            (Office 365 Exchange Online)
+          </li>
+          <li>Copiez le Client ID et le Client Secret ci-dessous</li>
+        </ol>
+      </div>
+
+      {loading ? (
+        <div className="h-20 bg-muted animate-pulse rounded-lg" />
+      ) : (
+        <div className="space-y-4">
+          <Field
+            label="Microsoft Client ID (Application ID)"
+            value={clientId}
+            onChange={setClientId}
+            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+          />
+          <Field
+            label="Microsoft Client Secret"
+            value={clientSecret}
+            onChange={setClientSecret}
+            placeholder="~xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            type="password"
+          />
+        </div>
+      )}
+
+      <div className="flex items-center gap-3 pt-2">
+        <button
+          onClick={handleSave}
+          disabled={saving || loading}
+          className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground
+            text-sm font-medium hover:bg-primary/90 transition-colors
+            disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          {saving ? (
+            <>
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              Enregistrement...
+            </>
+          ) : (
+            <>
+              <ShieldCheck className="h-4 w-4" />
+              Enregistrer
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Account Card ─────────────────────────────────────────────────────────────
 
 function AccountCard({
@@ -680,18 +831,21 @@ function AccountCard({
     }
   };
 
-  const handleGoogleOAuth = async () => {
+  const handleOAuthConnect = async (provider: "google" | "microsoft") => {
     if (!userId) {
       toast.error("Utilisateur non identifié");
       return;
     }
     setConnectingOAuth(true);
     try {
-      const { url } = await accountApi.getGoogleOAuthUrl();
+      const { url } =
+        provider === "microsoft"
+          ? await accountApi.getMicrosoftOAuthUrl()
+          : await accountApi.getGoogleOAuthUrl();
       // Open OAuth popup
       const popup = window.open(
         url,
-        "google_oauth",
+        `${provider}_oauth`,
         "width=600,height=700,left=200,top=100",
       );
       popupRef.current = popup;
@@ -702,8 +856,16 @@ function AccountCard({
           window.removeEventListener("message", handleMessage);
           popupRef.current?.close();
           try {
-            await accountApi.exchangeGoogleOAuthCode(event.data.code, userId);
-            toast.success("Connecte via Google OAuth");
+            if (provider === "microsoft") {
+              await accountApi.exchangeMicrosoftOAuthCode(
+                event.data.code,
+                userId,
+              );
+              toast.success("Connecte via Microsoft OAuth");
+            } else {
+              await accountApi.exchangeGoogleOAuthCode(event.data.code, userId);
+              toast.success("Connecte via Google OAuth");
+            }
             onSynced();
           } catch {
             toast.error("Echec de l'echange OAuth");
@@ -728,11 +890,11 @@ function AccountCard({
     }
   };
 
-  const isGmailOrOutlook =
-    account.provider === "gmail" ||
-    account.provider === "google" ||
-    account.provider === "outlook" ||
-    account.provider === "microsoft";
+  const isGoogle =
+    account.provider === "gmail" || account.provider === "google";
+  const isMicrosoft =
+    account.provider === "outlook" || account.provider === "microsoft";
+  const isGmailOrOutlook = isGoogle || isMicrosoft;
 
   return (
     <div className="rounded-xl border bg-card p-4 space-y-3">
@@ -747,7 +909,7 @@ function AccountCard({
               {account.has_oauth_token && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                   <ShieldCheck className="h-3 w-3" />
-                  Google OAuth
+                  {isMicrosoft ? "Microsoft" : "Google"} OAuth
                 </span>
               )}
             </p>
@@ -803,47 +965,84 @@ function AccountCard({
         </div>
       </div>
 
-      {/* Google OAuth connect button (Gmail/Outlook/Google accounts) */}
+      {/* OAuth connect buttons (Gmail/Outlook/Google/Microsoft accounts) */}
       {isGmailOrOutlook && (
         <div className="pt-1">
           {account.has_oauth_token ? (
             <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
               <ShieldCheck className="h-4 w-4" />
               <span>
-                Connecte via Google OAuth &mdash; synchronisation IMAP securisee
+                Connecte via {isMicrosoft ? "Microsoft" : "Google"} OAuth
+                &mdash; synchronisation IMAP securisee
               </span>
             </div>
           ) : (
-            <button
-              onClick={handleGoogleOAuth}
-              disabled={connectingOAuth}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background
-                hover:bg-accent text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {connectingOAuth ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : (
-                <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    fill="#4285F4"
-                  />
-                  <path
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    fill="#34A853"
-                  />
-                  <path
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                    fill="#FBBC05"
-                  />
-                  <path
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                    fill="#EA4335"
-                  />
-                </svg>
+            <div className="flex items-center gap-2 flex-wrap">
+              {isGoogle && (
+                <button
+                  onClick={() => handleOAuthConnect("google")}
+                  disabled={connectingOAuth}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background
+                    hover:bg-accent text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {connectingOAuth ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        fill="#4285F4"
+                      />
+                      <path
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        fill="#34A853"
+                      />
+                      <path
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        fill="#FBBC05"
+                      />
+                      <path
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        fill="#EA4335"
+                      />
+                    </svg>
+                  )}
+                  {connectingOAuth
+                    ? "Connexion..."
+                    : "Se connecter avec Google"}
+                </button>
               )}
-              {connectingOAuth ? "Connexion..." : "Se connecter avec Google"}
-            </button>
+              {isMicrosoft && (
+                <button
+                  onClick={() => handleOAuthConnect("microsoft")}
+                  disabled={connectingOAuth}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background
+                    hover:bg-accent text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {connectingOAuth ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 23 23"
+                      aria-hidden="true"
+                    >
+                      <path fill="#f25022" d="M1 1h10v10H1z" />
+                      <path fill="#00a4ef" d="M1 12h10v10H1z" />
+                      <path fill="#7fba00" d="M12 1h10v10H12z" />
+                      <path fill="#ffb900" d="M12 12h10v10H12z" />
+                    </svg>
+                  )}
+                  {connectingOAuth
+                    ? "Connexion..."
+                    : "Se connecter avec Microsoft"}
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -1081,6 +1280,7 @@ export default function MailSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [showAddWizard, setShowAddWizard] = useState(false);
   const [showOAuthWizard, setShowOAuthWizard] = useState(false);
+  const [showMsOAuthWizard, setShowMsOAuthWizard] = useState(false);
 
   const loadAccounts = useCallback(async () => {
     setLoading(true);
@@ -1119,7 +1319,15 @@ export default function MailSettingsPage() {
             title="Configurer Google OAuth (Client ID / Secret)"
           >
             <Settings2 className="h-3.5 w-3.5" />
-            Config. OAuth
+            Google OAuth
+          </button>
+          <button
+            onClick={() => setShowMsOAuthWizard((v) => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium hover:bg-accent transition-colors"
+            title="Configurer Microsoft OAuth (Client ID / Secret)"
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+            Microsoft OAuth
           </button>
           <a href="/mail" className="text-sm text-primary hover:underline">
             &larr; Retour au mail
@@ -1133,6 +1341,17 @@ export default function MailSettingsPage() {
           onClose={() => setShowOAuthWizard(false)}
           onSaved={() => {
             setShowOAuthWizard(false);
+            loadAccounts();
+          }}
+        />
+      )}
+
+      {/* Microsoft OAuth Setup Wizard */}
+      {showMsOAuthWizard && (
+        <MicrosoftOAuthSetupWizard
+          onClose={() => setShowMsOAuthWizard(false)}
+          onSaved={() => {
+            setShowMsOAuthWizard(false);
             loadAccounts();
           }}
         />

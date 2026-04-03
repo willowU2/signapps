@@ -976,10 +976,14 @@ export function MailDisplay({
             <div className="px-8 py-2">
               <iframe
                 sandbox="allow-same-origin"
-                srcDoc={mail.body_html.replace(
-                  /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-                  "",
-                )}
+                referrerPolicy="no-referrer"
+                srcDoc={
+                  '<meta name="referrer" content="no-referrer">' +
+                  mail.body_html.replace(
+                    /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+                    "",
+                  )
+                }
                 className="w-full border-0 rounded"
                 style={{ minHeight: "300px" }}
                 onLoad={(e) => {

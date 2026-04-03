@@ -108,8 +108,18 @@ export interface User {
   auth_provider: string; // 'local' | 'ldap'
   created_at: string;
   last_login?: string;
-  // Frontend-only computed fields
+  tenant_id?: string;
+  department?: string;
+  job_title?: string;
+  phone?: string;
+  timezone?: string;
+  locale?: string;
   avatar_url?: string;
+  user_settings?: Record<string, unknown>;
+  webdav_enabled?: boolean;
+  onboarding_completed_at?: string;
+  streak_count?: number;
+  streak_last_date?: string;
 }
 
 // Helper to check if user is admin (role >= Admin)

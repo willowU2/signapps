@@ -9,6 +9,7 @@ members = [
     "crates/signapps-service",
     "crates/signapps-mime",
     "crates/signapps-dkim",
+    "crates/signapps-smtp",
     # Tauri desktop app
     "src-tauri",
     # Backend services

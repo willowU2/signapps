@@ -18,6 +18,7 @@ use crate::handlers::emails::{
 use crate::handlers::folders::{get_folder, list_folders};
 use crate::handlers::import_export::import_mbox;
 use crate::handlers::labels::{create_label, delete_label, list_labels, update_label};
+use crate::handlers::mailing_lists::{list_mailing_lists, mass_unsubscribe};
 use crate::handlers::newsletter::send_newsletter;
 use crate::handlers::pgp::{delete_pgp_config, get_pgp_config, upsert_pgp_config};
 use crate::handlers::recurring::{
@@ -118,6 +119,15 @@ pub fn router() -> Router<AppState> {
             "/api/v1/mail/emails/categorize/settings",
             axum::routing::post(save_categorize_settings),
         )
+        // Mailing lists — detection & mass unsubscribe
+        .route(
+            "/api/v1/mail/mailing-lists",
+            get(list_mailing_lists),
+        )
+        .route(
+            "/api/v1/mail/mailing-lists/unsubscribe",
+            post(mass_unsubscribe),
+        )
         // Newsletter send (IDEA-039)
         .route(
             "/api/v1/mail/newsletters/send",
@@ -199,6 +209,24 @@ pub fn router() -> Router<AppState> {
         .route("/api/v1/mail/threads", get(list_threads))
         // Undo-send: cancel a pending scheduled email
         .route("/api/v1/mail/emails/:id/cancel-send", post(cancel_send))
+        // Internal Stalwart Mail Server management
+        .route(
+            "/api/v1/mail/internal/status",
+            get(crate::handlers::internal_server::get_status),
+        )
+        .route(
+            "/api/v1/mail/internal/domains",
+            get(crate::handlers::internal_server::list_domains),
+        )
+        .route(
+            "/api/v1/mail/internal/accounts",
+            get(crate::handlers::internal_server::list_accounts)
+                .post(crate::handlers::internal_server::create_account),
+        )
+        .route(
+            "/api/v1/mail/internal/accounts/:email",
+            axum::routing::delete(crate::handlers::internal_server::delete_account),
+        )
 }
 
 fn patch<H, T, S>(handler: H) -> axum::routing::MethodRouter<S>

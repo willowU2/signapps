@@ -102,6 +102,8 @@ struct FetchedMessage {
     received_at: Option<chrono::DateTime<Utc>>,
     has_attachments: bool,
     attachments: Vec<AttachmentInfo>,
+    list_unsubscribe: Option<String>,
+    list_id: Option<String>,
 }
 
 /// Represents a folder's sync results from IMAP.
@@ -204,7 +206,8 @@ pub async fn idle_inbox(pool: Pool<Postgres>, event_bus: PgEventBus, account: Ma
                         account.email_address
                     );
                     if let Some(ref refresh_token) = account.oauth_refresh_token {
-                        match refresh_google_token(refresh_token).await {
+                        let provider = if account.provider.is_empty() { "google" } else { &account.provider };
+                        match refresh_oauth_token(provider, refresh_token).await {
                             Ok((new_token, new_expires)) => {
                                 let _ = sqlx::query(
                                     "UPDATE mail.accounts SET oauth_token = $1, oauth_expires_at = $2, updated_at = NOW() WHERE id = $3",
@@ -500,24 +503,65 @@ async fn sync_all_accounts(
 }
 
 /// Map a raw IMAP folder name to a canonical folder_type string.
+///
+/// Handles Gmail labels (English, French, German, Spanish, Italian, Portuguese),
+/// Outlook/Exchange, and generic IMAP servers. The `[Gmail]/` prefix is stripped
+/// before matching, and IMAP UTF-7 modified encoding (`&AOk-` = é) is decoded.
 fn imap_name_to_folder_type(name: &str) -> &'static str {
     let lower = name.to_lowercase();
-    // Strip any namespace prefix like "[Gmail]/" or "INBOX."
-    let base = lower
-        .rsplit('/')
-        .next()
-        .unwrap_or(&lower)
-        .rsplit('.')
-        .next()
-        .unwrap_or(&lower);
 
-    match base {
-        "inbox" => "inbox",
-        "sent" | "sent items" | "sent messages" | "sent mail" => "sent",
-        "drafts" | "draft" => "drafts",
-        "trash" | "deleted items" | "deleted messages" => "trash",
-        "junk" | "spam" | "junk e-mail" | "junk email" => "spam",
-        "archive" | "archived" | "all mail" | "all messages" => "archive",
+    // Decode common IMAP modified-UTF7 sequences found in French Gmail
+    let decoded = lower
+        .replace("&aok-", "é")
+        .replace("&aek-", "è")
+        .replace("&amk-", "é"); // alternate encoding
+
+    // Strip namespace prefixes: "[Gmail]/", "[Google Mail]/", "INBOX.", "[Zoom Mail]/"
+    let base = decoded
+        .strip_prefix("[gmail]/")
+        .or_else(|| decoded.strip_prefix("[google mail]/"))
+        .unwrap_or(&decoded);
+
+    // Also try splitting on last '/' or '.' for other namespaces
+    let leaf = base.rsplit('/').next().unwrap_or(base);
+    let leaf = leaf.rsplit('.').next().unwrap_or(leaf);
+
+    // Match against known folder names in multiple languages
+    match leaf {
+        // Inbox
+        "inbox" | "boîte de réception" | "posteingang" | "bandeja de entrada" | "posta in arrivo" | "caixa de entrada" => "inbox",
+
+        // Sent
+        "sent" | "sent items" | "sent messages" | "sent mail"
+        | "messages envoyés" | "envoyés" | "éléments envoyés"
+        | "gesendet" | "gesendete elemente" | "enviados" | "elementi inviati" | "itens enviados" => "sent",
+
+        // Drafts
+        "drafts" | "draft" | "brouillons" | "brouillon"
+        | "entwürfe" | "borradores" | "bozze" | "rascunhos" => "drafts",
+
+        // Trash
+        "trash" | "deleted items" | "deleted messages"
+        | "corbeille" | "éléments supprimés"
+        | "papierkorb" | "papelera" | "cestino" | "lixeira" => "trash",
+
+        // Spam / Junk
+        "junk" | "spam" | "junk e-mail" | "junk email"
+        | "courrier indésirable" | "indésirables" | "pourriel"
+        | "spamverdacht" => "spam",
+
+        // Starred / Flagged
+        "starred" | "flagged" | "suivis" | "messages suivis"
+        | "markiert" | "destacados" | "speciali" | "com estrela" => "starred",
+
+        // Important (Gmail specific)
+        "important" | "wichtig" | "importantes" | "importanti" => "important",
+
+        // Archive / All Mail
+        "archive" | "archived" | "all mail" | "all messages"
+        | "tous les messages" | "archiv" | "alle nachrichten"
+        | "todos los correos" | "tutti i messaggi" | "todos os e-mails" => "archive",
+
         _ => "custom",
     }
 }
@@ -525,12 +569,14 @@ fn imap_name_to_folder_type(name: &str) -> &'static str {
 /// Display name for a folder given its type + raw IMAP name.
 fn folder_display_name(folder_type: &str, imap_name: &str) -> String {
     match folder_type {
-        "inbox" => "Inbox".to_string(),
-        "sent" => "Sent".to_string(),
-        "drafts" => "Drafts".to_string(),
-        "trash" => "Trash".to_string(),
-        "spam" => "Junk".to_string(),
-        "archive" => "Archive".to_string(),
+        "inbox" => "Boîte de réception".to_string(),
+        "sent" => "Messages envoyés".to_string(),
+        "drafts" => "Brouillons".to_string(),
+        "trash" => "Corbeille".to_string(),
+        "spam" => "Spam".to_string(),
+        "starred" => "Messages suivis".to_string(),
+        "important" => "Important".to_string(),
+        "archive" => "Tous les messages".to_string(),
         _ => imap_name.to_string(),
     }
 }
@@ -565,6 +611,67 @@ async fn refresh_google_token(
     let new_expiry = Utc::now() + chrono::Duration::seconds(expires_in);
 
     Ok((new_token, new_expiry))
+}
+
+/// Refresh a Microsoft OAuth2 access token using the stored refresh token.
+/// Returns (new_access_token, new_expiry).
+///
+/// Posts to the Microsoft identity platform token endpoint with
+/// `grant_type=refresh_token`. Uses `MICROSOFT_CLIENT_ID` and
+/// `MICROSOFT_CLIENT_SECRET` environment variables.
+///
+/// # Errors
+///
+/// Returns an error if the HTTP request fails, the response cannot be
+/// parsed, or the response does not contain an `access_token`.
+async fn refresh_microsoft_token(
+    refresh_token: &str,
+) -> Result<(String, chrono::DateTime<Utc>), Box<dyn std::error::Error + Send + Sync>> {
+    let client_id = std::env::var("MICROSOFT_CLIENT_ID").unwrap_or_default();
+    let client_secret = std::env::var("MICROSOFT_CLIENT_SECRET").unwrap_or_default();
+
+    let http = reqwest::Client::new();
+    let resp = http
+        .post("https://login.microsoftonline.com/common/oauth2/v2.0/token")
+        .form(&[
+            ("client_id", client_id.as_str()),
+            ("client_secret", client_secret.as_str()),
+            ("refresh_token", refresh_token),
+            ("grant_type", "refresh_token"),
+        ])
+        .send()
+        .await?
+        .json::<serde_json::Value>()
+        .await?;
+
+    let new_token = resp["access_token"]
+        .as_str()
+        .ok_or("Missing access_token in Microsoft refresh response")?
+        .to_string();
+    let expires_in = resp["expires_in"].as_i64().unwrap_or(3600);
+    let new_expiry = Utc::now() + chrono::Duration::seconds(expires_in);
+
+    Ok((new_token, new_expiry))
+}
+
+/// Refresh an OAuth2 access token for the given provider.
+///
+/// Dispatches to the provider-specific refresh function based on the
+/// account's `provider` field. Supports `"google"`, `"gmail"`,
+/// `"microsoft"`, and `"outlook"`.
+///
+/// # Errors
+///
+/// Returns an error if the provider is not recognized or if the
+/// underlying refresh call fails.
+async fn refresh_oauth_token(
+    provider: &str,
+    refresh_token: &str,
+) -> Result<(String, chrono::DateTime<Utc>), Box<dyn std::error::Error + Send + Sync>> {
+    match provider {
+        "microsoft" | "outlook" => refresh_microsoft_token(refresh_token).await,
+        _ => refresh_google_token(refresh_token).await,
+    }
 }
 
 /// Perform a full IMAP sync for a single mail account.
@@ -605,7 +712,8 @@ pub async fn sync_account(
                 account.email_address
             );
             if let Some(ref refresh_token) = account.oauth_refresh_token {
-                match refresh_google_token(refresh_token).await {
+                let provider = if account.provider.is_empty() { "google" } else { &account.provider };
+                match refresh_oauth_token(provider, refresh_token).await {
                     Ok((new_token, new_expires)) => {
                         let _ = sqlx::query(
                                 "UPDATE mail.accounts SET oauth_token = $1, oauth_expires_at = $2, updated_at = NOW() WHERE id = $3",
@@ -888,6 +996,11 @@ pub async fn sync_account(
                             let attachments = extract_attachments(&parsed);
                             let has_attachments = !attachments.is_empty();
 
+                            // Extract mailing list headers (RFC 2369 / RFC 2919)
+                            let list_unsubscribe =
+                                get_header(&parsed, "List-Unsubscribe");
+                            let list_id = get_header(&parsed, "List-Id");
+
                             folder_result.messages.push(FetchedMessage {
                                 uid: *uid,
                                 subject,
@@ -905,6 +1018,8 @@ pub async fn sync_account(
                                 received_at,
                                 has_attachments,
                                 attachments,
+                                list_unsubscribe,
+                                list_id,
                             });
                         }
                     }
@@ -1000,8 +1115,12 @@ pub async fn sync_account(
                 INSERT INTO mail.emails (
                     account_id, folder_id, imap_uid, message_id, in_reply_to,
                     sender, sender_name, recipient, cc, subject,
-                    body_text, body_html, snippet, is_read, received_at, has_attachments
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                    body_text, body_html, snippet, is_read, received_at,
+                    has_attachments, list_unsubscribe, list_id
+                ) VALUES (
+                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+                    $11, $12, $13, $14, $15, $16, $17, $18
+                )
                 ON CONFLICT DO NOTHING
                 RETURNING id
                 "#,
@@ -1026,6 +1145,8 @@ pub async fn sync_account(
             .bind(msg.is_read)
             .bind(msg.received_at)
             .bind(msg.has_attachments)
+            .bind(&msg.list_unsubscribe)
+            .bind(&msg.list_id)
             .fetch_optional(pool)
             .await
             .unwrap_or(None);

@@ -1,8 +1,11 @@
 pub mod api;
 pub mod auth;
 pub mod handlers;
+pub mod imap;
 pub mod models;
 pub mod openapi;
+pub mod smtp;
+pub mod state;
 pub mod sync_service;
 
 use chrono::{Datelike, Timelike, Weekday};
@@ -152,6 +155,39 @@ async fn main() {
                 tokio::time::sleep(Duration::from_secs(10)).await;
             }
         }
+    });
+
+    // ── SMTP / IMAP listeners ────────────────────────────────────────────────
+    let mail_server_state = state::MailServerState {
+        pool: pool.clone(),
+        jwt_config: state.jwt_config.clone(),
+        indexer: state.indexer.clone(),
+        event_bus: event_bus.clone(),
+    };
+
+    // SMTP inbound (port 25) — accepts mail from remote MTAs
+    let smtp_inbound_port: u16 = env_or("SMTP_INBOUND_PORT", "25")
+        .parse()
+        .unwrap_or(25);
+    let smtp_inbound_state = mail_server_state.clone();
+    tokio::spawn(async move {
+        smtp::inbound::start(smtp_inbound_state, smtp_inbound_port).await;
+    });
+
+    // SMTP submission (port 587) — accepts mail from authenticated local users
+    let smtp_submission_port: u16 = env_or("SMTP_SUBMISSION_PORT", "587")
+        .parse()
+        .unwrap_or(587);
+    let smtp_submission_state = mail_server_state.clone();
+    tokio::spawn(async move {
+        smtp::submission::start(smtp_submission_state, smtp_submission_port).await;
+    });
+
+    // IMAP server (port 993) — serves mailboxes to IMAP clients
+    let imap_port: u16 = env_or("IMAP_PORT", "993").parse().unwrap_or(993);
+    let imap_state = mail_server_state.clone();
+    tokio::spawn(async move {
+        imap::server::start(imap_state, imap_port).await;
     });
 
     let cors = CorsLayer::new()

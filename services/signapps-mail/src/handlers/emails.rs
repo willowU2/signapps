@@ -68,9 +68,11 @@ pub async fn list_emails(
         r#"
         SELECT e.* FROM mail.emails e
         JOIN mail.accounts a ON a.id = e.account_id
+        LEFT JOIN mail.folders f ON f.id = e.folder_id
         WHERE a.user_id = $1
         AND ($2::UUID IS NULL OR e.account_id = $2)
         AND ($3::UUID IS NULL OR e.folder_id = $3)
+        AND ($6::TEXT IS NULL OR f.folder_type = $6)
         AND COALESCE(e.is_deleted, false) = false
         ORDER BY COALESCE(e.received_at, e.created_at) DESC
         LIMIT $4 OFFSET $5
@@ -81,6 +83,7 @@ pub async fn list_emails(
     .bind(query.folder_id)
     .bind(limit)
     .bind(offset)
+    .bind(query.folder_type.as_deref())
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();

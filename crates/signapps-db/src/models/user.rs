@@ -45,7 +45,18 @@ pub struct User {
     pub last_login: Option<DateTime<Utc>>,
     /// Tenant ID for multi-tenant isolation (NULL = not assigned to a tenant)
     pub tenant_id: Option<Uuid>,
+    pub department: Option<String>,
+    pub job_title: Option<String>,
+    pub phone: Option<String>,
+    pub timezone: Option<String>,
+    pub locale: Option<String>,
     pub avatar_url: Option<String>,
+    pub user_settings: Option<serde_json::Value>,
+    pub deleted_at: Option<DateTime<Utc>>,
+    pub webdav_enabled: Option<bool>,
+    pub onboarding_completed_at: Option<DateTime<Utc>>,
+    pub streak_count: i32,
+    pub streak_last_date: Option<chrono::NaiveDate>,
 }
 
 /// Request to create a new user account.

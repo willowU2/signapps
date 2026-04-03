@@ -794,7 +794,7 @@ async fn main() -> anyhow::Result<()> {
     init_tracing("signapps_contacts");
     load_env();
 
-    let config = ServiceConfig::from_env("signapps-contacts", 3014);
+    let config = ServiceConfig::from_env("signapps-contacts", 3021);
     config.log_startup();
 
     let jwt_config = JwtConfig {

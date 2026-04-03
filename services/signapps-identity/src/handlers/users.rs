@@ -167,15 +167,21 @@ impl From<signapps_db::models::User> for UserResponse {
 pub async fn list(
     State(state): State<AppState>,
     Query(query): Query<ListQuery>,
-) -> Result<Json<Vec<UserResponse>>> {
+) -> Result<Json<UserListResponse>> {
     let limit = query.limit.unwrap_or(50).min(100);
     let offset = query.offset.unwrap_or(0);
 
     let users = UserRepository::list(&state.pool, limit, offset).await?;
+    let total = users.len() as i64;
 
     let response: Vec<UserResponse> = users.into_iter().map(UserResponse::from).collect();
 
-    Ok(Json(response))
+    Ok(Json(UserListResponse {
+        users: response,
+        total,
+        limit,
+        offset,
+    }))
 }
 
 /// Get user by ID (admin only).

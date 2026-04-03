@@ -82,30 +82,29 @@ export function AccountSwitcher({
       <DropdownMenuTrigger asChild>
         <div
           className={cn(
-            "flex items-center gap-2 overflow-hidden rounded-xl border border-transparent p-2 transition-all hover:bg-muted/50 cursor-pointer",
-            isCollapsed && "justify-center p-0",
+            "flex items-center gap-3 overflow-hidden rounded-xl border border-border/40 bg-card/50 p-2.5 transition-all hover:bg-muted/60 cursor-pointer shadow-sm",
+            isCollapsed &&
+              "justify-center p-1 border-transparent bg-transparent shadow-none",
           )}
         >
-          <Avatar className="h-8 w-8 shrink-0 rounded-full border border-background shadow-sm ring-1 ring-border/10">
-            <AvatarImage
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedAccount.email}`}
-            />
-            <AvatarFallback className="text-[10px] font-medium bg-primary/10 text-primary">
+          <Avatar className="h-9 w-9 shrink-0 rounded-full border-2 border-primary/20 shadow-sm">
+            {selectedAccount.icon && <AvatarImage src={selectedAccount.icon} />}
+            <AvatarFallback className="text-xs font-bold bg-primary/10 text-primary">
               {selectedAccount.name.substring(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           {!isCollapsed && (
-            <div className="flex flex-1 flex-col truncate">
-              <span className="truncate text-sm font-semibold leading-tight">
+            <div className="flex flex-1 flex-col min-w-0">
+              <span className="truncate text-sm font-semibold text-foreground">
                 {selectedAccount.name}
               </span>
-              <span className="truncate text-[11px] text-muted-foreground font-medium">
+              <span className="truncate text-xs text-muted-foreground">
                 {selectedAccount.email}
               </span>
             </div>
           )}
           {!isCollapsed && (
-            <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 text-muted-foreground/50" />
+            <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 text-muted-foreground/60" />
           )}
         </div>
       </DropdownMenuTrigger>
@@ -126,9 +125,10 @@ export function AccountSwitcher({
             className="flex items-center gap-2 rounded-lg cursor-pointer p-2"
           >
             <Avatar className="h-6 w-6 rounded-full border">
-              <AvatarImage
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${account.email}`}
-              />
+              {account.icon && <AvatarImage src={account.icon} />}
+              <AvatarFallback className="text-[9px] font-bold bg-primary/10 text-primary">
+                {account.name.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             <div className="flex flex-col truncate text-sm flex-1">
               <span className="font-medium">{account.name}</span>

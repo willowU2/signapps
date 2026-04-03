@@ -22,6 +22,12 @@ pub struct Calendar {
     pub is_public: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub tenant_id: Option<Uuid>,
+    pub workspace_id: Option<Uuid>,
+    pub calendar_type: Option<String>,
+    pub resource_id: Option<Uuid>,
+    pub is_default: Option<bool>,
+    pub deleted_at: Option<DateTime<Utc>>,
 }
 
 /// Request to create a new calendar.

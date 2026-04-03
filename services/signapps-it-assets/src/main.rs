@@ -15,7 +15,7 @@ async fn main() -> anyhow::Result<()> {
     init_tracing("signapps_it_assets");
     load_env();
 
-    let config = ServiceConfig::from_env("signapps-it-assets", 3015);
+    let config = ServiceConfig::from_env("signapps-it-assets", 3022);
     config.log_startup();
 
     // Database
@@ -54,8 +54,7 @@ async fn main() -> anyhow::Result<()> {
                 .url("/api-docs/openapi.json", handlers::openapi::ItAssetsApiDoc::openapi()),
         )
         .merge(routes::public_routes().with_state(state.pool.clone()))
-        .nest("/api/v1/it-assets", routes::api_routes())
-        .with_state(state)
+        .nest("/api/v1/it-assets", routes::api_routes(state))
         .layer(cors)
         .layer(TraceLayer::new_for_http());
 

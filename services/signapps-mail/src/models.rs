@@ -186,6 +186,11 @@ pub struct Email {
     /// Whether the email has file attachments.
     pub has_attachments: Option<bool>,
 
+    /// RFC 2369 `List-Unsubscribe` header value (mailto: and/or https: URLs).
+    pub list_unsubscribe: Option<String>,
+    /// RFC 2919 `List-Id` header value identifying the mailing list.
+    pub list_id: Option<String>,
+
     /// Row creation timestamp.
     pub created_at: Option<DateTime<Utc>>,
     /// Row last-update timestamp.

@@ -104,26 +104,84 @@ async fn health() -> Json<serde_json::Value> {
     Json(serde_json::json!({ "status": "ok", "service": "signapps-it-assets" }))
 }
 
-// ─── Routes ───────────────────────────────────────────────────────────────────
+// ─── Sub-routers ─────────────────────────────────────────────────────────────
+// Each sub-router calls `.with_state()` to eagerly erase the handler generic
+// types and return `Router<()>`.  This prevents the deep monomorphised type
+// tree that overflows the default 8 MB thread stack when Axum constructs the
+// routing table for 121+ routes.
 
-pub fn api_routes() -> Router<AppState> {
+/// Hardware CRUD routes.
+#[inline(never)]
+fn hardware_routes(state: AppState) -> Router {
     Router::new()
-        // Hardware
         .route("/hardware", get(list_hardware).post(create_hardware))
         .route(
             "/hardware/:id",
             get(get_hardware).put(update_hardware).delete(delete_hardware),
         )
-        // Agent registration & lifecycle
+        .with_state(state)
+}
+
+/// Agent registration, lifecycle, and reporting routes.
+#[inline(never)]
+fn agent_routes(state: AppState) -> Router {
+    Router::new()
         .route("/agent/register", post(register_agent))
         .route("/agent/:agent_id/heartbeat", post(agent_heartbeat))
         .route("/agent/:agent_id/config", get(get_agent_config))
         .route("/agent/:agent_id/hardware", post(report_hardware_inventory))
         .route("/agent/:agent_id/software", post(report_software_inventory))
-        .route("/agent/:agent_id/scripts", get(get_pending_scripts).post(queue_script))
+        .route(
+            "/agent/:agent_id/scripts",
+            get(get_pending_scripts).post(queue_script),
+        )
         .route("/agent/:agent_id/scripts/result", post(report_script_result))
         .route("/enrollment/token", post(create_enrollment_token))
-        // Patches
+        .route("/agent/download/:platform", get(download_agent))
+        .route("/agent/:agent_id/services", post(report_services))
+        .route("/agent/logs", post(ingest_event_logs))
+        .with_state(state)
+}
+
+/// Agent policy, packages, and security reporting routes.
+#[inline(never)]
+fn agent_policy_routes(state: AppState) -> Router {
+    Router::new()
+        .route("/agent/policies/:agent_id", get(get_agent_policies))
+        .route("/agent/policies/compliance", post(report_compliance))
+        .route(
+            "/agent/packages/pending/:agent_id",
+            get(get_agent_pending_packages),
+        )
+        .route(
+            "/agent/packages/deployment/:deployment_id/status",
+            put(update_deployment_status),
+        )
+        .route("/agent/security/antivirus", post(report_antivirus))
+        .route("/agent/security/encryption", post(report_encryption))
+        .with_state(state)
+}
+
+/// Agent commands and file transfer routes.
+#[inline(never)]
+fn agent_commands_routes(state: AppState) -> Router {
+    Router::new()
+        .route("/agent/commands/queue", post(queue_agent_command))
+        .route(
+            "/agent/commands/pending/:agent_id",
+            get(get_pending_commands),
+        )
+        .route("/agent/commands/:id/status", put(update_command_status))
+        .route("/agent/files/push", post(push_file_to_machine))
+        .route("/agent/files/upload", post(agent_upload_file))
+        .route("/agent/files/download/:file_id", get(agent_download_file))
+        .with_state(state)
+}
+
+/// Patch management routes.
+#[inline(never)]
+fn patch_routes(state: AppState) -> Router {
+    Router::new()
         .route("/patches", get(list_patches))
         .route("/patches/report", post(report_available_patches))
         .route("/patches/:id/approve", post(approve_patch))
@@ -131,7 +189,13 @@ pub fn api_routes() -> Router<AppState> {
         .route("/patches/:id/deploy", post(deploy_patch))
         .route("/patches/:id/rollback", post(rollback_patch))
         .route("/patches/compliance", get(patch_compliance))
-        // Policies (GP1-GP5)
+        .with_state(state)
+}
+
+/// GP-policy management routes.
+#[inline(never)]
+fn policy_routes(state: AppState) -> Router {
+    Router::new()
         .route("/policies", get(list_policies).post(create_policy))
         .route("/policies/tree", get(list_policies_tree))
         .route("/policies/compliance", get(compliance_summary))
@@ -141,48 +205,60 @@ pub fn api_routes() -> Router<AppState> {
         )
         .route("/policies/:id/assign", post(assign_policy))
         .route("/policies/:id/assignments", get(list_assignments))
-        // Agent policy endpoints
-        .route("/agent/policies/:agent_id", get(get_agent_policies))
-        .route("/agent/policies/compliance", post(report_compliance))
-        // Software Packages (SD1-SD4)
+        .with_state(state)
+}
+
+/// Software package deployment routes.
+#[inline(never)]
+fn package_routes(state: AppState) -> Router {
+    Router::new()
         .route("/packages", get(list_packages).post(create_package))
         .route(
             "/packages/:id",
             get(get_package).put(update_package).delete(delete_package),
         )
         .route("/packages/:id/deploy", post(deploy_package))
-        // Agent package endpoints
-        .route("/agent/packages/pending/:agent_id", get(get_agent_pending_packages))
-        .route(
-            "/agent/packages/deployment/:deployment_id/status",
-            put(update_deployment_status),
-        )
-        // MD1: Metrics
+        .with_state(state)
+}
+
+/// Monitoring: metrics, alerts, fleet overview.
+#[inline(never)]
+fn monitoring_routes(state: AppState) -> Router {
+    Router::new()
         .route("/hardware/:id/metrics", get(get_metrics))
-        // MD2: Alert rules & alerts
         .route("/alert-rules", get(list_alert_rules).post(create_alert_rule))
         .route("/alert-rules/:id", delete(delete_alert_rule))
         .route("/alerts", get(list_alerts))
         .route("/alerts/:id/resolve", post(resolve_alert))
-        // MD3: Event logs (agent ingest)
-        .route("/agent/logs", post(ingest_event_logs))
-        // MD3: Event logs (read per machine)
         .route("/hardware/:hw_id/logs", get(get_event_logs))
-        // MD4: Fleet overview
         .route("/fleet", get(fleet_overview))
-        // BK1: Hardware components
+        .with_state(state)
+}
+
+/// Hardware components and licenses.
+#[inline(never)]
+fn component_routes(state: AppState) -> Router {
+    Router::new()
         .route(
             "/hardware/:hw_id/components",
             get(list_components).post(create_component),
         )
-        .route("/components/:id", put(update_component).delete(delete_component))
-        // BK2: Software licenses
+        .route(
+            "/components/:id",
+            put(update_component).delete(delete_component),
+        )
         .route("/licenses", get(list_licenses).post(create_license))
         .route(
             "/licenses/:id",
             get(get_license).put(update_license).delete(delete_license),
         )
-        // BK3: Network interfaces
+        .with_state(state)
+}
+
+/// Network interfaces and maintenance windows.
+#[inline(never)]
+fn infra_routes(state: AppState) -> Router {
+    Router::new()
         .route(
             "/hardware/:hw_id/interfaces",
             get(list_network_interfaces).post(create_network_interface),
@@ -191,7 +267,6 @@ pub fn api_routes() -> Router<AppState> {
             "/interfaces/:id",
             put(update_network_interface).delete(delete_network_interface),
         )
-        // BK4: Maintenance windows
         .route(
             "/maintenance-windows",
             get(list_maintenance_windows).post(create_maintenance_window),
@@ -200,7 +275,44 @@ pub fn api_routes() -> Router<AppState> {
             "/maintenance-windows/:id",
             put(update_maintenance_window).delete(delete_maintenance_window),
         )
-        // CM1: CMDB CIs
+        .with_state(state)
+}
+
+/// Per-hardware detail routes (wake, commands, files, services, security, docs, health, tags, fields).
+#[inline(never)]
+fn hardware_detail_routes(state: AppState) -> Router {
+    Router::new()
+        .route("/hardware/:id/wake", post(wake_on_lan))
+        .route("/hardware/:id/commands", get(list_hardware_commands))
+        .route("/hardware/:id/files", get(list_hardware_files))
+        .route("/hardware/:hw_id/services", get(list_hardware_services))
+        .route("/hardware/:id/security/antivirus", get(get_antivirus_status))
+        .route(
+            "/hardware/:id/security/encryption",
+            get(get_encryption_status),
+        )
+        .route(
+            "/hardware/:hw_id/docs",
+            get(list_device_docs).post(create_device_doc),
+        )
+        .route("/hardware/:hw_id/health-score", get(get_health_score))
+        .route(
+            "/hardware/:hw_id/software-check",
+            get(check_software_compliance),
+        )
+        .route("/hardware/:id/tags", get(list_hardware_tags))
+        .route("/hardware/:id/custom-fields", get(get_hardware_fields))
+        .route(
+            "/hardware/:hw_id/custom-fields/:def_id",
+            put(set_field_value),
+        )
+        .with_state(state)
+}
+
+/// CMDB configuration items.
+#[inline(never)]
+fn cmdb_routes(state: AppState) -> Router {
+    Router::new()
         .route("/cmdb/cis", get(list_cis).post(create_ci))
         .route(
             "/cmdb/cis/:id",
@@ -210,58 +322,51 @@ pub fn api_routes() -> Router<AppState> {
         .route("/cmdb/cis/:id/impact", get(ci_impact))
         .route("/cmdb/relationships", post(create_ci_relationship))
         .route("/cmdb/relationships/:id", delete(delete_ci_relationship))
-        // CM3: Change management
+        .with_state(state)
+}
+
+/// Change management and LDAP import.
+#[inline(never)]
+fn change_routes(state: AppState) -> Router {
+    Router::new()
         .route(
             "/changes",
             get(list_change_requests).post(create_change_request),
         )
         .route("/changes/:id", get(get_change_request))
         .route("/changes/:id/status", put(update_change_status))
-        // CM4: LDAP import stub
         .route("/import/ldap", post(import_ldap))
-        // SE1: AV status
-        .route("/agent/security/antivirus", post(report_antivirus))
-        .route("/hardware/:id/security/antivirus", get(get_antivirus_status))
+        .with_state(state)
+}
+
+/// Security fleet summaries.
+#[inline(never)]
+fn security_routes(state: AppState) -> Router {
+    Router::new()
         .route("/fleet/security/av", get(av_fleet_summary))
-        // SE2: Encryption status
-        .route("/agent/security/encryption", post(report_encryption))
-        .route(
-            "/hardware/:id/security/encryption",
-            get(get_encryption_status),
-        )
         .route("/fleet/security/encryption", get(encryption_fleet_summary))
-        // RM2: Wake-on-LAN
-        .route("/hardware/:id/wake", post(wake_on_lan))
-        // RM3: Agent commands (reboot, shutdown, lock)
-        .route("/agent/commands/queue", post(queue_agent_command))
-        .route(
-            "/agent/commands/pending/:agent_id",
-            get(get_pending_commands),
-        )
-        .route("/agent/commands/:id/status", put(update_command_status))
-        .route("/hardware/:id/commands", get(list_hardware_commands))
-        // RM4: File transfer
-        .route("/agent/files/push", post(push_file_to_machine))
-        .route("/agent/files/upload", post(agent_upload_file))
-        .route("/agent/files/download/:file_id", get(agent_download_file))
-        .route("/hardware/:id/files", get(list_hardware_files))
-        // ND1: Network scanner
+        .with_state(state)
+}
+
+/// Network discovery, SNMP, and port scanning routes.
+#[inline(never)]
+fn network_routes(state: AppState) -> Router {
+    Router::new()
         .route("/network/scan", post(scan_network))
         .route("/network/discoveries", get(list_discoveries))
         .route(
             "/network/discoveries/:id/add-to-inventory",
             post(add_discovery_to_inventory),
         )
-        // ND2: SNMP monitoring
         .route("/network/snmp/:ip", get(query_snmp))
-        // ND4: Port scanner
         .route("/network/port-scan", post(port_scan))
-        // EA7: Agent binary download (placeholder — returns install instructions)
-        .route("/agent/download/:platform", get(download_agent))
-        // Agent services reporting (Feature 24)
-        .route("/agent/:agent_id/services", post(report_services))
-        .route("/hardware/:hw_id/services", get(list_hardware_services))
-        // RM5: Remote access — custom WSS protocol (no VNC)
+        .with_state(state)
+}
+
+/// Remote access WebSocket and session management routes.
+#[inline(never)]
+fn remote_routes(state: AppState) -> Router {
+    Router::new()
         .route("/agent/:agent_id/remote-ws", get(agent_remote_ws))
         .route("/hardware/:hw_id/remote-session", get(admin_remote_viewer))
         .route(
@@ -272,9 +377,14 @@ pub fn api_routes() -> Router<AppState> {
             "/hardware/:hw_id/remote-session/stop",
             post(stop_remote_session),
         )
-        // RM6: Session recordings (Feature 26)
         .route("/hardware/:hw_id/recordings", get(list_recordings))
-        // GR1-GR4: Device groups & tags
+        .with_state(state)
+}
+
+/// Groups and tags routes.
+#[inline(never)]
+fn group_routes(state: AppState) -> Router {
+    Router::new()
         .route("/groups", get(list_groups).post(create_group))
         .route(
             "/groups/:id",
@@ -286,35 +396,56 @@ pub fn api_routes() -> Router<AppState> {
         .route("/tags/:id", delete(delete_tag))
         .route("/tags/:id/assign", post(assign_tag))
         .route("/tags/:id/assign/:hardware_id", delete(unassign_tag))
-        .route("/hardware/:id/tags", get(list_hardware_tags))
-        // CF1-CF3: Custom fields
+        .with_state(state)
+}
+
+/// Custom field definitions.
+#[inline(never)]
+fn custom_field_routes(state: AppState) -> Router {
+    Router::new()
         .route("/custom-fields", get(list_field_defs).post(create_field_def))
         .route(
             "/custom-fields/:id",
             put(update_field_def).delete(delete_field_def),
         )
-        .route("/hardware/:id/custom-fields", get(get_hardware_fields))
-        .route(
-            "/hardware/:hw_id/custom-fields/:def_id",
-            put(set_field_value),
-        )
-        // AT1-AT3: Automation rules
+        .with_state(state)
+}
+
+/// Automation rules routes.
+#[inline(never)]
+fn automation_routes(state: AppState) -> Router {
+    Router::new()
         .route("/automation/rules", get(list_rules).post(create_rule))
         .route(
             "/automation/rules/:id",
             get(get_rule).put(update_rule).delete(delete_rule),
         )
         .route("/automation/rules/:id/executions", get(list_executions))
-        // SL1-SL3: Script library
+        .with_state(state)
+}
+
+/// Script library routes.
+#[inline(never)]
+fn script_library_routes(state: AppState) -> Router {
+    Router::new()
         .route("/script-library", get(list_scripts).post(create_script))
         .route(
             "/script-library/:id",
             get(get_script).put(update_script).delete(delete_script),
         )
         .route("/script-library/:id/run", post(run_library_script))
-        .route("/script-library/schedules", get(list_schedules).post(create_schedule))
+        .route(
+            "/script-library/schedules",
+            get(list_schedules).post(create_schedule),
+        )
         .route("/script-library/schedules/:id", delete(delete_schedule))
-        // #51: PSA Ticketing
+        .with_state(state)
+}
+
+/// PSA ticketing routes.
+#[inline(never)]
+fn ticket_routes(state: AppState) -> Router {
+    Router::new()
         .route("/tickets", get(list_tickets).post(create_ticket))
         .route("/tickets/stats", get(ticket_stats))
         .route(
@@ -323,23 +454,13 @@ pub fn api_routes() -> Router<AppState> {
         )
         .route("/tickets/:id/comments", post(add_comment))
         .route("/tickets/:id/time", post(log_time_entry))
-        // #11: Per-device documentation
-        .route(
-            "/hardware/:hw_id/docs",
-            get(list_device_docs).post(create_device_doc),
-        )
-        // #12: Unified device health score
-        .route("/hardware/:hw_id/health-score", get(get_health_score))
-        // #20: Software blacklist/whitelist policies
-        .route(
-            "/software-policies",
-            get(list_software_policies).post(create_software_policy),
-        )
-        .route(
-            "/hardware/:hw_id/software-check",
-            get(check_software_compliance),
-        )
-        // PSA webhook integrations
+        .with_state(state)
+}
+
+/// PSA webhook integrations and software policies.
+#[inline(never)]
+fn integration_routes(state: AppState) -> Router {
+    Router::new()
         .route(
             "/psa-integrations",
             get(list_psa_integrations).post(create_psa_integration),
@@ -348,7 +469,17 @@ pub fn api_routes() -> Router<AppState> {
             "/psa-integrations/:id",
             put(update_psa_integration).delete(delete_psa_integration),
         )
-        // PB1-PB6: Remediation playbooks (Feature 21)
+        .route(
+            "/software-policies",
+            get(list_software_policies).post(create_software_policy),
+        )
+        .with_state(state)
+}
+
+/// Remediation playbook routes.
+#[inline(never)]
+fn playbook_routes(state: AppState) -> Router {
+    Router::new()
         .route("/playbooks", get(list_playbooks).post(create_playbook))
         .route(
             "/playbooks/:id",
@@ -356,6 +487,50 @@ pub fn api_routes() -> Router<AppState> {
         )
         .route("/playbooks/:id/run", post(run_playbook))
         .route("/playbooks/:id/runs", get(list_playbook_runs))
+        .with_state(state)
+}
+
+// ─── Aggregated API routes ───────────────────────────────────────────────────
+
+/// Build all API routes by merging type-erased (`Router<()>`) sub-routers.
+///
+/// Each sub-router calls `.with_state(state)` to eagerly erase its handler
+/// generic types, converting `Router<AppState>` to `Router<()>`.  This
+/// prevents the deep monomorphised type tree that overflows the default
+/// 8 MB thread stack when Axum resolves state for 121+ routes at once.
+#[inline(never)]
+pub fn api_routes(state: AppState) -> Router {
+    let s = state;
+
+    // First batch of merged routers.
+    let mut r = Router::new();
+    r = r.merge(hardware_routes(s.clone()));
+    r = r.merge(agent_routes(s.clone()));
+    r = r.merge(agent_policy_routes(s.clone()));
+    r = r.merge(agent_commands_routes(s.clone()));
+    r = r.merge(patch_routes(s.clone()));
+    r = r.merge(policy_routes(s.clone()));
+    r = r.merge(package_routes(s.clone()));
+    r = r.merge(monitoring_routes(s.clone()));
+    r = r.merge(component_routes(s.clone()));
+    r = r.merge(infra_routes(s.clone()));
+    r = r.merge(hardware_detail_routes(s.clone()));
+    r = r.merge(cmdb_routes(s.clone()));
+
+    // Second batch.
+    r = r.merge(change_routes(s.clone()));
+    r = r.merge(security_routes(s.clone()));
+    r = r.merge(network_routes(s.clone()));
+    r = r.merge(remote_routes(s.clone()));
+    r = r.merge(group_routes(s.clone()));
+    r = r.merge(custom_field_routes(s.clone()));
+    r = r.merge(automation_routes(s.clone()));
+    r = r.merge(script_library_routes(s.clone()));
+    r = r.merge(ticket_routes(s.clone()));
+    r = r.merge(integration_routes(s.clone()));
+    r = r.merge(playbook_routes(s));
+
+    r
 }
 
 pub fn public_routes() -> Router<DatabasePool> {

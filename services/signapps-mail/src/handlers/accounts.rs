@@ -160,6 +160,14 @@ pub async fn create_account(
             Some("smtp.office365.com".to_string()),
             Some(587),
         ),
+        "internal" => {
+            // Internal Stalwart Mail Server — use configured host/port
+            let imap_h = crate::handlers::internal_server::stalwart_imap_host();
+            let imap_p = crate::handlers::internal_server::stalwart_imap_port();
+            let smtp_h = crate::handlers::internal_server::stalwart_smtp_host();
+            let smtp_p = crate::handlers::internal_server::stalwart_smtp_port();
+            (Some(imap_h), Some(imap_p), Some(smtp_h), Some(smtp_p))
+        },
         _ => (
             payload.imap_server,
             payload.imap_port.or(Some(993)),

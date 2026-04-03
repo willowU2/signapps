@@ -81,10 +81,12 @@ impl OAuthProvider {
                 "https://www.googleapis.com/auth/userinfo.email",
             ],
             OAuthProvider::Microsoft => vec![
-                "https://graph.microsoft.com/Mail.ReadWrite",
-                "https://graph.microsoft.com/Mail.Send",
-                "https://graph.microsoft.com/User.Read",
+                "https://outlook.office365.com/IMAP.AccessAsUser.All",
+                "https://outlook.office365.com/SMTP.Send",
                 "offline_access",
+                "openid",
+                "profile",
+                "email",
             ],
         }
     }

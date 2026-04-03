@@ -40,6 +40,15 @@ use utoipa::OpenApi;
         crate::handlers::labels::create_label,
         crate::handlers::labels::update_label,
         crate::handlers::labels::delete_label,
+        // Mailing Lists
+        crate::handlers::mailing_lists::list_mailing_lists,
+        crate::handlers::mailing_lists::mass_unsubscribe,
+        // Internal Stalwart Mail Server
+        crate::handlers::internal_server::get_status,
+        crate::handlers::internal_server::list_domains,
+        crate::handlers::internal_server::list_accounts,
+        crate::handlers::internal_server::create_account,
+        crate::handlers::internal_server::delete_account,
     ),
     components(
         schemas(
@@ -54,6 +63,15 @@ use utoipa::OpenApi;
             crate::handlers::emails::UpdateEmailRequest,
             crate::handlers::labels::CreateLabelRequest,
             crate::handlers::labels::UpdateLabelRequest,
+            crate::handlers::mailing_lists::MailingListEntry,
+            crate::handlers::mailing_lists::UnsubscribeRequest,
+            crate::handlers::mailing_lists::UnsubscribeItem,
+            crate::handlers::mailing_lists::UnsubscribeResult,
+            crate::handlers::internal_server::StalwartStatus,
+            crate::handlers::internal_server::CreateMailboxRequest,
+            crate::handlers::internal_server::CreateMailboxResponse,
+            crate::handlers::internal_server::StalwartDomain,
+            crate::handlers::internal_server::StalwartAccount,
         )
     ),
     tags(
@@ -61,6 +79,8 @@ use utoipa::OpenApi;
         (name = "mail-folders", description = "IMAP folder browsing"),
         (name = "mail-emails", description = "Email CRUD and sending"),
         (name = "mail-labels", description = "Email label management"),
+        (name = "mail-mailing-lists", description = "Mailing list detection and unsubscribe"),
+        (name = "mail-internal-server", description = "Internal Stalwart Mail Server management"),
     ),
     modifiers(&SecurityAddon),
 )]

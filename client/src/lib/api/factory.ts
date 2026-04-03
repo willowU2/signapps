@@ -66,31 +66,131 @@ interface ServiceConfig {
 }
 
 const SERVICE_CONFIG: Record<ServiceName, ServiceConfig> = {
-  [ServiceName.IDENTITY]: { port: 3001, envVar: 'NEXT_PUBLIC_IDENTITY_URL', healthPath: '/health' },
-  [ServiceName.CONTAINERS]: { port: 3002, envVar: 'NEXT_PUBLIC_CONTAINERS_URL', healthPath: '/health' },
-  [ServiceName.PROXY]: { port: 3003, envVar: 'NEXT_PUBLIC_PROXY_URL', healthPath: '/health' },
-  [ServiceName.STORAGE]: { port: 3004, envVar: 'NEXT_PUBLIC_STORAGE_URL', healthPath: '/health' },
-  [ServiceName.AI]: { port: 3005, envVar: 'NEXT_PUBLIC_AI_URL', healthPath: '/health' },
-  [ServiceName.SECURELINK]: { port: 3006, envVar: 'NEXT_PUBLIC_SECURELINK_URL', healthPath: '/health' },
-  [ServiceName.SCHEDULER]: { port: 3007, envVar: 'NEXT_PUBLIC_SCHEDULER_URL', healthPath: '/health' },
-  [ServiceName.METRICS]: { port: 3008, envVar: 'NEXT_PUBLIC_METRICS_URL', healthPath: '/health' },
-  [ServiceName.MEDIA]: { port: 3009, envVar: 'NEXT_PUBLIC_MEDIA_URL', healthPath: '/health' },
-  [ServiceName.DOCS]: { port: 3010, envVar: 'NEXT_PUBLIC_DOCS_URL', healthPath: '/health' },
-  [ServiceName.CALENDAR]: { port: 3011, envVar: 'NEXT_PUBLIC_CALENDAR_URL', healthPath: '/health' },
-  [ServiceName.MAIL]: { port: 3012, envVar: 'NEXT_PUBLIC_MAIL_URL', healthPath: '/health' },
-  [ServiceName.COLLAB]: { port: 3014, envVar: 'NEXT_PUBLIC_COLLAB_URL', healthPath: '/health' },
-  [ServiceName.MEET]: { port: 3013, envVar: 'NEXT_PUBLIC_MEET_URL', healthPath: '/health' },
-  [ServiceName.IT_ASSETS]: { port: 3022, envVar: 'NEXT_PUBLIC_IT_ASSETS_URL', healthPath: '/health' },
-  [ServiceName.PXE]: { port: 3016, envVar: 'NEXT_PUBLIC_PXE_URL', healthPath: '/health' },
-  [ServiceName.REMOTE]: { port: 3017, envVar: 'NEXT_PUBLIC_REMOTE_URL', healthPath: '/health' },
-  [ServiceName.OFFICE]: { port: 3018, envVar: 'NEXT_PUBLIC_OFFICE_URL', healthPath: '/health' },
-  [ServiceName.WORKFORCE]: { port: 3019, envVar: 'NEXT_PUBLIC_WORKFORCE_URL', healthPath: '/health' },
-  [ServiceName.CONTACTS]: { port: 3021, envVar: 'NEXT_PUBLIC_CONTACTS_URL', healthPath: '/health' },
-  [ServiceName.FORMS]: { port: 3015, envVar: 'NEXT_PUBLIC_FORMS_URL', healthPath: '/health' },
-  [ServiceName.CHAT]: { port: 3020, envVar: 'NEXT_PUBLIC_CHAT_URL', healthPath: '/health' },
-  [ServiceName.SOCIAL]: { port: 3027, envVar: 'NEXT_PUBLIC_SOCIAL_URL', healthPath: '/health' },
-  [ServiceName.NOTIFICATIONS]: { port: 3026, envVar: 'NEXT_PUBLIC_NOTIFICATIONS_URL', healthPath: '/health' },
-  [ServiceName.BILLING]: { port: 3023, envVar: 'NEXT_PUBLIC_BILLING_URL', healthPath: '/health' },
+  [ServiceName.IDENTITY]: {
+    port: 3001,
+    envVar: "NEXT_PUBLIC_IDENTITY_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.CONTAINERS]: {
+    port: 3002,
+    envVar: "NEXT_PUBLIC_CONTAINERS_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.PROXY]: {
+    port: 3003,
+    envVar: "NEXT_PUBLIC_PROXY_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.STORAGE]: {
+    port: 3004,
+    envVar: "NEXT_PUBLIC_STORAGE_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.AI]: {
+    port: 3005,
+    envVar: "NEXT_PUBLIC_AI_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.SECURELINK]: {
+    port: 3006,
+    envVar: "NEXT_PUBLIC_SECURELINK_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.SCHEDULER]: {
+    port: 3007,
+    envVar: "NEXT_PUBLIC_SCHEDULER_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.METRICS]: {
+    port: 3008,
+    envVar: "NEXT_PUBLIC_METRICS_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.MEDIA]: {
+    port: 3009,
+    envVar: "NEXT_PUBLIC_MEDIA_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.DOCS]: {
+    port: 3010,
+    envVar: "NEXT_PUBLIC_DOCS_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.CALENDAR]: {
+    port: 3011,
+    envVar: "NEXT_PUBLIC_CALENDAR_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.MAIL]: {
+    port: 3012,
+    envVar: "NEXT_PUBLIC_MAIL_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.COLLAB]: {
+    port: 3013,
+    envVar: "NEXT_PUBLIC_COLLAB_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.MEET]: {
+    port: 3014,
+    envVar: "NEXT_PUBLIC_MEET_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.IT_ASSETS]: {
+    port: 3022,
+    envVar: "NEXT_PUBLIC_IT_ASSETS_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.PXE]: {
+    port: 3016,
+    envVar: "NEXT_PUBLIC_PXE_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.REMOTE]: {
+    port: 3017,
+    envVar: "NEXT_PUBLIC_REMOTE_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.OFFICE]: {
+    port: 3018,
+    envVar: "NEXT_PUBLIC_OFFICE_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.WORKFORCE]: {
+    port: 3024,
+    envVar: "NEXT_PUBLIC_WORKFORCE_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.CONTACTS]: {
+    port: 3021,
+    envVar: "NEXT_PUBLIC_CONTACTS_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.FORMS]: {
+    port: 3015,
+    envVar: "NEXT_PUBLIC_FORMS_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.CHAT]: {
+    port: 3020,
+    envVar: "NEXT_PUBLIC_CHAT_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.SOCIAL]: {
+    port: 3019,
+    envVar: "NEXT_PUBLIC_SOCIAL_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.NOTIFICATIONS]: {
+    port: 8095,
+    envVar: "NEXT_PUBLIC_NOTIFICATIONS_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.BILLING]: {
+    port: 8096,
+    envVar: "NEXT_PUBLIC_BILLING_URL",
+    healthPath: "/health",
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
