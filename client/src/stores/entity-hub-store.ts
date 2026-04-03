@@ -184,7 +184,12 @@ export const useEntityStore = create<EntityState>((set, get) => ({
   createTask: async (data) => {
     set({ isLoading: true });
     try {
-      await entityHubApi.createTask(data);
+      await entityHubApi.createTask({
+        ...data,
+        type: "task",
+        status: "todo",
+        priority: "medium",
+      });
       await get().fetchTasks();
     } catch (error: unknown) {
       set({

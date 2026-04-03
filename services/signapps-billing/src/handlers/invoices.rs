@@ -22,7 +22,8 @@ use signapps_common::pg_events::NewEvent;
 pub struct CreateInvoiceRequest {
     pub tenant_id: Option<Uuid>,
     pub plan_id: Option<Uuid>,
-    pub number: String,
+    pub number: Option<String>,
+    #[serde(default)]
     pub amount_cents: i32,
     pub currency: Option<String>,
     pub due_at: Option<DateTime<Utc>>,
@@ -119,6 +120,11 @@ pub async fn create_invoice(
     State(state): State<AppState>,
     Json(payload): Json<CreateInvoiceRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
+    let number = payload.number.unwrap_or_else(|| {
+        let ts = chrono::Utc::now().format("%Y%m%d%H%M%S");
+        format!("INV-{ts}")
+    });
+
     let invoice = sqlx::query_as::<_, Invoice>(
         r#"
         INSERT INTO billing.invoices
@@ -129,7 +135,7 @@ pub async fn create_invoice(
     )
     .bind(payload.tenant_id)
     .bind(payload.plan_id)
-    .bind(&payload.number)
+    .bind(&number)
     .bind(payload.amount_cents)
     .bind(payload.currency.as_deref().unwrap_or("EUR"))
     .bind(payload.due_at)

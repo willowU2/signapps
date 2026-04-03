@@ -61,14 +61,17 @@ fn new_webhook_store() -> WebhookStore {
 pub struct CreateFormRequest {
     pub title: String,
     pub description: Option<String>,
+    #[serde(default)]
     pub fields: Vec<CreateFieldRequest>,
 }
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Request payload for CreateField operation.
 pub struct CreateFieldRequest {
+    #[serde(default)]
     pub field_type: FieldType,
     pub label: String,
+    #[serde(default)]
     pub required: bool,
     pub options: Option<Vec<String>>,
     pub layout: Option<String>,

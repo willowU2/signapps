@@ -4,9 +4,10 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 /// The input type of a form field.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum FieldType {
+    #[default]
     Text,
     TextArea,
     SingleChoice,

@@ -41,6 +41,9 @@ pub struct CreateDesignRequest {
     pub pages: serde_json::Value,
     #[serde(default)]
     pub metadata: serde_json::Value,
+    /// Alias for `pages` — frontend may send `content` instead of `pages`.
+    #[serde(default)]
+    pub content: serde_json::Value,
 }
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
@@ -125,7 +128,10 @@ pub async fn create_design(
         return Err(StatusCode::BAD_REQUEST);
     }
 
-    let pages = if payload.pages.is_null() {
+    // Use `content` as fallback when `pages` is not provided
+    let pages = if payload.pages.is_null() && !payload.content.is_null() {
+        payload.content
+    } else if payload.pages.is_null() {
         serde_json::json!([])
     } else {
         payload.pages

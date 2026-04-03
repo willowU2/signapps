@@ -104,7 +104,7 @@ pub struct FunctionDefinition {
 /// Request body for CreateEmployee.
 pub struct CreateEmployeeRequest {
     pub user_id: Option<Uuid>,
-    pub org_node_id: Uuid,
+    pub org_node_id: Option<Uuid>,
     pub employee_number: Option<String>,
     #[validate(length(min = 1, max = 100))]
     pub first_name: String,
@@ -304,22 +304,60 @@ pub async fn create_employee(
         StatusCode::BAD_REQUEST
     })?;
 
-    // Verify org node exists
-    let node_exists: bool = sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2)",
-    )
-    .bind(req.org_node_id)
-    .bind(ctx.tenant_id)
-    .fetch_one(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to check org node: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    // Resolve org_node_id: use provided value or fall back to (creating) a default root node
+    let org_node_id = if let Some(node_id) = req.org_node_id {
+        // Verify org node exists
+        let node_exists: bool = sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2)",
+        )
+        .bind(node_id)
+        .bind(ctx.tenant_id)
+        .fetch_one(&*state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to check org node: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
-    if !node_exists {
-        return Err(StatusCode::NOT_FOUND);
-    }
+        if !node_exists {
+            return Err(StatusCode::NOT_FOUND);
+        }
+        node_id
+    } else {
+        // Get or create a default root org node for this tenant
+        let maybe_root: Option<Uuid> = sqlx::query_scalar(
+            "SELECT id FROM workforce_org_nodes WHERE tenant_id = $1 AND parent_id IS NULL ORDER BY created_at LIMIT 1",
+        )
+        .bind(ctx.tenant_id)
+        .fetch_optional(&*state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to find default org node: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+        match maybe_root {
+            Some(root_id) => root_id,
+            None => {
+                // Create a default root org node
+                let root_id = Uuid::new_v4();
+                sqlx::query(
+                    r#"INSERT INTO workforce_org_nodes (id, tenant_id, parent_id, name, node_type, sort_order, created_at, updated_at)
+                       VALUES ($1, $2, NULL, 'Organisation', 'root', 0, NOW(), NOW())"#,
+                )
+                .bind(root_id)
+                .bind(ctx.tenant_id)
+                .execute(&*state.pool)
+                .await
+                .map_err(|e| {
+                    tracing::error!("Failed to create default org node: {}", e);
+                    StatusCode::INTERNAL_SERVER_ERROR
+                })?;
+                tracing::info!(tenant_id = %ctx.tenant_id, node_id = %root_id, "Created default root org node");
+                root_id
+            }
+        }
+    };
 
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -344,7 +382,7 @@ pub async fn create_employee(
     .bind(id)
     .bind(ctx.tenant_id)
     .bind(req.user_id)
-    .bind(req.org_node_id)
+    .bind(org_node_id)
     .bind(&req.employee_number)
     .bind(&req.first_name)
     .bind(&req.last_name)
