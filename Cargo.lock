@@ -10357,6 +10357,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-imap"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "chrono",
+]
+
+[[package]]
 name = "signapps-it-assets"
 version = "0.1.0"
 dependencies = [
@@ -10405,6 +10413,7 @@ dependencies = [
  "sha2",
  "signapps-common",
  "signapps-dkim",
+ "signapps-imap",
  "signapps-mime",
  "signapps-smtp",
  "sqlx",

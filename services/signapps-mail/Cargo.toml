@@ -22,6 +22,7 @@ signapps-common = { path = "../../crates/signapps-common" }
 
 # Mail protocol crates
 signapps-smtp = { path = "../../crates/signapps-smtp" }
+signapps-imap = { path = "../../crates/signapps-imap" }
 signapps-mime = { path = "../../crates/signapps-mime" }
 signapps-dkim = { path = "../../crates/signapps-dkim" }
 

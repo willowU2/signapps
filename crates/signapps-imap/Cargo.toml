@@ -1,0 +1,12 @@
+[package]
+name = "signapps-imap"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Pure IMAP4rev2 command parser, response builder, and session state machine — no I/O, no network"
+
+[dependencies]
+base64 = { workspace = true }
+chrono = { workspace = true }
