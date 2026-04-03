@@ -1,0 +1,36 @@
+[package]
+name = "signapps-dkim"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Pure DKIM sign/verify, SPF checker, DMARC evaluator — no I/O, DNS via trait"
+
+[dependencies]
+# RSA signing/verification
+rsa = { version = "0.9", features = ["sha2"] }
+
+# Ed25519 signing/verification
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+
+# Hashing
+sha2 = { workspace = true }
+
+# Encoding
+base64 = { workspace = true }
+
+# Randomness (key generation)
+rand = { workspace = true }
+
+# Date/time (signature timestamps)
+chrono = { workspace = true }
+
+# Async trait for DnsResolver
+async-trait = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt", "macros"] }
