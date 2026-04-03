@@ -11,6 +11,9 @@ use crate::handlers::accounts::{
 use crate::handlers::aliases::{
     create_alias, delete_alias, list_aliases, set_default_alias, update_alias,
 };
+use crate::handlers::autoconfig::{
+    outlook_autodiscover, thunderbird_autoconfig, well_known_caldav, well_known_carddav,
+};
 use crate::handlers::categorize::{categorize_inbox, save_categorize_settings};
 use crate::handlers::delegation::{create_delegation, list_delegations, revoke_delegation};
 use crate::handlers::domains::{
@@ -45,6 +48,7 @@ use crate::handlers::sieve_admin::{
 use crate::handlers::signatures::{get_signature, upsert_signature};
 use crate::handlers::spam::{classify_email, get_spam_settings, train_spam, update_spam_settings};
 use crate::handlers::stats::{get_stats, mail_analytics};
+use crate::handlers::subdomains::{create_subdomain, delete_subdomain, list_subdomains};
 use crate::handlers::templates::{
     create_template, delete_template, get_template, list_templates, update_template,
 };
@@ -243,6 +247,31 @@ pub fn router() -> Router<AppState> {
             "/api/v1/mailserver/domains/:id/dns-records",
             get(get_dns_records),
         )
+        // ── Mailserver admin: Service subdomains ─────────────────────────
+        .route(
+            "/api/v1/mailserver/domains/:id/subdomains",
+            get(list_subdomains).post(create_subdomain),
+        )
+        .route(
+            "/api/v1/mailserver/domains/:id/subdomains/:sub_id",
+            axum::routing::delete(delete_subdomain),
+        )
+        // ── Autoconfig / Autodiscover ────────────────────────────────────
+        .route(
+            "/mail/config-v1.1.xml",
+            get(thunderbird_autoconfig),
+        )
+        .route(
+            "/.well-known/autoconfig/mail/config-v1.1.xml",
+            get(thunderbird_autoconfig),
+        )
+        .route(
+            "/autodiscover/autodiscover.xml",
+            post(outlook_autodiscover),
+        )
+        // CalDAV/CardDAV well-known redirects (on main HTTP port)
+        .route("/.well-known/caldav", get(well_known_caldav))
+        .route("/.well-known/carddav", get(well_known_carddav))
         // ── Mailserver admin: Accounts ───────────────────────────────────
         .route(
             "/api/v1/mailserver/accounts",

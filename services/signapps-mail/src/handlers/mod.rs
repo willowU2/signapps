@@ -1,6 +1,7 @@
 pub mod accounts;
 pub(crate) mod accounts_connection;
 pub mod aliases;
+pub mod autoconfig;
 pub mod categorize;
 pub mod delegation;
 pub mod domains;
@@ -25,6 +26,7 @@ pub mod signatures;
 pub mod spam;
 pub(crate) mod spam_bayes;
 pub mod stats;
+pub mod subdomains;
 pub mod templates;
 pub mod threads;
 pub mod tracking;

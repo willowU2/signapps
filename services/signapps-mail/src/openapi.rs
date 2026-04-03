@@ -74,6 +74,13 @@ use utoipa::OpenApi;
         crate::handlers::sieve_admin::update_sieve_script,
         crate::handlers::sieve_admin::delete_sieve_script,
         crate::handlers::sieve_admin::activate_sieve_script,
+        // Service subdomains
+        crate::handlers::subdomains::list_subdomains,
+        crate::handlers::subdomains::create_subdomain,
+        crate::handlers::subdomains::delete_subdomain,
+        // Autoconfig / Autodiscover
+        crate::handlers::autoconfig::thunderbird_autoconfig,
+        crate::handlers::autoconfig::outlook_autodiscover,
         // JMAP (RFC 8620/8621)
         crate::jmap::session::well_known,
         crate::jmap::api::handle,
@@ -118,6 +125,11 @@ use utoipa::OpenApi;
             crate::handlers::sieve_admin::SieveScript,
             crate::handlers::sieve_admin::CreateSieveScriptRequest,
             crate::handlers::sieve_admin::UpdateSieveScriptRequest,
+            // Service subdomains
+            crate::handlers::subdomains::ServiceSubdomain,
+            crate::handlers::subdomains::CreateSubdomainRequest,
+            // DNS provisioning
+            crate::dns::securelink::DnsProvisionResult,
         )
     ),
     tags(
@@ -131,6 +143,8 @@ use utoipa::OpenApi;
         (name = "mailserver-accounts", description = "Mailserver account management"),
         (name = "mailserver-queue", description = "Outbound queue management"),
         (name = "mailserver-sieve", description = "Sieve script management"),
+        (name = "mailserver-subdomains", description = "Service subdomain management"),
+        (name = "autoconfig", description = "Email client auto-configuration"),
         (name = "jmap", description = "JMAP (RFC 8620/8621) protocol endpoints"),
     ),
     modifiers(&SecurityAddon),

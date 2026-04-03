@@ -208,7 +208,75 @@ pub async fn create_domain(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(domain) => (StatusCode::CREATED, Json(domain)).into_response(),
+        Ok(domain) => {
+            // Best-effort: create default service subdomains
+            if let Err(e) = crate::handlers::subdomains::create_default_subdomains(
+                &state.pool,
+                domain.id,
+                &domain.name,
+            )
+            .await
+            {
+                tracing::warn!(
+                    domain = %domain.name,
+                    "Failed to create default subdomains: {}",
+                    e
+                );
+            }
+
+            // Best-effort: provision DNS records via SecureLink
+            let server_ip = std::env::var("MAIL_SERVER_IP")
+                .unwrap_or_else(|_| "127.0.0.1".to_string());
+            let dns_client = crate::dns::securelink::SecurelinkDnsClient::new();
+
+            // Provision mail DNS records (MX, SPF, DKIM, DMARC)
+            match dns_client.provision_mail_domain(
+                &domain.name,
+                &server_ip,
+                domain.dkim_selector.as_deref().unwrap_or("signapps"),
+                domain.dkim_dns_value.as_deref().unwrap_or(""),
+                domain.dmarc_policy.as_deref().unwrap_or("none"),
+            ).await {
+                Ok(results) => {
+                    let success_count = results.iter().filter(|r| r.success).count();
+                    tracing::info!(
+                        domain = %domain.name,
+                        total = results.len(),
+                        success = success_count,
+                        "DNS mail records provisioned via SecureLink"
+                    );
+                },
+                Err(e) => {
+                    tracing::warn!(
+                        domain = %domain.name,
+                        "SecureLink DNS provisioning skipped (configure DNS manually): {}",
+                        e
+                    );
+                },
+            }
+
+            // Provision service subdomain DNS records
+            match dns_client.provision_service_subdomains(&domain.name, &server_ip).await {
+                Ok(results) => {
+                    let success_count = results.iter().filter(|r| r.success).count();
+                    tracing::info!(
+                        domain = %domain.name,
+                        total = results.len(),
+                        success = success_count,
+                        "DNS subdomain records provisioned via SecureLink"
+                    );
+                },
+                Err(e) => {
+                    tracing::warn!(
+                        domain = %domain.name,
+                        "SecureLink subdomain DNS provisioning skipped: {}",
+                        e
+                    );
+                },
+            }
+
+            (StatusCode::CREATED, Json(domain)).into_response()
+        },
         Err(e) => {
             let msg = e.to_string();
             if msg.contains("duplicate") || msg.contains("unique") {
@@ -361,12 +429,34 @@ pub async fn delete_domain(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // Fetch domain name before deletion for DNS cleanup
+    let domain_name: Option<String> =
+        sqlx::query_scalar("SELECT name FROM mailserver.domains WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&state.pool)
+            .await
+            .ok()
+            .flatten();
+
     match sqlx::query("DELETE FROM mailserver.domains WHERE id = $1 RETURNING id")
         .bind(id)
         .fetch_optional(&state.pool)
         .await
     {
-        Ok(Some(_)) => Json(serde_json::json!({ "success": true })).into_response(),
+        Ok(Some(_)) => {
+            // Best-effort: deprovision DNS records via SecureLink
+            if let Some(ref name) = domain_name {
+                let dns_client = crate::dns::securelink::SecurelinkDnsClient::new();
+                if let Err(e) = dns_client.deprovision_mail_domain(name).await {
+                    tracing::warn!(
+                        domain = %name,
+                        "SecureLink DNS deprovision failed (records may need manual cleanup): {}",
+                        e
+                    );
+                }
+            }
+            Json(serde_json::json!({ "success": true })).into_response()
+        },
         Ok(None) => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Domain not found" })),
