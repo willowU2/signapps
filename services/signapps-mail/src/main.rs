@@ -248,7 +248,21 @@ async fn main() {
         .route(
             "/health",
             axum::routing::get(|| async {
-                axum::Json(serde_json::json!({ "status": "ok", "service": "signapps-mail" }))
+                axum::Json(serde_json::json!({
+                    "status": "ok",
+                    "service": "signapps-mail",
+                    "version": env!("CARGO_PKG_VERSION"),
+                    "app": {
+                        "id": "mail",
+                        "label": "Mail",
+                        "description": "Messagerie et emails",
+                        "icon": "Mail",
+                        "category": "Communication",
+                        "color": "text-blue-500",
+                        "href": "/mail",
+                        "port": 3012
+                    }
+                }))
             }),
         )
         // Tracking pixel — no auth, loaded by recipient email clients (IDEA-265)

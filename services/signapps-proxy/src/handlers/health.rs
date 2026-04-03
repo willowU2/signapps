@@ -12,6 +12,8 @@ pub struct HealthResponse {
     pub service: String,
     pub version: String,
     pub components: ComponentsHealth,
+    /// Frontend app metadata for dynamic discovery.
+    pub app: serde_json::Value,
 }
 
 #[derive(Serialize, utoipa::ToSchema)]
@@ -32,7 +34,6 @@ pub struct ComponentsHealth {
     tag = "Proxy"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
     let db_healthy = state.pool.health_check().await.is_ok();
     let cache_healthy = state.shield.health_check();
@@ -49,6 +50,16 @@ pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse>
             cache: cache_healthy,
             proxy: proxy_healthy,
         },
+        app: serde_json::json!({
+            "id": "routes",
+            "label": "Routes",
+            "description": "Proxy et routage réseau",
+            "icon": "Network",
+            "category": "Infrastructure",
+            "color": "text-blue-500",
+            "href": "/routes",
+            "port": 3003
+        }),
     })
 }
 

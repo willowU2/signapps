@@ -38,7 +38,17 @@ pub async fn health_check() -> axum::Json<serde_json::Value> {
         "status": "ok",
         "service": "signapps-pxe",
         "version": env!("CARGO_PKG_VERSION"),
-        "uptime_seconds": signapps_common::healthz::uptime_seconds()
+        "uptime_seconds": signapps_common::healthz::uptime_seconds(),
+        "app": {
+            "id": "pxe",
+            "label": "PXE Deploy",
+            "description": "Déploiement réseau PXE",
+            "icon": "Server",
+            "category": "Infrastructure",
+            "color": "text-orange-600",
+            "href": "/pxe",
+            "port": 3016
+        }
     }))
 }
 

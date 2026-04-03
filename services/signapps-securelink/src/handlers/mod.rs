@@ -20,6 +20,8 @@ pub struct HealthResponse {
     pub mode: String,
     pub tunnels: TunnelHealth,
     pub dns: DnsHealth,
+    /// Frontend app metadata for dynamic discovery.
+    pub app: serde_json::Value,
 }
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -73,5 +75,15 @@ pub async fn health_check_standalone(
             adblock_enabled: dns_config.adblock_enabled,
             blocklists_count: blocklists.len(),
         },
+        app: serde_json::json!({
+            "id": "vpn",
+            "label": "VPN",
+            "description": "Réseau privé virtuel sécurisé",
+            "icon": "Shield",
+            "category": "Infrastructure",
+            "color": "text-green-600",
+            "href": "/vpn",
+            "port": 3006
+        }),
     })
 }

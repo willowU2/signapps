@@ -101,7 +101,21 @@ impl FromRef<AppState> for DatabasePool {
 // ─── Health ───────────────────────────────────────────────────────────────────
 
 async fn health() -> Json<serde_json::Value> {
-    Json(serde_json::json!({ "status": "ok", "service": "signapps-it-assets" }))
+    Json(serde_json::json!({
+        "status": "ok",
+        "service": "signapps-it-assets",
+        "version": env!("CARGO_PKG_VERSION"),
+        "app": {
+            "id": "it-assets",
+            "label": "IT Assets",
+            "description": "Gestion du parc informatique",
+            "icon": "Monitor",
+            "category": "Infrastructure",
+            "color": "text-cyan-500",
+            "href": "/admin/it-assets",
+            "port": 3022
+        }
+    }))
 }
 
 // ─── Sub-routers ─────────────────────────────────────────────────────────────

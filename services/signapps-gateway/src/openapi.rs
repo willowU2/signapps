@@ -43,6 +43,8 @@ impl Modify for SecurityAddon {
     paths(
         // System
         crate::gateway_health,
+        // Discovery
+        crate::discover_apps,
         // Proxy (catch-all — representative entry)
         crate::proxy_handler,
         // GraphQL
@@ -56,6 +58,7 @@ impl Modify for SecurityAddon {
     )),
     tags(
         (name = "System", description = "Gateway health and status"),
+        (name = "Discovery", description = "Dynamic application discovery"),
         (name = "Proxy", description = "Transparent reverse-proxy to backend services"),
         (name = "GraphQL", description = "Minimal GraphQL gateway endpoint"),
     ),

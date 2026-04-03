@@ -168,6 +168,16 @@ pub async fn health_check(State(state): State<AppState>) -> Result<Json<HealthRe
         cpu_usage_percent: metrics.cpu.total_usage_percent,
         memory_usage_percent: metrics.memory.usage_percent,
         uptime_seconds: metrics.uptime_seconds,
+        app: serde_json::json!({
+            "id": "monitoring",
+            "label": "Monitoring",
+            "description": "Supervision des services",
+            "icon": "Activity",
+            "category": "Infrastructure",
+            "color": "text-yellow-500",
+            "href": "/monitoring",
+            "port": 3008
+        }),
     }))
 }
 
@@ -179,6 +189,8 @@ pub struct HealthResponse {
     pub cpu_usage_percent: f32,
     pub memory_usage_percent: f64,
     pub uptime_seconds: u64,
+    /// Frontend app metadata for dynamic discovery.
+    pub app: serde_json::Value,
 }
 
 /// Summary metrics for dashboard.

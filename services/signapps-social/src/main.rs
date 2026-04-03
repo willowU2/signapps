@@ -70,7 +70,23 @@ fn create_router(state: AppState) -> Router {
         ]);
 
     let public_routes = Router::new()
-        .route("/health", get(|| async { axum::http::StatusCode::OK }))
+        .route("/health", get(|| async {
+            axum::Json(serde_json::json!({
+                "status": "ok",
+                "service": "signapps-social",
+                "version": env!("CARGO_PKG_VERSION"),
+                "app": {
+                    "id": "social",
+                    "label": "Social",
+                    "description": "Réseau social interne",
+                    "icon": "Users2",
+                    "category": "Communication",
+                    "color": "text-pink-500",
+                    "href": "/social",
+                    "port": 3019
+                }
+            }))
+        }))
         .route("/s/:code", get(short_urls::track_click))
         // OAuth callbacks are public — the platform redirects to these after login
         .route(

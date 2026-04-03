@@ -30,7 +30,17 @@ pub async fn health_check() -> axum::Json<serde_json::Value> {
         "status": "ok",
         "service": "signapps-remote",
         "version": env!("CARGO_PKG_VERSION"),
-        "uptime_seconds": signapps_common::healthz::uptime_seconds()
+        "uptime_seconds": signapps_common::healthz::uptime_seconds(),
+        "app": {
+            "id": "remote",
+            "label": "Accès distant",
+            "description": "Accès distant et assistance",
+            "icon": "MonitorSmartphone",
+            "category": "Infrastructure",
+            "color": "text-indigo-500",
+            "href": "/remote",
+            "port": 3017
+        }
     }))
 }
 

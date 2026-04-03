@@ -710,7 +710,17 @@ async fn health_check() -> axum::Json<serde_json::Value> {
         "status": "ok",
         "service": "signapps-contacts",
         "version": env!("CARGO_PKG_VERSION"),
-        "uptime_seconds": signapps_common::healthz::uptime_seconds()
+        "uptime_seconds": signapps_common::healthz::uptime_seconds(),
+        "app": {
+            "id": "contacts",
+            "label": "Contacts",
+            "description": "Répertoire et annuaire",
+            "icon": "ContactRound",
+            "category": "Organisation",
+            "color": "text-indigo-500",
+            "href": "/contacts",
+            "port": 3021
+        }
     }))
 }
 

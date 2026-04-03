@@ -1,25 +1,25 @@
 //! Health check handler.
 
 use axum::Json;
-use serde::Serialize;
-
-#[derive(Serialize)]
-/// Response for Health.
-pub struct HealthResponse {
-    pub status: String,
-    pub service: String,
-    pub version: String,
-}
 
 /// Health check endpoint.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
-pub async fn health_check() -> Json<HealthResponse> {
-    Json(HealthResponse {
-        status: "healthy".to_string(),
-        service: "signapps-identity".to_string(),
-        version: env!("CARGO_PKG_VERSION").to_string(),
-    })
+pub async fn health_check() -> Json<serde_json::Value> {
+    Json(serde_json::json!({
+        "status": "healthy",
+        "service": "signapps-identity",
+        "version": env!("CARGO_PKG_VERSION"),
+        "app": {
+            "id": "users",
+            "label": "Utilisateurs",
+            "description": "Gestion des comptes utilisateurs",
+            "icon": "Users",
+            "category": "Administration",
+            "color": "text-orange-500",
+            "href": "/admin/users",
+            "port": 3001
+        }
+    }))
 }
 
 #[cfg(test)]

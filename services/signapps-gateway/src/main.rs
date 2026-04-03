@@ -79,6 +79,279 @@ async fn gateway_health() -> axum::Json<serde_json::Value> {
 }
 
 // ---------------------------------------------------------------------------
+// App discovery types
+// ---------------------------------------------------------------------------
+
+/// App metadata returned by service /health endpoints.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct DiscoveredApp {
+    id: String,
+    label: String,
+    description: String,
+    icon: String,
+    category: String,
+    color: String,
+    href: String,
+    port: u16,
+    /// Service health status at discovery time.
+    status: String,
+}
+
+/// Response for the app discovery endpoint.
+#[derive(Debug, serde::Serialize)]
+struct DiscoverResponse {
+    apps: Vec<DiscoveredApp>,
+    categories: Vec<&'static str>,
+}
+
+/// Known service ports for health probing.
+const SERVICE_PORTS: &[(&str, u16)] = &[
+    ("signapps-identity", 3001),
+    ("signapps-containers", 3002),
+    ("signapps-proxy", 3003),
+    ("signapps-storage", 3004),
+    ("signapps-ai", 3005),
+    ("signapps-securelink", 3006),
+    ("signapps-scheduler", 3007),
+    ("signapps-metrics", 3008),
+    ("signapps-media", 3009),
+    ("signapps-docs", 3010),
+    ("signapps-calendar", 3011),
+    ("signapps-mail", 3012),
+    ("signapps-collab", 3013),
+    ("signapps-meet", 3014),
+    ("signapps-forms", 3015),
+    ("signapps-pxe", 3016),
+    ("signapps-remote", 3017),
+    ("signapps-office", 3018),
+    ("signapps-social", 3019),
+    ("signapps-chat", 3020),
+    ("signapps-contacts", 3021),
+    ("signapps-it-assets", 3022),
+    ("signapps-workforce", 3024),
+    ("signapps-notifications", 8095),
+    ("signapps-billing", 8096),
+];
+
+/// Frontend-only apps that have no backend service.
+fn static_frontend_apps() -> Vec<DiscoveredApp> {
+    vec![
+        DiscoveredApp {
+            id: "sheets".into(), label: "Sheets".into(),
+            description: "Tableurs et analyses de données".into(),
+            icon: "Sheet".into(), category: "Productivité".into(),
+            color: "text-green-500".into(), href: "/sheets".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "slides".into(), label: "Slides".into(),
+            description: "Présentations et diaporamas".into(),
+            icon: "Presentation".into(), category: "Productivité".into(),
+            color: "text-yellow-500".into(), href: "/slides".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "design".into(), label: "Design".into(),
+            description: "Création graphique et maquettes".into(),
+            icon: "Palette".into(), category: "Productivité".into(),
+            color: "text-purple-500".into(), href: "/design".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "keep".into(), label: "Keep".into(),
+            description: "Notes rapides et mémos".into(),
+            icon: "StickyNote".into(), category: "Productivité".into(),
+            color: "text-yellow-400".into(), href: "/keep".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "whiteboard".into(), label: "Tableau blanc".into(),
+            description: "Dessin et brainstorming visuel".into(),
+            icon: "PenTool".into(), category: "Productivité".into(),
+            color: "text-pink-400".into(), href: "/whiteboard".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "vault".into(), label: "Coffre-fort".into(),
+            description: "Stockage sécurisé de secrets".into(),
+            icon: "Lock".into(), category: "Productivité".into(),
+            color: "text-slate-600".into(), href: "/vault".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "wiki".into(), label: "Wiki".into(),
+            description: "Base de connaissances interne".into(),
+            icon: "BookOpen".into(), category: "Productivité".into(),
+            color: "text-amber-600".into(), href: "/wiki".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "tasks".into(), label: "Tasks".into(),
+            description: "Tâches et suivi de projets".into(),
+            icon: "CheckSquare".into(), category: "Organisation".into(),
+            color: "text-green-500".into(), href: "/tasks".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "projects".into(), label: "Projects".into(),
+            description: "Gestion de projets Kanban".into(),
+            icon: "KanbanSquare".into(), category: "Organisation".into(),
+            color: "text-orange-500".into(), href: "/projects".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "resources".into(), label: "Resources".into(),
+            description: "Ressources et équipements".into(),
+            icon: "Package".into(), category: "Organisation".into(),
+            color: "text-amber-500".into(), href: "/resources".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "crm".into(), label: "CRM".into(),
+            description: "Gestion des clients et prospects".into(),
+            icon: "TrendingUp".into(), category: "Business".into(),
+            color: "text-red-500".into(), href: "/crm".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "accounting".into(), label: "Accounting".into(),
+            description: "Comptabilité et finances".into(),
+            icon: "Calculator".into(), category: "Business".into(),
+            color: "text-teal-500".into(), href: "/accounting".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "analytics".into(), label: "Analytics".into(),
+            description: "Tableaux de bord et métriques".into(),
+            icon: "BarChart3".into(), category: "Business".into(),
+            color: "text-cyan-500".into(), href: "/analytics".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "settings".into(), label: "Paramètres".into(),
+            description: "Configuration de l'instance".into(),
+            icon: "Settings".into(), category: "Administration".into(),
+            color: "text-slate-500".into(), href: "/settings".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "backups".into(), label: "Sauvegardes".into(),
+            description: "Sauvegardes automatiques".into(),
+            icon: "Archive".into(), category: "Administration".into(),
+            color: "text-slate-400".into(), href: "/admin/backups".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "bookmarks".into(), label: "Favoris".into(),
+            description: "Liens et ressources sauvegardés".into(),
+            icon: "Star".into(), category: "Avancé".into(),
+            color: "text-yellow-500".into(), href: "/bookmarks".into(),
+            port: 0, status: "static".into(),
+        },
+        DiscoveredApp {
+            id: "apps".into(), label: "App Store".into(),
+            description: "Extensions et intégrations".into(),
+            icon: "Store".into(), category: "Avancé".into(),
+            color: "text-indigo-500".into(), href: "/apps".into(),
+            port: 0, status: "static".into(),
+        },
+    ]
+}
+
+/// Probe a single service's /health endpoint and extract app metadata.
+async fn probe_service(client: &reqwest::Client, _name: &str, port: u16) -> Option<DiscoveredApp> {
+    let url = format!("http://127.0.0.1:{}/health", port);
+    let resp = tokio::time::timeout(
+        Duration::from_secs(2),
+        client.get(&url).send(),
+    )
+    .await
+    .ok()?
+    .ok()?;
+
+    let json: serde_json::Value = resp.json().await.ok()?;
+
+    let app = json.get("app")?;
+    let status = json
+        .get("status")
+        .and_then(|s| s.as_str())
+        .unwrap_or("unknown")
+        .to_string();
+
+    Some(DiscoveredApp {
+        id: app.get("id")?.as_str()?.to_string(),
+        label: app.get("label")?.as_str()?.to_string(),
+        description: app.get("description")?.as_str()?.to_string(),
+        icon: app.get("icon")?.as_str()?.to_string(),
+        category: app.get("category")?.as_str()?.to_string(),
+        color: app.get("color")?.as_str()?.to_string(),
+        href: app.get("href")?.as_str()?.to_string(),
+        port: app.get("port").and_then(|p| p.as_u64()).unwrap_or(0) as u16,
+        status,
+    })
+}
+
+/// `GET /api/v1/apps/discover` — query all services and return their app metadata.
+///
+/// Each service is probed in parallel with a 2-second timeout.
+/// Services that don't respond are omitted. Frontend-only apps are always included.
+///
+/// # Errors
+///
+/// This endpoint does not fail — unreachable services are silently omitted.
+///
+/// # Panics
+///
+/// No panics possible.
+#[utoipa::path(
+    get,
+    path = "/api/v1/apps/discover",
+    responses(
+        (status = 200, description = "List of discovered applications"),
+    ),
+    tag = "Discovery",
+)]
+#[tracing::instrument(skip_all)]
+async fn discover_apps() -> axum::Json<DiscoverResponse> {
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(2))
+        .build()
+        .unwrap_or_default();
+
+    // Probe all services in parallel
+    let futures: Vec<_> = SERVICE_PORTS
+        .iter()
+        .map(|(name, port)| {
+            let client = client.clone();
+            async move { probe_service(&client, name, *port).await }
+        })
+        .collect();
+
+    let results = futures::future::join_all(futures).await;
+
+    let mut apps: Vec<DiscoveredApp> = results.into_iter().flatten().collect();
+
+    // Add frontend-only static apps
+    apps.extend(static_frontend_apps());
+
+    // Sort by category then label for stable ordering
+    apps.sort_by(|a, b| a.category.cmp(&b.category).then(a.label.cmp(&b.label)));
+
+    axum::Json(DiscoverResponse {
+        apps,
+        categories: vec![
+            "Productivité",
+            "Communication",
+            "Organisation",
+            "Business",
+            "Infrastructure",
+            "Administration",
+            "Avancé",
+        ],
+    })
+}
+
+// ---------------------------------------------------------------------------
 // Reverse-proxy handler
 // ---------------------------------------------------------------------------
 
@@ -345,12 +618,31 @@ async fn main() -> anyhow::Result<()> {
     // DA3: GraphQL gateway state (service URLs for resolvers)
     let graphql_state = Arc::new(graphql::ServiceUrls::from_env());
 
+    // CORS for discovery endpoint (accessed directly from frontend on port 3000)
+    let discover_cors = tower_http::cors::CorsLayer::new()
+        .allow_origin(tower_http::cors::AllowOrigin::list([
+            "http://localhost:3000"
+                .parse()
+                .expect("valid localhost origin"),
+            "http://127.0.0.1:3000"
+                .parse()
+                .expect("valid localhost origin"),
+        ]))
+        .allow_methods([axum::http::Method::GET, axum::http::Method::OPTIONS])
+        .allow_headers([
+            axum::http::header::CONTENT_TYPE,
+            axum::http::header::AUTHORIZATION,
+        ]);
+
     let app = Router::new()
         .route("/gateway/health", get(gateway_health))
+        // Dynamic app discovery
+        .route("/api/v1/apps/discover", get(discover_apps))
         // DA3: Minimal GraphQL gateway endpoint
         .route("/api/v1/graphql", post(graphql::graphql_handler).with_state(graphql_state.clone()))
         .route("/api/v1/graphql/schema", get(graphql::graphql_schema))
         .merge(openapi::swagger_router())
+        .layer(discover_cors)
         .fallback(any(proxy_handler))
         .with_state(service_map);
 

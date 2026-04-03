@@ -366,7 +366,17 @@ async fn health_check() -> axum::Json<serde_json::Value> {
         "status": "ok",
         "service": "signapps-calendar",
         "version": env!("CARGO_PKG_VERSION"),
-        "uptime_seconds": signapps_common::healthz::uptime_seconds()
+        "uptime_seconds": signapps_common::healthz::uptime_seconds(),
+        "app": {
+            "id": "calendar",
+            "label": "Calendrier",
+            "description": "Agenda, événements et gestion du temps",
+            "icon": "Calendar",
+            "category": "Organisation",
+            "color": "text-blue-500",
+            "href": "/cal",
+            "port": 3011
+        }
     }))
 }
 

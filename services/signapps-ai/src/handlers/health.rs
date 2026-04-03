@@ -16,6 +16,8 @@ pub struct HealthResponse {
     pub version: String,
     /// Individual component health.
     pub components: ComponentsHealth,
+    /// Frontend app metadata for dynamic discovery.
+    pub app: serde_json::Value,
 }
 
 #[derive(Serialize, utoipa::ToSchema)]
@@ -39,7 +41,6 @@ pub struct ComponentsHealth {
     tag = "health"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
     let vectors_healthy = state.vectors.get_stats(None).await.is_ok();
     let embeddings_healthy = state.embeddings.health_check().await.unwrap_or(false);
@@ -59,6 +60,16 @@ pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse>
             embeddings: embeddings_healthy,
             llm: llm_healthy,
         },
+        app: serde_json::json!({
+            "id": "ai",
+            "label": "Intelligence",
+            "description": "IA et automatisation",
+            "icon": "Brain",
+            "category": "Avancé",
+            "color": "text-violet-500",
+            "href": "/ai",
+            "port": 3005
+        }),
     })
 }
 

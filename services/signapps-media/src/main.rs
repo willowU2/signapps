@@ -304,6 +304,16 @@ async fn health_check() -> impl IntoResponse {
     Json(serde_json::json!({
         "status": "healthy",
         "service": "signapps-media",
-        "version": env!("CARGO_PKG_VERSION")
+        "version": env!("CARGO_PKG_VERSION"),
+        "app": {
+            "id": "media",
+            "label": "Media",
+            "description": "Audio, vidéo et médias",
+            "icon": "Mic",
+            "category": "Infrastructure",
+            "color": "text-purple-500",
+            "href": "/media",
+            "port": 3009
+        }
     }))
 }

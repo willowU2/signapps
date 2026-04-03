@@ -430,7 +430,17 @@ async fn health() -> impl IntoResponse {
         "status": "ok",
         "service": "signapps-notifications",
         "version": env!("CARGO_PKG_VERSION"),
-        "uptime_seconds": signapps_common::healthz::uptime_seconds()
+        "uptime_seconds": signapps_common::healthz::uptime_seconds(),
+        "app": {
+            "id": "notifications",
+            "label": "Notifications",
+            "description": "Centre de notifications",
+            "icon": "Bell",
+            "category": "Communication",
+            "color": "text-amber-500",
+            "href": "/notifications",
+            "port": 8095
+        }
     }))
 }
 

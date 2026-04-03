@@ -108,7 +108,17 @@ async fn meet_health() -> axum::Json<serde_json::Value> {
         "status": "ok",
         "service": "signapps-meet",
         "version": env!("CARGO_PKG_VERSION"),
-        "uptime_seconds": signapps_common::healthz::uptime_seconds()
+        "uptime_seconds": signapps_common::healthz::uptime_seconds(),
+        "app": {
+            "id": "meet",
+            "label": "Meet",
+            "description": "Visioconférences et réunions",
+            "icon": "Video",
+            "category": "Communication",
+            "color": "text-green-500",
+            "href": "/meet",
+            "port": 3014
+        }
     }))
 }
 

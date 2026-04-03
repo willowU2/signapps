@@ -341,6 +341,16 @@ pub async fn health_check(State(state): State<AppState>) -> Result<Json<HealthRe
         total_jobs: stats.total_jobs,
         enabled_jobs: stats.enabled_jobs,
         running_jobs: running.len() as i64,
+        app: serde_json::json!({
+            "id": "scheduler",
+            "label": "Planificateur",
+            "description": "Tâches planifiées et cron jobs",
+            "icon": "Clock",
+            "category": "Administration",
+            "color": "text-amber-500",
+            "href": "/scheduler",
+            "port": 3007
+        }),
     }))
 }
 
@@ -352,6 +362,8 @@ pub struct HealthResponse {
     pub total_jobs: i64,
     pub enabled_jobs: i64,
     pub running_jobs: i64,
+    /// Frontend app metadata for dynamic discovery.
+    pub app: serde_json::Value,
 }
 
 #[cfg(test)]

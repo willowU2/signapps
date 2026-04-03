@@ -1,27 +1,25 @@
 //! Health check handler.
 
-#![allow(dead_code)]
-
 use axum::Json;
-use serde::Serialize;
-
-#[derive(Serialize)]
-/// Response for Health.
-pub struct HealthResponse {
-    pub status: String,
-    pub service: String,
-    pub version: String,
-}
 
 /// Health check endpoint.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
-pub async fn health_check() -> Json<HealthResponse> {
-    Json(HealthResponse {
-        status: "healthy".to_string(),
-        service: "signapps-office".to_string(),
-        version: env!("CARGO_PKG_VERSION").to_string(),
-    })
+pub async fn health_check() -> Json<serde_json::Value> {
+    Json(serde_json::json!({
+        "status": "healthy",
+        "service": "signapps-office",
+        "version": env!("CARGO_PKG_VERSION"),
+        "app": {
+            "id": "office",
+            "label": "Office",
+            "description": "Conversion de documents Office",
+            "icon": "FileBox",
+            "category": "Avancé",
+            "color": "text-blue-600",
+            "href": "/office",
+            "port": 3018
+        }
+    }))
 }
 
 #[cfg(test)]

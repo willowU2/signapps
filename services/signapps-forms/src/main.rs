@@ -657,7 +657,17 @@ async fn health_check() -> axum::Json<serde_json::Value> {
         "status": "ok",
         "service": "signapps-forms",
         "version": env!("CARGO_PKG_VERSION"),
-        "uptime_seconds": signapps_common::healthz::uptime_seconds()
+        "uptime_seconds": signapps_common::healthz::uptime_seconds(),
+        "app": {
+            "id": "forms",
+            "label": "Formulaires",
+            "description": "Formulaires et sondages",
+            "icon": "ClipboardList",
+            "category": "Productivité",
+            "color": "text-violet-500",
+            "href": "/forms",
+            "port": 3015
+        }
     }))
 }
 

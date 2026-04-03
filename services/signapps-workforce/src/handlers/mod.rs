@@ -15,24 +15,23 @@ pub mod org;
 pub mod validation;
 
 use axum::Json;
-use serde::Serialize;
-
-/// Health check response
-#[derive(Serialize)]
-/// Response for Health.
-pub struct HealthResponse {
-    pub status: &'static str,
-    pub service: &'static str,
-    pub version: &'static str,
-}
 
 /// Health check endpoint
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
-pub async fn health_check() -> Json<HealthResponse> {
-    Json(HealthResponse {
-        status: "ok",
-        service: "signapps-workforce",
-        version: env!("CARGO_PKG_VERSION"),
-    })
+pub async fn health_check() -> Json<serde_json::Value> {
+    Json(serde_json::json!({
+        "status": "ok",
+        "service": "signapps-workforce",
+        "version": env!("CARGO_PKG_VERSION"),
+        "app": {
+            "id": "workforce",
+            "label": "Workforce",
+            "description": "RH et gestion des équipes",
+            "icon": "Briefcase",
+            "category": "Business",
+            "color": "text-rose-500",
+            "href": "/workforce",
+            "port": 3024
+        }
+    }))
 }

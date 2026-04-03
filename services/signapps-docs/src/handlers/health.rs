@@ -26,7 +26,17 @@ pub async fn health_handler() -> Json<serde_json::Value> {
         "status": "ok",
         "service": "signapps-docs",
         "version": "0.1.0",
-        "types": ["text", "sheet", "slide", "board"]
+        "types": ["text", "sheet", "slide", "board"],
+        "app": {
+            "id": "docs",
+            "label": "Docs",
+            "description": "Traitement de texte collaboratif",
+            "icon": "FileText",
+            "category": "Productivité",
+            "color": "text-blue-500",
+            "href": "/docs",
+            "port": 3010
+        }
     }))
 }
 

@@ -12,6 +12,8 @@ pub struct HealthResponse {
     pub service: String,
     pub version: String,
     pub docker_connected: bool,
+    /// Frontend app metadata for dynamic discovery.
+    pub app: serde_json::Value,
 }
 
 /// Health check endpoint.
@@ -23,7 +25,6 @@ pub struct HealthResponse {
     ),
     tag = "system"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn health_check(
     axum::extract::State(state): axum::extract::State<AppState>,
@@ -40,6 +41,16 @@ pub async fn health_check(
         service: "signapps-containers".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         docker_connected,
+        app: serde_json::json!({
+            "id": "containers",
+            "label": "Containers",
+            "description": "Orchestration de conteneurs",
+            "icon": "Container",
+            "category": "Infrastructure",
+            "color": "text-red-500",
+            "href": "/containers",
+            "port": 3002
+        }),
     })
 }
 

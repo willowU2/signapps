@@ -28,7 +28,17 @@ pub async fn health_handler() -> Json<serde_json::Value> {
     Json(json!({
         "status": "ok",
         "service": "signapps-collab",
-        "version": "0.1.0"
+        "version": "0.1.0",
+        "app": {
+            "id": "collab",
+            "label": "Collaboration",
+            "description": "Collaboration en temps réel",
+            "icon": "Users2",
+            "category": "Communication",
+            "color": "text-blue-500",
+            "href": "/collab",
+            "port": 3013
+        }
     }))
 }
 

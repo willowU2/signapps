@@ -12,6 +12,8 @@ pub struct HealthResponse {
     pub service: String,
     pub version: String,
     pub storage_connected: bool,
+    /// Frontend app metadata for dynamic discovery.
+    pub app: serde_json::Value,
 }
 
 /// Health check endpoint.
@@ -23,7 +25,6 @@ pub struct HealthResponse {
     ),
     tag = "health"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
     let storage_connected = state.storage.list_buckets().await.is_ok();
@@ -38,6 +39,16 @@ pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse>
         service: "signapps-storage".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         storage_connected,
+        app: serde_json::json!({
+            "id": "drive",
+            "label": "Drive",
+            "description": "Stockage et partage de fichiers",
+            "icon": "HardDrive",
+            "category": "Infrastructure",
+            "color": "text-slate-500",
+            "href": "/storage",
+            "port": 3004
+        }),
     })
 }
 
