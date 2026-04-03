@@ -26,11 +26,11 @@ pub async fn start(state: MailServerState, port: u16) {
         Ok(l) => {
             tracing::info!("IMAP server listening on port {}", port);
             l
-        }
+        },
         Err(e) => {
             tracing::error!("Failed to bind IMAP server on {}: {}", addr, e);
             return;
-        }
+        },
     };
 
     loop {
@@ -39,7 +39,7 @@ pub async fn start(state: MailServerState, port: u16) {
             Err(e) => {
                 tracing::warn!("IMAP accept error: {}", e);
                 continue;
-            }
+            },
         };
 
         let _state = state.clone();
@@ -75,20 +75,17 @@ async fn handle_connection(
             Ok(0) => {
                 tracing::debug!(peer = %peer_addr, "IMAP: client disconnected");
                 break;
-            }
+            },
             Err(e) => {
                 tracing::debug!(peer = %peer_addr, "IMAP read error: {}", e);
                 break;
-            }
+            },
             Ok(_) => {
                 let trimmed = line.trim();
                 // IMAP commands are prefixed with a tag: "a001 CAPABILITY"
                 let mut parts = trimmed.splitn(2, ' ');
                 let tag = parts.next().unwrap_or("*");
-                let command = parts
-                    .next()
-                    .unwrap_or("")
-                    .to_uppercase();
+                let command = parts.next().unwrap_or("").to_uppercase();
 
                 if command.starts_with("CAPABILITY") {
                     writer
@@ -124,7 +121,7 @@ async fn handle_connection(
                         )
                         .await?;
                 }
-            }
+            },
         }
     }
 

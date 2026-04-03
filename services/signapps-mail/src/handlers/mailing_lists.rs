@@ -3,12 +3,7 @@
 //! Provides endpoints to list detected mailing lists from synced emails
 //! and to mass-unsubscribe from them via HTTP or mailto.
 
-use axum::{
-    extract::State,
-    http::StatusCode,
-    response::IntoResponse,
-    Extension, Json,
-};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
 use serde::{Deserialize, Serialize};
 use signapps_common::Claims;
 
@@ -126,24 +121,15 @@ pub async fn list_mailing_lists(
             let entries: Vec<MailingListEntry> = rows
                 .into_iter()
                 .map(|row| {
-                    let unsubscribe_url = row
-                        .list_unsubscribe
-                        .as_deref()
-                        .and_then(extract_https_url);
-                    let unsubscribe_mailto = row
-                        .list_unsubscribe
-                        .as_deref()
-                        .and_then(extract_mailto);
+                    let unsubscribe_url =
+                        row.list_unsubscribe.as_deref().and_then(extract_https_url);
+                    let unsubscribe_mailto =
+                        row.list_unsubscribe.as_deref().and_then(extract_mailto);
 
-                    let display_name = row
-                        .list_id
-                        .clone()
-                        .unwrap_or_else(|| row.sender.clone());
+                    let display_name = row.list_id.clone().unwrap_or_else(|| row.sender.clone());
 
                     MailingListEntry {
-                        list_id: row
-                            .list_id
-                            .unwrap_or_else(|| row.sender.clone()),
+                        list_id: row.list_id.unwrap_or_else(|| row.sender.clone()),
                         name: display_name,
                         email_count: row.email_count,
                         unsubscribe_header: row.list_unsubscribe,
@@ -269,10 +255,7 @@ pub async fn mass_unsubscribe(
                                 "HTTP unsubscribe request sent"
                             );
                         } else {
-                            error = Some(format!(
-                                "HTTP {} from unsubscribe URL",
-                                resp.status()
-                            ));
+                            error = Some(format!("HTTP {} from unsubscribe URL", resp.status()));
                             tracing::warn!(
                                 sender = %item.sender,
                                 url = %url,
@@ -414,8 +397,7 @@ async fn send_unsubscribe_email(
 
     let port = smtp_port.unwrap_or(587) as u16;
     let mut transport_builder =
-        AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(smtp_server)?
-            .port(port);
+        AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(smtp_server)?.port(port);
 
     if let Some(pw) = password {
         transport_builder =
@@ -434,8 +416,7 @@ mod tests {
 
     #[test]
     fn test_extract_https_url() {
-        let header =
-            "<mailto:unsubscribe@example.com>, <https://example.com/unsubscribe?id=123>";
+        let header = "<mailto:unsubscribe@example.com>, <https://example.com/unsubscribe?id=123>";
         assert_eq!(
             extract_https_url(header),
             Some("https://example.com/unsubscribe?id=123".to_string())
@@ -450,8 +431,7 @@ mod tests {
 
     #[test]
     fn test_extract_mailto() {
-        let header =
-            "<mailto:unsubscribe@example.com>, <https://example.com/unsubscribe>";
+        let header = "<mailto:unsubscribe@example.com>, <https://example.com/unsubscribe>";
         assert_eq!(
             extract_mailto(header),
             Some("unsubscribe@example.com".to_string())

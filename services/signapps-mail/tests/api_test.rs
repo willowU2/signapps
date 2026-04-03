@@ -338,7 +338,10 @@ async fn test_list_threads_requires_auth() {
     assert_eq!(req.method(), "GET");
     assert_eq!(req.uri().path(), "/api/v1/mail/emails");
     let query = req.uri().query().unwrap_or("");
-    assert!(query.contains("thread_view=true"), "thread_view param must be present");
+    assert!(
+        query.contains("thread_view=true"),
+        "thread_view param must be present"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -399,8 +402,14 @@ fn test_create_label_request_shape() {
         "color": "#22c55e"
     });
 
-    assert!(payload.get("name").is_some(), "create label must have 'name'");
-    assert!(payload.get("color").is_some(), "create label must have 'color'");
+    assert!(
+        payload.get("name").is_some(),
+        "create label must have 'name'"
+    );
+    assert!(
+        payload.get("color").is_some(),
+        "create label must have 'color'"
+    );
     assert_eq!(payload["color"], "#22c55e");
 }
 
@@ -421,7 +430,10 @@ async fn test_search_endpoint_requires_auth() {
     assert_eq!(req.uri().path(), "/api/v1/mail/search");
     let query = req.uri().query().unwrap_or("");
     assert!(query.contains("q=project"), "search must accept 'q' param");
-    assert!(query.contains("limit=20"), "search must accept 'limit' param");
+    assert!(
+        query.contains("limit=20"),
+        "search must accept 'limit' param"
+    );
 }
 
 /// Validates the dedicated search endpoint response shape.
@@ -570,8 +582,5 @@ fn test_mail_rule_response_shape() {
         mock_rule["conditions"].is_array(),
         "conditions must be an array"
     );
-    assert!(
-        mock_rule["actions"].is_array(),
-        "actions must be an array"
-    );
+    assert!(mock_rule["actions"].is_array(), "actions must be an array");
 }

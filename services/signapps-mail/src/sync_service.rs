@@ -41,8 +41,10 @@ pub async fn tls_connect(
     connector: &tokio_native_tls::TlsConnector,
     domain: &str,
     tcp_stream: tokio::net::TcpStream,
-) -> Result<tokio_native_tls::TlsStream<tokio::net::TcpStream>, Box<dyn std::error::Error + Send + Sync>>
-{
+) -> Result<
+    tokio_native_tls::TlsStream<tokio::net::TcpStream>,
+    Box<dyn std::error::Error + Send + Sync>,
+> {
     let tls_stream = tokio::time::timeout(
         Duration::from_secs(TLS_CONNECT_TIMEOUT_SECS),
         connector.connect(domain, tcp_stream),
@@ -197,19 +199,23 @@ pub async fn idle_inbox(pool: Pool<Postgres>, event_bus: PgEventBus, account: Ma
 
     loop {
         // Refresh OAuth token if needed before connecting
-        let effective_oauth_token: Option<String> =
-            if let (Some(ref token), Some(expires)) = (&account.oauth_token, account.oauth_expires_at)
-            {
-                if expires < Utc::now() {
-                    tracing::info!(
-                        "IDLE: OAuth token expired for {}, attempting refresh",
-                        account.email_address
-                    );
-                    if let Some(ref refresh_token) = account.oauth_refresh_token {
-                        let provider = if account.provider.is_empty() { "google" } else { &account.provider };
-                        match refresh_oauth_token(provider, refresh_token).await {
-                            Ok((new_token, new_expires)) => {
-                                let _ = sqlx::query(
+        let effective_oauth_token: Option<String> = if let (Some(ref token), Some(expires)) =
+            (&account.oauth_token, account.oauth_expires_at)
+        {
+            if expires < Utc::now() {
+                tracing::info!(
+                    "IDLE: OAuth token expired for {}, attempting refresh",
+                    account.email_address
+                );
+                if let Some(ref refresh_token) = account.oauth_refresh_token {
+                    let provider = if account.provider.is_empty() {
+                        "google"
+                    } else {
+                        &account.provider
+                    };
+                    match refresh_oauth_token(provider, refresh_token).await {
+                        Ok((new_token, new_expires)) => {
+                            let _ = sqlx::query(
                                     "UPDATE mail.accounts SET oauth_token = $1, oauth_expires_at = $2, updated_at = NOW() WHERE id = $3",
                                 )
                                 .bind(&new_token)
@@ -217,30 +223,30 @@ pub async fn idle_inbox(pool: Pool<Postgres>, event_bus: PgEventBus, account: Ma
                                 .bind(account.id)
                                 .execute(&pool)
                                 .await;
-                                tracing::info!(
-                                    "IDLE: OAuth token refreshed for {}",
-                                    account.email_address
-                                );
-                                Some(new_token)
-                            },
-                            Err(e) => {
-                                tracing::error!(
-                                    "IDLE: Token refresh failed for {}: {}",
-                                    account.email_address,
-                                    e
-                                );
-                                Some(token.clone())
-                            },
-                        }
-                    } else {
-                        Some(token.clone())
+                            tracing::info!(
+                                "IDLE: OAuth token refreshed for {}",
+                                account.email_address
+                            );
+                            Some(new_token)
+                        },
+                        Err(e) => {
+                            tracing::error!(
+                                "IDLE: Token refresh failed for {}: {}",
+                                account.email_address,
+                                e
+                            );
+                            Some(token.clone())
+                        },
                     }
                 } else {
                     Some(token.clone())
                 }
             } else {
-                account.oauth_token.clone()
-            };
+                Some(token.clone())
+            }
+        } else {
+            account.oauth_token.clone()
+        };
 
         // Clone values for the spawn_blocking closure
         let server = imap_server.clone();
@@ -276,10 +282,7 @@ pub async fn idle_inbox(pool: Pool<Postgres>, event_bus: PgEventBus, account: Ma
 
             // Authenticate
             let mut session = if let Some(ref oauth_token) = oauth {
-                let auth_string = format!(
-                    "user={}\x01auth=Bearer {}\x01\x01",
-                    email, oauth_token
-                );
+                let auth_string = format!("user={}\x01auth=Bearer {}\x01\x01", email, oauth_token);
                 let auth = XOAuth2Auth {
                     auth_string: auth_string.into_bytes(),
                 };
@@ -336,9 +339,7 @@ pub async fn idle_inbox(pool: Pool<Postgres>, event_bus: PgEventBus, account: Ma
                     IdleOutcome::MailboxChanged
                 },
                 Ok(imap::extensions::idle::WaitOutcome::TimedOut) => IdleOutcome::TimedOut,
-                Err(e) => {
-                    IdleOutcome::Error(format!("IDLE wait error: {e}"))
-                },
+                Err(e) => IdleOutcome::Error(format!("IDLE wait error: {e}")),
             };
 
             // wait_with_timeout consumes the handle and returns the session
@@ -468,11 +469,7 @@ async fn sync_all_accounts(
             let err_msg = match sync_result {
                 Ok(Ok(())) => None,
                 Ok(Err(e)) => {
-                    tracing::error!(
-                        "Failed to sync account {}: {:?}",
-                        account.email_address,
-                        e
-                    );
+                    tracing::error!("Failed to sync account {}: {:?}", account.email_address, e);
                     Some(e.to_string())
                 },
                 Err(_) => {
@@ -529,38 +526,64 @@ fn imap_name_to_folder_type(name: &str) -> &'static str {
     // Match against known folder names in multiple languages
     match leaf {
         // Inbox
-        "inbox" | "boîte de réception" | "posteingang" | "bandeja de entrada" | "posta in arrivo" | "caixa de entrada" => "inbox",
+        "inbox"
+        | "boîte de réception"
+        | "posteingang"
+        | "bandeja de entrada"
+        | "posta in arrivo"
+        | "caixa de entrada" => "inbox",
 
         // Sent
-        "sent" | "sent items" | "sent messages" | "sent mail"
-        | "messages envoyés" | "envoyés" | "éléments envoyés"
-        | "gesendet" | "gesendete elemente" | "enviados" | "elementi inviati" | "itens enviados" => "sent",
+        "sent"
+        | "sent items"
+        | "sent messages"
+        | "sent mail"
+        | "messages envoyés"
+        | "envoyés"
+        | "éléments envoyés"
+        | "gesendet"
+        | "gesendete elemente"
+        | "enviados"
+        | "elementi inviati"
+        | "itens enviados" => "sent",
 
         // Drafts
-        "drafts" | "draft" | "brouillons" | "brouillon"
-        | "entwürfe" | "borradores" | "bozze" | "rascunhos" => "drafts",
+        "drafts" | "draft" | "brouillons" | "brouillon" | "entwürfe" | "borradores" | "bozze"
+        | "rascunhos" => "drafts",
 
         // Trash
-        "trash" | "deleted items" | "deleted messages"
-        | "corbeille" | "éléments supprimés"
-        | "papierkorb" | "papelera" | "cestino" | "lixeira" => "trash",
+        "trash"
+        | "deleted items"
+        | "deleted messages"
+        | "corbeille"
+        | "éléments supprimés"
+        | "papierkorb"
+        | "papelera"
+        | "cestino"
+        | "lixeira" => "trash",
 
         // Spam / Junk
-        "junk" | "spam" | "junk e-mail" | "junk email"
-        | "courrier indésirable" | "indésirables" | "pourriel"
+        "junk"
+        | "spam"
+        | "junk e-mail"
+        | "junk email"
+        | "courrier indésirable"
+        | "indésirables"
+        | "pourriel"
         | "spamverdacht" => "spam",
 
         // Starred / Flagged
-        "starred" | "flagged" | "suivis" | "messages suivis"
-        | "markiert" | "destacados" | "speciali" | "com estrela" => "starred",
+        "starred" | "flagged" | "suivis" | "messages suivis" | "markiert" | "destacados"
+        | "speciali" | "com estrela" => "starred",
 
         // Important (Gmail specific)
         "important" | "wichtig" | "importantes" | "importanti" => "important",
 
         // Archive / All Mail
-        "archive" | "archived" | "all mail" | "all messages"
-        | "tous les messages" | "archiv" | "alle nachrichten"
-        | "todos los correos" | "tutti i messaggi" | "todos os e-mails" => "archive",
+        "archive" | "archived" | "all mail" | "all messages" | "tous les messages" | "archiv"
+        | "alle nachrichten" | "todos los correos" | "tutti i messaggi" | "todos os e-mails" => {
+            "archive"
+        },
 
         _ => "custom",
     }
@@ -712,7 +735,11 @@ pub async fn sync_account(
                 account.email_address
             );
             if let Some(ref refresh_token) = account.oauth_refresh_token {
-                let provider = if account.provider.is_empty() { "google" } else { &account.provider };
+                let provider = if account.provider.is_empty() {
+                    "google"
+                } else {
+                    &account.provider
+                };
                 match refresh_oauth_token(provider, refresh_token).await {
                     Ok((new_token, new_expires)) => {
                         let _ = sqlx::query(
@@ -755,22 +782,17 @@ pub async fn sync_account(
     // -------------------------------------------------------------------------
     // Load existing folders from DB to get last_synced_uid for incremental sync
     // -------------------------------------------------------------------------
-    let db_folders: Vec<MailFolder> = sqlx::query_as(
-        "SELECT * FROM mail.folders WHERE account_id = $1",
-    )
-    .bind(account.id)
-    .fetch_all(pool)
-    .await
-    .unwrap_or_default();
+    let db_folders: Vec<MailFolder> =
+        sqlx::query_as("SELECT * FROM mail.folders WHERE account_id = $1")
+            .bind(account.id)
+            .fetch_all(pool)
+            .await
+            .unwrap_or_default();
 
     // Build a map: imap_path -> last_synced_uid
     let folder_uid_map: std::collections::HashMap<String, Option<i64>> = db_folders
         .iter()
-        .filter_map(|f| {
-            f.imap_path
-                .as_ref()
-                .map(|p| (p.clone(), f.last_synced_uid))
-        })
+        .filter_map(|f| f.imap_path.as_ref().map(|p| (p.clone(), f.last_synced_uid)))
         .collect();
 
     // -------------------------------------------------------------------------
@@ -841,10 +863,7 @@ pub async fn sync_account(
 
         // Authenticate
         let mut session = if let Some(ref oauth_token) = oauth {
-            let auth_string = format!(
-                "user={}\x01auth=Bearer {}\x01\x01",
-                email, oauth_token
-            );
+            let auth_string = format!("user={}\x01auth=Bearer {}\x01\x01", email, oauth_token);
             let auth = XOAuth2Auth {
                 auth_string: auth_string.into_bytes(),
             };
@@ -855,18 +874,12 @@ pub async fn sync_account(
                     s
                 },
                 Err((e, client2)) => {
-                    tracing::warn!(
-                        "XOAUTH2 failed for {}, trying password: {}",
-                        email,
-                        e
-                    );
+                    tracing::warn!("XOAUTH2 failed for {}, trying password: {}", email, e);
                     // Try password fallback with the same client (no reconnect needed
                     // since sync imap crate returns the client on auth failure)
                     if let Some(ref pw_str) = pw {
                         client2.login(&email, pw_str).map_err(|(e2, _)| {
-                            format!(
-                                "XOAUTH2 failed ({e}), password also failed for {email}: {e2}"
-                            )
+                            format!("XOAUTH2 failed ({e}), password also failed for {email}: {e2}")
                         })?
                     } else {
                         return Err(format!(
@@ -877,9 +890,9 @@ pub async fn sync_account(
             }
         } else if let Some(ref pw_str) = pw {
             tracing::info!("Attempting password login for {}", email);
-            client.login(&email, pw_str).map_err(|(e, _)| {
-                format!("Password login failed for {email}: {e}")
-            })?
+            client
+                .login(&email, pw_str)
+                .map_err(|(e, _)| format!("Password login failed for {email}: {e}"))?
         } else {
             return Err(format!("No credentials for {email}"));
         };
@@ -888,17 +901,14 @@ pub async fn sync_account(
         let folder_names = session
             .list(Some(""), Some("*"))
             .map_err(|e| format!("LIST folders failed: {e}"))?;
-        let mut imap_folders: Vec<String> = folder_names.iter().map(|n| n.name().to_string()).collect();
+        let mut imap_folders: Vec<String> =
+            folder_names.iter().map(|n| n.name().to_string()).collect();
 
         if imap_folders.is_empty() {
             imap_folders.push("INBOX".to_string());
         }
 
-        tracing::info!(
-            "Found {} IMAP folders for {}",
-            imap_folders.len(),
-            email
-        );
+        tracing::info!("Found {} IMAP folders for {}", imap_folders.len(), email);
 
         // Sync each folder
         let mut folders_result: Vec<FolderSyncResult> = Vec::new();
@@ -997,8 +1007,7 @@ pub async fn sync_account(
                             let has_attachments = !attachments.is_empty();
 
                             // Extract mailing list headers (RFC 2369 / RFC 2919)
-                            let list_unsubscribe =
-                                get_header(&parsed, "List-Unsubscribe");
+                            let list_unsubscribe = get_header(&parsed, "List-Unsubscribe");
                             let list_id = get_header(&parsed, "List-Id");
 
                             folder_result.messages.push(FetchedMessage {
@@ -1041,9 +1050,8 @@ pub async fn sync_account(
         format!("IMAP spawn_blocking panicked: {e}").into()
     })?;
 
-    let sync_result = imap_result.map_err(|e| -> Box<dyn std::error::Error + Send + Sync> {
-        e.into()
-    })?;
+    let sync_result =
+        imap_result.map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.into() })?;
 
     // -------------------------------------------------------------------------
     // Process fetched data in async context (database writes)
@@ -1163,22 +1171,15 @@ pub async fn sync_account(
                         msg.subject.as_deref().unwrap_or(""),
                         msg.body_text.as_deref().unwrap_or(""),
                     );
-                    if let Err(e) =
-                        ensure_label_and_apply(pool, email_id, &[], &category).await
-                    {
-                        tracing::warn!(
-                            "Auto-label failed for email {}: {:?}",
-                            email_id,
-                            e
-                        );
+                    if let Err(e) = ensure_label_and_apply(pool, email_id, &[], &category).await {
+                        tracing::warn!("Auto-label failed for email {}: {:?}", email_id, e);
                     }
                 }
 
                 // Track highest UID for incremental sync
                 let uid_i64 = msg.uid as i64;
-                max_uid_this_sync = Some(
-                    max_uid_this_sync.map_or(uid_i64, |prev: i64| prev.max(uid_i64)),
-                );
+                max_uid_this_sync =
+                    Some(max_uid_this_sync.map_or(uid_i64, |prev: i64| prev.max(uid_i64)));
 
                 // Insert attachments
                 for att in &msg.attachments {

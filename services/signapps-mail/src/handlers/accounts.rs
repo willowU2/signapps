@@ -397,11 +397,7 @@ pub async fn sync_account_now(
         {
             Ok(Ok(())) => {},
             Ok(Err(e)) => {
-                tracing::error!(
-                    "Sync failed for account {}: {:?}",
-                    account.email_address,
-                    e
-                );
+                tracing::error!("Sync failed for account {}: {:?}", account.email_address, e);
             },
             Err(_) => {
                 tracing::error!(
@@ -465,4 +461,3 @@ pub async fn test_account(
     })
     .into_response()
 }
-

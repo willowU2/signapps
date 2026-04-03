@@ -24,7 +24,9 @@ fn stalwart_api_url() -> String {
 
 /// Admin bearer token for authenticating against the Stalwart management API.
 fn stalwart_api_token() -> Option<String> {
-    std::env::var("STALWART_API_TOKEN").ok().filter(|s| !s.is_empty())
+    std::env::var("STALWART_API_TOKEN")
+        .ok()
+        .filter(|s| !s.is_empty())
 }
 
 /// IMAP host for internal accounts (default: `localhost`).
@@ -59,9 +61,7 @@ fn stalwart_client() -> reqwest::Client {
 }
 
 /// Add the authorization header if a token is configured.
-fn with_auth(
-    builder: reqwest::RequestBuilder,
-) -> reqwest::RequestBuilder {
+fn with_auth(builder: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
     if let Some(token) = stalwart_api_token() {
         builder.bearer_auth(token)
     } else {
@@ -505,7 +505,11 @@ fn parse_domain_list(body: &str) -> Vec<StalwartDomain> {
         {
             return items
                 .iter()
-                .filter_map(|v| v.as_str().map(|s| StalwartDomain { name: s.to_string() }))
+                .filter_map(|v| {
+                    v.as_str().map(|s| StalwartDomain {
+                        name: s.to_string(),
+                    })
+                })
                 .collect();
         }
         // Try plain array at top level
@@ -514,9 +518,13 @@ fn parse_domain_list(body: &str) -> Vec<StalwartDomain> {
                 .iter()
                 .filter_map(|v| {
                     if let Some(s) = v.as_str() {
-                        Some(StalwartDomain { name: s.to_string() })
+                        Some(StalwartDomain {
+                            name: s.to_string(),
+                        })
                     } else if let Some(name) = v.get("name").and_then(|n| n.as_str()) {
-                        Some(StalwartDomain { name: name.to_string() })
+                        Some(StalwartDomain {
+                            name: name.to_string(),
+                        })
                     } else {
                         None
                     }
@@ -527,7 +535,11 @@ fn parse_domain_list(body: &str) -> Vec<StalwartDomain> {
         if let Some(data) = val.get("data").and_then(|d| d.as_array()) {
             return data
                 .iter()
-                .filter_map(|v| v.as_str().map(|s| StalwartDomain { name: s.to_string() }))
+                .filter_map(|v| {
+                    v.as_str().map(|s| StalwartDomain {
+                        name: s.to_string(),
+                    })
+                })
                 .collect();
         }
     }

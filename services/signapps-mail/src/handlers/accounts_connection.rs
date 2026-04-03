@@ -1,8 +1,5 @@
 use futures_util::StreamExt;
-use lettre::{
-    transport::smtp::authentication::Credentials,
-    AsyncSmtpTransport, Tokio1Executor,
-};
+use lettre::{transport::smtp::authentication::Credentials, AsyncSmtpTransport, Tokio1Executor};
 
 use crate::models::MailAccount;
 
@@ -61,11 +58,10 @@ pub async fn test_imap_connection(
         Err(e) => return (false, Some(format!("Connection failed: {}", e)), None),
     };
 
-    let tls_stream =
-        match crate::sync_service::tls_connect(&tls, imap_server, tcp_stream).await {
-            Ok(stream) => stream,
-            Err(e) => return (false, Some(format!("TLS handshake failed: {}", e)), None),
-        };
+    let tls_stream = match crate::sync_service::tls_connect(&tls, imap_server, tcp_stream).await {
+        Ok(stream) => stream,
+        Err(e) => return (false, Some(format!("TLS handshake failed: {}", e)), None),
+    };
 
     let client = async_imap::Client::new(tls_stream);
 
