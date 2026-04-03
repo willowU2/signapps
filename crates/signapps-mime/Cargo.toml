@@ -1,0 +1,25 @@
+[package]
+name = "signapps-mime"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Pure MIME parser, builder and BODYSTRUCTURE generator — no I/O, no network"
+
+[dependencies]
+# Encoding
+base64 = { workspace = true }
+
+# Hashing
+sha2 = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Date/time
+chrono = { workspace = true }
+
+# UUID generation (boundaries, message-ids)
+uuid = { workspace = true }
