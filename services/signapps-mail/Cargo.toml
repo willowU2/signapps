@@ -41,6 +41,9 @@ rustls = { version = "0.23", features = ["ring"] }
 base64 = "0.22"
 futures-util = "0.3.30"
 thiserror = "1.0"
+argon2 = "0.5"
+sha2 = { workspace = true }
+trust-dns-resolver = "0.23"
 
 # OpenAPI
 utoipa = { version = "5", features = ["axum_extras", "uuid", "chrono"] }
