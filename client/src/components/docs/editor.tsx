@@ -3,10 +3,6 @@
 import { SpinnerInfinity } from "spinners-react";
 
 import { useEditor, EditorContent } from "@tiptap/react";
-import type {
-  Editor as TiptapEditor,
-  Range as TiptapRange,
-} from "@tiptap/core";
 import { BubbleMenu, FloatingMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -72,11 +68,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { fetchAndParseDocument } from "@/lib/file-parsers";
 import { GenericFeatureModal } from "@/components/editor/generic-feature-modal";
 import { driveApi } from "@/lib/api";
-import {
-  COLLAB_ENABLED,
-  COLLAB_WS_URL,
-  GOOGLE_FONTS_API_KEY,
-} from "@/lib/api/core";
 import { saveUserTemplate } from "@/lib/document-templates";
 
 // Utility to dynamically load Google Fonts without freezing the browser
@@ -243,7 +234,7 @@ type VoiceAction =
 
 const parseVoiceCommand = (
   text: string,
-  editor: TiptapEditor,
+  editor: any,
   pendingMarksRef: React.MutableRefObject<string[]>,
   pendingBlocksRef: React.MutableRefObject<string[]>,
   onVoiceAction?: (action: VoiceAction) => void,
@@ -1013,8 +1004,10 @@ const Editor = ({
 
   useEffect(() => {
     // RT1: Connect Docs to signapps-collab (port 3013)
-    const collabServerEnabled = COLLAB_ENABLED;
-    const baseWsUrl = COLLAB_WS_URL;
+    const collabServerEnabled =
+      process.env.NEXT_PUBLIC_COLLAB_ENABLED === "true";
+    const baseWsUrl =
+      process.env.NEXT_PUBLIC_COLLAB_WS_URL || "ws://localhost:3013";
     const wsUrl = `${baseWsUrl}/api/v1/collab/ws/${documentId}`;
 
     const wsProvider = new WebsocketProvider(wsUrl, documentId, ydoc, {
@@ -1036,7 +1029,7 @@ const Editor = ({
         const currentText = editor?.getText() || "";
         if (!currentText || currentText.trim() === "") {
           try {
-            let parsed: unknown;
+            let parsed: any;
             const targetKey = `${documentId}.html`;
             try {
               parsed = await fetchAndParseDocument(
@@ -1058,7 +1051,7 @@ const Editor = ({
                 id: `load-${documentId}`,
               });
             }
-          } catch (e: unknown) {
+          } catch (e: any) {
             // Silently ignore if file doesn't exist yet (brand new document)
             console.warn("No previous document found to load:", e);
           }
@@ -1229,7 +1222,7 @@ const Editor = ({
 
   useEffect(() => {
     const fetchGoogleFonts = async () => {
-      const apiKey = GOOGLE_FONTS_API_KEY || undefined;
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_FONTS_API_KEY;
       if (!apiKey) return; // Silent fallback to system fonts if no key
 
       try {
@@ -1241,7 +1234,7 @@ const Editor = ({
         if (data.items) {
           const fetchedFonts = data.items
             .slice(0, 100)
-            .map((item: { family: string }) => item.family);
+            .map((item: any) => item.family);
           setAvailableFonts([
             ...new Set(["Inter", "Arial", ...fetchedFonts]),
           ] as string[]);
@@ -1427,13 +1420,7 @@ const Editor = ({
               title: "Heading 1",
               description: "Big section heading.",
               icon: <Heading1 className="w-4 h-4" />,
-              command: ({
-                editor,
-                range,
-              }: {
-                editor: TiptapEditor;
-                range: TiptapRange;
-              }) => {
+              command: ({ editor, range }: any) => {
                 editor
                   .chain()
                   .focus()
@@ -1448,13 +1435,7 @@ const Editor = ({
               title: "Heading 2",
               description: "Medium section heading.",
               icon: <Heading2 className="w-4 h-4" />,
-              command: ({
-                editor,
-                range,
-              }: {
-                editor: TiptapEditor;
-                range: TiptapRange;
-              }) => {
+              command: ({ editor, range }: any) => {
                 editor
                   .chain()
                   .focus()
@@ -1469,13 +1450,7 @@ const Editor = ({
               title: "Heading 3",
               description: "Small section heading.",
               icon: <Heading3 className="w-4 h-4" />,
-              command: ({
-                editor,
-                range,
-              }: {
-                editor: TiptapEditor;
-                range: TiptapRange;
-              }) => {
+              command: ({ editor, range }: any) => {
                 editor
                   .chain()
                   .focus()
@@ -1490,13 +1465,7 @@ const Editor = ({
               title: "Bullet List",
               description: "Create a simple bulleted list.",
               icon: <List className="w-4 h-4" />,
-              command: ({
-                editor,
-                range,
-              }: {
-                editor: TiptapEditor;
-                range: TiptapRange;
-              }) => {
+              command: ({ editor, range }: any) => {
                 editor
                   .chain()
                   .focus()
@@ -1509,13 +1478,7 @@ const Editor = ({
               title: "Numbered List",
               description: "Create a list with numbering.",
               icon: <ListOrdered className="w-4 h-4" />,
-              command: ({
-                editor,
-                range,
-              }: {
-                editor: TiptapEditor;
-                range: TiptapRange;
-              }) => {
+              command: ({ editor, range }: any) => {
                 editor
                   .chain()
                   .focus()
@@ -1528,13 +1491,7 @@ const Editor = ({
               title: "To-do List",
               description: "Track tasks with a to-do list.",
               icon: <CheckSquare className="w-4 h-4" />,
-              command: ({
-                editor,
-                range,
-              }: {
-                editor: TiptapEditor;
-                range: TiptapRange;
-              }) => {
+              command: ({ editor, range }: any) => {
                 editor
                   .chain()
                   .focus()
@@ -1547,13 +1504,7 @@ const Editor = ({
               title: "Code Block",
               description: "Capture a code snippet.",
               icon: <Code className="w-4 h-4" />,
-              command: ({
-                editor,
-                range,
-              }: {
-                editor: TiptapEditor;
-                range: TiptapRange;
-              }) => {
+              command: ({ editor, range }: any) => {
                 editor
                   .chain()
                   .focus()
@@ -1566,13 +1517,7 @@ const Editor = ({
               title: "Image",
               description: "Upload or embed an image.",
               icon: <ImageIcon className="w-4 h-4" />,
-              command: ({
-                editor,
-                range,
-              }: {
-                editor: TiptapEditor;
-                range: TiptapRange;
-              }) => {
+              command: ({ editor, range }: any) => {
                 editor.chain().focus().deleteRange(range).run();
                 slashImageCallbackRef.current = (url: string) => {
                   if (url) editor.chain().focus().setImage({ src: url }).run();
@@ -1585,13 +1530,7 @@ const Editor = ({
               title: "Ask AI",
               description: "Generate text using AI.",
               icon: <Sparkles className="w-4 h-4 text-purple-500" />,
-              command: ({
-                editor,
-                range,
-              }: {
-                editor: TiptapEditor;
-                range: TiptapRange;
-              }) => {
+              command: ({ editor, range }: any) => {
                 editor.chain().focus().deleteRange(range).run();
                 setTimeout(() => {
                   setFloatingMode("prompt");
@@ -1602,13 +1541,7 @@ const Editor = ({
               title: "Embed Sheet",
               description: "Embed a spreadsheet in the document.",
               icon: <Table2 className="w-4 h-4 text-green-600" />,
-              command: ({
-                editor,
-                range,
-              }: {
-                editor: TiptapEditor;
-                range: TiptapRange;
-              }) => {
+              command: ({ editor, range }: any) => {
                 editor.chain().focus().deleteRange(range).run();
                 embedSheetCallbackRef.current = (
                   id: string,
@@ -1717,20 +1650,6 @@ const Editor = ({
 
   const [, forceUpdate] = useState({});
 
-            const docxBlob = await res.blob();
-            saveAs(docxBlob, `${documentName.replace(/\.docx$/, '') || 'document'}.docx`);
-            toast.success(`Exporté en DOCX`);
-        } else if (type === 'pdf') {
-            const title = documentName.replace(/\.(docx|html|epub)$/, '') || 'document';
-            const printWindow = window.open('', '_blank');
-            if (printWindow) {
-                printWindow.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title><style>@page { margin: 2cm; size: A4; } body { font-family: sans-serif; font-size: 11pt; line-height: 1.5; color: #000; } img { max-width: 100%; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #ccc; padding: 4px 8px; }</style></head><body>${htmlString}<script>window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 300); }</script></body></html>`);
-                printWindow.document.close();
-            } else {
-                toast.error("Veuillez autoriser les fenêtres pop-up");
-            }
-        }
-    }, [editor, documentName]);
   const handleFormat = useCallback(
     (command: () => void) => {
       if (!editor) return;
@@ -2206,12 +2125,20 @@ const Editor = ({
           docxBlob,
           `${documentName.replace(/\.docx$/, "") || "document"}.docx`,
         );
+        toast.success(`Exporté en DOCX`);
       } else if (type === "pdf") {
-        // For PDF, typically you'd send HTML to a server-side renderer or use a client-side library
-        // For simplicity, we'll just trigger print for now as a client-side PDF "export"
-        window.print();
+        const title =
+          documentName.replace(/\.(docx|html|epub)$/, "") || "document";
+        const printWindow = window.open("", "_blank");
+        if (printWindow) {
+          printWindow.document.write(
+            `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title><style>@page { margin: 2cm; size: A4; } body { font-family: sans-serif; font-size: 11pt; line-height: 1.5; color: #000; } img { max-width: 100%; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #ccc; padding: 4px 8px; }</style></head><body>${htmlString}<script>window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 300); }</script></body></html>`,
+          );
+          printWindow.document.close();
+        } else {
+          toast.error("Veuillez autoriser les fenêtres pop-up");
+        }
       }
-      toast.success(`Exporté en ${type.toUpperCase()}`);
     },
     [editor, documentName],
   );
@@ -2330,728 +2257,12 @@ ${html}
     [editor],
   );
 
-    // ---- Save To Drive ----
-    const saveToDrive = useCallback(async () => {
-        if (!editor) return;
-        if (!documentName) {
-            toast.error("Impossible d'enregistrer: Le nom du fichier est manquant.");
-            return;
-        }
-
-        const tId = toast.loading("Enregistrement dans le Drive...");
-
-        try {
-            const htmlString = editor.getHTML();
-            let blob: Blob;
-
-            // Generate DOCX blob via Next.js API
-            const res = await fetch('/api/docs/export', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ html: htmlString })
-            });
-
-            if (!res.ok) {
-                throw new Error("Erreur de conversion HTML vers DOCX sur le serveur");
-            }
-
-            blob = await res.blob();
-
-            // Envoyer à l'API backend dans le bucket 'drive'
-            await storageApi.uploadWithKey('drive', documentName, blob);
-            
-            // AUSSI enregistrer le HTML pour la preview tout de suite !
-            if (documentId) {
-                const htmlBlob = new Blob([htmlString], { type: 'text/html' });
-                await storageApi.uploadWithKey('drive', `${documentId}.html`, htmlBlob);
-            }
-
-            toast.success("Enregistré avec succès !", {
-                id: tId
-            });
-        } catch (err: any) {
-            console.error("Erreur enregistrement docx", err);
-            toast.error("Une erreur est survenue. Réessayez.", {
-                id: tId
-            });
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [editor, documentName]);
-
-    // Listen to global save event triggered by shortcut
-    useEffect(() => {
-        const handleSave = () => saveToDrive();
-        window.addEventListener('app:save-to-drive', handleSave);
-        return () => window.removeEventListener('app:save-to-drive', handleSave);
-    }, [saveToDrive]);
-
-    // Editor Menus Configuration
-    const editorMenus: MenuGroup[] = [{
-        id: 'file',
-        label: 'Fichier',
-        items: [
-            {
-                label: 'Nouveau',
-                subItems: [{
-                    label: 'Document',
-                    action: 'newDoc',
-                    icon: <FileText className="w-4 h-4" />
-                }, {
-                    label: 'De modèle',
-                    action: 'todo'
-                }]
-            },
-            {
-                label: 'Enregistrer (Drive)',
-                icon: <Download size={14} />,
-                action: 'saveToDrive',
-                shortcut: 'Ctrl+S'
-            },
-            {
-                label: 'Ouvrir',
-                action: 'open',
-                shortcut: 'Ctrl+O'
-            },
-            {
-                label: 'Cr\éer une copie',
-                action: 'copy_file'
-            },
-            {
-                label: 'Sauvegarder comme mod\èle',
-                action: 'saveAsTemplate'
-            },
-            {
-                sep: true
-            },
-            {
-                label: 'Partager',
-                subItems: [{
-                    label: 'Partager avec d\'autres personnes',
-                    action: 'share_advanced'
-                }, {
-                    label: 'Publier sur le Web',
-                    action: 'publish_web'
-                }]
-            },
-            {
-                label: 'Envoyer par e-mail',
-                action: 'email_doc'
-            },
-            {
-                label: 'Télécharger',
-                subItems: [{
-                    label: 'Document PDF (.pdf)',
-                    action: 'downloadPdf'
-                }, {
-                    label: 'PDF amélioré (numéros de page)',
-                    action: 'downloadPdfEnhanced'
-                }, {
-                    label: 'EPUB (.epub)',
-                    action: 'downloadEpub'
-                }, {
-                    label: 'Microsoft Word (.docx)',
-                    action: 'download_docx'
-                }, {
-                    label: 'Format OpenDocument (.odt)',
-                    action: 'download_odt'
-                }, {
-                    label: 'Texte brut (.txt)',
-                    action: 'download_txt'
-                }, {
-                    label: 'Markdown (.md)',
-                    action: 'downloadMarkdown'
-                }]
-            },
-            {
-                label: 'Approbations',
-                action: 'approvals'
-            },
-            {
-                sep: true
-            },
-            {
-                label: 'Renommer',
-                action: 'rename'
-            },
-            {
-                label: 'Placer dans la corbeille',
-                action: 'trash'
-            },
-            {
-                sep: true
-            },
-            {
-                label: 'Historique des versions',
-                action: 'version_history'
-            },
-            {
-                label: 'Rendre disponible hors connexion',
-                action: 'offline_mode'
-            },
-            {
-                sep: true
-            },
-            {
-                label: 'Détails',
-                action: 'details'
-            },
-            {
-                label: 'Limites de sécurité',
-                action: 'security'
-            },
-            {
-                label: 'Langue',
-                action: 'language'
-            },
-            {
-                label: 'Configuration de la page',
-                action: 'page_setup'
-            },
-            {
-                label: 'Imprimer',
-                action: 'print',
-                shortcut: 'Ctrl+P'
-            }
-        ]
-    }, {
-        id: 'edit',
-        label: 'Édition',
-        items: [{
-            label: 'Annuler',
-            icon: <Undo className="w-4 h-4" />,
-            action: 'undo',
-            shortcut: 'Ctrl+Z'
-        }, {
-            label: 'Rétablir',
-            icon: <Redo className="w-4 h-4" />,
-            action: 'redo',
-            shortcut: 'Ctrl+Y'
-        }, {
-            sep: true
-        }, {
-            label: 'Couper',
-            icon: <X className="w-4 h-4" />,
-            action: 'cut',
-            shortcut: 'Ctrl+X'
-        }, {
-            label: 'Copier',
-            action: 'copy',
-            shortcut: 'Ctrl+C'
-        }, {
-            label: 'Coller',
-            action: 'paste',
-            shortcut: 'Ctrl+V'
-        }, {
-            label: 'Coller sans la mise en forme',
-            action: 'pasteText',
-            shortcut: 'Ctrl+Maj+V'
-        }, {
-            sep: true
-        }, {
-            label: 'Tout sélectionner',
-            action: 'selectAll',
-            shortcut: 'Ctrl+A'
-        }, {
-            label: 'Supprimer',
-            action: 'delete'
-        }, {
-            sep: true
-        }, {
-            label: 'Rechercher et remplacer',
-            action: 'findReplace',
-            shortcut: 'Ctrl+H'
-        }]
-    }, {
-        id: 'view',
-        label: 'Affichage',
-        items: [{
-            label: 'Mode d\'affichage',
-            subItems: [{
-                label: 'Modification',
-                action: 'todo'
-            }, {
-                label: 'Suggestion',
-                action: 'todo'
-            }, {
-                label: 'Lecture',
-                action: 'todo'
-            }]
-        }, {
-            sep: true
-        }, {
-            label: 'Afficher la règle',
-            action: 'todo'
-        }, {
-            label: 'Afficher le plan',
-            action: 'todo'
-        }, {
-            label: 'Afficher la barre d\'équations',
-            action: 'todo'
-        }, {
-            label: 'Afficher les caractères non imprimables',
-            action: 'todo'
-        }, {
-            sep: true
-        }, {
-            label: 'Plein écran',
-            action: 'fullScreen'
-        }, {
-            label: 'Mode focus (F11)',
-            action: 'focusMode'
-        }, {
-            label: 'Vue partagée Markdown',
-            action: 'splitView'
-        }]
-    }, {
-        id: 'insert',
-        label: 'Insertion',
-        items: [{
-            label: 'Image',
-            icon: <ImageIcon className="w-4 h-4" />,
-            action: 'insertImage'
-        }, {
-            label: 'Tableau',
-            icon: <TableIcon className="w-4 h-4" />,
-            subItems: [{
-                label: 'Modèles de tableaux',
-                action: 'todo'
-            }, {
-                label: 'Insérer un tableau simple',
-                action: 'insertTable'
-            }]
-        }, {
-            label: 'Composants de base',
-            action: 'todo'
-        }, {
-            label: 'Chips intelligents',
-            action: 'todo'
-        }, {
-            label: 'Champs de signature électronique',
-            action: 'todo'
-        }, {
-            label: 'Lien',
-            icon: <LinkIcon className="w-4 h-4" />,
-            action: 'insertLink',
-            shortcut: 'Ctrl+K'
-        }, {
-            label: 'Dessin',
-            action: 'todo'
-        }, {
-            label: 'Graphique',
-            action: 'todo'
-        }, {
-            label: 'Symboles',
-            action: 'todo'
-        }, {
-            sep: true
-        }, {
-            label: 'Onglet',
-            action: 'todo',
-            shortcut: 'Maj+F11'
-        }, {
-            label: 'Ligne horizontale',
-            action: 'insertHorizontalRule'
-        }, {
-            label: 'Saut',
-            subItems: [{
-                label: 'Saut de page',
-                action: 'insertHardBreak',
-                shortcut: 'Ctrl+Entrée'
-            }, {
-                label: 'Saut de section',
-                action: 'todo'
-            }]
-        }, {
-            label: 'Signet',
-            action: 'todo'
-        }, {
-            label: 'Éléments de page',
-            action: 'todo'
-        }, {
-            sep: true
-        }, {
-            label: 'Commentaire',
-            action: 'comment',
-            shortcut: 'Ctrl+Alt+M'
-        }, {
-            sep: true
-        }, {
-            label: 'Colonnes',
-            subItems: [{ label: '2 colonnes', action: 'insert2Columns' }, { label: '3 colonnes', action: 'insert3Columns' }]
-        }, {
-            label: 'Mode suggestion',
-            action: 'suggestionMode'
-        }, {
-            label: 'Objectif de mots',
-            action: 'wordGoal'
-        }]
-    }, {
-        id: 'format',
-        label: 'Format',
-        items: [{
-            label: 'Texte',
-            subItems: [{
-                label: 'Indice',
-                icon: <SubscriptIcon className="w-4 h-4" />,
-                action: 'toggleSubscript',
-                shortcut: 'Ctrl+,'
-            }, {
-                label: 'Exposant',
-                icon: <SuperscriptIcon className="w-4 h-4" />,
-                action: 'toggleSuperscript',
-                shortcut: 'Ctrl+.'
-            },]
-        }, {
-            label: 'Styles de paragraphe',
-            subItems: [{
-                label: 'Normal',
-                action: 'setParagraph'
-            }, {
-                label: 'Titre 1',
-                action: 'toggleH1',
-                shortcut: 'Ctrl+Alt+1'
-            }, {
-                label: 'Titre 2',
-                action: 'toggleH2',
-                shortcut: 'Ctrl+Alt+2'
-            }, {
-                label: 'Titre 3',
-                action: 'toggleH3',
-                shortcut: 'Ctrl+Alt+3'
-            },]
-        }, {
-            sep: true
-        }, {
-            label: 'Effacer la mise en forme',
-            action: 'clearFormat',
-            shortcut: 'Ctrl+\\'
-        }]
-    }, {
-        id: 'tools',
-        label: 'Outils',
-        items: [{
-            label: 'Traduire en anglais',
-            icon: <Languages className="w-4 h-4" />,
-            action: 'translateEn'
-        }, {
-            label: 'Publipostage (Mail Merge)',
-            icon: <FileSpreadsheet className="w-4 h-4" />,
-            action: 'mailMerge'
-        }]
-    }, {
-        id: 'extensions',
-        label: 'Extensions',
-        items: [{
-            label: 'Modules complémentaires',
-            action: 'add_ons'
-        }, {
-            label: 'Apps Script',
-            action: 'apps_script'
-        }]
-    }, {
-        id: 'help',
-        label: 'Aide',
-        items: [{
-            label: 'Aide SignApps Docs',
-            action: 'todo'
-        }, {
-            label: 'Formation',
-            action: 'todo'
-        }, {
-            label: 'Mises à jour',
-            action: 'todo'
-        }]
-    }];
-
-    const NATIVE_ACTIONS = ['rename', 'trash', 'open', 'print', 'fullScreen', 'wordCount', 'undo', 'redo', 'selectAll', 'delete', 'newDoc', 'downloadPdf', 'downloadPdfEnhanced', 'downloadEpub', 'downloadMarkdown', 'cut', 'copy', 'paste', 'pasteText', 'toggleBold', 'toggleItalic', 'toggleUnderline', 'toggleStrike', 'toggleSuperscript', 'toggleSubscript', 'clearFormat', 'toggleH1', 'toggleH2', 'toggleH3', 'setParagraph', 'toggleOrderedList', 'toggleBulletList', 'toggleTaskList', 'alignLeft', 'alignCenter', 'alignRight', 'alignJustify', 'insertHorizontalRule', 'insertHardBreak', 'insertImage', 'insertLink', 'insertTable', 'insertCode', 'tableAddRowBefore', 'tableAddRowAfter', 'tableAddColBefore', 'tableAddColAfter', 'tableDeleteRow', 'tableDeleteCol', 'tableDeleteTable', 'tableMergeCells', 'aiGenerate', 'aiSummarize', 'translateEn', 'findReplace', 'comment', 'fontSize_smaller', 'fontSize_larger', 'lineHeight_1', 'lineHeight_1.15', 'lineHeight_1.5', 'lineHeight_2', 'page_setup', 'saveToDrive', 'download_docx', 'mailMerge', 'focusMode', 'splitView', 'wordGoal', 'suggestionMode', 'insert2Columns', 'insert3Columns', 'saveAsTemplate'];
-
-    // Handle Menu Actions
-    const handleMenuAction = useCallback(async (action: string, label?: string) => {
-        if (!editor || !NATIVE_ACTIONS.includes(action)) {
-            setActiveModal({
-                id: action,
-                label
-            });
-            return;
-        }
-
-        editor.chain().focus(); // Base focus to ensure operations happen inside editor
-
-        // Specific Settings actions
-        if (action === 'findReplace') {
-            toast.info("Appuyez sur Ctrl+F pour utiliser la recherche native de votre navigateur.");
-        }
-        if (action === 'comment') {
-            const commentId = uuidv4();
-            editor.chain().focus().setComment(commentId).run();
-            setComments(prev => [...prev, {
-                id: commentId,
-                text: '',
-                author: userName || 'Anonymous',
-                timestamp: Date.now()
-            }]);
-            setActiveCommentId(commentId);
-            setShowComments(true);
-        }
-        if (action === 'mailMerge') {
-            setMailMergeOpen(true);
-            return;
-        }
-        if (action === 'fontSize_smaller') setDocFontSize(s => Math.max(1, s - 1));
-        if (action === 'fontSize_larger') setDocFontSize(s => s + 1);
-        if (action === 'lineHeight_1') setDocLineHeight('1');
-        if (action === 'lineHeight_1.15') setDocLineHeight('1.15');
-        if (action === 'lineHeight_1.5') setDocLineHeight('1.5');
-        if (action === 'lineHeight_2') setDocLineHeight('2');
-        if (action === 'page_setup') {
-            setPageBgColorInput(docBgColor);
-            setShowPageSetupDialog(true);
-            return;
-        }
-
-        // File Actions
-        if (action === 'rename') {
-            setRenameDocName('');
-            setShowRenameDialog(true);
-            return;
-        }
-        if (action === 'trash') {
-            setShowTrashDialog(true);
-            return;
-        }
-        if (action === 'open') {
-            toast.info("Ouvrez l'explorateur Drive pour choisir un autre document.");
-            return;
-        }
-        if (action === 'print') {
-            exportHtmlDocument('pdf');
-            return;
-        }
-        if (action === 'saveToDrive') {
-            await saveToDrive();
-            return;
-        }
-        if (action === 'saveAsTemplate') {
-            const html = editor.getHTML();
-            const name = documentName || 'Mon mod\èle';
-            saveUserTemplate({
-                title: name,
-                description: `Modèle créé depuis "${name}"`,
-                type: 'document',
-                department: 'general',
-                content: html,
-            });
-            toast.success('Document sauvegard\é comme mod\èle');
-            return;
-        }
-
-        // View Actions
-        if (action === 'fullScreen') {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(() => toast.error("Le plein écran est bloqué."));
-            } else {
-                document.exitFullscreen();
-            }
-            return;
-        }
-
-        // Tools Actions
-        if (action === 'wordCount') {
-            const text = editor.getText();
-            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-            const chars = text.length;
-            toast.info(`Statistiques : ${words} mots, ${chars} caractères.`);
-            return;
-        }
-
-        // Standard Edit Actions map well to Tiptap or Clipboard API
-        if (action === 'undo') editor.commands.undo();
-        if (action === 'redo') editor.commands.redo();
-        if (action === 'selectAll') editor.commands.selectAll();
-        if (action === 'delete') editor.commands.deleteSelection();
-        if (action === 'newDoc') {
-            setNewDocName('');
-            setShowNewDocDialog(true);
-            return;
-        }
-        if (action === 'downloadPdf') {
-            toast.info("Génération du PDF...");
-            exportHtmlDocument('pdf');
-        }
-        if (action === 'download_docx') {
-            await exportHtmlDocument('docx');
-        }
-        if (action === 'downloadPdfEnhanced') {
-            exportToPdfEnhanced();
-            return;
-        }
-        if (action === 'downloadEpub') {
-            exportToEpub();
-            return;
-        }
-        if (action === 'downloadMarkdown') {
-            exportToMarkdown();
-            return;
-        }
-        // IDEA-001: Focus mode
-        if (action === 'focusMode') {
-            setIsFocusMode(prev => !prev);
-            return;
-        }
-        // IDEA-009: Split view
-        if (action === 'splitView') {
-            setSplitView(prev => !prev);
-            return;
-        }
-        // IDEA-002: Word goal dialog
-        if (action === 'wordGoal') {
-            setWordGoalInput(wordGoal ? String(wordGoal) : '');
-            setShowWordGoalDialog(true);
-            return;
-        }
-        // IDEA-012: Suggestion mode
-        if (action === 'suggestionMode') {
-            const next = !suggestionModeActive;
-            setSuggestionModeActive(next);
-            if (next) editor.commands.enableSuggestionMode();
-            else editor.commands.disableSuggestionMode();
-            toast.info(next ? 'Mode suggestion activé' : 'Mode suggestion désactivé');
-            return;
-        }
-        // IDEA-006: Columns
-        if (action === 'insert2Columns') { editor.chain().focus().setColumns(2).run(); return; }
-        if (action === 'insert3Columns') { editor.chain().focus().setColumns(3).run(); return; }
-
-        // Native clipboard if possible, fallback to execCommand
-        if (action === 'cut' || action === 'copy' || action === 'paste' || action === 'pasteText') {
-            try {
-                editor.view.dom.focus();
-                let successful = false;
-                if (action === 'pasteText') {
-                    // Modern API fallback for text
-                    const text = await navigator.clipboard.readText();
-                    editor.commands.insertContent(text);
-                    successful = true;
-                } else {
-                    successful = document.execCommand(action);
-                }
-                if (!successful) {
-                    toast.error(`Votre navigateur bloque l'action '${action}'. Utilisez les raccourcis clavier.`);
-                }
-            } catch (e) {
-                toast.error(`Erreur: ${e}`);
-            }
-        }
-
-        // Font Styles (some toggles)
-        if (action === 'toggleBold') editor.commands.toggleBold();
-        if (action === 'toggleItalic') editor.commands.toggleItalic();
-        if (action === 'toggleUnderline') editor.commands.toggleUnderline();
-        if (action === 'toggleStrike') editor.commands.toggleStrike();
-        if (action === 'toggleSuperscript') editor.commands.toggleSuperscript();
-        if (action === 'toggleSubscript') editor.commands.toggleSubscript();
-        if (action === 'clearFormat') {
-            editor.commands.unsetAllMarks();
-            editor.commands.clearNodes();
-        }
-
-        // Headings
-        if (action === 'toggleH1') editor.commands.toggleHeading({
-            level: 1
-        });
-        if (action === 'toggleH2') editor.commands.toggleHeading({
-            level: 2
-        });
-        if (action === 'toggleH3') editor.commands.toggleHeading({
-            level: 3
-        });
-        if (action === 'setParagraph') editor.commands.setParagraph();
-
-        // Lists
-        if (action === 'toggleOrderedList') editor.commands.toggleOrderedList();
-        if (action === 'toggleBulletList') editor.commands.toggleBulletList();
-        if (action === 'toggleTaskList') editor.commands.toggleTaskList();
-
-        // Alignments
-        if (action === 'alignLeft') editor.commands.setTextAlign('left');
-        if (action === 'alignCenter') editor.commands.setTextAlign('center');
-        if (action === 'alignRight') editor.commands.setTextAlign('right');
-        if (action === 'alignJustify') editor.commands.setTextAlign('justify');
-
-        // Insertions
-        if (action === 'insertHorizontalRule') editor.commands.setHorizontalRule();
-        if (action === 'insertHardBreak') editor.commands.setHardBreak();
-        if (action === 'insertImage') {
-            setInsertImageUrl('');
-            setShowInsertImageDialog(true);
-            return;
-        }
-        if (action === 'insertLink') {
-            setInsertLinkUrl('');
-            setShowInsertLinkDialog(true);
-            return;
-        }
-        if (action === 'insertTable') {
-            editor.commands.insertTable({
-                rows: 3,
-                cols: 3,
-                withHeaderRow: true
-            });
-        }
-        if (action === 'insertCode') {
-            editor.commands.toggleCodeBlock();
-        }
-
-        // Table Manipulations
-        if (action === 'tableAddRowBefore') editor.commands.addRowBefore();
-        if (action === 'tableAddRowAfter') editor.commands.addRowAfter();
-        if (action === 'tableAddColBefore') editor.commands.addColumnBefore();
-        if (action === 'tableAddColAfter') editor.commands.addColumnAfter();
-        if (action === 'tableDeleteRow') editor.commands.deleteRow();
-        if (action === 'tableDeleteCol') editor.commands.deleteColumn();
-        if (action === 'tableDeleteTable') editor.commands.deleteTable();
-        if (action === 'tableMergeCells') editor.commands.mergeCells();
-
-        // AI specific
-        if (action === 'aiGenerate') {
-            setFloatingMode('prompt');
-            setTimeout(() => promptInputRef.current?.focus(), 100);
-        }
-        if (action === 'aiSummarize') {
-            handleSummarize();
-        }
-        if (action === 'translateEn') {
-            handleTranslate('en', 'English');
-        }
-
-        // Focus back
-        editor.view.focus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [editor, handleSummarize, handleTranslate, saveToDrive, exportHtmlDocument, userName, docBgColor]);
-
-    const handleNewDocConfirm = async () => {
-        setShowNewDocDialog(false);
-        const finalName = newDocName.trim() || 'Document sans titre';
-        const toastId = toast.loading("Création du document...");
-        try {
-            const newNode = await driveApi.createNode({
-                parent_id: null,
-                name: finalName,
-                node_type: 'document',
-                target_id: null
-            });
-            const targetId = newNode.target_id || newNode.id;
-            toast.success("Document créé !", { id: toastId });
-            window.open(`/docs/editor?id=${targetId}`, '_blank');
-        } catch (err: any) {
-            console.error("Erreur création document:", err);
-            const msg = err?.response?.data?.message || err?.message || String(err);
-            toast.error(`Erreur création: ${msg}`, { id: toastId });
-        }
-    };
-
-    if (!editor || !ydoc || !provider) {
-        return <div className="flex items-center justify-center p-8 text-muted-foreground">Initializing editor...</div>;
+  // ---- Save To Drive ----
+  const saveToDrive = useCallback(async () => {
+    if (!editor) return;
+    if (!documentName) {
+      toast.error("Impossible d'enregistrer: Le nom du fichier est manquant.");
+      return;
     }
 
     const tId = toast.loading("Enregistrement dans le Drive...");
@@ -3085,7 +2296,7 @@ ${html}
       toast.success("Enregistré avec succès !", {
         id: tId,
       });
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error("Erreur enregistrement docx", err);
       toast.error("Une erreur est survenue. Réessayez.", {
         id: tId,
@@ -3728,7 +2939,7 @@ ${html}
         return;
       }
       if (action === "print") {
-        window.print();
+        exportHtmlDocument("pdf");
         return;
       }
       if (action === "saveToDrive") {
@@ -3781,8 +2992,8 @@ ${html}
         return;
       }
       if (action === "downloadPdf") {
-        toast.info("G\én\ération du PDF via le gestionnaire d'impression...");
-        window.print();
+        toast.info("Génération du PDF...");
+        exportHtmlDocument("pdf");
       }
       if (action === "download_docx") {
         await exportHtmlDocument("docx");
@@ -3951,8 +3162,8 @@ ${html}
 
       // Focus back
       editor.view.focus();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       editor,
       handleSummarize,
@@ -3978,16 +3189,9 @@ ${html}
       const targetId = newNode.target_id || newNode.id;
       toast.success("Document créé !", { id: toastId });
       window.open(`/docs/editor?id=${targetId}`, "_blank");
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error("Erreur création document:", err);
-      const msg =
-        (
-          err as {
-            response?: { data?: { message?: string } };
-            message?: string;
-          }
-        )?.response?.data?.message ||
-        (err instanceof Error ? err.message : String(err));
+      const msg = err?.response?.data?.message || err?.message || String(err);
       toast.error(`Erreur création: ${msg}`, { id: toastId });
     }
   };
