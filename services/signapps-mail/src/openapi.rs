@@ -49,6 +49,11 @@ use utoipa::OpenApi;
         crate::handlers::internal_server::list_accounts,
         crate::handlers::internal_server::create_account,
         crate::handlers::internal_server::delete_account,
+        // JMAP (RFC 8620/8621)
+        crate::jmap::session::well_known,
+        crate::jmap::api::handle,
+        crate::jmap::api::upload,
+        crate::jmap::api::download,
     ),
     components(
         schemas(
@@ -81,6 +86,7 @@ use utoipa::OpenApi;
         (name = "mail-labels", description = "Email label management"),
         (name = "mail-mailing-lists", description = "Mailing list detection and unsubscribe"),
         (name = "mail-internal-server", description = "Internal Stalwart Mail Server management"),
+        (name = "jmap", description = "JMAP (RFC 8620/8621) protocol endpoints"),
     ),
     modifiers(&SecurityAddon),
 )]

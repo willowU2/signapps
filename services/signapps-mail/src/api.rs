@@ -1,3 +1,4 @@
+use crate::jmap;
 use axum::{
     routing::{get, post},
     Router,
@@ -209,6 +210,14 @@ pub fn router() -> Router<AppState> {
         .route("/api/v1/mail/threads", get(list_threads))
         // Undo-send: cancel a pending scheduled email
         .route("/api/v1/mail/emails/:id/cancel-send", post(cancel_send))
+        // ── JMAP (RFC 8620/8621) endpoints ──────────────────────────────────
+        .route("/.well-known/jmap", get(jmap::session::well_known))
+        .route("/jmap", post(jmap::api::handle))
+        .route("/jmap/upload/:account_id", post(jmap::api::upload))
+        .route(
+            "/jmap/download/:account_id/:blob_id/:name",
+            get(jmap::api::download),
+        )
         // Internal Stalwart Mail Server management
         .route(
             "/api/v1/mail/internal/status",

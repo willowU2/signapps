@@ -11,6 +11,9 @@ members = [
     "crates/signapps-dkim",
     "crates/signapps-smtp",
     "crates/signapps-imap",
+    "crates/signapps-dav",
+    "crates/signapps-sieve",
+    "crates/signapps-jmap",
     # Tauri desktop app
     "src-tauri",
     # Backend services
@@ -154,6 +157,9 @@ rustls = { version = "0.23", features = ["ring"] }
 rustls-pemfile = "2"
 rcgen = "0.13"
 instant-acme = "0.7"
+
+# XML parsing (CalDAV/CardDAV)
+quick-xml = { version = "0.37", features = ["serialize"] }
 
 # OpenAPI documentation
 utoipa = { version = "5", features = ["axum_extras", "uuid", "chrono"] }

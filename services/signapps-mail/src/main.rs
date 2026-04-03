@@ -1,7 +1,9 @@
 pub mod api;
 pub mod auth;
+pub mod dav;
 pub mod handlers;
 pub mod imap;
+pub mod jmap;
 pub mod models;
 pub mod openapi;
 pub mod queue;
@@ -185,6 +187,13 @@ async fn main() {
     let imap_state = mail_server_state.clone();
     tokio::spawn(async move {
         imap::server::start(imap_state, imap_port).await;
+    });
+
+    // CalDAV/CardDAV server (port 8443) — serves calendars and contacts via DAV
+    let dav_port: u16 = env_or("DAV_PORT", "8443").parse().unwrap_or(8443);
+    let dav_state = mail_server_state.clone();
+    tokio::spawn(async move {
+        dav::server::start(dav_state, dav_port).await;
     });
 
     // Outbound queue worker — delivers queued messages to remote SMTP servers

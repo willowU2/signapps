@@ -10197,6 +10197,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-dav"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "quick-xml 0.37.5",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-db"
 version = "0.1.0"
 dependencies = [
@@ -10391,6 +10403,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-jmap"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-mail"
 version = "0.1.0"
 dependencies = [
@@ -10412,9 +10435,12 @@ dependencies = [
  "serde_json",
  "sha2",
  "signapps-common",
+ "signapps-dav",
  "signapps-dkim",
  "signapps-imap",
+ "signapps-jmap",
  "signapps-mime",
+ "signapps-sieve",
  "signapps-smtp",
  "sqlx",
  "thiserror 1.0.69",
@@ -10778,6 +10804,15 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "windows-service",
+]
+
+[[package]]
+name = "signapps-sieve"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
 ]
 
 [[package]]

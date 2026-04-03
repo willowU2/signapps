@@ -25,6 +25,9 @@ signapps-smtp = { path = "../../crates/signapps-smtp" }
 signapps-imap = { path = "../../crates/signapps-imap" }
 signapps-mime = { path = "../../crates/signapps-mime" }
 signapps-dkim = { path = "../../crates/signapps-dkim" }
+signapps-jmap = { path = "../../crates/signapps-jmap" }
+signapps-dav = { path = "../../crates/signapps-dav" }
+signapps-sieve = { path = "../../crates/signapps-sieve" }
 
 # IMAP/SMTP Backend
 async-imap = { version = "0.11", default-features = false, features = ["runtime-tokio"] }
