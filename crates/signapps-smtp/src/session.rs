@@ -256,15 +256,15 @@ impl SmtpSession {
             Err(SmtpError::InvalidUtf8 | SmtpError::SyntaxError(_)) => {
                 let r = reply::syntax_error();
                 return vec![SmtpAction::Reply(r.code, r.text)];
-            }
+            },
             Err(SmtpError::UnsupportedMechanism(_)) => {
                 let r = reply::not_implemented();
                 return vec![SmtpAction::Reply(r.code, r.text)];
-            }
+            },
             Err(SmtpError::Base64Error(_)) => {
                 let r = reply::syntax_error();
                 return vec![SmtpAction::Reply(r.code, r.text)];
-            }
+            },
         };
 
         match cmd {
@@ -278,7 +278,7 @@ impl SmtpSession {
             SmtpCommand::Noop => {
                 let r = reply::ok();
                 vec![SmtpAction::Reply(r.code, r.text)]
-            }
+            },
             SmtpCommand::StartTls => self.handle_starttls(),
             SmtpCommand::Auth {
                 mechanism,
@@ -287,11 +287,11 @@ impl SmtpSession {
             SmtpCommand::AuthResponse(_) => {
                 let r = reply::bad_sequence();
                 vec![SmtpAction::Reply(r.code, r.text)]
-            }
+            },
             SmtpCommand::Unknown(_) => {
                 let r = reply::not_implemented();
                 vec![SmtpAction::Reply(r.code, r.text)]
-            }
+            },
         }
     }
 
@@ -415,11 +415,11 @@ impl SmtpSession {
         params: Vec<(String, String)>,
     ) -> Vec<SmtpAction> {
         match &self.state {
-            SmtpState::Greeted { .. } | SmtpState::Authenticated { .. } => {}
+            SmtpState::Greeted { .. } | SmtpState::Authenticated { .. } => {},
             _ => {
                 let r = reply::bad_sequence();
                 return vec![SmtpAction::Reply(r.code, r.text)];
-            }
+            },
         }
 
         if self.config.require_tls && !self.tls_active {
@@ -469,7 +469,7 @@ impl SmtpSession {
                 };
                 let r = reply::ok();
                 vec![SmtpAction::Reply(r.code, r.text)]
-            }
+            },
             SmtpState::RcptTo { sender, .. } => {
                 let sender = sender.clone();
                 self.envelope_recipients.push(address.clone());
@@ -479,11 +479,11 @@ impl SmtpSession {
                 };
                 let r = reply::ok();
                 vec![SmtpAction::Reply(r.code, r.text)]
-            }
+            },
             _ => {
                 let r = reply::bad_sequence();
                 vec![SmtpAction::Reply(r.code, r.text)]
-            }
+            },
         }
     }
 
@@ -494,11 +494,11 @@ impl SmtpSession {
                 self.data_buffer.clear();
                 let r = reply::start_data();
                 vec![SmtpAction::Reply(r.code, r.text), SmtpAction::AcceptData]
-            }
+            },
             _ => {
                 let r = reply::bad_sequence();
                 vec![SmtpAction::Reply(r.code, r.text)]
-            }
+            },
         }
     }
 
@@ -514,7 +514,7 @@ impl SmtpSession {
         self.envelope_recipients.clear();
 
         match &self.state {
-            SmtpState::Connected => {} // stay in Connected
+            SmtpState::Connected => {}, // stay in Connected
             _ => self.reset_to_post_auth_state(),
         }
 
@@ -532,11 +532,11 @@ impl SmtpSession {
                     SmtpAction::Reply(220, "Ready to start TLS".into()),
                     SmtpAction::StartTls,
                 ]
-            }
+            },
             _ => {
                 let r = reply::bad_sequence();
                 vec![SmtpAction::Reply(r.code, r.text)]
-            }
+            },
         }
     }
 
@@ -546,11 +546,11 @@ impl SmtpSession {
         initial_response: Option<String>,
     ) -> Vec<SmtpAction> {
         match &self.state {
-            SmtpState::Greeted { .. } => {}
+            SmtpState::Greeted { .. } => {},
             _ => {
                 let r = reply::bad_sequence();
                 return vec![SmtpAction::Reply(r.code, r.text)];
-            }
+            },
         }
 
         if self.authenticated {
@@ -562,7 +562,7 @@ impl SmtpSession {
             Err(_) => {
                 let r = reply::not_implemented();
                 return vec![SmtpAction::Reply(r.code, r.text)];
-            }
+            },
         };
 
         match mech {
@@ -576,7 +576,7 @@ impl SmtpSession {
                     // Send empty challenge to prompt for credentials
                     vec![SmtpAction::AuthChallenge(String::new())]
                 }
-            }
+            },
             SaslMechanism::Login => {
                 if let Some(initial) = initial_response {
                     // Initial response is the username (base64)
@@ -587,7 +587,7 @@ impl SmtpSession {
                 let challenge = base64::engine::general_purpose::STANDARD.encode("Username:");
                 self.login_state = Some(LoginState::WaitingUsername);
                 vec![SmtpAction::AuthChallenge(challenge)]
-            }
+            },
             SaslMechanism::XOAuth2 => {
                 if let Some(initial) = initial_response {
                     vec![SmtpAction::Authenticate {
@@ -597,7 +597,7 @@ impl SmtpSession {
                 } else {
                     vec![SmtpAction::AuthChallenge(String::new())]
                 }
-            }
+            },
         }
     }
 
@@ -607,14 +607,14 @@ impl SmtpSession {
             Err(_) => {
                 let r = reply::auth_failed();
                 return vec![SmtpAction::Reply(r.code, r.text)];
-            }
+            },
         };
 
         match auth::decode_login_step(state, text) {
             Ok(LoginNext::Challenge(challenge, new_state)) => {
                 self.login_state = Some(new_state);
                 vec![SmtpAction::AuthChallenge(challenge)]
-            }
+            },
             Ok(LoginNext::Done(username, password)) => {
                 self.login_state = None;
                 vec![SmtpAction::Authenticate {
@@ -625,12 +625,12 @@ impl SmtpSession {
                         base64::engine::general_purpose::STANDARD.encode(&password),
                     )),
                 }]
-            }
+            },
             Err(_) => {
                 self.login_state = None;
                 let r = reply::auth_failed();
                 vec![SmtpAction::Reply(r.code, r.text)]
-            }
+            },
         }
     }
 }
@@ -650,7 +650,7 @@ mod tests {
             SmtpAction::Reply(code, text) => {
                 assert_eq!(code, 220);
                 assert!(text.contains("mx.example.com"));
-            }
+            },
             _ => panic!("expected Reply action"),
         }
     }
@@ -664,7 +664,7 @@ mod tests {
             SmtpAction::SendCapabilities(caps) => {
                 assert!(!caps.is_empty());
                 assert!(caps[0].contains("client.example.com"));
-            }
+            },
             _ => panic!("expected SendCapabilities"),
         }
         assert!(matches!(session.state(), SmtpState::Greeted { .. }));
@@ -733,13 +733,9 @@ mod tests {
         assert!(session
             .feed_data_line(b"To: recipient@example.com\r\n")
             .is_none());
-        assert!(session
-            .feed_data_line(b"Subject: Test\r\n")
-            .is_none());
+        assert!(session.feed_data_line(b"Subject: Test\r\n").is_none());
         assert!(session.feed_data_line(b"\r\n").is_none());
-        assert!(session
-            .feed_data_line(b"Hello, world!\r\n")
-            .is_none());
+        assert!(session.feed_data_line(b"Hello, world!\r\n").is_none());
 
         // End of data
         let action = session.feed_data_line(b".\r\n");
@@ -753,7 +749,7 @@ mod tests {
                 let data_str = String::from_utf8_lossy(&envelope.data);
                 assert!(data_str.contains("Subject: Test"));
                 assert!(data_str.contains("Hello, world!"));
-            }
+            },
             _ => panic!("expected Deliver action"),
         }
     }
@@ -788,7 +784,7 @@ mod tests {
                 assert!(recipients.contains(&"alice@example.com".to_string()));
                 assert!(recipients.contains(&"bob@example.com".to_string()));
                 assert!(recipients.contains(&"carol@example.com".to_string()));
-            }
+            },
             _ => panic!("expected RcptTo state"),
         }
     }
@@ -864,19 +860,15 @@ mod tests {
         let mut session = SmtpSession::new(SmtpConfig::default());
         session.feed_line(b"EHLO test\r\n");
 
-        let encoded =
-            base64::engine::general_purpose::STANDARD.encode(b"\0testuser\0testpass");
+        let encoded = base64::engine::general_purpose::STANDARD.encode(b"\0testuser\0testpass");
         let cmd = format!("AUTH PLAIN {}\r\n", encoded);
         let actions = session.feed_line(cmd.as_bytes());
 
         match &actions[0] {
-            SmtpAction::Authenticate {
-                mechanism,
-                initial,
-            } => {
+            SmtpAction::Authenticate { mechanism, initial } => {
                 assert_eq!(mechanism, "PLAIN");
                 assert!(initial.is_some());
-            }
+            },
             _ => panic!("expected Authenticate action, got: {:?}", actions),
         }
     }
@@ -932,7 +924,7 @@ mod tests {
                 assert!(data_str.contains(".hidden dot"));
                 assert!(!data_str.contains("..hidden dot"));
                 assert!(data_str.contains("normal line"));
-            }
+            },
             _ => panic!("expected Deliver"),
         }
     }

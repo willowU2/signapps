@@ -11,7 +11,9 @@ use signapps_dav::{
     },
     vcard::VCard,
     webdav::DavResponse,
-    xml::{build_multistatus, build_resource_response, parse_propfind, parse_report, ReportRequest},
+    xml::{
+        build_multistatus, build_resource_response, parse_propfind, parse_report, ReportRequest,
+    },
 };
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
@@ -85,7 +87,7 @@ async fn handle_propfind(
         Err(e) => {
             tracing::warn!("Invalid PROPFIND body: {}", e);
             return DavResponse::new(400, format!("Invalid PROPFIND: {e}"));
-        }
+        },
     };
 
     match segments.len() {
@@ -96,17 +98,14 @@ async fn handle_propfind(
                     &format!("/dav/addressbooks/{}/", auth.email),
                     vec![
                         ("D:displayname".to_string(), auth.email.clone()),
-                        (
-                            "D:resourcetype".to_string(),
-                            "<D:collection/>".to_string(),
-                        ),
+                        ("D:resourcetype".to_string(), "<D:collection/>".to_string()),
                     ],
                 );
                 DavResponse::multistatus(build_multistatus(&[resp]))
             } else {
                 list_addressbooks(pool, auth).await
             }
-        }
+        },
         // /dav/addressbooks/<email>/<book-id>/
         4 => {
             let book_id = segments[3].trim_matches('/');
@@ -115,14 +114,14 @@ async fn handle_propfind(
             } else {
                 list_contacts(pool, auth, book_id).await
             }
-        }
+        },
         // /dav/addressbooks/<email>/<book-id>/<contact-uid>.vcf
         _ => {
             let book_id = segments[3];
             let contact_file = segments[4];
             let contact_uid = contact_file.trim_end_matches(".vcf");
             contact_props(pool, auth, book_id, contact_uid).await
-        }
+        },
     }
 }
 
@@ -141,7 +140,7 @@ async fn list_addressbooks(pool: &Pool<Postgres>, auth: &DavAuth) -> DavResponse
         Err(e) => {
             tracing::error!("Failed to list addressbooks: {}", e);
             return DavResponse::new(500, format!("DB error: {e}"));
-        }
+        },
     };
 
     let infos: Vec<AddressbookInfo> = books
@@ -158,11 +157,7 @@ async fn list_addressbooks(pool: &Pool<Postgres>, auth: &DavAuth) -> DavResponse
 }
 
 /// Return properties for a single addressbook.
-async fn addressbook_props(
-    pool: &Pool<Postgres>,
-    auth: &DavAuth,
-    book_id: &str,
-) -> DavResponse {
+async fn addressbook_props(pool: &Pool<Postgres>, auth: &DavAuth, book_id: &str) -> DavResponse {
     let book_uuid = match Uuid::parse_str(book_id) {
         Ok(u) => u,
         Err(_) => return DavResponse::not_found(),
@@ -182,7 +177,7 @@ async fn addressbook_props(
         Err(e) => {
             tracing::error!("Failed to fetch addressbook: {}", e);
             return DavResponse::new(500, format!("DB error: {e}"));
-        }
+        },
     };
 
     match book {
@@ -194,7 +189,7 @@ async fn addressbook_props(
                 description: b.description,
             };
             DavResponse::multistatus(build_addressbook_propfind_response(&[info]))
-        }
+        },
         None => DavResponse::not_found(),
     }
 }
@@ -222,7 +217,7 @@ async fn list_contacts(pool: &Pool<Postgres>, auth: &DavAuth, book_id: &str) -> 
         Err(e) => {
             tracing::error!("Failed to list contacts: {}", e);
             return DavResponse::new(500, format!("DB error: {e}"));
-        }
+        },
     };
 
     let resources: Vec<ContactResource> = contacts
@@ -269,7 +264,7 @@ async fn contact_props(
         Err(e) => {
             tracing::error!("Failed to fetch contact: {}", e);
             return DavResponse::new(500, format!("DB error: {e}"));
-        }
+        },
     };
 
     match contact {
@@ -288,7 +283,7 @@ async fn contact_props(
                 ],
             );
             DavResponse::multistatus(build_multistatus(&[resp]))
-        }
+        },
         None => DavResponse::not_found(),
     }
 }
@@ -325,7 +320,7 @@ async fn handle_get(pool: &Pool<Postgres>, auth: &DavAuth, segments: &[&str]) ->
         Err(e) => {
             tracing::error!("Failed to fetch contact for GET: {}", e);
             return DavResponse::new(500, format!("DB error: {e}"));
-        }
+        },
     };
 
     match row {
@@ -376,7 +371,7 @@ async fn handle_put(
         Err(e) => {
             tracing::warn!("Invalid vCard data: {}", e);
             return DavResponse::new(400, format!("Invalid vCard: {e}"));
-        }
+        },
     };
 
     // Verify addressbook ownership
@@ -392,7 +387,7 @@ async fn handle_put(
         Err(e) => {
             tracing::error!("Addressbook ownership check failed: {}", e);
             return DavResponse::new(500, format!("DB error: {e}"));
-        }
+        },
     };
 
     if !book_exists {
@@ -499,12 +494,12 @@ async fn handle_delete(
                 "CardDAV contact deleted"
             );
             DavResponse::new(204, String::new())
-        }
+        },
         Ok(_) => DavResponse::not_found(),
         Err(e) => {
             tracing::error!("Failed to delete contact: {}", e);
             DavResponse::new(500, format!("DB error: {e}"))
-        }
+        },
     }
 }
 
@@ -525,7 +520,7 @@ async fn handle_report(
         Err(e) => {
             tracing::warn!("Invalid REPORT body: {}", e);
             return DavResponse::new(400, format!("Invalid REPORT: {e}"));
-        }
+        },
     };
 
     if segments.len() < 4 {
@@ -542,10 +537,10 @@ async fn handle_report(
         ReportRequest::AddressbookQuery => {
             // Return all contacts (basic implementation)
             list_contacts(pool, auth, book_id).await
-        }
+        },
         ReportRequest::AddressbookMultiget { hrefs } => {
             handle_addressbook_multiget(pool, auth, book_uuid, &hrefs).await
-        }
+        },
         _ => DavResponse::new(400, "Unsupported REPORT type for CardDAV".to_string()),
     }
 }
@@ -597,11 +592,7 @@ async fn handle_addressbook_multiget(
 }
 
 /// Handle MKCOL -- create a new addressbook.
-async fn handle_mkcol(
-    pool: &Pool<Postgres>,
-    auth: &DavAuth,
-    segments: &[&str],
-) -> DavResponse {
+async fn handle_mkcol(pool: &Pool<Postgres>, auth: &DavAuth, segments: &[&str]) -> DavResponse {
     if segments.len() < 4 {
         return DavResponse::new(400, "Invalid MKCOL path".to_string());
     }
@@ -630,10 +621,10 @@ async fn handle_mkcol(
                 "CardDAV addressbook created via MKCOL"
             );
             DavResponse::new(201, String::new())
-        }
+        },
         Err(e) => {
             tracing::error!("Failed to create addressbook: {}", e);
             DavResponse::new(500, format!("DB error: {e}"))
-        }
+        },
     }
 }

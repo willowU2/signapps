@@ -10,9 +10,9 @@ use super::devops::{
 use super::events::UpdateRsvpPayload;
 use super::health_stream::{HealthSnapshot, ServiceStatus};
 use super::jobs::{CleanupRequest, CleanupResponse, HealthResponse, RunJobResponse};
-use crate::scheduler::service::RunningJob;
 use super::tasks::{AddAttachmentRequest, TaskAttachmentResponse};
 use super::time_items::{QueryUsersEventsInput, UpdateRsvpInput, UpdateStatusInput};
+use crate::scheduler::service::RunningJob;
 
 #[derive(OpenApi)]
 #[openapi(

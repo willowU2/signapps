@@ -13,10 +13,8 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
-use handlers::openapi::ContainersApiDoc;
-use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
 use dashmap::DashMap;
+use handlers::openapi::ContainersApiDoc;
 use signapps_common::bootstrap::{env_or, init_tracing_with_filter, load_env, ServiceConfig};
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin, AuthState,
@@ -28,6 +26,8 @@ use tower_http::{
     cors::{AllowOrigin, CorsLayer},
     trace::TraceLayer,
 };
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 use docker::DockerClient;
 use store::types::InstallEvent;

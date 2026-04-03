@@ -947,7 +947,10 @@ mod tests {
             password: "SomePassword1".to_string(),
             mfa_code: None,
         };
-        assert!(req.validate().is_err(), "empty username must fail validation");
+        assert!(
+            req.validate().is_err(),
+            "empty username must fail validation"
+        );
     }
 
     /// Empty password fails validation.
@@ -958,7 +961,10 @@ mod tests {
             password: String::new(),
             mfa_code: None,
         };
-        assert!(req.validate().is_err(), "empty password must fail validation");
+        assert!(
+            req.validate().is_err(),
+            "empty password must fail validation"
+        );
     }
 
     /// Valid credentials pass validation.
@@ -969,7 +975,10 @@ mod tests {
             password: "correct-horse-battery".to_string(),
             mfa_code: None,
         };
-        assert!(req.validate().is_ok(), "valid login request must pass validation");
+        assert!(
+            req.validate().is_ok(),
+            "valid login request must pass validation"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -997,7 +1006,10 @@ mod tests {
             password: "SecurePass1".to_string(),
             display_name: None,
         };
-        assert!(req.validate().is_err(), "invalid email must fail validation");
+        assert!(
+            req.validate().is_err(),
+            "invalid email must fail validation"
+        );
     }
 
     /// A password shorter than 8 chars is rejected.

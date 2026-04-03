@@ -1,7 +1,6 @@
 pub mod agent;
 pub mod automation;
 pub mod cmdb;
-pub mod openapi;
 pub mod commands;
 pub mod custom_fields;
 pub mod device_docs;
@@ -10,6 +9,7 @@ pub mod groups;
 pub mod hardware;
 pub mod monitoring;
 pub mod network;
+pub mod openapi;
 pub mod packages;
 pub mod patches;
 pub mod playbooks;

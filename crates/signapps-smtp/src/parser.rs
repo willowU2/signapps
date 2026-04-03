@@ -183,10 +183,7 @@ pub fn parse_command(line: &[u8]) -> Result<SmtpCommand, SmtpError> {
     if upper.starts_with("AUTH ") {
         let rest = trimmed[5..].trim();
         let mut parts = rest.splitn(2, ' ');
-        let mechanism = parts
-            .next()
-            .unwrap_or_default()
-            .to_uppercase();
+        let mechanism = parts.next().unwrap_or_default().to_uppercase();
         if mechanism.is_empty() {
             return Err(SmtpError::SyntaxError("AUTH requires a mechanism".into()));
         }

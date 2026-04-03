@@ -50,7 +50,9 @@ pub struct AgentStatusResponse {
     ),
     tag = "System",
 )]
-pub async fn agent_status(State(config): State<Arc<RwLock<AgentConfig>>>) -> Json<AgentStatusResponse> {
+pub async fn agent_status(
+    State(config): State<Arc<RwLock<AgentConfig>>>,
+) -> Json<AgentStatusResponse> {
     let cfg = config.read().await;
     Json(AgentStatusResponse {
         agent_id: cfg.agent_id.clone(),

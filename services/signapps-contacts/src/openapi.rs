@@ -85,6 +85,5 @@ pub struct ContactsApiDoc;
 
 /// Returns a `SwaggerUi` router for the Contacts service.
 pub fn swagger_router() -> SwaggerUi {
-    SwaggerUi::new("/swagger-ui")
-        .url("/api-docs/openapi.json", ContactsApiDoc::openapi())
+    SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ContactsApiDoc::openapi())
 }

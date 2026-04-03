@@ -188,7 +188,10 @@ impl DavResponse {
     pub fn multistatus(xml_body: String) -> Self {
         Self {
             status: 207,
-            headers: vec![("Content-Type".to_string(), "application/xml; charset=utf-8".to_string())],
+            headers: vec![(
+                "Content-Type".to_string(),
+                "application/xml; charset=utf-8".to_string(),
+            )],
             body: xml_body,
         }
     }
@@ -278,7 +281,10 @@ mod tests {
     fn test_dav_response_multistatus() {
         let resp = DavResponse::multistatus("<ms/>".to_string());
         assert_eq!(resp.status, 207);
-        assert!(resp.headers.iter().any(|(k, v)| k == "Content-Type" && v.contains("xml")));
+        assert!(resp
+            .headers
+            .iter()
+            .any(|(k, v)| k == "Content-Type" && v.contains("xml")));
     }
 
     #[test]

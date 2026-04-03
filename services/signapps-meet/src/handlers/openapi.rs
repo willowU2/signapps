@@ -1,6 +1,9 @@
 //! OpenAPI documentation for the signapps-meet service.
 
-use utoipa::{openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme}, Modify, OpenApi};
+use utoipa::{
+    openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
+    Modify, OpenApi,
+};
 use utoipa_swagger_ui::SwaggerUi;
 
 struct SecurityAddon;
@@ -96,6 +99,5 @@ pub struct MeetApiDoc;
 
 /// Returns a router that serves Swagger UI and the OpenAPI JSON schema.
 pub fn swagger_router() -> SwaggerUi {
-    SwaggerUi::new("/swagger-ui")
-        .url("/api-docs/openapi.json", MeetApiDoc::openapi())
+    SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", MeetApiDoc::openapi())
 }

@@ -22,13 +22,13 @@ mod middleware;
 mod services;
 mod storage;
 
+use handlers::openapi::StorageApiDoc;
 use handlers::{
     acl, audit, backups, buckets, drive, external, favorites, files, health, mounts, permissions,
     preview, quotas, raid, search, shares, stats, storage_settings, trash, webdav,
 };
-use handlers::openapi::StorageApiDoc;
-use utoipa::OpenApi as _;
 use storage::StorageBackend;
+use utoipa::OpenApi as _;
 
 /// Application state shared across handlers.
 #[derive(Clone)]

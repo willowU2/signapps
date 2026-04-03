@@ -1,7 +1,9 @@
 //! Direct message handlers (IDEA-137, in-memory).
 
 use crate::state::{broadcast, AppState};
-use crate::types::{ChatMessage, CreateDmRequest, DirectMessageRoom, DmParticipant, SendMessageRequest};
+use crate::types::{
+    ChatMessage, CreateDmRequest, DirectMessageRoom, DmParticipant, SendMessageRequest,
+};
 use axum::{
     extract::{Extension, Path, State},
     http::StatusCode,

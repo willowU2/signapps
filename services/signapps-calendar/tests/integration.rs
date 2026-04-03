@@ -30,15 +30,13 @@ mod error_tests {
 
     #[test]
     fn invalid_input_maps_to_400() {
-        let resp =
-            CalendarError::InvalidInput("bad input".to_string()).into_response();
+        let resp = CalendarError::InvalidInput("bad input".to_string()).into_response();
         assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     }
 
     #[test]
     fn conflict_maps_to_409() {
-        let resp =
-            CalendarError::Conflict("already exists".to_string()).into_response();
+        let resp = CalendarError::Conflict("already exists".to_string()).into_response();
         assert_eq!(resp.status(), StatusCode::CONFLICT);
     }
 
@@ -93,9 +91,8 @@ mod error_tests {
 
     #[test]
     fn display_invalid_input_includes_message() {
-        let msg =
-            CalendarError::InvalidInput("end_time must be after start_time".to_string())
-                .to_string();
+        let msg = CalendarError::InvalidInput("end_time must be after start_time".to_string())
+            .to_string();
         assert!(msg.contains("end_time must be after start_time"));
     }
 
@@ -269,8 +266,7 @@ mod recurrence_tests {
         let start = Utc.with_ymd_and_hms(2020, 3, 15, 10, 0, 0).unwrap();
         let range_end = Utc.with_ymd_and_hms(2025, 12, 31, 23, 59, 59).unwrap();
 
-        let result =
-            expand_rrule("FREQ=YEARLY;COUNT=5", start, start, range_end, 10).unwrap();
+        let result = expand_rrule("FREQ=YEARLY;COUNT=5", start, start, range_end, 10).unwrap();
         assert_eq!(result.len(), 5);
         // Each occurrence should be in the same month/day, different year
         for (i, dt) in result.iter().enumerate() {
@@ -285,9 +281,14 @@ mod recurrence_tests {
         let start = Utc.with_ymd_and_hms(2020, 1, 1, 0, 0, 0).unwrap();
         let range_end = Utc.with_ymd_and_hms(2030, 12, 31, 23, 59, 59).unwrap();
 
-        let result =
-            expand_rrule("FREQ=YEARLY;INTERVAL=2;COUNT=3", start, start, range_end, 10)
-                .unwrap();
+        let result = expand_rrule(
+            "FREQ=YEARLY;INTERVAL=2;COUNT=3",
+            start,
+            start,
+            range_end,
+            10,
+        )
+        .unwrap();
         assert_eq!(result.len(), 3);
         assert_eq!(result[0].year(), 2020);
         assert_eq!(result[1].year(), 2022);
@@ -299,8 +300,7 @@ mod recurrence_tests {
         let start = Utc.with_ymd_and_hms(2025, 1, 1, 9, 0, 0).unwrap();
         let range_end = Utc.with_ymd_and_hms(2025, 1, 10, 23, 59, 59).unwrap();
 
-        let result =
-            expand_rrule("FREQ=DAILY;INTERVAL=2", start, start, range_end, 20).unwrap();
+        let result = expand_rrule("FREQ=DAILY;INTERVAL=2", start, start, range_end, 20).unwrap();
         // Jan 1, 3, 5, 7, 9 → 5 occurrences
         assert_eq!(result.len(), 5);
         assert_eq!(result[0].day(), 1);
@@ -315,8 +315,7 @@ mod recurrence_tests {
 
         // UNTIL = Jan 5 → only Jan 1, 2, 3, 4, 5
         let result =
-            expand_rrule("FREQ=DAILY;UNTIL=20250105", start, start, range_end, 100)
-                .unwrap();
+            expand_rrule("FREQ=DAILY;UNTIL=20250105", start, start, range_end, 100).unwrap();
         assert!(
             result.len() <= 5,
             "UNTIL=20250105 should cap at 5 occurrences, got {}",
@@ -381,8 +380,7 @@ mod recurrence_tests {
         let start = Utc.with_ymd_and_hms(2025, 5, 1, 8, 0, 0).unwrap();
         let range_end = Utc.with_ymd_and_hms(2025, 5, 10, 23, 59, 59).unwrap();
 
-        let result =
-            expand_rrule("FREQ=DAILY;COUNT=5", start, start, range_end, 10).unwrap();
+        let result = expand_rrule("FREQ=DAILY;COUNT=5", start, start, range_end, 10).unwrap();
         for window in result.windows(2) {
             assert!(
                 window[0] < window[1],
@@ -400,8 +398,7 @@ mod recurrence_tests {
         let range_start = Utc.with_ymd_and_hms(2025, 2, 1, 0, 0, 0).unwrap();
         let range_end = Utc.with_ymd_and_hms(2025, 1, 1, 0, 0, 0).unwrap();
 
-        let result =
-            expand_rrule("FREQ=DAILY", start, range_start, range_end, 100).unwrap();
+        let result = expand_rrule("FREQ=DAILY", start, range_start, range_end, 100).unwrap();
         assert!(
             result.is_empty(),
             "range_end before range_start should yield no results"
@@ -414,10 +411,12 @@ mod recurrence_tests {
         let start = Utc.with_ymd_and_hms(2025, 1, 31, 10, 0, 0).unwrap();
         let range_end = Utc.with_ymd_and_hms(2025, 6, 30, 23, 59, 59).unwrap();
 
-        let result =
-            expand_rrule("FREQ=MONTHLY;COUNT=5", start, start, range_end, 10).unwrap();
+        let result = expand_rrule("FREQ=MONTHLY;COUNT=5", start, start, range_end, 10).unwrap();
         // Should not panic; result length may vary based on month lengths
-        assert!(result.len() <= 5, "COUNT=5 should produce at most 5 instances");
+        assert!(
+            result.len() <= 5,
+            "COUNT=5 should produce at most 5 instances"
+        );
     }
 }
 
@@ -446,7 +445,12 @@ mod booking_tests {
         let event_id = Uuid::new_v4();
         let base = now_plus(0);
 
-        let booking = (event_id, "Prior".to_string(), base, base + Duration::hours(1));
+        let booking = (
+            event_id,
+            "Prior".to_string(),
+            base,
+            base + Duration::hours(1),
+        );
         // New event starts exactly when old one ends
         let conflicts = check_conflicts(
             resource,
@@ -498,12 +502,7 @@ mod booking_tests {
             base + Duration::hours(1),
             base + Duration::hours(2),
         );
-        let conflicts = check_conflicts(
-            resource,
-            base,
-            base + Duration::hours(3),
-            &[booking],
-        );
+        let conflicts = check_conflicts(resource, base, base + Duration::hours(3), &[booking]);
         assert_eq!(conflicts.len(), 1);
     }
 
@@ -516,7 +515,12 @@ mod booking_tests {
 
         let bookings = vec![
             (e1, "First".to_string(), base, base + Duration::hours(2)),
-            (e2, "Second".to_string(), base + Duration::hours(1), base + Duration::hours(3)),
+            (
+                e2,
+                "Second".to_string(),
+                base + Duration::hours(1),
+                base + Duration::hours(3),
+            ),
         ];
         // New booking overlaps both
         let conflicts = check_conflicts(
@@ -539,7 +543,13 @@ mod booking_tests {
 
         let resources = vec![(r1, "Room A".to_string()), (r2, "Room B".to_string())];
         // Only r1 has a booking
-        let all_bookings = vec![(r1, e1, "Meeting".to_string(), base, base + Duration::hours(1))];
+        let all_bookings = vec![(
+            r1,
+            e1,
+            "Meeting".to_string(),
+            base,
+            base + Duration::hours(1),
+        )];
 
         let conflicts = check_all_conflicts(
             &resources,
@@ -603,7 +613,7 @@ mod task_tree_tests {
         let b = Uuid::new_v4();
         let mut map = HashMap::new();
         map.insert(b, Some(a)); // B's parent is A
-        // Make A's parent B → cycle
+                                // Make A's parent B → cycle
         assert!(validate_parent_change(a, Some(b), &map).is_err());
     }
 
@@ -628,7 +638,7 @@ mod task_tree_tests {
         let mut map = HashMap::new();
         map.insert(a, None); // A is root
         map.insert(b, None); // B is root
-        // B -> A: fine (no cycle)
+                             // B -> A: fine (no cycle)
         assert!(validate_parent_change(b, Some(a), &map).is_ok());
     }
 

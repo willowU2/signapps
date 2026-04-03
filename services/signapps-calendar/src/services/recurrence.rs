@@ -226,13 +226,9 @@ mod tests {
 
     #[test]
     fn test_daily_expansion() {
-        let start = Utc
-            .with_ymd_and_hms(2025, 1, 1, 10, 0, 0)
-            .unwrap();
+        let start = Utc.with_ymd_and_hms(2025, 1, 1, 10, 0, 0).unwrap();
         let range_start = start;
-        let range_end = Utc
-            .with_ymd_and_hms(2025, 1, 5, 23, 59, 59)
-            .unwrap();
+        let range_end = Utc.with_ymd_and_hms(2025, 1, 5, 23, 59, 59).unwrap();
 
         let result = expand_rrule("FREQ=DAILY;COUNT=5", start, range_start, range_end, 100)
             .expect("rrule expansion should succeed");
@@ -241,12 +237,8 @@ mod tests {
 
     #[test]
     fn test_daily_recurrence_correct_dates() {
-        let start = Utc
-            .with_ymd_and_hms(2025, 3, 1, 9, 0, 0)
-            .unwrap();
-        let range_end = Utc
-            .with_ymd_and_hms(2025, 3, 4, 23, 59, 59)
-            .unwrap();
+        let start = Utc.with_ymd_and_hms(2025, 3, 1, 9, 0, 0).unwrap();
+        let range_end = Utc.with_ymd_and_hms(2025, 3, 4, 23, 59, 59).unwrap();
 
         let result = expand_rrule("FREQ=DAILY", start, start, range_end, 10)
             .expect("rrule expansion should succeed");
@@ -259,12 +251,8 @@ mod tests {
 
     #[test]
     fn test_weekly_with_byday() {
-        let start = Utc
-            .with_ymd_and_hms(2025, 1, 6, 9, 0, 0)
-            .unwrap(); // Monday
-        let range_end = Utc
-            .with_ymd_and_hms(2025, 1, 20, 23, 59, 59)
-            .unwrap();
+        let start = Utc.with_ymd_and_hms(2025, 1, 6, 9, 0, 0).unwrap(); // Monday
+        let range_end = Utc.with_ymd_and_hms(2025, 1, 20, 23, 59, 59).unwrap();
 
         let result = expand_rrule("FREQ=WEEKLY;BYDAY=MO,WE,FR", start, start, range_end, 100)
             .expect("rrule expansion should succeed");
@@ -274,12 +262,8 @@ mod tests {
     #[test]
     fn test_weekly_byday_only_returns_correct_weekdays() {
         // Start on Monday 2025-01-06; run for 2 weeks with only MO and FR
-        let start = Utc
-            .with_ymd_and_hms(2025, 1, 6, 10, 0, 0)
-            .unwrap(); // Monday
-        let range_end = Utc
-            .with_ymd_and_hms(2025, 1, 19, 23, 59, 59)
-            .unwrap();
+        let start = Utc.with_ymd_and_hms(2025, 1, 6, 10, 0, 0).unwrap(); // Monday
+        let range_end = Utc.with_ymd_and_hms(2025, 1, 19, 23, 59, 59).unwrap();
 
         let result = expand_rrule("FREQ=WEEKLY;BYDAY=MO,FR", start, start, range_end, 100)
             .expect("rrule expansion should succeed");
@@ -298,12 +282,8 @@ mod tests {
 
     #[test]
     fn test_monthly_recurrence_with_count_limit() {
-        let start = Utc
-            .with_ymd_and_hms(2025, 1, 15, 10, 0, 0)
-            .unwrap();
-        let range_end = Utc
-            .with_ymd_and_hms(2026, 12, 31, 23, 59, 59)
-            .unwrap();
+        let start = Utc.with_ymd_and_hms(2025, 1, 15, 10, 0, 0).unwrap();
+        let range_end = Utc.with_ymd_and_hms(2026, 12, 31, 23, 59, 59).unwrap();
 
         let result = expand_rrule("FREQ=MONTHLY;COUNT=4", start, start, range_end, 50)
             .expect("rrule expansion should succeed");
@@ -321,12 +301,8 @@ mod tests {
 
     #[test]
     fn test_monthly_recurrence_respects_max_count() {
-        let start = Utc
-            .with_ymd_and_hms(2025, 1, 1, 0, 0, 0)
-            .unwrap();
-        let range_end = Utc
-            .with_ymd_and_hms(2030, 1, 1, 0, 0, 0)
-            .unwrap();
+        let start = Utc.with_ymd_and_hms(2025, 1, 1, 0, 0, 0).unwrap();
+        let range_end = Utc.with_ymd_and_hms(2030, 1, 1, 0, 0, 0).unwrap();
 
         // max_count=3 should cap results
         let result = expand_rrule("FREQ=MONTHLY", start, start, range_end, 3)
@@ -337,15 +313,9 @@ mod tests {
     #[test]
     fn test_recurrence_exception_by_range_filtering() {
         // Range starts after first occurrence — first should be excluded
-        let start = Utc
-            .with_ymd_and_hms(2025, 1, 1, 10, 0, 0)
-            .unwrap();
-        let range_start = Utc
-            .with_ymd_and_hms(2025, 1, 3, 0, 0, 0)
-            .unwrap();
-        let range_end = Utc
-            .with_ymd_and_hms(2025, 1, 5, 23, 59, 59)
-            .unwrap();
+        let start = Utc.with_ymd_and_hms(2025, 1, 1, 10, 0, 0).unwrap();
+        let range_start = Utc.with_ymd_and_hms(2025, 1, 3, 0, 0, 0).unwrap();
+        let range_end = Utc.with_ymd_and_hms(2025, 1, 5, 23, 59, 59).unwrap();
 
         let result = expand_rrule("FREQ=DAILY", start, range_start, range_end, 100)
             .expect("rrule expansion should succeed");

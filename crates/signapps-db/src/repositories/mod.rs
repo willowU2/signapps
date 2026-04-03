@@ -122,6 +122,8 @@ pub use vault_repository::{
 };
 
 pub mod mailserver_repo;
-pub use mailserver_repo::{AccountRepository, DomainRepository, MailboxRepository, MessageRepository};
+pub use mailserver_repo::{
+    AccountRepository, DomainRepository, MailboxRepository, MessageRepository,
+};
 
 pub mod test_helpers;

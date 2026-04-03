@@ -175,7 +175,9 @@ fn test_jwt_workspace_ids_roundtrip() {
     .expect("encode must succeed");
 
     let decoded = decode_jwt(&token).expect("must decode");
-    let ids = decoded.workspace_ids.expect("workspace_ids must be present");
+    let ids = decoded
+        .workspace_ids
+        .expect("workspace_ids must be present");
     assert!(ids.contains(&ws1), "ws1 must be in decoded workspace_ids");
     assert!(ids.contains(&ws2), "ws2 must be in decoded workspace_ids");
 }
@@ -214,7 +216,10 @@ fn test_rbac_role_3_is_super_admin() {
 /// Role 2 is NOT super-admin.
 #[test]
 fn test_rbac_role_2_not_super_admin() {
-    assert!(!is_super_admin(2), "role 2 must not have super-admin access");
+    assert!(
+        !is_super_admin(2),
+        "role 2 must not have super-admin access"
+    );
 }
 
 // ─── Token type validation ───────────────────────────────────────────────────

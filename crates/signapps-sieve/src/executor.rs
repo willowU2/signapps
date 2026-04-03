@@ -95,38 +95,38 @@ pub fn execute(script: &SieveScript, ctx: &SieveContext) -> Vec<SieveAction> {
                         SieveAction::Stop => {
                             stopped = true;
                             break;
-                        }
+                        },
                         SieveAction::Keep => {
                             has_explicit_action = true;
                             actions.push(SieveAction::Keep);
-                        }
+                        },
                         SieveAction::Discard => {
                             has_explicit_action = true;
                             actions.push(SieveAction::Discard);
-                        }
+                        },
                         _ => {
                             has_explicit_action = true;
                             actions.push(action.clone());
-                        }
+                        },
                     }
                 }
-            }
+            },
             SieveRule::Action(action) => match action {
                 SieveAction::Stop => {
                     stopped = true;
-                }
+                },
                 SieveAction::Keep => {
                     has_explicit_action = true;
                     actions.push(SieveAction::Keep);
-                }
+                },
                 SieveAction::Discard => {
                     has_explicit_action = true;
                     actions.push(SieveAction::Discard);
-                }
+                },
                 _ => {
                     has_explicit_action = true;
                     actions.push(action.clone());
-                }
+                },
             },
         }
     }
@@ -149,14 +149,12 @@ fn evaluate_condition(condition: &SieveCondition, ctx: &SieveContext) -> bool {
         } => {
             let header_lower = header.to_lowercase();
             for (name, val) in &ctx.headers {
-                if name.to_lowercase() == header_lower
-                    && compare_string(comparator, val, value)
-                {
+                if name.to_lowercase() == header_lower && compare_string(comparator, val, value) {
                     return true;
                 }
             }
             false
-        }
+        },
         SieveCondition::Address {
             comparator,
             part,
@@ -166,7 +164,7 @@ fn evaluate_condition(condition: &SieveCondition, ctx: &SieveContext) -> bool {
                 "from" => &ctx.from,
                 "to" => {
                     return ctx.to.iter().any(|a| compare_string(comparator, a, value));
-                }
+                },
                 _ => {
                     // Check headers for the address part
                     let part_lower = part.to_lowercase();
@@ -178,29 +176,25 @@ fn evaluate_condition(condition: &SieveCondition, ctx: &SieveContext) -> bool {
                         }
                     }
                     return false;
-                }
+                },
             };
             compare_string(comparator, addr, value)
-        }
+        },
         SieveCondition::Size { over, size } => {
             if *over {
                 ctx.size > *size
             } else {
                 ctx.size < *size
             }
-        }
+        },
         SieveCondition::Exists(header) => {
             let header_lower = header.to_lowercase();
             ctx.headers
                 .iter()
                 .any(|(name, _)| name.to_lowercase() == header_lower)
-        }
-        SieveCondition::AllOf(conditions) => {
-            conditions.iter().all(|c| evaluate_condition(c, ctx))
-        }
-        SieveCondition::AnyOf(conditions) => {
-            conditions.iter().any(|c| evaluate_condition(c, ctx))
-        }
+        },
+        SieveCondition::AllOf(conditions) => conditions.iter().all(|c| evaluate_condition(c, ctx)),
+        SieveCondition::AnyOf(conditions) => conditions.iter().any(|c| evaluate_condition(c, ctx)),
         SieveCondition::Not(inner) => !evaluate_condition(inner, ctx),
         SieveCondition::True => true,
     }
@@ -210,11 +204,7 @@ fn evaluate_condition(condition: &SieveCondition, ctx: &SieveContext) -> bool {
 fn compare_string(comparator: &Comparator, haystack: &str, needle: &str) -> bool {
     match comparator {
         Comparator::Is => haystack.eq_ignore_ascii_case(needle),
-        Comparator::Contains => {
-            haystack
-                .to_lowercase()
-                .contains(&needle.to_lowercase())
-        }
+        Comparator::Contains => haystack.to_lowercase().contains(&needle.to_lowercase()),
         Comparator::Matches => glob_match(&haystack.to_lowercase(), &needle.to_lowercase()),
     }
 }
@@ -285,7 +275,9 @@ mod tests {
 
         let ctx = make_ctx("boss@example.com", "This is urgent!", 1024);
         let actions = execute(&script, &ctx);
-        assert!(actions.iter().any(|a| matches!(a, SieveAction::FileInto(f) if f == "Important")));
+        assert!(actions
+            .iter()
+            .any(|a| matches!(a, SieveAction::FileInto(f) if f == "Important")));
     }
 
     #[test]
@@ -379,7 +371,9 @@ mod tests {
         // Both conditions match
         let ctx = make_ctx("bot@example.com", "Weekly report", 1024);
         let actions = execute(&script, &ctx);
-        assert!(actions.iter().any(|a| matches!(a, SieveAction::FileInto(f) if f == "Reports")));
+        assert!(actions
+            .iter()
+            .any(|a| matches!(a, SieveAction::FileInto(f) if f == "Reports")));
 
         // Only one condition matches
         let ctx2 = make_ctx("human@example.com", "Weekly report", 1024);
@@ -401,7 +395,9 @@ mod tests {
 
         let ctx = make_ctx("monitor@example.com", "System alert!", 256);
         let actions = execute(&script, &ctx);
-        assert!(actions.iter().any(|a| matches!(a, SieveAction::FileInto(f) if f == "Alerts")));
+        assert!(actions
+            .iter()
+            .any(|a| matches!(a, SieveAction::FileInto(f) if f == "Alerts")));
     }
 
     #[test]
@@ -418,11 +414,9 @@ mod tests {
 
         let ctx = make_ctx("a@b.com", "Casual chat", 256);
         let actions = execute(&script, &ctx);
-        assert!(
-            actions
-                .iter()
-                .any(|a| matches!(a, SieveAction::FileInto(f) if f == "Low Priority"))
-        );
+        assert!(actions
+            .iter()
+            .any(|a| matches!(a, SieveAction::FileInto(f) if f == "Low Priority")));
     }
 
     #[test]
@@ -439,8 +433,12 @@ mod tests {
 
         let ctx = make_ctx("a@b.com", "Test", 256);
         let actions = execute(&script, &ctx);
-        assert!(actions.iter().any(|a| matches!(a, SieveAction::FileInto(f) if f == "First")));
-        assert!(!actions.iter().any(|a| matches!(a, SieveAction::FileInto(f) if f == "Second")));
+        assert!(actions
+            .iter()
+            .any(|a| matches!(a, SieveAction::FileInto(f) if f == "First")));
+        assert!(!actions
+            .iter()
+            .any(|a| matches!(a, SieveAction::FileInto(f) if f == "Second")));
     }
 
     #[test]
@@ -465,7 +463,9 @@ mod tests {
         ctx2.headers
             .push(("X-Custom-Header".to_string(), "value".to_string()));
         let actions2 = execute(&script, &ctx2);
-        assert!(actions2.iter().any(|a| matches!(a, SieveAction::FileInto(f) if f == "Custom")));
+        assert!(actions2
+            .iter()
+            .any(|a| matches!(a, SieveAction::FileInto(f) if f == "Custom")));
     }
 
     #[test]
@@ -484,8 +484,8 @@ mod tests {
         let script = SieveScript::compile(r#"redirect "admin@example.com";"#).unwrap();
         let ctx = make_ctx("a@b.com", "Forward me", 256);
         let actions = execute(&script, &ctx);
-        assert!(actions.iter().any(
-            |a| matches!(a, SieveAction::Redirect(addr) if addr == "admin@example.com")
-        ));
+        assert!(actions
+            .iter()
+            .any(|a| matches!(a, SieveAction::Redirect(addr) if addr == "admin@example.com")));
     }
 }

@@ -137,12 +137,12 @@ impl ICalEvent {
                     "STATUS" => status = Some(value.to_string()),
                     "CATEGORIES" => {
                         categories.extend(value.split(',').map(|s| s.trim().to_string()));
-                    }
+                    },
                     "PRIORITY" => priority = value.parse::<u8>().ok(),
                     "SEQUENCE" => sequence = value.parse::<u32>().unwrap_or(0),
                     "CREATED" => created = Some(value.to_string()),
                     "LAST-MODIFIED" => last_modified = Some(value.to_string()),
-                    _ => {} // Ignore unknown properties
+                    _ => {}, // Ignore unknown properties
                 }
             }
         }
@@ -472,7 +472,8 @@ mod tests {
 
     #[test]
     fn test_unfold_lines() {
-        let data = "DESCRIPTION:This is a long\r\n description that spans\r\n multiple lines\r\nUID:test";
+        let data =
+            "DESCRIPTION:This is a long\r\n description that spans\r\n multiple lines\r\nUID:test";
         let lines = unfold_lines(data);
         assert_eq!(lines.len(), 2);
         assert!(lines[0].contains("This is a long"));

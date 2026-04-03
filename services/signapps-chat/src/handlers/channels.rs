@@ -35,10 +35,7 @@ pub async fn list_channels(State(state): State<AppState>) -> impl IntoResponse {
 }
 
 /// Get a single channel by ID.
-pub async fn get_channel(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> impl IntoResponse {
+pub async fn get_channel(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     match sqlx::query_as::<_, Channel>(
         "SELECT id, name, topic, is_private, created_by, created_at, updated_at \
          FROM chat.channels WHERE id = $1",

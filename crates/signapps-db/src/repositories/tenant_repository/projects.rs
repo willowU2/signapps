@@ -1,8 +1,6 @@
 //! ProjectRepository — project and project member operations.
 
-use crate::models::{
-    CreateProject, Project, ProjectMember, ProjectWithStats, UpdateProject,
-};
+use crate::models::{CreateProject, Project, ProjectMember, ProjectWithStats, UpdateProject};
 use signapps_common::{Error, Result};
 use sqlx::PgPool;
 use uuid::Uuid;

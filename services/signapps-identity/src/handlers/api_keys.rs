@@ -320,7 +320,10 @@ mod tests {
     #[test]
     fn test_generate_api_key_has_prefix() {
         let key = generate_api_key();
-        assert!(key.starts_with("signapps_sk_"), "key must start with 'signapps_sk_': {key}");
+        assert!(
+            key.starts_with("signapps_sk_"),
+            "key must start with 'signapps_sk_': {key}"
+        );
     }
 
     /// Generated key is the expected total length (8 prefix chars + 64 hex chars = 72).
@@ -375,8 +378,12 @@ mod tests {
     /// Different keys produce different hashes.
     #[test]
     fn test_hash_key_different_inputs_differ() {
-        let h1 = hash_key("signapps_sk_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-        let h2 = hash_key("signapps_sk_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+        let h1 = hash_key(
+            "signapps_sk_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        );
+        let h2 = hash_key(
+            "signapps_sk_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        );
         assert_ne!(h1, h2, "different keys must hash differently");
     }
 

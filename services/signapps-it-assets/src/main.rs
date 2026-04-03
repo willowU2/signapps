@@ -49,10 +49,10 @@ async fn main() -> anyhow::Result<()> {
         ]);
 
     let app = Router::new()
-        .merge(
-            SwaggerUi::new("/swagger-ui")
-                .url("/api-docs/openapi.json", handlers::openapi::ItAssetsApiDoc::openapi()),
-        )
+        .merge(SwaggerUi::new("/swagger-ui").url(
+            "/api-docs/openapi.json",
+            handlers::openapi::ItAssetsApiDoc::openapi(),
+        ))
         .merge(routes::public_routes().with_state(state.pool.clone()))
         .nest("/api/v1/it-assets", routes::api_routes(state))
         .layer(cors)

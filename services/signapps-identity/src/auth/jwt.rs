@@ -113,8 +113,8 @@ mod tests {
     /// `create_tokens` produces a token pair where the access token expires in 900s.
     #[test]
     fn test_create_tokens_access_expires_in_900() {
-        let pair =
-            create_tokens(test_user_id(), "alice", 1, None, None, TEST_SECRET).expect("should succeed");
+        let pair = create_tokens(test_user_id(), "alice", 1, None, None, TEST_SECRET)
+            .expect("should succeed");
         assert_eq!(pair.expires_in, 900, "access token TTL must be 900 seconds");
     }
 
@@ -122,15 +122,8 @@ mod tests {
     #[test]
     fn test_create_tokens_access_claims_roundtrip() {
         let tenant_id = Uuid::new_v4();
-        let pair = create_tokens(
-            test_user_id(),
-            "bob",
-            2,
-            Some(tenant_id),
-            None,
-            TEST_SECRET,
-        )
-        .expect("should succeed");
+        let pair = create_tokens(test_user_id(), "bob", 2, Some(tenant_id), None, TEST_SECRET)
+            .expect("should succeed");
 
         let claims = verify_token(&pair.access_token, TEST_SECRET).expect("should decode");
         assert_eq!(claims.sub, test_user_id());
@@ -143,8 +136,8 @@ mod tests {
     /// The refresh token carries `token_type = "refresh"`.
     #[test]
     fn test_create_tokens_refresh_type() {
-        let pair =
-            create_tokens(test_user_id(), "carol", 1, None, None, TEST_SECRET).expect("should succeed");
+        let pair = create_tokens(test_user_id(), "carol", 1, None, None, TEST_SECRET)
+            .expect("should succeed");
         let claims = verify_token(&pair.refresh_token, TEST_SECRET).expect("should decode");
         assert_eq!(claims.token_type, "refresh");
     }
@@ -152,8 +145,8 @@ mod tests {
     /// `verify_token` with the wrong secret returns an error.
     #[test]
     fn test_verify_token_wrong_secret_fails() {
-        let pair =
-            create_tokens(test_user_id(), "dave", 1, None, None, TEST_SECRET).expect("should succeed");
+        let pair = create_tokens(test_user_id(), "dave", 1, None, None, TEST_SECRET)
+            .expect("should succeed");
         let result = verify_token(&pair.access_token, "completely-wrong-secret-value");
         assert!(result.is_err(), "wrong secret must be rejected");
     }
@@ -181,8 +174,8 @@ mod tests {
     /// Access and refresh tokens differ from each other.
     #[test]
     fn test_create_tokens_access_and_refresh_are_different() {
-        let pair =
-            create_tokens(test_user_id(), "frank", 1, None, None, TEST_SECRET).expect("should succeed");
+        let pair = create_tokens(test_user_id(), "frank", 1, None, None, TEST_SECRET)
+            .expect("should succeed");
         assert_ne!(
             pair.access_token, pair.refresh_token,
             "access and refresh tokens must be distinct"

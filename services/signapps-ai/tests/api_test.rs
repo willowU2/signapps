@@ -101,7 +101,10 @@ fn test_models_list_response_shape() {
     let model = &models[0];
     assert!(model.get("id").is_some(), "model must have 'id'");
     assert!(model.get("name").is_some(), "model must have 'name'");
-    assert!(model.get("provider").is_some(), "model must have 'provider'");
+    assert!(
+        model.get("provider").is_some(),
+        "model must have 'provider'"
+    );
     assert!(
         model.get("capabilities").is_some(),
         "model must have 'capabilities'"
@@ -377,7 +380,10 @@ fn test_collection_list_response_shape() {
 
     let collections = mock_response.as_array().expect("response must be an array");
     let collection = &collections[0];
-    assert!(collection.get("name").is_some(), "collection must have 'name'");
+    assert!(
+        collection.get("name").is_some(),
+        "collection must have 'name'"
+    );
     assert!(
         collection.get("document_count").is_some(),
         "collection must have 'document_count'"

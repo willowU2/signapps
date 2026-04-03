@@ -115,7 +115,8 @@ pub fn parse_propfind(body: &str) -> DavResult<PropfindRequest> {
 
     loop {
         match reader.read_event_into(&mut buf) {
-            Ok(quick_xml::events::Event::Start(ref e)) | Ok(quick_xml::events::Event::Empty(ref e)) => {
+            Ok(quick_xml::events::Event::Start(ref e))
+            | Ok(quick_xml::events::Event::Empty(ref e)) => {
                 let local = String::from_utf8_lossy(e.local_name().as_ref()).to_string();
                 // Extract namespace from tag prefix or attributes
                 let ns = extract_namespace(e, &current_ns);
@@ -126,25 +127,25 @@ pub fn parse_propfind(body: &str) -> DavResult<PropfindRequest> {
                     "prop" => {
                         inside_prop = true;
                         current_ns = ns;
-                    }
+                    },
                     _ if inside_prop => {
                         props.push(PropName {
                             namespace: ns,
                             local_name: local,
                         });
-                    }
-                    _ => {}
+                    },
+                    _ => {},
                 }
-            }
+            },
             Ok(quick_xml::events::Event::End(ref e)) => {
                 let local = String::from_utf8_lossy(e.local_name().as_ref()).to_string();
                 if local == "prop" {
                     inside_prop = false;
                 }
-            }
+            },
             Ok(quick_xml::events::Event::Eof) => break,
             Err(e) => return Err(DavError::Xml(format!("XML parse error: {e}"))),
-            _ => {}
+            _ => {},
         }
         buf.clear();
     }
@@ -194,7 +195,8 @@ pub fn parse_report(body: &str) -> DavResult<ReportRequest> {
 
     loop {
         match reader.read_event_into(&mut buf) {
-            Ok(quick_xml::events::Event::Start(ref e)) | Ok(quick_xml::events::Event::Empty(ref e)) => {
+            Ok(quick_xml::events::Event::Start(ref e))
+            | Ok(quick_xml::events::Event::Empty(ref e)) => {
                 let local = String::from_utf8_lossy(e.local_name().as_ref()).to_string();
 
                 if root_element.is_none() {
@@ -210,7 +212,7 @@ pub fn parse_report(body: &str) -> DavResult<ReportRequest> {
                                 hrefs.push(href);
                             }
                         }
-                    }
+                    },
                     "time-range" => {
                         let mut start = None;
                         let mut end = None;
@@ -220,17 +222,17 @@ pub fn parse_report(body: &str) -> DavResult<ReportRequest> {
                             match key.as_str() {
                                 "start" => start = Some(val),
                                 "end" => end = Some(val),
-                                _ => {}
+                                _ => {},
                             }
                         }
                         time_range = Some(TimeRangeFilter { start, end });
-                    }
-                    _ => {}
+                    },
+                    _ => {},
                 }
-            }
+            },
             Ok(quick_xml::events::Event::Eof) => break,
             Err(e) => return Err(DavError::Xml(format!("XML parse error: {e}"))),
-            _ => {}
+            _ => {},
         }
         buf.clear();
     }
@@ -240,8 +242,12 @@ pub fn parse_report(body: &str) -> DavResult<ReportRequest> {
         Some("calendar-multiget") => Ok(ReportRequest::CalendarMultiget { hrefs }),
         Some("addressbook-query") => Ok(ReportRequest::AddressbookQuery),
         Some("addressbook-multiget") => Ok(ReportRequest::AddressbookMultiget { hrefs }),
-        Some(other) => Err(DavError::Unsupported(format!("Unknown report type: {other}"))),
-        None => Err(DavError::InvalidRequest("No root element in REPORT body".to_string())),
+        Some(other) => Err(DavError::Unsupported(format!(
+            "Unknown report type: {other}"
+        ))),
+        None => Err(DavError::InvalidRequest(
+            "No root element in REPORT body".to_string(),
+        )),
     }
 }
 
@@ -311,10 +317,7 @@ pub fn build_multistatus(responses: &[MultistatusResponse]) -> String {
 /// # Panics
 ///
 /// None.
-pub fn build_resource_response(
-    href: &str,
-    props: Vec<(String, String)>,
-) -> MultistatusResponse {
+pub fn build_resource_response(href: &str, props: Vec<(String, String)>) -> MultistatusResponse {
     MultistatusResponse {
         href: href.to_string(),
         found_props: props,
@@ -339,10 +342,7 @@ pub fn xml_escape(s: &str) -> String {
 }
 
 /// Extract namespace from an XML event tag.
-fn extract_namespace(
-    event: &quick_xml::events::BytesStart<'_>,
-    default_ns: &str,
-) -> String {
+fn extract_namespace(event: &quick_xml::events::BytesStart<'_>, default_ns: &str) -> String {
     for attr in event.attributes().flatten() {
         let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
         if key == "xmlns" {
@@ -401,7 +401,7 @@ mod tests {
             ReportRequest::CalendarMultiget { hrefs } => {
                 assert_eq!(hrefs.len(), 2);
                 assert!(hrefs[0].contains("event1"));
-            }
+            },
             _ => panic!("Expected CalendarMultiget"),
         }
     }
@@ -425,7 +425,7 @@ mod tests {
                 let tr = time_range.unwrap();
                 assert_eq!(tr.start, Some("20260101T000000Z".to_string()));
                 assert_eq!(tr.end, Some("20260201T000000Z".to_string()));
-            }
+            },
             _ => panic!("Expected CalendarQuery"),
         }
     }
@@ -446,6 +446,9 @@ mod tests {
 
     #[test]
     fn test_xml_escape() {
-        assert_eq!(xml_escape("a<b>c&d\"e'f"), "a&lt;b&gt;c&amp;d&quot;e&apos;f");
+        assert_eq!(
+            xml_escape("a<b>c&d\"e'f"),
+            "a&lt;b&gt;c&amp;d&quot;e&apos;f"
+        );
     }
 }

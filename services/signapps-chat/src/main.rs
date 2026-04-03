@@ -4,7 +4,11 @@
 //! Channels and messages are persisted in PostgreSQL (chat schema).
 //! DMs, presence, and read-status remain in-memory (no user-facing persistence yet).
 
-use axum::{middleware, routing::{delete, get, patch, post}, Router};
+use axum::{
+    middleware,
+    routing::{delete, get, patch, post},
+    Router,
+};
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::auth_middleware;
 use signapps_common::pg_events::PgEventBus;

@@ -166,16 +166,13 @@ pub fn decode_xoauth2(base64_response: &str) -> Result<(String, String), SmtpErr
             user = Some(u.to_string());
         } else if let Some(auth) = part.strip_prefix("auth=") {
             // Strip "Bearer " prefix if present
-            let t = auth
-                .strip_prefix("Bearer ")
-                .unwrap_or(auth);
+            let t = auth.strip_prefix("Bearer ").unwrap_or(auth);
             token = Some(t.to_string());
         }
     }
 
     let user = user.ok_or_else(|| SmtpError::SyntaxError("missing user= in XOAUTH2".into()))?;
-    let token =
-        token.ok_or_else(|| SmtpError::SyntaxError("missing auth= in XOAUTH2".into()))?;
+    let token = token.ok_or_else(|| SmtpError::SyntaxError("missing auth= in XOAUTH2".into()))?;
 
     Ok((user, token))
 }
@@ -254,10 +251,8 @@ pub fn decode_login_step(state: &LoginState, response: &str) -> Result<LoginNext
                 password_challenge,
                 LoginState::WaitingPassword(decoded),
             ))
-        }
-        LoginState::WaitingPassword(username) => {
-            Ok(LoginNext::Done(username.clone(), decoded))
-        }
+        },
+        LoginState::WaitingPassword(username) => Ok(LoginNext::Done(username.clone(), decoded)),
     }
 }
 
@@ -331,10 +326,10 @@ mod tests {
                     LoginNext::Done(user, pass) => {
                         assert_eq!(user, "alice");
                         assert_eq!(pass, "secret123");
-                    }
+                    },
                     _ => panic!("expected LoginNext::Done"),
                 }
-            }
+            },
             _ => panic!("expected LoginNext::Challenge"),
         }
     }

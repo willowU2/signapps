@@ -19,6 +19,7 @@ pub mod generated_media;
 pub mod group;
 pub mod job;
 pub mod ldap;
+pub mod mailserver;
 pub mod multimodal_vector;
 pub mod notification;
 pub mod raid;
@@ -32,7 +33,6 @@ pub mod tenant;
 pub mod user;
 pub mod user_preferences;
 pub mod vault;
-pub mod mailserver;
 
 pub use audit_log::*;
 pub use backup::*;

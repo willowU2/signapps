@@ -68,9 +68,7 @@ struct AnthropicUsage {
     output_tokens: i32,
 }
 
-fn build_anthropic_messages(
-    messages: &[ChatMessage],
-) -> (Vec<AnthropicMessage>, Option<String>) {
+fn build_anthropic_messages(messages: &[ChatMessage]) -> (Vec<AnthropicMessage>, Option<String>) {
     let mut system_message = None;
     let anthropic_messages = messages
         .iter()
@@ -238,11 +236,8 @@ impl LlmProvider for AnthropicProvider {
                         for line in text.lines() {
                             if let Some(data) = line.strip_prefix("data: ") {
                                 // Anthropic SSE: content_block_delta events contain text
-                                if let Ok(event) =
-                                    serde_json::from_str::<serde_json::Value>(data)
-                                {
-                                    let event_type =
-                                        event.get("type").and_then(|t| t.as_str());
+                                if let Ok(event) = serde_json::from_str::<serde_json::Value>(data) {
+                                    let event_type = event.get("type").and_then(|t| t.as_str());
                                     match event_type {
                                         Some("content_block_delta") => {
                                             if let Some(delta_text) = event

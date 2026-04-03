@@ -117,7 +117,9 @@ fn hardware_routes(state: AppState) -> Router {
         .route("/hardware", get(list_hardware).post(create_hardware))
         .route(
             "/hardware/:id",
-            get(get_hardware).put(update_hardware).delete(delete_hardware),
+            get(get_hardware)
+                .put(update_hardware)
+                .delete(delete_hardware),
         )
         .with_state(state)
 }
@@ -135,7 +137,10 @@ fn agent_routes(state: AppState) -> Router {
             "/agent/:agent_id/scripts",
             get(get_pending_scripts).post(queue_script),
         )
-        .route("/agent/:agent_id/scripts/result", post(report_script_result))
+        .route(
+            "/agent/:agent_id/scripts/result",
+            post(report_script_result),
+        )
         .route("/enrollment/token", post(create_enrollment_token))
         .route("/agent/download/:platform", get(download_agent))
         .route("/agent/:agent_id/services", post(report_services))
@@ -226,7 +231,10 @@ fn package_routes(state: AppState) -> Router {
 fn monitoring_routes(state: AppState) -> Router {
     Router::new()
         .route("/hardware/:id/metrics", get(get_metrics))
-        .route("/alert-rules", get(list_alert_rules).post(create_alert_rule))
+        .route(
+            "/alert-rules",
+            get(list_alert_rules).post(create_alert_rule),
+        )
         .route("/alert-rules/:id", delete(delete_alert_rule))
         .route("/alerts", get(list_alerts))
         .route("/alerts/:id/resolve", post(resolve_alert))
@@ -286,7 +294,10 @@ fn hardware_detail_routes(state: AppState) -> Router {
         .route("/hardware/:id/commands", get(list_hardware_commands))
         .route("/hardware/:id/files", get(list_hardware_files))
         .route("/hardware/:hw_id/services", get(list_hardware_services))
-        .route("/hardware/:id/security/antivirus", get(get_antivirus_status))
+        .route(
+            "/hardware/:id/security/antivirus",
+            get(get_antivirus_status),
+        )
         .route(
             "/hardware/:id/security/encryption",
             get(get_encryption_status),
@@ -403,7 +414,10 @@ fn group_routes(state: AppState) -> Router {
 #[inline(never)]
 fn custom_field_routes(state: AppState) -> Router {
     Router::new()
-        .route("/custom-fields", get(list_field_defs).post(create_field_def))
+        .route(
+            "/custom-fields",
+            get(list_field_defs).post(create_field_def),
+        )
         .route(
             "/custom-fields/:id",
             put(update_field_def).delete(delete_field_def),
@@ -483,7 +497,9 @@ fn playbook_routes(state: AppState) -> Router {
         .route("/playbooks", get(list_playbooks).post(create_playbook))
         .route(
             "/playbooks/:id",
-            get(get_playbook).put(update_playbook).delete(delete_playbook),
+            get(get_playbook)
+                .put(update_playbook)
+                .delete(delete_playbook),
         )
         .route("/playbooks/:id/run", post(run_playbook))
         .route("/playbooks/:id/runs", get(list_playbook_runs))

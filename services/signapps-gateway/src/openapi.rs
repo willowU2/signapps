@@ -65,6 +65,5 @@ pub struct GatewayApiDoc;
 
 /// Returns a `SwaggerUi` router for the Gateway service.
 pub fn swagger_router() -> SwaggerUi {
-    SwaggerUi::new("/swagger-ui")
-        .url("/api-docs/openapi.json", GatewayApiDoc::openapi())
+    SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", GatewayApiDoc::openapi())
 }

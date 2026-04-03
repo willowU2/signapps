@@ -43,61 +43,61 @@ pub fn parse(source: &str) -> Result<SieveScript, SieveError> {
                 let exts = parse_string_list(&tokens, &mut pos)?;
                 requires.extend(exts);
                 expect_semicolon(&tokens, &mut pos)?;
-            }
+            },
             "if" => {
                 pos += 1;
                 let rule = parse_if_block(&tokens, &mut pos)?;
                 rules.push(rule);
-            }
+            },
             "keep" => {
                 pos += 1;
                 expect_semicolon(&tokens, &mut pos)?;
                 rules.push(SieveRule::Action(SieveAction::Keep));
-            }
+            },
             "discard" => {
                 pos += 1;
                 expect_semicolon(&tokens, &mut pos)?;
                 rules.push(SieveRule::Action(SieveAction::Discard));
-            }
+            },
             "stop" => {
                 pos += 1;
                 expect_semicolon(&tokens, &mut pos)?;
                 rules.push(SieveRule::Action(SieveAction::Stop));
-            }
+            },
             "fileinto" => {
                 pos += 1;
                 let folder = parse_string(&tokens, &mut pos)?;
                 expect_semicolon(&tokens, &mut pos)?;
                 rules.push(SieveRule::Action(SieveAction::FileInto(folder)));
-            }
+            },
             "redirect" => {
                 pos += 1;
                 let addr = parse_string(&tokens, &mut pos)?;
                 expect_semicolon(&tokens, &mut pos)?;
                 rules.push(SieveRule::Action(SieveAction::Redirect(addr)));
-            }
+            },
             "reject" | "ereject" => {
                 pos += 1;
                 let reason = parse_string(&tokens, &mut pos)?;
                 expect_semicolon(&tokens, &mut pos)?;
                 rules.push(SieveRule::Action(SieveAction::Reject(reason)));
-            }
+            },
             "vacation" => {
                 pos += 1;
                 let action = parse_vacation(&tokens, &mut pos)?;
                 rules.push(SieveRule::Action(action));
-            }
+            },
             "#" => {
                 // Skip comment lines
                 pos += 1;
                 while pos < tokens.len() && tokens[pos].value != "\n" {
                     pos += 1;
                 }
-            }
+            },
             _ => {
                 // Skip unknown tokens (comments, whitespace artifacts)
                 pos += 1;
-            }
+            },
         }
     }
 
@@ -133,10 +133,10 @@ fn tokenize(source: &str) -> Vec<Token> {
             '\n' => {
                 line += 1;
                 chars.next();
-            }
+            },
             ' ' | '\t' | '\r' => {
                 chars.next();
-            }
+            },
             '#' => {
                 // Line comment: skip to end of line
                 while let Some(&(_, c)) = chars.peek() {
@@ -145,7 +145,7 @@ fn tokenize(source: &str) -> Vec<Token> {
                     }
                     chars.next();
                 }
-            }
+            },
             '/' if chars.clone().nth(1).map(|(_, c)| c) == Some('*') => {
                 // Block comment: /* ... */
                 chars.next();
@@ -156,13 +156,13 @@ fn tokenize(source: &str) -> Vec<Token> {
                         Some((_, '*')) if chars.peek().map(|(_, c)| *c) == Some('/') => {
                             chars.next();
                             depth -= 1;
-                        }
+                        },
                         Some((_, '\n')) => line += 1,
                         None => break,
-                        _ => {}
+                        _ => {},
                     }
                 }
-            }
+            },
             '"' => {
                 // Quoted string
                 chars.next(); // consume opening quote
@@ -187,14 +187,14 @@ fn tokenize(source: &str) -> Vec<Token> {
                     value: format!("\"{}\"", s),
                     line,
                 });
-            }
+            },
             '{' | '}' | '(' | ')' | ';' | ',' => {
                 tokens.push(Token {
                     value: ch.to_string(),
                     line,
                 });
                 chars.next();
-            }
+            },
             ':' => {
                 // Tagged argument like :contains, :is, :matches, :over, :under
                 chars.next();
@@ -208,7 +208,7 @@ fn tokenize(source: &str) -> Vec<Token> {
                     }
                 }
                 tokens.push(Token { value: tag, line });
-            }
+            },
             _ if ch.is_alphanumeric() || ch == '_' => {
                 // Identifier or number
                 let mut word = String::new();
@@ -222,7 +222,7 @@ fn tokenize(source: &str) -> Vec<Token> {
                 }
                 // Check for size suffix (K, M, G)
                 tokens.push(Token { value: word, line });
-            }
+            },
             '[' => {
                 // String list [...] — tokenize the bracket
                 tokens.push(Token {
@@ -230,17 +230,17 @@ fn tokenize(source: &str) -> Vec<Token> {
                     line,
                 });
                 chars.next();
-            }
+            },
             ']' => {
                 tokens.push(Token {
                     value: "]".to_string(),
                     line,
                 });
                 chars.next();
-            }
+            },
             _ => {
                 chars.next();
-            }
+            },
         }
     }
 
@@ -344,17 +344,17 @@ fn parse_if_block(tokens: &[Token], pos: &mut usize) -> Result<SieveRule, SieveE
                             actions,
                             else_actions: resolve_elsif(c2, a2, ea2),
                         });
-                    }
+                    },
                     SieveRule::Action(a) => {
                         else_actions.push(a);
-                    }
+                    },
                 }
-            }
+            },
             "else" => {
                 *pos += 1;
                 else_actions = parse_action_block(tokens, pos)?;
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 
@@ -406,17 +406,17 @@ fn parse_condition(tokens: &[Token], pos: &mut usize) -> Result<SieveCondition, 
             *pos += 1;
             let conditions = parse_condition_list(tokens, pos)?;
             Ok(SieveCondition::AllOf(conditions))
-        }
+        },
         "anyof" => {
             *pos += 1;
             let conditions = parse_condition_list(tokens, pos)?;
             Ok(SieveCondition::AnyOf(conditions))
-        }
+        },
         "not" => {
             *pos += 1;
             let inner = parse_condition(tokens, pos)?;
             Ok(SieveCondition::Not(Box::new(inner)))
-        }
+        },
         "header" => {
             *pos += 1;
             let comparator = parse_comparator(tokens, pos)?;
@@ -427,7 +427,7 @@ fn parse_condition(tokens: &[Token], pos: &mut usize) -> Result<SieveCondition, 
                 header,
                 value,
             })
-        }
+        },
         "address" => {
             *pos += 1;
             let comparator = parse_comparator(tokens, pos)?;
@@ -438,26 +438,26 @@ fn parse_condition(tokens: &[Token], pos: &mut usize) -> Result<SieveCondition, 
                 part,
                 value,
             })
-        }
+        },
         "size" => {
             *pos += 1;
             let (over, size) = parse_size_test(tokens, pos)?;
             Ok(SieveCondition::Size { over, size })
-        }
+        },
         "exists" => {
             *pos += 1;
             let header = parse_string(tokens, pos)?;
             Ok(SieveCondition::Exists(header))
-        }
+        },
         "true" => {
             *pos += 1;
             Ok(SieveCondition::True)
-        }
+        },
         _ => {
             // Unknown test — treat as true for forward compatibility
             *pos += 1;
             Ok(SieveCondition::True)
-        }
+        },
     }
 }
 
@@ -495,15 +495,15 @@ fn parse_comparator(tokens: &[Token], pos: &mut usize) -> Result<Comparator, Sie
         ":is" => {
             *pos += 1;
             Ok(Comparator::Is)
-        }
+        },
         ":contains" => {
             *pos += 1;
             Ok(Comparator::Contains)
-        }
+        },
         ":matches" => {
             *pos += 1;
             Ok(Comparator::Matches)
-        }
+        },
         _ => Ok(Comparator::Is), // default if no comparator specified
     }
 }
@@ -515,11 +515,11 @@ fn parse_size_test(tokens: &[Token], pos: &mut usize) -> Result<(bool, usize), S
             ":over" => {
                 *pos += 1;
                 true
-            }
+            },
             ":under" => {
                 *pos += 1;
                 false
-            }
+            },
             _ => true,
         }
     } else {
@@ -583,43 +583,43 @@ fn parse_action_block(tokens: &[Token], pos: &mut usize) -> Result<Vec<SieveActi
                 *pos += 1;
                 expect_semicolon(tokens, pos)?;
                 actions.push(SieveAction::Keep);
-            }
+            },
             "discard" => {
                 *pos += 1;
                 expect_semicolon(tokens, pos)?;
                 actions.push(SieveAction::Discard);
-            }
+            },
             "stop" => {
                 *pos += 1;
                 expect_semicolon(tokens, pos)?;
                 actions.push(SieveAction::Stop);
-            }
+            },
             "fileinto" => {
                 *pos += 1;
                 let folder = parse_string(tokens, pos)?;
                 expect_semicolon(tokens, pos)?;
                 actions.push(SieveAction::FileInto(folder));
-            }
+            },
             "redirect" => {
                 *pos += 1;
                 let addr = parse_string(tokens, pos)?;
                 expect_semicolon(tokens, pos)?;
                 actions.push(SieveAction::Redirect(addr));
-            }
+            },
             "reject" | "ereject" => {
                 *pos += 1;
                 let reason = parse_string(tokens, pos)?;
                 expect_semicolon(tokens, pos)?;
                 actions.push(SieveAction::Reject(reason));
-            }
+            },
             "vacation" => {
                 *pos += 1;
                 let action = parse_vacation(tokens, pos)?;
                 actions.push(action);
-            }
+            },
             _ => {
                 *pos += 1; // skip unknown
-            }
+            },
         }
     }
 
@@ -641,26 +641,23 @@ fn parse_vacation(tokens: &[Token], pos: &mut usize) -> Result<SieveAction, Siev
             ":subject" => {
                 *pos += 1;
                 subject = Some(parse_string(tokens, pos)?);
-            }
+            },
             ":days" => {
                 *pos += 1;
                 if *pos < tokens.len() {
-                    days = tokens[*pos]
-                        .value
-                        .parse::<u32>()
-                        .unwrap_or(7);
+                    days = tokens[*pos].value.parse::<u32>().unwrap_or(7);
                     *pos += 1;
                 }
-            }
+            },
             s if s.starts_with('"') => break, // Body string found
-            ";" => break,                      // End of command
+            ";" => break,                     // End of command
             _ if tokens[*pos].value.starts_with(':') => {
                 // Skip unknown tagged arguments (2 tokens: tag + value)
                 *pos += 1;
                 if *pos < tokens.len() && !tokens[*pos].value.starts_with(':') {
                     *pos += 1;
                 }
-            }
+            },
             _ => break,
         }
     }
@@ -694,7 +691,7 @@ mod tests {
             _ => panic!("Expected FileInto"),
         }
         match &script.rules[1] {
-            SieveRule::Action(SieveAction::Stop) => {}
+            SieveRule::Action(SieveAction::Stop) => {},
             _ => panic!("Expected Stop"),
         }
     }
@@ -726,12 +723,12 @@ mod tests {
                         assert_eq!(*comparator, Comparator::Contains);
                         assert_eq!(header, "Subject");
                         assert_eq!(value, "urgent");
-                    }
+                    },
                     _ => panic!("Expected Header condition"),
                 }
                 assert_eq!(actions.len(), 1);
                 assert!(else_actions.is_empty());
-            }
+            },
             _ => panic!("Expected If rule"),
         }
     }
@@ -755,7 +752,7 @@ mod tests {
                 assert_eq!(subject.as_deref(), Some("Out of Office"));
                 assert_eq!(body, "I am on vacation until Jan 15.");
                 assert_eq!(*days, 14);
-            }
+            },
             _ => panic!("Expected Vacation"),
         }
     }
@@ -775,7 +772,7 @@ mod tests {
                 SieveCondition::Size { over, size } => {
                     assert!(*over);
                     assert_eq!(*size, 1024 * 1024);
-                }
+                },
                 _ => panic!("Expected Size condition"),
             },
             _ => panic!("Expected If rule"),
@@ -797,7 +794,7 @@ mod tests {
             SieveRule::If { condition, .. } => match condition {
                 SieveCondition::AllOf(conditions) => {
                     assert_eq!(conditions.len(), 2);
-                }
+                },
                 _ => panic!("Expected AllOf condition"),
             },
             _ => panic!("Expected If rule"),
@@ -825,7 +822,7 @@ mod tests {
             } => {
                 assert_eq!(actions.len(), 1);
                 assert_eq!(else_actions.len(), 1);
-            }
+            },
             _ => panic!("Expected If rule"),
         }
     }
@@ -836,7 +833,7 @@ mod tests {
         match &script.rules[0] {
             SieveRule::Action(SieveAction::Redirect(addr)) => {
                 assert_eq!(addr, "admin@example.com");
-            }
+            },
             _ => panic!("Expected Redirect"),
         }
     }
@@ -847,7 +844,7 @@ mod tests {
         match &script.rules[0] {
             SieveRule::Action(SieveAction::Reject(reason)) => {
                 assert_eq!(reason, "Not accepted");
-            }
+            },
             _ => panic!("Expected Reject"),
         }
     }
@@ -865,6 +862,9 @@ mod tests {
         )
         .unwrap();
         assert_eq!(script.rules.len(), 1);
-        assert!(matches!(script.rules[0], SieveRule::Action(SieveAction::Keep)));
+        assert!(matches!(
+            script.rules[0],
+            SieveRule::Action(SieveAction::Keep)
+        ));
     }
 }

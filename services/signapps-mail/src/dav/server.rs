@@ -45,10 +45,10 @@ pub async fn start(state: MailServerState, port: u16) {
             if let Err(e) = axum::serve(listener, app).await {
                 tracing::error!("DAV server error: {}", e);
             }
-        }
+        },
         Err(e) => {
             tracing::error!("Failed to bind DAV server on port {}: {}", port, e);
-        }
+        },
     }
 }
 
@@ -109,7 +109,7 @@ async fn dav_handler(
         Err(e) => {
             tracing::error!("Failed to read DAV request body: {}", e);
             return (axum::http::StatusCode::BAD_REQUEST, "Invalid request body").into_response();
-        }
+        },
     };
     let body_str = String::from_utf8_lossy(&body_bytes).to_string();
 

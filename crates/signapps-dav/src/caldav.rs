@@ -128,7 +128,10 @@ pub fn build_calendar_propfind_response(calendars: &[CalendarInfo]) -> String {
                 ("CS:getctag".to_string(), c.ctag.clone()),
             ];
             if let Some(ref color) = c.color {
-                props.push(("x1:calendar-color xmlns:x1=\"http://apple.com/ns/ical/\"".to_string(), color.clone()));
+                props.push((
+                    "x1:calendar-color xmlns:x1=\"http://apple.com/ns/ical/\"".to_string(),
+                    color.clone(),
+                ));
             }
             if let Some(ref desc) = c.description {
                 props.push(("C:calendar-description".to_string(), desc.clone()));

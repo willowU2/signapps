@@ -11,7 +11,9 @@ use signapps_dav::{
     },
     ical::{is_in_time_range, ICalEvent},
     webdav::DavResponse,
-    xml::{build_multistatus, build_resource_response, parse_propfind, parse_report, ReportRequest},
+    xml::{
+        build_multistatus, build_resource_response, parse_propfind, parse_report, ReportRequest,
+    },
 };
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
@@ -87,7 +89,7 @@ async fn handle_propfind(
         Err(e) => {
             tracing::warn!("Invalid PROPFIND body: {}", e);
             return DavResponse::new(400, format!("Invalid PROPFIND: {e}"));
-        }
+        },
     };
 
     match segments.len() {
@@ -97,17 +99,14 @@ async fn handle_propfind(
                     &format!("/dav/calendars/{}/", auth.email),
                     vec![
                         ("D:displayname".to_string(), auth.email.clone()),
-                        (
-                            "D:resourcetype".to_string(),
-                            "<D:collection/>".to_string(),
-                        ),
+                        ("D:resourcetype".to_string(), "<D:collection/>".to_string()),
                     ],
                 );
                 DavResponse::multistatus(build_multistatus(&[resp]))
             } else {
                 list_calendars(pool, auth).await
             }
-        }
+        },
         4 => {
             let calendar_id = segments[3].trim_matches('/');
             if depth == 0 {
@@ -115,13 +114,13 @@ async fn handle_propfind(
             } else {
                 list_events(pool, auth, calendar_id).await
             }
-        }
+        },
         _ => {
             let calendar_id = segments[3];
             let event_file = segments[4];
             let event_uid = event_file.trim_end_matches(".ics");
             event_props(pool, auth, calendar_id, event_uid).await
-        }
+        },
     }
 }
 
@@ -140,7 +139,7 @@ async fn list_calendars(pool: &Pool<Postgres>, auth: &DavAuth) -> DavResponse {
         Err(e) => {
             tracing::error!("Failed to list calendars: {}", e);
             return DavResponse::new(500, format!("DB error: {e}"));
-        }
+        },
     };
 
     let infos: Vec<CalendarInfo> = calendars
@@ -158,11 +157,7 @@ async fn list_calendars(pool: &Pool<Postgres>, auth: &DavAuth) -> DavResponse {
 }
 
 /// Return properties for a single calendar collection.
-async fn calendar_props(
-    pool: &Pool<Postgres>,
-    auth: &DavAuth,
-    calendar_id: &str,
-) -> DavResponse {
+async fn calendar_props(pool: &Pool<Postgres>, auth: &DavAuth, calendar_id: &str) -> DavResponse {
     let cal_uuid = match Uuid::parse_str(calendar_id) {
         Ok(u) => u,
         Err(_) => return DavResponse::not_found(),
@@ -182,7 +177,7 @@ async fn calendar_props(
         Err(e) => {
             tracing::error!("Failed to fetch calendar: {}", e);
             return DavResponse::new(500, format!("DB error: {e}"));
-        }
+        },
     };
 
     match cal {
@@ -195,7 +190,7 @@ async fn calendar_props(
                 description: c.description,
             };
             DavResponse::multistatus(build_calendar_propfind_response(&[info]))
-        }
+        },
         None => DavResponse::not_found(),
     }
 }
@@ -224,7 +219,7 @@ async fn list_events(pool: &Pool<Postgres>, auth: &DavAuth, calendar_id: &str) -
         Err(e) => {
             tracing::error!("Failed to list events: {}", e);
             return DavResponse::new(500, format!("DB error: {e}"));
-        }
+        },
     };
 
     let resources: Vec<CalendarResource> = events
@@ -268,7 +263,7 @@ async fn event_props(
         Err(e) => {
             tracing::error!("Failed to fetch event: {}", e);
             return DavResponse::new(500, format!("DB error: {e}"));
-        }
+        },
     };
 
     match event {
@@ -284,7 +279,7 @@ async fn event_props(
                 ],
             );
             DavResponse::multistatus(build_multistatus(&[resp]))
-        }
+        },
         None => DavResponse::not_found(),
     }
 }
@@ -321,7 +316,7 @@ async fn handle_get(pool: &Pool<Postgres>, auth: &DavAuth, segments: &[&str]) ->
         Err(e) => {
             tracing::error!("Failed to fetch event for GET: {}", e);
             return DavResponse::new(500, format!("DB error: {e}"));
-        }
+        },
     };
 
     match row {
@@ -371,7 +366,7 @@ async fn handle_put(
         Err(e) => {
             tracing::warn!("Invalid iCal data: {}", e);
             return DavResponse::new(400, format!("Invalid iCal: {e}"));
-        }
+        },
     };
 
     let cal_exists: bool = match sqlx::query_scalar(
@@ -386,7 +381,7 @@ async fn handle_put(
         Err(e) => {
             tracing::error!("Calendar ownership check failed: {}", e);
             return DavResponse::new(500, format!("DB error: {e}"));
-        }
+        },
     };
 
     if !cal_exists {
@@ -501,12 +496,12 @@ async fn handle_delete(
                 "CalDAV event deleted"
             );
             DavResponse::new(204, String::new())
-        }
+        },
         Ok(_) => DavResponse::not_found(),
         Err(e) => {
             tracing::error!("Failed to delete event: {}", e);
             DavResponse::new(500, format!("DB error: {e}"))
-        }
+        },
     }
 }
 
@@ -527,7 +522,7 @@ async fn handle_report(
         Err(e) => {
             tracing::warn!("Invalid REPORT body: {}", e);
             return DavResponse::new(400, format!("Invalid REPORT: {e}"));
-        }
+        },
     };
 
     if segments.len() < 4 {
@@ -543,10 +538,10 @@ async fn handle_report(
     match report {
         ReportRequest::CalendarQuery { time_range } => {
             handle_calendar_query(pool, auth, cal_uuid, time_range).await
-        }
+        },
         ReportRequest::CalendarMultiget { hrefs } => {
             handle_calendar_multiget(pool, auth, cal_uuid, &hrefs).await
-        }
+        },
         _ => DavResponse::new(400, "Unsupported REPORT type for CalDAV".to_string()),
     }
 }
@@ -574,7 +569,7 @@ async fn handle_calendar_query(
         Err(e) => {
             tracing::error!("Failed to query events: {}", e);
             return DavResponse::new(500, format!("DB error: {e}"));
-        }
+        },
     };
 
     let filtered: Vec<&CalEventRow> = if let Some(ref tr) = time_range {
@@ -648,11 +643,7 @@ async fn handle_calendar_multiget(
 }
 
 /// Handle MKCOL -- create a new calendar collection.
-async fn handle_mkcol(
-    pool: &Pool<Postgres>,
-    auth: &DavAuth,
-    segments: &[&str],
-) -> DavResponse {
+async fn handle_mkcol(pool: &Pool<Postgres>, auth: &DavAuth, segments: &[&str]) -> DavResponse {
     if segments.len() < 4 {
         return DavResponse::new(400, "Invalid MKCOL path".to_string());
     }
@@ -681,10 +672,10 @@ async fn handle_mkcol(
                 "CalDAV calendar created via MKCOL"
             );
             DavResponse::new(201, String::new())
-        }
+        },
         Err(e) => {
             tracing::error!("Failed to create calendar: {}", e);
             DavResponse::new(500, format!("DB error: {e}"))
-        }
+        },
     }
 }

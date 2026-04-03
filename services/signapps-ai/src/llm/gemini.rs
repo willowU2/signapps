@@ -297,16 +297,11 @@ impl LlmProvider for GeminiProvider {
                         let text = String::from_utf8_lossy(&bytes);
                         for line in text.lines() {
                             if let Some(data) = line.strip_prefix("data: ") {
-                                if let Ok(chunk) =
-                                    serde_json::from_str::<GeminiResponse>(data)
-                                {
+                                if let Ok(chunk) = serde_json::from_str::<GeminiResponse>(data) {
                                     if let Some(candidate) = chunk.candidates.first() {
                                         for part in &candidate.content.parts {
                                             if !part.text.is_empty()
-                                                && tx
-                                                    .send(Ok(part.text.clone()))
-                                                    .await
-                                                    .is_err()
+                                                && tx.send(Ok(part.text.clone())).await.is_err()
                                             {
                                                 return;
                                             }

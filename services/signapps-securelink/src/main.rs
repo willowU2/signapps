@@ -337,11 +337,10 @@ fn create_router(state: AppState) -> Router {
         ));
 
     // Swagger UI (unauthenticated)
-    let swagger = SwaggerUi::new("/swagger-ui")
-        .url(
-            "/api-docs/openapi.json",
-            handlers::openapi::SecurelinkApiDoc::openapi(),
-        );
+    let swagger = SwaggerUi::new("/swagger-ui").url(
+        "/api-docs/openapi.json",
+        handlers::openapi::SecurelinkApiDoc::openapi(),
+    );
 
     // Combine all routes
     public_routes

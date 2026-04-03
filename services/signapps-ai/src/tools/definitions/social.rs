@@ -57,7 +57,8 @@ pub fn register(tools: &mut HashMap<String, ToolDefinition>) {
         },
         ToolDefinition {
             name: "get_social_analytics".into(),
-            description: "Get social media analytics overview (reach, engagement, followers)".into(),
+            description: "Get social media analytics overview (reach, engagement, followers)"
+                .into(),
             service: "social".into(),
             method: "GET".into(),
             path_template: "/social/analytics/overview".into(),

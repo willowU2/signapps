@@ -56,6 +56,5 @@ pub struct AgentApiDoc;
 
 /// Returns a `SwaggerUi` router for the Agent status interface.
 pub fn swagger_router() -> SwaggerUi {
-    SwaggerUi::new("/swagger-ui")
-        .url("/api-docs/openapi.json", AgentApiDoc::openapi())
+    SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", AgentApiDoc::openapi())
 }

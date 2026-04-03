@@ -141,6 +141,5 @@ pub struct OfficeApiDoc;
 /// and the Swagger UI at `/swagger-ui/`.
 #[allow(dead_code)]
 pub fn swagger_router() -> SwaggerUi {
-    SwaggerUi::new("/swagger-ui")
-        .url("/api-docs/openapi.json", OfficeApiDoc::openapi())
+    SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", OfficeApiDoc::openapi())
 }

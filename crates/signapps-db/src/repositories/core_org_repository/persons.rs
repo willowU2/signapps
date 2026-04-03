@@ -1,8 +1,6 @@
 //! PersonRepository — person (Party Model) operations.
 
-use crate::models::core_org::{
-    CreatePerson, CreatePersonRole, Person, PersonRole, UpdatePerson,
-};
+use crate::models::core_org::{CreatePerson, CreatePersonRole, Person, PersonRole, UpdatePerson};
 use signapps_common::{Error, Result};
 use sqlx::PgPool;
 use uuid::Uuid;

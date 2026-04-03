@@ -96,7 +96,10 @@ async fn test_get_file_info_requires_auth() {
         .expect("Failed to build request");
 
     assert_eq!(req.method(), "GET");
-    assert!(req.uri().path().contains("/info/"), "path must contain '/info/'");
+    assert!(
+        req.uri().path().contains("/info/"),
+        "path must contain '/info/'"
+    );
 }
 
 // ---------------------------------------------------------------------------

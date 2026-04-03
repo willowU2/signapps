@@ -133,15 +133,15 @@ impl VCard {
                                 n_given = Some(given.to_string());
                             }
                         }
-                    }
+                    },
                     "EMAIL" => {
                         let t = type_param.unwrap_or_else(|| "other".to_string());
                         emails.push((t, value.to_string()));
-                    }
+                    },
                     "TEL" => {
                         let t = type_param.unwrap_or_else(|| "other".to_string());
                         phones.push((t, value.to_string()));
-                    }
+                    },
                     "ORG" => org = Some(value.replace(';', " ").trim().to_string()),
                     "TITLE" => title = Some(value.to_string()),
                     "NOTE" => note = Some(value.to_string()),
@@ -158,10 +158,10 @@ impl VCard {
                         if !formatted.is_empty() {
                             addresses.push((t, formatted));
                         }
-                    }
+                    },
                     "REV" => rev = Some(value.to_string()),
                     "VERSION" => version = value.to_string(),
-                    _ => {} // Ignore unknown properties
+                    _ => {}, // Ignore unknown properties
                 }
             }
         }
@@ -332,7 +332,10 @@ mod tests {
         assert_eq!(card.n_family.as_deref(), Some("Doe"));
         assert_eq!(card.n_given.as_deref(), Some("John"));
         assert_eq!(card.emails.len(), 2);
-        assert_eq!(card.emails[0], ("work".to_string(), "john@example.com".to_string()));
+        assert_eq!(
+            card.emails[0],
+            ("work".to_string(), "john@example.com".to_string())
+        );
         assert_eq!(card.phones.len(), 2);
         assert_eq!(card.org.as_deref(), Some("ACME Corp"));
         assert_eq!(card.title.as_deref(), Some("Developer"));
