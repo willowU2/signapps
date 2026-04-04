@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
+import { useUIStore } from "@/lib/store";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -2637,6 +2638,11 @@ function ListView({ nodes, selectedId, onSelect, searchQuery }: ListViewProps) {
 export default function OrgStructurePage() {
   usePageTitle("Structure organisationnelle \u2014 Administration");
 
+  const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
+  const rightSidebarOpen = useUIStore((s) => s.rightSidebarOpen);
+  const rightSidebarPinned = useUIStore((s) => s.rightSidebarPinned);
+  const rightPanelOpen = rightSidebarOpen || rightSidebarPinned;
+
   const {
     trees,
     treesLoading,
@@ -3209,7 +3215,12 @@ export default function OrgStructurePage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col h-[calc(100vh-8rem)] -m-4 md:-m-6">
+      <div
+        className={cn(
+          "flex flex-col -m-4 md:-m-6 overflow-hidden",
+          "h-[calc(100vh-5rem)]",
+        )}
+      >
         {/* ================================================================ */}
         {/* Header */}
         {/* ================================================================ */}
@@ -3612,7 +3623,12 @@ export default function OrgStructurePage() {
                 />
               </div>
             ) : detailOpen ? (
-              <div className="w-full lg:w-[40%] lg:max-w-[480px] border-t lg:border-t-0 border-border bg-card shrink-0 overflow-hidden">
+              <div
+                className={cn(
+                  "w-full lg:w-[40%] border-t lg:border-t-0 border-border bg-card shrink-0 overflow-hidden",
+                  rightPanelOpen ? "lg:max-w-[360px]" : "lg:max-w-[480px]",
+                )}
+              >
                 <DetailPanel
                   node={freshSelectedNode}
                   allNodes={nodes}
