@@ -13,3 +13,12 @@ pub mod guid;
 pub mod schema;
 pub mod sid;
 pub mod uac;
+
+pub use acl::{AclDecision, AclOperation};
+pub use dn::DistinguishedName;
+pub use entry::{DirectoryEntry, LifecycleState};
+pub use filter::LdapFilter;
+pub use guid::ObjectGuid;
+pub use schema::syntax::AttributeValue;
+pub use sid::SecurityIdentifier;
+pub use uac::UserAccountControl;

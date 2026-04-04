@@ -20,3 +20,25 @@ pub struct AdPrincipalKey {
     pub entity_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }
+
+/// Request to create a new principal key.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+pub struct CreatePrincipalKey {
+    /// AD domain ID.
+    pub domain_id: Uuid,
+    /// Kerberos principal name.
+    pub principal_name: String,
+    /// Principal type (user, computer, service, krbtgt).
+    pub principal_type: String,
+    /// Key version number.
+    pub key_version: i32,
+    /// Encryption type (17=AES128, 18=AES256, 23=RC4).
+    pub enc_type: i32,
+    /// Encrypted key data.
+    pub key_data: Vec<u8>,
+    /// Kerberos salt.
+    pub salt: Option<String>,
+    /// Linked entity ID.
+    pub entity_id: Option<Uuid>,
+}

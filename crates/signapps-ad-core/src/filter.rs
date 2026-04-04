@@ -289,8 +289,8 @@ fn parse_filter_list(input: &str) -> Result<(Vec<LdapFilter>, &str), FilterError
 /// Consume a single closing `)` and return the rest.
 fn expect_close(input: &str) -> Result<&str, FilterError> {
     let input = input.trim_start();
-    if input.starts_with(')') {
-        Ok(&input[1..])
+    if let Some(rest) = input.strip_prefix(')') {
+        Ok(rest)
     } else if input.is_empty() {
         Err(FilterError::UnexpectedEnd)
     } else {

@@ -4,7 +4,7 @@ use signapps_common::{Error, Result};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::models::ad_principal_keys::AdPrincipalKey;
+use crate::models::ad_principal_keys::{AdPrincipalKey, CreatePrincipalKey};
 
 /// Repository for `ad_principal_keys` table operations.
 pub struct AdPrincipalKeysRepository;
@@ -15,17 +15,7 @@ impl AdPrincipalKeysRepository {
     /// # Errors
     ///
     /// Returns `Error::Database` if the INSERT fails (e.g., duplicate version/enc_type combo).
-    pub async fn create(
-        pool: &PgPool,
-        domain_id: Uuid,
-        principal_name: &str,
-        principal_type: &str,
-        key_version: i32,
-        enc_type: i32,
-        key_data: &[u8],
-        salt: Option<&str>,
-        entity_id: Option<Uuid>,
-    ) -> Result<AdPrincipalKey> {
+    pub async fn create(pool: &PgPool, input: CreatePrincipalKey) -> Result<AdPrincipalKey> {
         let key = sqlx::query_as::<_, AdPrincipalKey>(
             r#"
             INSERT INTO ad_principal_keys (
@@ -36,14 +26,14 @@ impl AdPrincipalKeysRepository {
             RETURNING *
             "#,
         )
-        .bind(domain_id)
-        .bind(principal_name)
-        .bind(principal_type)
-        .bind(key_version)
-        .bind(enc_type)
-        .bind(key_data)
-        .bind(salt)
-        .bind(entity_id)
+        .bind(input.domain_id)
+        .bind(&input.principal_name)
+        .bind(&input.principal_type)
+        .bind(input.key_version)
+        .bind(input.enc_type)
+        .bind(&input.key_data)
+        .bind(&input.salt)
+        .bind(input.entity_id)
         .fetch_one(pool)
         .await
         .map_err(|e| Error::Database(e.to_string()))?;
