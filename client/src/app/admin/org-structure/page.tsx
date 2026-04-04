@@ -428,14 +428,23 @@ function TreeNodeItem({
             onDragEnd={onDragEnd}
             onDragOver={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               e.dataTransfer.dropEffect = "move";
-              setDragOver(true);
+              if (draggedId !== node.id) {
+                setDragOver(true);
+              }
             }}
-            onDragLeave={() => setDragOver(false)}
+            onDragLeave={(e) => {
+              e.stopPropagation();
+              setDragOver(false);
+            }}
             onDrop={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               setDragOver(false);
-              onDrop(node.id);
+              if (draggedId !== node.id) {
+                onDrop(node.id);
+              }
             }}
             className={cn(
               "flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all group select-none",
@@ -2524,7 +2533,9 @@ export default function OrgStructurePage() {
   // Drag and drop handler
   const handleDrop = useCallback(
     async (targetId: string) => {
-      if (!draggedId || draggedId === targetId || !currentTree) return;
+      const movedId = draggedId;
+      setDraggedId(null);
+      if (!movedId || movedId === targetId || !currentTree) return;
       // Prevent dropping on own descendant
       const isDescendant = (parentId: string, checkId: string): boolean => {
         const children = nodes.filter((n) => n.parent_id === parentId);
@@ -2532,15 +2543,21 @@ export default function OrgStructurePage() {
           (c) => c.id === checkId || isDescendant(c.id, checkId),
         );
       };
-      if (isDescendant(draggedId, targetId)) {
+      if (isDescendant(movedId, targetId)) {
         toast.error(
           "Impossible de deplacer un noeud dans un de ses descendants",
         );
         return;
       }
+      // Check not dropping on current parent (no-op)
+      const movedNode = nodes.find((n) => n.id === movedId);
+      if (movedNode?.parent_id === targetId) return;
       try {
-        await orgApi.nodes.move(draggedId, targetId);
-        toast.success("Noeud deplace");
+        await orgApi.nodes.move(movedId, targetId);
+        const targetNode = nodes.find((n) => n.id === targetId);
+        toast.success(
+          `"${movedNode?.name}" deplace sous "${targetNode?.name}"`,
+        );
         fetchNodes(currentTree.id);
       } catch {
         toast.error("Erreur lors du deplacement");
