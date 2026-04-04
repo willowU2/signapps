@@ -3,6 +3,7 @@
 //! Supports Simple Bind (DN + password) against identity.users table.
 //! SASL/GSSAPI (Kerberos) is stubbed for Phase 3 integration.
 
+use argon2::{password_hash::PasswordHash, Argon2, PasswordVerifier};
 use signapps_ad_core::DistinguishedName;
 use sqlx::PgPool;
 use tracing;
@@ -79,15 +80,16 @@ pub async fn handle_simple_bind(pool: &PgPool, bind_dn: &str, password: &[u8]) -
         };
     }
 
-    // Look up user in identity.users
-    let user: Option<(Uuid, String, i16)> =
-        sqlx::query_as("SELECT id, password_hash, role FROM identity.users WHERE username = $1")
-            .bind(&username)
-            .fetch_optional(pool)
-            .await
-            .unwrap_or(None);
+    // Look up user in identity.users — also fetch auth_provider to detect LDAP-only accounts
+    let user: Option<(Uuid, Option<String>, i16, String)> = sqlx::query_as(
+        "SELECT id, password_hash, role, auth_provider FROM identity.users WHERE username = $1",
+    )
+    .bind(&username)
+    .fetch_optional(pool)
+    .await
+    .unwrap_or(None);
 
-    let (user_id, password_hash, role) = match user {
+    let (user_id, password_hash_opt, role, auth_provider) = match user {
         Some(u) => u,
         None => {
             tracing::warn!(username = %username, "Bind failed: user not found");
@@ -101,15 +103,55 @@ pub async fn handle_simple_bind(pool: &PgPool, bind_dn: &str, password: &[u8]) -
         }
     };
 
-    // TODO: Delegate to signapps-identity for Argon2 verification in production.
-    // argon2 crate is not a direct dependency of signapps-ldap-server; password
-    // verification will be offloaded to the identity service via an internal RPC
-    // call in Phase 2. For now we accept any non-empty password for known users.
-    let _ = password_hash;
-    let hash_valid = !password.is_empty();
+    // Reject LDAP-only users that have no local password hash
+    if auth_provider != "local" {
+        tracing::warn!(
+            username = %username,
+            auth_provider = %auth_provider,
+            "Bind failed: user has no local password (use directory authentication)"
+        );
+        return BindResult {
+            success: false,
+            user_id: None,
+            user_role: 0,
+            bound_dn: None,
+            error_message: "No local password — use directory authentication".to_string(),
+        };
+    }
+
+    let password_hash = match password_hash_opt {
+        Some(h) if !h.is_empty() => h,
+        _ => {
+            tracing::warn!(username = %username, "Bind failed: no password hash stored");
+            return BindResult {
+                success: false,
+                user_id: None,
+                user_role: 0,
+                bound_dn: None,
+                error_message: "Invalid credentials".to_string(),
+            };
+        }
+    };
+
+    // Verify password with Argon2 — runs on the calling task (bind handler is already
+    // dispatched to a Tokio thread; CPU cost is bounded by Argon2 default params).
+    let password_bytes = password.to_vec();
+    let hash_valid = tokio::task::spawn_blocking(move || {
+        match PasswordHash::new(&password_hash) {
+            Ok(parsed_hash) => Argon2::default()
+                .verify_password(&password_bytes, &parsed_hash)
+                .is_ok(),
+            Err(e) => {
+                tracing::error!(?e, "Failed to parse stored password hash");
+                false
+            }
+        }
+    })
+    .await
+    .unwrap_or(false);
 
     if !hash_valid {
-        tracing::warn!(username = %username, "Bind failed: empty password rejected");
+        tracing::warn!(username = %username, "Bind failed: wrong password");
         return BindResult {
             success: false,
             user_id: None,
@@ -182,5 +224,33 @@ mod tests {
         let result = DistinguishedName::parse("=baddn");
         // The dn crate may or may not reject this; either way, cover the branch.
         let _ = result;
+    }
+
+    /// Verify that the Argon2 round-trip used in handle_simple_bind works correctly.
+    #[test]
+    fn argon2_verify_works() {
+        use argon2::{
+            password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
+            Argon2,
+        };
+
+        let password = b"test_password";
+        let salt = SaltString::generate(&mut OsRng);
+        let hash = Argon2::default()
+            .hash_password(password, &salt)
+            .unwrap()
+            .to_string();
+
+        let parsed = PasswordHash::new(&hash).unwrap();
+        assert!(
+            Argon2::default().verify_password(password, &parsed).is_ok(),
+            "correct password must verify"
+        );
+        assert!(
+            Argon2::default()
+                .verify_password(b"wrong_password", &parsed)
+                .is_err(),
+            "wrong password must not verify"
+        );
     }
 }
