@@ -1552,6 +1552,7 @@ function GovernanceTab({ nodeId, persons, allNodes }: GovernanceTabProps) {
   const [creatingBoard, setCreatingBoard] = useState(false);
 
   const loadBoard = useCallback(async () => {
+    if (typeof orgApi.nodes.board !== "function") return;
     setLoading(true);
     setLoadError(false);
     try {
@@ -1923,6 +1924,7 @@ function DetailPanel({
       setDetailTab("details");
       // Load board decision maker for header display
       setBoardDecisionMaker(null);
+      if (typeof orgApi.nodes.board !== "function") return;
       orgApi.nodes
         .board(node.id)
         .then((res) => {
