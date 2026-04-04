@@ -416,7 +416,10 @@ function TreeNodeItem({
   const showChildren = searchQuery ? true : isExpanded;
 
   return (
-    <div className={cn(isDragged && "opacity-40")}>
+    <div
+      className={cn(isDragged && "opacity-40")}
+      onDragOver={(e) => e.preventDefault()}
+    >
       <ContextMenu>
         <ContextMenuTrigger>
           <div
@@ -538,6 +541,9 @@ function TreeNodeItem({
         <div
           className="border-l border-border/50 ml-[calc(var(--depth)*20px+20px)]"
           style={{ "--depth": depth } as React.CSSProperties}
+          onDragOver={(e) => {
+            e.preventDefault();
+          }}
         >
           {visibleChildren.map((child) => (
             <TreeNodeItem
@@ -2535,7 +2541,17 @@ export default function OrgStructurePage() {
     async (targetId: string) => {
       const movedId = draggedId;
       setDraggedId(null);
-      if (!movedId || movedId === targetId || !currentTree) return;
+      if (!movedId || movedId === targetId || !currentTree) {
+        console.warn(
+          "[DnD] skip: movedId=",
+          movedId,
+          "targetId=",
+          targetId,
+          "same=",
+          movedId === targetId,
+        );
+        return;
+      }
       // Prevent dropping on own descendant
       const isDescendant = (parentId: string, checkId: string): boolean => {
         const children = nodes.filter((n) => n.parent_id === parentId);
@@ -2551,7 +2567,16 @@ export default function OrgStructurePage() {
       }
       // Check not dropping on current parent (no-op)
       const movedNode = nodes.find((n) => n.id === movedId);
-      if (movedNode?.parent_id === targetId) return;
+      if (movedNode?.parent_id === targetId) {
+        console.warn("[DnD] skip: already under this parent");
+        return;
+      }
+      console.warn(
+        "[DnD] moving",
+        movedNode?.name,
+        "→",
+        nodes.find((n) => n.id === targetId)?.name,
+      );
       try {
         await orgApi.nodes.move(movedId, targetId);
         const targetNode = nodes.find((n) => n.id === targetId);
@@ -2559,7 +2584,8 @@ export default function OrgStructurePage() {
           `"${movedNode?.name}" deplace sous "${targetNode?.name}"`,
         );
         fetchNodes(currentTree.id);
-      } catch {
+      } catch (err) {
+        console.error("[DnD] move failed:", err);
         toast.error("Erreur lors du deplacement");
       }
     },
