@@ -17,6 +17,13 @@ import type {
   PermissionProfile,
   OrgContext,
   TreeType,
+  OrgGroup,
+  OrgGroupMember,
+  OrgPolicy,
+  OrgPolicyLink,
+  EffectivePolicy,
+  OrgDelegation,
+  OrgAuditEntry,
 } from "@/types/org";
 
 const client = getClient(ServiceName.WORKFORCE);
@@ -130,4 +137,69 @@ export const orgApi = {
 
   // ── Context ──────────────────────────────────────────────────────────────
   context: () => client.get<OrgContext>("/workforce/org/context"),
+
+  // ── Groups ────────────────────────────────────────────────────────────────
+  groups: {
+    list: () => client.get<OrgGroup[]>("/workforce/groups"),
+    create: (data: Partial<OrgGroup>) =>
+      client.post<OrgGroup>("/workforce/groups", data),
+    get: (id: string) => client.get<OrgGroup>(`/workforce/groups/${id}`),
+    update: (id: string, data: Partial<OrgGroup>) =>
+      client.put<OrgGroup>(`/workforce/groups/${id}`, data),
+    delete: (id: string) => client.delete(`/workforce/groups/${id}`),
+    addMember: (
+      groupId: string,
+      data: { member_type: string; member_id: string },
+    ) =>
+      client.post<OrgGroupMember>(`/workforce/groups/${groupId}/members`, data),
+    removeMember: (groupId: string, memberId: string) =>
+      client.delete(`/workforce/groups/${groupId}/members/${memberId}`),
+    effectiveMembers: (groupId: string) =>
+      client.get<string[]>(`/workforce/groups/${groupId}/effective-members`),
+  },
+
+  // ── Policies ──────────────────────────────────────────────────────────────
+  policies: {
+    list: (domain?: string) =>
+      client.get<OrgPolicy[]>("/workforce/policies", {
+        params: domain ? { domain } : undefined,
+      }),
+    create: (data: Partial<OrgPolicy>) =>
+      client.post<OrgPolicy>("/workforce/policies", data),
+    get: (id: string) => client.get<OrgPolicy>(`/workforce/policies/${id}`),
+    update: (id: string, data: Partial<OrgPolicy>) =>
+      client.put<OrgPolicy>(`/workforce/policies/${id}`, data),
+    delete: (id: string) => client.delete(`/workforce/policies/${id}`),
+    addLink: (policyId: string, data: Partial<OrgPolicyLink>) =>
+      client.post<OrgPolicyLink>(`/workforce/policies/${policyId}/links`, data),
+    removeLink: (policyId: string, linkId: string) =>
+      client.delete(`/workforce/policies/${policyId}/links/${linkId}`),
+    resolvePerson: (personId: string) =>
+      client.get<EffectivePolicy>(`/workforce/policies/resolve/${personId}`),
+    resolveNode: (nodeId: string) =>
+      client.get<EffectivePolicy>(`/workforce/policies/resolve/node/${nodeId}`),
+  },
+
+  // ── Delegations ───────────────────────────────────────────────────────────
+  delegations: {
+    list: () => client.get<OrgDelegation[]>("/workforce/delegations"),
+    create: (data: Partial<OrgDelegation>) =>
+      client.post<OrgDelegation>("/workforce/delegations", data),
+    revoke: (id: string) => client.delete(`/workforce/delegations/${id}`),
+    my: () => client.get<OrgDelegation[]>("/workforce/delegations/my"),
+    granted: () =>
+      client.get<OrgDelegation[]>("/workforce/delegations/granted"),
+  },
+
+  // ── Audit ─────────────────────────────────────────────────────────────────
+  audit: {
+    query: (params?: Record<string, unknown>) =>
+      client.get<OrgAuditEntry[]>("/workforce/audit", { params }),
+    entityHistory: (entityType: string, entityId: string) =>
+      client.get<OrgAuditEntry[]>(
+        `/workforce/audit/entity/${entityType}/${entityId}`,
+      ),
+    actorHistory: (actorId: string) =>
+      client.get<OrgAuditEntry[]>(`/workforce/audit/actor/${actorId}`),
+  },
 };
