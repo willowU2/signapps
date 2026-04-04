@@ -137,6 +137,27 @@ fn create_router(state: AppState) -> Router {
         .route("/node-types", get(handlers::org::list_node_types))
         .route("/node-types", post(handlers::org::create_node_type))
         .route("/node-types/:id", delete(handlers::org::delete_node_type))
+        // Board routes
+        .route("/nodes/:id/board", get(handlers::boards::get_board))
+        .route("/nodes/:id/board", post(handlers::boards::create_board))
+        .route("/nodes/:id/board", put(handlers::boards::update_board))
+        .route("/nodes/:id/board", delete(handlers::boards::delete_board))
+        .route(
+            "/nodes/:id/board/members",
+            post(handlers::boards::add_member),
+        )
+        .route(
+            "/nodes/:id/board/members/:member_id",
+            put(handlers::boards::update_member),
+        )
+        .route(
+            "/nodes/:id/board/members/:member_id",
+            delete(handlers::boards::remove_member),
+        )
+        .route(
+            "/nodes/:id/effective-board",
+            get(handlers::boards::get_effective_board),
+        )
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))

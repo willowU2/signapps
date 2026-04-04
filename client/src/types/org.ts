@@ -257,6 +257,34 @@ export interface SiteAssignment {
   created_at: string;
 }
 
+// ── Board Types ──────────────────────────────────────────
+
+export interface OrgBoard {
+  id: string;
+  node_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrgBoardMember {
+  id: string;
+  board_id: string;
+  person_id: string;
+  role: string;
+  is_decision_maker: boolean;
+  sort_order: number;
+  start_date?: string;
+  end_date?: string;
+  created_at: string;
+}
+
+export interface EffectiveBoard {
+  board: OrgBoard;
+  members: OrgBoardMember[];
+  inherited_from_node_id?: string;
+  inherited_from_node_name?: string;
+}
+
 // ── Node Type ────────────────────────────────────────────
 export interface OrgNodeType {
   id: string;

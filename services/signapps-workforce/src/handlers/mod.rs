@@ -8,6 +8,7 @@
 
 pub mod attendance;
 pub mod audit;
+pub mod boards;
 pub mod coverage;
 pub mod delegations;
 pub mod employees;

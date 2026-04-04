@@ -24,6 +24,9 @@ import type {
   EffectivePolicy,
   OrgDelegation,
   OrgAuditEntry,
+  OrgBoard,
+  OrgBoardMember,
+  EffectiveBoard,
 } from "@/types/org";
 
 const client = getClient(ServiceName.WORKFORCE);
@@ -77,6 +80,29 @@ export const orgApi = {
       client.get<PermissionProfile>(`/workforce/org/nodes/${id}/permissions`),
     setPermissions: (id: string, data: Partial<PermissionProfile>) =>
       client.put(`/workforce/org/nodes/${id}/permissions`, data),
+    // Board (governance)
+    board: (id: string) =>
+      client.get<EffectiveBoard>(`/workforce/org/nodes/${id}/effective-board`),
+    createBoard: (id: string) =>
+      client.post<OrgBoard>(`/workforce/org/nodes/${id}/board`),
+    deleteBoard: (id: string) =>
+      client.delete(`/workforce/org/nodes/${id}/board`),
+    addBoardMember: (id: string, data: Partial<OrgBoardMember>) =>
+      client.post<OrgBoardMember>(
+        `/workforce/org/nodes/${id}/board/members`,
+        data,
+      ),
+    updateBoardMember: (
+      id: string,
+      memberId: string,
+      data: Partial<OrgBoardMember>,
+    ) =>
+      client.put<OrgBoardMember>(
+        `/workforce/org/nodes/${id}/board/members/${memberId}`,
+        data,
+      ),
+    removeBoardMember: (id: string, memberId: string) =>
+      client.delete(`/workforce/org/nodes/${id}/board/members/${memberId}`),
   },
 
   // ── Persons ──────────────────────────────────────────────────────────────

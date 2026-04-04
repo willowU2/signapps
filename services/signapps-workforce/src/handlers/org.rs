@@ -262,22 +262,62 @@ pub async fn create_node(
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
-    // Verify parent exists if specified
+    // Verify parent exists if specified, and enforce allowed_children
     if let Some(parent_id) = req.parent_id {
-        let parent_exists: bool = sqlx::query_scalar(
-            "SELECT EXISTS(SELECT 1 FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2)",
+        let parent_node: Option<(String,)> = sqlx::query_as(
+            "SELECT node_type FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2",
         )
         .bind(parent_id)
         .bind(ctx.tenant_id)
-        .fetch_one(&mut *tx)
+        .fetch_optional(&mut *tx)
         .await
         .map_err(|e| {
             tracing::error!("Failed to check parent: {}", e);
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-        if !parent_exists {
-            return Err(StatusCode::NOT_FOUND);
+        let parent_node_type = match parent_node {
+            Some((nt,)) => nt,
+            None => return Err(StatusCode::NOT_FOUND),
+        };
+
+        // Check allowed_children constraint from node type definition
+        let allowed: Option<(Vec<String>,)> = sqlx::query_as(
+            r#"
+            SELECT allowed_children_arr
+            FROM workforce_org_node_types
+            WHERE (tenant_id = $1 OR tenant_id = '00000000-0000-0000-0000-000000000000')
+              AND name = $2
+            ORDER BY CASE WHEN tenant_id = $1 THEN 0 ELSE 1 END
+            LIMIT 1
+            "#,
+        )
+        .bind(ctx.tenant_id)
+        .bind(&parent_node_type)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to check allowed_children: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+        if let Some((allowed_children,)) = allowed {
+            if !allowed_children.is_empty() && !allowed_children.contains(&req.node_type) {
+                tracing::warn!(
+                    parent_type = %parent_node_type,
+                    child_type = %req.node_type,
+                    "Child type not allowed under parent type"
+                );
+                return Ok((
+                    StatusCode::BAD_REQUEST,
+                    Json(json!({
+                        "error": format!(
+                            "Node type '{}' is not allowed under parent type '{}'. Allowed: {:?}",
+                            req.node_type, parent_node_type, allowed_children
+                        )
+                    })),
+                ));
+            }
         }
     }
 
