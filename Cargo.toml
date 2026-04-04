@@ -2,19 +2,24 @@
 resolver = "2"
 members = [
     # Shared crates
-    "crates/signapps-common",
-    "crates/signapps-db",
+    "crates/signapps-ad-core",
+    "crates/signapps-smb-sysvol",
+    "crates/signapps-ldap-server",
+    "crates/signapps-kerberos-kdc",
     "crates/signapps-cache",
+    "crates/signapps-common",
+    "crates/signapps-dav",
+    "crates/signapps-db",
+    "crates/signapps-dkim",
+    "crates/signapps-dns-server",
+    "crates/signapps-imap",
+    "crates/signapps-jmap",
+    "crates/signapps-mime",
     "crates/signapps-runtime",
     "crates/signapps-service",
-    "crates/signapps-mime",
-    "crates/signapps-dkim",
-    "crates/signapps-smtp",
-    "crates/signapps-imap",
-    "crates/signapps-dav",
     "crates/signapps-sieve",
+    "crates/signapps-smtp",
     "crates/signapps-spam",
-    "crates/signapps-jmap",
     # Tauri desktop app
     "src-tauri",
     # Backend services
@@ -43,6 +48,7 @@ members = [
     "services/signapps-billing",
     "services/signapps-notifications",
     "services/signapps-social",
+    "services/signapps-dc",
     # Single-binary gateway (LT-05 POC)
     "services/signapps-gateway",
     # Endpoint management agent (standalone binary)

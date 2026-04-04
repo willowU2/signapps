@@ -1,0 +1,30 @@
+[package]
+name = "signapps-ldap-server"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "LDAP server implementation (RFC 4511) — BER codec, operations, TCP/TLS listener"
+
+[dependencies]
+tokio = { workspace = true }
+tokio-rustls = { workspace = true }
+rustls = { workspace = true }
+rustls-pemfile = { workspace = true }
+sqlx = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+bytes = { workspace = true }
+
+signapps-common = { path = "../signapps-common" }
+signapps-db = { path = "../signapps-db" }
+signapps-ad-core = { path = "../signapps-ad-core" }
+
+[dev-dependencies]
+tokio-test = { workspace = true }

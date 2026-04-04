@@ -1,0 +1,1 @@
+//! AES256-CTS-HMAC-SHA1-96 encryption (RFC 3962).

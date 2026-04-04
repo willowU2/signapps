@@ -1,5 +1,13 @@
 //! Database repositories for SignApps Platform.
 
+pub mod ad_dns_repository;
+pub mod ad_domain_repository;
+pub mod ad_principal_keys_repository;
+
+pub use ad_dns_repository::AdDnsRepository;
+pub use ad_domain_repository::AdDomainRepository;
+pub use ad_principal_keys_repository::AdPrincipalKeysRepository;
+
 pub mod container_repository;
 pub mod group_repository;
 pub mod ldap_repository;
