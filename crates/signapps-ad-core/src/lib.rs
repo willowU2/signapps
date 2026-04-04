@@ -7,6 +7,8 @@
 
 pub mod acl;
 pub mod builder;
+pub mod crypto_helpers;
+pub mod domain;
 pub mod dn;
 pub mod entry;
 pub mod filter;

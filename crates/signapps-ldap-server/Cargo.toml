@@ -22,6 +22,8 @@ thiserror = { workspace = true }
 anyhow = { workspace = true }
 bytes = { workspace = true }
 
+argon2 = { workspace = true }
+
 signapps-common = { path = "../signapps-common" }
 signapps-db = { path = "../signapps-db" }
 signapps-ad-core = { path = "../signapps-ad-core" }

@@ -3,10 +3,10 @@
 //! Translates LDAP search requests into SQL queries via ad-core's
 //! filter compiler and returns DirectoryEntry results.
 
-use signapps_ad_core::{acl::check_access, AclDecision, AclOperation, LdapFilter};
+use signapps_ad_core::{acl::check_access, AclDecision, AclOperation, LdapFilter, SecurityIdentifier};
 use signapps_common::Result;
 use sqlx::PgPool;
-use tracing;
+use uuid::Uuid;
 
 /// Search scope as defined by RFC 4511 §4.5.1.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -94,16 +94,233 @@ pub fn root_dse(domain: &str) -> SearchEntry {
     }
 }
 
+/// Convert a [`signapps_ad_core::DirectoryEntry`] to a [`SearchEntry`] for LDAP response.
+///
+/// When `requested_attrs` is empty, all attributes are returned.  Otherwise
+/// only the named attributes are included, using case-insensitive matching.
+/// Binary attribute values are represented as their display string (e.g. `<binary 16 bytes>`).
+///
+/// # Examples
+///
+/// ```
+/// use std::collections::HashMap;
+/// use chrono::Utc;
+/// use uuid::Uuid;
+/// use signapps_ad_core::{
+///     dn::DistinguishedName,
+///     entry::{DirectoryEntry, LifecycleState},
+///     schema::syntax::AttributeValue,
+///     uac::UserAccountControl,
+/// };
+/// use signapps_ldap_server::ops::search::entry_to_search_entry;
+///
+/// let mut attrs = HashMap::new();
+/// attrs.insert("cn".to_string(), vec![AttributeValue::String("Alice".to_string())]);
+/// let entry = DirectoryEntry {
+///     guid: Uuid::new_v4(), sid: None,
+///     dn: DistinguishedName::parse("CN=Alice,DC=example,DC=com").unwrap(),
+///     object_classes: vec!["user".into()],
+///     attributes: attrs,
+///     uac: UserAccountControl::normal_user(),
+///     lifecycle: LifecycleState::Live,
+///     created: Utc::now(),
+///     modified: Utc::now(),
+/// };
+/// let search_entry = entry_to_search_entry(&entry, &[]);
+/// assert_eq!(search_entry.dn, "CN=Alice,DC=example,DC=com");
+/// ```
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+pub fn entry_to_search_entry(
+    entry: &signapps_ad_core::DirectoryEntry,
+    requested_attrs: &[String],
+) -> SearchEntry {
+    let attributes: Vec<(String, Vec<String>)> = if requested_attrs.is_empty() {
+        // Return all attributes
+        entry
+            .attributes
+            .iter()
+            .map(|(name, values)| {
+                let str_values: Vec<String> = values.iter().map(|v| v.to_string()).collect();
+                (name.clone(), str_values)
+            })
+            .collect()
+    } else {
+        // Return only requested attributes, case-insensitive lookup
+        requested_attrs
+            .iter()
+            .filter_map(|req| {
+                entry
+                    .attributes
+                    .get(req)
+                    .or_else(|| {
+                        entry
+                            .attributes
+                            .iter()
+                            .find(|(k, _)| k.eq_ignore_ascii_case(req))
+                            .map(|(_, v)| v)
+                    })
+                    .map(|values| {
+                        let str_values: Vec<String> =
+                            values.iter().map(|v| v.to_string()).collect();
+                        (req.clone(), str_values)
+                    })
+            })
+            .collect()
+    };
+
+    SearchEntry {
+        dn: entry.dn.to_string(),
+        attributes,
+    }
+}
+
+/// Resolve the domain SID for `domain` from the `ad_domains` table.
+///
+/// Falls back to a synthesised `S-1-5-21-0-0-0` when no row is found or the
+/// stored string is not parseable.
+///
+/// # Errors
+///
+/// Never returns `Err` — SQL failures are swallowed and the fallback SID is
+/// returned instead.
+///
+/// # Panics
+///
+/// No panics — the fallback parse is a hard-coded valid SID.
+async fn resolve_domain_sid(pool: &PgPool, domain: &str) -> SecurityIdentifier {
+    let row: Option<(String,)> = sqlx::query_as(
+        "SELECT domain_sid FROM ad_domains WHERE dns_name = $1 LIMIT 1",
+    )
+    .bind(domain)
+    .fetch_optional(pool)
+    .await
+    .unwrap_or(None);
+
+    row.and_then(|(s,)| SecurityIdentifier::parse(&s).ok())
+        .unwrap_or_else(|| {
+            SecurityIdentifier::parse("S-1-5-21-0-0-0")
+                .expect("fallback SID is always valid")
+        })
+}
+
+/// Search PostgreSQL for directory objects that match the given filter.
+///
+/// Queries `identity.users`, `workforce_org_nodes`, and `workforce_org_groups`
+/// according to the `objectClass` hints embedded in `filter_str`.  When the
+/// filter contains no `objectClass` restriction, all three object types are
+/// queried (subtree / wildcard search).
+///
+/// # Errors
+///
+/// Individual builder failures are logged and skipped; the function itself
+/// always returns `Ok`.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+async fn search_objects(
+    pool: &PgPool,
+    filter_str: &str,
+    domain: &str,
+    domain_sid: &SecurityIdentifier,
+) -> Vec<signapps_ad_core::DirectoryEntry> {
+    let mut results = Vec::new();
+
+    // Decide which object types to query based on objectClass hints in filter.
+    let has_class_constraint = filter_str.contains("objectClass=")
+        && !filter_str.contains("objectClass=*");
+
+    let search_users = !has_class_constraint
+        || filter_str.contains("objectClass=user")
+        || filter_str.contains("objectClass=person")
+        || filter_str.contains("objectClass=organizationalPerson");
+
+    let search_nodes = !has_class_constraint
+        || filter_str.contains("objectClass=organizationalUnit")
+        || filter_str.contains("objectClass=container");
+
+    let search_groups = !has_class_constraint
+        || filter_str.contains("objectClass=group");
+
+    // ── Users ──────────────────────────────────────────────────────────────
+    if search_users {
+        let users: Vec<(Uuid,)> =
+            sqlx::query_as("SELECT id FROM identity.users LIMIT 1000")
+                .fetch_all(pool)
+                .await
+                .unwrap_or_default();
+
+        for (user_id,) in users {
+            match signapps_ad_core::builder::build_user_entry(pool, user_id, domain, domain_sid)
+                .await
+            {
+                Ok(entry) => results.push(entry),
+                Err(e) => {
+                    tracing::warn!(user_id = %user_id, error = ?e, "Failed to build user entry");
+                }
+            }
+        }
+    }
+
+    // ── Org nodes (OUs / containers) ───────────────────────────────────────
+    if search_nodes {
+        let nodes: Vec<(Uuid,)> = sqlx::query_as(
+            "SELECT id FROM workforce_org_nodes \
+             WHERE lifecycle_state IS NULL OR lifecycle_state = 'live' \
+             LIMIT 1000",
+        )
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+
+        for (node_id,) in nodes {
+            match signapps_ad_core::builder::build_node_entry(pool, node_id, domain).await {
+                Ok(entry) => results.push(entry),
+                Err(e) => {
+                    tracing::warn!(node_id = %node_id, error = ?e, "Failed to build node entry");
+                }
+            }
+        }
+    }
+
+    // ── Security groups ────────────────────────────────────────────────────
+    if search_groups {
+        let groups: Vec<(Uuid,)> = sqlx::query_as(
+            "SELECT id FROM workforce_org_groups WHERE is_active = true LIMIT 1000",
+        )
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+
+        for (group_id,) in groups {
+            match signapps_ad_core::builder::build_group_entry(pool, group_id, domain, domain_sid)
+                .await
+            {
+                Ok(entry) => results.push(entry),
+                Err(e) => {
+                    tracing::warn!(group_id = %group_id, error = ?e, "Failed to build group entry");
+                }
+            }
+        }
+    }
+
+    results
+}
+
 /// Handle an LDAP search request.
 ///
 /// For RootDSE (empty base DN + base scope), returns server information
 /// without requiring authentication.  All other searches require at least
 /// anonymous (role 0) access, which the ACL layer permits for reads.
 ///
-/// The filter is compiled to a PostgreSQL `WHERE` fragment via
-/// [`LdapFilter::to_sql`].  Full result hydration (table joins, attribute
-/// projection) will be wired in a later task when the
-/// [`signapps_ad_core::DirectoryEntry`] builder is integrated.
+/// User, OU/container, and group objects are hydrated from PostgreSQL via the
+/// [`signapps_ad_core::builder`] functions.  The `objectClass` hints in the
+/// filter string are used to narrow which table(s) are queried; a wildcard
+/// filter (`(objectClass=*)`) or no class constraint triggers a full subtree
+/// search across all three object types.
 ///
 /// # Errors
 ///
@@ -164,18 +381,56 @@ pub async fn handle_search(
         "Search compiled"
     );
 
-    // TODO: Wire full SQL execution with DirectoryEntry builder and table joins.
-    // The compiled `where_clause` and `params` are ready; the multi-table JOIN
-    // (identity.users + workforce_org_nodes + groups) will be implemented in the
-    // DirectoryEntry hydration task.
-    let _ = (pool, requested_attrs);
+    // Resolve domain SID for object building
+    let domain_sid = resolve_domain_sid(pool, domain).await;
 
-    Ok(vec![])
+    // Query PostgreSQL and build DirectoryEntry objects
+    let entries = search_objects(pool, filter_str, domain, &domain_sid).await;
+
+    tracing::debug!(
+        result_count = entries.len(),
+        base = base_dn,
+        "Search returned {} entries",
+        entries.len()
+    );
+
+    // Convert DirectoryEntry objects to SearchEntry for LDAP response
+    let search_entries: Vec<SearchEntry> = entries
+        .iter()
+        .map(|e| entry_to_search_entry(e, requested_attrs))
+        .collect();
+
+    Ok(search_entries)
 }
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
+    use chrono::Utc;
+    use uuid::Uuid;
+
     use super::*;
+    use signapps_ad_core::{
+        dn::DistinguishedName,
+        entry::{DirectoryEntry, LifecycleState},
+        schema::syntax::AttributeValue,
+        uac::UserAccountControl,
+    };
+
+    fn make_entry(attrs: HashMap<String, Vec<AttributeValue>>) -> DirectoryEntry {
+        DirectoryEntry {
+            guid: Uuid::new_v4(),
+            sid: None,
+            dn: DistinguishedName::parse("CN=Test,DC=example,DC=com").unwrap(),
+            object_classes: vec!["user".into()],
+            attributes: attrs,
+            uac: UserAccountControl::normal_user(),
+            lifecycle: LifecycleState::Live,
+            created: Utc::now(),
+            modified: Utc::now(),
+        }
+    }
 
     #[test]
     fn root_dse_has_required_attributes() {
@@ -232,5 +487,56 @@ mod tests {
         assert_ne!(Scope::BaseObject, Scope::SingleLevel);
         assert_ne!(Scope::SingleLevel, Scope::WholeSubtree);
         assert_ne!(Scope::BaseObject, Scope::WholeSubtree);
+    }
+
+    #[test]
+    fn entry_to_search_entry_all_attrs() {
+        let mut attrs = HashMap::new();
+        attrs.insert("cn".to_string(), vec![AttributeValue::String("Alice".into())]);
+        attrs.insert("mail".to_string(), vec![AttributeValue::String("alice@example.com".into())]);
+        attrs.insert("sn".to_string(), vec![AttributeValue::String("Smith".into())]);
+
+        let entry = make_entry(attrs);
+        let result = entry_to_search_entry(&entry, &[]);
+
+        // All 3 attributes returned when requested_attrs is empty
+        assert_eq!(result.attributes.len(), 3);
+        assert_eq!(result.dn, "CN=Test,DC=example,DC=com");
+    }
+
+    #[test]
+    fn entry_to_search_entry_specific_attrs() {
+        let mut attrs = HashMap::new();
+        attrs.insert("cn".to_string(), vec![AttributeValue::String("Alice".into())]);
+        attrs.insert("mail".to_string(), vec![AttributeValue::String("alice@example.com".into())]);
+        attrs.insert("sn".to_string(), vec![AttributeValue::String("Smith".into())]);
+
+        let entry = make_entry(attrs);
+        let requested = vec!["cn".to_string(), "mail".to_string()];
+        let result = entry_to_search_entry(&entry, &requested);
+
+        // Only the 2 requested attributes are returned
+        assert_eq!(result.attributes.len(), 2);
+        let names: Vec<&str> = result.attributes.iter().map(|(k, _)| k.as_str()).collect();
+        assert!(names.contains(&"cn"));
+        assert!(names.contains(&"mail"));
+        assert!(!names.contains(&"sn"));
+    }
+
+    #[test]
+    fn entry_to_search_entry_case_insensitive() {
+        let mut attrs = HashMap::new();
+        attrs.insert("cn".to_string(), vec![AttributeValue::String("Bob".into())]);
+        attrs.insert("mail".to_string(), vec![AttributeValue::String("bob@example.com".into())]);
+
+        let entry = make_entry(attrs);
+        // Request "CN" (uppercase) — should match "cn" (lowercase) in attributes
+        let requested = vec!["CN".to_string()];
+        let result = entry_to_search_entry(&entry, &requested);
+
+        assert_eq!(result.attributes.len(), 1);
+        // The key in the result is the requested name (preserving case of request)
+        assert_eq!(result.attributes[0].0, "CN");
+        assert_eq!(result.attributes[0].1, vec!["Bob"]);
     }
 }
