@@ -1,9 +1,9 @@
 //! Models for cross-functional org groups and membership.
 //!
 //! Covers the `workforce_org_groups` and `workforce_org_group_members` tables
-//! created by migration 122.
+//! created by migration 204.
 
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 use uuid::Uuid;
@@ -26,18 +26,18 @@ pub struct OrgGroup {
     pub name: String,
     /// Optional human-readable description.
     pub description: Option<String>,
-    /// Discriminator (e.g. `"project"`, `"committee"`, `"distribution"`).
+    /// Discriminator (e.g. `"static"`, `"dynamic"`, `"derived"`, `"hybrid"`).
     pub group_type: String,
     /// JSONB filter definition for dynamic groups (null = static).
     pub filter: Option<serde_json::Value>,
     /// Optional node or person responsible for managing this group.
     pub managed_by: Option<Uuid>,
-    /// Date from which membership is valid.
-    pub valid_from: Option<NaiveDate>,
-    /// Date after which membership expires.
-    pub valid_until: Option<NaiveDate>,
-    /// Entry lifecycle state: live, recycled, or tombstone.
-    pub lifecycle_state: String,
+    /// Date from which membership is valid (TIMESTAMPTZ).
+    pub valid_from: Option<DateTime<Utc>>,
+    /// Date after which membership expires (TIMESTAMPTZ).
+    pub valid_until: Option<DateTime<Utc>>,
+    /// Whether this group is active.
+    pub is_active: bool,
     /// Extensible attributes (JSONB).
     pub attributes: serde_json::Value,
     /// Timestamp of record creation.
@@ -54,16 +54,16 @@ pub struct CreateOrgGroup {
     pub name: String,
     /// Optional human-readable description.
     pub description: Option<String>,
-    /// Discriminator (e.g. `"project"`, `"committee"`, `"distribution"`).
+    /// Discriminator (e.g. `"static"`, `"dynamic"`, `"derived"`, `"hybrid"`).
     pub group_type: String,
     /// JSONB filter definition for dynamic groups.
     pub filter: Option<serde_json::Value>,
     /// Optional managing node or person.
     pub managed_by: Option<Uuid>,
     /// Validity start date.
-    pub valid_from: Option<NaiveDate>,
+    pub valid_from: Option<DateTime<Utc>>,
     /// Validity end date.
-    pub valid_until: Option<NaiveDate>,
+    pub valid_until: Option<DateTime<Utc>>,
     /// Extensible attributes (JSONB).
     pub attributes: Option<serde_json::Value>,
 }
@@ -83,11 +83,11 @@ pub struct UpdateOrgGroup {
     /// Updated managing node or person.
     pub managed_by: Option<Uuid>,
     /// Updated validity start date.
-    pub valid_from: Option<NaiveDate>,
+    pub valid_from: Option<DateTime<Utc>>,
     /// Updated validity end date.
-    pub valid_until: Option<NaiveDate>,
-    /// Updated lifecycle state.
-    pub lifecycle_state: Option<String>,
+    pub valid_until: Option<DateTime<Utc>>,
+    /// Updated active flag.
+    pub is_active: Option<bool>,
     /// Updated extensible attributes.
     pub attributes: Option<serde_json::Value>,
 }
@@ -112,8 +112,10 @@ pub struct OrgGroupMember {
     pub member_id: Uuid,
     /// Whether this membership was added manually, overriding dynamic rules.
     pub is_manual_override: bool,
-    /// Timestamp of record creation.
-    pub created_at: DateTime<Utc>,
+    /// Timestamp of when the member was added.
+    pub added_at: DateTime<Utc>,
+    /// UUID of the user who added the member.
+    pub added_by: Option<Uuid>,
 }
 
 /// Request payload to add a member to an org group.
@@ -142,7 +144,7 @@ pub struct OrgMemberOf {
     pub person_id: Uuid,
     /// Group the person belongs to.
     pub group_id: Uuid,
-    /// Source that determined membership (e.g. `"dynamic"`, `"manual"`).
+    /// Source that determined membership (e.g. `"direct"`, `"nested_group"`, `"node"`).
     pub source: String,
     /// Timestamp at which membership was last evaluated.
     pub computed_at: DateTime<Utc>,

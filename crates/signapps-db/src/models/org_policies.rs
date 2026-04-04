@@ -1,7 +1,7 @@
 //! Models for GPO-style org policies and their node/scope links.
 //!
-//! Covers the `workforce_org_policies` and `workforce_org_policy_links` tables
-//! created by migration 122.
+//! Covers the `workforce_org_policies`, `workforce_org_policy_links`, and
+//! `workforce_country_policies` tables created by migration 206.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -26,16 +26,21 @@ pub struct OrgPolicy {
     pub name: String,
     /// Optional human-readable description.
     pub description: Option<String>,
-    /// Policy domain (e.g. `"security"`, `"notifications"`, `"ui"`).
+    /// Policy domain (e.g. `"security"`, `"modules"`, `"naming"`, `"delegation"`,
+    /// `"compliance"`, `"custom"`).
     pub domain: String,
     /// Merge precedence — higher value overrides lower.
     pub priority: i32,
     /// Whether this policy is enforced (non-overridable by child nodes).
     pub is_enforced: bool,
+    /// Whether this policy is disabled (excluded from resolution).
+    pub is_disabled: bool,
     /// Policy settings as JSONB.
     pub settings: serde_json::Value,
-    /// Entry lifecycle state: live, recycled, or tombstone.
-    pub lifecycle_state: String,
+    /// Schema version for forward/backward compatibility.
+    pub version: i32,
+    /// Extensible attributes (JSONB).
+    pub attributes: serde_json::Value,
     /// Timestamp of record creation.
     pub created_at: DateTime<Utc>,
     /// Timestamp of last update.
@@ -50,7 +55,8 @@ pub struct CreateOrgPolicy {
     pub name: String,
     /// Optional human-readable description.
     pub description: Option<String>,
-    /// Policy domain (e.g. `"security"`, `"notifications"`, `"ui"`).
+    /// Policy domain (e.g. `"security"`, `"modules"`, `"naming"`, `"delegation"`,
+    /// `"compliance"`, `"custom"`).
     pub domain: String,
     /// Merge precedence — higher value overrides lower.
     pub priority: Option<i32>,
@@ -74,17 +80,17 @@ pub struct UpdateOrgPolicy {
     pub priority: Option<i32>,
     /// Updated enforcement flag.
     pub is_enforced: Option<bool>,
+    /// Updated disabled flag.
+    pub is_disabled: Option<bool>,
     /// Updated settings.
     pub settings: Option<serde_json::Value>,
-    /// Updated lifecycle state.
-    pub lifecycle_state: Option<String>,
 }
 
 // ============================================================================
 // Org Policy Link
 // ============================================================================
 
-/// A link attaching a policy to an org scope (node, group, or country).
+/// A link attaching a policy to an org scope (node, group, site, country, or global).
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 #[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct OrgPolicyLink {
@@ -92,10 +98,12 @@ pub struct OrgPolicyLink {
     pub id: Uuid,
     /// Policy being linked.
     pub policy_id: Uuid,
-    /// Scope type (e.g. `"node"`, `"group"`, `"country"`).
+    /// Scope type (e.g. `"node"`, `"group"`, `"site"`, `"country"`, `"global"`).
     pub link_type: String,
-    /// UUID of the scope entity.
-    pub link_id: Uuid,
+    /// Identifier of the scope entity (UUID as text, country code, or empty for global).
+    pub link_id: String,
+    /// Whether this link blocks policy inheritance at this point.
+    pub is_blocked: bool,
     /// Timestamp of record creation.
     pub created_at: DateTime<Utc>,
 }
@@ -106,10 +114,10 @@ pub struct OrgPolicyLink {
 pub struct CreatePolicyLink {
     /// Policy to link.
     pub policy_id: Uuid,
-    /// Scope type (e.g. `"node"`, `"group"`, `"country"`).
+    /// Scope type (e.g. `"node"`, `"group"`, `"site"`, `"country"`, `"global"`).
     pub link_type: String,
-    /// UUID of the scope entity.
-    pub link_id: Uuid,
+    /// Identifier of the scope entity (UUID as text, country code, or empty for global).
+    pub link_id: String,
 }
 
 // ============================================================================

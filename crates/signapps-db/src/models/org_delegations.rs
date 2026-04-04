@@ -1,6 +1,6 @@
 //! Models for org management delegations.
 //!
-//! Covers the `workforce_org_delegations` table created by migration 122.
+//! Covers the `workforce_org_delegations` table created by migration 208.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -28,10 +28,16 @@ pub struct OrgDelegation {
     pub delegate_type: String,
     /// UUID of the entity receiving the delegation.
     pub delegate_id: Uuid,
-    /// Org node whose subtree is the scope of the delegation.
-    pub scope_node_id: Uuid,
+    /// Org node whose subtree is the scope of the delegation (nullable).
+    pub scope_node_id: Option<Uuid>,
     /// JSONB map of specific permissions granted.
     pub permissions: serde_json::Value,
+    /// UUID of the person who actually created this delegation (for sub-delegations).
+    pub delegated_by: Option<Uuid>,
+    /// Depth in the delegation chain (0 = original, 1 = sub-delegation, ...).
+    pub depth: i32,
+    /// Parent delegation if this is a sub-delegation.
+    pub parent_delegation_id: Option<Uuid>,
     /// When the delegation expires (null = permanent).
     pub expires_at: Option<DateTime<Utc>>,
     /// Whether the delegation is currently active.
@@ -53,9 +59,11 @@ pub struct CreateDelegation {
     /// UUID of the entity receiving the delegation.
     pub delegate_id: Uuid,
     /// Org node whose subtree defines the scope.
-    pub scope_node_id: Uuid,
+    pub scope_node_id: Option<Uuid>,
     /// JSONB map of specific permissions granted.
     pub permissions: serde_json::Value,
+    /// Optional parent delegation (for sub-delegations).
+    pub parent_delegation_id: Option<Uuid>,
     /// Optional expiry timestamp.
     pub expires_at: Option<DateTime<Utc>>,
 }

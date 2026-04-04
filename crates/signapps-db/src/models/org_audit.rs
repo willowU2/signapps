@@ -1,6 +1,6 @@
 //! Models for the org structure audit log.
 //!
-//! Covers the `workforce_org_audit_log` table created by migration 122.
+//! Covers the `workforce_org_audit_log` table created by migration 209.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -22,9 +22,9 @@ pub struct OrgAuditEntry {
     pub id: Uuid,
     /// Tenant scope.
     pub tenant_id: Uuid,
-    /// UUID of the user or system actor that performed the change.
-    pub actor_id: Uuid,
-    /// Type of the actor (e.g. `"user"`, `"system"`, `"service"`).
+    /// UUID of the user or system actor that performed the change (nullable for triggers).
+    pub actor_id: Option<Uuid>,
+    /// Type of the actor (e.g. `"user"`, `"system"`, `"trigger"`).
     pub actor_type: String,
     /// Action performed (e.g. `"create"`, `"update"`, `"delete"`, `"move"`).
     pub action: String,
@@ -35,7 +35,7 @@ pub struct OrgAuditEntry {
     /// JSON diff of fields that changed.
     pub changes: serde_json::Value,
     /// Arbitrary metadata (e.g. request ID, IP address).
-    pub metadata: Option<serde_json::Value>,
+    pub metadata: serde_json::Value,
     /// Timestamp at which the event occurred.
     pub created_at: DateTime<Utc>,
 }
@@ -47,7 +47,7 @@ pub struct CreateAuditEntry {
     /// Tenant scope.
     pub tenant_id: Uuid,
     /// UUID of the actor performing the change.
-    pub actor_id: Uuid,
+    pub actor_id: Option<Uuid>,
     /// Type of the actor.
     pub actor_type: String,
     /// Action performed.
