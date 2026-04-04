@@ -3,6 +3,7 @@
 
 pub mod assignments;
 pub mod audit;
+pub mod boards;
 pub mod delegations;
 pub mod groups;
 pub mod nodes;
@@ -15,6 +16,7 @@ pub mod trees;
 
 pub use assignments::AssignmentRepository;
 pub use audit::AuditRepository;
+pub use boards::BoardRepository;
 pub use delegations::DelegationRepository;
 pub use groups::GroupRepository;
 pub use nodes::OrgNodeRepository;
