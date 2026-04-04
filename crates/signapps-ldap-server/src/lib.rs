@@ -5,6 +5,7 @@
 //! Extended), and TCP/TLS listener support.
 
 pub mod codec;
+pub mod connection;
 pub mod listener;
 pub mod ops;
 pub mod session;
