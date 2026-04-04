@@ -9,6 +9,7 @@ members = [
     "crates/signapps-dav",
     "crates/signapps-db",
     "crates/signapps-dkim",
+    "crates/signapps-dns-server",
     "crates/signapps-imap",
     "crates/signapps-jmap",
     "crates/signapps-mime",

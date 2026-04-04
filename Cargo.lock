@@ -10262,6 +10262,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-dns-server"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "signapps-ad-core",
+ "signapps-common",
+ "signapps-db",
+ "sqlx",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-docs"
 version = "0.1.0"
 dependencies = [
