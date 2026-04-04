@@ -107,6 +107,8 @@ import {
   Star,
   Gavel,
   Info,
+  Monitor,
+  Key,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -1930,6 +1932,122 @@ function GovernanceTab({ nodeId, persons, allNodes }: GovernanceTabProps) {
 
 type AssignmentWithPerson = Assignment & { person?: Person };
 
+// ── Tab Categories & Visibility ──────────────────────────────────────────────
+
+interface TabDef {
+  id: string;
+  label: string;
+  category: "organisation" | "groupes_politiques" | "infrastructure";
+}
+
+const ALL_TABS: TabDef[] = [
+  // Organisation
+  { id: "details", label: "Details", category: "organisation" },
+  { id: "people", label: "Personnes", category: "organisation" },
+  { id: "governance", label: "Gouvernance", category: "organisation" },
+  // Groupes & Politiques
+  { id: "groups", label: "Groupes", category: "groupes_politiques" },
+  { id: "sites", label: "Sites", category: "groupes_politiques" },
+  { id: "policies", label: "Policies", category: "groupes_politiques" },
+  { id: "gpo", label: "GPO", category: "groupes_politiques" },
+  // Infrastructure
+  { id: "computers", label: "Ordinateurs", category: "infrastructure" },
+  { id: "kerberos", label: "Kerberos", category: "infrastructure" },
+  { id: "dns", label: "DNS", category: "infrastructure" },
+  { id: "audit", label: "Audit", category: "infrastructure" },
+];
+
+const CATEGORY_LABELS: Record<string, string> = {
+  organisation: "Organisation",
+  groupes_politiques: "Groupes & Politiques",
+  infrastructure: "Infrastructure",
+};
+
+const DEFAULT_TAB_VISIBILITY: Record<string, string[]> = {
+  group: [
+    "details",
+    "people",
+    "governance",
+    "groups",
+    "sites",
+    "policies",
+    "gpo",
+    "computers",
+    "kerberos",
+    "dns",
+    "audit",
+  ],
+  subsidiary: [
+    "details",
+    "people",
+    "governance",
+    "groups",
+    "sites",
+    "policies",
+    "gpo",
+    "computers",
+    "kerberos",
+    "audit",
+  ],
+  bu: [
+    "details",
+    "people",
+    "governance",
+    "groups",
+    "sites",
+    "policies",
+    "gpo",
+    "computers",
+    "audit",
+  ],
+  department: [
+    "details",
+    "people",
+    "governance",
+    "groups",
+    "sites",
+    "policies",
+    "gpo",
+    "computers",
+    "audit",
+  ],
+  service: [
+    "details",
+    "people",
+    "groups",
+    "policies",
+    "gpo",
+    "computers",
+    "audit",
+  ],
+  team: ["details", "people", "groups", "gpo", "computers", "audit"],
+  position: ["details", "people", "audit"],
+  computer: ["details", "kerberos", "dns", "audit"],
+};
+
+/** Get visible tabs for a node type, with optional override from schema.visible_tabs */
+function getVisibleTabs(
+  nodeType: string,
+  schema?: Record<string, unknown>,
+): TabDef[] {
+  // Check for override in schema.visible_tabs
+  const override = schema?.visible_tabs as Record<string, string[]> | undefined;
+  if (override) {
+    const allIds = [
+      ...(override.organisation || []),
+      ...(override.groupes_politiques || []),
+      ...(override.infrastructure || []),
+    ];
+    return ALL_TABS.filter((t) => allIds.includes(t.id));
+  }
+  // Default mapping
+  const defaultIds =
+    DEFAULT_TAB_VISIBILITY[nodeType] ?? DEFAULT_TAB_VISIBILITY["department"];
+  return ALL_TABS.filter((t) => defaultIds.includes(t.id));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 interface DetailPanelProps {
   node: OrgNode | null;
   allNodes: OrgNode[];
@@ -2041,6 +2159,11 @@ function DetailPanel({
       loadAssignments();
     }
   }, [node, detailTab, loadAssignments]);
+
+  const visibleTabs = useMemo(() => {
+    if (!node) return ALL_TABS.filter((t) => t.id === "details");
+    return getVisibleTabs(node.node_type);
+  }, [node]);
 
   const handleSave = async () => {
     if (!node) return;
@@ -2189,36 +2312,50 @@ function DetailPanel({
         onValueChange={setDetailTab}
         className="flex-1 flex flex-col overflow-hidden"
       >
-        <TabsList className={cn("mx-4 mt-3 shrink-0", focusMode && "mx-6")}>
-          <TabsTrigger value="details" className="flex-1 text-xs">
-            <FileText className="h-3 w-3 mr-1" />
-            Details
-          </TabsTrigger>
-          <TabsTrigger value="people" className="flex-1 text-xs">
-            <Users className="h-3 w-3 mr-1" />
-            Personnes
-          </TabsTrigger>
-          <TabsTrigger value="governance" className="flex-1 text-xs">
-            <Gavel className="h-3 w-3 mr-1" />
-            Gouvernance
-          </TabsTrigger>
-          <TabsTrigger value="children" className="flex-1 text-xs">
-            <FolderTree className="h-3 w-3 mr-1" />
-            Sous-noeuds
-          </TabsTrigger>
-          <TabsTrigger value="policies" className="flex-1 text-xs">
-            <Shield className="h-3 w-3 mr-1" />
-            Politiques
-          </TabsTrigger>
-          <TabsTrigger value="audit" className="flex-1 text-xs">
-            <History className="h-3 w-3 mr-1" />
-            Audit
-          </TabsTrigger>
+        {/* Categorized TabsList */}
+        <TabsList
+          className={cn(
+            "mx-4 mt-3 shrink-0 w-auto h-auto flex-wrap justify-start gap-0 bg-transparent p-0 border-b",
+            focusMode && "mx-6",
+          )}
+        >
+          {(
+            ["organisation", "groupes_politiques", "infrastructure"] as const
+          ).map((category) => {
+            const categoryTabs = visibleTabs.filter(
+              (t) => t.category === category,
+            );
+            if (categoryTabs.length === 0) return null;
+            return (
+              <div
+                key={category}
+                className="flex items-center gap-0.5 pr-3 mr-3 border-r border-border/30 last:border-r-0 last:mr-0 last:pr-0 py-1"
+              >
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider mr-2 hidden lg:inline">
+                  {CATEGORY_LABELS[category]}
+                </span>
+                {categoryTabs.map((tab) => (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className="text-xs px-2 py-1 h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                  >
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </div>
+            );
+          })}
           {focusMode && (
-            <TabsTrigger value="delegations" className="flex-1 text-xs">
-              <UserCheck className="h-3 w-3 mr-1" />
-              Delegations
-            </TabsTrigger>
+            <div className="flex items-center gap-0.5 py-1">
+              <TabsTrigger
+                value="delegations"
+                className="text-xs px-2 py-1 h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                <UserCheck className="h-3 w-3 mr-1" />
+                Delegations
+              </TabsTrigger>
+            </div>
           )}
         </TabsList>
 
@@ -2428,6 +2565,46 @@ function DetailPanel({
           {/* Audit tab */}
           <TabsContent value="audit" className="mt-0">
             <AuditTab entityType="node" entityId={node.id} />
+          </TabsContent>
+
+          {/* GPO tab */}
+          <TabsContent value="gpo" className="mt-0 p-4">
+            <div className="text-center text-muted-foreground py-8">
+              <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Strategies de groupe (GPO)</p>
+              <p className="text-xs mt-1">
+                Les GPO liees a cette OU seront affichees ici
+              </p>
+            </div>
+          </TabsContent>
+
+          {/* Computers tab */}
+          <TabsContent value="computers" className="mt-0 p-4">
+            <div className="text-center text-muted-foreground py-8">
+              <Monitor className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Ordinateurs</p>
+              <p className="text-xs mt-1">
+                Les machines jointes au domaine dans cette OU
+              </p>
+            </div>
+          </TabsContent>
+
+          {/* Kerberos tab */}
+          <TabsContent value="kerberos" className="mt-0 p-4">
+            <div className="text-center text-muted-foreground py-8">
+              <Key className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Kerberos</p>
+              <p className="text-xs mt-1">Principals et cles de chiffrement</p>
+            </div>
+          </TabsContent>
+
+          {/* DNS tab */}
+          <TabsContent value="dns" className="mt-0 p-4">
+            <div className="text-center text-muted-foreground py-8">
+              <Globe className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">DNS</p>
+              <p className="text-xs mt-1">Records DNS associes a ce noeud</p>
+            </div>
           </TabsContent>
 
           {/* Delegations tab (focus mode only) */}
