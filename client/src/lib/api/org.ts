@@ -24,35 +24,41 @@ const client = getClient(ServiceName.WORKFORCE);
 export const orgApi = {
   // ── Trees ────────────────────────────────────────────────────────────────
   trees: {
-    list: () => client.get<OrgTree[]>("/workforce/org/trees"),
+    list: () => client.get<OrgTree[]>("/workforce/org/tree"),
     create: (data: { tree_type: TreeType; name: string }) =>
-      client.post<OrgTree>("/workforce/org/trees", data),
+      client.post<OrgTree>("/workforce/org/nodes", {
+        name: data.name,
+        node_type: data.tree_type || "department",
+        parent_id: null,
+      }),
     getFull: (id: string) =>
-      client.get<{ tree: OrgTree; nodes: OrgNode[] }>(`/org/trees/${id}/full`),
+      client.get<{ tree: OrgTree; nodes: OrgNode[] }>(
+        `/workforce/org/nodes/${id}/children`,
+      ),
   },
 
   // ── Nodes ────────────────────────────────────────────────────────────────
   nodes: {
-    get: (id: string) => client.get<OrgNode>(`/org/nodes/${id}`),
+    get: (id: string) => client.get<OrgNode>(`/workforce/org/nodes/${id}`),
     create: (data: Partial<OrgNode>) =>
       client.post<OrgNode>("/workforce/org/nodes", data),
     update: (id: string, data: Partial<OrgNode>) =>
-      client.put<OrgNode>(`/org/nodes/${id}`, data),
-    delete: (id: string) => client.delete(`/org/nodes/${id}`),
+      client.put<OrgNode>(`/workforce/org/nodes/${id}`, data),
+    delete: (id: string) => client.delete(`/workforce/org/nodes/${id}`),
     move: (id: string, parentId: string) =>
-      client.post(`/org/nodes/${id}/move`, { parent_id: parentId }),
+      client.post(`/workforce/org/nodes/${id}/move`, { parent_id: parentId }),
     children: (id: string) =>
-      client.get<OrgNode[]>(`/org/nodes/${id}/children`),
+      client.get<OrgNode[]>(`/workforce/org/nodes/${id}/children`),
     descendants: (id: string) =>
-      client.get<OrgNode[]>(`/org/nodes/${id}/descendants`),
+      client.get<OrgNode[]>(`/workforce/org/nodes/${id}/descendants`),
     ancestors: (id: string) =>
-      client.get<OrgNode[]>(`/org/nodes/${id}/ancestors`),
+      client.get<OrgNode[]>(`/workforce/org/nodes/${id}/ancestors`),
     assignments: (id: string) =>
-      client.get<Assignment[]>(`/org/nodes/${id}/assignments`),
+      client.get<Assignment[]>(`/workforce/org/nodes/${id}/assignments`),
     permissions: (id: string) =>
-      client.get<PermissionProfile>(`/org/nodes/${id}/permissions`),
+      client.get<PermissionProfile>(`/workforce/org/nodes/${id}/permissions`),
     setPermissions: (id: string, data: Partial<PermissionProfile>) =>
-      client.put(`/org/nodes/${id}/permissions`, data),
+      client.put(`/workforce/org/nodes/${id}/permissions`, data),
   },
 
   // ── Persons ──────────────────────────────────────────────────────────────
@@ -86,13 +92,15 @@ export const orgApi = {
   // ── Assignments ──────────────────────────────────────────────────────────
   assignments: {
     create: (data: Partial<Assignment>) =>
-      client.post<Assignment>("/assignments", data),
+      client.post<Assignment>("/workforce/assignments", data),
     update: (id: string, data: Partial<Assignment>) =>
-      client.put<Assignment>(`/assignments/${id}`, data),
+      client.put<Assignment>(`/workforce/assignments/${id}`, data),
     end: (id: string, reason?: string) =>
-      client.delete(`/assignments/${id}`, { data: { reason } }),
+      client.delete(`/workforce/assignments/${id}`, { data: { reason } }),
     history: (params?: Record<string, unknown>) =>
-      client.get<AssignmentHistory[]>("/assignments/history", { params }),
+      client.get<AssignmentHistory[]>("/workforce/assignments/history", {
+        params,
+      }),
   },
 
   // ── Sites ────────────────────────────────────────────────────────────────
