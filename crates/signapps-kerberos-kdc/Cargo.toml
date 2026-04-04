@@ -1,0 +1,35 @@
+[package]
+name = "signapps-kerberos-kdc"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Kerberos KDC implementation — AS/TGS request handling, ticket crypto, PAC generation"
+
+[dependencies]
+tokio = { workspace = true }
+sqlx = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+bytes = { workspace = true }
+rand = { workspace = true }
+hmac = { workspace = true }
+sha2 = { workspace = true }
+aes = "0.8"
+cbc = "0.1"
+md-5 = "0.10"
+md4 = "0.10"
+
+signapps-common = { path = "../signapps-common" }
+signapps-db = { path = "../signapps-db" }
+signapps-ad-core = { path = "../signapps-ad-core" }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+hex-literal = "0.4"

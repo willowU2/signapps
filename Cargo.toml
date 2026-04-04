@@ -4,6 +4,7 @@ members = [
     # Shared crates
     "crates/signapps-ad-core",
     "crates/signapps-ldap-server",
+    "crates/signapps-kerberos-kdc",
     "crates/signapps-cache",
     "crates/signapps-common",
     "crates/signapps-dav",
