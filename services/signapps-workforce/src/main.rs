@@ -119,6 +119,10 @@ fn create_router(state: AppState) -> Router {
         .route("/nodes/{id}", get(handlers::org::get_node))
         .route("/nodes/{id}", put(handlers::org::update_node))
         .route("/nodes/{id}", delete(handlers::org::delete_node))
+        .route(
+            "/nodes/{id}/recursive",
+            delete(handlers::org::delete_node_recursive),
+        )
         .route("/nodes/{id}/move", post(handlers::org::move_node))
         .route("/nodes/{id}/children", get(handlers::org::get_children))
         .route(

@@ -516,6 +516,134 @@ pub async fn delete_node(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// Recursively delete a node and all its descendants
+///
+/// Deletes the target node plus every node beneath it in the hierarchy.
+/// Closure-table entries are cleaned up in the same transaction.
+///
+/// # Errors
+///
+/// Returns `404` if the node does not exist, `500` on database errors.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/workforce/org/nodes/{id}/recursive",
+    params(("id" = uuid::Uuid, Path, description = "Node ID")),
+    responses(
+        (status = 204, description = "Node and all descendants deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Node not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Org"
+)]
+#[tracing::instrument(skip_all)]
+pub async fn delete_node_recursive(
+    State(state): State<AppState>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let mut tx = state.pool.begin().await.map_err(|e| {
+        tracing::error!("Failed to begin transaction: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    // Verify the target node exists
+    let exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2)",
+    )
+    .bind(id)
+    .bind(ctx.tenant_id)
+    .fetch_one(&mut *tx)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to check node existence: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    if !exists {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    // Collect all descendant IDs via recursive CTE on parent_id
+    let descendant_rows: Vec<(Uuid,)> = sqlx::query_as(
+        r#"
+        WITH RECURSIVE descendants AS (
+            SELECT id FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2
+            UNION ALL
+            SELECT n.id FROM workforce_org_nodes n
+            INNER JOIN descendants d ON n.parent_id = d.id
+            WHERE n.tenant_id = $2
+        )
+        SELECT id FROM descendants
+        "#,
+    )
+    .bind(id)
+    .bind(ctx.tenant_id)
+    .fetch_all(&mut *tx)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to collect descendants: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let all_ids: Vec<Uuid> = descendant_rows.into_iter().map(|(did,)| did).collect();
+
+    if all_ids.is_empty() {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    // Delete closure table entries for all collected nodes
+    sqlx::query(
+        "DELETE FROM workforce_org_closure WHERE descendant_id = ANY($1) OR ancestor_id = ANY($1)",
+    )
+    .bind(&all_ids)
+    .execute(&mut *tx)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to delete closure entries: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    // Unlink employees from nodes about to be deleted (set org_node_id to null)
+    sqlx::query(
+        "UPDATE workforce_employees SET org_node_id = NULL WHERE org_node_id = ANY($1) AND tenant_id = $2",
+    )
+    .bind(&all_ids)
+    .bind(ctx.tenant_id)
+    .execute(&mut *tx)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to unlink employees: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    // Delete all collected nodes
+    sqlx::query("DELETE FROM workforce_org_nodes WHERE id = ANY($1) AND tenant_id = $2")
+        .bind(&all_ids)
+        .bind(ctx.tenant_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to delete nodes: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    tx.commit().await.map_err(|e| {
+        tracing::error!("Failed to commit transaction: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    tracing::info!(node_id = %id, count = all_ids.len(), "Recursively deleted node and descendants");
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
 /// Move a node to a new parent
 #[utoipa::path(
     post,

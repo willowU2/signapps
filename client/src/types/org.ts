@@ -51,7 +51,7 @@ export interface OrgTree {
 
 export interface OrgNode {
   id: string;
-  tree_id: string;
+  tenant_id?: string;
   parent_id?: string;
   node_type: string;
   name: string;
@@ -60,6 +60,8 @@ export interface OrgNode {
   config: Record<string, unknown>;
   sort_order: number;
   is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Assignment {

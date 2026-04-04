@@ -30,18 +30,25 @@ const client = getClient(ServiceName.WORKFORCE);
 
 export const orgApi = {
   // ── Trees ────────────────────────────────────────────────────────────────
+  // A "tree" is a root node (parent_id = null). The backend has no OrgTree entity.
   trees: {
-    list: () => client.get<OrgTree[]>("/workforce/org/tree"),
+    /** GET /workforce/org/tree returns the full tree hierarchy. We extract root-level nodes as "trees". */
+    list: () => client.get<OrgNode[]>("/workforce/org/tree"),
+    /** Create a new tree = create a root node with the right node_type and parent_id: null */
     create: (data: { tree_type: TreeType; name: string }) =>
-      client.post<OrgTree>("/workforce/org/nodes", {
+      client.post<OrgNode>("/workforce/org/nodes", {
         name: data.name,
-        node_type: data.tree_type || "department",
+        node_type:
+          data.tree_type === "clients"
+            ? "client_group"
+            : data.tree_type === "suppliers"
+              ? "supplier_group"
+              : "group",
         parent_id: null,
       }),
+    /** Get all descendants of a root node (the full sub-tree) */
     getFull: (id: string) =>
-      client.get<{ tree: OrgTree; nodes: OrgNode[] }>(
-        `/workforce/org/nodes/${id}/children`,
-      ),
+      client.get<OrgNode[]>(`/workforce/org/nodes/${id}/descendants`),
   },
 
   // ── Nodes ────────────────────────────────────────────────────────────────
@@ -52,6 +59,8 @@ export const orgApi = {
     update: (id: string, data: Partial<OrgNode>) =>
       client.put<OrgNode>(`/workforce/org/nodes/${id}`, data),
     delete: (id: string) => client.delete(`/workforce/org/nodes/${id}`),
+    deleteRecursive: (id: string) =>
+      client.delete(`/workforce/org/nodes/${id}/recursive`),
     move: (id: string, parentId: string) =>
       client.post(`/workforce/org/nodes/${id}/move`, { parent_id: parentId }),
     children: (id: string) =>

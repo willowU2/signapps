@@ -2395,11 +2395,38 @@ export default function OrgStructurePage() {
       setCreateTreeDialogOpen(false);
       setNewTreeName("");
       await fetchTrees();
-      setCurrentTree(res.data!);
+      // Map the created root node (OrgNode) to OrgTree shape
+      const createdNode = res.data!;
+      setCurrentTree({
+        id: createdNode.id,
+        tenant_id: createdNode.tenant_id ?? "",
+        tree_type: newTreeType,
+        name: createdNode.name,
+      });
     } catch {
       toast.error("Erreur lors de la creation");
     } finally {
       setCreatingTree(false);
+    }
+  };
+
+  const handleDeleteTree = async () => {
+    if (!currentTree) return;
+    if (
+      !confirm(
+        `Supprimer l'arbre "${currentTree.name}" et tous ses noeuds ? Cette action est irreversible.`,
+      )
+    )
+      return;
+    try {
+      await orgApi.nodes.deleteRecursive(currentTree.id);
+      toast.success("Arbre supprime");
+      setCurrentTree(null);
+      selectNode(null);
+      setDetailOpen(false);
+      await fetchTrees();
+    } catch {
+      toast.error("Erreur lors de la suppression de l'arbre");
     }
   };
 
@@ -2417,8 +2444,8 @@ export default function OrgStructurePage() {
     setAddingNode(true);
     try {
       await orgApi.nodes.create({
-        tree_id: currentTree.id,
-        parent_id: addNodeParent?.id,
+        // If no parent selected, add under the root (currentTree IS the root node)
+        parent_id: addNodeParent?.id ?? currentTree.id,
         node_type: newNodeType,
         name: newNodeName.trim(),
         code: newNodeCode.trim() || undefined,
@@ -2446,14 +2473,26 @@ export default function OrgStructurePage() {
     if (!nodeToDelete || !currentTree) return;
     setDeleting(true);
     try {
-      await orgApi.nodes.delete(nodeToDelete.id);
+      // Check if the node has children — if so, use recursive delete
+      const hasChildren = nodes.some((n) => n.parent_id === nodeToDelete.id);
+      if (hasChildren) {
+        await orgApi.nodes.deleteRecursive(nodeToDelete.id);
+      } else {
+        await orgApi.nodes.delete(nodeToDelete.id);
+      }
       toast.success("Noeud supprime");
       setDeleteDialogOpen(false);
       if (selectedNode?.id === nodeToDelete.id) {
         selectNode(null);
         setDetailOpen(false);
       }
-      fetchNodes(currentTree.id);
+      // If deleting the root node (the tree itself), refresh trees and clear current
+      if (nodeToDelete.id === currentTree.id) {
+        setCurrentTree(null);
+        await fetchTrees();
+      } else {
+        fetchNodes(currentTree.id);
+      }
     } catch {
       toast.error("Erreur lors de la suppression");
     } finally {
@@ -2633,6 +2672,16 @@ export default function OrgStructurePage() {
               icon={<Building2 className="h-5 w-5" />}
               actions={
                 <div className="flex items-center gap-2">
+                  {currentTree && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={handleDeleteTree}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Supprimer l&apos;arbre
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"

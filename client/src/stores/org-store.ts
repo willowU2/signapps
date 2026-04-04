@@ -14,6 +14,7 @@ import type {
   OrgContext,
   OrgGroup,
   OrgPolicy,
+  TreeType,
 } from "@/types/org";
 
 interface OrgState {
@@ -107,7 +108,31 @@ export const useOrgStore = create<OrgState>()(
         set({ treesLoading: true, treesError: null });
         try {
           const res = await orgApi.trees.list();
-          set({ trees: res.data ?? [], treesLoading: false });
+          // The backend returns OrgTreeNode[] (full hierarchy).
+          // We extract root nodes (parent_id = null) and map them to OrgTree shape.
+          const raw = res.data ?? [];
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const allNodes: any[] = Array.isArray(raw) ? raw : [];
+          // GET /workforce/org/tree returns OrgTreeNode[] with serde(flatten),
+          // so each item has all OrgNode fields directly (id, parent_id, node_type, name, ...)
+          // plus children, depth, employee_count. Root nodes are the top-level items (parent_id = null).
+          const roots: OrgTree[] = allNodes
+            .filter((n) => !n.parent_id)
+            .map((n) => {
+              const nodeType = (n.node_type as string) ?? "";
+              const treeType: TreeType = nodeType.startsWith("client")
+                ? "clients"
+                : nodeType.startsWith("supplier")
+                  ? "suppliers"
+                  : "internal";
+              return {
+                id: n.id as string,
+                tenant_id: (n.tenant_id as string) ?? "",
+                tree_type: treeType,
+                name: n.name as string,
+              };
+            });
+          set({ trees: roots, treesLoading: false });
         } catch (err: unknown) {
           const message =
             err instanceof Error
@@ -122,8 +147,15 @@ export const useOrgStore = create<OrgState>()(
       fetchNodes: async (treeId: string) => {
         set({ nodesLoading: true, nodesError: null });
         try {
-          const res = await orgApi.trees.getFull(treeId);
-          set({ nodes: res.data?.nodes ?? [], nodesLoading: false });
+          // Get the root node itself + all its descendants
+          const [rootRes, descRes] = await Promise.all([
+            orgApi.nodes.get(treeId),
+            orgApi.trees.getFull(treeId),
+          ]);
+          const root = rootRes.data;
+          const descendants = descRes.data ?? [];
+          const allNodes = root ? [root, ...descendants] : descendants;
+          set({ nodes: allNodes, nodesLoading: false });
         } catch (err: unknown) {
           const message =
             err instanceof Error
