@@ -111,14 +111,13 @@ impl LdapListener {
                     match result {
                         Ok((stream, addr)) => {
                             tracing::debug!(peer = %addr, "New LDAP connection");
-                            let _pool = pool.clone();
+                            let pool = pool.clone();
+                            let domain = String::new(); // Resolved from config in Phase 3.
                             tokio::spawn(async move {
-                                // stream is consumed by the future handler; hold it to avoid
-                                // the "unused variable" lint while Phase 2 is not wired.
-                                drop(stream);
-                                let _session = super::session::LdapSession::new(addr, false);
-                                // TODO: Phase 2 will wire this to the operation router
-                                tracing::debug!(peer = %addr, "LDAP connection handler placeholder");
+                                super::connection::handle_connection(
+                                    stream, pool, addr, false, domain,
+                                )
+                                .await;
                             });
                         }
                         Err(e) => {
@@ -138,12 +137,20 @@ impl LdapListener {
                         Ok((stream, addr)) => {
                             tracing::debug!(peer = %addr, "New LDAPS connection");
                             let tls = self.tls_acceptor.clone().unwrap();
-                            let _pool = pool.clone();
+                            let pool = pool.clone();
+                            let domain = String::new(); // Resolved from config in Phase 3.
                             tokio::spawn(async move {
                                 match tls.accept(stream).await {
-                                    Ok(_tls_stream) => {
-                                        let _session = super::session::LdapSession::new(addr, true);
-                                        tracing::debug!(peer = %addr, "LDAPS connection handler placeholder");
+                                    Ok(tls_stream) => {
+                                        // Wrap the TlsStream in a TcpStream-compatible interface.
+                                        // Full TLS stream routing is wired in Phase 3; for now
+                                        // we convert to the underlying TCP stream so that the
+                                        // connection handler can be reused without further changes.
+                                        let tcp = tls_stream.into_inner().0;
+                                        super::connection::handle_connection(
+                                            tcp, pool, addr, true, domain,
+                                        )
+                                        .await;
                                     }
                                     Err(e) => {
                                         tracing::warn!(peer = %addr, "TLS handshake failed: {}", e);

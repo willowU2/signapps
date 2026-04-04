@@ -6,6 +6,7 @@
 //! they never access the database directly.
 
 pub mod acl;
+pub mod builder;
 pub mod dn;
 pub mod entry;
 pub mod filter;
