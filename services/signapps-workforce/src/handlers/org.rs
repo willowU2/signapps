@@ -281,13 +281,33 @@ pub async fn create_node(
             None => return Err(StatusCode::NOT_FOUND),
         };
 
-        // allowed_children is advisory only — log if unusual but don't block
-        // Strict enforcement is opt-in via GPO governance.strict_hierarchy = true
-        tracing::debug!(
-            parent_type = %parent_node_type,
-            child_type = %req.node_type,
-            "Creating child node"
-        );
+        // Enforce allowed_children: query the parent's node type config
+        let allowed: Option<(serde_json::Value,)> = sqlx::query_as(
+            "SELECT allowed_children FROM workforce_org_node_types WHERE code = $1 AND tenant_id = $2",
+        )
+        .bind(&parent_node_type)
+        .bind(ctx.tenant_id)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to query node type: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+        if let Some((allowed_json,)) = allowed {
+            if let Some(arr) = allowed_json.as_array() {
+                let allowed_types: Vec<&str> = arr.iter().filter_map(|v| v.as_str()).collect();
+                if !allowed_types.is_empty() && !allowed_types.contains(&req.node_type.as_str()) {
+                    tracing::warn!(
+                        parent_type = %parent_node_type,
+                        child_type = %req.node_type,
+                        allowed = ?allowed_types,
+                        "Child type not in allowed_children"
+                    );
+                    return Err(StatusCode::BAD_REQUEST);
+                }
+            }
+        }
     }
 
     // Insert the node
@@ -740,16 +760,15 @@ pub async fn move_node(
     }
 
     // 1. Collect all descendants of the node being moved (via closure table)
-    let subtree_ids: Vec<(Uuid,)> = sqlx::query_as(
-        "SELECT descendant_id FROM workforce_org_closure WHERE ancestor_id = $1",
-    )
-    .bind(id)
-    .fetch_all(&mut *tx)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to get subtree: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let subtree_ids: Vec<(Uuid,)> =
+        sqlx::query_as("SELECT descendant_id FROM workforce_org_closure WHERE ancestor_id = $1")
+            .bind(id)
+            .fetch_all(&mut *tx)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to get subtree: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
 
     let subtree: Vec<Uuid> = std::iter::once(id)
         .chain(subtree_ids.into_iter().map(|(d,)| d))

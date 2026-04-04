@@ -101,6 +101,21 @@ pub struct UpdateBoardMember {
 // Effective board (with inheritance info)
 // ============================================================================
 
+/// Lightweight board summary for tree view display.
+///
+/// Contains just enough data to render board indicators without fetching
+/// full board details for every node.
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+pub struct BoardSummary {
+    /// The node this board is attached to.
+    pub node_id: Uuid,
+    /// The board ID.
+    pub board_id: Uuid,
+    /// Person ID of the decision maker (if any).
+    pub decision_maker_person_id: Option<Uuid>,
+}
+
 /// Resolved board for a node, which may be inherited from an ancestor.
 ///
 /// When a node has no board of its own, the system walks up the parent chain

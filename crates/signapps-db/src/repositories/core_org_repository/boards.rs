@@ -1,7 +1,7 @@
 //! Repository for governance boards — CRUD and effective-board resolution.
 
 use crate::models::org_boards::{
-    CreateBoardMember, EffectiveBoard, OrgBoard, OrgBoardMember, UpdateBoardMember,
+    BoardSummary, CreateBoardMember, EffectiveBoard, OrgBoard, OrgBoardMember, UpdateBoardMember,
 };
 use signapps_common::{Error, Result};
 use sqlx::PgPool;
@@ -17,13 +17,12 @@ impl BoardRepository {
     ///
     /// Returns `Error::Database` if the query fails.
     pub async fn get_board_by_node(pool: &PgPool, node_id: Uuid) -> Result<Option<OrgBoard>> {
-        let board = sqlx::query_as::<_, OrgBoard>(
-            "SELECT * FROM workforce_org_boards WHERE node_id = $1",
-        )
-        .bind(node_id)
-        .fetch_optional(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        let board =
+            sqlx::query_as::<_, OrgBoard>("SELECT * FROM workforce_org_boards WHERE node_id = $1")
+                .bind(node_id)
+                .fetch_optional(pool)
+                .await
+                .map_err(|e| Error::Database(e.to_string()))?;
         Ok(board)
     }
 
@@ -69,10 +68,7 @@ impl BoardRepository {
     /// # Errors
     ///
     /// Returns `Error::Database` if the query fails.
-    pub async fn list_board_members(
-        pool: &PgPool,
-        board_id: Uuid,
-    ) -> Result<Vec<OrgBoardMember>> {
+    pub async fn list_board_members(pool: &PgPool, board_id: Uuid) -> Result<Vec<OrgBoardMember>> {
         let members = sqlx::query_as::<_, OrgBoardMember>(
             r#"
             SELECT * FROM workforce_org_board_members
@@ -151,6 +147,25 @@ impl BoardRepository {
         Ok(member)
     }
 
+    /// Clear the `is_decision_maker` flag on all members of a board.
+    ///
+    /// Called before setting a new decision maker to enforce the uniqueness
+    /// invariant (exactly one decision maker per board).
+    ///
+    /// # Errors
+    ///
+    /// Returns `Error::Database` if the query fails.
+    pub async fn clear_decision_maker(pool: &PgPool, board_id: Uuid) -> Result<()> {
+        sqlx::query(
+            "UPDATE workforce_org_board_members SET is_decision_maker = false WHERE board_id = $1 AND is_decision_maker = true",
+        )
+        .bind(board_id)
+        .execute(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+        Ok(())
+    }
+
     /// Remove a member from a board.
     ///
     /// # Errors
@@ -163,6 +178,52 @@ impl BoardRepository {
             .await
             .map_err(|e| Error::Database(e.to_string()))?;
         Ok(())
+    }
+
+    /// List all boards with their decision makers for a given tenant.
+    ///
+    /// Returns a flat list of `(node_id, board_id, decision_maker_person_id)` tuples.
+    /// Used for batch-fetching board status to display in the tree view.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Error::Database` if the query fails.
+    pub async fn list_all_boards_summary(
+        pool: &PgPool,
+        tenant_id: Uuid,
+    ) -> Result<Vec<BoardSummary>> {
+        let rows = sqlx::query_as::<_, BoardSummary>(
+            r#"
+            SELECT
+                b.node_id,
+                b.id AS board_id,
+                dm.person_id AS decision_maker_person_id
+            FROM workforce_org_boards b
+            INNER JOIN workforce_org_nodes n ON n.id = b.node_id AND n.tenant_id = $1
+            LEFT JOIN workforce_org_board_members dm
+                ON dm.board_id = b.id AND dm.is_decision_maker = true
+            "#,
+        )
+        .bind(tenant_id)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+        Ok(rows)
+    }
+
+    /// Check if a node is a root node (has no parent).
+    ///
+    /// # Errors
+    ///
+    /// Returns `Error::Database` if the query fails.
+    pub async fn is_root_node(pool: &PgPool, node_id: Uuid) -> Result<bool> {
+        let row: Option<(Option<Uuid>,)> =
+            sqlx::query_as("SELECT parent_id FROM workforce_org_nodes WHERE id = $1")
+                .bind(node_id)
+                .fetch_optional(pool)
+                .await
+                .map_err(|e| Error::Database(e.to_string()))?;
+        Ok(matches!(row, Some((None,))))
     }
 
     /// Resolve the effective board for a node by walking up the parent chain.
@@ -200,9 +261,8 @@ impl BoardRepository {
         .await
         .map_err(|e| Error::Database(e.to_string()))?;
 
-        let (board_node_id, ancestor_id, ancestor_name) = row.ok_or_else(|| {
-            Error::NotFound("No board found in ancestor chain".to_string())
-        })?;
+        let (board_node_id, ancestor_id, ancestor_name) =
+            row.ok_or_else(|| Error::NotFound("No board found in ancestor chain".to_string()))?;
 
         let board = Self::get_board_by_node(pool, board_node_id)
             .await?

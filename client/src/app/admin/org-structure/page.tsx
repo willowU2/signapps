@@ -69,6 +69,7 @@ import type {
   ResponsibilityType,
   EffectiveBoard,
   OrgBoardMember,
+  BoardSummary,
 } from "@/types/org";
 import {
   Building2,
@@ -383,6 +384,11 @@ function getAncestorNames(nodeId: string, nodes: OrgNode[]): string[] {
 // Tree View — Left-panel tree node (recursive)
 // =============================================================================
 
+interface BoardInfo {
+  decisionMakerName?: string;
+  isInherited: boolean;
+}
+
 interface TreeNodeItemProps {
   node: TreeNode;
   depth: number;
@@ -397,6 +403,7 @@ interface TreeNodeItemProps {
   onDrop: (targetId: string) => void;
   onDragEnd: () => void;
   onDoubleClick?: (node: TreeNode) => void;
+  boardMap?: Record<string, BoardInfo>;
 }
 
 function matchesSearch(node: TreeNode, query: string): boolean {
@@ -421,6 +428,7 @@ function TreeNodeItem({
   onDrop,
   onDragEnd,
   onDoubleClick,
+  boardMap,
 }: TreeNodeItemProps) {
   const [dragOver, setDragOver] = useState(false);
   const isExpanded = expanded.has(node.id);
@@ -515,6 +523,34 @@ function TreeNodeItem({
               {cfg.label}
             </Badge>
 
+            {/* Governance board indicator */}
+            {boardMap?.[node.id] && (
+              <div
+                className="flex items-center gap-1 shrink-0"
+                title={
+                  boardMap[node.id].isInherited
+                    ? "Gouvernance heritee"
+                    : "Gouvernance propre"
+                }
+              >
+                <Shield
+                  className={cn(
+                    "h-3 w-3",
+                    boardMap[node.id].isInherited
+                      ? "text-muted-foreground/50"
+                      : "text-blue-500",
+                  )}
+                />
+                {boardMap[node.id].decisionMakerName && (
+                  <span className="text-[9px] bg-muted rounded-full w-4 h-4 flex items-center justify-center font-medium text-muted-foreground">
+                    {boardMap[node.id]
+                      .decisionMakerName!.slice(0, 2)
+                      .toUpperCase()}
+                  </span>
+                )}
+              </div>
+            )}
+
             {/* Name */}
             <span className="text-sm font-medium flex-1 truncate">
               {node.name}
@@ -583,6 +619,7 @@ function TreeNodeItem({
               onDrop={onDrop}
               onDragEnd={onDragEnd}
               onDoubleClick={onDoubleClick}
+              boardMap={boardMap}
             />
           ))}
         </div>
@@ -601,6 +638,7 @@ interface OrgChartCardProps {
   onSelect: (node: TreeNode) => void;
   collapsed: Set<string>;
   onToggleCollapse: (id: string) => void;
+  boardMap?: Record<string, BoardInfo>;
 }
 
 function OrgChartCard({
@@ -609,6 +647,7 @@ function OrgChartCard({
   onSelect,
   collapsed,
   onToggleCollapse,
+  boardMap,
 }: OrgChartCardProps) {
   const cfg = getNodeTypeConfig(node.node_type);
   const isSelected = selectedId === node.id;
@@ -627,16 +666,44 @@ function OrgChartCard({
           isSelected && "ring-2 ring-primary shadow-lg scale-105",
         )}
       >
-        <Badge
-          variant="secondary"
-          className={cn(
-            "text-[9px] px-1 py-0 font-medium mb-1",
-            cfg.color,
-            cfg.bg,
+        <div className="flex items-center justify-center gap-1 mb-1">
+          <Badge
+            variant="secondary"
+            className={cn(
+              "text-[9px] px-1 py-0 font-medium",
+              cfg.color,
+              cfg.bg,
+            )}
+          >
+            {cfg.label}
+          </Badge>
+          {boardMap?.[node.id] && (
+            <div
+              className="flex items-center gap-0.5"
+              title={
+                boardMap[node.id].isInherited
+                  ? "Gouvernance heritee"
+                  : "Gouvernance propre"
+              }
+            >
+              <Shield
+                className={cn(
+                  "h-3 w-3",
+                  boardMap[node.id].isInherited
+                    ? "text-muted-foreground/50"
+                    : "text-blue-500",
+                )}
+              />
+              {boardMap[node.id].decisionMakerName && (
+                <span className="text-[9px] bg-muted rounded-full w-4 h-4 flex items-center justify-center font-medium text-muted-foreground">
+                  {boardMap[node.id]
+                    .decisionMakerName!.slice(0, 2)
+                    .toUpperCase()}
+                </span>
+              )}
+            </div>
           )}
-        >
-          {cfg.label}
-        </Badge>
+        </div>
         <div className="text-sm font-semibold truncate">{node.name}</div>
         {node.code && (
           <div className="text-xs text-muted-foreground font-mono">
@@ -692,6 +759,7 @@ function OrgChartCard({
                     onSelect={onSelect}
                     collapsed={collapsed}
                     onToggleCollapse={onToggleCollapse}
+                    boardMap={boardMap}
                   />
                 </div>
               ))}
@@ -2716,6 +2784,9 @@ export default function OrgStructurePage() {
   const [moveTargetId, setMoveTargetId] = useState("");
   const [moving, setMoving] = useState(false);
 
+  // Board governance map for tree indicators
+  const [boardMap, setBoardMap] = useState<Record<string, BoardInfo>>({});
+
   // Build tree hierarchy
   const treeHierarchy = useMemo(() => buildTree(nodes), [nodes]);
 
@@ -2745,6 +2816,53 @@ export default function OrgStructurePage() {
     fetchGroups();
     fetchPolicies();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load board governance map for tree indicators
+  useEffect(() => {
+    if (nodes.length === 0) return;
+    orgApi.nodes
+      .listBoards()
+      .then((res) => {
+        const summaries = res.data;
+        const map: Record<string, BoardInfo> = {};
+        // Mark nodes that have their own board
+        const boardNodeIds = new Set(
+          summaries.map((s: BoardSummary) => s.node_id),
+        );
+        for (const s of summaries) {
+          const person = s.decision_maker_person_id
+            ? persons.find((p) => p.id === s.decision_maker_person_id)
+            : undefined;
+          map[s.node_id] = {
+            decisionMakerName: person
+              ? `${person.first_name} ${person.last_name}`
+              : undefined,
+            isInherited: false,
+          };
+        }
+        // For nodes without own board, find inherited board via parent chain
+        for (const node of nodes) {
+          if (!boardNodeIds.has(node.id)) {
+            let parentId: string | undefined = node.parent_id;
+            while (parentId) {
+              if (map[parentId]) {
+                map[node.id] = {
+                  ...map[parentId],
+                  isInherited: true,
+                };
+                break;
+              }
+              const parentNode = nodes.find((n) => n.id === parentId);
+              parentId = parentNode?.parent_id;
+            }
+          }
+        }
+        setBoardMap(map);
+      })
+      .catch(() => {
+        /* silently ignore — indicators are optional */
+      });
+  }, [nodes, persons]);
 
   // Auto-select first tree (only when trees change and no current tree)
   useEffect(() => {
@@ -2800,6 +2918,47 @@ export default function OrgStructurePage() {
       // reads from nodes directly via selectedNode.id lookup.
     }
   }, [nodes]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Batch-fetch effective boards for all nodes (governance indicators)
+  const boardFetchVersionRef = React.useRef(0);
+  useEffect(() => {
+    if (nodes.length === 0) {
+      setBoardMap({});
+      return;
+    }
+    if (typeof orgApi.nodes.board !== "function") return;
+
+    const version = ++boardFetchVersionRef.current;
+    const fetchBoards = async () => {
+      const results = await Promise.allSettled(
+        nodes.map((n) =>
+          orgApi.nodes
+            .board(n.id)
+            .then((res) => ({ nodeId: n.id, data: res.data })),
+        ),
+      );
+      // Abort if a newer fetch has started
+      if (boardFetchVersionRef.current !== version) return;
+
+      const map: Record<string, BoardInfo> = {};
+      for (const result of results) {
+        if (result.status !== "fulfilled" || !result.value.data) continue;
+        const { nodeId, data } = result.value;
+        const isInherited = !!data.inherited_from_node_id;
+        const decisionMaker = data.members?.find((m) => m.is_decision_maker);
+        let decisionMakerName: string | undefined;
+        if (decisionMaker) {
+          const person = persons.find((p) => p.id === decisionMaker.person_id);
+          if (person) {
+            decisionMakerName = `${person.first_name} ${person.last_name}`;
+          }
+        }
+        map[nodeId] = { decisionMakerName, isInherited };
+      }
+      setBoardMap(map);
+    };
+    fetchBoards();
+  }, [nodes, persons]);
 
   // Keyboard handler for focus mode
   useEffect(() => {
@@ -3575,6 +3734,7 @@ export default function OrgStructurePage() {
                           onDrop={handleDrop}
                           onDragEnd={() => setDraggedId(null)}
                           onDoubleClick={handleDoubleClickNode}
+                          boardMap={boardMap}
                         />
                       ))}
                     </div>
@@ -3590,6 +3750,7 @@ export default function OrgStructurePage() {
                             onSelect={handleSelectNode}
                             collapsed={orgchartCollapsed}
                             onToggleCollapse={handleToggleOrgchartCollapse}
+                            boardMap={boardMap}
                           />
                         ))}
                       </div>

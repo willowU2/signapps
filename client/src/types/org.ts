@@ -175,7 +175,16 @@ export type PolicyDomain =
   | "naming"
   | "delegation"
   | "compliance"
+  | "governance"
   | "custom";
+
+export interface GovernancePolicySettings {
+  board_required?: boolean;
+  min_members?: number;
+  max_members?: number;
+  required_roles?: string[];
+  optional_roles?: string[];
+}
 
 export interface OrgPolicy {
   id: string;
@@ -276,6 +285,12 @@ export interface OrgBoardMember {
   start_date?: string;
   end_date?: string;
   created_at: string;
+}
+
+export interface BoardSummary {
+  node_id: string;
+  board_id: string;
+  decision_maker_person_id?: string;
 }
 
 export interface EffectiveBoard {

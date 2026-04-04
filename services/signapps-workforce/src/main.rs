@@ -137,7 +137,8 @@ fn create_router(state: AppState) -> Router {
         .route("/node-types", get(handlers::org::list_node_types))
         .route("/node-types", post(handlers::org::create_node_type))
         .route("/node-types/:id", delete(handlers::org::delete_node_type))
-        // Board routes
+        // Board routes (batch endpoint BEFORE parameterized routes)
+        .route("/nodes/boards", get(handlers::boards::list_all_boards))
         .route("/nodes/:id/board", get(handlers::boards::get_board))
         .route("/nodes/:id/board", post(handlers::boards::create_board))
         .route("/nodes/:id/board", put(handlers::boards::update_board))
@@ -177,10 +178,7 @@ fn create_router(state: AppState) -> Router {
         .route("/:id/link-user", post(handlers::employees::link_user))
         .route("/:id/unlink-user", post(handlers::employees::unlink_user))
         .route("/:id/functions", get(handlers::employees::get_functions))
-        .route(
-            "/:id/functions",
-            put(handlers::employees::update_functions),
-        )
+        .route("/:id/functions", put(handlers::employees::update_functions))
         .route(
             "/by-node/:node_id",
             get(handlers::employees::list_by_org_node),
@@ -199,10 +197,7 @@ fn create_router(state: AppState) -> Router {
     let function_routes = Router::new()
         .route("/", get(handlers::employees::list_function_definitions))
         .route("/", post(handlers::employees::create_function_definition))
-        .route(
-            "/:id",
-            put(handlers::employees::update_function_definition),
-        )
+        .route("/:id", put(handlers::employees::update_function_definition))
         .route(
             "/:id",
             delete(handlers::employees::delete_function_definition),

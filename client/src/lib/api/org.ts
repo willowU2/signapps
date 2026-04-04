@@ -26,6 +26,7 @@ import type {
   OrgAuditEntry,
   OrgBoard,
   OrgBoardMember,
+  BoardSummary,
   EffectiveBoard,
 } from "@/types/org";
 
@@ -81,6 +82,7 @@ export const orgApi = {
     setPermissions: (id: string, data: Partial<PermissionProfile>) =>
       client.put(`/workforce/org/nodes/${id}/permissions`, data),
     // Board (governance)
+    listBoards: () => client.get<BoardSummary[]>(`/workforce/org/nodes/boards`),
     board: (id: string) =>
       client.get<EffectiveBoard>(`/workforce/org/nodes/${id}/effective-board`),
     createBoard: (id: string) =>
