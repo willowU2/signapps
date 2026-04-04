@@ -50,6 +50,10 @@ pub struct Person {
     pub user_id: Option<Uuid>,
     pub is_active: bool,
     pub metadata: serde_json::Value,
+    /// Entry lifecycle state: live, recycled, or tombstone.
+    pub lifecycle_state: String,
+    /// Extensible attributes (JSONB).
+    pub attributes: serde_json::Value,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -160,6 +164,10 @@ pub struct OrgNode {
     pub config: serde_json::Value,
     pub sort_order: i32,
     pub is_active: bool,
+    /// Entry lifecycle state: live, recycled, or tombstone.
+    pub lifecycle_state: String,
+    /// Extensible attributes (JSONB).
+    pub attributes: serde_json::Value,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -427,4 +435,43 @@ pub struct EffectivePermissions {
     pub custom_permissions: serde_json::Value,
     /// Ordered list of node IDs from root to the target node (inheritance chain).
     pub inherited_from: Vec<Uuid>,
+}
+
+// ============================================================================
+// Org Node Type
+// ============================================================================
+
+/// Extensible node type definition (schema-as-data pattern).
+///
+/// Defines the taxonomy of node types available in a given tree, their visual
+/// representation and the JSON schema for their `attributes` field.
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+pub struct OrgNodeType {
+    /// Unique identifier for this node type definition.
+    pub id: Uuid,
+    /// Tenant scope.
+    pub tenant_id: Uuid,
+    /// Tree type this node type belongs to (e.g. `"internal"`, `"clients"`).
+    pub tree_type: String,
+    /// Internal machine name (e.g. `"department"`, `"team"`).
+    pub name: String,
+    /// Human-readable display label.
+    pub label: String,
+    /// Optional CSS / hex colour for UI rendering.
+    pub color: Option<String>,
+    /// Optional icon identifier for UI rendering.
+    pub icon: Option<String>,
+    /// Display order relative to sibling node types.
+    pub sort_order: i32,
+    /// Constraint on which node types may appear as children.
+    pub allowed_children: Option<Vec<String>>,
+    /// JSON Schema describing the expected shape of `OrgNode.attributes`.
+    pub schema: serde_json::Value,
+    /// Whether this node type is currently usable.
+    pub is_active: bool,
+    /// Timestamp of record creation.
+    pub created_at: DateTime<Utc>,
+    /// Timestamp of last update.
+    pub updated_at: DateTime<Utc>,
 }
