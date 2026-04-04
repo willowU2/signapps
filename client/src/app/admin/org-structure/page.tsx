@@ -3209,7 +3209,7 @@ export default function OrgStructurePage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col h-[calc(100vh-4rem)]">
+      <div className="flex flex-col h-[calc(100vh-8rem)] -m-4 md:-m-6">
         {/* ================================================================ */}
         {/* Header */}
         {/* ================================================================ */}
