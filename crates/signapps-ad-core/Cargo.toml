@@ -1,0 +1,26 @@
+[package]
+name = "signapps-ad-core"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Active Directory core data layer — DN, SID, GUID, schema, filter compilation, DirectoryEntry"
+
+[dependencies]
+tokio = { workspace = true }
+sqlx = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+rand = { workspace = true }
+
+signapps-common = { path = "../signapps-common" }
+signapps-db = { path = "../signapps-db" }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
