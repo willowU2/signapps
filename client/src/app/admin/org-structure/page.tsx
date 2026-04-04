@@ -2315,17 +2315,30 @@ export default function OrgStructurePage() {
     }
   }, [currentTree, fetchNodes]);
 
-  // Auto-expand root nodes
+  // When nodes change: auto-expand all nodes that have children, update selectedNode ref
   useEffect(() => {
     if (nodes.length > 0) {
-      const roots = nodes.filter((n) => !n.parent_id);
-      setExpanded((prev) => {
-        const next = new Set(prev);
-        roots.forEach((r) => next.add(r.id));
-        return next;
-      });
+      // Expand all nodes that have children (so the tree is always visible)
+      const parents = new Set(
+        nodes.filter((n) => n.parent_id).map((n) => n.parent_id!),
+      );
+      // Also add root nodes
+      nodes.filter((n) => !n.parent_id).forEach((n) => parents.add(n.id));
+      setExpanded(parents);
+
+      // Refresh selectedNode reference to the updated version
+      if (selectedNode) {
+        const updated = nodes.find((n) => n.id === selectedNode.id);
+        if (updated) {
+          selectNode(updated);
+        } else {
+          // Node was deleted
+          selectNode(null);
+          setDetailOpen(false);
+        }
+      }
     }
-  }, [nodes]);
+  }, [nodes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keyboard handler for focus mode
   useEffect(() => {
@@ -2368,6 +2381,14 @@ export default function OrgStructurePage() {
       return next;
     });
   }, []);
+
+  // Full reload: refetch trees list + all nodes for current tree
+  const reloadTree = useCallback(async () => {
+    await fetchTrees();
+    if (currentTree) {
+      await fetchNodes(currentTree.id);
+    }
+  }, [fetchTrees, fetchNodes, currentTree]);
 
   const handleSelectNode = useCallback(
     (node: OrgNode) => {
@@ -2471,7 +2492,7 @@ export default function OrgStructurePage() {
       });
       toast.success("Noeud cree");
       setAddNodeDialogOpen(false);
-      fetchNodes(currentTree.id);
+      await reloadTree();
     } catch {
       toast.error("Erreur lors de la creation");
     } finally {
@@ -2506,7 +2527,7 @@ export default function OrgStructurePage() {
         setCurrentTree(null);
         await fetchTrees();
       } else {
-        fetchNodes(currentTree.id);
+        await reloadTree();
       }
     } catch {
       toast.error("Erreur lors de la suppression");
@@ -2528,7 +2549,7 @@ export default function OrgStructurePage() {
       await orgApi.nodes.move(nodeToMove.id, moveTargetId);
       toast.success("Noeud deplace");
       setMoveDialogOpen(false);
-      fetchNodes(currentTree.id);
+      await reloadTree();
     } catch {
       toast.error("Erreur lors du deplacement");
     } finally {
@@ -2583,13 +2604,13 @@ export default function OrgStructurePage() {
         toast.success(
           `"${movedNode?.name}" deplace sous "${targetNode?.name}"`,
         );
-        fetchNodes(currentTree.id);
+        await reloadTree();
       } catch (err) {
         console.error("[DnD] move failed:", err);
         toast.error("Erreur lors du deplacement");
       }
     },
-    [draggedId, currentTree, nodes, fetchNodes],
+    [draggedId, currentTree, nodes, reloadTree],
   );
 
   // Context menu actions
@@ -3164,9 +3185,7 @@ export default function OrgStructurePage() {
                   allNodes={nodes}
                   tree={currentTree}
                   onClose={handleCloseDetail}
-                  onNodeUpdated={() => {
-                    if (currentTree) fetchNodes(currentTree.id);
-                  }}
+                  onNodeUpdated={reloadTree}
                   onAddChild={openAddNodeDialog}
                   onDeleteNode={openDeleteDialog}
                   onMoveNode={openMoveDialog}
@@ -3182,9 +3201,7 @@ export default function OrgStructurePage() {
                   allNodes={nodes}
                   tree={currentTree}
                   onClose={handleCloseDetail}
-                  onNodeUpdated={() => {
-                    if (currentTree) fetchNodes(currentTree.id);
-                  }}
+                  onNodeUpdated={reloadTree}
                   onAddChild={openAddNodeDialog}
                   onDeleteNode={openDeleteDialog}
                   onMoveNode={openMoveDialog}
