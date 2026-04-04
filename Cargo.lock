@@ -9902,6 +9902,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-ad-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db",
+ "sqlx",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-agent"
 version = "1.0.0"
 dependencies = [
@@ -10410,6 +10429,29 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 1.0.69",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-ldap-server"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "chrono",
+ "rustls 0.23.36",
+ "rustls-pemfile 2.2.0",
+ "serde",
+ "serde_json",
+ "signapps-ad-core",
+ "signapps-common",
+ "signapps-db",
+ "sqlx",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-rustls 0.26.4",
+ "tokio-test",
+ "tracing",
  "uuid",
 ]
 

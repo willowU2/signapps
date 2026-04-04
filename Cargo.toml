@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     # Shared crates
     "crates/signapps-ad-core",
+    "crates/signapps-ldap-server",
     "crates/signapps-cache",
     "crates/signapps-common",
     "crates/signapps-dav",
