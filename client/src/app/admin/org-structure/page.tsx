@@ -66,6 +66,8 @@ import type {
   OrgPolicy,
   AssignmentType,
   ResponsibilityType,
+  EffectiveBoard,
+  OrgBoardMember,
 } from "@/types/org";
 import {
   Building2,
@@ -100,6 +102,9 @@ import {
   FileText,
   LinkIcon,
   Ban,
+  Star,
+  Gavel,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -291,6 +296,22 @@ const AUDIT_ACTION_LABELS: Record<string, { label: string; color: string }> = {
   assign: { label: "Affectation", color: "text-purple-600" },
   unassign: { label: "Desaffectation", color: "text-pink-600" },
 };
+
+const BOARD_ROLE_LABELS: Record<string, string> = {
+  president: "President",
+  vice_president: "Vice-president",
+  member: "Membre",
+  treasurer: "Tresorier",
+  secretary: "Secretaire",
+};
+
+const BOARD_ROLE_SUGGESTIONS = [
+  "president",
+  "vice_president",
+  "member",
+  "treasurer",
+  "secretary",
+];
 
 const COUNTRY_FLAGS: Record<string, string> = {
   France: "FR",
@@ -1505,7 +1526,336 @@ function DelegationsTab({ nodeId, persons }: DelegationsTabProps) {
 }
 
 // =============================================================================
-// Detail panel (right) — enhanced with 5 tabs (6 in focus mode)
+// Governance Tab content for Detail panel
+// =============================================================================
+
+interface GovernanceTabProps {
+  nodeId: string;
+  persons: Person[];
+  allNodes: OrgNode[];
+}
+
+function GovernanceTab({ nodeId, persons, allNodes }: GovernanceTabProps) {
+  const [effectiveBoard, setEffectiveBoard] = useState<EffectiveBoard | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
+  const [memberPersonId, setMemberPersonId] = useState("");
+  const [memberRole, setMemberRole] = useState("member");
+  const [memberIsDecisionMaker, setMemberIsDecisionMaker] = useState(false);
+  const [memberPersonSearch, setMemberPersonSearch] = useState("");
+  const [addingMember, setAddingMember] = useState(false);
+  const [removingMember, setRemovingMember] = useState<string | null>(null);
+  const [creatingBoard, setCreatingBoard] = useState(false);
+
+  const loadBoard = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const res = await orgApi.nodes.board(nodeId);
+      setEffectiveBoard(res.data ?? null);
+    } catch {
+      setEffectiveBoard(null);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [nodeId]);
+
+  useEffect(() => {
+    loadBoard();
+  }, [loadBoard]);
+
+  const handleCreateBoard = async () => {
+    setCreatingBoard(true);
+    try {
+      await orgApi.nodes.createBoard(nodeId);
+      toast.success("Board de gouvernance cree");
+      await loadBoard();
+    } catch {
+      toast.error("Erreur lors de la creation du board");
+    } finally {
+      setCreatingBoard(false);
+    }
+  };
+
+  const handleAddMember = async () => {
+    if (!memberPersonId) return;
+    setAddingMember(true);
+    try {
+      await orgApi.nodes.addBoardMember(nodeId, {
+        person_id: memberPersonId,
+        role: memberRole,
+        is_decision_maker: memberIsDecisionMaker,
+        sort_order: (effectiveBoard?.members?.length ?? 0) + 1,
+      });
+      toast.success("Membre ajoute au board");
+      setAddMemberOpen(false);
+      setMemberPersonId("");
+      setMemberRole("member");
+      setMemberIsDecisionMaker(false);
+      setMemberPersonSearch("");
+      await loadBoard();
+    } catch {
+      toast.error("Erreur lors de l'ajout du membre");
+    } finally {
+      setAddingMember(false);
+    }
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    setRemovingMember(memberId);
+    try {
+      await orgApi.nodes.removeBoardMember(nodeId, memberId);
+      toast.success("Membre retire du board");
+      await loadBoard();
+    } catch {
+      toast.error("Erreur lors du retrait du membre");
+    } finally {
+      setRemovingMember(null);
+    }
+  };
+
+  const filteredBoardPersons = useMemo(() => {
+    if (!memberPersonSearch) return persons;
+    const q = memberPersonSearch.toLowerCase();
+    return persons.filter(
+      (p) =>
+        p.first_name.toLowerCase().includes(q) ||
+        p.last_name.toLowerCase().includes(q) ||
+        p.email?.toLowerCase().includes(q),
+    );
+  }, [persons, memberPersonSearch]);
+
+  const getPersonName = (personId: string): string => {
+    const p = persons.find((p) => p.id === personId);
+    return p ? `${p.first_name} ${p.last_name}` : personId.slice(0, 8) + "...";
+  };
+
+  const getPersonInitials = (personId: string): string => {
+    const p = persons.find((p) => p.id === personId);
+    return p ? `${p.first_name[0]}${p.last_name[0]}` : "?";
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
+        Chargement de la gouvernance...
+      </div>
+    );
+  }
+
+  const isInherited = !!effectiveBoard?.inherited_from_node_id;
+  const inheritedNodeName =
+    effectiveBoard?.inherited_from_node_name ??
+    allNodes.find((n) => n.id === effectiveBoard?.inherited_from_node_id)
+      ?.name ??
+    "noeud parent";
+  const members = effectiveBoard?.members ?? [];
+
+  return (
+    <div className="p-4 space-y-4">
+      {/* Inherited banner */}
+      {isInherited && (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+          <Info className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              Board herite de{" "}
+              <span className="font-semibold">{inheritedNodeName}</span>
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleCreateBoard}
+            disabled={creatingBoard}
+            className="shrink-0"
+          >
+            {creatingBoard ? "Creation..." : "Definir un board propre"}
+          </Button>
+        </div>
+      )}
+
+      {/* No board at all */}
+      {!effectiveBoard && !loadError && (
+        <div className="text-center py-8 text-muted-foreground text-sm border border-dashed rounded-lg">
+          <Gavel className="h-8 w-8 mx-auto mb-2 opacity-30" />
+          <p>Aucun board de gouvernance</p>
+          <p className="text-xs mt-1">
+            Creez un board pour definir les decideurs
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="mt-3"
+            onClick={handleCreateBoard}
+            disabled={creatingBoard}
+          >
+            {creatingBoard ? "Creation..." : "Creer un board"}
+          </Button>
+        </div>
+      )}
+
+      {loadError && !effectiveBoard && (
+        <div className="text-center py-8 text-muted-foreground text-sm border border-dashed rounded-lg">
+          <Gavel className="h-8 w-8 mx-auto mb-2 opacity-30" />
+          <p>Aucun board de gouvernance</p>
+          <p className="text-xs mt-1">
+            Creez un board pour definir les decideurs
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="mt-3"
+            onClick={handleCreateBoard}
+            disabled={creatingBoard}
+          >
+            {creatingBoard ? "Creation..." : "Creer un board"}
+          </Button>
+        </div>
+      )}
+
+      {/* Board members list */}
+      {effectiveBoard && (
+        <>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {members.length} membre(s) du board
+            </p>
+            {!isInherited && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setAddMemberOpen(true)}
+              >
+                <UserPlus className="h-4 w-4 mr-1" />
+                Ajouter un membre
+              </Button>
+            )}
+          </div>
+
+          {members.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground text-sm border border-dashed rounded-lg">
+              <Users className="h-6 w-6 mx-auto mb-2 opacity-30" />
+              <p>Aucun membre dans le board</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {members.map((m: OrgBoardMember) => (
+                <div
+                  key={m.id}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="text-xs">
+                      {getPersonInitials(m.person_id)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {getPersonName(m.person_id)}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="text-xs shrink-0">
+                    {BOARD_ROLE_LABELS[m.role] ?? m.role}
+                  </Badge>
+                  {m.is_decision_maker && (
+                    <Star className="h-4 w-4 shrink-0 text-amber-500 fill-amber-500" />
+                  )}
+                  {!isInherited && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="shrink-0 h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleRemoveMember(m.id)}
+                      disabled={removingMember === m.id}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Add member inline form */}
+      <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajouter un membre au board</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Rechercher une personne *</Label>
+              <Input
+                value={memberPersonSearch}
+                onChange={(e) => setMemberPersonSearch(e.target.value)}
+                placeholder="Nom, prenom ou email..."
+              />
+              <Select value={memberPersonId} onValueChange={setMemberPersonId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisir une personne..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredBoardPersons.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.first_name} {p.last_name}
+                      {p.email ? ` (${p.email})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Role *</Label>
+              <Select value={memberRole} onValueChange={setMemberRole}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {BOARD_ROLE_SUGGESTIONS.map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {BOARD_ROLE_LABELS[role] ?? role}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted/80 transition-colors">
+              <Checkbox
+                checked={memberIsDecisionMaker}
+                onCheckedChange={(checked) =>
+                  setMemberIsDecisionMaker(checked === true)
+                }
+              />
+              <Star className="h-4 w-4 text-amber-500" />
+              <span className="text-sm">Decideur final</span>
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddMemberOpen(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleAddMember}
+              disabled={addingMember || !memberPersonId}
+            >
+              {addingMember ? "Ajout..." : "Ajouter"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// =============================================================================
+// Detail panel (right) — enhanced with 6 tabs (7 in focus mode)
 // =============================================================================
 
 type AssignmentWithPerson = Assignment & { person?: Person };
@@ -1557,14 +1907,50 @@ function DetailPanel({
   const [assignCreating, setAssignCreating] = useState(false);
   const [endingAssignment, setEndingAssignment] = useState<string | null>(null);
 
+  // Board decision maker for the header
+  const [boardDecisionMaker, setBoardDecisionMaker] = useState<{
+    name: string;
+    inherited: boolean;
+    inheritedFrom?: string;
+  } | null>(null);
+
   useEffect(() => {
     if (node) {
       setName(node.name);
       setCode(node.code ?? "");
       setDescription(node.description ?? "");
       setDetailTab("details");
+      // Load board decision maker for header display
+      setBoardDecisionMaker(null);
+      orgApi.nodes
+        .board(node.id)
+        .then((res) => {
+          const board = res.data;
+          if (!board) return;
+          const decisionMakers = (board.members ?? []).filter(
+            (m: OrgBoardMember) => m.is_decision_maker,
+          );
+          if (decisionMakers.length > 0) {
+            const dm = decisionMakers[0];
+            const person = persons.find((p) => p.id === dm.person_id);
+            const dmName = person
+              ? `${person.first_name} ${person.last_name}`
+              : dm.person_id.slice(0, 8) + "...";
+            setBoardDecisionMaker({
+              name: dmName,
+              inherited: !!board.inherited_from_node_id,
+              inheritedFrom:
+                board.inherited_from_node_name ??
+                allNodes.find((n) => n.id === board.inherited_from_node_id)
+                  ?.name,
+            });
+          }
+        })
+        .catch(() => {
+          // No board or error — leave null
+        });
     }
-  }, [node]);
+  }, [node, persons, allNodes]);
 
   const loadAssignments = useCallback(async () => {
     if (!node) return;
@@ -1706,6 +2092,24 @@ function DetailPanel({
             Code: {node.code}
           </span>
         )}
+        {boardDecisionMaker && (
+          <div className="flex items-center gap-1.5 mt-1">
+            <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+            <span className="text-xs text-muted-foreground">
+              Decideur:{" "}
+              <span className="font-medium text-foreground">
+                {boardDecisionMaker.name}
+              </span>
+              {boardDecisionMaker.inherited &&
+                boardDecisionMaker.inheritedFrom && (
+                  <span className="text-muted-foreground">
+                    {" "}
+                    (herite de {boardDecisionMaker.inheritedFrom})
+                  </span>
+                )}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -1722,6 +2126,10 @@ function DetailPanel({
           <TabsTrigger value="people" className="flex-1 text-xs">
             <Users className="h-3 w-3 mr-1" />
             Personnes
+          </TabsTrigger>
+          <TabsTrigger value="governance" className="flex-1 text-xs">
+            <Gavel className="h-3 w-3 mr-1" />
+            Gouvernance
           </TabsTrigger>
           <TabsTrigger value="children" className="flex-1 text-xs">
             <FolderTree className="h-3 w-3 mr-1" />
@@ -1930,6 +2338,15 @@ function DetailPanel({
                 })}
               </div>
             )}
+          </TabsContent>
+
+          {/* Governance tab */}
+          <TabsContent value="governance" className="mt-0">
+            <GovernanceTab
+              nodeId={node.id}
+              persons={persons}
+              allNodes={allNodes}
+            />
           </TabsContent>
 
           {/* Policies tab */}
@@ -2271,6 +2688,8 @@ export default function OrgStructurePage() {
   const [newTreeName, setNewTreeName] = useState("");
   const [newTreeType, setNewTreeType] = useState<TreeType>("internal");
   const [creatingTree, setCreatingTree] = useState(false);
+  const [newTreeDecisionMakerId, setNewTreeDecisionMakerId] = useState("");
+  const [newTreePersonSearch, setNewTreePersonSearch] = useState("");
 
   const [addNodeDialogOpen, setAddNodeDialogOpen] = useState(false);
   const [addNodeParent, setAddNodeParent] = useState<OrgNode | null>(null);
@@ -2460,19 +2879,33 @@ export default function OrgStructurePage() {
   }, [setFocusMode]);
 
   const handleCreateTree = async () => {
-    if (!newTreeName.trim()) return;
+    if (!newTreeName.trim() || !newTreeDecisionMakerId) return;
     setCreatingTree(true);
     try {
       const res = await orgApi.trees.create({
         tree_type: newTreeType,
         name: newTreeName.trim(),
       });
-      toast.success("Arbre cree");
+      const createdNode = res.data!;
+      // Create board and add decision maker
+      try {
+        await orgApi.nodes.createBoard(createdNode.id);
+        await orgApi.nodes.addBoardMember(createdNode.id, {
+          person_id: newTreeDecisionMakerId,
+          role: "president",
+          is_decision_maker: true,
+          sort_order: 1,
+        });
+      } catch {
+        console.warn("Board creation succeeded but member add may have failed");
+      }
+      toast.success("Arbre cree avec decideur");
       setCreateTreeDialogOpen(false);
       setNewTreeName("");
+      setNewTreeDecisionMakerId("");
+      setNewTreePersonSearch("");
       await fetchTrees();
       // Map the created root node (OrgNode) to OrgTree shape
-      const createdNode = res.data!;
       setCurrentTree({
         id: createdNode.id,
         tenant_id: createdNode.tenant_id ?? "",
@@ -2735,6 +3168,18 @@ export default function OrgStructurePage() {
     collectDescendants(nodeToMove.id);
     return nodes.filter((n) => !descendants.has(n.id));
   }, [nodeToMove, nodes]);
+
+  // Filtered persons for tree creation decision maker
+  const treeCreationFilteredPersons = useMemo(() => {
+    if (!newTreePersonSearch) return persons;
+    const q = newTreePersonSearch.toLowerCase();
+    return persons.filter(
+      (p) =>
+        p.first_name.toLowerCase().includes(q) ||
+        p.last_name.toLowerCase().includes(q) ||
+        p.email?.toLowerCase().includes(q),
+    );
+  }, [persons, newTreePersonSearch]);
 
   // Breadcrumb for focus mode
   const focusBreadcrumb = useMemo(() => {
@@ -3324,6 +3769,37 @@ export default function OrgStructurePage() {
                 ))}
               </div>
             </div>
+            <div className="space-y-2">
+              <Label>
+                <Star className="h-3.5 w-3.5 inline mr-1 text-amber-500" />
+                Directeur General / Decideur *
+              </Label>
+              <Input
+                value={newTreePersonSearch}
+                onChange={(e) => setNewTreePersonSearch(e.target.value)}
+                placeholder="Rechercher par nom, prenom ou email..."
+              />
+              <Select
+                value={newTreeDecisionMakerId}
+                onValueChange={setNewTreeDecisionMakerId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisir le decideur..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {treeCreationFilteredPersons.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.first_name} {p.last_name}
+                      {p.email ? ` (${p.email})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Cette personne sera ajoutee comme president et decideur final du
+                board de gouvernance.
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -3334,7 +3810,9 @@ export default function OrgStructurePage() {
             </Button>
             <Button
               onClick={handleCreateTree}
-              disabled={creatingTree || !newTreeName.trim()}
+              disabled={
+                creatingTree || !newTreeName.trim() || !newTreeDecisionMakerId
+              }
             >
               {creatingTree ? "Creation..." : "Creer"}
             </Button>
