@@ -2292,6 +2292,15 @@ export default function OrgStructurePage() {
   // Build tree hierarchy
   const treeHierarchy = useMemo(() => buildTree(nodes), [nodes]);
 
+  // Fresh selectedNode from current nodes (avoids stale references)
+  const freshSelectedNode = useMemo(
+    () =>
+      selectedNode
+        ? (nodes.find((n) => n.id === selectedNode.id) ?? null)
+        : null,
+    [nodes, selectedNode],
+  );
+
   // Track the currentTree.id to avoid duplicate fetches
   const currentTreeIdRef = React.useRef<string | null>(null);
   const selectedNodeIdRef = React.useRef<string | null>(null);
@@ -2325,34 +2334,43 @@ export default function OrgStructurePage() {
     }
   }, [currentTree, fetchNodes]);
 
-  // When nodes change: auto-expand + update selectedNode ref (NO store writes that trigger re-renders)
+  // Track nodes version to detect actual data changes (not reference changes)
+  const nodesVersionRef = React.useRef(0);
+  const prevNodesLenRef = React.useRef(0);
+
+  // When nodes actually change: expand new parents + sync selectedNode
   useEffect(() => {
-    if (nodes.length === 0) return;
-
-    // Expand all nodes that have children
-    const parents = new Set<string>();
-    for (const n of nodes) {
-      if (!n.parent_id) parents.add(n.id); // root
-      if (n.parent_id) parents.add(n.parent_id); // any parent
+    if (nodes.length === 0) {
+      prevNodesLenRef.current = 0;
+      return;
     }
-    setExpanded(parents);
 
-    // Refresh selectedNode if its data changed — only if ID still exists
+    // Only run expansion logic if the node count changed (real mutation happened)
+    if (nodes.length !== prevNodesLenRef.current) {
+      prevNodesLenRef.current = nodes.length;
+      nodesVersionRef.current += 1;
+
+      // Expand all nodes that have children
+      const parents = new Set<string>();
+      for (const n of nodes) {
+        if (!n.parent_id) parents.add(n.id);
+        if (n.parent_id) parents.add(n.parent_id);
+      }
+      setExpanded(parents);
+    }
+
+    // Sync selectedNode reference (no store write if unchanged)
     const selId = selectedNodeIdRef.current;
     if (selId) {
       const updated = nodes.find((n) => n.id === selId);
-      if (updated) {
-        // Only update if name/parent actually changed (avoid infinite loop)
-        if (
-          updated.name !== selectedNode?.name ||
-          updated.parent_id !== selectedNode?.parent_id
-        ) {
-          selectNode(updated);
-        }
-      } else {
+      if (!updated) {
+        selectedNodeIdRef.current = null;
         selectNode(null);
         setDetailOpen(false);
       }
+      // Don't call selectNode(updated) here — it causes render loops.
+      // The selectedNode in the store is stale but the detail panel
+      // reads from nodes directly via selectedNode.id lookup.
     }
   }, [nodes]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -2825,7 +2843,7 @@ export default function OrgStructurePage() {
         {/* ================================================================ */}
         {/* Focus mode breadcrumb bar */}
         {/* ================================================================ */}
-        {focusMode && selectedNode && (
+        {focusMode && freshSelectedNode && (
           <div className="px-4 py-2.5 border-b border-border bg-card shrink-0 flex items-center gap-3">
             <Button
               variant="ghost"
@@ -3203,7 +3221,7 @@ export default function OrgStructurePage() {
             {focusMode ? (
               <div className="flex-1 bg-card overflow-hidden">
                 <DetailPanel
-                  node={selectedNode}
+                  node={freshSelectedNode}
                   allNodes={nodes}
                   tree={currentTree}
                   onClose={handleCloseDetail}
@@ -3219,7 +3237,7 @@ export default function OrgStructurePage() {
             ) : detailOpen ? (
               <div className="w-full lg:w-[40%] lg:max-w-[480px] border-t lg:border-t-0 border-border bg-card shrink-0 overflow-hidden">
                 <DetailPanel
-                  node={selectedNode}
+                  node={freshSelectedNode}
                   allNodes={nodes}
                   tree={currentTree}
                   onClose={handleCloseDetail}
