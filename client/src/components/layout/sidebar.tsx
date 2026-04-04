@@ -193,6 +193,13 @@ const essentialNavItems = [
     badgeKey: null,
   },
   {
+    href: "/admin/active-directory",
+    icon: Network,
+    label: "Active Directory",
+    color: "text-sky-500",
+    badgeKey: null,
+  },
+  {
     href: "/vault",
     icon: Shield,
     label: "Coffre-fort",
