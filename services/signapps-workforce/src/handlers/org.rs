@@ -730,7 +730,40 @@ pub async fn move_node(
         }
     }
 
-    // Update parent_id
+    // 1. Collect all descendants of the node being moved (via closure table)
+    let subtree_ids: Vec<(Uuid,)> = sqlx::query_as(
+        "SELECT descendant_id FROM workforce_org_closure WHERE ancestor_id = $1",
+    )
+    .bind(id)
+    .fetch_all(&mut *tx)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to get subtree: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let subtree: Vec<Uuid> = std::iter::once(id)
+        .chain(subtree_ids.into_iter().map(|(d,)| d))
+        .collect();
+
+    // 2. Remove old closure entries: all links from ancestors-of-node to subtree nodes
+    //    (but keep internal subtree links intact)
+    sqlx::query(
+        r#"
+        DELETE FROM workforce_org_closure
+        WHERE descendant_id = ANY($1)
+          AND ancestor_id != ALL($1)
+        "#,
+    )
+    .bind(&subtree)
+    .execute(&mut *tx)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to clean closure entries: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    // 3. Update parent_id
     let updated_node: OrgNode = sqlx::query_as(
         r#"
         UPDATE workforce_org_nodes
@@ -749,11 +782,75 @@ pub async fn move_node(
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
+    // 4. Rebuild closure entries: connect new ancestors to all subtree nodes
+    if let Some(new_parent_id) = req.new_parent_id {
+        // Get all ancestors of the new parent (including itself)
+        let new_ancestors: Vec<(Uuid, i32)> = sqlx::query_as(
+            r#"
+            SELECT ancestor_id, depth FROM workforce_org_closure WHERE descendant_id = $1
+            UNION ALL
+            SELECT $1::uuid, 0
+            "#,
+        )
+        .bind(new_parent_id)
+        .fetch_all(&mut *tx)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get new ancestors: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+        // Get internal subtree closure (relative depths)
+        let subtree_closure: Vec<(Uuid, Uuid, i32)> = sqlx::query_as(
+            r#"
+            SELECT ancestor_id, descendant_id, depth FROM workforce_org_closure
+            WHERE ancestor_id = ANY($1) AND descendant_id = ANY($1)
+            "#,
+        )
+        .bind(&subtree)
+        .fetch_all(&mut *tx)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get subtree closure: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+        // Insert cross-product: each new ancestor × each subtree node
+        // For the moved node itself: depth = ancestor_depth + 1
+        // For subtree nodes: depth = ancestor_depth + 1 + internal_depth
+        for (anc_id, anc_depth) in &new_ancestors {
+            // Direct link: ancestor → moved node
+            let _ = sqlx::query(
+                "INSERT INTO workforce_org_closure (ancestor_id, descendant_id, depth) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+            )
+            .bind(anc_id)
+            .bind(id)
+            .bind(anc_depth + 1)
+            .execute(&mut *tx)
+            .await;
+
+            // Links: ancestor → each subtree descendant
+            for (_, desc_id, int_depth) in &subtree_closure {
+                if *desc_id != id {
+                    let _ = sqlx::query(
+                        "INSERT INTO workforce_org_closure (ancestor_id, descendant_id, depth) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+                    )
+                    .bind(anc_id)
+                    .bind(desc_id)
+                    .bind(anc_depth + 1 + int_depth)
+                    .execute(&mut *tx)
+                    .await;
+                }
+            }
+        }
+    }
+
     tx.commit().await.map_err(|e| {
         tracing::error!("Failed to commit transaction: {}", e);
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
+    tracing::info!(%id, new_parent = ?req.new_parent_id, "Node moved successfully");
     Ok(Json(json!(updated_node)))
 }
 

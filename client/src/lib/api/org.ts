@@ -62,7 +62,9 @@ export const orgApi = {
     deleteRecursive: (id: string) =>
       client.delete(`/workforce/org/nodes/${id}/recursive`),
     move: (id: string, parentId: string) =>
-      client.post(`/workforce/org/nodes/${id}/move`, { parent_id: parentId }),
+      client.post(`/workforce/org/nodes/${id}/move`, {
+        new_parent_id: parentId,
+      }),
     children: (id: string) =>
       client.get<OrgNode[]>(`/workforce/org/nodes/${id}/children`),
     descendants: (id: string) =>
