@@ -2234,6 +2234,232 @@ function GpoTabContent({ nodeId: _nodeId }: { nodeId: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// KerberosTabContent
+// ─────────────────────────────────────────────────────────────────────────────
+
+function KerberosTabContent({
+  nodeId: _nodeId,
+  nodeType,
+}: {
+  nodeId: string;
+  nodeType: string;
+}) {
+  const { data: domains = [] } = useAdDomains();
+  const domainId = domains[0]?.id || "";
+  const { data: keys = [] } = useAdKeys(domainId);
+  const rotateKey = useRotateKey();
+
+  if (!domainId) {
+    return (
+      <div className="text-center text-muted-foreground py-8">
+        <Key className="h-8 w-8 mx-auto mb-2 opacity-30" />
+        <p className="text-sm">Aucun domaine AD configure</p>
+      </div>
+    );
+  }
+
+  const filteredKeys = keys.filter((k: AdPrincipalKey) => {
+    if (nodeType === "computer") return k.principal_type === "computer";
+    if (nodeType === "group") return true;
+    return k.principal_type === "user";
+  });
+
+  const grouped = filteredKeys.reduce<Record<string, AdPrincipalKey[]>>(
+    (acc, k: AdPrincipalKey) => {
+      (acc[k.principal_name] ||= []).push(k);
+      return acc;
+    },
+    {},
+  );
+
+  return (
+    <div className="space-y-3">
+      <Badge variant="outline" className="text-xs">
+        {Object.keys(grouped).length} principal(s)
+      </Badge>
+      {Object.keys(grouped).length === 0 ? (
+        <div className="text-center text-muted-foreground py-6">
+          <Key className="h-6 w-6 mx-auto mb-2 opacity-30" />
+          <p className="text-xs">Aucun principal Kerberos</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {Object.entries(grouped).map(([principal, pkeys]) => (
+            <div key={principal} className="rounded-md border p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Key className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-medium font-mono">
+                    {principal}
+                  </span>
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      "text-[10px]",
+                      pkeys[0]?.principal_type === "krbtgt"
+                        ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        : pkeys[0]?.principal_type === "user"
+                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                          : pkeys[0]?.principal_type === "computer"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+                    )}
+                  >
+                    {pkeys[0]?.principal_type}
+                  </Badge>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => rotateKey.mutate({ domainId, principal })}
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Rotation
+                </Button>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                {pkeys.map((k: AdPrincipalKey) => (
+                  <div key={k.id} className="flex items-center gap-1">
+                    <span className="font-mono">
+                      {ENC_TYPE_LABELS[k.enc_type] || `enc${k.enc_type}`}
+                    </span>
+                    <span>v{k.key_version}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DnsTabContent
+// ─────────────────────────────────────────────────────────────────────────────
+
+function DnsTabContent({
+  nodeId: _nodeId,
+  nodeType: _nodeType,
+}: {
+  nodeId: string;
+  nodeType: string;
+}) {
+  const { data: domains = [] } = useAdDomains();
+  const domainId = domains[0]?.id || "";
+  const { data: zones = [] } = useAdDnsZones(domainId);
+  const zoneId = zones[0]?.id || "";
+  const { data: records = [] } = useAdDnsRecords(zoneId);
+
+  if (!domainId || !zoneId) {
+    return (
+      <div className="text-center text-muted-foreground py-8">
+        <Globe className="h-8 w-8 mx-auto mb-2 opacity-30" />
+        <p className="text-sm">Aucune zone DNS configuree</p>
+      </div>
+    );
+  }
+
+  const TYPE_COLORS: Record<string, string> = {
+    A: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    AAAA: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    SRV: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    CNAME:
+      "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+    TXT: "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400",
+    MX: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    NS: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+    PTR: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
+  };
+
+  function formatRdata(record: AdDnsRecord): string {
+    const r = record.rdata;
+    switch (record.record_type) {
+      case "SRV":
+        return `${r.priority} ${r.weight} ${r.port} ${r.target}`;
+      case "MX":
+        return `${r.preference} ${r.exchange}`;
+      case "A":
+      case "AAAA":
+        return String(r.ip || "");
+      case "CNAME":
+      case "PTR":
+      case "NS":
+        return String(r.target || "");
+      case "TXT":
+        return String(r.text || "");
+      default:
+        return JSON.stringify(r);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Badge variant="outline" className="text-xs">
+          {zones[0]?.zone_name}
+        </Badge>
+        <Badge variant="outline" className="text-xs">
+          {records.length} record(s)
+        </Badge>
+      </div>
+      {records.length === 0 ? (
+        <div className="text-center text-muted-foreground py-6">
+          <Globe className="h-6 w-6 mx-auto mb-2 opacity-30" />
+          <p className="text-xs">Aucun enregistrement DNS</p>
+        </div>
+      ) : (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs">Nom</TableHead>
+                <TableHead className="text-xs">Type</TableHead>
+                <TableHead className="text-xs">Donnees</TableHead>
+                <TableHead className="text-xs">TTL</TableHead>
+                <TableHead className="text-xs">Statut</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {records.map((r: AdDnsRecord) => (
+                <TableRow key={r.id}>
+                  <TableCell className="text-xs font-mono">{r.name}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        "text-[10px]",
+                        TYPE_COLORS[r.record_type] || "",
+                      )}
+                    >
+                      {r.record_type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs font-mono text-muted-foreground max-w-[200px] truncate">
+                    {formatRdata(r)}
+                  </TableCell>
+                  <TableCell className="text-xs">{r.ttl}s</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={r.is_static ? "outline" : "secondary"}
+                      className="text-[10px]"
+                    >
+                      {r.is_static ? "Statique" : "Dynamique"}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface DetailPanelProps {
   node: OrgNode | null;
@@ -2766,20 +2992,18 @@ function DetailPanel({
 
           {/* Kerberos tab */}
           <TabsContent value="kerberos" className="mt-0 p-4">
-            <div className="text-center text-muted-foreground py-8">
-              <Key className="h-8 w-8 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Kerberos</p>
-              <p className="text-xs mt-1">Principals et cles de chiffrement</p>
-            </div>
+            <KerberosTabContent
+              nodeId={node?.id || ""}
+              nodeType={node?.node_type || ""}
+            />
           </TabsContent>
 
           {/* DNS tab */}
           <TabsContent value="dns" className="mt-0 p-4">
-            <div className="text-center text-muted-foreground py-8">
-              <Globe className="h-8 w-8 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">DNS</p>
-              <p className="text-xs mt-1">Records DNS associes a ce noeud</p>
-            </div>
+            <DnsTabContent
+              nodeId={node?.id || ""}
+              nodeType={node?.node_type || ""}
+            />
           </TabsContent>
 
           {/* Delegations tab (focus mode only) */}
