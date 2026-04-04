@@ -2292,50 +2292,66 @@ export default function OrgStructurePage() {
   // Build tree hierarchy
   const treeHierarchy = useMemo(() => buildTree(nodes), [nodes]);
 
-  // Load data on mount
+  // Track the currentTree.id to avoid duplicate fetches
+  const currentTreeIdRef = React.useRef<string | null>(null);
+  const selectedNodeIdRef = React.useRef<string | null>(null);
+
+  // Keep refs in sync
+  useEffect(() => {
+    selectedNodeIdRef.current = selectedNode?.id ?? null;
+  }, [selectedNode]);
+
+  // Load data on mount (once)
   useEffect(() => {
     fetchTrees();
     fetchPersons();
     fetchSites();
     fetchGroups();
     fetchPolicies();
-  }, [fetchTrees, fetchPersons, fetchSites, fetchGroups, fetchPolicies]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-select first tree
+  // Auto-select first tree (only when trees change and no current tree)
   useEffect(() => {
     if (trees.length > 0 && !currentTree) {
       setCurrentTree(trees[0]);
     }
   }, [trees, currentTree, setCurrentTree]);
 
-  // Load nodes when tree changes
+  // Load nodes when tree changes (using ref to prevent double-fetch)
   useEffect(() => {
-    if (currentTree) {
+    if (currentTree && currentTree.id !== currentTreeIdRef.current) {
+      currentTreeIdRef.current = currentTree.id;
       fetchNodes(currentTree.id);
     }
   }, [currentTree, fetchNodes]);
 
-  // When nodes change: auto-expand all nodes that have children, update selectedNode ref
+  // When nodes change: auto-expand + update selectedNode ref (NO store writes that trigger re-renders)
   useEffect(() => {
-    if (nodes.length > 0) {
-      // Expand all nodes that have children (so the tree is always visible)
-      const parents = new Set(
-        nodes.filter((n) => n.parent_id).map((n) => n.parent_id!),
-      );
-      // Also add root nodes
-      nodes.filter((n) => !n.parent_id).forEach((n) => parents.add(n.id));
-      setExpanded(parents);
+    if (nodes.length === 0) return;
 
-      // Refresh selectedNode reference to the updated version
-      if (selectedNode) {
-        const updated = nodes.find((n) => n.id === selectedNode.id);
-        if (updated) {
+    // Expand all nodes that have children
+    const parents = new Set<string>();
+    for (const n of nodes) {
+      if (!n.parent_id) parents.add(n.id); // root
+      if (n.parent_id) parents.add(n.parent_id); // any parent
+    }
+    setExpanded(parents);
+
+    // Refresh selectedNode if its data changed — only if ID still exists
+    const selId = selectedNodeIdRef.current;
+    if (selId) {
+      const updated = nodes.find((n) => n.id === selId);
+      if (updated) {
+        // Only update if name/parent actually changed (avoid infinite loop)
+        if (
+          updated.name !== selectedNode?.name ||
+          updated.parent_id !== selectedNode?.parent_id
+        ) {
           selectNode(updated);
-        } else {
-          // Node was deleted
-          selectNode(null);
-          setDetailOpen(false);
         }
+      } else {
+        selectNode(null);
+        setDetailOpen(false);
       }
     }
   }, [nodes]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -2382,11 +2398,17 @@ export default function OrgStructurePage() {
     });
   }, []);
 
-  // Full reload: refetch trees list + all nodes for current tree
+  // Full reload: refetch nodes for current tree (+ trees list)
   const reloadTree = useCallback(async () => {
-    await fetchTrees();
     if (currentTree) {
-      await fetchNodes(currentTree.id);
+      // Reset ref so the useEffect doesn't skip the fetch
+      currentTreeIdRef.current = null;
+      // Fetch both in parallel
+      await Promise.all([fetchTrees(), fetchNodes(currentTree.id)]);
+      // Restore ref
+      currentTreeIdRef.current = currentTree.id;
+    } else {
+      await fetchTrees();
     }
   }, [fetchTrees, fetchNodes, currentTree]);
 
