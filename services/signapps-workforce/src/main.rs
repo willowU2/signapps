@@ -116,27 +116,27 @@ fn create_router(state: AppState) -> Router {
     let org_routes = Router::new()
         .route("/tree", get(handlers::org::get_tree))
         .route("/nodes", post(handlers::org::create_node))
-        .route("/nodes/{id}", get(handlers::org::get_node))
-        .route("/nodes/{id}", put(handlers::org::update_node))
-        .route("/nodes/{id}", delete(handlers::org::delete_node))
+        .route("/nodes/:id", get(handlers::org::get_node))
+        .route("/nodes/:id", put(handlers::org::update_node))
+        .route("/nodes/:id", delete(handlers::org::delete_node))
         .route(
-            "/nodes/{id}/recursive",
+            "/nodes/:id/recursive",
             delete(handlers::org::delete_node_recursive),
         )
-        .route("/nodes/{id}/move", post(handlers::org::move_node))
-        .route("/nodes/{id}/children", get(handlers::org::get_children))
+        .route("/nodes/:id/move", post(handlers::org::move_node))
+        .route("/nodes/:id/children", get(handlers::org::get_children))
         .route(
-            "/nodes/{id}/descendants",
+            "/nodes/:id/descendants",
             get(handlers::org::get_descendants),
         )
-        .route("/nodes/{id}/ancestors", get(handlers::org::get_ancestors))
+        .route("/nodes/:id/ancestors", get(handlers::org::get_ancestors))
         .route(
-            "/nodes/{id}/effective-policy",
+            "/nodes/:id/effective-policy",
             get(handlers::policies::resolve_node),
         )
         .route("/node-types", get(handlers::org::list_node_types))
         .route("/node-types", post(handlers::org::create_node_type))
-        .route("/node-types/{id}", delete(handlers::org::delete_node_type))
+        .route("/node-types/:id", delete(handlers::org::delete_node_type))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))
@@ -150,22 +150,22 @@ fn create_router(state: AppState) -> Router {
         .route("/", get(handlers::employees::list_employees))
         .route("/", post(handlers::employees::create_employee))
         .route("/import", post(handlers::employees::import_employees))
-        .route("/{id}", get(handlers::employees::get_employee))
-        .route("/{id}", put(handlers::employees::update_employee))
-        .route("/{id}", delete(handlers::employees::delete_employee))
-        .route("/{id}/link-user", post(handlers::employees::link_user))
-        .route("/{id}/unlink-user", post(handlers::employees::unlink_user))
-        .route("/{id}/functions", get(handlers::employees::get_functions))
+        .route("/:id", get(handlers::employees::get_employee))
+        .route("/:id", put(handlers::employees::update_employee))
+        .route("/:id", delete(handlers::employees::delete_employee))
+        .route("/:id/link-user", post(handlers::employees::link_user))
+        .route("/:id/unlink-user", post(handlers::employees::unlink_user))
+        .route("/:id/functions", get(handlers::employees::get_functions))
         .route(
-            "/{id}/functions",
+            "/:id/functions",
             put(handlers::employees::update_functions),
         )
         .route(
-            "/by-node/{node_id}",
+            "/by-node/:node_id",
             get(handlers::employees::list_by_org_node),
         )
         .route("/search", get(handlers::employees::search_employees))
-        .route("/{id}/memberof", get(handlers::groups::get_person_groups))
+        .route("/:id/memberof", get(handlers::groups::get_person_groups))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))
@@ -179,11 +179,11 @@ fn create_router(state: AppState) -> Router {
         .route("/", get(handlers::employees::list_function_definitions))
         .route("/", post(handlers::employees::create_function_definition))
         .route(
-            "/{id}",
+            "/:id",
             put(handlers::employees::update_function_definition),
         )
         .route(
-            "/{id}",
+            "/:id",
             delete(handlers::employees::delete_function_definition),
         )
         .layer(axum::middleware::from_fn(
@@ -198,11 +198,11 @@ fn create_router(state: AppState) -> Router {
     let coverage_template_routes = Router::new()
         .route("/", get(handlers::coverage::list_templates))
         .route("/", post(handlers::coverage::create_template))
-        .route("/{id}", get(handlers::coverage::get_template))
-        .route("/{id}", put(handlers::coverage::update_template))
-        .route("/{id}", delete(handlers::coverage::delete_template))
+        .route("/:id", get(handlers::coverage::get_template))
+        .route("/:id", put(handlers::coverage::update_template))
+        .route("/:id", delete(handlers::coverage::delete_template))
         .route(
-            "/{id}/duplicate",
+            "/:id/duplicate",
             post(handlers::coverage::duplicate_template),
         )
         .layer(axum::middleware::from_fn(
@@ -217,15 +217,15 @@ fn create_router(state: AppState) -> Router {
     let coverage_rule_routes = Router::new()
         .route("/", get(handlers::coverage::list_rules))
         .route("/", post(handlers::coverage::create_rule))
-        .route("/{id}", get(handlers::coverage::get_rule))
-        .route("/{id}", put(handlers::coverage::update_rule))
-        .route("/{id}", delete(handlers::coverage::delete_rule))
+        .route("/:id", get(handlers::coverage::get_rule))
+        .route("/:id", put(handlers::coverage::update_rule))
+        .route("/:id", delete(handlers::coverage::delete_rule))
         .route(
-            "/by-node/{node_id}",
+            "/by-node/:node_id",
             get(handlers::coverage::get_rules_by_node),
         )
         .route(
-            "/effective/{node_id}",
+            "/effective/:node_id",
             get(handlers::coverage::get_effective_coverage),
         )
         .layer(axum::middleware::from_fn(
@@ -239,9 +239,9 @@ fn create_router(state: AppState) -> Router {
     // Learning routes
     let learning_routes = Router::new()
         .route("/courses", get(handlers::learning::list_courses))
-        .route("/courses/{id}", get(handlers::learning::get_course))
+        .route("/courses/:id", get(handlers::learning::get_course))
         .route(
-            "/courses/{id}/progress",
+            "/courses/:id/progress",
             put(handlers::learning::update_progress),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -287,16 +287,16 @@ fn create_router(state: AppState) -> Router {
     let group_routes = Router::new()
         .route("/", get(handlers::groups::list_groups))
         .route("/", post(handlers::groups::create_group))
-        .route("/{id}", get(handlers::groups::get_group))
-        .route("/{id}", put(handlers::groups::update_group))
-        .route("/{id}", delete(handlers::groups::delete_group))
-        .route("/{id}/members", post(handlers::groups::add_member))
+        .route("/:id", get(handlers::groups::get_group))
+        .route("/:id", put(handlers::groups::update_group))
+        .route("/:id", delete(handlers::groups::delete_group))
+        .route("/:id/members", post(handlers::groups::add_member))
         .route(
-            "/{id}/members/{member_id}",
+            "/:id/members/:member_id",
             delete(handlers::groups::remove_member),
         )
         .route(
-            "/{id}/effective-members",
+            "/:id/effective-members",
             get(handlers::groups::get_effective_members),
         )
         .layer(axum::middleware::from_fn(
@@ -312,20 +312,20 @@ fn create_router(state: AppState) -> Router {
         .route("/", get(handlers::policies::list_policies))
         .route("/", post(handlers::policies::create_policy))
         .route("/simulate", post(handlers::policies::simulate_policy))
-        .route("/{id}", get(handlers::policies::get_policy))
-        .route("/{id}", put(handlers::policies::update_policy))
-        .route("/{id}", delete(handlers::policies::delete_policy))
-        .route("/{id}/links", post(handlers::policies::add_link))
+        .route("/:id", get(handlers::policies::get_policy))
+        .route("/:id", put(handlers::policies::update_policy))
+        .route("/:id", delete(handlers::policies::delete_policy))
+        .route("/:id/links", post(handlers::policies::add_link))
         .route(
-            "/{id}/links/{link_id}",
+            "/:id/links/:link_id",
             delete(handlers::policies::remove_link),
         )
         .route(
-            "/resolve/{person_id}",
+            "/resolve/:person_id",
             get(handlers::policies::resolve_person),
         )
         .route(
-            "/resolve/node/{node_id}",
+            "/resolve/node/:node_id",
             get(handlers::policies::resolve_node),
         )
         .layer(axum::middleware::from_fn(
@@ -340,8 +340,8 @@ fn create_router(state: AppState) -> Router {
     let delegation_routes = Router::new()
         .route("/", get(handlers::delegations::list_delegations))
         .route("/", post(handlers::delegations::create_delegation))
-        .route("/{id}", put(handlers::delegations::update_delegation))
-        .route("/{id}", delete(handlers::delegations::revoke_delegation))
+        .route("/:id", put(handlers::delegations::update_delegation))
+        .route("/:id", delete(handlers::delegations::revoke_delegation))
         .route("/my", get(handlers::delegations::my_delegations))
         .route("/granted", get(handlers::delegations::granted_delegations))
         .layer(axum::middleware::from_fn(
@@ -356,10 +356,10 @@ fn create_router(state: AppState) -> Router {
     let audit_routes = Router::new()
         .route("/", get(handlers::audit::query_audit))
         .route(
-            "/entity/{entity_type}/{entity_id}",
+            "/entity/:entity_type/:entity_id",
             get(handlers::audit::entity_history),
         )
-        .route("/actor/{actor_id}", get(handlers::audit::actor_history))
+        .route("/actor/:actor_id", get(handlers::audit::actor_history))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))

@@ -38,6 +38,10 @@ pub struct OrgNode {
     pub is_active: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    /// Entry lifecycle state: live, recycled, or tombstone.
+    pub lifecycle_state: Option<String>,
+    /// Extensible attributes (JSONB).
+    pub attributes: Option<serde_json::Value>,
 }
 
 /// Node type definition (customizable per tenant)
@@ -52,8 +56,18 @@ pub struct OrgNodeType {
     pub color: Option<String>,
     pub allowed_children: serde_json::Value,
     pub config_schema: Option<serde_json::Value>,
-    pub sort_order: i32,
+    pub sort_order: Option<i32>,
     pub created_at: DateTime<Utc>,
+    /// Tree type (internal/clients/suppliers).
+    pub tree_type: Option<String>,
+    /// Display label.
+    pub label: Option<String>,
+    /// Whether this node type is active.
+    pub is_active: Option<bool>,
+    /// Last update timestamp.
+    pub updated_at: Option<DateTime<Utc>>,
+    /// Schema definition for attributes.
+    pub schema: Option<serde_json::Value>,
 }
 
 /// Tree node with children (recursive structure)
@@ -325,8 +339,9 @@ pub async fn get_node(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    tracing::info!(%id, tenant_id = %ctx.tenant_id, "get_node called");
     let node: Option<OrgNode> =
-        sqlx::query_as("SELECT * FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2")
+        sqlx::query_as("SELECT id, tenant_id, parent_id, node_type, name, code, description, config, sort_order, is_active, created_at, updated_at, lifecycle_state, attributes FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2")
             .bind(id)
             .bind(ctx.tenant_id)
             .fetch_optional(&*state.pool)
