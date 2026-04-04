@@ -1,0 +1,27 @@
+[package]
+name = "signapps-smb-sysvol"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "SMB2/3 SYSVOL share for Active Directory Group Policy distribution"
+
+[dependencies]
+tokio = { workspace = true }
+sqlx = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+bytes = { workspace = true }
+
+signapps-common = { path = "../signapps-common" }
+signapps-db = { path = "../signapps-db" }
+signapps-ad-core = { path = "../signapps-ad-core" }
+
+[dev-dependencies]
+tokio-test = { workspace = true }

@@ -10970,6 +10970,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-smb-sysvol"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-ad-core",
+ "signapps-common",
+ "signapps-db",
+ "sqlx",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-smtp"
 version = "0.1.0"
 dependencies = [
