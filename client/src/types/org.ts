@@ -162,7 +162,7 @@ export interface OrgGroupMember {
 export interface OrgMemberOf {
   person_id: string;
   group_id: string;
-  source: "direct" | "nested" | "dynamic" | "node";
+  source: "direct" | "nested_group" | "node";
   computed_at: string;
 }
 

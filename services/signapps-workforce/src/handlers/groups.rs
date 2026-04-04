@@ -135,11 +135,11 @@ pub async fn create_group(
 #[tracing::instrument(skip_all)]
 pub async fn get_group(
     State(state): State<AppState>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let group = GroupRepository::get_group(&state.pool, id)
+    let group = GroupRepository::get_group(&state.pool, ctx.tenant_id, id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get group: {}", e);
@@ -179,7 +179,7 @@ pub async fn update_group(
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateOrgGroup>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let group = GroupRepository::update_group(&state.pool, id, input)
+    let group = GroupRepository::update_group(&state.pool, ctx.tenant_id, id, input)
         .await
         .map_err(|e| {
             tracing::error!("Failed to update group: {}", e);
@@ -232,7 +232,7 @@ pub async fn delete_group(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    GroupRepository::delete_group(&state.pool, id)
+    GroupRepository::delete_group(&state.pool, ctx.tenant_id, id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to delete group: {}", e);

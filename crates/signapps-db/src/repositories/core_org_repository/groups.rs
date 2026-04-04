@@ -57,37 +57,45 @@ impl GroupRepository {
         Ok(group)
     }
 
-    /// Find a group by primary key.
-    pub async fn get_group(pool: &PgPool, id: Uuid) -> Result<Option<OrgGroup>> {
-        let group =
-            sqlx::query_as::<_, OrgGroup>("SELECT * FROM workforce_org_groups WHERE id = $1")
-                .bind(id)
-                .fetch_optional(pool)
-                .await
-                .map_err(|e| Error::Database(e.to_string()))?;
+    /// Find a group by primary key, scoped to tenant.
+    pub async fn get_group(pool: &PgPool, tenant_id: Uuid, id: Uuid) -> Result<Option<OrgGroup>> {
+        let group = sqlx::query_as::<_, OrgGroup>(
+            "SELECT * FROM workforce_org_groups WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
         Ok(group)
     }
 
-    /// Update an existing org group using COALESCE patching.
-    pub async fn update_group(pool: &PgPool, id: Uuid, input: UpdateOrgGroup) -> Result<OrgGroup> {
+    /// Update an existing org group using COALESCE patching, scoped to tenant.
+    pub async fn update_group(
+        pool: &PgPool,
+        tenant_id: Uuid,
+        id: Uuid,
+        input: UpdateOrgGroup,
+    ) -> Result<OrgGroup> {
         let group = sqlx::query_as::<_, OrgGroup>(
             r#"
             UPDATE workforce_org_groups SET
-                name        = COALESCE($2, name),
-                description = COALESCE($3, description),
-                group_type  = COALESCE($4, group_type),
-                filter      = COALESCE($5, filter),
-                managed_by  = COALESCE($6, managed_by),
-                valid_from  = COALESCE($7, valid_from),
-                valid_until = COALESCE($8, valid_until),
-                is_active   = COALESCE($9, is_active),
-                attributes  = COALESCE($10, attributes),
+                name        = COALESCE($3, name),
+                description = COALESCE($4, description),
+                group_type  = COALESCE($5, group_type),
+                filter      = COALESCE($6, filter),
+                managed_by  = COALESCE($7, managed_by),
+                valid_from  = COALESCE($8, valid_from),
+                valid_until = COALESCE($9, valid_until),
+                is_active   = COALESCE($10, is_active),
+                attributes  = COALESCE($11, attributes),
                 updated_at  = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND tenant_id = $2
             RETURNING *
             "#,
         )
         .bind(id)
+        .bind(tenant_id)
         .bind(&input.name)
         .bind(&input.description)
         .bind(&input.group_type)
@@ -103,10 +111,11 @@ impl GroupRepository {
         Ok(group)
     }
 
-    /// Delete a group. The trigger handles memberof cleanup via ON DELETE CASCADE.
-    pub async fn delete_group(pool: &PgPool, id: Uuid) -> Result<()> {
-        sqlx::query("DELETE FROM workforce_org_groups WHERE id = $1")
+    /// Delete a group, scoped to tenant. The trigger handles memberof cleanup via ON DELETE CASCADE.
+    pub async fn delete_group(pool: &PgPool, tenant_id: Uuid, id: Uuid) -> Result<()> {
+        sqlx::query("DELETE FROM workforce_org_groups WHERE id = $1 AND tenant_id = $2")
             .bind(id)
+            .bind(tenant_id)
             .execute(pool)
             .await
             .map_err(|e| Error::Database(e.to_string()))?;

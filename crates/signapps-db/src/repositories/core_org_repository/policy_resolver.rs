@@ -50,6 +50,7 @@ impl PolicyResolver {
             WHERE wa.employee_id = $1
               AND pl.link_type = 'node'
               AND p.is_disabled = false
+              AND pl.is_blocked = false
             ORDER BY p.priority ASC
             "#,
         )
@@ -301,12 +302,12 @@ fn merge_policies(collected: Vec<CollectedPolicy>) -> EffectivePolicy {
     let mut settings = serde_json::Map::new();
     let mut sources: Vec<PolicySource> = Vec::new();
 
-    // Apply normal policies first (lower priority wins for first-non-null, higher priority
-    // wins for security).
-    apply_policies(&normal, &mut settings, &mut sources);
+    // Apply normal policies first (first-non-null wins for non-security, strict-wins for
+    // security).
+    apply_policies(&normal, &mut settings, &mut sources, false);
 
     // Enforced policies always override — applied last.
-    apply_policies(&enforced, &mut settings, &mut sources);
+    apply_policies(&enforced, &mut settings, &mut sources, true);
 
     EffectivePolicy {
         settings: serde_json::Value::Object(settings),
@@ -322,11 +323,14 @@ fn merge_policies(collected: Vec<CollectedPolicy>) -> EffectivePolicy {
 /// - Arrays: intersection (smallest common set).
 ///
 /// For other domains (`modules`, `naming`, `delegation`, `compliance`, `custom`):
-/// - Priority ASC → later (higher priority) values overwrite earlier.
+/// - First-non-null wins (lowest priority = applied first, keeps existing).
+///
+/// If `is_enforced_pass` is true, all keys overwrite unconditionally (enforced pass).
 fn apply_policies(
     policies: &[&CollectedPolicy],
     settings: &mut serde_json::Map<String, serde_json::Value>,
     sources: &mut Vec<PolicySource>,
+    is_enforced_pass: bool,
 ) {
     for cp in policies {
         let domain = &cp.policy.domain;
@@ -334,7 +338,11 @@ fn apply_policies(
             for (key, value) in policy_settings {
                 let full_key = format!("{}.{}", domain, key);
 
-                if domain == "security" {
+                if is_enforced_pass {
+                    // Enforced policies always overwrite.
+                    settings.insert(full_key.clone(), value.clone());
+                    update_source(sources, &full_key, value, cp);
+                } else if domain == "security" {
                     // Strict-wins merge for security domain.
                     let should_apply = match settings.get(&full_key) {
                         None => true,
@@ -345,9 +353,11 @@ fn apply_policies(
                         update_source(sources, &full_key, value, cp);
                     }
                 } else {
-                    // Priority-based overwrite: later (higher priority) wins.
-                    settings.insert(full_key.clone(), value.clone());
-                    update_source(sources, &full_key, value, cp);
+                    // First-non-null wins: skip if key already exists.
+                    if !settings.contains_key(&full_key) {
+                        settings.insert(full_key.clone(), value.clone());
+                        update_source(sources, &full_key, value, cp);
+                    }
                 }
             }
         }

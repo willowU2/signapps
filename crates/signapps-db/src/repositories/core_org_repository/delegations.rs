@@ -1,6 +1,6 @@
 //! DelegationRepository — scoped delegation chain operations.
 
-use crate::models::org_delegations::{CreateDelegation, OrgDelegation};
+use crate::models::org_delegations::{CreateDelegation, OrgDelegation, UpdateDelegation};
 use signapps_common::{Error, Result};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -64,16 +64,46 @@ impl DelegationRepository {
         Ok(delegation)
     }
 
-    /// Revoke a delegation by setting `is_active = false`.
-    pub async fn revoke_delegation(pool: &PgPool, id: Uuid) -> Result<()> {
+    /// Revoke a delegation by setting `is_active = false`, scoped to tenant.
+    pub async fn revoke_delegation(pool: &PgPool, tenant_id: Uuid, id: Uuid) -> Result<()> {
         sqlx::query(
-            "UPDATE workforce_org_delegations SET is_active = false, updated_at = NOW() WHERE id = $1",
+            "UPDATE workforce_org_delegations SET is_active = false, updated_at = NOW() WHERE id = $1 AND tenant_id = $2",
         )
         .bind(id)
+        .bind(tenant_id)
         .execute(pool)
         .await
         .map_err(|e| Error::Database(e.to_string()))?;
         Ok(())
+    }
+
+    /// Update an existing delegation, scoped to tenant.
+    pub async fn update_delegation(
+        pool: &PgPool,
+        tenant_id: Uuid,
+        id: Uuid,
+        input: UpdateDelegation,
+    ) -> Result<OrgDelegation> {
+        let delegation = sqlx::query_as::<_, OrgDelegation>(
+            r#"
+            UPDATE workforce_org_delegations SET
+                permissions = COALESCE($3, permissions),
+                expires_at  = COALESCE($4, expires_at),
+                is_active   = COALESCE($5, is_active),
+                updated_at  = NOW()
+            WHERE id = $1 AND tenant_id = $2
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .bind(&input.permissions)
+        .bind(input.expires_at)
+        .bind(input.is_active)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+        Ok(delegation)
     }
 
     /// Get all active delegations where a person is the delegate.

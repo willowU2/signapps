@@ -72,39 +72,46 @@ impl PolicyRepository {
         Ok(policy)
     }
 
-    /// Find a policy by primary key.
-    pub async fn get_policy(pool: &PgPool, id: Uuid) -> Result<Option<OrgPolicy>> {
-        let policy =
-            sqlx::query_as::<_, OrgPolicy>("SELECT * FROM workforce_org_policies WHERE id = $1")
-                .bind(id)
-                .fetch_optional(pool)
-                .await
-                .map_err(|e| Error::Database(e.to_string()))?;
+    /// Find a policy by primary key, scoped to tenant.
+    pub async fn get_policy(pool: &PgPool, tenant_id: Uuid, id: Uuid) -> Result<Option<OrgPolicy>> {
+        let policy = sqlx::query_as::<_, OrgPolicy>(
+            "SELECT * FROM workforce_org_policies WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
         Ok(policy)
     }
 
-    /// Update an existing org policy using COALESCE patching.
+    /// Update an existing org policy using COALESCE patching, scoped to tenant.
+    ///
+    /// Automatically increments the `version` field on each update.
     pub async fn update_policy(
         pool: &PgPool,
+        tenant_id: Uuid,
         id: Uuid,
         input: UpdateOrgPolicy,
     ) -> Result<OrgPolicy> {
         let policy = sqlx::query_as::<_, OrgPolicy>(
             r#"
             UPDATE workforce_org_policies SET
-                name        = COALESCE($2, name),
-                description = COALESCE($3, description),
-                domain      = COALESCE($4, domain),
-                priority    = COALESCE($5, priority),
-                is_enforced = COALESCE($6, is_enforced),
-                is_disabled = COALESCE($7, is_disabled),
-                settings    = COALESCE($8, settings),
+                name        = COALESCE($3, name),
+                description = COALESCE($4, description),
+                domain      = COALESCE($5, domain),
+                priority    = COALESCE($6, priority),
+                is_enforced = COALESCE($7, is_enforced),
+                is_disabled = COALESCE($8, is_disabled),
+                settings    = COALESCE($9, settings),
+                version     = version + 1,
                 updated_at  = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND tenant_id = $2
             RETURNING *
             "#,
         )
         .bind(id)
+        .bind(tenant_id)
         .bind(&input.name)
         .bind(&input.description)
         .bind(&input.domain)
@@ -118,10 +125,11 @@ impl PolicyRepository {
         Ok(policy)
     }
 
-    /// Delete a policy and all its links (ON DELETE CASCADE).
-    pub async fn delete_policy(pool: &PgPool, id: Uuid) -> Result<()> {
-        sqlx::query("DELETE FROM workforce_org_policies WHERE id = $1")
+    /// Delete a policy and all its links (ON DELETE CASCADE), scoped to tenant.
+    pub async fn delete_policy(pool: &PgPool, tenant_id: Uuid, id: Uuid) -> Result<()> {
+        sqlx::query("DELETE FROM workforce_org_policies WHERE id = $1 AND tenant_id = $2")
             .bind(id)
+            .bind(tenant_id)
             .execute(pool)
             .await
             .map_err(|e| Error::Database(e.to_string()))?;
@@ -129,6 +137,8 @@ impl PolicyRepository {
     }
 
     /// Attach a policy to a scope (node, group, site, country, or global).
+    ///
+    /// Uses an idempotent upsert so that re-linking the same scope returns the existing row.
     pub async fn add_policy_link(
         pool: &PgPool,
         policy_id: Uuid,
@@ -139,7 +149,8 @@ impl PolicyRepository {
             INSERT INTO workforce_org_policy_links
                 (policy_id, link_type, link_id)
             VALUES ($1, $2, $3)
-            ON CONFLICT (policy_id, link_type, link_id) DO NOTHING
+            ON CONFLICT (policy_id, link_type, link_id) DO UPDATE
+                SET created_at = EXCLUDED.created_at
             RETURNING *
             "#,
         )
@@ -206,11 +217,18 @@ impl PolicyRepository {
     pub async fn get_policies_for_site(pool: &PgPool, site_id: Uuid) -> Result<Vec<OrgPolicy>> {
         let policies = sqlx::query_as::<_, OrgPolicy>(
             r#"
+            WITH RECURSIVE site_chain AS (
+                SELECT id, parent_id FROM workforce_sites WHERE id = $1
+                UNION ALL
+                SELECT s.id, s.parent_id FROM workforce_sites s
+                JOIN site_chain sc ON s.id = sc.parent_id
+                WHERE sc.parent_id IS NOT NULL
+            )
             SELECT DISTINCT p.*
             FROM workforce_org_policies p
             JOIN workforce_org_policy_links pl ON pl.policy_id = p.id
+            JOIN site_chain sc ON sc.id::text = pl.link_id
             WHERE pl.link_type = 'site'
-              AND pl.link_id = $1::text
               AND p.is_disabled = false
               AND pl.is_blocked = false
             ORDER BY p.priority DESC, p.name

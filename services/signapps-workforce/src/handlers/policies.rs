@@ -8,7 +8,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use uuid::Uuid;
 
@@ -154,11 +154,11 @@ pub async fn create_policy(
 #[tracing::instrument(skip_all)]
 pub async fn get_policy(
     State(state): State<AppState>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let policy = PolicyRepository::get_policy(&state.pool, id)
+    let policy = PolicyRepository::get_policy(&state.pool, ctx.tenant_id, id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get policy: {}", e);
@@ -198,7 +198,7 @@ pub async fn update_policy(
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateOrgPolicy>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let policy = PolicyRepository::update_policy(&state.pool, id, input)
+    let policy = PolicyRepository::update_policy(&state.pool, ctx.tenant_id, id, input)
         .await
         .map_err(|e| {
             tracing::error!("Failed to update policy: {}", e);
@@ -251,7 +251,7 @@ pub async fn delete_policy(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    PolicyRepository::delete_policy(&state.pool, id)
+    PolicyRepository::delete_policy(&state.pool, ctx.tenant_id, id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to delete policy: {}", e);
@@ -458,5 +458,85 @@ pub async fn resolve_node(
             tracing::error!("Failed to resolve node policy: {}", e);
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
+    Ok(Json(json!(effective)))
+}
+
+// ============================================================================
+// Policy Simulation
+// ============================================================================
+
+/// Request payload for simulating a hypothetical policy change.
+#[derive(Debug, Deserialize, Serialize, utoipa::ToSchema)]
+pub struct SimulateRequest {
+    /// Person UUID to resolve the effective policy for.
+    pub person_id: Uuid,
+    /// Optional policy to add/overlay for the simulation.
+    pub add_policy: Option<CreateOrgPolicy>,
+    /// Optional policy ID to exclude from the simulation.
+    pub remove_policy_id: Option<Uuid>,
+}
+
+/// Simulate a hypothetical policy change and return the effective policy.
+///
+/// Resolves the current effective policy for a person, then applies the
+/// requested overlay (add/remove) to show what WOULD change.
+///
+/// # Errors
+///
+/// Returns `500` if the policy resolution fails.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+#[utoipa::path(
+    post,
+    path = "/api/v1/workforce/policies/simulate",
+    request_body = SimulateRequest,
+    responses(
+        (status = 200, description = "Simulated effective policy"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Policies"
+)]
+#[tracing::instrument(skip_all)]
+pub async fn simulate_policy(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Json(req): Json<SimulateRequest>,
+) -> Result<impl IntoResponse, StatusCode> {
+    // Step 1: Resolve current effective policy for the person.
+    let mut effective = PolicyResolver::resolve_person_policy(&state.pool, req.person_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to resolve person policy for simulation: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    // Step 2: Remove the excluded policy's contributions from sources and settings.
+    if let Some(remove_id) = req.remove_policy_id {
+        effective.sources.retain(|s| s.policy_id != remove_id);
+        // Rebuild settings from remaining sources.
+        let mut rebuilt = serde_json::Map::new();
+        for src in &effective.sources {
+            rebuilt.insert(src.key.clone(), src.value.clone());
+        }
+        effective.settings = serde_json::Value::Object(rebuilt);
+    }
+
+    // Step 3: Overlay the added policy's settings (high priority, applied last).
+    if let Some(add) = req.add_policy {
+        if let serde_json::Value::Object(add_settings) = &add.settings {
+            if let Some(settings) = effective.settings.as_object_mut() {
+                for (key, value) in add_settings {
+                    let full_key = format!("{}.{}", add.domain, key);
+                    settings.insert(full_key, value.clone());
+                }
+            }
+        }
+    }
+
     Ok(Json(json!(effective)))
 }

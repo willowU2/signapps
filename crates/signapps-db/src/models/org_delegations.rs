@@ -28,8 +28,8 @@ pub struct OrgDelegation {
     pub delegate_type: String,
     /// UUID of the entity receiving the delegation.
     pub delegate_id: Uuid,
-    /// Org node whose subtree is the scope of the delegation (nullable).
-    pub scope_node_id: Option<Uuid>,
+    /// Org node whose subtree is the scope of the delegation.
+    pub scope_node_id: Uuid,
     /// JSONB map of specific permissions granted.
     pub permissions: serde_json::Value,
     /// UUID of the person who actually created this delegation (for sub-delegations).
@@ -59,7 +59,7 @@ pub struct CreateDelegation {
     /// UUID of the entity receiving the delegation.
     pub delegate_id: Uuid,
     /// Org node whose subtree defines the scope.
-    pub scope_node_id: Option<Uuid>,
+    pub scope_node_id: Uuid,
     /// JSONB map of specific permissions granted.
     pub permissions: serde_json::Value,
     /// Optional parent delegation (for sub-delegations).

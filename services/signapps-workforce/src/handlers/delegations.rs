@@ -14,7 +14,7 @@ use uuid::Uuid;
 use crate::AppState;
 use signapps_common::{Claims, TenantContext};
 use signapps_db::models::org_audit::CreateAuditEntry;
-use signapps_db::models::org_delegations::CreateDelegation;
+use signapps_db::models::org_delegations::{CreateDelegation, UpdateDelegation};
 use signapps_db::repositories::core_org_repository::{AuditRepository, DelegationRepository};
 
 // ============================================================================
@@ -141,7 +141,7 @@ pub async fn revoke_delegation(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    DelegationRepository::revoke_delegation(&state.pool, id)
+    DelegationRepository::revoke_delegation(&state.pool, ctx.tenant_id, id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to revoke delegation: {}", e);
@@ -164,6 +164,62 @@ pub async fn revoke_delegation(
     .await;
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Update an existing delegation.
+///
+/// # Errors
+///
+/// Returns `500` if the database update fails.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+#[utoipa::path(
+    put,
+    path = "/api/v1/workforce/delegations/{id}",
+    params(("id" = Uuid, Path, description = "Delegation UUID")),
+    request_body = UpdateDelegation,
+    responses(
+        (status = 200, description = "Delegation updated"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Workforce Delegations"
+)]
+#[tracing::instrument(skip_all)]
+pub async fn update_delegation(
+    State(state): State<AppState>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(input): Json<UpdateDelegation>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let delegation =
+        DelegationRepository::update_delegation(&state.pool, ctx.tenant_id, id, input)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to update delegation: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+
+    let _ = AuditRepository::log_audit(
+        &state.pool,
+        CreateAuditEntry {
+            tenant_id: ctx.tenant_id,
+            actor_id: Some(claims.sub),
+            actor_type: "user".to_string(),
+            action: "update".to_string(),
+            entity_type: "delegation".to_string(),
+            entity_id: id,
+            changes: json!({"delegate_id": delegation.delegate_id}),
+            metadata: None,
+        },
+    )
+    .await;
+
+    Ok(Json(json!(delegation)))
 }
 
 /// Get delegations where the current user is the delegate.
