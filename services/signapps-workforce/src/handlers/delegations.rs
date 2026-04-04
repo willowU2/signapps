@@ -84,13 +84,12 @@ pub async fn create_delegation(
     Extension(claims): Extension<Claims>,
     Json(input): Json<CreateDelegation>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let delegation =
-        DelegationRepository::create_delegation(&state.pool, ctx.tenant_id, input)
-            .await
-            .map_err(|e| {
-                tracing::error!("Failed to create delegation: {}", e);
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+    let delegation = DelegationRepository::create_delegation(&state.pool, ctx.tenant_id, input)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to create delegation: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     let _ = AuditRepository::log_audit(
         &state.pool,
@@ -196,13 +195,12 @@ pub async fn update_delegation(
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateDelegation>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let delegation =
-        DelegationRepository::update_delegation(&state.pool, ctx.tenant_id, id, input)
-            .await
-            .map_err(|e| {
-                tracing::error!("Failed to update delegation: {}", e);
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+    let delegation = DelegationRepository::update_delegation(&state.pool, ctx.tenant_id, id, input)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to update delegation: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     let _ = AuditRepository::log_audit(
         &state.pool,
@@ -248,13 +246,12 @@ pub async fn my_delegations(
     Extension(_ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let delegations =
-        DelegationRepository::get_delegations_for_person(&state.pool, claims.sub)
-            .await
-            .map_err(|e| {
-                tracing::error!("Failed to get my delegations: {}", e);
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+    let delegations = DelegationRepository::get_delegations_for_person(&state.pool, claims.sub)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get my delegations: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
     Ok(Json(json!(delegations)))
 }
 
@@ -284,12 +281,11 @@ pub async fn granted_delegations(
     Extension(_ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let delegations =
-        DelegationRepository::get_delegations_granted_by(&state.pool, claims.sub)
-            .await
-            .map_err(|e| {
-                tracing::error!("Failed to get granted delegations: {}", e);
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+    let delegations = DelegationRepository::get_delegations_granted_by(&state.pool, claims.sub)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get granted delegations: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
     Ok(Json(json!(delegations)))
 }

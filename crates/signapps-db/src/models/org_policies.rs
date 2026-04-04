@@ -27,7 +27,7 @@ pub struct OrgPolicy {
     /// Optional human-readable description.
     pub description: Option<String>,
     /// Policy domain (e.g. `"security"`, `"modules"`, `"naming"`, `"delegation"`,
-    /// `"compliance"`, `"custom"`).
+    /// `"compliance"`, `"governance"`, `"custom"`).
     pub domain: String,
     /// Merge precedence — higher value overrides lower.
     pub priority: i32,
@@ -56,7 +56,7 @@ pub struct CreateOrgPolicy {
     /// Optional human-readable description.
     pub description: Option<String>,
     /// Policy domain (e.g. `"security"`, `"modules"`, `"naming"`, `"delegation"`,
-    /// `"compliance"`, `"custom"`).
+    /// `"compliance"`, `"governance"`, `"custom"`).
     pub domain: String,
     /// Merge precedence — higher value overrides lower.
     pub priority: Option<i32>,

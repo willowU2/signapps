@@ -63,16 +63,13 @@ pub async fn list_policies(
     Extension(_claims): Extension<Claims>,
     Query(params): Query<PolicyListParams>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let policies = PolicyRepository::list_policies(
-        &state.pool,
-        ctx.tenant_id,
-        params.domain.as_deref(),
-    )
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to list policies: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let policies =
+        PolicyRepository::list_policies(&state.pool, ctx.tenant_id, params.domain.as_deref())
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to list policies: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
     Ok(Json(json!(policies)))
 }
 

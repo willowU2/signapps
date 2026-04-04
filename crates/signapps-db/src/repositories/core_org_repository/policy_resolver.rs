@@ -322,7 +322,7 @@ fn merge_policies(collected: Vec<CollectedPolicy>) -> EffectivePolicy {
 /// - Numbers: maximum wins (e.g. longer password length, more retries).
 /// - Arrays: intersection (smallest common set).
 ///
-/// For other domains (`modules`, `naming`, `delegation`, `compliance`, `custom`):
+/// For other domains (`modules`, `naming`, `delegation`, `compliance`, `governance`, `custom`):
 /// - First-non-null wins (lowest priority = applied first, keeps existing).
 ///
 /// If `is_enforced_pass` is true, all keys overwrite unconditionally (enforced pass).
