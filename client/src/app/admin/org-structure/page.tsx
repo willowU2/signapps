@@ -107,9 +107,28 @@ import {
   Star,
   Gavel,
   Info,
+  Monitor,
+  Key,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  useAdDomains,
+  useAdComputers,
+  useAdGpos,
+  useAdKeys,
+  useAdDnsZones,
+  useAdDnsRecords,
+  useRotateKey,
+} from "@/hooks/use-active-directory";
+import type {
+  ComputerAccount,
+  GroupPolicyObject,
+  AdPrincipalKey,
+  AdDnsRecord,
+} from "@/types/active-directory";
+import { ENC_TYPE_LABELS } from "@/types/active-directory";
 
 // =============================================================================
 // Node type configuration
@@ -1930,6 +1949,518 @@ function GovernanceTab({ nodeId, persons, allNodes }: GovernanceTabProps) {
 
 type AssignmentWithPerson = Assignment & { person?: Person };
 
+// ── Tab Categories & Visibility ──────────────────────────────────────────────
+
+interface TabDef {
+  id: string;
+  label: string;
+  category: "organisation" | "groupes_politiques" | "infrastructure";
+}
+
+const ALL_TABS: TabDef[] = [
+  // Organisation
+  { id: "details", label: "Details", category: "organisation" },
+  { id: "people", label: "Personnes", category: "organisation" },
+  { id: "governance", label: "Gouvernance", category: "organisation" },
+  // Groupes & Politiques
+  { id: "groups", label: "Groupes", category: "groupes_politiques" },
+  { id: "sites", label: "Sites", category: "groupes_politiques" },
+  { id: "policies", label: "Policies", category: "groupes_politiques" },
+  { id: "gpo", label: "GPO", category: "groupes_politiques" },
+  // Infrastructure
+  { id: "computers", label: "Ordinateurs", category: "infrastructure" },
+  { id: "kerberos", label: "Kerberos", category: "infrastructure" },
+  { id: "dns", label: "DNS", category: "infrastructure" },
+  { id: "audit", label: "Audit", category: "infrastructure" },
+];
+
+const CATEGORY_LABELS: Record<string, string> = {
+  organisation: "Organisation",
+  groupes_politiques: "Groupes & Politiques",
+  infrastructure: "Infrastructure",
+};
+
+const DEFAULT_TAB_VISIBILITY: Record<string, string[]> = {
+  group: [
+    "details",
+    "people",
+    "governance",
+    "groups",
+    "sites",
+    "policies",
+    "gpo",
+    "computers",
+    "kerberos",
+    "dns",
+    "audit",
+  ],
+  subsidiary: [
+    "details",
+    "people",
+    "governance",
+    "groups",
+    "sites",
+    "policies",
+    "gpo",
+    "computers",
+    "kerberos",
+    "audit",
+  ],
+  bu: [
+    "details",
+    "people",
+    "governance",
+    "groups",
+    "sites",
+    "policies",
+    "gpo",
+    "computers",
+    "audit",
+  ],
+  department: [
+    "details",
+    "people",
+    "governance",
+    "groups",
+    "sites",
+    "policies",
+    "gpo",
+    "computers",
+    "audit",
+  ],
+  service: [
+    "details",
+    "people",
+    "groups",
+    "policies",
+    "gpo",
+    "computers",
+    "audit",
+  ],
+  team: ["details", "people", "groups", "gpo", "computers", "audit"],
+  position: ["details", "people", "audit"],
+  computer: ["details", "kerberos", "dns", "audit"],
+};
+
+/** Get visible tabs for a node type, with optional override from schema.visible_tabs */
+function getVisibleTabs(
+  nodeType: string,
+  schema?: Record<string, unknown>,
+): TabDef[] {
+  // Check for override in schema.visible_tabs
+  const override = schema?.visible_tabs as Record<string, string[]> | undefined;
+  if (override) {
+    const allIds = [
+      ...(override.organisation || []),
+      ...(override.groupes_politiques || []),
+      ...(override.infrastructure || []),
+    ];
+    return ALL_TABS.filter((t) => allIds.includes(t.id));
+  }
+  // Default mapping
+  const defaultIds =
+    DEFAULT_TAB_VISIBILITY[nodeType] ?? DEFAULT_TAB_VISIBILITY["department"];
+  return ALL_TABS.filter((t) => defaultIds.includes(t.id));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ComputersTabContent
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ComputersTabContent({ nodeId: _nodeId }: { nodeId: string }) {
+  const { data: domains = [] } = useAdDomains();
+  const domainId = domains[0]?.id ?? "";
+  const { data: computers = [] } = useAdComputers(domainId);
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    if (!search) return computers;
+    const q = search.toLowerCase();
+    return computers.filter(
+      (c: ComputerAccount) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.dns_hostname ?? "").toLowerCase().includes(q),
+    );
+  }, [computers, search]);
+
+  if (!domainId) {
+    return (
+      <div className="text-center text-muted-foreground py-8">
+        <Monitor className="h-8 w-8 mx-auto mb-2 opacity-30" />
+        <p className="text-sm">Aucun domaine AD configure</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="Rechercher un ordinateur..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-8 text-sm max-w-xs"
+        />
+        <Badge variant="outline" className="text-xs">
+          {filtered.length} machine(s)
+        </Badge>
+      </div>
+      {filtered.length === 0 ? (
+        <div className="text-center text-muted-foreground py-6">
+          <Monitor className="h-6 w-6 mx-auto mb-2 opacity-30" />
+          <p className="text-xs">Aucun ordinateur dans cette OU</p>
+        </div>
+      ) : (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs">Nom</TableHead>
+                <TableHead className="text-xs">Hostname DNS</TableHead>
+                <TableHead className="text-xs">OS</TableHead>
+                <TableHead className="text-xs">Derniere connexion</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((c: ComputerAccount) => (
+                <TableRow key={c.id}>
+                  <TableCell className="text-sm font-medium">
+                    {c.name}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground font-mono">
+                    {c.dns_hostname ?? "—"}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="text-[10px]">
+                      {c.os ?? "Inconnu"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {c.last_logon
+                      ? new Date(c.last_logon).toLocaleDateString("fr-FR")
+                      : "Jamais"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GpoTabContent
+// ─────────────────────────────────────────────────────────────────────────────
+
+function GpoTabContent({ nodeId: _nodeId }: { nodeId: string }) {
+  const { data: domains = [] } = useAdDomains();
+  const domainId = domains[0]?.id ?? "";
+  const { data: gpos = [] } = useAdGpos(domainId);
+
+  if (!domainId) {
+    return (
+      <div className="text-center text-muted-foreground py-8">
+        <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
+        <p className="text-sm">Aucun domaine AD configure</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Badge variant="outline" className="text-xs">
+          {gpos.length} GPO(s)
+        </Badge>
+      </div>
+      {gpos.length === 0 ? (
+        <div className="text-center text-muted-foreground py-6">
+          <FileText className="h-6 w-6 mx-auto mb-2 opacity-30" />
+          <p className="text-xs">Aucune strategie de groupe</p>
+        </div>
+      ) : (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs">Nom</TableHead>
+                <TableHead className="text-xs">Version</TableHead>
+                <TableHead className="text-xs">Machine</TableHead>
+                <TableHead className="text-xs">User</TableHead>
+                <TableHead className="text-xs">Statut</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {gpos.map((g: GroupPolicyObject) => (
+                <TableRow key={g.id}>
+                  <TableCell className="text-sm font-medium">
+                    {g.display_name}
+                  </TableCell>
+                  <TableCell className="text-xs">v{g.version}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={g.machine_enabled ? "default" : "secondary"}
+                      className="text-[10px]"
+                    >
+                      {g.machine_enabled ? "Actif" : "Inactif"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={g.user_enabled ? "default" : "secondary"}
+                      className="text-[10px]"
+                    >
+                      {g.user_enabled ? "Actif" : "Inactif"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={g.enabled ? "default" : "outline"}
+                      className="text-[10px]"
+                    >
+                      {g.enabled ? "Active" : "Desactivee"}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// KerberosTabContent
+// ─────────────────────────────────────────────────────────────────────────────
+
+function KerberosTabContent({
+  nodeId: _nodeId,
+  nodeType,
+}: {
+  nodeId: string;
+  nodeType: string;
+}) {
+  const { data: domains = [] } = useAdDomains();
+  const domainId = domains[0]?.id || "";
+  const { data: keys = [] } = useAdKeys(domainId);
+  const rotateKey = useRotateKey();
+
+  if (!domainId) {
+    return (
+      <div className="text-center text-muted-foreground py-8">
+        <Key className="h-8 w-8 mx-auto mb-2 opacity-30" />
+        <p className="text-sm">Aucun domaine AD configure</p>
+      </div>
+    );
+  }
+
+  const filteredKeys = keys.filter((k: AdPrincipalKey) => {
+    if (nodeType === "computer") return k.principal_type === "computer";
+    if (nodeType === "group") return true;
+    return k.principal_type === "user";
+  });
+
+  const grouped = filteredKeys.reduce<Record<string, AdPrincipalKey[]>>(
+    (acc, k: AdPrincipalKey) => {
+      (acc[k.principal_name] ||= []).push(k);
+      return acc;
+    },
+    {},
+  );
+
+  return (
+    <div className="space-y-3">
+      <Badge variant="outline" className="text-xs">
+        {Object.keys(grouped).length} principal(s)
+      </Badge>
+      {Object.keys(grouped).length === 0 ? (
+        <div className="text-center text-muted-foreground py-6">
+          <Key className="h-6 w-6 mx-auto mb-2 opacity-30" />
+          <p className="text-xs">Aucun principal Kerberos</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {Object.entries(grouped).map(([principal, pkeys]) => (
+            <div key={principal} className="rounded-md border p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Key className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-medium font-mono">
+                    {principal}
+                  </span>
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      "text-[10px]",
+                      pkeys[0]?.principal_type === "krbtgt"
+                        ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        : pkeys[0]?.principal_type === "user"
+                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                          : pkeys[0]?.principal_type === "computer"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+                    )}
+                  >
+                    {pkeys[0]?.principal_type}
+                  </Badge>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => rotateKey.mutate({ domainId, principal })}
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Rotation
+                </Button>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                {pkeys.map((k: AdPrincipalKey) => (
+                  <div key={k.id} className="flex items-center gap-1">
+                    <span className="font-mono">
+                      {ENC_TYPE_LABELS[k.enc_type] || `enc${k.enc_type}`}
+                    </span>
+                    <span>v{k.key_version}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DnsTabContent
+// ─────────────────────────────────────────────────────────────────────────────
+
+function DnsTabContent({
+  nodeId: _nodeId,
+  nodeType: _nodeType,
+}: {
+  nodeId: string;
+  nodeType: string;
+}) {
+  const { data: domains = [] } = useAdDomains();
+  const domainId = domains[0]?.id || "";
+  const { data: zones = [] } = useAdDnsZones(domainId);
+  const zoneId = zones[0]?.id || "";
+  const { data: records = [] } = useAdDnsRecords(zoneId);
+
+  if (!domainId || !zoneId) {
+    return (
+      <div className="text-center text-muted-foreground py-8">
+        <Globe className="h-8 w-8 mx-auto mb-2 opacity-30" />
+        <p className="text-sm">Aucune zone DNS configuree</p>
+      </div>
+    );
+  }
+
+  const TYPE_COLORS: Record<string, string> = {
+    A: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    AAAA: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    SRV: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    CNAME:
+      "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+    TXT: "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400",
+    MX: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    NS: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+    PTR: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
+  };
+
+  function formatRdata(record: AdDnsRecord): string {
+    const r = record.rdata;
+    switch (record.record_type) {
+      case "SRV":
+        return `${r.priority} ${r.weight} ${r.port} ${r.target}`;
+      case "MX":
+        return `${r.preference} ${r.exchange}`;
+      case "A":
+      case "AAAA":
+        return String(r.ip || "");
+      case "CNAME":
+      case "PTR":
+      case "NS":
+        return String(r.target || "");
+      case "TXT":
+        return String(r.text || "");
+      default:
+        return JSON.stringify(r);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Badge variant="outline" className="text-xs">
+          {zones[0]?.zone_name}
+        </Badge>
+        <Badge variant="outline" className="text-xs">
+          {records.length} record(s)
+        </Badge>
+      </div>
+      {records.length === 0 ? (
+        <div className="text-center text-muted-foreground py-6">
+          <Globe className="h-6 w-6 mx-auto mb-2 opacity-30" />
+          <p className="text-xs">Aucun enregistrement DNS</p>
+        </div>
+      ) : (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs">Nom</TableHead>
+                <TableHead className="text-xs">Type</TableHead>
+                <TableHead className="text-xs">Donnees</TableHead>
+                <TableHead className="text-xs">TTL</TableHead>
+                <TableHead className="text-xs">Statut</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {records.map((r: AdDnsRecord) => (
+                <TableRow key={r.id}>
+                  <TableCell className="text-xs font-mono">{r.name}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        "text-[10px]",
+                        TYPE_COLORS[r.record_type] || "",
+                      )}
+                    >
+                      {r.record_type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs font-mono text-muted-foreground max-w-[200px] truncate">
+                    {formatRdata(r)}
+                  </TableCell>
+                  <TableCell className="text-xs">{r.ttl}s</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={r.is_static ? "outline" : "secondary"}
+                      className="text-[10px]"
+                    >
+                      {r.is_static ? "Statique" : "Dynamique"}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 interface DetailPanelProps {
   node: OrgNode | null;
   allNodes: OrgNode[];
@@ -2041,6 +2572,11 @@ function DetailPanel({
       loadAssignments();
     }
   }, [node, detailTab, loadAssignments]);
+
+  const visibleTabs = useMemo(() => {
+    if (!node) return ALL_TABS.filter((t) => t.id === "details");
+    return getVisibleTabs(node.node_type);
+  }, [node]);
 
   const handleSave = async () => {
     if (!node) return;
@@ -2189,36 +2725,50 @@ function DetailPanel({
         onValueChange={setDetailTab}
         className="flex-1 flex flex-col overflow-hidden"
       >
-        <TabsList className={cn("mx-4 mt-3 shrink-0", focusMode && "mx-6")}>
-          <TabsTrigger value="details" className="flex-1 text-xs">
-            <FileText className="h-3 w-3 mr-1" />
-            Details
-          </TabsTrigger>
-          <TabsTrigger value="people" className="flex-1 text-xs">
-            <Users className="h-3 w-3 mr-1" />
-            Personnes
-          </TabsTrigger>
-          <TabsTrigger value="governance" className="flex-1 text-xs">
-            <Gavel className="h-3 w-3 mr-1" />
-            Gouvernance
-          </TabsTrigger>
-          <TabsTrigger value="children" className="flex-1 text-xs">
-            <FolderTree className="h-3 w-3 mr-1" />
-            Sous-noeuds
-          </TabsTrigger>
-          <TabsTrigger value="policies" className="flex-1 text-xs">
-            <Shield className="h-3 w-3 mr-1" />
-            Politiques
-          </TabsTrigger>
-          <TabsTrigger value="audit" className="flex-1 text-xs">
-            <History className="h-3 w-3 mr-1" />
-            Audit
-          </TabsTrigger>
+        {/* Categorized TabsList */}
+        <TabsList
+          className={cn(
+            "mx-4 mt-3 shrink-0 w-auto h-auto flex-wrap justify-start gap-0 bg-transparent p-0 border-b",
+            focusMode && "mx-6",
+          )}
+        >
+          {(
+            ["organisation", "groupes_politiques", "infrastructure"] as const
+          ).map((category) => {
+            const categoryTabs = visibleTabs.filter(
+              (t) => t.category === category,
+            );
+            if (categoryTabs.length === 0) return null;
+            return (
+              <div
+                key={category}
+                className="flex items-center gap-0.5 pr-3 mr-3 border-r border-border/30 last:border-r-0 last:mr-0 last:pr-0 py-1"
+              >
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider mr-2 hidden lg:inline">
+                  {CATEGORY_LABELS[category]}
+                </span>
+                {categoryTabs.map((tab) => (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className="text-xs px-2 py-1 h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                  >
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </div>
+            );
+          })}
           {focusMode && (
-            <TabsTrigger value="delegations" className="flex-1 text-xs">
-              <UserCheck className="h-3 w-3 mr-1" />
-              Delegations
-            </TabsTrigger>
+            <div className="flex items-center gap-0.5 py-1">
+              <TabsTrigger
+                value="delegations"
+                className="text-xs px-2 py-1 h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                <UserCheck className="h-3 w-3 mr-1" />
+                Delegations
+              </TabsTrigger>
+            </div>
           )}
         </TabsList>
 
@@ -2428,6 +2978,32 @@ function DetailPanel({
           {/* Audit tab */}
           <TabsContent value="audit" className="mt-0">
             <AuditTab entityType="node" entityId={node.id} />
+          </TabsContent>
+
+          {/* GPO tab */}
+          <TabsContent value="gpo" className="mt-0 p-4">
+            <GpoTabContent nodeId={node.id} />
+          </TabsContent>
+
+          {/* Computers tab */}
+          <TabsContent value="computers" className="mt-0 p-4">
+            <ComputersTabContent nodeId={node.id} />
+          </TabsContent>
+
+          {/* Kerberos tab */}
+          <TabsContent value="kerberos" className="mt-0 p-4">
+            <KerberosTabContent
+              nodeId={node?.id || ""}
+              nodeType={node?.node_type || ""}
+            />
+          </TabsContent>
+
+          {/* DNS tab */}
+          <TabsContent value="dns" className="mt-0 p-4">
+            <DnsTabContent
+              nodeId={node?.id || ""}
+              nodeType={node?.node_type || ""}
+            />
           </TabsContent>
 
           {/* Delegations tab (focus mode only) */}
