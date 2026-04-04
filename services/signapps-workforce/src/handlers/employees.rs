@@ -355,7 +355,7 @@ pub async fn create_employee(
                 })?;
                 tracing::info!(tenant_id = %ctx.tenant_id, node_id = %root_id, "Created default root org node");
                 root_id
-            }
+            },
         }
     };
 
