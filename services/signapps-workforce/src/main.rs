@@ -126,6 +126,10 @@ fn create_router(state: AppState) -> Router {
             get(handlers::org::get_descendants),
         )
         .route("/nodes/{id}/ancestors", get(handlers::org::get_ancestors))
+        .route(
+            "/nodes/{id}/effective-policy",
+            get(handlers::policies::resolve_node),
+        )
         .route("/node-types", get(handlers::org::list_node_types))
         .route("/node-types", post(handlers::org::create_node_type))
         .route("/node-types/{id}", delete(handlers::org::delete_node_type))
@@ -157,6 +161,7 @@ fn create_router(state: AppState) -> Router {
             get(handlers::employees::list_by_org_node),
         )
         .route("/search", get(handlers::employees::search_employees))
+        .route("/{id}/memberof", get(handlers::groups::get_person_groups))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))
@@ -274,6 +279,89 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
+    // Group routes
+    let group_routes = Router::new()
+        .route("/", get(handlers::groups::list_groups))
+        .route("/", post(handlers::groups::create_group))
+        .route("/{id}", get(handlers::groups::get_group))
+        .route("/{id}", put(handlers::groups::update_group))
+        .route("/{id}", delete(handlers::groups::delete_group))
+        .route("/{id}/members", post(handlers::groups::add_member))
+        .route(
+            "/{id}/members/{member_id}",
+            delete(handlers::groups::remove_member),
+        )
+        .route(
+            "/{id}/effective-members",
+            get(handlers::groups::get_effective_members),
+        )
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Policy routes
+    let policy_routes = Router::new()
+        .route("/", get(handlers::policies::list_policies))
+        .route("/", post(handlers::policies::create_policy))
+        .route("/{id}", get(handlers::policies::get_policy))
+        .route("/{id}", put(handlers::policies::update_policy))
+        .route("/{id}", delete(handlers::policies::delete_policy))
+        .route("/{id}/links", post(handlers::policies::add_link))
+        .route(
+            "/{id}/links/{link_id}",
+            delete(handlers::policies::remove_link),
+        )
+        .route(
+            "/resolve/{person_id}",
+            get(handlers::policies::resolve_person),
+        )
+        .route(
+            "/resolve/node/{node_id}",
+            get(handlers::policies::resolve_node),
+        )
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Delegation routes
+    let delegation_routes = Router::new()
+        .route("/", get(handlers::delegations::list_delegations))
+        .route("/", post(handlers::delegations::create_delegation))
+        .route("/{id}", delete(handlers::delegations::revoke_delegation))
+        .route("/my", get(handlers::delegations::my_delegations))
+        .route("/granted", get(handlers::delegations::granted_delegations))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Audit routes
+    let audit_routes = Router::new()
+        .route("/", get(handlers::audit::query_audit))
+        .route(
+            "/entity/{entity_type}/{entity_id}",
+            get(handlers::audit::entity_history),
+        )
+        .route("/actor/{actor_id}", get(handlers::audit::actor_history))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
     // Combine all routes
     Router::new()
         .nest("/api/v1/workforce/org", org_routes)
@@ -286,6 +374,10 @@ fn create_router(state: AppState) -> Router {
         )
         .nest("/api/v1/workforce/coverage/rules", coverage_rule_routes)
         .nest("/api/v1/workforce/validate", validation_routes)
+        .nest("/api/v1/workforce/groups", group_routes)
+        .nest("/api/v1/workforce/policies", policy_routes)
+        .nest("/api/v1/workforce/delegations", delegation_routes)
+        .nest("/api/v1/workforce/audit", audit_routes)
         .nest("/api/v1/learning", learning_routes)
         .nest("/health", health_routes)
         .merge(handlers::openapi::swagger_router())

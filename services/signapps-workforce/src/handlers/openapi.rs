@@ -85,6 +85,36 @@ impl Modify for SecurityAddon {
         crate::handlers::learning::list_courses,
         crate::handlers::learning::get_course,
         crate::handlers::learning::update_progress,
+        // ── Groups ─────────────────────────────────────────────────────────────
+        crate::handlers::groups::list_groups,
+        crate::handlers::groups::create_group,
+        crate::handlers::groups::get_group,
+        crate::handlers::groups::update_group,
+        crate::handlers::groups::delete_group,
+        crate::handlers::groups::add_member,
+        crate::handlers::groups::remove_member,
+        crate::handlers::groups::get_effective_members,
+        crate::handlers::groups::get_person_groups,
+        // ── Policies ───────────────────────────────────────────────────────────
+        crate::handlers::policies::list_policies,
+        crate::handlers::policies::create_policy,
+        crate::handlers::policies::get_policy,
+        crate::handlers::policies::update_policy,
+        crate::handlers::policies::delete_policy,
+        crate::handlers::policies::add_link,
+        crate::handlers::policies::remove_link,
+        crate::handlers::policies::resolve_person,
+        crate::handlers::policies::resolve_node,
+        // ── Delegations ────────────────────────────────────────────────────────
+        crate::handlers::delegations::list_delegations,
+        crate::handlers::delegations::create_delegation,
+        crate::handlers::delegations::revoke_delegation,
+        crate::handlers::delegations::my_delegations,
+        crate::handlers::delegations::granted_delegations,
+        // ── Audit ──────────────────────────────────────────────────────────────
+        crate::handlers::audit::query_audit,
+        crate::handlers::audit::entity_history,
+        crate::handlers::audit::actor_history,
     ),
     components(schemas(
         // Org
@@ -137,6 +167,10 @@ impl Modify for SecurityAddon {
         (name = "Workforce Validation", description = "Gap analysis and leave simulation"),
         (name = "Workforce Attendance", description = "Clock-in/clock-out attendance tracking"),
         (name = "Workforce Learning", description = "Learning courses and progress"),
+        (name = "Workforce Groups", description = "Cross-functional group management"),
+        (name = "Workforce Policies", description = "GPO-style policy management and resolution"),
+        (name = "Workforce Delegations", description = "Scoped management delegation chains"),
+        (name = "Workforce Audit", description = "Org structure audit log queries"),
     ),
     info(
         title = "SignApps Workforce API",

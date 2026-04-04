@@ -7,11 +7,15 @@
 //! - validation: Gap analysis and leave simulation
 
 pub mod attendance;
+pub mod audit;
 pub mod coverage;
+pub mod delegations;
 pub mod employees;
+pub mod groups;
 pub mod learning;
 pub mod openapi;
 pub mod org;
+pub mod policies;
 pub mod validation;
 
 use axum::Json;
