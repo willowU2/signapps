@@ -541,8 +541,8 @@ export default function OrgStructurePage() {
     <AppLayout>
       <div
         className={cn(
-          "flex flex-col -m-4 md:-m-6 overflow-hidden",
-          "h-[calc(100vh-4rem)]",
+          "flex flex-col overflow-hidden -m-4 md:-m-6",
+          "h-[calc(100vh-4rem)] relative z-0",
         )}
       >
         {!focusMode && (
@@ -687,7 +687,7 @@ export default function OrgStructurePage() {
                 />
               </div>
             ) : detailOpen ? (
-              <div className="w-full lg:w-auto lg:basis-[400px] lg:shrink lg:grow-0 border-t lg:border-t-0 lg:border-l border-border bg-card min-w-[300px] max-w-[500px] flex flex-col">
+              <div className="w-full lg:w-[380px] lg:shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-card flex flex-col overflow-hidden">
                 <DetailPanel
                   node={freshSelectedNode}
                   allNodes={nodes}

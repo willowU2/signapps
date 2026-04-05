@@ -257,16 +257,13 @@ export function DetailPanel({
             return (
               <div
                 key={category}
-                className="flex items-center gap-1 pr-4 mr-4 border-r border-border/40 last:border-r-0 last:mr-0 last:pr-0 py-1.5"
+                className="flex items-center gap-0.5 pr-2 mr-2 border-r border-border/30 last:border-r-0 last:mr-0 last:pr-0 py-1"
               >
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider mr-2 hidden xl:inline">
-                  {CATEGORY_LABELS[category]}
-                </span>
                 {categoryTabs.map((tab) => (
                   <TabsTrigger
                     key={tab.id}
                     value={tab.id}
-                    className="text-xs px-2 py-1 h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                    className="text-[11px] px-1.5 py-0.5 h-6 data-[state=active]:bg-background data-[state=active]:shadow-sm whitespace-nowrap"
                   >
                     {tab.label}
                   </TabsTrigger>
