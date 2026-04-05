@@ -21,6 +21,7 @@ pub mod form;
 pub mod generated_media;
 pub mod group;
 pub mod job;
+pub mod kg;
 pub mod ldap;
 pub mod mailserver;
 pub mod multimodal_vector;
