@@ -16,6 +16,11 @@ import type {
   ComputerAccount,
   DcStatus,
   GroupPolicyObject,
+  InfraCertificate,
+  DhcpScope,
+  DhcpLease,
+  DeployProfile,
+  DeployHistory,
 } from "@/types/active-directory";
 
 const client = getClient(ServiceName.WORKFORCE);
@@ -95,5 +100,33 @@ export const adApi = {
     update: (id: string, data: Partial<GroupPolicyObject>) =>
       client.put<GroupPolicyObject>(`/workforce/ad/gpos/${id}`, data),
     delete: (id: string) => client.delete(`/workforce/ad/gpos/${id}`),
+  },
+
+  // ── Certificates ──
+  certificates: {
+    list: (domainId: string) =>
+      client.get<InfraCertificate[]>(
+        `/workforce/ad/domains/${domainId}/certificates`,
+      ),
+  },
+
+  // ── DHCP ──
+  dhcp: {
+    scopes: (domainId: string) =>
+      client.get<DhcpScope[]>(`/workforce/ad/domains/${domainId}/dhcp/scopes`),
+    leases: (scopeId: string) =>
+      client.get<DhcpLease[]>(`/workforce/ad/dhcp/scopes/${scopeId}/leases`),
+  },
+
+  // ── Deployment ──
+  deploy: {
+    profiles: (domainId: string) =>
+      client.get<DeployProfile[]>(
+        `/workforce/ad/domains/${domainId}/deploy/profiles`,
+      ),
+    history: (profileId: string) =>
+      client.get<DeployHistory[]>(
+        `/workforce/ad/deploy/profiles/${profileId}/history`,
+      ),
   },
 };

@@ -137,4 +137,10 @@ pub use mailserver_repo::{
     AccountRepository, DomainRepository, MailboxRepository, MessageRepository,
 };
 
+pub mod infrastructure_repository;
+pub use infrastructure_repository::{
+    DeployProfileRepository, DhcpLeaseRepository, DhcpScopeRepository,
+    InfraCertificateRepository, InfraDomainRepository,
+};
+
 pub mod test_helpers;

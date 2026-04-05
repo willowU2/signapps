@@ -62,6 +62,7 @@ pub mod dn;
 pub mod entry;
 pub mod filter;
 pub mod guid;
+pub mod provisioner;
 pub mod schema;
 pub mod sid;
 pub mod uac;

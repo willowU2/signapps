@@ -139,3 +139,79 @@ export interface GroupPolicyObject {
   user_enabled: boolean;
   linked_ous: string[];
 }
+
+// ── Certificates ──
+
+export interface InfraCertificate {
+  id: string;
+  domain_id: string;
+  subject: string;
+  issuer: string;
+  cert_type: "root_ca" | "intermediate_ca" | "server" | "client" | "wildcard";
+  not_before: string;
+  not_after: string;
+  auto_renew: boolean;
+  san: string[];
+  fingerprint_sha256?: string;
+  status: "active" | "expired" | "revoked" | "pending";
+  created_at: string;
+}
+
+// ── DHCP ──
+
+export interface DhcpScope {
+  id: string;
+  domain_id: string;
+  site_id?: string;
+  name: string;
+  subnet: string;
+  range_start: string;
+  range_end: string;
+  gateway?: string;
+  dns_servers: string[];
+  lease_duration_hours: number;
+  is_active: boolean;
+}
+
+export interface DhcpLease {
+  id: string;
+  scope_id: string;
+  ip_address: string;
+  mac_address: string;
+  hostname?: string;
+  lease_start: string;
+  lease_end: string;
+  is_active: boolean;
+}
+
+// ── Deployment ──
+
+export interface DeployProfile {
+  id: string;
+  domain_id: string;
+  name: string;
+  description?: string;
+  os_type?: string;
+  os_version?: string;
+  packages: unknown[];
+  target_ou?: string;
+  is_default: boolean;
+  sort_order: number;
+}
+
+export interface DeployHistory {
+  id: string;
+  profile_id: string;
+  hostname?: string;
+  status:
+    | "pending"
+    | "booting"
+    | "installing"
+    | "configuring"
+    | "completed"
+    | "failed";
+  started_at?: string;
+  completed_at?: string;
+  error_message?: string;
+  created_at: string;
+}

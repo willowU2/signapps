@@ -178,6 +178,12 @@ fn create_router(state: AppState) -> Router {
         .route("/domains/:id/gpos", get(handlers::ad::list_gpos))
         .route("/dns/zones/:zone_id/records", get(handlers::ad::list_dns_records))
         .route("/status", get(handlers::ad::dc_status))
+        // ── Infrastructure extensions ──
+        .route("/domains/:id/certificates", get(handlers::ad::list_certificates))
+        .route("/domains/:id/dhcp/scopes", get(handlers::ad::list_dhcp_scopes))
+        .route("/dhcp/scopes/:id/leases", get(handlers::ad::list_dhcp_leases))
+        .route("/domains/:id/deploy/profiles", get(handlers::ad::list_deploy_profiles))
+        .route("/deploy/profiles/:id/history", get(handlers::ad::list_deploy_history))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))

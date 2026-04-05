@@ -20,6 +20,7 @@ pub mod external_sync;
 pub mod form;
 pub mod generated_media;
 pub mod group;
+pub mod infrastructure;
 pub mod job;
 pub mod kg;
 pub mod ldap;
