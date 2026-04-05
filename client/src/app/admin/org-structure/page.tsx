@@ -591,7 +591,7 @@ export default function OrgStructurePage() {
                   onPrint={handlePrint}
                 />
 
-                <div className="flex-1 overflow-auto">
+                <div className="flex-1 overflow-auto min-w-0">
                   {activeNavTab === "groups" ? (
                     <GroupsNav
                       groups={groups}
@@ -619,7 +619,7 @@ export default function OrgStructurePage() {
                       </p>
                     </div>
                   ) : viewMode === "tree" ? (
-                    <div className="p-2 space-y-0.5 overflow-hidden">
+                    <div className="p-2 space-y-0.5 overflow-x-hidden">
                       {treeHierarchy.map((node) => (
                         <TreeNodeItem
                           key={node.id}
@@ -687,7 +687,7 @@ export default function OrgStructurePage() {
                 />
               </div>
             ) : detailOpen ? (
-              <div className="w-full lg:w-[420px] lg:shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-card flex flex-col overflow-hidden mr-1">
+              <div className="w-full lg:w-[420px] lg:shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-card flex flex-col overflow-hidden">
                 <DetailPanel
                   node={freshSelectedNode}
                   allNodes={nodes}
@@ -706,7 +706,7 @@ export default function OrgStructurePage() {
               </div>
             ) : (
               !focusMode && (
-                <div className="hidden lg:flex w-[320px] shrink-0 items-center justify-center text-muted-foreground text-sm p-8 text-center">
+                <div className="hidden lg:flex w-[420px] shrink-0 items-center justify-center text-muted-foreground text-sm p-8 text-center border-l border-border overflow-hidden">
                   <div>
                     <Building2 className="h-12 w-12 mx-auto mb-3 opacity-20" />
                     <p>Selectionnez un noeud</p>

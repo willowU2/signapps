@@ -139,7 +139,7 @@ export function TreeNodeItem({
               }
             }}
             className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all group select-none",
+              "flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all group select-none min-w-0",
               isSelected
                 ? "bg-primary/10 ring-1 ring-primary/30 text-foreground"
                 : "hover:bg-muted/60",
@@ -215,9 +215,9 @@ export function TreeNodeItem({
               {node.name}
             </span>
 
-            {/* Code */}
+            {/* Code — subtle, narrow, clipped to avoid overflow */}
             {node.code && (
-              <span className="text-xs text-muted-foreground font-mono truncate max-w-[120px] hidden lg:inline">
+              <span className="text-[10px] text-muted-foreground/60 font-mono truncate max-w-[80px] hidden xl:inline shrink-0">
                 {node.code}
               </span>
             )}
