@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Plus, Edit2, Trash2, Users, UserPlus } from 'lucide-react';
-import { useGroupList, Group } from '@/hooks/use-groups';
-import { GroupSheet } from '@/components/admin/group-sheet';
-import { GroupDeleteDialog } from '@/components/admin/group-delete-dialog';
-import { GroupMembersSheet } from '@/components/admin/group-members-sheet';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { Plus, Edit2, Trash2, Users, UserPlus } from "lucide-react";
+import { useGroupList, Group } from "@/hooks/use-groups";
+import { GroupSheet } from "@/components/admin/group-sheet";
+import { GroupDeleteDialog } from "@/components/admin/group-delete-dialog";
+import { GroupMembersSheet } from "@/components/admin/group-members-sheet";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -14,14 +14,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { usePageTitle } from '@/hooks/use-page-title';
-import { PageHeader } from '@/components/ui/page-header';
+} from "@/components/ui/table";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ErrorState } from "@/components/ui/error-state";
+import { AppLayout } from "@/components/layout/app-layout";
 
 export default function GroupsPage() {
-  usePageTitle('Groupes');
+  usePageTitle("Groupes");
   const { data: groups, isLoading, error } = useGroupList();
-  
+
   const [sheetOpen, setSheetOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [membersSheetOpen, setMembersSheetOpen] = useState(false);
@@ -46,6 +49,40 @@ export default function GroupsPage() {
     setSelectedGroup(group);
     setMembersSheetOpen(true);
   };
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="w-full space-y-6">
+          <PageHeader
+            title="Groupes utilisateurs"
+            description="Gérez les groupes RBAC pour contrôler les accès et les permissions."
+            icon={<Users className="h-5 w-5" />}
+          />
+          <LoadingState variant="skeleton" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppLayout>
+        <div className="w-full space-y-6">
+          <PageHeader
+            title="Groupes utilisateurs"
+            description="Gérez les groupes RBAC pour contrôler les accès et les permissions."
+            icon={<Users className="h-5 w-5" />}
+          />
+          <ErrorState
+            title="Impossible de charger les groupes"
+            message="Vérifiez votre connexion au service d'identité."
+            onRetry={() => window.location.reload()}
+          />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <div className="w-full space-y-6">
@@ -72,32 +109,31 @@ export default function GroupsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
+            {groups?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
-                  Chargement des groupes...
-                </TableCell>
-              </TableRow>
-            ) : error ? (
-              <TableRow>
-                <TableCell colSpan={4} className="h-32 text-center text-red-500">
-                  Erreur lors du chargement des groupes.
-                </TableCell>
-              </TableRow>
-            ) : groups?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
-                  Aucun groupe trouvé.
+                <TableCell colSpan={4} className="h-32">
+                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                    <Users className="h-12 w-12 mb-3 opacity-20" />
+                    <p className="text-sm font-medium">Aucun groupe trouvé</p>
+                    <p className="text-xs mt-1">
+                      Créez votre premier groupe pour gérer les accès
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
               groups?.map((group: Group) => (
-                <TableRow key={group.id} className="group h-12 hover:bg-muted/50 transition-colors">
+                <TableRow
+                  key={group.id}
+                  className="group h-12 hover:bg-muted/50 transition-colors"
+                >
                   <TableCell className="font-medium whitespace-nowrap">
                     {group.name}
                   </TableCell>
                   <TableCell className="text-muted-foreground max-w-[300px] truncate">
-                    {group.description || <span className="italic">Aucune description</span>}
+                    {group.description || (
+                      <span className="italic">Aucune description</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary/50 text-secondary-foreground text-xs font-medium">

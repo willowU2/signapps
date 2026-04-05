@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { usePageTitle } from '@/hooks/use-page-title';
-import { PageHeader } from '@/components/ui/page-header';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import React, { useState, useEffect, useCallback } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -15,34 +15,51 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { AssignmentPanel } from '@/components/org/assignment-panel';
-import { orgApi } from '@/lib/api/org';
-import type { Person, PersonRole, PersonRoleType } from '@/types/org';
-import { Plus, Users, Search, Link2, Filter } from 'lucide-react';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/dialog";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AssignmentPanel } from "@/components/org/assignment-panel";
+import { orgApi } from "@/lib/api/org";
+import type { Person, PersonRole, PersonRoleType } from "@/types/org";
+import { Plus, Users, Search, Link2, Filter } from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ErrorState } from "@/components/ui/error-state";
 
 const ROLE_CONFIG: Record<string, { label: string; color: string }> = {
-  employee: { label: 'Employé', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
-  client_contact: { label: 'Client', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-  supplier_contact: { label: 'Fournisseur', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
-  partner: { label: 'Partenaire', color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' },
+  employee: {
+    label: "Employé",
+    color:
+      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  },
+  client_contact: {
+    label: "Client",
+    color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  },
+  supplier_contact: {
+    label: "Fournisseur",
+    color:
+      "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+  },
+  partner: {
+    label: "Partenaire",
+    color:
+      "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
+  },
 };
 
 interface PersonWithDetails extends Person {
@@ -51,37 +68,40 @@ interface PersonWithDetails extends Person {
 }
 
 export default function PersonsPage() {
-  usePageTitle('Personnes — Administration');
+  usePageTitle("Personnes — Administration");
 
   const [persons, setPersons] = useState<PersonWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [activeFilter, setActiveFilter] = useState<string>('active');
+  const [loadError, setLoadError] = useState(false);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [activeFilter, setActiveFilter] = useState<string>("active");
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
 
   // Create form
-  const [newFirstName, setNewFirstName] = useState('');
-  const [newLastName, setNewLastName] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [newPhone, setNewPhone] = useState('');
-  const [newRoles, setNewRoles] = useState<PersonRoleType[]>(['employee']);
+  const [newFirstName, setNewFirstName] = useState("");
+  const [newLastName, setNewLastName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [newRoles, setNewRoles] = useState<PersonRoleType[]>(["employee"]);
   const [creating, setCreating] = useState(false);
 
   const loadPersons = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const params: { role?: string; active?: boolean } = {};
-      if (roleFilter !== 'all') params.role = roleFilter;
-      if (activeFilter === 'active') params.active = true;
-      if (activeFilter === 'inactive') params.active = false;
+      if (roleFilter !== "all") params.role = roleFilter;
+      if (activeFilter === "active") params.active = true;
+      if (activeFilter === "inactive") params.active = false;
 
       const res = await orgApi.persons.list(params);
       setPersons((res.data ?? []) as PersonWithDetails[]);
     } catch {
-      toast.error('Erreur lors du chargement des personnes');
+      setLoadError(true);
+      toast.error("Erreur lors du chargement des personnes");
     } finally {
       setLoading(false);
     }
@@ -104,16 +124,16 @@ export default function PersonsPage() {
         metadata: {},
         role_type: newRoles[0],
       });
-      toast.success('Personne créée');
+      toast.success("Personne créée");
       setCreateOpen(false);
-      setNewFirstName('');
-      setNewLastName('');
-      setNewEmail('');
-      setNewPhone('');
-      setNewRoles(['employee']);
+      setNewFirstName("");
+      setNewLastName("");
+      setNewEmail("");
+      setNewPhone("");
+      setNewRoles(["employee"]);
       loadPersons();
     } catch {
-      toast.error('Erreur lors de la création');
+      toast.error("Erreur lors de la création");
     } finally {
       setCreating(false);
     }
@@ -121,7 +141,7 @@ export default function PersonsPage() {
 
   const toggleRole = (role: PersonRoleType) => {
     setNewRoles((prev) =>
-      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role],
     );
   };
 
@@ -133,6 +153,40 @@ export default function PersonsPage() {
       (p.email?.toLowerCase().includes(q) ?? false)
     );
   });
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="px-6 py-6 space-y-6">
+          <PageHeader
+            title="Personnes"
+            description="Gérez les personnes et leurs affectations dans la structure organisationnelle"
+            icon={<Users className="h-5 w-5" />}
+          />
+          <LoadingState variant="skeleton" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <AppLayout>
+        <div className="px-6 py-6 space-y-6">
+          <PageHeader
+            title="Personnes"
+            description="Gérez les personnes et leurs affectations dans la structure organisationnelle"
+            icon={<Users className="h-5 w-5" />}
+          />
+          <ErrorState
+            title="Impossible de charger les personnes"
+            message="Vérifiez votre connexion au service d'organisation."
+            onRetry={loadPersons}
+          />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -169,7 +223,9 @@ export default function PersonsPage() {
             <SelectContent>
               <SelectItem value="all">Tous les rôles</SelectItem>
               {Object.entries(ROLE_CONFIG).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                <SelectItem key={k} value={k}>
+                  {v.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -200,15 +256,12 @@ export default function PersonsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
+              {filteredPersons.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                    Chargement des personnes...
-                  </TableCell>
-                </TableRow>
-              ) : filteredPersons.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={6}
+                    className="h-32 text-center text-muted-foreground"
+                  >
                     Aucune personne trouvée
                   </TableCell>
                 </TableRow>
@@ -226,7 +279,7 @@ export default function PersonsPage() {
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
                           <AvatarFallback className="text-xs font-semibold">
-                            {`${person.first_name[0] ?? ''}${person.last_name[0] ?? ''}`.toUpperCase()}
+                            {`${person.first_name[0] ?? ""}${person.last_name[0] ?? ""}`.toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <span className="font-medium text-sm">
@@ -235,46 +288,58 @@ export default function PersonsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {person.email ?? '—'}
+                      {person.email ?? "—"}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1 flex-wrap">
-                        {(person.roles ?? []).filter((r) => r.is_active).map((role) => {
-                          const cfg = ROLE_CONFIG[role.role_type];
-                          if (!cfg) return null;
-                          return (
-                            <span
-                              key={role.id}
-                              className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium', cfg.color)}
-                            >
-                              {cfg.label}
-                            </span>
-                          );
-                        })}
+                        {(person.roles ?? [])
+                          .filter((r) => r.is_active)
+                          .map((role) => {
+                            const cfg = ROLE_CONFIG[role.role_type];
+                            if (!cfg) return null;
+                            return (
+                              <span
+                                key={role.id}
+                                className={cn(
+                                  "text-[10px] px-1.5 py-0.5 rounded-full font-medium",
+                                  cfg.color,
+                                )}
+                              >
+                                {cfg.label}
+                              </span>
+                            );
+                          })}
                         {(!person.roles || person.roles.length === 0) && (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-muted-foreground">
+                            —
+                          </span>
                         )}
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {person.primaryPosition ?? '—'}
+                      {person.primaryPosition ?? "—"}
                     </TableCell>
                     <TableCell className="text-center">
                       {person.user_id ? (
-                        <Badge variant="secondary" className="text-[10px] text-green-600">
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] text-green-600"
+                        >
                           <Link2 className="h-3 w-3 mr-1" />
                           Lié
                         </Badge>
                       ) : (
-                        <span className="text-xs text-muted-foreground">Non lié</span>
+                        <span className="text-xs text-muted-foreground">
+                          Non lié
+                        </span>
                       )}
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge
-                        variant={person.is_active ? 'default' : 'secondary'}
+                        variant={person.is_active ? "default" : "secondary"}
                         className="text-[10px]"
                       >
-                        {person.is_active ? 'Actif' : 'Inactif'}
+                        {person.is_active ? "Actif" : "Inactif"}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -350,16 +415,21 @@ export default function PersonsPage() {
             <div className="space-y-2">
               <Label>Rôles</Label>
               <div className="flex items-center gap-2 flex-wrap">
-                {(Object.entries(ROLE_CONFIG) as [PersonRoleType, (typeof ROLE_CONFIG)[string]][]).map(([key, cfg]) => (
+                {(
+                  Object.entries(ROLE_CONFIG) as [
+                    PersonRoleType,
+                    (typeof ROLE_CONFIG)[string],
+                  ][]
+                ).map(([key, cfg]) => (
                   <button
                     key={key}
                     type="button"
                     onClick={() => toggleRole(key)}
                     className={cn(
-                      'text-xs px-3 py-1.5 rounded-full font-medium border transition-colors',
+                      "text-xs px-3 py-1.5 rounded-full font-medium border transition-colors",
                       newRoles.includes(key)
-                        ? cn(cfg.color, 'border-current')
-                        : 'bg-muted text-muted-foreground border-transparent hover:border-border'
+                        ? cn(cfg.color, "border-current")
+                        : "bg-muted text-muted-foreground border-transparent hover:border-border",
                     )}
                   >
                     {cfg.label}
@@ -376,7 +446,7 @@ export default function PersonsPage() {
               onClick={handleCreatePerson}
               disabled={creating || !newFirstName.trim() || !newLastName.trim()}
             >
-              {creating ? 'Création...' : 'Créer'}
+              {creating ? "Création..." : "Créer"}
             </Button>
           </DialogFooter>
         </DialogContent>

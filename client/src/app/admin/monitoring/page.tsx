@@ -25,6 +25,7 @@ import {
 import { PageHeader } from "@/components/ui/page-header";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { cn } from "@/lib/utils";
+import { LoadingState } from "@/components/ui/loading-state";
 
 // ─── Tab type ─────────────────────────────────────────────────────────────────
 
@@ -327,6 +328,7 @@ export default function MonitoringPage() {
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [prevMetrics, setPrevMetrics] = useState<SystemMetrics | null>(null);
   const [netSpeed, setNetSpeed] = useState({ rx: 0, tx: 0 });
+  const [initialLoading, setInitialLoading] = useState(true);
 
   // Polling for live metrics
   useEffect(() => {
@@ -351,13 +353,29 @@ export default function MonitoringPage() {
           });
           setMetrics(newMetrics);
         })
-        .catch((err) => console.warn(err));
+        .catch((err) => console.warn(err))
+        .finally(() => setInitialLoading(false));
     };
 
     fetchMetrics();
     const interval = setInterval(fetchMetrics, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  if (initialLoading) {
+    return (
+      <AppLayout>
+        <div className="space-y-6">
+          <PageHeader
+            title="System Monitoring"
+            description="Supervision des métriques système, requêtes lentes et pool de connexions"
+            icon={<Activity className="h-5 w-5" />}
+          />
+          <LoadingState variant="skeleton" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

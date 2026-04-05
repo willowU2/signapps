@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/collapsible";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { getClient, ServiceName } from "@/lib/api/factory";
 import { toast } from "sonner";
 import {
@@ -448,6 +450,40 @@ export default function MailServerPage() {
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
+
+  if (loading && domains.length === 0 && accounts.length === 0) {
+    return (
+      <AppLayout>
+        <div className="w-full space-y-6">
+          <PageHeader
+            title="Serveur Mail Interne"
+            description="Gestion du serveur mail natif SignApps"
+            icon={<Mail className="h-5 w-5" />}
+          />
+          <LoadingState variant="skeleton" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error && domains.length === 0 && accounts.length === 0) {
+    return (
+      <AppLayout>
+        <div className="w-full space-y-6">
+          <PageHeader
+            title="Serveur Mail Interne"
+            description="Gestion du serveur mail natif SignApps"
+            icon={<Mail className="h-5 w-5" />}
+          />
+          <ErrorState
+            title="Impossible de charger la configuration mail"
+            message={error}
+            onRetry={refresh}
+          />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
