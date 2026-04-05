@@ -4364,10 +4364,10 @@ export default function OrgStructurePage() {
             ) : detailOpen ? (
               <div
                 className={cn(
-                  "w-full border-t lg:border-t-0 border-border bg-card shrink-0 overflow-y-auto",
+                  "w-full border-t lg:border-t-0 lg:border-l border-border bg-card overflow-y-auto min-w-[300px]",
                   rightPanelOpen
-                    ? "lg:w-[360px] xl:w-[400px]"
-                    : "lg:w-[480px] xl:w-[560px]",
+                    ? "lg:w-[340px] lg:max-w-[35%]"
+                    : "lg:w-[480px] lg:max-w-[45%]",
                 )}
               >
                 <DetailPanel
