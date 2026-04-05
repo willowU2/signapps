@@ -687,7 +687,7 @@ export default function OrgStructurePage() {
                 />
               </div>
             ) : detailOpen ? (
-              <div className="w-full lg:w-[380px] lg:shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-card flex flex-col overflow-hidden">
+              <div className="w-full lg:w-[380px] lg:shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-card flex flex-col overflow-hidden mr-2 lg:mr-4">
                 <DetailPanel
                   node={freshSelectedNode}
                   allNodes={nodes}
