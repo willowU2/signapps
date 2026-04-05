@@ -10939,6 +10939,7 @@ dependencies = [
  "serde_yaml",
  "signapps-common",
  "signapps-db",
+ "signapps-dns-server",
  "sqlx",
  "tokio",
  "tokio-tungstenite 0.24.0",

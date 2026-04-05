@@ -35,6 +35,10 @@ import { SitesTab } from "./sites-tab";
 import { PoliciesTab } from "./policies-tab";
 import { AuditTab } from "./audit-tab";
 import { DelegationsTab } from "./delegations-tab";
+import { CertificatesTabContent } from "./certificates-tab";
+import { DhcpTabContent } from "./dhcp-tab";
+import { NtpTabContent } from "./ntp-tab";
+import { DeploymentTabContent } from "./deployment-tab";
 
 // =============================================================================
 // Helper: ancestor names breadcrumb
@@ -353,6 +357,38 @@ export function DetailPanel({
           {/* DNS tab */}
           <TabsContent value="dns" className="mt-0 p-4">
             <DnsTabContent
+              nodeId={node?.id || ""}
+              nodeType={node?.node_type || ""}
+            />
+          </TabsContent>
+
+          {/* Certificates tab */}
+          <TabsContent value="certificates" className="mt-0 p-4">
+            <CertificatesTabContent
+              nodeId={node?.id || ""}
+              nodeType={node?.node_type || ""}
+            />
+          </TabsContent>
+
+          {/* DHCP tab */}
+          <TabsContent value="dhcp" className="mt-0 p-4">
+            <DhcpTabContent
+              nodeId={node?.id || ""}
+              nodeType={node?.node_type || ""}
+            />
+          </TabsContent>
+
+          {/* NTP tab */}
+          <TabsContent value="ntp" className="mt-0 p-4">
+            <NtpTabContent
+              nodeId={node?.id || ""}
+              nodeType={node?.node_type || ""}
+            />
+          </TabsContent>
+
+          {/* Deployment tab */}
+          <TabsContent value="deployment" className="mt-0 p-4">
+            <DeploymentTabContent
               nodeId={node?.id || ""}
               nodeType={node?.node_type || ""}
             />

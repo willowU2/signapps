@@ -15,6 +15,8 @@ path = "src/main.rs"
 default = []
 # Enable mesh VPN features (requires database)
 mesh-vpn = ["signapps-db", "sqlx"]
+# Enable DHCP/NTP server (requires database + signapps-dns-server)
+dhcp-server = ["signapps-db", "signapps-dns-server", "sqlx"]
 
 [dependencies]
 # Common (error types, result)
@@ -49,6 +51,7 @@ serde_yaml = "0.9"
 # Environment
 dotenvy = "0.15"
 
-# Optional: Database support for mesh VPN
+# Optional: Database support for mesh VPN / DHCP
 signapps-db = { path = "../../crates/signapps-db", optional = true }
+signapps-dns-server = { path = "../../crates/signapps-dns-server", optional = true }
 sqlx = { workspace = true, optional = true }

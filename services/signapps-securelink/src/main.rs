@@ -30,6 +30,10 @@ mod tunnel;
 #[cfg(feature = "mesh-vpn")]
 mod vpn;
 
+// DHCP/NTP server module (optional, requires database)
+#[cfg(feature = "dhcp-server")]
+mod dhcp;
+
 use dns::{Blocklist as DnsBlocklist, DnsConfig as DnsServiceConfig, DnsStats};
 use tunnel::{TunnelClient, TunnelClientConfig};
 

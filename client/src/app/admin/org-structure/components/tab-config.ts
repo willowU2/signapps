@@ -22,6 +22,10 @@ export const ALL_TABS: TabDef[] = [
   { id: "computers", label: "Ordinateurs", category: "infrastructure" },
   { id: "kerberos", label: "Kerberos", category: "infrastructure" },
   { id: "dns", label: "DNS", category: "infrastructure" },
+  { id: "certificates", label: "Certificats", category: "infrastructure" },
+  { id: "dhcp", label: "DHCP", category: "infrastructure" },
+  { id: "ntp", label: "NTP", category: "infrastructure" },
+  { id: "deployment", label: "Deploiement", category: "infrastructure" },
   { id: "audit", label: "Audit", category: "infrastructure" },
 ];
 
@@ -43,6 +47,10 @@ export const DEFAULT_TAB_VISIBILITY: Record<string, string[]> = {
     "computers",
     "kerberos",
     "dns",
+    "certificates",
+    "dhcp",
+    "ntp",
+    "deployment",
     "audit",
   ],
   subsidiary: [
@@ -55,6 +63,8 @@ export const DEFAULT_TAB_VISIBILITY: Record<string, string[]> = {
     "gpo",
     "computers",
     "kerberos",
+    "dhcp",
+    "ntp",
     "audit",
   ],
   bu: [
@@ -66,6 +76,7 @@ export const DEFAULT_TAB_VISIBILITY: Record<string, string[]> = {
     "policies",
     "gpo",
     "computers",
+    "deployment",
     "audit",
   ],
   department: [
@@ -77,6 +88,7 @@ export const DEFAULT_TAB_VISIBILITY: Record<string, string[]> = {
     "policies",
     "gpo",
     "computers",
+    "deployment",
     "audit",
   ],
   service: [
@@ -90,7 +102,16 @@ export const DEFAULT_TAB_VISIBILITY: Record<string, string[]> = {
   ],
   team: ["details", "people", "groups", "gpo", "computers", "audit"],
   position: ["details", "people", "audit"],
-  computer: ["details", "kerberos", "dns", "audit"],
+  computer: [
+    "details",
+    "kerberos",
+    "dns",
+    "certificates",
+    "dhcp",
+    "ntp",
+    "deployment",
+    "audit",
+  ],
 };
 
 /** Get visible tabs for a node type, with optional override from schema.visible_tabs */
