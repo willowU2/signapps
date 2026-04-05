@@ -14,14 +14,27 @@ export interface AdDomain {
   config: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+  domain_type?: string;
+  ad_enabled?: boolean;
+  mail_enabled?: boolean;
+  dhcp_enabled?: boolean;
+  pxe_enabled?: boolean;
+  ntp_enabled?: boolean;
+  cert_mode?: string;
+  is_active?: boolean;
 }
 
 export interface CreateDomainRequest {
   dns_name: string;
-  netbios_name: string;
-  tree_id: string;
-  admin_user_id: string;
-  admin_password: string;
+  netbios_name?: string;
+  domain_type?: string;
+  ad_enabled?: boolean;
+  mail_enabled?: boolean;
+  dhcp_enabled?: boolean;
+  pxe_enabled?: boolean;
+  tree_id?: string;
+  admin_user_id?: string;
+  admin_password?: string;
 }
 
 export interface DomainCreationResult {

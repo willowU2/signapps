@@ -8,6 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -82,6 +90,11 @@ export default function ActiveDirectoryPage() {
     dns_name: "",
     netbios_name: "",
     admin_password: "",
+    domain_type: "full",
+    ad_enabled: true,
+    mail_enabled: true,
+    dhcp_enabled: true,
+    pxe_enabled: false,
   });
 
   const stats = {
@@ -97,14 +110,28 @@ export default function ActiveDirectoryPage() {
     try {
       await createDomain.mutateAsync({
         dns_name: newDomain.dns_name,
-        netbios_name: newDomain.netbios_name,
+        netbios_name: newDomain.netbios_name || undefined,
+        domain_type: newDomain.domain_type,
+        ad_enabled: newDomain.ad_enabled,
+        mail_enabled: newDomain.mail_enabled,
+        dhcp_enabled: newDomain.dhcp_enabled,
+        pxe_enabled: newDomain.pxe_enabled,
         tree_id: "00000000-0000-0000-0000-000000000001",
         admin_user_id: "00000000-0000-0000-0000-000000000001",
         admin_password: newDomain.admin_password,
       });
       toast.success(`Domaine ${newDomain.dns_name} cree avec succes`);
       setCreateDialogOpen(false);
-      setNewDomain({ dns_name: "", netbios_name: "", admin_password: "" });
+      setNewDomain({
+        dns_name: "",
+        netbios_name: "",
+        admin_password: "",
+        domain_type: "full",
+        ad_enabled: true,
+        mail_enabled: true,
+        dhcp_enabled: true,
+        pxe_enabled: false,
+      });
     } catch (e) {
       toast.error(
         `Erreur: ${e instanceof Error ? e.message : "Echec de la creation"}`,
@@ -367,6 +394,7 @@ export default function ActiveDirectoryPage() {
                       <TableHead>Realm</TableHead>
                       <TableHead>SID</TableHead>
                       <TableHead>Niveau</TableHead>
+                      <TableHead>Services</TableHead>
                       <TableHead>Cree le</TableHead>
                       <TableHead className="w-[50px]" />
                     </TableRow>
@@ -405,6 +433,30 @@ export default function ActiveDirectoryPage() {
                           <Badge variant="outline">
                             Niveau {domain.domain_function_level}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            {domain.ad_enabled && (
+                              <Badge variant="secondary" className="text-[9px]">
+                                AD
+                              </Badge>
+                            )}
+                            {domain.mail_enabled && (
+                              <Badge variant="secondary" className="text-[9px]">
+                                Mail
+                              </Badge>
+                            )}
+                            {domain.dhcp_enabled && (
+                              <Badge variant="secondary" className="text-[9px]">
+                                DHCP
+                              </Badge>
+                            )}
+                            {domain.pxe_enabled && (
+                              <Badge variant="secondary" className="text-[9px]">
+                                PXE
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
                           {new Date(domain.created_at).toLocaleDateString(
@@ -483,6 +535,98 @@ export default function ActiveDirectoryPage() {
                 <p className="text-xs text-muted-foreground">
                   Mot de passe pour les cles Kerberos de l&apos;administrateur
                 </p>
+              </div>
+              <div className="space-y-2">
+                <Label>Type de domaine</Label>
+                <Select
+                  value={newDomain.domain_type}
+                  onValueChange={(v) => {
+                    const presets: Record<string, Partial<typeof newDomain>> = {
+                      full: {
+                        ad_enabled: true,
+                        mail_enabled: true,
+                        dhcp_enabled: true,
+                      },
+                      dns_only: {
+                        ad_enabled: false,
+                        mail_enabled: false,
+                        dhcp_enabled: false,
+                      },
+                      mail_only: {
+                        ad_enabled: false,
+                        mail_enabled: true,
+                        dhcp_enabled: false,
+                      },
+                      internal: {
+                        ad_enabled: true,
+                        mail_enabled: false,
+                        dhcp_enabled: true,
+                      },
+                    };
+                    setNewDomain((d) => ({
+                      ...d,
+                      domain_type: v,
+                      ...presets[v],
+                    }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="full">
+                      Complet (AD + Mail + DHCP)
+                    </SelectItem>
+                    <SelectItem value="internal">
+                      Interne (AD + DHCP)
+                    </SelectItem>
+                    <SelectItem value="dns_only">DNS uniquement</SelectItem>
+                    <SelectItem value="mail_only">Mail uniquement</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Services actives</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={newDomain.ad_enabled}
+                      onCheckedChange={(v) =>
+                        setNewDomain((d) => ({ ...d, ad_enabled: !!v }))
+                      }
+                    />
+                    <Label className="text-sm font-normal">
+                      Active Directory
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={newDomain.mail_enabled}
+                      onCheckedChange={(v) =>
+                        setNewDomain((d) => ({ ...d, mail_enabled: !!v }))
+                      }
+                    />
+                    <Label className="text-sm font-normal">Serveur Mail</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={newDomain.dhcp_enabled}
+                      onCheckedChange={(v) =>
+                        setNewDomain((d) => ({ ...d, dhcp_enabled: !!v }))
+                      }
+                    />
+                    <Label className="text-sm font-normal">DHCP</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={newDomain.pxe_enabled}
+                      onCheckedChange={(v) =>
+                        setNewDomain((d) => ({ ...d, pxe_enabled: !!v }))
+                      }
+                    />
+                    <Label className="text-sm font-normal">PXE Boot</Label>
+                  </div>
+                </div>
               </div>
             </div>
             <DialogFooter>
