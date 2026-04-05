@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText } from "lucide-react";
+import { FileText, Loader2 } from "lucide-react";
 import { useAdDomains, useAdGpos } from "@/hooks/use-active-directory";
 import type { GroupPolicyObject } from "@/types/active-directory";
 
@@ -19,9 +19,35 @@ import type { GroupPolicyObject } from "@/types/active-directory";
 // =============================================================================
 
 export function GpoTabContent({ nodeId: _nodeId }: { nodeId: string }) {
-  const { data: domains = [] } = useAdDomains();
+  const {
+    data: domains = [],
+    isLoading: domainsLoading,
+    isError: domainsError,
+  } = useAdDomains();
   const domainId = domains[0]?.id ?? "";
-  const { data: gpos = [] } = useAdGpos(domainId);
+  const {
+    data: gpos = [],
+    isLoading: gposLoading,
+    isError: gposError,
+  } = useAdGpos(domainId);
+
+  if (domainsLoading || (domainId && gposLoading)) {
+    return (
+      <div className="flex items-center justify-center py-8 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+        <span className="text-sm">Chargement...</span>
+      </div>
+    );
+  }
+
+  if (domainsError || gposError) {
+    return (
+      <div className="text-center text-destructive py-8">
+        <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
+        <p className="text-sm">Erreur lors du chargement des donnees AD</p>
+      </div>
+    );
+  }
 
   if (!domainId) {
     return (

@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Monitor } from "lucide-react";
+import { Loader2, Monitor } from "lucide-react";
 import { useAdDomains, useAdComputers } from "@/hooks/use-active-directory";
 import type { ComputerAccount } from "@/types/active-directory";
 
@@ -20,9 +20,17 @@ import type { ComputerAccount } from "@/types/active-directory";
 // =============================================================================
 
 export function ComputersTabContent({ nodeId: _nodeId }: { nodeId: string }) {
-  const { data: domains = [] } = useAdDomains();
+  const {
+    data: domains = [],
+    isLoading: domainsLoading,
+    isError: domainsError,
+  } = useAdDomains();
   const domainId = domains[0]?.id ?? "";
-  const { data: computers = [] } = useAdComputers(domainId);
+  const {
+    data: computers = [],
+    isLoading: computersLoading,
+    isError: computersError,
+  } = useAdComputers(domainId);
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -34,6 +42,24 @@ export function ComputersTabContent({ nodeId: _nodeId }: { nodeId: string }) {
         (c.dns_hostname ?? "").toLowerCase().includes(q),
     );
   }, [computers, search]);
+
+  if (domainsLoading || (domainId && computersLoading)) {
+    return (
+      <div className="flex items-center justify-center py-8 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+        <span className="text-sm">Chargement...</span>
+      </div>
+    );
+  }
+
+  if (domainsError || computersError) {
+    return (
+      <div className="text-center text-destructive py-8">
+        <Monitor className="h-8 w-8 mx-auto mb-2 opacity-30" />
+        <p className="text-sm">Erreur lors du chargement des données AD</p>
+      </div>
+    );
+  }
 
   if (!domainId) {
     return (

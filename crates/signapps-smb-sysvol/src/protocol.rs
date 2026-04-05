@@ -278,6 +278,134 @@ pub fn build_negotiate_response(client_dialects: &[Smb2Dialect], server_guid: &[
     response
 }
 
+/// Parse an SMB2 Session Setup Request.
+///
+/// Returns the security blob (SPNEGO token) if present.
+///
+/// # Errors
+///
+/// Returns a static error string when the packet is not a valid SMB2 Session
+/// Setup request (wrong magic, wrong command, or body too short).
+///
+/// # Examples
+///
+/// ```
+/// use signapps_smb_sysvol::protocol::parse_session_setup_request;
+/// // A real packet would come from a Windows SMB client.
+/// ```
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+pub fn parse_session_setup_request(data: &[u8]) -> Result<SessionSetupInfo, &'static str> {
+    let offset = if data.len() > 4 && data[0] == 0x00 { 4 } else { 0 };
+    let smb = &data[offset..];
+
+    if !Smb2Header::is_smb2(smb) || smb.len() < 64 {
+        return Err("Not an SMB2 message");
+    }
+
+    let command = u16::from_le_bytes([smb[12], smb[13]]);
+    if command != Smb2Command::SessionSetup as u16 {
+        return Err("Not a Session Setup command");
+    }
+
+    let message_id = u64::from_le_bytes(smb[24..32].try_into().unwrap_or([0; 8]));
+
+    // Session Setup body starts at offset 64
+    let body = &smb[64..];
+    if body.len() < 24 {
+        return Err("Session Setup body too short");
+    }
+
+    // SecurityBufferOffset (from start of SMB2 header) and Length
+    let sec_offset = u16::from_le_bytes([body[12], body[13]]) as usize;
+    let sec_length = u16::from_le_bytes([body[14], body[15]]) as usize;
+
+    let security_blob = if sec_length > 0 && sec_offset >= 64 {
+        let blob_start = sec_offset - 64; // relative to body
+        if blob_start + sec_length <= body.len() {
+            Some(body[blob_start..blob_start + sec_length].to_vec())
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    Ok(SessionSetupInfo {
+        message_id,
+        security_blob,
+    })
+}
+
+/// Info extracted from Session Setup request.
+#[derive(Debug)]
+pub struct SessionSetupInfo {
+    /// Message identifier from the SMB2 header.
+    pub message_id: u64,
+    /// SPNEGO security blob, if present.
+    pub security_blob: Option<Vec<u8>>,
+}
+
+/// Build an SMB2 Session Setup Response.
+///
+/// For now, return `STATUS_MORE_PROCESSING_REQUIRED` to indicate
+/// the auth handshake is not complete (multi-step SPNEGO).
+///
+/// # Examples
+///
+/// ```
+/// use signapps_smb_sysvol::protocol::{build_session_setup_response, NtStatus, Smb2Header};
+/// let resp = build_session_setup_response(1, 0x1234, NtStatus::MoreProcessingRequired);
+/// assert_eq!(&resp[4..8], &Smb2Header::MAGIC);
+/// ```
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+pub fn build_session_setup_response(
+    message_id: u64,
+    session_id: u64,
+    status: NtStatus,
+) -> Vec<u8> {
+    let mut response = Vec::with_capacity(140);
+
+    // NetBIOS header
+    response.extend_from_slice(&[0x00, 0x00, 0x00, 0x00]);
+
+    // SMB2 Header (64 bytes)
+    response.extend_from_slice(&Smb2Header::MAGIC);
+    response.extend_from_slice(&64u16.to_le_bytes()); // StructureSize
+    response.extend_from_slice(&0u16.to_le_bytes()); // CreditCharge
+    response.extend_from_slice(&(status as u32).to_le_bytes());
+    response.extend_from_slice(&(Smb2Command::SessionSetup as u16).to_le_bytes());
+    response.extend_from_slice(&1u16.to_le_bytes()); // Credits
+    response.extend_from_slice(&0x01u32.to_le_bytes()); // Flags (response)
+    response.extend_from_slice(&0u32.to_le_bytes()); // NextCommand
+    response.extend_from_slice(&message_id.to_le_bytes());
+    response.extend_from_slice(&0u32.to_le_bytes()); // Reserved
+    response.extend_from_slice(&0u32.to_le_bytes()); // TreeId
+    response.extend_from_slice(&session_id.to_le_bytes());
+    response.extend_from_slice(&[0u8; 16]); // Signature
+
+    // Session Setup Response body (9 bytes minimum)
+    response.extend_from_slice(&9u16.to_le_bytes()); // StructureSize
+    response.extend_from_slice(&0u16.to_le_bytes()); // SessionFlags
+    // SecurityBufferOffset + Length
+    response.extend_from_slice(&((64 + 9) as u16).to_le_bytes());
+    response.extend_from_slice(&0u16.to_le_bytes()); // No security blob
+    response.push(0); // Padding to reach 9 bytes body
+
+    // Fix NetBIOS length
+    let total = (response.len() - 4) as u32;
+    response[1] = ((total >> 16) & 0xFF) as u8;
+    response[2] = ((total >> 8) & 0xFF) as u8;
+    response[3] = (total & 0xFF) as u8;
+
+    response
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -318,6 +446,23 @@ mod tests {
     fn negotiate_response_has_correct_length() {
         let guid = [0u8; 16];
         let resp = build_negotiate_response(&[Smb2Dialect::Smb300], &guid);
+        let netbios_len =
+            ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
+        assert_eq!(netbios_len as usize, resp.len() - 4);
+    }
+
+    #[test]
+    fn session_setup_response_valid() {
+        let resp = build_session_setup_response(1, 0x1234, NtStatus::MoreProcessingRequired);
+        assert_eq!(&resp[4..8], &Smb2Header::MAGIC);
+        // Check status = MoreProcessingRequired (at bytes 12..16 of SMB2 header, i.e. resp[16..20])
+        let status = u32::from_le_bytes([resp[12], resp[13], resp[14], resp[15]]);
+        assert_eq!(status, NtStatus::MoreProcessingRequired as u32);
+    }
+
+    #[test]
+    fn session_setup_response_netbios_length() {
+        let resp = build_session_setup_response(2, 0x5678, NtStatus::MoreProcessingRequired);
         let netbios_len =
             ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
         assert_eq!(netbios_len as usize, resp.len() - 4);

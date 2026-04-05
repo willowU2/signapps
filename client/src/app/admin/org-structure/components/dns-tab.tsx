@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Globe } from "lucide-react";
+import { Globe, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   useAdDomains,
@@ -63,17 +63,60 @@ export function DnsTabContent({
   nodeId: string;
   nodeType: string;
 }) {
-  const { data: domains = [] } = useAdDomains();
+  const {
+    data: domains = [],
+    isLoading: domainsLoading,
+    isError: domainsError,
+  } = useAdDomains();
   const domainId = domains[0]?.id || "";
-  const { data: zones = [] } = useAdDnsZones(domainId);
+  const {
+    data: zones = [],
+    isLoading: zonesLoading,
+    isError: zonesError,
+  } = useAdDnsZones(domainId);
   const zoneId = zones[0]?.id || "";
-  const { data: records = [] } = useAdDnsRecords(zoneId);
+  const {
+    data: records = [],
+    isLoading: recordsLoading,
+    isError: recordsError,
+  } = useAdDnsRecords(zoneId);
 
-  if (!domainId || !zoneId) {
+  if (
+    domainsLoading ||
+    (domainId && zonesLoading) ||
+    (zoneId && recordsLoading)
+  ) {
+    return (
+      <div className="flex items-center justify-center py-8 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+        <span className="text-sm">Chargement...</span>
+      </div>
+    );
+  }
+
+  if (domainsError || zonesError || recordsError) {
+    return (
+      <div className="text-center text-destructive py-8">
+        <Globe className="h-8 w-8 mx-auto mb-2 opacity-30" />
+        <p className="text-sm">Erreur lors du chargement des donnees DNS</p>
+      </div>
+    );
+  }
+
+  if (!domainId) {
     return (
       <div className="text-center text-muted-foreground py-8">
         <Globe className="h-8 w-8 mx-auto mb-2 opacity-30" />
-        <p className="text-sm">Aucune zone DNS configuree</p>
+        <p className="text-sm">Aucun domaine AD configure</p>
+      </div>
+    );
+  }
+
+  if (!zoneId) {
+    return (
+      <div className="text-center text-muted-foreground py-8">
+        <Globe className="h-8 w-8 mx-auto mb-2 opacity-30" />
+        <p className="text-sm">Aucune zone DNS configuree pour ce domaine</p>
       </div>
     );
   }

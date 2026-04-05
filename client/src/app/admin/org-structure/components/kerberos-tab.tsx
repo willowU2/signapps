@@ -3,7 +3,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Key, RefreshCw } from "lucide-react";
+import { Key, Loader2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   useAdDomains,
@@ -24,10 +24,36 @@ export function KerberosTabContent({
   nodeId: string;
   nodeType: string;
 }) {
-  const { data: domains = [] } = useAdDomains();
+  const {
+    data: domains = [],
+    isLoading: domainsLoading,
+    isError: domainsError,
+  } = useAdDomains();
   const domainId = domains[0]?.id || "";
-  const { data: keys = [] } = useAdKeys(domainId);
+  const {
+    data: keys = [],
+    isLoading: keysLoading,
+    isError: keysError,
+  } = useAdKeys(domainId);
   const rotateKey = useRotateKey();
+
+  if (domainsLoading || (domainId && keysLoading)) {
+    return (
+      <div className="flex items-center justify-center py-8 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+        <span className="text-sm">Chargement...</span>
+      </div>
+    );
+  }
+
+  if (domainsError || keysError) {
+    return (
+      <div className="text-center text-destructive py-8">
+        <Key className="h-8 w-8 mx-auto mb-2 opacity-30" />
+        <p className="text-sm">Erreur lors du chargement des cles Kerberos</p>
+      </div>
+    );
+  }
 
   if (!domainId) {
     return (
