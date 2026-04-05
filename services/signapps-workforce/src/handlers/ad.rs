@@ -357,3 +357,134 @@ pub async fn dc_status() -> impl IntoResponse {
         "version": "0.1.0",
     }))
 }
+
+// ── Certificates ──────────────────────────────────────────────────────────────
+
+/// List certificates for an infrastructure domain.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the database query fails.
+#[tracing::instrument(skip_all)]
+pub async fn list_certificates(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(domain_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let certs: Vec<signapps_db::models::infrastructure::InfraCertificate> = sqlx::query_as(
+        "SELECT * FROM infrastructure.certificates WHERE domain_id = $1 ORDER BY not_after DESC",
+    )
+    .bind(domain_id)
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list certificates: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    Ok(Json(json!(certs)))
+}
+
+// ── DHCP ──────────────────────────────────────────────────────────────────────
+
+/// List DHCP scopes for an infrastructure domain.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the database query fails.
+#[tracing::instrument(skip_all)]
+pub async fn list_dhcp_scopes(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(domain_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let scopes: Vec<signapps_db::models::infrastructure::DhcpScope> = sqlx::query_as(
+        "SELECT * FROM infrastructure.dhcp_scopes WHERE domain_id = $1 AND is_active = true ORDER BY name",
+    )
+    .bind(domain_id)
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list DHCP scopes: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    Ok(Json(json!(scopes)))
+}
+
+/// List active DHCP leases for a scope.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the database query fails.
+#[tracing::instrument(skip_all)]
+pub async fn list_dhcp_leases(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(scope_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let leases: Vec<signapps_db::models::infrastructure::DhcpLease> = sqlx::query_as(
+        "SELECT * FROM infrastructure.dhcp_leases WHERE scope_id = $1 AND is_active = true ORDER BY lease_end DESC",
+    )
+    .bind(scope_id)
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list DHCP leases: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    Ok(Json(json!(leases)))
+}
+
+// ── Deployment ────────────────────────────────────────────────────────────────
+
+/// List deployment profiles for an infrastructure domain.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the database query fails.
+#[tracing::instrument(skip_all)]
+pub async fn list_deploy_profiles(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(domain_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let profiles: Vec<signapps_db::models::infrastructure::DeployProfile> = sqlx::query_as(
+        "SELECT * FROM infrastructure.deploy_profiles WHERE domain_id = $1 ORDER BY sort_order, name",
+    )
+    .bind(domain_id)
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list deploy profiles: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    Ok(Json(json!(profiles)))
+}
+
+/// List deployment history for a profile (last 50 entries).
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the database query fails.
+#[tracing::instrument(skip_all)]
+pub async fn list_deploy_history(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(profile_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let history: Vec<signapps_db::models::infrastructure::DeployHistory> = sqlx::query_as(
+        "SELECT * FROM infrastructure.deploy_history WHERE profile_id = $1 ORDER BY created_at DESC LIMIT 50",
+    )
+    .bind(profile_id)
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list deploy history: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    Ok(Json(json!(history)))
+}

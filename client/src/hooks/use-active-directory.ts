@@ -228,3 +228,64 @@ export function useDeleteGpo() {
       qc.invalidateQueries({ queryKey: ["ad-gpos", domainId] }),
   });
 }
+
+// ── Certificates ──
+
+export function useInfraCertificates(domainId: string) {
+  return useQuery({
+    queryKey: ["infra-certificates", domainId],
+    queryFn: async () => {
+      const res = await adApi.certificates.list(domainId);
+      return res.data;
+    },
+    enabled: !!domainId,
+  });
+}
+
+// ── DHCP ──
+
+export function useDhcpScopes(domainId: string) {
+  return useQuery({
+    queryKey: ["dhcp-scopes", domainId],
+    queryFn: async () => {
+      const res = await adApi.dhcp.scopes(domainId);
+      return res.data;
+    },
+    enabled: !!domainId,
+  });
+}
+
+export function useDhcpLeases(scopeId: string) {
+  return useQuery({
+    queryKey: ["dhcp-leases", scopeId],
+    queryFn: async () => {
+      const res = await adApi.dhcp.leases(scopeId);
+      return res.data;
+    },
+    enabled: !!scopeId,
+  });
+}
+
+// ── Deployment ──
+
+export function useDeployProfiles(domainId: string) {
+  return useQuery({
+    queryKey: ["deploy-profiles", domainId],
+    queryFn: async () => {
+      const res = await adApi.deploy.profiles(domainId);
+      return res.data;
+    },
+    enabled: !!domainId,
+  });
+}
+
+export function useDeployHistory(profileId: string) {
+  return useQuery({
+    queryKey: ["deploy-history", profileId],
+    queryFn: async () => {
+      const res = await adApi.deploy.history(profileId);
+      return res.data;
+    },
+    enabled: !!profileId,
+  });
+}
