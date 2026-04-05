@@ -12,35 +12,49 @@ use uuid::Uuid;
 
 use crate::AppState;
 use signapps_common::{Claims, TenantContext};
-use signapps_db::models::ad_domain::CreateAdDomain;
-use signapps_db::repositories::{AdDnsRepository, AdDomainRepository};
 
 #[derive(Debug, Deserialize)]
 pub struct CreateDomainRequest {
     pub dns_name: String,
-    pub netbios_name: String,
-    pub tree_id: Option<String>,
+    pub netbios_name: Option<String>,
+    pub domain_type: Option<String>,
+    pub ad_enabled: Option<bool>,
+    pub mail_enabled: Option<bool>,
+    pub dhcp_enabled: Option<bool>,
+    pub pxe_enabled: Option<bool>,
     pub admin_user_id: Option<String>,
     pub admin_password: Option<String>,
 }
 
-/// List all AD domains for the current tenant.
+/// List all infrastructure domains for the current tenant.
 #[tracing::instrument(skip_all)]
 pub async fn list_domains(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
     Extension(_claims): Extension<Claims>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let domains = AdDomainRepository::list_by_tenant(&state.pool, ctx.tenant_id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to list domains: {}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+    let domains: Vec<signapps_db::models::infrastructure::InfraDomain> = sqlx::query_as(
+        "SELECT * FROM infrastructure.domains WHERE tenant_id = $1 AND is_active = true ORDER BY dns_name",
+    )
+    .bind(ctx.tenant_id)
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list domains: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
     Ok(Json(json!(domains)))
 }
 
-/// Create a new AD domain.
+/// Create a new infrastructure domain using the unified provisioner.
+///
+/// Provisions all sub-systems (AD, DNS, certificates, mail, DHCP, NTP,
+/// deployment profile) automatically based on the enabled flags in the request.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the core domain INSERT fails
+/// (e.g., duplicate `(tenant_id, dns_name)` constraint triggers a DB error).
 #[tracing::instrument(skip_all)]
 pub async fn create_domain(
     State(state): State<AppState>,
@@ -48,93 +62,31 @@ pub async fn create_domain(
     Extension(_claims): Extension<Claims>,
     Json(req): Json<CreateDomainRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let existing = AdDomainRepository::get_by_dns_name(&state.pool, ctx.tenant_id, &req.dns_name)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to check domain: {}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
-
-    if existing.is_some() {
-        return Err(StatusCode::CONFLICT);
-    }
-
-    let domain_sid = signapps_ad_core::SecurityIdentifier::generate_domain_sid();
-    let realm = req.dns_name.to_uppercase();
-    let tree_id = req
-        .tree_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::new_v4());
-
-    let input = CreateAdDomain {
+    let input = signapps_db::models::infrastructure::CreateInfraDomain {
         dns_name: req.dns_name.clone(),
         netbios_name: req.netbios_name.clone(),
-        tree_id,
+        domain_type: req.domain_type.clone(),
+        ad_enabled: req.ad_enabled,
+        mail_enabled: req.mail_enabled,
+        dhcp_enabled: req.dhcp_enabled,
+        pxe_enabled: req.pxe_enabled,
     };
 
-    let domain = AdDomainRepository::create(
+    let result = signapps_ad_core::provisioner::provision_domain(
         &state.pool,
         ctx.tenant_id,
         input,
-        &domain_sid.to_string(),
-        &realm,
     )
     .await
     .map_err(|e| {
-        tracing::error!("Failed to create domain: {}", e);
+        tracing::error!("Domain provisioning failed: {}", e);
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
-    // Create DNS zone with default SRV records
-    if let Ok(zone) = AdDnsRepository::create_zone(&state.pool, domain.id, &req.dns_name).await {
-        let dc_fqdn = format!("dc.{}", req.dns_name);
-        for (name, port) in &[
-            ("_ldap._tcp", 389),
-            ("_ldap._tcp.dc._msdcs", 389),
-            ("_kerberos._tcp", 88),
-            ("_kerberos._tcp.dc._msdcs", 88),
-            ("_kpasswd._tcp", 464),
-            ("_gc._tcp", 3268),
-        ] {
-            let _ = AdDnsRepository::add_record(
-                &state.pool,
-                zone.id,
-                name,
-                "SRV",
-                json!({"priority": 0, "weight": 100, "port": port, "target": dc_fqdn}),
-                3600,
-                true,
-            )
-            .await;
-        }
-        let _ = AdDnsRepository::add_record(
-            &state.pool,
-            zone.id,
-            &dc_fqdn,
-            "A",
-            json!({"ip": "127.0.0.1"}),
-            3600,
-            true,
-        )
-        .await;
-    }
-
-    tracing::info!(domain = %req.dns_name, sid = %domain_sid, "AD domain created");
-
-    Ok((
-        StatusCode::CREATED,
-        Json(json!({
-            "domain_id": domain.id,
-            "dns_name": domain.dns_name,
-            "realm": domain.realm,
-            "netbios_name": domain.netbios_name,
-            "domain_sid": domain.domain_sid,
-        })),
-    ))
+    Ok((StatusCode::CREATED, Json(json!(result))))
 }
 
-/// Delete an AD domain.
+/// Delete an infrastructure domain (soft-delete via `is_active = false`).
 #[tracing::instrument(skip_all)]
 pub async fn delete_domain(
     State(state): State<AppState>,
@@ -142,12 +94,16 @@ pub async fn delete_domain(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    AdDomainRepository::delete(&state.pool, id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to delete domain: {}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+    sqlx::query(
+        "UPDATE infrastructure.domains SET is_active = false, updated_at = NOW() WHERE id = $1",
+    )
+    .bind(id)
+    .execute(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to delete domain: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
     Ok(StatusCode::NO_CONTENT)
 }
 
