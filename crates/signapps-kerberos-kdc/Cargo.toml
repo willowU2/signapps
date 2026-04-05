@@ -23,6 +23,7 @@ hmac = { workspace = true }
 sha2 = { workspace = true }
 aes = "0.8"
 cbc = "0.1"
+cipher = "0.4"
 md-5 = "0.10"
 md4 = "0.10"
 sha1 = "0.10"
