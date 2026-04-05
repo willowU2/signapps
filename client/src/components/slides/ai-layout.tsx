@@ -23,6 +23,7 @@ interface FabricObject {
   height?: number;
   scaleX?: number;
   scaleY?: number;
+  fontSize?: number;
   _masterElement?: boolean;
   set(props: Record<string, unknown>): void;
   animate(props: Record<string, unknown>, opts: Record<string, unknown>): void;

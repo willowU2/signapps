@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import React, { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,19 +12,19 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
-import { orgApi } from '@/lib/api/org';
-import { useOrgStore } from '@/stores/org-store';
-import { NodeDetailSheet } from './node-detail-sheet';
-import type { OrgNode, OrgTree } from '@/types/org';
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
+import { orgApi } from "@/lib/api/org";
+import { useOrgStore } from "@/stores/org-store";
+import { NodeDetailSheet } from "./node-detail-sheet";
+import type { OrgNode, OrgTree } from "@/types/org";
 import {
   Plus,
   ChevronRight,
@@ -32,8 +32,8 @@ import {
   Trash2,
   Users,
   Building2,
-} from 'lucide-react';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { toast } from "sonner";
 
 // ── Node type configuration ──────────────────────────────────────────────────
 
@@ -44,25 +44,77 @@ interface NodeTypeConfig {
 }
 
 const INTERNAL_NODE_TYPES: Record<string, NodeTypeConfig> = {
-  group: { label: 'Groupe', color: 'text-purple-600', bg: 'bg-purple-100 dark:bg-purple-900/30' },
-  subsidiary: { label: 'Filiale', color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-  bu: { label: 'BU', color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
-  department: { label: 'Département', color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/30' },
-  service: { label: 'Service', color: 'text-teal-600', bg: 'bg-teal-100 dark:bg-teal-900/30' },
-  team: { label: 'Équipe', color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/30' },
-  position: { label: 'Poste', color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30' },
+  group: {
+    label: "Groupe",
+    color: "text-purple-600",
+    bg: "bg-purple-100 dark:bg-purple-900/30",
+  },
+  subsidiary: {
+    label: "Filiale",
+    color: "text-blue-600",
+    bg: "bg-blue-100 dark:bg-blue-900/30",
+  },
+  bu: {
+    label: "BU",
+    color: "text-indigo-600",
+    bg: "bg-indigo-100 dark:bg-indigo-900/30",
+  },
+  department: {
+    label: "Département",
+    color: "text-green-600",
+    bg: "bg-green-100 dark:bg-green-900/30",
+  },
+  service: {
+    label: "Service",
+    color: "text-teal-600",
+    bg: "bg-teal-100 dark:bg-teal-900/30",
+  },
+  team: {
+    label: "Équipe",
+    color: "text-amber-600",
+    bg: "bg-amber-100 dark:bg-amber-900/30",
+  },
+  position: {
+    label: "Poste",
+    color: "text-orange-600",
+    bg: "bg-orange-100 dark:bg-orange-900/30",
+  },
 };
 
 const CLIENT_NODE_TYPES: Record<string, NodeTypeConfig> = {
-  client_group: { label: 'Groupe client', color: 'text-slate-600', bg: 'bg-slate-100 dark:bg-slate-900/30' },
-  client_company: { label: 'Société cliente', color: 'text-cyan-600', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
-  client_department: { label: 'Département client', color: 'text-sky-600', bg: 'bg-sky-100 dark:bg-sky-900/30' },
+  client_group: {
+    label: "Groupe client",
+    color: "text-slate-600",
+    bg: "bg-slate-100 dark:bg-slate-900/30",
+  },
+  client_company: {
+    label: "Société cliente",
+    color: "text-cyan-600",
+    bg: "bg-cyan-100 dark:bg-cyan-900/30",
+  },
+  client_department: {
+    label: "Département client",
+    color: "text-sky-600",
+    bg: "bg-sky-100 dark:bg-sky-900/30",
+  },
 };
 
 const SUPPLIER_NODE_TYPES: Record<string, NodeTypeConfig> = {
-  supplier_group: { label: 'Groupe fournisseur', color: 'text-rose-600', bg: 'bg-rose-100 dark:bg-rose-900/30' },
-  supplier_company: { label: 'Société fournisseur', color: 'text-pink-600', bg: 'bg-pink-100 dark:bg-pink-900/30' },
-  supplier_department: { label: 'Département fournisseur', color: 'text-fuchsia-600', bg: 'bg-fuchsia-100 dark:bg-fuchsia-900/30' },
+  supplier_group: {
+    label: "Groupe fournisseur",
+    color: "text-rose-600",
+    bg: "bg-rose-100 dark:bg-rose-900/30",
+  },
+  supplier_company: {
+    label: "Société fournisseur",
+    color: "text-pink-600",
+    bg: "bg-pink-100 dark:bg-pink-900/30",
+  },
+  supplier_department: {
+    label: "Département fournisseur",
+    color: "text-fuchsia-600",
+    bg: "bg-fuchsia-100 dark:bg-fuchsia-900/30",
+  },
 };
 
 function getNodeTypeConfig(type: string): NodeTypeConfig {
@@ -71,15 +123,17 @@ function getNodeTypeConfig(type: string): NodeTypeConfig {
     CLIENT_NODE_TYPES[type] ??
     SUPPLIER_NODE_TYPES[type] ?? {
       label: type,
-      color: 'text-muted-foreground',
-      bg: 'bg-muted',
+      color: "text-muted-foreground",
+      bg: "bg-muted",
     }
   );
 }
 
-function getNodeTypesByTreeType(treeType: string): Record<string, NodeTypeConfig> {
-  if (treeType === 'clients') return CLIENT_NODE_TYPES;
-  if (treeType === 'suppliers') return SUPPLIER_NODE_TYPES;
+function getNodeTypesByTreeType(
+  treeType: string,
+): Record<string, NodeTypeConfig> {
+  if (treeType === "clients") return CLIENT_NODE_TYPES;
+  if (treeType === "suppliers") return SUPPLIER_NODE_TYPES;
   return INTERNAL_NODE_TYPES;
 }
 
@@ -113,10 +167,8 @@ function TreeNodeItem({
     <div>
       <div
         className={cn(
-          'flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors group',
-          isSelected
-            ? 'bg-accent text-accent-foreground'
-            : 'hover:bg-muted/60'
+          "flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors group",
+          isSelected ? "bg-accent text-accent-foreground" : "hover:bg-muted/60",
         )}
         style={{ paddingLeft: `${depth * 20 + 12}px` }}
         onClick={() => onSelect(node)}
@@ -124,8 +176,8 @@ function TreeNodeItem({
         {/* Expand/collapse toggle */}
         <button
           className={cn(
-            'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
-            children.length === 0 && 'invisible'
+            "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+            children.length === 0 && "invisible",
           )}
           onClick={(e) => {
             e.stopPropagation();
@@ -142,7 +194,11 @@ function TreeNodeItem({
         {/* Type badge */}
         <Badge
           variant="secondary"
-          className={cn('text-[10px] px-1.5 py-0 shrink-0 font-medium', cfg.color, cfg.bg)}
+          className={cn(
+            "text-[10px] px-1.5 py-0 shrink-0 font-medium",
+            cfg.color,
+            cfg.bg,
+          )}
         >
           {cfg.label}
         </Badge>
@@ -152,13 +208,14 @@ function TreeNodeItem({
 
         {/* Code */}
         {node.code && (
-          <span className="text-xs text-muted-foreground font-mono shrink-0">{node.code}</span>
+          <span className="text-xs text-muted-foreground font-mono shrink-0">
+            {node.code}
+          </span>
         )}
 
         {/* Person count indicator (placeholder) */}
         <span className="text-xs text-muted-foreground flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Users className="h-3 w-3" />
-          0
+          <Users className="h-3 w-3" />0
         </span>
       </div>
 
@@ -191,13 +248,14 @@ interface OrgTreeEditorProps {
 }
 
 export function OrgTreeEditor({ tree }: OrgTreeEditorProps) {
-  const { nodes, nodesLoading, selectedNode, fetchNodes, selectNode } = useOrgStore();
+  const { nodes, nodesLoading, selectedNode, fetchNodes, selectNode } =
+    useOrgStore();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [detailOpen, setDetailOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [newNodeType, setNewNodeType] = useState('');
-  const [newNodeName, setNewNodeName] = useState('');
-  const [newNodeCode, setNewNodeCode] = useState('');
+  const [newNodeType, setNewNodeType] = useState("");
+  const [newNodeName, setNewNodeName] = useState("");
+  const [newNodeCode, setNewNodeCode] = useState("");
   const [adding, setAdding] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -232,7 +290,7 @@ export function OrgTreeEditor({ tree }: OrgTreeEditorProps) {
       selectNode(node);
       setDetailOpen(true);
     },
-    [selectNode]
+    [selectNode],
   );
 
   const handleAddNode = async () => {
@@ -240,8 +298,7 @@ export function OrgTreeEditor({ tree }: OrgTreeEditorProps) {
     setAdding(true);
     try {
       await orgApi.nodes.create({
-        tree_id: tree.id,
-        parent_id: selectedNode?.id,
+        parent_id: selectedNode?.id ?? tree.id,
         node_type: newNodeType,
         name: newNodeName.trim(),
         code: newNodeCode.trim() || undefined,
@@ -249,14 +306,14 @@ export function OrgTreeEditor({ tree }: OrgTreeEditorProps) {
         is_active: true,
         config: {},
       });
-      toast.success('Noeud créé');
+      toast.success("Noeud créé");
       setAddDialogOpen(false);
-      setNewNodeName('');
-      setNewNodeCode('');
-      setNewNodeType('');
+      setNewNodeName("");
+      setNewNodeCode("");
+      setNewNodeType("");
       fetchNodes(tree.id);
     } catch {
-      toast.error('Erreur lors de la création');
+      toast.error("Erreur lors de la création");
     } finally {
       setAdding(false);
     }
@@ -267,20 +324,22 @@ export function OrgTreeEditor({ tree }: OrgTreeEditorProps) {
     setDeleting(true);
     try {
       await orgApi.nodes.delete(selectedNode.id);
-      toast.success('Noeud supprimé');
+      toast.success("Noeud supprimé");
       selectNode(null);
       setDeleteConfirm(false);
       setDetailOpen(false);
       fetchNodes(tree.id);
     } catch {
-      toast.error('Erreur lors de la suppression');
+      toast.error("Erreur lors de la suppression");
     } finally {
       setDeleting(false);
     }
   };
 
   const nodeTypesByTree = getNodeTypesByTreeType(tree.tree_type);
-  const rootNodes = nodes.filter((n) => !n.parent_id).sort((a, b) => a.sort_order - b.sort_order);
+  const rootNodes = nodes
+    .filter((n) => !n.parent_id)
+    .sort((a, b) => a.sort_order - b.sort_order);
 
   return (
     <div className="flex gap-0 h-full">
@@ -297,7 +356,7 @@ export function OrgTreeEditor({ tree }: OrgTreeEditorProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">
               <DropdownMenuLabel className="text-xs text-muted-foreground">
-                {selectedNode ? `Sous: ${selectedNode.name}` : 'Noeud racine'}
+                {selectedNode ? `Sous: ${selectedNode.name}` : "Noeud racine"}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {Object.entries(nodeTypesByTree).map(([type, cfg]) => (
@@ -308,7 +367,7 @@ export function OrgTreeEditor({ tree }: OrgTreeEditorProps) {
                     setAddDialogOpen(true);
                   }}
                 >
-                  <span className={cn('text-xs font-medium mr-2', cfg.color)}>
+                  <span className={cn("text-xs font-medium mr-2", cfg.color)}>
                     {cfg.label}
                   </span>
                 </DropdownMenuItem>
@@ -345,7 +404,9 @@ export function OrgTreeEditor({ tree }: OrgTreeEditorProps) {
             <div className="flex flex-col items-center justify-center h-40 text-muted-foreground text-sm gap-2">
               <Building2 className="h-10 w-10 opacity-30" />
               <p>Aucun noeud dans cet arbre</p>
-              <p className="text-xs">Cliquez sur «Ajouter un noeud» pour commencer</p>
+              <p className="text-xs">
+                Cliquez sur «Ajouter un noeud» pour commencer
+              </p>
             </div>
           ) : (
             <div className="space-y-0.5">
@@ -396,8 +457,8 @@ export function OrgTreeEditor({ tree }: OrgTreeEditorProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              Ajouter {nodeTypesByTree[newNodeType]?.label ?? 'un noeud'}
-              {selectedNode ? ` sous "${selectedNode.name}"` : ''}
+              Ajouter {nodeTypesByTree[newNodeType]?.label ?? "un noeud"}
+              {selectedNode ? ` sous "${selectedNode.name}"` : ""}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -425,8 +486,11 @@ export function OrgTreeEditor({ tree }: OrgTreeEditorProps) {
             <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
               Annuler
             </Button>
-            <Button onClick={handleAddNode} disabled={adding || !newNodeName.trim()}>
-              {adding ? 'Création...' : 'Créer'}
+            <Button
+              onClick={handleAddNode}
+              disabled={adding || !newNodeName.trim()}
+            >
+              {adding ? "Création..." : "Créer"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -439,7 +503,8 @@ export function OrgTreeEditor({ tree }: OrgTreeEditorProps) {
             <DialogTitle>Supprimer «{selectedNode?.name}»?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground py-2">
-            Cette action supprimera le noeud et tous ses sous-noeuds. Les affectations associées seront également supprimées.
+            Cette action supprimera le noeud et tous ses sous-noeuds. Les
+            affectations associées seront également supprimées.
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteConfirm(false)}>
@@ -450,7 +515,7 @@ export function OrgTreeEditor({ tree }: OrgTreeEditorProps) {
               onClick={handleDeleteNode}
               disabled={deleting}
             >
-              {deleting ? 'Suppression...' : 'Supprimer'}
+              {deleting ? "Suppression..." : "Supprimer"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -81,6 +81,14 @@ export interface Email {
   sent_at?: string;
   size_bytes?: number;
   has_attachments?: boolean;
+  priority?: number;
+  attachments?: {
+    id: string;
+    filename: string;
+    mime_type?: string;
+    size_bytes?: number;
+    storage_key?: string;
+  }[];
   created_at?: string;
   updated_at?: string;
 }

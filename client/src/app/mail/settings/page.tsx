@@ -21,6 +21,7 @@ import {
   accountApi,
   type MailAccount,
   type CreateAccountRequest,
+  type MailProvider,
 } from "@/lib/api-mail";
 import { mailApi } from "@/lib/api/mail";
 import { toast } from "sonner";

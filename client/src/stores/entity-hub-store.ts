@@ -4,14 +4,51 @@ import { entityHubApi } from "@/lib/api/entityHub";
 
 import { workspacesApi } from "@/lib/api/tenant";
 
+// Minimal entity types used across the Hub UI
+export interface EntityWorkspace {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface EntityCalendar {
+  id: string;
+  name: string;
+}
+
+export interface EntityResource {
+  id: string;
+  name: string;
+}
+
+export interface EntityProject {
+  id: string;
+  name: string;
+  description?: string;
+  workspace_id?: string;
+}
+
+export interface EntityTask {
+  id: string;
+  title: string;
+  project_id?: string;
+  status?: string;
+}
+
+export interface EntityEvent {
+  id: string;
+  title: string;
+  calendar_id?: string;
+}
+
 // Unified Entity Hub Store for Phase 5 Calendars & Projects
 interface EntityState {
-  workspaces: unknown[];
-  calendars: unknown[];
-  resources: unknown[];
-  projects: unknown[];
-  tasks: unknown[];
-  events: unknown[];
+  workspaces: EntityWorkspace[];
+  calendars: EntityCalendar[];
+  resources: EntityResource[];
+  projects: EntityProject[];
+  tasks: EntityTask[];
+  events: EntityEvent[];
 
   selectedWorkspaceId: string | null;
   setSelectedWorkspace: (id: string | null) => void;

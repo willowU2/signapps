@@ -60,7 +60,9 @@ export function EmailComposer({
     setEditorReady(true);
     // Load initial design if provided
     if (initialDesign && emailEditorRef.current?.editor) {
-      emailEditorRef.current.editor.loadDesign(initialDesign);
+      // Cast required: prop is typed as `object`, unlayer expects JSONTemplate
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      emailEditorRef.current.editor.loadDesign(initialDesign as any);
     }
   }, [initialDesign]);
 

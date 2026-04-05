@@ -1254,12 +1254,19 @@ export function Spreadsheet({
       if (now - lastUpdateRef.current < 2000) return;
       lastUpdateRef.current = now;
       // Try to get author from origin (WebsocketProvider sets origin to the provider)
+      const originProvider = origin as {
+        awareness?: {
+          getLocalState?: () => {
+            user?: { name?: string; color?: string };
+          } | null;
+        };
+      } | null;
       const authorName =
-        origin?.awareness?.getLocalState()?.user?.name ||
+        originProvider?.awareness?.getLocalState?.()?.user?.name ||
         collaborators[0]?.name ||
         "Moi";
       const authorColor =
-        origin?.awareness?.getLocalState()?.user?.color ||
+        originProvider?.awareness?.getLocalState?.()?.user?.color ||
         collaborators[0]?.color ||
         "#94a3b8";
       addHistoryEntry(authorName, authorColor, "Modification de la feuille");
@@ -2476,12 +2483,12 @@ export function Spreadsheet({
       });
       const newChart = {
         id: `chart-${Date.now()}`,
-        type: config.type,
+        type: config.type as "bar" | "line" | "pie" | "scatter" | "area",
         title: config.title || "Graphique",
         chartData,
         seriesNames: parsed.series.map((s) => s.name),
-        colors: config.colors,
-        showLegend: config.showLegend,
+        colors: config.colors ?? [],
+        showLegend: config.showLegend ?? false,
       };
       setFloatingCharts((prev) => [...prev, newChart]);
     },

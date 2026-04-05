@@ -1,57 +1,64 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { usePageTitle } from '@/hooks/use-page-title';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import React, { useState, useEffect, useCallback } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { orgApi } from '@/lib/api/org';
-import type { OrgTree, OrgChartNode, TreeType } from '@/types/org';
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { orgApi } from "@/lib/api/org";
+import type { OrgNode, OrgTree, OrgChartNode, TreeType } from "@/types/org";
 import {
   ChevronRight,
   ChevronDown,
   Users,
   Building2,
   Calendar,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // ── Node type colors ──────────────────────────────────────────────────────────
 
 const NODE_TYPE_COLORS: Record<string, string> = {
-  group: 'border-purple-400 bg-purple-50 dark:bg-purple-950/20',
-  subsidiary: 'border-blue-400 bg-blue-50 dark:bg-blue-950/20',
-  bu: 'border-indigo-400 bg-indigo-50 dark:bg-indigo-950/20',
-  department: 'border-green-400 bg-green-50 dark:bg-green-950/20',
-  service: 'border-teal-400 bg-teal-50 dark:bg-teal-950/20',
-  team: 'border-amber-400 bg-amber-50 dark:bg-amber-950/20',
-  position: 'border-orange-400 bg-orange-50 dark:bg-orange-950/20',
-  client_group: 'border-slate-400 bg-slate-50 dark:bg-slate-950/20',
-  client_company: 'border-cyan-400 bg-cyan-50 dark:bg-cyan-950/20',
-  supplier_group: 'border-rose-400 bg-rose-50 dark:bg-rose-950/20',
-  supplier_company: 'border-pink-400 bg-pink-50 dark:bg-pink-950/20',
+  group: "border-purple-400 bg-purple-50 dark:bg-purple-950/20",
+  subsidiary: "border-blue-400 bg-blue-50 dark:bg-blue-950/20",
+  bu: "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/20",
+  department: "border-green-400 bg-green-50 dark:bg-green-950/20",
+  service: "border-teal-400 bg-teal-50 dark:bg-teal-950/20",
+  team: "border-amber-400 bg-amber-50 dark:bg-amber-950/20",
+  position: "border-orange-400 bg-orange-50 dark:bg-orange-950/20",
+  client_group: "border-slate-400 bg-slate-50 dark:bg-slate-950/20",
+  client_company: "border-cyan-400 bg-cyan-50 dark:bg-cyan-950/20",
+  supplier_group: "border-rose-400 bg-rose-50 dark:bg-rose-950/20",
+  supplier_company: "border-pink-400 bg-pink-50 dark:bg-pink-950/20",
 };
 
 const NODE_TYPE_LABELS: Record<string, string> = {
-  group: 'Groupe', subsidiary: 'Filiale', bu: 'BU',
-  department: 'Département', service: 'Service', team: 'Équipe',
-  position: 'Poste', client_group: 'Groupe client', client_company: 'Client',
-  supplier_group: 'Groupe fournisseur', supplier_company: 'Fournisseur',
+  group: "Groupe",
+  subsidiary: "Filiale",
+  bu: "BU",
+  department: "Département",
+  service: "Service",
+  team: "Équipe",
+  position: "Poste",
+  client_group: "Groupe client",
+  client_company: "Client",
+  supplier_group: "Groupe fournisseur",
+  supplier_company: "Fournisseur",
 };
 
 const TREE_TYPE_LABELS: Record<TreeType, string> = {
-  internal: 'Interne',
-  clients: 'Clients',
-  suppliers: 'Fournisseurs',
+  internal: "Interne",
+  clients: "Clients",
+  suppliers: "Fournisseurs",
 };
 
 // ── OrgChart node card ────────────────────────────────────────────────────────
@@ -67,22 +74,23 @@ function OrgCard({ chartNode, depth, expanded, onToggle }: OrgCardProps) {
   const { node, assignments, children } = chartNode;
   const isExpanded = expanded.has(node.id);
   const hasChildren = children.length > 0;
-  const colorClass = NODE_TYPE_COLORS[node.node_type] ?? 'border-border bg-card';
-  const isPosition = node.node_type === 'position';
+  const colorClass =
+    NODE_TYPE_COLORS[node.node_type] ?? "border-border bg-card";
+  const isPosition = node.node_type === "position";
 
   // Separate filled vs vacant slots (only relevant for position nodes)
   const filledAssignments = assignments.filter((a) => a.person);
   const isVacant = isPosition && filledAssignments.length === 0;
 
   return (
-    <div className={cn('flex flex-col items-center', depth > 0 && 'mt-4')}>
+    <div className={cn("flex flex-col items-center", depth > 0 && "mt-4")}>
       {/* Card */}
       <div
         className={cn(
-          'relative rounded-xl border-2 p-3 min-w-[180px] max-w-[220px] shadow-sm transition-all',
+          "relative rounded-xl border-2 p-3 min-w-[180px] max-w-[220px] shadow-sm transition-all",
           colorClass,
-          hasChildren && 'cursor-pointer hover:shadow-md',
-          isVacant && 'border-dashed opacity-70'
+          hasChildren && "cursor-pointer hover:shadow-md",
+          isVacant && "border-dashed opacity-70",
         )}
         onClick={() => hasChildren && onToggle(node.id)}
       >
@@ -99,7 +107,9 @@ function OrgCard({ chartNode, depth, expanded, onToggle }: OrgCardProps) {
               {node.name}
             </p>
             {node.code && (
-              <p className="text-[10px] text-muted-foreground font-mono">{node.code}</p>
+              <p className="text-[10px] text-muted-foreground font-mono">
+                {node.code}
+              </p>
             )}
           </div>
           {hasChildren && (
@@ -118,7 +128,9 @@ function OrgCard({ chartNode, depth, expanded, onToggle }: OrgCardProps) {
           isVacant ? (
             <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-dashed border-muted-foreground/40 bg-muted/30">
               <Users className="h-3 w-3 text-muted-foreground" />
-              <span className="text-[10px] text-muted-foreground italic">Poste vacant</span>
+              <span className="text-[10px] text-muted-foreground italic">
+                Poste vacant
+              </span>
             </div>
           ) : (
             <div className="space-y-1">
@@ -127,12 +139,14 @@ function OrgCard({ chartNode, depth, expanded, onToggle }: OrgCardProps) {
                   <Avatar className="h-5 w-5 shrink-0">
                     <AvatarFallback className="text-[8px] font-semibold">
                       {a.person
-                        ? `${a.person.first_name[0] ?? ''}${a.person.last_name[0] ?? ''}`.toUpperCase()
-                        : '?'}
+                        ? `${a.person.first_name[0] ?? ""}${a.person.last_name[0] ?? ""}`.toUpperCase()
+                        : "?"}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-[10px] truncate">
-                    {a.person ? `${a.person.first_name} ${a.person.last_name}` : '—'}
+                    {a.person
+                      ? `${a.person.first_name} ${a.person.last_name}`
+                      : "—"}
                   </span>
                 </div>
               ))}
@@ -179,19 +193,20 @@ function OrgCard({ chartNode, depth, expanded, onToggle }: OrgCardProps) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function OrgChartPage() {
-  usePageTitle('Organigramme');
+  usePageTitle("Organigramme");
 
-  const [trees, setTrees] = useState<OrgTree[]>([]);
-  const [selectedTreeId, setSelectedTreeId] = useState<string>('');
+  const [trees, setTrees] = useState<OrgNode[]>([]);
+  const [selectedTreeId, setSelectedTreeId] = useState<string>("");
   const [chartNodes, setChartNodes] = useState<OrgChartNode[]>([]);
   const [currentTree, setCurrentTree] = useState<OrgTree | null>(null);
   const [loading, setLoading] = useState(false);
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState("");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   // Load trees
   useEffect(() => {
-    orgApi.trees.list()
+    orgApi.trees
+      .list()
       .then((res) => {
         const t = res.data ?? [];
         setTrees(t);
@@ -205,7 +220,9 @@ export default function OrgChartPage() {
     if (!selectedTreeId) return;
     setLoading(true);
     try {
-      const params: { tree_id?: string; date?: string } = { tree_id: selectedTreeId };
+      const params: { tree_id?: string; date?: string } = {
+        tree_id: selectedTreeId,
+      };
       if (date) params.date = date;
       const res = await orgApi.orgchart(params);
       setChartNodes(res.data?.nodes ?? []);
@@ -228,7 +245,8 @@ export default function OrgChartPage() {
   const handleToggle = useCallback((id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }, []);
@@ -247,7 +265,10 @@ export default function OrgChartPage() {
 
   const collapseAll = () => setExpanded(new Set());
 
-  const treeTypeLabel = currentTree ? (TREE_TYPE_LABELS[currentTree.tree_type as TreeType] ?? currentTree.tree_type) : '';
+  const treeTypeLabel = currentTree
+    ? (TREE_TYPE_LABELS[currentTree.tree_type as TreeType] ??
+      currentTree.tree_type)
+    : "";
 
   return (
     <AppLayout>
@@ -256,7 +277,9 @@ export default function OrgChartPage() {
         <div className="px-6 py-4 border-b border-border shrink-0 bg-background">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Organigramme</h1>
+              <h1 className="text-2xl font-bold tracking-tight">
+                Organigramme
+              </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
                 Vue hiérarchique de la structure organisationnelle
               </p>
@@ -265,7 +288,10 @@ export default function OrgChartPage() {
             <div className="flex items-center gap-2 flex-wrap">
               {/* Tree switcher */}
               {trees.length > 0 && (
-                <Select value={selectedTreeId} onValueChange={setSelectedTreeId}>
+                <Select
+                  value={selectedTreeId}
+                  onValueChange={setSelectedTreeId}
+                >
                   <SelectTrigger className="w-48">
                     <Building2 className="h-4 w-4 mr-1 text-muted-foreground" />
                     <SelectValue placeholder="Sélectionner un arbre" />
@@ -273,10 +299,12 @@ export default function OrgChartPage() {
                   <SelectContent>
                     {trees.map((t) => (
                       <SelectItem key={t.id} value={t.id}>
-                        {t.name}
-                        {' '}
+                        {t.name}{" "}
                         <span className="text-muted-foreground text-xs">
-                          ({TREE_TYPE_LABELS[t.tree_type as TreeType] ?? t.tree_type})
+                          (
+                          {TREE_TYPE_LABELS[t.node_type as TreeType] ??
+                            t.node_type}
+                          )
                         </span>
                       </SelectItem>
                     ))}
@@ -295,26 +323,39 @@ export default function OrgChartPage() {
                   title="Vue historique — laissez vide pour la vue actuelle"
                 />
                 {date && (
-                  <Button size="sm" variant="ghost" onClick={() => setDate('')} className="text-xs px-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setDate("")}
+                    className="text-xs px-2"
+                  >
                     Aujourd'hui
                   </Button>
                 )}
               </div>
 
               <div className="flex items-center gap-1">
-                <Button size="sm" variant="outline" onClick={expandAll}>Tout déplier</Button>
-                <Button size="sm" variant="outline" onClick={collapseAll}>Tout replier</Button>
+                <Button size="sm" variant="outline" onClick={expandAll}>
+                  Tout déplier
+                </Button>
+                <Button size="sm" variant="outline" onClick={collapseAll}>
+                  Tout replier
+                </Button>
               </div>
             </div>
           </div>
 
           {currentTree && (
             <div className="flex items-center gap-2 mt-2">
-              <Badge variant="secondary" className="text-xs">{treeTypeLabel}</Badge>
-              <span className="text-sm text-muted-foreground">{currentTree.name}</span>
+              <Badge variant="secondary" className="text-xs">
+                {treeTypeLabel}
+              </Badge>
+              <span className="text-sm text-muted-foreground">
+                {currentTree.name}
+              </span>
               {date && (
                 <Badge variant="outline" className="text-xs text-amber-600">
-                  Vue au {new Date(date).toLocaleDateString('fr-FR')}
+                  Vue au {new Date(date).toLocaleDateString("fr-FR")}
                 </Badge>
               )}
             </div>

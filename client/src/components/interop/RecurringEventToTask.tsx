@@ -34,7 +34,7 @@ export function RecurringEventToTask({
   const handleCreate = async () => {
     setCreating(true);
     try {
-      const calsRes = await fetch(`${API}/calendars`, {
+      const calsRes = await fetch(`${CALENDAR_URL}/calendars`, {
         credentials: "include",
       });
       const cals = await calsRes.json();

@@ -312,7 +312,18 @@ export default function MailPage() {
 
   // Bug 3: Folder-aware email loader with PW2 IndexedDB cache
   const loadFolder = useCallback(
-    async (folder: "inbox" | "sent" | "drafts" | "starred" | "snoozed") => {
+    async (
+      folder:
+        | "inbox"
+        | "sent"
+        | "drafts"
+        | "starred"
+        | "snoozed"
+        | "trash"
+        | "spam"
+        | "archive"
+        | "important",
+    ) => {
       setIsLoading(true);
       setLoadError(null);
       setFromCache(false);
@@ -345,12 +356,14 @@ export default function MailPage() {
           is_sent: email.is_sent ?? false,
         }));
         setMailList(uiMails);
-        // PW2: persist to IndexedDB cache after successful fetch
-        setMailCache(folder, uiMails).catch(() => {});
+        // PW2: persist to IndexedDB cache after successful fetch (only for cacheable folders)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setMailCache(folder as any, uiMails).catch(() => {});
       } catch (err) {
         toast.error("Erreur de chargement du dossier");
         // PW2: offline fallback — load from IndexedDB cache
-        const cached = await getMailCache(folder);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const cached = await getMailCache(folder as any);
         if (cached && cached.length > 0) {
           setMailList(cached);
           setFromCache(true);
@@ -370,7 +383,18 @@ export default function MailPage() {
 
   // Bug 3: Handle folder click
   const handleFolderChange = useCallback(
-    (folder: "inbox" | "sent" | "drafts" | "starred" | "snoozed") => {
+    (
+      folder:
+        | "inbox"
+        | "sent"
+        | "drafts"
+        | "starred"
+        | "snoozed"
+        | "trash"
+        | "spam"
+        | "archive"
+        | "important",
+    ) => {
       setActiveFolder(folder);
       clearSelection();
       setSearchQuery("");
@@ -410,7 +434,13 @@ export default function MailPage() {
           is_important: email.is_important ?? false,
           is_sent: email.is_sent ?? false,
           priority: email.priority,
-          attachments: email.attachments,
+          attachments: email.attachments?.map((a) => ({
+            id: a.id,
+            name: a.filename,
+            url: a.storage_key || "",
+            mime_type: a.mime_type,
+            size: a.size_bytes,
+          })),
         }));
         setMailList(uiMails);
       } catch {
@@ -463,7 +493,13 @@ export default function MailPage() {
           is_important: email.is_important ?? false,
           is_sent: email.is_sent ?? false,
           priority: email.priority,
-          attachments: email.attachments,
+          attachments: email.attachments?.map((a) => ({
+            id: a.id,
+            name: a.filename,
+            url: a.storage_key || "",
+            mime_type: a.mime_type,
+            size: a.size_bytes,
+          })),
         }));
         setSearchResults(uiMails);
       } catch (err) {

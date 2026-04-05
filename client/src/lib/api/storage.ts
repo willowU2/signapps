@@ -176,7 +176,7 @@ export const storageApi = {
   deleteTag: (id: string) => storageClient.delete(`/tags/${id}`),
 
   // File Tags
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   getFileTags: (fileId: string) =>
     storageClient.get<any[]>(`/files/${fileId}/tags`),
   addFileTag: (fileId: string, tagId: string) =>
@@ -185,7 +185,7 @@ export const storageApi = {
     storageClient.delete(`/files/${fileId}/tags/${tagId}`),
 
   // Versions
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   getFileVersions: (fileId: string) =>
     storageClient.get<any[]>(`/files/${fileId}/versions`),
   restoreFileVersion: (fileId: string, versionId: string) =>
@@ -529,6 +529,7 @@ export interface QuickSearchResult {
   filename: string;
   content_type: string;
   size: number;
+  modified_at?: string;
 }
 
 // Quotas API

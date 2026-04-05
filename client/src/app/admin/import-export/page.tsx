@@ -412,11 +412,13 @@ export default function ImportExportPage() {
               const header = "Nom,Email,Telephone,Entreprise,Tags";
               const rows = contacts.map((c) =>
                 [
-                  c.name || "",
-                  c.email || "",
-                  c.phone || "",
-                  c.company || "",
-                  (c.tags || []).join("; "),
+                  (c.name as string) || "",
+                  (c.email as string) || "",
+                  (c.phone as string) || "",
+                  (c.company as string) || "",
+                  (Array.isArray(c.tags) ? (c.tags as string[]) : []).join(
+                    "; ",
+                  ),
                 ]
                   .map((v: string) => `"${v.replace(/"/g, '""')}"`)
                   .join(","),
@@ -518,9 +520,9 @@ export default function ImportExportPage() {
               const header = "Nom,Cle,Type,Taille";
               const rows = files.map((f) =>
                 [
-                  f.name || f.key?.split("/").pop() || "",
+                  f.key?.split("/").pop() || "",
                   f.key || "",
-                  f.mime_type || f.content_type || "",
+                  f.content_type || "",
                   String(f.size || 0),
                 ]
                   .map((v: string) => `"${v.replace(/"/g, '""')}"`)
@@ -548,9 +550,9 @@ export default function ImportExportPage() {
               const header = "Titre,Contenu,Date de modification";
               const rows = docs.map((d) =>
                 [
-                  d.title || "",
-                  (d.content || "").substring(0, 500),
-                  d.updated_at || "",
+                  (d.title as string) || "",
+                  ((d.content as string) || "").substring(0, 500),
+                  (d.updated_at as string) || "",
                 ]
                   .map((v: string) => `"${v.replace(/"/g, '""')}"`)
                   .join(","),
@@ -580,10 +582,10 @@ export default function ImportExportPage() {
               const header = "Sujet,Expediteur,Date,Extrait";
               const rows = messages.map((m) =>
                 [
-                  m.subject || "",
-                  m.from_address || "",
-                  m.date || "",
-                  (m.snippet || "").substring(0, 200),
+                  (m.subject as string) || "",
+                  (m.from_address as string) || "",
+                  (m.date as string) || "",
+                  ((m.snippet as string) || "").substring(0, 200),
                 ]
                   .map((v: string) => `"${v.replace(/"/g, '""')}"`)
                   .join(","),

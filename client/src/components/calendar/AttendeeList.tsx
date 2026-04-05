@@ -62,12 +62,12 @@ export function AttendeeList({
 
     try {
       setIsAdding(true);
-      const response = await calendarApi.post(
+      const response = await calendarApi.post<{ id: string; user_id?: string }>(
         `/events/${eventId}/attendees`,
         {
           email: email,
           rsvp_status: "pending",
-        }
+        },
       );
 
       const newAttendee: Attendee = {
@@ -103,16 +103,15 @@ export function AttendeeList({
 
   const handleUpdateRSVP = async (
     attendeeId: string,
-    status: "pending" | "accepted" | "declined"
+    status: "pending" | "accepted" | "declined",
   ) => {
     try {
-      await calendarApi.put(
-        `/attendees/${attendeeId}/rsvp`,
-        { rsvp_status: status }
-      );
+      await calendarApi.put(`/attendees/${attendeeId}/rsvp`, {
+        rsvp_status: status,
+      });
 
       const updated = localAttendees.map((a) =>
-        a.id === attendeeId ? { ...a, rsvp_status: status } : a
+        a.id === attendeeId ? { ...a, rsvp_status: status } : a,
       );
       setLocalAttendees(updated);
       onAttendeesChange(updated);
@@ -249,8 +248,8 @@ export function AttendeeList({
           <div className="p-3 bg-blue-50 rounded text-xs text-blue-900 flex gap-2">
             <Mail className="h-4 w-4 flex-shrink-0 mt-0.5" />
             <p>
-              Invitations will be sent to attendees. They can respond with their RSVP
-              status.
+              Invitations will be sent to attendees. They can respond with their
+              RSVP status.
             </p>
           </div>
         </div>
