@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Key, Loader2, RefreshCw } from "lucide-react";
@@ -118,7 +119,20 @@ export function KerberosTabContent({
                   variant="ghost"
                   size="sm"
                   className="h-7 text-xs"
-                  onClick={() => rotateKey.mutate({ domainId, principal })}
+                  onClick={() =>
+                    rotateKey.mutate(
+                      { domainId, principal },
+                      {
+                        onSuccess: () =>
+                          toast.success(`Rotation effectuee pour ${principal}`),
+                        onError: (e) =>
+                          toast.error(
+                            "Erreur: " +
+                              (e instanceof Error ? e.message : "Echec"),
+                          ),
+                      },
+                    )
+                  }
                 >
                   <RefreshCw className="h-3 w-3 mr-1" />
                   Rotation

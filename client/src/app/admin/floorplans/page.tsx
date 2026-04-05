@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { AppLayout } from "@/components/layout/app-layout";
 import {
   Card,
@@ -157,7 +158,13 @@ export default function AdminFloorPlans() {
             <AlertDialogAction
               onClick={() => {
                 if (deletePlanId) {
-                  deletePlan.mutate(deletePlanId);
+                  deletePlan.mutate(deletePlanId, {
+                    onSuccess: () => toast.success("Plan supprime"),
+                    onError: (e) =>
+                      toast.error(
+                        "Erreur: " + (e instanceof Error ? e.message : "Echec"),
+                      ),
+                  });
                   setDeletePlanId(null);
                 }
               }}

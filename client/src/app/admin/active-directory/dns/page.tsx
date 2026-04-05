@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { AppLayout } from "@/components/layout/app-layout";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { PageHeader } from "@/components/ui/page-header";
@@ -271,6 +272,7 @@ function AddRecordDialog({ open, onOpenChange, zoneId }: AddRecordDialogProps) {
       { zoneId, data: payload },
       {
         onSuccess: () => {
+          toast.success("Enregistrement DNS cree avec succes");
           onOpenChange(false);
           setName("@");
           setType("A");
@@ -278,6 +280,8 @@ function AddRecordDialog({ open, onOpenChange, zoneId }: AddRecordDialogProps) {
           setTtl("3600");
           setIsStatic(true);
         },
+        onError: (e) =>
+          toast.error("Erreur: " + (e instanceof Error ? e.message : "Echec")),
       },
     );
   };
@@ -404,7 +408,14 @@ export default function AdDnsPage() {
     if (!deleteTarget) return;
     deleteRecord.mutate(
       { recordId: deleteTarget.id, zoneId: activeZoneId },
-      { onSuccess: () => setDeleteTarget(null) },
+      {
+        onSuccess: () => {
+          toast.success("Enregistrement DNS supprime");
+          setDeleteTarget(null);
+        },
+        onError: (e) =>
+          toast.error("Erreur: " + (e instanceof Error ? e.message : "Echec")),
+      },
     );
   };
 

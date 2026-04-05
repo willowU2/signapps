@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { AppLayout } from "@/components/layout/app-layout";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { PageHeader } from "@/components/ui/page-header";
@@ -111,22 +112,40 @@ export default function AdGpoPage() {
       { domainId, data: { display_name: newGpoName.trim(), enabled: true } },
       {
         onSuccess: () => {
+          toast.success("GPO cree avec succes");
           setCreateOpen(false);
           setNewGpoName("");
         },
+        onError: (e) =>
+          toast.error("Erreur: " + (e instanceof Error ? e.message : "Echec")),
       },
     );
   }
 
   function handleToggle(gpo: GroupPolicyObject) {
-    updateGpo.mutate({ id: gpo.id, data: { enabled: !gpo.enabled } });
+    updateGpo.mutate(
+      { id: gpo.id, data: { enabled: !gpo.enabled } },
+      {
+        onSuccess: () =>
+          toast.success(gpo.enabled ? "GPO desactivee" : "GPO activee"),
+        onError: (e) =>
+          toast.error("Erreur: " + (e instanceof Error ? e.message : "Echec")),
+      },
+    );
   }
 
   function handleDeleteConfirm() {
     if (!deleteTarget) return;
     deleteGpo.mutate(
       { id: deleteTarget.id, domainId },
-      { onSuccess: () => setDeleteTarget(null) },
+      {
+        onSuccess: () => {
+          toast.success("GPO supprimee");
+          setDeleteTarget(null);
+        },
+        onError: (e) =>
+          toast.error("Erreur: " + (e instanceof Error ? e.message : "Echec")),
+      },
     );
   }
 
