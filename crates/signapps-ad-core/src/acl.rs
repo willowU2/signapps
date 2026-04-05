@@ -31,6 +31,7 @@ pub enum AclDecision {
 /// 3. All write/create/delete/move → deny for non-admins
 ///
 /// Future: resolve workforce_org_delegations for granular permissions.
+#[tracing::instrument]
 pub fn check_access(
     user_role: i16,
     operation: AclOperation,

@@ -136,7 +136,10 @@ impl LdapListener {
                     match result {
                         Ok((stream, addr)) => {
                             tracing::debug!(peer = %addr, "New LDAPS connection");
-                            let tls = self.tls_acceptor.clone().unwrap();
+                            let Some(tls) = self.tls_acceptor.clone() else {
+                                tracing::error!(peer = %addr, "LDAPS connection accepted but TLS acceptor is missing — dropping");
+                                continue;
+                            };
                             let pool = pool.clone();
                             let domain = std::env::var("DC_DOMAIN").unwrap_or_else(|_| "example.com".to_string());
                             tokio::spawn(async move {

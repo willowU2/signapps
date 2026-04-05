@@ -306,6 +306,7 @@ impl DirectoryEntry {
 /// # Panics
 ///
 /// Never panics.
+#[tracing::instrument(skip(pool), fields(node_id = %node_id))]
 pub async fn resolve_node_path(
     pool: &PgPool,
     node_id: Uuid,
