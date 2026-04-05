@@ -167,6 +167,20 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
+    // AD domain routes
+    let ad_routes = Router::new()
+        .route("/domains", get(handlers::ad::list_domains))
+        .route("/domains", post(handlers::ad::create_domain))
+        .route("/domains/:id", delete(handlers::ad::delete_domain))
+        .route("/status", get(handlers::ad::dc_status))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
     // Employee routes
     let employee_routes = Router::new()
         .route("/", get(handlers::employees::list_employees))
@@ -386,6 +400,7 @@ fn create_router(state: AppState) -> Router {
 
     // Combine all routes
     Router::new()
+        .nest("/api/v1/workforce/ad", ad_routes)
         .nest("/api/v1/workforce/org", org_routes)
         .nest("/api/v1/workforce/employees", employee_routes)
         .nest("/api/v1/workforce/attendance", attendance_routes)

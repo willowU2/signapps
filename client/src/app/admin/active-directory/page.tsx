@@ -42,22 +42,24 @@ import {
   Trash2,
   RefreshCw,
   CheckCircle,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
-
-interface AdDomain {
-  id: string;
-  dns_name: string;
-  netbios_name: string;
-  domain_sid: string;
-  realm: string;
-  forest_root: boolean;
-  domain_function_level: number;
-  created_at: string;
-}
+import { toast } from "sonner";
+import {
+  useAdDomains,
+  useCreateDomain,
+  useDeleteDomain,
+  useDcStatus,
+} from "@/hooks/use-active-directory";
 
 export default function ActiveDirectoryPage() {
   usePageTitle("Active Directory — Administration");
+
+  const { data: domains = [], refetch: refetchDomains } = useAdDomains();
+  const { data: dcStatus } = useDcStatus();
+  const createDomain = useCreateDomain();
+  const deleteDomain = useDeleteDomain();
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newDomain, setNewDomain] = useState({
@@ -65,14 +67,46 @@ export default function ActiveDirectoryPage() {
     netbios_name: "",
     admin_password: "",
   });
-  const [domains] = useState<AdDomain[]>([]);
-  const [loading] = useState(false);
 
   const stats = {
     domains: domains.length,
     computers: 0,
     users: 0,
     gpos: 0,
+  };
+
+  const dcOnline = dcStatus?.status === "healthy";
+
+  const handleCreateDomain = async () => {
+    try {
+      await createDomain.mutateAsync({
+        dns_name: newDomain.dns_name,
+        netbios_name: newDomain.netbios_name,
+        tree_id: "00000000-0000-0000-0000-000000000001",
+        admin_user_id: "00000000-0000-0000-0000-000000000001",
+        admin_password: newDomain.admin_password,
+      });
+      toast.success(`Domaine ${newDomain.dns_name} cree avec succes`);
+      setCreateDialogOpen(false);
+      setNewDomain({ dns_name: "", netbios_name: "", admin_password: "" });
+    } catch (e) {
+      toast.error(
+        `Erreur: ${e instanceof Error ? e.message : "Echec de la creation"}`,
+      );
+    }
+  };
+
+  const handleDeleteDomain = async (id: string, name: string) => {
+    if (
+      !confirm(`Supprimer le domaine ${name} ? Cette action est irreversible.`)
+    )
+      return;
+    try {
+      await deleteDomain.mutateAsync(id);
+      toast.success(`Domaine ${name} supprime`);
+    } catch (e) {
+      toast.error(`Erreur: ${e instanceof Error ? e.message : "Echec"}`);
+    }
   };
 
   return (
@@ -84,7 +118,11 @@ export default function ActiveDirectoryPage() {
           icon={<Network className="h-5 w-5" />}
           actions={
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetchDomains()}
+              >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Rafraichir
               </Button>
@@ -107,11 +145,19 @@ export default function ActiveDirectoryPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-2xl font-bold">En ligne</span>
+                {dcOnline ? (
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-red-500" />
+                )}
+                <span className="text-2xl font-bold">
+                  {dcOnline ? "En ligne" : "Hors ligne"}
+                </span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                LDAP :389 | KDC :88
+                {dcStatus?.version
+                  ? `v${dcStatus.version}`
+                  : "LDAP :389 | KDC :88"}
               </p>
             </CardContent>
           </Card>
@@ -289,7 +335,13 @@ export default function ActiveDirectoryPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="icon">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              handleDeleteDomain(domain.id, domain.dns_name)
+                            }
+                          >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </TableCell>
@@ -368,13 +420,11 @@ export default function ActiveDirectoryPage() {
                   !newDomain.dns_name ||
                   !newDomain.netbios_name ||
                   !newDomain.admin_password ||
-                  loading
+                  createDomain.isPending
                 }
-                onClick={() => {
-                  /* Will call useCreateDomain mutation */
-                }}
+                onClick={handleCreateDomain}
               >
-                {loading ? (
+                {createDomain.isPending ? (
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <Plus className="h-4 w-4 mr-2" />
