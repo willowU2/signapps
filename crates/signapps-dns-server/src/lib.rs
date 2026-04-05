@@ -46,6 +46,7 @@
 //! ).await?;
 //! ```
 
+pub mod axfr;
 pub mod zone;
 pub mod provision;
 pub mod dynamic;

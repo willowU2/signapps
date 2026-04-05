@@ -132,13 +132,52 @@ impl KdcListener {
                 // TCP KDC requests
                 result = tcp_listener.accept() => {
                     match result {
-                        Ok((_stream, addr)) => {
+                        Ok((stream, addr)) => {
                             tracing::debug!(peer = %addr, "KDC TCP connection accepted");
-                            let _pool = pool.clone();
+                            let pool_clone = pool.clone();
                             tokio::spawn(async move {
-                                // TCP handler: full framed read/dispatch is a follow-up iteration.
-                                // Framing per RFC 4120 §7.2.2: 4-byte big-endian length prefix.
-                                tracing::debug!(peer = %addr, "KDC TCP connection accepted (ASN.1 framing pending)");
+                                use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+                                let mut stream = stream;
+                                loop {
+                                    // Read 4-byte length prefix (big-endian), per RFC 4120 §7.2.2
+                                    let mut len_buf = [0u8; 4];
+                                    if stream.read_exact(&mut len_buf).await.is_err() {
+                                        break; // Connection closed
+                                    }
+                                    let msg_len = u32::from_be_bytes(len_buf) as usize;
+
+                                    if msg_len > 65535 {
+                                        tracing::warn!(peer = %addr, len = msg_len, "KDC TCP message too large");
+                                        break;
+                                    }
+
+                                    // Read message body
+                                    let mut msg_buf = vec![0u8; msg_len];
+                                    if stream.read_exact(&mut msg_buf).await.is_err() {
+                                        break;
+                                    }
+
+                                    // Dispatch (same handler as UDP)
+                                    let response = match handle_kdc_request(&pool_clone, &msg_buf).await {
+                                        Ok(resp) => resp,
+                                        Err(e) => {
+                                            tracing::warn!(peer = %addr, error = %e, "KDC TCP request failed");
+                                            serde_json::to_vec(&serde_json::json!({"error": e}))
+                                                .unwrap_or_default()
+                                        }
+                                    };
+
+                                    // Send response with 4-byte length prefix
+                                    let resp_len = (response.len() as u32).to_be_bytes();
+                                    if stream.write_all(&resp_len).await.is_err() {
+                                        break;
+                                    }
+                                    if stream.write_all(&response).await.is_err() {
+                                        break;
+                                    }
+                                }
+                                tracing::debug!(peer = %addr, "KDC TCP connection closed");
                             });
                         }
                         Err(e) => tracing::error!(error = %e, "KDC TCP accept error"),
