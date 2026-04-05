@@ -73,14 +73,17 @@ fn pbkdf2_hmac_sha1(password: &[u8], salt: &[u8], iterations: u32, output: &mut 
     let mut offset = 0;
     for block_num in 1..=blocks as u32 {
         let mut u = {
-            let mut mac = <Hmac<Sha1> as Mac>::new_from_slice(password).expect("HMAC key");
+            // HMAC accepts keys of any length — new_from_slice never returns Err for HMAC.
+            let mut mac = <Hmac<Sha1> as Mac>::new_from_slice(password)
+                .unwrap_or_else(|_| unreachable!("HMAC accepts keys of any length"));
             mac.update(salt);
             mac.update(&block_num.to_be_bytes());
             mac.finalize().into_bytes().to_vec()
         };
         let mut result = u.clone();
         for _ in 1..iterations {
-            let mut mac = <Hmac<Sha1> as Mac>::new_from_slice(password).expect("HMAC key");
+            let mut mac = <Hmac<Sha1> as Mac>::new_from_slice(password)
+                .unwrap_or_else(|_| unreachable!("HMAC accepts keys of any length"));
             mac.update(&u);
             u = mac.finalize().into_bytes().to_vec();
             for (r, x) in result.iter_mut().zip(u.iter()) {

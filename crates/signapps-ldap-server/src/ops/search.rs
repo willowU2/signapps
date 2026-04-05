@@ -200,9 +200,12 @@ async fn resolve_domain_sid(pool: &PgPool, domain: &str) -> SecurityIdentifier {
     .unwrap_or(None);
 
     row.and_then(|(s,)| SecurityIdentifier::parse(&s).ok())
+        .or_else(|| SecurityIdentifier::parse("S-1-5-21-0-0-0").ok())
         .unwrap_or_else(|| {
-            SecurityIdentifier::parse("S-1-5-21-0-0-0")
-                .expect("fallback SID is always valid")
+            // This branch is only reachable if the hardcoded fallback above fails to
+            // parse — which would be a bug. Log and return a generated placeholder SID.
+            tracing::error!("Hardcoded fallback SID 'S-1-5-21-0-0-0' failed to parse — using generated SID");
+            SecurityIdentifier::generate_domain_sid()
         })
 }
 

@@ -162,8 +162,8 @@ impl DistinguishedName {
 
         let mut components: Vec<RdnComponent> = Vec::new();
 
-        // Last element → CN
-        let cn = *path.last().expect("checked non-empty above");
+        // Last element → CN. Safety: non-emptiness was asserted above.
+        let cn = path[path.len() - 1];
         components.push(RdnComponent::new("CN", cn));
 
         // Intermediate elements (all but last) → OU in reverse order so that

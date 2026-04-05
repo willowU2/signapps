@@ -97,6 +97,7 @@ impl LdapFilter {
     /// # Panics
     ///
     /// No panics — all errors are propagated via `Result`.
+    #[tracing::instrument]
     pub fn parse(input: &str) -> Result<Self, FilterError> {
         let input = input.trim();
         if input.is_empty() {
