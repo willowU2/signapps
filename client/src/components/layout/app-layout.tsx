@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
-import { useUIStore } from '@/lib/store';
-import { Sidebar } from './sidebar';
-import { Header } from './header';
-import { RightSidebar } from './right-sidebar';
-import { AiChatBar } from './ai-chat-bar';
-import { SkipLink } from '@/components/accessibility/skip-link';
-import { cn } from '@/lib/utils';
+import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
+import { useUIStore } from "@/lib/store";
+import { Sidebar } from "./sidebar";
+import { Header } from "./header";
+import { RightSidebar } from "./right-sidebar";
+import { AiChatBar } from "./ai-chat-bar";
+import { SkipLink } from "@/components/accessibility/skip-link";
+import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -30,11 +30,13 @@ export function AppLayout({ children }: AppLayoutProps) {
   const rightPanelOpen = rightSidebarOpen || rightSidebarPinned;
 
   return (
-    <div className={cn(
-      "flex h-screen w-full flex-col overflow-hidden bg-background transition-all duration-200",
-      sidebarCollapsed ? "md:pl-16" : "md:pl-64",
-      rightPanelOpen ? "md:pr-[24rem]" : "md:pr-16"
-    )}>
+    <div
+      className={cn(
+        "flex h-screen w-full flex-col overflow-hidden bg-background transition-all duration-200",
+        sidebarCollapsed ? "md:pl-16" : "md:pl-64",
+        rightPanelOpen ? "md:pr-[24rem]" : "md:pr-16",
+      )}
+    >
       <SkipLink />
       <Header />
 
@@ -47,11 +49,11 @@ export function AppLayout({ children }: AppLayoutProps) {
           ref={mainRef}
           id="main-content"
           className={cn(
-            'flex-1 min-w-0 overflow-y-auto rounded-tl-2xl border-l border-t border-border bg-card dark:bg-[#0b0e14] p-4 md:p-6 pb-28 transition-all duration-200'
+            "flex-1 min-w-0 overflow-y-auto rounded-tl-2xl border-l border-t border-border bg-card dark:bg-[#0b0e14] p-4 md:p-6 pb-28 transition-all duration-200 smooth-scroll",
           )}
         >
-          {/* key on pathname forces fade-in to re-trigger on every page navigation */}
-          <div key={pathname} className="w-full fade-in">
+          {/* key on pathname forces page-enter to re-trigger on every page navigation */}
+          <div key={pathname} className="w-full page-enter">
             {children}
           </div>
         </main>

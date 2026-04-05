@@ -54,7 +54,7 @@ export function StatCard({
       </CardHeader>
       <CardContent>
         <div className="flex items-baseline gap-2">
-          <div className="text-2xl font-bold">{value}</div>
+          <div className="text-2xl font-bold count-up">{value}</div>
           {trend && (
             <span
               className={cn(
