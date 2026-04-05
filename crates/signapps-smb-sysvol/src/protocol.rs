@@ -705,6 +705,135 @@ pub fn build_create_response(
     resp
 }
 
+/// Build an SMB2 Close Response (MS-SMB2 §2.2.16).
+///
+/// Returns a wire-format SMB2 Close Response with a NetBIOS session header,
+/// an SMB2 response header, and a 60-byte Close Response body with zeroed
+/// file metadata fields (the client only needs the status code).
+///
+/// # Examples
+///
+/// ```
+/// use signapps_smb_sysvol::protocol::{build_close_response, Smb2Header};
+/// let resp = build_close_response(1, 0x1234, 1);
+/// assert_eq!(&resp[4..8], &Smb2Header::MAGIC);
+/// ```
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+pub fn build_close_response(message_id: u64, session_id: u64, tree_id: u32) -> Vec<u8> {
+    let mut resp = Vec::with_capacity(130);
+
+    // NetBIOS session header (length filled below)
+    resp.extend_from_slice(&[0x00, 0x00, 0x00, 0x00]);
+
+    // SMB2 Header (64 bytes)
+    resp.extend_from_slice(&Smb2Header::MAGIC);
+    resp.extend_from_slice(&64u16.to_le_bytes()); // StructureSize
+    resp.extend_from_slice(&0u16.to_le_bytes()); // CreditCharge
+    resp.extend_from_slice(&(NtStatus::Success as u32).to_le_bytes()); // Status
+    resp.extend_from_slice(&(Smb2Command::Close as u16).to_le_bytes()); // Command
+    resp.extend_from_slice(&1u16.to_le_bytes()); // Credits granted
+    resp.extend_from_slice(&0x01u32.to_le_bytes()); // Flags (response)
+    resp.extend_from_slice(&0u32.to_le_bytes()); // NextCommand
+    resp.extend_from_slice(&message_id.to_le_bytes());
+    resp.extend_from_slice(&0u32.to_le_bytes()); // Reserved
+    resp.extend_from_slice(&tree_id.to_le_bytes());
+    resp.extend_from_slice(&session_id.to_le_bytes());
+    resp.extend_from_slice(&[0u8; 16]); // Signature
+
+    // Close Response Body (60 bytes, MS-SMB2 §2.2.16)
+    resp.extend_from_slice(&60u16.to_le_bytes()); // StructureSize
+    resp.extend_from_slice(&0u16.to_le_bytes()); // Flags
+    resp.extend_from_slice(&0u32.to_le_bytes()); // Reserved
+    resp.extend_from_slice(&0u64.to_le_bytes()); // CreationTime
+    resp.extend_from_slice(&0u64.to_le_bytes()); // LastAccessTime
+    resp.extend_from_slice(&0u64.to_le_bytes()); // LastWriteTime
+    resp.extend_from_slice(&0u64.to_le_bytes()); // ChangeTime
+    resp.extend_from_slice(&0u64.to_le_bytes()); // AllocationSize
+    resp.extend_from_slice(&0u64.to_le_bytes()); // EndOfFile
+    resp.extend_from_slice(&0u32.to_le_bytes()); // FileAttributes
+
+    // Fix NetBIOS session length (total - 4 header bytes)
+    let total = (resp.len() - 4) as u32;
+    resp[1] = ((total >> 16) & 0xFF) as u8;
+    resp[2] = ((total >> 8) & 0xFF) as u8;
+    resp[3] = (total & 0xFF) as u8;
+
+    resp
+}
+
+/// Build an SMB2 Read Response with a data payload (MS-SMB2 §2.2.20).
+///
+/// Returns a wire-format SMB2 Read Response carrying `data`.  The
+/// `DataOffset` field is set to the byte position of the data relative to
+/// the start of the SMB2 header (i.e. `64 + 16` for the fixed body prefix).
+///
+/// Pass an empty slice to signal end-of-file / zero bytes read.
+///
+/// # Examples
+///
+/// ```
+/// use signapps_smb_sysvol::protocol::{build_read_response, Smb2Header};
+/// let data = b"[General]\r\nVersion=1\r\n";
+/// let resp = build_read_response(1, 0x1234, 1, data);
+/// assert_eq!(&resp[4..8], &Smb2Header::MAGIC);
+/// assert!(resp.len() > 64 + 16 + data.len());
+/// ```
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+pub fn build_read_response(
+    message_id: u64,
+    session_id: u64,
+    tree_id: u32,
+    data: &[u8],
+) -> Vec<u8> {
+    let mut resp = Vec::with_capacity(100 + data.len());
+
+    // NetBIOS session header (length filled below)
+    resp.extend_from_slice(&[0x00, 0x00, 0x00, 0x00]);
+
+    // SMB2 Header (64 bytes)
+    resp.extend_from_slice(&Smb2Header::MAGIC);
+    resp.extend_from_slice(&64u16.to_le_bytes()); // StructureSize
+    resp.extend_from_slice(&0u16.to_le_bytes()); // CreditCharge
+    resp.extend_from_slice(&(NtStatus::Success as u32).to_le_bytes()); // Status
+    resp.extend_from_slice(&(Smb2Command::Read as u16).to_le_bytes()); // Command
+    resp.extend_from_slice(&1u16.to_le_bytes()); // Credits granted
+    resp.extend_from_slice(&0x01u32.to_le_bytes()); // Flags (response)
+    resp.extend_from_slice(&0u32.to_le_bytes()); // NextCommand
+    resp.extend_from_slice(&message_id.to_le_bytes());
+    resp.extend_from_slice(&0u32.to_le_bytes()); // Reserved
+    resp.extend_from_slice(&tree_id.to_le_bytes());
+    resp.extend_from_slice(&session_id.to_le_bytes());
+    resp.extend_from_slice(&[0u8; 16]); // Signature
+
+    // Read Response Body (17 bytes fixed prefix, MS-SMB2 §2.2.20)
+    // DataOffset is measured from the start of the SMB2 header (offset 4 of the packet).
+    // Fixed body is 16 bytes (17 reported StructureSize includes the 1-byte Buffer[0]).
+    let data_offset: u8 = (4 + 64 + 16) as u8; // NetBIOS(4) + Header(64) + body-prefix(16)
+    resp.extend_from_slice(&17u16.to_le_bytes()); // StructureSize
+    resp.push(data_offset); // DataOffset
+    resp.push(0); // Reserved
+    resp.extend_from_slice(&0u32.to_le_bytes()); // DataRemaining (unused for files)
+    resp.extend_from_slice(&(data.len() as u32).to_le_bytes()); // DataLength
+    resp.extend_from_slice(&0u32.to_le_bytes()); // Reserved2
+
+    // Data payload
+    resp.extend_from_slice(data);
+
+    // Fix NetBIOS session length (total - 4 header bytes)
+    let total = (resp.len() - 4) as u32;
+    resp[1] = ((total >> 16) & 0xFF) as u8;
+    resp[2] = ((total >> 8) & 0xFF) as u8;
+    resp[3] = (total & 0xFF) as u8;
+
+    resp
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -819,5 +948,51 @@ mod tests {
         // offset = 4 + 64 + 2 + 2 + 4 + 8*6 + 4 + 4 = 4+64+60 = 128
         let file_id_start = 4 + 64 + 2 + 1 + 1 + 4 + 8 + 8 + 8 + 8 + 8 + 8 + 4 + 4;
         assert_eq!(&resp[file_id_start..file_id_start + 16], &file_id);
+    }
+
+    #[test]
+    fn close_response_valid() {
+        let resp = build_close_response(1, 0x1234, 1);
+        // SMB2 magic after NetBIOS header
+        assert_eq!(&resp[4..8], &Smb2Header::MAGIC);
+        // Command = Close (0x0006) at header offset 16
+        let command = u16::from_le_bytes([resp[16], resp[17]]);
+        assert_eq!(command, Smb2Command::Close as u16);
+        // Status = Success
+        let status = u32::from_le_bytes([resp[12], resp[13], resp[14], resp[15]]);
+        assert_eq!(status, NtStatus::Success as u32);
+    }
+
+    #[test]
+    fn close_response_netbios_length() {
+        let resp = build_close_response(99, 0xABCD, 2);
+        let netbios_len =
+            ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
+        assert_eq!(netbios_len as usize, resp.len() - 4);
+    }
+
+    #[test]
+    fn read_response_with_data() {
+        let data = b"[General]\r\nVersion=1\r\n";
+        let resp = build_read_response(1, 0x1234, 1, data);
+        // SMB2 magic
+        assert_eq!(&resp[4..8], &Smb2Header::MAGIC);
+        // Command = Read (0x0008) at header offset 16
+        let command = u16::from_le_bytes([resp[16], resp[17]]);
+        assert_eq!(command, Smb2Command::Read as u16);
+        // Status = Success
+        let status = u32::from_le_bytes([resp[12], resp[13], resp[14], resp[15]]);
+        assert_eq!(status, NtStatus::Success as u32);
+        // Total length includes NetBIOS(4) + SMB2 header(64) + body prefix(16) + data
+        assert!(resp.len() >= 4 + 64 + 16 + data.len());
+    }
+
+    #[test]
+    fn read_response_empty_data() {
+        let resp = build_read_response(2, 0, 0, b"");
+        assert_eq!(&resp[4..8], &Smb2Header::MAGIC);
+        let netbios_len =
+            ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
+        assert_eq!(netbios_len as usize, resp.len() - 4);
     }
 }

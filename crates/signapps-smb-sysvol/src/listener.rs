@@ -201,6 +201,23 @@ impl SmbListener {
                                                                                 }
                                                                             }
                                                                         }
+                                                                        0x0006 => { // Close
+                                                                            let msg_id = u64::from_le_bytes(cmd_data[off + 24..off + 32].try_into().unwrap_or([0; 8]));
+                                                                            let sess_id = u64::from_le_bytes(cmd_data[off + 40..off + 48].try_into().unwrap_or([0; 8]));
+                                                                            let tree = u32::from_le_bytes(cmd_data[off + 36..off + 40].try_into().unwrap_or([0; 4]));
+                                                                            tracing::debug!(peer = %addr, "SMB Close");
+                                                                            let resp = super::protocol::build_close_response(msg_id, sess_id, tree);
+                                                                            let _ = stream.write_all(&resp).await;
+                                                                        }
+                                                                        0x0008 => { // Read
+                                                                            let msg_id = u64::from_le_bytes(cmd_data[off + 24..off + 32].try_into().unwrap_or([0; 8]));
+                                                                            let sess_id = u64::from_le_bytes(cmd_data[off + 40..off + 48].try_into().unwrap_or([0; 8]));
+                                                                            let tree = u32::from_le_bytes(cmd_data[off + 36..off + 40].try_into().unwrap_or([0; 4]));
+                                                                            tracing::debug!(peer = %addr, "SMB Read");
+                                                                            // Return empty data for now — SYSVOL content will be wired to storage
+                                                                            let resp = super::protocol::build_read_response(msg_id, sess_id, tree, b"");
+                                                                            let _ = stream.write_all(&resp).await;
+                                                                        }
                                                                         _ => {
                                                                             tracing::debug!(
                                                                                 peer = %addr,

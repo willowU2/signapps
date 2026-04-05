@@ -30,6 +30,73 @@ pub struct SearchEntry {
     pub attributes: Vec<(String, Vec<String>)>,
 }
 
+/// Build the subschemaSubentry for AD schema queries (RFC 4512).
+///
+/// Returns a `SearchEntry` with `objectClasses` and `attributeTypes` lists in
+/// LDAP schema description format, populated from the static built-in tables in
+/// [`signapps_ad_core::schema`].  Windows LDAP clients query this entry to
+/// discover which object classes and attributes the directory supports.
+///
+/// The DN follows the standard AD path:
+/// `CN=Aggregate,CN=Schema,CN=Configuration,DC=<domain>`.
+///
+/// # Examples
+///
+/// ```
+/// use signapps_ldap_server::ops::search::schema_subentry;
+///
+/// let entry = schema_subentry("example.com");
+/// assert!(entry.dn.contains("CN=Aggregate"));
+/// assert!(entry.dn.contains("DC=example,DC=com"));
+/// ```
+///
+/// # Panics
+///
+/// No panics — this function is purely constructive.
+pub fn schema_subentry(domain: &str) -> SearchEntry {
+    use signapps_ad_core::schema::{BUILTIN_ATTRIBUTES, BUILTIN_CLASSES};
+
+    let naming_context = format!("DC={}", domain.replace('.', ",DC="));
+    let dn = format!("CN=Aggregate,CN=Schema,CN=Configuration,{naming_context}");
+
+    let object_classes: Vec<String> = BUILTIN_CLASSES
+        .iter()
+        .map(|cls| {
+            let sup = if cls.super_classes.is_empty() { "top" } else { cls.super_classes[0] };
+            let must_part = if cls.must_attributes.is_empty() {
+                String::new()
+            } else {
+                format!(" MUST ( {} )", cls.must_attributes.join(" $ "))
+            };
+            format!("( {} NAME '{}' SUP {}{} )", cls.oid, cls.name, sup, must_part)
+        })
+        .collect();
+
+    let attribute_types: Vec<String> = BUILTIN_ATTRIBUTES
+        .iter()
+        .map(|attr| {
+            let single = if attr.multi_valued { "" } else { " SINGLE-VALUE" };
+            format!(
+                "( {} NAME '{}' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{} )",
+                attr.oid, attr.name, single,
+            )
+        })
+        .collect();
+
+    SearchEntry {
+        dn,
+        attributes: vec![
+            (
+                "objectClass".to_string(),
+                vec!["top".to_string(), "subSchema".to_string()],
+            ),
+            ("cn".to_string(), vec!["Aggregate".to_string()]),
+            ("objectClasses".to_string(), object_classes),
+            ("attributeTypes".to_string(), attribute_types),
+        ],
+    }
+}
+
 /// Build the RootDSE entry for the given domain name.
 ///
 /// Returns the pseudo-entry that LDAP clients read when they issue a base-scope
@@ -429,6 +496,15 @@ pub async fn handle_search(
         return Ok(vec![root_dse(domain)]);
     }
 
+    // subschemaSubentry — schema query (unauthenticated, RFC 4512)
+    let base_lower = base_dn.to_ascii_lowercase();
+    if base_lower.contains("cn=schema")
+        || base_lower.contains("cn=aggregate")
+    {
+        tracing::debug!(base = base_dn, "Schema subentry query");
+        return Ok(vec![schema_subentry(domain)]);
+    }
+
     // ACL check — regular users (role 1) and above may read; role 0 (anonymous)
     // also passes because check_access returns Allow for Read at any role level.
     if check_access(user_role, AclOperation::Read, None) == AclDecision::Deny {
@@ -555,6 +631,33 @@ mod tests {
             .find(|(k, _)| k == "subschemaSubentry")
             .unwrap();
         assert!(subschema.1[0].contains("DC=corp,DC=local"));
+    }
+
+    #[test]
+    fn schema_subentry_has_classes() {
+        let entry = schema_subentry("example.com");
+        assert!(entry.dn.contains("CN=Aggregate"));
+        assert!(entry.dn.contains("DC=example,DC=com"));
+        let classes = entry
+            .attributes
+            .iter()
+            .find(|(k, _)| k == "objectClasses")
+            .unwrap();
+        assert!(!classes.1.is_empty(), "objectClasses must not be empty");
+    }
+
+    #[test]
+    fn schema_subentry_has_attribute_types() {
+        let entry = schema_subentry("example.com");
+        let attrs = entry
+            .attributes
+            .iter()
+            .find(|(k, _)| k == "attributeTypes")
+            .unwrap();
+        assert!(!attrs.1.is_empty(), "attributeTypes must not be empty");
+        // Each entry should contain an OID and a NAME
+        assert!(attrs.1[0].contains("NAME"));
+        assert!(attrs.1[0].contains("SYNTAX"));
     }
 
     #[test]
