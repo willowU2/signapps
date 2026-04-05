@@ -174,6 +174,33 @@ impl SmbListener {
                                                                                 }
                                                                             }
                                                                         }
+                                                                        0x0005 => { // Create (Open File / Directory)
+                                                                            match super::protocol::parse_create_request(cmd_data) {
+                                                                                Ok(info) => {
+                                                                                    tracing::info!(
+                                                                                        peer = %addr,
+                                                                                        file = %info.filename,
+                                                                                        "SMB Create (Open)"
+                                                                                    );
+                                                                                    let file_id = uuid::Uuid::new_v4().into_bytes();
+                                                                                    let resp = super::protocol::build_create_response(
+                                                                                        info.message_id,
+                                                                                        info.session_id,
+                                                                                        info.tree_id,
+                                                                                        file_id,
+                                                                                        super::protocol::NtStatus::Success,
+                                                                                    );
+                                                                                    let _ = stream.write_all(&resp).await;
+                                                                                }
+                                                                                Err(e) => {
+                                                                                    tracing::debug!(
+                                                                                        peer = %addr,
+                                                                                        "Create error: {}",
+                                                                                        e
+                                                                                    );
+                                                                                }
+                                                                            }
+                                                                        }
                                                                         _ => {
                                                                             tracing::debug!(
                                                                                 peer = %addr,

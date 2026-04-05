@@ -190,6 +190,7 @@ pub(crate) async fn process_message(
         }
 
         LdapOperation::ExtendedRequest(req) => {
+            let is_start_tls = req.oid == ops::extended::oid::START_TLS;
             let bound_dn = session.bound_dn.as_ref().map(|dn| dn.to_string());
             let result = ops::extended::handle_extended(
                 &req.oid,
@@ -198,6 +199,14 @@ pub(crate) async fn process_message(
                 bound_dn.as_deref(),
             )
             .await;
+
+            // Signal the connection loop to perform the TLS upgrade after sending
+            // the StartTLS response (RFC 4511 §4.14.1 — the server MUST send the
+            // response before initiating the TLS handshake).
+            if is_start_tls && result.success {
+                session.start_tls_pending = true;
+            }
+
             let ldap_result = if result.success {
                 LdapResult::success()
             } else {

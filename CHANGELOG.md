@@ -3,7 +3,38 @@
 Tous les changements notables de ce projet sont documentés dans ce fichier.
 Format basé sur [Conventional Commits](https://www.conventionalcommits.org/).
 
-## [Non publié]
+## [Non publié] — 2026-04-05
+
+### Ajouté
+
+- **SMB2 Create (0x0005)** (`signapps-smb-sysvol`): Ajout de `parse_create_request` et `build_create_response` — ouverture de fichiers/répertoires SYSVOL avec handle opaque 16 octets (UUID v4). Le listener dispatche désormais Create après TreeConnect.
+- **LDAP StartTLS upgrade** (`signapps-ldap-server`): Implémentation de la mise à niveau TLS en place (RFC 4511 §4.14.1). Après l'envoi de l'ExtendedResponse de succès, `handle_connection_upgradable` effectue le handshake TLS via le `TlsAcceptor` fourni et continue la boucle de messages sur le flux chiffré. Le drapeau `session.start_tls_pending` sert de signal entre le dispatcher et la boucle principale.
+- **Domaine Contrôleur** (`signapps-dc`): Serveur multi-protocoles (LDAP + Kerberos + DNS + SMB)
+- **Serveur LDAP** (`signapps-ldap-server`): RFC 4511 complet avec codec BER from scratch
+- **KDC Kerberos** (`signapps-kerberos-kdc`): AS/TGS avec AES-CTS + RC4-HMAC
+- **SMB/SYSVOL** (`signapps-smb-sysvol`): Negotiate, Session Setup, Tree Connect, Create
+- **LightRAG**: RAG basé sur graphes — 17 sources de données, auto-feed, détection de communautés
+- **UI Admin AD**: 9 pages frontend (dashboard, DNS, Kerberos, computers, GPO, security, LightRAG)
+- **Gouvernance Boards**: Unicité du décideur, allowed_children, protection du board racine
+
+### Modifié
+
+- Page org-structure décomposée de 4 653 à 736 LOC + 27 composants
+- LightRAG seeder modularisé en 17 modules focalisés
+- Codec BER divisé en modules types/decoder/encoder
+- Handler de connexion LDAP divisé en 6 modules (`dispatcher`, `filter_utils`, `message_decoder`, `message_encoder`, boucles `run_plain_loop`/`run_stream_loop`)
+- Handlers Workforce (employees, org, validation) divisés en sous-modules
+- `handle_connection` conserve la signature d'origine ; `handle_connection_upgradable` ajoute le support StartTLS optionnel
+
+### Sécurité
+
+- Protection 5 couches dans LightRAG (triggers, seeder, auto-discovery, prompt LLM, post-filter)
+- Tous les `panic!()` supprimés du code de production
+- Hachage de mots de passe avec Argon2id
+- Chiffrement des clés Kerberos au repos (AES-256-GCM)
+- StartTLS : refus si la connexion est déjà TLS (`is_tls = true`) — pas de double-handshake possible
+
+## [Non publié] — avant 2026-04-05
 
 ### CI/CD
 

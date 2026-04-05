@@ -541,6 +541,170 @@ pub fn build_tree_connect_response(
     resp
 }
 
+// ── SMB2 Create (Open File / Directory) ──────────────────────────────────────
+
+/// Info extracted from an SMB2 Create Request.
+#[derive(Debug)]
+pub struct CreateInfo {
+    /// Message identifier from the SMB2 header.
+    pub message_id: u64,
+    /// Session identifier from the SMB2 header.
+    pub session_id: u64,
+    /// Tree identifier from the SMB2 header.
+    pub tree_id: u32,
+    /// Requested file or directory name (UTF-16LE decoded).
+    pub filename: String,
+}
+
+/// Parse an SMB2 Create (Open File) Request.
+///
+/// Extracts the `MessageId`, `SessionId`, `TreeId`, and `FileName` (UTF-16LE
+/// decoded) from the wire packet.  Handles both bare SMB2 packets and packets
+/// preceded by a 4-byte NetBIOS session header.
+///
+/// # Errors
+///
+/// Returns a static error string if the packet is too short, the magic bytes
+/// are wrong, or the command code is not `Create` (0x0005).
+///
+/// # Examples
+///
+/// ```
+/// use signapps_smb_sysvol::protocol::{build_create_response, NtStatus, Smb2Header};
+/// let file_id = [0x42u8; 16];
+/// let resp = build_create_response(1, 0x1234, 1, file_id, NtStatus::Success);
+/// assert_eq!(&resp[4..8], &Smb2Header::MAGIC);
+/// ```
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+pub fn parse_create_request(data: &[u8]) -> Result<CreateInfo, &'static str> {
+    let offset = if data.len() > 4 && data[0] == 0x00 { 4 } else { 0 };
+    let smb = &data[offset..];
+
+    if !Smb2Header::is_smb2(smb) || smb.len() < 64 {
+        return Err("Not SMB2");
+    }
+
+    let command = u16::from_le_bytes([smb[12], smb[13]]);
+    if command != Smb2Command::Create as u16 {
+        return Err("Not Create");
+    }
+
+    let message_id = u64::from_le_bytes(smb[24..32].try_into().unwrap_or([0; 8]));
+    let session_id = u64::from_le_bytes(smb[40..48].try_into().unwrap_or([0; 8]));
+    let tree_id = u32::from_le_bytes(smb[36..40].try_into().unwrap_or([0; 4]));
+
+    let body = &smb[64..];
+    if body.len() < 56 {
+        return Err("Create body too short");
+    }
+
+    // FileName is at NameOffset/NameLength (offsets 44–47 within the body,
+    // but the spec measures NameOffset from the start of the SMB2 header,
+    // so we subtract 64 to get the position within `body`).
+    let name_offset = u16::from_le_bytes([body[44], body[45]]) as usize;
+    let name_length = u16::from_le_bytes([body[46], body[47]]) as usize;
+
+    let filename = if name_offset >= 64 && name_length > 0 {
+        let start = name_offset - 64;
+        if start + name_length <= body.len() {
+            let utf16: Vec<u16> = body[start..start + name_length]
+                .chunks(2)
+                .map(|c| u16::from_le_bytes([c[0], c.get(1).copied().unwrap_or(0)]))
+                .collect();
+            String::from_utf16_lossy(&utf16).to_owned()
+        } else {
+            String::new()
+        }
+    } else {
+        String::new()
+    };
+
+    Ok(CreateInfo { message_id, session_id, tree_id, filename })
+}
+
+/// Build an SMB2 Create Response (file or directory opened successfully).
+///
+/// Returns a wire-format response with a NetBIOS session header, an SMB2
+/// response header, and a minimal Create Response body with the supplied
+/// opaque `file_id` (16-byte handle).
+///
+/// `status` should be [`NtStatus::Success`] for a successful open.
+///
+/// # Examples
+///
+/// ```
+/// use signapps_smb_sysvol::protocol::{build_create_response, NtStatus, Smb2Header};
+/// let file_id = [0x42u8; 16];
+/// let resp = build_create_response(1, 0x1234, 1, file_id, NtStatus::Success);
+/// // NetBIOS header byte
+/// assert_eq!(resp[0], 0x00);
+/// // SMB2 magic
+/// assert_eq!(&resp[4..8], &Smb2Header::MAGIC);
+/// // NT Status = Success
+/// let status = u32::from_le_bytes([resp[12], resp[13], resp[14], resp[15]]);
+/// assert_eq!(status, NtStatus::Success as u32);
+/// ```
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+pub fn build_create_response(
+    message_id: u64,
+    session_id: u64,
+    tree_id: u32,
+    file_id: [u8; 16],
+    status: NtStatus,
+) -> Vec<u8> {
+    let mut resp = Vec::with_capacity(200);
+
+    // NetBIOS session header (length filled below)
+    resp.extend_from_slice(&[0x00, 0x00, 0x00, 0x00]);
+
+    // SMB2 Header (64 bytes)
+    resp.extend_from_slice(&Smb2Header::MAGIC);
+    resp.extend_from_slice(&64u16.to_le_bytes()); // StructureSize
+    resp.extend_from_slice(&0u16.to_le_bytes()); // CreditCharge
+    resp.extend_from_slice(&(status as u32).to_le_bytes()); // Status
+    resp.extend_from_slice(&(Smb2Command::Create as u16).to_le_bytes()); // Command
+    resp.extend_from_slice(&1u16.to_le_bytes()); // Credits granted
+    resp.extend_from_slice(&0x01u32.to_le_bytes()); // Flags (response)
+    resp.extend_from_slice(&0u32.to_le_bytes()); // NextCommand
+    resp.extend_from_slice(&message_id.to_le_bytes());
+    resp.extend_from_slice(&0u32.to_le_bytes()); // Reserved
+    resp.extend_from_slice(&tree_id.to_le_bytes());
+    resp.extend_from_slice(&session_id.to_le_bytes());
+    resp.extend_from_slice(&[0u8; 16]); // Signature
+
+    // Create Response Body (MS-SMB2 §2.2.14)
+    resp.extend_from_slice(&89u16.to_le_bytes()); // StructureSize (fixed)
+    resp.push(0); // OplockLevel (SMB2_OPLOCK_LEVEL_NONE)
+    resp.push(0); // Flags
+    resp.extend_from_slice(&0x01u32.to_le_bytes()); // CreateAction (FILE_OPENED)
+    resp.extend_from_slice(&0u64.to_le_bytes()); // CreationTime
+    resp.extend_from_slice(&0u64.to_le_bytes()); // LastAccessTime
+    resp.extend_from_slice(&0u64.to_le_bytes()); // LastWriteTime
+    resp.extend_from_slice(&0u64.to_le_bytes()); // ChangeTime
+    resp.extend_from_slice(&0u64.to_le_bytes()); // AllocationSize
+    resp.extend_from_slice(&0u64.to_le_bytes()); // EndOfFile
+    resp.extend_from_slice(&0x10u32.to_le_bytes()); // FileAttributes (FILE_ATTRIBUTE_DIRECTORY)
+    resp.extend_from_slice(&0u32.to_le_bytes()); // Reserved2
+    resp.extend_from_slice(&file_id); // FileId (16-byte opaque handle)
+    resp.extend_from_slice(&0u32.to_le_bytes()); // CreateContextsOffset
+    resp.extend_from_slice(&0u32.to_le_bytes()); // CreateContextsLength
+    resp.push(0); // Padding (body = 89 bytes)
+
+    // Fix NetBIOS session length (total - 4 header bytes)
+    let total = (resp.len() - 4) as u32;
+    resp[1] = ((total >> 16) & 0xFF) as u8;
+    resp[2] = ((total >> 8) & 0xFF) as u8;
+    resp[3] = (total & 0xFF) as u8;
+
+    resp
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -616,5 +780,44 @@ mod tests {
         let resp = build_tree_connect_response(1, 0, 0, 0x01, NtStatus::BadNetworkName);
         let status = u32::from_le_bytes([resp[12], resp[13], resp[14], resp[15]]);
         assert_eq!(status, NtStatus::BadNetworkName as u32);
+    }
+
+    #[test]
+    fn create_response_valid() {
+        let file_id = [0x42u8; 16];
+        let resp = build_create_response(1, 0x1234, 1, file_id, NtStatus::Success);
+        // Must start with NetBIOS header
+        assert_eq!(resp[0], 0x00);
+        // SMB2 magic at offset 4
+        assert_eq!(&resp[4..8], &Smb2Header::MAGIC);
+        // NT Status = Success
+        let status = u32::from_le_bytes([resp[12], resp[13], resp[14], resp[15]]);
+        assert_eq!(status, NtStatus::Success as u32);
+        // Command = Create (0x0005)
+        let command = u16::from_le_bytes([resp[16], resp[17]]);
+        assert_eq!(command, Smb2Command::Create as u16);
+    }
+
+    #[test]
+    fn create_response_netbios_length() {
+        let file_id = [0u8; 16];
+        let resp = build_create_response(99, 0, 0, file_id, NtStatus::Success);
+        let netbios_len =
+            ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
+        assert_eq!(netbios_len as usize, resp.len() - 4);
+    }
+
+    #[test]
+    fn create_response_file_id_embedded() {
+        let file_id = [0xABu8; 16];
+        let resp = build_create_response(1, 1, 1, file_id, NtStatus::Success);
+        // FileId is at offset 4 (NetBIOS) + 64 (SMB2 header) + 32 (body before FileId)
+        // Body layout: StructureSize(2) + OplockLevel(1) + Flags(1) + CreateAction(4)
+        //   + CreationTime(8) + LastAccessTime(8) + LastWriteTime(8) + ChangeTime(8)
+        //   + AllocationSize(8) + EndOfFile(8) + FileAttributes(4) + Reserved2(4) = 64 bytes
+        // Hmm, that's 2+1+1+4+8+8+8+8+8+8+4+4 = 64 but FileId comes next at +64.
+        // offset = 4 + 64 + 2 + 2 + 4 + 8*6 + 4 + 4 = 4+64+60 = 128
+        let file_id_start = 4 + 64 + 2 + 1 + 1 + 4 + 8 + 8 + 8 + 8 + 8 + 8 + 4 + 4;
+        assert_eq!(&resp[file_id_start..file_id_start + 16], &file_id);
     }
 }

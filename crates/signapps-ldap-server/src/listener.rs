@@ -112,10 +112,11 @@ impl LdapListener {
                         Ok((stream, addr)) => {
                             tracing::debug!(peer = %addr, "New LDAP connection");
                             let pool = pool.clone();
+                            let tls = self.tls_acceptor.clone();
                             let domain = std::env::var("DC_DOMAIN").unwrap_or_else(|_| "example.com".to_string());
                             tokio::spawn(async move {
-                                super::connection::handle_connection(
-                                    stream, pool, addr, false, domain,
+                                super::connection::handle_connection_upgradable(
+                                    stream, pool, addr, false, domain, tls,
                                 )
                                 .await;
                             });

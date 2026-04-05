@@ -35,6 +35,11 @@ pub struct LdapSession {
     pub auth_method: AuthMethod,
     /// Whether the connection is TLS-secured.
     pub is_tls: bool,
+    /// Set to `true` by the Extended handler after a successful StartTLS response.
+    ///
+    /// The connection loop in `handle_connection` checks this flag after each
+    /// message and performs the TLS handshake before processing further messages.
+    pub start_tls_pending: bool,
     /// Remote peer address.
     pub remote_addr: SocketAddr,
     /// When the connection was established.
@@ -64,6 +69,7 @@ impl LdapSession {
             user_role: 0,
             auth_method: AuthMethod::Anonymous,
             is_tls,
+            start_tls_pending: false,
             remote_addr,
             connected_at: Instant::now(),
             last_message_id: 0,
