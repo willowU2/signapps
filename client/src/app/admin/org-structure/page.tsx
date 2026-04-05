@@ -506,7 +506,7 @@ function TreeNodeItem({
               dragOver &&
                 draggedId &&
                 draggedId !== node.id &&
-                "ring-2 ring-primary bg-primary/5",
+                "ring-2 ring-primary bg-primary/10 shadow-md",
             )}
             style={{ paddingLeft: `${depth * 20 + 12}px` }}
             onClick={() => onSelect(node)}
@@ -561,7 +561,7 @@ function TreeNodeItem({
                   )}
                 />
                 {boardMap[node.id].decisionMakerName && (
-                  <span className="text-[9px] bg-muted rounded-full w-4 h-4 flex items-center justify-center font-medium text-muted-foreground">
+                  <span className="text-[10px] bg-muted rounded-full w-5 h-5 flex items-center justify-center font-medium text-muted-foreground">
                     {boardMap[node.id]
                       .decisionMakerName!.slice(0, 2)
                       .toUpperCase()}
@@ -682,7 +682,7 @@ function OrgChartCard({
           "relative px-4 py-3 rounded-xl border-2 cursor-pointer transition-all min-w-[160px] max-w-[220px] text-center",
           cfg.bg,
           cfg.border,
-          isSelected && "ring-2 ring-primary shadow-lg scale-105",
+          isSelected && "ring-2 ring-primary shadow-lg",
         )}
       >
         <div className="flex items-center justify-center gap-1 mb-1">
@@ -714,7 +714,7 @@ function OrgChartCard({
                 )}
               />
               {boardMap[node.id].decisionMakerName && (
-                <span className="text-[9px] bg-muted rounded-full w-4 h-4 flex items-center justify-center font-medium text-muted-foreground">
+                <span className="text-[10px] bg-muted rounded-full w-5 h-5 flex items-center justify-center font-medium text-muted-foreground">
                   {boardMap[node.id]
                     .decisionMakerName!.slice(0, 2)
                     .toUpperCase()}
@@ -2669,7 +2669,7 @@ function DetailPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-4 py-2.5 border-b border-border shrink-0 max-h-[120px] overflow-hidden">
+      <div className="px-4 py-2 border-b border-border shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <Badge
@@ -2690,7 +2690,10 @@ function DetailPanel({
           </Button>
         </div>
         {breadcrumb.length > 0 && (
-          <p className="text-xs text-muted-foreground mt-1 truncate">
+          <p
+            className="text-xs text-muted-foreground mt-0.5 truncate max-w-full"
+            title={breadcrumb.join(" > ") + " > " + node.name}
+          >
             {breadcrumb.join(" > ")} &gt; {node.name}
           </p>
         )}
@@ -2728,7 +2731,7 @@ function DetailPanel({
         {/* Categorized TabsList */}
         <TabsList
           className={cn(
-            "mx-4 mt-2 shrink-0 w-auto h-auto flex flex-wrap justify-start gap-0 bg-transparent p-0 border-b border-border",
+            "mx-4 mt-2 shrink-0 w-auto h-auto flex flex-nowrap justify-start gap-1 bg-transparent p-0 border-b border-border overflow-x-auto scrollbar-none",
             focusMode && "mx-6",
           )}
         >
@@ -2742,7 +2745,7 @@ function DetailPanel({
             return (
               <div
                 key={category}
-                className="flex items-center gap-0.5 pr-3 mr-3 border-r border-border/30 last:border-r-0 last:mr-0 last:pr-0 py-1"
+                className="flex items-center gap-1 pr-4 mr-4 border-r border-border/40 last:border-r-0 last:mr-0 last:pr-0 py-1.5"
               >
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider mr-2 hidden xl:inline">
                   {CATEGORY_LABELS[category]}
@@ -2838,7 +2841,7 @@ function DetailPanel({
           </TabsContent>
 
           {/* People tab */}
-          <TabsContent value="people" className="p-4 space-y-3 mt-0">
+          <TabsContent value="people" className="p-4 space-y-4 mt-0">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
                 {assignments.length} personne(s) affectee(s)
@@ -2864,7 +2867,7 @@ function DetailPanel({
                 Aucune affectation pour ce noeud
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {assignments.map((a) => (
                   <div
                     key={a.id}
@@ -2909,7 +2912,7 @@ function DetailPanel({
           </TabsContent>
 
           {/* Children tab */}
-          <TabsContent value="children" className="p-4 space-y-3 mt-0">
+          <TabsContent value="children" className="p-4 space-y-4 mt-0">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
                 {childNodes.length} sous-noeud(s)
@@ -3955,7 +3958,7 @@ export default function OrgStructurePage() {
       <div
         className={cn(
           "flex flex-col -m-4 md:-m-6 overflow-hidden",
-          "h-[calc(100vh-5rem)]",
+          "h-[calc(100vh-4rem)]",
         )}
       >
         {/* ================================================================ */}
@@ -4346,7 +4349,7 @@ export default function OrgStructurePage() {
 
             {/* == Detail panel (right, or full-width in focus mode) == */}
             {focusMode ? (
-              <div className="flex-1 bg-card overflow-y-auto">
+              <div className="flex-1 bg-card flex flex-col overflow-hidden">
                 <DetailPanel
                   node={freshSelectedNode}
                   allNodes={nodes}
@@ -4362,14 +4365,7 @@ export default function OrgStructurePage() {
                 />
               </div>
             ) : detailOpen ? (
-              <div
-                className={cn(
-                  "w-full border-t lg:border-t-0 lg:border-l border-border bg-card overflow-y-auto min-w-[300px]",
-                  rightPanelOpen
-                    ? "lg:w-[340px] lg:max-w-[35%]"
-                    : "lg:w-[480px] lg:max-w-[45%]",
-                )}
-              >
+              <div className="w-full lg:w-auto lg:basis-[400px] lg:shrink lg:grow-0 border-t lg:border-t-0 lg:border-l border-border bg-card min-w-[300px] max-w-[500px] flex flex-col">
                 <DetailPanel
                   node={freshSelectedNode}
                   allNodes={nodes}
