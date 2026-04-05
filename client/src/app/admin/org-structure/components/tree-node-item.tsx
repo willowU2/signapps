@@ -217,7 +217,7 @@ export function TreeNodeItem({
 
             {/* Code */}
             {node.code && (
-              <span className="text-xs text-muted-foreground font-mono shrink-0">
+              <span className="text-xs text-muted-foreground font-mono truncate max-w-[120px] hidden lg:inline">
                 {node.code}
               </span>
             )}
