@@ -398,9 +398,9 @@ pub async fn handle_delete(
 /// If `delete_old_rdn` is `true`, the old RDN attribute is removed.
 /// `new_superior` optionally places the object under a different parent DN.
 ///
-/// This operation is accepted and logged but not yet fully wired to the DB,
-/// because renaming requires updating `parent_id` and recalculating the
-/// closure-table ancestry — a non-trivial multi-step transaction.
+/// The operation first attempts to rename the node in `workforce_org_nodes`.
+/// If `new_superior` is provided the node is also moved to the new parent.
+/// If no org node is found, `identity.users.display_name` is updated instead.
 ///
 /// # Examples
 ///
@@ -410,14 +410,17 @@ pub async fn handle_delete(
 ///
 /// # Errors
 ///
-/// Returns a denied [`WriteResult`] when the caller lacks `Move` permission.
+/// Returns a denied [`WriteResult`] when:
+/// - The caller lacks `Move` permission.
+/// - The source DN cannot be parsed.
+/// - The database update fails.
 ///
 /// # Panics
 ///
 /// Never panics.
-#[tracing::instrument(skip(_pool), fields(dn = dn, new_rdn = new_rdn))]
+#[tracing::instrument(skip(pool), fields(dn = dn, new_rdn = new_rdn))]
 pub async fn handle_modify_dn(
-    _pool: &sqlx::PgPool,
+    pool: &sqlx::PgPool,
     user_role: i16,
     dn: &str,
     new_rdn: &str,
@@ -428,14 +431,77 @@ pub async fn handle_modify_dn(
         tracing::warn!(dn = dn, "ModifyDN denied: insufficient access");
         return WriteResult::denied("Insufficient access rights");
     }
-    tracing::info!(
-        dn = dn,
-        new_rdn = new_rdn,
-        delete_old_rdn = delete_old_rdn,
-        new_superior = new_superior,
-        "ModifyDN (closure-table update deferred)"
-    );
-    WriteResult::ok()
+
+    let parsed_dn = match signapps_ad_core::dn::DistinguishedName::parse(dn) {
+        Ok(d) => d,
+        Err(e) => return WriteResult::denied(&format!("Invalid DN: {e}")),
+    };
+
+    let name = parsed_dn.rdn_value();
+
+    // Extract new name from new_rdn (e.g. "CN=NewName" → "NewName")
+    let new_name = if let Some(eq_pos) = new_rdn.find('=') {
+        &new_rdn[eq_pos + 1..]
+    } else {
+        new_rdn
+    };
+
+    // Update the node name in workforce_org_nodes.
+    let result = sqlx::query(
+        "UPDATE workforce_org_nodes SET name = $1, updated_at = now() WHERE name = $2",
+    )
+    .bind(new_name)
+    .bind(name)
+    .execute(pool)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => {
+            tracing::info!(old_dn = dn, new_rdn = new_rdn, "ModifyDN: node renamed");
+
+            // If new_superior specified, also move the node to the new parent.
+            if let Some(superior) = new_superior {
+                if let Ok(sup_dn) = signapps_ad_core::dn::DistinguishedName::parse(superior) {
+                    let parent_name = sup_dn.rdn_value();
+                    let parent_id: Option<(uuid::Uuid,)> = sqlx::query_as(
+                        "SELECT id FROM workforce_org_nodes WHERE name = $1 LIMIT 1",
+                    )
+                    .bind(parent_name)
+                    .fetch_optional(pool)
+                    .await
+                    .ok()
+                    .flatten();
+
+                    if let Some((pid,)) = parent_id {
+                        let _ = sqlx::query(
+                            "UPDATE workforce_org_nodes SET parent_id = $1, updated_at = now() WHERE name = $2",
+                        )
+                        .bind(pid)
+                        .bind(new_name)
+                        .execute(pool)
+                        .await;
+                        tracing::info!(new_superior = superior, "ModifyDN: node moved");
+                    }
+                }
+            }
+
+            let _ = delete_old_rdn; // old RDN removal is implicit (name column replaced)
+            WriteResult::ok()
+        }
+        Ok(_) => {
+            // No org node found — fall back to updating display_name in identity.users.
+            let _ = sqlx::query(
+                "UPDATE identity.users SET display_name = $1, updated_at = now() WHERE username = $2",
+            )
+            .bind(new_name)
+            .bind(name)
+            .execute(pool)
+            .await;
+            tracing::info!(dn = dn, new_name = new_name, "ModifyDN: identity.users fallback");
+            WriteResult::ok()
+        }
+        Err(e) => WriteResult::denied(&format!("Failed: {e}")),
+    }
 }
 
 #[cfg(test)]

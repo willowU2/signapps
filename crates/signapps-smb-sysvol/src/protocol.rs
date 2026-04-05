@@ -406,6 +406,141 @@ pub fn build_session_setup_response(
     response
 }
 
+/// Parse an SMB2 Tree Connect Request.
+///
+/// Extracts the UNC share path (UTF-16LE encoded) and the message/session
+/// identifiers from the SMB2 header so the caller can decide whether to
+/// grant or reject access to the requested share.
+///
+/// # Errors
+///
+/// Returns a static error string when the packet is not a valid SMB2 Tree
+/// Connect request (wrong magic, wrong command, or body too short).
+///
+/// # Examples
+///
+/// ```
+/// // A real packet would come from a Windows SMB client.
+/// use signapps_smb_sysvol::protocol::parse_tree_connect_request;
+/// ```
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+pub fn parse_tree_connect_request(data: &[u8]) -> Result<TreeConnectInfo, &'static str> {
+    let offset = if data.len() > 4 && data[0] == 0x00 { 4 } else { 0 };
+    let smb = &data[offset..];
+
+    if !Smb2Header::is_smb2(smb) || smb.len() < 64 {
+        return Err("Not SMB2");
+    }
+
+    let command = u16::from_le_bytes([smb[12], smb[13]]);
+    if command != Smb2Command::TreeConnect as u16 {
+        return Err("Not TreeConnect");
+    }
+
+    let message_id = u64::from_le_bytes(smb[24..32].try_into().unwrap_or([0; 8]));
+    let session_id = u64::from_le_bytes(smb[40..48].try_into().unwrap_or([0; 8]));
+
+    let body = &smb[64..];
+    if body.len() < 8 {
+        return Err("TreeConnect body too short");
+    }
+
+    let path_offset = u16::from_le_bytes([body[4], body[5]]) as usize;
+    let path_length = u16::from_le_bytes([body[6], body[7]]) as usize;
+
+    let path = if path_offset >= 64 && path_length > 0 {
+        let start = path_offset - 64;
+        if start + path_length <= body.len() {
+            // UTF-16LE encoded path
+            let utf16: Vec<u16> = body[start..start + path_length]
+                .chunks(2)
+                .map(|c| u16::from_le_bytes([c[0], c.get(1).copied().unwrap_or(0)]))
+                .collect();
+            String::from_utf16_lossy(&utf16)
+        } else {
+            String::new()
+        }
+    } else {
+        String::new()
+    };
+
+    Ok(TreeConnectInfo { message_id, session_id, path })
+}
+
+/// Info extracted from a Tree Connect request.
+#[derive(Debug)]
+pub struct TreeConnectInfo {
+    /// Message identifier from the SMB2 header.
+    pub message_id: u64,
+    /// Session identifier from the SMB2 header.
+    pub session_id: u64,
+    /// UNC share path requested by the client (e.g. `\\server\SYSVOL`).
+    pub path: String,
+}
+
+/// Build an SMB2 Tree Connect Response.
+///
+/// Returns a wire-format response granting or denying access to the
+/// requested share.  `share_type` should be `0x01` for a disk share.
+///
+/// # Examples
+///
+/// ```
+/// use signapps_smb_sysvol::protocol::{build_tree_connect_response, NtStatus, Smb2Header};
+/// let resp = build_tree_connect_response(1, 0x1234, 1, 0x01, NtStatus::Success);
+/// assert_eq!(&resp[4..8], &Smb2Header::MAGIC);
+/// ```
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+pub fn build_tree_connect_response(
+    message_id: u64,
+    session_id: u64,
+    tree_id: u32,
+    share_type: u8, // 0x01 = disk
+    status: NtStatus,
+) -> Vec<u8> {
+    let mut resp = Vec::with_capacity(140);
+
+    // NetBIOS header
+    resp.extend_from_slice(&[0x00, 0x00, 0x00, 0x00]);
+
+    // SMB2 Header (64 bytes)
+    resp.extend_from_slice(&Smb2Header::MAGIC);
+    resp.extend_from_slice(&64u16.to_le_bytes()); // StructureSize
+    resp.extend_from_slice(&0u16.to_le_bytes()); // CreditCharge
+    resp.extend_from_slice(&(status as u32).to_le_bytes());
+    resp.extend_from_slice(&(Smb2Command::TreeConnect as u16).to_le_bytes());
+    resp.extend_from_slice(&1u16.to_le_bytes()); // Credits
+    resp.extend_from_slice(&0x01u32.to_le_bytes()); // Flags (response)
+    resp.extend_from_slice(&0u32.to_le_bytes()); // NextCommand
+    resp.extend_from_slice(&message_id.to_le_bytes());
+    resp.extend_from_slice(&0u32.to_le_bytes()); // Reserved
+    resp.extend_from_slice(&tree_id.to_le_bytes());
+    resp.extend_from_slice(&session_id.to_le_bytes());
+    resp.extend_from_slice(&[0u8; 16]); // Signature
+
+    // TreeConnect Response Body (16 bytes)
+    resp.extend_from_slice(&16u16.to_le_bytes()); // StructureSize
+    resp.push(share_type); // ShareType (0x01 = Disk)
+    resp.push(0); // Reserved
+    resp.extend_from_slice(&0x30u32.to_le_bytes()); // ShareFlags (DFS | RESTRICT_EXCLUSIVE_OPENS)
+    resp.extend_from_slice(&0x1Fu32.to_le_bytes()); // Capabilities (all file caps)
+    resp.extend_from_slice(&0x001F_01FFu32.to_le_bytes()); // MaximalAccess (full)
+
+    // Fix NetBIOS length
+    let total = (resp.len() - 4) as u32;
+    resp[1] = ((total >> 16) & 0xFF) as u8;
+    resp[2] = ((total >> 8) & 0xFF) as u8;
+    resp[3] = (total & 0xFF) as u8;
+
+    resp
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -466,5 +601,20 @@ mod tests {
         let netbios_len =
             ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
         assert_eq!(netbios_len as usize, resp.len() - 4);
+    }
+
+    #[test]
+    fn tree_connect_response_valid() {
+        let resp = build_tree_connect_response(1, 0x1234, 1, 0x01, NtStatus::Success);
+        assert_eq!(&resp[4..8], &Smb2Header::MAGIC);
+        let status = u32::from_le_bytes([resp[12], resp[13], resp[14], resp[15]]);
+        assert_eq!(status, NtStatus::Success as u32);
+    }
+
+    #[test]
+    fn tree_connect_bad_share() {
+        let resp = build_tree_connect_response(1, 0, 0, 0x01, NtStatus::BadNetworkName);
+        let status = u32::from_le_bytes([resp[12], resp[13], resp[14], resp[15]]);
+        assert_eq!(status, NtStatus::BadNetworkName as u32);
     }
 }

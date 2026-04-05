@@ -142,6 +142,38 @@ impl SmbListener {
                                                                                 }
                                                                             }
                                                                         }
+                                                                        0x0003 => { // TreeConnect
+                                                                            match super::protocol::parse_tree_connect_request(cmd_data) {
+                                                                                Ok(info) => {
+                                                                                    tracing::info!(
+                                                                                        peer = %addr,
+                                                                                        path = %info.path,
+                                                                                        "SMB Tree Connect"
+                                                                                    );
+                                                                                    let share_name = info.path.split('\\').last().unwrap_or("");
+                                                                                    let (tree_id, status) = if share_name.eq_ignore_ascii_case("SYSVOL") || share_name.eq_ignore_ascii_case("NETLOGON") {
+                                                                                        (1u32, super::protocol::NtStatus::Success)
+                                                                                    } else {
+                                                                                        (0u32, super::protocol::NtStatus::BadNetworkName)
+                                                                                    };
+                                                                                    let resp = super::protocol::build_tree_connect_response(
+                                                                                        info.message_id,
+                                                                                        info.session_id,
+                                                                                        tree_id,
+                                                                                        0x01,
+                                                                                        status,
+                                                                                    );
+                                                                                    let _ = stream.write_all(&resp).await;
+                                                                                }
+                                                                                Err(e) => {
+                                                                                    tracing::debug!(
+                                                                                        peer = %addr,
+                                                                                        "TreeConnect error: {}",
+                                                                                        e
+                                                                                    );
+                                                                                }
+                                                                            }
+                                                                        }
                                                                         _ => {
                                                                             tracing::debug!(
                                                                                 peer = %addr,
