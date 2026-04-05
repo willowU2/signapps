@@ -2669,7 +2669,7 @@ function DetailPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-border shrink-0">
+      <div className="px-4 py-2.5 border-b border-border shrink-0 max-h-[120px] overflow-hidden">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <Badge
@@ -2723,12 +2723,12 @@ function DetailPanel({
       <Tabs
         value={detailTab}
         onValueChange={setDetailTab}
-        className="flex-1 flex flex-col overflow-hidden"
+        className="flex-1 flex flex-col min-h-0"
       >
         {/* Categorized TabsList */}
         <TabsList
           className={cn(
-            "mx-4 mt-3 shrink-0 w-auto h-auto flex-wrap justify-start gap-0 bg-transparent p-0 border-b",
+            "mx-4 mt-2 shrink-0 w-auto h-auto flex flex-wrap justify-start gap-0 bg-transparent p-0 border-b border-border",
             focusMode && "mx-6",
           )}
         >
@@ -2772,7 +2772,7 @@ function DetailPanel({
           )}
         </TabsList>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-h-0">
           {/* Details tab */}
           <TabsContent value="details" className="p-4 space-y-4 mt-0">
             <div className="space-y-2">
@@ -4079,7 +4079,7 @@ export default function OrgStructurePage() {
         {/* Main content area */}
         {/* ================================================================ */}
         {currentTree ? (
-          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
             {/* == Center panel: view content == */}
             {!focusMode && (
               <div className="flex-1 flex flex-col min-w-0">
@@ -4346,7 +4346,7 @@ export default function OrgStructurePage() {
 
             {/* == Detail panel (right, or full-width in focus mode) == */}
             {focusMode ? (
-              <div className="flex-1 bg-card overflow-hidden">
+              <div className="flex-1 bg-card overflow-y-auto">
                 <DetailPanel
                   node={freshSelectedNode}
                   allNodes={nodes}
