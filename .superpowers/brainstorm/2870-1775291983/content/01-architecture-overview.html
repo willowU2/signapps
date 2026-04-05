@@ -1,0 +1,137 @@
+<h2>Architecture Org Structure — Vue d'ensemble</h2>
+<p class="subtitle">SignApps comme source de verite, patterns Kanidm, PostgreSQL + pgvector</p>
+
+<div class="section">
+  <h3>Decisions prises</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
+    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:12px;">
+      <div style="font-size:11px;text-transform:uppercase;color:#3b82f6;font-weight:600;margin-bottom:4px;">Echelle</div>
+      <div style="font-size:14px;font-weight:600;">Grand groupe international</div>
+      <div style="font-size:12px;color:#888;">Utilisable PME des le jour 1</div>
+    </div>
+    <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:12px;">
+      <div style="font-size:11px;text-transform:uppercase;color:#22c55e;font-weight:600;margin-bottom:4px;">Droits</div>
+      <div style="font-size:14px;font-weight:600;">GPO-style policies</div>
+      <div style="font-size:12px;color:#888;">Attachees aux noeuds, heritage cascadant</div>
+    </div>
+    <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:8px;padding:12px;">
+      <div style="font-size:11px;text-transform:uppercase;color:#a855f7;font-weight:600;margin-bottom:4px;">Annuaire</div>
+      <div style="font-size:14px;font-weight:600;">Patterns Kanidm</div>
+      <div style="font-size:12px;color:#888;">API-first, pas de copie de code</div>
+    </div>
+    <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:12px;">
+      <div style="font-size:11px;text-transform:uppercase;color:#f59e0b;font-weight:600;margin-bottom:4px;">Base de donnees</div>
+      <div style="font-size:14px;font-weight:600;">PostgreSQL + pgvector</div>
+      <div style="font-size:12px;color:#888;">BDD RAG existante, zero base embarquee</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Architecture en couches</h3>
+  <div style="max-width:800px;margin:0 auto;">
+    <!-- Layer 1: API -->
+    <div style="background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);color:white;border-radius:12px 12px 0 0;padding:16px 20px;text-align:center;">
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.8;">Couche API (Axum REST + LDAP Gateway read-only)</div>
+      <div style="font-size:11px;margin-top:4px;opacity:0.7;">OpenAPI / SCIM / LDAP v3 compatible</div>
+    </div>
+    <!-- Layer 2: Identity Engine -->
+    <div style="background:rgba(59,130,246,0.1);border-left:2px solid #3b82f6;border-right:2px solid #3b82f6;padding:12px 20px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+        <span style="background:white;border:1px solid #ddd;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;">Auth (JWT/OIDC/SAML)</span>
+        <span style="background:white;border:1px solid #ddd;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;">MFA/Passkeys</span>
+        <span style="background:white;border:1px solid #ddd;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;">Sessions</span>
+        <span style="background:white;border:1px solid #ddd;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;">Privilege Elevation</span>
+      </div>
+    </div>
+    <!-- Layer 3: Org Engine -->
+    <div style="background:rgba(34,197,94,0.1);border-left:2px solid #22c55e;border-right:2px solid #22c55e;padding:12px 20px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+        <span style="background:white;border:1px solid #ddd;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;">Arbre Org</span>
+        <span style="background:white;border:1px solid #ddd;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;">Affectations</span>
+        <span style="background:white;border:1px solid #ddd;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;">Groupes transverses</span>
+        <span style="background:white;border:1px solid #ddd;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;">Sites/Geographie</span>
+        <span style="background:white;border:1px solid #ddd;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;">Conventions</span>
+      </div>
+    </div>
+    <!-- Layer 4: Policy Engine -->
+    <div style="background:rgba(168,85,247,0.1);border-left:2px solid #a855f7;border-right:2px solid #a855f7;padding:12px 20px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+        <span style="background:white;border:1px solid #ddd;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;">GPO Engine</span>
+        <span style="background:white;border:1px solid #ddd;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;">RBAC Resolver</span>
+        <span style="background:white;border:1px solid #ddd;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;">Delegation Chains</span>
+        <span style="background:white;border:1px solid #ddd;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;">Naming Policies</span>
+        <span style="background:white;border:1px solid #ddd;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;">Audit Trail</span>
+      </div>
+    </div>
+    <!-- Layer 5: Storage -->
+    <div style="background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);color:white;border-radius:0 0 12px 12px;padding:16px 20px;text-align:center;">
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.8;">PostgreSQL + pgvector (BDD RAG unifiee)</div>
+      <div style="font-size:11px;margin-top:4px;opacity:0.7;">Entries EAV + Tables relationnelles + Index vectoriels</div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:32px;">
+  <h3>10 patterns Kanidm adoptes (sans copier le code)</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div style="background:rgba(0,0,0,0.03);border-radius:6px;padding:10px;font-size:12px;">
+      <strong>1. Entry-Attribute-Value</strong><br/>Tout est une "entry" (personne, groupe, policy, noeud). Extensible sans migration.
+    </div>
+    <div style="background:rgba(0,0,0,0.03);border-radius:6px;padding:10px;font-size:12px;">
+      <strong>2. Schema-as-data</strong><br/>Schema stocke en BDD, pas hardcode. Types d'attributs extensibles.
+    </div>
+    <div style="background:rgba(0,0,0,0.03);border-radius:6px;padding:10px;font-size:12px;">
+      <strong>3. MemberOf auto-compute</strong><br/>Index inverse des groupes calcule automatiquement. Groupes imbriques aplatis.
+    </div>
+    <div style="background:rgba(0,0,0,0.03);border-radius:6px;padding:10px;font-size:12px;">
+      <strong>4. Policy-on-groups</strong><br/>Politiques attachees aux groupes, resolution "le plus strict gagne".
+    </div>
+    <div style="background:rgba(0,0,0,0.03);border-radius:6px;padding:10px;font-size:12px;">
+      <strong>5. Privilege elevation</strong><br/>Sessions longues read-only, re-auth pour ecrire. Fenetre courte.
+    </div>
+    <div style="background:rgba(0,0,0,0.03);border-radius:6px;padding:10px;font-size:12px;">
+      <strong>6. High-privilege taint</strong><br/>Groupe "high_privilege" empeche les roles inferieurs de modifier les admins.
+    </div>
+    <div style="background:rgba(0,0,0,0.03);border-radius:6px;padding:10px;font-size:12px;">
+      <strong>7. Recycle bin</strong><br/>Suppression douce → recyclage → tombstone. Recuperable par admin.
+    </div>
+    <div style="background:rgba(0,0,0,0.03);border-radius:6px;padding:10px;font-size:12px;">
+      <strong>8. Event pipeline</strong><br/>Request → Event → Validation → ACP check → Plugins pre → Write → Plugins post.
+    </div>
+    <div style="background:rgba(0,0,0,0.03);border-radius:6px;padding:10px;font-size:12px;">
+      <strong>9. Referential integrity</strong><br/>Plugin post-write verifie toutes les refs UUID. Nettoyage auto des liens morts.
+    </div>
+    <div style="background:rgba(0,0,0,0.03);border-radius:6px;padding:10px;font-size:12px;">
+      <strong>10. Fail-fast batch</strong><br/>Operations batch atomiques : tout reussit ou tout echoue. Zero etat partiel.
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:32px;">
+  <h3 style="color:#ef4444;">Question : Modele de donnees</h3>
+  <p class="subtitle">Comment structurer les entries dans PostgreSQL ?</p>
+  <div class="options">
+    <div class="option" data-choice="a" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Full EAV (comme Kanidm)</h3>
+        <p>Une table <code>entries</code> + <code>entry_attributes</code>. Ultra-flexible, extensible sans migration. Mais queries complexes, pas de contraintes SQL natives, JOINs couteux.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="b" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Relationnel pur (actuel)</h3>
+        <p>Tables dedicaces : <code>org_nodes</code>, <code>persons</code>, <code>assignments</code>, <code>policies</code>. Performant, contraintes FK, indexes. Mais chaque extension = migration SQL.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="c" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Hybride (recommande)</h3>
+        <p>Tables relationnelles pour le coeur (noeuds, personnes, assignments, policies) + colonne JSONB <code>attributes</code> pour les extensions + pgvector pour le RAG. Le meilleur des deux mondes : performance SQL + flexibilite schema-less.</p>
+      </div>
+    </div>
+  </div>
+</div>

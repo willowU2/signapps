@@ -1,0 +1,140 @@
+<h2>Sites et Geographie — Dimension physique</h2>
+<p class="subtitle">L'org tree est logique. Les sites sont physiques. Comment les lier ?</p>
+
+<div class="section">
+  <h3>Le probleme international</h3>
+  <div style="max-width:750px;margin:0 auto;display:flex;gap:20px;">
+    <!-- Logical -->
+    <div style="flex:1;border:1px solid #3b82f6;border-radius:10px;padding:14px;background:rgba(59,130,246,0.03);">
+      <div style="font-size:11px;text-transform:uppercase;color:#3b82f6;font-weight:600;margin-bottom:8px;">Arbre logique</div>
+      <div style="font-size:12px;line-height:1.8;">
+        Corp<br/>
+        &nbsp;&nbsp;&#x251C; Filiale France<br/>
+        &nbsp;&nbsp;&#x2502;&nbsp;&nbsp;&#x251C; DSI<br/>
+        &nbsp;&nbsp;&#x2502;&nbsp;&nbsp;&#x2514; DRH<br/>
+        &nbsp;&nbsp;&#x251C; Filiale US<br/>
+        &nbsp;&nbsp;&#x2502;&nbsp;&nbsp;&#x251C; Engineering<br/>
+        &nbsp;&nbsp;&#x2502;&nbsp;&nbsp;&#x2514; Sales<br/>
+        &nbsp;&nbsp;&#x2514; Filiale Japon<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; R&D
+      </div>
+    </div>
+    <!-- ≠ -->
+    <div style="display:flex;align-items:center;font-size:24px;color:#ef4444;font-weight:bold;">&#x2260;</div>
+    <!-- Physical -->
+    <div style="flex:1;border:1px solid #22c55e;border-radius:10px;padding:14px;background:rgba(34,197,94,0.03);">
+      <div style="font-size:11px;text-transform:uppercase;color:#22c55e;font-weight:600;margin-bottom:8px;">Arbre physique (sites)</div>
+      <div style="font-size:12px;line-height:1.8;">
+        &#x1F30D; Monde<br/>
+        &nbsp;&nbsp;&#x251C; &#x1F1EB;&#x1F1F7; France<br/>
+        &nbsp;&nbsp;&#x2502;&nbsp;&nbsp;&#x251C; Paris — Tour Montparnasse<br/>
+        &nbsp;&nbsp;&#x2502;&nbsp;&nbsp;&#x2502;&nbsp;&nbsp;&#x251C; Etage 12 (DSI)<br/>
+        &nbsp;&nbsp;&#x2502;&nbsp;&nbsp;&#x2502;&nbsp;&nbsp;&#x2514; Etage 14 (DRH)<br/>
+        &nbsp;&nbsp;&#x2502;&nbsp;&nbsp;&#x2514; Lyon — Coworking<br/>
+        &nbsp;&nbsp;&#x251C; &#x1F1FA;&#x1F1F8; USA<br/>
+        &nbsp;&nbsp;&#x2502;&nbsp;&nbsp;&#x2514; San Francisco — HQ<br/>
+        &nbsp;&nbsp;&#x2514; &#x1F1EF;&#x1F1F5; Japon<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; Tokyo — WeWork Shibuya
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:750px;margin:16px auto 0;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:12px;text-align:center;font-size:12px;">
+    <strong style="color:#f59e0b;">Liens N:M :</strong> Un site heberge plusieurs departements. Un departement peut etre multi-site (equipe distribuee). Alice (DSI France) travaille a Paris mais 2j/semaine a Lyon.
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>Attributs d'un site</h3>
+  <div style="max-width:700px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+    <div style="background:rgba(0,0,0,0.02);border-radius:6px;padding:10px;font-size:11px;">
+      <strong style="color:#3b82f6;">Identite</strong><br/>
+      nom, code, type (campus/batiment/etage/salle), description
+    </div>
+    <div style="background:rgba(0,0,0,0.02);border-radius:6px;padding:10px;font-size:11px;">
+      <strong style="color:#22c55e;">Localisation</strong><br/>
+      adresse, ville, pays, code_pays (ISO 3166), geo_lat, geo_lng, timezone (IANA)
+    </div>
+    <div style="background:rgba(0,0,0,0.02);border-radius:6px;padding:10px;font-size:11px;">
+      <strong style="color:#f59e0b;">Capacite</strong><br/>
+      capacite_max, surface_m2, amenities (JSONB)
+    </div>
+    <div style="background:rgba(0,0,0,0.02);border-radius:6px;padding:10px;font-size:11px;">
+      <strong style="color:#a855f7;">Legal/Compliance</strong><br/>
+      entite_legale, convention_collective, regime_fiscal, langue_officielle
+    </div>
+    <div style="background:rgba(0,0,0,0.02);border-radius:6px;padding:10px;font-size:11px;">
+      <strong style="color:#ef4444;">Reseau/IT</strong><br/>
+      subnet, vlan, dns_suffix, ntp_server, proxy (JSONB attributes)
+    </div>
+    <div style="background:rgba(0,0,0,0.02);border-radius:6px;padding:10px;font-size:11px;">
+      <strong style="color:#06b6d4;">Contact</strong><br/>
+      responsable_site (person_id), telephone, email, horaires
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>Liens site ↔ org</h3>
+  <div style="max-width:700px;margin:0 auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead>
+        <tr style="border-bottom:2px solid #ddd;text-align:left;">
+          <th style="padding:8px;">Relation</th>
+          <th style="padding:8px;">Cardinalite</th>
+          <th style="padding:8px;">Exemple</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:8px;font-weight:600;">Site &#x2194; Noeud org</td>
+          <td style="padding:8px;">N:M</td>
+          <td style="padding:8px;color:#888;">Paris-Etage12 heberge DSI + equipe projet Alpha</td>
+        </tr>
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:8px;font-weight:600;">Site &#x2194; Personne</td>
+          <td style="padding:8px;">N:M (avec site principal)</td>
+          <td style="padding:8px;color:#888;">Alice: Paris (principal) + Lyon (2j/sem)</td>
+        </tr>
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:8px;font-weight:600;">Site &#x2194; Policy GPO</td>
+          <td style="padding:8px;">1:N</td>
+          <td style="padding:8px;color:#888;">pol_japan_compliance attache a Tokyo</td>
+        </tr>
+        <tr>
+          <td style="padding:8px;font-weight:600;">Site &#x2192; Site (hierarchie)</td>
+          <td style="padding:8px;">parent_id</td>
+          <td style="padding:8px;color:#888;">Etage12 est enfant de Tour Montparnasse</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3 style="color:#ef4444;">Question : Policies et sites — quel lien ?</h3>
+  <p class="subtitle">Les GPO peuvent s'attacher a des noeuds org ET a des groupes. Et les sites ?</p>
+  <div class="options">
+    <div class="option" data-choice="a" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Sites = recepteurs de policy seulement</h3>
+        <p>Les GPO s'attachent aux sites comme aux noeuds. Un site herite des policies de son site parent. Mais les sites ne GENERE pas de policies — c'est juste un point d'ancrage supplementaire. Simple, pas de confusion entre "ou" et "quoi".</p>
+      </div>
+    </div>
+    <div class="option" data-choice="b" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Sites = dimension de resolution independante</h3>
+        <p>La policy effective d'une personne = merge(policies arbre org + policies site). Deux axes independants qui se combinent. Plus puissant, mais complexifie la resolution et le debug ("pourquoi Alice a ce droit ?").</p>
+      </div>
+    </div>
+    <div class="option" data-choice="c" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Sites + Pays = contexte automatique (recommande)</h3>
+        <p>Comme B, mais le <code>country_code</code> du site injecte automatiquement les policies compliance du pays (RGPD, CCPA, APPI...). La resolution combine 3 axes : <strong>arbre org + site + pays</strong>. Securite par domaine (le plus strict), reste par priorite. Repond aux enjeux internationaux nativement.</p>
+      </div>
+    </div>
+  </div>
+</div>

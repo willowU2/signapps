@@ -1,0 +1,159 @@
+<h2>Moteur GPO — Politiques de Groupe</h2>
+<p class="subtitle">Comment les politiques cascadent dans l'arbre organisationnel</p>
+
+<div class="section">
+  <h3>Anatomie d'un objet Policy (GPO)</h3>
+  <div style="max-width:700px;margin:0 auto;background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.1);border-radius:12px;padding:20px;font-size:13px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+      <div style="background:#a855f7;color:white;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;">POLICY</div>
+      <strong style="font-size:15px;">pol_security_mfa_required</strong>
+      <span style="color:#888;font-size:11px;margin-left:auto;">Priorite: 100</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <!-- Scope -->
+      <div style="border:1px dashed #a855f7;border-radius:8px;padding:10px;">
+        <div style="font-size:10px;text-transform:uppercase;color:#a855f7;font-weight:600;margin-bottom:6px;">Scope (ou s'applique)</div>
+        <div style="font-size:12px;line-height:1.6;">
+          <div>&#x2022; <strong>link_type:</strong> node | group | global</div>
+          <div>&#x2022; <strong>linked_to:</strong> UUID du noeud/groupe</div>
+          <div>&#x2022; <strong>enforced:</strong> true = non-blocable</div>
+          <div>&#x2022; <strong>disabled:</strong> false</div>
+        </div>
+      </div>
+      <!-- Domaine -->
+      <div style="border:1px dashed #3b82f6;border-radius:8px;padding:10px;">
+        <div style="font-size:10px;text-transform:uppercase;color:#3b82f6;font-weight:600;margin-bottom:6px;">Domaine (quoi)</div>
+        <div style="font-size:12px;line-height:1.6;">
+          <div>&#x2022; <strong>security</strong> — auth, MFA, sessions</div>
+          <div>&#x2022; <strong>modules</strong> — acces aux apps</div>
+          <div>&#x2022; <strong>naming</strong> — conventions nommage</div>
+          <div>&#x2022; <strong>delegation</strong> — qui administre quoi</div>
+          <div>&#x2022; <strong>compliance</strong> — regles pays/legal</div>
+          <div>&#x2022; <strong>custom</strong> — extensible JSONB</div>
+        </div>
+      </div>
+      <!-- Settings -->
+      <div style="border:1px dashed #22c55e;border-radius:8px;padding:10px;grid-column:span 2;">
+        <div style="font-size:10px;text-transform:uppercase;color:#22c55e;font-weight:600;margin-bottom:6px;">Settings (les regles)</div>
+        <div style="font-size:12px;font-family:monospace;background:rgba(0,0,0,0.04);border-radius:6px;padding:8px;line-height:1.5;">
+{<br/>
+&nbsp;&nbsp;"auth.mfa_required": true,<br/>
+&nbsp;&nbsp;"auth.session_max_hours": 8,<br/>
+&nbsp;&nbsp;"auth.password_min_length": 14,<br/>
+&nbsp;&nbsp;"auth.allowed_methods": ["passkey", "totp"],<br/>
+&nbsp;&nbsp;"modules.enabled": ["calendar", "mail", "chat"],<br/>
+&nbsp;&nbsp;"modules.disabled": ["billing"],<br/>
+&nbsp;&nbsp;"naming.email_pattern": "{first}.{last}@{domain}",<br/>
+&nbsp;&nbsp;"naming.username_pattern": "{first[0]}{last}"<br/>
+}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:32px;">
+  <h3>Cascade dans l'arbre — Exemple concret</h3>
+  <div style="max-width:750px;margin:0 auto;position:relative;">
+    <!-- Global -->
+    <div style="text-align:center;margin-bottom:4px;">
+      <div style="display:inline-block;background:#ef4444;color:white;border-radius:8px;padding:10px 24px;font-size:13px;font-weight:600;">
+        GLOBAL — pol_base_security
+        <div style="font-size:10px;font-weight:400;opacity:0.8;">MFA=false, session=24h, modules=all</div>
+      </div>
+    </div>
+    <div style="text-align:center;color:#ccc;font-size:18px;">|</div>
+
+    <!-- Groupe SignApps Corp -->
+    <div style="text-align:center;margin-bottom:4px;">
+      <div style="display:inline-flex;align-items:center;gap:8px;">
+        <div style="background:#f59e0b;color:white;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;">
+          Groupe SignApps Corp
+          <div style="font-size:10px;font-weight:400;opacity:0.8;">Racine de l'arbre interne</div>
+        </div>
+        <div style="background:rgba(168,85,247,0.1);border:1px solid #a855f7;border-radius:6px;padding:6px 10px;font-size:11px;">
+          <strong style="color:#a855f7;">+ pol_corp_security</strong><br/>
+          MFA=true, session=8h <span style="color:#ef4444;font-weight:600;">[ENFORCED]</span>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;color:#ccc;font-size:14px;">|<br/><span style="font-size:10px;color:#22c55e;">herite: MFA=true, session=8h</span></div>
+
+    <!-- Filiales -->
+    <div style="display:flex;gap:16px;justify-content:center;margin-bottom:4px;">
+      <div style="text-align:center;">
+        <div style="display:inline-flex;align-items:center;gap:6px;">
+          <div style="background:#3b82f6;color:white;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;">
+            Filiale France
+          </div>
+          <div style="background:rgba(168,85,247,0.1);border:1px solid #a855f7;border-radius:6px;padding:4px 8px;font-size:10px;">
+            <strong style="color:#a855f7;">+ pol_france</strong><br/>
+            naming="{prenom}.{nom}@fr.corp"<br/>
+            compliance.cnil=true
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <div style="display:inline-flex;align-items:center;gap:6px;">
+          <div style="background:#3b82f6;color:white;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;">
+            Filiale US
+          </div>
+          <div style="background:rgba(168,85,247,0.1);border:1px solid #a855f7;border-radius:6px;padding:4px 8px;font-size:10px;">
+            <strong style="color:#a855f7;">+ pol_us</strong><br/>
+            naming="{first}.{last}@us.corp"<br/>
+            session=12h <span style="color:#888;font-size:9px;">(bloque par ENFORCED → reste 8h)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;color:#ccc;font-size:14px;">|<br/><span style="font-size:10px;color:#22c55e;">herite: MFA=true, session=8h, naming=local, compliance=local</span></div>
+
+    <!-- Departements -->
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <div style="background:rgba(34,197,94,0.1);border:1px solid #22c55e;border-radius:8px;padding:8px 14px;font-size:12px;text-align:center;">
+        <strong>DSI France</strong>
+        <div style="font-size:10px;color:#888;">+ pol_dsi → modules.devtools=true</div>
+        <div style="font-size:10px;color:#22c55e;margin-top:4px;">Resultat: MFA=true, session=8h, cnil=true, devtools=true</div>
+      </div>
+      <div style="background:rgba(34,197,94,0.1);border:1px solid #22c55e;border-radius:8px;padding:8px 14px;font-size:12px;text-align:center;">
+        <strong>DRH France</strong>
+        <div style="font-size:10px;color:#888;">herite seulement</div>
+        <div style="font-size:10px;color:#22c55e;margin-top:4px;">Resultat: MFA=true, session=8h, cnil=true</div>
+      </div>
+      <div style="background:rgba(34,197,94,0.1);border:1px solid #22c55e;border-radius:8px;padding:8px 14px;font-size:12px;text-align:center;">
+        <strong>Engineering US</strong>
+        <div style="font-size:10px;color:#888;">+ pol_eng → password_min=20</div>
+        <div style="font-size:10px;color:#22c55e;margin-top:4px;">Resultat: MFA=true, session=8h, us_naming, pwd=20</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:32px;">
+  <h3 style="color:#ef4444;">Question : Resolution de conflits entre policies</h3>
+  <p class="subtitle">Quand 2 policies au meme niveau definissent la meme cle, qui gagne ?</p>
+  <div class="options">
+    <div class="option" data-choice="a" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Priorite numerique (comme AD GPO)</h3>
+        <p>Chaque policy a un <code>priority: number</code>. Le plus petit nombre gagne. Previsible, facile a debugger. L'admin ordonne explicitement. <strong>+ flag ENFORCED</strong> pour les policies non-blocables (le groupe impose).</p>
+      </div>
+    </div>
+    <div class="option" data-choice="b" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Le plus strict gagne (comme Kanidm)</h3>
+        <p>Pour chaque setting : le plus restrictif l'emporte. session=8h bat session=12h. mfa=true bat mfa=false. Simple, securitaire par defaut. Mais pas toujours previsible (qui decide ce qui est "plus strict" pour un pattern de nommage ?).</p>
+      </div>
+    </div>
+    <div class="option" data-choice="c" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Hybride : strict pour securite + priorite pour le reste</h3>
+        <p>Domaine <code>security</code> → le plus strict gagne toujours. Domaines <code>naming</code>, <code>modules</code>, <code>delegation</code> → priorite numerique. Combine securite forte et flexibilite administrative. <strong>Recommande.</strong></p>
+      </div>
+    </div>
+  </div>
+</div>

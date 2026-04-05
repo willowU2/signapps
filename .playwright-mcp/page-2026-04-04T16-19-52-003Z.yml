@@ -1,0 +1,38 @@
+- generic [active] [ref=e1]:
+  - link "Aller au contenu principal" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e9]: S
+      - generic [ref=e10]: Bon retour
+      - generic [ref=e11]: Connectez-vous à votre compte SignApps
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - generic [ref=e15]: Nom d'utilisateur
+          - textbox "Nom d'utilisateur" [ref=e16]:
+            - /placeholder: Entrez votre nom d'utilisateur
+        - generic [ref=e17]:
+          - generic [ref=e18]: Mot de passe
+          - generic [ref=e19]:
+            - textbox "Mot de passe" [ref=e20]:
+              - /placeholder: Entrez votre mot de passe
+            - button [ref=e21]:
+              - img
+        - generic [ref=e22]:
+          - generic [ref=e23]:
+            - checkbox "Se souvenir de moi" [ref=e24]
+            - checkbox
+            - generic [ref=e25] [cursor=pointer]: Se souvenir de moi
+          - generic [ref=e26]:
+            - checkbox "Faire confiance à cet appareil pendant 30 jours" [ref=e27]
+            - checkbox
+            - generic [ref=e28] [cursor=pointer]: Faire confiance à cet appareil pendant 30 jours
+        - button "Se connecter" [ref=e29]
+      - generic [ref=e30]:
+        - generic [ref=e32]: Ou continuer avec
+        - button "LDAP / Active Directory" [ref=e33]
+  - status [ref=e34]
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e40] [cursor=pointer]:
+    - img [ref=e41]

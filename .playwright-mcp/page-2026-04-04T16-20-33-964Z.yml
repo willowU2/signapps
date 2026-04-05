@@ -1,0 +1,292 @@
+- generic [active] [ref=e1]:
+  - link "Aller au contenu principal" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e4]:
+    - link "Aller au contenu principal" [ref=e5] [cursor=pointer]:
+      - /url: "#main-content"
+    - banner "En-tete de l'application" [ref=e6]:
+      - generic [ref=e7]:
+        - button "Basculer le menu lateral" [ref=e8]:
+          - img
+        - button "S SignApps" [ref=e9]:
+          - generic [ref=e10]: S
+          - heading "SignApps" [level=1] [ref=e11]
+      - navigation "breadcrumb" [ref=e12]:
+        - list [ref=e13]:
+          - listitem [ref=e14]:
+            - link "Accueil" [ref=e15] [cursor=pointer]:
+              - /url: /dashboard
+          - listitem [ref=e16]:
+            - generic [ref=e17]: /
+            - link "Administration" [ref=e18] [cursor=pointer]:
+              - /url: /admin
+          - listitem [ref=e19]:
+            - generic [ref=e20]: /
+            - generic [ref=e21]: Org structure
+      - generic [ref=e22]:
+        - button "Nouveautés" [ref=e24]:
+          - img
+          - text: Nouveautés
+        - button [ref=e25]:
+          - img
+        - button "Help" [ref=e26]:
+          - img
+        - button "Paramètres" [ref=e27]:
+          - img
+        - button [ref=e28]:
+          - img
+        - button "Apps" [ref=e29]:
+          - img
+        - button "A" [ref=e30]
+    - generic [ref=e31]:
+      - navigation "Navigation principale" [ref=e32]:
+        - link "S SignApps" [ref=e34] [cursor=pointer]:
+          - /url: /dashboard
+          - generic [ref=e35]:
+            - generic [ref=e36]: S
+            - generic [ref=e37]: SignApps
+        - generic [ref=e38]:
+          - button "Réduire" [ref=e39]:
+            - img [ref=e40]
+          - button "Désépingler la barre" [ref=e43]:
+            - img [ref=e44]
+        - button "Nouveau" [ref=e47]:
+          - img [ref=e48]
+          - text: Nouveau
+        - navigation [ref=e49]:
+          - link "Tableau de bord" [ref=e51] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e52]
+            - generic [ref=e57]: Tableau de bord
+          - link "Applications" [ref=e59] [cursor=pointer]:
+            - /url: /all-apps
+            - img [ref=e60]
+            - generic [ref=e62]: Applications
+          - link "Mail" [ref=e64] [cursor=pointer]:
+            - /url: /mail
+            - img [ref=e65]
+            - generic [ref=e68]: Mail
+          - link "Calendrier" [ref=e70] [cursor=pointer]:
+            - /url: /cal
+            - img [ref=e71]
+            - generic [ref=e73]: Calendrier
+          - link "Tâches" [ref=e75] [cursor=pointer]:
+            - /url: /tasks
+            - img [ref=e76]
+            - generic [ref=e79]: Tâches
+          - link "Drive" [ref=e81] [cursor=pointer]:
+            - /url: /storage
+            - img [ref=e82]
+            - generic [ref=e84]: Drive
+          - link "Tableau blanc" [ref=e86] [cursor=pointer]:
+            - /url: /whiteboard
+            - img [ref=e87]
+            - generic [ref=e89]: Tableau blanc
+          - link "Audit Drive" [ref=e91] [cursor=pointer]:
+            - /url: /admin/drive-audit
+            - img [ref=e92]
+            - generic [ref=e96]: Audit Drive
+          - link "Structure org" [ref=e98] [cursor=pointer]:
+            - /url: /admin/org-structure
+            - img [ref=e99]
+            - generic [ref=e103]: Structure org
+          - link "Personnes" [ref=e105] [cursor=pointer]:
+            - /url: /admin/persons
+            - img [ref=e106]
+            - generic [ref=e111]: Personnes
+          - link "Sites" [ref=e113] [cursor=pointer]:
+            - /url: /admin/sites
+            - img [ref=e114]
+            - generic [ref=e117]: Sites
+          - link "Serveur Mail" [ref=e119] [cursor=pointer]:
+            - /url: /admin/mail-server
+            - img [ref=e120]
+            - generic [ref=e123]: Serveur Mail
+          - link "Coffre-fort" [ref=e125] [cursor=pointer]:
+            - /url: /vault
+            - img [ref=e126]
+            - generic [ref=e128]: Coffre-fort
+          - paragraph [ref=e130]: Glissez une app depuis le dashboard pour l'épingler ici
+          - generic [ref=e131]:
+            - generic [ref=e132]:
+              - heading "Labels" [level=3] [ref=e133]
+              - button "Ajouter un label" [ref=e134]:
+                - img [ref=e135]
+            - generic [ref=e136]:
+              - img [ref=e137]
+              - generic [ref=e140]: Important
+              - button [ref=e141]:
+                - img [ref=e142]
+            - generic [ref=e145]:
+              - img [ref=e146]
+              - generic [ref=e149]: Production
+              - button [ref=e150]:
+                - img [ref=e151]
+            - generic [ref=e154]:
+              - img [ref=e155]
+              - generic [ref=e158]: Review
+              - button [ref=e159]:
+                - img [ref=e160]
+        - generic [ref=e163]: SignApps v0.1.0
+      - main [ref=e164]:
+        - generic [ref=e166]:
+          - generic [ref=e167]:
+            - generic [ref=e168]:
+              - generic [ref=e169]:
+                - img [ref=e171]
+                - generic [ref=e175]:
+                  - heading "Structure organisationnelle" [level=2] [ref=e176]
+                  - paragraph [ref=e177]: Gerez la hierarchie interne, les clients et les fournisseurs
+              - generic [ref=e179]:
+                - button "Supprimer l'arbre" [ref=e180]:
+                  - img
+                  - text: Supprimer l'arbre
+                - button "Nouvel arbre" [ref=e181]:
+                  - img
+                  - text: Nouvel arbre
+            - button "SignApps Corp Interne" [ref=e183]:
+              - img [ref=e185]
+              - generic [ref=e189]: SignApps Corp
+              - generic [ref=e190]: Interne
+          - generic [ref=e191]:
+            - generic [ref=e192]:
+              - generic [ref=e193]:
+                - generic [ref=e194]:
+                  - img [ref=e195]
+                  - generic [ref=e200]: "5"
+                  - generic [ref=e201]: Noeuds
+                - generic [ref=e202]:
+                  - img [ref=e203]
+                  - generic [ref=e208]: "0"
+                  - generic [ref=e209]: Personnes
+                - generic [ref=e210]:
+                  - img [ref=e211]
+                  - generic [ref=e213]: "0"
+                  - generic [ref=e214]: Politiques
+                - generic [ref=e215]:
+                  - img [ref=e216]
+                  - generic [ref=e219]: "0"
+                  - generic [ref=e220]: Sites
+              - generic [ref=e221]:
+                - generic [ref=e222]:
+                  - button "Arbre" [ref=e223]:
+                    - img [ref=e224]
+                    - text: Arbre
+                  - button "Groupes" [ref=e229]:
+                    - img [ref=e230]
+                    - text: Groupes
+                  - button "Sites" [ref=e235]:
+                    - img [ref=e236]
+                    - text: Sites
+                - generic [ref=e239]:
+                  - button "Arbre" [ref=e240]:
+                    - img [ref=e241]
+                    - text: Arbre
+                  - button "Organigramme" [ref=e246]:
+                    - img [ref=e247]
+                    - text: Organigramme
+                  - button "Liste" [ref=e252]:
+                    - img [ref=e253]
+                    - text: Liste
+                - generic [ref=e254]:
+                  - img [ref=e255]
+                  - textbox "Rechercher..." [ref=e258]
+                - button "Ajouter" [ref=e259]:
+                  - img
+                  - text: Ajouter
+                - generic [ref=e260]:
+                  - button [ref=e261]:
+                    - img
+                  - button [ref=e262]:
+                    - img
+              - generic [ref=e265]:
+                - generic [ref=e267] [cursor=pointer]:
+                  - button [ref=e268]:
+                    - img [ref=e269]
+                  - generic [ref=e271]: Groupe
+                  - generic [ref=e272]: SignApps Corp
+                  - generic [ref=e273]: "4"
+                - generic [ref=e274]:
+                  - generic [ref=e277] [cursor=pointer]:
+                    - generic [ref=e278]: Departement
+                    - generic [ref=e279]: DRH
+                  - generic [ref=e282] [cursor=pointer]:
+                    - generic [ref=e283]: Departement
+                    - generic [ref=e284]: Direction Générale
+                    - generic [ref=e285]: Direction Générale
+                  - generic [ref=e288] [cursor=pointer]:
+                    - generic [ref=e289]: Filiale
+                    - generic [ref=e290]: LDLC MULHOUSE WITTENHEIM
+                    - generic [ref=e291]: LDLC MULHOUSE WITTENHEIM
+                  - generic [ref=e294] [cursor=pointer]:
+                    - generic [ref=e295]: Departement
+                    - generic [ref=e296]: SI
+            - generic [ref=e298]:
+              - img [ref=e299]
+              - paragraph [ref=e303]: Selectionnez un noeud
+              - paragraph [ref=e304]: pour voir et modifier ses details
+      - generic [ref=e305]:
+        - generic [ref=e306]:
+          - heading "Keep Notes" [level=2] [ref=e307]
+          - generic [ref=e308]:
+            - button [ref=e309]:
+              - img
+            - button [ref=e310]:
+              - img
+        - generic [ref=e315]:
+          - img [ref=e316]
+          - text: Notes Widget Chargement...
+      - generic [ref=e319]:
+        - button [ref=e320]:
+          - img
+        - button [ref=e321]:
+          - img
+        - button [ref=e322]:
+          - img
+        - button [ref=e323]:
+          - img
+        - button [ref=e325]:
+          - img
+        - button [ref=e327]:
+          - img
+    - generic [ref=e329]:
+      - img [ref=e331]
+      - button "Joindre un fichier" [ref=e334]:
+        - img [ref=e335]
+      - textbox "Rechercher, naviguer (/docs, /mail...) ou poser une question IA..." [ref=e337]
+      - generic [ref=e338]:
+        - 'button "Génération média : Auto" [ref=e339]':
+          - img [ref=e340]
+        - button "Dictée vocale" [ref=e343]:
+          - img [ref=e344]
+        - button [disabled] [ref=e347]:
+          - img [ref=e348]
+  - generic [ref=e351]:
+    - generic:
+      - button "Nouveau Document":
+        - img
+    - generic:
+      - button "Nouveau Email":
+        - img
+    - generic:
+      - button "Nouvel Événement":
+        - img
+    - generic:
+      - button "Nouvelle Tâche":
+        - img
+    - generic:
+      - button "Nouveau Dossier":
+        - img
+    - generic:
+      - button "Nouveau Contact":
+        - img
+    - generic:
+      - button "Nouvelle Feuille":
+        - img
+    - button "Actions rapides (clic long pour personnaliser)" [ref=e352]:
+      - img [ref=e354]
+  - status [ref=e355]
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e361] [cursor=pointer]:
+    - img [ref=e362]
+  - alert [ref=e365]

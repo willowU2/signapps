@@ -1,0 +1,234 @@
+<h2>Design Final — Org Structure Enterprise</h2>
+<p class="subtitle">Synthese de toutes les decisions pour validation</p>
+
+<div class="section">
+  <h3>1. Decisions d'architecture</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:800px;margin:0 auto;">
+    <div style="background:rgba(59,130,246,0.06);border-left:3px solid #3b82f6;padding:10px 12px;border-radius:0 6px 6px 0;">
+      <div style="font-size:10px;text-transform:uppercase;color:#3b82f6;font-weight:600;">Echelle</div>
+      <div style="font-size:13px;font-weight:600;">Grand groupe international</div>
+      <div style="font-size:11px;color:#888;">Utilisable PME, concu pour 10K+ personnes multi-pays</div>
+    </div>
+    <div style="background:rgba(168,85,247,0.06);border-left:3px solid #a855f7;padding:10px 12px;border-radius:0 6px 6px 0;">
+      <div style="font-size:10px;text-transform:uppercase;color:#a855f7;font-weight:600;">Droits</div>
+      <div style="font-size:13px;font-weight:600;">GPO-style policies</div>
+      <div style="font-size:11px;color:#888;">Securite = strict gagne | Reste = priorite numerique</div>
+    </div>
+    <div style="background:rgba(34,197,94,0.06);border-left:3px solid #22c55e;padding:10px 12px;border-radius:0 6px 6px 0;">
+      <div style="font-size:10px;text-transform:uppercase;color:#22c55e;font-weight:600;">Donnees</div>
+      <div style="font-size:13px;font-weight:600;">Hybride : SQL + JSONB + pgvector</div>
+      <div style="font-size:11px;color:#888;">Tables relationnelles coeur + JSONB extensible + RAG</div>
+    </div>
+    <div style="background:rgba(245,158,11,0.06);border-left:3px solid #f59e0b;padding:10px 12px;border-radius:0 6px 6px 0;">
+      <div style="font-size:10px;text-transform:uppercase;color:#f59e0b;font-weight:600;">Annuaire</div>
+      <div style="font-size:13px;font-weight:600;">Patterns Kanidm, API-first</div>
+      <div style="font-size:11px;color:#888;">SignApps = source de verite, LDAP gateway read-only</div>
+    </div>
+    <div style="background:rgba(6,182,212,0.06);border-left:3px solid #06b6d4;padding:10px 12px;border-radius:0 6px 6px 0;">
+      <div style="font-size:10px;text-transform:uppercase;color:#06b6d4;font-weight:600;">Groupes transverses</div>
+      <div style="font-size:13px;font-weight:600;">Table dediee, panneau integre</div>
+      <div style="font-size:11px;color:#888;">Statiques, dynamiques (filtre), derives, hybrides</div>
+    </div>
+    <div style="background:rgba(239,68,68,0.06);border-left:3px solid #ef4444;padding:10px 12px;border-radius:0 6px 6px 0;">
+      <div style="font-size:10px;text-transform:uppercase;color:#ef4444;font-weight:600;">Delegation</div>
+      <div style="font-size:13px;font-weight:600;">Sub-delegation illimitee par defaut</div>
+      <div style="font-size:11px;color:#888;">Restreinte via GPO delegation.max_depth si besoin</div>
+    </div>
+    <div style="background:rgba(236,72,153,0.06);border-left:3px solid #ec4899;padding:10px 12px;border-radius:0 6px 6px 0;">
+      <div style="font-size:10px;text-transform:uppercase;color:#ec4899;font-weight:600;">Sites</div>
+      <div style="font-size:13px;font-weight:600;">3 axes : org + site + pays</div>
+      <div style="font-size:11px;color:#888;">Compliance auto par country_code (RGPD, CCPA, APPI)</div>
+    </div>
+    <div style="background:rgba(132,204,22,0.06);border-left:3px solid #84cc16;padding:10px 12px;border-radius:0 6px 6px 0;">
+      <div style="font-size:10px;text-transform:uppercase;color:#84cc16;font-weight:600;">UX</div>
+      <div style="font-size:13px;font-weight:600;">Commander + Focus mode</div>
+      <div style="font-size:11px;color:#888;">Triple panel navigation + expand pleine page pour detail</div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>2. Schema de donnees PostgreSQL (13 tables)</h3>
+  <div style="max-width:800px;margin:0 auto;font-size:11px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <!-- Core Org -->
+      <div style="grid-column:span 3;font-size:10px;text-transform:uppercase;color:#3b82f6;font-weight:600;padding:4px 0;border-bottom:1px solid #3b82f630;">Coeur Org</div>
+
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#3b82f6;">org_trees</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">id, tenant_id, tree_type, name, root_node_id, <em>attributes JSONB</em></div>
+      </div>
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#3b82f6;">org_nodes</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">id, tree_id, parent_id, node_type, name, code, description, sort_order, is_active, <em>attributes JSONB</em></div>
+      </div>
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#3b82f6;">org_node_types</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">id, tree_type, name, label, color, icon, sort_order, schema JSONB</div>
+      </div>
+
+      <!-- Personnes -->
+      <div style="grid-column:span 3;font-size:10px;text-transform:uppercase;color:#f59e0b;font-weight:600;padding:4px 0;border-bottom:1px solid #f59e0b30;margin-top:8px;">Personnes & Affectations</div>
+
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#f59e0b;">persons</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">id, tenant_id, first_name, last_name, email, phone, user_id, is_active, <em>attributes JSONB</em></div>
+      </div>
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#f59e0b;">assignments</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">id, person_id, node_id, type, responsibility, start_date, end_date, fte_ratio, is_primary</div>
+      </div>
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#f59e0b;">assignment_history</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">id, assignment_id, action, changed_by, changes JSONB, reason, effective_date</div>
+      </div>
+
+      <!-- Groupes -->
+      <div style="grid-column:span 3;font-size:10px;text-transform:uppercase;color:#06b6d4;font-weight:600;padding:4px 0;border-bottom:1px solid #06b6d430;margin-top:8px;">Groupes transverses</div>
+
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#06b6d4;">org_groups</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">id, tenant_id, name, group_type (static/dynamic/derived/hybrid), filter JSONB, managed_by, valid_from, valid_until, <em>attributes JSONB</em></div>
+      </div>
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#06b6d4;">org_group_members</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">group_id, member_type (person/group/node), member_id, is_manual_override</div>
+      </div>
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#06b6d4;">org_memberof</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">person_id, group_id, source (direct/nested/dynamic/node), computed_at<br/><em>Auto-compute, index inverse</em></div>
+      </div>
+
+      <!-- Policies -->
+      <div style="grid-column:span 3;font-size:10px;text-transform:uppercase;color:#a855f7;font-weight:600;padding:4px 0;border-bottom:1px solid #a855f730;margin-top:8px;">Policies GPO</div>
+
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#a855f7;">org_policies</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">id, tenant_id, name, description, priority, is_enforced, is_disabled, domain, settings JSONB, <em>attributes JSONB</em></div>
+      </div>
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#a855f7;">org_policy_links</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">policy_id, link_type (node/group/site/country/global), link_id, blocked (heritage bloque)</div>
+      </div>
+
+      <!-- Sites -->
+      <div style="grid-column:span 3;font-size:10px;text-transform:uppercase;color:#ef4444;font-weight:600;padding:4px 0;border-bottom:1px solid #ef444430;margin-top:8px;">Sites & Geographie</div>
+
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#ef4444;">sites</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">id, tenant_id, parent_id, site_type, name, code, address, city, country_code, geo_lat, geo_lng, timezone, capacity, legal_entity, <em>attributes JSONB</em></div>
+      </div>
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#ef4444;">site_assignments</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">site_id, assignee_type (person/node), assignee_id, is_primary, schedule JSONB</div>
+      </div>
+
+      <!-- Audit -->
+      <div style="grid-column:span 3;font-size:10px;text-transform:uppercase;color:#78716c;font-weight:600;padding:4px 0;border-bottom:1px solid #78716c30;margin-top:8px;">Audit & Delegation</div>
+
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#78716c;">org_audit_log</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">id, tenant_id, actor_id, action, entity_type, entity_id, changes JSONB, ip, user_agent, created_at</div>
+      </div>
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#78716c;">org_delegations</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">id, delegator_id, delegate_id (person/group), scope_node_id, permissions JSONB, delegated_by, expires_at</div>
+      </div>
+      <div style="background:#f8f9fa;border:1px solid #eee;border-radius:6px;padding:8px;">
+        <strong style="color:#78716c;">country_policies</strong>
+        <div style="color:#888;margin-top:4px;line-height:1.5;">country_code (ISO 3166), policy_id<br/><em>Auto-link: FR→RGPD, US→CCPA, JP→APPI</em></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>3. Resolution de policy — Algorithme</h3>
+  <div style="max-width:700px;margin:0 auto;background:rgba(0,0,0,0.02);border:1px solid #ddd;border-radius:10px;padding:16px;font-size:12px;font-family:monospace;line-height:1.8;">
+    <div style="color:#a855f7;font-weight:600;">resolve_effective_policy(person):</div>
+    <div style="padding-left:16px;">
+      <div style="color:#888;">// 1. Collecter les policies par source</div>
+      <div>org_policies &larr; walk_ancestors(person.assignments[*].node_id)</div>
+      <div>site_policies &larr; walk_ancestors(person.site_assignments[*].site_id)</div>
+      <div>country_policies &larr; unique(person.sites[*].country_code)</div>
+      <div>group_policies &larr; person.memberof[*].policies</div>
+      <div>global_policies &larr; policies WHERE link_type = 'global'</div>
+      <div style="color:#888;margin-top:8px;">// 2. Filtrer les desactivees et les bloquees</div>
+      <div>all &larr; filter(!disabled AND !blocked_at_ancestor)</div>
+      <div style="color:#888;margin-top:8px;">// 3. Separer enforced / normales</div>
+      <div>enforced &larr; all WHERE is_enforced = true</div>
+      <div>normal &larr; all WHERE is_enforced = false</div>
+      <div style="color:#888;margin-top:8px;">// 4. Merger par domaine</div>
+      <div><span style="color:#ef4444;font-weight:600;">security:</span> max_strict(enforced) THEN max_strict(normal)</div>
+      <div><span style="color:#3b82f6;font-weight:600;">modules, naming, delegation, compliance:</span></div>
+      <div style="padding-left:16px;">enforced(priority ASC) THEN normal(priority ASC)</div>
+      <div><span style="color:#22c55e;font-weight:600;">custom:</span> deep_merge(priority ASC)</div>
+      <div style="color:#888;margin-top:8px;">// 5. Retourner policy effective + sources</div>
+      <div><strong>return</strong> { settings, sources[] }</div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>4. Patterns Kanidm appliques</h3>
+  <div style="max-width:700px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;">
+    <div style="padding:8px;background:rgba(34,197,94,0.05);border-radius:6px;">&#x2705; Entry lifecycle: Live → Recycled → Tombstone</div>
+    <div style="padding:8px;background:rgba(34,197,94,0.05);border-radius:6px;">&#x2705; MemberOf auto-compute (trigger PG)</div>
+    <div style="padding:8px;background:rgba(34,197,94,0.05);border-radius:6px;">&#x2705; High-privilege taint group</div>
+    <div style="padding:8px;background:rgba(34,197,94,0.05);border-radius:6px;">&#x2705; Privilege elevation (re-auth pour ecrire)</div>
+    <div style="padding:8px;background:rgba(34,197,94,0.05);border-radius:6px;">&#x2705; Referential integrity (FK + trigger cleanup)</div>
+    <div style="padding:8px;background:rgba(34,197,94,0.05);border-radius:6px;">&#x2705; Fail-fast batch (transactions atomiques)</div>
+    <div style="padding:8px;background:rgba(34,197,94,0.05);border-radius:6px;">&#x2705; Event pipeline (validate → ACP → write → post)</div>
+    <div style="padding:8px;background:rgba(34,197,94,0.05);border-radius:6px;">&#x2705; Schema-as-data (org_node_types extensible)</div>
+    <div style="padding:8px;background:rgba(34,197,94,0.05);border-radius:6px;">&#x2705; Policy-on-groups (GPO attachable partout)</div>
+    <div style="padding:8px;background:rgba(34,197,94,0.05);border-radius:6px;">&#x2705; LDAP gateway read-only (futur)</div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>5. API REST — Endpoints principaux</h3>
+  <div style="max-width:700px;margin:0 auto;font-size:11px;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:2px solid #ddd;text-align:left;font-size:10px;text-transform:uppercase;color:#888;">
+          <th style="padding:6px;">Methode</th>
+          <th style="padding:6px;">Endpoint</th>
+          <th style="padding:6px;">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:4px 6px;color:#22c55e;font-weight:600;">GET</td><td style="padding:4px 6px;font-family:monospace;">/workforce/org/trees</td><td style="padding:4px 6px;color:#888;">Lister les arbres</td></tr>
+        <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:4px 6px;color:#22c55e;font-weight:600;">CRUD</td><td style="padding:4px 6px;font-family:monospace;">/workforce/org/nodes/*</td><td style="padding:4px 6px;color:#888;">Noeuds + move + descendants</td></tr>
+        <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:4px 6px;color:#f59e0b;font-weight:600;">CRUD</td><td style="padding:4px 6px;font-family:monospace;">/workforce/employees/*</td><td style="padding:4px 6px;color:#888;">Personnes + roles</td></tr>
+        <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:4px 6px;color:#f59e0b;font-weight:600;">CRUD</td><td style="padding:4px 6px;font-family:monospace;">/workforce/assignments/*</td><td style="padding:4px 6px;color:#888;">Affectations + historique</td></tr>
+        <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:4px 6px;color:#06b6d4;font-weight:600;">CRUD</td><td style="padding:4px 6px;font-family:monospace;">/workforce/groups/*</td><td style="padding:4px 6px;color:#888;">Groupes transverses + membres</td></tr>
+        <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:4px 6px;color:#a855f7;font-weight:600;">CRUD</td><td style="padding:4px 6px;font-family:monospace;">/workforce/policies/*</td><td style="padding:4px 6px;color:#888;">GPO + links + resolve</td></tr>
+        <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:4px 6px;color:#22c55e;font-weight:600;">GET</td><td style="padding:4px 6px;font-family:monospace;">/workforce/policies/resolve/{person_id}</td><td style="padding:4px 6px;color:#888;">Policy effective calculee</td></tr>
+        <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:4px 6px;color:#ef4444;font-weight:600;">CRUD</td><td style="padding:4px 6px;font-family:monospace;">/workforce/sites/*</td><td style="padding:4px 6px;color:#888;">Sites + hierarchie + assignments</td></tr>
+        <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:4px 6px;color:#78716c;font-weight:600;">CRUD</td><td style="padding:4px 6px;font-family:monospace;">/workforce/delegations/*</td><td style="padding:4px 6px;color:#888;">Delegations scopees</td></tr>
+        <tr><td style="padding:4px 6px;color:#78716c;font-weight:600;">GET</td><td style="padding:4px 6px;font-family:monospace;">/workforce/audit/*</td><td style="padding:4px 6px;color:#888;">Audit trail filtrable</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section" style="margin-top:28px;text-align:center;">
+  <h3 style="color:#ef4444;">Ce design te convient ? On passe a la spec ?</h3>
+  <p class="subtitle">Si oui, je redige le document de spec complet et on enchaine sur le plan d'implementation</p>
+  <div class="options">
+    <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+      <div class="letter" style="background:#22c55e;">&#x2713;</div>
+      <div class="content">
+        <h3>Valide — Ecrire la spec</h3>
+        <p>Le design est complet, on passe a la redaction du document de specification puis au plan d'implementation.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="revise" onclick="toggleSelect(this)">
+      <div class="letter" style="background:#f59e0b;">&#x270E;</div>
+      <div class="content">
+        <h3>A modifier</h3>
+        <p>Il manque quelque chose ou un point doit etre revise. Dis-moi quoi changer.</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,317 @@
+<h2>Layout UX — Tout centraliser en une page</h2>
+<p class="subtitle">Arbre, groupes, sites, policies, personnes, audit — dans un seul ecran coherent</p>
+
+<div class="section">
+  <h3>Les entites a gerer dans cette page</h3>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:24px;">
+    <span style="background:#3b82f6;color:white;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;">Arbres org</span>
+    <span style="background:#22c55e;color:white;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;">Noeuds</span>
+    <span style="background:#f59e0b;color:white;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;">Personnes</span>
+    <span style="background:#a855f7;color:white;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;">Policies GPO</span>
+    <span style="background:#06b6d4;color:white;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;">Groupes transverses</span>
+    <span style="background:#ef4444;color:white;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;">Sites</span>
+    <span style="background:#84cc16;color:white;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;">Affectations</span>
+    <span style="background:#78716c;color:white;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;">Delegations</span>
+    <span style="background:#ec4899;color:white;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;">Audit trail</span>
+  </div>
+</div>
+
+<h3>3 options de layout</h3>
+<p class="subtitle">Cliquez sur celui qui vous parle le plus</p>
+
+<div class="cards" style="grid-template-columns:1fr;">
+
+  <!-- Option A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)" style="padding:0;overflow:hidden;">
+    <div style="padding:12px 16px;background:rgba(59,130,246,0.05);border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px;">
+      <div class="letter" style="margin:0;">A</div>
+      <div>
+        <h3 style="margin:0;font-size:14px;">Commander — Panneau triple</h3>
+        <p style="margin:0;font-size:11px;color:#888;">Navigation | Contenu | Detail (comme VS Code, Outlook, Figma)</p>
+      </div>
+    </div>
+    <div style="padding:16px;">
+      <div style="display:flex;gap:2px;height:280px;border:1px solid #ddd;border-radius:8px;overflow:hidden;font-size:10px;">
+        <!-- Left nav -->
+        <div style="width:220px;background:#f8f9fa;border-right:1px solid #ddd;display:flex;flex-direction:column;">
+          <div style="padding:8px;border-bottom:1px solid #eee;font-weight:600;font-size:11px;display:flex;align-items:center;justify-content:space-between;">
+            <span>Navigation</span>
+            <span style="font-size:9px;color:#888;">&#x25BC;</span>
+          </div>
+          <!-- Tabs -->
+          <div style="display:flex;border-bottom:1px solid #eee;">
+            <div style="flex:1;padding:6px;text-align:center;font-size:9px;font-weight:600;color:#3b82f6;border-bottom:2px solid #3b82f6;">&#x1F333; Arbre</div>
+            <div style="flex:1;padding:6px;text-align:center;font-size:9px;color:#888;">&#x1F465; Groupes</div>
+            <div style="flex:1;padding:6px;text-align:center;font-size:9px;color:#888;">&#x1F4CD; Sites</div>
+          </div>
+          <!-- Tree -->
+          <div style="padding:8px;flex:1;overflow:hidden;line-height:1.8;">
+            <div style="display:flex;align-items:center;gap:4px;"><span style="color:#ccc;">&#x25BC;</span><span style="background:#ef444420;padding:0 4px;border-radius:3px;font-size:9px;color:#ef4444;">GRP</span> <strong>SignApps Corp</strong></div>
+            <div style="padding-left:14px;display:flex;align-items:center;gap:4px;"><span style="color:#ccc;">&#x25BC;</span><span style="background:#3b82f620;padding:0 4px;border-radius:3px;font-size:9px;color:#3b82f6;">FIL</span> France</div>
+            <div style="padding-left:28px;display:flex;align-items:center;gap:4px;background:#3b82f610;border-radius:4px;padding:2px 4px 2px 28px;"><span style="background:#22c55e20;padding:0 4px;border-radius:3px;font-size:9px;color:#22c55e;">DEP</span> <strong>DSI</strong></div>
+            <div style="padding-left:28px;display:flex;align-items:center;gap:4px;"><span style="background:#22c55e20;padding:0 4px;border-radius:3px;font-size:9px;color:#22c55e;">DEP</span> DRH</div>
+            <div style="padding-left:28px;display:flex;align-items:center;gap:4px;"><span style="background:#22c55e20;padding:0 4px;border-radius:3px;font-size:9px;color:#22c55e;">DEP</span> Commercial</div>
+            <div style="padding-left:14px;display:flex;align-items:center;gap:4px;"><span style="color:#ccc;">&#x25B6;</span><span style="background:#3b82f620;padding:0 4px;border-radius:3px;font-size:9px;color:#3b82f6;">FIL</span> US</div>
+            <div style="padding-left:14px;display:flex;align-items:center;gap:4px;"><span style="color:#ccc;">&#x25B6;</span><span style="background:#3b82f620;padding:0 4px;border-radius:3px;font-size:9px;color:#3b82f6;">FIL</span> Japon</div>
+          </div>
+          <!-- Search -->
+          <div style="padding:6px;border-top:1px solid #eee;">
+            <div style="background:white;border:1px solid #ddd;border-radius:4px;padding:4px 8px;font-size:9px;color:#aaa;">&#x1F50D; Rechercher...</div>
+          </div>
+        </div>
+
+        <!-- Center content -->
+        <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+          <div style="padding:8px 12px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px;">
+            <div style="display:flex;background:#f1f5f9;border-radius:6px;padding:2px;">
+              <span style="background:white;border-radius:4px;padding:2px 8px;font-size:9px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,0.1);">&#x1F333; Arbre</span>
+              <span style="padding:2px 8px;font-size:9px;color:#888;">&#x1F4CA; Organigramme</span>
+              <span style="padding:2px 8px;font-size:9px;color:#888;">&#x1F4CB; Liste</span>
+            </div>
+            <span style="font-size:9px;color:#888;margin-left:auto;">3 policies &#x2022; 12 personnes &#x2022; 2 sites</span>
+          </div>
+          <div style="flex:1;padding:12px;display:flex;flex-direction:column;gap:6px;overflow:hidden;">
+            <!-- Stats bar -->
+            <div style="display:flex;gap:6px;">
+              <div style="flex:1;background:#3b82f610;border:1px solid #3b82f630;border-radius:6px;padding:6px 8px;text-align:center;">
+                <div style="font-size:16px;font-weight:700;color:#3b82f6;">12</div>
+                <div style="font-size:8px;color:#888;">Personnes</div>
+              </div>
+              <div style="flex:1;background:#a855f710;border:1px solid #a855f730;border-radius:6px;padding:6px 8px;text-align:center;">
+                <div style="font-size:16px;font-weight:700;color:#a855f7;">3</div>
+                <div style="font-size:8px;color:#888;">Policies</div>
+              </div>
+              <div style="flex:1;background:#ef444410;border:1px solid #ef444430;border-radius:6px;padding:6px 8px;text-align:center;">
+                <div style="font-size:16px;font-weight:700;color:#ef4444;">2</div>
+                <div style="font-size:8px;color:#888;">Sites</div>
+              </div>
+              <div style="flex:1;background:#06b6d410;border:1px solid #06b6d430;border-radius:6px;padding:6px 8px;text-align:center;">
+                <div style="font-size:16px;font-weight:700;color:#06b6d4;">4</div>
+                <div style="font-size:8px;color:#888;">Sous-noeuds</div>
+              </div>
+            </div>
+            <!-- Orgchart placeholder -->
+            <div style="flex:1;border:1px dashed #ddd;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:11px;">
+              Vue arbre / organigramme / liste ici
+            </div>
+          </div>
+        </div>
+
+        <!-- Right detail -->
+        <div style="width:280px;background:#f8f9fa;border-left:1px solid #ddd;display:flex;flex-direction:column;">
+          <div style="padding:8px 12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:9px;color:#22c55e;font-weight:600;">DEPARTEMENT</div>
+              <div style="font-size:13px;font-weight:700;">DSI</div>
+              <div style="font-size:9px;color:#888;">France > DSI</div>
+            </div>
+            <span style="color:#888;cursor:pointer;">&#x2715;</span>
+          </div>
+          <div style="display:flex;border-bottom:1px solid #eee;">
+            <div style="flex:1;padding:6px;text-align:center;font-size:9px;font-weight:600;color:#3b82f6;border-bottom:2px solid #3b82f6;">Details</div>
+            <div style="flex:1;padding:6px;text-align:center;font-size:9px;color:#888;">Personnes</div>
+            <div style="flex:1;padding:6px;text-align:center;font-size:9px;color:#888;">Policies</div>
+            <div style="flex:1;padding:6px;text-align:center;font-size:9px;color:#888;">Sites</div>
+            <div style="flex:1;padding:6px;text-align:center;font-size:9px;color:#888;">Audit</div>
+          </div>
+          <div style="flex:1;padding:10px;font-size:10px;line-height:2;">
+            <div><strong>Nom :</strong> DSI</div>
+            <div><strong>Code :</strong> FR-DSI</div>
+            <div><strong>Type :</strong> Departement</div>
+            <div><strong>Responsable :</strong> Alice Martin</div>
+            <div><strong>Effectif :</strong> 47 (incl. sous-noeuds)</div>
+            <div style="margin-top:8px;padding:6px;background:#a855f710;border:1px solid #a855f730;border-radius:6px;">
+              <div style="font-size:9px;font-weight:600;color:#a855f7;">POLICIES EFFECTIVES</div>
+              <div style="font-size:9px;color:#666;margin-top:2px;">
+                &#x2022; MFA: requis (via pol_corp)<br/>
+                &#x2022; Session: 8h (via pol_corp, enforced)<br/>
+                &#x2022; Devtools: actif (via pol_dsi)<br/>
+                &#x2022; RGPD: actif (via pays FR)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>Avantages</h4><ul><li>Tout visible sans quitter la page</li><li>Pattern familier (VS Code, Figma)</li><li>Navigation rapide arbre/groupes/sites</li><li>Detail contextuel toujours accessible</li></ul></div>
+        <div class="cons"><h4>Limites</h4><ul><li>Necessite ecran large (>1280px)</li><li>Detail panel etroit pour les formulaires</li><li>Beaucoup de tabs a gerer</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)" style="padding:0;overflow:hidden;">
+    <div style="padding:12px 16px;background:rgba(34,197,94,0.05);border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px;">
+      <div class="letter" style="margin:0;">B</div>
+      <div>
+        <h3 style="margin:0;font-size:14px;">Hub — Dashboard avec drill-down</h3>
+        <p style="margin:0;font-size:11px;color:#888;">Vue d'ensemble puis zoom sur l'entite selectionnee (comme Notion, Linear)</p>
+      </div>
+    </div>
+    <div style="padding:16px;">
+      <div style="display:flex;gap:2px;height:280px;border:1px solid #ddd;border-radius:8px;overflow:hidden;font-size:10px;">
+        <!-- Sidebar -->
+        <div style="width:52px;background:#1e293b;display:flex;flex-direction:column;align-items:center;padding-top:12px;gap:8px;">
+          <div style="width:32px;height:32px;background:#3b82f6;border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;">&#x1F333;</div>
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:14px;">&#x1F465;</div>
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:14px;">&#x1F4CD;</div>
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:14px;">&#x1F6E1;</div>
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:14px;">&#x1F4CA;</div>
+        </div>
+        <!-- Main -->
+        <div style="flex:1;display:flex;flex-direction:column;">
+          <div style="padding:12px 16px;border-bottom:1px solid #eee;">
+            <div style="font-size:14px;font-weight:700;">Structure organisationnelle</div>
+            <div style="font-size:10px;color:#888;">SignApps Corp &#x2022; 3 filiales &#x2022; 247 personnes</div>
+          </div>
+          <!-- Breadcrumb -->
+          <div style="padding:6px 16px;font-size:10px;color:#888;border-bottom:1px solid #f1f5f9;">
+            Corp &gt; France &gt; <strong style="color:#333;">DSI</strong>
+          </div>
+          <!-- Content area -->
+          <div style="flex:1;padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;overflow:hidden;">
+            <!-- Personnes -->
+            <div style="border:1px solid #eee;border-radius:8px;padding:10px;">
+              <div style="font-size:10px;font-weight:600;color:#f59e0b;margin-bottom:6px;">&#x1F465; 12 PERSONNES</div>
+              <div style="display:flex;gap:-4px;">
+                <div style="width:24px;height:24px;background:#3b82f6;border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;color:white;font-size:8px;">AM</div>
+                <div style="width:24px;height:24px;background:#22c55e;border-radius:50%;border:2px solid white;margin-left:-6px;display:flex;align-items:center;justify-content:center;color:white;font-size:8px;">BD</div>
+                <div style="width:24px;height:24px;background:#a855f7;border-radius:50%;border:2px solid white;margin-left:-6px;display:flex;align-items:center;justify-content:center;color:white;font-size:8px;">+10</div>
+              </div>
+            </div>
+            <!-- Policies -->
+            <div style="border:1px solid #eee;border-radius:8px;padding:10px;">
+              <div style="font-size:10px;font-weight:600;color:#a855f7;margin-bottom:6px;">&#x1F6E1; 3 POLICIES</div>
+              <div style="font-size:9px;line-height:1.6;">
+                pol_corp_security<br/>
+                pol_dsi_devtools<br/>
+                pol_france_rgpd (auto)
+              </div>
+            </div>
+            <!-- Sous-noeuds -->
+            <div style="border:1px solid #eee;border-radius:8px;padding:10px;">
+              <div style="font-size:10px;font-weight:600;color:#22c55e;margin-bottom:6px;">&#x1F4C2; 4 SOUS-NOEUDS</div>
+              <div style="font-size:9px;line-height:1.6;">
+                Dev Backend &#x2022; Dev Frontend<br/>
+                Infra &#x2022; Support
+              </div>
+            </div>
+            <!-- Sites -->
+            <div style="border:1px solid #eee;border-radius:8px;padding:10px;">
+              <div style="font-size:10px;font-weight:600;color:#ef4444;margin-bottom:6px;">&#x1F4CD; 2 SITES</div>
+              <div style="font-size:9px;line-height:1.6;">
+                Paris — Etage 12<br/>
+                Lyon — Coworking
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>Avantages</h4><ul><li>Vue d'ensemble immédiate</li><li>Drill-down progressif</li><li>Marche bien sur tablette</li><li>Chaque entite a toute la largeur</li></ul></div>
+        <div class="cons"><h4>Limites</h4><ul><li>Perd le contexte arbre en drillant</li><li>Plus de clics pour naviguer</li><li>Pas d'arbre visible en permanence</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)" style="padding:0;overflow:hidden;">
+    <div style="padding:12px 16px;background:rgba(168,85,247,0.05);border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px;">
+      <div class="letter" style="margin:0;">C</div>
+      <div>
+        <h3 style="margin:0;font-size:14px;">Fusion A+B — Commander avec mode focus (recommande)</h3>
+        <p style="margin:0;font-size:11px;color:#888;">Triple panel par defaut + le detail s'expand en pleine page quand besoin</p>
+      </div>
+    </div>
+    <div style="padding:16px;">
+      <div style="display:flex;gap:8px;align-items:stretch;height:280px;">
+        <!-- Normal mode -->
+        <div style="flex:1;border:1px solid #ddd;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;">
+          <div style="padding:6px 10px;background:#f8f9fa;border-bottom:1px solid #eee;font-size:10px;font-weight:600;text-align:center;color:#3b82f6;">Mode normal — Triple panel</div>
+          <div style="flex:1;display:flex;font-size:9px;">
+            <div style="width:30%;background:#f8f9fa;border-right:1px solid #eee;padding:6px;">
+              <div style="font-weight:600;margin-bottom:4px;">Nav</div>
+              <div style="color:#888;">Arbre / Groupes / Sites</div>
+              <div style="margin-top:6px;line-height:1.6;">
+                &#x25BC; Corp<br/>
+                &nbsp;&nbsp;&#x25BC; France<br/>
+                &nbsp;&nbsp;&nbsp;&nbsp;<strong style="background:#3b82f610;padding:0 4px;border-radius:2px;">DSI</strong><br/>
+                &nbsp;&nbsp;&nbsp;&nbsp;DRH
+              </div>
+            </div>
+            <div style="flex:1;padding:6px;display:flex;flex-direction:column;">
+              <div style="font-weight:600;margin-bottom:4px;">Contenu</div>
+              <div style="flex:1;border:1px dashed #ddd;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#ccc;">Arbre / Chart / Liste</div>
+            </div>
+            <div style="width:35%;background:#f8f9fa;border-left:1px solid #eee;padding:6px;">
+              <div style="font-weight:600;margin-bottom:4px;">Detail DSI</div>
+              <div style="display:flex;gap:2px;margin-bottom:4px;font-size:8px;">
+                <span style="background:#3b82f6;color:white;padding:1px 4px;border-radius:3px;">Details</span>
+                <span style="color:#888;padding:1px 4px;">People</span>
+                <span style="color:#888;padding:1px 4px;">Policy</span>
+                <span style="color:#888;padding:1px 4px;">Sites</span>
+                <span style="color:#888;padding:1px 4px;">Audit</span>
+              </div>
+              <div style="color:#888;line-height:1.5;">
+                Nom: DSI<br/>
+                Code: FR-DSI<br/>
+                Effectif: 47<br/>
+                MFA: requis
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow -->
+        <div style="display:flex;align-items:center;font-size:20px;color:#a855f7;">
+          <div style="text-align:center;">
+            <div>&#x1F5B1;</div>
+            <div style="font-size:9px;">double-clic<br/>ou &#x23CE;</div>
+          </div>
+        </div>
+
+        <!-- Focus mode -->
+        <div style="flex:1;border:2px solid #a855f7;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;">
+          <div style="padding:6px 10px;background:rgba(168,85,247,0.1);border-bottom:1px solid #a855f730;font-size:10px;font-weight:600;text-align:center;color:#a855f7;">Mode focus — Detail pleine page</div>
+          <div style="flex:1;padding:10px;font-size:9px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+              <span style="color:#888;cursor:pointer;">&#x2190; Retour</span>
+              <span style="font-size:10px;color:#888;">Corp &gt; France &gt;</span>
+              <span style="font-size:12px;font-weight:700;">DSI</span>
+            </div>
+            <div style="display:flex;gap:4px;margin-bottom:8px;">
+              <span style="background:#3b82f6;color:white;padding:2px 8px;border-radius:4px;font-weight:600;">Details</span>
+              <span style="color:#888;padding:2px 8px;">Personnes (12)</span>
+              <span style="color:#888;padding:2px 8px;">Policies (3)</span>
+              <span style="color:#888;padding:2px 8px;">Sites (2)</span>
+              <span style="color:#888;padding:2px 8px;">Delegations</span>
+              <span style="color:#888;padding:2px 8px;">Audit</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+              <div style="background:#f8f9fa;border-radius:6px;padding:8px;">
+                <div style="font-weight:600;margin-bottom:4px;">Informations</div>
+                <div style="color:#888;">Formulaire complet, nom, code, description, responsable, metadata...</div>
+              </div>
+              <div style="background:#f8f9fa;border-radius:6px;padding:8px;">
+                <div style="font-weight:600;margin-bottom:4px;">Policies effectives</div>
+                <div style="color:#888;">Liste detaillee avec source de chaque regle, conflits, overrides...</div>
+              </div>
+              <div style="background:#f8f9fa;border-radius:6px;padding:8px;">
+                <div style="font-weight:600;margin-bottom:4px;">KPIs</div>
+                <div style="color:#888;">Effectif, taux occupation, turnover, compliance score...</div>
+              </div>
+              <div style="background:#f8f9fa;border-radius:6px;padding:8px;">
+                <div style="font-weight:600;margin-bottom:4px;">Timeline</div>
+                <div style="color:#888;">Historique des changements, audit trail detaille...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>Avantages</h4><ul><li>Navigation rapide en mode normal</li><li>Detail complet en mode focus</li><li>Responsive : collapse le triple panel en mobile</li><li>Pas de compromis : navigation ET profondeur</li></ul></div>
+        <div class="cons"><h4>Limites</h4><ul><li>Deux modes a implementer</li><li>Transition a bien designer</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

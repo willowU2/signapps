@@ -68,9 +68,11 @@ pub async fn handle_connection(
             match ber::decode(&pending) {
                 Ok((element, rest)) => {
                     let consumed = pending.len() - rest.len();
+                    tracing::debug!(peer = %addr, consumed = consumed, tag = ?element.tag, "BER decoded");
 
                     match decode_ldap_message(&element) {
                         Ok(msg) => {
+                            tracing::debug!(peer = %addr, msg_id = msg.message_id, "LDAP message decoded");
                             let is_unbind =
                                 matches!(msg.operation, LdapOperation::UnbindRequest);
 
@@ -100,6 +102,7 @@ pub async fn handle_connection(
                     pending.drain(..consumed);
                 }
                 Err(ber::BerError::UnexpectedEnd) => {
+                    tracing::trace!(peer = %addr, pending = pending.len(), "BER needs more data");
                     // Need more data — wait for the next read.
                     break;
                 }
@@ -159,7 +162,7 @@ fn decode_ldap_message(element: &BerElement) -> Result<LdapMessage, String> {
 fn decode_operation(element: &BerElement) -> Result<LdapOperation, String> {
     match &element.tag {
         // BindRequest [APPLICATION 0] CONSTRUCTED
-        BerTag::Context { number: 0, constructed: true } => {
+        BerTag::Application { number: 0, constructed: true } => {
             let children = constructed_children(element, "BindRequest")?;
             if children.len() < 3 {
                 return Err("BindRequest requires 3 elements".to_string());
@@ -192,10 +195,10 @@ fn decode_operation(element: &BerElement) -> Result<LdapOperation, String> {
         }
 
         // UnbindRequest [APPLICATION 2]
-        BerTag::Context { number: 2, .. } => Ok(LdapOperation::UnbindRequest),
+        BerTag::Application { number: 2, .. } => Ok(LdapOperation::UnbindRequest),
 
         // SearchRequest [APPLICATION 3] CONSTRUCTED
-        BerTag::Context { number: 3, constructed: true } => {
+        BerTag::Application { number: 3, constructed: true } => {
             let children = constructed_children(element, "SearchRequest")?;
             if children.len() < 8 {
                 return Err("SearchRequest requires 8 elements".to_string());
@@ -230,7 +233,7 @@ fn decode_operation(element: &BerElement) -> Result<LdapOperation, String> {
         }
 
         // ModifyRequest [APPLICATION 6] CONSTRUCTED
-        BerTag::Context { number: 6, constructed: true } => {
+        BerTag::Application { number: 6, constructed: true } => {
             let children = constructed_children(element, "ModifyRequest")?;
             let dn = if !children.is_empty() {
                 octet_string_to_utf8(&children[0])
@@ -241,7 +244,7 @@ fn decode_operation(element: &BerElement) -> Result<LdapOperation, String> {
         }
 
         // AddRequest [APPLICATION 8] CONSTRUCTED
-        BerTag::Context { number: 8, constructed: true } => {
+        BerTag::Application { number: 8, constructed: true } => {
             let children = constructed_children(element, "AddRequest")?;
             let dn = if !children.is_empty() {
                 octet_string_to_utf8(&children[0])
@@ -252,7 +255,7 @@ fn decode_operation(element: &BerElement) -> Result<LdapOperation, String> {
         }
 
         // DeleteRequest [APPLICATION 10] PRIMITIVE
-        BerTag::Context { number: 10, .. } => {
+        BerTag::Application { number: 10, .. } => {
             let dn = match &element.data {
                 BerData::Primitive(p) => String::from_utf8_lossy(p).to_string(),
                 _ => String::new(),
@@ -261,7 +264,7 @@ fn decode_operation(element: &BerElement) -> Result<LdapOperation, String> {
         }
 
         // ModifyDNRequest [APPLICATION 12] CONSTRUCTED
-        BerTag::Context { number: 12, constructed: true } => {
+        BerTag::Application { number: 12, constructed: true } => {
             let children = constructed_children(element, "ModifyDNRequest")?;
             let dn = children.first().map(|e| octet_string_to_utf8(e)).unwrap_or_default();
             let new_rdn =
@@ -278,7 +281,7 @@ fn decode_operation(element: &BerElement) -> Result<LdapOperation, String> {
         }
 
         // CompareRequest [APPLICATION 14] CONSTRUCTED
-        BerTag::Context { number: 14, constructed: true } => {
+        BerTag::Application { number: 14, constructed: true } => {
             let children = constructed_children(element, "CompareRequest")?;
             let dn = children.first().map(|e| octet_string_to_utf8(e)).unwrap_or_default();
             // AVA: SEQUENCE { attributeDesc OCTET STRING, assertionValue OCTET STRING }
@@ -298,13 +301,13 @@ fn decode_operation(element: &BerElement) -> Result<LdapOperation, String> {
         }
 
         // AbandonRequest [APPLICATION 16]
-        BerTag::Context { number: 16, .. } => {
+        BerTag::Application { number: 16, .. } => {
             let id = ber::decode_integer(element).unwrap_or(0) as i32;
             Ok(LdapOperation::AbandonRequest(id))
         }
 
         // ExtendedRequest [APPLICATION 23] CONSTRUCTED
-        BerTag::Context { number: 23, constructed: true } => {
+        BerTag::Application { number: 23, constructed: true } => {
             let children = constructed_children(element, "ExtendedRequest")?;
             let oid = children.first().map(|e| primitive_bytes_cloned(e)).map(|b| {
                 String::from_utf8_lossy(&b).to_string()
@@ -654,7 +657,7 @@ fn encode_ldap_message(msg: &LdapMessage) -> BerElement {
 fn encode_operation(op: &LdapOperation) -> BerElement {
     match op {
         // BindResponse [APPLICATION 1]
-        LdapOperation::BindResponse(result) => ber::encode_context(
+        LdapOperation::BindResponse(result) => ber::encode_application(
             1,
             true,
             BerData::Constructed(encode_ldap_result(result)),
@@ -678,7 +681,7 @@ fn encode_operation(op: &LdapOperation) -> BerElement {
                 })
                 .collect();
 
-            ber::encode_context(
+            ber::encode_application(
                 4,
                 true,
                 BerData::Constructed(vec![
@@ -689,42 +692,42 @@ fn encode_operation(op: &LdapOperation) -> BerElement {
         }
 
         // SearchResultDone [APPLICATION 5]
-        LdapOperation::SearchResultDone(result) => ber::encode_context(
+        LdapOperation::SearchResultDone(result) => ber::encode_application(
             5,
             true,
             BerData::Constructed(encode_ldap_result(result)),
         ),
 
         // ModifyResponse [APPLICATION 7]
-        LdapOperation::ModifyResponse(result) => ber::encode_context(
+        LdapOperation::ModifyResponse(result) => ber::encode_application(
             7,
             true,
             BerData::Constructed(encode_ldap_result(result)),
         ),
 
         // AddResponse [APPLICATION 9]
-        LdapOperation::AddResponse(result) => ber::encode_context(
+        LdapOperation::AddResponse(result) => ber::encode_application(
             9,
             true,
             BerData::Constructed(encode_ldap_result(result)),
         ),
 
         // DeleteResponse [APPLICATION 11]
-        LdapOperation::DeleteResponse(result) => ber::encode_context(
+        LdapOperation::DeleteResponse(result) => ber::encode_application(
             11,
             true,
             BerData::Constructed(encode_ldap_result(result)),
         ),
 
         // ModifyDNResponse [APPLICATION 13]
-        LdapOperation::ModifyDnResponse(result) => ber::encode_context(
+        LdapOperation::ModifyDnResponse(result) => ber::encode_application(
             13,
             true,
             BerData::Constructed(encode_ldap_result(result)),
         ),
 
         // CompareResponse [APPLICATION 15]
-        LdapOperation::CompareResponse(result) => ber::encode_context(
+        LdapOperation::CompareResponse(result) => ber::encode_application(
             15,
             true,
             BerData::Constructed(encode_ldap_result(result)),
@@ -747,7 +750,7 @@ fn encode_operation(op: &LdapOperation) -> BerElement {
                     BerData::Primitive(val.clone()),
                 ));
             }
-            ber::encode_context(24, true, BerData::Constructed(children))
+            ber::encode_application(24, true, BerData::Constructed(children))
         }
 
         _ => {

@@ -1,0 +1,144 @@
+<h2>Groupes transverses — Au-dela de la hierarchie</h2>
+<p class="subtitle">Comment gerer les groupes qui traversent l'arbre org</p>
+
+<div class="section">
+  <h3>Le probleme</h3>
+  <div style="max-width:750px;margin:0 auto;">
+    <div style="display:flex;gap:24px;align-items:flex-start;">
+      <!-- Tree -->
+      <div style="flex:1;border:1px solid #ddd;border-radius:10px;padding:16px;background:rgba(0,0,0,0.01);">
+        <div style="font-size:11px;text-transform:uppercase;color:#888;font-weight:600;margin-bottom:10px;">Arbre hierarchique</div>
+        <div style="font-size:12px;line-height:2;">
+          <div>&#x1F3E2; SignApps Corp</div>
+          <div style="padding-left:20px;">&#x1F1EB;&#x1F1F7; Filiale France</div>
+          <div style="padding-left:40px;"><span style="color:#3b82f6;">&#9632;</span> DSI → <em>Alice, Bob</em></div>
+          <div style="padding-left:40px;"><span style="color:#22c55e;">&#9632;</span> DRH → <em>Carol</em></div>
+          <div style="padding-left:40px;"><span style="color:#f59e0b;">&#9632;</span> Commercial → <em>Dave</em></div>
+          <div style="padding-left:20px;">&#x1F1FA;&#x1F1F8; Filiale US</div>
+          <div style="padding-left:40px;"><span style="color:#3b82f6;">&#9632;</span> Engineering → <em>Eve, Frank</em></div>
+          <div style="padding-left:40px;"><span style="color:#22c55e;">&#9632;</span> HR → <em>Grace</em></div>
+        </div>
+      </div>
+      <!-- Arrow -->
+      <div style="display:flex;align-items:center;font-size:24px;color:#a855f7;">&#x27A1;</div>
+      <!-- Cross groups -->
+      <div style="flex:1;border:2px dashed #a855f7;border-radius:10px;padding:16px;background:rgba(168,85,247,0.03);">
+        <div style="font-size:11px;text-transform:uppercase;color:#a855f7;font-weight:600;margin-bottom:10px;">Groupes transverses necessaires</div>
+        <div style="font-size:12px;line-height:2.2;">
+          <div style="background:rgba(59,130,246,0.08);border-radius:4px;padding:2px 8px;margin-bottom:4px;">
+            <strong>&#x1F4BB; All IT</strong> — Alice, Bob, Eve, Frank
+            <div style="font-size:10px;color:#888;">Tous les IT, toutes filiales</div>
+          </div>
+          <div style="background:rgba(34,197,94,0.08);border-radius:4px;padding:2px 8px;margin-bottom:4px;">
+            <strong>&#x1F91D; All HR</strong> — Carol, Grace
+            <div style="font-size:10px;color:#888;">Tous les RH, toutes filiales</div>
+          </div>
+          <div style="background:rgba(245,158,11,0.08);border-radius:4px;padding:2px 8px;margin-bottom:4px;">
+            <strong>&#x1F680; Projet Alpha</strong> — Bob, Dave, Eve
+            <div style="font-size:10px;color:#888;">Equipe projet cross-filiale</div>
+          </div>
+          <div style="background:rgba(239,68,68,0.08);border-radius:4px;padding:2px 8px;margin-bottom:4px;">
+            <strong>&#x1F6E1; Comite RGPD</strong> — Alice, Carol, Grace
+            <div style="font-size:10px;color:#888;">Compliance cross-fonction</div>
+          </div>
+          <div style="background:rgba(168,85,247,0.08);border-radius:4px;padding:2px 8px;">
+            <strong>&#x1F4CA; Managers N-1</strong> — <em>automatique</em>
+            <div style="font-size:10px;color:#888;">Tous les responsables directs du CEO</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:28px;">
+  <h3>Types de groupes</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:700px;margin:0 auto;">
+    <div style="border:1px solid #3b82f6;border-radius:8px;padding:12px;background:rgba(59,130,246,0.04);">
+      <div style="font-size:13px;font-weight:600;color:#3b82f6;margin-bottom:4px;">Statique</div>
+      <div style="font-size:12px;color:#666;">Membres ajoutes manuellement par un admin. Ex: "Comite RGPD", "Projet Alpha".</div>
+    </div>
+    <div style="border:1px solid #22c55e;border-radius:8px;padding:12px;background:rgba(34,197,94,0.04);">
+      <div style="font-size:13px;font-weight:600;color:#22c55e;margin-bottom:4px;">Dynamique (filtre)</div>
+      <div style="font-size:12px;color:#666;">Membres calcules par un filtre sur les attributs. Ex: "All IT" = node_type=dsi OR node_type=engineering.</div>
+    </div>
+    <div style="border:1px solid #f59e0b;border-radius:8px;padding:12px;background:rgba(245,158,11,0.04);">
+      <div style="font-size:13px;font-weight:600;color:#f59e0b;margin-bottom:4px;">Derive de l'arbre</div>
+      <div style="font-size:12px;color:#666;">Auto-genere depuis la structure org. Ex: "Managers N-1" = toute personne holder d'un noeud enfant direct de la racine.</div>
+    </div>
+    <div style="border:1px solid #a855f7;border-radius:8px;padding:12px;background:rgba(168,85,247,0.04);">
+      <div style="font-size:13px;font-weight:600;color:#a855f7;margin-bottom:4px;">Hybride</div>
+      <div style="font-size:12px;color:#666;">Base dynamique + membres manuels en override. Ex: "All IT" dynamique + "Dave" ajoute manuellement car il fait du dev meme s'il est au commercial.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:28px;">
+  <h3>Capacites cles des groupes transverses</h3>
+  <div style="max-width:700px;margin:0 auto;font-size:12px;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:2px solid #ddd;text-align:left;">
+          <th style="padding:8px;font-size:11px;text-transform:uppercase;color:#888;">Capacite</th>
+          <th style="padding:8px;font-size:11px;text-transform:uppercase;color:#888;">Description</th>
+          <th style="padding:8px;font-size:11px;text-transform:uppercase;color:#888;">Exemple</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:8px;font-weight:600;">Imbrication</td>
+          <td style="padding:8px;">Un groupe peut contenir d'autres groupes</td>
+          <td style="padding:8px;color:#888;">"All Staff" contient "All IT" + "All HR" + ...</td>
+        </tr>
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:8px;font-weight:600;">MemberOf auto</td>
+          <td style="padding:8px;">Index inverse calcule automatiquement (pattern Kanidm)</td>
+          <td style="padding:8px;color:#888;">Alice.memberof = [All IT, Comite RGPD, DSI France]</td>
+        </tr>
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:8px;font-weight:600;">Policy attachable</td>
+          <td style="padding:8px;">Les GPO s'attachent aux groupes transverses aussi</td>
+          <td style="padding:8px;color:#888;">"All IT" → policy modules.devtools=true</td>
+        </tr>
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:8px;font-weight:600;">Delegation</td>
+          <td style="padding:8px;">Un groupe peut etre manage par un autre groupe</td>
+          <td style="padding:8px;color:#888;">"Projet Alpha" manage par "PMO Office"</td>
+        </tr>
+        <tr>
+          <td style="padding:8px;font-weight:600;">Scope temporel</td>
+          <td style="padding:8px;">Debut/fin optionnels (projets, missions)</td>
+          <td style="padding:8px;color:#888;">"Projet Alpha" actif du 01/04 au 31/12/2026</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section" style="margin-top:28px;">
+  <h3 style="color:#ef4444;">Question : Ou vivent les groupes transverses ?</h3>
+  <p class="subtitle">Faut-il un espace dedie ou les integrer dans l'arbre ?</p>
+  <div class="options">
+    <div class="option" data-choice="a" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Entite separee — table dediee</h3>
+        <p>Les groupes sont une entite premiere classe a cote des arbres. Table <code>org_groups</code> avec son propre CRUD. Ils apparaissent dans un onglet "Groupes" a cote de l'arbre. Separation claire, mais navigation fragmentee.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="b" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Dans l'arbre — comme un type de noeud special</h3>
+        <p>Un groupe transverse est un <code>OrgNode</code> avec <code>node_type=cross_group</code>. Il vit dans un arbre dedie "Groupes transverses". Unifie le modele, mais melange hierarchie et groupes.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="c" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Hybride unifie (recommande)</h3>
+        <p>Table dediee <code>org_groups</code> MAIS visible comme un panneau lateral dans la meme page. Les groupes peuvent <strong>referencer</strong> des noeuds (tous les enfants de ce noeud sont membres). Vue unifiee : arbre a gauche, groupes en overlay, detail a droite. Un seul endroit pour tout gerer.</p>
+      </div>
+    </div>
+  </div>
+</div>

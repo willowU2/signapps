@@ -1,0 +1,130 @@
+<h2>Modele de delegation — Qui administre quoi</h2>
+<p class="subtitle">Scaler l'administration sans perdre le controle</p>
+
+<div class="section">
+  <h3>Les roles d'administration par defaut (pattern Kanidm)</h3>
+  <div style="max-width:750px;margin:0 auto;">
+    <!-- Pyramid -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <!-- Top -->
+      <div style="background:linear-gradient(135deg,#ef4444,#dc2626);color:white;border-radius:8px;padding:10px 28px;font-size:13px;font-weight:600;text-align:center;width:200px;">
+        <div>&#x1F6E1; Platform Admin</div>
+        <div style="font-size:10px;font-weight:400;opacity:0.8;">Domaine, replication, integrations</div>
+      </div>
+      <div style="color:#ccc;">&#x25BC;</div>
+      <!-- Level 2 -->
+      <div style="display:flex;gap:8px;">
+        <div style="background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;text-align:center;width:180px;">
+          <div>&#x1F465; IDM Admin</div>
+          <div style="font-size:10px;font-weight:400;opacity:0.8;">Personnes, groupes, policies</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;text-align:center;width:180px;">
+          <div>&#x1F4DC; Policy Admin</div>
+          <div style="font-size:10px;font-weight:400;opacity:0.8;">GPO, naming, compliance</div>
+        </div>
+      </div>
+      <div style="color:#ccc;">&#x25BC;</div>
+      <!-- Level 3 -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+        <div style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:600;text-align:center;width:150px;">
+          <div>&#x1F3E2; Org Admin</div>
+          <div style="font-size:10px;font-weight:400;opacity:0.8;">Arbre, noeuds, sites</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:600;text-align:center;width:150px;">
+          <div>&#x1F511; Group Admin</div>
+          <div style="font-size:10px;font-weight:400;opacity:0.8;">Groupes transverses</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:600;text-align:center;width:150px;">
+          <div>&#x1F4C4; Audit Viewer</div>
+          <div style="font-size:10px;font-weight:400;opacity:0.8;">Lecture audit trail</div>
+        </div>
+      </div>
+      <div style="color:#ccc;">&#x25BC;</div>
+      <!-- Level 4 -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+        <div style="background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:600;text-align:center;width:180px;">
+          <div>&#x1F3E0; Delegated Admin</div>
+          <div style="font-size:10px;font-weight:400;opacity:0.8;">Admin sur un sous-arbre</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:600;text-align:center;width:180px;">
+          <div>&#x1F4DE; Service Desk</div>
+          <div style="font-size:10px;font-weight:400;opacity:0.8;">Reset pwd, lock/unlock</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:600;text-align:center;width:180px;">
+          <div>&#x1F4C5; Manager</div>
+          <div style="font-size:10px;font-weight:400;opacity:0.8;">Ses subordonnes directs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- High privilege taint -->
+    <div style="margin-top:20px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:12px;text-align:center;">
+      <div style="font-size:12px;font-weight:600;color:#ef4444;">&#x26A0; Protection High-Privilege (pattern Kanidm)</div>
+      <div style="font-size:11px;color:#888;margin-top:4px;">Un Service Desk ne peut PAS modifier un IDM Admin, meme s'il a les droits generiques. Le groupe <code>high_privilege</code> "teinte" ses membres et bloque les roles inferieurs.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:28px;">
+  <h3>Delegation scopee — Le concept cle</h3>
+  <div style="max-width:700px;margin:0 auto;">
+    <div style="background:rgba(0,0,0,0.02);border:1px solid #ddd;border-radius:10px;padding:16px;font-size:12px;">
+      <p style="margin-bottom:12px;">Un <strong>Delegated Admin</strong> recoit des droits <em>restreints a un sous-arbre</em>. Exemple :</p>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;align-items:start;">
+        <div style="font-weight:600;color:#3b82f6;">Qui :</div>
+        <div>Marie Dupont (DRH France)</div>
+        <div style="font-weight:600;color:#22c55e;">Scope :</div>
+        <div>Noeud "Filiale France" et tous ses descendants</div>
+        <div style="font-weight:600;color:#a855f7;">Droits :</div>
+        <div>
+          &#x2705; Creer/modifier personnes<br/>
+          &#x2705; Gerer affectations<br/>
+          &#x2705; Creer groupes locaux<br/>
+          &#x2705; Voir audit trail de son scope<br/>
+          &#x274C; Modifier l'arbre (noeuds)<br/>
+          &#x274C; Creer/modifier policies<br/>
+          &#x274C; Voir hors de son scope
+        </div>
+        <div style="font-weight:600;color:#f59e0b;">Expire :</div>
+        <div>Optionnel — delegation temporaire pour interimaires</div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;background:rgba(168,85,247,0.05);border:1px solid rgba(168,85,247,0.2);border-radius:10px;padding:16px;font-size:12px;">
+      <p style="font-weight:600;color:#a855f7;margin-bottom:8px;">Delegation chainee (sub-delegation)</p>
+      <p>Marie peut-elle deleguer a son tour ? Ex: donner a un chef d'equipe le droit de gerer les affectations de son equipe seulement.</p>
+      <div style="margin-top:8px;font-size:11px;color:#888;">
+        DRH France (Marie) → Chef equipe Dev (Bob) → son equipe seulement<br/>
+        Chaque maillon ne peut donner que ce qu'il a, restreint a son scope ou plus petit.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:28px;">
+  <h3 style="color:#ef4444;">Question : Profondeur de la delegation</h3>
+  <p class="subtitle">Jusqu'ou peut-on deleguer l'administration ?</p>
+  <div class="options">
+    <div class="option" data-choice="a" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Un seul niveau — pas de sub-delegation</h3>
+        <p>Seuls les IDM/Org Admin creent des Delegated Admin. Un Delegated Admin ne peut pas deleguer a son tour. Simple, auditabe, mais rigide pour un grand groupe avec 4+ niveaux hierarchiques.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="b" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Sub-delegation limitee (N niveaux configurable)</h3>
+        <p>La policy GPO definit <code>delegation.max_depth: 2</code> pour le scope. Chaque maillon ne peut donner que ce qu'il a, restreint a son scope ou plus petit. Default: 1 (pas de sub-delegation). Le groupe peut monter a 2-3 quand il grossit. <strong>Recommande.</strong></p>
+      </div>
+    </div>
+    <div class="option" data-choice="c" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Sub-delegation illimitee</h3>
+        <p>Chaque Delegated Admin peut deleguer a son tour, sans limite de profondeur. Maximum de flexibilite mais risque de perte de controle, audit complexe, difficile de repondre a "qui a acces a quoi".</p>
+      </div>
+    </div>
+  </div>
+</div>

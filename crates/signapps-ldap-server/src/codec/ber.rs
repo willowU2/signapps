@@ -57,6 +57,13 @@ pub enum BerTag {
     Sequence,
     /// Universal tag 0x31 — SET (always constructed).
     Set,
+    /// Application tag `[N]` — used for LDAP operation messages (BindRequest, SearchRequest, etc.).
+    Application {
+        /// Tag number (0-30).
+        number: u8,
+        /// Whether this is a constructed encoding.
+        constructed: bool,
+    },
     /// Context-specific tag `[N]`, constructed or primitive.
     ///
     /// LDAP uses these for operation discriminators (0x60–0x7F),
@@ -210,8 +217,11 @@ fn decode_tag(input: &[u8]) -> Result<(BerTag, &[u8]), BerError> {
             0x11 => BerTag::Set,      // 0x31 decoded as class=0, constructed=1, tag=17
             _ => return Err(BerError::InvalidTag(byte)),
         },
-        // Context-specific (class = 0b10)
+        // Application (class = 0b01) — used for LDAP operation tags (0x60-0x7F)
+        0b01 => BerTag::Application { number: tag_number, constructed },
+        // Context-specific (class = 0b10) — used for LDAP filters and controls
         0b10 => BerTag::Context { number: tag_number, constructed },
+        // Private (class = 0b11) — not used in LDAP
         _ => return Err(BerError::InvalidTag(byte)),
     };
 
@@ -267,6 +277,7 @@ fn is_constructed(tag: &BerTag) -> bool {
     match tag {
         BerTag::Boolean | BerTag::Integer | BerTag::OctetString | BerTag::Enumerated => false,
         BerTag::Sequence | BerTag::Set => true,
+        BerTag::Application { constructed, .. } => *constructed,
         BerTag::Context { constructed, .. } => *constructed,
     }
 }
@@ -322,6 +333,12 @@ fn encode_tag(tag: &BerTag) -> Vec<u8> {
         BerTag::Enumerated => 0x0A,
         BerTag::Sequence => 0x30, // class=universal, constructed=1, tag=16
         BerTag::Set => 0x31,      // class=universal, constructed=1, tag=17
+        BerTag::Application { number, constructed } => {
+            assert!(*number < 31, "multi-byte application tags not supported");
+            let class_bits: u8 = 0b0100_0000; // application
+            let constructed_bit: u8 = if *constructed { 0b0010_0000 } else { 0 };
+            class_bits | constructed_bit | number
+        }
         BerTag::Context { number, constructed } => {
             assert!(*number < 31, "multi-byte context tags not supported");
             let class_bits: u8 = 0b1000_0000; // context-specific
@@ -511,6 +528,15 @@ pub fn encode_context(number: u8, constructed: bool, data: BerData) -> BerElemen
     assert!(number < 31, "multi-byte context tags not supported");
     BerElement {
         tag: BerTag::Context { number, constructed },
+        data,
+    }
+}
+
+/// Create an application-tagged element (used for LDAP response messages).
+pub fn encode_application(number: u8, constructed: bool, data: BerData) -> BerElement {
+    assert!(number < 31, "multi-byte application tags not supported");
+    BerElement {
+        tag: BerTag::Application { number, constructed },
         data,
     }
 }
