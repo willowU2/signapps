@@ -7,9 +7,9 @@
 //! The actual handler functions are wired in `main.rs` once AppState is fully
 //! constructed, following the pattern used by the rest of the AI service.
 
-use axum::{extract::State, Json};
+use axum::{extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
-use signapps_common::Result;
+use signapps_common::{Claims, Error, Result};
 use uuid::Uuid;
 
 use crate::llm::types::ChatMessage;
@@ -335,6 +335,89 @@ pub async fn lightrag_communities(
         communities_created: count,
         collection,
     }))
+}
+
+/// GET /api/v1/ai/lightrag/graph — Get entity and relation data for graph visualization.
+///
+/// Returns the top 50 entities (ordered by mention count) and the relations
+/// between them, with pre-computed circular layout positions suitable for
+/// SVG rendering on the frontend.
+///
+/// # Errors
+///
+/// Returns `500 Internal Server Error` if the database query fails.
+///
+/// # Panics
+///
+/// No panics possible — all errors are propagated via `Result`.
+#[tracing::instrument(skip_all)]
+pub async fn lightrag_graph(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> Result<Json<serde_json::Value>> {
+    // Fetch top 50 entities ordered by relevance
+    let entities: Vec<(Uuid, String, String, Option<String>)> = sqlx::query_as(
+        "SELECT id, name, entity_type, description \
+         FROM ai.kg_entities \
+         WHERE collection = 'default' \
+         ORDER BY mention_count DESC \
+         LIMIT 50",
+    )
+    .fetch_all(state.pool.inner())
+    .await
+    .map_err(|e| {
+        tracing::error!(?e, "Failed to fetch kg_entities for graph");
+        Error::Internal(format!("DB query failed: {e}"))
+    })?;
+
+    let entity_ids: Vec<Uuid> = entities.iter().map(|(id, _, _, _)| *id).collect();
+
+    let relations: Vec<(Uuid, Uuid, String)> = if !entity_ids.is_empty() {
+        sqlx::query_as(
+            "SELECT source_entity_id, target_entity_id, relation_type \
+             FROM ai.kg_relations \
+             WHERE collection = 'default' \
+               AND source_entity_id = ANY($1) \
+               AND target_entity_id = ANY($1) \
+             LIMIT 200",
+        )
+        .bind(&entity_ids)
+        .fetch_all(state.pool.inner())
+        .await
+        .unwrap_or_default()
+    } else {
+        vec![]
+    };
+
+    let total = entities.len().max(1);
+    let nodes: Vec<serde_json::Value> = entities
+        .iter()
+        .enumerate()
+        .map(|(i, (id, name, etype, desc))| {
+            let angle = 2.0 * std::f64::consts::PI * i as f64 / total as f64;
+            serde_json::json!({
+                "id": id,
+                "name": name,
+                "type": etype,
+                "description": desc,
+                "x": 300.0 + 200.0 * angle.cos(),
+                "y": 200.0 + 150.0 * angle.sin(),
+            })
+        })
+        .collect();
+
+    let edges: Vec<serde_json::Value> = relations
+        .iter()
+        .map(|(src, tgt, rtype)| {
+            serde_json::json!({
+                "source": src,
+                "target": tgt,
+                "type": rtype,
+            })
+        })
+        .collect();
+
+    Ok(Json(serde_json::json!({ "nodes": nodes, "edges": edges })))
 }
 
 /// POST /api/v1/ai/lightrag/seed — Trigger a manual full seed from signapps data.

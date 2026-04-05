@@ -48,6 +48,8 @@ import Link from "next/link";
 import { toast } from "sonner";
 import {
   useAdDomains,
+  useAdComputers,
+  useAdGpos,
   useCreateDomain,
   useDeleteDomain,
   useDcStatus,
@@ -61,6 +63,11 @@ export default function ActiveDirectoryPage() {
   const createDomain = useCreateDomain();
   const deleteDomain = useDeleteDomain();
 
+  // Use the first domain for real-time metric counts
+  const domainId = domains[0]?.id ?? "";
+  const { data: computers = [] } = useAdComputers(domainId);
+  const { data: gpos = [] } = useAdGpos(domainId);
+
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newDomain, setNewDomain] = useState({
     dns_name: "",
@@ -70,9 +77,9 @@ export default function ActiveDirectoryPage() {
 
   const stats = {
     domains: domains.length,
-    computers: 0,
+    computers: computers.length,
     users: 0,
-    gpos: 0,
+    gpos: gpos.length,
   };
 
   const dcOnline = dcStatus?.status === "healthy";

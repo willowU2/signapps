@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { PageHeader } from "@/components/ui/page-header";
@@ -31,6 +31,134 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient, ServiceName } from "@/lib/api/factory";
 
 const aiClient = getClient(ServiceName.AI);
+
+const TYPE_COLORS: Record<string, string> = {
+  person: "#3b82f6",
+  organization: "#10b981",
+  concept: "#8b5cf6",
+  technology: "#f59e0b",
+  event: "#ef4444",
+  department: "#06b6d4",
+  group: "#ec4899",
+  default: "#6b7280",
+};
+
+function KnowledgeGraphViewer() {
+  const [graphData, setGraphData] = useState<{
+    nodes: { id: string; name: string; type: string; x: number; y: number }[];
+    edges: { source: string; target: string; type: string }[];
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const loadGraph = async () => {
+    setLoading(true);
+    try {
+      const res = await aiClient.get("/ai/lightrag/graph");
+      setGraphData(res.data);
+    } catch {
+      toast.error("Erreur de chargement du graphe");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadGraph();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[300px]">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!graphData || graphData.nodes.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+        <GitBranch className="h-8 w-8 mb-2 opacity-30" />
+        <p className="text-sm">Aucune donnee dans le graphe</p>
+        <p className="text-xs mt-1">
+          Indexez des documents ou lancez le seed pour alimenter le graphe
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <svg
+        width="100%"
+        height="400"
+        viewBox="0 0 600 400"
+        className="border rounded-lg bg-muted/20"
+      >
+        {/* Edges */}
+        {graphData.edges.map((edge, i) => {
+          const source = graphData.nodes.find((n) => n.id === edge.source);
+          const target = graphData.nodes.find((n) => n.id === edge.target);
+          if (!source || !target) return null;
+          return (
+            <line
+              key={`edge-${i}`}
+              x1={source.x}
+              y1={source.y}
+              x2={target.x}
+              y2={target.y}
+              stroke="currentColor"
+              strokeOpacity={0.15}
+              strokeWidth={1}
+            />
+          );
+        })}
+        {/* Nodes */}
+        {graphData.nodes.map((node) => (
+          <g key={node.id}>
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r={8}
+              fill={TYPE_COLORS[node.type] ?? TYPE_COLORS.default}
+              fillOpacity={0.8}
+              stroke={TYPE_COLORS[node.type] ?? TYPE_COLORS.default}
+              strokeWidth={2}
+            />
+            <text
+              x={node.x}
+              y={node.y + 18}
+              textAnchor="middle"
+              fontSize={9}
+              fill="currentColor"
+              fillOpacity={0.6}
+            >
+              {node.name.length > 12
+                ? node.name.slice(0, 12) + "..."
+                : node.name}
+            </text>
+          </g>
+        ))}
+      </svg>
+      {/* Legend */}
+      <div className="flex flex-wrap gap-3 mt-3">
+        {Object.entries(TYPE_COLORS)
+          .filter(([k]) => k !== "default")
+          .map(([type, color]) => (
+            <div
+              key={type}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground"
+            >
+              <div
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ backgroundColor: color }}
+              />
+              {type}
+            </div>
+          ))}
+      </div>
+    </div>
+  );
+}
 
 export default function LightRagPage() {
   usePageTitle("LightRAG — Intelligence Artificielle");
@@ -172,6 +300,22 @@ export default function LightRagPage() {
           </Card>
         </div>
 
+        {/* Knowledge Graph Visualization */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GitBranch className="h-4 w-4" />
+              Visualisation du graphe
+            </CardTitle>
+            <CardDescription>
+              Entites (noeuds) et relations (aretes) du graphe de connaissances
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <KnowledgeGraphViewer />
+          </CardContent>
+        </Card>
+
         {/* Query Section */}
         <Card>
           <CardHeader>
@@ -225,11 +369,11 @@ export default function LightRagPage() {
                       </h4>
                       <div className="space-y-1">
                         {queryResult.entities.map((e, i) => (
-                          <div key={i} className="flex items-center gap-2 text-xs">
-                            <Badge
-                              variant="secondary"
-                              className="text-[10px]"
-                            >
+                          <div
+                            key={i}
+                            className="flex items-center gap-2 text-xs"
+                          >
+                            <Badge variant="secondary" className="text-[10px]">
                               {e.entity_type}
                             </Badge>
                             <span className="font-medium">{e.name}</span>
@@ -290,7 +434,10 @@ export default function LightRagPage() {
               <span className="text-xs text-muted-foreground">
                 {docText.length} caracteres
               </span>
-              <Button onClick={handleIndex} disabled={indexing || !docText.trim()}>
+              <Button
+                onClick={handleIndex}
+                disabled={indexing || !docText.trim()}
+              >
                 {indexing ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (

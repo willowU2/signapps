@@ -426,6 +426,10 @@ fn create_router(state: AppState) -> Router {
             "/lightrag/communities",
             post(lightrag::lightrag_communities),
         )
+        .route(
+            "/lightrag/graph",
+            get(lightrag::lightrag_graph),
+        )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
