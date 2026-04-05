@@ -34,7 +34,7 @@ mod workers;
 
 use embeddings::EmbeddingsClient;
 use handlers::openapi::AiApiDoc;
-use handlers::{chat, collections, health, index, model_management, providers, search};
+use handlers::{chat, collections, health, index, lightrag, model_management, providers, search};
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
 use rag::RagPipeline;
@@ -405,6 +405,23 @@ fn create_router(state: AppState) -> Router {
                 .delete(model_management::delete_model),
         )
         .route("/hardware", get(model_management::get_hardware))
+        // LightRAG knowledge graph
+        .route(
+            "/lightrag/index",
+            post(lightrag::lightrag_index),
+        )
+        .route(
+            "/lightrag/query",
+            post(lightrag::lightrag_query),
+        )
+        .route(
+            "/lightrag/stats",
+            get(lightrag::lightrag_stats),
+        )
+        .route(
+            "/lightrag/seed",
+            post(lightrag::lightrag_seed),
+        )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
