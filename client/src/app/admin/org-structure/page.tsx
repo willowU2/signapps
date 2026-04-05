@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { AppLayout } from "@/components/layout/app-layout";
 import { useUIStore } from "@/lib/store";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useOrgStore } from "@/stores/org-store";
 import { orgApi } from "@/lib/api/org";
 import type { OrgNode, Person, TreeType, BoardSummary } from "@/types/org";
@@ -11,15 +13,13 @@ import { Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-// Components
+// Components — always visible
 import { TreeNodeItem } from "./components/tree-node-item";
 import type { TreeNode, BoardInfo } from "./components/tree-node-item";
-import { OrgChartCard } from "./components/org-chart-card";
 import { DetailPanel } from "./components/detail-panel";
 import { GroupsNav } from "./components/groups-nav";
 import { SitesNav } from "./components/sites-nav";
 import { StatsBar } from "./components/stats-bar";
-import { ListView } from "./components/list-view";
 import { OrgTreeHeader } from "./components/org-tree-header";
 import { OrgToolbar } from "./components/org-toolbar";
 import type { ViewMode, NavTab } from "./components/org-toolbar";
@@ -28,6 +28,20 @@ import { CreateTreeDialog } from "./components/dialogs/create-tree-dialog";
 import { AddNodeDialog } from "./components/dialogs/add-node-dialog";
 import { DeleteNodeDialog } from "./components/dialogs/delete-node-dialog";
 import { MoveNodeDialog } from "./components/dialogs/move-node-dialog";
+
+// Lazy-loaded view-specific components
+const OrgChartCard = dynamic(
+  () =>
+    import("./components/org-chart-card").then((m) => ({
+      default: m.OrgChartCard,
+    })),
+  { loading: () => <div className="animate-pulse bg-muted h-40 rounded-lg" /> },
+);
+
+const ListView = dynamic(
+  () => import("./components/list-view").then((m) => ({ default: m.ListView })),
+  { loading: () => <div className="animate-pulse bg-muted h-40 rounded-lg" /> },
+);
 import {
   getNodeTypesByTreeType,
   INTERNAL_NODE_TYPES,
@@ -112,6 +126,7 @@ export default function OrgStructurePage() {
 
   const [viewMode, setViewMode] = useState<ViewMode>("tree");
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 200);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [orgchartCollapsed, setOrgchartCollapsed] = useState<Set<string>>(
     new Set(),
@@ -630,7 +645,7 @@ export default function OrgStructurePage() {
                           expanded={expanded}
                           onToggleExpand={handleToggleExpand}
                           onContextAction={handleContextAction}
-                          searchQuery={searchQuery}
+                          searchQuery={debouncedSearchQuery}
                           draggedId={draggedId}
                           onDragStart={setDraggedId}
                           onDrop={handleDrop}
@@ -661,7 +676,7 @@ export default function OrgStructurePage() {
                       nodes={nodes}
                       selectedId={selectedNode?.id ?? null}
                       onSelect={handleSelectNode}
-                      searchQuery={searchQuery}
+                      searchQuery={debouncedSearchQuery}
                     />
                   )}
                 </div>

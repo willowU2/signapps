@@ -73,7 +73,7 @@ export interface TreeNodeItemProps {
   boardMap?: Record<string, BoardInfo>;
 }
 
-export function TreeNodeItem({
+function TreeNodeItemInner({
   node,
   depth,
   selectedId,
@@ -286,3 +286,19 @@ export function TreeNodeItem({
     </div>
   );
 }
+
+export const TreeNodeItem = React.memo(
+  TreeNodeItemInner,
+  (prev, next) =>
+    prev.node.id === next.node.id &&
+    prev.node.name === next.node.name &&
+    prev.node.node_type === next.node.node_type &&
+    prev.node.code === next.node.code &&
+    prev.node.children === next.node.children &&
+    prev.selectedId === next.selectedId &&
+    prev.depth === next.depth &&
+    prev.expanded === next.expanded &&
+    prev.searchQuery === next.searchQuery &&
+    prev.draggedId === next.draggedId &&
+    prev.boardMap === next.boardMap,
+);
