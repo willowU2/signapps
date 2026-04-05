@@ -1,6 +1,6 @@
 //! SignApps Domain Controller — multi-protocol server.
 //!
-//! Launches LDAP (:389/:636), Kerberos KDC (:88/:464) listeners
+//! Launches LDAP (:389/:636), Kerberos KDC (:88/:464), and NTP (:10123) listeners
 //! on a shared tokio runtime with a single PostgreSQL connection pool.
 //! DNS is delegated to signapps-securelink.
 
@@ -78,6 +78,61 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    // NTP listener
+    let ntp_port = config.ntp_port;
+    let ntp_shutdown = shutdown_rx.clone();
+    let ntp_handle = tokio::spawn(async move {
+        use signapps_dns_server::ntp::NtpPacket;
+        use tokio::net::UdpSocket;
+
+        let socket = match UdpSocket::bind(format!("0.0.0.0:{}", ntp_port)).await {
+            Ok(s) => {
+                tracing::info!(port = ntp_port, "NTP server started");
+                s
+            }
+            Err(e) => {
+                tracing::error!(port = ntp_port, "NTP bind failed: {}", e);
+                return;
+            }
+        };
+
+        let mut buf = [0u8; 48];
+        let mut shutdown_rx = ntp_shutdown;
+
+        loop {
+            tokio::select! {
+                result = socket.recv_from(&mut buf) => {
+                    match result {
+                        Ok((len, addr)) if len >= 48 => {
+                            if let Some(client_pkt) = NtpPacket::from_bytes(&buf[..len]) {
+                                let response = NtpPacket::server_response(client_pkt.transmit_timestamp, 3);
+                                let resp_bytes = response.to_bytes();
+                                if let Err(e) = socket.send_to(&resp_bytes, addr).await {
+                                    tracing::warn!(peer = %addr, "NTP send error: {}", e);
+                                }
+                            }
+                        }
+                        Ok((len, addr)) => {
+                            tracing::debug!(peer = %addr, len = len, "NTP packet too short");
+                        }
+                        Err(e) => {
+                            tracing::error!("NTP recv error: {}", e);
+                        }
+                    }
+                }
+                _ = async {
+                    loop {
+                        shutdown_rx.changed().await.ok();
+                        if *shutdown_rx.borrow() { break; }
+                    }
+                } => {
+                    tracing::info!("NTP server shutting down");
+                    break;
+                }
+            }
+        }
+    });
+
     tracing::info!("All DC listeners started — press Ctrl+C to stop");
 
     // Wait for shutdown
@@ -86,7 +141,7 @@ async fn main() -> anyhow::Result<()> {
     let _ = shutdown_tx.send(true);
 
     // Wait for listeners to finish
-    let _ = tokio::join!(health_handle, ldap_handle, kdc_handle);
+    let _ = tokio::join!(health_handle, ldap_handle, kdc_handle, ntp_handle);
 
     tracing::info!("=== SignApps DC stopped ===");
     Ok(())
