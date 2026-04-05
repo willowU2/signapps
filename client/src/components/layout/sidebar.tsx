@@ -200,6 +200,13 @@ const essentialNavItems = [
     badgeKey: null,
   },
   {
+    href: "/admin/ai/lightrag",
+    icon: Brain,
+    label: "LightRAG",
+    color: "text-violet-500",
+    badgeKey: null,
+  },
+  {
     href: "/vault",
     icon: Shield,
     label: "Coffre-fort",
