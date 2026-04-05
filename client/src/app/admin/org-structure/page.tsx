@@ -566,7 +566,7 @@ export default function OrgStructurePage() {
         {currentTree ? (
           <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
             {!focusMode && (
-              <div className="flex-1 flex flex-col min-w-0">
+              <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 <StatsBar
                   nodeCount={nodes.length}
                   personCount={persons.length}
