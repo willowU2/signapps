@@ -619,7 +619,7 @@ export default function OrgStructurePage() {
                       </p>
                     </div>
                   ) : viewMode === "tree" ? (
-                    <div className="p-2 space-y-0.5">
+                    <div className="p-2 space-y-0.5 overflow-hidden">
                       {treeHierarchy.map((node) => (
                         <TreeNodeItem
                           key={node.id}
