@@ -6,6 +6,68 @@
 
 use std::collections::HashMap;
 
+/// Columns that must NEVER be included in knowledge graph entities.
+/// These contain passwords, tokens, keys, or other secrets.
+const SENSITIVE_FIELDS: &[&str] = &[
+    "password",
+    "password_hash",
+    "secret",
+    "token",
+    "key_data",
+    "bind_password",
+    "bind_password_encrypted",
+    "private_key",
+    "client_secret",
+    "api_key",
+    "mfa_secret",
+    "signature",
+    "certificate",
+    "credentials",
+    "salt",
+];
+
+/// Tables that must NEVER be seeded into the knowledge graph.
+const EXCLUDED_TABLES: &[&str] = &[
+    "identity.sessions",
+    "identity.api_keys",
+    "identity.sso_configs",
+    "identity.ldap_config",
+    "ad_principal_keys",
+    "ad_dns_records",
+    "ai.kg_entities",
+    "ai.kg_relations",
+    "ai.kg_communities",
+    "ai.document_vectors",
+    "ai.multimodal_vectors",
+];
+
+/// Remove any sensitive fields from a JSON value before storing in the KG.
+///
+/// Iterates all keys of a JSON object and drops any whose lowercase form
+/// contains a name from [`SENSITIVE_FIELDS`]. Non-object values pass through
+/// unchanged.
+///
+/// # Examples
+///
+/// ```
+/// let attrs = serde_json::json!({"username": "alice", "password_hash": "argon2…"});
+/// let clean = sanitize_attributes(attrs);
+/// assert!(clean.get("username").is_some());
+/// assert!(clean.get("password_hash").is_none());
+/// ```
+fn sanitize_attributes(attrs: serde_json::Value) -> serde_json::Value {
+    match attrs {
+        serde_json::Value::Object(mut map) => {
+            map.retain(|key, _| {
+                let key_lower = key.to_lowercase();
+                !SENSITIVE_FIELDS.iter().any(|s| key_lower.contains(s))
+            });
+            serde_json::Value::Object(map)
+        }
+        other => other,
+    }
+}
+
 use signapps_db::models::kg::{CreateRelation, UpsertEntity};
 use signapps_db::repositories::KgRepository;
 use signapps_db::DatabasePool;
@@ -168,11 +230,11 @@ where
                 entity_type: "person".to_string(),
                 description: Some(desc),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "username": user.username,
                     "email": user.email,
                     "user_id": user.id,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -261,10 +323,10 @@ where
                 entity_type: entity_type.to_string(),
                 description: Some(desc),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "node_id": node.id,
                     "node_type": node.node_type,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -375,10 +437,10 @@ where
                 entity_type: "group".to_string(),
                 description: Some(desc),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "group_id": group.id,
                     "group_type": group.group_type,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -577,12 +639,12 @@ where
                 entity_type: "event".to_string(),
                 description: Some(desc.clone()),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "event_id": row.id,
                     "event_type": row.event_type,
                     "start_time": row.start_time,
                     "end_time": row.end_time,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -691,10 +753,10 @@ where
                 entity_type: "mail_account".to_string(),
                 description: Some(desc),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "account_id": row.id,
                     "email_address": row.email_address,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -769,9 +831,9 @@ where
                 entity_type: "channel".to_string(),
                 description: Some(desc),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "channel_id": row.id,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -846,10 +908,10 @@ where
                 entity_type: "document".to_string(),
                 description: Some(desc),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "document_id": row.id,
                     "doc_type": row.doc_type,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -926,11 +988,11 @@ where
                 entity_type: "file".to_string(),
                 description: Some(desc),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "file_id": row.id,
                     "content_type": row.content_type,
                     "bucket": row.bucket,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -1015,13 +1077,13 @@ where
                 entity_type: "device".to_string(),
                 description: Some(desc),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "hardware_id": row.id,
                     "device_type": row.device_type,
                     "manufacturer": row.manufacturer,
                     "model": row.model,
                     "status": row.status,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -1107,14 +1169,14 @@ where
                 entity_type: "ticket".to_string(),
                 description: Some(desc),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "ticket_id": row.id,
                     "number": row.number,
                     "status": row.status,
                     "priority": row.priority,
                     "category": row.category,
                     "requester_name": row.requester_name,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -1192,12 +1254,12 @@ where
                 entity_type: "lead".to_string(),
                 description: Some(desc),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "lead_id": row.id,
                     "company": row.company,
                     "status": row.status,
                     "email": row.email,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -1281,11 +1343,11 @@ where
                 entity_type: "social_post".to_string(),
                 description: Some(desc),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "post_id": row.id,
                     "status": row.status,
                     "published_at": row.published_at,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -1361,10 +1423,10 @@ where
                 entity_type: "meeting".to_string(),
                 description: Some(desc),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "room_id": row.id,
                     "created_by": row.created_by,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -1439,9 +1501,9 @@ where
                 entity_type: "form".to_string(),
                 description: Some(desc),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "form_id": row.id,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -1526,13 +1588,13 @@ where
                 entity_type: "invoice".to_string(),
                 description: Some(desc),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "invoice_id": row.id,
                     "number": row.number,
                     "status": row.status,
                     "total_cents": row.total_cents,
                     "currency": row.currency,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -1607,9 +1669,9 @@ where
                 entity_type: "course".to_string(),
                 description: Some(desc),
                 source_document_id: None,
-                attributes: Some(serde_json::json!({
+                attributes: Some(sanitize_attributes(serde_json::json!({
                     "course_id": row.id,
-                })),
+                }))),
             },
             &embedding,
         )
@@ -1638,5 +1700,69 @@ mod tests {
         };
         let json = serde_json::to_string(&r).unwrap();
         assert!(json.contains("entities_created"));
+    }
+
+    #[test]
+    fn sanitize_removes_passwords() {
+        let attrs = serde_json::json!({
+            "username": "admin",
+            "password_hash": "argon2...",
+            "email": "admin@example.com",
+            "mfa_secret": "JBSWY3DPEHPK3PXP"
+        });
+        let clean = sanitize_attributes(attrs);
+        assert!(clean.get("username").is_some());
+        assert!(clean.get("email").is_some());
+        assert!(clean.get("password_hash").is_none());
+        assert!(clean.get("mfa_secret").is_none());
+    }
+
+    #[test]
+    fn sanitize_removes_all_sensitive_variants() {
+        let attrs = serde_json::json!({
+            "id": "abc123",
+            "secret": "topsecret",
+            "token": "jwt.token.here",
+            "key_data": "binary-key",
+            "client_secret": "oauth-secret",
+            "certificate": "-----BEGIN CERT-----",
+            "salt": "random-salt",
+            "safe_field": "this is fine",
+        });
+        let clean = sanitize_attributes(attrs);
+        assert!(clean.get("id").is_some());
+        assert!(clean.get("safe_field").is_some());
+        assert!(clean.get("secret").is_none());
+        assert!(clean.get("token").is_none());
+        assert!(clean.get("key_data").is_none());
+        assert!(clean.get("client_secret").is_none());
+        assert!(clean.get("certificate").is_none());
+        assert!(clean.get("salt").is_none());
+    }
+
+    #[test]
+    fn sanitize_non_object_passthrough() {
+        let val = serde_json::Value::String("plain string".to_string());
+        let result = sanitize_attributes(val.clone());
+        assert_eq!(result, val);
+    }
+
+    #[test]
+    fn excluded_tables_contains_sensitive() {
+        assert!(EXCLUDED_TABLES.contains(&"identity.sessions"));
+        assert!(EXCLUDED_TABLES.contains(&"identity.api_keys"));
+        assert!(EXCLUDED_TABLES.contains(&"identity.sso_configs"));
+        assert!(EXCLUDED_TABLES.contains(&"identity.ldap_config"));
+        assert!(EXCLUDED_TABLES.contains(&"ad_principal_keys"));
+        assert!(EXCLUDED_TABLES.contains(&"ai.kg_entities"));
+    }
+
+    #[test]
+    fn sensitive_fields_covers_common_secrets() {
+        assert!(SENSITIVE_FIELDS.contains(&"password_hash"));
+        assert!(SENSITIVE_FIELDS.contains(&"mfa_secret"));
+        assert!(SENSITIVE_FIELDS.contains(&"api_key"));
+        assert!(SENSITIVE_FIELDS.contains(&"private_key"));
+        assert!(SENSITIVE_FIELDS.contains(&"bind_password"));
     }
 }

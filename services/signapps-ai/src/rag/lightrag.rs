@@ -174,6 +174,13 @@ Rules:
 - Relations should connect entities from the same text
 - Return valid JSON only, no markdown
 
+SECURITY: NEVER extract or include the following in entities or relations:
+- Passwords, password hashes, or authentication tokens
+- API keys, secret keys, or encryption keys
+- Private certificates or credentials
+- Session tokens or MFA secrets
+If you encounter such data, skip it entirely.
+
 Text:
 {text}"#;
 
@@ -227,13 +234,17 @@ where
     // Strip markdown code fences that some LLMs add (e.g. ```json ... ``` or ``` ... ```)
     let json_str = strip_markdown_fences(response.trim());
 
-    let result: ExtractionResult = serde_json::from_str(json_str).unwrap_or_else(|e| {
+    let mut result: ExtractionResult = serde_json::from_str(json_str).unwrap_or_else(|e| {
         tracing::warn!(error = %e, "Failed to parse extraction result, returning empty");
         ExtractionResult {
             entities: vec![],
             relations: vec![],
         }
     });
+
+    // Post-extraction security filter: remove any entity/relation that may
+    // contain sensitive data (passwords, keys, tokens, etc.)
+    filter_sensitive_entities(&mut result);
 
     tracing::info!(
         entities = result.entities.len(),
@@ -529,6 +540,54 @@ where
     })
 }
 
+// ── Security filters ─────────────────────────────────────────────────────────
+
+/// Filter out entities that might contain sensitive data.
+///
+/// Removes any entity whose name or description contains a sensitive pattern
+/// (password, secret, token, key, credential, certificate, api_key, mfa).
+/// Relations referencing filtered entities are removed in a second pass.
+///
+/// # Examples
+///
+/// ```
+/// let mut result = ExtractionResult {
+///     entities: vec![
+///         ExtractedEntity { name: "Admin User".into(), entity_type: "person".into(), description: "Administrator".into() },
+///         ExtractedEntity { name: "API Key".into(), entity_type: "concept".into(), description: "An API key".into() },
+///     ],
+///     relations: vec![],
+/// };
+/// filter_sensitive_entities(&mut result);
+/// assert_eq!(result.entities.len(), 1);
+/// assert_eq!(result.entities[0].name, "Admin User");
+/// ```
+///
+/// # Panics
+///
+/// No panics possible — this function only performs in-place filtering.
+fn filter_sensitive_entities(result: &mut ExtractionResult) {
+    let sensitive_patterns = [
+        "password", "secret", "token", "api_key", "mfa",
+        "credential", "certificate", "private_key",
+    ];
+
+    result.entities.retain(|e| {
+        let name_lower = e.name.to_lowercase();
+        let desc_lower = e.description.to_lowercase();
+        !sensitive_patterns
+            .iter()
+            .any(|p| name_lower.contains(p) || desc_lower.contains(p))
+    });
+
+    // Remove relations whose source or target was filtered out
+    let entity_names: std::collections::HashSet<String> =
+        result.entities.iter().map(|e| e.name.clone()).collect();
+    result.relations.retain(|r| {
+        entity_names.contains(&r.source) && entity_names.contains(&r.target)
+    });
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /// Strip markdown code fences from an LLM response.
@@ -585,6 +644,73 @@ fn chunk_text(text: &str, max_chars: usize) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn filter_sensitive_entities_removes_secrets() {
+        let mut result = ExtractionResult {
+            entities: vec![
+                ExtractedEntity {
+                    name: "Admin User".into(),
+                    entity_type: "person".into(),
+                    description: "System administrator".into(),
+                },
+                ExtractedEntity {
+                    name: "API Key Manager".into(),
+                    entity_type: "concept".into(),
+                    description: "Manages API keys and secrets".into(),
+                },
+                ExtractedEntity {
+                    name: "Password Policy".into(),
+                    entity_type: "concept".into(),
+                    description: "Defines password rules".into(),
+                },
+            ],
+            relations: vec![ExtractedRelation {
+                source: "Admin User".into(),
+                target: "API Key Manager".into(),
+                relation_type: "manages".into(),
+                description: "Admin manages keys".into(),
+            }],
+        };
+        filter_sensitive_entities(&mut result);
+        assert_eq!(result.entities.len(), 1, "Only 'Admin User' should remain");
+        assert_eq!(result.entities[0].name, "Admin User");
+        assert_eq!(result.relations.len(), 0, "Relation should be removed (target filtered)");
+    }
+
+    #[test]
+    fn filter_sensitive_entities_preserves_safe_entities() {
+        let mut result = ExtractionResult {
+            entities: vec![
+                ExtractedEntity {
+                    name: "Rust Programming Language".into(),
+                    entity_type: "technology".into(),
+                    description: "A systems programming language".into(),
+                },
+                ExtractedEntity {
+                    name: "Axum Framework".into(),
+                    entity_type: "technology".into(),
+                    description: "A web application framework".into(),
+                },
+            ],
+            relations: vec![ExtractedRelation {
+                source: "Axum Framework".into(),
+                target: "Rust Programming Language".into(),
+                relation_type: "depends_on".into(),
+                description: "Axum is built on Rust".into(),
+            }],
+        };
+        filter_sensitive_entities(&mut result);
+        assert_eq!(result.entities.len(), 2);
+        assert_eq!(result.relations.len(), 1);
+    }
+
+    #[test]
+    fn extraction_prompt_has_security_instruction() {
+        assert!(EXTRACTION_PROMPT.contains("SECURITY"));
+        assert!(EXTRACTION_PROMPT.contains("Passwords"));
+        assert!(EXTRACTION_PROMPT.contains("API keys"));
+    }
 
     #[test]
     fn chunk_text_splits_at_paragraphs() {
