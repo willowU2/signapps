@@ -1,45 +1,125 @@
 @media print {
   /* ──────────── Global: Hide non-content elements ──────────── */
-  nav, .sidebar, header, footer,
-  .toast, .dialog-overlay,
-  .mobile-bottom-nav, .feedback-widget,
-  .command-palette, .omni-search,
+  nav,
+  .sidebar,
+  .right-sidebar,
+  header,
+  footer,
+  .ai-chat-bar,
+  .toast,
+  .dialog-overlay,
+  .mobile-bottom-nav,
+  .feedback-widget,
+  .command-palette,
+  .omni-search,
+  [role="navigation"],
+  [aria-label="Navigation principale"],
   [data-no-print],
-  .no-print { display: none !important; }
+  .no-print {
+    display: none !important;
+  }
 
-  /* Keep print buttons hidden but don't hide ALL buttons */
+  /* Hide all buttons except those explicitly marked for print */
+  button:not([data-print]),
   button.no-print,
-  [data-no-print] button { display: none !important; }
+  [data-no-print] button {
+    display: none !important;
+  }
 
   /* Reset layout — remove sidebar offsets */
-  body { font-size: 12pt; color: black !important; background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  main { margin: 0 !important; padding: 1cm !important; width: 100% !important; max-width: none !important; }
+  body {
+    font-size: 12pt;
+    color: black !important;
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  main {
+    margin: 0 !important;
+    padding: 1cm !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
 
   /* Remove parent flex offsets from AppLayout sidebar padding */
-  .flex.h-screen { padding-left: 0 !important; padding-right: 0 !important; }
+  .flex.h-screen {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
 
   /* Remove shadows and borders for cleaner print */
-  .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl,
-  .shadow-premium, .shadow-glass, .shadow-card { box-shadow: none !important; }
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl,
+  .shadow-2xl,
+  .shadow-premium,
+  .shadow-glass,
+  .shadow-card {
+    box-shadow: none !important;
+  }
 
   /* Links */
-  a { text-decoration: underline; color: black; }
-  a[href]::after { content: " (" attr(href) ")"; font-size: 0.8em; color: #666; }
-  a[href^="#"]::after, a[href^="javascript"]::after { content: ""; }
+  a {
+    text-decoration: underline;
+    color: black;
+  }
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+  a[href^="#"]::after,
+  a[href^="javascript"]::after,
+  a[href^="/"]::after {
+    content: "";
+  }
 
   /* Tables */
-  table { border-collapse: collapse; width: 100%; }
-  th, td { border: 1px solid #ddd !important; padding: 6px 8px; }
-  thead { display: table-header-group; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th,
+  td {
+    border: 1px solid #ddd !important;
+    padding: 6px 8px;
+  }
+  thead {
+    display: table-header-group;
+  }
 
   /* Page breaks */
-  h1, h2, h3 { page-break-after: avoid; }
-  table, figure, img { page-break-inside: avoid; }
-  .page-break { page-break-before: always; }
+  h1,
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
+  table,
+  figure,
+  img {
+    page-break-inside: avoid;
+  }
+  .page-break {
+    page-break-before: always;
+  }
 
   /* Cards in print */
-  .rounded-xl, .rounded-lg, .rounded-2xl { border-radius: 0 !important; }
-  .bg-card { background: white !important; border: 1px solid #eee !important; }
+  .rounded-xl,
+  .rounded-lg,
+  .rounded-2xl {
+    border-radius: 0 !important;
+  }
+  .bg-card {
+    background: white !important;
+    border: 1px solid #eee !important;
+  }
+  .card,
+  [class*="Card"] {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    break-inside: avoid;
+  }
 
   /* ──────────── Print header (injected by print buttons) ──────────── */
   .print-header {
@@ -49,12 +129,25 @@
     padding-bottom: 0.5cm;
     border-bottom: 2px solid #1a73e8;
   }
-  .print-header h1 { font-size: 18pt; color: #1a73e8; margin: 0 0 4px; }
-  .print-header p { font-size: 10pt; color: #666; margin: 0; }
+  .print-header h1 {
+    font-size: 18pt;
+    color: #1a73e8;
+    margin: 0 0 4px;
+  }
+  .print-header p {
+    font-size: 10pt;
+    color: #666;
+    margin: 0;
+  }
 
   /* ──────────── Dashboard print ──────────── */
-  .dashboard-print-content .grid { display: block !important; }
-  .dashboard-print-content .grid > * { margin-bottom: 1em; page-break-inside: avoid; }
+  .dashboard-print-content .grid {
+    display: block !important;
+  }
+  .dashboard-print-content .grid > * {
+    margin-bottom: 1em;
+    page-break-inside: avoid;
+  }
 
   /* ──────────── Contacts print ──────────── */
   .contacts-print-table {
@@ -67,8 +160,13 @@
     text-align: left;
   }
   /* Hide action columns and checkboxes in contacts print */
-  .contacts-print-hide { display: none !important; }
+  .contacts-print-hide {
+    display: none !important;
+  }
 
   /* ──────────── Calendar print ──────────── */
-  @page { size: A4 portrait; margin: 1.5cm; }
+  @page {
+    size: A4 portrait;
+    margin: 1.5cm;
+  }
 }
