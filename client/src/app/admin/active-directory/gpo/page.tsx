@@ -283,7 +283,7 @@ export default function AdGpoPage() {
                             </TableCell>
                             <TableCell>
                               {gpo.machine_enabled ? (
-                                <Badge className="bg-green-100 text-green-800 border-green-200 text-[10px]">
+                                <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800 text-[10px]">
                                   Active
                                 </Badge>
                               ) : (
@@ -311,7 +311,7 @@ export default function AdGpoPage() {
                             </TableCell>
                             <TableCell>
                               {gpo.enabled ? (
-                                <Badge className="bg-green-100 text-green-800 border-green-200">
+                                <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800">
                                   Activee
                                 </Badge>
                               ) : (
@@ -332,7 +332,7 @@ export default function AdGpoPage() {
                                   onClick={() => handleToggle(gpo)}
                                 >
                                   {gpo.enabled ? (
-                                    <ToggleRight className="h-4 w-4 text-green-600" />
+                                    <ToggleRight className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                                   ) : (
                                     <ToggleLeft className="h-4 w-4 text-muted-foreground" />
                                   )}
@@ -437,7 +437,7 @@ export default function AdGpoPage() {
               <AlertDialogTitle>Supprimer la GPO</AlertDialogTitle>
               <AlertDialogDescription>
                 {deleteTarget && isDefaultPolicy(deleteTarget.display_name) && (
-                  <span className="block mb-2 font-medium text-amber-600">
+                  <span className="block mb-2 font-medium text-amber-600 dark:text-amber-400">
                     Attention : il s&apos;agit d&apos;une politique systeme par
                     defaut. Sa suppression peut affecter le fonctionnement du
                     domaine.

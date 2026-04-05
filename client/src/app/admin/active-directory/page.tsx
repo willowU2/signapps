@@ -43,6 +43,8 @@ import {
   RefreshCw,
   CheckCircle,
   XCircle,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -58,7 +60,12 @@ import {
 export default function ActiveDirectoryPage() {
   usePageTitle("Active Directory — Administration");
 
-  const { data: domains = [], refetch: refetchDomains } = useAdDomains();
+  const {
+    data: domains = [],
+    isLoading: domainsLoading,
+    isError: domainsError,
+    refetch: refetchDomains,
+  } = useAdDomains();
   const { data: dcStatus } = useDcStatus();
   const createDomain = useCreateDomain();
   const deleteDomain = useDeleteDomain();
@@ -115,6 +122,49 @@ export default function ActiveDirectoryPage() {
       toast.error(`Erreur: ${e instanceof Error ? e.message : "Echec"}`);
     }
   };
+
+  if (domainsLoading) {
+    return (
+      <AppLayout>
+        <div className="space-y-6">
+          <PageHeader
+            title="Active Directory"
+            description="Gestion du Domain Controller, domaines, Kerberos, DNS et GPO"
+            icon={<Network className="h-5 w-5" />}
+          />
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (domainsError) {
+    return (
+      <AppLayout>
+        <div className="space-y-6">
+          <PageHeader
+            title="Active Directory"
+            description="Gestion du Domain Controller, domaines, Kerberos, DNS et GPO"
+            icon={<Network className="h-5 w-5" />}
+          />
+          <div className="flex flex-col items-center justify-center py-12">
+            <AlertTriangle className="h-8 w-8 text-destructive mb-3" />
+            <p className="text-sm font-medium">Erreur de chargement</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => refetchDomains()}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" /> Reessayer
+            </Button>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -306,7 +356,7 @@ export default function ActiveDirectoryPage() {
                       <TableRow key={domain.id}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-blue-500" />
+                            <Globe className="h-4 w-4 text-primary" />
                             {domain.dns_name}
                             {domain.forest_root && (
                               <Badge
