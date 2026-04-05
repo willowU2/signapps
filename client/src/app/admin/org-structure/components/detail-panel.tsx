@@ -243,7 +243,7 @@ export function DetailPanel({
         {/* Categorized TabsList */}
         <TabsList
           className={cn(
-            "mx-3 mt-2 shrink-0 w-auto h-auto flex flex-wrap justify-start gap-0.5 bg-transparent p-0 border-b border-border",
+            "mx-3 mt-2 pb-2 shrink-0 w-auto h-auto flex flex-wrap justify-start gap-0.5 bg-transparent p-0 border-b border-border",
             focusMode && "mx-6",
           )}
         >
@@ -284,7 +284,7 @@ export function DetailPanel({
           )}
         </TabsList>
 
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex-1 overflow-y-auto min-h-0 mt-3">
           {/* Details tab */}
           <TabsContent value="details" className="mt-0">
             <DetailsTab
