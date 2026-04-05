@@ -151,6 +151,203 @@ pub async fn delete_domain(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// List DNS zones for a domain.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the database query fails.
+#[tracing::instrument(skip_all)]
+pub async fn list_dns_zones(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(domain_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let zones: Vec<signapps_db::models::ad_dns::AdDnsZone> = sqlx::query_as(
+        "SELECT * FROM ad_dns_zones WHERE domain_id = $1 ORDER BY zone_name",
+    )
+    .bind(domain_id)
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list DNS zones: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    Ok(Json(json!(zones)))
+}
+
+/// List DNS records for a zone.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the database query fails.
+#[tracing::instrument(skip_all)]
+pub async fn list_dns_records(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(zone_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let records: Vec<signapps_db::models::ad_dns::AdDnsRecord> = sqlx::query_as(
+        "SELECT * FROM ad_dns_records WHERE zone_id = $1 ORDER BY name, record_type",
+    )
+    .bind(zone_id)
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list DNS records: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    Ok(Json(json!(records)))
+}
+
+/// List Kerberos principal keys for a domain (key material excluded).
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the database query fails.
+#[tracing::instrument(skip_all)]
+pub async fn list_keys(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(domain_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let keys: Vec<serde_json::Value> = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            String,
+            i32,
+            i32,
+            Option<String>,
+            Option<Uuid>,
+            chrono::DateTime<chrono::Utc>,
+        ),
+    >(
+        "SELECT id, principal_name, principal_type, key_version, enc_type, salt, entity_id, \
+         created_at FROM ad_principal_keys WHERE domain_id = $1 ORDER BY principal_name, enc_type",
+    )
+    .bind(domain_id)
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list Kerberos keys: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?
+    .into_iter()
+    .map(|(id, name, ptype, version, enc, salt, entity, created)| {
+        json!({
+            "id": id,
+            "principal_name": name,
+            "principal_type": ptype,
+            "key_version": version,
+            "enc_type": enc,
+            "salt": salt,
+            "entity_id": entity,
+            "created_at": created,
+        })
+    })
+    .collect();
+    Ok(Json(json!(keys)))
+}
+
+/// List computer accounts (org nodes with type `computer`) for a domain.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the database query fails.
+#[tracing::instrument(skip_all)]
+pub async fn list_computers(
+    State(state): State<AppState>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(_domain_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let computers: Vec<serde_json::Value> = sqlx::query_as::<
+        _,
+        (Uuid, String, Option<String>, chrono::DateTime<chrono::Utc>),
+    >(
+        "SELECT id, name, description, created_at FROM workforce_org_nodes \
+         WHERE tenant_id = $1 AND node_type = 'computer' AND is_active = true ORDER BY name",
+    )
+    .bind(ctx.tenant_id)
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list computer accounts: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?
+    .into_iter()
+    .map(|(id, name, _desc, created)| {
+        let none: Option<String> = None;
+        json!({
+            "id": id,
+            "name": name,
+            "dns_hostname": none,
+            "os": none,
+            "os_version": none,
+            "last_logon": none,
+            "created_at": created,
+        })
+    })
+    .collect();
+    Ok(Json(json!(computers)))
+}
+
+/// List GPOs (governance policies) for a domain.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the database query fails.
+#[tracing::instrument(skip_all)]
+pub async fn list_gpos(
+    State(state): State<AppState>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(_domain_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let gpos: Vec<serde_json::Value> = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            Option<String>,
+            String,
+            i32,
+            bool,
+            bool,
+            serde_json::Value,
+        ),
+    >(
+        "SELECT id, name, description, domain, priority, is_enforced, is_disabled, settings \
+         FROM workforce_org_policies WHERE tenant_id = $1 AND domain = 'governance' \
+         ORDER BY priority DESC, name",
+    )
+    .bind(ctx.tenant_id)
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list GPOs: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?
+    .into_iter()
+    .map(|(id, name, _desc, _domain, _priority, enforced, disabled, _settings)| {
+        json!({
+            "id": id,
+            "display_name": name,
+            "version": 1,
+            "enabled": !disabled,
+            "machine_enabled": enforced,
+            "user_enabled": true,
+            "linked_ous": [],
+        })
+    })
+    .collect();
+    Ok(Json(json!(gpos)))
+}
+
 /// Get DC status.
 #[tracing::instrument(skip_all)]
 pub async fn dc_status() -> impl IntoResponse {

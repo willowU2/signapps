@@ -172,6 +172,11 @@ fn create_router(state: AppState) -> Router {
         .route("/domains", get(handlers::ad::list_domains))
         .route("/domains", post(handlers::ad::create_domain))
         .route("/domains/:id", delete(handlers::ad::delete_domain))
+        .route("/domains/:id/dns/zones", get(handlers::ad::list_dns_zones))
+        .route("/domains/:id/keys", get(handlers::ad::list_keys))
+        .route("/domains/:id/computers", get(handlers::ad::list_computers))
+        .route("/domains/:id/gpos", get(handlers::ad::list_gpos))
+        .route("/dns/zones/:zone_id/records", get(handlers::ad::list_dns_records))
         .route("/status", get(handlers::ad::dc_status))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
