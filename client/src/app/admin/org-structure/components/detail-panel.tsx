@@ -243,7 +243,7 @@ export function DetailPanel({
         {/* Categorized TabsList */}
         <TabsList
           className={cn(
-            "mx-4 mt-2 shrink-0 w-auto h-auto flex flex-nowrap justify-start gap-1 bg-transparent p-0 border-b border-border overflow-x-auto scrollbar-none",
+            "mx-3 mt-2 shrink-0 w-auto h-auto flex flex-wrap justify-start gap-0.5 bg-transparent p-0 border-b border-border",
             focusMode && "mx-6",
           )}
         >
