@@ -5,7 +5,7 @@
 //! embeddings, then retrieve relevant context using dual-level search
 //! (local entity-based + global relation-based).
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use serde::{Deserialize, Serialize};
 use signapps_db::models::kg::{CreateRelation, EntityWithNeighbors, UpsertEntity};
@@ -538,6 +538,162 @@ where
             communities_total: stats.communities,
         },
     })
+}
+
+// ── Community Detection ───────────────────────────────────────────────────────
+
+/// Build communities from the knowledge graph using connected component analysis.
+///
+/// Groups related entities into communities based on graph connectivity, then
+/// persists each community with an embedding for later retrieval.
+///
+/// # Algorithm
+///
+/// 1. Load all entities and relations for the collection.
+/// 2. Build an adjacency list (undirected).
+/// 3. Find connected components using BFS.
+/// 4. For each component with `>= 2` entities, create a community record.
+/// 5. Embed the community summary and store via [`KgRepository::create_community`].
+///
+/// # Errors
+///
+/// Returns `Error::Database` if entity/relation loading or community insert fails.
+/// Propagates embedding errors from `embed_fn`.
+///
+/// # Panics
+///
+/// No panics possible — all errors are propagated via `Result`.
+#[tracing::instrument(skip(pool, embed_fn))]
+pub async fn build_communities<E, EFut>(
+    pool: &DatabasePool,
+    collection: &str,
+    embed_fn: E,
+) -> signapps_common::Result<usize>
+where
+    E: Fn(String) -> EFut + Clone,
+    EFut: std::future::Future<Output = signapps_common::Result<Vec<f32>>>,
+{
+    // Load all entities (id, name, entity_type)
+    let entities: Vec<(uuid::Uuid, String, String)> = sqlx::query_as(
+        "SELECT id, name, entity_type FROM ai.kg_entities WHERE collection = $1",
+    )
+    .bind(collection)
+    .fetch_all(pool.inner())
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    // Load all relations (source_entity_id, target_entity_id)
+    let relations: Vec<(uuid::Uuid, uuid::Uuid)> = sqlx::query_as(
+        "SELECT source_entity_id, target_entity_id FROM ai.kg_relations WHERE collection = $1",
+    )
+    .bind(collection)
+    .fetch_all(pool.inner())
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    if entities.is_empty() {
+        tracing::info!(collection = collection, "No entities found, skipping community detection");
+        return Ok(0);
+    }
+
+    // Build undirected adjacency list
+    let mut adj: HashMap<uuid::Uuid, HashSet<uuid::Uuid>> = HashMap::new();
+    for (src, tgt) in &relations {
+        adj.entry(*src).or_default().insert(*tgt);
+        adj.entry(*tgt).or_default().insert(*src);
+    }
+
+    // Find connected components via BFS
+    let mut visited: HashSet<uuid::Uuid> = HashSet::new();
+    let mut components: Vec<Vec<uuid::Uuid>> = Vec::new();
+
+    for (eid, _, _) in &entities {
+        if visited.contains(eid) {
+            continue;
+        }
+
+        let mut component = Vec::new();
+        let mut queue = VecDeque::new();
+        queue.push_back(*eid);
+        visited.insert(*eid);
+
+        while let Some(node) = queue.pop_front() {
+            component.push(node);
+            if let Some(neighbors) = adj.get(&node) {
+                for &n in neighbors {
+                    if !visited.contains(&n) {
+                        visited.insert(n);
+                        queue.push_back(n);
+                    }
+                }
+            }
+        }
+
+        // Only create communities for components with at least 2 entities
+        if component.len() >= 2 {
+            components.push(component);
+        }
+    }
+
+    // Entity metadata lookup
+    let entity_map: HashMap<uuid::Uuid, (&str, &str)> = entities
+        .iter()
+        .map(|(id, name, etype)| (*id, (name.as_str(), etype.as_str())))
+        .collect();
+
+    let mut created = 0usize;
+    for (level, component) in components.iter().enumerate() {
+        // Collect names and types from the component
+        let names: Vec<&str> = component
+            .iter()
+            .filter_map(|id| entity_map.get(id).map(|(name, _)| *name))
+            .take(5)
+            .collect();
+
+        let types: HashSet<&str> = component
+            .iter()
+            .filter_map(|id| entity_map.get(id).map(|(_, t)| *t))
+            .collect();
+
+        let title = if names.len() <= 3 {
+            names.join(", ")
+        } else {
+            format!("{}, {} et {} autres", names[0], names[1], component.len() - 2)
+        };
+
+        let mut type_list: Vec<&str> = types.into_iter().collect();
+        type_list.sort_unstable();
+
+        let summary = format!(
+            "Communaute de {} entites ({}) incluant: {}",
+            component.len(),
+            type_list.join(", "),
+            names.join(", "),
+        );
+
+        let embedding = embed_fn.clone()(summary.clone()).await?;
+
+        KgRepository::create_community(
+            pool,
+            collection,
+            level as i32,
+            &title,
+            &summary,
+            component,
+            &embedding,
+        )
+        .await?;
+
+        created += 1;
+    }
+
+    tracing::info!(
+        collection = collection,
+        communities = created,
+        "Community detection complete"
+    );
+
+    Ok(created)
 }
 
 // ── Security filters ─────────────────────────────────────────────────────────

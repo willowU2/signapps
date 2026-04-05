@@ -13,7 +13,7 @@ use signapps_common::Result;
 use uuid::Uuid;
 
 use crate::llm::types::ChatMessage;
-use crate::rag::lightrag::{IndexResult, LightRagConfig, LightRagResult};
+use crate::rag::lightrag::{build_communities, IndexResult, LightRagConfig, LightRagResult};
 use crate::AppState;
 
 /// Request to index a document into the knowledge graph.
@@ -273,6 +273,67 @@ pub async fn lightrag_stats(
         entities: stats.entities,
         relations: stats.relations,
         communities: stats.communities,
+    }))
+}
+
+/// Request to build communities from the knowledge graph.
+///
+/// # Examples
+///
+/// ```json
+/// { "collection": "default" }
+/// ```
+#[derive(Debug, Deserialize)]
+pub struct CommunityRequest {
+    /// Knowledge base collection (defaults to `"default"`).
+    pub collection: Option<String>,
+}
+
+/// Response for a community detection operation.
+#[derive(Debug, Serialize)]
+pub struct CommunityResponse {
+    /// Always `true` on success.
+    pub success: bool,
+    /// Number of communities created.
+    pub communities_created: usize,
+    /// Collection that was processed.
+    pub collection: String,
+}
+
+/// POST /api/v1/ai/lightrag/communities — Build communities from entity clusters.
+///
+/// Runs connected component analysis on the knowledge graph for the given
+/// collection, then persists each component with `>= 2` entities as a community
+/// with a vector embedding. Idempotent: re-running will insert additional
+/// community rows; callers may wish to truncate `ai.kg_communities` first.
+///
+/// # Errors
+///
+/// Returns `500 Internal Server Error` if entity/relation loading, embedding,
+/// or the community insert fails.
+///
+/// # Panics
+///
+/// No panics possible — all errors are propagated via `Result`.
+#[tracing::instrument(skip_all)]
+pub async fn lightrag_communities(
+    State(state): State<AppState>,
+    Json(req): Json<CommunityRequest>,
+) -> Result<Json<CommunityResponse>> {
+    let collection = req.collection.unwrap_or_else(|| "default".to_string());
+
+    let embed_client = state.embeddings.clone();
+    let embed_fn = move |text: String| {
+        let client = embed_client.clone();
+        async move { client.embed(&text).await }
+    };
+
+    let count = build_communities(&state.pool, &collection, embed_fn).await?;
+
+    Ok(Json(CommunityResponse {
+        success: true,
+        communities_created: count,
+        collection,
     }))
 }
 
