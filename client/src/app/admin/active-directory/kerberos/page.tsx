@@ -41,6 +41,7 @@ import {
   Server,
   ShieldAlert,
 } from "lucide-react";
+import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 import { useAdDomains } from "@/hooks/use-active-directory";
 import { useAdKeys, useRotateKey } from "@/hooks/use-active-directory";
 import type { AdPrincipalKey } from "@/types/active-directory";
@@ -370,6 +371,13 @@ export default function AdKerberosPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
+        <PageBreadcrumb
+          items={[
+            { label: "Administration", href: "/admin" },
+            { label: "Active Directory", href: "/admin/active-directory" },
+            { label: "Kerberos" },
+          ]}
+        />
         <PageHeader
           title="Kerberos KDC"
           description="Gestion des principals, clés et tickets Kerberos"

@@ -58,6 +58,7 @@ import {
   Loader2,
   AlertTriangle,
 } from "lucide-react";
+import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 import {
   useAdDomains,
   useAdDnsZones,
@@ -411,6 +412,13 @@ export default function AdDnsPage() {
     return (
       <AppLayout>
         <div className="space-y-6">
+          <PageBreadcrumb
+            items={[
+              { label: "Administration", href: "/admin" },
+              { label: "Active Directory", href: "/admin/active-directory" },
+              { label: "Zones DNS" },
+            ]}
+          />
           <PageHeader
             title="Zones DNS"
             description="Gestion des zones et enregistrements DNS Active Directory"
@@ -428,6 +436,13 @@ export default function AdDnsPage() {
     return (
       <AppLayout>
         <div className="space-y-6">
+          <PageBreadcrumb
+            items={[
+              { label: "Administration", href: "/admin" },
+              { label: "Active Directory", href: "/admin/active-directory" },
+              { label: "Zones DNS" },
+            ]}
+          />
           <PageHeader
             title="Zones DNS"
             description="Gestion des zones et enregistrements DNS Active Directory"
@@ -453,6 +468,13 @@ export default function AdDnsPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
+        <PageBreadcrumb
+          items={[
+            { label: "Administration", href: "/admin" },
+            { label: "Active Directory", href: "/admin/active-directory" },
+            { label: "Zones DNS" },
+          ]}
+        />
         <PageHeader
           title="Zones DNS"
           description="Gestion des zones et enregistrements DNS Active Directory"

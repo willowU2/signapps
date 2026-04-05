@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { PageHeader } from "@/components/ui/page-header";
+import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -237,6 +238,13 @@ export default function LightRagPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
+        <PageBreadcrumb
+          items={[
+            { label: "Administration", href: "/admin" },
+            { label: "Intelligence Artificielle", href: "/ai" },
+            { label: "LightRAG" },
+          ]}
+        />
         <PageHeader
           title="LightRAG — Graphe de Connaissances"
           description="Recherche augmentee par graphe de connaissances — extraction d'entites, relations, et reponses contextuelles"
@@ -259,7 +267,7 @@ export default function LightRagPage() {
         />
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger-in">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Entites</CardTitle>

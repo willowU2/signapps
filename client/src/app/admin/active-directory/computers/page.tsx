@@ -40,6 +40,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Monitor, Search, Trash2, KeyRound, RefreshCw } from "lucide-react";
+import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 import { useAdDomains } from "@/hooks/use-active-directory";
 import { useAdComputers } from "@/hooks/use-active-directory";
 import type { ComputerAccount } from "@/types/active-directory";
@@ -99,6 +100,13 @@ export default function AdComputersPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
+        <PageBreadcrumb
+          items={[
+            { label: "Administration", href: "/admin" },
+            { label: "Active Directory", href: "/admin/active-directory" },
+            { label: "Ordinateurs" },
+          ]}
+        />
         <PageHeader
           title="Comptes ordinateurs"
           description="Machines jointes au domaine Active Directory"

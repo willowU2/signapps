@@ -4,6 +4,7 @@ import React from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { PageHeader } from "@/components/ui/page-header";
+import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -90,6 +91,13 @@ export default function AdSecurityPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
+        <PageBreadcrumb
+          items={[
+            { label: "Administration", href: "/admin" },
+            { label: "Active Directory", href: "/admin/active-directory" },
+            { label: "Securite" },
+          ]}
+        />
         <PageHeader
           title="Securite Active Directory"
           description="Audit de securite, politiques et recommandations"
@@ -97,7 +105,7 @@ export default function AdSecurityPage() {
         />
 
         {/* Score */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger-in">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Conformes</CardTitle>
@@ -141,7 +149,7 @@ export default function AdSecurityPage() {
         </div>
 
         {/* Policy Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger-in">
           <Card>
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">

@@ -57,6 +57,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
+import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 import {
   useAdDomains,
   useAdGpos,
@@ -132,6 +133,13 @@ export default function AdGpoPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
+        <PageBreadcrumb
+          items={[
+            { label: "Administration", href: "/admin" },
+            { label: "Active Directory", href: "/admin/active-directory" },
+            { label: "GPO" },
+          ]}
+        />
         <PageHeader
           title="Strategies de groupe (GPO)"
           description="Group Policy Objects pour la configuration des postes et utilisateurs"
