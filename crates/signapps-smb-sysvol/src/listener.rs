@@ -55,11 +55,78 @@ impl SmbListener {
             tokio::select! {
                 result = listener.accept() => {
                     match result {
-                        Ok((_stream, addr)) => {
+                        Ok((mut stream, addr)) => {
                             tracing::debug!(peer = %addr, "New SMB connection");
                             tokio::spawn(async move {
-                                // Read first 4 bytes to check for SMB2 magic
-                                tracing::debug!(peer = %addr, "SMB handler placeholder");
+                                use tokio::io::{AsyncReadExt, AsyncWriteExt};
+                                let mut buf = vec![0u8; 8192];
+
+                                match stream.read(&mut buf).await {
+                                    Ok(n) if n > 0 => {
+                                        let data = &buf[..n];
+
+                                        // Check for SMB2 magic (with or without NetBIOS header)
+                                        let is_smb = data.len() >= 8
+                                            && (super::protocol::Smb2Header::is_smb2(data)
+                                                || (data[0] == 0x00
+                                                    && data.len() > 4
+                                                    && super::protocol::Smb2Header::is_smb2(
+                                                        &data[4..],
+                                                    ))
+                                                || (data.len() >= 4
+                                                    && data[0] == 0xFF
+                                                    && data[1] == b'S'));
+
+                                        if is_smb {
+                                            match super::protocol::parse_negotiate_request(data) {
+                                                Ok(dialects) => {
+                                                    tracing::info!(
+                                                        peer = %addr,
+                                                        dialects = ?dialects,
+                                                        "SMB Negotiate received"
+                                                    );
+                                                    let server_guid =
+                                                        uuid::Uuid::new_v4().into_bytes();
+                                                    let response =
+                                                        super::protocol::build_negotiate_response(
+                                                            &dialects,
+                                                            &server_guid,
+                                                        );
+                                                    if let Err(e) =
+                                                        stream.write_all(&response).await
+                                                    {
+                                                        tracing::warn!(
+                                                            peer = %addr,
+                                                            "SMB write error: {}",
+                                                            e
+                                                        );
+                                                    }
+                                                }
+                                                Err(e) => {
+                                                    tracing::debug!(
+                                                        peer = %addr,
+                                                        "Not an SMB negotiate: {}",
+                                                        e
+                                                    );
+                                                }
+                                            }
+                                        } else {
+                                            tracing::debug!(
+                                                peer = %addr,
+                                                "Unknown protocol on SMB port"
+                                            );
+                                        }
+                                    }
+                                    Ok(_) => {
+                                        tracing::debug!(
+                                            peer = %addr,
+                                            "SMB client disconnected immediately"
+                                        )
+                                    }
+                                    Err(e) => {
+                                        tracing::warn!(peer = %addr, "SMB read error: {}", e)
+                                    }
+                                }
                             });
                         }
                         Err(e) => tracing::error!("SMB accept error: {}", e),
