@@ -13,9 +13,7 @@ function isInputFocused(): boolean {
   const el = document.activeElement as HTMLElement | null;
   if (!el) return false;
   return (
-    el.tagName === "INPUT" ||
-    el.tagName === "TEXTAREA" ||
-    el.isContentEditable
+    el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable
   );
 }
 
@@ -46,14 +44,26 @@ export function getShortcutsList(pathname: string = "/"): KeyboardShortcut[] {
     { keys: "Ctrl+N", description: "Nouveau", category: "global" },
     { keys: "Ctrl+Shift+B", description: "Barre latérale", category: "global" },
     { keys: "Escape", description: "Fermer modale", category: "global" },
-    { keys: "G → D", description: "Aller au Dashboard", category: "navigation" },
+    {
+      keys: "G → D",
+      description: "Aller au Dashboard",
+      category: "navigation",
+    },
     { keys: "G → M", description: "Aller à Mail", category: "navigation" },
-    { keys: "G → C", description: "Aller au Calendrier", category: "navigation" },
+    {
+      keys: "G → C",
+      description: "Aller au Calendrier",
+      category: "navigation",
+    },
     { keys: "G → T", description: "Aller aux Tâches", category: "navigation" },
     { keys: "G → F", description: "Aller à Drive", category: "navigation" },
     { keys: "G → S", description: "Aller au Social", category: "navigation" },
     { keys: "G → B", description: "Aller à Billing", category: "navigation" },
-    { keys: "G → A", description: "Aller aux Settings", category: "navigation" },
+    {
+      keys: "G → A",
+      description: "Aller aux Settings",
+      category: "navigation",
+    },
   ];
 
   if (pathname.startsWith("/mail")) {
@@ -62,18 +72,29 @@ export function getShortcutsList(pathname: string = "/"): KeyboardShortcut[] {
       { keys: "R", description: "Répondre", category: "module" },
       { keys: "F", description: "Transférer", category: "module" },
     );
-  } else if (pathname.startsWith("/docs") || pathname.startsWith("/sheets") || pathname.startsWith("/slides") || pathname.startsWith("/design")) {
-    shortcuts.push(
-      { keys: "Ctrl+S", description: "Sauvegarder", category: "module" },
-    );
+  } else if (
+    pathname.startsWith("/docs") ||
+    pathname.startsWith("/sheets") ||
+    pathname.startsWith("/slides") ||
+    pathname.startsWith("/design")
+  ) {
+    shortcuts.push({
+      keys: "Ctrl+S",
+      description: "Sauvegarder",
+      category: "module",
+    });
   } else if (pathname.startsWith("/tasks")) {
-    shortcuts.push(
-      { keys: "N", description: "Nouvelle tâche", category: "module" },
-    );
+    shortcuts.push({
+      keys: "N",
+      description: "Nouvelle tâche",
+      category: "module",
+    });
   } else if (pathname.startsWith("/cal") || pathname.startsWith("/calendar")) {
-    shortcuts.push(
-      { keys: "N", description: "Nouvel événement", category: "module" },
-    );
+    shortcuts.push({
+      keys: "N",
+      description: "Nouvel événement",
+      category: "module",
+    });
   }
 
   return shortcuts;
@@ -153,6 +174,24 @@ export function useKeyboardShortcuts() {
         }
       }
 
+      // Alt+key navigation shortcuts
+      if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        const altNavMap: Record<string, string> = {
+          d: "/dashboard",
+          o: "/admin/org-structure",
+          m: "/mail",
+          c: "/cal",
+          a: "/admin/active-directory",
+          l: "/admin/ai/lightrag",
+        };
+        const dest = altNavMap[e.key.toLowerCase()];
+        if (dest) {
+          e.preventDefault();
+          router.push(dest);
+          return;
+        }
+      }
+
       // Skip non-ctrl shortcuts when typing in inputs
       if (isInputFocused()) return;
 
@@ -178,15 +217,30 @@ export function useKeyboardShortcuts() {
 
       // Module-specific shortcuts
       if (pathname.startsWith("/mail")) {
-        if (key === "c") { document.dispatchEvent(new CustomEvent("mail:compose")); return; }
-        if (key === "r") { document.dispatchEvent(new CustomEvent("mail:reply")); return; }
-        if (key === "f") { document.dispatchEvent(new CustomEvent("mail:forward")); return; }
+        if (key === "c") {
+          document.dispatchEvent(new CustomEvent("mail:compose"));
+          return;
+        }
+        if (key === "r") {
+          document.dispatchEvent(new CustomEvent("mail:reply"));
+          return;
+        }
+        if (key === "f") {
+          document.dispatchEvent(new CustomEvent("mail:forward"));
+          return;
+        }
       }
       if (pathname.startsWith("/tasks")) {
-        if (key === "n") { document.dispatchEvent(new CustomEvent("tasks:new")); return; }
+        if (key === "n") {
+          document.dispatchEvent(new CustomEvent("tasks:new"));
+          return;
+        }
       }
       if (pathname.startsWith("/cal") || pathname.startsWith("/calendar")) {
-        if (key === "n") { document.dispatchEvent(new CustomEvent("calendar:new")); return; }
+        if (key === "n") {
+          document.dispatchEvent(new CustomEvent("calendar:new"));
+          return;
+        }
       }
     }
 
@@ -197,5 +251,10 @@ export function useKeyboardShortcuts() {
     };
   }, [router, pathname, toggleOverlay]);
 
-  return { overlayOpen, setOverlayOpen, toggleOverlay, moduleName: getModuleName(pathname) };
+  return {
+    overlayOpen,
+    setOverlayOpen,
+    toggleOverlay,
+    moduleName: getModuleName(pathname),
+  };
 }

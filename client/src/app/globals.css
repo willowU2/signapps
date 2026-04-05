@@ -654,6 +654,29 @@ textarea:focus-visible,
   border-radius: 4px;
 }
 
+/* Skip to content link enhancement */
+.skip-link:focus {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+  .badge,
+  .btn,
+  .card {
+    border: 1px solid ButtonText;
+  }
+}
+
 /* ───────────── aria-live region styles ───────────── */
 [aria-live="polite"],
 [aria-live="assertive"] {

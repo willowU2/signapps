@@ -8,6 +8,7 @@ import { Header } from "./header";
 import { RightSidebar } from "./right-sidebar";
 import { AiChatBar } from "./ai-chat-bar";
 import { SkipLink } from "@/components/accessibility/skip-link";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
   const pathname = usePathname();
   const mainRef = useRef<HTMLElement>(null);
+
+  useKeyboardShortcuts();
 
   // Phase 5: Scroll to top on every navigation
   useEffect(() => {
