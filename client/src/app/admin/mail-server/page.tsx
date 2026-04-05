@@ -28,6 +28,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { PageHeader } from "@/components/ui/page-header";
 import { getClient, ServiceName } from "@/lib/api/factory";
 import { toast } from "sonner";
 import {
@@ -451,29 +452,24 @@ export default function MailServerPage() {
   return (
     <AppLayout>
       <div className="w-full space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Server className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-2xl font-bold">Serveur Mail Interne</h1>
-              <p className="text-sm text-muted-foreground">
-                Gestion du serveur mail natif SignApps
-              </p>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={refresh}
-            disabled={loading}
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
-            />
-            Actualiser
-          </Button>
-        </div>
+        <PageHeader
+          title="Serveur Mail Interne"
+          description="Gestion du serveur mail natif SignApps"
+          icon={<Mail className="h-5 w-5" />}
+          actions={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refresh}
+              disabled={loading}
+            >
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              />
+              Actualiser
+            </Button>
+          }
+        />
 
         {error && (
           <Card className="border-destructive/50 bg-destructive/5">

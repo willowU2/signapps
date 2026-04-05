@@ -1,28 +1,29 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Plus, Edit2, Trash2, Lock } from 'lucide-react';
-import { useRoleList, type Role } from '@/hooks/use-roles';
-import { RoleSheet } from '@/components/admin/role-sheet';
-import { RoleDeleteDialog } from '@/components/admin/role-delete-dialog';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { Plus, Edit2, Trash2, Lock } from "lucide-react";
+import { useRoleList, type Role } from "@/hooks/use-roles";
+import { RoleSheet } from "@/components/admin/role-sheet";
+import { RoleDeleteDialog } from "@/components/admin/role-delete-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 import {
   GenericDataTable,
   roleConfig,
   extendEntityConfig,
   type RoleEntity,
   type ActionConfig,
-} from '@/lib/data-table';
-import { usePageTitle } from '@/hooks/use-page-title';
+} from "@/lib/data-table";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function RolesPage() {
-  usePageTitle('Roles');
+  usePageTitle("Roles");
   const { data: roles, isLoading, error } = useRoleList();
 
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -47,25 +48,25 @@ export default function RolesPage() {
   // Extend role config with custom actions
   const actions: ActionConfig<RoleEntity>[] = [
     {
-      id: 'edit',
-      label: 'Modifier',
+      id: "edit",
+      label: "Modifier",
       icon: Edit2,
       onClick: (row) => handleEdit(row as Role),
     },
     {
-      id: 'delete',
-      label: 'Supprimer',
+      id: "delete",
+      label: "Supprimer",
       icon: Trash2,
-      variant: 'destructive',
+      variant: "destructive",
       onClick: (row) => handleDelete(row as Role),
       visible: (row) => !row.is_system,
     },
   ];
 
   // Custom cell for the name column to show system role indicator
-  const extendedConfig = extendEntityConfig<RoleEntity>('roles', {
+  const extendedConfig = extendEntityConfig<RoleEntity>("roles", {
     columns: roleConfig.columns.map((col) =>
-      col.id === 'name'
+      col.id === "name"
         ? {
             ...col,
             cell: ({ row }) => (
@@ -86,36 +87,36 @@ export default function RolesPage() {
               </div>
             ),
           }
-        : col
+        : col,
     ),
   });
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Rôles & Permissions</h1>
-          <p className="text-muted-foreground mt-2">
-            Gérez les rôles RBAC et configurez les permissions d'accès aux ressources.
-          </p>
-        </div>
-        <Button onClick={handleCreate} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nouveau Rôle
-        </Button>
-      </div>
+      <PageHeader
+        title="Rôles & Permissions"
+        description="Gérez les rôles RBAC et configurez les permissions d'accès aux ressources."
+        icon={<Lock className="h-5 w-5" />}
+        actions={
+          <Button onClick={handleCreate} size="sm">
+            <Plus className="h-4 w-4" />
+            Nouveau Rôle
+          </Button>
+        }
+      />
 
       <GenericDataTable
         config={extendedConfig}
         data={(roles as RoleEntity[]) ?? []}
         isLoading={isLoading}
-        error={error ? 'Erreur lors du chargement des rôles.' : undefined}
+        error={error ? "Erreur lors du chargement des rôles." : undefined}
         actions={actions}
         emptyState={{
-          title: 'Aucun rôle trouvé',
-          description: "Créez votre premier rôle pour commencer à gérer les permissions.",
+          title: "Aucun rôle trouvé",
+          description:
+            "Créez votre premier rôle pour commencer à gérer les permissions.",
           action: {
-            label: 'Créer un rôle',
+            label: "Créer un rôle",
             onClick: handleCreate,
           },
         }}

@@ -42,6 +42,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { PageHeader } from "@/components/ui/page-header";
 
 interface LdapConfig {
   id: string;
@@ -270,20 +271,16 @@ export default function LdapPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              LDAP / Active Directory
-            </h1>
-            <p className="text-muted-foreground">
-              Configurez l'authentification et la synchronisation LDAP
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {config?.enabled && (
-              <>
+        <PageHeader
+          title="LDAP / Active Directory"
+          description="Configurez l'authentification et la synchronisation LDAP"
+          icon={<Server className="h-5 w-5" />}
+          actions={
+            config?.enabled ? (
+              <div className="flex gap-2">
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={testConnection}
                   disabled={testing}
                 >
@@ -293,7 +290,7 @@ export default function LdapPage() {
                       secondaryColor="rgba(128,128,128,0.2)"
                       color="currentColor"
                       speed={120}
-                      className="mr-2 h-4 w-4 "
+                      className="mr-2 h-4 w-4"
                     />
                   ) : (
                     <Play className="mr-2 h-4 w-4" />
@@ -302,6 +299,7 @@ export default function LdapPage() {
                 </Button>
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={syncUsers}
                   disabled={syncing}
                 >
@@ -311,17 +309,17 @@ export default function LdapPage() {
                       secondaryColor="rgba(128,128,128,0.2)"
                       color="currentColor"
                       speed={120}
-                      className="mr-2 h-4 w-4 "
+                      className="mr-2 h-4 w-4"
                     />
                   ) : (
                     <RefreshCw className="mr-2 h-4 w-4" />
                   )}
                   Synchroniser
                 </Button>
-              </>
-            )}
-          </div>
-        </div>
+              </div>
+            ) : undefined
+          }
+        />
 
         {testResult && (
           <Card

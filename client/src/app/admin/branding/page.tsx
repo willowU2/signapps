@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * WL1: Admin Branding Page
@@ -13,15 +13,16 @@
  * immediately via CSS variables injected in the root layout.
  */
 
-import { useState, useEffect } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Palette, Upload, Eye, RotateCcw, Check, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { usePageTitle } from '@/hooks/use-page-title';
+import { useState, useEffect } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Palette, Upload, Eye, RotateCcw, Check, Loader2 } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { toast } from "sonner";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -39,7 +40,7 @@ interface TenantBranding {
 // ---------------------------------------------------------------------------
 
 export default function BrandingPage() {
-  usePageTitle('Branding');
+  usePageTitle("Branding");
 
   const [branding, setBranding] = useState<TenantBranding>({});
   const [original, setOriginal] = useState<TenantBranding>({});
@@ -53,22 +54,27 @@ export default function BrandingPage() {
     async function load() {
       try {
         // First get the current tenant
-        const tenantRes = await fetch('/api/v1/tenant', { credentials: 'include' });
-        if (!tenantRes.ok) throw new Error('Failed to load tenant');
+        const tenantRes = await fetch("/api/v1/tenant", {
+          credentials: "include",
+        });
+        if (!tenantRes.ok) throw new Error("Failed to load tenant");
         const tenant = await tenantRes.json();
         setTenantId(tenant.id);
 
         // Then load branding
-        const brandingRes = await fetch(`/api/v1/tenants/${tenant.id}/branding`, {
-          credentials: 'include',
-        });
+        const brandingRes = await fetch(
+          `/api/v1/tenants/${tenant.id}/branding`,
+          {
+            credentials: "include",
+          },
+        );
         if (brandingRes.ok) {
           const data = await brandingRes.json();
           setBranding(data.branding ?? {});
           setOriginal(data.branding ?? {});
         }
       } catch (err) {
-        toast.error('Failed to load branding settings');
+        toast.error("Failed to load branding settings");
       } finally {
         setLoading(false);
       }
@@ -82,15 +88,15 @@ export default function BrandingPage() {
     setSaving(true);
     try {
       const res = await fetch(`/api/v1/tenants/${tenantId}/branding`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(branding),
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? 'Save failed');
+        throw new Error(err.error ?? "Save failed");
       }
 
       const data = await res.json();
@@ -99,12 +105,17 @@ export default function BrandingPage() {
 
       // Apply CSS variable immediately
       if (branding.primary_color) {
-        document.documentElement.style.setProperty('--brand-primary', branding.primary_color);
+        document.documentElement.style.setProperty(
+          "--brand-primary",
+          branding.primary_color,
+        );
       }
 
-      toast.success('Branding saved successfully');
+      toast.success("Branding saved successfully");
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to save branding');
+      toast.error(
+        err instanceof Error ? err.message : "Failed to save branding",
+      );
     } finally {
       setSaving(false);
     }
@@ -115,18 +126,18 @@ export default function BrandingPage() {
     if (!tenantId) return;
     try {
       const res = await fetch(`/api/v1/tenants/${tenantId}/branding`, {
-        method: 'DELETE',
-        credentials: 'include',
+        method: "DELETE",
+        credentials: "include",
       });
 
-      if (!res.ok) throw new Error('Reset failed');
+      if (!res.ok) throw new Error("Reset failed");
 
       setBranding({});
       setOriginal({});
-      document.documentElement.style.removeProperty('--brand-primary');
-      toast.success('Branding reset to defaults');
+      document.documentElement.style.removeProperty("--brand-primary");
+      toast.success("Branding reset to defaults");
     } catch {
-      toast.error('Failed to reset branding');
+      toast.error("Failed to reset branding");
     }
   };
 
@@ -136,7 +147,10 @@ export default function BrandingPage() {
   useEffect(() => {
     if (!previewMode) return;
     if (branding.primary_color) {
-      document.documentElement.style.setProperty('--brand-primary-preview', branding.primary_color);
+      document.documentElement.style.setProperty(
+        "--brand-primary-preview",
+        branding.primary_color,
+      );
     }
   }, [branding.primary_color, previewMode]);
 
@@ -153,48 +167,39 @@ export default function BrandingPage() {
   return (
     <AppLayout>
       <div className="space-y-6 p-6 max-w-3xl">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Palette className="h-6 w-6 text-primary" />
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Branding</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Customize the look and feel for your tenant (white-label settings).
-              </p>
+        <PageHeader
+          title="Branding"
+          description="Customize the look and feel for your tenant (white-label settings)."
+          icon={<Palette className="h-5 w-5" />}
+          actions={
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPreviewMode(!previewMode)}
+              >
+                <Eye className="size-4" />
+                {previewMode ? "Stop Preview" : "Preview"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleReset}>
+                <RotateCcw className="size-4" />
+                Reset Defaults
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={!isDirty || saving}
+              >
+                {saving ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Check className="size-4" />
+                )}
+                Save Changes
+              </Button>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPreviewMode(!previewMode)}
-            >
-              <Eye className="size-4" />
-              {previewMode ? 'Stop Preview' : 'Preview'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleReset}
-            >
-              <RotateCcw className="size-4" />
-              Reset Defaults
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={!isDirty || saving}
-            >
-              {saving ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Check className="size-4" />
-              )}
-              Save Changes
-            </Button>
-          </div>
-        </div>
+          }
+        />
 
         {/* Logo */}
         <Card>
@@ -209,8 +214,13 @@ export default function BrandingPage() {
                   id="logo_url"
                   type="url"
                   placeholder="https://example.com/logo.png"
-                  value={branding.logo_url ?? ''}
-                  onChange={(e) => setBranding((b) => ({ ...b, logo_url: e.target.value || undefined }))}
+                  value={branding.logo_url ?? ""}
+                  onChange={(e) =>
+                    setBranding((b) => ({
+                      ...b,
+                      logo_url: e.target.value || undefined,
+                    }))
+                  }
                 />
                 <Button variant="outline" size="sm" className="shrink-0">
                   <Upload className="size-4" />
@@ -218,7 +228,8 @@ export default function BrandingPage() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                PNG or SVG recommended. Will appear in the sidebar and login page.
+                PNG or SVG recommended. Will appear in the sidebar and login
+                page.
               </p>
             </div>
             {branding.logo_url && (
@@ -229,7 +240,7 @@ export default function BrandingPage() {
                   alt="Logo preview"
                   className="max-h-16 max-w-48 object-contain"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
+                    (e.target as HTMLImageElement).style.display = "none";
                   }}
                 />
               </div>
@@ -248,8 +259,13 @@ export default function BrandingPage() {
               id="app_name"
               placeholder="SignApps"
               maxLength={64}
-              value={branding.app_name ?? ''}
-              onChange={(e) => setBranding((b) => ({ ...b, app_name: e.target.value || undefined }))}
+              value={branding.app_name ?? ""}
+              onChange={(e) =>
+                setBranding((b) => ({
+                  ...b,
+                  app_name: e.target.value || undefined,
+                }))
+              }
             />
             <p className="text-xs text-muted-foreground">
               Displayed in the browser title bar, email footers, and login page.
@@ -270,9 +286,12 @@ export default function BrandingPage() {
                 <input
                   type="color"
                   id="primary_color_picker"
-                  value={branding.primary_color ?? '#6366f1'}
+                  value={branding.primary_color ?? "#6366f1"}
                   onChange={(e) =>
-                    setBranding((b) => ({ ...b, primary_color: e.target.value }))
+                    setBranding((b) => ({
+                      ...b,
+                      primary_color: e.target.value,
+                    }))
                   }
                   className="h-9 w-12 rounded border cursor-pointer"
                 />
@@ -280,9 +299,12 @@ export default function BrandingPage() {
                   id="primary_color"
                   placeholder="#6366f1"
                   maxLength={7}
-                  value={branding.primary_color ?? ''}
+                  value={branding.primary_color ?? ""}
                   onChange={(e) =>
-                    setBranding((b) => ({ ...b, primary_color: e.target.value || undefined }))
+                    setBranding((b) => ({
+                      ...b,
+                      primary_color: e.target.value || undefined,
+                    }))
                   }
                   className="font-mono w-32"
                 />
@@ -294,7 +316,8 @@ export default function BrandingPage() {
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Applied as the primary accent color throughout the UI. Hex format required (e.g. #1a73e8).
+                Applied as the primary accent color throughout the UI. Hex
+                format required (e.g. #1a73e8).
               </p>
             </div>
           </CardContent>
@@ -311,9 +334,12 @@ export default function BrandingPage() {
               id="favicon_url"
               type="url"
               placeholder="https://example.com/favicon.ico"
-              value={branding.favicon_url ?? ''}
+              value={branding.favicon_url ?? ""}
               onChange={(e) =>
-                setBranding((b) => ({ ...b, favicon_url: e.target.value || undefined }))
+                setBranding((b) => ({
+                  ...b,
+                  favicon_url: e.target.value || undefined,
+                }))
               }
             />
             <p className="text-xs text-muted-foreground">
