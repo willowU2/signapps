@@ -43,9 +43,7 @@ struct UserRow {
     updated_at: DateTime<Utc>,
     first_name: Option<String>,
     last_name: Option<String>,
-    lifecycle_state: Option<String>,
-    #[allow(dead_code)]
-    attributes: Option<serde_json::Value>,
+    is_active: Option<bool>,
 }
 
 #[derive(sqlx::FromRow)]
@@ -105,7 +103,7 @@ pub async fn build_user_entry(
         SELECT
             u.id, u.username, u.email, u.role, u.department, u.job_title, u.phone,
             u.created_at, u.updated_at,
-            p.first_name, p.last_name, p.lifecycle_state, p.attributes
+            p.first_name, p.last_name, p.is_active
         FROM identity.users u
         LEFT JOIN core.persons p ON p.user_id = u.id
         WHERE u.id = $1
@@ -197,7 +195,7 @@ pub async fn build_user_entry(
         ],
         attributes: attrs,
         uac,
-        lifecycle: LifecycleState::from_db(row.lifecycle_state.as_deref()),
+        lifecycle: if row.is_active.unwrap_or(true) { LifecycleState::Live } else { LifecycleState::Recycled },
         created: row.created_at,
         modified: row.updated_at,
     })
