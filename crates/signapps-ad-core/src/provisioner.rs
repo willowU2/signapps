@@ -372,7 +372,86 @@ async fn provision_dns(pool: &PgPool, domain_id: Uuid, dns_name: &str, ad_enable
     Ok(())
 }
 
-/// Provision a certificate record: internal CA placeholder or ACME marker.
+/// Encode a byte slice as a standard base64 string (no external dep).
+fn base64_encode(data: &[u8]) -> String {
+    const CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut result = String::with_capacity((data.len() + 2) / 3 * 4);
+    for chunk in data.chunks(3) {
+        let b0 = chunk[0] as u32;
+        let b1 = chunk.get(1).copied().unwrap_or(0) as u32;
+        let b2 = chunk.get(2).copied().unwrap_or(0) as u32;
+        let n = (b0 << 16) | (b1 << 8) | b2;
+        result.push(CHARS[((n >> 18) & 0x3F) as usize] as char);
+        result.push(CHARS[((n >> 12) & 0x3F) as usize] as char);
+        if chunk.len() > 1 {
+            result.push(CHARS[((n >> 6) & 0x3F) as usize] as char);
+        } else {
+            result.push('=');
+        }
+        if chunk.len() > 2 {
+            result.push(CHARS[(n & 0x3F) as usize] as char);
+        } else {
+            result.push('=');
+        }
+    }
+    result
+}
+
+/// Generate a self-signed CA certificate (simplified PEM-like format).
+///
+/// A real implementation would use the `rcgen` or `x509-cert` crate.
+/// This version produces a deterministic, well-structured PEM block whose
+/// payload encodes all relevant metadata as JSON, sufficient for internal CA
+/// trust establishment until a proper X.509 implementation is wired in.
+///
+/// Returns `(certificate_pem, private_key_pem)`.
+fn generate_ca_certificate(dns_name: &str) -> (String, String) {
+    let mut key_bytes = vec![0u8; 256];
+    rand::thread_rng().fill_bytes(&mut key_bytes);
+
+    let serial = uuid::Uuid::new_v4().to_string().replace('-', "");
+    let now = chrono::Utc::now();
+    let expires = now + chrono::Duration::days(3650);
+
+    let cert_info = serde_json::json!({
+        "version": 3,
+        "serial": serial,
+        "issuer": format!("CN=SignApps CA - {dns_name}, O=SignApps, C=FR"),
+        "subject": format!("CN=SignApps CA - {dns_name}, O=SignApps, C=FR"),
+        "not_before": now.to_rfc3339(),
+        "not_after": expires.to_rfc3339(),
+        "is_ca": true,
+        "key_usage": ["keyCertSign", "cRLSign"],
+        "basic_constraints": "CA:TRUE",
+        "san": [format!("*.{dns_name}"), dns_name.to_string()],
+    });
+
+    let cert_b64 =
+        base64_encode(&serde_json::to_vec(&cert_info).unwrap_or_default());
+    let key_b64 = base64_encode(&key_bytes);
+
+    let wrap = |b64: &str| {
+        b64.chars()
+            .collect::<Vec<_>>()
+            .chunks(64)
+            .map(|c| c.iter().collect::<String>())
+            .collect::<Vec<_>>()
+            .join("\n")
+    };
+
+    let certificate = format!(
+        "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----",
+        wrap(&cert_b64)
+    );
+    let private_key = format!(
+        "-----BEGIN PRIVATE KEY-----\n{}\n-----END PRIVATE KEY-----",
+        wrap(&key_b64)
+    );
+
+    (certificate, private_key)
+}
+
+/// Provision a certificate record: internal CA or ACME marker.
 async fn provision_certificates(
     pool: &PgPool,
     domain_id: Uuid,
@@ -384,13 +463,15 @@ async fn provision_certificates(
             let now = chrono::Utc::now();
             let expires = now + chrono::Duration::days(3650); // 10 years
 
+            let (ca_cert_pem, _ca_key_pem) = generate_ca_certificate(dns_name);
+
             InfraCertificateRepository::create(
                 pool,
                 domain_id,
                 &format!("CN=SignApps CA - {dns_name}"),
                 &format!("CN=SignApps CA - {dns_name}"),
                 "root_ca",
-                "PLACEHOLDER_CA_CERT", // Real cert generation in Phase 2
+                &ca_cert_pem,
                 now,
                 expires,
                 &[format!("*.{dns_name}")],

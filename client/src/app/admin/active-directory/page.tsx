@@ -36,8 +36,10 @@ import {
   Server,
   Globe,
   Key,
+  Lock,
   Monitor,
   FileText,
+  Package,
   Plus,
   Trash2,
   RefreshCw,
@@ -260,7 +262,7 @@ export default function ActiveDirectoryPage() {
         </div>
 
         {/* Quick Navigation */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 stagger-in">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 stagger-in">
           {[
             {
               href: "/admin/active-directory/dns",
@@ -291,6 +293,24 @@ export default function ActiveDirectoryPage() {
               icon: Shield,
               label: "Securite",
               desc: "Audit et politiques",
+            },
+            {
+              href: "/admin/active-directory/certificates",
+              icon: Lock,
+              label: "Certificats",
+              desc: "CA, TLS, renouvellement",
+            },
+            {
+              href: "/admin/active-directory/dhcp",
+              icon: Network,
+              label: "DHCP",
+              desc: "Scopes et baux reseau",
+            },
+            {
+              href: "/admin/active-directory/deployment",
+              icon: Package,
+              label: "Deploiement",
+              desc: "Profils OS et logiciels",
             },
           ].map((item) => (
             <Link key={item.href} href={item.href}>
