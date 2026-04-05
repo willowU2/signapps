@@ -2744,7 +2744,7 @@ function DetailPanel({
                 key={category}
                 className="flex items-center gap-0.5 pr-3 mr-3 border-r border-border/30 last:border-r-0 last:mr-0 last:pr-0 py-1"
               >
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider mr-2 hidden lg:inline">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider mr-2 hidden xl:inline">
                   {CATEGORY_LABELS[category]}
                 </span>
                 {categoryTabs.map((tab) => (
@@ -4364,8 +4364,8 @@ export default function OrgStructurePage() {
             ) : detailOpen ? (
               <div
                 className={cn(
-                  "w-full lg:w-[40%] border-t lg:border-t-0 border-border bg-card shrink-0 overflow-hidden",
-                  rightPanelOpen ? "lg:max-w-[360px]" : "lg:max-w-[480px]",
+                  "w-full lg:w-[50%] xl:w-[45%] border-t lg:border-t-0 border-border bg-card shrink-0 overflow-y-auto",
+                  rightPanelOpen ? "lg:max-w-[520px]" : "lg:max-w-[640px]",
                 )}
               >
                 <DetailPanel
