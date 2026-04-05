@@ -104,7 +104,7 @@ export default function AdSecurityPage() {
               <CheckCircle className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                 {passCount}
               </div>
               <p className="text-xs text-muted-foreground">controles passes</p>
@@ -118,7 +118,7 @@ export default function AdSecurityPage() {
               <AlertTriangle className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-600">
+              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                 {warnCount}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -132,7 +132,9 @@ export default function AdSecurityPage() {
               <XCircle className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{failCount}</div>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                {failCount}
+              </div>
               <p className="text-xs text-muted-foreground">actions requises</p>
             </CardContent>
           </Card>

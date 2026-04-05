@@ -56,24 +56,25 @@ const TYPE_CONFIG: Record<
 > = {
   user: {
     label: "Utilisateur",
-    className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    className:
+      "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
     icon: <Users className="h-3 w-3" />,
   },
   computer: {
     label: "Ordinateur",
     className:
-      "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+      "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
     icon: <Monitor className="h-3 w-3" />,
   },
   service: {
     label: "Service",
     className:
-      "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+      "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
     icon: <Server className="h-3 w-3" />,
   },
   krbtgt: {
     label: "krbtgt",
-    className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+    className: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
     icon: <ShieldAlert className="h-3 w-3" />,
   },
 };

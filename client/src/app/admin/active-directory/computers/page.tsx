@@ -49,11 +49,13 @@ function osBadge(os?: string) {
   const lower = os.toLowerCase();
   if (lower.includes("windows"))
     return (
-      <Badge className="bg-blue-100 text-blue-800 border-blue-200">{os}</Badge>
+      <Badge className="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800">
+        {os}
+      </Badge>
     );
   if (lower.includes("linux"))
     return (
-      <Badge className="bg-green-100 text-green-800 border-green-200">
+      <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800">
         {os}
       </Badge>
     );

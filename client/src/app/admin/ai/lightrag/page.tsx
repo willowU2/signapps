@@ -33,14 +33,14 @@ import { getClient, ServiceName } from "@/lib/api/factory";
 const aiClient = getClient(ServiceName.AI);
 
 const TYPE_COLORS: Record<string, string> = {
-  person: "#3b82f6",
-  organization: "#10b981",
-  concept: "#8b5cf6",
-  technology: "#f59e0b",
-  event: "#ef4444",
-  department: "#06b6d4",
-  group: "#ec4899",
-  default: "#6b7280",
+  person: "hsl(217, 91%, 60%)", // blue-500
+  organization: "hsl(160, 84%, 39%)", // emerald-500
+  concept: "hsl(258, 90%, 66%)", // violet-500
+  technology: "hsl(38, 92%, 50%)", // amber-500
+  event: "hsl(0, 84%, 60%)", // red-500
+  department: "hsl(189, 94%, 43%)", // cyan-500
+  group: "hsl(330, 81%, 60%)", // pink-500
+  default: "hsl(215, 14%, 34%)", // gray-600
 };
 
 function KnowledgeGraphViewer() {
