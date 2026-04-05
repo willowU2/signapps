@@ -23,6 +23,8 @@
 //! | [`zone`] | Zone model and helpers — creates forward zones with SRV records |
 //! | [`provision`] | High-level AD domain provisioning (SRV, A, NS records) |
 //! | [`dynamic`] | Dynamic DNS update processing (RFC 2136) for machine accounts |
+//! | [`dhcp`] | DHCP lease allocation and DORA flow (RFC 2131) |
+//! | [`ntp`] | NTP packet encode/decode and server response (RFC 5905) |
 //!
 //! ## AD SRV Records Created on Provisioning
 //!
@@ -47,6 +49,8 @@
 //! ```
 
 pub mod axfr;
-pub mod zone;
-pub mod provision;
+pub mod dhcp;
 pub mod dynamic;
+pub mod ntp;
+pub mod provision;
+pub mod zone;
