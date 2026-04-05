@@ -2,6 +2,8 @@
 
 pub mod chunker;
 pub mod circular_pipeline;
+pub mod lightrag;
+pub mod lightrag_seeder;
 pub mod multimodal_indexer;
 pub mod multimodal_search;
 pub mod pipeline;

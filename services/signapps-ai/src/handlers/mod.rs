@@ -11,6 +11,7 @@ pub mod gpu_status;
 pub mod health;
 pub mod image_gen;
 pub mod index;
+pub mod lightrag;
 pub mod model_management;
 pub mod models;
 pub mod openapi;
