@@ -11,6 +11,26 @@ use std::sync::Arc;
 use tokio::sync::watch;
 use tracing;
 
+/// Tables excluded from auto-discovery (contain sensitive data).
+///
+/// Any table whose name or schema contains one of these substrings will be
+/// skipped when attaching KG notify triggers. The SQL query uses explicit
+/// `NOT LIKE` clauses for the same patterns; this list provides a Rust-side
+/// double-check before issuing DDL.
+const AUTO_DISCOVER_EXCLUDED: &[&str] = &[
+    "sessions",
+    "api_keys",
+    "sso_configs",
+    "ldap_config",
+    "principal_keys",
+    "vault",
+    "secrets",
+    "tokens",
+    "password",
+    "credentials",
+    "certificates",
+];
+
 /// Configuration for the auto-feed watcher.
 ///
 /// # Examples
@@ -366,7 +386,15 @@ async fn discover_and_attach_triggers(pool: &DatabasePool) -> signapps_common::R
             AND c.table_name   = t.table_name
             AND c.column_name  = 'id'
         WHERE t.table_type = 'BASE TABLE'
-          AND t.table_schema NOT IN ('pg_catalog', 'information_schema', 'ai')
+          AND t.table_schema NOT IN ('pg_catalog', 'information_schema', 'ai', 'vault')
+          AND t.table_name NOT IN ('sessions', 'api_keys', 'sso_configs', 'ldap_config')
+          AND t.table_name NOT LIKE '%password%'
+          AND t.table_name NOT LIKE '%secret%'
+          AND t.table_name NOT LIKE '%token%'
+          AND t.table_name NOT LIKE '%key%'
+          AND t.table_name NOT LIKE '%vault%'
+          AND t.table_name NOT LIKE '%credential%'
+          AND t.table_name NOT LIKE '%certificate%'
           AND NOT EXISTS (
               SELECT 1
               FROM information_schema.triggers tr
@@ -383,6 +411,19 @@ async fn discover_and_attach_triggers(pool: &DatabasePool) -> signapps_common::R
 
     let mut attached = 0usize;
     for (schema, table) in &new_tables {
+        // Double-check: never attach to sensitive tables (defense-in-depth)
+        let is_sensitive = AUTO_DISCOVER_EXCLUDED.iter().any(|exc| {
+            table.to_lowercase().contains(exc) || schema.to_lowercase().contains(exc)
+        });
+        if is_sensitive {
+            tracing::trace!(
+                table = %table,
+                schema = %schema,
+                "Skipping sensitive table during auto-discovery"
+            );
+            continue;
+        }
+
         let safe_schema = schema.replace('.', "_");
         let trigger_name = format!("trg_kg_{}_{}", safe_schema, table);
         let full_name = format!("{}.{}", schema, table);
@@ -461,6 +502,39 @@ mod tests {
         let json = r#"{"table":"workforce_org_nodes","op":"DELETE","id":"123"}"#;
         let change: ChangeNotification = serde_json::from_str(json).unwrap();
         assert_eq!(change.op, "DELETE");
+    }
+
+    #[test]
+    fn excluded_tables_not_discovered() {
+        let excluded = AUTO_DISCOVER_EXCLUDED;
+        assert!(excluded.contains(&"sessions"));
+        assert!(excluded.contains(&"api_keys"));
+        assert!(excluded.contains(&"vault"));
+        assert!(excluded.contains(&"password"));
+        assert!(excluded.contains(&"credentials"));
+        assert!(excluded.contains(&"sso_configs"));
+    }
+
+    #[test]
+    fn sensitive_table_is_detected() {
+        let sensitive_names = &["sessions", "api_keys", "user_tokens", "vault_entries", "sso_configs"];
+        for name in sensitive_names {
+            let is_sensitive = AUTO_DISCOVER_EXCLUDED.iter().any(|exc| {
+                name.to_lowercase().contains(exc)
+            });
+            assert!(is_sensitive, "Expected '{}' to be detected as sensitive", name);
+        }
+    }
+
+    #[test]
+    fn safe_table_is_not_excluded() {
+        let safe_names = &["users", "org_nodes", "calendar_events", "invoices"];
+        for name in safe_names {
+            let is_sensitive = AUTO_DISCOVER_EXCLUDED.iter().any(|exc| {
+                name.to_lowercase().contains(exc)
+            });
+            assert!(!is_sensitive, "Expected '{}' NOT to be detected as sensitive", name);
+        }
     }
 
     #[test]

@@ -1,5 +1,11 @@
 -- Migration 217: LightRAG auto-feed triggers
 -- Sends NOTIFY on data changes for automatic knowledge graph updates.
+--
+-- SECURITY: The following tables are EXCLUDED from KG triggers
+-- to prevent sensitive data from entering the knowledge graph:
+-- identity.sessions, identity.api_keys, identity.sso_configs,
+-- identity.ldap_config, ad_principal_keys, vault.*
+-- NEVER add triggers to tables containing passwords, tokens, or keys.
 
 -- Generic notify function that sends table name + operation + row ID
 CREATE OR REPLACE FUNCTION kg_notify_change() RETURNS trigger AS $$
