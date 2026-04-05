@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { useQueries } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -14,9 +13,12 @@ import {
 } from "@/components/ui/table";
 import { Loader2, Rocket, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAdDomains, useDeployProfiles } from "@/hooks/use-active-directory";
 import { adApi } from "@/lib/api/active-directory";
-import type { DeployProfile, DeployHistory } from "@/types/active-directory";
+import type {
+  AdDomain,
+  DeployProfile,
+  DeployHistory,
+} from "@/types/active-directory";
 
 // =============================================================================
 // Status badge configuration
@@ -76,7 +78,7 @@ function StatusBadge({ status }: { status: DeployStatus }) {
 // =============================================================================
 
 function formatDt(value?: string): string {
-  if (!value) return "—";
+  if (!value) return "\u2014";
   return new Date(value).toLocaleString("fr-FR", {
     day: "2-digit",
     month: "2-digit",
@@ -189,7 +191,7 @@ function RecentDeploymentsSection({ rows }: { rows: HistoryRow[] }) {
           {rows.map((row) => (
             <TableRow key={row.id}>
               <TableCell className="text-xs font-mono">
-                {row.hostname ?? "—"}
+                {row.hostname ?? "\u2014"}
               </TableCell>
               <TableCell className="text-xs">{row.profileName}</TableCell>
               <TableCell>
@@ -209,7 +211,7 @@ function RecentDeploymentsSection({ rows }: { rows: HistoryRow[] }) {
                     {row.error_message}
                   </span>
                 ) : (
-                  "—"
+                  "\u2014"
                 )}
               </TableCell>
             </TableRow>
@@ -225,82 +227,100 @@ function RecentDeploymentsSection({ rows }: { rows: HistoryRow[] }) {
 // =============================================================================
 
 export function DeploymentTabContent({
-  nodeId: _nodeId,
+  nodeId,
   nodeType,
 }: {
   nodeId: string;
   nodeType: string;
 }) {
-  // Step 1: load domains
-  const {
-    data: domains = [],
-    isLoading: domainsLoading,
-    isError: domainsError,
-  } = useAdDomains();
-  const domainId = domains[0]?.id ?? "";
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [profiles, setProfiles] = useState<DeployProfile[]>([]);
+  const [historyRows, setHistoryRows] = useState<HistoryRow[]>([]);
 
-  // Step 2: load profiles for the first domain
-  const {
-    data: allProfiles = [],
-    isLoading: profilesLoading,
-    isError: profilesError,
-  } = useDeployProfiles(domainId);
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
 
-  // Step 3: filter profiles according to node type
-  const profiles: DeployProfile[] = React.useMemo(() => {
-    if (nodeType === "computer") {
-      // For computer nodes: show the specific profile(s) applied (all by default,
-      // server can filter by hostname in the future)
-      return allProfiles;
-    }
-    if (
-      nodeType === "department" ||
-      nodeType === "service" ||
-      nodeType === "team"
-    ) {
-      // Show profiles whose target_ou matches the nodeId, or all if none match
-      const matched = allProfiles.filter(
-        (p) => p.target_ou && p.target_ou === _nodeId,
-      );
-      return matched.length > 0 ? matched : allProfiles;
-    }
-    // root / group nodes: show all profiles
-    return allProfiles;
-  }, [allProfiles, nodeType, _nodeId]);
+    (async () => {
+      try {
+        // 1. Get domains
+        const domainsRes = await adApi.domains.list();
+        const domains: AdDomain[] = domainsRes.data ?? [];
+        if (cancelled) return;
 
-  // Step 4: fetch history for every visible profile in parallel
-  const historyQueries = useQueries({
-    queries: profiles.map((p) => ({
-      queryKey: ["deploy-history", p.id],
-      queryFn: async () => {
-        const res = await adApi.deploy.history(p.id);
-        return res.data;
-      },
-      enabled: !!p.id,
-    })),
-  });
+        if (domains.length === 0) {
+          setProfiles([]);
+          setHistoryRows([]);
+          setLoading(false);
+          return;
+        }
 
-  const historyLoading = historyQueries.some((q) => q.isLoading);
-  const historyError = historyQueries.some((q) => q.isError);
+        // 2. Get profiles for all domains
+        const allProfiles: DeployProfile[] = [];
+        await Promise.all(
+          domains.map(async (d) => {
+            try {
+              const res = await adApi.deploy.profiles(d.id);
+              allProfiles.push(...(res.data ?? []));
+            } catch {
+              // Domain may not have deploy profiles
+            }
+          }),
+        );
+        if (cancelled) return;
 
-  // Flatten history rows, annotated with their profile name, sorted by created_at desc
-  const historyRows: HistoryRow[] = React.useMemo(() => {
-    const rows: HistoryRow[] = [];
-    historyQueries.forEach((q, i) => {
-      const profileName = profiles[i]?.name ?? "—";
-      (q.data ?? []).forEach((h: DeployHistory) => {
-        rows.push({ ...h, profileName });
-      });
-    });
-    rows.sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-    );
-    return rows;
-  }, [historyQueries, profiles]);
+        // 3. Filter by node type
+        let filtered = allProfiles;
+        if (
+          nodeType === "department" ||
+          nodeType === "service" ||
+          nodeType === "team"
+        ) {
+          const matched = allProfiles.filter(
+            (p) => p.target_ou && p.target_ou === nodeId,
+          );
+          if (matched.length > 0) filtered = matched;
+        }
+
+        setProfiles(filtered);
+
+        // 4. Get history for each profile
+        const rows: HistoryRow[] = [];
+        await Promise.all(
+          filtered.map(async (p) => {
+            try {
+              const res = await adApi.deploy.history(p.id);
+              (res.data ?? []).forEach((h: DeployHistory) => {
+                rows.push({ ...h, profileName: p.name });
+              });
+            } catch {
+              // History may not exist yet
+            }
+          }),
+        );
+        if (cancelled) return;
+
+        rows.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+        setHistoryRows(rows);
+      } catch {
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [nodeId, nodeType]);
 
   // ── Loading state ──
-  if (domainsLoading || (domainId && profilesLoading)) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-8 text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin mr-2" />
@@ -310,7 +330,7 @@ export function DeploymentTabContent({
   }
 
   // ── Error state ──
-  if (domainsError || profilesError || historyError) {
+  if (error) {
     return (
       <div className="text-center text-destructive py-8">
         <Rocket className="h-8 w-8 mx-auto mb-2 opacity-30" />
@@ -319,12 +339,15 @@ export function DeploymentTabContent({
     );
   }
 
-  // ── No domain configured ──
-  if (!domainId) {
+  // ── No profiles ──
+  if (profiles.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-8">
         <Rocket className="h-8 w-8 mx-auto mb-2 opacity-30" />
-        <p className="text-sm">Aucun domaine AD configure</p>
+        <p className="text-sm">Aucun profil de deploiement</p>
+        <p className="text-xs mt-1">
+          Configurez un domaine AD pour activer les deploiements
+        </p>
       </div>
     );
   }
@@ -350,22 +373,11 @@ export function DeploymentTabContent({
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Deploiements recents
           </h3>
-          {historyLoading ? (
-            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-          ) : (
-            <Badge variant="outline" className="text-xs">
-              {historyRows.length}
-            </Badge>
-          )}
+          <Badge variant="outline" className="text-xs">
+            {historyRows.length}
+          </Badge>
         </div>
-        {historyLoading ? (
-          <div className="flex items-center justify-center py-4 text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            <span className="text-xs">Chargement de l&apos;historique...</span>
-          </div>
-        ) : (
-          <RecentDeploymentsSection rows={historyRows} />
-        )}
+        <RecentDeploymentsSection rows={historyRows} />
       </section>
     </div>
   );
