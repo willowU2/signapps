@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Play, Copy, GitMerge, Info } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/use-page-title";
 
@@ -93,15 +94,11 @@ export default function GraphQLPage() {
   return (
     <AppLayout>
       <div className="w-full space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <GitMerge className="h-6 w-6 text-primary" />
-            GraphQL Explorer
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Query the SignApps unified GraphQL API
-          </p>
-        </div>
+        <PageHeader
+          title="GraphQL Explorer"
+          description="Query the SignApps unified GraphQL API"
+          icon={<GitMerge className="h-5 w-5 text-primary" />}
+        />
 
         {/* Sample queries */}
         <div className="flex gap-2 flex-wrap">

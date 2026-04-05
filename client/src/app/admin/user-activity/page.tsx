@@ -1,19 +1,20 @@
-'use client';
+"use client";
 
-import { AppLayout } from '@/components/layout/app-layout';
-import { UserActivity } from '@/components/admin/user-activity';
-import { Users } from 'lucide-react';
-import { usePageTitle } from '@/hooks/use-page-title';
+import { AppLayout } from "@/components/layout/app-layout";
+import { UserActivity } from "@/components/admin/user-activity";
+import { Users } from "lucide-react";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function UserActivityPage() {
-  usePageTitle('Activite utilisateurs');
+  usePageTitle("Activite utilisateurs");
   return (
     <AppLayout>
       <div className="space-y-6 p-6">
-        <div className="flex items-center gap-3">
-          <Users className="h-6 w-6 text-primary" />
-          <h1 className="text-3xl font-bold tracking-tight">User Activity Report</h1>
-        </div>
+        <PageHeader
+          title="User Activity Report"
+          icon={<Users className="h-5 w-5 text-primary" />}
+        />
         <UserActivity />
       </div>
     </AppLayout>

@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { AppLayout } from "@/components/layout/app-layout"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useEffect, useState } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,231 +19,280 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useTenantStore } from "@/stores/tenant-store"
-import type { Workspace } from "@/lib/api/tenant"
-import { DataTable } from "@/components/ui/data-table"
-import { WorkspaceSheet, type WorkspaceFormValues } from "@/components/admin/workspace-sheet"
-import { WorkspaceMembersSheet } from "@/components/admin/workspace-members-sheet"
-import { ColumnDef } from "@tanstack/react-table"
-import { toast } from "sonner"
-import { Label } from "@/components/ui/label"
-import { Plus, Search, MoreHorizontal, Users, Pencil, Trash2 } from "lucide-react"
-import { FEATURES } from "@/lib/features"
+} from "@/components/ui/dropdown-menu";
+import { useTenantStore } from "@/stores/tenant-store";
+import type { Workspace } from "@/lib/api/tenant";
+import { DataTable } from "@/components/ui/data-table";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { usePageTitle } from '@/hooks/use-page-title';
-
+  WorkspaceSheet,
+  type WorkspaceFormValues,
+} from "@/components/admin/workspace-sheet";
+import { WorkspaceMembersSheet } from "@/components/admin/workspace-members-sheet";
+import { ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  Users,
+  Pencil,
+  Trash2,
+  Layers,
+} from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { FEATURES } from "@/lib/features";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function WorkspacesPage() {
-  usePageTitle('Espaces de travail');
-    const { workspaces, workspacesLoading, fetchWorkspaces, createWorkspace, updateWorkspace, deleteWorkspace } = useTenantStore()
-    const [isSheetOpen, setIsSheetOpen] = useState(false)
-    const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null)
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [isMembersSheetOpen, setIsMembersSheetOpen] = useState(false)
-    const [membersWorkspace, setMembersWorkspace] = useState<Workspace | null>(null)
-    const [deleteWorkspaceTarget, setDeleteWorkspaceTarget] = useState<Workspace | null>(null)
+  usePageTitle("Espaces de travail");
+  const {
+    workspaces,
+    workspacesLoading,
+    fetchWorkspaces,
+    createWorkspace,
+    updateWorkspace,
+    deleteWorkspace,
+  } = useTenantStore();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(
+    null,
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMembersSheetOpen, setIsMembersSheetOpen] = useState(false);
+  const [membersWorkspace, setMembersWorkspace] = useState<Workspace | null>(
+    null,
+  );
+  const [deleteWorkspaceTarget, setDeleteWorkspaceTarget] =
+    useState<Workspace | null>(null);
 
-    const handleOpenMembersSheet = (workspace: Workspace) => {
-        setMembersWorkspace(workspace)
-        setIsMembersSheetOpen(true)
+  const handleOpenMembersSheet = (workspace: Workspace) => {
+    setMembersWorkspace(workspace);
+    setIsMembersSheetOpen(true);
+  };
+
+  useEffect(() => {
+    fetchWorkspaces();
+  }, [fetchWorkspaces]);
+
+  const handleOpenSheet = (workspace?: Workspace) => {
+    setEditingWorkspace(workspace || null);
+    setIsSheetOpen(true);
+  };
+
+  const handleSubmit = async (values: WorkspaceFormValues) => {
+    setIsSubmitting(true);
+    try {
+      if (editingWorkspace) {
+        await updateWorkspace(editingWorkspace.id, {
+          name: values.name,
+          description: values.description || undefined,
+          color: values.color,
+        });
+        toast.success("Espace de travail mis à jour");
+      } else {
+        await createWorkspace(
+          values.name,
+          values.description || undefined,
+          values.color,
+        );
+        toast.success("Espace de travail créé");
+      }
+      setIsSheetOpen(false);
+      setEditingWorkspace(null);
+    } catch (error) {
+      console.error("Impossible d'enregistrer workspace:", error);
+      toast.error("Impossible d'enregistrer l'espace de travail");
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
-    useEffect(() => {
-        fetchWorkspaces()
-    }, [fetchWorkspaces])
-
-    const handleOpenSheet = (workspace?: Workspace) => {
-        setEditingWorkspace(workspace || null)
-        setIsSheetOpen(true)
+  const handleDelete = (workspace: Workspace) => {
+    if (workspace.is_default) {
+      toast.error("Impossible de supprimer l'espace de travail par défaut");
+      return;
     }
+    setDeleteWorkspaceTarget(workspace);
+  };
 
-    const handleSubmit = async (values: WorkspaceFormValues) => {
-        setIsSubmitting(true)
-        try {
-            if (editingWorkspace) {
-                await updateWorkspace(editingWorkspace.id, {
-                    name: values.name,
-                    description: values.description || undefined,
-                    color: values.color
-                })
-                toast.success("Espace de travail mis à jour")
-            } else {
-                await createWorkspace(values.name, values.description || undefined, values.color)
-                toast.success("Espace de travail créé")
-            }
-            setIsSheetOpen(false)
-            setEditingWorkspace(null)
-        } catch (error) {
-            console.error("Impossible d'enregistrer workspace:", error)
-            toast.error("Impossible d'enregistrer l'espace de travail")
-        } finally {
-            setIsSubmitting(false)
-        }
+  const handleDeleteConfirm = async () => {
+    if (!deleteWorkspaceTarget) return;
+    setDeleteWorkspaceTarget(null);
+    try {
+      await deleteWorkspace(deleteWorkspaceTarget.id);
+      toast.success("Espace de travail supprimé");
+    } catch (error) {
+      console.error("Impossible de supprimer workspace:", error);
+      toast.error("Impossible de supprimer l'espace de travail");
     }
+  };
 
-    const handleDelete = (workspace: Workspace) => {
-        if (workspace.is_default) {
-            toast.error("Impossible de supprimer l'espace de travail par défaut")
-            return
-        }
-        setDeleteWorkspaceTarget(workspace)
-    }
+  const workspaceColumns: ColumnDef<Workspace>[] = [
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <div
+            className="h-3 w-3 rounded-full"
+            style={{ backgroundColor: row.original.color || "#3B82F6" }}
+          />
+          <span className="font-medium">{row.original.name}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {row.original.description || "-"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "is_default",
+      header: "Type",
+      cell: ({ row }) => (
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${row.original.is_default ? "bg-primary/10 text-primary" : "bg-muted"}`}
+        >
+          {row.original.is_default ? "Default" : "Custom"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "created_at",
+      header: "Created",
+      cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const workspace = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => {
+                  navigator.clipboard.writeText(workspace.id);
+                  toast.success("ID copié dans le presse-papiers");
+                }}
+              >
+                Copy ID
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {FEATURES.MEMBER_MANAGEMENT && (
+                <DropdownMenuItem
+                  onClick={() => handleOpenMembersSheet(workspace)}
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  Manage Members
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => handleOpenSheet(workspace)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => handleDelete(workspace)}
+                disabled={workspace.is_default}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
-    const handleDeleteConfirm = async () => {
-        if (!deleteWorkspaceTarget) return
-        setDeleteWorkspaceTarget(null)
-        try {
-            await deleteWorkspace(deleteWorkspaceTarget.id)
-            toast.success("Espace de travail supprimé")
-        } catch (error) {
-            console.error("Impossible de supprimer workspace:", error)
-            toast.error("Impossible de supprimer l'espace de travail")
-        }
-    }
+  return (
+    <AppLayout>
+      <div className="space-y-6">
+        <PageHeader
+          title="Workspaces"
+          icon={<Layers className="h-5 w-5 text-primary" />}
+          actions={
+            <Button onClick={() => handleOpenSheet()}>
+              <Plus className="mr-2 h-4 w-4" /> New Workspace
+            </Button>
+          }
+        />
 
-    const workspaceColumns: ColumnDef<Workspace>[] = [
-        {
-            accessorKey: "name",
-            header: "Name",
-            cell: ({ row }) => (
-                <div className="flex items-center gap-2">
-                    <div
-                        className="h-3 w-3 rounded-full"
-                        style={{ backgroundColor: row.original.color || "#3B82F6" }}
-                    />
-                    <span className="font-medium">{row.original.name}</span>
-                </div>
-            ),
-        },
-        {
-            accessorKey: "description",
-            header: "Description",
-            cell: ({ row }) => <span className="text-muted-foreground">{row.original.description || "-"}</span>,
-        },
-        {
-            accessorKey: "is_default",
-            header: "Type",
-            cell: ({ row }) => (
-                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${row.original.is_default ? "bg-primary/10 text-primary" : "bg-muted"}`}>
-                    {row.original.is_default ? "Default" : "Custom"}
-                </span>
-            ),
-        },
-        {
-            accessorKey: "created_at",
-            header: "Created",
-            cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(),
-        },
-        {
-            id: "actions",
-            cell: ({ row }) => {
-                const workspace = row.original
-                return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => {
-                                navigator.clipboard.writeText(workspace.id)
-                                toast.success("ID copié dans le presse-papiers")
-                            }}>
-                                Copy ID
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {FEATURES.MEMBER_MANAGEMENT && (
-                                <DropdownMenuItem onClick={() => handleOpenMembersSheet(workspace)}>
-                                    <Users className="mr-2 h-4 w-4" />
-                                    Manage Members
-                                </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem onClick={() => handleOpenSheet(workspace)}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => handleDelete(workspace)}
-                                disabled={workspace.is_default}
-                            >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )
-            },
-        },
-    ]
+        {workspacesLoading ? (
+          <div className="space-y-4">
+            <div className="h-10 w-full bg-muted/50 rounded-md animate-pulse" />
+            <div className="h-12 w-full bg-muted/50 rounded-md animate-pulse" />
+            <div className="h-12 w-full bg-muted/50 rounded-md animate-pulse" />
+          </div>
+        ) : (
+          <DataTable
+            columns={workspaceColumns}
+            data={workspaces}
+            searchKey="name"
+          />
+        )}
 
-    return (
-        <AppLayout>
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold tracking-tight">Workspaces</h1>
-                    <Button onClick={() => handleOpenSheet()}>
-                        <Plus className="mr-2 h-4 w-4" /> New Workspace
-                    </Button>
-                </div>
+        <WorkspaceSheet
+          open={isSheetOpen}
+          onOpenChange={setIsSheetOpen}
+          workspace={editingWorkspace}
+          onSubmit={handleSubmit}
+          isLoading={isSubmitting}
+        />
 
-                {workspacesLoading ? (
-                    <div className="space-y-4">
-                        <div className="h-10 w-full bg-muted/50 rounded-md animate-pulse" />
-                        <div className="h-12 w-full bg-muted/50 rounded-md animate-pulse" />
-                        <div className="h-12 w-full bg-muted/50 rounded-md animate-pulse" />
-                    </div>
-                ) : (
-                    <DataTable
-                        columns={workspaceColumns}
-                        data={workspaces}
-                        searchKey="name"
-                    />
-                )}
+        {FEATURES.MEMBER_MANAGEMENT && (
+          <WorkspaceMembersSheet
+            open={isMembersSheetOpen}
+            onOpenChange={setIsMembersSheetOpen}
+            workspace={membersWorkspace}
+          />
+        )}
 
-                <WorkspaceSheet
-                    open={isSheetOpen}
-                    onOpenChange={setIsSheetOpen}
-                    workspace={editingWorkspace}
-                    onSubmit={handleSubmit}
-                    isLoading={isSubmitting}
-                />
-
-                {FEATURES.MEMBER_MANAGEMENT && (
-                    <WorkspaceMembersSheet
-                        open={isMembersSheetOpen}
-                        onOpenChange={setIsMembersSheetOpen}
-                        workspace={membersWorkspace}
-                    />
-                )}
-
-                <AlertDialog open={!!deleteWorkspaceTarget} onOpenChange={() => setDeleteWorkspaceTarget(null)}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Delete workspace &quot;{deleteWorkspaceTarget?.name}&quot;?</AlertDialogTitle>
-                            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Annuler</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDeleteConfirm}>Supprimer</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            </div>
-        </AppLayout>
-    )
+        <AlertDialog
+          open={!!deleteWorkspaceTarget}
+          onOpenChange={() => setDeleteWorkspaceTarget(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Delete workspace &quot;{deleteWorkspaceTarget?.name}&quot;?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm}>
+                Supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </AppLayout>
+  );
 }

@@ -1,43 +1,48 @@
-'use client';
+"use client";
 
-import { AppLayout } from '@/components/layout/app-layout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ApiMarketplace } from '@/components/api-platform/api-marketplace';
-import { ApiHealthStatus } from '@/components/api-platform/api-health-status';
-import { ApiChangelog } from '@/components/api-platform/api-changelog';
-import { WebhookEventCatalog } from '@/components/api-platform/webhook-event-catalog';
-import { SdkGeneration } from '@/components/api-platform/sdk-generation';
-import { ShoppingBag, Activity, GitCommit, Webhook, Code } from 'lucide-react';
-import { usePageTitle } from '@/hooks/use-page-title';
+import { AppLayout } from "@/components/layout/app-layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ApiMarketplace } from "@/components/api-platform/api-marketplace";
+import { ApiHealthStatus } from "@/components/api-platform/api-health-status";
+import { ApiChangelog } from "@/components/api-platform/api-changelog";
+import { WebhookEventCatalog } from "@/components/api-platform/webhook-event-catalog";
+import { SdkGeneration } from "@/components/api-platform/sdk-generation";
+import { ShoppingBag, Activity, GitCommit, Webhook, Code } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function ApiPlatformPage() {
-  usePageTitle('Plateforme API');
+  usePageTitle("Plateforme API");
   return (
     <AppLayout>
       <div className="w-full space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold">API Platform</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Marketplace, health monitoring, changelogs, webhooks, and SDK generation
-          </p>
-        </div>
+        <PageHeader
+          title="API Platform"
+          description="Marketplace, health monitoring, changelogs, webhooks, and SDK generation"
+          icon={<Code className="h-5 w-5 text-primary" />}
+        />
 
         <Tabs defaultValue="marketplace">
           <TabsList className="flex-wrap h-auto gap-1 p-1">
             <TabsTrigger value="marketplace" className="gap-1.5 text-xs">
-              <ShoppingBag className="h-3.5 w-3.5" />Marketplace
+              <ShoppingBag className="h-3.5 w-3.5" />
+              Marketplace
             </TabsTrigger>
             <TabsTrigger value="health" className="gap-1.5 text-xs">
-              <Activity className="h-3.5 w-3.5" />Health
+              <Activity className="h-3.5 w-3.5" />
+              Health
             </TabsTrigger>
             <TabsTrigger value="changelog" className="gap-1.5 text-xs">
-              <GitCommit className="h-3.5 w-3.5" />Changelog
+              <GitCommit className="h-3.5 w-3.5" />
+              Changelog
             </TabsTrigger>
             <TabsTrigger value="webhooks" className="gap-1.5 text-xs">
-              <Webhook className="h-3.5 w-3.5" />Webhooks
+              <Webhook className="h-3.5 w-3.5" />
+              Webhooks
             </TabsTrigger>
             <TabsTrigger value="sdk" className="gap-1.5 text-xs">
-              <Code className="h-3.5 w-3.5" />SDKs
+              <Code className="h-3.5 w-3.5" />
+              SDKs
             </TabsTrigger>
           </TabsList>
 

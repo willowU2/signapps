@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { PageHeader } from "@/components/ui/page-header";
 import { toast } from "sonner";
 import {
   Upload,
@@ -659,17 +660,11 @@ export default function ImportExportPage() {
     <AppLayout>
       <div className="space-y-6 max-w-4xl">
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <Package className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Import / Export
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Importez ou exportez vos donnees en masse.
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          title="Import / Export"
+          description="Importez ou exportez vos données en masse."
+          icon={<Package className="h-5 w-5 text-primary" />}
+        />
 
         {/* Mode selection */}
         {mode === "idle" && (

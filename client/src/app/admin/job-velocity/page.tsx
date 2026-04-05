@@ -1,19 +1,20 @@
-'use client';
+"use client";
 
-import { AppLayout } from '@/components/layout/app-layout';
-import { JobVelocity } from '@/components/admin/job-velocity';
-import { Zap } from 'lucide-react';
-import { usePageTitle } from '@/hooks/use-page-title';
+import { AppLayout } from "@/components/layout/app-layout";
+import { JobVelocity } from "@/components/admin/job-velocity";
+import { Zap } from "lucide-react";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function JobVelocityPage() {
-  usePageTitle('Velocite');
+  usePageTitle("Velocite");
   return (
     <AppLayout>
       <div className="space-y-6 p-6">
-        <div className="flex items-center gap-3">
-          <Zap className="h-6 w-6 text-primary" />
-          <h1 className="text-3xl font-bold tracking-tight">Job Velocity</h1>
-        </div>
+        <PageHeader
+          title="Job Velocity"
+          icon={<Zap className="h-5 w-5 text-primary" />}
+        />
         <JobVelocity />
       </div>
     </AppLayout>

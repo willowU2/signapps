@@ -1,17 +1,29 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 import {
   Settings,
   Shield,
@@ -30,9 +42,10 @@ import {
   Webhook,
   Download,
   Upload,
-} from 'lucide-react';
-import { usePageTitle } from '@/hooks/use-page-title';
-import { useBrandingStore } from '@/stores/branding-store';
+} from "lucide-react";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { PageHeader } from "@/components/ui/page-header";
+import { useBrandingStore } from "@/stores/branding-store";
 
 // ─── General Settings ───────────────────────────────────────────────
 interface GeneralSettings {
@@ -45,11 +58,11 @@ interface GeneralSettings {
 }
 
 const defaultGeneral: GeneralSettings = {
-  platformName: 'SignApps Platform',
-  logoUrl: '/logo.png',
-  defaultLanguage: 'fr',
-  timezone: 'Europe/Paris',
-  description: 'Plateforme de gestion infrastructure et services',
+  platformName: "SignApps Platform",
+  logoUrl: "/logo.png",
+  defaultLanguage: "fr",
+  timezone: "Europe/Paris",
+  description: "Plateforme de gestion infrastructure et services",
   maintenanceMode: false,
 };
 
@@ -93,19 +106,19 @@ interface EmailSettings {
 }
 
 const defaultEmail: EmailSettings = {
-  smtpHost: 'smtp.example.com',
+  smtpHost: "smtp.example.com",
   smtpPort: 587,
-  smtpUser: '',
-  smtpPassword: '',
-  senderEmail: 'noreply@signapps.local',
-  senderName: 'SignApps Platform',
+  smtpUser: "",
+  smtpPassword: "",
+  senderEmail: "noreply@signapps.local",
+  senderName: "SignApps Platform",
   useTLS: false,
   useSTARTTLS: true,
 };
 
 // ─── Storage Settings ───────────────────────────────────────────────
 interface StorageSettings {
-  mode: 'local' | 's3';
+  mode: "local" | "s3";
   localPath: string;
   s3Endpoint: string;
   s3Bucket: string;
@@ -118,16 +131,16 @@ interface StorageSettings {
 }
 
 const defaultStorage: StorageSettings = {
-  mode: 'local',
-  localPath: './data/storage',
-  s3Endpoint: '',
-  s3Bucket: '',
-  s3AccessKey: '',
-  s3SecretKey: '',
-  s3Region: 'eu-west-1',
+  mode: "local",
+  localPath: "./data/storage",
+  s3Endpoint: "",
+  s3Bucket: "",
+  s3AccessKey: "",
+  s3SecretKey: "",
+  s3Region: "eu-west-1",
   maxFileSize: 100,
   quotaPerUser: 5120,
-  allowedTypes: 'pdf,docx,xlsx,pptx,png,jpg,jpeg,gif,svg,mp4,mp3,zip,tar.gz',
+  allowedTypes: "pdf,docx,xlsx,pptx,png,jpg,jpeg,gif,svg,mp4,mp3,zip,tar.gz",
 };
 
 // ─── Integration Settings ───────────────────────────────────────────
@@ -152,17 +165,27 @@ interface IntegrationSettings {
 
 const defaultIntegrations: IntegrationSettings = {
   apiKeys: [
-    { id: '1', name: 'OpenAI', key: 'sk-...', enabled: true },
-    { id: '2', name: 'Anthropic', key: 'sk-ant-...', enabled: true },
-    { id: '3', name: 'Google AI', key: '', enabled: false },
+    { id: "1", name: "OpenAI", key: "sk-...", enabled: true },
+    { id: "2", name: "Anthropic", key: "sk-ant-...", enabled: true },
+    { id: "3", name: "Google AI", key: "", enabled: false },
   ],
   webhooks: [
-    { id: '1', url: 'https://hooks.slack.com/services/...', events: 'user.created,user.deleted', enabled: true },
+    {
+      id: "1",
+      url: "https://hooks.slack.com/services/...",
+      events: "user.created,user.deleted",
+      enabled: true,
+    },
   ],
 };
 
 // ─── Password Visibility Helper ─────────────────────────────────────
-function PasswordInput({ value, onChange, placeholder, id }: {
+function PasswordInput({
+  value,
+  onChange,
+  placeholder,
+  id,
+}: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
@@ -173,7 +196,7 @@ function PasswordInput({ value, onChange, placeholder, id }: {
     <div className="relative">
       <Input
         id={id}
-        type={visible ? 'text' : 'password'}
+        type={visible ? "text" : "password"}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
@@ -194,19 +217,20 @@ function PasswordInput({ value, onChange, placeholder, id }: {
 
 // ─── Main Component ─────────────────────────────────────────────────
 export default function AdminSettingsPage() {
-  usePageTitle('Parametres admin');
+  usePageTitle("Parametres admin");
   const [general, setGeneral] = useState<GeneralSettings>(defaultGeneral);
   const [security, setSecurity] = useState<SecuritySettings>(defaultSecurity);
   const [email, setEmail] = useState<EmailSettings>(defaultEmail);
   const [storage, setStorage] = useState<StorageSettings>(defaultStorage);
-  const [integrations, setIntegrations] = useState<IntegrationSettings>(defaultIntegrations);
+  const [integrations, setIntegrations] =
+    useState<IntegrationSettings>(defaultIntegrations);
   const { setLogoUrl, setAppName } = useBrandingStore();
 
   const handleSave = (section: string) => {
     // Persist branding when general settings are saved
-    if (section === 'Paramètres généraux') {
+    if (section === "Paramètres généraux") {
       setLogoUrl(general.logoUrl || null);
-      setAppName(general.platformName || 'SignApps');
+      setAppName(general.platformName || "SignApps");
     }
     toast.success(`${section} sauvegardé avec succès`);
   };
@@ -214,11 +238,14 @@ export default function AdminSettingsPage() {
   const addApiKey = () => {
     const newKey: ApiKey = {
       id: Date.now().toString(),
-      name: '',
-      key: '',
+      name: "",
+      key: "",
       enabled: true,
     };
-    setIntegrations((prev) => ({ ...prev, apiKeys: [...prev.apiKeys, newKey] }));
+    setIntegrations((prev) => ({
+      ...prev,
+      apiKeys: [...prev.apiKeys, newKey],
+    }));
   };
 
   const removeApiKey = (id: string) => {
@@ -228,21 +255,30 @@ export default function AdminSettingsPage() {
     }));
   };
 
-  const updateApiKey = (id: string, field: keyof ApiKey, value: string | boolean) => {
+  const updateApiKey = (
+    id: string,
+    field: keyof ApiKey,
+    value: string | boolean,
+  ) => {
     setIntegrations((prev) => ({
       ...prev,
-      apiKeys: prev.apiKeys.map((k) => (k.id === id ? { ...k, [field]: value } : k)),
+      apiKeys: prev.apiKeys.map((k) =>
+        k.id === id ? { ...k, [field]: value } : k,
+      ),
     }));
   };
 
   const addWebhook = () => {
     const newHook: WebhookEntry = {
       id: Date.now().toString(),
-      url: '',
-      events: '',
+      url: "",
+      events: "",
       enabled: true,
     };
-    setIntegrations((prev) => ({ ...prev, webhooks: [...prev.webhooks, newHook] }));
+    setIntegrations((prev) => ({
+      ...prev,
+      webhooks: [...prev.webhooks, newHook],
+    }));
   };
 
   const removeWebhook = (id: string) => {
@@ -252,10 +288,16 @@ export default function AdminSettingsPage() {
     }));
   };
 
-  const updateWebhook = (id: string, field: keyof WebhookEntry, value: string | boolean) => {
+  const updateWebhook = (
+    id: string,
+    field: keyof WebhookEntry,
+    value: string | boolean,
+  ) => {
     setIntegrations((prev) => ({
       ...prev,
-      webhooks: prev.webhooks.map((w) => (w.id === id ? { ...w, [field]: value } : w)),
+      webhooks: prev.webhooks.map((w) =>
+        w.id === id ? { ...w, [field]: value } : w,
+      ),
     }));
   };
 
@@ -263,26 +305,28 @@ export default function AdminSettingsPage() {
   const handleExportConfig = () => {
     const config = {
       _exportedAt: new Date().toISOString(),
-      _version: '1.0',
+      _version: "1.0",
       general,
       security,
-      email: { ...email, smtpPassword: '' },
-      storage: { ...storage, s3AccessKey: '', s3SecretKey: '' },
+      email: { ...email, smtpPassword: "" },
+      storage: { ...storage, s3AccessKey: "", s3SecretKey: "" },
       integrations: {
         ...integrations,
-        apiKeys: integrations.apiKeys.map((k) => ({ ...k, key: '' })),
+        apiKeys: integrations.apiKeys.map((k) => ({ ...k, key: "" })),
       },
     };
-    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(config, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = `signapps-config-${format(new Date(), 'yyyy-MM-dd')}.json`;
+    link.download = `signapps-config-${format(new Date(), "yyyy-MM-dd")}.json`;
     document.body.appendChild(link);
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
-    toast.success('Configuration exportée avec succès');
+    toast.success("Configuration exportée avec succès");
   };
 
   const handleImportConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -293,60 +337,62 @@ export default function AdminSettingsPage() {
       try {
         const data = JSON.parse(ev.target?.result as string);
         if (data.general) setGeneral((prev) => ({ ...prev, ...data.general }));
-        if (data.security) setSecurity((prev) => ({ ...prev, ...data.security }));
+        if (data.security)
+          setSecurity((prev) => ({ ...prev, ...data.security }));
         if (data.email) setEmail((prev) => ({ ...prev, ...data.email }));
         if (data.storage) setStorage((prev) => ({ ...prev, ...data.storage }));
-        if (data.integrations) setIntegrations((prev) => ({ ...prev, ...data.integrations }));
-        toast.success('Configuration importée avec succès');
+        if (data.integrations)
+          setIntegrations((prev) => ({ ...prev, ...data.integrations }));
+        toast.success("Configuration importée avec succès");
       } catch {
         toast.error("Le fichier JSON est invalide ou corrompu.");
       }
     };
     reader.readAsText(file);
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const format = (d: Date, fmt: string) => {
     const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
     return `${y}-${m}-${day}`;
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Settings className="size-8" />
-            Paramètres de la plateforme
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Configuration générale, sécurité, messagerie, stockage et intégrations.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExportConfig} className="gap-2">
-            <Download className="size-4" />
-            Exporter
-          </Button>
-          <label className="cursor-pointer">
-            <Button variant="outline" asChild className="gap-2">
-              <span>
-                <Upload className="size-4" />
-                Importer
-              </span>
+      <PageHeader
+        title="Paramètres de la plateforme"
+        description="Configuration générale, sécurité, messagerie, stockage et intégrations."
+        icon={<Settings className="h-5 w-5 text-primary" />}
+        actions={
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleExportConfig}
+              className="gap-2"
+            >
+              <Download className="size-4" />
+              Exporter
             </Button>
-            <input
-              type="file"
-              accept=".json"
-              className="hidden"
-              onChange={handleImportConfig}
-            />
-          </label>
-        </div>
-      </div>
+            <label className="cursor-pointer">
+              <Button variant="outline" asChild className="gap-2">
+                <span>
+                  <Upload className="size-4" />
+                  Importer
+                </span>
+              </Button>
+              <input
+                type="file"
+                accept=".json"
+                className="hidden"
+                onChange={handleImportConfig}
+              />
+            </label>
+          </div>
+        }
+      />
 
       <Tabs defaultValue="general" className="space-y-6">
         <TabsList className="w-full justify-start">
@@ -391,7 +437,9 @@ export default function AdminSettingsPage() {
                   <Input
                     id="platformName"
                     value={general.platformName}
-                    onChange={(e) => setGeneral({ ...general, platformName: e.target.value })}
+                    onChange={(e) =>
+                      setGeneral({ ...general, platformName: e.target.value })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -399,7 +447,9 @@ export default function AdminSettingsPage() {
                   <Input
                     id="logoUrl"
                     value={general.logoUrl}
-                    onChange={(e) => setGeneral({ ...general, logoUrl: e.target.value })}
+                    onChange={(e) =>
+                      setGeneral({ ...general, logoUrl: e.target.value })
+                    }
                     placeholder="/logo.png ou https://..."
                   />
                 </div>
@@ -407,7 +457,9 @@ export default function AdminSettingsPage() {
                   <Label htmlFor="language">Langue par défaut</Label>
                   <Select
                     value={general.defaultLanguage}
-                    onValueChange={(v) => setGeneral({ ...general, defaultLanguage: v })}
+                    onValueChange={(v) =>
+                      setGeneral({ ...general, defaultLanguage: v })
+                    }
                   >
                     <SelectTrigger id="language" className="w-full">
                       <SelectValue />
@@ -425,19 +477,35 @@ export default function AdminSettingsPage() {
                   <Label htmlFor="timezone">Fuseau horaire</Label>
                   <Select
                     value={general.timezone}
-                    onValueChange={(v) => setGeneral({ ...general, timezone: v })}
+                    onValueChange={(v) =>
+                      setGeneral({ ...general, timezone: v })
+                    }
                   >
                     <SelectTrigger id="timezone" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Europe/Paris">Europe/Paris (UTC+1)</SelectItem>
-                      <SelectItem value="Europe/Brussels">Europe/Brussels (UTC+1)</SelectItem>
-                      <SelectItem value="Europe/London">Europe/London (UTC+0)</SelectItem>
-                      <SelectItem value="Europe/Berlin">Europe/Berlin (UTC+1)</SelectItem>
-                      <SelectItem value="America/New_York">America/New_York (UTC-5)</SelectItem>
-                      <SelectItem value="America/Los_Angeles">America/Los_Angeles (UTC-8)</SelectItem>
-                      <SelectItem value="Asia/Tokyo">Asia/Tokyo (UTC+9)</SelectItem>
+                      <SelectItem value="Europe/Paris">
+                        Europe/Paris (UTC+1)
+                      </SelectItem>
+                      <SelectItem value="Europe/Brussels">
+                        Europe/Brussels (UTC+1)
+                      </SelectItem>
+                      <SelectItem value="Europe/London">
+                        Europe/London (UTC+0)
+                      </SelectItem>
+                      <SelectItem value="Europe/Berlin">
+                        Europe/Berlin (UTC+1)
+                      </SelectItem>
+                      <SelectItem value="America/New_York">
+                        America/New_York (UTC-5)
+                      </SelectItem>
+                      <SelectItem value="America/Los_Angeles">
+                        America/Los_Angeles (UTC-8)
+                      </SelectItem>
+                      <SelectItem value="Asia/Tokyo">
+                        Asia/Tokyo (UTC+9)
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -448,7 +516,9 @@ export default function AdminSettingsPage() {
                 <Textarea
                   id="description"
                   value={general.description}
-                  onChange={(e) => setGeneral({ ...general, description: e.target.value })}
+                  onChange={(e) =>
+                    setGeneral({ ...general, description: e.target.value })
+                  }
                   rows={3}
                 />
               </div>
@@ -459,17 +529,23 @@ export default function AdminSettingsPage() {
                 <div className="space-y-0.5">
                   <Label>Mode maintenance</Label>
                   <p className="text-sm text-muted-foreground">
-                    Restreindre l&apos;accès à la plateforme aux administrateurs uniquement.
+                    Restreindre l&apos;accès à la plateforme aux administrateurs
+                    uniquement.
                   </p>
                 </div>
                 <Switch
                   checked={general.maintenanceMode}
-                  onCheckedChange={(v) => setGeneral({ ...general, maintenanceMode: v })}
+                  onCheckedChange={(v) =>
+                    setGeneral({ ...general, maintenanceMode: v })
+                  }
                 />
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={() => handleSave('Paramètres généraux')} className="gap-2">
+                <Button
+                  onClick={() => handleSave("Paramètres généraux")}
+                  className="gap-2"
+                >
                   <Save className="size-4" />
                   Sauvegarder
                 </Button>
@@ -488,7 +564,8 @@ export default function AdminSettingsPage() {
                   Politique de mot de passe
                 </CardTitle>
                 <CardDescription>
-                  Définissez les exigences de complexité et d&apos;expiration des mots de passe.
+                  Définissez les exigences de complexité et d&apos;expiration
+                  des mots de passe.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -501,7 +578,12 @@ export default function AdminSettingsPage() {
                       min={6}
                       max={128}
                       value={security.minPasswordLength}
-                      onChange={(e) => setSecurity({ ...security, minPasswordLength: parseInt(e.target.value) || 8 })}
+                      onChange={(e) =>
+                        setSecurity({
+                          ...security,
+                          minPasswordLength: parseInt(e.target.value) || 8,
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -511,35 +593,54 @@ export default function AdminSettingsPage() {
                       type="number"
                       min={0}
                       value={security.passwordExpireDays}
-                      onChange={(e) => setSecurity({ ...security, passwordExpireDays: parseInt(e.target.value) || 0 })}
+                      onChange={(e) =>
+                        setSecurity({
+                          ...security,
+                          passwordExpireDays: parseInt(e.target.value) || 0,
+                        })
+                      }
                     />
-                    <p className="text-xs text-muted-foreground">0 = pas d&apos;expiration</p>
+                    <p className="text-xs text-muted-foreground">
+                      0 = pas d&apos;expiration
+                    </p>
                   </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="flex items-center justify-between rounded-lg border p-3">
-                    <Label htmlFor="requireUpper" className="cursor-pointer">Majuscules requises</Label>
+                    <Label htmlFor="requireUpper" className="cursor-pointer">
+                      Majuscules requises
+                    </Label>
                     <Switch
                       id="requireUpper"
                       checked={security.requireUppercase}
-                      onCheckedChange={(v) => setSecurity({ ...security, requireUppercase: v })}
+                      onCheckedChange={(v) =>
+                        setSecurity({ ...security, requireUppercase: v })
+                      }
                     />
                   </div>
                   <div className="flex items-center justify-between rounded-lg border p-3">
-                    <Label htmlFor="requireNum" className="cursor-pointer">Chiffres requis</Label>
+                    <Label htmlFor="requireNum" className="cursor-pointer">
+                      Chiffres requis
+                    </Label>
                     <Switch
                       id="requireNum"
                       checked={security.requireNumbers}
-                      onCheckedChange={(v) => setSecurity({ ...security, requireNumbers: v })}
+                      onCheckedChange={(v) =>
+                        setSecurity({ ...security, requireNumbers: v })
+                      }
                     />
                   </div>
                   <div className="flex items-center justify-between rounded-lg border p-3">
-                    <Label htmlFor="requireSpecial" className="cursor-pointer">Caractères spéciaux</Label>
+                    <Label htmlFor="requireSpecial" className="cursor-pointer">
+                      Caractères spéciaux
+                    </Label>
                     <Switch
                       id="requireSpecial"
                       checked={security.requireSpecialChars}
-                      onCheckedChange={(v) => setSecurity({ ...security, requireSpecialChars: v })}
+                      onCheckedChange={(v) =>
+                        setSecurity({ ...security, requireSpecialChars: v })
+                      }
                     />
                   </div>
                 </div>
@@ -558,61 +659,97 @@ export default function AdminSettingsPage() {
                   <div className="space-y-0.5">
                     <Label>2FA obligatoire</Label>
                     <p className="text-sm text-muted-foreground">
-                      Forcer l&apos;authentification à deux facteurs pour tous les utilisateurs.
+                      Forcer l&apos;authentification à deux facteurs pour tous
+                      les utilisateurs.
                     </p>
                   </div>
                   <Switch
                     checked={security.enforce2FA}
-                    onCheckedChange={(v) => setSecurity({ ...security, enforce2FA: v })}
+                    onCheckedChange={(v) =>
+                      setSecurity({ ...security, enforce2FA: v })
+                    }
                   />
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="maxSessions">Sessions max par utilisateur</Label>
+                    <Label htmlFor="maxSessions">
+                      Sessions max par utilisateur
+                    </Label>
                     <Input
                       id="maxSessions"
                       type="number"
                       min={1}
                       max={50}
                       value={security.maxSessions}
-                      onChange={(e) => setSecurity({ ...security, maxSessions: parseInt(e.target.value) || 5 })}
+                      onChange={(e) =>
+                        setSecurity({
+                          ...security,
+                          maxSessions: parseInt(e.target.value) || 5,
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="sessionTimeout">Timeout session (minutes)</Label>
+                    <Label htmlFor="sessionTimeout">
+                      Timeout session (minutes)
+                    </Label>
                     <Input
                       id="sessionTimeout"
                       type="number"
                       min={5}
                       value={security.sessionTimeoutMinutes}
-                      onChange={(e) => setSecurity({ ...security, sessionTimeoutMinutes: parseInt(e.target.value) || 480 })}
+                      onChange={(e) =>
+                        setSecurity({
+                          ...security,
+                          sessionTimeoutMinutes:
+                            parseInt(e.target.value) || 480,
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lockoutAttempts">Tentatives avant verrouillage</Label>
+                    <Label htmlFor="lockoutAttempts">
+                      Tentatives avant verrouillage
+                    </Label>
                     <Input
                       id="lockoutAttempts"
                       type="number"
                       min={1}
                       value={security.lockoutAttempts}
-                      onChange={(e) => setSecurity({ ...security, lockoutAttempts: parseInt(e.target.value) || 5 })}
+                      onChange={(e) =>
+                        setSecurity({
+                          ...security,
+                          lockoutAttempts: parseInt(e.target.value) || 5,
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lockoutDuration">Durée de verrouillage (minutes)</Label>
+                    <Label htmlFor="lockoutDuration">
+                      Durée de verrouillage (minutes)
+                    </Label>
                     <Input
                       id="lockoutDuration"
                       type="number"
                       min={1}
                       value={security.lockoutDurationMinutes}
-                      onChange={(e) => setSecurity({ ...security, lockoutDurationMinutes: parseInt(e.target.value) || 30 })}
+                      onChange={(e) =>
+                        setSecurity({
+                          ...security,
+                          lockoutDurationMinutes:
+                            parseInt(e.target.value) || 30,
+                        })
+                      }
                     />
                   </div>
                 </div>
 
                 <div className="flex justify-end">
-                  <Button onClick={() => handleSave('Sécurité')} className="gap-2">
+                  <Button
+                    onClick={() => handleSave("Sécurité")}
+                    className="gap-2"
+                  >
                     <Save className="size-4" />
                     Sauvegarder
                   </Button>
@@ -631,7 +768,8 @@ export default function AdminSettingsPage() {
                 Configuration SMTP
               </CardTitle>
               <CardDescription>
-                Paramètres du serveur de messagerie pour l&apos;envoi d&apos;emails transactionnels.
+                Paramètres du serveur de messagerie pour l&apos;envoi
+                d&apos;emails transactionnels.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -641,7 +779,9 @@ export default function AdminSettingsPage() {
                   <Input
                     id="smtpHost"
                     value={email.smtpHost}
-                    onChange={(e) => setEmail({ ...email, smtpHost: e.target.value })}
+                    onChange={(e) =>
+                      setEmail({ ...email, smtpHost: e.target.value })
+                    }
                     placeholder="smtp.example.com"
                   />
                 </div>
@@ -651,7 +791,12 @@ export default function AdminSettingsPage() {
                     id="smtpPort"
                     type="number"
                     value={email.smtpPort}
-                    onChange={(e) => setEmail({ ...email, smtpPort: parseInt(e.target.value) || 587 })}
+                    onChange={(e) =>
+                      setEmail({
+                        ...email,
+                        smtpPort: parseInt(e.target.value) || 587,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -659,7 +804,9 @@ export default function AdminSettingsPage() {
                   <Input
                     id="smtpUser"
                     value={email.smtpUser}
-                    onChange={(e) => setEmail({ ...email, smtpUser: e.target.value })}
+                    onChange={(e) =>
+                      setEmail({ ...email, smtpUser: e.target.value })
+                    }
                     placeholder="user@example.com"
                   />
                 </div>
@@ -683,7 +830,9 @@ export default function AdminSettingsPage() {
                     id="senderEmail"
                     type="email"
                     value={email.senderEmail}
-                    onChange={(e) => setEmail({ ...email, senderEmail: e.target.value })}
+                    onChange={(e) =>
+                      setEmail({ ...email, senderEmail: e.target.value })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -691,26 +840,44 @@ export default function AdminSettingsPage() {
                   <Input
                     id="senderName"
                     value={email.senderName}
-                    onChange={(e) => setEmail({ ...email, senderName: e.target.value })}
+                    onChange={(e) =>
+                      setEmail({ ...email, senderName: e.target.value })
+                    }
                   />
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="flex items-center justify-between rounded-lg border p-3">
-                  <Label htmlFor="useTLS" className="cursor-pointer">TLS (port 465)</Label>
+                  <Label htmlFor="useTLS" className="cursor-pointer">
+                    TLS (port 465)
+                  </Label>
                   <Switch
                     id="useTLS"
                     checked={email.useTLS}
-                    onCheckedChange={(v) => setEmail({ ...email, useTLS: v, useSTARTTLS: v ? false : email.useSTARTTLS })}
+                    onCheckedChange={(v) =>
+                      setEmail({
+                        ...email,
+                        useTLS: v,
+                        useSTARTTLS: v ? false : email.useSTARTTLS,
+                      })
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between rounded-lg border p-3">
-                  <Label htmlFor="useSTARTTLS" className="cursor-pointer">STARTTLS (port 587)</Label>
+                  <Label htmlFor="useSTARTTLS" className="cursor-pointer">
+                    STARTTLS (port 587)
+                  </Label>
                   <Switch
                     id="useSTARTTLS"
                     checked={email.useSTARTTLS}
-                    onCheckedChange={(v) => setEmail({ ...email, useSTARTTLS: v, useTLS: v ? false : email.useTLS })}
+                    onCheckedChange={(v) =>
+                      setEmail({
+                        ...email,
+                        useSTARTTLS: v,
+                        useTLS: v ? false : email.useTLS,
+                      })
+                    }
                   />
                 </div>
               </div>
@@ -718,13 +885,13 @@ export default function AdminSettingsPage() {
               <div className="flex justify-between">
                 <Button
                   variant="outline"
-                  onClick={() => toast.info('Test d\'envoi simulé avec succès')}
+                  onClick={() => toast.info("Test d'envoi simulé avec succès")}
                   className="gap-2"
                 >
                   <Mail className="size-4" />
                   Envoyer un email de test
                 </Button>
-                <Button onClick={() => handleSave('Email')} className="gap-2">
+                <Button onClick={() => handleSave("Email")} className="gap-2">
                   <Save className="size-4" />
                   Sauvegarder
                 </Button>
@@ -742,7 +909,8 @@ export default function AdminSettingsPage() {
                 Configuration du stockage
               </CardTitle>
               <CardDescription>
-                Mode de stockage des fichiers, quotas et types de fichiers autorisés.
+                Mode de stockage des fichiers, quotas et types de fichiers
+                autorisés.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -751,32 +919,36 @@ export default function AdminSettingsPage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <button
                     type="button"
-                    onClick={() => setStorage({ ...storage, mode: 'local' })}
+                    onClick={() => setStorage({ ...storage, mode: "local" })}
                     className={`flex items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors ${
-                      storage.mode === 'local'
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-muted-foreground/25'
+                      storage.mode === "local"
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-muted-foreground/25"
                     }`}
                   >
                     <Server className="size-8 shrink-0 text-muted-foreground" />
                     <div>
                       <p className="font-medium">Stockage local</p>
-                      <p className="text-sm text-muted-foreground">Fichiers sur le système de fichiers du serveur</p>
+                      <p className="text-sm text-muted-foreground">
+                        Fichiers sur le système de fichiers du serveur
+                      </p>
                     </div>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setStorage({ ...storage, mode: 's3' })}
+                    onClick={() => setStorage({ ...storage, mode: "s3" })}
                     className={`flex items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors ${
-                      storage.mode === 's3'
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-muted-foreground/25'
+                      storage.mode === "s3"
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-muted-foreground/25"
                     }`}
                   >
                     <HardDrive className="size-8 shrink-0 text-muted-foreground" />
                     <div>
                       <p className="font-medium">S3 / Compatible</p>
-                      <p className="text-sm text-muted-foreground">Amazon S3, MinIO, ou compatible</p>
+                      <p className="text-sm text-muted-foreground">
+                        Amazon S3, MinIO, ou compatible
+                      </p>
                     </div>
                   </button>
                 </div>
@@ -784,13 +956,15 @@ export default function AdminSettingsPage() {
 
               <Separator />
 
-              {storage.mode === 'local' ? (
+              {storage.mode === "local" ? (
                 <div className="space-y-2">
                   <Label htmlFor="localPath">Chemin local</Label>
                   <Input
                     id="localPath"
                     value={storage.localPath}
-                    onChange={(e) => setStorage({ ...storage, localPath: e.target.value })}
+                    onChange={(e) =>
+                      setStorage({ ...storage, localPath: e.target.value })
+                    }
                     placeholder="./data/storage"
                   />
                 </div>
@@ -801,7 +975,9 @@ export default function AdminSettingsPage() {
                     <Input
                       id="s3Endpoint"
                       value={storage.s3Endpoint}
-                      onChange={(e) => setStorage({ ...storage, s3Endpoint: e.target.value })}
+                      onChange={(e) =>
+                        setStorage({ ...storage, s3Endpoint: e.target.value })
+                      }
                       placeholder="https://s3.amazonaws.com"
                     />
                   </div>
@@ -810,7 +986,9 @@ export default function AdminSettingsPage() {
                     <Input
                       id="s3Bucket"
                       value={storage.s3Bucket}
-                      onChange={(e) => setStorage({ ...storage, s3Bucket: e.target.value })}
+                      onChange={(e) =>
+                        setStorage({ ...storage, s3Bucket: e.target.value })
+                      }
                       placeholder="signapps-storage"
                     />
                   </div>
@@ -819,7 +997,9 @@ export default function AdminSettingsPage() {
                     <Input
                       id="s3Region"
                       value={storage.s3Region}
-                      onChange={(e) => setStorage({ ...storage, s3Region: e.target.value })}
+                      onChange={(e) =>
+                        setStorage({ ...storage, s3Region: e.target.value })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -827,7 +1007,9 @@ export default function AdminSettingsPage() {
                     <PasswordInput
                       id="s3AccessKey"
                       value={storage.s3AccessKey}
-                      onChange={(v) => setStorage({ ...storage, s3AccessKey: v })}
+                      onChange={(v) =>
+                        setStorage({ ...storage, s3AccessKey: v })
+                      }
                       placeholder="AKIA..."
                     />
                   </div>
@@ -836,7 +1018,9 @@ export default function AdminSettingsPage() {
                     <PasswordInput
                       id="s3SecretKey"
                       value={storage.s3SecretKey}
-                      onChange={(v) => setStorage({ ...storage, s3SecretKey: v })}
+                      onChange={(v) =>
+                        setStorage({ ...storage, s3SecretKey: v })
+                      }
                       placeholder="Clé secrète S3"
                     />
                   </div>
@@ -847,42 +1031,65 @@ export default function AdminSettingsPage() {
 
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="maxFileSize">Taille max par fichier (Mo)</Label>
+                  <Label htmlFor="maxFileSize">
+                    Taille max par fichier (Mo)
+                  </Label>
                   <Input
                     id="maxFileSize"
                     type="number"
                     min={1}
                     value={storage.maxFileSize}
-                    onChange={(e) => setStorage({ ...storage, maxFileSize: parseInt(e.target.value) || 100 })}
+                    onChange={(e) =>
+                      setStorage({
+                        ...storage,
+                        maxFileSize: parseInt(e.target.value) || 100,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="quotaPerUser">Quota par utilisateur (Mo)</Label>
+                  <Label htmlFor="quotaPerUser">
+                    Quota par utilisateur (Mo)
+                  </Label>
                   <Input
                     id="quotaPerUser"
                     type="number"
                     min={0}
                     value={storage.quotaPerUser}
-                    onChange={(e) => setStorage({ ...storage, quotaPerUser: parseInt(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      setStorage({
+                        ...storage,
+                        quotaPerUser: parseInt(e.target.value) || 0,
+                      })
+                    }
                   />
                   <p className="text-xs text-muted-foreground">0 = illimité</p>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="allowedTypes">Types de fichiers autorisés</Label>
+                <Label htmlFor="allowedTypes">
+                  Types de fichiers autorisés
+                </Label>
                 <Textarea
                   id="allowedTypes"
                   value={storage.allowedTypes}
-                  onChange={(e) => setStorage({ ...storage, allowedTypes: e.target.value })}
+                  onChange={(e) =>
+                    setStorage({ ...storage, allowedTypes: e.target.value })
+                  }
                   placeholder="pdf,docx,xlsx,png,jpg..."
                   rows={2}
                 />
-                <p className="text-xs text-muted-foreground">Extensions séparées par des virgules</p>
+                <p className="text-xs text-muted-foreground">
+                  Extensions séparées par des virgules
+                </p>
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={() => handleSave('Stockage')} className="gap-2">
+                <Button
+                  onClick={() => handleSave("Stockage")}
+                  className="gap-2"
+                >
                   <Save className="size-4" />
                   Sauvegarder
                 </Button>
@@ -904,10 +1111,16 @@ export default function AdminSettingsPage() {
                       Clés API
                     </CardTitle>
                     <CardDescription>
-                      Gérez les clés d&apos;accès aux services externes (LLM, etc.).
+                      Gérez les clés d&apos;accès aux services externes (LLM,
+                      etc.).
                     </CardDescription>
                   </div>
-                  <Button variant="outline" size="sm" onClick={addApiKey} className="gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addApiKey}
+                    className="gap-2"
+                  >
                     <Plus className="size-4" />
                     Ajouter
                   </Button>
@@ -927,24 +1140,31 @@ export default function AdminSettingsPage() {
                     <div className="flex-1 grid gap-3 sm:grid-cols-3">
                       <Input
                         value={apiKey.name}
-                        onChange={(e) => updateApiKey(apiKey.id, 'name', e.target.value)}
+                        onChange={(e) =>
+                          updateApiKey(apiKey.id, "name", e.target.value)
+                        }
                         placeholder="Nom du service"
                       />
                       <div className="sm:col-span-2">
                         <PasswordInput
                           value={apiKey.key}
-                          onChange={(v) => updateApiKey(apiKey.id, 'key', v)}
+                          onChange={(v) => updateApiKey(apiKey.id, "key", v)}
                           placeholder="Clé API"
                         />
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant={apiKey.enabled ? 'default' : 'secondary'} className="cursor-pointer select-none">
-                        {apiKey.enabled ? 'Actif' : 'Inactif'}
+                      <Badge
+                        variant={apiKey.enabled ? "default" : "secondary"}
+                        className="cursor-pointer select-none"
+                      >
+                        {apiKey.enabled ? "Actif" : "Inactif"}
                       </Badge>
                       <Switch
                         checked={apiKey.enabled}
-                        onCheckedChange={(v) => updateApiKey(apiKey.id, 'enabled', v)}
+                        onCheckedChange={(v) =>
+                          updateApiKey(apiKey.id, "enabled", v)
+                        }
                       />
                       <Button
                         variant="ghost"
@@ -970,10 +1190,16 @@ export default function AdminSettingsPage() {
                       Webhooks
                     </CardTitle>
                     <CardDescription>
-                      Envoyez des notifications vers des services externes lors d&apos;événements.
+                      Envoyez des notifications vers des services externes lors
+                      d&apos;événements.
                     </CardDescription>
                   </div>
-                  <Button variant="outline" size="sm" onClick={addWebhook} className="gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addWebhook}
+                    className="gap-2"
+                  >
                     <Plus className="size-4" />
                     Ajouter
                   </Button>
@@ -993,22 +1219,31 @@ export default function AdminSettingsPage() {
                     <div className="flex-1 grid gap-3 sm:grid-cols-2">
                       <Input
                         value={webhook.url}
-                        onChange={(e) => updateWebhook(webhook.id, 'url', e.target.value)}
+                        onChange={(e) =>
+                          updateWebhook(webhook.id, "url", e.target.value)
+                        }
                         placeholder="https://hooks.example.com/..."
                       />
                       <Input
                         value={webhook.events}
-                        onChange={(e) => updateWebhook(webhook.id, 'events', e.target.value)}
+                        onChange={(e) =>
+                          updateWebhook(webhook.id, "events", e.target.value)
+                        }
                         placeholder="Événements (user.created, file.uploaded...)"
                       />
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant={webhook.enabled ? 'default' : 'secondary'} className="cursor-pointer select-none">
-                        {webhook.enabled ? 'Actif' : 'Inactif'}
+                      <Badge
+                        variant={webhook.enabled ? "default" : "secondary"}
+                        className="cursor-pointer select-none"
+                      >
+                        {webhook.enabled ? "Actif" : "Inactif"}
                       </Badge>
                       <Switch
                         checked={webhook.enabled}
-                        onCheckedChange={(v) => updateWebhook(webhook.id, 'enabled', v)}
+                        onCheckedChange={(v) =>
+                          updateWebhook(webhook.id, "enabled", v)
+                        }
                       />
                       <Button
                         variant="ghost"
@@ -1023,7 +1258,10 @@ export default function AdminSettingsPage() {
                 ))}
 
                 <div className="flex justify-end pt-2">
-                  <Button onClick={() => handleSave('Intégrations')} className="gap-2">
+                  <Button
+                    onClick={() => handleSave("Intégrations")}
+                    className="gap-2"
+                  >
                     <Save className="size-4" />
                     Sauvegarder
                   </Button>

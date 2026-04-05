@@ -1,19 +1,20 @@
-'use client';
+"use client";
 
-import { AppLayout } from '@/components/layout/app-layout';
-import { CveDashboard } from '@/components/admin/cve-dashboard';
-import { ShieldAlert } from 'lucide-react';
-import { usePageTitle } from '@/hooks/use-page-title';
+import { AppLayout } from "@/components/layout/app-layout";
+import { CveDashboard } from "@/components/admin/cve-dashboard";
+import { ShieldAlert } from "lucide-react";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function CvePage() {
-  usePageTitle('Vulnerabilites');
+  usePageTitle("Vulnerabilites");
   return (
     <AppLayout>
       <div className="space-y-6 p-6">
-        <div className="flex items-center gap-3">
-          <ShieldAlert className="h-6 w-6 text-primary" />
-          <h1 className="text-3xl font-bold tracking-tight">CVE Dashboard</h1>
-        </div>
+        <PageHeader
+          title="CVE Dashboard"
+          icon={<ShieldAlert className="h-5 w-5 text-primary" />}
+        />
         <CveDashboard />
       </div>
     </AppLayout>
