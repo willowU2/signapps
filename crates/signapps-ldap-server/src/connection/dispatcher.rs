@@ -84,6 +84,7 @@ pub(crate) async fn process_message(
                 &filter_str,
                 &req.attributes,
                 domain,
+                req.size_limit,
             )
             .await
             .unwrap_or_default();

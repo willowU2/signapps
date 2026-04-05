@@ -313,6 +313,74 @@ async fn search_objects(
     results
 }
 
+/// Paged results state for RFC 2696 Simple Paged Results Manipulation.
+///
+/// Carries the client-requested page size and the raw cookie bytes received
+/// from the client (empty on the first request).
+pub struct PagedResultsControl {
+    /// Maximum number of entries to return in this response page.
+    pub page_size: i32,
+    /// Opaque cookie bytes from the client (empty on first page).
+    pub cookie: Vec<u8>,
+}
+
+/// Parse the offset from a paged results cookie.
+///
+/// The cookie encodes the next result offset as a 4-byte little-endian integer.
+/// An empty cookie means "first page" (offset 0).
+///
+/// # Examples
+///
+/// ```
+/// use signapps_ldap_server::ops::search::parse_paged_control;
+///
+/// assert_eq!(parse_paged_control(&[]), Some(0));
+/// let cookie = 50_i32.to_le_bytes();
+/// assert_eq!(parse_paged_control(&cookie), Some(50));
+/// ```
+///
+/// # Panics
+///
+/// No panics.
+pub fn parse_paged_control(cookie: &[u8]) -> Option<i32> {
+    if cookie.is_empty() {
+        return Some(0); // First page
+    }
+    if cookie.len() >= 4 {
+        let offset = i32::from_le_bytes([cookie[0], cookie[1], cookie[2], cookie[3]]);
+        return Some(offset);
+    }
+    None
+}
+
+/// Build a paged results response cookie.
+///
+/// Returns the `next_offset` encoded as a 4-byte little-endian integer, or
+/// an empty `Vec` when `next_offset >= total` (signalling the last page).
+///
+/// # Examples
+///
+/// ```
+/// use signapps_ldap_server::ops::search::build_paged_cookie;
+///
+/// let cookie = build_paged_cookie(50, 100);
+/// assert_eq!(cookie.len(), 4);
+///
+/// let done = build_paged_cookie(100, 100);
+/// assert!(done.is_empty());
+/// ```
+///
+/// # Panics
+///
+/// No panics.
+pub fn build_paged_cookie(next_offset: i32, total: i32) -> Vec<u8> {
+    if next_offset >= total {
+        vec![] // Empty cookie = last page
+    } else {
+        next_offset.to_le_bytes().to_vec()
+    }
+}
+
 /// Handle an LDAP search request.
 ///
 /// For RootDSE (empty base DN + base scope), returns server information
@@ -325,6 +393,9 @@ async fn search_objects(
 /// filter (`(objectClass=*)`) or no class constraint triggers a full subtree
 /// search across all three object types.
 ///
+/// When `size_limit > 0`, the result set is truncated to at most `size_limit`
+/// entries before returning.
+///
 /// # Errors
 ///
 /// Returns `Ok(vec![])` on filter parse failure or access denial — the caller
@@ -334,7 +405,7 @@ async fn search_objects(
 /// # Examples
 ///
 /// ```ignore
-/// let entries = handle_search(&pool, 0, "", Scope::BaseObject, "(objectClass=*)", &[], "example.com").await?;
+/// let entries = handle_search(&pool, 0, "", Scope::BaseObject, "(objectClass=*)", &[], "example.com", 0).await?;
 /// assert_eq!(entries[0].dn, "");
 /// ```
 ///
@@ -350,6 +421,7 @@ pub async fn handle_search(
     filter_str: &str,
     requested_attrs: &[String],
     domain: &str,
+    size_limit: i32,
 ) -> Result<Vec<SearchEntry>> {
     // RootDSE — unauthenticated, no filter parsing needed
     if base_dn.is_empty() && scope == Scope::BaseObject {
@@ -388,7 +460,20 @@ pub async fn handle_search(
     let domain_sid = resolve_domain_sid(pool, domain).await;
 
     // Query PostgreSQL and build DirectoryEntry objects
-    let entries = search_objects(pool, filter_str, domain, &domain_sid).await;
+    let raw_entries = search_objects(pool, filter_str, domain, &domain_sid).await;
+
+    // Enforce size limit (0 = unlimited)
+    let entries: Vec<signapps_ad_core::DirectoryEntry> =
+        if size_limit > 0 && raw_entries.len() > size_limit as usize {
+            tracing::debug!(
+                size_limit,
+                total = raw_entries.len(),
+                "Truncating results to size limit"
+            );
+            raw_entries.into_iter().take(size_limit as usize).collect()
+        } else {
+            raw_entries
+        };
 
     tracing::debug!(
         result_count = entries.len(),
@@ -524,6 +609,26 @@ mod tests {
         assert!(names.contains(&"cn"));
         assert!(names.contains(&"mail"));
         assert!(!names.contains(&"sn"));
+    }
+
+    #[test]
+    fn paged_cookie_roundtrip() {
+        let cookie = build_paged_cookie(50, 100);
+        assert_eq!(cookie.len(), 4);
+        let offset = parse_paged_control(&cookie);
+        assert_eq!(offset, Some(50));
+    }
+
+    #[test]
+    fn paged_cookie_last_page() {
+        let cookie = build_paged_cookie(100, 100);
+        assert!(cookie.is_empty()); // Empty = last page
+    }
+
+    #[test]
+    fn paged_cookie_first_page() {
+        let offset = parse_paged_control(&[]);
+        assert_eq!(offset, Some(0));
     }
 
     #[test]
