@@ -231,6 +231,62 @@ async fn main() -> std::io::Result<()> {
         });
     }
 
+    // DHCP server (optional — requires database and dhcp-server feature)
+    #[cfg(feature = "dhcp-server")]
+    {
+        let dhcp_enabled = std::env::var("DHCP_ENABLED")
+            .map(|v| v == "true" || v == "1")
+            .unwrap_or(false);
+
+        if dhcp_enabled {
+            let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+                "postgres://signapps:password@localhost:5432/signapps".to_string()
+            });
+            match sqlx::postgres::PgPoolOptions::new()
+                .max_connections(5)
+                .connect(&database_url)
+                .await
+            {
+                Ok(pool) => {
+                    let dhcp_port: u16 = std::env::var("DHCP_PORT")
+                        .ok()
+                        .and_then(|p| p.parse().ok())
+                        .unwrap_or(6767);
+                    let dhcp_domain =
+                        std::env::var("DHCP_DOMAIN").unwrap_or_else(|_| "local".to_string());
+
+                    let dhcp_config = dhcp::DhcpListenerConfig {
+                        bind_addr: format!("0.0.0.0:{}", dhcp_port),
+                        default_scope_id: None,
+                        default_lease_hours: 8,
+                        domain_name: dhcp_domain,
+                    };
+
+                    let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
+
+                    tracing::info!(port = dhcp_port, "DHCP server enabled — spawning listener");
+                    let dhcp_pool = pool.clone();
+                    tokio::spawn(async move {
+                        if let Err(e) =
+                            dhcp::run_dhcp_listener(dhcp_config, dhcp_pool, shutdown_rx).await
+                        {
+                            tracing::error!("DHCP listener error: {}", e);
+                        }
+                    });
+
+                    // Shutdown on Ctrl+C
+                    tokio::spawn(async move {
+                        tokio::signal::ctrl_c().await.ok();
+                        let _ = shutdown_tx.send(true);
+                    });
+                }
+                Err(e) => {
+                    tracing::error!("DHCP: failed to connect to database: {} — DHCP disabled", e);
+                }
+            }
+        }
+    }
+
     // Build router
     let app = create_router(state);
 
