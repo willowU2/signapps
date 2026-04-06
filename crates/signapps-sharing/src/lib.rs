@@ -41,10 +41,13 @@
 pub mod models;
 pub mod types;
 
-// Modules to be added in subsequent tasks:
-// pub mod repository;
-// pub mod resolver;
-// pub mod cache;
+pub mod repository;
+pub mod resolver;
+
+pub mod audit;
+pub mod cache;
+
+// Modules to be added in subsequent tasks (engine, …):
 // pub mod engine;
 // pub mod audit;
 // pub mod middleware;
