@@ -394,67 +394,133 @@ async fn provision_dns(pool: &PgPool, domain_id: Uuid, dns_name: &str, ad_enable
     Ok(())
 }
 
-/// Generate a real self-signed X.509 CA certificate using `rcgen`.
+/// Result of CA + child certificate generation.
+struct CertBundle {
+    ca_cert_pem: String,
+    ca_key_pem: String,
+    server_cert_pem: String,
+    wildcard_cert_pem: String,
+    ca_fingerprint: String,
+    server_fingerprint: String,
+    wildcard_fingerprint: String,
+}
+
+/// Generate a complete certificate chain: Root CA + DC server cert + wildcard.
 ///
-/// Produces a valid DER-encoded certificate with:
-/// - RSA-equivalent ECDSA P-256 key pair
-/// - BasicConstraints CA:TRUE
-/// - KeyUsage: keyCertSign + cRLSign
-/// - SubjectAltName: `*.{dns_name}` + `{dns_name}`
-/// - 10-year validity
-///
-/// Returns `(certificate_pem, private_key_pem)`.
+/// All certificates use ECDSA P-256. The server and wildcard certs are signed
+/// by the CA key. The CA is valid for 10 years, child certs for 2 years.
 ///
 /// # Errors
 ///
-/// Returns an error string if certificate generation fails.
+/// Returns an error string if any certificate generation step fails.
 ///
 /// # Panics
 ///
 /// No panics — all errors are propagated.
-fn generate_ca_certificate(dns_name: &str) -> std::result::Result<(String, String), String> {
+fn generate_cert_bundle(dns_name: &str) -> std::result::Result<CertBundle, String> {
     use rcgen::{
         BasicConstraints, CertificateParams, DistinguishedName, DnType,
         IsCa, KeyUsagePurpose, SanType,
     };
+    use sha2::{Digest, Sha256};
 
-    let mut params = CertificateParams::default();
+    let now = time::OffsetDateTime::now_utc();
 
-    // Subject
-    let mut dn = DistinguishedName::new();
-    dn.push(DnType::CommonName, format!("SignApps CA - {dns_name}"));
-    dn.push(DnType::OrganizationName, "SignApps");
-    dn.push(DnType::CountryName, "FR");
-    params.distinguished_name = dn;
+    // ── 1. Root CA ──────────────────────────────────────────────────────
+    let mut ca_params = CertificateParams::default();
+    let mut ca_dn = DistinguishedName::new();
+    ca_dn.push(DnType::CommonName, format!("SignApps CA - {dns_name}"));
+    ca_dn.push(DnType::OrganizationName, "SignApps");
+    ca_dn.push(DnType::CountryName, "FR");
+    ca_params.distinguished_name = ca_dn;
+    ca_params.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
+    ca_params.key_usages = vec![KeyUsagePurpose::KeyCertSign, KeyUsagePurpose::CrlSign];
+    ca_params.not_before = now;
+    ca_params.not_after = now + time::Duration::days(3650);
 
-    // CA constraints
-    params.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
-    params.key_usages = vec![
-        KeyUsagePurpose::KeyCertSign,
-        KeyUsagePurpose::CrlSign,
+    let ca_key = rcgen::KeyPair::generate().map_err(|e| format!("CA key gen: {e}"))?;
+    let ca_cert = ca_params
+        .self_signed(&ca_key)
+        .map_err(|e| format!("CA cert gen: {e}"))?;
+
+    let ca_fingerprint = hex_sha256(ca_cert.der());
+
+    // ── 2. DC Server certificate (signed by CA) ─────────────────────────
+    let dc_fqdn = format!("dc.{dns_name}");
+    let mut srv_params = CertificateParams::default();
+    let mut srv_dn = DistinguishedName::new();
+    srv_dn.push(DnType::CommonName, &dc_fqdn);
+    srv_dn.push(DnType::OrganizationName, "SignApps");
+    srv_params.distinguished_name = srv_dn;
+    srv_params.is_ca = IsCa::NoCa;
+    srv_params.key_usages = vec![
+        KeyUsagePurpose::DigitalSignature,
+        KeyUsagePurpose::KeyEncipherment,
     ];
-
-    // SAN
-    params.subject_alt_names = vec![
-        SanType::DnsName(format!("*.{dns_name}").try_into().map_err(|e| format!("{e}"))?),
+    srv_params.extended_key_usages = vec![
+        rcgen::ExtendedKeyUsagePurpose::ServerAuth,
+        rcgen::ExtendedKeyUsagePurpose::ClientAuth,
+    ];
+    srv_params.subject_alt_names = vec![
+        SanType::DnsName(dc_fqdn.clone().try_into().map_err(|e| format!("{e}"))?),
         SanType::DnsName(dns_name.to_string().try_into().map_err(|e| format!("{e}"))?),
     ];
+    srv_params.not_before = now;
+    srv_params.not_after = now + time::Duration::days(730); // 2 years
 
-    // Validity: 10 years
-    let now = time::OffsetDateTime::now_utc();
-    params.not_before = now;
-    params.not_after = now + time::Duration::days(3650);
+    let srv_key = rcgen::KeyPair::generate().map_err(|e| format!("Server key gen: {e}"))?;
+    let srv_cert = srv_params
+        .signed_by(&srv_key, &ca_cert, &ca_key)
+        .map_err(|e| format!("Server cert sign: {e}"))?;
 
-    // Generate the key pair and self-signed certificate
-    let key_pair = rcgen::KeyPair::generate().map_err(|e| format!("Key generation failed: {e}"))?;
-    let cert = params
-        .self_signed(&key_pair)
-        .map_err(|e| format!("Certificate generation failed: {e}"))?;
+    let server_fingerprint = hex_sha256(srv_cert.der());
 
-    Ok((cert.pem(), key_pair.serialize_pem()))
+    // ── 3. Wildcard certificate (signed by CA) ──────────────────────────
+    let wildcard_name = format!("*.{dns_name}");
+    let mut wc_params = CertificateParams::default();
+    let mut wc_dn = DistinguishedName::new();
+    wc_dn.push(DnType::CommonName, &wildcard_name);
+    wc_dn.push(DnType::OrganizationName, "SignApps");
+    wc_params.distinguished_name = wc_dn;
+    wc_params.is_ca = IsCa::NoCa;
+    wc_params.key_usages = vec![
+        KeyUsagePurpose::DigitalSignature,
+        KeyUsagePurpose::KeyEncipherment,
+    ];
+    wc_params.extended_key_usages = vec![rcgen::ExtendedKeyUsagePurpose::ServerAuth];
+    wc_params.subject_alt_names = vec![
+        SanType::DnsName(wildcard_name.clone().try_into().map_err(|e| format!("{e}"))?),
+        SanType::DnsName(dns_name.to_string().try_into().map_err(|e| format!("{e}"))?),
+    ];
+    wc_params.not_before = now;
+    wc_params.not_after = now + time::Duration::days(730);
+
+    let wc_key = rcgen::KeyPair::generate().map_err(|e| format!("Wildcard key gen: {e}"))?;
+    let wc_cert = wc_params
+        .signed_by(&wc_key, &ca_cert, &ca_key)
+        .map_err(|e| format!("Wildcard cert sign: {e}"))?;
+
+    let wildcard_fingerprint = hex_sha256(wc_cert.der());
+
+    Ok(CertBundle {
+        ca_cert_pem: ca_cert.pem(),
+        ca_key_pem: ca_key.serialize_pem(),
+        server_cert_pem: srv_cert.pem(),
+        wildcard_cert_pem: wc_cert.pem(),
+        ca_fingerprint,
+        server_fingerprint,
+        wildcard_fingerprint,
+    })
 }
 
-/// Provision a certificate record: internal CA or ACME marker.
+/// Compute the SHA-256 fingerprint of a DER-encoded certificate.
+fn hex_sha256(der: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    let hash = Sha256::digest(der);
+    hash.iter().map(|b| format!("{b:02X}")).collect::<Vec<_>>().join(":")
+}
+
+/// Provision certificate records: internal CA chain or ACME marker.
 async fn provision_certificates(
     pool: &PgPool,
     domain_id: Uuid,
@@ -464,28 +530,52 @@ async fn provision_certificates(
     match cert_mode {
         "internal_ca" => {
             let now = chrono::Utc::now();
-            let expires = now + chrono::Duration::days(3650); // 10 years
+            let ca_expires = now + chrono::Duration::days(3650);
+            let child_expires = now + chrono::Duration::days(730);
 
-            let (ca_cert_pem, _ca_key_pem) = generate_ca_certificate(dns_name)
-                .map_err(|e| signapps_common::Error::Internal(format!("CA cert gen: {e}")))?;
+            let bundle = generate_cert_bundle(dns_name)
+                .map_err(|e| signapps_common::Error::Internal(format!("Cert bundle: {e}")))?;
 
+            let ca_subject = format!("CN=SignApps CA - {dns_name}");
+
+            // Root CA
             InfraCertificateRepository::create(
-                pool,
-                domain_id,
-                &format!("CN=SignApps CA - {dns_name}"),
-                &format!("CN=SignApps CA - {dns_name}"),
-                "root_ca",
-                &ca_cert_pem,
-                now,
-                expires,
-                &[format!("*.{dns_name}")],
-                None, // serial_number
-                None, // fingerprint_sha256
-            )
-            .await?;
+                pool, domain_id,
+                &ca_subject, &ca_subject, "root_ca",
+                &bundle.ca_cert_pem, now, ca_expires,
+                &[format!("*.{dns_name}"), dns_name.to_string()],
+                None,
+                Some(&bundle.ca_fingerprint),
+            ).await?;
+
+            // DC Server cert
+            let dc_subject = format!("CN=dc.{dns_name}");
+            InfraCertificateRepository::create(
+                pool, domain_id,
+                &dc_subject, &ca_subject, "server",
+                &bundle.server_cert_pem, now, child_expires,
+                &[format!("dc.{dns_name}"), dns_name.to_string()],
+                None,
+                Some(&bundle.server_fingerprint),
+            ).await?;
+
+            // Wildcard cert
+            let wc_subject = format!("CN=*.{dns_name}");
+            InfraCertificateRepository::create(
+                pool, domain_id,
+                &wc_subject, &ca_subject, "wildcard",
+                &bundle.wildcard_cert_pem, now, child_expires,
+                &[format!("*.{dns_name}"), dns_name.to_string()],
+                None,
+                Some(&bundle.wildcard_fingerprint),
+            ).await?;
+
+            tracing::info!(
+                domain = dns_name,
+                "Issued 3 certificates: Root CA (10y) + DC server (2y) + Wildcard (2y)"
+            );
         }
         "acme" => {
-            // ACME provisioning is asynchronous (background job)
             tracing::info!(domain = dns_name, "ACME certificate will be provisioned asynchronously");
         }
         _ => {}
@@ -597,17 +687,26 @@ mod tests {
     }
 
     #[test]
-    fn generate_real_x509_ca() {
-        let (cert_pem, key_pem) = generate_ca_certificate("test.local").unwrap();
+    fn generate_real_x509_cert_bundle() {
+        let bundle = generate_cert_bundle("test.local").unwrap();
 
-        // Verify PEM format
-        assert!(cert_pem.starts_with("-----BEGIN CERTIFICATE-----"));
-        assert!(cert_pem.trim_end().ends_with("-----END CERTIFICATE-----"));
-        assert!(key_pem.starts_with("-----BEGIN PRIVATE KEY-----"));
-        assert!(key_pem.trim_end().ends_with("-----END PRIVATE KEY-----"));
+        // CA cert
+        assert!(bundle.ca_cert_pem.starts_with("-----BEGIN CERTIFICATE-----"));
+        assert!(bundle.ca_cert_pem.len() > 500);
+        assert!(bundle.ca_key_pem.starts_with("-----BEGIN PRIVATE KEY-----"));
 
-        // Verify substantial content (real X.509 is much larger than our old JSON stub)
-        assert!(cert_pem.len() > 500, "Real X.509 cert should be >500 bytes");
-        assert!(key_pem.len() > 100, "Private key PEM should be >100 bytes");
+        // Server cert
+        assert!(bundle.server_cert_pem.starts_with("-----BEGIN CERTIFICATE-----"));
+        assert!(bundle.server_cert_pem.len() > 500);
+
+        // Wildcard cert
+        assert!(bundle.wildcard_cert_pem.starts_with("-----BEGIN CERTIFICATE-----"));
+        assert!(bundle.wildcard_cert_pem.len() > 500);
+
+        // SHA-256 fingerprints (colon-separated hex, 95 chars)
+        assert_eq!(bundle.ca_fingerprint.len(), 95, "SHA-256 fingerprint = 32 bytes * 3 - 1");
+        assert!(bundle.ca_fingerprint.contains(':'));
+        assert_ne!(bundle.ca_fingerprint, bundle.server_fingerprint);
+        assert_ne!(bundle.server_fingerprint, bundle.wildcard_fingerprint);
     }
 }
