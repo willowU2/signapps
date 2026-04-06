@@ -162,16 +162,21 @@ impl From<signapps_db::models::User> for UserResponse {
         (status = 401, description = "Not authenticated"),
     )
 )]
-#[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<ListQuery>,
 ) -> Result<Json<UserListResponse>> {
     let limit = query.limit.unwrap_or(50).min(100);
     let offset = query.offset.unwrap_or(0);
 
-    let users = UserRepository::list(&state.pool, limit, offset).await?;
+    // Filter users by the caller's tenant for multi-tenant isolation
+    let users = if let Some(tenant_id) = claims.tenant_id {
+        UserRepository::list_by_tenant(&state.pool, tenant_id, limit, offset).await?
+    } else {
+        UserRepository::list(&state.pool, limit, offset).await?
+    };
     let total = users.len() as i64;
 
     let response: Vec<UserResponse> = users.into_iter().map(UserResponse::from).collect();
@@ -197,15 +202,22 @@ pub async fn list(
         (status = 404, description = "User not found"),
     )
 )]
-#[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn get(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<UserResponse>> {
     let user = UserRepository::find_by_id(&state.pool, id)
         .await?
         .ok_or_else(|| Error::NotFound(format!("User {}", id)))?;
+
+    // Verify the target user belongs to the same tenant
+    if let Some(tenant_id) = claims.tenant_id {
+        if user.tenant_id != Some(tenant_id) {
+            return Err(Error::NotFound(format!("User {}", id)));
+        }
+    }
 
     Ok(Json(UserResponse::from(user)))
 }
@@ -356,7 +368,6 @@ pub async fn create(
         (status = 404, description = "User not found"),
     )
 )]
-#[tracing::instrument(skip(state, payload))]
 #[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
@@ -368,10 +379,16 @@ pub async fn update(
         .validate()
         .map_err(|e| Error::Validation(e.to_string()))?;
 
-    // Verify user exists
+    // Verify user exists and belongs to the same tenant
     let _existing = UserRepository::find_by_id(&state.pool, id)
         .await?
         .ok_or_else(|| Error::NotFound(format!("User {}", id)))?;
+
+    if let Some(tenant_id) = claims.tenant_id {
+        if _existing.tenant_id != Some(tenant_id) {
+            return Err(Error::NotFound(format!("User {}", id)));
+        }
+    }
 
     // Check email uniqueness if changing
     if let Some(ref email) = payload.email {
@@ -425,17 +442,22 @@ pub async fn update(
         (status = 404, description = "User not found"),
     )
 )]
-#[tracing::instrument(skip(state))]
 #[tracing::instrument(skip_all)]
 pub async fn delete(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Result<StatusCode> {
-    // Verify user exists
+    // Verify user exists and belongs to the same tenant
     let _existing = UserRepository::find_by_id(&state.pool, id)
         .await?
         .ok_or_else(|| Error::NotFound(format!("User {}", id)))?;
+
+    if let Some(tenant_id) = claims.tenant_id {
+        if _existing.tenant_id != Some(tenant_id) {
+            return Err(Error::NotFound(format!("User {}", id)));
+        }
+    }
 
     // Purge associated tasks
     sqlx::query("DELETE FROM calendar.tasks WHERE created_by = $1 OR assigned_to = $1")

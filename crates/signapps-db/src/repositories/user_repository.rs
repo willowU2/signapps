@@ -56,6 +56,26 @@ impl UserRepository {
         Ok(users)
     }
 
+    /// List users belonging to a specific tenant with pagination.
+    pub async fn list_by_tenant(
+        pool: &PgPool,
+        tenant_id: Uuid,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<User>> {
+        let users = sqlx::query_as::<_, User>(
+            "SELECT * FROM identity.users WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        )
+        .bind(tenant_id)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+
+        Ok(users)
+    }
+
     /// Count all users.
     pub async fn count(pool: &PgPool) -> Result<i64> {
         let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM identity.users")

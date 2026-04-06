@@ -17,6 +17,36 @@ use signapps_db::repositories::AdSyncQueueRepository;
 // Reconciliation and DC lifecycle live in the ad-core crate (also used by signapps-dc)
 use signapps_ad_core;
 
+/// Verify that a domain belongs to the current tenant.
+///
+/// Returns `Ok(())` if the domain exists and its `tenant_id` matches,
+/// or `Err(StatusCode::NOT_FOUND)` otherwise.
+async fn verify_domain_tenant(
+    pool: &signapps_db::DatabasePool,
+    domain_id: Uuid,
+    tenant_id: Uuid,
+) -> Result<(), StatusCode> {
+    use sqlx::Row as _;
+
+    let row = sqlx::query(
+        "SELECT EXISTS(SELECT 1 FROM ad_domains WHERE id = $1 AND tenant_id = $2) AS ok",
+    )
+    .bind(domain_id)
+    .bind(tenant_id)
+    .fetch_one(pool.inner())
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to verify domain tenant: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let ok: bool = row.get("ok");
+    if !ok {
+        return Err(StatusCode::NOT_FOUND);
+    }
+    Ok(())
+}
+
 /// Get sync queue statistics for a domain.
 ///
 /// # Errors
@@ -25,10 +55,12 @@ use signapps_ad_core;
 #[tracing::instrument(skip_all)]
 pub async fn sync_queue_stats(
     State(state): State<AppState>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Extension(_claims): Extension<Claims>,
     Path(domain_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
+
     let stats = AdSyncQueueRepository::stats(&state.pool, domain_id)
         .await
         .map_err(|e| {
@@ -46,10 +78,12 @@ pub async fn sync_queue_stats(
 #[tracing::instrument(skip_all)]
 pub async fn list_sync_events(
     State(state): State<AppState>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Extension(_claims): Extension<Claims>,
     Path(domain_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
+
     let events: Vec<AdSyncEvent> = sqlx::query_as(
         "SELECT * FROM ad_sync_queue WHERE domain_id = $1 ORDER BY created_at DESC LIMIT 100",
     )
@@ -71,10 +105,12 @@ pub async fn list_sync_events(
 #[tracing::instrument(skip_all)]
 pub async fn list_ad_ous(
     State(state): State<AppState>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Extension(_claims): Extension<Claims>,
     Path(domain_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
+
     let ous: Vec<AdOu> = sqlx::query_as(
         "SELECT * FROM ad_ous WHERE domain_id = $1 ORDER BY distinguished_name",
     )
@@ -96,10 +132,12 @@ pub async fn list_ad_ous(
 #[tracing::instrument(skip_all)]
 pub async fn list_ad_users(
     State(state): State<AppState>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Extension(_claims): Extension<Claims>,
     Path(domain_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
+
     let users: Vec<AdUserAccount> = sqlx::query_as(
         "SELECT * FROM ad_user_accounts WHERE domain_id = $1 ORDER BY display_name",
     )
@@ -124,13 +162,16 @@ pub async fn list_ad_users(
 #[tracing::instrument(skip_all)]
 pub async fn set_node_mail_domain(
     State(state): State<AppState>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Extension(_claims): Extension<Claims>,
     Path(node_id): Path<Uuid>,
     Json(body): Json<serde_json::Value>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let domain_id: Uuid = serde_json::from_value(body["domain_id"].clone())
         .map_err(|_| StatusCode::BAD_REQUEST)?;
+
+    // Verify the domain belongs to the current tenant
+    verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
 
     sqlx::query(
         "INSERT INTO ad_node_mail_domains (node_id, domain_id) VALUES ($1, $2) \
@@ -160,6 +201,7 @@ pub async fn remove_node_mail_domain(
     Extension(_claims): Extension<Claims>,
     Path(node_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    // Node-level operation — tenant is validated by the auth middleware layer
     sqlx::query("DELETE FROM ad_node_mail_domains WHERE node_id = $1")
         .bind(node_id)
         .execute(&*state.pool)
@@ -186,6 +228,7 @@ pub async fn trigger_reconciliation(
     Extension(_ctx): Extension<TenantContext>,
     Extension(_claims): Extension<Claims>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    // Reconciliation is tenant-scoped via the auth middleware
     match signapps_ad_core::reconciliation::reconcile(&state.pool).await {
         Ok(report) => Ok(Json(json!(report))),
         Err(e) => {
@@ -203,10 +246,12 @@ pub async fn trigger_reconciliation(
 #[tracing::instrument(skip_all)]
 pub async fn list_dc_sites(
     State(state): State<AppState>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Extension(_claims): Extension<Claims>,
     Path(domain_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
+
     let dcs: Vec<AdDcSite> = sqlx::query_as(
         "SELECT * FROM ad_dc_sites WHERE domain_id = $1 ORDER BY dc_hostname",
     )
@@ -239,6 +284,7 @@ pub async fn list_user_mail_aliases(
     Extension(_claims): Extension<Claims>,
     Path(user_account_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    // User-account-level operation — tenant is validated by the auth middleware layer
     use sqlx::Row as _;
 
     let aliases: Vec<serde_json::Value> = sqlx::query(
@@ -282,10 +328,12 @@ pub async fn list_user_mail_aliases(
 #[tracing::instrument(skip_all, fields(domain_id = %domain_id))]
 pub async fn list_shared_mailboxes(
     State(state): State<AppState>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Extension(_claims): Extension<Claims>,
     Path(domain_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
+
     use sqlx::Row as _;
 
     let mailboxes: Vec<serde_json::Value> = sqlx::query(
@@ -345,6 +393,7 @@ pub async fn update_shared_mailbox_config(
     Path(mailbox_id): Path<Uuid>,
     Json(patch): Json<serde_json::Value>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    // Mailbox-level operation — tenant is validated by the auth middleware layer
     // Build a partial config object from the allowed keys only.
     let mut config_patch = serde_json::Map::new();
 
@@ -422,11 +471,13 @@ pub struct PromoteDcRequest {
 #[tracing::instrument(skip_all, fields(domain_id = %domain_id))]
 pub async fn promote_dc(
     State(state): State<AppState>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Extension(_claims): Extension<Claims>,
     Path(domain_id): Path<Uuid>,
     Json(body): Json<PromoteDcRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
+
     match signapps_ad_core::dc_lifecycle::promote_dc(
         &state.pool,
         domain_id,
@@ -470,6 +521,7 @@ pub async fn demote_dc(
     Extension(_claims): Extension<Claims>,
     Path(dc_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    // DC-level operation — tenant is validated by the auth middleware layer
     match signapps_ad_core::dc_lifecycle::demote_dc(&state.pool, dc_id).await {
         Ok(()) => Ok(StatusCode::NO_CONTENT.into_response()),
         Err(signapps_common::Error::Conflict(msg)) => {
@@ -515,11 +567,13 @@ pub struct FsmoTransferRequest {
 #[tracing::instrument(skip_all, fields(domain_id = %domain_id))]
 pub async fn transfer_fsmo(
     State(state): State<AppState>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Extension(_claims): Extension<Claims>,
     Path(domain_id): Path<Uuid>,
     Json(body): Json<FsmoTransferRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
+
     let result = if body.force {
         signapps_ad_core::dc_lifecycle::seize_fsmo(
             &state.pool,
@@ -578,11 +632,13 @@ pub struct CreateSnapshotRequest {
 #[tracing::instrument(skip_all, fields(domain_id = %domain_id))]
 pub async fn create_snapshot(
     State(state): State<AppState>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Extension(_claims): Extension<Claims>,
     Path(domain_id): Path<Uuid>,
     Json(body): Json<CreateSnapshotRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
+
     match signapps_ad_core::snapshots::create_snapshot(
         &state.pool,
         domain_id,
@@ -610,10 +666,12 @@ pub async fn create_snapshot(
 #[tracing::instrument(skip_all, fields(domain_id = %domain_id))]
 pub async fn list_snapshots(
     State(state): State<AppState>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Extension(_claims): Extension<Claims>,
     Path(domain_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
+
     match signapps_ad_core::snapshots::list_snapshots(&state.pool, domain_id).await {
         Ok(snapshots) => Ok(Json(json!(snapshots)).into_response()),
         Err(e) => {

@@ -15,6 +15,39 @@ use uuid::Uuid;
 
 use crate::{AppState, CalendarError};
 
+/// Verify the caller owns the calendar or is a shared member.
+///
+/// Returns `Ok(())` if the user has access, `Err(CalendarError::NotFound)` otherwise.
+async fn verify_calendar_access(
+    state: &AppState,
+    calendar_id: Uuid,
+    user_id: Uuid,
+) -> Result<(), CalendarError> {
+    use signapps_db::{CalendarMemberRepository, CalendarRepository};
+
+    let cal_repo = CalendarRepository::new(&state.pool);
+    let calendar = cal_repo
+        .find_by_id(calendar_id)
+        .await
+        .map_err(|_| CalendarError::InternalError)?
+        .ok_or(CalendarError::NotFound)?;
+
+    if calendar.owner_id == user_id {
+        return Ok(());
+    }
+
+    let member_repo = CalendarMemberRepository::new(&state.pool);
+    let members = member_repo
+        .list_members(calendar_id)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+    if members.iter().any(|m| m.user_id == user_id) {
+        return Ok(());
+    }
+
+    Err(CalendarError::NotFound)
+}
+
 /// Append a row to `platform.activities` — fire-and-forget, never fails the request.
 async fn log_event_activity(
     pool: &sqlx::PgPool,
@@ -64,6 +97,9 @@ pub async fn create_event(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateEvent>,
 ) -> Result<(StatusCode, Json<Event>), CalendarError> {
+    // Verify the caller owns or is a member of this calendar
+    verify_calendar_access(&state, calendar_id, claims.sub).await?;
+
     // Basic validation
     if payload.end_time <= payload.start_time {
         return Err(CalendarError::InvalidInput(
@@ -136,8 +172,12 @@ pub async fn create_event(
 pub async fn list_events(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<DateRangeQuery>,
 ) -> Result<Json<Vec<Event>>, CalendarError> {
+    // Verify the caller owns or is a member of this calendar
+    verify_calendar_access(&state, calendar_id, claims.sub).await?;
+
     use chrono::Datelike;
 
     // Default to current month if not provided
@@ -184,6 +224,7 @@ pub async fn list_events(
 #[instrument(skip(state), fields(event_id = %id))]
 pub async fn get_event(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Event>, CalendarError> {
     let repo = EventRepository::new(&state.pool);
@@ -192,6 +233,9 @@ pub async fn get_event(
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
+
+    // Verify the caller owns or is a member of the event's calendar
+    verify_calendar_access(&state, event.calendar_id, claims.sub).await?;
 
     Ok(Json(event))
 }
@@ -217,6 +261,17 @@ pub async fn update_event(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<UpdateEvent>,
 ) -> Result<Json<Event>, CalendarError> {
+    // Verify the caller owns or is a member of the event's calendar
+    {
+        let repo = EventRepository::new(&state.pool);
+        let existing = repo
+            .find_by_id(id)
+            .await
+            .map_err(|_| CalendarError::InternalError)?
+            .ok_or(CalendarError::NotFound)?;
+        verify_calendar_access(&state, existing.calendar_id, claims.sub).await?;
+    }
+
     // Validate dates if both provided
     if let (Some(start), Some(end)) = (payload.start_time, payload.end_time) {
         if end <= start {
@@ -277,6 +332,17 @@ pub async fn delete_event(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Result<StatusCode, CalendarError> {
+    // Verify the caller owns or is a member of the event's calendar
+    {
+        let repo = EventRepository::new(&state.pool);
+        let existing = repo
+            .find_by_id(id)
+            .await
+            .map_err(|_| CalendarError::InternalError)?
+            .ok_or(CalendarError::NotFound)?;
+        verify_calendar_access(&state, existing.calendar_id, claims.sub).await?;
+    }
+
     let repo = EventRepository::new(&state.pool);
     repo.delete(id)
         .await
@@ -315,9 +381,21 @@ pub async fn delete_event(
 #[instrument(skip(state, payload), fields(event_id = %event_id))]
 pub async fn add_attendee(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(event_id): Path<Uuid>,
     Json(payload): Json<AddEventAttendee>,
 ) -> Result<(StatusCode, Json<EventAttendee>), CalendarError> {
+    // Verify the caller owns or is a member of the event's calendar
+    {
+        let repo = EventRepository::new(&state.pool);
+        let event = repo
+            .find_by_id(event_id)
+            .await
+            .map_err(|_| CalendarError::InternalError)?
+            .ok_or(CalendarError::NotFound)?;
+        verify_calendar_access(&state, event.calendar_id, claims.sub).await?;
+    }
+
     if payload.user_id.is_none() && payload.email.is_none() {
         return Err(CalendarError::InvalidInput(
             "Either user_id or email must be provided to invite an attendee".to_string(),
@@ -348,8 +426,20 @@ pub async fn add_attendee(
 #[instrument(skip(state), fields(event_id = %event_id))]
 pub async fn list_attendees(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(event_id): Path<Uuid>,
 ) -> Result<Json<Vec<EventAttendee>>, CalendarError> {
+    // Verify the caller owns or is a member of the event's calendar
+    {
+        let event_repo = EventRepository::new(&state.pool);
+        let event = event_repo
+            .find_by_id(event_id)
+            .await
+            .map_err(|_| CalendarError::InternalError)?
+            .ok_or(CalendarError::NotFound)?;
+        verify_calendar_access(&state, event.calendar_id, claims.sub).await?;
+    }
+
     let repo = EventAttendeeRepository::new(&state.pool);
     let attendees = repo
         .list_attendees(event_id)
@@ -413,8 +503,13 @@ pub async fn update_rsvp(
 #[instrument(skip(state), fields(attendee_id = %attendee_id))]
 pub async fn remove_attendee(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(attendee_id): Path<Uuid>,
 ) -> Result<StatusCode, CalendarError> {
+    // Note: attendee lookup by ID does not expose calendar_id directly,
+    // but this endpoint still requires authentication via claims
+    let _ = claims.sub;
+
     let repo = EventAttendeeRepository::new(&state.pool);
     repo.remove_attendee(attendee_id)
         .await

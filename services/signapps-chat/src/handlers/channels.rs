@@ -11,12 +11,19 @@ use axum::{
 use signapps_common::Claims;
 use uuid::Uuid;
 
-/// List all channels.
-pub async fn list_channels(State(state): State<AppState>) -> impl IntoResponse {
+/// List channels visible to the current user (created by or member of).
+pub async fn list_channels(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> impl IntoResponse {
     match sqlx::query_as::<_, Channel>(
         "SELECT id, name, topic, is_private, created_by, created_at, updated_at \
-         FROM chat.channels ORDER BY created_at ASC",
+         FROM chat.channels \
+         WHERE created_by = $1 \
+            OR id IN (SELECT channel_id FROM chat.channel_members WHERE user_id = $1) \
+         ORDER BY created_at ASC",
     )
+    .bind(claims.sub)
     .fetch_all(&state.pool)
     .await
     {
@@ -35,12 +42,22 @@ pub async fn list_channels(State(state): State<AppState>) -> impl IntoResponse {
 }
 
 /// Get a single channel by ID.
-pub async fn get_channel(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
+///
+/// Only the creator or a member can view the channel.
+pub async fn get_channel(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
     match sqlx::query_as::<_, Channel>(
         "SELECT id, name, topic, is_private, created_by, created_at, updated_at \
-         FROM chat.channels WHERE id = $1",
+         FROM chat.channels \
+         WHERE id = $1 \
+           AND (created_by = $2 \
+                OR id IN (SELECT channel_id FROM chat.channel_members WHERE user_id = $2))",
     )
     .bind(id)
+    .bind(claims.sub)
     .fetch_optional(&state.pool)
     .await
     {
@@ -100,9 +117,11 @@ pub async fn create_channel(
 }
 
 /// Update an existing channel.
+///
+/// Only the channel creator can update it.
 pub async fn update_channel(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateChannelRequest>,
 ) -> impl IntoResponse {
@@ -113,7 +132,7 @@ pub async fn update_channel(
             topic = COALESCE($2, topic),
             is_private = COALESCE($3, is_private),
             updated_at = NOW()
-        WHERE id = $4
+        WHERE id = $4 AND created_by = $5
         RETURNING id, name, topic, is_private, created_by, created_at, updated_at
         "#,
     )
@@ -121,6 +140,7 @@ pub async fn update_channel(
     .bind(&payload.topic)
     .bind(payload.is_private)
     .bind(id)
+    .bind(claims.sub)
     .fetch_optional(&state.pool)
     .await
     {
@@ -133,7 +153,7 @@ pub async fn update_channel(
         },
         Ok(None) => (
             StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": "Channel not found" })),
+            Json(serde_json::json!({ "error": "Channel not found or not owned by user" })),
         ),
         Err(e) => {
             tracing::error!("update_channel DB error: {:?}", e);
@@ -146,13 +166,16 @@ pub async fn update_channel(
 }
 
 /// Delete a channel.
+///
+/// Only the channel creator can delete it.
 pub async fn delete_channel(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    match sqlx::query("DELETE FROM chat.channels WHERE id = $1")
+    match sqlx::query("DELETE FROM chat.channels WHERE id = $1 AND created_by = $2")
         .bind(id)
+        .bind(claims.sub)
         .execute(&state.pool)
         .await
     {
@@ -162,7 +185,7 @@ pub async fn delete_channel(
         },
         Ok(_) => (
             StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": "Channel not found" })),
+            Json(serde_json::json!({ "error": "Channel not found or not owned by user" })),
         ),
         Err(e) => {
             tracing::error!("delete_channel DB error: {:?}", e);
