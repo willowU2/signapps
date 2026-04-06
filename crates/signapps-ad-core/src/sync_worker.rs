@@ -344,7 +344,7 @@ async fn handle_user_provision(pool: &PgPool, event: &AdSyncEvent) -> Result<()>
     .await
     .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
-    AdUserAccountRepository::create(
+    let user = AdUserAccountRepository::create(
         pool,
         event.domain_id,
         person_id,
@@ -361,6 +361,36 @@ async fn handle_user_provision(pool: &PgPool, event: &AdSyncEvent) -> Result<()>
     .await?;
 
     tracing::info!(sam = %sam, dn = %dn, mail = ?mail, "User provisioned");
+
+    // ── Phase 5: mail provisioning ─────────────────────────────────────────
+    // Compute and persist mail aliases (default + sub-branch domains).
+    if let Err(e) = mail_provisioner::compute_user_mail_aliases(
+        pool,
+        user.id,
+        person_id,
+        node_id,
+        &sam,
+    )
+    .await
+    {
+        tracing::warn!(
+            sam = %sam,
+            error = %e,
+            "Mail alias provisioning failed"
+        );
+    }
+
+    // Compute and persist IMAP shared-folder subscriptions.
+    if let Err(e) =
+        mail_provisioner::compute_user_subscriptions(pool, user.id, node_id).await
+    {
+        tracing::warn!(
+            sam = %sam,
+            error = %e,
+            "Shared mailbox subscription failed"
+        );
+    }
+
     Ok(())
 }
 
@@ -832,6 +862,132 @@ async fn handle_computer_disable(pool: &PgPool, event: &AdSyncEvent) -> Result<(
 
         tracing::info!(computer_id = %computer_id, "Computer account disabled");
     }
+    Ok(())
+}
+
+// ── Mail domain bind handler ──────────────────────────────────────────────────
+
+/// Handle `mail_domain_bind` — recalculate mail aliases and shared mailbox
+/// addresses for every user in the affected subtree.
+///
+/// Payload keys:
+/// - `node_id` (UUID) — the org node to which the mail domain was bound.
+/// - `domain_id` (UUID) — the `infrastructure.domains.id` that was bound.
+/// - `dns_name` (string) — the DNS name of the bound domain.
+///
+/// The handler:
+/// 1. Walks every enabled user account whose assignment node is at or below
+///    `node_id` (using the closure table).
+/// 2. Re-runs [`mail_provisioner::compute_user_mail_aliases`] for each.
+/// 3. For every OU in the same subtree that has a matching `ad_ous` row, calls
+///    [`mail_provisioner::provision_ou_shared_mailbox`] to create/update the
+///    shared mailbox entry.
+///
+/// Errors during individual user/OU provisioning are warned and skipped so that
+/// one bad row does not abort the entire batch.
+#[tracing::instrument(skip(pool, event), fields(event_id = %event.id))]
+async fn handle_mail_domain_bind(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
+    let node_id: Uuid = serde_json::from_value(event.payload["node_id"].clone())
+        .map_err(|e| signapps_common::Error::Internal(format!("Bad payload node_id: {e}")))?;
+    let domain_id: Uuid = serde_json::from_value(event.payload["domain_id"].clone())
+        .map_err(|e| signapps_common::Error::Internal(format!("Bad payload domain_id: {e}")))?;
+    let dns_name = event.payload["dns_name"].as_str().unwrap_or_default().to_string();
+
+    // ── 1. Re-provision mail aliases for all users in the subtree ─────────
+    // Find all enabled user accounts whose assigned node is at or below node_id.
+    let users: Vec<(Uuid, Uuid, String)> = sqlx::query_as(
+        r#"SELECT ua.id, ua.person_id, ua.sam_account_name
+           FROM ad_user_accounts ua
+           JOIN core.assignments a ON a.person_id = ua.person_id
+           JOIN core.org_closure c ON c.descendant_id = a.node_id
+               AND c.ancestor_id = $1
+           WHERE ua.domain_id = $2
+             AND ua.is_enabled = true
+             AND (a.end_date IS NULL OR a.end_date > now())"#,
+    )
+    .bind(node_id)
+    .bind(event.domain_id)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    let user_count = users.len();
+    for (user_account_id, person_id, sam) in users {
+        // Resolve the user's current assignment node.
+        let user_node: Option<Uuid> = sqlx::query_scalar(
+            r#"SELECT a.node_id
+               FROM core.assignments a
+               JOIN ad_user_accounts ua ON ua.person_id = a.person_id
+               WHERE ua.id = $1
+                 AND (a.end_date IS NULL OR a.end_date > now())
+               LIMIT 1"#,
+        )
+        .bind(user_account_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+        let Some(user_node_id) = user_node else {
+            continue;
+        };
+
+        if let Err(e) = mail_provisioner::compute_user_mail_aliases(
+            pool,
+            user_account_id,
+            person_id,
+            user_node_id,
+            &sam,
+        )
+        .await
+        {
+            tracing::warn!(
+                sam = %sam,
+                error = %e,
+                "mail_domain_bind: alias re-provisioning failed for user"
+            );
+        }
+    }
+
+    // ── 2. Provision/update shared mailboxes for OUs in the subtree ───────
+    let ous: Vec<(Uuid, String)> = sqlx::query_as(
+        r#"SELECT ao.id, n.name
+           FROM ad_ous ao
+           JOIN core.org_nodes n ON n.id = ao.node_id
+           JOIN core.org_closure c ON c.descendant_id = ao.node_id
+               AND c.ancestor_id = $1
+           WHERE ao.domain_id = $2"#,
+    )
+    .bind(node_id)
+    .bind(event.domain_id)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    let ou_count = ous.len();
+    for (ou_id, ou_name) in ous {
+        if let Err(e) = mail_provisioner::provision_ou_shared_mailbox(
+            pool,
+            ou_id,
+            &ou_name,
+            domain_id,
+            &dns_name,
+        )
+        .await
+        {
+            tracing::warn!(
+                ou_id = %ou_id,
+                error = %e,
+                "mail_domain_bind: shared mailbox provisioning failed for OU"
+            );
+        }
+    }
+
+    tracing::info!(
+        node_id = %node_id,
+        users_processed = user_count,
+        ous_processed = ou_count,
+        "mail_domain_bind processed"
+    );
     Ok(())
 }
 

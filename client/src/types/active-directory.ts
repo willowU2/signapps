@@ -273,6 +273,39 @@ export interface AdDcSiteInfo {
   created_at: string;
 }
 
+// ── Snapshots ──
+
+export interface AdSnapshot {
+  id: string;
+  domain_id: string;
+  snapshot_type: "full" | "incremental";
+  status: "pending" | "completed" | "failed" | "restoring";
+  size_bytes?: number;
+  tables_included: string[];
+  checksum?: string;
+  error_message?: string;
+  created_at: string;
+  completed_at?: string;
+}
+
+export interface SnapshotPreview {
+  ous_to_create: number;
+  ous_to_update: number;
+  users_to_create: number;
+  users_to_update: number;
+  users_to_delete: number;
+  details: string[];
+}
+
+export interface ReconcileReport {
+  ous_created: number;
+  ous_updated: number;
+  users_created: number;
+  users_updated: number;
+  users_disabled: number;
+  errors: string[];
+}
+
 // ── Deployment ──
 
 export interface DeployProfile {

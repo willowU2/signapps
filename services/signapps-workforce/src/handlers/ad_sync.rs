@@ -1,4 +1,4 @@
-//! Handlers for AD sync queue management and monitoring.
+//! Handlers for AD sync queue management, monitoring, DC lifecycle, and snapshots.
 
 use axum::{
     extract::{Extension, Path, State},
@@ -6,6 +6,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
 
@@ -13,7 +14,7 @@ use crate::AppState;
 use signapps_common::{middleware::TenantContext, Claims};
 use signapps_db::models::ad_sync::{AdDcSite, AdOu, AdSyncEvent, AdUserAccount};
 use signapps_db::repositories::AdSyncQueueRepository;
-// Reconciliation lives in the ad-core crate (also used by signapps-dc)
+// Reconciliation and DC lifecycle live in the ad-core crate (also used by signapps-dc)
 use signapps_ad_core;
 
 /// Get sync queue statistics for a domain.
@@ -217,4 +218,173 @@ pub async fn list_dc_sites(
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
     Ok(Json(json!(dcs)))
+}
+
+// ── Phase 5: mail alias and shared mailbox handlers ───────────────────────────
+
+/// List all mail aliases for a provisioned AD user account.
+///
+/// Path: `GET /ad-users/:id/mail-aliases`
+///
+/// Returns the `ad_mail_aliases` rows for the user, ordered with the default
+/// alias first.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the database query fails.
+#[tracing::instrument(skip_all, fields(user_account_id = %user_account_id))]
+pub async fn list_user_mail_aliases(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(user_account_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    use sqlx::Row as _;
+
+    let aliases: Vec<serde_json::Value> = sqlx::query(
+        r#"SELECT id, user_account_id, mail_address, domain_id,
+                  is_default, is_active, created_at
+           FROM ad_mail_aliases
+           WHERE user_account_id = $1
+           ORDER BY is_default DESC, mail_address ASC"#,
+    )
+    .bind(user_account_id)
+    .map(|row: sqlx::postgres::PgRow| {
+        json!({
+            "id": row.get::<Uuid, _>("id"),
+            "user_account_id": row.get::<Uuid, _>("user_account_id"),
+            "mail_address": row.get::<String, _>("mail_address"),
+            "domain_id": row.get::<Uuid, _>("domain_id"),
+            "is_default": row.get::<bool, _>("is_default"),
+            "is_active": row.get::<bool, _>("is_active"),
+        })
+    })
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list mail aliases: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    Ok(Json(json!(aliases)))
+}
+
+/// List all shared mailboxes for a domain.
+///
+/// Path: `GET /domains/:id/shared-mailboxes`
+///
+/// Returns every active `ad_shared_mailboxes` row for the domain, ordered by
+/// display name.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the database query fails.
+#[tracing::instrument(skip_all, fields(domain_id = %domain_id))]
+pub async fn list_shared_mailboxes(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(domain_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    use sqlx::Row as _;
+
+    let mailboxes: Vec<serde_json::Value> = sqlx::query(
+        r#"SELECT sm.id, sm.ou_id, sm.group_id, sm.mail_address,
+                  sm.domain_id, sm.display_name, sm.config,
+                  sm.is_active, sm.created_at
+           FROM ad_shared_mailboxes sm
+           WHERE sm.domain_id = $1
+             AND sm.is_active = true
+           ORDER BY sm.display_name ASC"#,
+    )
+    .bind(domain_id)
+    .map(|row: sqlx::postgres::PgRow| {
+        json!({
+            "id": row.get::<Uuid, _>("id"),
+            "ou_id": row.get::<Option<Uuid>, _>("ou_id"),
+            "group_id": row.get::<Option<Uuid>, _>("group_id"),
+            "mail_address": row.get::<String, _>("mail_address"),
+            "domain_id": row.get::<Uuid, _>("domain_id"),
+            "display_name": row.get::<String, _>("display_name"),
+            "config": row.get::<serde_json::Value, _>("config"),
+            "is_active": row.get::<bool, _>("is_active"),
+        })
+    })
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list shared mailboxes: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    Ok(Json(json!(mailboxes)))
+}
+
+/// Update the configuration of a shared mailbox.
+///
+/// Path: `PUT /shared-mailboxes/:id/config`
+///
+/// Accepted body keys (all optional — omit to leave unchanged):
+/// - `shared_mailbox_enabled` (bool)
+/// - `shared_mailbox_visible_to_children` (bool)
+/// - `shared_mailbox_send_as` (string: `"members"`, `"managers"`, `"none"`)
+/// - `shared_mailbox_auto_subscribe` (bool)
+///
+/// Uses `jsonb_strip_nulls(config || $patch)` to merge only the supplied keys,
+/// leaving the rest intact.
+///
+/// # Errors
+///
+/// Returns `StatusCode::NOT_FOUND` if the mailbox does not exist.
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the update fails.
+#[tracing::instrument(skip_all, fields(mailbox_id = %mailbox_id))]
+pub async fn update_shared_mailbox_config(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(mailbox_id): Path<Uuid>,
+    Json(patch): Json<serde_json::Value>,
+) -> Result<impl IntoResponse, StatusCode> {
+    // Build a partial config object from the allowed keys only.
+    let mut config_patch = serde_json::Map::new();
+
+    for key in &[
+        "shared_mailbox_enabled",
+        "shared_mailbox_visible_to_children",
+        "shared_mailbox_send_as",
+        "shared_mailbox_auto_subscribe",
+    ] {
+        if let Some(v) = patch.get(*key) {
+            config_patch.insert((*key).to_string(), v.clone());
+        }
+    }
+
+    if config_patch.is_empty() {
+        // Nothing to update — treat as no-op success.
+        return Ok(StatusCode::NO_CONTENT.into_response());
+    }
+
+    let patch_value = serde_json::Value::Object(config_patch);
+
+    let rows_affected = sqlx::query(
+        r#"UPDATE ad_shared_mailboxes
+           SET config = jsonb_strip_nulls(config || $1::jsonb)
+           WHERE id = $2"#,
+    )
+    .bind(patch_value)
+    .bind(mailbox_id)
+    .execute(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to update shared mailbox config: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?
+    .rows_affected();
+
+    if rows_affected == 0 {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    tracing::info!(mailbox_id = %mailbox_id, "Shared mailbox config updated");
+    Ok(StatusCode::NO_CONTENT.into_response())
 }

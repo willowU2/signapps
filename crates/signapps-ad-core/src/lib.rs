@@ -46,6 +46,8 @@
 //! | [`mail_resolver`] | Resolve mail domains via closure table inheritance |
 //! | [`reconciliation`] | Periodic drift detection and corrective event enqueue |
 //! | [`sync_worker`] | Event processor and worker loop for org→AD sync |
+//! | [`dc_lifecycle`] | DC promote/demote, FSMO transfer/seize, heartbeat, resolve_dc |
+//! | [`snapshots`] | Snapshot creation, listing, restore preview, restore execute |
 //!
 //! ## Example
 //!
@@ -62,6 +64,7 @@
 pub mod acl;
 pub mod builder;
 pub mod crypto_helpers;
+pub mod dc_lifecycle;
 pub mod domain;
 pub mod dn;
 pub mod entry;
@@ -74,6 +77,7 @@ pub mod provisioner;
 pub mod reconciliation;
 pub mod schema;
 pub mod sid;
+pub mod snapshots;
 pub mod sync_worker;
 pub mod uac;
 

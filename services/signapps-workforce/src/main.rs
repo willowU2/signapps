@@ -211,6 +211,19 @@ fn create_router(state: AppState) -> Router {
         .route("/org-nodes/:id/mail-domain", put(handlers::ad_sync::set_node_mail_domain))
         .route("/org-nodes/:id/mail-domain", delete(handlers::ad_sync::remove_node_mail_domain))
         .route("/sync/reconcile", post(handlers::ad_sync::trigger_reconciliation))
+        // ── Phase 5: mail aliases & shared mailboxes ──
+        .route(
+            "/ad-users/:id/mail-aliases",
+            get(handlers::ad_sync::list_user_mail_aliases),
+        )
+        .route(
+            "/domains/:id/shared-mailboxes",
+            get(handlers::ad_sync::list_shared_mailboxes),
+        )
+        .route(
+            "/shared-mailboxes/:id/config",
+            put(handlers::ad_sync::update_shared_mailbox_config),
+        )
         // ── Update endpoints ──
         .route("/domains/:id", put(handlers::ad::update_domain))
         .route("/deploy/profiles/:id", put(handlers::ad::update_deploy_profile))

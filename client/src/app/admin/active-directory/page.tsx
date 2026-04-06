@@ -56,6 +56,7 @@ import {
   Loader2,
   AlertTriangle,
   Database,
+  HardDrive,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -351,6 +352,18 @@ export default function ActiveDirectoryPage() {
               icon: RefreshCw,
               label: "Synchronisation",
               desc: "Queue, OUs, comptes AD",
+            },
+            {
+              href: "/admin/active-directory/dc-management",
+              icon: Server,
+              label: "Domain Controllers",
+              desc: "Topologie DC, FSMO",
+            },
+            {
+              href: "/admin/active-directory/snapshots",
+              icon: HardDrive,
+              label: "Sauvegardes",
+              desc: "Snapshots et restauration",
             },
           ].map((item) => (
             <Link key={item.href} href={item.href}>

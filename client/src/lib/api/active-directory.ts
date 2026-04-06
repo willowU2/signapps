@@ -27,6 +27,9 @@ import type {
   AdSyncEvent,
   AdSyncQueueStats,
   AdDcSiteInfo,
+  AdSnapshot,
+  SnapshotPreview,
+  ReconcileReport,
 } from "@/types/active-directory";
 
 const client = getClient(ServiceName.WORKFORCE);
@@ -221,6 +224,39 @@ export const adApi = {
       }),
     removeMailDomain: (nodeId: string) =>
       client.delete(`/workforce/ad/org-nodes/${nodeId}/mail-domain`),
+    promoteDc: (
+      domainId: string,
+      data: { hostname: string; ip: string; site_id?: string; role?: string },
+    ) => client.post(`/workforce/ad/domains/${domainId}/dc-sites`, data),
+    demoteDc: (dcId: string) =>
+      client.post(`/workforce/ad/dc-sites/${dcId}/demote`),
+    transferFsmo: (domainId: string, data: { role: string; dc_id: string }) =>
+      client.post(`/workforce/ad/domains/${domainId}/fsmo/transfer`, data),
+    reconcile: () =>
+      client.post<ReconcileReport>(`/workforce/ad/sync/reconcile`),
+    snapshots: (domainId: string) =>
+      client.get<AdSnapshot[]>(`/workforce/ad/domains/${domainId}/snapshots`),
+    createSnapshot: (domainId: string, data: { snapshot_type: string }) =>
+      client.post<AdSnapshot>(
+        `/workforce/ad/domains/${domainId}/snapshots`,
+        data,
+      ),
+    restorePreview: (
+      snapshotId: string,
+      data: { target_dn?: string; include_children?: boolean },
+    ) =>
+      client.post<SnapshotPreview>(
+        `/workforce/ad/snapshots/${snapshotId}/preview`,
+        data,
+      ),
+    restoreExecute: (
+      snapshotId: string,
+      data: { target_dn?: string; include_children?: boolean },
+    ) => client.post(`/workforce/ad/snapshots/${snapshotId}/restore`, data),
+    userMailAliases: (userId: string) =>
+      client.get(`/workforce/ad/ad-users/${userId}/mail-aliases`),
+    sharedMailboxes: (domainId: string) =>
+      client.get(`/workforce/ad/domains/${domainId}/shared-mailboxes`),
   },
 
   // ── Monitoring & Maintenance ──

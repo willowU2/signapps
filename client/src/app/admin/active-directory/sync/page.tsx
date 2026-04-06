@@ -43,14 +43,17 @@ import {
   Clock,
   Hourglass,
   RotateCcw,
+  GitMerge,
 } from "lucide-react";
 import { adApi } from "@/lib/api/active-directory";
+import { toast } from "sonner";
 import type {
   AdSyncQueueStats,
   AdSyncEvent,
   AdOu,
   AdUserAccountInfo,
   AdDcSiteInfo,
+  ReconcileReport,
 } from "@/types/active-directory";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -138,6 +141,7 @@ export default function AdSyncPage() {
   usePageTitle("Synchronisation AD");
 
   const [domainId, setDomainId] = useState("");
+  const [reconciling, setReconciling] = useState(false);
 
   // Load domains
   const {
@@ -236,6 +240,33 @@ export default function AdSyncPage() {
     refetchDcSites();
   }
 
+  async function handleReconcile() {
+    setReconciling(true);
+    try {
+      const res = await adApi.sync.reconcile();
+      const report = res.data as ReconcileReport;
+      const parts: string[] = [];
+      if (report.ous_created)
+        parts.push(`${report.ous_created} OU(s) creee(s)`);
+      if (report.ous_updated)
+        parts.push(`${report.ous_updated} OU(s) mise(s) a jour`);
+      if (report.users_created)
+        parts.push(`${report.users_created} utilisateur(s) cree(s)`);
+      if (report.users_updated)
+        parts.push(`${report.users_updated} utilisateur(s) mis a jour`);
+      if (report.users_disabled)
+        parts.push(`${report.users_disabled} utilisateur(s) desactive(s)`);
+      const summary =
+        parts.length > 0 ? parts.join(", ") : "Aucun changement detecte";
+      toast.success(`Reconciliation terminee — ${summary}`);
+      handleRefreshAll();
+    } catch {
+      toast.error("Echec de la reconciliation");
+    } finally {
+      setReconciling(false);
+    }
+  }
+
   // Auto-set domain when domains load
   useEffect(() => {
     if (domains.length > 0 && !domainId) {
@@ -325,6 +356,19 @@ export default function AdSyncPage() {
                   </SelectContent>
                 </Select>
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleReconcile}
+                disabled={reconciling || !activeDomainId}
+              >
+                {reconciling ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <GitMerge className="h-4 w-4 mr-2" />
+                )}
+                Reconcilier
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
