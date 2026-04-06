@@ -12,6 +12,7 @@ use signapps_common::middleware::{
 use signapps_common::pg_events::PgEventBus;
 use signapps_common::{AiIndexerClient, AuthState, JwtConfig};
 use signapps_db::DatabasePool;
+use signapps_sharing::{engine::SharingEngine, routes::sharing_routes, types::ResourceType};
 use tower::ServiceBuilder;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use utoipa_swagger_ui::SwaggerUi;
@@ -102,13 +103,20 @@ async fn main() -> anyhow::Result<()> {
     // Create event bus
     let event_bus = PgEventBus::new(pool.inner().clone(), "signapps-storage".to_string());
 
+    let cache_service = signapps_cache::CacheService::default_config();
+
+    // Initialize sharing engine (runs alongside the existing drive.acl system)
+    let sharing_engine =
+        SharingEngine::new(pool.inner().clone(), cache_service.clone());
+    tracing::info!("Sharing engine initialized");
+
     // Create application state
     let state = AppState {
         pool,
         storage,
         jwt_config,
         indexer: AiIndexerClient::from_env(),
-        cache: signapps_cache::CacheService::default_config(),
+        cache: cache_service,
         event_bus,
     };
 
@@ -130,14 +138,14 @@ async fn main() -> anyhow::Result<()> {
     });
 
     // Build router
-    let app = create_router(state);
+    let app = create_router(state, sharing_engine);
 
     // Start server using bootstrap helper
     signapps_common::bootstrap::run_server(app, &config).await
 }
 
 /// Create the application router with all routes.
-fn create_router(state: AppState) -> Router {
+fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
     // Public routes (health check)
     let public_routes = Router::new().route("/health", get(health::health_check));
 
@@ -515,10 +523,19 @@ fn create_router(state: AppState) -> Router {
     let openapi_routes =
         SwaggerUi::new("/swagger-ui").url("/api/v1/openapi.json", StorageApiDoc::openapi());
 
+    // Sharing sub-routers for files and folders — additive, alongside existing drive.acl
+    // Routes produced by sharing_routes() already include the /api/v1/ prefix.
+    let files_sharing = sharing_routes("files", ResourceType::File)
+        .with_state(sharing_engine.clone());
+    let folders_sharing = sharing_routes("folders", ResourceType::Folder)
+        .with_state(sharing_engine);
+
     Router::new()
         .merge(root_health)
         .merge(webdav_routes)
         .merge(openapi_routes)
+        .merge(files_sharing)
+        .merge(folders_sharing)
         .nest("/api/v1", v1_routes)
         .layer(
             ServiceBuilder::new()
