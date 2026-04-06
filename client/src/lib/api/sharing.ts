@@ -38,6 +38,8 @@ import type {
   CreateSharingGrant,
   EffectivePermission,
   SharingResourceType,
+  SharingTemplate,
+  CreateTemplateRequest,
 } from "@/types/sharing";
 import { getClient, ServiceName } from "./factory";
 
@@ -247,6 +249,86 @@ export const sharingApi = {
       {
         params,
       },
+    );
+    return data;
+  },
+
+  // ─── Template methods ───────────────────────────────────────────────────
+
+  /**
+   * List all sharing templates available in the tenant.
+   *
+   * Includes both system templates and user-created templates.
+   *
+   * @returns Array of {@link SharingTemplate} records.
+   *
+   * @example
+   * ```ts
+   * const templates = await sharingApi.listTemplates();
+   * ```
+   */
+  async listTemplates(): Promise<SharingTemplate[]> {
+    // Templates are a tenant-wide resource — storage is the stable default.
+    const client = getClient(ServiceName.STORAGE);
+    const { data } = await client.get<SharingTemplate[]>(
+      "/api/v1/sharing/templates",
+    );
+    return data;
+  },
+
+  /**
+   * Create a new sharing template (admin only).
+   *
+   * @param request - Template creation payload.
+   * @returns The created {@link SharingTemplate}.
+   *
+   * @example
+   * ```ts
+   * const tpl = await sharingApi.createTemplate({
+   *   name: "Lecture équipe",
+   *   description: null,
+   *   grants: [{ grantee_type: "everyone", grantee_id: null, role: "viewer", can_reshare: false }],
+   * });
+   * ```
+   */
+  async createTemplate(
+    request: CreateTemplateRequest,
+  ): Promise<SharingTemplate> {
+    const client = getClient(ServiceName.STORAGE);
+    const { data } = await client.post<SharingTemplate>(
+      "/api/v1/sharing/templates",
+      request,
+    );
+    return data;
+  },
+
+  /**
+   * Apply a sharing template to a resource.
+   *
+   * Resolves the correct backend service from the resource type, then calls
+   * the `apply-template` endpoint which expands all template grants onto the
+   * target resource.
+   *
+   * @param resourceType - Type of the target resource.
+   * @param resourceId   - UUID of the target resource.
+   * @param templateId   - UUID of the template to apply.
+   * @returns An object with the `count` of grants that were created.
+   *
+   * @example
+   * ```ts
+   * const { count } = await sharingApi.applyTemplate('file', fileId, templateId);
+   * console.log(`${count} accès créés`);
+   * ```
+   */
+  async applyTemplate(
+    resourceType: SharingResourceType,
+    resourceId: string,
+    templateId: string,
+  ): Promise<{ count: number }> {
+    const client = getClient(resolveService(resourceType));
+    const prefix = resolvePrefix(resourceType);
+    const { data } = await client.post<{ count: number }>(
+      `/api/v1/${prefix}/${resourceId}/apply-template/${templateId}`,
     );
     return data;
   },

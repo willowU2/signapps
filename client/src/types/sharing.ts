@@ -181,3 +181,74 @@ export const SHARING_RESOURCE_TYPE_LABELS: Record<SharingResourceType, string> =
     asset: "Actif",
     vault_entry: "Secret",
   };
+
+// ─── Template types ──────────────────────────────────────────────────────────
+
+/**
+ * A single grant definition stored inside a sharing template.
+ *
+ * Unlike {@link SharingGrant}, this is a definition (not a live record):
+ * it has no `id`, `resource_id`, or `granted_by` — those are resolved at
+ * apply-time.
+ */
+export interface TemplateGrantDef {
+  /** Kind of entity the grant applies to. */
+  grantee_type: SharingGranteeType;
+  /** UUID of the grantee — `null` when `grantee_type` is `"everyone"`. */
+  grantee_id: string | null;
+  /** Role to grant when the template is applied. */
+  role: SharingRole;
+  /** Whether the grantee will be allowed to re-share the resource. */
+  can_reshare: boolean;
+}
+
+/**
+ * A sharing template — a named preset containing multiple {@link TemplateGrantDef}s
+ * that can be applied to any resource in one click.
+ *
+ * System templates (`is_system = true`) are created at tenant setup time and
+ * cannot be deleted.
+ */
+export interface SharingTemplate {
+  /** UUID of the template record. */
+  id: string;
+  /** Tenant the template belongs to. */
+  tenant_id: string;
+  /** Human-readable name displayed in the picker. */
+  name: string;
+  /** Optional description shown in the admin list. */
+  description: string | null;
+  /** Ordered list of grant definitions to apply. */
+  grants: TemplateGrantDef[];
+  /** UUID of the user who created this template. */
+  created_by: string;
+  /** Whether this template is managed by the system (read-only). */
+  is_system: boolean;
+  /** ISO 8601 creation timestamp. */
+  created_at: string;
+  /** ISO 8601 last-update timestamp. */
+  updated_at: string;
+}
+
+/**
+ * Payload for creating a new sharing template.
+ *
+ * @example
+ * ```ts
+ * const request: CreateTemplateRequest = {
+ *   name: "Lecture équipe",
+ *   description: "Accès en lecture pour tous les membres de l'équipe",
+ *   grants: [
+ *     { grantee_type: "everyone", grantee_id: null, role: "viewer", can_reshare: false },
+ *   ],
+ * };
+ * ```
+ */
+export interface CreateTemplateRequest {
+  /** Human-readable template name (required). */
+  name: string;
+  /** Optional description. */
+  description: string | null;
+  /** List of grant definitions that make up this template. */
+  grants: TemplateGrantDef[];
+}
