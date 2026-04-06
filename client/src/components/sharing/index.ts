@@ -6,6 +6,8 @@ export { WorkspaceSharing } from "./workspace-sharing";
 export type { WorkspaceSharingProps } from "./workspace-sharing";
 export { ShareDialog } from "./share-dialog";
 export type { ShareDialogProps } from "./share-dialog";
+export { BulkShareDialog } from "./bulk-share-dialog";
+export type { BulkShareDialogProps } from "./bulk-share-dialog";
 export { GranteePicker } from "./grantee-picker";
 export type { GranteePickerProps, GranteeOption } from "./grantee-picker";
 export { PermissionBadge } from "./permission-badge";
