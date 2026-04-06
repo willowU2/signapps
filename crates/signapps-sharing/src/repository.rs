@@ -375,25 +375,50 @@ impl SharingRepository {
     pub async fn create_template(
         pool: &PgPool,
         tenant_id: Uuid,
+        created_by: Uuid,
         name: &str,
         description: Option<&str>,
-        resource_type: Option<&str>,
         grants: serde_json::Value,
     ) -> Result<Template> {
         sqlx::query_as::<_, Template>(
             r#"INSERT INTO sharing.templates
-                   (tenant_id, name, description, resource_type, grants)
+                   (tenant_id, created_by, name, description, grants)
                VALUES ($1, $2, $3, $4, $5)
                RETURNING *"#,
         )
         .bind(tenant_id)
+        .bind(created_by)
         .bind(name)
         .bind(description)
-        .bind(resource_type)
         .bind(grants)
         .fetch_one(pool)
         .await
         .map_err(|e| Error::Database(e.to_string()))
+    }
+
+    /// Delete a non-system template by ID within a tenant.
+    ///
+    /// Returns `true` if a row was deleted.  Returns `false` when the template
+    /// does not exist or has `is_system = true` (system templates are protected).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Database`] if the delete fails.
+    pub async fn delete_template(
+        pool: &PgPool,
+        tenant_id: Uuid,
+        template_id: Uuid,
+    ) -> Result<bool> {
+        let result = sqlx::query(
+            "DELETE FROM sharing.templates WHERE id = $1 AND tenant_id = $2 AND is_system = false",
+        )
+        .bind(template_id)
+        .bind(tenant_id)
+        .execute(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+
+        Ok(result.rows_affected() > 0)
     }
 
     /// Fetch a single template by ID within a tenant.
@@ -491,6 +516,29 @@ impl SharingRepository {
         .bind(action)
         .bind(details)
         .fetch_one(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))
+    }
+
+    /// List recent audit log entries for a tenant (all resources), newest first.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Database`] if the query fails.
+    pub async fn list_audit_by_tenant(
+        pool: &PgPool,
+        tenant_id: Uuid,
+        limit: i64,
+    ) -> Result<Vec<AuditEntry>> {
+        sqlx::query_as::<_, AuditEntry>(
+            r#"SELECT * FROM sharing.audit_log
+               WHERE tenant_id = $1
+               ORDER BY created_at DESC
+               LIMIT $2"#,
+        )
+        .bind(tenant_id)
+        .bind(limit)
+        .fetch_all(pool)
         .await
         .map_err(|e| Error::Database(e.to_string()))
     }

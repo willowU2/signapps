@@ -15,6 +15,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -513,6 +523,8 @@ export default function SharingTemplatesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadTemplates = useCallback(() => {
     setLoading(true);
@@ -539,11 +551,22 @@ export default function SharingTemplatesPage() {
   };
 
   const handleDelete = (id: string) => {
-    // TODO: call DELETE /api/v1/sharing/templates/:id once the endpoint is available
-    toast.info(
-      "La suppression de templates sera disponible dans une prochaine version",
-    );
-    void id;
+    setDeleteTargetId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) return;
+    setDeleting(true);
+    try {
+      await sharingApi.deleteTemplate(deleteTargetId);
+      setTemplates((prev) => prev.filter((t) => t.id !== deleteTargetId));
+      toast.success("Template supprimé");
+    } catch {
+      toast.error("Impossible de supprimer le template");
+    } finally {
+      setDeleting(false);
+      setDeleteTargetId(null);
+    }
   };
 
   return (
@@ -631,6 +654,37 @@ export default function SharingTemplatesPage() {
         onOpenChange={setCreateOpen}
         onCreated={handleCreated}
       />
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog
+        open={deleteTargetId !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setDeleteTargetId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce template ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Le template sera définitivement
+              supprimé et ne pourra plus être appliqué aux ressources.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+              ) : null}
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }

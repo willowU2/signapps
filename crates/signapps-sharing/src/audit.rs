@@ -314,6 +314,51 @@ impl<'pool> AuditLogger<'pool> {
 
         Ok(())
     }
+
+    /// Record a `template_deleted` event.
+    ///
+    /// Called after successfully deleting a sharing template.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`signapps_common::Error::Database`] if the insert fails.
+    ///
+    /// # Panics
+    ///
+    /// No panics — all errors are propagated via `Result`.
+    #[instrument(skip(self), fields(
+        tenant_id   = %tenant_id,
+        actor_id    = %actor_id,
+        template_id = %template_id,
+    ))]
+    pub async fn log_template_deleted(
+        &self,
+        tenant_id: Uuid,
+        actor_id: Uuid,
+        template_id: Uuid,
+    ) -> Result<()> {
+        let details = serde_json::json!({ "template_id": template_id });
+
+        SharingRepository::insert_audit(
+            self.pool,
+            tenant_id,
+            "template",
+            template_id,
+            actor_id,
+            "template_deleted",
+            details,
+        )
+        .await?;
+
+        tracing::info!(
+            tenant_id   = %tenant_id,
+            actor_id    = %actor_id,
+            template_id = %template_id,
+            "sharing template deleted"
+        );
+
+        Ok(())
+    }
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

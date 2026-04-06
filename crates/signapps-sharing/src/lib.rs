@@ -56,8 +56,8 @@ pub use engine::SharingEngine;
 pub use middleware::require_permission;
 
 pub use models::{
-    AuditEntry, Capability, CreateGrant, DefaultVisibility, EffectivePermission, Grant,
-    PermissionSource, Policy, Template, UserContext,
+    AuditEntry, Capability, CreateGrant, CreateTemplate, DefaultVisibility, EffectivePermission,
+    Grant, PermissionSource, Policy, Template, UserContext,
 };
 pub use types::{Action, Grantee, GranteeType, ResourceRef, ResourceType, Role};
 

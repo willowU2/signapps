@@ -12,7 +12,11 @@ use signapps_common::middleware::{
 use signapps_common::pg_events::PgEventBus;
 use signapps_common::{AiIndexerClient, AuthState, JwtConfig};
 use signapps_db::DatabasePool;
-use signapps_sharing::{engine::SharingEngine, routes::sharing_routes, types::ResourceType};
+use signapps_sharing::{
+    engine::SharingEngine,
+    routes::{sharing_global_routes, sharing_routes},
+    types::ResourceType,
+};
 use tower::ServiceBuilder;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use utoipa_swagger_ui::SwaggerUi;
@@ -528,7 +532,8 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
     let files_sharing = sharing_routes("files", ResourceType::File)
         .with_state(sharing_engine.clone());
     let folders_sharing = sharing_routes("folders", ResourceType::Folder)
-        .with_state(sharing_engine);
+        .with_state(sharing_engine.clone());
+    let global_sharing = sharing_global_routes().with_state(sharing_engine);
 
     Router::new()
         .merge(root_health)
@@ -536,6 +541,7 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .merge(openapi_routes)
         .merge(files_sharing)
         .merge(folders_sharing)
+        .merge(global_sharing)
         .nest("/api/v1", v1_routes)
         .layer(
             ServiceBuilder::new()

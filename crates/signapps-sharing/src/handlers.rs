@@ -20,7 +20,7 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use crate::engine::SharingEngine;
-use crate::models::{CreateGrant, EffectivePermission, Grant};
+use crate::models::{AuditEntry, CreateGrant, CreateTemplate, EffectivePermission, Grant, Template};
 use crate::types::ResourceType;
 
 // ─── Path extractors ─────────────────────────────────────────────────────────
@@ -210,4 +210,127 @@ pub async fn shared_with_me_handler(
 
     let grants = engine.shared_with_me(&user_ctx, rt_filter).await?;
     Ok(Json(grants))
+}
+
+// ─── Template handlers ────────────────────────────────────────────────────────
+
+/// List all sharing templates in the calling user's tenant.
+///
+/// `GET /api/v1/sharing/templates`
+///
+/// # Errors
+///
+/// Returns [`Error::Unauthorized`] if no valid JWT is present.
+/// Returns [`Error::Database`] if the DB query fails.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+#[instrument(skip(engine, claims), fields(user_id = %claims.sub))]
+pub async fn list_templates_handler(
+    State(engine): State<SharingEngine>,
+    Extension(claims): Extension<Claims>,
+) -> Result<Json<Vec<Template>>> {
+    let user_ctx = engine.build_user_context(&claims).await?;
+    let templates = engine.list_templates(&user_ctx).await?;
+    Ok(Json(templates))
+}
+
+/// Create a new sharing template (admin only).
+///
+/// `POST /api/v1/sharing/templates`
+///
+/// # Errors
+///
+/// Returns [`Error::Unauthorized`] if no valid JWT is present.
+/// Returns [`Error::Forbidden`] if the actor is not an admin.
+/// Returns [`Error::Database`] if the DB query fails.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+#[instrument(skip(engine, claims, body), fields(user_id = %claims.sub))]
+pub async fn create_template_handler(
+    State(engine): State<SharingEngine>,
+    Extension(claims): Extension<Claims>,
+    Json(body): Json<CreateTemplate>,
+) -> Result<Json<Template>> {
+    let actor_ctx = engine.build_user_context(&claims).await?;
+    let template = engine.create_template(&actor_ctx, body).await?;
+    Ok(Json(template))
+}
+
+/// Delete a sharing template by ID (admin only).
+///
+/// `DELETE /api/v1/sharing/templates/:template_id`
+///
+/// System templates cannot be deleted and will return 404.
+///
+/// # Errors
+///
+/// Returns [`Error::Unauthorized`] if no valid JWT is present.
+/// Returns [`Error::Forbidden`] if the actor is not an admin.
+/// Returns [`Error::NotFound`] if the template does not exist or is a system template.
+/// Returns [`Error::Database`] if the DB query fails.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+#[instrument(skip(engine, claims), fields(user_id = %claims.sub, template_id = %template_id))]
+pub async fn delete_template_handler(
+    State(engine): State<SharingEngine>,
+    Extension(claims): Extension<Claims>,
+    Path(template_id): Path<Uuid>,
+) -> Result<Json<()>> {
+    let actor_ctx = engine.build_user_context(&claims).await?;
+    engine.delete_template(&actor_ctx, template_id).await?;
+    Ok(Json(()))
+}
+
+// ─── Audit handler ────────────────────────────────────────────────────────────
+
+/// Query parameters for the audit log endpoint.
+#[derive(Debug, Deserialize)]
+pub struct AuditQuery {
+    /// Optional resource type filter.
+    pub resource_type: Option<String>,
+    /// Optional resource ID filter (requires `resource_type`).
+    pub resource_id: Option<Uuid>,
+    /// Maximum number of entries to return (default 100).
+    pub limit: Option<i64>,
+}
+
+/// List sharing audit log entries (admin only).
+///
+/// `GET /api/v1/sharing/audit`
+///
+/// Accepts optional `resource_type`, `resource_id`, and `limit` query parameters.
+/// When both `resource_type` and `resource_id` are provided, results are filtered
+/// to that specific resource.  Otherwise the full tenant-wide log is returned.
+///
+/// # Errors
+///
+/// Returns [`Error::Unauthorized`] if no valid JWT is present.
+/// Returns [`Error::Forbidden`] if the actor is not an admin.
+/// Returns [`Error::Database`] if the DB query fails.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+#[instrument(skip(engine, claims), fields(user_id = %claims.sub))]
+pub async fn list_audit_handler(
+    State(engine): State<SharingEngine>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<AuditQuery>,
+) -> Result<Json<Vec<AuditEntry>>> {
+    let actor_ctx = engine.build_user_context(&claims).await?;
+    let entries = engine
+        .list_audit(
+            &actor_ctx,
+            params.resource_type,
+            params.resource_id,
+            params.limit.unwrap_or(100),
+        )
+        .await?;
+    Ok(Json(entries))
 }
