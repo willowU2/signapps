@@ -196,6 +196,7 @@ pub async fn delete_connection(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    // TODO: add created_by column to remote.connections for user isolation
     let result = sqlx::query("DELETE FROM remote.connections WHERE id = $1")
         .bind(id)
         .execute(state.db.inner())

@@ -187,6 +187,14 @@ pub async fn patch_invoice(
     Path(id): Path<Uuid>,
     Json(payload): Json<PatchInvoiceRequest>,
 ) -> Result<Json<InvoiceResponse>, (StatusCode, String)> {
+    // Verify invoice exists before patching
+    let existing = sqlx::query_as::<_, Invoice>("SELECT * FROM billing.invoices WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or_else(|| (StatusCode::NOT_FOUND, "Invoice not found".to_string()))?;
+
     sqlx::query(
         r#"UPDATE billing.invoices SET
             status      = COALESCE($2, status),
@@ -194,7 +202,7 @@ pub async fn patch_invoice(
             currency    = COALESCE($4, currency),
             due_at      = COALESCE($5, due_at),
             metadata    = COALESCE($6, metadata)
-           WHERE id = $1"#,
+           WHERE id = $1 AND tenant_id = $7"#,
     )
     .bind(id)
     .bind(&payload.status)
@@ -202,6 +210,7 @@ pub async fn patch_invoice(
     .bind(&payload.currency)
     .bind(payload.due_at)
     .bind(&payload.metadata)
+    .bind(existing.tenant_id)
     .execute(&state.pool)
     .await
     .map_err(|e| {
@@ -238,8 +247,9 @@ pub async fn delete_invoice(
         ));
     }
 
-    sqlx::query("DELETE FROM billing.invoices WHERE id = $1")
+    sqlx::query("DELETE FROM billing.invoices WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(invoice.tenant_id)
         .execute(&state.pool)
         .await
         .map_err(|e| {

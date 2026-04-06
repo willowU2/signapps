@@ -201,6 +201,7 @@ pub async fn delete_profile(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    // TODO: add created_by column to pxe.profiles for user isolation
     let result = sqlx::query("DELETE FROM pxe.profiles WHERE id = $1")
         .bind(id)
         .execute(state.db.inner())
@@ -387,6 +388,7 @@ pub async fn delete_asset(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    // TODO: add created_by column to pxe.assets for user isolation
     let result = sqlx::query("DELETE FROM pxe.assets WHERE id = $1")
         .bind(id)
         .execute(state.db.inner())

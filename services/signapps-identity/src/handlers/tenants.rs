@@ -517,11 +517,16 @@ pub async fn list_my_workspaces(
 #[tracing::instrument(skip_all)]
 pub async fn get_workspace(
     State(state): State<AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<WorkspaceResponse>> {
     let workspace = WorkspaceRepository::find_by_id(&state.pool, id)
         .await?
         .ok_or_else(|| Error::NotFound(format!("Workspace {}", id)))?;
+
+    if workspace.tenant_id != ctx.tenant_id {
+        return Err(Error::NotFound(format!("Workspace {}", id)));
+    }
 
     Ok(Json(WorkspaceResponse::from(workspace)))
 }
@@ -614,6 +619,7 @@ pub async fn create_workspace(
 #[tracing::instrument(skip_all)]
 pub async fn update_workspace(
     State(state): State<AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateWorkspaceRequest>,
 ) -> Result<Json<WorkspaceResponse>> {
@@ -621,10 +627,14 @@ pub async fn update_workspace(
         .validate()
         .map_err(|e| Error::Validation(e.to_string()))?;
 
-    // Verify workspace exists
+    // Verify workspace exists and belongs to current tenant
     let _existing = WorkspaceRepository::find_by_id(&state.pool, id)
         .await?
         .ok_or_else(|| Error::NotFound(format!("Workspace {}", id)))?;
+
+    if _existing.tenant_id != ctx.tenant_id {
+        return Err(Error::NotFound(format!("Workspace {}", id)));
+    }
 
     let update = UpdateWorkspace {
         name: payload.name,
@@ -659,12 +669,17 @@ pub async fn update_workspace(
 #[tracing::instrument(skip_all)]
 pub async fn delete_workspace(
     State(state): State<AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
-    // Verify workspace exists
+    // Verify workspace exists and belongs to current tenant
     let workspace = WorkspaceRepository::find_by_id(&state.pool, id)
         .await?
         .ok_or_else(|| Error::NotFound(format!("Workspace {}", id)))?;
+
+    if workspace.tenant_id != ctx.tenant_id {
+        return Err(Error::NotFound(format!("Workspace {}", id)));
+    }
 
     // Prevent deleting default workspace
     if workspace.is_default {

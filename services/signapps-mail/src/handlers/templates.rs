@@ -183,15 +183,23 @@ pub async fn update_template(
 }
 
 /// DELETE /api/v1/mail/templates/:id
+/// Only deletes templates belonging to accounts owned by the current user.
 #[tracing::instrument(skip_all)]
 pub async fn delete_template(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    match sqlx::query("DELETE FROM mail.email_templates WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await
+    // Only delete if the template belongs to an account owned by the current user
+    match sqlx::query(
+        r#"DELETE FROM mail.email_templates
+           WHERE id = $1
+             AND account_id IN (SELECT a.id FROM mail.accounts a WHERE a.user_id = $2)"#,
+    )
+    .bind(id)
+    .bind(claims.sub)
+    .execute(&state.pool)
+    .await
     {
         Ok(r) if r.rows_affected() > 0 => StatusCode::NO_CONTENT.into_response(),
         Ok(_) => (StatusCode::NOT_FOUND, "Template not found").into_response(),

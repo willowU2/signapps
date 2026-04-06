@@ -197,6 +197,7 @@ pub async fn update_package(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdatePackageRequest>,
 ) -> Result<Json<SoftwarePackage>, (StatusCode, String)> {
+    // TODO: add tenant_id column to it.software_packages for tenant isolation
     let pkg = sqlx::query_as::<_, SoftwarePackage>(
         r#"
         UPDATE it.software_packages SET
@@ -243,6 +244,7 @@ pub async fn delete_package(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    // TODO: add tenant_id column to it.software_packages for tenant isolation
     let result = sqlx::query("DELETE FROM it.software_packages WHERE id = $1")
         .bind(id)
         .execute(pool.inner())

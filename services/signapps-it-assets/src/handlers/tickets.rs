@@ -1,12 +1,13 @@
 // PSA/Ticketing system — ConnectWise/Autotask style (idea #51)
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::StatusCode,
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use signapps_common::Claims;
 use signapps_db::DatabasePool;
 use uuid::Uuid;
 
@@ -461,6 +462,7 @@ pub async fn get_ticket(
 #[tracing::instrument(skip_all)]
 pub async fn update_ticket(
     State(pool): State<DatabasePool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateTicketReq>,
 ) -> Result<Json<Ticket>, (StatusCode, String)> {
@@ -495,7 +497,7 @@ pub async fn update_ticket(
             metadata = COALESCE($10, metadata),
             updated_at = now()
             {}
-           WHERE id = $1
+           WHERE id = $1 AND tenant_id = $11
            RETURNING id, number, title, description, status, priority, category,
                      hardware_id, requester_id, requester_name, requester_email,
                      assigned_to, assigned_group, sla_response_due, sla_resolution_due,
@@ -515,6 +517,7 @@ pub async fn update_ticket(
         .bind(payload.assigned_group)
         .bind(payload.tags.as_deref())
         .bind(&payload.metadata)
+        .bind(claims.tenant_id)
         .fetch_optional(pool.inner())
         .await
         .map_err(internal_err)?
@@ -540,11 +543,13 @@ pub async fn update_ticket(
 #[tracing::instrument(skip_all)]
 pub async fn delete_ticket(
     State(pool): State<DatabasePool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     // Only allow deletion of closed or resolved tickets
-    let ticket: Option<(String,)> = sqlx::query_as("SELECT status FROM it.tickets WHERE id = $1")
+    let ticket: Option<(String,)> = sqlx::query_as("SELECT status FROM it.tickets WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(claims.tenant_id)
         .fetch_optional(pool.inner())
         .await
         .map_err(internal_err)?;
@@ -556,8 +561,9 @@ pub async fn delete_ticket(
             format!("Cannot delete ticket with status '{}'. Only closed or resolved tickets can be deleted.", status),
         )),
         Some(_) => {
-            sqlx::query("DELETE FROM it.tickets WHERE id = $1")
+            sqlx::query("DELETE FROM it.tickets WHERE id = $1 AND tenant_id = $2")
                 .bind(id)
+                .bind(claims.tenant_id)
                 .execute(pool.inner())
                 .await
                 .map_err(internal_err)?;
@@ -802,6 +808,7 @@ pub async fn update_psa_integration(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdatePsaIntegrationReq>,
 ) -> Result<Json<PsaIntegrationRow>, (StatusCode, String)> {
+    // TODO: add tenant_id column to it.psa_integrations for tenant isolation
     let row = sqlx::query_as::<_, PsaIntegrationRow>(
         r#"UPDATE it.psa_integrations SET
                name           = COALESCE($2, name),
@@ -844,6 +851,7 @@ pub async fn delete_psa_integration(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    // TODO: add tenant_id column to it.psa_integrations for tenant isolation
     let result = sqlx::query("DELETE FROM it.psa_integrations WHERE id = $1")
         .bind(id)
         .execute(pool.inner())

@@ -68,12 +68,14 @@ pub async fn create_line_item(
 }
 
 /// Remove a line item from an invoice.
+/// Scoped to ensure the line item belongs to the specified invoice.
 pub async fn delete_line_item(
     State(state): State<AppState>,
-    Path((_invoice_id, item_id)): Path<(Uuid, Uuid)>,
+    Path((invoice_id, item_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let r = sqlx::query("DELETE FROM billing.line_items WHERE id = $1")
+    let r = sqlx::query("DELETE FROM billing.line_items WHERE id = $1 AND invoice_id = $2")
         .bind(item_id)
+        .bind(invoice_id)
         .execute(&state.pool)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;

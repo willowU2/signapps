@@ -1,12 +1,13 @@
 // SL1-SL3: Script library + scheduled scripts
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::StatusCode,
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use signapps_common::Claims;
 use signapps_db::DatabasePool;
 use uuid::Uuid;
 
@@ -196,6 +197,7 @@ pub async fn get_script(
 #[tracing::instrument(skip_all)]
 pub async fn update_script(
     State(pool): State<DatabasePool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateScriptReq>,
 ) -> Result<Json<ScriptLibraryEntry>, (StatusCode, String)> {
@@ -210,7 +212,7 @@ pub async fn update_script(
             parameters  = COALESCE($7, parameters),
             version     = version + 1,
             updated_at  = now()
-        WHERE id = $1
+        WHERE id = $1 AND created_by = $8
         RETURNING id, name, description, category, script_type, content, parameters,
                   version, created_by, created_at, updated_at
         "#,
@@ -222,6 +224,7 @@ pub async fn update_script(
     .bind(&payload.script_type)
     .bind(&payload.content)
     .bind(&payload.parameters)
+    .bind(claims.sub)
     .fetch_optional(pool.inner())
     .await
     .map_err(internal_err)?
@@ -243,10 +246,12 @@ pub async fn update_script(
 #[tracing::instrument(skip_all)]
 pub async fn delete_script(
     State(pool): State<DatabasePool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let result = sqlx::query("DELETE FROM it.script_library WHERE id = $1")
+    let result = sqlx::query("DELETE FROM it.script_library WHERE id = $1 AND created_by = $2")
         .bind(id)
+        .bind(claims.sub)
         .execute(pool.inner())
         .await
         .map_err(internal_err)?;
@@ -413,6 +418,7 @@ pub async fn delete_schedule(
     State(pool): State<DatabasePool>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    // TODO: add tenant_id column to it.scheduled_scripts for tenant isolation
     let result = sqlx::query("DELETE FROM it.scheduled_scripts WHERE id = $1")
         .bind(id)
         .execute(pool.inner())

@@ -29,7 +29,12 @@ fn sha256_hex(data: &[u8]) -> String {
 
 /// Check `drive.nodes` for an existing file with the same SHA-256 hash.
 /// Returns `(storage_path, node_id)` if a duplicate exists.
-async fn find_duplicate_by_hash(pool: &sqlx::PgPool, hash: &str) -> Option<(String, Uuid)> {
+/// Scoped to the same owner to prevent cross-tenant dedup leaking.
+async fn find_duplicate_by_hash(
+    pool: &sqlx::PgPool,
+    hash: &str,
+    owner_id: Uuid,
+) -> Option<(String, Uuid)> {
     use sqlx::Row;
     let row = sqlx::query(
         r#"
@@ -37,11 +42,13 @@ async fn find_duplicate_by_hash(pool: &sqlx::PgPool, hash: &str) -> Option<(Stri
         FROM drive.nodes n
         WHERE n.node_type = 'file'
           AND n.sha256_hash = $1
+          AND n.owner_id = $2
           AND n.deleted_at IS NULL
         LIMIT 1
         "#,
     )
     .bind(hash)
+    .bind(owner_id)
     .fetch_optional(pool)
     .await
     .unwrap_or(None)?;
@@ -414,7 +421,7 @@ pub async fn upload(
 
         // ── SHA-256 deduplication ─────────────────────────────────────────────
         let hash = sha256_hex(&data);
-        let dedup = find_duplicate_by_hash(state.pool.inner(), &hash).await;
+        let dedup = find_duplicate_by_hash(state.pool.inner(), &hash, user_id).await;
 
         if let Some((existing_key, existing_node_id)) = dedup {
             // Duplicate found — skip storage write, reuse existing content
@@ -580,7 +587,7 @@ pub async fn upload_with_key(
     // ── SHA-256 deduplication ─────────────────────────────────────────────────
     let hash = sha256_hex(&body);
     if let Some((existing_key, existing_node_id)) =
-        find_duplicate_by_hash(state.pool.inner(), &hash).await
+        find_duplicate_by_hash(state.pool.inner(), &hash, user_id).await
     {
         tracing::info!(
             hash = %hash,

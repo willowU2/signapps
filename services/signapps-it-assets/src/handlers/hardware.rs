@@ -1,8 +1,9 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::StatusCode,
     Json,
 };
+use signapps_common::Claims;
 use signapps_db::DatabasePool;
 use uuid::Uuid;
 
@@ -111,12 +112,16 @@ pub async fn create_hardware(
 #[tracing::instrument(skip_all)]
 pub async fn update_hardware(
     State(pool): State<DatabasePool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateHardwareReq>,
 ) -> Result<Json<HardwareAsset>, (StatusCode, String)> {
-    // Check exists
-    let _ = sqlx::query("SELECT id FROM it.hardware WHERE id = $1")
+    let tenant_id = claims.tenant_id;
+
+    // Check exists with tenant isolation
+    let _ = sqlx::query("SELECT id FROM it.hardware WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .fetch_optional(pool.inner())
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
@@ -131,7 +136,7 @@ pub async fn update_hardware(
             assigned_user_id = COALESCE($4, assigned_user_id),
             notes = COALESCE($5, notes),
             updated_at = NOW()
-        WHERE id = $6
+        WHERE id = $6 AND tenant_id = $7
         RETURNING *
         "#,
     )
@@ -141,6 +146,7 @@ pub async fn update_hardware(
     .bind(payload.assigned_user_id)
     .bind(payload.notes)
     .bind(id)
+    .bind(tenant_id)
     .fetch_one(pool.inner())
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -162,10 +168,12 @@ pub async fn update_hardware(
 #[tracing::instrument(skip_all)]
 pub async fn delete_hardware(
     State(pool): State<DatabasePool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let result = sqlx::query("DELETE FROM it.hardware WHERE id = $1")
+    let result = sqlx::query("DELETE FROM it.hardware WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(claims.tenant_id)
         .execute(pool.inner())
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;

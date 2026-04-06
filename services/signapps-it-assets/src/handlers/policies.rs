@@ -1,12 +1,13 @@
 // GP1-GP5: Policy CRUD, assignment, merged policies for agent, compliance reporting
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::StatusCode,
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use signapps_common::Claims;
 use signapps_db::DatabasePool;
 use uuid::Uuid;
 
@@ -291,11 +292,13 @@ pub async fn create_policy(
 #[tracing::instrument(skip_all)]
 pub async fn update_policy(
     State(pool): State<DatabasePool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdatePolicyRequest>,
 ) -> Result<Json<Policy>, (StatusCode, String)> {
-    let _ = sqlx::query("SELECT id FROM it.policies WHERE id = $1")
+    let _ = sqlx::query("SELECT id FROM it.policies WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(claims.tenant_id)
         .fetch_optional(pool.inner())
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
@@ -312,7 +315,7 @@ pub async fn update_policy(
             priority    = COALESCE($6, priority),
             mode        = COALESCE($7, mode),
             updated_at  = NOW()
-        WHERE id = $8
+        WHERE id = $8 AND tenant_id = $9
         RETURNING id, name, description, category, settings, parent_id, priority, mode, created_at, updated_at
         "#,
     )
@@ -324,6 +327,7 @@ pub async fn update_policy(
     .bind(payload.priority)
     .bind(payload.mode.as_deref())
     .bind(id)
+    .bind(claims.tenant_id)
     .fetch_one(pool.inner())
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -345,10 +349,12 @@ pub async fn update_policy(
 #[tracing::instrument(skip_all)]
 pub async fn delete_policy(
     State(pool): State<DatabasePool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let result = sqlx::query("DELETE FROM it.policies WHERE id = $1")
+    let result = sqlx::query("DELETE FROM it.policies WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(claims.tenant_id)
         .execute(pool.inner())
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;

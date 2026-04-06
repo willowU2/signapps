@@ -122,6 +122,7 @@ pub async fn update_plan(
 }
 
 /// Delete a billing plan by UUID.
+// TODO: add tenant_id column to billing.plans for tenant isolation
 pub async fn delete_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

@@ -429,16 +429,16 @@ pub async fn delete_domain(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    // Fetch domain name before deletion for DNS cleanup
+    // Fetch domain name before deletion for DNS cleanup (tenant-scoped)
     let domain_name: Option<String> =
-        sqlx::query_scalar("SELECT name FROM mailserver.domains WHERE id = $1")
+        sqlx::query_scalar("SELECT name FROM mailserver.domains WHERE id = $1 AND tenant_id IS NOT NULL")
             .bind(id)
             .fetch_optional(&state.pool)
             .await
             .ok()
             .flatten();
 
-    match sqlx::query("DELETE FROM mailserver.domains WHERE id = $1 RETURNING id")
+    match sqlx::query("DELETE FROM mailserver.domains WHERE id = $1 AND tenant_id IS NOT NULL RETURNING id")
         .bind(id)
         .fetch_optional(&state.pool)
         .await

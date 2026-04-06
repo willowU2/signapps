@@ -784,6 +784,13 @@ pub async fn update_vault_settings(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<UpdateVaultSettingsRequest>,
 ) -> Result<Json<VaultSettingsResponse>> {
+    // Only admins (role >= 2) may update vault settings
+    if claims.role < 2 {
+        return Err(Error::Forbidden(
+            "Admin role required to update vault settings".to_string(),
+        ));
+    }
+
     let tenant_id = claims
         .tenant_id
         .ok_or_else(|| Error::BadRequest("No tenant context".to_string()))?;
