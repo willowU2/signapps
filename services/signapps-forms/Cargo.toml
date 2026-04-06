@@ -14,6 +14,8 @@ path = "src/main.rs"
 [dependencies]
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
+signapps-sharing = { path = "../../crates/signapps-sharing" }
+signapps-cache = { path = "../../crates/signapps-cache" }
 sqlx = { workspace = true }
 axum = { workspace = true }
 tokio = { workspace = true }
