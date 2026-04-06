@@ -15,7 +15,7 @@ use uuid::Uuid;
 ///
 /// Used both as a discriminator in the `sharing.grants` table and as a key
 /// for capability lookups in `sharing.capabilities`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ResourceType {
     /// A single uploaded or synced file.
@@ -101,7 +101,7 @@ impl std::str::FromStr for ResourceType {
 /// The numeric `level()` is stored as a signed integer so that `deny` can be
 /// represented as -1 (below any positive grant) and used for explicit deny
 /// semantics.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Role {
     /// Explicitly deny all access, overriding positive grants from other axes.
@@ -198,6 +198,8 @@ impl std::str::FromStr for Role {
 /// Use the constructor helpers ([`Action::read`], [`Action::write`], …) for
 /// standard actions; custom actions can be built via [`Action::new`].
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(utoipa::ToSchema)]
+#[schema(value_type = String, example = "read")]
 pub struct Action(String);
 
 impl Action {
@@ -258,7 +260,7 @@ impl From<&str> for Action {
 // ─── GranteeType ─────────────────────────────────────────────────────────────
 
 /// The kind of principal a permission grant targets.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum GranteeType {
     /// A specific user account.

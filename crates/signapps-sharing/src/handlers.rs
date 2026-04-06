@@ -23,6 +23,7 @@ use crate::engine::SharingEngine;
 use crate::models::{AuditEntry, CreateGrant, CreateTemplate, EffectivePermission, Grant, Template};
 use crate::types::ResourceType;
 
+
 // ─── Path extractors ─────────────────────────────────────────────────────────
 
 /// Path parameters for resource-level sharing endpoints.
@@ -62,6 +63,21 @@ pub struct SharedWithMeQuery {
 /// # Panics
 ///
 /// No panics — all errors are propagated via `Result`.
+#[utoipa::path(
+    get,
+    path = "/api/v1/{prefix}/{resource_id}/grants",
+    params(
+        ("prefix" = String, Path, description = "Resource type prefix (e.g. `files`, `calendars`)"),
+        ("resource_id" = Uuid, Path, description = "UUID of the resource"),
+    ),
+    responses(
+        (status = 200, description = "List of active grants on the resource", body = Vec<Grant>),
+        (status = 401, description = "Unauthorized — missing or invalid JWT"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "Sharing"
+)]
 #[instrument(skip(engine, claims), fields(user_id = %claims.sub, resource_id = %path.resource_id))]
 pub async fn list_grants_handler(
     State(engine): State<SharingEngine>,
@@ -93,6 +109,24 @@ pub async fn list_grants_handler(
 /// # Panics
 ///
 /// No panics — all errors are propagated via `Result`.
+#[utoipa::path(
+    post,
+    path = "/api/v1/{prefix}/{resource_id}/grants",
+    params(
+        ("prefix" = String, Path, description = "Resource type prefix (e.g. `files`, `calendars`)"),
+        ("resource_id" = Uuid, Path, description = "UUID of the resource"),
+    ),
+    request_body = CreateGrant,
+    responses(
+        (status = 200, description = "Grant created successfully", body = Grant),
+        (status = 400, description = "Invalid grant input"),
+        (status = 401, description = "Unauthorized — missing or invalid JWT"),
+        (status = 403, description = "Forbidden — caller lacks manager role"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "Sharing"
+)]
 #[instrument(skip(engine, claims, body), fields(user_id = %claims.sub, resource_id = %path.resource_id))]
 pub async fn create_grant_handler(
     State(engine): State<SharingEngine>,
@@ -124,6 +158,24 @@ pub async fn create_grant_handler(
 /// # Panics
 ///
 /// No panics — all errors are propagated via `Result`.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/{prefix}/{resource_id}/grants/{grant_id}",
+    params(
+        ("prefix" = String, Path, description = "Resource type prefix (e.g. `files`, `calendars`)"),
+        ("resource_id" = Uuid, Path, description = "UUID of the resource"),
+        ("grant_id" = Uuid, Path, description = "UUID of the grant to revoke"),
+    ),
+    responses(
+        (status = 200, description = "Grant revoked successfully"),
+        (status = 401, description = "Unauthorized — missing or invalid JWT"),
+        (status = 403, description = "Forbidden — caller lacks manager role"),
+        (status = 404, description = "Grant not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "Sharing"
+)]
 #[instrument(skip(engine, claims), fields(
     user_id  = %claims.sub,
     resource_id = %path.resource_id,
@@ -160,6 +212,21 @@ pub async fn revoke_grant_handler(
 /// # Panics
 ///
 /// No panics — all errors are propagated via `Result`.
+#[utoipa::path(
+    get,
+    path = "/api/v1/{prefix}/{resource_id}/permissions",
+    params(
+        ("prefix" = String, Path, description = "Resource type prefix (e.g. `files`, `calendars`)"),
+        ("resource_id" = Uuid, Path, description = "UUID of the resource"),
+    ),
+    responses(
+        (status = 200, description = "Effective permission for the caller, or null if no access", body = Option<EffectivePermission>),
+        (status = 401, description = "Unauthorized — missing or invalid JWT"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "Sharing"
+)]
 #[instrument(skip(engine, claims), fields(user_id = %claims.sub, resource_id = %path.resource_id))]
 pub async fn permissions_handler(
     State(engine): State<SharingEngine>,
@@ -191,6 +258,21 @@ pub async fn permissions_handler(
 /// # Panics
 ///
 /// No panics — all errors are propagated via `Result`.
+#[utoipa::path(
+    get,
+    path = "/api/v1/shared-with-me",
+    params(
+        ("resource_type" = Option<String>, Query, description = "Optional resource type filter (e.g. `file`, `calendar`)"),
+    ),
+    responses(
+        (status = 200, description = "All grants where the caller is the grantee", body = Vec<Grant>),
+        (status = 400, description = "Invalid resource_type query parameter"),
+        (status = 401, description = "Unauthorized — missing or invalid JWT"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "Sharing"
+)]
 #[instrument(skip(engine, claims), fields(user_id = %claims.sub))]
 pub async fn shared_with_me_handler(
     State(engine): State<SharingEngine>,
@@ -226,6 +308,17 @@ pub async fn shared_with_me_handler(
 /// # Panics
 ///
 /// No panics — all errors are propagated via `Result`.
+#[utoipa::path(
+    get,
+    path = "/api/v1/sharing/templates",
+    responses(
+        (status = 200, description = "List of sharing templates for the caller's tenant", body = Vec<Template>),
+        (status = 401, description = "Unauthorized — missing or invalid JWT"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "Sharing"
+)]
 #[instrument(skip(engine, claims), fields(user_id = %claims.sub))]
 pub async fn list_templates_handler(
     State(engine): State<SharingEngine>,
@@ -249,6 +342,19 @@ pub async fn list_templates_handler(
 /// # Panics
 ///
 /// No panics — all errors are propagated via `Result`.
+#[utoipa::path(
+    post,
+    path = "/api/v1/sharing/templates",
+    request_body = CreateTemplate,
+    responses(
+        (status = 200, description = "Template created successfully", body = Template),
+        (status = 401, description = "Unauthorized — missing or invalid JWT"),
+        (status = 403, description = "Forbidden — admin role required"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "Sharing"
+)]
 #[instrument(skip(engine, claims, body), fields(user_id = %claims.sub))]
 pub async fn create_template_handler(
     State(engine): State<SharingEngine>,
@@ -276,6 +382,22 @@ pub async fn create_template_handler(
 /// # Panics
 ///
 /// No panics — all errors are propagated via `Result`.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/sharing/templates/{template_id}",
+    params(
+        ("template_id" = Uuid, Path, description = "UUID of the template to delete"),
+    ),
+    responses(
+        (status = 200, description = "Template deleted successfully"),
+        (status = 401, description = "Unauthorized — missing or invalid JWT"),
+        (status = 403, description = "Forbidden — admin role required"),
+        (status = 404, description = "Template not found or is a system template"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "Sharing"
+)]
 #[instrument(skip(engine, claims), fields(user_id = %claims.sub, template_id = %template_id))]
 pub async fn delete_template_handler(
     State(engine): State<SharingEngine>,
@@ -317,6 +439,23 @@ pub struct AuditQuery {
 /// # Panics
 ///
 /// No panics — all errors are propagated via `Result`.
+#[utoipa::path(
+    get,
+    path = "/api/v1/sharing/audit",
+    params(
+        ("resource_type" = Option<String>, Query, description = "Optional resource type filter"),
+        ("resource_id" = Option<Uuid>, Query, description = "Optional resource UUID filter (requires resource_type)"),
+        ("limit" = Option<i64>, Query, description = "Maximum entries to return (default 100)"),
+    ),
+    responses(
+        (status = 200, description = "Audit log entries for the tenant", body = Vec<AuditEntry>),
+        (status = 401, description = "Unauthorized — missing or invalid JWT"),
+        (status = 403, description = "Forbidden — admin role required"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "Sharing"
+)]
 #[instrument(skip(engine, claims), fields(user_id = %claims.sub))]
 pub async fn list_audit_handler(
     State(engine): State<SharingEngine>,

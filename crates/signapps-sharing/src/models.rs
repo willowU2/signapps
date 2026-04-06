@@ -20,7 +20,7 @@ use crate::types::{GranteeType, Role};
 /// Represents one axis of the multi-axis permission model. Grants can target a
 /// user, group, org node, or everyone, and may be scoped to a specific resource
 /// or inherited from a parent resource.
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct Grant {
     /// Unique identifier of this grant.
     pub id: Uuid,
@@ -79,7 +79,7 @@ impl Grant {
 /// Request DTO for creating a new permission grant.
 ///
 /// Sent by HTTP handlers and validated before persisting to `sharing.grants`.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct CreateGrant {
     /// The kind of grantee: `"user"`, `"group"`, `"org_node"`, or `"everyone"`.
     pub grantee_type: GranteeType,
@@ -140,7 +140,7 @@ impl CreateGrant {
 /// Policies provide tenant-level or resource-level overrides that can restrict
 /// or expand what the base grant resolution allows (e.g. disabling external
 /// sharing for a resource type).
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct Policy {
     /// Unique identifier of this policy.
     pub id: Uuid,
@@ -151,6 +151,7 @@ pub struct Policy {
     /// A machine-readable policy key (e.g. `"no_external_share"`).
     pub policy_key: String,
     /// JSON-encoded policy value / configuration.
+    #[schema(value_type = Object)]
     pub policy_value: serde_json::Value,
     /// Whether this policy is currently active.
     pub enabled: Option<bool>,
@@ -166,7 +167,7 @@ pub struct Policy {
 ///
 /// Templates are reusable sets of grants that can be applied to a resource in
 /// one operation (e.g. "Project team default access").
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct Template {
     /// Unique identifier of this template.
     pub id: Uuid,
@@ -177,6 +178,7 @@ pub struct Template {
     /// Optional description of what this template does.
     pub description: Option<String>,
     /// JSON array of grant descriptors stored as raw JSON.
+    #[schema(value_type = Object)]
     pub grants: serde_json::Value,
     /// The user who created this template.
     pub created_by: Uuid,
@@ -191,13 +193,14 @@ pub struct Template {
 // ─── CreateTemplate ───────────────────────────────────────────────────────────
 
 /// Request DTO for creating a new sharing template (admin only).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct CreateTemplate {
     /// Human-readable template name (required).
     pub name: String,
     /// Optional description.
     pub description: Option<String>,
     /// List of grant definitions stored as a JSON array.
+    #[schema(value_type = Object)]
     pub grants: serde_json::Value,
 }
 
@@ -207,7 +210,7 @@ pub struct CreateTemplate {
 ///
 /// Maps a (resource_type, role) pair to the list of fine-grained actions that
 /// the role is allowed to perform on that resource type.
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct Capability {
     /// The resource type this capability applies to (e.g. `"file"`).
     pub resource_type: String,
@@ -223,7 +226,7 @@ pub struct Capability {
 ///
 /// Controls whether newly created resources of a given type are visible to
 /// everyone in the tenant by default, or start as private.
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct DefaultVisibility {
     /// The tenant this default applies to.
     pub tenant_id: Uuid,
@@ -239,7 +242,7 @@ pub struct DefaultVisibility {
 ///
 /// Every mutation to the sharing system (grant creation, revocation, policy
 /// change, template application) generates an immutable audit entry.
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct AuditEntry {
     /// Unique identifier of this audit entry.
     pub id: Uuid,
@@ -256,6 +259,7 @@ pub struct AuditEntry {
     /// Optional IP address of the actor for forensic purposes.
     pub actor_ip: Option<String>,
     /// Optional JSON payload with additional event details.
+    #[schema(value_type = Option<Object>)]
     pub details: Option<serde_json::Value>,
     /// When this audit entry was recorded.
     pub created_at: Option<DateTime<Utc>>,
@@ -343,7 +347,7 @@ impl UserContext {
 /// Returned by the permission resolver after evaluating all grant axes,
 /// policies, and capabilities. Contains both the net role and the full list
 /// of allowed actions, plus attribution sources for auditing/display.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct EffectivePermission {
     /// The net role after multi-axis resolution.
     pub role: Role,
@@ -361,7 +365,7 @@ pub struct EffectivePermission {
 ///
 /// Used for transparency: the UI can show the user "you have editor access
 /// because you are a member of group X".
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct PermissionSource {
     /// The grant axis this source comes from (e.g. `"user"`, `"group"`, `"org_node"`, `"everyone"`).
     pub axis: String,

@@ -37,11 +37,12 @@ chrono = { workspace = true }
 axum = { workspace = true }
 tower = { workspace = true }
 
-# OpenAPI schema derivation (optional feature)
-utoipa = { workspace = true, optional = true }
+# OpenAPI schema derivation
+utoipa = { workspace = true }
 
 [features]
-openapi = ["utoipa"]
+# Kept for backwards-compat; no longer gates anything.
+openapi = []
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
