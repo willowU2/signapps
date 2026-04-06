@@ -197,6 +197,18 @@ export interface DhcpLease {
   is_active: boolean;
 }
 
+// ── DHCP Reservations ──
+
+export interface DhcpReservation {
+  id: string;
+  scope_id: string;
+  mac_address: string;
+  ip_address: string;
+  hostname?: string;
+  description?: string;
+  computer_id?: string;
+}
+
 // ── Deployment ──
 
 export interface DeployProfile {

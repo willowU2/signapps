@@ -190,6 +190,20 @@ fn create_router(state: AppState) -> Router {
         .route("/domains/:id/deploy/profiles", post(handlers::ad::create_deploy_profile))
         .route("/deploy/profiles/:id", delete(handlers::ad::delete_deploy_profile))
         .route("/domains/:id/config", put(handlers::ad::update_domain_config))
+        // ── Certificate lifecycle ──
+        .route("/domains/:id/certificates", post(handlers::ad::issue_certificate))
+        .route("/certificates/:id/revoke", post(handlers::ad::revoke_certificate))
+        .route("/certificates/:id/renew", post(handlers::ad::renew_certificate))
+        // ── DHCP reservations ──
+        .route("/dhcp/scopes/:id/reservations", get(handlers::ad::list_dhcp_reservations))
+        .route("/dhcp/scopes/:id/reservations", post(handlers::ad::create_dhcp_reservation))
+        .route("/dhcp/reservations/:id", delete(handlers::ad::delete_dhcp_reservation))
+        // ── Deploy assignments ──
+        .route("/deploy/profiles/:id/assignments", get(handlers::ad::list_deploy_assignments))
+        .route("/deploy/profiles/:id/assignments", post(handlers::ad::create_deploy_assignment))
+        .route("/deploy/assignments/:id", delete(handlers::ad::delete_deploy_assignment))
+        // ── Maintenance ──
+        .route("/dhcp/leases/expire", post(handlers::ad::expire_dhcp_leases))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))

@@ -575,3 +575,357 @@ pub async fn update_domain_config(
         })?;
     Ok(StatusCode::NO_CONTENT)
 }
+
+// ── Certificate Lifecycle ─────────────────────────────────────────────────────
+
+/// Issue a new server certificate signed by the domain's CA.
+///
+/// Creates a placeholder certificate record in `pending` status. Real signing
+/// requires the CA private key to be accessible by the provisioner subsystem.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the INSERT fails (e.g. no
+/// root CA exists for the domain yet).
+#[tracing::instrument(skip_all)]
+pub async fn issue_certificate(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(domain_id): Path<Uuid>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let subject = body["subject"].as_str().unwrap_or("CN=new-cert");
+    let cert_type = body["cert_type"].as_str().unwrap_or("server");
+    let san: Vec<String> = body["san"]
+        .as_array()
+        .map(|a| {
+            a.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    let now = chrono::Utc::now();
+    let expires = now + chrono::Duration::days(730);
+
+    let cert: signapps_db::models::infrastructure::InfraCertificate = sqlx::query_as(
+        r#"INSERT INTO infrastructure.certificates
+           (domain_id, subject, issuer, cert_type, certificate, not_before, not_after, san, status)
+           VALUES ($1, $2,
+                   (SELECT subject FROM infrastructure.certificates WHERE domain_id = $1 AND cert_type = 'root_ca' LIMIT 1),
+                   $3, 'pending-issuance', $4, $5, $6, 'pending')
+           RETURNING *"#,
+    )
+    .bind(domain_id)
+    .bind(subject)
+    .bind(cert_type)
+    .bind(now)
+    .bind(expires)
+    .bind(&san)
+    .fetch_one(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to issue certificate: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    Ok((StatusCode::CREATED, Json(json!(cert))))
+}
+
+/// Revoke a certificate.
+///
+/// Sets the certificate status to `revoked`. The CRL is not automatically
+/// republished; a separate CRL regeneration step is required.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the UPDATE fails.
+#[tracing::instrument(skip_all)]
+pub async fn revoke_certificate(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(cert_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    sqlx::query(
+        "UPDATE infrastructure.certificates SET status = 'revoked' WHERE id = $1",
+    )
+    .bind(cert_id)
+    .execute(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to revoke certificate: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// Renew a certificate (reset expiry to +2 years, status back to `active`).
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the UPDATE fails.
+#[tracing::instrument(skip_all)]
+pub async fn renew_certificate(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(cert_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let now = chrono::Utc::now();
+    let new_expiry = now + chrono::Duration::days(730);
+    sqlx::query(
+        "UPDATE infrastructure.certificates \
+         SET not_before = $1, not_after = $2, status = 'active' WHERE id = $3",
+    )
+    .bind(now)
+    .bind(new_expiry)
+    .bind(cert_id)
+    .execute(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to renew certificate: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+// ── DHCP Reservations ─────────────────────────────────────────────────────────
+
+/// List DHCP reservations for a scope.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the database query fails.
+#[tracing::instrument(skip_all)]
+pub async fn list_dhcp_reservations(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(scope_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let reservations: Vec<signapps_db::models::infrastructure::DhcpReservation> =
+        sqlx::query_as(
+            "SELECT * FROM infrastructure.dhcp_reservations \
+             WHERE scope_id = $1 ORDER BY ip_address",
+        )
+        .bind(scope_id)
+        .fetch_all(&*state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to list DHCP reservations: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    Ok(Json(json!(reservations)))
+}
+
+/// Create a DHCP reservation.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the INSERT fails (e.g.
+/// duplicate MAC or IP within the scope).
+#[tracing::instrument(skip_all)]
+pub async fn create_dhcp_reservation(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(scope_id): Path<Uuid>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let mac = body["mac_address"].as_str().unwrap_or("");
+    let ip = body["ip_address"].as_str().unwrap_or("");
+    let hostname = body["hostname"].as_str();
+    let description = body["description"].as_str();
+
+    let reservation: signapps_db::models::infrastructure::DhcpReservation = sqlx::query_as(
+        r#"INSERT INTO infrastructure.dhcp_reservations
+           (scope_id, mac_address, ip_address, hostname, description)
+           VALUES ($1, $2, $3, $4, $5) RETURNING *"#,
+    )
+    .bind(scope_id)
+    .bind(mac)
+    .bind(ip)
+    .bind(hostname)
+    .bind(description)
+    .fetch_one(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to create DHCP reservation: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    Ok((StatusCode::CREATED, Json(json!(reservation))))
+}
+
+/// Delete a DHCP reservation.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the DELETE fails.
+#[tracing::instrument(skip_all)]
+pub async fn delete_dhcp_reservation(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(reservation_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    sqlx::query("DELETE FROM infrastructure.dhcp_reservations WHERE id = $1")
+        .bind(reservation_id)
+        .execute(&*state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to delete DHCP reservation: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+// ── Deploy Assignments ────────────────────────────────────────────────────────
+
+/// List deploy assignments for a profile.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the database query fails.
+#[tracing::instrument(skip_all)]
+pub async fn list_deploy_assignments(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(profile_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let assignments: Vec<serde_json::Value> = sqlx::query_as::<
+        _,
+        (Uuid, Uuid, String, String, chrono::DateTime<chrono::Utc>),
+    >(
+        "SELECT id, profile_id, target_type, target_id, created_at \
+         FROM infrastructure.deploy_assignments \
+         WHERE profile_id = $1 ORDER BY created_at",
+    )
+    .bind(profile_id)
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list deploy assignments: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?
+    .into_iter()
+    .map(|(id, pid, ttype, tid, created)| {
+        json!({
+            "id": id,
+            "profile_id": pid,
+            "target_type": ttype,
+            "target_id": tid,
+            "created_at": created,
+        })
+    })
+    .collect();
+    Ok(Json(json!(assignments)))
+}
+
+/// Create a deploy assignment.
+///
+/// Binds a deployment profile to an org node (or any target type) so that PXE
+/// provisioning applies the profile to all matching machines.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the INSERT fails (e.g.
+/// duplicate `(profile_id, target_id)` constraint).
+#[tracing::instrument(skip_all)]
+pub async fn create_deploy_assignment(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(profile_id): Path<Uuid>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let target_type = body["target_type"].as_str().unwrap_or("org_node");
+    let target_id = body["target_id"].as_str().unwrap_or("");
+
+    let row: (Uuid, Uuid, String, String, chrono::DateTime<chrono::Utc>) = sqlx::query_as(
+        r#"INSERT INTO infrastructure.deploy_assignments (profile_id, target_type, target_id)
+           VALUES ($1, $2, $3)
+           RETURNING id, profile_id, target_type, target_id, created_at"#,
+    )
+    .bind(profile_id)
+    .bind(target_type)
+    .bind(target_id)
+    .fetch_one(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to create deploy assignment: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    Ok((
+        StatusCode::CREATED,
+        Json(json!({
+            "id": row.0,
+            "profile_id": row.1,
+            "target_type": row.2,
+            "target_id": row.3,
+            "created_at": row.4,
+        })),
+    ))
+}
+
+/// Delete a deploy assignment.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the DELETE fails.
+#[tracing::instrument(skip_all)]
+pub async fn delete_deploy_assignment(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(assignment_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    sqlx::query("DELETE FROM infrastructure.deploy_assignments WHERE id = $1")
+        .bind(assignment_id)
+        .execute(&*state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to delete deploy assignment: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+// ── Maintenance ───────────────────────────────────────────────────────────────
+
+/// Expire stale DHCP leases (background sweep endpoint).
+///
+/// Sets `is_active = false` on all leases whose `lease_end` is in the past.
+/// Returns the number of leases that were expired.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the UPDATE fails.
+#[tracing::instrument(skip_all)]
+pub async fn expire_dhcp_leases(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let result = sqlx::query(
+        "UPDATE infrastructure.dhcp_leases \
+         SET is_active = false \
+         WHERE is_active = true AND lease_end <= now()",
+    )
+    .execute(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to expire leases: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let count = result.rows_affected();
+    if count > 0 {
+        tracing::info!(expired = count, "DHCP lease expiration sweep completed");
+    }
+    Ok(Json(json!({ "expired": count })))
+}

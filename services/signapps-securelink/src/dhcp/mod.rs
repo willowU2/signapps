@@ -135,13 +135,13 @@ async fn handle_discover(
     config: &DhcpListenerConfig,
     pkt: &DhcpPacket,
 ) -> Option<DhcpResponse> {
-    let scope_id = resolve_scope_id(pool, config).await?;
+    let scope = resolve_scope(pool, config).await?;
     let mac_str = format_mac(&pkt.mac_address);
 
-    match allocate_ip(pool, scope_id, &mac_str).await {
+    match allocate_ip(pool, scope.id, &mac_str).await {
         Ok(ip) => {
             tracing::info!(ip = %ip, mac = %mac_str, "DHCP OFFER");
-            Some(build_response(DhcpMessageType::Offer, &ip, config))
+            Some(build_response(DhcpMessageType::Offer, &ip, &scope, config))
         }
         Err(e) => {
             tracing::warn!(mac = %mac_str, "DHCP DISCOVER allocation failed: {}", e);
@@ -156,7 +156,8 @@ async fn handle_request(
     config: &DhcpListenerConfig,
     pkt: &DhcpPacket,
 ) -> Option<DhcpResponse> {
-    let scope_id = resolve_scope_id(pool, config).await?;
+    let scope = resolve_scope(pool, config).await?;
+    let scope_id = scope.id;
     let mac_str = format_mac(&pkt.mac_address);
 
     // Allocate (or confirm) the IP
@@ -252,7 +253,7 @@ async fn handle_request(
     }
 
     tracing::info!(ip = %ip, mac = %mac_str, "DHCP ACK");
-    Some(build_response(DhcpMessageType::Ack, &ip, config))
+    Some(build_response(DhcpMessageType::Ack, &ip, &scope, config))
 }
 
 /// Handle a DHCP RELEASE — deactivate the lease.
@@ -276,39 +277,87 @@ async fn handle_release(pool: &PgPool, pkt: &DhcpPacket) {
     }
 }
 
-/// Find the first active scope to allocate from.
-async fn resolve_scope_id(pool: &PgPool, config: &DhcpListenerConfig) -> Option<Uuid> {
-    if let Some(id) = config.default_scope_id {
-        return Some(id);
-    }
-    // Pick the first active scope
-    let row: Option<(Uuid,)> = sqlx::query_as(
-        "SELECT id FROM infrastructure.dhcp_scopes WHERE is_active = true ORDER BY created_at LIMIT 1",
-    )
-    .fetch_optional(pool)
-    .await
-    .ok()?;
-    row.map(|(id,)| id)
+/// Resolved scope data from the database.
+struct ResolvedScope {
+    id: Uuid,
+    gateway: Option<String>,
+    dns_servers: Vec<String>,
+    ntp_servers: Vec<String>,
+    domain_name: Option<String>,
+    lease_duration_hours: i32,
+    pxe_server: Option<String>,
+    pxe_bootfile: Option<String>,
 }
 
-/// Build a DhcpResponse struct.
+/// Find the first active scope and load its full configuration.
+async fn resolve_scope(pool: &PgPool, config: &DhcpListenerConfig) -> Option<ResolvedScope> {
+    let scope_filter = if let Some(id) = config.default_scope_id {
+        format!("id = '{id}'")
+    } else {
+        "TRUE".to_string()
+    };
+
+    let row: Option<(Uuid, Option<String>, Vec<String>, Vec<String>, Option<String>, i32, Option<String>, Option<String>)> =
+        sqlx::query_as(&format!(
+            "SELECT id, gateway, dns_servers, ntp_servers, domain_name, \
+             lease_duration_hours, pxe_server, pxe_bootfile \
+             FROM infrastructure.dhcp_scopes \
+             WHERE is_active = true AND {scope_filter} \
+             ORDER BY created_at LIMIT 1"
+        ))
+        .fetch_optional(pool)
+        .await
+        .ok()?;
+
+    row.map(|(id, gateway, dns_servers, ntp_servers, domain_name, lease_hours, pxe_server, pxe_bootfile)| {
+        ResolvedScope { id, gateway, dns_servers, ntp_servers, domain_name, lease_duration_hours: lease_hours, pxe_server, pxe_bootfile }
+    })
+}
+
+/// Build a DhcpResponse using real scope data from the database.
 fn build_response(
     msg_type: DhcpMessageType,
     ip_str: &str,
+    scope: &ResolvedScope,
     config: &DhcpListenerConfig,
 ) -> DhcpResponse {
     let ip = parse_ipv4(ip_str);
+
+    // Gateway: use scope value, or default to x.x.x.1
+    let gateway = scope.gateway.as_deref()
+        .map(|g| parse_ipv4(g))
+        .unwrap_or([ip[0], ip[1], ip[2], 1]);
+
+    // DNS servers from scope, fallback to gateway
+    let dns_servers: Vec<[u8; 4]> = if scope.dns_servers.is_empty() {
+        vec![gateway]
+    } else {
+        scope.dns_servers.iter().map(|s| parse_ipv4(s)).collect()
+    };
+
+    // NTP servers from scope, fallback to gateway
+    let ntp_servers: Vec<[u8; 4]> = if scope.ntp_servers.is_empty() {
+        vec![gateway]
+    } else {
+        scope.ntp_servers.iter().map(|s| parse_ipv4(s)).collect()
+    };
+
+    let domain_name = scope.domain_name.clone()
+        .unwrap_or_else(|| config.domain_name.clone());
+
+    let lease_seconds = (scope.lease_duration_hours as u32) * 3600;
+
     DhcpResponse {
         message_type: msg_type as u8,
         offered_ip: ip,
         subnet_mask: [255, 255, 255, 0],
-        gateway: [ip[0], ip[1], ip[2], 1],
-        dns_servers: vec![[ip[0], ip[1], ip[2], 1]],
-        ntp_servers: vec![[ip[0], ip[1], ip[2], 1]],
-        domain_name: config.domain_name.clone(),
-        lease_seconds: (config.default_lease_hours as u32) * 3600,
-        pxe_server: None,
-        pxe_bootfile: None,
+        gateway,
+        dns_servers,
+        ntp_servers,
+        domain_name,
+        lease_seconds,
+        pxe_server: scope.pxe_server.clone(),
+        pxe_bootfile: scope.pxe_bootfile.clone(),
     }
 }
 

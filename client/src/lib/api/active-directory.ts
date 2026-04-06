@@ -19,6 +19,7 @@ import type {
   InfraCertificate,
   DhcpScope,
   DhcpLease,
+  DhcpReservation,
   DeployProfile,
   DeployHistory,
 } from "@/types/active-directory";
@@ -108,6 +109,18 @@ export const adApi = {
       client.get<InfraCertificate[]>(
         `/workforce/ad/domains/${domainId}/certificates`,
       ),
+    issue: (
+      domainId: string,
+      data: { subject: string; cert_type: string; san?: string[] },
+    ) =>
+      client.post<InfraCertificate>(
+        `/workforce/ad/domains/${domainId}/certificates`,
+        data,
+      ),
+    revoke: (certId: string) =>
+      client.post(`/workforce/ad/certificates/${certId}/revoke`),
+    renew: (certId: string) =>
+      client.post(`/workforce/ad/certificates/${certId}/renew`),
   },
 
   // ── DHCP ──
@@ -123,6 +136,19 @@ export const adApi = {
       client.delete(`/workforce/ad/dhcp/scopes/${scopeId}`),
     leases: (scopeId: string) =>
       client.get<DhcpLease[]>(`/workforce/ad/dhcp/scopes/${scopeId}/leases`),
+    reservations: (scopeId: string) =>
+      client.get<DhcpReservation[]>(
+        `/workforce/ad/dhcp/scopes/${scopeId}/reservations`,
+      ),
+    createReservation: (scopeId: string, data: Partial<DhcpReservation>) =>
+      client.post<DhcpReservation>(
+        `/workforce/ad/dhcp/scopes/${scopeId}/reservations`,
+        data,
+      ),
+    deleteReservation: (reservationId: string) =>
+      client.delete(`/workforce/ad/dhcp/reservations/${reservationId}`),
+    expireLeases: () =>
+      client.post<{ expired: number }>(`/workforce/ad/dhcp/leases/expire`),
   },
 
   // ── Deployment ──
@@ -142,6 +168,18 @@ export const adApi = {
       client.get<DeployHistory[]>(
         `/workforce/ad/deploy/profiles/${profileId}/history`,
       ),
+    assignments: (profileId: string) =>
+      client.get(`/workforce/ad/deploy/profiles/${profileId}/assignments`),
+    createAssignment: (
+      profileId: string,
+      data: { target_type: string; target_id: string },
+    ) =>
+      client.post(
+        `/workforce/ad/deploy/profiles/${profileId}/assignments`,
+        data,
+      ),
+    deleteAssignment: (assignmentId: string) =>
+      client.delete(`/workforce/ad/deploy/assignments/${assignmentId}`),
   },
 
   // ── Domain Config ──
