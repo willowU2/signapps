@@ -394,83 +394,64 @@ async fn provision_dns(pool: &PgPool, domain_id: Uuid, dns_name: &str, ad_enable
     Ok(())
 }
 
-/// Encode a byte slice as a standard base64 string (no external dep).
-fn base64_encode(data: &[u8]) -> String {
-    const CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    let mut result = String::with_capacity((data.len() + 2) / 3 * 4);
-    for chunk in data.chunks(3) {
-        let b0 = chunk[0] as u32;
-        let b1 = chunk.get(1).copied().unwrap_or(0) as u32;
-        let b2 = chunk.get(2).copied().unwrap_or(0) as u32;
-        let n = (b0 << 16) | (b1 << 8) | b2;
-        result.push(CHARS[((n >> 18) & 0x3F) as usize] as char);
-        result.push(CHARS[((n >> 12) & 0x3F) as usize] as char);
-        if chunk.len() > 1 {
-            result.push(CHARS[((n >> 6) & 0x3F) as usize] as char);
-        } else {
-            result.push('=');
-        }
-        if chunk.len() > 2 {
-            result.push(CHARS[(n & 0x3F) as usize] as char);
-        } else {
-            result.push('=');
-        }
-    }
-    result
-}
-
-/// Generate a self-signed CA certificate (simplified PEM-like format).
+/// Generate a real self-signed X.509 CA certificate using `rcgen`.
 ///
-/// A real implementation would use the `rcgen` or `x509-cert` crate.
-/// This version produces a deterministic, well-structured PEM block whose
-/// payload encodes all relevant metadata as JSON, sufficient for internal CA
-/// trust establishment until a proper X.509 implementation is wired in.
+/// Produces a valid DER-encoded certificate with:
+/// - RSA-equivalent ECDSA P-256 key pair
+/// - BasicConstraints CA:TRUE
+/// - KeyUsage: keyCertSign + cRLSign
+/// - SubjectAltName: `*.{dns_name}` + `{dns_name}`
+/// - 10-year validity
 ///
 /// Returns `(certificate_pem, private_key_pem)`.
-fn generate_ca_certificate(dns_name: &str) -> (String, String) {
-    let mut key_bytes = vec![0u8; 256];
-    rand::thread_rng().fill_bytes(&mut key_bytes);
-
-    let serial = uuid::Uuid::new_v4().to_string().replace('-', "");
-    let now = chrono::Utc::now();
-    let expires = now + chrono::Duration::days(3650);
-
-    let cert_info = serde_json::json!({
-        "version": 3,
-        "serial": serial,
-        "issuer": format!("CN=SignApps CA - {dns_name}, O=SignApps, C=FR"),
-        "subject": format!("CN=SignApps CA - {dns_name}, O=SignApps, C=FR"),
-        "not_before": now.to_rfc3339(),
-        "not_after": expires.to_rfc3339(),
-        "is_ca": true,
-        "key_usage": ["keyCertSign", "cRLSign"],
-        "basic_constraints": "CA:TRUE",
-        "san": [format!("*.{dns_name}"), dns_name.to_string()],
-    });
-
-    let cert_b64 =
-        base64_encode(&serde_json::to_vec(&cert_info).unwrap_or_default());
-    let key_b64 = base64_encode(&key_bytes);
-
-    let wrap = |b64: &str| {
-        b64.chars()
-            .collect::<Vec<_>>()
-            .chunks(64)
-            .map(|c| c.iter().collect::<String>())
-            .collect::<Vec<_>>()
-            .join("\n")
+///
+/// # Errors
+///
+/// Returns an error string if certificate generation fails.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated.
+fn generate_ca_certificate(dns_name: &str) -> std::result::Result<(String, String), String> {
+    use rcgen::{
+        BasicConstraints, CertificateParams, DistinguishedName, DnType,
+        IsCa, KeyUsagePurpose, SanType,
     };
 
-    let certificate = format!(
-        "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----",
-        wrap(&cert_b64)
-    );
-    let private_key = format!(
-        "-----BEGIN PRIVATE KEY-----\n{}\n-----END PRIVATE KEY-----",
-        wrap(&key_b64)
-    );
+    let mut params = CertificateParams::default();
 
-    (certificate, private_key)
+    // Subject
+    let mut dn = DistinguishedName::new();
+    dn.push(DnType::CommonName, format!("SignApps CA - {dns_name}"));
+    dn.push(DnType::OrganizationName, "SignApps");
+    dn.push(DnType::CountryName, "FR");
+    params.distinguished_name = dn;
+
+    // CA constraints
+    params.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
+    params.key_usages = vec![
+        KeyUsagePurpose::KeyCertSign,
+        KeyUsagePurpose::CrlSign,
+    ];
+
+    // SAN
+    params.subject_alt_names = vec![
+        SanType::DnsName(format!("*.{dns_name}").try_into().map_err(|e| format!("{e}"))?),
+        SanType::DnsName(dns_name.to_string().try_into().map_err(|e| format!("{e}"))?),
+    ];
+
+    // Validity: 10 years
+    let now = time::OffsetDateTime::now_utc();
+    params.not_before = now;
+    params.not_after = now + time::Duration::days(3650);
+
+    // Generate the key pair and self-signed certificate
+    let key_pair = rcgen::KeyPair::generate().map_err(|e| format!("Key generation failed: {e}"))?;
+    let cert = params
+        .self_signed(&key_pair)
+        .map_err(|e| format!("Certificate generation failed: {e}"))?;
+
+    Ok((cert.pem(), key_pair.serialize_pem()))
 }
 
 /// Provision a certificate record: internal CA or ACME marker.
@@ -485,7 +466,8 @@ async fn provision_certificates(
             let now = chrono::Utc::now();
             let expires = now + chrono::Duration::days(3650); // 10 years
 
-            let (ca_cert_pem, _ca_key_pem) = generate_ca_certificate(dns_name);
+            let (ca_cert_pem, _ca_key_pem) = generate_ca_certificate(dns_name)
+                .map_err(|e| signapps_common::Error::Internal(format!("CA cert gen: {e}")))?;
 
             InfraCertificateRepository::create(
                 pool,
@@ -612,5 +594,20 @@ mod tests {
         let public_mode = if is_internal_domain("example.com") { "internal_ca" } else { "acme" };
         assert_eq!(internal_mode, "internal_ca");
         assert_eq!(public_mode, "acme");
+    }
+
+    #[test]
+    fn generate_real_x509_ca() {
+        let (cert_pem, key_pem) = generate_ca_certificate("test.local").unwrap();
+
+        // Verify PEM format
+        assert!(cert_pem.starts_with("-----BEGIN CERTIFICATE-----"));
+        assert!(cert_pem.trim_end().ends_with("-----END CERTIFICATE-----"));
+        assert!(key_pem.starts_with("-----BEGIN PRIVATE KEY-----"));
+        assert!(key_pem.trim_end().ends_with("-----END PRIVATE KEY-----"));
+
+        // Verify substantial content (real X.509 is much larger than our old JSON stub)
+        assert!(cert_pem.len() > 500, "Real X.509 cert should be >500 bytes");
+        assert!(key_pem.len() > 100, "Private key PEM should be >100 bytes");
     }
 }

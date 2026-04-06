@@ -21,6 +21,8 @@ rand = { workspace = true }
 hmac = { workspace = true }
 sha1 = "0.10"
 md4 = "0.10"
+rcgen = { version = "0.13", features = ["pem"] }
+time = "0.3"
 
 signapps-common = { path = "../signapps-common" }
 signapps-db = { path = "../signapps-db" }
