@@ -33,7 +33,8 @@ use axum::{
 
 use crate::engine::SharingEngine;
 use crate::handlers::{
-    create_grant_handler, list_grants_handler, permissions_handler, revoke_grant_handler,
+    create_grant_handler, create_template_handler, delete_template_handler, list_audit_handler,
+    list_grants_handler, list_templates_handler, permissions_handler, revoke_grant_handler,
     shared_with_me_handler,
 };
 use crate::types::ResourceType;
@@ -86,6 +87,45 @@ pub fn sharing_routes(prefix: &str, resource_type: ResourceType) -> Router<Shari
     resource_routes.merge(shared_route)
 }
 
+/// Create global sharing routes (templates + audit) that are not tied to a
+/// specific resource type prefix.
+///
+/// Mount these once in the application router alongside resource-specific
+/// [`sharing_routes`] calls.
+///
+/// Routes added:
+/// ```text
+/// GET    /api/v1/sharing/templates
+/// DELETE /api/v1/sharing/templates/:template_id
+/// GET    /api/v1/sharing/audit
+/// ```
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use signapps_sharing::routes::sharing_global_routes;
+///
+/// let router = Router::new()
+///     .merge(sharing_global_routes())
+///     .with_state(engine);
+/// ```
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+pub fn sharing_global_routes() -> Router<SharingEngine> {
+    Router::new()
+        .route(
+            "/api/v1/sharing/templates",
+            get(list_templates_handler).post(create_template_handler),
+        )
+        .route(
+            "/api/v1/sharing/templates/:template_id",
+            delete(delete_template_handler),
+        )
+        .route("/api/v1/sharing/audit", get(list_audit_handler))
+}
+
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -99,5 +139,10 @@ mod tests {
         let _ = sharing_routes("files", ResourceType::File);
         let _ = sharing_routes("calendars", ResourceType::Calendar);
         let _ = sharing_routes("vault", ResourceType::VaultEntry);
+    }
+
+    #[test]
+    fn sharing_global_routes_builds_without_panic() {
+        let _ = sharing_global_routes();
     }
 }

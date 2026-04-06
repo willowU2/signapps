@@ -440,6 +440,142 @@ impl SharingEngine {
         Ok(created)
     }
 
+    /// List all sharing templates for the calling user's tenant.
+    ///
+    /// Any authenticated user can list templates (they are tenant-wide presets).
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::Database`] — a repository call failed.
+    ///
+    /// # Panics
+    ///
+    /// No panics — all errors are propagated via `Result`.
+    #[instrument(skip(self, user_ctx), fields(user_id = %user_ctx.user_id))]
+    pub async fn list_templates(
+        &self,
+        user_ctx: &UserContext,
+    ) -> Result<Vec<crate::models::Template>> {
+        SharingRepository::list_templates(&self.pool, user_ctx.tenant_id).await
+    }
+
+    /// Create a new sharing template (admin only).
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::Forbidden`] — actor is not an admin.
+    /// - [`Error::Database`] — a repository call failed.
+    ///
+    /// # Panics
+    ///
+    /// No panics — all errors are propagated via `Result`.
+    #[instrument(skip(self, actor_ctx, request), fields(actor_id = %actor_ctx.user_id))]
+    pub async fn create_template(
+        &self,
+        actor_ctx: &UserContext,
+        request: crate::models::CreateTemplate,
+    ) -> Result<crate::models::Template> {
+        if !actor_ctx.is_admin() {
+            return Err(Error::Forbidden(
+                "only admins can create templates".to_string(),
+            ));
+        }
+        SharingRepository::create_template(
+            &self.pool,
+            actor_ctx.tenant_id,
+            actor_ctx.user_id,
+            &request.name,
+            request.description.as_deref(),
+            request.grants,
+        )
+        .await
+    }
+
+    /// Delete a non-system sharing template by ID.
+    ///
+    /// Only admins may delete templates.  System templates (`is_system = true`)
+    /// are always protected and will return [`Error::NotFound`].
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::Forbidden`] — actor is not an admin.
+    /// - [`Error::NotFound`] — template does not exist or is a system template.
+    /// - [`Error::Database`] — a repository call failed.
+    ///
+    /// # Panics
+    ///
+    /// No panics — all errors are propagated via `Result`.
+    #[instrument(skip(self, actor_ctx), fields(
+        actor_id    = %actor_ctx.user_id,
+        template_id = %template_id,
+    ))]
+    pub async fn delete_template(
+        &self,
+        actor_ctx: &UserContext,
+        template_id: Uuid,
+    ) -> Result<()> {
+        if !actor_ctx.is_admin() {
+            return Err(Error::Forbidden(
+                "only admins can delete templates".to_string(),
+            ));
+        }
+
+        let deleted =
+            SharingRepository::delete_template(&self.pool, actor_ctx.tenant_id, template_id)
+                .await?;
+
+        if !deleted {
+            return Err(Error::NotFound(
+                "template not found or is a system template".to_string(),
+            ));
+        }
+
+        // Audit log.
+        let logger = AuditLogger::new(&self.pool);
+        logger
+            .log_template_deleted(actor_ctx.tenant_id, actor_ctx.user_id, template_id)
+            .await?;
+
+        Ok(())
+    }
+
+    /// List recent audit log entries for the calling user's tenant.
+    ///
+    /// Optionally filter by `resource_type` + `resource_id`.  Only admins may
+    /// call this method.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::Forbidden`] — actor is not an admin.
+    /// - [`Error::Database`] — a repository call failed.
+    ///
+    /// # Panics
+    ///
+    /// No panics — all errors are propagated via `Result`.
+    #[instrument(skip(self, user_ctx), fields(user_id = %user_ctx.user_id))]
+    pub async fn list_audit(
+        &self,
+        user_ctx: &UserContext,
+        resource_type: Option<String>,
+        resource_id: Option<Uuid>,
+        limit: i64,
+    ) -> Result<Vec<crate::models::AuditEntry>> {
+        if !user_ctx.is_admin() {
+            return Err(Error::Forbidden("admin required".to_string()));
+        }
+
+        match (resource_type, resource_id) {
+            (Some(rt), Some(rid)) => {
+                SharingRepository::list_audit(&self.pool, user_ctx.tenant_id, &rt, rid, limit)
+                    .await
+            }
+            _ => {
+                SharingRepository::list_audit_by_tenant(&self.pool, user_ctx.tenant_id, limit)
+                    .await
+            }
+        }
+    }
+
     // ─── User context ─────────────────────────────────────────────────────
 
     /// Build a [`UserContext`] from JWT [`Claims`].

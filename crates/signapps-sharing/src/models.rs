@@ -176,14 +176,29 @@ pub struct Template {
     pub name: String,
     /// Optional description of what this template does.
     pub description: Option<String>,
-    /// The resource type this template is intended for, or `NULL` for any type.
-    pub resource_type: Option<String>,
     /// JSON array of grant descriptors stored as raw JSON.
     pub grants: serde_json::Value,
+    /// The user who created this template.
+    pub created_by: Uuid,
+    /// Whether this is a system-managed template that cannot be deleted.
+    pub is_system: bool,
     /// When this template was created.
     pub created_at: Option<DateTime<Utc>>,
     /// When this template was last modified.
     pub updated_at: Option<DateTime<Utc>>,
+}
+
+// ─── CreateTemplate ───────────────────────────────────────────────────────────
+
+/// Request DTO for creating a new sharing template (admin only).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateTemplate {
+    /// Human-readable template name (required).
+    pub name: String,
+    /// Optional description.
+    pub description: Option<String>,
+    /// List of grant definitions stored as a JSON array.
+    pub grants: serde_json::Value,
 }
 
 // ─── Capability ───────────────────────────────────────────────────────────────
