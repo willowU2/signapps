@@ -210,6 +210,24 @@ impl SharingEngine {
             })
             .await?;
 
+        // Emit notification (best-effort, never fails the grant).
+        // Only direct user grants get a notification; group / org_node /
+        // everyone fan-out is out of scope for this iteration.
+        if grant.grantee_type == GranteeType::User.as_str() {
+            if let Some(recipient_id) = grant.grantee_id {
+                crate::notifications::notify_grant_created(
+                    &self.pool,
+                    actor_ctx.tenant_id,
+                    recipient_id,
+                    actor_ctx.user_id,
+                    resource.resource_type,
+                    resource.resource_id,
+                    &grant.role,
+                )
+                .await;
+            }
+        }
+
         // Invalidate L2 cache for this resource.
         self.cache
             .invalidate_resource(resource.resource_type.as_str(), resource.resource_id);
@@ -281,6 +299,54 @@ impl SharingEngine {
             .invalidate_resource(resource.resource_type.as_str(), resource.resource_id);
 
         Ok(())
+    }
+
+    /// Apply the same grant to multiple resources at once.
+    ///
+    /// Atomic per-resource: a failure on one resource does not stop the others.
+    /// The caller receives the count of successfully created grants plus the
+    /// list of per-resource errors.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::BadRequest`] — `resource_type` string is not a known type.
+    /// - Individual per-resource errors are collected into [`BulkGrantResult::errors`]
+    ///   rather than propagated.
+    ///
+    /// # Panics
+    ///
+    /// No panics — all errors are propagated via `Result`.
+    #[instrument(skip(self, actor_ctx, request), fields(
+        actor_id      = %actor_ctx.user_id,
+        resource_type = %resource_type,
+        count         = resource_ids.len(),
+        grantee       = ?request.grantee_type,
+    ))]
+    pub async fn bulk_grant(
+        &self,
+        actor_ctx: &UserContext,
+        resource_type: crate::types::ResourceType,
+        resource_ids: Vec<Uuid>,
+        request: CreateGrant,
+    ) -> Result<crate::models::BulkGrantResult> {
+        let mut created = 0usize;
+        let mut errors: Vec<crate::models::BulkGrantError> = Vec::new();
+
+        for resource_id in resource_ids {
+            let resource = ResourceRef {
+                resource_type,
+                resource_id,
+            };
+            match self.grant(actor_ctx, resource, None, request.clone()).await {
+                Ok(_) => created += 1,
+                Err(e) => errors.push(crate::models::BulkGrantError {
+                    resource_id,
+                    error: format!("{e:?}"),
+                }),
+            }
+        }
+
+        Ok(crate::models::BulkGrantResult { created, errors })
     }
 
     // ─── Listing ──────────────────────────────────────────────────────────

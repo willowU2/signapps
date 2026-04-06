@@ -23,6 +23,7 @@
 //! - [`defaults`] — System-level default visibility per resource type
 //! - [`handlers`] — Generic Axum HTTP handlers
 //! - [`routes`] — Route registration helpers
+//! - [`openapi`] — [`SharingApiDoc`] OpenAPI spec (utoipa)
 //!
 //! ## Example
 //!
@@ -48,12 +49,15 @@ pub mod defaults;
 pub mod engine;
 pub mod handlers;
 pub mod middleware;
+pub mod notifications;
+pub mod openapi;
 pub mod routes;
 
 // ─── Re-exports ───────────────────────────────────────────────────────────────
 
 pub use engine::SharingEngine;
 pub use middleware::require_permission;
+pub use openapi::SharingApiDoc;
 
 pub use models::{
     AuditEntry, Capability, CreateGrant, CreateTemplate, DefaultVisibility, EffectivePermission,

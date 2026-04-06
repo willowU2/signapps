@@ -280,6 +280,56 @@ export interface SharingAuditEntry {
   created_at: string | null;
 }
 
+// ─── Bulk grant types ─────────────────────────────────────────────────────────
+
+/**
+ * Request payload for the bulk grant endpoint.
+ *
+ * Applies the same grant specification to every resource listed in
+ * `resource_ids`.  All resources must be of the same `resource_type`.
+ *
+ * @example
+ * ```ts
+ * const req: BulkGrantRequest = {
+ *   resource_type: "file",
+ *   resource_ids: [id1, id2, id3],
+ *   grantee_type: "user",
+ *   grantee_id: userId,
+ *   role: "viewer",
+ *   can_reshare: false,
+ *   expires_at: null,
+ * };
+ * ```
+ */
+export interface BulkGrantRequest {
+  /** Resource type shared by all target resources. */
+  resource_type: SharingResourceType;
+  /** UUIDs of all target resources. */
+  resource_ids: string[];
+  /** Kind of grantee. */
+  grantee_type: SharingGranteeType;
+  /** UUID of the grantee — `null` when `grantee_type` is `"everyone"`. */
+  grantee_id: string | null;
+  /** Role to assign on each resource. */
+  role: SharingRole;
+  /** Whether the grantee may re-share each resource. */
+  can_reshare: boolean;
+  /** Optional ISO 8601 expiry — `null` means no expiry. */
+  expires_at: string | null;
+}
+
+/**
+ * Aggregated result returned by the bulk grant endpoint.
+ *
+ * Partial success is possible: some resources may succeed while others fail.
+ */
+export interface BulkGrantResult {
+  /** Number of grants successfully created. */
+  created: number;
+  /** Per-resource errors for any resources that failed. */
+  errors: { resource_id: string; error: string }[];
+}
+
 /** French labels for sharing audit actions, suitable for display in tables. */
 export const SHARING_AUDIT_ACTION_LABELS: Record<string, string> = {
   grant_created: "Grant créé",

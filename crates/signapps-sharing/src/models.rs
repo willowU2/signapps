@@ -20,7 +20,7 @@ use crate::types::{GranteeType, Role};
 /// Represents one axis of the multi-axis permission model. Grants can target a
 /// user, group, org node, or everyone, and may be scoped to a specific resource
 /// or inherited from a parent resource.
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct Grant {
     /// Unique identifier of this grant.
     pub id: Uuid,
@@ -79,7 +79,7 @@ impl Grant {
 /// Request DTO for creating a new permission grant.
 ///
 /// Sent by HTTP handlers and validated before persisting to `sharing.grants`.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct CreateGrant {
     /// The kind of grantee: `"user"`, `"group"`, `"org_node"`, or `"everyone"`.
     pub grantee_type: GranteeType,
@@ -140,7 +140,7 @@ impl CreateGrant {
 /// Policies provide tenant-level or resource-level overrides that can restrict
 /// or expand what the base grant resolution allows (e.g. disabling external
 /// sharing for a resource type).
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct Policy {
     /// Unique identifier of this policy.
     pub id: Uuid,
@@ -151,6 +151,7 @@ pub struct Policy {
     /// A machine-readable policy key (e.g. `"no_external_share"`).
     pub policy_key: String,
     /// JSON-encoded policy value / configuration.
+    #[schema(value_type = Object)]
     pub policy_value: serde_json::Value,
     /// Whether this policy is currently active.
     pub enabled: Option<bool>,
@@ -166,7 +167,7 @@ pub struct Policy {
 ///
 /// Templates are reusable sets of grants that can be applied to a resource in
 /// one operation (e.g. "Project team default access").
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct Template {
     /// Unique identifier of this template.
     pub id: Uuid,
@@ -177,6 +178,7 @@ pub struct Template {
     /// Optional description of what this template does.
     pub description: Option<String>,
     /// JSON array of grant descriptors stored as raw JSON.
+    #[schema(value_type = Object)]
     pub grants: serde_json::Value,
     /// The user who created this template.
     pub created_by: Uuid,
@@ -191,13 +193,14 @@ pub struct Template {
 // ─── CreateTemplate ───────────────────────────────────────────────────────────
 
 /// Request DTO for creating a new sharing template (admin only).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct CreateTemplate {
     /// Human-readable template name (required).
     pub name: String,
     /// Optional description.
     pub description: Option<String>,
     /// List of grant definitions stored as a JSON array.
+    #[schema(value_type = Object)]
     pub grants: serde_json::Value,
 }
 
@@ -207,7 +210,7 @@ pub struct CreateTemplate {
 ///
 /// Maps a (resource_type, role) pair to the list of fine-grained actions that
 /// the role is allowed to perform on that resource type.
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct Capability {
     /// The resource type this capability applies to (e.g. `"file"`).
     pub resource_type: String,
@@ -223,7 +226,7 @@ pub struct Capability {
 ///
 /// Controls whether newly created resources of a given type are visible to
 /// everyone in the tenant by default, or start as private.
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct DefaultVisibility {
     /// The tenant this default applies to.
     pub tenant_id: Uuid,
@@ -239,7 +242,7 @@ pub struct DefaultVisibility {
 ///
 /// Every mutation to the sharing system (grant creation, revocation, policy
 /// change, template application) generates an immutable audit entry.
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct AuditEntry {
     /// Unique identifier of this audit entry.
     pub id: Uuid,
@@ -256,6 +259,7 @@ pub struct AuditEntry {
     /// Optional IP address of the actor for forensic purposes.
     pub actor_ip: Option<String>,
     /// Optional JSON payload with additional event details.
+    #[schema(value_type = Option<Object>)]
     pub details: Option<serde_json::Value>,
     /// When this audit entry was recorded.
     pub created_at: Option<DateTime<Utc>>,
@@ -343,7 +347,7 @@ impl UserContext {
 /// Returned by the permission resolver after evaluating all grant axes,
 /// policies, and capabilities. Contains both the net role and the full list
 /// of allowed actions, plus attribution sources for auditing/display.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct EffectivePermission {
     /// The net role after multi-axis resolution.
     pub role: Role,
@@ -361,7 +365,7 @@ pub struct EffectivePermission {
 ///
 /// Used for transparency: the UI can show the user "you have editor access
 /// because you are a member of group X".
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct PermissionSource {
     /// The grant axis this source comes from (e.g. `"user"`, `"group"`, `"org_node"`, `"everyone"`).
     pub axis: String,
@@ -371,6 +375,52 @@ pub struct PermissionSource {
     pub role: Role,
     /// A short description of how this grant was found (e.g. `"direct"`, `"inherited from /projects"`).
     pub via: String,
+}
+
+// ─── BulkGrant ────────────────────────────────────────────────────────────────
+
+/// Request body for a bulk grant operation.
+///
+/// Applies the same grant specification to multiple resources of the same
+/// type in a single call.  Failures on individual resources do not abort
+/// the rest of the batch.
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct BulkGrantRequest {
+    /// The resource type shared by all target resources (e.g. `"file"`, `"calendar"`).
+    pub resource_type: String,
+    /// UUIDs of all target resources.
+    pub resource_ids: Vec<uuid::Uuid>,
+    /// Kind of grantee: `"user"`, `"group"`, `"org_node"`, or `"everyone"`.
+    pub grantee_type: crate::types::GranteeType,
+    /// UUID of the grantee — `None` when `grantee_type` is `"everyone"`.
+    pub grantee_id: Option<uuid::Uuid>,
+    /// Role to assign to the grantee on each resource.
+    pub role: crate::types::Role,
+    /// Whether the grantee may re-share each resource.
+    pub can_reshare: bool,
+    /// Optional expiry for time-limited grants.
+    pub expires_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+/// Aggregated outcome of a bulk grant operation.
+///
+/// Individual resource failures are collected into `errors` so that the caller
+/// can report partial success without masking transient per-resource issues.
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct BulkGrantResult {
+    /// Number of grants successfully created.
+    pub created: usize,
+    /// Per-resource errors for any resources that failed.
+    pub errors: Vec<BulkGrantError>,
+}
+
+/// A per-resource failure recorded during a bulk grant operation.
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct BulkGrantError {
+    /// UUID of the resource that could not be granted.
+    pub resource_id: uuid::Uuid,
+    /// Human-readable description of the error.
+    pub error: String,
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -460,5 +510,34 @@ mod tests {
         };
         let json = serde_json::to_string(&ep).expect("serialization failed");
         assert!(json.contains("editor"));
+    }
+
+    #[test]
+    fn bulk_grant_result_serializes() {
+        let id = Uuid::new_v4();
+        let result = BulkGrantResult {
+            created: 3,
+            errors: vec![BulkGrantError {
+                resource_id: id,
+                error: "forbidden".into(),
+            }],
+        };
+        let json = serde_json::to_string(&result).expect("serialization failed");
+        assert!(json.contains("\"created\":3"));
+        assert!(json.contains("forbidden"));
+        assert!(json.contains(&id.to_string()));
+    }
+
+    #[test]
+    fn bulk_grant_result_empty_errors_serializes() {
+        let result = BulkGrantResult {
+            created: 5,
+            errors: vec![],
+        };
+        let json = serde_json::to_string(&result).expect("serialization failed");
+        let decoded: BulkGrantResult =
+            serde_json::from_str(&json).expect("deserialization failed");
+        assert_eq!(decoded.created, 5);
+        assert!(decoded.errors.is_empty());
     }
 }

@@ -34,6 +34,8 @@
  */
 
 import type {
+  BulkGrantRequest,
+  BulkGrantResult,
   SharingGrant,
   CreateSharingGrant,
   EffectivePermission,
@@ -349,6 +351,42 @@ export const sharingApi = {
   async deleteTemplate(templateId: string): Promise<void> {
     const client = getClient(ServiceName.STORAGE);
     await client.delete(`/api/v1/sharing/templates/${templateId}`);
+  },
+
+  /**
+   * Apply the same grant to multiple resources at once.
+   *
+   * Processes each resource independently — individual failures are returned
+   * in `result.errors` rather than aborting the whole batch.
+   *
+   * The endpoint is hosted on the storage service (tenant-wide), regardless
+   * of the actual `resource_type` in the request.
+   *
+   * @param request - Bulk grant payload.
+   * @returns {@link BulkGrantResult} with the count of successes and any errors.
+   *
+   * @example
+   * ```ts
+   * const result = await sharingApi.bulkGrant({
+   *   resource_type: "file",
+   *   resource_ids: [id1, id2, id3],
+   *   grantee_type: "user",
+   *   grantee_id: userId,
+   *   role: "viewer",
+   *   can_reshare: false,
+   *   expires_at: null,
+   * });
+   * console.log(`${result.created} partages créés, ${result.errors.length} erreurs`);
+   * ```
+   */
+  async bulkGrant(request: BulkGrantRequest): Promise<BulkGrantResult> {
+    // bulk-grant is a global endpoint — storage service hosts it
+    const client = getClient(ServiceName.STORAGE);
+    const { data } = await client.post<BulkGrantResult>(
+      "/api/v1/sharing/bulk-grant",
+      request,
+    );
+    return data;
   },
 
   /**
