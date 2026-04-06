@@ -1,11 +1,20 @@
 //! ACL check middleware for drive node routes.
 //!
 //! Extracts the node UUID from the URL path (routes under `/drive/nodes/:id/...`),
-//! maps the HTTP method + path to a required ACL role, and verifies the
-//! authenticated user has at least that role via `acl_resolver::resolve_effective_role`.
+//! maps the HTTP method + path to a minimum required role, and verifies that the
+//! authenticated user holds at least that role via the [`SharingEngine`].
 //!
 //! Routes that do not contain a `/drive/nodes/<uuid>` segment (e.g. the root
 //! listing, create-node, or health) are passed through unchanged.
+//!
+//! ## Role mapping from legacy 5-role to sharing-engine 3-role
+//!
+//! | Legacy `downloader` | → `viewer`  |
+//! | Legacy `contributor`| → `editor`  |
+//! | `viewer`, `editor`, `manager` | identity |
+//!
+//! The middleware maps the legacy role names to the sharing engine's
+//! [`Role`] before performing the check.
 
 use axum::{
     body::Body,
@@ -15,19 +24,20 @@ use axum::{
     response::Response,
 };
 use signapps_common::auth::Claims;
+use signapps_sharing::types::{Action, ResourceRef, ResourceType, Role};
 use uuid::Uuid;
 
-use crate::{services::acl_resolver, services::audit_chain, AppState};
+use crate::{services::audit_chain, AppState};
 
 // ============================================================================
 // Route → required-role mapping
 // ============================================================================
 
-/// Derive the minimum required ACL role from the HTTP method and URI path.
+/// Derive the minimum required role from the HTTP method and URI path.
 ///
 /// Returns `None` when the request does not target a specific node (the
 /// middleware should then let the request through unconditionally).
-fn required_role(method: &Method, path: &str) -> Option<&'static str> {
+fn required_role(method: &Method, path: &str) -> Option<Role> {
     // Audit routes – no per-node ACL required (handler enforces admin role)
     if path.contains("/drive/audit") {
         return None;
@@ -42,46 +52,45 @@ fn required_role(method: &Method, path: &str) -> Option<&'static str> {
             || path.ends_with("/acl/restore")
         {
             if matches!(*method, Method::POST | Method::PUT | Method::DELETE) {
-                return Some("manager");
+                return Some(Role::Manager);
             }
-            // GET /acl or GET /effective-acl → viewer can read own grants
-            return Some("viewer");
+            // GET /acl or GET /effective-acl → viewer can read grants
+            return Some(Role::Viewer);
         }
 
-        // Share routes with "share" in path  (POST /nodes/:id/share)
+        // Share routes (POST /nodes/:id/share)
         if path.contains("/share") && *method == Method::POST {
-            return Some("contributor");
+            return Some(Role::Editor);
         }
 
-        // Download (GET …/download)
+        // Download (GET …/download) — downloader = viewer in new model
         if path.ends_with("/download") && *method == Method::GET {
-            return Some("downloader");
+            return Some(Role::Viewer);
         }
 
         // Effective-ACL read
         if path.ends_with("/effective-acl") && *method == Method::GET {
-            return Some("viewer");
+            return Some(Role::Viewer);
         }
 
         // Node mutations (rename, move, update) → editor
         if matches!(*method, Method::PUT | Method::PATCH) {
-            return Some("editor");
+            return Some(Role::Editor);
         }
 
-        // Node creation within a parent folder (POST /nodes/:id/children is not
-        // standard here, but guard it anyway)
+        // Node creation within a parent folder
         if *method == Method::POST {
-            return Some("editor");
+            return Some(Role::Editor);
         }
 
         // Node deletion → manager
         if *method == Method::DELETE {
-            return Some("manager");
+            return Some(Role::Manager);
         }
 
         // Default for GET on a specific node → viewer
         if *method == Method::GET {
-            return Some("viewer");
+            return Some(Role::Viewer);
         }
     }
 
@@ -100,6 +109,19 @@ fn extract_node_id(path: &str) -> Option<Uuid> {
     // The UUID ends at the next `/` or end-of-string
     let segment = after.split('/').next()?;
     Uuid::parse_str(segment).ok()
+}
+
+// ============================================================================
+// Map Role to Action for the sharing engine check
+// ============================================================================
+
+fn role_to_action(role: Role) -> Action {
+    match role {
+        Role::Viewer => Action::read(),
+        Role::Editor => Action::write(),
+        Role::Manager => Action::new("manage"),
+        Role::Deny => Action::read(),
+    }
 }
 
 // ============================================================================
@@ -142,13 +164,42 @@ pub async fn acl_check_middleware(
         },
     };
 
-    let user_id = claims.sub;
-    let pool = state.pool.inner();
+    // 4. Build user context and check permission via the sharing engine
+    let user_ctx = match state.sharing.build_user_context(&claims).await {
+        Ok(ctx) => ctx,
+        Err(_) => {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                "Could not build user context".to_string(),
+            ));
+        },
+    };
 
-    // 4. Resolve effective role for this user on this node
-    let allowed = acl_resolver::check_permission(pool, user_id, node_id, role)
+    // Determine resource type from DB
+    let rtype: ResourceType =
+        sqlx::query_scalar("SELECT node_type FROM drive.nodes WHERE id = $1")
+            .bind(node_id)
+            .fetch_optional(state.pool.inner())
+            .await
+            .ok()
+            .flatten()
+            .map(|t: String| {
+                if t == "folder" {
+                    ResourceType::Folder
+                } else {
+                    ResourceType::File
+                }
+            })
+            .unwrap_or(ResourceType::File);
+
+    let resource = ResourceRef { resource_type: rtype, resource_id: node_id };
+    let action = role_to_action(role);
+
+    let allowed = state
+        .sharing
+        .check(&user_ctx, resource, action, None)
         .await
-        .unwrap_or(false);
+        .is_ok();
 
     if !allowed {
         // Log the denied access attempt to the forensic audit chain
@@ -160,23 +211,26 @@ pub async fn acl_check_middleware(
             .map(String::from);
 
         let _ = audit_chain::log_audit(
-            pool,
+            state.pool.inner(),
             Some(node_id),
             &path,
             "access_denied",
-            user_id,
+            claims.sub,
             actor_ip.as_deref(),
             None,
             Some(serde_json::json!({
                 "method": method.as_str(),
-                "required_role": role,
+                "required_role": role.as_str(),
             })),
         )
         .await;
 
         return Err((
             StatusCode::FORBIDDEN,
-            format!("Access denied: requires '{role}' role on node {node_id}"),
+            format!(
+                "Access denied: requires '{}' role on node {node_id}",
+                role.as_str()
+            ),
         ));
     }
 
@@ -210,31 +264,32 @@ mod tests {
     #[test]
     fn required_role_get_viewer() {
         let role = required_role(&Method::GET, "/api/v1/drive/nodes/some-uuid");
-        assert_eq!(role, Some("viewer"));
+        assert_eq!(role, Some(Role::Viewer));
     }
 
     #[test]
     fn required_role_put_editor() {
         let role = required_role(&Method::PUT, "/api/v1/drive/nodes/some-uuid");
-        assert_eq!(role, Some("editor"));
+        assert_eq!(role, Some(Role::Editor));
     }
 
     #[test]
     fn required_role_delete_manager() {
         let role = required_role(&Method::DELETE, "/api/v1/drive/nodes/some-uuid");
-        assert_eq!(role, Some("manager"));
+        assert_eq!(role, Some(Role::Manager));
     }
 
     #[test]
-    fn required_role_get_download_is_downloader() {
+    fn required_role_get_download_is_viewer() {
+        // "downloader" is now mapped to "viewer" in the 3-role model
         let role = required_role(&Method::GET, "/api/v1/drive/nodes/some-uuid/download");
-        assert_eq!(role, Some("downloader"));
+        assert_eq!(role, Some(Role::Viewer));
     }
 
     #[test]
     fn required_role_acl_post_is_manager() {
         let role = required_role(&Method::POST, "/api/v1/drive/nodes/some-uuid/acl");
-        assert_eq!(role, Some("manager"));
+        assert_eq!(role, Some(Role::Manager));
     }
 
     #[test]
