@@ -168,6 +168,9 @@ async fn handle_request(
         }
     };
 
+    // Store IP as string before moving into create_lease (needed for DNS update below).
+    let ip_str = ip.clone();
+
     // Create the lease record
     if let Err(e) = create_lease(
         pool,
@@ -182,6 +185,70 @@ async fn handle_request(
     {
         tracing::error!(mac = %mac_str, ip = %ip, "Failed to create DHCP lease: {}", e);
         return None;
+    }
+
+    // DNS dynamic update — register A and PTR records for the new lease.
+    if let Some(ref hostname) = pkt.hostname {
+        let fqdn = format!("{}.{}", hostname, config.domain_name);
+
+        let zone: Option<(Uuid,)> = sqlx::query_as(
+            "SELECT id FROM ad_dns_zones WHERE zone_name = $1 LIMIT 1",
+        )
+        .bind(&config.domain_name)
+        .fetch_optional(pool)
+        .await
+        .ok()
+        .flatten();
+
+        if let Some((zone_id,)) = zone {
+            // Upsert A record: hostname.domain → IP
+            let _ = sqlx::query(
+                "INSERT INTO ad_dns_records \
+                     (zone_id, name, record_type, rdata, ttl, is_static, timestamp) \
+                 VALUES ($1, $2, 'A', $3, $4, false, now()) \
+                 ON CONFLICT (zone_id, name, record_type) WHERE NOT is_static \
+                 DO UPDATE SET rdata = EXCLUDED.rdata, timestamp = now()",
+            )
+            .bind(zone_id)
+            .bind(&fqdn)
+            .bind(serde_json::json!({"ip": ip_str}))
+            .bind(300_i32)
+            .execute(pool)
+            .await;
+
+            // Upsert reverse PTR record: x.z.y.x.in-addr.arpa → FQDN
+            let octets: Vec<&str> = ip_str.split('.').collect();
+            if octets.len() == 4 {
+                let reverse_name = format!(
+                    "{}.{}.{}.{}.in-addr.arpa",
+                    octets[3], octets[2], octets[1], octets[0]
+                );
+                let _ = sqlx::query(
+                    "INSERT INTO ad_dns_records \
+                         (zone_id, name, record_type, rdata, ttl, is_static, timestamp) \
+                     VALUES ($1, $2, 'PTR', $3, $4, false, now()) \
+                     ON CONFLICT (zone_id, name, record_type) WHERE NOT is_static \
+                     DO UPDATE SET rdata = EXCLUDED.rdata, timestamp = now()",
+                )
+                .bind(zone_id)
+                .bind(&reverse_name)
+                .bind(serde_json::json!({"target": fqdn}))
+                .bind(300_i32)
+                .execute(pool)
+                .await;
+            }
+
+            tracing::info!(
+                fqdn = %fqdn,
+                ip = %ip_str,
+                "DHCP→DNS dynamic update applied"
+            );
+        } else {
+            tracing::debug!(
+                domain = %config.domain_name,
+                "No DNS zone found for DHCP domain — skipping dynamic update"
+            );
+        }
     }
 
     tracing::info!(ip = %ip, mac = %mac_str, "DHCP ACK");

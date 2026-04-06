@@ -55,6 +55,7 @@ import {
   XCircle,
   Loader2,
   AlertTriangle,
+  Database,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -291,6 +292,12 @@ export default function ActiveDirectoryPage() {
         {/* Quick Navigation */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 stagger-in">
           {[
+            {
+              href: "/admin/active-directory/domains",
+              icon: Database,
+              label: "Domaines",
+              desc: "Registre unifie AD+DNS+Mail",
+            },
             {
               href: "/admin/active-directory/dns",
               icon: Globe,

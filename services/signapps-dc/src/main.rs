@@ -36,6 +36,38 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("Database connected");
 
+    // Load domain config from registry (if available).
+    let domain_config_query: Option<(String, Option<String>, Option<String>, serde_json::Value)> =
+        sqlx::query_as(
+            "SELECT dns_name, realm, domain_sid, config \
+             FROM infrastructure.domains \
+             WHERE dns_name = $1 AND is_active = true \
+             LIMIT 1",
+        )
+        .bind(&config.domain)
+        .fetch_optional(&pool)
+        .await
+        .ok()
+        .flatten();
+
+    if let Some((dns_name, realm, sid, db_config)) = domain_config_query {
+        tracing::info!(
+            domain = %dns_name,
+            realm = ?realm,
+            sid = ?sid,
+            "Loaded domain config from registry"
+        );
+        // Surface NTP configuration when present in the JSONB blob.
+        if let Some(ntp) = db_config.get("ntp") {
+            tracing::info!(ntp = %ntp, "NTP configuration loaded");
+        }
+    } else {
+        tracing::warn!(
+            domain = %config.domain,
+            "Domain not found in infrastructure registry — using env defaults"
+        );
+    }
+
     // Shutdown signal
     let (shutdown_tx, shutdown_rx) = watch::channel(false);
 
