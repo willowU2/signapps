@@ -42,6 +42,7 @@ import {
   SHARING_ROLE_LABELS,
   SHARING_GRANTEE_TYPE_LABELS,
 } from "@/types/sharing";
+import { GranteePicker } from "./grantee-picker";
 
 // ─── Role badge config ──────────────────────────────────────────────────────
 
@@ -241,7 +242,8 @@ export function ShareDialog({
 
   // Form state
   const [granteeType, setGranteeType] = useState<SharingGranteeType>("user");
-  const [granteeId, setGranteeId] = useState("");
+  const [granteeId, setGranteeId] = useState<string | null>(null);
+  const [granteeName, setGranteeName] = useState("");
   const [role, setRole] = useState<SharingRole>("viewer");
   const [canReshare, setCanReshare] = useState(false);
   const [expiresAt, setExpiresAt] = useState("");
@@ -249,17 +251,18 @@ export function ShareDialog({
   const [mutating, setMutating] = useState(false);
 
   const handleAdd = async () => {
-    if (granteeType !== "everyone" && !granteeId.trim()) return;
+    if (granteeType !== "everyone" && !granteeId) return;
     setSubmitting(true);
     try {
       await createGrant({
         grantee_type: granteeType,
-        grantee_id: granteeType !== "everyone" ? granteeId.trim() : null,
+        grantee_id: granteeType !== "everyone" ? granteeId : null,
         role,
         can_reshare: canReshare,
         expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
       });
-      setGranteeId("");
+      setGranteeId(null);
+      setGranteeName("");
       setExpiresAt("");
       setCanReshare(false);
     } catch {
@@ -312,11 +315,15 @@ export function ShareDialog({
             Ajouter un accès
           </p>
 
-          {/* Grantee type + id */}
+          {/* Grantee type + picker */}
           <div className="flex gap-2">
             <Select
               value={granteeType}
-              onValueChange={(v) => setGranteeType(v as SharingGranteeType)}
+              onValueChange={(v) => {
+                setGranteeType(v as SharingGranteeType);
+                setGranteeId(null);
+                setGranteeName("");
+              }}
             >
               <SelectTrigger className="h-8 w-[130px] text-xs shrink-0">
                 <SelectValue />
@@ -349,14 +356,15 @@ export function ShareDialog({
               </SelectContent>
             </Select>
 
-            {granteeType !== "everyone" && (
-              <Input
-                placeholder="UUID du destinataire"
-                value={granteeId}
-                onChange={(e) => setGranteeId(e.target.value)}
-                className="h-8 text-xs flex-1"
-              />
-            )}
+            <GranteePicker
+              granteeType={granteeType}
+              value={granteeId}
+              onChange={(id, label) => {
+                setGranteeId(id);
+                setGranteeName(label);
+              }}
+              disabled={submitting}
+            />
           </div>
 
           {/* Role + expiry */}
@@ -407,9 +415,7 @@ export function ShareDialog({
             size="sm"
             className="w-full h-8 text-xs"
             onClick={handleAdd}
-            disabled={
-              submitting || (granteeType !== "everyone" && !granteeId.trim())
-            }
+            disabled={submitting || (granteeType !== "everyone" && !granteeId)}
           >
             {submitting ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
