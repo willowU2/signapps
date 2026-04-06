@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -45,6 +46,7 @@ import {
   AlertTriangle,
   ChevronLeft,
   Package,
+  Pencil,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -228,6 +230,19 @@ export default function DeploymentPage() {
   const [newOsType, setNewOsType] = useState("");
   const [newOsVersion, setNewOsVersion] = useState("");
 
+  // Edit profile dialog state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<DeployProfile | null>(
+    null,
+  );
+  const [editSaving, setEditSaving] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editOsType, setEditOsType] = useState("");
+  const [editOsVersion, setEditOsVersion] = useState("");
+  const [editTargetOu, setEditTargetOu] = useState("");
+  const [editIsDefault, setEditIsDefault] = useState(false);
+
   const {
     data: domains = [],
     isLoading: loadingDomains,
@@ -254,6 +269,45 @@ export default function DeploymentPage() {
     setNewOsType("");
     setNewOsVersion("");
     setCreateOpen(true);
+  };
+
+  const openEditDialog = (e: React.MouseEvent, profile: DeployProfile) => {
+    e.stopPropagation();
+    setEditingProfile(profile);
+    setEditName(profile.name);
+    setEditDescription(profile.description ?? "");
+    setEditOsType(profile.os_type ?? "");
+    setEditOsVersion(profile.os_version ?? "");
+    setEditTargetOu(profile.target_ou ?? "");
+    setEditIsDefault(profile.is_default ?? false);
+    setEditOpen(true);
+  };
+
+  const handleEditProfile = async () => {
+    if (!editingProfile) return;
+    if (!editName.trim()) {
+      toast.error("Le nom du profil est obligatoire.");
+      return;
+    }
+    setEditSaving(true);
+    try {
+      await adApi.deploy.updateProfile(editingProfile.id, {
+        name: editName.trim(),
+        description: editDescription.trim() || undefined,
+        os_type: editOsType || undefined,
+        os_version: editOsVersion.trim() || undefined,
+        target_ou: editTargetOu.trim() || undefined,
+        is_default: editIsDefault,
+      });
+      toast.success(`Profil "${editName.trim()}" mis a jour.`);
+      setEditOpen(false);
+      setEditingProfile(null);
+      void refetchProfiles();
+    } catch {
+      toast.error("Erreur lors de la mise a jour du profil.");
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   const handleCreateProfile = async () => {
@@ -489,7 +543,7 @@ export default function DeploymentPage() {
                           <TableHead>OU cible</TableHead>
                           <TableHead className="w-[90px]">Par defaut</TableHead>
                           <TableHead className="w-[90px]">Paquets</TableHead>
-                          <TableHead className="w-[48px]" />
+                          <TableHead className="w-[80px]" />
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -534,15 +588,28 @@ export default function DeploymentPage() {
                               </span>
                             </TableCell>
                             <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                onClick={(e) => handleDeleteProfile(e, profile)}
-                                title="Supprimer ce profil"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                  onClick={(e) => openEditDialog(e, profile)}
+                                  title="Modifier ce profil"
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                  onClick={(e) =>
+                                    handleDeleteProfile(e, profile)
+                                  }
+                                  title="Supprimer ce profil"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -555,6 +622,131 @@ export default function DeploymentPage() {
           )
         )}
       </div>
+
+      {/* Edit profile dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>
+              Modifier le profil{" "}
+              {editingProfile && (
+                <span className="text-sm font-normal text-muted-foreground ml-1">
+                  {editingProfile.name}
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-profile-name">
+                Nom <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="edit-profile-name"
+                placeholder="ex: Windows 11 Standard"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                disabled={editSaving}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-profile-description">
+                Description{" "}
+                <span className="text-muted-foreground text-xs">
+                  (optionnel)
+                </span>
+              </Label>
+              <Input
+                id="edit-profile-description"
+                placeholder="Description du profil"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                disabled={editSaving}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-profile-os-type">Type OS</Label>
+              <Select
+                value={editOsType}
+                onValueChange={setEditOsType}
+                disabled={editSaving}
+              >
+                <SelectTrigger id="edit-profile-os-type">
+                  <SelectValue placeholder="Sélectionner un type OS" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="windows">Windows</SelectItem>
+                  <SelectItem value="linux">Linux</SelectItem>
+                  <SelectItem value="macos">macOS</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-profile-os-version">
+                Version OS{" "}
+                <span className="text-muted-foreground text-xs">
+                  (optionnel)
+                </span>
+              </Label>
+              <Input
+                id="edit-profile-os-version"
+                placeholder="ex: 11 22H2"
+                value={editOsVersion}
+                onChange={(e) => setEditOsVersion(e.target.value)}
+                disabled={editSaving}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-profile-ou">
+                OU cible{" "}
+                <span className="text-muted-foreground text-xs">
+                  (optionnel)
+                </span>
+              </Label>
+              <Input
+                id="edit-profile-ou"
+                placeholder="ex: OU=Workstations,DC=corp,DC=example,DC=com"
+                value={editTargetOu}
+                onChange={(e) => setEditTargetOu(e.target.value)}
+                disabled={editSaving}
+                className="font-mono text-xs"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="edit-profile-default"
+                checked={editIsDefault}
+                onCheckedChange={(v) => setEditIsDefault(!!v)}
+                disabled={editSaving}
+              />
+              <Label
+                htmlFor="edit-profile-default"
+                className="text-sm font-normal"
+              >
+                Profil par defaut
+              </Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditOpen(false)}
+              disabled={editSaving}
+            >
+              Annuler
+            </Button>
+            <Button onClick={handleEditProfile} disabled={editSaving}>
+              {editSaving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Pencil className="h-4 w-4 mr-2" />
+              )}
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create profile dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

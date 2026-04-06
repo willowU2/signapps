@@ -42,6 +42,7 @@ import {
 import {
   Globe,
   Plus,
+  Pencil,
   Trash2,
   RefreshCw,
   Loader2,
@@ -155,6 +156,16 @@ const DOMAIN_TYPE_PRESETS: Record<string, DomainTypePreset> = {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
+type EditDomainData = {
+  netbios_name: string;
+  domain_type: string;
+  ad_enabled: boolean;
+  mail_enabled: boolean;
+  dhcp_enabled: boolean;
+  pxe_enabled: boolean;
+  ntp_enabled: boolean;
+};
+
 export default function DomainsPage() {
   usePageTitle("Domaines — Active Directory");
 
@@ -163,6 +174,59 @@ export default function DomainsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_FORM });
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingDomain, setEditingDomain] = useState<AdDomain | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editData, setEditData] = useState<EditDomainData>({
+    netbios_name: "",
+    domain_type: "full",
+    ad_enabled: true,
+    mail_enabled: true,
+    dhcp_enabled: true,
+    pxe_enabled: false,
+    ntp_enabled: false,
+  });
+
+  const openEditDialog = (domain: AdDomain) => {
+    setEditingDomain(domain);
+    setEditData({
+      netbios_name: domain.netbios_name ?? "",
+      domain_type: domain.domain_type ?? "full",
+      ad_enabled: domain.ad_enabled ?? true,
+      mail_enabled: domain.mail_enabled ?? true,
+      dhcp_enabled: domain.dhcp_enabled ?? true,
+      pxe_enabled: domain.pxe_enabled ?? false,
+      ntp_enabled: domain.ntp_enabled ?? false,
+    });
+    setEditOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!editingDomain) return;
+    setEditSaving(true);
+    try {
+      await adApi.domains.update(editingDomain.id, {
+        netbios_name: editData.netbios_name || undefined,
+        domain_type: editData.domain_type,
+        ad_enabled: editData.ad_enabled,
+        mail_enabled: editData.mail_enabled,
+        dhcp_enabled: editData.dhcp_enabled,
+        pxe_enabled: editData.pxe_enabled,
+        ntp_enabled: editData.ntp_enabled,
+      });
+      toast.success(`Domaine "${editingDomain.dns_name}" mis a jour`);
+      setEditOpen(false);
+      setEditingDomain(null);
+      refetch();
+    } catch (e) {
+      toast.error(
+        `Erreur: ${e instanceof Error ? e.message : "Echec de la mise a jour"}`,
+      );
+    } finally {
+      setEditSaving(false);
+    }
+  };
 
   const handleDomainTypeChange = (value: string) => {
     setForm((prev) => ({
@@ -425,14 +489,26 @@ export default function DomainsPage() {
                           {formatDate(domain.created_at)}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                            onClick={() => handleDelete(domain)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                              onClick={() => openEditDialog(domain)}
+                              title="Modifier ce domaine"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                              onClick={() => handleDelete(domain)}
+                              title="Supprimer ce domaine"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -443,6 +519,157 @@ export default function DomainsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit Domain Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              Modifier le domaine{" "}
+              {editingDomain && (
+                <span className="font-mono text-sm font-normal text-muted-foreground ml-1">
+                  {editingDomain.dns_name}
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-netbios">Nom NetBIOS</Label>
+              <Input
+                id="edit-netbios"
+                placeholder="EXAMPLE"
+                value={editData.netbios_name}
+                onChange={(e) =>
+                  setEditData((d) => ({
+                    ...d,
+                    netbios_name: e.target.value.toUpperCase(),
+                  }))
+                }
+                disabled={editSaving}
+              />
+              <p className="text-xs text-muted-foreground">
+                Nom court du domaine (max 15 caracteres, majuscules)
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-domain-type">Type de domaine</Label>
+              <Select
+                value={editData.domain_type}
+                onValueChange={(value) =>
+                  setEditData((d) => ({ ...d, domain_type: value }))
+                }
+                disabled={editSaving}
+              >
+                <SelectTrigger id="edit-domain-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full">
+                    Complet (AD + Mail + DHCP)
+                  </SelectItem>
+                  <SelectItem value="internal">Interne (AD + DHCP)</SelectItem>
+                  <SelectItem value="dns_only">DNS uniquement</SelectItem>
+                  <SelectItem value="mail_only">Mail uniquement</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Services actives</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="edit-svc-ad"
+                    checked={editData.ad_enabled}
+                    onCheckedChange={(v) =>
+                      setEditData((d) => ({ ...d, ad_enabled: !!v }))
+                    }
+                    disabled={editSaving}
+                  />
+                  <Label htmlFor="edit-svc-ad" className="text-sm font-normal">
+                    Active Directory
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="edit-svc-mail"
+                    checked={editData.mail_enabled}
+                    onCheckedChange={(v) =>
+                      setEditData((d) => ({ ...d, mail_enabled: !!v }))
+                    }
+                    disabled={editSaving}
+                  />
+                  <Label
+                    htmlFor="edit-svc-mail"
+                    className="text-sm font-normal"
+                  >
+                    Serveur Mail
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="edit-svc-dhcp"
+                    checked={editData.dhcp_enabled}
+                    onCheckedChange={(v) =>
+                      setEditData((d) => ({ ...d, dhcp_enabled: !!v }))
+                    }
+                    disabled={editSaving}
+                  />
+                  <Label
+                    htmlFor="edit-svc-dhcp"
+                    className="text-sm font-normal"
+                  >
+                    DHCP
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="edit-svc-pxe"
+                    checked={editData.pxe_enabled}
+                    onCheckedChange={(v) =>
+                      setEditData((d) => ({ ...d, pxe_enabled: !!v }))
+                    }
+                    disabled={editSaving}
+                  />
+                  <Label htmlFor="edit-svc-pxe" className="text-sm font-normal">
+                    PXE Boot
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="edit-svc-ntp"
+                    checked={editData.ntp_enabled}
+                    onCheckedChange={(v) =>
+                      setEditData((d) => ({ ...d, ntp_enabled: !!v }))
+                    }
+                    disabled={editSaving}
+                  />
+                  <Label htmlFor="edit-svc-ntp" className="text-sm font-normal">
+                    NTP
+                  </Label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditOpen(false)}
+              disabled={editSaving}
+            >
+              Annuler
+            </Button>
+            <Button onClick={handleEditSave} disabled={editSaving}>
+              {editSaving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Pencil className="h-4 w-4 mr-2" />
+              )}
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create Domain Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

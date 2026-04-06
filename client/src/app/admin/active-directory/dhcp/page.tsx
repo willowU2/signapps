@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { PageHeader } from "@/components/ui/page-header";
@@ -200,13 +200,11 @@ function ReservationsPanel({
     }
   };
 
-  // Fetch on mount — useEffect cannot be imported at top level here,
-  // so we rely on the pattern used elsewhere in this file via inline init.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const [_fetched] = useState(() => {
+  // Fetch on mount
+  useEffect(() => {
     void fetchReservations();
-    return true;
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scope.id]);
 
   const handleCreate = async () => {
     setCreating(true);

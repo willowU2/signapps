@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { PageHeader } from "@/components/ui/page-header";
@@ -14,13 +14,53 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Shield,
-  Lock,
-  Key,
   CheckCircle,
   XCircle,
   AlertTriangle,
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { adApi } from "@/lib/api/active-directory";
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+interface InfraHealth {
+  domains: number;
+  certificates: {
+    active: number;
+    expiring_soon: number;
+  };
+  dhcp: {
+    scopes: number;
+    active_leases: number;
+  };
+  deployment: {
+    profiles: number;
+  };
+}
+
+interface ExpiringCert {
+  id: string;
+  subject: string;
+  not_after: string;
+  days_remaining?: number;
+}
+
+interface ExpiringCertsResponse {
+  expiring_within_days: number;
+  count: number;
+  certificates: ExpiringCert[];
+}
 
 interface SecurityCheck {
   name: string;
@@ -28,83 +68,175 @@ interface SecurityCheck {
   description: string;
 }
 
-const SECURITY_CHECKS: SecurityCheck[] = [
-  {
-    name: "TLS obligatoire sur LDAP",
-    status: "warn",
-    description: "LDAP accepte les connexions non chiffrees sur le port 389",
-  },
-  {
-    name: "Pre-authentification Kerberos",
-    status: "pass",
-    description: "PA-ENC-TIMESTAMP est requis pour tous les comptes",
-  },
-  {
-    name: "AES256 par defaut",
-    status: "pass",
-    description: "L'encryption AES256-CTS-HMAC-SHA1 est preferee",
-  },
-  {
-    name: "RC4-HMAC desactive",
-    status: "warn",
-    description: "RC4-HMAC est encore disponible pour la compatibilite legacy",
-  },
-  {
-    name: "Rotation cle krbtgt",
-    status: "warn",
-    description: "La cle krbtgt n'a pas ete changee depuis plus de 180 jours",
-  },
-  {
-    name: "Politique de mot de passe",
-    status: "pass",
-    description: "Longueur minimale de 8 caracteres avec complexite",
-  },
-  {
-    name: "Verrouillage de compte",
-    status: "pass",
-    description: "Verrouillage apres 5 tentatives echouees",
-  },
-  {
-    name: "Audit des connexions",
-    status: "pass",
-    description: "Toutes les connexions LDAP et Kerberos sont tracees",
-  },
-  {
-    name: "LDAP anonymous restreint",
-    status: "pass",
-    description: "Acces anonymous limite au RootDSE uniquement",
-  },
-  {
-    name: "DNS TSIG",
-    status: "fail",
-    description: "Les mises a jour DNS dynamiques ne sont pas signees",
-  },
-];
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function buildSecurityChecks(
+  health: InfraHealth,
+  expiring: ExpiringCertsResponse,
+): SecurityCheck[] {
+  return [
+    {
+      name: "Certificats CA",
+      status: health.certificates.active > 0 ? "pass" : "fail",
+      description:
+        health.certificates.active > 0
+          ? `${health.certificates.active} certificat(s) actif(s) dans l'infrastructure`
+          : "Aucun certificat actif — la PKI n'est pas configuree",
+    },
+    {
+      name: "Renouvellement auto",
+      status: expiring.count === 0 ? "pass" : "warn",
+      description:
+        expiring.count === 0
+          ? "Aucun certificat n'expire dans les 30 prochains jours"
+          : `${expiring.count} certificat(s) expirent dans moins de 30 jours`,
+    },
+    {
+      name: "DHCP actif",
+      status: health.dhcp.scopes > 0 ? "pass" : "warn",
+      description:
+        health.dhcp.scopes > 0
+          ? `${health.dhcp.scopes} scope(s) DHCP configure(s), ${health.dhcp.active_leases} bail(aux) actif(s)`
+          : "Aucun scope DHCP configure",
+    },
+    {
+      name: "Domaines configures",
+      status: health.domains > 0 ? "pass" : "fail",
+      description:
+        health.domains > 0
+          ? `${health.domains} domaine(s) Active Directory actif(s)`
+          : "Aucun domaine Active Directory configure",
+    },
+    {
+      name: "Profils de deploiement",
+      status: health.deployment.profiles > 0 ? "pass" : "warn",
+      description:
+        health.deployment.profiles > 0
+          ? `${health.deployment.profiles} profil(s) de deploiement defini(s)`
+          : "Aucun profil de deploiement configure",
+    },
+  ];
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+// ── Main Page ──────────────────────────────────────────────────────────────────
 
 export default function AdSecurityPage() {
   usePageTitle("Securite — Active Directory");
 
-  const passCount = SECURITY_CHECKS.filter((c) => c.status === "pass").length;
-  const warnCount = SECURITY_CHECKS.filter((c) => c.status === "warn").length;
-  const failCount = SECURITY_CHECKS.filter((c) => c.status === "fail").length;
+  const [health, setHealth] = useState<InfraHealth | null>(null);
+  const [expiring, setExpiring] = useState<ExpiringCertsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  async function fetchData() {
+    setLoading(true);
+    setError(false);
+    try {
+      const [healthRes, expiringRes] = await Promise.all([
+        adApi.monitoring.infrastructureHealth(),
+        adApi.monitoring.expiringCerts(30),
+      ]);
+      setHealth(healthRes.data as InfraHealth);
+      setExpiring(expiringRes.data as ExpiringCertsResponse);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const breadcrumb = (
+    <PageBreadcrumb
+      items={[
+        { label: "Administration", href: "/admin" },
+        { label: "Active Directory", href: "/admin/active-directory" },
+        { label: "Securite" },
+      ]}
+    />
+  );
+
+  const header = (
+    <PageHeader
+      title="Securite Active Directory"
+      description="Audit de securite, etat de l'infrastructure et recommandations"
+      icon={<Shield className="h-5 w-5" />}
+      actions={
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchData}
+          disabled={loading}
+        >
+          <RefreshCw
+            className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+          />
+          Rafraichir
+        </Button>
+      }
+    />
+  );
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="space-y-6">
+          {breadcrumb}
+          {header}
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error || !health || !expiring) {
+    return (
+      <AppLayout>
+        <div className="space-y-6">
+          {breadcrumb}
+          {header}
+          <div className="flex flex-col items-center justify-center py-12">
+            <AlertTriangle className="h-8 w-8 text-destructive mb-3" />
+            <p className="text-sm font-medium">Erreur de chargement</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={fetchData}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" /> Reessayer
+            </Button>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const checks = buildSecurityChecks(health, expiring);
+  const passCount = checks.filter((c) => c.status === "pass").length;
+  const warnCount = checks.filter((c) => c.status === "warn").length;
+  const failCount = checks.filter((c) => c.status === "fail").length;
 
   return (
     <AppLayout>
       <div className="space-y-6">
-        <PageBreadcrumb
-          items={[
-            { label: "Administration", href: "/admin" },
-            { label: "Active Directory", href: "/admin/active-directory" },
-            { label: "Securite" },
-          ]}
-        />
-        <PageHeader
-          title="Securite Active Directory"
-          description="Audit de securite, politiques et recommandations"
-          icon={<Shield className="h-5 w-5" />}
-        />
+        {breadcrumb}
+        {header}
 
-        {/* Score */}
+        {/* Summary score cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger-in">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -118,6 +250,7 @@ export default function AdSecurityPage() {
               <p className="text-xs text-muted-foreground">controles passes</p>
             </CardContent>
           </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">
@@ -134,6 +267,7 @@ export default function AdSecurityPage() {
               </p>
             </CardContent>
           </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Critiques</CardTitle>
@@ -148,100 +282,148 @@ export default function AdSecurityPage() {
           </Card>
         </div>
 
-        {/* Policy Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger-in">
+        {/* Infrastructure Health */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 stagger-in">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Lock className="h-4 w-4" />
-                Politique de mot de passe
-              </CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Domaines</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Longueur minimale</span>
-                <span className="font-medium">8 caracteres</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  Complexite requise
-                </span>
-                <Badge variant="default" className="text-[10px]">
-                  Oui
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Historique</span>
-                <span className="font-medium">12 derniers</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Age maximum</span>
-                <span className="font-medium">90 jours</span>
-              </div>
+            <CardContent>
+              <div className="text-2xl font-bold">{health.domains}</div>
+              <p className="text-xs text-muted-foreground">
+                domaine(s) Active Directory
+              </p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                Verrouillage de compte
-              </CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Certificats</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Seuil</span>
-                <span className="font-medium">5 tentatives</span>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {health.certificates.active}
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Duree</span>
-                <span className="font-medium">30 minutes</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Reset apres</span>
-                <span className="font-medium">30 minutes</span>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                actif(s)
+                {health.certificates.expiring_soon > 0 && (
+                  <span className="ml-1 text-amber-600 dark:text-amber-400 font-medium">
+                    · {health.certificates.expiring_soon} expire(nt) bientot
+                  </span>
+                )}
+              </p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Key className="h-4 w-4" />
-                Politique Kerberos
-              </CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">DHCP</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Duree TGT</span>
-                <span className="font-medium">10 heures</span>
+            <CardContent>
+              <div className="text-2xl font-bold">{health.dhcp.scopes}</div>
+              <p className="text-xs text-muted-foreground">
+                scope(s) · {health.dhcp.active_leases} bail(aux)
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Deploiement</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {health.deployment.profiles}
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tolerance horloge</span>
-                <span className="font-medium">5 minutes</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Encryption</span>
-                <Badge variant="default" className="text-[10px]">
-                  AES256
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">RC4-HMAC</span>
-                <Badge variant="secondary" className="text-[10px]">
-                  Active (legacy)
-                </Badge>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                profil(s) configure(s)
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Security Checklist */}
+        {/* Certificate Health */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Sante des certificats</CardTitle>
+            <CardDescription>
+              {health.certificates.active} certificat(s) actif(s) ·{" "}
+              {expiring.count === 0
+                ? "aucun renouvellement urgent"
+                : `${expiring.count} expirant dans ${expiring.expiring_within_days} jours`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {expiring.count > 0 ? (
+              <>
+                <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <p className="text-sm text-amber-800 dark:text-amber-300">
+                    {expiring.count} certificat(s) expirent dans les{" "}
+                    {expiring.expiring_within_days} prochains jours
+                  </p>
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Sujet</TableHead>
+                      <TableHead className="w-[160px]">Expiration</TableHead>
+                      <TableHead className="w-[120px]">
+                        Jours restants
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {expiring.certificates.map((cert) => {
+                      const daysLeft =
+                        cert.days_remaining ??
+                        Math.floor(
+                          (new Date(cert.not_after).getTime() - Date.now()) /
+                            (1000 * 60 * 60 * 24),
+                        );
+                      return (
+                        <TableRow key={cert.id}>
+                          <TableCell className="font-mono text-sm">
+                            {cert.subject}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {formatDate(cert.not_after)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={
+                                daysLeft <= 7
+                                  ? "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
+                                  : "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800"
+                              }
+                            >
+                              {daysLeft}j
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </>
+            ) : (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <p className="text-sm text-emerald-800 dark:text-emerald-300">
+                  Tous les certificats sont valides pour les 30 prochains jours
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Security Checks */}
         <Card>
           <CardHeader>
             <CardTitle>Audit de securite</CardTitle>
             <CardDescription>
-              {passCount}/{SECURITY_CHECKS.length} controles conformes —{" "}
+              {passCount}/{checks.length} controles conformes —{" "}
               {failCount > 0
                 ? `${failCount} action(s) requise(s)`
                 : "aucune action critique"}
@@ -249,7 +431,7 @@ export default function AdSecurityPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {SECURITY_CHECKS.map((check, i) => (
+              {checks.map((check, i) => (
                 <div
                   key={i}
                   className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50"
