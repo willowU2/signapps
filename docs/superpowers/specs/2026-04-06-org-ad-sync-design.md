@@ -567,16 +567,41 @@ SignApps Corp (advicetech.fr)
 | a.vendeur | a.vendeur@france.sales.advicetech.fr | *(aucun)* |
 | m.martin | m.martin@ldlc-mulhouse.fr | *(aucun)* |
 
-### 9.4 Listes de distribution OU
+### 9.4 Boites mail partagees OU/Groupe (dossiers IMAP)
 
-Chaque OU cree automatiquement :
-- Une **adresse de distribution** : `{nom_ou_normalise}@{domaine_herite}` (ex: `drh@advicetech.fr`)
-- Un **groupe de securite** AD associe (les membres de l'OU recoivent les mails)
-- Desactivable par OU via un flag `mail_distribution_enabled` dans `ad_ous`
+Au lieu de listes de distribution (qui dupliquent les mails), chaque OU/groupe avec une adresse mail cree une **boite partagee** qui apparait comme un **dossier IMAP** dans la boite de chaque membre.
 
-Quand un mail est envoye a `drh@advicetech.fr`, il est distribue a tous les utilisateurs dans l'OU DRH et ses sous-OUs.
+**Principe :** Un mail envoye a `drh@advicetech.fr` arrive **une seule fois** dans la boite partagee DRH, visible par tous les membres comme un dossier dans leur client mail.
 
-### 9.5 Table `ad_mail_aliases`
+**Hierarchie des dossiers dans la boite utilisateur :**
+```
+Boite mail de j.dupont@advicetech.fr
++-- Inbox (personnel)
++-- Sent
++-- Drafts
++-- [Shared] SignApps Corp (advicetech.fr)
+|   +-- [Shared] SI (si@advicetech.fr)
+|   |   +-- [Shared] Dev Frontend (dev-frontend@advicetech.fr)
+|   +-- [Shared] DRH (drh@advicetech.fr)
+```
+
+Par defaut, l'utilisateur voit toute la branche hierarchique de son noeud jusqu'a la racine. Cela est configurable par les administrateurs.
+
+**Configuration par OU** (stockee dans `ad_ous.config` JSONB ou `ad_shared_mailboxes.config`) :
+
+| Parametre | Defaut | Description |
+|-----------|--------|-------------|
+| `shared_mailbox_enabled` | `true` | Active/desactive la boite partagee pour cette OU |
+| `shared_mailbox_visible_to_children` | `true` | Les membres des sous-OUs voient ce dossier |
+| `shared_mailbox_send_as` | `members` | Qui peut envoyer en tant que cette OU : `members`, `managers`, `none` |
+| `shared_mailbox_auto_subscribe` | `true` | Les nouveaux membres sont abonnes automatiquement |
+
+**Exemples de configuration :**
+- Desactiver `shared_mailbox_visible_to_children` sur SignApps Corp → les filiales ne voient pas le dossier racine
+- Mettre `shared_mailbox_send_as = managers` sur DRH → seuls les membres du board DRH peuvent repondre depuis `drh@advicetech.fr`
+- Desactiver `shared_mailbox_enabled` sur une equipe → pas de dossier partage pour cette equipe
+
+### 9.5 Table `ad_mail_aliases` — Alias utilisateurs
 
 ```sql
 CREATE TABLE ad_mail_aliases (
@@ -593,21 +618,87 @@ CREATE TABLE ad_mail_aliases (
 CREATE INDEX idx_mail_aliases_user ON ad_mail_aliases(user_account_id);
 ```
 
-### 9.6 Table `ad_ou_distribution_lists`
+### 9.6 Table `ad_shared_mailboxes` — Boites partagees OU/Groupe
 
 ```sql
-CREATE TABLE ad_ou_distribution_lists (
+CREATE TABLE ad_shared_mailboxes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    ou_id UUID NOT NULL REFERENCES ad_ous(id) ON DELETE CASCADE,
+    ou_id UUID REFERENCES ad_ous(id) ON DELETE CASCADE,
+    group_id UUID REFERENCES ad_security_groups(id) ON DELETE CASCADE,
     mail_address TEXT NOT NULL,
     domain_id UUID NOT NULL REFERENCES infrastructure.domains(id),
-    is_enabled BOOLEAN DEFAULT true,
-    security_group_id UUID REFERENCES ad_security_groups(id),
+    display_name TEXT NOT NULL,
+    config JSONB DEFAULT '{
+        "shared_mailbox_enabled": true,
+        "shared_mailbox_visible_to_children": true,
+        "shared_mailbox_send_as": "members",
+        "shared_mailbox_auto_subscribe": true
+    }',
+    is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT now(),
-    UNIQUE(mail_address)
+    UNIQUE(mail_address),
+    CHECK (ou_id IS NOT NULL OR group_id IS NOT NULL)
 );
 
-CREATE INDEX idx_ou_dist_ou ON ad_ou_distribution_lists(ou_id);
+CREATE INDEX idx_shared_mbox_ou ON ad_shared_mailboxes(ou_id);
+CREATE INDEX idx_shared_mbox_group ON ad_shared_mailboxes(group_id);
+```
+
+### 9.7 Table `ad_shared_mailbox_subscriptions` — Abonnements utilisateurs
+
+```sql
+CREATE TABLE ad_shared_mailbox_subscriptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    mailbox_id UUID NOT NULL REFERENCES ad_shared_mailboxes(id) ON DELETE CASCADE,
+    user_account_id UUID NOT NULL REFERENCES ad_user_accounts(id) ON DELETE CASCADE,
+    imap_folder_path TEXT NOT NULL,
+    can_send_as BOOLEAN DEFAULT false,
+    is_subscribed BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(mailbox_id, user_account_id)
+);
+
+CREATE INDEX idx_mbox_sub_user ON ad_shared_mailbox_subscriptions(user_account_id);
+CREATE INDEX idx_mbox_sub_mailbox ON ad_shared_mailbox_subscriptions(mailbox_id);
+```
+
+Le champ `imap_folder_path` contient le chemin hierarchique du dossier tel qu'il apparait dans le client mail, ex: `[Shared]/SignApps Corp/SI/Dev Frontend`.
+
+### 9.8 Algorithme de calcul des abonnements
+
+```
+compute_subscriptions(user):
+  node = user.assigned_node
+  domain = resolve_closest_mail_domain(node)
+
+  // 1. Remonter la branche jusqu'a la racine
+  ancestors = closure_ancestors(node)  // du plus proche au plus loin
+  path_parts = []
+
+  for ancestor in reverse(ancestors):  // de la racine vers le bas
+    mailbox = ad_shared_mailboxes WHERE ou_id = ad_ous.id AND ancestor.id = node_id
+    if mailbox is None: continue
+    if not mailbox.config.shared_mailbox_enabled: continue
+
+    // Verifier la visibilite pour les enfants
+    if ancestor != node AND not mailbox.config.shared_mailbox_visible_to_children:
+      continue
+
+    path_parts.append(mailbox.display_name)
+    folder_path = "[Shared]/" + "/".join(path_parts)
+
+    upsert subscription(
+      mailbox_id = mailbox.id,
+      user_account_id = user.id,
+      imap_folder_path = folder_path,
+      can_send_as = (mailbox.config.send_as == 'members'
+                     OR (mailbox.config.send_as == 'managers' AND user_is_board_member(ancestor)))
+    )
+
+  // 2. Ajouter les groupes transversaux dont l'user est membre
+  for group_membership in user.group_memberships:
+    mailbox = ad_shared_mailboxes WHERE group_id = group_membership.group_id
+    if mailbox: subscribe(user, mailbox, "[Shared]/Groupes/" + mailbox.display_name)
 ```
 
 ## 10. Services impactes
@@ -634,5 +725,5 @@ CREATE INDEX idx_ou_dist_ou ON ad_ou_distribution_lists(ou_id);
 - Migration 227: table `ad_node_mail_domains`
 - Migration 228: tables `ad_dc_sites`, `ad_fsmo_roles`
 - Migration 229: table `ad_snapshots`
-- Migration 230: tables `ad_mail_aliases`, `ad_ou_distribution_lists`
+- Migration 230: tables `ad_mail_aliases`, `ad_shared_mailboxes`, `ad_shared_mailbox_subscriptions`
 - Migration 231: triggers NOTIFY sur core.org_nodes, core.assignments, workforce_org_groups
