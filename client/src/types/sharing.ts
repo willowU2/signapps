@@ -252,3 +252,40 @@ export interface CreateTemplateRequest {
   /** List of grant definitions that make up this template. */
   grants: TemplateGrantDef[];
 }
+
+// ─── Audit types ─────────────────────────────────────────────────────────────
+
+/**
+ * A single sharing audit log entry as returned by the backend.
+ *
+ * Every mutation to the sharing system (grant creation, revocation, template
+ * deletion, etc.) generates an immutable audit entry.
+ */
+export interface SharingAuditEntry {
+  /** UUID of this audit entry. */
+  id: string;
+  /** Tenant this event belongs to. */
+  tenant_id: string;
+  /** Resource type involved in the event (e.g. `"file"`, `"template"`). */
+  resource_type: string;
+  /** UUID of the resource involved. */
+  resource_id: string;
+  /** UUID of the user who performed the action. */
+  actor_id: string;
+  /** Machine-readable action key (e.g. `"grant_created"`, `"template_deleted"`). */
+  action: string;
+  /** Optional JSON payload with additional event details. */
+  details: Record<string, unknown> | null;
+  /** ISO 8601 timestamp when the entry was recorded. */
+  created_at: string | null;
+}
+
+/** French labels for sharing audit actions, suitable for display in tables. */
+export const SHARING_AUDIT_ACTION_LABELS: Record<string, string> = {
+  grant_created: "Grant créé",
+  grant_revoked: "Grant révoqué",
+  access_denied: "Accès refusé",
+  deny_set: "Deny posé",
+  template_applied: "Template appliqué",
+  template_deleted: "Template supprimé",
+};

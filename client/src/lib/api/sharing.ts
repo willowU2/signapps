@@ -40,6 +40,7 @@ import type {
   SharingResourceType,
   SharingTemplate,
   CreateTemplateRequest,
+  SharingAuditEntry,
 } from "@/types/sharing";
 import { getClient, ServiceName } from "./factory";
 
@@ -329,6 +330,53 @@ export const sharingApi = {
     const prefix = resolvePrefix(resourceType);
     const { data } = await client.post<{ count: number }>(
       `/api/v1/${prefix}/${resourceId}/apply-template/${templateId}`,
+    );
+    return data;
+  },
+
+  /**
+   * Delete a sharing template by ID (admin only).
+   *
+   * System templates cannot be deleted and the server will return 404.
+   *
+   * @param templateId - UUID of the template to delete.
+   *
+   * @example
+   * ```ts
+   * await sharingApi.deleteTemplate(templateId);
+   * ```
+   */
+  async deleteTemplate(templateId: string): Promise<void> {
+    const client = getClient(ServiceName.STORAGE);
+    await client.delete(`/api/v1/sharing/templates/${templateId}`);
+  },
+
+  /**
+   * List sharing audit log entries for the tenant (admin only).
+   *
+   * Optionally filter by `resource_type` and `resource_id`.
+   *
+   * @param params - Optional filters: `resource_type`, `resource_id`, `limit`.
+   * @returns Array of {@link SharingAuditEntry} records, newest first.
+   *
+   * @example
+   * ```ts
+   * // All audit entries
+   * const entries = await sharingApi.listAudit();
+   *
+   * // Filtered by resource type
+   * const templateEntries = await sharingApi.listAudit({ resource_type: 'template' });
+   * ```
+   */
+  async listAudit(params?: {
+    resource_type?: string;
+    resource_id?: string;
+    limit?: number;
+  }): Promise<SharingAuditEntry[]> {
+    const client = getClient(ServiceName.STORAGE);
+    const { data } = await client.get<SharingAuditEntry[]>(
+      "/api/v1/sharing/audit",
+      { params },
     );
     return data;
   },
