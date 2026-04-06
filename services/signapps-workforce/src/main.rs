@@ -184,6 +184,12 @@ fn create_router(state: AppState) -> Router {
         .route("/dhcp/scopes/:id/leases", get(handlers::ad::list_dhcp_leases))
         .route("/domains/:id/deploy/profiles", get(handlers::ad::list_deploy_profiles))
         .route("/deploy/profiles/:id/history", get(handlers::ad::list_deploy_history))
+        // ── Infrastructure CRUD ──
+        .route("/domains/:id/dhcp/scopes", post(handlers::ad::create_dhcp_scope))
+        .route("/dhcp/scopes/:id", delete(handlers::ad::delete_dhcp_scope))
+        .route("/domains/:id/deploy/profiles", post(handlers::ad::create_deploy_profile))
+        .route("/deploy/profiles/:id", delete(handlers::ad::delete_deploy_profile))
+        .route("/domains/:id/config", put(handlers::ad::update_domain_config))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))

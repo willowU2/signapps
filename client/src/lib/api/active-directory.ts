@@ -114,6 +114,13 @@ export const adApi = {
   dhcp: {
     scopes: (domainId: string) =>
       client.get<DhcpScope[]>(`/workforce/ad/domains/${domainId}/dhcp/scopes`),
+    createScope: (domainId: string, data: Partial<DhcpScope>) =>
+      client.post<DhcpScope>(
+        `/workforce/ad/domains/${domainId}/dhcp/scopes`,
+        data,
+      ),
+    deleteScope: (scopeId: string) =>
+      client.delete(`/workforce/ad/dhcp/scopes/${scopeId}`),
     leases: (scopeId: string) =>
       client.get<DhcpLease[]>(`/workforce/ad/dhcp/scopes/${scopeId}/leases`),
   },
@@ -124,9 +131,20 @@ export const adApi = {
       client.get<DeployProfile[]>(
         `/workforce/ad/domains/${domainId}/deploy/profiles`,
       ),
+    createProfile: (domainId: string, data: Partial<DeployProfile>) =>
+      client.post<DeployProfile>(
+        `/workforce/ad/domains/${domainId}/deploy/profiles`,
+        data,
+      ),
+    deleteProfile: (profileId: string) =>
+      client.delete(`/workforce/ad/deploy/profiles/${profileId}`),
     history: (profileId: string) =>
       client.get<DeployHistory[]>(
         `/workforce/ad/deploy/profiles/${profileId}/history`,
       ),
   },
+
+  // ── Domain Config ──
+  updateConfig: (domainId: string, config: Record<string, unknown>) =>
+    client.put(`/workforce/ad/domains/${domainId}/config`, config),
 };

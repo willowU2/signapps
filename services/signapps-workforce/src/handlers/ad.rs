@@ -444,3 +444,134 @@ pub async fn list_deploy_history(
     })?;
     Ok(Json(json!(history)))
 }
+
+// ── DHCP CRUD ────────────────────────────────────────────────────────────────
+
+/// Create a new DHCP scope.
+#[tracing::instrument(skip_all)]
+pub async fn create_dhcp_scope(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(domain_id): Path<Uuid>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let name = body["name"].as_str().unwrap_or("New Scope");
+    let subnet = body["subnet"].as_str().unwrap_or("192.168.1.0/24");
+    let range_start = body["range_start"].as_str().unwrap_or("192.168.1.100");
+    let range_end = body["range_end"].as_str().unwrap_or("192.168.1.200");
+    let gateway = body["gateway"].as_str();
+    let lease_hours = body["lease_duration_hours"].as_i64().unwrap_or(8) as i32;
+
+    let scope = signapps_db::repositories::DhcpScopeRepository::create(
+        &state.pool,
+        domain_id,
+        None,
+        name,
+        subnet,
+        range_start,
+        range_end,
+        gateway,
+        &[],
+        lease_hours,
+    )
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to create DHCP scope: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    Ok((StatusCode::CREATED, Json(json!(scope))))
+}
+
+/// Delete a DHCP scope (soft-delete: set is_active = false).
+#[tracing::instrument(skip_all)]
+pub async fn delete_dhcp_scope(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(scope_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    sqlx::query("UPDATE infrastructure.dhcp_scopes SET is_active = false WHERE id = $1")
+        .bind(scope_id)
+        .execute(&*state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to delete DHCP scope: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+// ── Deploy CRUD ──────────────────────────────────────────────────────────────
+
+/// Create a new deployment profile.
+#[tracing::instrument(skip_all)]
+pub async fn create_deploy_profile(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(domain_id): Path<Uuid>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let name = body["name"].as_str().unwrap_or("New Profile");
+    let description = body["description"].as_str();
+    let os_type = body["os_type"].as_str();
+    let os_version = body["os_version"].as_str();
+
+    let profile = signapps_db::repositories::DeployProfileRepository::create(
+        &state.pool,
+        domain_id,
+        name,
+        description,
+        os_type,
+        os_version,
+    )
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to create deploy profile: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    Ok((StatusCode::CREATED, Json(json!(profile))))
+}
+
+/// Delete a deployment profile.
+#[tracing::instrument(skip_all)]
+pub async fn delete_deploy_profile(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(profile_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    sqlx::query("DELETE FROM infrastructure.deploy_profiles WHERE id = $1")
+        .bind(profile_id)
+        .execute(&*state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to delete deploy profile: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// Update a domain's configuration (NTP, etc.).
+#[tracing::instrument(skip_all)]
+pub async fn update_domain_config(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(domain_id): Path<Uuid>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<impl IntoResponse, StatusCode> {
+    sqlx::query("UPDATE infrastructure.domains SET config = config || $1, updated_at = now() WHERE id = $2")
+        .bind(&body)
+        .bind(domain_id)
+        .execute(&*state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to update domain config: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    Ok(StatusCode::NO_CONTENT)
+}
