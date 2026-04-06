@@ -14,7 +14,7 @@ fn bind_request_bytes(message_id: i32, dn: &str, password: &[u8]) -> Vec<u8> {
         data: BerData::Primitive(password.to_vec()),
     };
     // BindRequest [APPLICATION 0] CONSTRUCTED { version, name, auth }
-    let bind_req = ber::encode_context(
+    let bind_req = ber::encode_application(
         0,
         true,
         BerData::Constructed(vec![
@@ -85,7 +85,7 @@ fn encode_bind_error_response() {
 fn decode_unbind_request() {
     // UnbindRequest [APPLICATION 2] NULL (length 0)
     let unbind = BerElement {
-        tag: BerTag::Context { number: 2, constructed: false },
+        tag: BerTag::Application { number: 2, constructed: false },
         data: BerData::Primitive(vec![]),
     };
     let msg_elem = encode_sequence(vec![encode_integer(5), unbind]);
