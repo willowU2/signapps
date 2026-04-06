@@ -43,6 +43,7 @@ import {
   SHARING_GRANTEE_TYPE_LABELS,
 } from "@/types/sharing";
 import { GranteePicker } from "./grantee-picker";
+import { TemplatePicker } from "./template-picker";
 
 // ─── Role badge config ──────────────────────────────────────────────────────
 
@@ -308,6 +309,22 @@ export function ShareDialog({
             immédiatement.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Apply template section */}
+        <div className="shrink-0 bg-muted/20 border-b border-border px-6 py-3 space-y-2">
+          <p className="text-xs font-semibold text-foreground">
+            Appliquer un template
+          </p>
+          <TemplatePicker
+            resourceType={resourceType}
+            resourceId={resourceId}
+            onApplied={() => {
+              // Grants list will refresh automatically via the useSharing hook
+              // when the dialog detects the resource has changed; no manual
+              // refresh needed here.
+            }}
+          />
+        </div>
 
         {/* Add grant form */}
         <div className="shrink-0 bg-muted/30 border-y border-border px-6 py-4 space-y-3">
