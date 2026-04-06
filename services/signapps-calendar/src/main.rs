@@ -4,11 +4,14 @@
 use axum::{extract::DefaultBodyLimit, middleware, Router};
 use dashmap::DashMap;
 use handlers::openapi::CalendarApiDoc;
+use signapps_cache::CacheService;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::pg_events::{PgEventBus, PlatformEvent};
 use signapps_common::JwtConfig;
 use signapps_db::DatabasePool;
+use signapps_sharing::routes::sharing_routes;
+use signapps_sharing::{ResourceType, SharingEngine};
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tower_http::trace::TraceLayer;
@@ -85,6 +88,9 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("Real-time collaboration system initialized");
     tracing::info!("Presence tracking system initialized");
 
+    // Initialize sharing engine (additive — existing calendar.members system unchanged)
+    let sharing_engine = SharingEngine::new(pool.inner().clone(), CacheService::default_config());
+
     // Initialize and spawn notification scheduler
     let scheduler_config = SchedulerConfig::new();
     let scheduler = NotificationScheduler::new(state.pool.inner().clone(), scheduler_config);
@@ -111,13 +117,13 @@ async fn main() -> anyhow::Result<()> {
     });
 
     // Build router
-    let app = build_router(state);
+    let app = build_router(state, sharing_engine);
 
     // Start server using bootstrap helper
     signapps_common::bootstrap::run_server(app, &config).await
 }
 
-fn build_router(state: AppState) -> Router {
+fn build_router(state: AppState, sharing_engine: SharingEngine) -> Router {
     use axum::routing::{any, delete, get, post, put};
     use handlers::{
         approval, caldav, calendars, categories, cron_jobs, events, external_sync, floor_plans,
@@ -353,8 +359,17 @@ fn build_router(state: AppState) -> Router {
             axum::http::HeaderName::from_static("x-request-id"),
         ]);
 
+    // Sharing sub-routers: State<SharingEngine> — additive, isolated from AppState.
+    // The existing calendar.members / shares system is NOT touched.
+    let sharing_sub = sharing_routes("calendars", ResourceType::Calendar)
+        .with_state(sharing_engine.clone());
+    let events_sharing_sub = sharing_routes("events", ResourceType::Event)
+        .with_state(sharing_engine);
+
     public_routes
         .merge(protected_routes)
+        .merge(sharing_sub)
+        .merge(events_sharing_sub)
         .layer(DefaultBodyLimit::max(100 * 1024 * 1024))  // 100MB
         .layer(TraceLayer::new_for_http())
         .layer(cors)
