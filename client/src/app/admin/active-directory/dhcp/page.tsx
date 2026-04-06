@@ -46,6 +46,7 @@ import {
   ChevronLeft,
   Plus,
   Trash2,
+  Bookmark,
 } from "lucide-react";
 import {
   useAdDomains,
@@ -54,7 +55,7 @@ import {
 } from "@/hooks/use-active-directory";
 import { adApi } from "@/lib/api/active-directory";
 import { toast } from "sonner";
-import type { DhcpScope } from "@/types/active-directory";
+import type { DhcpScope, DhcpReservation } from "@/types/active-directory";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -167,6 +168,268 @@ function LeasesPanel({
   );
 }
 
+// ── Reservations Panel ────────────────────────────────────────────────────────
+
+function ReservationsPanel({
+  scope,
+  onBack,
+}: {
+  scope: DhcpScope;
+  onBack: () => void;
+}) {
+  const [reservations, setReservations] = useState<DhcpReservation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newReservation, setNewReservation] = useState({
+    mac_address: "",
+    ip_address: "",
+    hostname: "",
+    description: "",
+  });
+
+  const fetchReservations = async () => {
+    setLoading(true);
+    try {
+      const res = await adApi.dhcp.reservations(scope.id);
+      setReservations(res.data);
+    } catch {
+      toast.error("Erreur lors du chargement des réservations");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch on mount — useEffect cannot be imported at top level here,
+  // so we rely on the pattern used elsewhere in this file via inline init.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const [_fetched] = useState(() => {
+    void fetchReservations();
+    return true;
+  });
+
+  const handleCreate = async () => {
+    setCreating(true);
+    try {
+      await adApi.dhcp.createReservation(scope.id, {
+        mac_address: newReservation.mac_address,
+        ip_address: newReservation.ip_address,
+        hostname: newReservation.hostname || undefined,
+        description: newReservation.description || undefined,
+      });
+      toast.success("Réservation créée avec succès");
+      setCreateOpen(false);
+      setNewReservation({
+        mac_address: "",
+        ip_address: "",
+        hostname: "",
+        description: "",
+      });
+      void fetchReservations();
+    } catch {
+      toast.error("Erreur lors de la création de la réservation");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDelete = async (reservation: DhcpReservation) => {
+    if (
+      !window.confirm(
+        `Supprimer la réservation pour ${reservation.mac_address} (${reservation.ip_address}) ?`,
+      )
+    ) {
+      return;
+    }
+    try {
+      await adApi.dhcp.deleteReservation(reservation.id);
+      toast.success("Réservation supprimée");
+      void fetchReservations();
+    } catch {
+      toast.error("Erreur lors de la suppression de la réservation");
+    }
+  };
+
+  return (
+    <>
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={onBack}>
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Retour
+              </Button>
+              <div>
+                <CardTitle>
+                  Réservations — {scope.name}{" "}
+                  <span className="font-mono text-sm font-normal text-muted-foreground">
+                    ({scope.subnet})
+                  </span>
+                </CardTitle>
+                <CardDescription>
+                  Plage : {scope.range_start} — {scope.range_end}
+                </CardDescription>
+              </div>
+            </div>
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouvelle réservation
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="py-12 text-center text-muted-foreground">
+              <RefreshCw className="h-5 w-5 mx-auto mb-2 animate-spin" />
+              Chargement...
+            </div>
+          ) : reservations.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground text-sm">
+              <Bookmark className="h-10 w-10 mx-auto mb-3 opacity-20" />
+              Aucune réservation pour cette étendue.
+            </div>
+          ) : (
+            <div className="rounded-b-md overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Adresse MAC</TableHead>
+                    <TableHead>Adresse IP</TableHead>
+                    <TableHead>Hostname</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="w-[60px]" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reservations.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="font-mono text-sm">
+                        {r.mac_address}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {r.ip_address}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {r.hostname ?? (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {r.description ?? (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          onClick={() => handleDelete(r)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Create Reservation Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nouvelle réservation DHCP</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-1.5">
+              <Label htmlFor="res-mac">Adresse MAC</Label>
+              <Input
+                id="res-mac"
+                placeholder="AA:BB:CC:DD:EE:FF"
+                value={newReservation.mac_address}
+                onChange={(e) =>
+                  setNewReservation((s) => ({
+                    ...s,
+                    mac_address: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="res-ip">Adresse IP</Label>
+              <Input
+                id="res-ip"
+                placeholder="192.168.1.50"
+                value={newReservation.ip_address}
+                onChange={(e) =>
+                  setNewReservation((s) => ({
+                    ...s,
+                    ip_address: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="res-hostname">Hostname (optionnel)</Label>
+              <Input
+                id="res-hostname"
+                placeholder="ex: PC-COMPTA-01"
+                value={newReservation.hostname}
+                onChange={(e) =>
+                  setNewReservation((s) => ({ ...s, hostname: e.target.value }))
+                }
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="res-desc">Description (optionnel)</Label>
+              <Input
+                id="res-desc"
+                placeholder="ex: Imprimante RDC"
+                value={newReservation.description}
+                onChange={(e) =>
+                  setNewReservation((s) => ({
+                    ...s,
+                    description: e.target.value,
+                  }))
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCreateOpen(false)}
+              disabled={creating}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleCreate}
+              disabled={
+                creating ||
+                !newReservation.mac_address ||
+                !newReservation.ip_address
+              }
+            >
+              {creating ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4 mr-2" />
+              )}
+              Créer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function DhcpPage() {
@@ -174,6 +437,8 @@ export default function DhcpPage() {
 
   const [domainId, setDomainId] = useState("");
   const [selectedScope, setSelectedScope] = useState<DhcpScope | null>(null);
+  const [selectedReservationScope, setSelectedReservationScope] =
+    useState<DhcpScope | null>(null);
 
   // Create scope dialog state
   const [createOpen, setCreateOpen] = useState(false);
@@ -205,6 +470,7 @@ export default function DhcpPage() {
   const handleDomainChange = (v: string) => {
     setDomainId(v);
     setSelectedScope(null);
+    setSelectedReservationScope(null);
   };
 
   const handleCreateScope = async () => {
@@ -371,7 +637,7 @@ export default function DhcpPage() {
         />
 
         {/* Domain selector (body area) */}
-        {domains.length > 1 && !selectedScope && (
+        {domains.length > 1 && !selectedScope && !selectedReservationScope && (
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Domaine</Label>
             <Select value={activeDomainId} onValueChange={handleDomainChange}>
@@ -411,6 +677,11 @@ export default function DhcpPage() {
             scope={selectedScope}
             onBack={() => setSelectedScope(null)}
           />
+        ) : selectedReservationScope ? (
+          <ReservationsPanel
+            scope={selectedReservationScope}
+            onBack={() => setSelectedReservationScope(null)}
+          />
         ) : (
           /* Scopes table */
           activeDomainId && (
@@ -446,7 +717,7 @@ export default function DhcpPage() {
                             Durée bail
                           </TableHead>
                           <TableHead className="w-[80px]">Actif</TableHead>
-                          <TableHead className="w-[60px]" />
+                          <TableHead className="w-[80px]" />
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -489,14 +760,28 @@ export default function DhcpPage() {
                               onClick={(e) => e.stopPropagation()}
                               className="text-right"
                             >
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                onClick={(e) => handleDeleteScope(scope, e)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-primary"
+                                  title="Réservations"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedReservationScope(scope);
+                                  }}
+                                >
+                                  <Bookmark className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                  onClick={(e) => handleDeleteScope(scope, e)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}

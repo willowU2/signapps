@@ -15,6 +15,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
   Table,
   TableBody,
   TableCell,
@@ -31,6 +39,8 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import {
+  Ban,
+  Plus,
   ShieldCheck,
   RefreshCw,
   Loader2,
@@ -41,6 +51,8 @@ import {
   useAdDomains,
   useInfraCertificates,
 } from "@/hooks/use-active-directory";
+import { adApi } from "@/lib/api/active-directory";
+import { toast } from "sonner";
 import type { InfraCertificate } from "@/types/active-directory";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -105,6 +117,15 @@ export default function CertificatesPage() {
 
   const [domainId, setDomainId] = useState("");
 
+  // Issue dialog state
+  const [issueOpen, setIssueOpen] = useState(false);
+  const [issueSubject, setIssueSubject] = useState("");
+  const [issueCertType, setIssueCertType] = useState<
+    "server" | "client" | "wildcard"
+  >("server");
+  const [issueSan, setIssueSan] = useState("");
+  const [issuing, setIssuing] = useState(false);
+
   const {
     data: domains = [],
     isLoading: loadingDomains,
@@ -119,6 +140,59 @@ export default function CertificatesPage() {
     isLoading: loadingCerts,
     refetch: refetchCerts,
   } = useInfraCertificates(activeDomainId);
+
+  async function handleRenew(cert: InfraCertificate) {
+    if (!window.confirm(`Renouveler le certificat "${cert.subject}" ?`)) return;
+    try {
+      await adApi.certificates.renew(cert.id);
+      toast.success("Certificat renouvelé avec succès");
+      refetchCerts();
+    } catch {
+      toast.error("Echec du renouvellement du certificat");
+    }
+  }
+
+  async function handleRevoke(cert: InfraCertificate) {
+    if (
+      !window.confirm(
+        `Révoquer le certificat "${cert.subject}" ? Cette action est irréversible.`,
+      )
+    )
+      return;
+    try {
+      await adApi.certificates.revoke(cert.id);
+      toast.success("Certificat révoqué");
+      refetchCerts();
+    } catch {
+      toast.error("Echec de la révocation du certificat");
+    }
+  }
+
+  async function handleIssue() {
+    if (!issueSubject.trim()) return;
+    setIssuing(true);
+    try {
+      const san = issueSan
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      await adApi.certificates.issue(activeDomainId, {
+        subject: issueSubject.trim(),
+        cert_type: issueCertType,
+        ...(san.length > 0 ? { san } : {}),
+      });
+      toast.success("Certificat émis avec succès");
+      setIssueOpen(false);
+      setIssueSubject("");
+      setIssueSan("");
+      setIssueCertType("server");
+      refetchCerts();
+    } catch {
+      toast.error("Echec de l'émission du certificat");
+    } finally {
+      setIssuing(false);
+    }
+  }
 
   const expiringSoon = certs.filter(
     (c) => c.status === "active" && daysUntilExpiry(c.not_after) <= 30,
@@ -222,6 +296,12 @@ export default function CertificatesPage() {
                 />
                 Rafraichir
               </Button>
+              {activeDomainId && (
+                <Button size="sm" onClick={() => setIssueOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Emettre un certificat
+                </Button>
+              )}
             </div>
           }
         />
@@ -317,6 +397,9 @@ export default function CertificatesPage() {
                         <TableHead className="w-[100px]">
                           Renouvellement
                         </TableHead>
+                        <TableHead className="w-[100px] text-right">
+                          Actions
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -374,6 +457,33 @@ export default function CertificatesPage() {
                                 </span>
                               )}
                             </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                {cert.status === "active" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    title="Renouveler"
+                                    onClick={() => handleRenew(cert)}
+                                  >
+                                    <RefreshCw className="h-3.5 w-3.5" />
+                                  </Button>
+                                )}
+                                {cert.status === "active" &&
+                                  cert.cert_type !== "root_ca" && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-destructive hover:text-destructive"
+                                      title="Révoquer"
+                                      onClick={() => handleRevoke(cert)}
+                                    >
+                                      <Ban className="h-3.5 w-3.5" />
+                                    </Button>
+                                  )}
+                              </div>
+                            </TableCell>
                           </TableRow>
                         );
                       })}
@@ -385,6 +495,76 @@ export default function CertificatesPage() {
           </Card>
         )}
       </div>
+
+      {/* Issue Certificate Dialog */}
+      <Dialog open={issueOpen} onOpenChange={setIssueOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Emettre un certificat</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="issue-subject">
+                Sujet (CN=...) <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="issue-subject"
+                placeholder="CN=mon-serveur.example.com"
+                value={issueSubject}
+                onChange={(e) => setIssueSubject(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="issue-type">Type</Label>
+              <Select
+                value={issueCertType}
+                onValueChange={(v) =>
+                  setIssueCertType(v as "server" | "client" | "wildcard")
+                }
+              >
+                <SelectTrigger id="issue-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="server">Serveur</SelectItem>
+                  <SelectItem value="client">Client</SelectItem>
+                  <SelectItem value="wildcard">Wildcard</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="issue-san">
+                SAN{" "}
+                <span className="text-muted-foreground text-xs">
+                  (séparés par des virgules, optionnel)
+                </span>
+              </Label>
+              <Input
+                id="issue-san"
+                placeholder="alt1.example.com, alt2.example.com"
+                value={issueSan}
+                onChange={(e) => setIssueSan(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIssueOpen(false)}
+              disabled={issuing}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleIssue}
+              disabled={!issueSubject.trim() || issuing}
+            >
+              {issuing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Emettre
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
