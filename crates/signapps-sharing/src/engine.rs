@@ -210,6 +210,24 @@ impl SharingEngine {
             })
             .await?;
 
+        // Emit notification (best-effort, never fails the grant).
+        // Only direct user grants get a notification; group / org_node /
+        // everyone fan-out is out of scope for this iteration.
+        if grant.grantee_type == GranteeType::User.as_str() {
+            if let Some(recipient_id) = grant.grantee_id {
+                crate::notifications::notify_grant_created(
+                    &self.pool,
+                    actor_ctx.tenant_id,
+                    recipient_id,
+                    actor_ctx.user_id,
+                    resource.resource_type,
+                    resource.resource_id,
+                    &grant.role,
+                )
+                .await;
+            }
+        }
+
         // Invalidate L2 cache for this resource.
         self.cache
             .invalidate_resource(resource.resource_type.as_str(), resource.resource_id);

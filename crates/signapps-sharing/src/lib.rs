@@ -49,6 +49,7 @@ pub mod defaults;
 pub mod engine;
 pub mod handlers;
 pub mod middleware;
+pub mod notifications;
 pub mod openapi;
 pub mod routes;
 
