@@ -388,3 +388,330 @@ pub async fn update_shared_mailbox_config(
     tracing::info!(mailbox_id = %mailbox_id, "Shared mailbox config updated");
     Ok(StatusCode::NO_CONTENT.into_response())
 }
+
+// ── Phase 3: DC Lifecycle ─────────────────────────────────────────────────────
+
+/// Request body for DC promotion.
+#[derive(Debug, Deserialize)]
+pub struct PromoteDcRequest {
+    /// Optional site UUID to associate the DC with.
+    pub site_id: Option<Uuid>,
+    /// Fully-qualified hostname of the new DC (e.g. `dc2.corp.local`).
+    pub hostname: String,
+    /// Primary IP address of the DC.
+    pub ip: String,
+    /// DC role: `primary_rwdc`, `rwdc`, or `rodc`.
+    pub role: String,
+}
+
+/// Promote a new Domain Controller into a domain.
+///
+/// Body: [`PromoteDcRequest`]
+///
+/// Creates DNS SRV records, assigns FSMO roles if first DC, and transitions
+/// the DC to `online` status.
+///
+/// # Errors
+///
+/// Returns `StatusCode::CONFLICT` if a DC with the same hostname already exists.
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the operation fails.
+///
+/// # Panics
+///
+/// No panics possible — all errors are propagated via `Result`.
+#[tracing::instrument(skip_all, fields(domain_id = %domain_id))]
+pub async fn promote_dc(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(domain_id): Path<Uuid>,
+    Json(body): Json<PromoteDcRequest>,
+) -> Result<impl IntoResponse, StatusCode> {
+    match signapps_ad_core::dc_lifecycle::promote_dc(
+        &state.pool,
+        domain_id,
+        body.site_id,
+        &body.hostname,
+        &body.ip,
+        &body.role,
+    )
+    .await
+    {
+        Ok(dc) => Ok((StatusCode::CREATED, Json(json!(dc))).into_response()),
+        Err(signapps_common::Error::Conflict(msg)) => {
+            tracing::warn!(domain_id = %domain_id, error = %msg, "DC promotion conflict");
+            Err(StatusCode::CONFLICT)
+        }
+        Err(e) => {
+            tracing::error!(domain_id = %domain_id, error = %e, "DC promotion failed");
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+/// Demote a Domain Controller, removing it from service.
+///
+/// The DC must hold no FSMO roles. Transfer them first using the FSMO transfer
+/// endpoint before calling this.
+///
+/// # Errors
+///
+/// Returns `StatusCode::CONFLICT` if the DC still holds FSMO roles.
+/// Returns `StatusCode::NOT_FOUND` if the DC does not exist.
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the operation fails.
+///
+/// # Panics
+///
+/// No panics possible — all errors are propagated via `Result`.
+#[tracing::instrument(skip_all, fields(dc_id = %dc_id))]
+pub async fn demote_dc(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(dc_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    match signapps_ad_core::dc_lifecycle::demote_dc(&state.pool, dc_id).await {
+        Ok(()) => Ok(StatusCode::NO_CONTENT.into_response()),
+        Err(signapps_common::Error::Conflict(msg)) => {
+            tracing::warn!(dc_id = %dc_id, error = %msg, "DC demotion blocked by FSMO roles");
+            Err(StatusCode::CONFLICT)
+        }
+        Err(signapps_common::Error::NotFound(_)) => Err(StatusCode::NOT_FOUND),
+        Err(e) => {
+            tracing::error!(dc_id = %dc_id, error = %e, "DC demotion failed");
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+/// Request body for FSMO role transfer or seizure.
+#[derive(Debug, Deserialize)]
+pub struct FsmoTransferRequest {
+    /// FSMO role name: `schema_master`, `domain_naming`, `rid_master`,
+    /// `pdc_emulator`, or `infrastructure_master`.
+    pub role: String,
+    /// UUID of the target DC that will receive the role.
+    pub new_dc_id: Uuid,
+    /// If `true`, perform a forced seizure without consulting the old DC.
+    #[serde(default)]
+    pub force: bool,
+}
+
+/// Transfer (or seize) a FSMO role to a new Domain Controller.
+///
+/// Body: [`FsmoTransferRequest`]
+///
+/// Set `force = true` for a seizure operation when the old DC is unreachable.
+///
+/// # Errors
+///
+/// Returns `StatusCode::BAD_REQUEST` if the target DC is not online or not writable.
+/// Returns `StatusCode::NOT_FOUND` if the role does not exist for the domain.
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the operation fails.
+///
+/// # Panics
+///
+/// No panics possible — all errors are propagated via `Result`.
+#[tracing::instrument(skip_all, fields(domain_id = %domain_id))]
+pub async fn transfer_fsmo(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(domain_id): Path<Uuid>,
+    Json(body): Json<FsmoTransferRequest>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let result = if body.force {
+        signapps_ad_core::dc_lifecycle::seize_fsmo(
+            &state.pool,
+            domain_id,
+            &body.role,
+            body.new_dc_id,
+        )
+        .await
+    } else {
+        signapps_ad_core::dc_lifecycle::transfer_fsmo(
+            &state.pool,
+            domain_id,
+            &body.role,
+            body.new_dc_id,
+        )
+        .await
+    };
+
+    match result {
+        Ok(()) => Ok(StatusCode::NO_CONTENT.into_response()),
+        Err(signapps_common::Error::NotFound(_)) => Err(StatusCode::NOT_FOUND),
+        Err(signapps_common::Error::BadRequest(msg)) => {
+            tracing::warn!(domain_id = %domain_id, error = %msg, "FSMO transfer rejected");
+            Err(StatusCode::BAD_REQUEST)
+        }
+        Err(e) => {
+            tracing::error!(domain_id = %domain_id, error = %e, "FSMO transfer failed");
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+// ── Phase 4: Snapshots ────────────────────────────────────────────────────────
+
+/// Request body for snapshot creation.
+#[derive(Debug, Deserialize)]
+pub struct CreateSnapshotRequest {
+    /// Snapshot type: `full`, `incremental`, `pre_migration`, or `pre_restore`.
+    pub snapshot_type: String,
+}
+
+/// Create a new snapshot for a domain.
+///
+/// Body: [`CreateSnapshotRequest`]
+///
+/// Captures all AD tables and writes a JSON archive with a SHA-256 checksum.
+/// Returns the completed [`AdSnapshot`](signapps_db::models::ad_sync::AdSnapshot) record.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if snapshot creation fails.
+///
+/// # Panics
+///
+/// No panics possible — all errors are propagated via `Result`.
+#[tracing::instrument(skip_all, fields(domain_id = %domain_id))]
+pub async fn create_snapshot(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(domain_id): Path<Uuid>,
+    Json(body): Json<CreateSnapshotRequest>,
+) -> Result<impl IntoResponse, StatusCode> {
+    match signapps_ad_core::snapshots::create_snapshot(
+        &state.pool,
+        domain_id,
+        &body.snapshot_type,
+    )
+    .await
+    {
+        Ok(snapshot) => Ok((StatusCode::CREATED, Json(json!(snapshot))).into_response()),
+        Err(e) => {
+            tracing::error!(domain_id = %domain_id, error = %e, "Snapshot creation failed");
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+/// List all snapshots for a domain, newest first.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the query fails.
+///
+/// # Panics
+///
+/// No panics possible — all errors are propagated via `Result`.
+#[tracing::instrument(skip_all, fields(domain_id = %domain_id))]
+pub async fn list_snapshots(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(domain_id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    match signapps_ad_core::snapshots::list_snapshots(&state.pool, domain_id).await {
+        Ok(snapshots) => Ok(Json(json!(snapshots)).into_response()),
+        Err(e) => {
+            tracing::error!(domain_id = %domain_id, error = %e, "Failed to list snapshots");
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+/// Request body for restore preview and execution.
+#[derive(Debug, Deserialize)]
+pub struct RestoreRequest {
+    /// Limit the restore scope to a specific DN subtree.
+    /// Absent or `null` restores the entire domain.
+    pub target_dn: Option<String>,
+    /// When `target_dn` is provided, also restore objects whose DN ends with
+    /// `,{target_dn}` (descendants in the subtree).
+    #[serde(default)]
+    pub include_children: bool,
+}
+
+/// Preview what would change if a snapshot restore were executed.
+///
+/// Body: [`RestoreRequest`]
+///
+/// Compares the snapshot manifest against the current database state and
+/// returns a diff without writing anything to the database.
+///
+/// # Errors
+///
+/// Returns `StatusCode::NOT_FOUND` if the snapshot does not exist.
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the preview fails.
+///
+/// # Panics
+///
+/// No panics possible — all errors are propagated via `Result`.
+#[tracing::instrument(skip_all, fields(snapshot_id = %snapshot_id))]
+pub async fn restore_preview(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(snapshot_id): Path<Uuid>,
+    Json(body): Json<RestoreRequest>,
+) -> Result<impl IntoResponse, StatusCode> {
+    match signapps_ad_core::snapshots::restore_preview(
+        &state.pool,
+        snapshot_id,
+        body.target_dn.as_deref(),
+        body.include_children,
+    )
+    .await
+    {
+        Ok(preview) => Ok(Json(json!(preview)).into_response()),
+        Err(signapps_common::Error::NotFound(_)) => Err(StatusCode::NOT_FOUND),
+        Err(e) => {
+            tracing::error!(snapshot_id = %snapshot_id, error = %e, "Restore preview failed");
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
+
+/// Execute a granular restore from a snapshot.
+///
+/// Body: [`RestoreRequest`]
+///
+/// Automatically creates a `pre_restore` safety snapshot before making any
+/// changes. Returns a [`RestoreReport`](signapps_ad_core::snapshots::RestoreReport)
+/// with counts of restored and skipped objects.
+///
+/// # Errors
+///
+/// Returns `StatusCode::NOT_FOUND` if the snapshot does not exist.
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if the restore fails.
+///
+/// # Panics
+///
+/// No panics possible — all errors are propagated via `Result`.
+#[tracing::instrument(skip_all, fields(snapshot_id = %snapshot_id))]
+pub async fn restore_execute(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(snapshot_id): Path<Uuid>,
+    Json(body): Json<RestoreRequest>,
+) -> Result<impl IntoResponse, StatusCode> {
+    match signapps_ad_core::snapshots::restore_execute(
+        &state.pool,
+        snapshot_id,
+        body.target_dn.as_deref(),
+        body.include_children,
+    )
+    .await
+    {
+        Ok(report) => Ok(Json(json!(report)).into_response()),
+        Err(signapps_common::Error::NotFound(_)) => Err(StatusCode::NOT_FOUND),
+        Err(e) => {
+            tracing::error!(snapshot_id = %snapshot_id, error = %e, "Restore execution failed");
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}

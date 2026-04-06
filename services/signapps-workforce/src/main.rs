@@ -224,6 +224,36 @@ fn create_router(state: AppState) -> Router {
             "/shared-mailboxes/:id/config",
             put(handlers::ad_sync::update_shared_mailbox_config),
         )
+        // ── Phase 3: DC Lifecycle ──
+        .route(
+            "/domains/:id/dc-sites",
+            post(handlers::ad_sync::promote_dc),
+        )
+        .route(
+            "/dc-sites/:id/demote",
+            post(handlers::ad_sync::demote_dc),
+        )
+        .route(
+            "/domains/:id/fsmo/transfer",
+            post(handlers::ad_sync::transfer_fsmo),
+        )
+        // ── Phase 4: Snapshots ──
+        .route(
+            "/domains/:id/snapshots",
+            get(handlers::ad_sync::list_snapshots),
+        )
+        .route(
+            "/domains/:id/snapshots",
+            post(handlers::ad_sync::create_snapshot),
+        )
+        .route(
+            "/snapshots/:id/preview",
+            post(handlers::ad_sync::restore_preview),
+        )
+        .route(
+            "/snapshots/:id/restore",
+            post(handlers::ad_sync::restore_execute),
+        )
         // ── Update endpoints ──
         .route("/domains/:id", put(handlers::ad::update_domain))
         .route("/deploy/profiles/:id", put(handlers::ad::update_deploy_profile))
