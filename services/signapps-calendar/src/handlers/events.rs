@@ -15,7 +15,7 @@ use uuid::Uuid;
 
 use crate::{AppState, CalendarError};
 
-/// Verify the caller owns the calendar or is a shared member.
+/// Verify the caller owns the calendar or has a sharing grant on it.
 ///
 /// Returns `Ok(())` if the user has access, `Err(CalendarError::NotFound)` otherwise.
 async fn verify_calendar_access(
@@ -23,7 +23,7 @@ async fn verify_calendar_access(
     calendar_id: Uuid,
     user_id: Uuid,
 ) -> Result<(), CalendarError> {
-    use signapps_db::{CalendarMemberRepository, CalendarRepository};
+    use signapps_db::CalendarRepository;
 
     let cal_repo = CalendarRepository::new(&state.pool);
     let calendar = cal_repo
@@ -36,12 +36,25 @@ async fn verify_calendar_access(
         return Ok(());
     }
 
-    let member_repo = CalendarMemberRepository::new(&state.pool);
-    let members = member_repo
-        .list_members(calendar_id)
-        .await
-        .map_err(|_| CalendarError::InternalError)?;
-    if members.iter().any(|m| m.user_id == user_id) {
+    // Check for a direct user grant in the unified sharing system
+    let has_grant: Option<bool> = sqlx::query_scalar(
+        r#"
+        SELECT TRUE FROM sharing.grants
+        WHERE resource_type = 'calendar'
+          AND resource_id = $1
+          AND grantee_type = 'user'
+          AND grantee_id = $2
+          AND (expires_at IS NULL OR expires_at > NOW())
+        LIMIT 1
+        "#,
+    )
+    .bind(calendar_id)
+    .bind(user_id)
+    .fetch_optional(state.pool.inner())
+    .await
+    .map_err(|_| CalendarError::InternalError)?;
+
+    if has_grant.is_some() {
         return Ok(());
     }
 

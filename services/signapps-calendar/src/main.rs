@@ -43,6 +43,8 @@ pub struct AppState {
     pub ai_client: Arc<crate::services::ai_service::AiServiceClient>,
     /// PostgreSQL-backed event bus for cross-service events
     pub event_bus: PgEventBus,
+    /// Unified sharing / permission engine
+    pub sharing: SharingEngine,
 }
 
 impl AuthState for AppState {
@@ -75,6 +77,9 @@ async fn main() -> anyhow::Result<()> {
 
     let event_bus = PgEventBus::new(pool.inner().clone(), "signapps-calendar".to_string());
 
+    // Initialize sharing engine — drives all calendar sharing/permission operations
+    let sharing_engine = SharingEngine::new(pool.inner().clone(), CacheService::default_config());
+
     let state = AppState {
         pool: pool.clone(),
         jwt_config,
@@ -83,13 +88,11 @@ async fn main() -> anyhow::Result<()> {
         presence_manager: Arc::new(PresenceManager::new()),
         ai_client: Arc::new(crate::services::ai_service::AiServiceClient::new()),
         event_bus,
+        sharing: sharing_engine.clone(),
     };
 
     tracing::info!("Real-time collaboration system initialized");
     tracing::info!("Presence tracking system initialized");
-
-    // Initialize sharing engine (additive — existing calendar.members system unchanged)
-    let sharing_engine = SharingEngine::new(pool.inner().clone(), CacheService::default_config());
 
     // Initialize and spawn notification scheduler
     let scheduler_config = SchedulerConfig::new();

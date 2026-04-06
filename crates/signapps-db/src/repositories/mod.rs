@@ -41,7 +41,7 @@ pub use vector_repository::VectorRepository;
 
 pub mod calendar_repository;
 pub use calendar_repository::{
-    CalendarMemberRepository, CalendarRepository, EventAttendeeRepository, EventRepository,
+    CalendarRepository, EventAttendeeRepository, EventRepository,
     FloorPlanRepository, ResourceRepository, TaskRepository,
 };
 

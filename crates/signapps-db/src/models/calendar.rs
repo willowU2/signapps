@@ -53,47 +53,6 @@ pub struct UpdateCalendar {
 }
 
 // ============================================================================
-// Calendar Member (Sharing)
-// ============================================================================
-/// A user who has been granted access to a shared calendar with a specific role.
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
-pub struct CalendarMember {
-    pub id: Uuid,
-    pub calendar_id: Uuid,
-    pub user_id: Uuid,
-    pub role: String, // owner|editor|viewer
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-/// Request to add a user to a calendar with a given role.
-#[derive(Debug, Clone, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
-pub struct AddCalendarMember {
-    pub user_id: Uuid,
-    pub role: String,
-}
-
-/// A calendar together with its full member list.
-#[derive(Debug, Clone, Serialize)]
-pub struct CalendarWithMembers {
-    pub calendar: Calendar,
-    pub members: Vec<CalendarMemberWithUser>,
-}
-
-/// A calendar member row joined with basic user profile data.
-#[derive(Debug, Clone, FromRow, Serialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
-pub struct CalendarMemberWithUser {
-    pub id: Uuid,
-    pub user_id: Uuid,
-    pub username: String,
-    pub email: Option<String>,
-    pub role: String,
-}
-
-// ============================================================================
 // Event Model
 // ============================================================================
 /// A calendar event with optional recurrence rules, type metadata, and attendee support.

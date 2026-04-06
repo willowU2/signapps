@@ -46,13 +46,18 @@ impl TenantCalendarRepository {
         Ok(calendars)
     }
 
-    /// List calendars for a user (owned + shared).
+    /// List calendars for a user (owned + shared via signapps-sharing grants).
     pub async fn list_by_user(pool: &PgPool, user_id: Uuid) -> Result<Vec<TenantCalendar>> {
         let calendars = sqlx::query_as::<_, TenantCalendar>(
             r#"
             SELECT DISTINCT c.* FROM calendar.calendars c
-            LEFT JOIN calendar.calendar_members cm ON c.id = cm.calendar_id
-            WHERE c.owner_id = $1 OR cm.user_id = $1 OR c.is_public = TRUE
+            LEFT JOIN sharing.grants g
+                ON g.resource_type = 'calendar'
+                AND g.resource_id = c.id
+                AND g.grantee_type = 'user'
+                AND g.grantee_id = $1
+                AND (g.expires_at IS NULL OR g.expires_at > NOW())
+            WHERE c.owner_id = $1 OR g.id IS NOT NULL OR c.is_public = TRUE
             ORDER BY c.is_default DESC, c.name
             "#,
         )
