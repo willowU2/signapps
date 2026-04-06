@@ -57,7 +57,9 @@ import {
   ToggleRight,
   ChevronDown,
   ChevronRight,
+  Info,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 import {
   useAdDomains,
@@ -401,6 +403,46 @@ export default function AdGpoPage() {
                                       <span>{gpo.linked_ous.join(", ")}</span>
                                     </div>
                                   )}
+
+                                  {/* Certificate Enrollment Section */}
+                                  <div className="mt-3 pt-3 border-t border-border/50">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                                      <span className="font-medium text-foreground">
+                                        Inscription certificats
+                                      </span>
+                                    </div>
+                                    <div className="space-y-2 pl-1">
+                                      <div className="flex items-center gap-3">
+                                        <Switch
+                                          id={`cert-autoenroll-${gpo.id}`}
+                                          defaultChecked={false}
+                                          disabled
+                                          aria-label="Auto-enrollment des certificats"
+                                        />
+                                        <Label
+                                          htmlFor={`cert-autoenroll-${gpo.id}`}
+                                          className="text-sm font-normal cursor-default"
+                                        >
+                                          Auto-enrollment
+                                        </Label>
+                                      </div>
+                                      <div className="text-muted-foreground">
+                                        Politique de renouvellement :{" "}
+                                        <span className="text-foreground">
+                                          automatique (30j avant expiration)
+                                        </span>
+                                      </div>
+                                      <div className="flex items-start gap-1.5 text-xs text-muted-foreground mt-1">
+                                        <Info className="h-3.5 w-3.5 mt-0.5 shrink-0 text-blue-500 dark:text-blue-400" />
+                                        <span>
+                                          Configuré via GPO — les machines du
+                                          domaine recevront automatiquement les
+                                          certificats
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
                               </TableCell>
                             </TableRow>

@@ -40,6 +40,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Monitor, Search, Trash2, KeyRound, RefreshCw } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 import { useAdDomains } from "@/hooks/use-active-directory";
 import { useAdComputers } from "@/hooks/use-active-directory";
@@ -68,6 +74,19 @@ function isOnlineLast30Days(lastLogon?: string): boolean {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 30);
   return new Date(lastLogon) >= cutoff;
+}
+
+// Returns true when the machine has network config (proxy for an active DHCP lease)
+function hasDhcpIndicator(dnsHostname?: string): boolean {
+  return !!dnsHostname;
+}
+
+// Returns true when dns_hostname ends with a known domain suffix (proxy for TLS cert)
+const KNOWN_DOMAIN_SUFFIXES = [".local", ".lan", ".corp", ".internal", ".ad"];
+function hasTlsIndicator(dnsHostname?: string): boolean {
+  if (!dnsHostname) return false;
+  const lower = dnsHostname.toLowerCase();
+  return KNOWN_DOMAIN_SUFFIXES.some((suffix) => lower.endsWith(suffix));
 }
 
 export default function AdComputersPage() {
@@ -206,6 +225,15 @@ export default function AdComputersPage() {
                       <TableHead>Nom DNS</TableHead>
                       <TableHead>Systeme</TableHead>
                       <TableHead>Version</TableHead>
+                      <TableHead className="w-[60px] text-center">
+                        DHCP
+                      </TableHead>
+                      <TableHead className="w-[60px] text-center">
+                        Cert
+                      </TableHead>
+                      <TableHead className="w-[60px] text-center">
+                        Deploy
+                      </TableHead>
                       <TableHead>Derniere connexion</TableHead>
                       <TableHead>Cree le</TableHead>
                       <TableHead className="w-[100px]" />
@@ -228,6 +256,68 @@ export default function AdComputersPage() {
                         <TableCell>{osBadge(computer.os)}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {computer.os_version ?? "—"}
+                        </TableCell>
+                        {/* DHCP indicator */}
+                        <TableCell className="text-center">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                {hasDhcpIndicator(computer.dns_hostname) ? (
+                                  <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800 text-[10px] cursor-default">
+                                    DHCP
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted-foreground text-xs">
+                                    —
+                                  </span>
+                                )}
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {hasDhcpIndicator(computer.dns_hostname)
+                                  ? "Nom DNS résolu — bail DHCP probable"
+                                  : "Pas de configuration réseau détectée"}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </TableCell>
+                        {/* TLS cert indicator */}
+                        <TableCell className="text-center">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                {hasTlsIndicator(computer.dns_hostname) ? (
+                                  <Badge className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 text-[10px] cursor-default">
+                                    TLS
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted-foreground text-xs">
+                                    —
+                                  </span>
+                                )}
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {hasTlsIndicator(computer.dns_hostname)
+                                  ? "Suffixe de domaine connu — certificat TLS probable"
+                                  : "Suffixe de domaine non reconnu"}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </TableCell>
+                        {/* Deploy profile indicator (placeholder) */}
+                        <TableCell className="text-center">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge className="bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800 text-[10px] cursor-default">
+                                  Deploy
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Profil de déploiement — données détaillées
+                                disponibles via PXE
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {computer.last_logon

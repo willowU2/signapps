@@ -47,6 +47,7 @@ import {
   Plus,
   Trash2,
   Bookmark,
+  Pencil,
 } from "lucide-react";
 import {
   useAdDomains,
@@ -438,6 +439,18 @@ export default function DhcpPage() {
   const [selectedReservationScope, setSelectedReservationScope] =
     useState<DhcpScope | null>(null);
 
+  // Edit scope dialog state
+  const [editScopeOpen, setEditScopeOpen] = useState(false);
+  const [editingScope, setEditingScope] = useState<DhcpScope | null>(null);
+  const [editScopeData, setEditScopeData] = useState({
+    name: "",
+    gateway: "",
+    lease_duration_hours: "24",
+    pxe_server: "",
+    pxe_bootfile: "",
+  });
+  const [editingScopeLoading, setEditingScopeLoading] = useState(false);
+
   // Create scope dialog state
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -498,6 +511,47 @@ export default function DhcpPage() {
       toast.error("Erreur lors de la création de l'étendue");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleOpenEditScope = (scope: DhcpScope, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingScope(scope);
+    setEditScopeData({
+      name: scope.name,
+      gateway: scope.gateway ?? "",
+      lease_duration_hours: String(scope.lease_duration_hours),
+      pxe_server:
+        (scope as DhcpScope & { pxe_server?: string }).pxe_server ?? "",
+      pxe_bootfile:
+        (scope as DhcpScope & { pxe_bootfile?: string }).pxe_bootfile ?? "",
+    });
+    setEditScopeOpen(true);
+  };
+
+  const handleUpdateScope = async () => {
+    if (!editingScope) return;
+    setEditingScopeLoading(true);
+    try {
+      await adApi.dhcp.updateScope(editingScope.id, {
+        name: editScopeData.name,
+        gateway: editScopeData.gateway || undefined,
+        lease_duration_hours: parseInt(editScopeData.lease_duration_hours, 10),
+        ...(editScopeData.pxe_server
+          ? { pxe_server: editScopeData.pxe_server }
+          : {}),
+        ...(editScopeData.pxe_bootfile
+          ? { pxe_bootfile: editScopeData.pxe_bootfile }
+          : {}),
+      });
+      toast.success(`Étendue "${editScopeData.name}" mise à jour`);
+      setEditScopeOpen(false);
+      setEditingScope(null);
+      refetchScopes();
+    } catch {
+      toast.error("Erreur lors de la mise à jour de l'étendue");
+    } finally {
+      setEditingScopeLoading(false);
     }
   };
 
@@ -774,6 +828,15 @@ export default function DhcpPage() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-primary"
+                                  title="Modifier l'étendue"
+                                  onClick={(e) => handleOpenEditScope(scope, e)}
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   className="h-7 w-7 text-muted-foreground hover:text-destructive"
                                   onClick={(e) => handleDeleteScope(scope, e)}
                                 >
@@ -898,6 +961,106 @@ export default function DhcpPage() {
                 <Plus className="h-4 w-4 mr-2" />
               )}
               Créer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Edit Scope Dialog */}
+      <Dialog open={editScopeOpen} onOpenChange={setEditScopeOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modifier l&apos;étendue DHCP</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-1.5">
+              <Label htmlFor="edit-scope-name">Nom</Label>
+              <Input
+                id="edit-scope-name"
+                placeholder="ex: LAN-Bureau"
+                value={editScopeData.name}
+                onChange={(e) =>
+                  setEditScopeData((s) => ({ ...s, name: e.target.value }))
+                }
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="edit-scope-gateway">Passerelle (optionnel)</Label>
+              <Input
+                id="edit-scope-gateway"
+                placeholder="192.168.1.1"
+                value={editScopeData.gateway}
+                onChange={(e) =>
+                  setEditScopeData((s) => ({ ...s, gateway: e.target.value }))
+                }
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="edit-scope-lease">Durée du bail (heures)</Label>
+              <Input
+                id="edit-scope-lease"
+                type="number"
+                min="1"
+                placeholder="24"
+                value={editScopeData.lease_duration_hours}
+                onChange={(e) =>
+                  setEditScopeData((s) => ({
+                    ...s,
+                    lease_duration_hours: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="edit-scope-pxe-server">
+                Serveur PXE (optionnel)
+              </Label>
+              <Input
+                id="edit-scope-pxe-server"
+                placeholder="ex: 192.168.1.10"
+                value={editScopeData.pxe_server}
+                onChange={(e) =>
+                  setEditScopeData((s) => ({
+                    ...s,
+                    pxe_server: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="edit-scope-pxe-bootfile">
+                Fichier boot PXE (optionnel)
+              </Label>
+              <Input
+                id="edit-scope-pxe-bootfile"
+                placeholder="ex: pxelinux.0"
+                value={editScopeData.pxe_bootfile}
+                onChange={(e) =>
+                  setEditScopeData((s) => ({
+                    ...s,
+                    pxe_bootfile: e.target.value,
+                  }))
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditScopeOpen(false)}
+              disabled={editingScopeLoading}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleUpdateScope}
+              disabled={editingScopeLoading || !editScopeData.name}
+            >
+              {editingScopeLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Pencil className="h-4 w-4 mr-2" />
+              )}
+              Enregistrer
             </Button>
           </DialogFooter>
         </DialogContent>
