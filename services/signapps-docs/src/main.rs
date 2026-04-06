@@ -7,6 +7,8 @@ use signapps_cache::CacheService;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::auth_middleware;
 use signapps_common::{AuthState, JwtConfig};
+use signapps_sharing::routes::sharing_routes;
+use signapps_sharing::{ResourceType, SharingEngine};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
@@ -66,13 +68,16 @@ async fn main() -> anyhow::Result<()> {
 
     // Initialize app state
     let app_state = AppState {
-        pool,
+        pool: pool.clone(),
         cache,
         docs: Arc::new(dashmap::DashMap::new()),
         broadcasts: Arc::new(dashmap::DashMap::new()),
         indexer: AiIndexerClient::from_env(),
         jwt_config,
     };
+
+    // Initialize sharing engine (additive — existing document_permissions system unchanged)
+    let sharing_engine = SharingEngine::new(pool.inner().clone(), CacheService::default_config());
 
     // Build router with document type endpoints
     // Public routes (no auth required)
@@ -141,8 +146,14 @@ async fn main() -> anyhow::Result<()> {
             auth_middleware::<AppState>,
         ));
 
+    // Sharing sub-router: State<SharingEngine> — additive, isolated from AppState.
+    // The existing document_permissions system is NOT touched.
+    let sharing_sub = sharing_routes("documents", ResourceType::Document)
+        .with_state(sharing_engine);
+
     let app = public_routes
         .merge(protected_routes)
+        .merge(sharing_sub)
         .merge(
             SwaggerUi::new("/swagger-ui")
                 .url("/api-docs/openapi.json", handlers::openapi::DocsApiDoc::openapi()),
