@@ -1,0 +1,47 @@
+[package]
+name = "signapps-sharing"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Unified permission/sharing engine for SignApps Platform"
+
+[dependencies]
+# Internal
+signapps-common = { path = "../signapps-common" }
+signapps-db = { path = "../signapps-db" }
+signapps-cache = { path = "../signapps-cache" }
+
+# Database
+sqlx = { workspace = true }
+
+# Async
+tokio = { workspace = true }
+
+# Observability
+tracing = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+
+# Web framework
+axum = { workspace = true }
+tower = { workspace = true }
+
+# OpenAPI schema derivation (optional feature)
+utoipa = { workspace = true, optional = true }
+
+[features]
+openapi = ["utoipa"]
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

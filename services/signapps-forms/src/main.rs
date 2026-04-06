@@ -12,6 +12,7 @@ use axum::{
     Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use signapps_cache::CacheService;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::pg_events::{NewEvent, PgEventBus};
@@ -19,6 +20,8 @@ use signapps_common::Claims;
 use signapps_common::JwtConfig;
 use signapps_db::models::{Answer, CreateForm, FieldType, FormField, SubmitResponse, UpdateForm};
 use signapps_db::repositories::FormRepository;
+use signapps_sharing::routes::sharing_routes;
+use signapps_sharing::{ResourceType, SharingEngine};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 use uuid::Uuid;
@@ -678,7 +681,7 @@ async fn health_check() -> axum::Json<serde_json::Value> {
 // Router
 // ---------------------------------------------------------------------------
 
-fn create_router(state: AppState) -> Router {
+fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
             "http://localhost:3000".parse().expect("valid origin"),
@@ -727,8 +730,13 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    // Sharing sub-router: State<SharingEngine> — separate from AppState.
+    let sharing_sub = sharing_routes("forms", ResourceType::Form)
+        .with_state(sharing_engine);
+
     public_routes
         .merge(protected_routes)
+        .merge(sharing_sub)
         .merge(openapi::swagger_router())
         .layer(TraceLayer::new_for_http())
         .layer(cors)
@@ -775,14 +783,16 @@ async fn main() -> anyhow::Result<()> {
 
     let state = AppState {
         jwt_config,
-        pool,
+        pool: pool.clone(),
         event_bus,
         webhooks: new_webhook_store(),
     };
 
+    let sharing_engine = SharingEngine::new(pool, CacheService::default_config());
+
     tracing::info!("Database connected & service ready");
 
-    let app = create_router(state);
+    let app = create_router(state, sharing_engine);
 
     signapps_common::bootstrap::run_server(app, &config).await?;
 
