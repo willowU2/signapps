@@ -84,9 +84,10 @@ impl SharingEngine {
         action: Action,
         owner_id: Option<Uuid>,
     ) -> Result<()> {
+        let chain = self.parent_chain(&resource).await;
         let resolver = PermissionResolver::new(&self.pool);
         resolver
-            .check_action(user_ctx, &resource, owner_id, &action)
+            .check_action_with_parents(user_ctx, &chain, owner_id, &action)
             .await
     }
 
@@ -111,8 +112,9 @@ impl SharingEngine {
         resource: ResourceRef,
         owner_id: Option<Uuid>,
     ) -> Result<Option<EffectivePermission>> {
+        let chain = self.parent_chain(&resource).await;
         let resolver = PermissionResolver::new(&self.pool);
-        resolver.resolve(user_ctx, &resource, owner_id).await
+        resolver.resolve_with_parents(user_ctx, &chain, owner_id).await
     }
 
     // ─── Grant management ─────────────────────────────────────────────────
@@ -549,6 +551,44 @@ impl SharingEngine {
         .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(rows.into_iter().map(|(id,)| id).collect())
+    }
+
+    /// Build the ordered parent chain for a resource (current resource first,
+    /// then its ancestors in order).
+    ///
+    /// **Phase A (current):** Returns a single-element `Vec` containing the
+    /// resource itself.  The resolver already handles this case correctly —
+    /// permission checks on direct grants continue to work unchanged.
+    ///
+    /// **Phase B (future):** Extend this method per resource type to walk the
+    /// actual hierarchy from the database:
+    /// - `file` / `folder` → query `drive.nodes.parent_id` repeatedly until
+    ///   `parent_id IS NULL`.
+    /// - `event` → query `calendar.events.calendar_id`, return
+    ///   `[event_ref, calendar_ref]`.
+    /// - Other types → single-element chain (no inheritance).
+    ///
+    /// # Errors
+    ///
+    /// No errors in Phase A.  Phase B implementations will propagate
+    /// [`Error::Database`] for any failed query.
+    ///
+    /// # Panics
+    ///
+    /// No panics — all errors are propagated via `Result`.
+    async fn parent_chain(&self, resource: &ResourceRef) -> Vec<ResourceRef> {
+        // Phase A: always return the resource itself.
+        // TODO(phase-b): extend with per-type DB walk-up.
+        //   match resource.resource_type {
+        //     ResourceType::File | ResourceType::Folder => {
+        //         self.walk_drive_nodes(resource).await.unwrap_or_else(|_| vec![resource.clone()])
+        //     }
+        //     ResourceType::Event => {
+        //         self.event_with_calendar(resource).await.unwrap_or_else(|_| vec![resource.clone()])
+        //     }
+        //     _ => vec![resource.clone()],
+        //   }
+        vec![resource.clone()]
     }
 }
 
