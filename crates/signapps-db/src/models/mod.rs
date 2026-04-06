@@ -2,6 +2,7 @@
 
 pub mod activity;
 pub mod ad_dns;
+pub mod ad_sync;
 pub mod ad_domain;
 pub mod ad_principal_keys;
 pub mod audit_log;

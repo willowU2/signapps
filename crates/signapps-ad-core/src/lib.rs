@@ -41,6 +41,7 @@
 //! | [`acl`] | Access control for directory operations |
 //! | [`domain`] | AD domain lifecycle (create, delete) |
 //! | [`crypto_helpers`] | Key derivation (AES-256, NT hash) |
+//! | [`naming`] | SAM account name generation and DN builder |
 //!
 //! ## Example
 //!
@@ -62,6 +63,7 @@ pub mod dn;
 pub mod entry;
 pub mod filter;
 pub mod guid;
+pub mod naming;
 pub mod provisioner;
 pub mod schema;
 pub mod sid;
