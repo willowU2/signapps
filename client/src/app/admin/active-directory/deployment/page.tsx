@@ -30,6 +30,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   HardDrive,
   RefreshCw,
@@ -37,6 +45,8 @@ import {
   AlertTriangle,
   ChevronLeft,
   Package,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import {
   useAdDomains,
@@ -44,6 +54,8 @@ import {
   useDeployHistory,
 } from "@/hooks/use-active-directory";
 import type { DeployProfile, DeployHistory } from "@/types/active-directory";
+import { adApi } from "@/lib/api/active-directory";
+import { toast } from "sonner";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -208,6 +220,14 @@ export default function DeploymentPage() {
     null,
   );
 
+  // Create profile dialog state
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [newOsType, setNewOsType] = useState("");
+  const [newOsVersion, setNewOsVersion] = useState("");
+
   const {
     data: domains = [],
     isLoading: loadingDomains,
@@ -226,6 +246,62 @@ export default function DeploymentPage() {
   const handleDomainChange = (v: string) => {
     setDomainId(v);
     setSelectedProfile(null);
+  };
+
+  const openCreateDialog = () => {
+    setNewName("");
+    setNewDescription("");
+    setNewOsType("");
+    setNewOsVersion("");
+    setCreateOpen(true);
+  };
+
+  const handleCreateProfile = async () => {
+    if (!newName.trim()) {
+      toast.error("Le nom du profil est obligatoire.");
+      return;
+    }
+    if (!activeDomainId) {
+      toast.error("Aucun domaine sélectionné.");
+      return;
+    }
+    setCreating(true);
+    try {
+      await adApi.deploy.createProfile(activeDomainId, {
+        name: newName.trim(),
+        description: newDescription.trim() || undefined,
+        os_type: newOsType || undefined,
+        os_version: newOsVersion.trim() || undefined,
+      });
+      toast.success(`Profil "${newName.trim()}" créé avec succès.`);
+      setCreateOpen(false);
+      void refetchProfiles();
+    } catch {
+      toast.error("Erreur lors de la création du profil.");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDeleteProfile = async (
+    e: React.MouseEvent,
+    profile: DeployProfile,
+  ) => {
+    e.stopPropagation();
+    if (
+      !window.confirm(
+        `Supprimer le profil "${profile.name}" ? Cette action est irréversible.`,
+      )
+    ) {
+      return;
+    }
+    try {
+      await adApi.deploy.deleteProfile(profile.id);
+      toast.success(`Profil "${profile.name}" supprimé.`);
+      void refetchProfiles();
+    } catch {
+      toast.error("Erreur lors de la suppression du profil.");
+    }
   };
 
   if (loadingDomains) {
@@ -329,6 +405,12 @@ export default function DeploymentPage() {
                 />
                 Rafraichir
               </Button>
+              {activeDomainId && (
+                <Button size="sm" onClick={openCreateDialog}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouveau profil
+                </Button>
+              )}
             </div>
           }
         />
@@ -407,6 +489,7 @@ export default function DeploymentPage() {
                           <TableHead>OU cible</TableHead>
                           <TableHead className="w-[90px]">Par defaut</TableHead>
                           <TableHead className="w-[90px]">Paquets</TableHead>
+                          <TableHead className="w-[48px]" />
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -450,6 +533,17 @@ export default function DeploymentPage() {
                                 {packagesCount(profile.packages)}
                               </span>
                             </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                onClick={(e) => handleDeleteProfile(e, profile)}
+                                title="Supprimer ce profil"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -461,6 +555,90 @@ export default function DeploymentPage() {
           )
         )}
       </div>
+
+      {/* Create profile dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Nouveau profil de deploiement</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="profile-name">
+                Nom <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="profile-name"
+                placeholder="ex: Windows 11 Standard"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                disabled={creating}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="profile-description">
+                Description{" "}
+                <span className="text-muted-foreground text-xs">
+                  (optionnel)
+                </span>
+              </Label>
+              <Input
+                id="profile-description"
+                placeholder="Description du profil"
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                disabled={creating}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="profile-os-type">Type OS</Label>
+              <Select
+                value={newOsType}
+                onValueChange={setNewOsType}
+                disabled={creating}
+              >
+                <SelectTrigger id="profile-os-type">
+                  <SelectValue placeholder="Sélectionner un type OS" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="windows">Windows</SelectItem>
+                  <SelectItem value="linux">Linux</SelectItem>
+                  <SelectItem value="macos">macOS</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="profile-os-version">
+                Version OS{" "}
+                <span className="text-muted-foreground text-xs">
+                  (optionnel)
+                </span>
+              </Label>
+              <Input
+                id="profile-os-version"
+                placeholder="ex: 11 22H2"
+                value={newOsVersion}
+                onChange={(e) => setNewOsVersion(e.target.value)}
+                disabled={creating}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCreateOpen(false)}
+              disabled={creating}
+            >
+              Annuler
+            </Button>
+            <Button onClick={handleCreateProfile} disabled={creating}>
+              {creating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Créer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

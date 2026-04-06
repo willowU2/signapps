@@ -30,18 +30,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Network,
   RefreshCw,
   Loader2,
   AlertTriangle,
   ChevronLeft,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import {
   useAdDomains,
   useDhcpScopes,
   useDhcpLeases,
 } from "@/hooks/use-active-directory";
+import { adApi } from "@/lib/api/active-directory";
+import { toast } from "sonner";
 import type { DhcpScope } from "@/types/active-directory";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -163,6 +175,18 @@ export default function DhcpPage() {
   const [domainId, setDomainId] = useState("");
   const [selectedScope, setSelectedScope] = useState<DhcpScope | null>(null);
 
+  // Create scope dialog state
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newScope, setNewScope] = useState({
+    name: "",
+    subnet: "",
+    range_start: "",
+    range_end: "",
+    gateway: "",
+    lease_duration_hours: "24",
+  });
+
   const {
     data: domains = [],
     isLoading: loadingDomains,
@@ -181,6 +205,54 @@ export default function DhcpPage() {
   const handleDomainChange = (v: string) => {
     setDomainId(v);
     setSelectedScope(null);
+  };
+
+  const handleCreateScope = async () => {
+    if (!activeDomainId) return;
+    setCreating(true);
+    try {
+      await adApi.dhcp.createScope(activeDomainId, {
+        name: newScope.name,
+        subnet: newScope.subnet,
+        range_start: newScope.range_start,
+        range_end: newScope.range_end,
+        gateway: newScope.gateway || undefined,
+        lease_duration_hours: parseInt(newScope.lease_duration_hours, 10),
+      });
+      toast.success("Étendue créée avec succès");
+      setCreateOpen(false);
+      setNewScope({
+        name: "",
+        subnet: "",
+        range_start: "",
+        range_end: "",
+        gateway: "",
+        lease_duration_hours: "24",
+      });
+      refetchScopes();
+    } catch {
+      toast.error("Erreur lors de la création de l'étendue");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDeleteScope = async (scope: DhcpScope, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (
+      !window.confirm(
+        `Supprimer l'étendue "${scope.name}" (${scope.subnet}) ? Cette action est irréversible.`,
+      )
+    ) {
+      return;
+    }
+    try {
+      await adApi.dhcp.deleteScope(scope.id);
+      toast.success(`Étendue "${scope.name}" supprimée`);
+      refetchScopes();
+    } catch {
+      toast.error("Erreur lors de la suppression de l'étendue");
+    }
   };
 
   if (loadingDomains) {
@@ -273,6 +345,16 @@ export default function DhcpPage() {
                   </SelectContent>
                 </Select>
               )}
+              {activeDomainId && (
+                <Button
+                  size="sm"
+                  onClick={() => setCreateOpen(true)}
+                  disabled={loadingScopes}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouvelle etendue
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -364,6 +446,7 @@ export default function DhcpPage() {
                             Durée bail
                           </TableHead>
                           <TableHead className="w-[80px]">Actif</TableHead>
+                          <TableHead className="w-[60px]" />
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -402,6 +485,19 @@ export default function DhcpPage() {
                                 {scope.is_active ? "Actif" : "Inactif"}
                               </Badge>
                             </TableCell>
+                            <TableCell
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-right"
+                            >
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                onClick={(e) => handleDeleteScope(scope, e)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -413,6 +509,116 @@ export default function DhcpPage() {
           )
         )}
       </div>
+
+      {/* Create Scope Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nouvelle étendue DHCP</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-1.5">
+              <Label htmlFor="scope-name">Nom</Label>
+              <Input
+                id="scope-name"
+                placeholder="ex: LAN-Bureau"
+                value={newScope.name}
+                onChange={(e) =>
+                  setNewScope((s) => ({ ...s, name: e.target.value }))
+                }
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="scope-subnet">Sous-réseau</Label>
+              <Input
+                id="scope-subnet"
+                placeholder="ex: 192.168.1.0/24"
+                value={newScope.subnet}
+                onChange={(e) =>
+                  setNewScope((s) => ({ ...s, subnet: e.target.value }))
+                }
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5">
+                <Label htmlFor="scope-range-start">Début de plage</Label>
+                <Input
+                  id="scope-range-start"
+                  placeholder="192.168.1.100"
+                  value={newScope.range_start}
+                  onChange={(e) =>
+                    setNewScope((s) => ({ ...s, range_start: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="scope-range-end">Fin de plage</Label>
+                <Input
+                  id="scope-range-end"
+                  placeholder="192.168.1.200"
+                  value={newScope.range_end}
+                  onChange={(e) =>
+                    setNewScope((s) => ({ ...s, range_end: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="scope-gateway">Passerelle (optionnel)</Label>
+              <Input
+                id="scope-gateway"
+                placeholder="192.168.1.1"
+                value={newScope.gateway}
+                onChange={(e) =>
+                  setNewScope((s) => ({ ...s, gateway: e.target.value }))
+                }
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="scope-lease">Durée du bail (heures)</Label>
+              <Input
+                id="scope-lease"
+                type="number"
+                min="1"
+                placeholder="24"
+                value={newScope.lease_duration_hours}
+                onChange={(e) =>
+                  setNewScope((s) => ({
+                    ...s,
+                    lease_duration_hours: e.target.value,
+                  }))
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCreateOpen(false)}
+              disabled={creating}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleCreateScope}
+              disabled={
+                creating ||
+                !newScope.name ||
+                !newScope.subnet ||
+                !newScope.range_start ||
+                !newScope.range_end
+              }
+            >
+              {creating ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4 mr-2" />
+              )}
+              Créer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
