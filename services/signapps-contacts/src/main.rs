@@ -15,10 +15,13 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use signapps_cache::CacheService;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::pg_events::{NewEvent, PgEventBus};
 use signapps_common::{Claims, JwtConfig};
+use signapps_sharing::routes::sharing_routes;
+use signapps_sharing::{ResourceType, SharingEngine};
 use std::sync::{Arc, Mutex};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
@@ -728,7 +731,7 @@ async fn health_check() -> axum::Json<serde_json::Value> {
 // Router
 // ---------------------------------------------------------------------------
 
-fn create_router(state: AppState) -> Router {
+fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
             "http://localhost:3000".parse().expect("valid origin"),
@@ -787,8 +790,13 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    // Sharing sub-router: State<SharingEngine> — separate from AppState.
+    let sharing_sub = sharing_routes("contacts", ResourceType::ContactBook)
+        .with_state(sharing_engine);
+
     public_routes
         .merge(protected_routes)
+        .merge(sharing_sub)
         .merge(openapi::swagger_router())
         .layer(TraceLayer::new_for_http())
         .layer(cors)
@@ -831,7 +839,9 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("In-memory store initialized (skeleton — no DB yet)");
 
-    let app = create_router(state);
+    let sharing_engine = SharingEngine::new(pool.inner().clone(), CacheService::default_config());
+
+    let app = create_router(state, sharing_engine);
 
     signapps_common::bootstrap::run_server(app, &config).await?;
 
