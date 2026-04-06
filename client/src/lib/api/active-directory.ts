@@ -33,6 +33,8 @@ export const adApi = {
     get: (id: string) => client.get<AdDomain>(`/workforce/ad/domains/${id}`),
     create: (data: CreateDomainRequest) =>
       client.post<DomainCreationResult>("/workforce/ad/domains", data),
+    update: (id: string, data: Partial<AdDomain>) =>
+      client.put(`/workforce/ad/domains/${id}`, data),
     delete: (id: string) => client.delete(`/workforce/ad/domains/${id}`),
   },
 
@@ -132,6 +134,8 @@ export const adApi = {
         `/workforce/ad/domains/${domainId}/dhcp/scopes`,
         data,
       ),
+    updateScope: (scopeId: string, data: Partial<DhcpScope>) =>
+      client.put(`/workforce/ad/dhcp/scopes/${scopeId}`, data),
     deleteScope: (scopeId: string) =>
       client.delete(`/workforce/ad/dhcp/scopes/${scopeId}`),
     leases: (scopeId: string) =>
@@ -162,6 +166,8 @@ export const adApi = {
         `/workforce/ad/domains/${domainId}/deploy/profiles`,
         data,
       ),
+    updateProfile: (profileId: string, data: Partial<DeployProfile>) =>
+      client.put(`/workforce/ad/deploy/profiles/${profileId}`, data),
     deleteProfile: (profileId: string) =>
       client.delete(`/workforce/ad/deploy/profiles/${profileId}`),
     history: (profileId: string) =>

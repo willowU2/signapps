@@ -202,6 +202,10 @@ fn create_router(state: AppState) -> Router {
         .route("/deploy/profiles/:id/assignments", get(handlers::ad::list_deploy_assignments))
         .route("/deploy/profiles/:id/assignments", post(handlers::ad::create_deploy_assignment))
         .route("/deploy/assignments/:id", delete(handlers::ad::delete_deploy_assignment))
+        // ── Update endpoints ──
+        .route("/domains/:id", put(handlers::ad::update_domain))
+        .route("/deploy/profiles/:id", put(handlers::ad::update_deploy_profile))
+        .route("/dhcp/scopes/:id", put(handlers::ad::update_dhcp_scope))
         // ── Maintenance ──
         .route("/dhcp/leases/expire", post(handlers::ad::expire_dhcp_leases))
         .layer(axum::middleware::from_fn(

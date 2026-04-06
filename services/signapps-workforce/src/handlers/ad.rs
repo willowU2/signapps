@@ -107,6 +107,147 @@ pub async fn delete_domain(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// Update an infrastructure domain (features, netbios, type).
+#[tracing::instrument(skip_all)]
+pub async fn update_domain(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let mut updates = vec!["updated_at = NOW()".to_string()];
+    let mut bind_idx = 1u32;
+    let mut values: Vec<Box<dyn std::any::Any + Send + Sync>> = Vec::new();
+
+    // Build dynamic SET clause
+    // Use raw SQL with parameter placeholders since we need dynamic updates
+    let netbios = body["netbios_name"].as_str().map(String::from);
+    let domain_type = body["domain_type"].as_str().map(String::from);
+    let ad_enabled = body["ad_enabled"].as_bool();
+    let mail_enabled = body["mail_enabled"].as_bool();
+    let dhcp_enabled = body["dhcp_enabled"].as_bool();
+    let pxe_enabled = body["pxe_enabled"].as_bool();
+    let ntp_enabled = body["ntp_enabled"].as_bool();
+
+    // Simple approach: update all provided fields
+    let result = sqlx::query(
+        r#"UPDATE infrastructure.domains SET
+            netbios_name = COALESCE($2, netbios_name),
+            domain_type = COALESCE($3, domain_type),
+            ad_enabled = COALESCE($4, ad_enabled),
+            mail_enabled = COALESCE($5, mail_enabled),
+            dhcp_enabled = COALESCE($6, dhcp_enabled),
+            pxe_enabled = COALESCE($7, pxe_enabled),
+            ntp_enabled = COALESCE($8, ntp_enabled),
+            updated_at = NOW()
+        WHERE id = $1"#,
+    )
+    .bind(id)
+    .bind(netbios.as_deref())
+    .bind(domain_type.as_deref())
+    .bind(ad_enabled)
+    .bind(mail_enabled)
+    .bind(dhcp_enabled)
+    .bind(pxe_enabled)
+    .bind(ntp_enabled)
+    .execute(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to update domain: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    // Ignore unused variables
+    let _ = (updates, bind_idx, values);
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// Update a deployment profile.
+#[tracing::instrument(skip_all)]
+pub async fn update_deploy_profile(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(profile_id): Path<Uuid>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let name = body["name"].as_str();
+    let description = body["description"].as_str();
+    let os_type = body["os_type"].as_str();
+    let os_version = body["os_version"].as_str();
+    let target_ou = body["target_ou"].as_str();
+    let is_default = body["is_default"].as_bool();
+
+    sqlx::query(
+        r#"UPDATE infrastructure.deploy_profiles SET
+            name = COALESCE($2, name),
+            description = COALESCE($3, description),
+            os_type = COALESCE($4, os_type),
+            os_version = COALESCE($5, os_version),
+            target_ou = COALESCE($6, target_ou),
+            is_default = COALESCE($7, is_default),
+            updated_at = NOW()
+        WHERE id = $1"#,
+    )
+    .bind(profile_id)
+    .bind(name)
+    .bind(description)
+    .bind(os_type)
+    .bind(os_version)
+    .bind(target_ou)
+    .bind(is_default)
+    .execute(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to update deploy profile: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// Update a DHCP scope.
+#[tracing::instrument(skip_all)]
+pub async fn update_dhcp_scope(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    Path(scope_id): Path<Uuid>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let name = body["name"].as_str();
+    let gateway = body["gateway"].as_str();
+    let lease_hours = body["lease_duration_hours"].as_i64().map(|v| v as i32);
+    let pxe_server = body["pxe_server"].as_str();
+    let pxe_bootfile = body["pxe_bootfile"].as_str();
+
+    sqlx::query(
+        r#"UPDATE infrastructure.dhcp_scopes SET
+            name = COALESCE($2, name),
+            gateway = COALESCE($3, gateway),
+            lease_duration_hours = COALESCE($4, lease_duration_hours),
+            pxe_server = COALESCE($5, pxe_server),
+            pxe_bootfile = COALESCE($6, pxe_bootfile)
+        WHERE id = $1"#,
+    )
+    .bind(scope_id)
+    .bind(name)
+    .bind(gateway)
+    .bind(lease_hours)
+    .bind(pxe_server)
+    .bind(pxe_bootfile)
+    .execute(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to update DHCP scope: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
 /// List DNS zones for a domain.
 ///
 /// # Errors
