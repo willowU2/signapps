@@ -24,6 +24,7 @@ impl InfraDomainRepository {
     ///
     /// Returns `Error::Database` if the INSERT fails (e.g., duplicate
     /// `(tenant_id, dns_name)`).
+    #[allow(clippy::too_many_arguments)]
     pub async fn create(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -58,6 +59,42 @@ impl InfraDomainRepository {
         .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(domain)
+    }
+
+    /// Update a domain's AD identity fields (SID, realm, cert_mode).
+    ///
+    /// Called by the provisioner after the initial INSERT to store
+    /// generated values.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Error::Database` if the UPDATE fails.
+    pub async fn update_ad_identity(
+        pool: &PgPool,
+        domain_id: Uuid,
+        domain_sid: Option<&str>,
+        realm: Option<&str>,
+        cert_mode: &str,
+    ) -> Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE infrastructure.domains
+            SET domain_sid = COALESCE($2, domain_sid),
+                realm = COALESCE($3, realm),
+                cert_mode = $4,
+                updated_at = now()
+            WHERE id = $1
+            "#,
+        )
+        .bind(domain_id)
+        .bind(domain_sid)
+        .bind(realm)
+        .bind(cert_mode)
+        .execute(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+
+        Ok(())
     }
 
     /// Get an infrastructure domain by its ID.
@@ -183,6 +220,7 @@ impl InfraCertificateRepository {
     /// # Errors
     ///
     /// Returns `Error::Database` if the INSERT fails.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create(
         pool: &PgPool,
         domain_id: Uuid,
@@ -294,6 +332,7 @@ impl DhcpScopeRepository {
     /// # Errors
     ///
     /// Returns `Error::Database` if the INSERT fails.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create(
         pool: &PgPool,
         domain_id: Uuid,
@@ -503,9 +542,9 @@ impl DeployProfileRepository {
         let profile = sqlx::query_as::<_, DeployProfile>(
             r#"
             INSERT INTO infrastructure.deploy_profiles (
-                domain_id, name, description, os_type, os_version
+                domain_id, name, description, os_type, os_version, is_default
             )
-            VALUES ($1, $2, $3, $4, $5)
+            VALUES ($1, $2, $3, $4, $5, true)
             RETURNING *
             "#,
         )

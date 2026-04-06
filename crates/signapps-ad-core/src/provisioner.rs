@@ -148,6 +148,19 @@ pub async fn provision_domain(
     // 3. Create the unified domain record
     let domain = create_infra_domain(pool, tenant_id, &input, ad_enabled, mail_enabled, dhcp_enabled).await?;
 
+    // 3b. Store generated SID, realm, and cert_mode
+    if let Err(e) = InfraDomainRepository::update_ad_identity(
+        pool,
+        domain.id,
+        domain_sid.as_deref(),
+        realm.as_deref(),
+        cert_mode,
+    )
+    .await
+    {
+        tracing::warn!(domain = %dns_name, error = %e, "Failed to store AD identity (non-fatal)");
+    }
+
     let mut result = ProvisionResult {
         domain_id: domain.id,
         dns_name: dns_name.clone(),
