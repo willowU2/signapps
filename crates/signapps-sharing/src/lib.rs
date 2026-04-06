@@ -14,28 +14,25 @@
 //!
 //! - [`types`] — Core domain enums and value objects (ResourceType, Role, Action, Grantee…)
 //! - [`models`] — Database-mapped structs for grants, policies, templates, audit log, etc.
-//!
-//! ## Planned Modules (not yet implemented)
-//!
-//! - `repository` — CRUD operations over `sharing.*` PostgreSQL tables
-//! - `resolver` — Multi-axis permission resolution with caching
-//! - `cache` — TTL cache layer for resolved permissions
-//! - `engine` — High-level [`SharingEngine`] public API
-//! - `audit` — Structured audit logging for sharing events
-//! - `middleware` — Axum middleware for permission enforcement
-//! - `defaults` — Tenant-level default visibility management
-//! - `handlers` — Axum HTTP handlers
-//! - `routes` — Route registration helpers
+//! - [`repository`] — CRUD operations over `sharing.*` PostgreSQL tables
+//! - [`resolver`] — Multi-axis permission resolution
+//! - [`cache`] — TTL cache layer for resolved permissions
+//! - [`engine`] — High-level [`SharingEngine`] public API
+//! - [`audit`] — Structured audit logging for sharing events
+//! - [`middleware`] — Axum middleware for permission enforcement
+//! - [`defaults`] — System-level default visibility per resource type
+//! - [`handlers`] — Generic Axum HTTP handlers
+//! - [`routes`] — Route registration helpers
 //!
 //! ## Example
 //!
 //! ```rust,ignore
-//! use signapps_sharing::types::{ResourceRef, Grantee, Role};
-//! use uuid::Uuid;
+//! use signapps_sharing::engine::SharingEngine;
+//! use signapps_sharing::types::{ResourceRef, Action};
+//! use signapps_cache::CacheService;
 //!
-//! let resource = ResourceRef::file(Uuid::new_v4());
-//! let grantee = Grantee::User(Uuid::new_v4());
-//! let role = Role::Editor;
+//! let engine = SharingEngine::new(pool.clone(), CacheService::default_config());
+//! engine.check(&user_ctx, ResourceRef::file(file_id), Action::read(), None).await?;
 //! ```
 
 pub mod models;
@@ -47,15 +44,16 @@ pub mod resolver;
 pub mod audit;
 pub mod cache;
 
-// Modules to be added in subsequent tasks (engine, …):
-// pub mod engine;
-// pub mod audit;
-// pub mod middleware;
-// pub mod defaults;
-// pub mod handlers;
-// pub mod routes;
+pub mod engine;
+pub mod middleware;
+pub mod defaults;
+pub mod handlers;
+pub mod routes;
 
 // ─── Re-exports ───────────────────────────────────────────────────────────────
+
+pub use engine::SharingEngine;
+pub use middleware::require_permission;
 
 pub use models::{
     AuditEntry, Capability, CreateGrant, DefaultVisibility, EffectivePermission, Grant, Policy,

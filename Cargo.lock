@@ -10970,6 +10970,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-sharing"
+version = "0.1.0"
+dependencies = [
+ "axum 0.7.9",
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-cache",
+ "signapps-common",
+ "signapps-db",
+ "sqlx",
+ "thiserror 1.0.69",
+ "tokio",
+ "tower 0.4.13",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-sieve"
 version = "0.1.0"
 dependencies = [
