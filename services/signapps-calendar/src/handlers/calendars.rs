@@ -6,11 +6,21 @@ use axum::{
     Json,
 };
 use serde::Deserialize;
-use signapps_common::Claims;
-use signapps_db::{models::*, CalendarMemberRepository, CalendarRepository};
+use signapps_common::auth::Claims;
+use signapps_db::{models::*, CalendarRepository};
+use signapps_sharing::models::CreateGrant;
+use signapps_sharing::types::{GranteeType, ResourceRef, ResourceType};
 use uuid::Uuid;
 
+use crate::handlers::shares::CalendarShareEntry;
 use crate::{AppState, CalendarError};
+
+/// Request body to add a member to a calendar.
+#[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
+pub struct AddMemberRequest {
+    pub user_id: Uuid,
+    pub role: String,
+}
 
 #[derive(Debug, Deserialize)]
 /// Request body for UpdateRole.
@@ -72,7 +82,7 @@ pub async fn list_calendars(
 
 /// Get calendar by ID.
 ///
-/// Only the owner or a shared member can access the calendar.
+/// Only the owner or a user with a sharing grant can access the calendar.
 #[utoipa::path(
     get,
     path = "/api/v1/calendars/{id}",
@@ -97,14 +107,26 @@ pub async fn get_calendar(
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
 
-    // Verify the caller owns the calendar or is a shared member
+    // Verify the caller owns the calendar or has a sharing grant
     if calendar.owner_id != claims.sub {
-        let member_repo = CalendarMemberRepository::new(&state.pool);
-        let members = member_repo
-            .list_members(id)
+        let user_ctx = state
+            .sharing
+            .build_user_context(&claims)
             .await
             .map_err(|_| CalendarError::InternalError)?;
-        if !members.iter().any(|m| m.user_id == claims.sub) {
+
+        let resource = ResourceRef {
+            resource_type: ResourceType::Calendar,
+            resource_id: id,
+        };
+
+        let effective = state
+            .sharing
+            .effective_role(&user_ctx, resource, Some(calendar.owner_id))
+            .await
+            .map_err(|_| CalendarError::InternalError)?;
+
+        if effective.is_none() {
             return Err(CalendarError::NotFound);
         }
     }
@@ -193,7 +215,8 @@ pub async fn delete_calendar(
 
 /// Get all members of a calendar.
 ///
-/// Only the owner or an existing member can view the member list.
+/// Returns all sharing grants for the calendar. Only the owner or an existing
+/// member can view the grant list.
 #[utoipa::path(
     get,
     path = "/api/v1/calendars/{id}/members",
@@ -201,7 +224,7 @@ pub async fn delete_calendar(
     security(("bearerAuth" = [])),
     params(("id" = Uuid, Path, description = "Calendar UUID")),
     responses(
-        (status = 200, description = "List of members", body = Vec<signapps_db::models::CalendarMemberWithUser>),
+        (status = 200, description = "List of members", body = Vec<CalendarShareEntry>),
         (status = 401, description = "Not authenticated"),
     )
 )]
@@ -210,8 +233,8 @@ pub async fn list_members(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Result<Json<Vec<CalendarMemberWithUser>>, CalendarError> {
-    // Verify the caller owns the calendar or is a member
+) -> Result<Json<Vec<CalendarShareEntry>>, CalendarError> {
+    // Verify the calendar exists first
     let cal_repo = CalendarRepository::new(&state.pool);
     let calendar = cal_repo
         .find_by_id(id)
@@ -219,17 +242,38 @@ pub async fn list_members(
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
 
-    let repo = CalendarMemberRepository::new(&state.pool);
-    let members = repo
-        .list_members(id)
+    let user_ctx = state
+        .sharing
+        .build_user_context(&claims)
         .await
         .map_err(|_| CalendarError::InternalError)?;
 
-    if calendar.owner_id != claims.sub && !members.iter().any(|m| m.user_id == claims.sub) {
-        return Err(CalendarError::NotFound);
+    let resource = ResourceRef {
+        resource_type: ResourceType::Calendar,
+        resource_id: id,
+    };
+
+    // Only owner or a user with a grant can see the member list
+    if calendar.owner_id != claims.sub {
+        let effective = state
+            .sharing
+            .effective_role(&user_ctx, resource.clone(), Some(calendar.owner_id))
+            .await
+            .map_err(|_| CalendarError::InternalError)?;
+        if effective.is_none() {
+            return Err(CalendarError::NotFound);
+        }
     }
 
-    Ok(Json(members))
+    let grants = state
+        .sharing
+        .list_grants(&user_ctx, resource)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    let entries: Vec<CalendarShareEntry> = grants.iter().map(CalendarShareEntry::from).collect();
+
+    Ok(Json(entries))
 }
 
 /// Add a member to a calendar (share).
@@ -241,9 +285,9 @@ pub async fn list_members(
     tag = "calendars",
     security(("bearerAuth" = [])),
     params(("id" = Uuid, Path, description = "Calendar UUID")),
-    request_body = signapps_db::models::AddCalendarMember,
+    request_body = AddMemberRequest,
     responses(
-        (status = 201, description = "Member added", body = signapps_db::models::CalendarMember),
+        (status = 201, description = "Member added", body = CalendarShareEntry),
         (status = 401, description = "Not authenticated"),
     )
 )]
@@ -252,8 +296,8 @@ pub async fn add_member(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Json(payload): Json<AddCalendarMember>,
-) -> Result<(StatusCode, Json<CalendarMember>), CalendarError> {
+    Json(payload): Json<AddMemberRequest>,
+) -> Result<(StatusCode, Json<CalendarShareEntry>), CalendarError> {
     // Only the calendar owner can add members
     let cal_repo = CalendarRepository::new(&state.pool);
     let calendar = cal_repo
@@ -265,13 +309,33 @@ pub async fn add_member(
         return Err(CalendarError::NotFound);
     }
 
-    let repo = CalendarMemberRepository::new(&state.pool);
-    let member = repo
-        .add_member(id, payload.user_id, &payload.role)
+    let actor_ctx = state
+        .sharing
+        .build_user_context(&claims)
         .await
         .map_err(|_| CalendarError::InternalError)?;
 
-    Ok((StatusCode::CREATED, Json(member)))
+    let resource = ResourceRef {
+        resource_type: ResourceType::Calendar,
+        resource_id: id,
+    };
+
+    let role = crate::handlers::shares::map_legacy_role_pub(&payload.role);
+    let grant_req = CreateGrant {
+        grantee_type: GranteeType::User,
+        grantee_id: Some(payload.user_id),
+        role,
+        can_reshare: None,
+        expires_at: None,
+    };
+
+    let grant = state
+        .sharing
+        .grant(&actor_ctx, resource, None, grant_req)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    Ok((StatusCode::CREATED, Json(CalendarShareEntry::from(&grant))))
 }
 
 /// Remove a member from a calendar.
@@ -308,8 +372,32 @@ pub async fn remove_member(
         return Err(CalendarError::NotFound);
     }
 
-    let repo = CalendarMemberRepository::new(&state.pool);
-    repo.remove_member(calendar_id, user_id)
+    let actor_ctx = state
+        .sharing
+        .build_user_context(&claims)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    let resource = ResourceRef {
+        resource_type: ResourceType::Calendar,
+        resource_id: calendar_id,
+    };
+
+    // Find the grant for this specific user
+    let grants = state
+        .sharing
+        .list_grants(&actor_ctx, resource.clone())
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    let grant = grants
+        .iter()
+        .find(|g| g.grantee_id == Some(user_id))
+        .ok_or(CalendarError::NotFound)?;
+
+    state
+        .sharing
+        .revoke(&actor_ctx, resource, None, grant.id)
         .await
         .map_err(|_| CalendarError::InternalError)?;
 
@@ -337,8 +425,53 @@ pub async fn update_member_role(
         return Err(CalendarError::NotFound);
     }
 
-    let repo = CalendarMemberRepository::new(&state.pool);
-    repo.update_role(calendar_id, user_id, &payload.role)
+    let actor_ctx = state
+        .sharing
+        .build_user_context(&claims)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    let resource = ResourceRef {
+        resource_type: ResourceType::Calendar,
+        resource_id: calendar_id,
+    };
+
+    // Find the existing grant for this user
+    let grants = state
+        .sharing
+        .list_grants(&actor_ctx, resource.clone())
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    let existing = grants
+        .iter()
+        .find(|g| g.grantee_id == Some(user_id))
+        .ok_or(CalendarError::NotFound)?;
+
+    let old_grant_id = existing.id;
+    let old_expires_at = existing.expires_at;
+    let old_can_reshare = existing.can_reshare;
+
+    // Revoke old grant
+    state
+        .sharing
+        .revoke(&actor_ctx, resource.clone(), None, old_grant_id)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    // Re-create with new role
+    let new_role = crate::handlers::shares::map_legacy_role_pub(&payload.role);
+    let grant_req = CreateGrant {
+        grantee_type: GranteeType::User,
+        grantee_id: Some(user_id),
+        role: new_role,
+        can_reshare: old_can_reshare,
+        expires_at: old_expires_at,
+    };
+
+    state
+        .sharing
+        .grant(&actor_ctx, resource, None, grant_req)
         .await
         .map_err(|_| CalendarError::InternalError)?;
 

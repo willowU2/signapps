@@ -1,126 +1,14 @@
-//! Drive ACL, audit log, and alert configuration repositories.
+//! Drive audit log and alert configuration repositories.
+//!
+//! The `AclRepository` (drive.acl) has been removed; permission management is
+//! now handled exclusively by the `signapps-sharing` crate via `SharingEngine`.
 
 use crate::models::drive_acl::{
-    AuditAlertConfig, AuditLogFilters, CreateAcl, DriveAcl, DriveAuditLog, UpdateAcl,
-    UpdateAlertConfig,
+    AuditAlertConfig, AuditLogFilters, DriveAuditLog, UpdateAlertConfig,
 };
 use crate::DatabasePool;
 use signapps_common::{Error, Result};
 use uuid::Uuid;
-
-// ============================================================================
-// ACL Repository
-// ============================================================================
-
-/// Repository for drive ACL grant operations.
-pub struct AclRepository<'a> {
-    pool: &'a DatabasePool,
-}
-
-impl<'a> AclRepository<'a> {
-    /// Create a new `AclRepository`.
-    pub fn new(pool: &'a DatabasePool) -> Self {
-        Self { pool }
-    }
-
-    /// List all non-expired ACL grants for a drive node.
-    pub async fn list_by_node(&self, node_id: Uuid) -> Result<Vec<DriveAcl>> {
-        let rows = sqlx::query_as::<_, DriveAcl>(
-            r#"SELECT * FROM drive.acl
-               WHERE node_id = $1
-                 AND (expires_at IS NULL OR expires_at > NOW())
-               ORDER BY created_at ASC"#,
-        )
-        .bind(node_id)
-        .fetch_all(self.pool.inner())
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
-
-        Ok(rows)
-    }
-
-    /// Create an ACL grant on a node.
-    pub async fn create(
-        &self,
-        node_id: Uuid,
-        granted_by: Uuid,
-        input: CreateAcl,
-    ) -> Result<DriveAcl> {
-        let row = sqlx::query_as::<_, DriveAcl>(
-            r#"INSERT INTO drive.acl
-                   (node_id, grantee_type, grantee_id, role, inherit, granted_by, expires_at)
-               VALUES ($1, $2, $3, $4::drive.acl_role, $5, $6, $7)
-               RETURNING *"#,
-        )
-        .bind(node_id)
-        .bind(&input.grantee_type)
-        .bind(input.grantee_id)
-        .bind(&input.role)
-        .bind(input.inherit)
-        .bind(granted_by)
-        .bind(input.expires_at)
-        .fetch_one(self.pool.inner())
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
-
-        Ok(row)
-    }
-
-    /// Update an existing ACL grant (role / inherit / expiry).
-    pub async fn update(&self, acl_id: Uuid, input: UpdateAcl) -> Result<DriveAcl> {
-        let row = sqlx::query_as::<_, DriveAcl>(
-            r#"UPDATE drive.acl
-               SET role       = COALESCE($2::drive.acl_role, role),
-                   inherit    = COALESCE($3, inherit),
-                   expires_at = COALESCE($4, expires_at),
-                   updated_at = NOW()
-               WHERE id = $1
-               RETURNING *"#,
-        )
-        .bind(acl_id)
-        .bind(input.role.as_deref())
-        .bind(input.inherit)
-        .bind(input.expires_at)
-        .fetch_one(self.pool.inner())
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
-
-        Ok(row)
-    }
-
-    /// Delete an ACL grant by ID. Returns `true` if a row was deleted.
-    pub async fn delete(&self, acl_id: Uuid) -> Result<bool> {
-        let result = sqlx::query("DELETE FROM drive.acl WHERE id = $1")
-            .bind(acl_id)
-            .execute(self.pool.inner())
-            .await
-            .map_err(|e| Error::Database(e.to_string()))?;
-
-        Ok(result.rows_affected() > 0)
-    }
-
-    /// List all ACL grants for a specific grantee across all nodes.
-    pub async fn list_by_grantee(
-        &self,
-        grantee_type: &str,
-        grantee_id: Option<Uuid>,
-    ) -> Result<Vec<DriveAcl>> {
-        let rows = sqlx::query_as::<_, DriveAcl>(
-            r#"SELECT * FROM drive.acl
-               WHERE grantee_type = $1
-                 AND ($2::uuid IS NULL OR grantee_id = $2)
-                 AND (expires_at IS NULL OR expires_at > NOW())
-               ORDER BY created_at ASC"#,
-        )
-        .bind(grantee_type)
-        .bind(grantee_id)
-        .fetch_all(self.pool.inner())
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
-
-        Ok(rows)
-    }
-}
 
 // ============================================================================
 // Audit Log Repository

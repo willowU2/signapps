@@ -44,6 +44,7 @@ pub struct AppState {
     pub indexer: AiIndexerClient,
     pub cache: signapps_cache::CacheService,
     pub event_bus: PgEventBus,
+    pub sharing: SharingEngine,
 }
 
 impl AuthState for AppState {
@@ -109,7 +110,7 @@ async fn main() -> anyhow::Result<()> {
 
     let cache_service = signapps_cache::CacheService::default_config();
 
-    // Initialize sharing engine (runs alongside the existing drive.acl system)
+    // Initialize sharing engine — unified permission system replacing drive.acl
     let sharing_engine =
         SharingEngine::new(pool.inner().clone(), cache_service.clone());
     tracing::info!("Sharing engine initialized");
@@ -122,6 +123,7 @@ async fn main() -> anyhow::Result<()> {
         indexer: AiIndexerClient::from_env(),
         cache: cache_service,
         event_bus,
+        sharing: sharing_engine.clone(),
     };
 
     // Start background jobs
@@ -527,7 +529,7 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
     let openapi_routes =
         SwaggerUi::new("/swagger-ui").url("/api/v1/openapi.json", StorageApiDoc::openapi());
 
-    // Sharing sub-routers for files and folders — additive, alongside existing drive.acl
+    // Sharing sub-routers for files and folders (unified ACL via SharingEngine).
     // Routes produced by sharing_routes() already include the /api/v1/ prefix.
     let files_sharing = sharing_routes("files", ResourceType::File)
         .with_state(sharing_engine.clone());

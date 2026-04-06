@@ -18,7 +18,7 @@ pub use models::{
 };
 pub use pool::DatabasePool;
 pub use repositories::{
-    CalendarMemberRepository, CalendarRepository, CategoryRepository, EventAttendeeRepository,
+    CalendarRepository, CategoryRepository, EventAttendeeRepository,
     EventRepository, FloorPlanRepository, QuotaRepository, RecurrenceRuleRepository,
     ResourceRepository, SchedulingPreferencesRepository, SchedulingResourceRepository,
     SchedulingTemplateRepository, TaskRepository, TimeItemDependencyRepository,

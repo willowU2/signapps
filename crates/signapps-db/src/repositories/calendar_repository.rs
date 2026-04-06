@@ -29,13 +29,18 @@ impl<'a> CalendarRepository<'a> {
         Ok(calendar)
     }
 
-    /// List all calendars for a user (owned + shared).
+    /// List all calendars for a user (owned + shared via signapps-sharing grants).
     pub async fn list_for_user(&self, user_id: Uuid) -> Result<Vec<Calendar>> {
         let calendars = sqlx::query_as::<_, Calendar>(
             r#"
             SELECT DISTINCT c.* FROM calendar.calendars c
-            LEFT JOIN calendar.calendar_members m ON c.id = m.calendar_id
-            WHERE c.owner_id = $1 OR m.user_id = $1
+            LEFT JOIN sharing.grants g
+                ON g.resource_type = 'calendar'
+                AND g.resource_id = c.id
+                AND g.grantee_type = 'user'
+                AND g.grantee_id = $1
+                AND (g.expires_at IS NULL OR g.expires_at > NOW())
+            WHERE c.owner_id = $1 OR g.id IS NOT NULL
             ORDER BY c.created_at DESC
             "#,
         )
@@ -111,90 +116,6 @@ impl<'a> CalendarRepository<'a> {
     pub async fn delete(&self, id: Uuid) -> Result<()> {
         sqlx::query("DELETE FROM calendar.calendars WHERE id = $1")
             .bind(id)
-            .execute(self.pool.inner())
-            .await?;
-
-        Ok(())
-    }
-}
-
-// ============================================================================
-// Calendar Member Repository (Sharing)
-// ============================================================================
-/// Repository for managing calendar sharing and member roles.
-pub struct CalendarMemberRepository<'a> {
-    pool: &'a DatabasePool,
-}
-
-impl<'a> CalendarMemberRepository<'a> {
-    pub fn new(pool: &'a DatabasePool) -> Self {
-        Self { pool }
-    }
-
-    /// Get all members of a calendar.
-    pub async fn list_members(&self, calendar_id: Uuid) -> Result<Vec<CalendarMemberWithUser>> {
-        let members = sqlx::query_as::<_, CalendarMemberWithUser>(
-            r#"
-            SELECT
-                cm.id, cm.user_id, u.username, u.email, cm.role
-            FROM calendar.calendar_members cm
-            JOIN identity.users u ON cm.user_id = u.id
-            WHERE cm.calendar_id = $1
-            ORDER BY cm.created_at
-            "#,
-        )
-        .bind(calendar_id)
-        .fetch_all(self.pool.inner())
-        .await?;
-
-        Ok(members)
-    }
-
-    /// Add a member to a calendar.
-    pub async fn add_member(
-        &self,
-        calendar_id: Uuid,
-        user_id: Uuid,
-        role: &str,
-    ) -> Result<CalendarMember> {
-        let member = sqlx::query_as::<_, CalendarMember>(
-            r#"
-            INSERT INTO calendar.calendar_members (calendar_id, user_id, role)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (calendar_id, user_id) DO UPDATE SET
-                role = $3,
-                updated_at = NOW()
-            RETURNING *
-            "#,
-        )
-        .bind(calendar_id)
-        .bind(user_id)
-        .bind(role)
-        .fetch_one(self.pool.inner())
-        .await?;
-
-        Ok(member)
-    }
-
-    /// Remove a member from a calendar.
-    pub async fn remove_member(&self, calendar_id: Uuid, user_id: Uuid) -> Result<()> {
-        sqlx::query(
-            "DELETE FROM calendar.calendar_members WHERE calendar_id = $1 AND user_id = $2",
-        )
-        .bind(calendar_id)
-        .bind(user_id)
-        .execute(self.pool.inner())
-        .await?;
-
-        Ok(())
-    }
-
-    /// Update member role.
-    pub async fn update_role(&self, calendar_id: Uuid, user_id: Uuid, role: &str) -> Result<()> {
-        sqlx::query("UPDATE calendar.calendar_members SET role = $3, updated_at = NOW() WHERE calendar_id = $1 AND user_id = $2")
-            .bind(calendar_id)
-            .bind(user_id)
-            .bind(role)
             .execute(self.pool.inner())
             .await?;
 

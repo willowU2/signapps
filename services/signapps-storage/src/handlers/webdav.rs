@@ -406,6 +406,9 @@ pub async fn webdav_dispatch(State(state): State<AppState>, request: Request) ->
         },
     };
 
+    // Extract synthetic Claims injected by webdav_auth (used for SharingEngine context)
+    let claims = request.extensions().get::<Claims>().cloned();
+
     // Extract path after /webdav prefix
     let full_path = uri.path();
     let vpath = full_path
@@ -448,16 +451,20 @@ pub async fn webdav_dispatch(State(state): State<AppState>, request: Request) ->
                 .get(header::CONTENT_TYPE)
                 .and_then(|h| h.to_str().ok())
                 .map(|s| s.to_owned());
-            match handle_put(&state, user_id, &vpath, body_bytes, content_type).await {
+            match handle_put(&state, user_id, claims.as_ref(), &vpath, body_bytes, content_type)
+                .await
+            {
                 Ok(r) => r,
                 Err(e) => error_response(e),
             }
         },
-        m if m.as_str() == "MKCOL" => match handle_mkcol(&state, user_id, &vpath).await {
-            Ok(r) => r,
-            Err(e) => error_response(e),
+        m if m.as_str() == "MKCOL" => {
+            match handle_mkcol(&state, user_id, claims.as_ref(), &vpath).await {
+                Ok(r) => r,
+                Err(e) => error_response(e),
+            }
         },
-        Method::DELETE => match handle_delete(&state, user_id, &vpath).await {
+        Method::DELETE => match handle_delete(&state, user_id, claims.as_ref(), &vpath).await {
             Ok(r) => r,
             Err(e) => error_response(e),
         },
@@ -471,7 +478,16 @@ pub async fn webdav_dispatch(State(state): State<AppState>, request: Request) ->
                 .and_then(|h| h.to_str().ok())
                 .map(|s| s != "F")
                 .unwrap_or(true);
-            match handle_move(&state, user_id, &vpath, dest.as_deref(), overwrite).await {
+            match handle_move(
+                &state,
+                user_id,
+                claims.as_ref(),
+                &vpath,
+                dest.as_deref(),
+                overwrite,
+            )
+            .await
+            {
                 Ok(r) => r,
                 Err(e) => error_response(e),
             }
@@ -667,6 +683,7 @@ async fn handle_get(
 async fn handle_put(
     state: &AppState,
     user_id: Uuid,
+    claims: Option<&Claims>,
     vpath: &str,
     body: Bytes,
     content_type: Option<String>,
@@ -684,7 +701,7 @@ async fn handle_put(
             .await?
             .ok_or_else(|| AppError::NotFound(format!("Parent path not found: {parent_path}")))?;
         // Check write permission on parent
-        check_write_permission(pool, user_id, parent.id).await?;
+        check_write_permission(state, user_id, claims, parent.id).await?;
         Some(parent.id)
     };
 
@@ -770,7 +787,12 @@ async fn handle_put(
 }
 
 /// MKCOL — create a folder node.
-async fn handle_mkcol(state: &AppState, user_id: Uuid, vpath: &str) -> Result<Response, AppError> {
+async fn handle_mkcol(
+    state: &AppState,
+    user_id: Uuid,
+    claims: Option<&Claims>,
+    vpath: &str,
+) -> Result<Response, AppError> {
     let pool = state.pool.inner();
 
     let (parent_path, folder_name) = split_parent(vpath);
@@ -796,7 +818,7 @@ async fn handle_mkcol(state: &AppState, user_id: Uuid, vpath: &str) -> Result<Re
         let parent = resolve_path(pool, user_id, parent_path)
             .await?
             .ok_or_else(|| AppError::NotFound(format!("Parent path not found: {parent_path}")))?;
-        check_write_permission(pool, user_id, parent.id).await?;
+        check_write_permission(state, user_id, claims, parent.id).await?;
         Some(parent.id)
     };
 
@@ -820,19 +842,23 @@ async fn handle_mkcol(state: &AppState, user_id: Uuid, vpath: &str) -> Result<Re
 }
 
 /// DELETE — soft-delete a node.
-async fn handle_delete(state: &AppState, user_id: Uuid, vpath: &str) -> Result<Response, AppError> {
+async fn handle_delete(
+    state: &AppState,
+    user_id: Uuid,
+    claims: Option<&Claims>,
+    vpath: &str,
+) -> Result<Response, AppError> {
     let pool = state.pool.inner();
     let node = resolve_path(pool, user_id, vpath)
         .await?
         .ok_or_else(|| AppError::NotFound(format!("Node not found: {vpath}")))?;
 
-    // Require manager role (owner or explicit grant)
+    // Require manager role (owner or explicit grant via SharingEngine)
     let is_owner = node.owner_id == Some(user_id);
     if !is_owner {
-        let allowed =
-            crate::services::acl_resolver::check_permission(pool, user_id, node.id, "manager")
-                .await
-                .unwrap_or(false);
+        let allowed = check_manage_permission(state, user_id, claims, node.id)
+            .await
+            .unwrap_or(false);
         if !allowed {
             return Ok(Response::builder()
                 .status(StatusCode::FORBIDDEN)
@@ -857,6 +883,7 @@ async fn handle_delete(state: &AppState, user_id: Uuid, vpath: &str) -> Result<R
 async fn handle_move(
     state: &AppState,
     user_id: Uuid,
+    claims: Option<&Claims>,
     vpath: &str,
     destination: Option<&str>,
     _overwrite: bool,
@@ -874,7 +901,7 @@ async fn handle_move(
         .ok_or_else(|| AppError::NotFound(format!("Source not found: {vpath}")))?;
 
     // Check write access on source
-    check_write_permission(pool, user_id, node.id).await?;
+    check_write_permission(state, user_id, claims, node.id).await?;
 
     let (dest_parent_path, new_name) = split_parent(dest_path);
 
@@ -1096,21 +1123,90 @@ fn extract_webdav_path(dest: &str) -> &str {
     path.strip_prefix("/webdav").unwrap_or(path)
 }
 
-/// Check that `user_id` has at least editor role on `node_id`.
+/// Check that `user_id` has at least editor role on `node_id` via the SharingEngine.
+///
+/// Falls back to `false` (deny) when Claims are unavailable (no tenant context)
+/// so that unauthenticated or incomplete sessions cannot accidentally gain write
+/// access.
 async fn check_write_permission(
-    pool: &sqlx::PgPool,
+    state: &AppState,
     user_id: Uuid,
+    claims: Option<&Claims>,
     node_id: Uuid,
 ) -> Result<(), AppError> {
-    let allowed = crate::services::acl_resolver::check_permission(pool, user_id, node_id, "editor")
-        .await
-        .unwrap_or(false);
+    let allowed = check_min_role(state, user_id, claims, node_id, signapps_sharing::types::Role::Editor).await;
     if !allowed {
         return Err(AppError::Forbidden(
             "Requires editor role on this node".into(),
         ));
     }
     Ok(())
+}
+
+/// Check that `user_id` has at least manager role on `node_id` via the SharingEngine.
+async fn check_manage_permission(
+    state: &AppState,
+    user_id: Uuid,
+    claims: Option<&Claims>,
+    node_id: Uuid,
+) -> Result<bool, AppError> {
+    Ok(check_min_role(state, user_id, claims, node_id, signapps_sharing::types::Role::Manager).await)
+}
+
+/// Core helper: returns `true` when the user holds at least `min_role` on `node_id`.
+async fn check_min_role(
+    state: &AppState,
+    user_id: Uuid,
+    claims: Option<&Claims>,
+    node_id: Uuid,
+    min_role: signapps_sharing::types::Role,
+) -> bool {
+    let Some(claims) = claims else { return false };
+
+    let user_ctx = match state.sharing.build_user_context(claims).await {
+        Ok(ctx) => ctx,
+        Err(_) => return false,
+    };
+
+    // Determine resource type
+    let rtype: signapps_sharing::types::ResourceType =
+        sqlx::query_scalar("SELECT node_type FROM drive.nodes WHERE id = $1")
+            .bind(node_id)
+            .fetch_optional(state.pool.inner())
+            .await
+            .ok()
+            .flatten()
+            .map(|t: String| {
+                if t == "folder" {
+                    signapps_sharing::types::ResourceType::Folder
+                } else {
+                    signapps_sharing::types::ResourceType::File
+                }
+            })
+            .unwrap_or(signapps_sharing::types::ResourceType::File);
+
+    let resource = signapps_sharing::types::ResourceRef { resource_type: rtype, resource_id: node_id };
+    let action = match min_role {
+        signapps_sharing::types::Role::Manager => signapps_sharing::types::Action::new("manage"),
+        signapps_sharing::types::Role::Editor => signapps_sharing::types::Action::write(),
+        _ => signapps_sharing::types::Action::read(),
+    };
+
+    // Also check if user is direct owner of the node (owner always has manager)
+    let is_owner: bool = sqlx::query_scalar("SELECT owner_id = $1 FROM drive.nodes WHERE id = $2")
+        .bind(user_id)
+        .bind(node_id)
+        .fetch_optional(state.pool.inner())
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(false);
+
+    if is_owner {
+        return true;
+    }
+
+    state.sharing.check(&user_ctx, resource, action, None).await.is_ok()
 }
 
 /// Convert `AppError` into an HTTP response.
