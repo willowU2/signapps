@@ -218,8 +218,17 @@ pub async fn provision_domain(
         }
     }
 
-    // 9. NTP configuration is stored in the domain config blob — always succeeds
-    result.ntp_configured = true;
+    // 9. NTP configuration — store in domain config blob
+    match provision_ntp_config(pool, domain.id).await {
+        Ok(()) => {
+            result.ntp_configured = true;
+            tracing::info!(domain = %dns_name, "NTP configured");
+        }
+        Err(e) => {
+            tracing::warn!(domain = %dns_name, error = %e, "NTP config failed (non-fatal)");
+            result.ntp_configured = false;
+        }
+    }
 
     // 10. Create default deployment profile
     match provision_deploy_profile(pool, domain.id, &dns_name).await {
@@ -518,6 +527,30 @@ async fn provision_deploy_profile(pool: &PgPool, domain_id: Uuid, dns_name: &str
         Some("11"),
     )
     .await?;
+    Ok(())
+}
+
+/// Store default NTP configuration in the domain's config JSONB field.
+async fn provision_ntp_config(pool: &PgPool, domain_id: Uuid) -> Result<()> {
+    let ntp_config = serde_json::json!({
+        "ntp": {
+            "enabled": true,
+            "upstream": ["pool.ntp.org", "time.google.com"],
+            "stratum": 3,
+            "restrict_subnet": "192.168.0.0/16",
+            "max_drift_ms": 500
+        }
+    });
+
+    sqlx::query(
+        "UPDATE infrastructure.domains SET config = config || $1 WHERE id = $2",
+    )
+    .bind(&ntp_config)
+    .bind(domain_id)
+    .execute(pool)
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
     Ok(())
 }
 
