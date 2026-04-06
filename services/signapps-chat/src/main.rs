@@ -9,9 +9,12 @@ use axum::{
     routing::{delete, get, patch, post},
     Router,
 };
+use signapps_cache::CacheService;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::auth_middleware;
 use signapps_common::pg_events::PgEventBus;
+use signapps_sharing::routes::sharing_routes;
+use signapps_sharing::{ResourceType, SharingEngine};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 
@@ -25,7 +28,7 @@ pub use state::AppState;
 // Router
 // ---------------------------------------------------------------------------
 
-fn create_router(state: AppState) -> Router {
+fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
     let public_routes = Router::new().route("/health", get(handlers::health::health_check));
 
     let protected_routes = Router::new()
@@ -96,8 +99,13 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    // Sharing sub-router: State<SharingEngine> — separate from AppState.
+    let sharing_sub = sharing_routes("chat", ResourceType::Channel)
+        .with_state(sharing_engine);
+
     public_routes
         .merge(protected_routes)
+        .merge(sharing_sub)
         .layer(TraceLayer::new_for_http())
         .layer(
             CorsLayer::new()
@@ -150,7 +158,10 @@ async fn main() -> anyhow::Result<()> {
     let state = AppState::new(db_pool.inner().clone(), jwt_config, event_bus);
     tracing::info!("Chat service initialized with PostgreSQL persistence");
 
-    let app = create_router(state);
+    let sharing_engine =
+        SharingEngine::new(db_pool.inner().clone(), CacheService::default_config());
+
+    let app = create_router(state, sharing_engine);
 
     signapps_common::bootstrap::run_server(app, &config).await?;
 

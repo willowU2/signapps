@@ -18,6 +18,8 @@ path = "src/lib.rs"
 [dependencies]
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
+signapps-sharing = { path = "../../crates/signapps-sharing" }
+signapps-cache = { path = "../../crates/signapps-cache" }
 axum = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }

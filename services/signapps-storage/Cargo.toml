@@ -15,6 +15,7 @@ path = "src/main.rs"
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 signapps-cache = { path = "../../crates/signapps-cache" }
+signapps-sharing = { path = "../../crates/signapps-sharing" }
 axum = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
