@@ -44,10 +44,10 @@ pub mod resolver;
 pub mod audit;
 pub mod cache;
 
-pub mod engine;
-pub mod middleware;
 pub mod defaults;
+pub mod engine;
 pub mod handlers;
+pub mod middleware;
 pub mod routes;
 
 // ─── Re-exports ───────────────────────────────────────────────────────────────
@@ -56,8 +56,8 @@ pub use engine::SharingEngine;
 pub use middleware::require_permission;
 
 pub use models::{
-    AuditEntry, Capability, CreateGrant, DefaultVisibility, EffectivePermission, Grant, Policy,
-    PermissionSource, Template, UserContext,
+    AuditEntry, Capability, CreateGrant, DefaultVisibility, EffectivePermission, Grant,
+    PermissionSource, Policy, Template, UserContext,
 };
 pub use types::{Action, Grantee, GranteeType, ResourceRef, ResourceType, Role};
 

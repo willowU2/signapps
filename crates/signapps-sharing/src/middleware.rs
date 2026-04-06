@@ -38,6 +38,12 @@ use uuid::Uuid;
 use crate::engine::SharingEngine;
 use crate::types::{Action, ResourceRef, ResourceType};
 
+// ─── Type alias ───────────────────────────────────────────────────────────────
+
+/// Boxed async middleware future returned by the permission-check closure.
+type PermissionFuture =
+    std::pin::Pin<Box<dyn std::future::Future<Output = Result<Response, Error>> + Send>>;
+
 // ─── require_permission ───────────────────────────────────────────────────────
 
 /// Returns an Axum middleware that enforces a specific permission on a resource.
@@ -64,16 +70,16 @@ pub fn require_permission(
     resource_type: ResourceType,
     action: Action,
     param_name: &'static str,
-) -> impl Fn(
-    State<SharingEngine>,
-    Request,
-    Next,
-) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Response, Error>> + Send>>
-       + Clone
-       + Send
-       + 'static {
+) -> impl Fn(State<SharingEngine>, Request, Next) -> PermissionFuture + Clone + Send + 'static {
     move |State(engine): State<SharingEngine>, request: Request, next: Next| {
-        Box::pin(permission_check(engine, request, next, resource_type, action.clone(), param_name))
+        Box::pin(permission_check(
+            engine,
+            request,
+            next,
+            resource_type,
+            action.clone(),
+            param_name,
+        ))
     }
 }
 
@@ -107,7 +113,10 @@ async fn permission_check(
     let user_ctx = engine.build_user_context(&claims).await?;
 
     // Check permission.
-    let resource = ResourceRef { resource_type, resource_id };
+    let resource = ResourceRef {
+        resource_type,
+        resource_id,
+    };
     engine.check(&user_ctx, resource, action, None).await?;
 
     // Suppress unused-variable warning for path_params check above.
@@ -137,14 +146,16 @@ fn extract_path_uuid(request: &Request<Body>, param_name: &str) -> Result<Uuid, 
     if let Some(params) = params {
         for (key, value) in params.iter() {
             if key == param_name {
-                return value
-                    .parse::<Uuid>()
-                    .map_err(|_| Error::BadRequest(format!("path param '{param_name}' is not a valid UUID")));
+                return value.parse::<Uuid>().map_err(|_| {
+                    Error::BadRequest(format!("path param '{param_name}' is not a valid UUID"))
+                });
             }
         }
     }
 
-    Err(Error::BadRequest(format!("path parameter '{param_name}' not found")))
+    Err(Error::BadRequest(format!(
+        "path parameter '{param_name}' not found"
+    )))
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

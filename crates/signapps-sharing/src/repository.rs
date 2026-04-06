@@ -7,11 +7,39 @@
 //! All queries enforce tenant isolation via `WHERE tenant_id = $N` and filter
 //! expired grants with `AND (expires_at IS NULL OR expires_at > NOW())`.
 
+use chrono::{DateTime, Utc};
 use signapps_common::{Error, Result};
 use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::models::{AuditEntry, Capability, DefaultVisibility, Grant, Policy, Template};
+
+// ─── CreateGrantInput ────────────────────────────────────────────────────────
+
+/// Input bundle for [`SharingRepository::create_grant`].
+///
+/// Groups the 8+ individual parameters into a single struct to comply with
+/// the function-argument-count limit.
+pub struct CreateGrantInput<'a> {
+    /// Tenant scope for this grant.
+    pub tenant_id: Uuid,
+    /// The resource type (e.g. `"file"`, `"folder"`).
+    pub resource_type: &'a str,
+    /// The specific resource instance.
+    pub resource_id: Uuid,
+    /// The kind of grantee (`"user"`, `"group"`, `"org_node"`, `"everyone"`).
+    pub grantee_type: &'a str,
+    /// The grantee UUID, or `None` for `"everyone"` grants.
+    pub grantee_id: Option<Uuid>,
+    /// The role to assign (e.g. `"viewer"`, `"editor"`, `"manager"`, `"deny"`).
+    pub role: &'a str,
+    /// Whether the grantee may re-share the resource.
+    pub can_reshare: Option<bool>,
+    /// Optional expiry after which the grant is no longer active.
+    pub expires_at: Option<DateTime<Utc>>,
+    /// The actor who is creating this grant.
+    pub granted_by: Uuid,
+}
 
 // ─── SharingRepository ────────────────────────────────────────────────────────
 
@@ -164,18 +192,7 @@ impl SharingRepository {
     ///
     /// Returns [`Error::Database`] if the insert fails (e.g. constraint
     /// violation).
-    pub async fn create_grant(
-        pool: &PgPool,
-        tenant_id: Uuid,
-        resource_type: &str,
-        resource_id: Uuid,
-        grantee_type: &str,
-        grantee_id: Option<Uuid>,
-        role: &str,
-        can_reshare: Option<bool>,
-        expires_at: Option<chrono::DateTime<chrono::Utc>>,
-        granted_by: Uuid,
-    ) -> Result<Grant> {
+    pub async fn create_grant(pool: &PgPool, input: CreateGrantInput<'_>) -> Result<Grant> {
         sqlx::query_as::<_, Grant>(
             r#"INSERT INTO sharing.grants
                    (tenant_id, resource_type, resource_id,
@@ -184,15 +201,15 @@ impl SharingRepository {
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                RETURNING *"#,
         )
-        .bind(tenant_id)
-        .bind(resource_type)
-        .bind(resource_id)
-        .bind(grantee_type)
-        .bind(grantee_id)
-        .bind(role)
-        .bind(can_reshare)
-        .bind(expires_at)
-        .bind(granted_by)
+        .bind(input.tenant_id)
+        .bind(input.resource_type)
+        .bind(input.resource_id)
+        .bind(input.grantee_type)
+        .bind(input.grantee_id)
+        .bind(input.role)
+        .bind(input.can_reshare)
+        .bind(input.expires_at)
+        .bind(input.granted_by)
         .fetch_one(pool)
         .await
         .map_err(|e| Error::Database(e.to_string()))
@@ -204,14 +221,12 @@ impl SharingRepository {
     ///
     /// Returns [`Error::Database`] if the delete fails.
     pub async fn delete_grant(pool: &PgPool, tenant_id: Uuid, grant_id: Uuid) -> Result<bool> {
-        let result = sqlx::query(
-            "DELETE FROM sharing.grants WHERE tenant_id = $1 AND id = $2",
-        )
-        .bind(tenant_id)
-        .bind(grant_id)
-        .execute(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        let result = sqlx::query("DELETE FROM sharing.grants WHERE tenant_id = $1 AND id = $2")
+            .bind(tenant_id)
+            .bind(grant_id)
+            .execute(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(result.rows_affected() > 0)
     }
@@ -323,14 +338,12 @@ impl SharingRepository {
     ///
     /// Returns [`Error::Database`] if the delete fails.
     pub async fn delete_policy(pool: &PgPool, tenant_id: Uuid, policy_id: Uuid) -> Result<bool> {
-        let result = sqlx::query(
-            "DELETE FROM sharing.policies WHERE tenant_id = $1 AND id = $2",
-        )
-        .bind(tenant_id)
-        .bind(policy_id)
-        .execute(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        let result = sqlx::query("DELETE FROM sharing.policies WHERE tenant_id = $1 AND id = $2")
+            .bind(tenant_id)
+            .bind(policy_id)
+            .execute(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(result.rows_affected() > 0)
     }

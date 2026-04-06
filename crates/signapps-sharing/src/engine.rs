@@ -21,10 +21,10 @@ use sqlx::PgPool;
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::audit::AuditLogger;
+use crate::audit::{AuditLogger, GrantCreatedEvent};
 use crate::cache::SharingCache;
 use crate::models::{CreateGrant, EffectivePermission, Grant, UserContext};
-use crate::repository::SharingRepository;
+use crate::repository::{CreateGrantInput, SharingRepository};
 use crate::resolver::PermissionResolver;
 use crate::types::{Action, GranteeType, ResourceRef, ResourceType, Role};
 
@@ -52,7 +52,10 @@ pub struct SharingEngine {
 impl SharingEngine {
     /// Create a new engine backed by `pool` and `cache`.
     pub fn new(pool: PgPool, cache: CacheService) -> Self {
-        Self { pool, cache: SharingCache::new(cache) }
+        Self {
+            pool,
+            cache: SharingCache::new(cache),
+        }
     }
 
     // ─── Permission checks ────────────────────────────────────────────────
@@ -82,7 +85,9 @@ impl SharingEngine {
         owner_id: Option<Uuid>,
     ) -> Result<()> {
         let resolver = PermissionResolver::new(&self.pool);
-        resolver.check_action(user_ctx, &resource, owner_id, &action).await
+        resolver
+            .check_action(user_ctx, &resource, owner_id, &action)
+            .await
     }
 
     /// Resolve the effective permission for `user_ctx` on `resource`.
@@ -174,31 +179,33 @@ impl SharingEngine {
         // Create the grant.
         let grant = SharingRepository::create_grant(
             &self.pool,
-            actor_ctx.tenant_id,
-            resource.resource_type.as_str(),
-            resource.resource_id,
-            request.grantee_type.as_str(),
-            request.resolved_grantee_id(),
-            request.role.as_str(),
-            request.can_reshare,
-            request.expires_at,
-            actor_ctx.user_id,
+            CreateGrantInput {
+                tenant_id: actor_ctx.tenant_id,
+                resource_type: resource.resource_type.as_str(),
+                resource_id: resource.resource_id,
+                grantee_type: request.grantee_type.as_str(),
+                grantee_id: request.resolved_grantee_id(),
+                role: request.role.as_str(),
+                can_reshare: request.can_reshare,
+                expires_at: request.expires_at,
+                granted_by: actor_ctx.user_id,
+            },
         )
         .await?;
 
         // Audit log.
         let logger = AuditLogger::new(&self.pool);
         logger
-            .log_grant_created(
-                actor_ctx.tenant_id,
-                resource.resource_type.as_str(),
-                resource.resource_id,
-                actor_ctx.user_id,
-                grant.id,
-                &grant.grantee_type,
-                grant.grantee_id,
-                &grant.role,
-            )
+            .log_grant_created(GrantCreatedEvent {
+                tenant_id: actor_ctx.tenant_id,
+                resource_type: resource.resource_type.as_str(),
+                resource_id: resource.resource_id,
+                actor_id: actor_ctx.user_id,
+                grant_id: grant.id,
+                grantee_type: &grant.grantee_type,
+                grantee_id: grant.grantee_id,
+                role: &grant.role,
+            })
             .await?;
 
         // Invalidate L2 cache for this resource.
@@ -238,8 +245,8 @@ impl SharingEngine {
         let resolver = PermissionResolver::new(&self.pool);
         let effective = resolver.resolve(actor_ctx, &resource, owner_id).await?;
 
-        let can_revoke = actor_ctx.is_admin()
-            || effective.is_some_and(|ep| ep.role == Role::Manager);
+        let can_revoke =
+            actor_ctx.is_admin() || effective.is_some_and(|ep| ep.role == Role::Manager);
 
         if !can_revoke {
             return Err(Error::Forbidden(format!(
@@ -370,8 +377,8 @@ impl SharingEngine {
         let resolver = PermissionResolver::new(&self.pool);
         let effective = resolver.resolve(actor_ctx, &resource, owner_id).await?;
 
-        let can_apply = actor_ctx.is_admin()
-            || effective.is_some_and(|ep| ep.role == Role::Manager);
+        let can_apply =
+            actor_ctx.is_admin() || effective.is_some_and(|ep| ep.role == Role::Manager);
 
         if !can_apply {
             return Err(Error::Forbidden(format!(
@@ -387,25 +394,25 @@ impl SharingEngine {
                 .ok_or_else(|| Error::NotFound(format!("template {template_id} not found")))?;
 
         // Parse grants JSON array.
-        let grant_defs: Vec<CreateGrant> =
-            serde_json::from_value(template.grants.clone()).map_err(|e| {
-                Error::BadRequest(format!("invalid template grants JSON: {e}"))
-            })?;
+        let grant_defs: Vec<CreateGrant> = serde_json::from_value(template.grants.clone())
+            .map_err(|e| Error::BadRequest(format!("invalid template grants JSON: {e}")))?;
 
         // Create each grant.
         let mut created = 0usize;
         for def in grant_defs {
             SharingRepository::create_grant(
                 &self.pool,
-                actor_ctx.tenant_id,
-                resource.resource_type.as_str(),
-                resource.resource_id,
-                def.grantee_type.as_str(),
-                def.resolved_grantee_id(),
-                def.role.as_str(),
-                def.can_reshare,
-                def.expires_at,
-                actor_ctx.user_id,
+                CreateGrantInput {
+                    tenant_id: actor_ctx.tenant_id,
+                    resource_type: resource.resource_type.as_str(),
+                    resource_id: resource.resource_id,
+                    grantee_type: def.grantee_type.as_str(),
+                    grantee_id: def.resolved_grantee_id(),
+                    role: def.role.as_str(),
+                    can_reshare: def.can_reshare,
+                    expires_at: def.expires_at,
+                    granted_by: actor_ctx.user_id,
+                },
             )
             .await?;
             created += 1;
@@ -477,7 +484,14 @@ impl SharingEngine {
         // role display only, not for the core permission check).
         let group_roles = std::collections::HashMap::new();
 
-        Ok(UserContext { user_id, tenant_id, group_ids, group_roles, org_ancestors, system_role })
+        Ok(UserContext {
+            user_id,
+            tenant_id,
+            group_ids,
+            group_roles,
+            org_ancestors,
+            system_role,
+        })
     }
 
     // ─── Internal helpers ─────────────────────────────────────────────────
@@ -611,18 +625,27 @@ mod tests {
 
     #[test]
     fn scenario_04_max_permissive_viewer_vs_editor_returns_editor() {
-        assert_eq!(Role::max_permissive(Role::Viewer, Role::Editor), Role::Editor);
+        assert_eq!(
+            Role::max_permissive(Role::Viewer, Role::Editor),
+            Role::Editor
+        );
     }
 
     #[test]
     fn scenario_04_max_permissive_deny_vs_manager_returns_manager() {
         // A positive grant on another axis overrides a deny on a less-specific axis.
-        assert_eq!(Role::max_permissive(Role::Deny, Role::Manager), Role::Manager);
+        assert_eq!(
+            Role::max_permissive(Role::Deny, Role::Manager),
+            Role::Manager
+        );
     }
 
     #[test]
     fn scenario_04_max_permissive_same_roles() {
-        assert_eq!(Role::max_permissive(Role::Editor, Role::Editor), Role::Editor);
+        assert_eq!(
+            Role::max_permissive(Role::Editor, Role::Editor),
+            Role::Editor
+        );
     }
 
     #[test]
@@ -678,9 +701,8 @@ mod tests {
         };
         assert_eq!(dto.grantee_type, GranteeType::Everyone);
         // Confirms the combination that engine.grant() must reject.
-        let is_forbidden_combination =
-            ResourceType::VaultEntry == ResourceType::VaultEntry
-                && dto.grantee_type == GranteeType::Everyone;
+        let is_forbidden_combination = ResourceType::VaultEntry == ResourceType::VaultEntry
+            && dto.grantee_type == GranteeType::Everyone;
         assert!(is_forbidden_combination);
     }
 
@@ -688,8 +710,7 @@ mod tests {
     fn scenario_06_non_vault_everyone_is_not_forbidden() {
         // File + Everyone is a valid combination — only VaultEntry is restricted.
         let file_ref = ResourceRef::file(Uuid::new_v4());
-        let is_forbidden =
-            file_ref.resource_type == ResourceType::VaultEntry;
+        let is_forbidden = file_ref.resource_type == ResourceType::VaultEntry;
         assert!(!is_forbidden);
     }
 
@@ -768,9 +789,18 @@ mod tests {
         };
 
         assert_eq!(make("user").parsed_grantee_type(), Some(GranteeType::User));
-        assert_eq!(make("group").parsed_grantee_type(), Some(GranteeType::Group));
-        assert_eq!(make("org_node").parsed_grantee_type(), Some(GranteeType::OrgNode));
-        assert_eq!(make("everyone").parsed_grantee_type(), Some(GranteeType::Everyone));
+        assert_eq!(
+            make("group").parsed_grantee_type(),
+            Some(GranteeType::Group)
+        );
+        assert_eq!(
+            make("org_node").parsed_grantee_type(),
+            Some(GranteeType::OrgNode)
+        );
+        assert_eq!(
+            make("everyone").parsed_grantee_type(),
+            Some(GranteeType::Everyone)
+        );
         assert_eq!(make("unknown").parsed_grantee_type(), None);
     }
 
@@ -822,14 +852,29 @@ mod tests {
         let id = Uuid::new_v4();
         assert_eq!(ResourceRef::file(id).resource_type, ResourceType::File);
         assert_eq!(ResourceRef::folder(id).resource_type, ResourceType::Folder);
-        assert_eq!(ResourceRef::calendar(id).resource_type, ResourceType::Calendar);
+        assert_eq!(
+            ResourceRef::calendar(id).resource_type,
+            ResourceType::Calendar
+        );
         assert_eq!(ResourceRef::event(id).resource_type, ResourceType::Event);
-        assert_eq!(ResourceRef::document(id).resource_type, ResourceType::Document);
+        assert_eq!(
+            ResourceRef::document(id).resource_type,
+            ResourceType::Document
+        );
         assert_eq!(ResourceRef::form(id).resource_type, ResourceType::Form);
-        assert_eq!(ResourceRef::contact_book(id).resource_type, ResourceType::ContactBook);
-        assert_eq!(ResourceRef::channel(id).resource_type, ResourceType::Channel);
+        assert_eq!(
+            ResourceRef::contact_book(id).resource_type,
+            ResourceType::ContactBook
+        );
+        assert_eq!(
+            ResourceRef::channel(id).resource_type,
+            ResourceType::Channel
+        );
         assert_eq!(ResourceRef::asset(id).resource_type, ResourceType::Asset);
-        assert_eq!(ResourceRef::vault_entry(id).resource_type, ResourceType::VaultEntry);
+        assert_eq!(
+            ResourceRef::vault_entry(id).resource_type,
+            ResourceType::VaultEntry
+        );
     }
 
     #[test]
@@ -884,7 +929,11 @@ mod tests {
     #[test]
     fn scenario_10_default_visibility_workspace_resources() {
         use crate::defaults::system_default_visibility;
-        for rt in [ResourceType::Calendar, ResourceType::Event, ResourceType::Channel] {
+        for rt in [
+            ResourceType::Calendar,
+            ResourceType::Event,
+            ResourceType::Channel,
+        ] {
             assert_eq!(
                 system_default_visibility(rt),
                 "workspace",
@@ -940,7 +989,12 @@ mod tests {
         let ep = EffectivePermission {
             role: Role::Manager,
             can_reshare: true,
-            capabilities: vec!["read".into(), "write".into(), "delete".into(), "share".into()],
+            capabilities: vec![
+                "read".into(),
+                "write".into(),
+                "delete".into(),
+                "share".into(),
+            ],
             sources: vec![PermissionSource {
                 axis: "user".into(),
                 grantee_name: Some("alice".into()),

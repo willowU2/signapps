@@ -14,6 +14,31 @@ use uuid::Uuid;
 
 use crate::repository::SharingRepository;
 
+// ─── GrantCreatedEvent ────────────────────────────────────────────────────────
+
+/// Input bundle for [`AuditLogger::log_grant_created`].
+///
+/// Groups the 8+ individual parameters into a single struct to comply with
+/// the function-argument-count limit.
+pub struct GrantCreatedEvent<'a> {
+    /// Tenant scope for this event.
+    pub tenant_id: Uuid,
+    /// The resource type (e.g. `"file"`, `"folder"`).
+    pub resource_type: &'a str,
+    /// The specific resource instance.
+    pub resource_id: Uuid,
+    /// The actor who created the grant.
+    pub actor_id: Uuid,
+    /// The newly created grant's identifier.
+    pub grant_id: Uuid,
+    /// The kind of grantee (`"user"`, `"group"`, `"org_node"`, `"everyone"`).
+    pub grantee_type: &'a str,
+    /// The grantee UUID, or `None` for `"everyone"` grants.
+    pub grantee_id: Option<Uuid>,
+    /// The assigned role string.
+    pub role: &'a str,
+}
+
 // ─── AuditLogger ─────────────────────────────────────────────────────────────
 
 /// Convenience wrapper for writing immutable sharing audit log entries.
@@ -40,47 +65,41 @@ impl<'pool> AuditLogger<'pool> {
     /// # Panics
     ///
     /// No panics — all errors are propagated via `Result`.
-    #[instrument(skip(self), fields(
-        tenant_id  = %tenant_id,
-        actor_id   = %actor_id,
-        grant_id   = %grant_id,
+    #[instrument(skip(self, event), fields(
+        tenant_id = tracing::field::Empty,
+        actor_id  = tracing::field::Empty,
+        grant_id  = tracing::field::Empty,
     ))]
-    pub async fn log_grant_created(
-        &self,
-        tenant_id: Uuid,
-        resource_type: &str,
-        resource_id: Uuid,
-        actor_id: Uuid,
-        grant_id: Uuid,
-        grantee_type: &str,
-        grantee_id: Option<Uuid>,
-        role: &str,
-    ) -> Result<()> {
+    pub async fn log_grant_created(&self, event: GrantCreatedEvent<'_>) -> Result<()> {
+        tracing::Span::current()
+            .record("tenant_id", tracing::field::display(event.tenant_id))
+            .record("actor_id", tracing::field::display(event.actor_id))
+            .record("grant_id", tracing::field::display(event.grant_id));
         let details = serde_json::json!({
-            "grant_id":    grant_id,
-            "grantee_type": grantee_type,
-            "grantee_id":  grantee_id,
-            "role":        role,
+            "grant_id":    event.grant_id,
+            "grantee_type": event.grantee_type,
+            "grantee_id":  event.grantee_id,
+            "role":        event.role,
         });
 
         SharingRepository::insert_audit(
             self.pool,
-            tenant_id,
-            resource_type,
-            resource_id,
-            actor_id,
+            event.tenant_id,
+            event.resource_type,
+            event.resource_id,
+            event.actor_id,
             "grant_created",
             details,
         )
         .await?;
 
         tracing::info!(
-            tenant_id  = %tenant_id,
-            resource   = %resource_type,
-            resource_id = %resource_id,
-            actor_id   = %actor_id,
-            grant_id   = %grant_id,
-            role,
+            tenant_id   = %event.tenant_id,
+            resource    = %event.resource_type,
+            resource_id = %event.resource_id,
+            actor_id    = %event.actor_id,
+            grant_id    = %event.grant_id,
+            role        = %event.role,
             "grant created"
         );
 

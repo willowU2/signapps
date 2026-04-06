@@ -27,8 +27,8 @@
 //! ```
 
 use axum::{
-    Router,
     routing::{delete, get},
+    Router,
 };
 
 use crate::engine::SharingEngine;
@@ -81,8 +81,7 @@ pub fn sharing_routes(prefix: &str, resource_type: ResourceType) -> Router<Shari
         .layer(axum::Extension(resource_type));
 
     // Shared-with-me — no resource_type injection needed (uses query param).
-    let shared_route =
-        Router::new().route("/api/v1/shared-with-me", get(shared_with_me_handler));
+    let shared_route = Router::new().route("/api/v1/shared-with-me", get(shared_with_me_handler));
 
     resource_routes.merge(shared_route)
 }

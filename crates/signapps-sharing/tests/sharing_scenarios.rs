@@ -213,8 +213,13 @@ async fn scenario_06_org_node_grant_applies_to_descendant() {
     let _engineering_id = Uuid::new_v4();
     let _diana_id = Uuid::new_v4();
     let _tenant_id = Uuid::new_v4();
-    let _diana_ctx =
-        make_ctx(_diana_id, _tenant_id, vec![], vec![_engineering_id, Uuid::new_v4()], 0);
+    let _diana_ctx = make_ctx(
+        _diana_id,
+        _tenant_id,
+        vec![],
+        vec![_engineering_id, Uuid::new_v4()],
+        0,
+    );
 
     // INSERT INTO sharing.grants ... grantee_type = 'org_node', grantee_id = engineering_id, role = 'viewer'
     // let ep = engine.effective_role(&diana_ctx, ResourceRef::asset(asset_id), None).await.unwrap().unwrap();
@@ -491,7 +496,9 @@ async fn scenario_14_capabilities_match_role() {
 /// Reads `DATABASE_URL` from the environment. Panics if the variable is not set
 /// or the connection cannot be established.
 async fn setup_pool() -> sqlx::PgPool {
-    let url = std::env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set for integration tests");
-    sqlx::PgPool::connect(&url).await.expect("failed to connect to PostgreSQL")
+    let url =
+        std::env::var("DATABASE_URL").expect("DATABASE_URL must be set for integration tests");
+    sqlx::PgPool::connect(&url)
+        .await
+        .expect("failed to connect to PostgreSQL")
 }

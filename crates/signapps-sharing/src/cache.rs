@@ -219,7 +219,10 @@ mod tests {
 
         assert!(cache.get_group_ids(user_id).await.is_none());
         cache.set_group_ids(user_id, &ids).await;
-        let got = cache.get_group_ids(user_id).await.expect("should be cached");
+        let got = cache
+            .get_group_ids(user_id)
+            .await
+            .expect("should be cached");
         assert_eq!(got, ids);
     }
 
@@ -231,7 +234,10 @@ mod tests {
 
         assert!(cache.get_org_ancestors(user_id).await.is_none());
         cache.set_org_ancestors(user_id, &ids).await;
-        let got = cache.get_org_ancestors(user_id).await.expect("should be cached");
+        let got = cache
+            .get_org_ancestors(user_id)
+            .await
+            .expect("should be cached");
         assert_eq!(got, ids);
     }
 
@@ -241,8 +247,13 @@ mod tests {
         let user_id = Uuid::new_v4();
         let resource_id = Uuid::new_v4();
 
-        assert!(cache.get_effective_role(user_id, "file", resource_id).await.is_none());
-        cache.set_effective_role(user_id, "file", resource_id, "editor").await;
+        assert!(cache
+            .get_effective_role(user_id, "file", resource_id)
+            .await
+            .is_none());
+        cache
+            .set_effective_role(user_id, "file", resource_id, "editor")
+            .await;
         let got = cache
             .get_effective_role(user_id, "file", resource_id)
             .await
@@ -277,6 +288,9 @@ mod tests {
         let r = Uuid::new_v4();
         assert_ne!(l1_group_key(u), l1_org_key(u));
         assert_ne!(l2_role_key(u, "file", r), l2_role_key(u, "folder", r));
-        assert_ne!(l2_role_key(u, "file", r), l2_role_key(u, "file", Uuid::new_v4()));
+        assert_ne!(
+            l2_role_key(u, "file", r),
+            l2_role_key(u, "file", Uuid::new_v4())
+        );
     }
 }

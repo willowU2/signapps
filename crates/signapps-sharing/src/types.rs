@@ -320,52 +320,82 @@ pub struct ResourceRef {
 impl ResourceRef {
     /// Create a reference to a file resource.
     pub fn file(id: Uuid) -> Self {
-        Self { resource_type: ResourceType::File, resource_id: id }
+        Self {
+            resource_type: ResourceType::File,
+            resource_id: id,
+        }
     }
 
     /// Create a reference to a folder resource.
     pub fn folder(id: Uuid) -> Self {
-        Self { resource_type: ResourceType::Folder, resource_id: id }
+        Self {
+            resource_type: ResourceType::Folder,
+            resource_id: id,
+        }
     }
 
     /// Create a reference to a calendar resource.
     pub fn calendar(id: Uuid) -> Self {
-        Self { resource_type: ResourceType::Calendar, resource_id: id }
+        Self {
+            resource_type: ResourceType::Calendar,
+            resource_id: id,
+        }
     }
 
     /// Create a reference to an event resource.
     pub fn event(id: Uuid) -> Self {
-        Self { resource_type: ResourceType::Event, resource_id: id }
+        Self {
+            resource_type: ResourceType::Event,
+            resource_id: id,
+        }
     }
 
     /// Create a reference to a document resource.
     pub fn document(id: Uuid) -> Self {
-        Self { resource_type: ResourceType::Document, resource_id: id }
+        Self {
+            resource_type: ResourceType::Document,
+            resource_id: id,
+        }
     }
 
     /// Create a reference to a form resource.
     pub fn form(id: Uuid) -> Self {
-        Self { resource_type: ResourceType::Form, resource_id: id }
+        Self {
+            resource_type: ResourceType::Form,
+            resource_id: id,
+        }
     }
 
     /// Create a reference to a contact book resource.
     pub fn contact_book(id: Uuid) -> Self {
-        Self { resource_type: ResourceType::ContactBook, resource_id: id }
+        Self {
+            resource_type: ResourceType::ContactBook,
+            resource_id: id,
+        }
     }
 
     /// Create a reference to a channel resource.
     pub fn channel(id: Uuid) -> Self {
-        Self { resource_type: ResourceType::Channel, resource_id: id }
+        Self {
+            resource_type: ResourceType::Channel,
+            resource_id: id,
+        }
     }
 
     /// Create a reference to an asset resource.
     pub fn asset(id: Uuid) -> Self {
-        Self { resource_type: ResourceType::Asset, resource_id: id }
+        Self {
+            resource_type: ResourceType::Asset,
+            resource_id: id,
+        }
     }
 
     /// Create a reference to a vault entry resource.
     pub fn vault_entry(id: Uuid) -> Self {
-        Self { resource_type: ResourceType::VaultEntry, resource_id: id }
+        Self {
+            resource_type: ResourceType::VaultEntry,
+            resource_id: id,
+        }
     }
 }
 
@@ -463,10 +493,19 @@ mod tests {
 
     #[test]
     fn role_max_permissive() {
-        assert_eq!(Role::max_permissive(Role::Viewer, Role::Editor), Role::Editor);
-        assert_eq!(Role::max_permissive(Role::Manager, Role::Viewer), Role::Manager);
+        assert_eq!(
+            Role::max_permissive(Role::Viewer, Role::Editor),
+            Role::Editor
+        );
+        assert_eq!(
+            Role::max_permissive(Role::Manager, Role::Viewer),
+            Role::Manager
+        );
         assert_eq!(Role::max_permissive(Role::Deny, Role::Viewer), Role::Viewer);
-        assert_eq!(Role::max_permissive(Role::Manager, Role::Deny), Role::Manager);
+        assert_eq!(
+            Role::max_permissive(Role::Manager, Role::Deny),
+            Role::Manager
+        );
         assert_eq!(Role::max_permissive(Role::Deny, Role::Deny), Role::Deny);
     }
 
@@ -545,14 +584,29 @@ mod tests {
         let id = Uuid::new_v4();
         assert_eq!(ResourceRef::file(id).resource_type, ResourceType::File);
         assert_eq!(ResourceRef::folder(id).resource_type, ResourceType::Folder);
-        assert_eq!(ResourceRef::calendar(id).resource_type, ResourceType::Calendar);
+        assert_eq!(
+            ResourceRef::calendar(id).resource_type,
+            ResourceType::Calendar
+        );
         assert_eq!(ResourceRef::event(id).resource_type, ResourceType::Event);
-        assert_eq!(ResourceRef::document(id).resource_type, ResourceType::Document);
+        assert_eq!(
+            ResourceRef::document(id).resource_type,
+            ResourceType::Document
+        );
         assert_eq!(ResourceRef::form(id).resource_type, ResourceType::Form);
-        assert_eq!(ResourceRef::contact_book(id).resource_type, ResourceType::ContactBook);
-        assert_eq!(ResourceRef::channel(id).resource_type, ResourceType::Channel);
+        assert_eq!(
+            ResourceRef::contact_book(id).resource_type,
+            ResourceType::ContactBook
+        );
+        assert_eq!(
+            ResourceRef::channel(id).resource_type,
+            ResourceType::Channel
+        );
         assert_eq!(ResourceRef::asset(id).resource_type, ResourceType::Asset);
-        assert_eq!(ResourceRef::vault_entry(id).resource_type, ResourceType::VaultEntry);
+        assert_eq!(
+            ResourceRef::vault_entry(id).resource_type,
+            ResourceType::VaultEntry
+        );
         // All constructors should preserve the id
         assert_eq!(ResourceRef::file(id).resource_id, id);
     }

@@ -11,8 +11,8 @@
 //! - Return JSON responses on success.
 
 use axum::{
-    Extension, Json,
     extract::{Path, Query, State},
+    Extension, Json,
 };
 use serde::Deserialize;
 use signapps_common::{Claims, Error, Result};
@@ -71,7 +71,10 @@ pub async fn list_grants_handler(
     Extension(resource_type): Extension<ResourceType>,
 ) -> Result<Json<Vec<Grant>>> {
     let user_ctx = engine.build_user_context(&claims).await?;
-    let resource = crate::types::ResourceRef { resource_type, resource_id: path.resource_id };
+    let resource = crate::types::ResourceRef {
+        resource_type,
+        resource_id: path.resource_id,
+    };
     let grants = engine.list_grants(&user_ctx, resource).await?;
     Ok(Json(grants))
 }
@@ -99,7 +102,10 @@ pub async fn create_grant_handler(
     Json(body): Json<CreateGrant>,
 ) -> Result<Json<Grant>> {
     let user_ctx = engine.build_user_context(&claims).await?;
-    let resource = crate::types::ResourceRef { resource_type, resource_id: path.resource_id };
+    let resource = crate::types::ResourceRef {
+        resource_type,
+        resource_id: path.resource_id,
+    };
     let grant = engine.grant(&user_ctx, resource, None, body).await?;
     Ok(Json(grant))
 }
@@ -130,8 +136,13 @@ pub async fn revoke_grant_handler(
     Extension(resource_type): Extension<ResourceType>,
 ) -> Result<Json<()>> {
     let user_ctx = engine.build_user_context(&claims).await?;
-    let resource = crate::types::ResourceRef { resource_type, resource_id: path.resource_id };
-    engine.revoke(&user_ctx, resource, None, path.grant_id).await?;
+    let resource = crate::types::ResourceRef {
+        resource_type,
+        resource_id: path.resource_id,
+    };
+    engine
+        .revoke(&user_ctx, resource, None, path.grant_id)
+        .await?;
     Ok(Json(()))
 }
 
@@ -157,7 +168,10 @@ pub async fn permissions_handler(
     Extension(resource_type): Extension<ResourceType>,
 ) -> Result<Json<Option<EffectivePermission>>> {
     let user_ctx = engine.build_user_context(&claims).await?;
-    let resource = crate::types::ResourceRef { resource_type, resource_id: path.resource_id };
+    let resource = crate::types::ResourceRef {
+        resource_type,
+        resource_id: path.resource_id,
+    };
     let perm = engine.effective_role(&user_ctx, resource, None).await?;
     Ok(Json(perm))
 }

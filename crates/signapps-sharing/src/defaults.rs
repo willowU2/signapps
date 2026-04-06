@@ -78,17 +78,26 @@ mod tests {
 
     #[test]
     fn contact_book_defaults_private() {
-        assert_eq!(system_default_visibility(ResourceType::ContactBook), "private");
+        assert_eq!(
+            system_default_visibility(ResourceType::ContactBook),
+            "private"
+        );
     }
 
     #[test]
     fn vault_entry_defaults_private() {
-        assert_eq!(system_default_visibility(ResourceType::VaultEntry), "private");
+        assert_eq!(
+            system_default_visibility(ResourceType::VaultEntry),
+            "private"
+        );
     }
 
     #[test]
     fn calendar_defaults_workspace() {
-        assert_eq!(system_default_visibility(ResourceType::Calendar), "workspace");
+        assert_eq!(
+            system_default_visibility(ResourceType::Calendar),
+            "workspace"
+        );
     }
 
     #[test]
@@ -98,7 +107,10 @@ mod tests {
 
     #[test]
     fn channel_defaults_workspace() {
-        assert_eq!(system_default_visibility(ResourceType::Channel), "workspace");
+        assert_eq!(
+            system_default_visibility(ResourceType::Channel),
+            "workspace"
+        );
     }
 
     #[test]
