@@ -32,7 +32,7 @@ use handlers::websocket::websocket_handler;
 use signapps_common::AiIndexerClient;
 
 #[derive(Clone)]
-/// Application state for  service.
+/// Application state for the docs service.
 pub struct AppState {
     pub pool: signapps_db::DatabasePool,
     pub cache: Arc<CacheService>,
@@ -40,6 +40,7 @@ pub struct AppState {
     pub broadcasts: Arc<dashmap::DashMap<String, tokio::sync::broadcast::Sender<Vec<u8>>>>,
     pub indexer: AiIndexerClient,
     pub jwt_config: JwtConfig,
+    pub sharing: SharingEngine,
 }
 
 impl AuthState for AppState {
@@ -66,6 +67,9 @@ async fn main() -> anyhow::Result<()> {
     // Initialize JWT config
     let jwt_config = config.jwt_config();
 
+    // Initialize sharing engine (replaces legacy document_permissions)
+    let sharing_engine = SharingEngine::new(pool.inner().clone(), CacheService::default_config());
+
     // Initialize app state
     let app_state = AppState {
         pool: pool.clone(),
@@ -74,10 +78,8 @@ async fn main() -> anyhow::Result<()> {
         broadcasts: Arc::new(dashmap::DashMap::new()),
         indexer: AiIndexerClient::from_env(),
         jwt_config,
+        sharing: sharing_engine.clone(),
     };
-
-    // Initialize sharing engine (additive — existing document_permissions system unchanged)
-    let sharing_engine = SharingEngine::new(pool.inner().clone(), CacheService::default_config());
 
     // Build router with document type endpoints
     // Public routes (no auth required)
@@ -146,10 +148,9 @@ async fn main() -> anyhow::Result<()> {
             auth_middleware::<AppState>,
         ));
 
-    // Sharing sub-router: State<SharingEngine> — additive, isolated from AppState.
-    // The existing document_permissions system is NOT touched.
+    // Sharing sub-router: State<SharingEngine> — uses the same engine as AppState.
     let sharing_sub = sharing_routes("documents", ResourceType::Document)
-        .with_state(sharing_engine);
+        .with_state(app_state.sharing.clone());
 
     let app = public_routes
         .merge(protected_routes)
