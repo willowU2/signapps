@@ -19,6 +19,8 @@ chrono = { version = "0.4", features = ["serde"] }
 
 # Authentication
 signapps-common = { path = "../../crates/signapps-common" }
+signapps-sharing = { path = "../../crates/signapps-sharing" }
+signapps-cache = { path = "../../crates/signapps-cache" }
 
 # Mail protocol crates
 signapps-smtp = { path = "../../crates/signapps-smtp" }
