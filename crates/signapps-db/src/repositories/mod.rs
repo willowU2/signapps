@@ -143,4 +143,7 @@ pub use infrastructure_repository::{
     InfraCertificateRepository, InfraDomainRepository,
 };
 
+pub mod ad_sync_repository;
+pub use ad_sync_repository::{AdOuRepository, AdSyncQueueRepository, AdUserAccountRepository};
+
 pub mod test_helpers;

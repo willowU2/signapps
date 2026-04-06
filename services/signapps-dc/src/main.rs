@@ -165,6 +165,14 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    // AD Sync worker
+    let sync_pool = pool.clone();
+    let sync_handle = tokio::spawn(async move {
+        signapps_ad_core::sync_worker::run_sync_worker(sync_pool).await;
+    });
+
+    tracing::info!("AD sync worker spawned");
+
     tracing::info!("All DC listeners started — press Ctrl+C to stop");
 
     // Wait for shutdown
@@ -173,7 +181,7 @@ async fn main() -> anyhow::Result<()> {
     let _ = shutdown_tx.send(true);
 
     // Wait for listeners to finish
-    let _ = tokio::join!(health_handle, ldap_handle, kdc_handle, ntp_handle);
+    let _ = tokio::join!(health_handle, ldap_handle, kdc_handle, ntp_handle, sync_handle);
 
     tracing::info!("=== SignApps DC stopped ===");
     Ok(())
