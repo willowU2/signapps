@@ -22,6 +22,11 @@ import type {
   DhcpReservation,
   DeployProfile,
   DeployHistory,
+  AdOu,
+  AdUserAccountInfo,
+  AdSyncEvent,
+  AdSyncQueueStats,
+  AdDcSiteInfo,
 } from "@/types/active-directory";
 
 const client = getClient(ServiceName.WORKFORCE);
@@ -191,6 +196,32 @@ export const adApi = {
   // ── Domain Config ──
   updateConfig: (domainId: string, config: Record<string, unknown>) =>
     client.put(`/workforce/ad/domains/${domainId}/config`, config),
+
+  // ── AD Sync ──
+  sync: {
+    queueStats: (domainId: string) =>
+      client.get<AdSyncQueueStats>(
+        `/workforce/ad/domains/${domainId}/sync/stats`,
+      ),
+    events: (domainId: string) =>
+      client.get<AdSyncEvent[]>(
+        `/workforce/ad/domains/${domainId}/sync/events`,
+      ),
+    ous: (domainId: string) =>
+      client.get<AdOu[]>(`/workforce/ad/domains/${domainId}/ad-ous`),
+    users: (domainId: string) =>
+      client.get<AdUserAccountInfo[]>(
+        `/workforce/ad/domains/${domainId}/ad-users`,
+      ),
+    dcSites: (domainId: string) =>
+      client.get<AdDcSiteInfo[]>(`/workforce/ad/domains/${domainId}/dc-sites`),
+    setMailDomain: (nodeId: string, domainId: string) =>
+      client.put(`/workforce/ad/org-nodes/${nodeId}/mail-domain`, {
+        domain_id: domainId,
+      }),
+    removeMailDomain: (nodeId: string) =>
+      client.delete(`/workforce/ad/org-nodes/${nodeId}/mail-domain`),
+  },
 
   // ── Monitoring & Maintenance ──
   monitoring: {

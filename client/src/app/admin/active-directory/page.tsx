@@ -346,6 +346,12 @@ export default function ActiveDirectoryPage() {
               label: "Deploiement",
               desc: "Profils OS et logiciels",
             },
+            {
+              href: "/admin/active-directory/sync",
+              icon: RefreshCw,
+              label: "Synchronisation",
+              desc: "Queue, OUs, comptes AD",
+            },
           ].map((item) => (
             <Link key={item.href} href={item.href}>
               <Card className="hover:bg-muted/50 transition-colors cursor-pointer h-full">

@@ -209,6 +209,70 @@ export interface DhcpReservation {
   computer_id?: string;
 }
 
+// ── AD Sync ──
+
+export interface AdOu {
+  id: string;
+  domain_id: string;
+  node_id: string;
+  distinguished_name: string;
+  parent_ou_id?: string;
+  mail_distribution_enabled: boolean;
+  sync_status: string;
+  last_synced_at?: string;
+  created_at: string;
+}
+
+export interface AdUserAccountInfo {
+  id: string;
+  domain_id: string;
+  person_id: string;
+  sam_account_name: string;
+  user_principal_name: string;
+  distinguished_name: string;
+  display_name: string;
+  title?: string;
+  department?: string;
+  mail?: string;
+  is_enabled: boolean;
+  sync_status: string;
+  created_at: string;
+}
+
+export interface AdSyncEvent {
+  id: string;
+  domain_id: string;
+  event_type: string;
+  payload: Record<string, unknown>;
+  priority: number;
+  status: string;
+  attempts: number;
+  error_message?: string;
+  created_at: string;
+  processed_at?: string;
+}
+
+export interface AdSyncQueueStats {
+  pending: number;
+  processing: number;
+  completed: number;
+  failed: number;
+  retry: number;
+}
+
+export interface AdDcSiteInfo {
+  id: string;
+  domain_id: string;
+  dc_hostname: string;
+  dc_ip: string;
+  dc_role: string;
+  dc_status: string;
+  is_writable: boolean;
+  is_primary: boolean;
+  last_heartbeat_at?: string;
+  created_at: string;
+}
+
 // ── Deployment ──
 
 export interface DeployProfile {
