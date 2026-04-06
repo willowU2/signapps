@@ -28,9 +28,13 @@ import {
   AlertTriangle,
   Loader2,
   RefreshCw,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { adApi } from "@/lib/api/active-directory";
+import { vaultApi } from "@/lib/api/vault";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -136,6 +140,10 @@ export default function AdSecurityPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  // Vault settings
+  const [vaultMasterPwRequired, setVaultMasterPwRequired] = useState(false);
+  const [vaultSettingLoading, setVaultSettingLoading] = useState(false);
+
   async function fetchData() {
     setLoading(true);
     setError(false);
@@ -150,6 +158,27 @@ export default function AdSecurityPage() {
       setError(true);
     } finally {
       setLoading(false);
+    }
+    // Fetch vault settings separately (non-blocking)
+    try {
+      const vaultRes = await vaultApi.settings.get();
+      setVaultMasterPwRequired(vaultRes.data.vault_master_password_required);
+    } catch {
+      // Vault settings not available — keep default (false)
+    }
+  }
+
+  async function handleVaultMasterPwToggle(checked: boolean) {
+    setVaultSettingLoading(true);
+    try {
+      const res = await vaultApi.settings.update({
+        vault_master_password_required: checked,
+      });
+      setVaultMasterPwRequired(res.data.vault_master_password_required);
+    } catch {
+      // Revert on failure
+    } finally {
+      setVaultSettingLoading(false);
     }
   }
 
@@ -451,6 +480,42 @@ export default function AdSecurityPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Vault Settings */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Lock className="h-5 w-5 text-emerald-500" />
+              <CardTitle>Coffre-fort</CardTitle>
+            </div>
+            <CardDescription>
+              Parametres de securite du coffre-fort pour ce tenant
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between p-3 rounded-lg border border-border">
+              <div className="space-y-1">
+                <Label
+                  htmlFor="vault-master-pw"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Exiger un mot de passe maitre pour le coffre-fort
+                </Label>
+                <p className="text-xs text-muted-foreground max-w-lg">
+                  Par defaut, le coffre-fort utilise l&apos;authentification
+                  SignApps. Activez cette option pour ajouter un mot de passe
+                  maitre supplementaire.
+                </p>
+              </div>
+              <Switch
+                id="vault-master-pw"
+                checked={vaultMasterPwRequired}
+                onCheckedChange={handleVaultMasterPwToggle}
+                disabled={vaultSettingLoading}
+              />
             </div>
           </CardContent>
         </Card>

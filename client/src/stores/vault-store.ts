@@ -8,8 +8,8 @@
  * Elle vit uniquement en mémoire pendant la session.
  */
 
-import { create } from 'zustand';
-import { vaultApi } from '@/lib/api/vault';
+import { create } from "zustand";
+import { vaultApi } from "@/lib/api/vault";
 import {
   unlockVault,
   encrypt,
@@ -17,7 +17,7 @@ import {
   deriveKey,
   initializeVault,
   encryptWithPublicKey,
-} from '@/lib/vault-crypto';
+} from "@/lib/vault-crypto";
 import type {
   VaultItemType,
   ShareType,
@@ -26,7 +26,7 @@ import type {
   DecryptedVaultItem,
   DecryptedFolder,
   BrowseSession,
-} from '@/types/vault';
+} from "@/types/vault";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // State interface
@@ -49,6 +49,8 @@ interface VaultState {
   loading: boolean;
   /** Erreur courante */
   error: string | null;
+  /** Le tenant exige un mot de passe maitre (sinon auto-unlock) */
+  masterPasswordRequired: boolean;
 
   // ──────────────────────────────────────────────
   // Actions
@@ -56,6 +58,8 @@ interface VaultState {
 
   /** Déverrouille le coffre */
   unlock: (password: string, email: string) => Promise<void>;
+  /** Tente un deverrouillage automatique sans mot de passe maitre */
+  autoUnlock: (email: string) => Promise<void>;
   /** Verrouille le coffre : efface symKey + tous les plaintexts de la mémoire */
   lock: () => void;
   /** Initialise le coffre pour la première utilisation */
@@ -114,13 +118,18 @@ interface VaultState {
 // Helper: déchiffre un item depuis l'API
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function decryptItem(raw: VaultItem, symKey: CryptoKey): Promise<DecryptedVaultItem> {
+async function decryptItem(
+  raw: VaultItem,
+  symKey: CryptoKey,
+): Promise<DecryptedVaultItem> {
   const [name, dataStr, notes, uri, totpSecret] = await Promise.all([
     decrypt(symKey, raw.name),
     decrypt(symKey, raw.data),
     raw.notes ? decrypt(symKey, raw.notes) : Promise.resolve(undefined),
     raw.uri ? decrypt(symKey, raw.uri) : Promise.resolve(undefined),
-    raw.totp_secret ? decrypt(symKey, raw.totp_secret) : Promise.resolve(undefined),
+    raw.totp_secret
+      ? decrypt(symKey, raw.totp_secret)
+      : Promise.resolve(undefined),
   ]);
 
   let data: Record<string, unknown> = {};
@@ -153,6 +162,68 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   sharedItems: [],
   loading: false,
   error: null,
+  masterPasswordRequired: false,
+
+  // ── autoUnlock ────────────────────────────────────────────────────────
+
+  autoUnlock: async (email) => {
+    set({ loading: true, error: null });
+    try {
+      // 1. Check tenant setting for master password requirement
+      let needsMaster = false;
+      try {
+        const settingsRes = await vaultApi.settings.get();
+        needsMaster = settingsRes.data.vault_master_password_required === true;
+      } catch {
+        // Settings endpoint unavailable — default to not required
+      }
+      set({ masterPasswordRequired: needsMaster });
+
+      if (needsMaster) {
+        // Master password required — stay locked, let the UI show VaultUnlock
+        set({ loading: false });
+        return;
+      }
+
+      // 2. Fetch user keys (may not exist yet for new users)
+      let userKeys;
+      try {
+        const res = await vaultApi.keys.get();
+        userKeys = res.data;
+      } catch {
+        // Keys not initialised — auto-initialize with empty password
+        await get().initialize("", email);
+        return;
+      }
+
+      // 3. If the keys were created with a master password but the tenant
+      //    setting was since disabled, still need master password to unlock
+      if (userKeys.has_master_password === true) {
+        set({ masterPasswordRequired: true, loading: false });
+        return;
+      }
+
+      // 4. Auto-unlock: derive key from empty password + email
+      const symKey = await unlockVault("", email, userKeys.encrypted_sym_key);
+      const masterKey = await deriveKey(
+        "",
+        email,
+        userKeys.kdf_iterations || 600_000,
+      );
+      const privateKey = await decrypt(
+        masterKey,
+        userKeys.encrypted_private_key,
+      );
+
+      set({ locked: false, symKey, privateKey, loading: false });
+
+      // 5. Load and decrypt all items
+      await get().fetchAndDecrypt();
+    } catch {
+      // Decryption failed — likely keys encrypted with a master password
+      set({ loading: false, masterPasswordRequired: true });
+    }
+  },
 
   // ── unlock ──────────────────────────────────────────────────────────────
 
@@ -170,8 +241,15 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       );
 
       // 3. Déchiffre la clé privée RSA (pour les partages)
-      const masterKey = await deriveKey(password, email, userKeys.kdf_iterations || 600_000);
-      const privateKey = await decrypt(masterKey, userKeys.encrypted_private_key);
+      const masterKey = await deriveKey(
+        password,
+        email,
+        userKeys.kdf_iterations || 600_000,
+      );
+      const privateKey = await decrypt(
+        masterKey,
+        userKeys.encrypted_private_key,
+      );
 
       set({ locked: false, symKey, privateKey, loading: false });
 
@@ -180,7 +258,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     } catch (err) {
       set({
         loading: false,
-        error: err instanceof Error ? err.message : 'Mot de passe incorrect',
+        error: err instanceof Error ? err.message : "Mot de passe incorrect",
       });
       throw err;
     }
@@ -222,7 +300,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     } catch (err) {
       set({
         loading: false,
-        error: err instanceof Error ? err.message : "Erreur lors de l'initialisation",
+        error:
+          err instanceof Error
+            ? err.message
+            : "Erreur lors de l'initialisation",
       });
       throw err;
     }
@@ -257,7 +338,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     } catch (err) {
       set({
         loading: false,
-        error: err instanceof Error ? err.message : 'Erreur lors du chargement',
+        error: err instanceof Error ? err.message : "Erreur lors du chargement",
       });
     }
   },
@@ -266,14 +347,16 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   createItem: async (type, name, plainData, opts = {}) => {
     const { symKey } = get();
-    if (!symKey) throw new Error('Coffre verrouillé');
+    if (!symKey) throw new Error("Coffre verrouillé");
 
     const [encName, encData, encNotes, encUri, encTotp] = await Promise.all([
       encrypt(symKey, name),
       encrypt(symKey, JSON.stringify(plainData)),
       opts.notes ? encrypt(symKey, opts.notes) : Promise.resolve(undefined),
       opts.uri ? encrypt(symKey, opts.uri) : Promise.resolve(undefined),
-      opts.totp_secret ? encrypt(symKey, opts.totp_secret) : Promise.resolve(undefined),
+      opts.totp_secret
+        ? encrypt(symKey, opts.totp_secret)
+        : Promise.resolve(undefined),
     ]);
 
     await vaultApi.items.create({
@@ -295,14 +378,16 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   updateItem: async (id, name, plainData, opts = {}) => {
     const { symKey } = get();
-    if (!symKey) throw new Error('Coffre verrouillé');
+    if (!symKey) throw new Error("Coffre verrouillé");
 
     const [encName, encData, encNotes, encUri, encTotp] = await Promise.all([
       encrypt(symKey, name),
       encrypt(symKey, JSON.stringify(plainData)),
       opts.notes ? encrypt(symKey, opts.notes) : Promise.resolve(undefined),
       opts.uri ? encrypt(symKey, opts.uri) : Promise.resolve(undefined),
-      opts.totp_secret ? encrypt(symKey, opts.totp_secret) : Promise.resolve(undefined),
+      opts.totp_secret
+        ? encrypt(symKey, opts.totp_secret)
+        : Promise.resolve(undefined),
     ]);
 
     await vaultApi.items.update(id, {
@@ -332,7 +417,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   shareItem: async (itemId, granteeId, shareType, level, expiresAt) => {
     const { symKey } = get();
-    if (!symKey) throw new Error('Coffre verrouillé');
+    if (!symKey) throw new Error("Coffre verrouillé");
 
     // In a full implementation: fetch grantee's public key, encrypt the item key with it
     // For now, the server handles key distribution for group shares
@@ -372,7 +457,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   createFolder: async (name) => {
     const { symKey } = get();
-    if (!symKey) throw new Error('Coffre verrouillé');
+    if (!symKey) throw new Error("Coffre verrouillé");
     const encName = await encrypt(symKey, name);
     await vaultApi.folders.create({ name: encName });
     await get().fetchAndDecrypt();

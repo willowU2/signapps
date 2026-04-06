@@ -692,6 +692,130 @@ pub async fn list_audit(
 }
 
 // ---------------------------------------------------------------------------
+// Task 4-I: Vault tenant settings (2)
+// ---------------------------------------------------------------------------
+
+/// Response for vault tenant settings.
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct VaultSettingsResponse {
+    /// Whether a master password is required for the vault.
+    pub vault_master_password_required: bool,
+}
+
+/// Request to update vault settings.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct UpdateVaultSettingsRequest {
+    /// Whether a master password is required for the vault.
+    pub vault_master_password_required: bool,
+}
+
+/// `GET /api/v1/vault/settings` — Get vault settings for the current tenant.
+///
+/// Reads the `vault_master_password_required` setting from the workspace JSONB
+/// settings column. Defaults to `false` if not set.
+///
+/// # Errors
+///
+/// Returns `BadRequest` if the user has no tenant_id in their token.
+#[utoipa::path(
+    get,
+    path = "/api/v1/vault/settings",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "Vault settings", body = VaultSettingsResponse),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
+pub async fn get_vault_settings(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Result<Json<VaultSettingsResponse>> {
+    let tenant_id = claims
+        .tenant_id
+        .ok_or_else(|| Error::BadRequest("No tenant context".to_string()))?;
+
+    let row: Option<(Option<serde_json::Value>,)> = sqlx::query_as(
+        r#"SELECT settings
+           FROM identity.workspaces
+           WHERE tenant_id = $1 AND is_default = TRUE
+           LIMIT 1"#,
+    )
+    .bind(tenant_id)
+    .fetch_optional(&*state.pool)
+    .await
+    .map_err(|e| Error::Database(e.to_string()))?;
+
+    let required = row
+        .and_then(|(s,)| s)
+        .and_then(|s| s.get("vault_master_password_required").cloned())
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+
+    Ok(Json(VaultSettingsResponse {
+        vault_master_password_required: required,
+    }))
+}
+
+/// `PUT /api/v1/vault/settings` — Update vault settings for the current tenant.
+///
+/// Stores `vault_master_password_required` in the workspace JSONB settings.
+///
+/// # Errors
+///
+/// Returns `NotFound` if no default workspace exists for the tenant.
+/// Returns `BadRequest` if the user has no tenant_id in their token.
+#[utoipa::path(
+    put,
+    path = "/api/v1/vault/settings",
+    tag = "vault",
+    security(("bearerAuth" = [])),
+    request_body = UpdateVaultSettingsRequest,
+    responses(
+        (status = 200, description = "Vault settings updated", body = VaultSettingsResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Workspace not found"),
+    )
+)]
+#[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub))]
+pub async fn update_vault_settings(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(payload): Json<UpdateVaultSettingsRequest>,
+) -> Result<Json<VaultSettingsResponse>> {
+    let tenant_id = claims
+        .tenant_id
+        .ok_or_else(|| Error::BadRequest("No tenant context".to_string()))?;
+
+    let result = sqlx::query(
+        r#"UPDATE identity.workspaces
+           SET settings = COALESCE(settings, '{}'::jsonb)
+                         || jsonb_build_object('vault_master_password_required', $2::boolean)
+           WHERE tenant_id = $1 AND is_default = TRUE"#,
+    )
+    .bind(tenant_id)
+    .bind(payload.vault_master_password_required)
+    .execute(&*state.pool)
+    .await
+    .map_err(|e| Error::Database(e.to_string()))?;
+
+    if result.rows_affected() == 0 {
+        return Err(Error::NotFound("Workspace not found".to_string()));
+    }
+
+    tracing::info!(
+        tenant_id = %tenant_id,
+        vault_master_password_required = payload.vault_master_password_required,
+        "Updated vault master password setting"
+    );
+
+    Ok(Json(VaultSettingsResponse {
+        vault_master_password_required: payload.vault_master_password_required,
+    }))
+}
+
+// ---------------------------------------------------------------------------
 // Task 5: Browse session endpoints (2)
 // ---------------------------------------------------------------------------
 

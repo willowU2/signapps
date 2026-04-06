@@ -1,7 +1,7 @@
 /**
  * Vault API — Identity service (port 3001) endpoints under /vault/*
  */
-import { getClient, ServiceName } from './factory';
+import { getClient, ServiceName } from "./factory";
 import type {
   VaultUserKeys,
   VaultItem,
@@ -9,7 +9,7 @@ import type {
   VaultShare,
   VaultAuditEntry,
   BrowseSession,
-} from '@/types/vault';
+} from "@/types/vault";
 
 const client = getClient(ServiceName.IDENTITY);
 
@@ -25,17 +25,17 @@ export const vaultApi = {
       public_key: string;
       password_hash: string;
       kdf_iterations?: number;
-    }) => client.post('/vault/keys', data),
+    }) => client.post("/vault/keys", data),
 
     /** Récupère les clés chiffrées de l'utilisateur courant */
-    get: () => client.get<VaultUserKeys>('/vault/keys'),
+    get: () => client.get<VaultUserKeys>("/vault/keys"),
 
     /** Met à jour les clés (changement de mot de passe maître) */
     update: (data: {
       encrypted_sym_key: string;
       encrypted_private_key: string;
       password_hash: string;
-    }) => client.put('/vault/keys', data),
+    }) => client.put("/vault/keys", data),
   },
 
   // ──────────────────────────────────────────────
@@ -43,7 +43,7 @@ export const vaultApi = {
   // ──────────────────────────────────────────────
   items: {
     /** Liste tous les éléments du coffre de l'utilisateur */
-    list: () => client.get<VaultItem[]>('/vault/items'),
+    list: () => client.get<VaultItem[]>("/vault/items"),
 
     /** Crée un nouvel élément (données déjà chiffrées) */
     create: (data: {
@@ -57,7 +57,7 @@ export const vaultApi = {
       folder_id?: string;
       favorite?: boolean;
       reprompt?: boolean;
-    }) => client.post<VaultItem>('/vault/items', data),
+    }) => client.post<VaultItem>("/vault/items", data),
 
     /** Met à jour un élément existant */
     update: (
@@ -83,9 +83,9 @@ export const vaultApi = {
   // Folders
   // ──────────────────────────────────────────────
   folders: {
-    list: () => client.get<VaultFolder[]>('/vault/folders'),
+    list: () => client.get<VaultFolder[]>("/vault/folders"),
     create: (data: { name: string }) =>
-      client.post<VaultFolder>('/vault/folders', data),
+      client.post<VaultFolder>("/vault/folders", data),
     update: (id: string, data: { name: string }) =>
       client.put<VaultFolder>(`/vault/folders/${id}`, data),
     delete: (id: string) => client.delete(`/vault/folders/${id}`),
@@ -103,13 +103,13 @@ export const vaultApi = {
       access_level: string;
       encrypted_item_key?: string;
       expires_at?: string;
-    }) => client.post<VaultShare>('/vault/shares', data),
+    }) => client.post<VaultShare>("/vault/shares", data),
 
     /** Révoque un partage */
     delete: (id: string) => client.delete(`/vault/shares/${id}`),
 
     /** Éléments partagés avec l'utilisateur courant */
-    sharedWithMe: () => client.get<VaultItem[]>('/vault/shared-with-me'),
+    sharedWithMe: () => client.get<VaultItem[]>("/vault/shared-with-me"),
   },
 
   // ──────────────────────────────────────────────
@@ -129,18 +129,23 @@ export const vaultApi = {
     digits?: boolean;
     symbols?: boolean;
   }) =>
-    client.get<{ password: string }>('/vault/generate-password', { params }),
+    client.get<{ password: string }>("/vault/generate-password", { params }),
 
   // ──────────────────────────────────────────────
   // Organisation keys (chiffrement partagé de groupe)
   // ──────────────────────────────────────────────
   orgKeys: {
-    upsert: (data: { group_id: string; encrypted_org_key: string; public_key: string }) =>
-      client.put('/vault/org-keys', data),
+    upsert: (data: {
+      group_id: string;
+      encrypted_org_key: string;
+      public_key: string;
+    }) => client.put("/vault/org-keys", data),
     get: (groupId: string) =>
-      client.get<{ group_id: string; encrypted_org_key: string; public_key: string }>(
-        `/vault/org-keys/${groupId}`,
-      ),
+      client.get<{
+        group_id: string;
+        encrypted_org_key: string;
+        public_key: string;
+      }>(`/vault/org-keys/${groupId}`),
   },
 
   // ──────────────────────────────────────────────
@@ -149,7 +154,7 @@ export const vaultApi = {
   browse: {
     /** Démarre une session de navigation isolée (use_only) */
     start: (itemId: string) =>
-      client.post<BrowseSession>('/vault/browse/start', { item_id: itemId }),
+      client.post<BrowseSession>("/vault/browse/start", { item_id: itemId }),
 
     /** Termine et invalide la session */
     end: (token: string) => client.delete(`/vault/browse/${token}`),
@@ -163,5 +168,23 @@ export const vaultApi = {
     action?: string;
     limit?: number;
     offset?: number;
-  }) => client.get<VaultAuditEntry[]>('/vault/audit', { params }),
+  }) => client.get<VaultAuditEntry[]>("/vault/audit", { params }),
+
+  // ──────────────────────────────────────────────
+  // Settings (tenant-level)
+  // ──────────────────────────────────────────────
+  settings: {
+    /** Recupere les parametres du coffre-fort pour le tenant courant */
+    get: () =>
+      client.get<{ vault_master_password_required: boolean }>(
+        "/vault/settings",
+      ),
+
+    /** Met a jour les parametres du coffre-fort pour le tenant courant (admin) */
+    update: (data: { vault_master_password_required: boolean }) =>
+      client.put<{ vault_master_password_required: boolean }>(
+        "/vault/settings",
+        data,
+      ),
+  },
 };
