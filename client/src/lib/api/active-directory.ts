@@ -191,4 +191,16 @@ export const adApi = {
   // ── Domain Config ──
   updateConfig: (domainId: string, config: Record<string, unknown>) =>
     client.put(`/workforce/ad/domains/${domainId}/config`, config),
+
+  // ── Monitoring & Maintenance ──
+  monitoring: {
+    expiringCerts: (days?: number) =>
+      client.get(
+        `/workforce/ad/certificates/expiring${days ? `?days=${days}` : ""}`,
+      ),
+    infrastructureHealth: () =>
+      client.get(`/workforce/ad/health/infrastructure`),
+    expireLeases: () =>
+      client.post<{ expired: number }>(`/workforce/ad/dhcp/leases/expire`),
+  },
 };

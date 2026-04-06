@@ -206,8 +206,10 @@ fn create_router(state: AppState) -> Router {
         .route("/domains/:id", put(handlers::ad::update_domain))
         .route("/deploy/profiles/:id", put(handlers::ad::update_deploy_profile))
         .route("/dhcp/scopes/:id", put(handlers::ad::update_dhcp_scope))
-        // ── Maintenance ──
+        // ── Maintenance & Monitoring ──
         .route("/dhcp/leases/expire", post(handlers::ad::expire_dhcp_leases))
+        .route("/certificates/expiring", get(handlers::ad::check_expiring_certificates))
+        .route("/health/infrastructure", get(handlers::ad::infrastructure_health))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))

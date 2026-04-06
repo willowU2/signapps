@@ -1070,3 +1070,88 @@ pub async fn expire_dhcp_leases(
     }
     Ok(Json(json!({ "expired": count })))
 }
+
+/// Check for certificates expiring within N days (default 30).
+///
+/// Returns a list of certificates that are active but will expire soon,
+/// suitable for dashboard alerts and notification triggers.
+#[tracing::instrument(skip_all)]
+pub async fn check_expiring_certificates(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+    axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let days: i32 = params
+        .get("days")
+        .and_then(|d| d.parse().ok())
+        .unwrap_or(30);
+
+    let certs: Vec<signapps_db::models::infrastructure::InfraCertificate> = sqlx::query_as(
+        r#"SELECT * FROM infrastructure.certificates
+           WHERE status = 'active'
+             AND not_after <= now() + make_interval(days => $1)
+           ORDER BY not_after ASC"#,
+    )
+    .bind(days)
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to check expiring certificates: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    if !certs.is_empty() {
+        tracing::warn!(
+            count = certs.len(),
+            days = days,
+            "Certificates expiring soon"
+        );
+    }
+
+    Ok(Json(json!({
+        "expiring_within_days": days,
+        "count": certs.len(),
+        "certificates": certs,
+    })))
+}
+
+/// Infrastructure health overview — aggregated stats for the dashboard.
+#[tracing::instrument(skip_all)]
+pub async fn infrastructure_health(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+) -> Result<impl IntoResponse, StatusCode> {
+    // Run all stat queries in parallel
+    let (domains, certs, expiring, scopes, active_leases, profiles) = tokio::join!(
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM infrastructure.domains WHERE is_active = true")
+            .fetch_one(&*state.pool),
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM infrastructure.certificates WHERE status = 'active'")
+            .fetch_one(&*state.pool),
+        sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM infrastructure.certificates WHERE status = 'active' AND not_after <= now() + interval '30 days'"
+        ).fetch_one(&*state.pool),
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM infrastructure.dhcp_scopes WHERE is_active = true")
+            .fetch_one(&*state.pool),
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM infrastructure.dhcp_leases WHERE is_active = true AND lease_end > now()")
+            .fetch_one(&*state.pool),
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM infrastructure.deploy_profiles")
+            .fetch_one(&*state.pool),
+    );
+
+    Ok(Json(json!({
+        "domains": domains.unwrap_or(0),
+        "certificates": {
+            "active": certs.unwrap_or(0),
+            "expiring_soon": expiring.unwrap_or(0),
+        },
+        "dhcp": {
+            "scopes": scopes.unwrap_or(0),
+            "active_leases": active_leases.unwrap_or(0),
+        },
+        "deployment": {
+            "profiles": profiles.unwrap_or(0),
+        },
+    })))
+}
