@@ -202,6 +202,14 @@ fn create_router(state: AppState) -> Router {
         .route("/deploy/profiles/:id/assignments", get(handlers::ad::list_deploy_assignments))
         .route("/deploy/profiles/:id/assignments", post(handlers::ad::create_deploy_assignment))
         .route("/deploy/assignments/:id", delete(handlers::ad::delete_deploy_assignment))
+        // ── AD Sync ──
+        .route("/domains/:id/sync/stats", get(handlers::ad_sync::sync_queue_stats))
+        .route("/domains/:id/sync/events", get(handlers::ad_sync::list_sync_events))
+        .route("/domains/:id/ad-ous", get(handlers::ad_sync::list_ad_ous))
+        .route("/domains/:id/ad-users", get(handlers::ad_sync::list_ad_users))
+        .route("/domains/:id/dc-sites", get(handlers::ad_sync::list_dc_sites))
+        .route("/org-nodes/:id/mail-domain", put(handlers::ad_sync::set_node_mail_domain))
+        .route("/org-nodes/:id/mail-domain", delete(handlers::ad_sync::remove_node_mail_domain))
         // ── Update endpoints ──
         .route("/domains/:id", put(handlers::ad::update_domain))
         .route("/deploy/profiles/:id", put(handlers::ad::update_deploy_profile))

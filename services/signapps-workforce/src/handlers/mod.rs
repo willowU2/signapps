@@ -7,6 +7,7 @@
 //! - validation: Gap analysis and leave simulation
 
 pub mod ad;
+pub mod ad_sync;
 pub mod attendance;
 pub mod audit;
 pub mod boards;
