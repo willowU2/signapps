@@ -1,0 +1,253 @@
+/**
+ * Sharing API Module — SignApps Platform
+ *
+ * Unified client for the cross-service sharing API.  Sharing endpoints are
+ * hosted on the same backend service that owns each resource type, so this
+ * module routes requests to the correct service automatically.
+ *
+ * Supported resource types and their backend services:
+ *   file, folder    → storage   (port 3004)
+ *   calendar, event → calendar  (port 3011)
+ *   document        → docs      (port 3010)
+ *   form            → forms     (port 3015)
+ *   contact_book    → contacts  (port 3021)
+ *   channel         → chat      (port 3020)
+ *   asset           → it-assets (port 3022)
+ *   vault_entry     → identity  (port 3001)
+ *
+ * Usage:
+ * ```ts
+ * import { sharingApi } from '@/lib/api/sharing';
+ *
+ * // List grants on a file
+ * const grants = await sharingApi.listGrants('file', fileId);
+ *
+ * // Create a new grant
+ * const grant = await sharingApi.createGrant('file', fileId, {
+ *   grantee_type: 'user',
+ *   grantee_id: userId,
+ *   role: 'editor',
+ *   can_reshare: false,
+ *   expires_at: null,
+ * });
+ * ```
+ */
+
+import type {
+  SharingGrant,
+  CreateSharingGrant,
+  EffectivePermission,
+  SharingResourceType,
+} from "@/types/sharing";
+import { getClient, ServiceName } from "./factory";
+
+// ─── Internal routing helpers ────────────────────────────────────────────────
+
+/**
+ * Maps a resource type to the backend service that owns it.
+ *
+ * @param resourceType - The resource type to resolve.
+ * @returns The {@link ServiceName} of the owning service.
+ */
+function resolveService(resourceType: SharingResourceType): ServiceName {
+  switch (resourceType) {
+    case "file":
+    case "folder":
+      return ServiceName.STORAGE;
+    case "calendar":
+    case "event":
+      return ServiceName.CALENDAR;
+    case "document":
+      return ServiceName.DOCS;
+    case "form":
+      return ServiceName.FORMS;
+    case "contact_book":
+      return ServiceName.CONTACTS;
+    case "channel":
+      return ServiceName.CHAT;
+    case "asset":
+      return ServiceName.IT_ASSETS;
+    case "vault_entry":
+      return ServiceName.IDENTITY;
+  }
+}
+
+/**
+ * Maps a resource type to its URL path prefix used in the backend route.
+ *
+ * @param resourceType - The resource type to resolve.
+ * @returns The URL segment that precedes `/:resource_id/grants`.
+ */
+function resolvePrefix(resourceType: SharingResourceType): string {
+  switch (resourceType) {
+    case "file":
+      return "files";
+    case "folder":
+      return "folders";
+    case "calendar":
+      return "calendars";
+    case "event":
+      return "events";
+    case "document":
+      return "documents";
+    case "form":
+      return "forms";
+    case "contact_book":
+      return "contacts";
+    case "channel":
+      return "chat";
+    case "asset":
+      return "assets";
+    case "vault_entry":
+      return "vault";
+  }
+}
+
+// ─── API surface ─────────────────────────────────────────────────────────────
+
+/**
+ * Unified sharing API client.
+ *
+ * All methods accept a `resourceType` and `resourceId` and automatically
+ * route to the correct backend service.
+ */
+export const sharingApi = {
+  /**
+   * List all sharing grants on a resource.
+   *
+   * @param resourceType - Type of the shared resource.
+   * @param resourceId   - UUID of the resource.
+   * @returns Array of {@link SharingGrant} records (direct + inherited).
+   *
+   * @example
+   * ```ts
+   * const grants = await sharingApi.listGrants('calendar', calendarId);
+   * ```
+   */
+  async listGrants(
+    resourceType: SharingResourceType,
+    resourceId: string,
+  ): Promise<SharingGrant[]> {
+    const client = getClient(resolveService(resourceType));
+    const prefix = resolvePrefix(resourceType);
+    const { data } = await client.get<SharingGrant[]>(
+      `/api/v1/${prefix}/${resourceId}/grants`,
+    );
+    return data;
+  },
+
+  /**
+   * Create a new sharing grant on a resource.
+   *
+   * @param resourceType - Type of the shared resource.
+   * @param resourceId   - UUID of the resource.
+   * @param request      - Grant creation payload.
+   * @returns The created {@link SharingGrant}.
+   *
+   * @example
+   * ```ts
+   * const grant = await sharingApi.createGrant('document', docId, {
+   *   grantee_type: 'group',
+   *   grantee_id: groupId,
+   *   role: 'viewer',
+   *   can_reshare: false,
+   *   expires_at: '2026-12-31T23:59:59Z',
+   * });
+   * ```
+   */
+  async createGrant(
+    resourceType: SharingResourceType,
+    resourceId: string,
+    request: CreateSharingGrant,
+  ): Promise<SharingGrant> {
+    const client = getClient(resolveService(resourceType));
+    const prefix = resolvePrefix(resourceType);
+    const { data } = await client.post<SharingGrant>(
+      `/api/v1/${prefix}/${resourceId}/grants`,
+      request,
+    );
+    return data;
+  },
+
+  /**
+   * Revoke a sharing grant.
+   *
+   * @param resourceType - Type of the shared resource.
+   * @param resourceId   - UUID of the resource.
+   * @param grantId      - UUID of the grant to revoke.
+   *
+   * @example
+   * ```ts
+   * await sharingApi.revokeGrant('file', fileId, grantId);
+   * ```
+   */
+  async revokeGrant(
+    resourceType: SharingResourceType,
+    resourceId: string,
+    grantId: string,
+  ): Promise<void> {
+    const client = getClient(resolveService(resourceType));
+    const prefix = resolvePrefix(resourceType);
+    await client.delete(`/api/v1/${prefix}/${resourceId}/grants/${grantId}`);
+  },
+
+  /**
+   * Get the effective (resolved) permission for the authenticated user.
+   *
+   * Returns `null` when the user has no access or the endpoint is unavailable.
+   *
+   * @param resourceType - Type of the shared resource.
+   * @param resourceId   - UUID of the resource.
+   * @returns The {@link EffectivePermission} or `null`.
+   *
+   * @example
+   * ```ts
+   * const perm = await sharingApi.getEffectivePermission('folder', folderId);
+   * if (perm?.capabilities.includes('write')) { ... }
+   * ```
+   */
+  async getEffectivePermission(
+    resourceType: SharingResourceType,
+    resourceId: string,
+  ): Promise<EffectivePermission | null> {
+    const client = getClient(resolveService(resourceType));
+    const prefix = resolvePrefix(resourceType);
+    const { data } = await client.get<EffectivePermission | null>(
+      `/api/v1/${prefix}/${resourceId}/permissions`,
+    );
+    return data;
+  },
+
+  /**
+   * List all resources shared with the authenticated user.
+   *
+   * Uses the storage service as the authoritative endpoint for the
+   * tenant-wide `shared-with-me` query.
+   *
+   * @param resourceType - Optional filter — omit to get all resource types.
+   * @returns Array of {@link SharingGrant} records.
+   *
+   * @example
+   * ```ts
+   * // All shared resources
+   * const all = await sharingApi.sharedWithMe();
+   *
+   * // Only shared files
+   * const files = await sharingApi.sharedWithMe('file');
+   * ```
+   */
+  async sharedWithMe(
+    resourceType?: SharingResourceType,
+  ): Promise<SharingGrant[]> {
+    // shared-with-me is a tenant-wide query — storage is the safe default
+    const client = getClient(ServiceName.STORAGE);
+    const params = resourceType ? { resource_type: resourceType } : {};
+    const { data } = await client.get<SharingGrant[]>(
+      "/api/v1/shared-with-me",
+      {
+        params,
+      },
+    );
+    return data;
+  },
+};
