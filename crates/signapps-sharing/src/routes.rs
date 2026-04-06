@@ -27,15 +27,15 @@
 //! ```
 
 use axum::{
-    routing::{delete, get},
+    routing::{delete, get, post},
     Router,
 };
 
 use crate::engine::SharingEngine;
 use crate::handlers::{
-    create_grant_handler, create_template_handler, delete_template_handler, list_audit_handler,
-    list_grants_handler, list_templates_handler, permissions_handler, revoke_grant_handler,
-    shared_with_me_handler,
+    bulk_grant_handler, create_grant_handler, create_template_handler, delete_template_handler,
+    list_audit_handler, list_grants_handler, list_templates_handler, permissions_handler,
+    revoke_grant_handler, shared_with_me_handler,
 };
 use crate::types::ResourceType;
 
@@ -124,6 +124,10 @@ pub fn sharing_global_routes() -> Router<SharingEngine> {
             delete(delete_template_handler),
         )
         .route("/api/v1/sharing/audit", get(list_audit_handler))
+        .route(
+            "/api/v1/sharing/bulk-grant",
+            post(bulk_grant_handler),
+        )
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

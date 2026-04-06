@@ -20,7 +20,10 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use crate::engine::SharingEngine;
-use crate::models::{AuditEntry, CreateGrant, CreateTemplate, EffectivePermission, Grant, Template};
+use crate::models::{
+    AuditEntry, BulkGrantRequest, BulkGrantResult, CreateGrant, CreateTemplate, EffectivePermission,
+    Grant, Template,
+};
 use crate::types::ResourceType;
 
 
@@ -292,6 +295,66 @@ pub async fn shared_with_me_handler(
 
     let grants = engine.shared_with_me(&user_ctx, rt_filter).await?;
     Ok(Json(grants))
+}
+
+// ─── Bulk grant handler ───────────────────────────────────────────────────────
+
+/// Apply the same grant to multiple resources at once.
+///
+/// `POST /api/v1/sharing/bulk-grant`
+///
+/// Processes each resource independently — a failure on one resource does not
+/// abort the rest of the batch.  The response body always contains the count of
+/// successfully created grants and the list of per-resource errors.
+///
+/// # Errors
+///
+/// Returns [`Error::Unauthorized`] if no valid JWT is present.
+/// Returns [`Error::BadRequest`] if `resource_type` is not a valid type string.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+#[utoipa::path(
+    post,
+    path = "/api/v1/sharing/bulk-grant",
+    request_body = BulkGrantRequest,
+    responses(
+        (status = 200, description = "Bulk grant result (partial success possible)", body = BulkGrantResult),
+        (status = 400, description = "Invalid resource_type or request body"),
+        (status = 401, description = "Unauthorized — missing or invalid JWT"),
+        (status = 403, description = "Forbidden — caller lacks required role"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "Sharing"
+)]
+#[instrument(skip(engine, claims, body), fields(user_id = %claims.sub, resource_type = %body.resource_type))]
+pub async fn bulk_grant_handler(
+    State(engine): State<SharingEngine>,
+    Extension(claims): Extension<Claims>,
+    Json(body): Json<BulkGrantRequest>,
+) -> Result<Json<BulkGrantResult>> {
+    let actor_ctx = engine.build_user_context(&claims).await?;
+
+    let resource_type: crate::types::ResourceType = body
+        .resource_type
+        .parse()
+        .map_err(|_| Error::BadRequest(format!("invalid resource_type: {}", body.resource_type)))?;
+
+    let create_grant = CreateGrant {
+        grantee_type: body.grantee_type,
+        grantee_id: body.grantee_id,
+        role: body.role,
+        can_reshare: Some(body.can_reshare),
+        expires_at: body.expires_at,
+    };
+
+    let result = engine
+        .bulk_grant(&actor_ctx, resource_type, body.resource_ids, create_grant)
+        .await?;
+
+    Ok(Json(result))
 }
 
 // ─── Template handlers ────────────────────────────────────────────────────────

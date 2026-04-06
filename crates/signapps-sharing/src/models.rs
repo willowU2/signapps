@@ -377,6 +377,52 @@ pub struct PermissionSource {
     pub via: String,
 }
 
+// ─── BulkGrant ────────────────────────────────────────────────────────────────
+
+/// Request body for a bulk grant operation.
+///
+/// Applies the same grant specification to multiple resources of the same
+/// type in a single call.  Failures on individual resources do not abort
+/// the rest of the batch.
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct BulkGrantRequest {
+    /// The resource type shared by all target resources (e.g. `"file"`, `"calendar"`).
+    pub resource_type: String,
+    /// UUIDs of all target resources.
+    pub resource_ids: Vec<uuid::Uuid>,
+    /// Kind of grantee: `"user"`, `"group"`, `"org_node"`, or `"everyone"`.
+    pub grantee_type: crate::types::GranteeType,
+    /// UUID of the grantee — `None` when `grantee_type` is `"everyone"`.
+    pub grantee_id: Option<uuid::Uuid>,
+    /// Role to assign to the grantee on each resource.
+    pub role: crate::types::Role,
+    /// Whether the grantee may re-share each resource.
+    pub can_reshare: bool,
+    /// Optional expiry for time-limited grants.
+    pub expires_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+/// Aggregated outcome of a bulk grant operation.
+///
+/// Individual resource failures are collected into `errors` so that the caller
+/// can report partial success without masking transient per-resource issues.
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct BulkGrantResult {
+    /// Number of grants successfully created.
+    pub created: usize,
+    /// Per-resource errors for any resources that failed.
+    pub errors: Vec<BulkGrantError>,
+}
+
+/// A per-resource failure recorded during a bulk grant operation.
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct BulkGrantError {
+    /// UUID of the resource that could not be granted.
+    pub resource_id: uuid::Uuid,
+    /// Human-readable description of the error.
+    pub error: String,
+}
+
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -464,5 +510,34 @@ mod tests {
         };
         let json = serde_json::to_string(&ep).expect("serialization failed");
         assert!(json.contains("editor"));
+    }
+
+    #[test]
+    fn bulk_grant_result_serializes() {
+        let id = Uuid::new_v4();
+        let result = BulkGrantResult {
+            created: 3,
+            errors: vec![BulkGrantError {
+                resource_id: id,
+                error: "forbidden".into(),
+            }],
+        };
+        let json = serde_json::to_string(&result).expect("serialization failed");
+        assert!(json.contains("\"created\":3"));
+        assert!(json.contains("forbidden"));
+        assert!(json.contains(&id.to_string()));
+    }
+
+    #[test]
+    fn bulk_grant_result_empty_errors_serializes() {
+        let result = BulkGrantResult {
+            created: 5,
+            errors: vec![],
+        };
+        let json = serde_json::to_string(&result).expect("serialization failed");
+        let decoded: BulkGrantResult =
+            serde_json::from_str(&json).expect("deserialization failed");
+        assert_eq!(decoded.created, 5);
+        assert!(decoded.errors.is_empty());
     }
 }
