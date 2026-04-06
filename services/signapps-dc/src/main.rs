@@ -173,6 +173,25 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("AD sync worker spawned");
 
+    // AD Reconciliation cron — runs every 15 minutes
+    let recon_pool = pool.clone();
+    let recon_handle = tokio::spawn(async move {
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(900));
+        loop {
+            interval.tick().await;
+            match signapps_ad_core::reconciliation::reconcile(&recon_pool).await {
+                Ok(report) => {
+                    tracing::info!(?report, "AD reconciliation completed");
+                }
+                Err(e) => {
+                    tracing::error!("AD reconciliation failed: {}", e);
+                }
+            }
+        }
+    });
+
+    tracing::info!("AD reconciliation cron spawned (interval = 15 min)");
+
     tracing::info!("All DC listeners started — press Ctrl+C to stop");
 
     // Wait for shutdown
@@ -181,7 +200,7 @@ async fn main() -> anyhow::Result<()> {
     let _ = shutdown_tx.send(true);
 
     // Wait for listeners to finish
-    let _ = tokio::join!(health_handle, ldap_handle, kdc_handle, ntp_handle, sync_handle);
+    let _ = tokio::join!(health_handle, ldap_handle, kdc_handle, ntp_handle, sync_handle, recon_handle);
 
     tracing::info!("=== SignApps DC stopped ===");
     Ok(())

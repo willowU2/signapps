@@ -42,7 +42,9 @@
 //! | [`domain`] | AD domain lifecycle (create, delete) |
 //! | [`crypto_helpers`] | Key derivation (AES-256, NT hash) |
 //! | [`naming`] | SAM account name generation and DN builder |
+//! | [`mail_provisioner`] | User aliases, shared OU mailboxes, IMAP subscriptions |
 //! | [`mail_resolver`] | Resolve mail domains via closure table inheritance |
+//! | [`reconciliation`] | Periodic drift detection and corrective event enqueue |
 //! | [`sync_worker`] | Event processor and worker loop for org→AD sync |
 //!
 //! ## Example
@@ -65,9 +67,11 @@ pub mod dn;
 pub mod entry;
 pub mod filter;
 pub mod guid;
+pub mod mail_provisioner;
 pub mod mail_resolver;
 pub mod naming;
 pub mod provisioner;
+pub mod reconciliation;
 pub mod schema;
 pub mod sid;
 pub mod sync_worker;

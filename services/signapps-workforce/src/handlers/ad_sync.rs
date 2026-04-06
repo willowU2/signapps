@@ -13,6 +13,8 @@ use crate::AppState;
 use signapps_common::{middleware::TenantContext, Claims};
 use signapps_db::models::ad_sync::{AdDcSite, AdOu, AdSyncEvent, AdUserAccount};
 use signapps_db::repositories::AdSyncQueueRepository;
+// Reconciliation lives in the ad-core crate (also used by signapps-dc)
+use signapps_ad_core;
 
 /// Get sync queue statistics for a domain.
 ///
@@ -167,6 +169,29 @@ pub async fn remove_node_mail_domain(
         })?;
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Trigger a manual AD reconciliation pass immediately.
+///
+/// Runs the same logic as the 15-minute cron in `signapps-dc`.
+/// Returns a [`ReconciliationReport`] with drift counters.
+///
+/// # Errors
+///
+/// Returns `StatusCode::INTERNAL_SERVER_ERROR` if reconciliation fails.
+#[tracing::instrument(skip_all)]
+pub async fn trigger_reconciliation(
+    State(state): State<AppState>,
+    Extension(_ctx): Extension<TenantContext>,
+    Extension(_claims): Extension<Claims>,
+) -> Result<impl IntoResponse, StatusCode> {
+    match signapps_ad_core::reconciliation::reconcile(&state.pool).await {
+        Ok(report) => Ok(Json(json!(report))),
+        Err(e) => {
+            tracing::error!("Manual reconciliation failed: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
 }
 
 /// List DC sites (domain controllers) for a domain.

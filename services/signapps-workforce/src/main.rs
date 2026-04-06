@@ -210,6 +210,7 @@ fn create_router(state: AppState) -> Router {
         .route("/domains/:id/dc-sites", get(handlers::ad_sync::list_dc_sites))
         .route("/org-nodes/:id/mail-domain", put(handlers::ad_sync::set_node_mail_domain))
         .route("/org-nodes/:id/mail-domain", delete(handlers::ad_sync::remove_node_mail_domain))
+        .route("/sync/reconcile", post(handlers::ad_sync::trigger_reconciliation))
         // ── Update endpoints ──
         .route("/domains/:id", put(handlers::ad::update_domain))
         .route("/deploy/profiles/:id", put(handlers::ad::update_deploy_profile))

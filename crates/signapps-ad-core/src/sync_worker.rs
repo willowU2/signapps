@@ -17,6 +17,12 @@
 //! | `user_disable` | [`handle_user_disable`] |
 //! | `user_move` | [`handle_user_move`] |
 //! | `user_update` | [`handle_user_update`] |
+//! | `group_create` | [`handle_group_create`] |
+//! | `group_sync` | [`handle_group_sync`] |
+//! | `group_delete` | [`handle_group_delete`] |
+//! | `computer_create` | [`handle_computer_create`] |
+//! | `computer_disable` | [`handle_computer_disable`] |
+//! | `mail_domain_bind` | [`handle_mail_domain_bind`] |
 
 use signapps_common::Result;
 use signapps_db::models::ad_sync::AdSyncEvent;
@@ -24,6 +30,7 @@ use signapps_db::repositories::{AdOuRepository, AdSyncQueueRepository, AdUserAcc
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::mail_provisioner;
 use crate::mail_resolver;
 use crate::naming;
 
@@ -53,18 +60,12 @@ pub async fn process_event(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
         "user_disable" => handle_user_disable(pool, event).await,
         "user_move" => handle_user_move(pool, event).await,
         "user_update" => handle_user_update(pool, event).await,
-        "group_create" | "group_sync" | "group_delete" => {
-            tracing::info!("Group event — not yet implemented");
-            Ok(())
-        }
-        "computer_create" | "computer_disable" => {
-            tracing::info!("Computer event — not yet implemented");
-            Ok(())
-        }
-        "mail_domain_bind" => {
-            tracing::info!("Mail domain bind — not yet implemented");
-            Ok(())
-        }
+        "group_create" => handle_group_create(pool, event).await,
+        "group_sync" => handle_group_sync(pool, event).await,
+        "group_delete" => handle_group_delete(pool, event).await,
+        "computer_create" => handle_computer_create(pool, event).await,
+        "computer_disable" => handle_computer_disable(pool, event).await,
+        "mail_domain_bind" => handle_mail_domain_bind(pool, event).await,
         _ => {
             tracing::warn!(event_type = %event.event_type, "Unknown event type — skipping");
             Ok(())
@@ -439,6 +440,397 @@ async fn handle_user_update(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
         .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
         tracing::info!(sam = %user.sam_account_name, "User attributes updated");
+    }
+    Ok(())
+}
+
+// ── Group handlers ────────────────────────────────────────────────────────────
+
+/// Handle security group creation from an org_group, team, or position event.
+///
+/// SAM name conventions:
+/// - `org_group` or `team` → `GS-{name}`
+/// - `position`            → `GR-Position-{name}`
+///
+/// Creates the `ad_security_groups` row and populates initial members in
+/// `ad_group_members` for every user account that is already provisioned.
+#[tracing::instrument(skip(pool, event), fields(event_id = %event.id))]
+async fn handle_group_create(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
+    let source_type = event.payload["source_type"].as_str().unwrap_or("org_group");
+    let source_id: Uuid = serde_json::from_value(event.payload["source_id"].clone())
+        .map_err(|e| signapps_common::Error::Internal(format!("Bad payload source_id: {e}")))?;
+    let name = event.payload["name"].as_str().unwrap_or("Unknown");
+
+    // Idempotent: skip if already created
+    let existing: Option<(Uuid,)> = sqlx::query_as(
+        "SELECT id FROM ad_security_groups \
+         WHERE domain_id = $1 AND source_type = $2 AND source_id = $3",
+    )
+    .bind(event.domain_id)
+    .bind(source_type)
+    .bind(source_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    if existing.is_some() {
+        tracing::debug!(source_id = %source_id, "Security group already exists — skipping");
+        return Ok(());
+    }
+
+    let sam = if source_type == "position" {
+        format!("GR-Position-{}", &name[..name.len().min(32)])
+    } else {
+        format!("GS-{}", &name[..name.len().min(35)])
+    };
+
+    let domain_dn = resolve_domain_dn(pool, event.domain_id).await?;
+    let dn = format!("CN={sam},CN=Users,{domain_dn}");
+    let display_name = name;
+
+    let (group_id,): (Uuid,) = sqlx::query_as(
+        r#"INSERT INTO ad_security_groups
+           (domain_id, source_type, source_id, sam_account_name, distinguished_name,
+            display_name, group_scope, group_type, sync_status)
+           VALUES ($1, $2, $3, $4, $5, $6, 'global', 'security', 'synced')
+           RETURNING id"#,
+    )
+    .bind(event.domain_id)
+    .bind(source_type)
+    .bind(source_id)
+    .bind(&sam)
+    .bind(&dn)
+    .bind(display_name)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    // Seed initial members — query depends on source type
+    let member_person_ids: Vec<(Uuid,)> = match source_type {
+        "org_group" => sqlx::query_as(
+            r#"SELECT m.person_id FROM workforce_org_memberof m
+               WHERE m.group_id = $1"#,
+        )
+        .bind(source_id)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| signapps_common::Error::Database(e.to_string()))?,
+        "team" | "position" => sqlx::query_as(
+            r#"SELECT a.person_id FROM core.assignments a
+               WHERE a.node_id = $1
+                 AND (a.end_date IS NULL OR a.end_date > now())"#,
+        )
+        .bind(source_id)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| signapps_common::Error::Database(e.to_string()))?,
+        _ => vec![],
+    };
+
+    for (person_id,) in &member_person_ids {
+        // Resolve the AD user account for this person
+        let user_account: Option<(Uuid,)> = sqlx::query_as(
+            "SELECT id FROM ad_user_accounts \
+             WHERE domain_id = $1 AND person_id = $2 AND is_enabled = true",
+        )
+        .bind(event.domain_id)
+        .bind(person_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+        if let Some((user_id,)) = user_account {
+            sqlx::query(
+                r#"INSERT INTO ad_group_members (group_id, member_type, member_id, sync_status)
+                   VALUES ($1, 'user', $2, 'synced')
+                   ON CONFLICT (group_id, member_type, member_id) DO NOTHING"#,
+            )
+            .bind(group_id)
+            .bind(user_id)
+            .execute(pool)
+            .await
+            .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+        }
+    }
+
+    tracing::info!(
+        sam = %sam,
+        dn = %dn,
+        member_count = member_person_ids.len(),
+        "Security group created"
+    );
+    Ok(())
+}
+
+/// Handle security group member sync from a membership change event.
+///
+/// Queries the authoritative membership source, then adds missing members and
+/// removes stale ones from `ad_group_members`.
+#[tracing::instrument(skip(pool, event), fields(event_id = %event.id))]
+async fn handle_group_sync(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
+    let source_id: Uuid = serde_json::from_value(event.payload["source_id"].clone())
+        .map_err(|e| signapps_common::Error::Internal(format!("Bad payload source_id: {e}")))?;
+
+    // Locate the AD group record
+    let group: Option<(Uuid, String)> = sqlx::query_as(
+        "SELECT id, source_type FROM ad_security_groups \
+         WHERE domain_id = $1 AND source_id = $2",
+    )
+    .bind(event.domain_id)
+    .bind(source_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    let (group_id, source_type) = match group {
+        Some(g) => g,
+        None => {
+            tracing::warn!(source_id = %source_id, "No AD group found for source — skipping sync");
+            return Ok(());
+        }
+    };
+
+    // Resolve expected members (as AD user account UUIDs)
+    let expected_user_ids: Vec<Uuid> = match source_type.as_str() {
+        "org_group" => sqlx::query_scalar(
+            r#"SELECT u.id FROM ad_user_accounts u
+               JOIN workforce_org_memberof m ON m.person_id = u.person_id
+               WHERE m.group_id = $1
+                 AND u.domain_id = $2
+                 AND u.is_enabled = true"#,
+        )
+        .bind(source_id)
+        .bind(event.domain_id)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| signapps_common::Error::Database(e.to_string()))?,
+        "team" | "position" => sqlx::query_scalar(
+            r#"SELECT u.id FROM ad_user_accounts u
+               JOIN core.assignments a ON a.person_id = u.person_id
+               WHERE a.node_id = $1
+                 AND u.domain_id = $2
+                 AND u.is_enabled = true
+                 AND (a.end_date IS NULL OR a.end_date > now())"#,
+        )
+        .bind(source_id)
+        .bind(event.domain_id)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| signapps_common::Error::Database(e.to_string()))?,
+        _ => vec![],
+    };
+
+    // Resolve actual members currently in ad_group_members
+    let actual_user_ids: Vec<Uuid> = sqlx::query_scalar(
+        "SELECT member_id FROM ad_group_members \
+         WHERE group_id = $1 AND member_type = 'user'",
+    )
+    .bind(group_id)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    use std::collections::HashSet;
+    let expected: HashSet<Uuid> = expected_user_ids.into_iter().collect();
+    let actual: HashSet<Uuid> = actual_user_ids.into_iter().collect();
+
+    // Add missing members
+    let to_add: Vec<Uuid> = expected.difference(&actual).copied().collect();
+    for user_id in &to_add {
+        sqlx::query(
+            r#"INSERT INTO ad_group_members (group_id, member_type, member_id, sync_status)
+               VALUES ($1, 'user', $2, 'synced')
+               ON CONFLICT (group_id, member_type, member_id) DO NOTHING"#,
+        )
+        .bind(group_id)
+        .bind(user_id)
+        .execute(pool)
+        .await
+        .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+    }
+
+    // Remove stale members
+    let to_remove: Vec<Uuid> = actual.difference(&expected).copied().collect();
+    for user_id in &to_remove {
+        sqlx::query(
+            "DELETE FROM ad_group_members \
+             WHERE group_id = $1 AND member_type = 'user' AND member_id = $2",
+        )
+        .bind(group_id)
+        .bind(user_id)
+        .execute(pool)
+        .await
+        .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+    }
+
+    // Mark group as synced
+    sqlx::query(
+        "UPDATE ad_security_groups \
+         SET sync_status = 'synced', last_synced_at = now() \
+         WHERE id = $1",
+    )
+    .bind(group_id)
+    .execute(pool)
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    tracing::info!(
+        group_id = %group_id,
+        added = to_add.len(),
+        removed = to_remove.len(),
+        "Security group synced"
+    );
+    Ok(())
+}
+
+/// Handle security group deletion from an org group/team/position delete event.
+///
+/// Deletes the `ad_security_groups` row; `ad_group_members` rows are removed
+/// by the ON DELETE CASCADE foreign key.
+#[tracing::instrument(skip(pool, event), fields(event_id = %event.id))]
+async fn handle_group_delete(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
+    let source_id: Uuid = serde_json::from_value(event.payload["source_id"].clone())
+        .map_err(|e| signapps_common::Error::Internal(format!("Bad payload source_id: {e}")))?;
+
+    let deleted = sqlx::query_scalar::<_, Option<String>>(
+        "DELETE FROM ad_security_groups \
+         WHERE domain_id = $1 AND source_id = $2 \
+         RETURNING sam_account_name",
+    )
+    .bind(event.domain_id)
+    .bind(source_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    if let Some(Some(sam)) = deleted {
+        tracing::info!(sam = %sam, "Security group deleted (cascade to members)");
+    }
+    Ok(())
+}
+
+// ── Computer handlers ─────────────────────────────────────────────────────────
+
+/// Handle computer account creation from an IT hardware or manual event.
+///
+/// All computers are placed in `OU=Computers,{domain_dn}` per spec.
+/// SAM name: `{hostname}$`.
+///
+/// Looks up the `it.hardware` table first (if the table exists), otherwise
+/// falls back to the `hostname` field in the event payload.
+#[tracing::instrument(skip(pool, event), fields(event_id = %event.id))]
+async fn handle_computer_create(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
+    let hostname = event.payload["hostname"]
+        .as_str()
+        .unwrap_or("UNKNOWN")
+        .to_uppercase();
+
+    let hardware_id: Option<Uuid> =
+        event.payload["hardware_id"].as_str().and_then(|s| s.parse().ok());
+
+    // Idempotent check
+    let sam = format!("{hostname}$");
+    let existing: Option<(Uuid,)> = sqlx::query_as(
+        "SELECT id FROM ad_computer_accounts \
+         WHERE domain_id = $1 AND sam_account_name = $2",
+    )
+    .bind(event.domain_id)
+    .bind(&sam)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    if existing.is_some() {
+        tracing::debug!(hostname = %hostname, "Computer account already exists — skipping");
+        return Ok(());
+    }
+
+    // Try to enrich from it.hardware if a hardware_id was provided
+    let (dns_hostname, os_name, os_version): (Option<String>, Option<String>, Option<String>) =
+        if let Some(hw_id) = hardware_id {
+            sqlx::query_as(
+                "SELECT hostname, os_name, os_version FROM it.hardware WHERE id = $1",
+            )
+            .bind(hw_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| signapps_common::Error::Database(e.to_string()))?
+            .map(|(h, o, ov): (Option<String>, Option<String>, Option<String>)| (h, o, ov))
+            .unwrap_or((None, None, None))
+        } else {
+            (Some(hostname.to_lowercase()), None, None)
+        };
+
+    let domain_dn = resolve_domain_dn(pool, event.domain_id).await?;
+    let dn = format!("CN={hostname},OU=Computers,{domain_dn}");
+
+    sqlx::query(
+        r#"INSERT INTO ad_computer_accounts
+           (domain_id, hardware_id, sam_account_name, distinguished_name,
+            dns_hostname, os_name, os_version, is_enabled, sync_status)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, true, 'synced')"#,
+    )
+    .bind(event.domain_id)
+    .bind(hardware_id)
+    .bind(&sam)
+    .bind(&dn)
+    .bind(&dns_hostname)
+    .bind(&os_name)
+    .bind(&os_version)
+    .execute(pool)
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    tracing::info!(sam = %sam, dn = %dn, "Computer account created");
+    Ok(())
+}
+
+/// Handle computer account disable from a hardware removal or reassignment event.
+#[tracing::instrument(skip(pool, event), fields(event_id = %event.id))]
+async fn handle_computer_disable(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
+    // Payload may carry hostname or hardware_id
+    let hostname = event.payload["hostname"].as_str().map(|h| h.to_uppercase());
+    let hardware_id: Option<Uuid> =
+        event.payload["hardware_id"].as_str().and_then(|s| s.parse().ok());
+
+    let id: Option<Uuid> = if let Some(hw_id) = hardware_id {
+        sqlx::query_scalar(
+            "SELECT id FROM ad_computer_accounts \
+             WHERE domain_id = $1 AND hardware_id = $2",
+        )
+        .bind(event.domain_id)
+        .bind(hw_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| signapps_common::Error::Database(e.to_string()))?
+    } else if let Some(ref h) = hostname {
+        let sam = format!("{h}$");
+        sqlx::query_scalar(
+            "SELECT id FROM ad_computer_accounts \
+             WHERE domain_id = $1 AND sam_account_name = $2",
+        )
+        .bind(event.domain_id)
+        .bind(&sam)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| signapps_common::Error::Database(e.to_string()))?
+    } else {
+        tracing::warn!("computer_disable event has no hostname or hardware_id — skipping");
+        return Ok(());
+    };
+
+    if let Some(computer_id) = id {
+        sqlx::query(
+            "UPDATE ad_computer_accounts \
+             SET is_enabled = false, sync_status = 'disabled', last_synced_at = now() \
+             WHERE id = $1",
+        )
+        .bind(computer_id)
+        .execute(pool)
+        .await
+        .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+        tracing::info!(computer_id = %computer_id, "Computer account disabled");
     }
     Ok(())
 }
