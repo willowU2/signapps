@@ -54,6 +54,7 @@ CREATE TABLE ad_ous (
     distinguished_name TEXT NOT NULL,
     parent_ou_id UUID REFERENCES ad_ous(id),
     guid TEXT,
+    mail_distribution_enabled BOOLEAN DEFAULT true,
     sync_status TEXT DEFAULT 'pending'
         CHECK (sync_status IN ('pending', 'synced', 'error', 'orphan')),
     last_synced_at TIMESTAMPTZ,
@@ -505,17 +506,109 @@ restore(snapshot_id, target_dn, include_children):
   7. Marquer le snapshot source comme "used for restore at {date}"
 ```
 
-## 9. Creation automatique des comptes mail
+## 9. Systeme mail integre
+
+### 9.1 Domaine mail par noeud org
+
+Un domaine mail peut etre assigne a n'importe quel noeud org via `ad_node_mail_domains`. L'heritage fonctionne par proximite : un noeud sans domaine herite du domaine de l'ancetre le plus proche qui en a un.
+
+### 9.2 Boites mail utilisateurs
 
 Quand un `user_provision` est traite :
-1. Resoudre le domaine mail via `ad_node_mail_domains` + heritage closure
+1. Resoudre le domaine mail par defaut via `ad_node_mail_domains` + heritage closure (domaine le plus proche)
 2. Si un domaine mail est trouve :
-   a. Generer l'adresse : `{sam_account_name}@{mail_domain.dns_name}`
-   b. Creer le compte dans `mailserver.accounts` avec le meme mot de passe
+   a. Generer l'adresse par defaut : `{sam_account_name}@{mail_domain.dns_name}`
+   b. Creer la boite mail dans `mailserver.accounts` avec le meme mot de passe que l'AD
    c. Stocker `mail` dans `ad_user_accounts`
 3. Si pas de domaine mail : laisser `mail` NULL (pas de boite mail)
 
 Le mot de passe mail est toujours synchronise avec le mot de passe AD (meme hash dans `ad_principal_keys`).
+
+### 9.3 Alias mail — regle "mon niveau + branches en dessous"
+
+Un utilisateur peut envoyer avec :
+- Son domaine par defaut (herite du noeud le plus proche)
+- Tous les domaines assignes aux sous-branches en dessous de son niveau dans l'arbre
+
+L'adresse est toujours `{sam_account_name}@{domaine}` (meme login partout).
+
+**Algorithme de resolution des alias :**
+```
+resolve_mail_aliases(person):
+  node = person.assigned_node
+  default_domain = resolve_closest_mail_domain(node)  // remonte closure
+
+  // Collecter tous les domaines des sous-branches
+  descendants = closure_descendants(node)  // tous les noeuds en dessous
+  alias_domains = ad_node_mail_domains WHERE node_id IN descendants
+
+  return {
+    default: sam + "@" + default_domain,
+    aliases: [sam + "@" + d.dns_name for d in alias_domains]
+  }
+```
+
+**Exemple :**
+```
+SignApps Corp (advicetech.fr)
++-- Commercial (sales.advicetech.fr)
+|   +-- France (france.sales.advicetech.fr)
+|   |   +-- a.vendeur
+|   +-- b.directeur
++-- LDLC Mulhouse (ldlc-mulhouse.fr)
+|   +-- m.martin
++-- p.boss (DG)
+```
+
+| Utilisateur | Defaut | Alias |
+|------------|--------|-------|
+| p.boss | p.boss@advicetech.fr | p.boss@sales.advicetech.fr, p.boss@france.sales.advicetech.fr, p.boss@ldlc-mulhouse.fr |
+| b.directeur | b.directeur@sales.advicetech.fr | b.directeur@france.sales.advicetech.fr |
+| a.vendeur | a.vendeur@france.sales.advicetech.fr | *(aucun)* |
+| m.martin | m.martin@ldlc-mulhouse.fr | *(aucun)* |
+
+### 9.4 Listes de distribution OU
+
+Chaque OU cree automatiquement :
+- Une **adresse de distribution** : `{nom_ou_normalise}@{domaine_herite}` (ex: `drh@advicetech.fr`)
+- Un **groupe de securite** AD associe (les membres de l'OU recoivent les mails)
+- Desactivable par OU via un flag `mail_distribution_enabled` dans `ad_ous`
+
+Quand un mail est envoye a `drh@advicetech.fr`, il est distribue a tous les utilisateurs dans l'OU DRH et ses sous-OUs.
+
+### 9.5 Table `ad_mail_aliases`
+
+```sql
+CREATE TABLE ad_mail_aliases (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_account_id UUID NOT NULL REFERENCES ad_user_accounts(id) ON DELETE CASCADE,
+    mail_address TEXT NOT NULL,
+    domain_id UUID NOT NULL REFERENCES infrastructure.domains(id),
+    is_default BOOLEAN DEFAULT false,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(mail_address)
+);
+
+CREATE INDEX idx_mail_aliases_user ON ad_mail_aliases(user_account_id);
+```
+
+### 9.6 Table `ad_ou_distribution_lists`
+
+```sql
+CREATE TABLE ad_ou_distribution_lists (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ou_id UUID NOT NULL REFERENCES ad_ous(id) ON DELETE CASCADE,
+    mail_address TEXT NOT NULL,
+    domain_id UUID NOT NULL REFERENCES infrastructure.domains(id),
+    is_enabled BOOLEAN DEFAULT true,
+    security_group_id UUID REFERENCES ad_security_groups(id),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(mail_address)
+);
+
+CREATE INDEX idx_ou_dist_ou ON ad_ou_distribution_lists(ou_id);
+```
 
 ## 10. Services impactes
 
@@ -541,4 +634,5 @@ Le mot de passe mail est toujours synchronise avec le mot de passe AD (meme hash
 - Migration 227: table `ad_node_mail_domains`
 - Migration 228: tables `ad_dc_sites`, `ad_fsmo_roles`
 - Migration 229: table `ad_snapshots`
-- Migration 230: triggers NOTIFY sur core.org_nodes, core.assignments, workforce_org_groups
+- Migration 230: tables `ad_mail_aliases`, `ad_ou_distribution_lists`
+- Migration 231: triggers NOTIFY sur core.org_nodes, core.assignments, workforce_org_groups
