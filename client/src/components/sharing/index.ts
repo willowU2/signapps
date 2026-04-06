@@ -1,6 +1,10 @@
-export { GuestLinkDialog } from './guest-link-dialog';
-export type { GuestLinkDialogProps, GuestLink } from './guest-link-dialog';
-export { GuestBadge } from './guest-badge';
-export type { GuestBadgeProps } from './guest-badge';
-export { WorkspaceSharing } from './workspace-sharing';
-export type { WorkspaceSharingProps } from './workspace-sharing';
+export { GuestLinkDialog } from "./guest-link-dialog";
+export type { GuestLinkDialogProps, GuestLink } from "./guest-link-dialog";
+export { GuestBadge } from "./guest-badge";
+export type { GuestBadgeProps } from "./guest-badge";
+export { WorkspaceSharing } from "./workspace-sharing";
+export type { WorkspaceSharingProps } from "./workspace-sharing";
+export { ShareDialog } from "./share-dialog";
+export type { ShareDialogProps } from "./share-dialog";
+export { PermissionBadge } from "./permission-badge";
+export type { PermissionBadgeProps } from "./permission-badge";
