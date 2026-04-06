@@ -23,6 +23,8 @@ tower-http.workspace = true
 
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
+signapps-sharing = { path = "../../crates/signapps-sharing" }
+signapps-cache = { path = "../../crates/signapps-cache" }
 ipnetwork = { version = "0.20", features = ["serde"] }
 dashmap.workspace = true
 futures.workspace = true
