@@ -126,8 +126,8 @@ pub use vault_repository::{
 pub mod kg_repository;
 pub use kg_repository::KgRepository;
 
-pub mod mailserver_repo;
-pub use mailserver_repo::{
+// Mail repositories — now live in signapps-db-mail (Phase 4 split).
+pub use signapps_db_mail::repositories::{
     AccountRepository, DomainRepository, MailboxRepository, MessageRepository,
 };
 

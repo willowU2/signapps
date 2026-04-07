@@ -50,7 +50,10 @@ pub mod infrastructure;
 pub mod job;
 pub mod kg;
 pub mod ldap;
-pub mod mailserver;
+// Mail domain models — now live in signapps-db-mail (Phase 4 split).
+pub mod mailserver {
+    pub use signapps_db_mail::models::mailserver::*;
+}
 pub mod multimodal_vector;
 pub mod notification;
 pub mod org_audit;
@@ -83,6 +86,7 @@ pub use generated_media::*;
 pub use group::*;
 pub use job::*;
 pub use ldap::*;
+pub use mailserver::*;
 pub use multimodal_vector::*;
 pub use notification::*;
 pub use org_audit::*;
