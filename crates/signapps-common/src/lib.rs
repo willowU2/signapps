@@ -62,7 +62,8 @@ pub mod comments;
 pub mod config;
 pub mod data_connectors;
 pub mod dlp;
-pub mod e2e_crypto;
+// e2e_crypto module extracted to signapps-e2e-crypto crate
+pub use signapps_e2e_crypto as e2e_crypto;
 /// Email template engine with `{{variable}}` substitution for transactional emails.
 pub mod email_templates;
 pub mod error;
