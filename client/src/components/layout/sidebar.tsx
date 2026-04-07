@@ -46,6 +46,7 @@ import {
   Building2,
   MapPin,
   Server,
+  ChevronDown,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import {
@@ -59,6 +60,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -106,8 +112,22 @@ const quickActions = [
   },
 ];
 
-// Essential nav items — always shown, cannot be removed
-const essentialNavItems = [
+type NavItem = {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  color: string;
+  badgeKey: "mail" | "tasks" | "storage" | null;
+};
+
+type NavSection = {
+  id: string;
+  label: string;
+  items: NavItem[];
+};
+
+// Top-level items always visible (no group header)
+const topNavItems: NavItem[] = [
   {
     href: "/dashboard",
     icon: LayoutDashboard,
@@ -122,98 +142,123 @@ const essentialNavItems = [
     color: "text-indigo-500",
     badgeKey: null,
   },
+];
+
+// Grouped sections — collapsed by default except Workspace
+const navSections: NavSection[] = [
   {
-    href: "/mail",
-    icon: Mail,
-    label: "Mail",
-    color: "text-blue-500",
-    badgeKey: "mail" as const,
+    id: "workspace",
+    label: "Espace de travail",
+    items: [
+      {
+        href: "/mail",
+        icon: Mail,
+        label: "Mail",
+        color: "text-blue-500",
+        badgeKey: "mail" as const,
+      },
+      {
+        href: "/cal",
+        icon: Calendar,
+        label: "Calendrier",
+        color: "text-blue-400",
+        badgeKey: null,
+      },
+      {
+        href: "/storage",
+        icon: HardDrive,
+        label: "Drive",
+        color: "text-muted-foreground",
+        badgeKey: "storage" as const,
+      },
+      {
+        href: "/tasks",
+        icon: CheckSquare,
+        label: "Tâches",
+        color: "text-green-500",
+        badgeKey: "tasks" as const,
+      },
+      {
+        href: "/whiteboard",
+        icon: PenLine,
+        label: "Tableau blanc",
+        color: "text-violet-500",
+        badgeKey: null,
+      },
+    ],
   },
   {
-    href: "/cal",
-    icon: Calendar,
-    label: "Calendrier",
-    color: "text-blue-400",
-    badgeKey: null,
+    id: "productivity",
+    label: "Productivité",
+    items: [
+      {
+        href: "/vault",
+        icon: Shield,
+        label: "Coffre-fort",
+        color: "text-emerald-500",
+        badgeKey: null,
+      },
+      {
+        href: "/admin/ai/lightrag",
+        icon: Brain,
+        label: "LightRAG",
+        color: "text-violet-500",
+        badgeKey: null,
+      },
+    ],
   },
   {
-    href: "/tasks",
-    icon: CheckSquare,
-    label: "Tâches",
-    color: "text-green-500",
-    badgeKey: "tasks" as const,
-  },
-  {
-    href: "/storage",
-    icon: HardDrive,
-    label: "Drive",
-    color: "text-muted-foreground",
-    badgeKey: "storage" as const,
-  },
-  {
-    href: "/whiteboard",
-    icon: PenLine,
-    label: "Tableau blanc",
-    color: "text-violet-500",
-    badgeKey: null,
-  },
-  {
-    href: "/admin/drive-audit",
-    icon: History,
-    label: "Audit Drive",
-    color: "text-amber-500",
-    badgeKey: null,
-  },
-  {
-    href: "/admin/org-structure",
-    icon: Building2,
-    label: "Structure org",
-    color: "text-purple-500",
-    badgeKey: null,
-  },
-  {
-    href: "/admin/persons",
-    icon: Users,
-    label: "Personnes",
-    color: "text-emerald-500",
-    badgeKey: null,
-  },
-  {
-    href: "/admin/sites",
-    icon: MapPin,
-    label: "Sites",
-    color: "text-cyan-500",
-    badgeKey: null,
-  },
-  {
-    href: "/admin/mail-server",
-    icon: Server,
-    label: "Serveur Mail",
-    color: "text-orange-500",
-    badgeKey: null,
-  },
-  {
-    href: "/admin/active-directory",
-    icon: Network,
-    label: "Active Directory",
-    color: "text-sky-500",
-    badgeKey: null,
-  },
-  {
-    href: "/admin/ai/lightrag",
-    icon: Brain,
-    label: "LightRAG",
-    color: "text-violet-500",
-    badgeKey: null,
-  },
-  {
-    href: "/vault",
-    icon: Shield,
-    label: "Coffre-fort",
-    color: "text-emerald-500",
-    badgeKey: null,
+    id: "admin",
+    label: "Administration",
+    items: [
+      {
+        href: "/admin/org-structure",
+        icon: Building2,
+        label: "Structure org",
+        color: "text-purple-500",
+        badgeKey: null,
+      },
+      {
+        href: "/admin/persons",
+        icon: Users,
+        label: "Personnes",
+        color: "text-emerald-500",
+        badgeKey: null,
+      },
+      {
+        href: "/admin/sites",
+        icon: MapPin,
+        label: "Sites",
+        color: "text-cyan-500",
+        badgeKey: null,
+      },
+      {
+        href: "/admin/mail-server",
+        icon: Server,
+        label: "Serveur Mail",
+        color: "text-orange-500",
+        badgeKey: null,
+      },
+      {
+        href: "/admin/active-directory",
+        icon: Network,
+        label: "Active Directory",
+        color: "text-sky-500",
+        badgeKey: null,
+      },
+      {
+        href: "/admin/drive-audit",
+        icon: History,
+        label: "Audit Drive",
+        color: "text-amber-500",
+        badgeKey: null,
+      },
+    ],
   },
 ];
+
+// localStorage key for persisted section open state
+const SECTION_STATE_KEY = "sidebar-sections-open";
 
 const labelColors = [
   "#ef4444",
@@ -278,6 +323,31 @@ export function Sidebar() {
   const [addLabelOpen, setAddLabelOpen] = useState(false);
   const [newLabelName, setNewLabelName] = useState("");
   const [newLabelColor, setNewLabelColor] = useState("#3b82f6");
+
+  // Section collapse state — persisted to localStorage
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(
+    () => {
+      if (typeof window === "undefined") return { workspace: true };
+      try {
+        const saved = localStorage.getItem(SECTION_STATE_KEY);
+        return saved ? JSON.parse(saved) : { workspace: true };
+      } catch {
+        return { workspace: true };
+      }
+    },
+  );
+
+  const toggleSection = (id: string) => {
+    setOpenSections((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      try {
+        localStorage.setItem(SECTION_STATE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+  };
 
   // Drop zone state
   const [isDragOver, setIsDragOver] = useState(false);
@@ -650,8 +720,58 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-0.5 overflow-y-auto">
-          {/* Essential items */}
-          {essentialNavItems.map((item) => renderNavLink(item))}
+          {/* Top-level items (always visible) */}
+          {topNavItems.map((item) => renderNavLink(item))}
+
+          {/* Grouped collapsible sections */}
+          {navSections.map((section) => {
+            const isOpen = !!openSections[section.id];
+            const hasActive = section.items.some((item) =>
+              pathname.startsWith(item.href),
+            );
+
+            // In collapsed sidebar mode just render items without headers
+            if (!isExpanded) {
+              return (
+                <div key={section.id}>
+                  {section.items.map((item) => renderNavLink(item))}
+                </div>
+              );
+            }
+
+            return (
+              <Collapsible
+                key={section.id}
+                open={isOpen}
+                onOpenChange={() => toggleSection(section.id)}
+                className="mx-2 mt-1"
+              >
+                <CollapsibleTrigger asChild>
+                  <button
+                    className={cn(
+                      "flex w-full items-center gap-1.5 rounded-lg px-2 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors",
+                      hasActive
+                        ? "text-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                    )}
+                  >
+                    <span className="flex-1 text-left">{section.label}</span>
+                    <ChevronDown
+                      className={cn(
+                        "h-3 w-3 shrink-0 transition-transform duration-200",
+                        isOpen && "rotate-180",
+                      )}
+                    />
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="mt-0.5 space-y-0.5">
+                    {section.items.map((item) => renderNavLink(item))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          })}
 
           {/* Dynamic Drop Zone Hint for Pinned items */}
           {isDragOver && isExpanded && (
