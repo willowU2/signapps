@@ -9,6 +9,7 @@ members = [
     "crates/signapps-cache",
     "crates/signapps-common",
     "crates/signapps-marketplace",
+    "crates/signapps-plugins",
     "crates/signapps-workflows",
     "crates/signapps-sharing",
     "crates/signapps-dav",

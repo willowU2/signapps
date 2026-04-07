@@ -79,7 +79,8 @@ pub mod pg_events;
 pub mod pg_listener;
 /// PII cipher (AES-256-GCM) for encrypting personally identifiable fields before database storage.
 pub mod pii;
-pub mod plugins;
+// plugins module extracted to signapps-plugins crate
+pub use signapps_plugins as plugins;
 pub mod qrcode_gen;
 pub mod rate_limit;
 pub mod reporting;

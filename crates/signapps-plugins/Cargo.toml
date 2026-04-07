@@ -1,0 +1,25 @@
+[package]
+name = "signapps-plugins"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Plugin system architecture (trait, manifest, registry) for SignApps Platform"
+
+[dependencies]
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+
+# Async trait support
+async-trait = { workspace = true }
+
+# Web framework (for route merging)
+axum = { workspace = true }
+
+# Observability
+tracing = { workspace = true }

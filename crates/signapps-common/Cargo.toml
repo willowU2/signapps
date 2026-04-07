@@ -10,6 +10,7 @@ description = "Shared utilities and types for SignApps Platform"
 [dependencies]
 # Extracted domain crates (re-exported for backward compat)
 signapps-marketplace = { path = "../signapps-marketplace" }
+signapps-plugins = { path = "../signapps-plugins" }
 
 # Serialization
 serde = { workspace = true }
