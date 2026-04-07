@@ -44,6 +44,7 @@ members = [
     "crates/signapps-db-notifications",
     "crates/signapps-db-shared",
     "crates/signapps-db-storage",
+    "crates/signapps-db-vault",
     "crates/signapps-dkim",
     "crates/signapps-dns-server",
     "crates/signapps-imap",

@@ -117,8 +117,8 @@ pub use core_org_repository::{
     PersonRepository, SiteRepository,
 };
 
-pub mod vault_repository;
-pub use vault_repository::{
+// Vault repositories — now live in signapps-db-vault (Phase 5 split).
+pub use signapps_db_vault::repositories::{
     VaultAuditRepository, VaultBrowseRepository, VaultFolderRepository, VaultItemRepository,
     VaultKeysRepository, VaultOrgKeyRepository, VaultShareRepository,
 };

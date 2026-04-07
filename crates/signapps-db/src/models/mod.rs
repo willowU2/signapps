@@ -73,7 +73,10 @@ pub mod signature;
 pub mod tenant;
 pub mod user;
 pub mod user_preferences;
-pub mod vault;
+// Vault domain models — now live in signapps-db-vault (Phase 5 split).
+pub mod vault {
+    pub use signapps_db_vault::models::vault::*;
+}
 
 pub use audit_log::*;
 pub use backup::*;
