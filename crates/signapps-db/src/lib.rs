@@ -158,4 +158,12 @@ async fn fix_migration_checksums(
     Ok(())
 }
 
+/// Re-export the `signapps-db-shared` crate so that consumers can access
+/// the shared pool wrapper, Tenant, Job, Activity, and EntityReference types
+/// directly from the `signapps_db` namespace once they migrate.
+///
+/// Phase 1 of the signapps-db split (see docs/architecture/refactors/01-split-signapps-db.md).
+/// The types defined here remain available via their existing `signapps_db::` paths.
+pub use signapps_db_shared as shared;
+
 // forced touch build

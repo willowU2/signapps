@@ -1,16 +1,15 @@
 [package]
-name = "signapps-db"
+name = "signapps-db-shared"
 version.workspace = true
 edition = "2021"
 rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Database access layer for SignApps Platform"
+description = "Shared database primitives: pool wrapper, Tenant, EntityReference, Job, Activity"
 
 [dependencies]
 # Database
 sqlx = { workspace = true }
-pgvector = { workspace = true }
 
 # Serialization
 serde = { workspace = true }
@@ -18,7 +17,6 @@ serde_json = { workspace = true }
 
 # Async
 tokio = { workspace = true }
-async-trait = { workspace = true }
 
 # Utilities
 uuid = { workspace = true }
@@ -27,14 +25,9 @@ tracing = { workspace = true }
 
 # Internal
 signapps-common = { path = "../signapps-common" }
-signapps-db-shared = { path = "../signapps-db-shared" }
 
 # OpenAPI schema derivation (optional feature)
 utoipa = { workspace = true, optional = true }
 
 [features]
 openapi = ["utoipa"]
-
-[dev-dependencies]
-tokio-test = { workspace = true }
-argon2 = { workspace = true }

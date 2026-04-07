@@ -10284,9 +10284,25 @@ dependencies = [
  "serde",
  "serde_json",
  "signapps-common",
+ "signapps-db-shared",
  "sqlx",
  "tokio",
  "tokio-test",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-db-shared"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "sqlx",
+ "tokio",
  "tracing",
  "utoipa",
  "uuid",
