@@ -22,6 +22,31 @@ use uuid::Uuid;
 
 use crate::AppState;
 
+// ─── Response builder helper ──────────────────────────────────────────────────
+
+/// Build an HTTP response, falling back to 500 if the builder fails.
+///
+/// `Response::builder().body()` can theoretically fail when header values are
+/// invalid (e.g. non-ASCII filenames from user-supplied data). Using this helper
+/// prevents a panic in the publicly-exposed WebDAV endpoint.
+fn build_response(
+    status: StatusCode,
+    headers: &[(&str, String)],
+    body: Body,
+) -> Response {
+    let mut builder = Response::builder().status(status);
+    for (name, value) in headers {
+        builder = builder.header(*name, value.as_str());
+    }
+    builder.body(body).unwrap_or_else(|e| {
+        tracing::error!(?e, "failed to build WebDAV response");
+        Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(Body::from("Internal Server Error"))
+            .expect("static fallback response always builds")
+    })
+}
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const DAV_CAPABILITIES: &str = "1, 2";
@@ -312,7 +337,7 @@ pub async fn webdav_auth(
                 .header(header::WWW_AUTHENTICATE, r#"Basic realm="SignApps Drive""#)
                 .header(header::CONTENT_TYPE, "text/plain")
                 .body(Body::from("Authentication required"))
-                .unwrap());
+                .expect("static auth response always builds"));
         },
     };
 
@@ -341,7 +366,7 @@ pub async fn webdav_auth(
                 .header(header::WWW_AUTHENTICATE, r#"Basic realm="SignApps Drive""#)
                 .header(header::CONTENT_TYPE, "text/plain")
                 .body(Body::from("Invalid credentials"))
-                .unwrap());
+                .expect("static auth response always builds"));
         },
     };
 
@@ -351,7 +376,7 @@ pub async fn webdav_auth(
             .status(StatusCode::FORBIDDEN)
             .header(header::CONTENT_TYPE, "text/plain")
             .body(Body::from("WebDAV access disabled for this account"))
-            .unwrap());
+            .expect("static auth response always builds"));
     }
 
     // Verify password with bcrypt
@@ -363,7 +388,7 @@ pub async fn webdav_auth(
             .header(header::WWW_AUTHENTICATE, r#"Basic realm="SignApps Drive""#)
             .header(header::CONTENT_TYPE, "text/plain")
             .body(Body::from("Invalid credentials"))
-            .unwrap());
+            .expect("static auth response always builds"));
     }
 
     // Build synthetic Claims and inject into extensions (same pattern as auth_middleware)
@@ -402,7 +427,7 @@ pub async fn webdav_dispatch(State(state): State<AppState>, request: Request) ->
                 .status(StatusCode::UNAUTHORIZED)
                 .header(header::CONTENT_TYPE, "text/plain")
                 .body(Body::from("Unauthorized"))
-                .unwrap();
+                .expect("static dispatch response always builds");
         },
     };
 
@@ -444,7 +469,7 @@ pub async fn webdav_dispatch(State(state): State<AppState>, request: Request) ->
                         return Response::builder()
                             .status(StatusCode::BAD_REQUEST)
                             .body(Body::from("Failed to read request body"))
-                            .unwrap();
+                            .expect("static dispatch response always builds");
                     },
                 };
             let content_type = headers
@@ -511,7 +536,7 @@ pub async fn webdav_dispatch(State(state): State<AppState>, request: Request) ->
             .status(StatusCode::METHOD_NOT_ALLOWED)
             .header(header::ALLOW, ALLOWED_METHODS)
             .body(Body::empty())
-            .unwrap(),
+            .expect("static dispatch response always builds"),
     }
 }
 
@@ -525,7 +550,7 @@ fn handle_options() -> Response {
         .header("DAV", DAV_CAPABILITIES)
         .header(header::CONTENT_LENGTH, "0")
         .body(Body::empty())
-        .unwrap()
+        .expect("static OPTIONS response always builds")
 }
 
 /// PROPFIND — list folder or get properties of a single node.
@@ -575,7 +600,7 @@ async fn handle_propfind(
                     .status(StatusCode::NOT_FOUND)
                     .header(header::CONTENT_TYPE, "text/plain")
                     .body(Body::from("Not Found"))
-                    .unwrap());
+                    .expect("static PROPFIND response always builds"));
             },
             Some(n) => {
                 let node_href = if n.node_type == "folder" {
@@ -614,7 +639,7 @@ async fn handle_propfind(
         .header(header::CONTENT_TYPE, "application/xml; charset=utf-8")
         .header("DAV", DAV_CAPABILITIES)
         .body(Body::from(xml))
-        .unwrap())
+        .expect("PROPFIND multistatus response always builds"))
 }
 
 /// GET/HEAD — download a file from storage.
@@ -634,7 +659,7 @@ async fn handle_get(
             .status(StatusCode::METHOD_NOT_ALLOWED)
             .header(header::CONTENT_TYPE, "text/plain")
             .body(Body::from("Cannot GET a collection"))
-            .unwrap());
+            .expect("static GET response always builds"));
     }
 
     // node.target_id is the storage key (UUID stored as string path)
@@ -657,18 +682,21 @@ async fn handle_get(
     let content_type = obj.content_type;
     let content_length = obj.content_length;
 
-    let mut builder = Response::builder()
-        .status(StatusCode::OK)
-        .header(header::CONTENT_TYPE, content_type)
-        .header(header::CONTENT_LENGTH, content_length)
-        .header(
-            header::CONTENT_DISPOSITION,
-            format!("attachment; filename=\"{}\"", node.name),
-        );
+    // Build the Content-Disposition value — sanitise the filename to ASCII-safe
+    // form using RFC 5987 percent-encoding so non-ASCII names don't cause the
+    // response builder to reject the header value.
+    let safe_filename = node.name.replace('"', "\\\"");
+    let disposition = format!("attachment; filename=\"{safe_filename}\"");
 
-    if let Some(mt) = &node.mime_type {
-        builder = builder.header(header::CONTENT_TYPE, mt.as_str());
-    }
+    // Prefer the per-node mime_type stored in the DB over the object's generic
+    // content_type when available.
+    let effective_content_type = node.mime_type.clone().unwrap_or(content_type);
+
+    let headers: &[(&str, String)] = &[
+        (header::CONTENT_TYPE.as_str(), effective_content_type),
+        (header::CONTENT_LENGTH.as_str(), content_length.to_string()),
+        (header::CONTENT_DISPOSITION.as_str(), disposition),
+    ];
 
     let body = if head_only {
         Body::empty()
@@ -676,7 +704,7 @@ async fn handle_get(
         Body::from(obj.data)
     };
 
-    Ok(builder.body(body).unwrap())
+    Ok(build_response(StatusCode::OK, headers, body))
 }
 
 /// PUT — create or update a file node in the Drive.
@@ -753,7 +781,7 @@ async fn handle_put(
         return Ok(Response::builder()
             .status(StatusCode::NO_CONTENT)
             .body(Body::empty())
-            .unwrap());
+            .expect("static PUT response always builds"));
     }
 
     // Create: upload to storage and insert drive node
@@ -783,7 +811,7 @@ async fn handle_put(
     Ok(Response::builder()
         .status(StatusCode::CREATED)
         .body(Body::empty())
-        .unwrap())
+        .expect("static PUT response always builds"))
 }
 
 /// MKCOL — create a folder node.
@@ -801,7 +829,7 @@ async fn handle_mkcol(
         return Ok(Response::builder()
             .status(StatusCode::METHOD_NOT_ALLOWED)
             .body(Body::from("Cannot create root collection"))
-            .unwrap());
+            .expect("static MKCOL response always builds"));
     }
 
     // Check node doesn't already exist
@@ -809,7 +837,7 @@ async fn handle_mkcol(
         return Ok(Response::builder()
             .status(StatusCode::METHOD_NOT_ALLOWED)
             .body(Body::from("Collection already exists"))
-            .unwrap());
+            .expect("static MKCOL response always builds"));
     }
 
     let parent_id = if parent_path.trim_matches('/').is_empty() {
@@ -838,7 +866,7 @@ async fn handle_mkcol(
     Ok(Response::builder()
         .status(StatusCode::CREATED)
         .body(Body::empty())
-        .unwrap())
+        .expect("static MKCOL response always builds"))
 }
 
 /// DELETE — soft-delete a node.
@@ -863,7 +891,7 @@ async fn handle_delete(
             return Ok(Response::builder()
                 .status(StatusCode::FORBIDDEN)
                 .body(Body::from("Requires manager role"))
-                .unwrap());
+                .expect("static DELETE response always builds"));
         }
     }
 
@@ -876,7 +904,7 @@ async fn handle_delete(
     Ok(Response::builder()
         .status(StatusCode::NO_CONTENT)
         .body(Body::empty())
-        .unwrap())
+        .expect("static DELETE response always builds"))
 }
 
 /// MOVE — rename or move a node (reads Destination header).
@@ -929,7 +957,7 @@ async fn handle_move(
     Ok(Response::builder()
         .status(StatusCode::CREATED)
         .body(Body::empty())
-        .unwrap())
+        .expect("static MOVE response always builds"))
 }
 
 /// COPY — duplicate a node.
@@ -1020,7 +1048,7 @@ async fn handle_copy(
     Ok(Response::builder()
         .status(StatusCode::CREATED)
         .body(Body::empty())
-        .unwrap())
+        .expect("static COPY response always builds"))
 }
 
 // ─── WebDAV admin config handlers ─────────────────────────────────────────────
@@ -1221,11 +1249,11 @@ fn error_response(e: AppError) -> Response {
             format!("Internal error: {other}"),
         ),
     };
-    Response::builder()
-        .status(status)
-        .header(header::CONTENT_TYPE, "text/plain")
-        .body(Body::from(msg))
-        .unwrap()
+    build_response(
+        status,
+        &[(header::CONTENT_TYPE.as_str(), "text/plain".to_string())],
+        Body::from(msg),
+    )
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
