@@ -6,7 +6,7 @@
 #![allow(dead_code)]
 
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
@@ -24,8 +24,12 @@ use crate::workers::{AiWorker, RerankResult, RerankerWorker};
 
 /// Reranker worker that runs a bge-reranker ONNX model locally via ONNX
 /// Runtime for cross-encoder document scoring.
+///
+/// The ONNX session is wrapped in `Arc<Mutex<Session>>` so inference can be
+/// offloaded to a `tokio::task::spawn_blocking` closure without blocking the
+/// async runtime thread.
 pub struct NativeReranker {
-    session: Mutex<Session>,
+    session: Arc<Mutex<Session>>,
     tokenizer: Tokenizer,
     model_id: String,
     loaded: AtomicBool,
@@ -56,7 +60,7 @@ impl NativeReranker {
             .to_string();
 
         Ok(Self {
-            session: Mutex::new(session),
+            session: Arc::new(Mutex::new(session)),
             tokenizer,
             model_id,
             loaded: AtomicBool::new(true),
@@ -117,10 +121,11 @@ impl RerankerWorker for NativeReranker {
             "native ONNX rerank request"
         );
 
-        let mut scored: Vec<(usize, f32, String)> = Vec::with_capacity(documents.len());
+        // Pre-tokenize all pairs on the async thread (fast, no I/O).
+        let mut pairs: Vec<(usize, String, Vec<i64>, Vec<i64>, Vec<i64>)> =
+            Vec::with_capacity(documents.len());
 
         for (idx, doc) in documents.iter().enumerate() {
-            // Encode the query-document pair for the cross-encoder.
             let encoding = self
                 .tokenizer
                 .encode((query, doc.as_str()), true)
@@ -135,39 +140,55 @@ impl RerankerWorker for NativeReranker {
             let token_type_ids: Vec<i64> =
                 encoding.get_type_ids().iter().map(|&t| t as i64).collect();
 
-            let seq_len = input_ids.len();
-
-            // Build ONNX input tensors — shape [1, seq_len] for a single pair.
-            let input_ids_tensor = Tensor::from_array((vec![1i64, seq_len as i64], input_ids))
-                .context("failed to create input_ids tensor")?;
-            let attention_mask_tensor =
-                Tensor::from_array((vec![1i64, seq_len as i64], attention_mask))
-                    .context("failed to create attention_mask tensor")?;
-            let token_type_ids_tensor =
-                Tensor::from_array((vec![1i64, seq_len as i64], token_type_ids))
-                    .context("failed to create token_type_ids tensor")?;
-
-            // Run the cross-encoder model.
-            let mut session = self
-                .session
-                .lock()
-                .map_err(|e| anyhow::anyhow!("session lock poisoned: {e}"))?;
-            let outputs = session.run(ort::inputs![
-                "input_ids" => input_ids_tensor,
-                "attention_mask" => attention_mask_tensor,
-                "token_type_ids" => token_type_ids_tensor,
-            ])?;
-
-            // Extract the relevance score from the model output.
-            let (_shape, score_data) = outputs[0]
-                .try_extract_tensor::<f32>()
-                .context("failed to extract score tensor from ONNX output")?;
-            let relevance_score = score_data[0];
-
-            scored.push((idx, relevance_score, doc.clone()));
+            pairs.push((idx, doc.clone(), input_ids, attention_mask, token_type_ids));
         }
 
+        // Run ONNX inference in a blocking thread pool so the tokio runtime is
+        // not stalled during the 50–500 ms inference window.
+        let session = Arc::clone(&self.session);
+        let scored = tokio::task::spawn_blocking(move || -> Result<Vec<(usize, f32, String)>> {
+            let mut scored: Vec<(usize, f32, String)> = Vec::with_capacity(pairs.len());
+
+            for (idx, doc, input_ids, attention_mask, token_type_ids) in pairs {
+                let seq_len = input_ids.len();
+
+                // Build ONNX input tensors — shape [1, seq_len] for a single pair.
+                let input_ids_tensor =
+                    Tensor::from_array((vec![1i64, seq_len as i64], input_ids))
+                        .context("failed to create input_ids tensor")?;
+                let attention_mask_tensor =
+                    Tensor::from_array((vec![1i64, seq_len as i64], attention_mask))
+                        .context("failed to create attention_mask tensor")?;
+                let token_type_ids_tensor =
+                    Tensor::from_array((vec![1i64, seq_len as i64], token_type_ids))
+                        .context("failed to create token_type_ids tensor")?;
+
+                // Acquire the mutex inside the blocking thread — blocking here is fine.
+                let mut s = session
+                    .lock()
+                    .map_err(|e| anyhow::anyhow!("session lock poisoned: {e}"))?;
+                let outputs = s.run(ort::inputs![
+                    "input_ids" => input_ids_tensor,
+                    "attention_mask" => attention_mask_tensor,
+                    "token_type_ids" => token_type_ids_tensor,
+                ])?;
+
+                // Extract the relevance score from the model output.
+                let (_shape, score_data) = outputs[0]
+                    .try_extract_tensor::<f32>()
+                    .context("failed to extract score tensor from ONNX output")?;
+                let relevance_score = score_data[0];
+
+                scored.push((idx, relevance_score, doc));
+            }
+
+            Ok(scored)
+        })
+        .await
+        .map_err(|e| anyhow::anyhow!("spawn_blocking join error: {e}"))??;
+
         // Sort by score descending.
+        let mut scored = scored;
         scored.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
 
         // Apply top_k limit.
