@@ -171,6 +171,7 @@ impl SharingRepository {
                        (grantee_type = 'user'     AND grantee_id = $4)
                     OR (grantee_type = 'group'    AND grantee_id = ANY($5))
                     OR (grantee_type = 'org_node' AND grantee_id = ANY($6))
+                    OR  grantee_type = 'everyone'
                  )"#,
         )
         .bind(tenant_id)
