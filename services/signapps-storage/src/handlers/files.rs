@@ -10,8 +10,10 @@ use axum::{
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use signapps_common::auth::Claims;
 use signapps_common::pg_events::NewEvent;
 use signapps_common::{Error, Result};
+use signapps_sharing::types::{Action, ResourceRef};
 
 use crate::handlers::quotas;
 use crate::storage::{CopyRequest, ListObjectsQuery, ListObjectsResponse, ObjectInfo};
@@ -56,6 +58,96 @@ async fn find_duplicate_by_hash(
     let storage_key: String = row.try_get("storage_key").ok()?;
     let node_id: Uuid = row.try_get("id").ok()?;
     Some((storage_key, node_id))
+}
+
+// ─── Permission check helpers ────────────────────────────────────────────────
+
+/// Resolve a `(bucket, key)` pair to a `drive.nodes` UUID via the
+/// `storage.files` join.
+///
+/// Returns `None` when the file exists in `storage.files` but has no
+/// corresponding drive node (raw upload, not via Drive VFS).
+/// Returns `(node_id, owner_id)` when a node is found.
+async fn resolve_file_node(
+    pool: &sqlx::PgPool,
+    bucket: &str,
+    key: &str,
+) -> Option<(Uuid, Uuid)> {
+    use sqlx::Row;
+    let row = sqlx::query(
+        r#"
+        SELECT n.id, n.owner_id
+        FROM drive.nodes n
+        JOIN storage.files f ON f.id = n.target_id
+        WHERE f.bucket = $1
+          AND f.key    = $2
+          AND n.node_type = 'file'
+          AND n.deleted_at IS NULL
+        LIMIT 1
+        "#,
+    )
+    .bind(bucket)
+    .bind(key)
+    .fetch_optional(pool)
+    .await
+    .unwrap_or(None)?;
+
+    let node_id: Uuid = row.try_get("id").ok()?;
+    let owner_id: Uuid = row.try_get("owner_id").ok()?;
+    Some((node_id, owner_id))
+}
+
+/// Enforce a permission check on a `(bucket, key)` file for the given caller.
+///
+/// Resolution order:
+/// 1. If a `drive.nodes` entry exists → delegate to the sharing engine
+///    (`action` is passed as-is: read / write / delete).
+/// 2. Otherwise → the file lives outside the Drive VFS; check that the caller
+///    owns the file row in `storage.files`.  If the file doesn't exist at all
+///    this returns `Ok(())` so that the caller's own storage op can surface a
+///    natural 404 from the backend.
+///
+/// # Errors
+///
+/// - [`Error::Forbidden`] if the caller does not have the required permission.
+/// - [`Error::Database`] if a repository call fails.
+async fn check_file_permission(
+    state: &AppState,
+    claims: &Claims,
+    bucket: &str,
+    key: &str,
+    action: Action,
+) -> Result<()> {
+    if let Some((node_id, owner_id)) = resolve_file_node(state.pool.inner(), bucket, key).await {
+        // File is tracked in the Drive VFS — use the sharing engine.
+        let user_ctx = state.sharing.build_user_context(claims).await?;
+        return state
+            .sharing
+            .check(&user_ctx, ResourceRef::file(node_id), action, Some(owner_id))
+            .await;
+    }
+
+    // File is not (yet) in the Drive VFS — enforce simple owner check.
+    // Allow the operation only if the caller is the file owner in storage.files.
+    let owner: Option<Uuid> = sqlx::query_scalar(
+        "SELECT user_id FROM storage.files WHERE bucket = $1 AND key = $2 LIMIT 1",
+    )
+    .bind(bucket)
+    .bind(key)
+    .fetch_optional(state.pool.inner())
+    .await
+    .map_err(|e| Error::Database(e.to_string()))?;
+
+    match owner {
+        // File doesn't exist yet (e.g. a new upload_with_key) — allow.
+        None => Ok(()),
+        // File exists; only the owner may touch it until it enters the Drive VFS.
+        Some(uid) if uid == claims.sub => Ok(()),
+        Some(_) => Err(Error::Forbidden(format!(
+            "insufficient permission to {} {}/{}",
+            action, bucket, key
+        ))),
+    }
 }
 
 /// Append a row to `platform.activities` — fire-and-forget, never fails the request.
@@ -304,8 +396,10 @@ pub async fn list(
 #[tracing::instrument(skip_all)]
 pub async fn get_info(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((bucket, key)): Path<(String, String)>,
 ) -> Result<Json<ObjectInfo>> {
+    check_file_permission(&state, &claims, &bucket, &key, Action::read()).await?;
     let info = state.storage.get_object_info(&bucket, &key).await?;
     Ok(Json(info))
 }
@@ -330,8 +424,10 @@ pub async fn get_info(
 #[tracing::instrument(skip_all)]
 pub async fn download(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((bucket, key)): Path<(String, String)>,
 ) -> Result<Response> {
+    check_file_permission(&state, &claims, &bucket, &key, Action::read()).await?;
     let object = state.storage.get_object(&bucket, &key).await?;
 
     let content_type = object.content_type;
@@ -557,11 +653,15 @@ pub async fn upload(
 #[tracing::instrument(skip_all)]
 pub async fn upload_with_key(
     State(state): State<AppState>,
-    Extension(user_id): Extension<Uuid>,
+    Extension(claims): Extension<Claims>,
     Path((bucket, key)): Path<(String, String)>,
     headers: axum::http::HeaderMap,
     body: Bytes,
 ) -> Result<Json<UploadResponse>> {
+    // Enforce write permission: if the key already exists, only the owner
+    // (or a user with sharing-engine write access) may overwrite it.
+    check_file_permission(&state, &claims, &bucket, &key, Action::write()).await?;
+    let user_id = claims.sub;
     let content_type = headers
         .get(header::CONTENT_TYPE)
         .and_then(|v| v.to_str().ok())
@@ -696,9 +796,11 @@ pub async fn upload_with_key(
 #[tracing::instrument(skip_all)]
 pub async fn delete(
     State(state): State<AppState>,
-    Extension(user_id): Extension<Uuid>,
+    Extension(claims): Extension<Claims>,
     Path((bucket, key)): Path<(String, String)>,
 ) -> Result<StatusCode> {
+    check_file_permission(&state, &claims, &bucket, &key, Action::delete()).await?;
+    let user_id = claims.sub;
     // Get info first to know size for quota update
     let info = state.storage.get_object_info(&bucket, &key).await.ok();
 
@@ -782,9 +884,28 @@ pub async fn delete_many(
 #[tracing::instrument(skip_all)]
 pub async fn copy(
     State(state): State<AppState>,
-    Extension(user_id): Extension<Uuid>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CopyRequest>,
 ) -> Result<Json<ObjectInfo>> {
+    // Enforce read permission on source file before allowing copy.
+    check_file_permission(
+        &state,
+        &claims,
+        &payload.source_bucket,
+        &payload.source_key,
+        Action::read(),
+    )
+    .await?;
+    // Enforce write permission on destination (overwrite guard).
+    check_file_permission(
+        &state,
+        &claims,
+        &payload.dest_bucket,
+        &payload.dest_key,
+        Action::write(),
+    )
+    .await?;
+    let user_id = claims.sub;
     // 1. Get source info to check quota
     let info = state
         .storage
@@ -860,9 +981,27 @@ pub async fn copy(
 #[tracing::instrument(skip_all)]
 pub async fn move_file(
     State(state): State<AppState>,
-    Extension(user_id): Extension<Uuid>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CopyRequest>,
 ) -> Result<Json<ObjectInfo>> {
+    // Move requires write permission on source (destructive) and write on dest (overwrite).
+    check_file_permission(
+        &state,
+        &claims,
+        &payload.source_bucket,
+        &payload.source_key,
+        Action::write(),
+    )
+    .await?;
+    check_file_permission(
+        &state,
+        &claims,
+        &payload.dest_bucket,
+        &payload.dest_key,
+        Action::write(),
+    )
+    .await?;
+    let user_id = claims.sub;
     state
         .storage
         .move_object(
