@@ -173,14 +173,17 @@ export default function LoginPage() {
       // Direct API call to avoid useCallback timing issues
       (async () => {
         try {
-          const response = await authApi.login({ username: 'admin', password: 'admin', remember_me: true });
+          const response = await authApi.login({ username: 'admin', password: 'admin123', remember_me: true });
           if (response.data.access_token && response.data.refresh_token) {
             localStorage.setItem('access_token', response.data.access_token);
             localStorage.setItem('refresh_token', response.data.refresh_token);
             window.location.href = redirectAfterLogin || '/dashboard';
           }
-        } catch (e) {
+        } catch (e: any) {
           console.error('Auto-login failed:', e);
+          if (e.config) {
+            console.error('Failed URL:', e.config.baseURL, e.config.url);
+          }
         }
       })();
     }

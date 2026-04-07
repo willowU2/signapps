@@ -204,16 +204,42 @@ const SERVICE_CONFIG: Record<ServiceName, ServiceConfig> = {
  */
 export function getServiceUrl(service: ServiceName): string {
   const config = SERVICE_CONFIG[service];
-  const envValue =
-    typeof window !== "undefined"
-      ? process.env[config.envVar] || null
-      : process.env[config.envVar];
+  
+  // Explicit process.env mapping to allow Webpack static replacement in Next.js
+  let envValue: string | null = null;
+  switch (service) {
+    case ServiceName.IDENTITY: envValue = process.env.NEXT_PUBLIC_IDENTITY_URL || null; break;
+    case ServiceName.CONTAINERS: envValue = process.env.NEXT_PUBLIC_CONTAINERS_URL || null; break;
+    case ServiceName.PROXY: envValue = process.env.NEXT_PUBLIC_PROXY_URL || null; break;
+    case ServiceName.STORAGE: envValue = process.env.NEXT_PUBLIC_STORAGE_URL || null; break;
+    case ServiceName.AI: envValue = process.env.NEXT_PUBLIC_AI_URL || null; break;
+    case ServiceName.SECURELINK: envValue = process.env.NEXT_PUBLIC_SECURELINK_URL || null; break;
+    case ServiceName.SCHEDULER: envValue = process.env.NEXT_PUBLIC_SCHEDULER_URL || null; break;
+    case ServiceName.METRICS: envValue = process.env.NEXT_PUBLIC_METRICS_URL || null; break;
+    case ServiceName.MEDIA: envValue = process.env.NEXT_PUBLIC_MEDIA_URL || null; break;
+    case ServiceName.DOCS: envValue = process.env.NEXT_PUBLIC_DOCS_URL || null; break;
+    case ServiceName.CALENDAR: envValue = process.env.NEXT_PUBLIC_CALENDAR_URL || null; break;
+    case ServiceName.MAIL: envValue = process.env.NEXT_PUBLIC_MAIL_URL || null; break;
+    case ServiceName.COLLAB: envValue = process.env.NEXT_PUBLIC_COLLAB_URL || null; break;
+    case ServiceName.MEET: envValue = process.env.NEXT_PUBLIC_MEET_URL || null; break;
+    case ServiceName.IT_ASSETS: envValue = process.env.NEXT_PUBLIC_IT_ASSETS_URL || null; break;
+    case ServiceName.PXE: envValue = process.env.NEXT_PUBLIC_PXE_URL || null; break;
+    case ServiceName.REMOTE: envValue = process.env.NEXT_PUBLIC_REMOTE_URL || null; break;
+    case ServiceName.OFFICE: envValue = process.env.NEXT_PUBLIC_OFFICE_URL || null; break;
+    case ServiceName.WORKFORCE: envValue = process.env.NEXT_PUBLIC_WORKFORCE_URL || null; break;
+    case ServiceName.CONTACTS: envValue = process.env.NEXT_PUBLIC_CONTACTS_URL || null; break;
+    case ServiceName.FORMS: envValue = process.env.NEXT_PUBLIC_FORMS_URL || null; break;
+    case ServiceName.CHAT: envValue = process.env.NEXT_PUBLIC_CHAT_URL || null; break;
+    case ServiceName.SOCIAL: envValue = process.env.NEXT_PUBLIC_SOCIAL_URL || null; break;
+    case ServiceName.NOTIFICATIONS: envValue = process.env.NEXT_PUBLIC_NOTIFICATIONS_URL || null; break;
+    case ServiceName.BILLING: envValue = process.env.NEXT_PUBLIC_BILLING_URL || null; break;
+  }
 
   if (envValue) return envValue;
 
   // Gateway fallback — strip /api/v1 if accidentally included
   const gatewayBase = GATEWAY_URL.replace(/\/api\/v1\/?$/, "");
-  if (gatewayBase !== "http://localhost:3099") {
+  if (gatewayBase !== "http://localhost:3099" && gatewayBase) {
     return `${gatewayBase}/api/v1`;
   }
 
@@ -225,10 +251,35 @@ export function getServiceUrl(service: ServiceName): string {
  */
 export function getServiceBaseUrl(service: ServiceName): string {
   const config = SERVICE_CONFIG[service];
-  const envValue =
-    typeof window !== "undefined"
-      ? process.env[config.envVar] || null
-      : process.env[config.envVar];
+  
+  let envValue: string | null = null;
+  switch (service) {
+    case ServiceName.IDENTITY: envValue = process.env.NEXT_PUBLIC_IDENTITY_URL || null; break;
+    case ServiceName.CONTAINERS: envValue = process.env.NEXT_PUBLIC_CONTAINERS_URL || null; break;
+    case ServiceName.PROXY: envValue = process.env.NEXT_PUBLIC_PROXY_URL || null; break;
+    case ServiceName.STORAGE: envValue = process.env.NEXT_PUBLIC_STORAGE_URL || null; break;
+    case ServiceName.AI: envValue = process.env.NEXT_PUBLIC_AI_URL || null; break;
+    case ServiceName.SECURELINK: envValue = process.env.NEXT_PUBLIC_SECURELINK_URL || null; break;
+    case ServiceName.SCHEDULER: envValue = process.env.NEXT_PUBLIC_SCHEDULER_URL || null; break;
+    case ServiceName.METRICS: envValue = process.env.NEXT_PUBLIC_METRICS_URL || null; break;
+    case ServiceName.MEDIA: envValue = process.env.NEXT_PUBLIC_MEDIA_URL || null; break;
+    case ServiceName.DOCS: envValue = process.env.NEXT_PUBLIC_DOCS_URL || null; break;
+    case ServiceName.CALENDAR: envValue = process.env.NEXT_PUBLIC_CALENDAR_URL || null; break;
+    case ServiceName.MAIL: envValue = process.env.NEXT_PUBLIC_MAIL_URL || null; break;
+    case ServiceName.COLLAB: envValue = process.env.NEXT_PUBLIC_COLLAB_URL || null; break;
+    case ServiceName.MEET: envValue = process.env.NEXT_PUBLIC_MEET_URL || null; break;
+    case ServiceName.IT_ASSETS: envValue = process.env.NEXT_PUBLIC_IT_ASSETS_URL || null; break;
+    case ServiceName.PXE: envValue = process.env.NEXT_PUBLIC_PXE_URL || null; break;
+    case ServiceName.REMOTE: envValue = process.env.NEXT_PUBLIC_REMOTE_URL || null; break;
+    case ServiceName.OFFICE: envValue = process.env.NEXT_PUBLIC_OFFICE_URL || null; break;
+    case ServiceName.WORKFORCE: envValue = process.env.NEXT_PUBLIC_WORKFORCE_URL || null; break;
+    case ServiceName.CONTACTS: envValue = process.env.NEXT_PUBLIC_CONTACTS_URL || null; break;
+    case ServiceName.FORMS: envValue = process.env.NEXT_PUBLIC_FORMS_URL || null; break;
+    case ServiceName.CHAT: envValue = process.env.NEXT_PUBLIC_CHAT_URL || null; break;
+    case ServiceName.SOCIAL: envValue = process.env.NEXT_PUBLIC_SOCIAL_URL || null; break;
+    case ServiceName.NOTIFICATIONS: envValue = process.env.NEXT_PUBLIC_NOTIFICATIONS_URL || null; break;
+    case ServiceName.BILLING: envValue = process.env.NEXT_PUBLIC_BILLING_URL || null; break;
+  }
 
   if (envValue) {
     // Remove /api/v1 suffix if present

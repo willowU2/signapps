@@ -4,7 +4,7 @@
 
 -- Enable required extensions (idempotent)
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-CREATE EXTENSION IF NOT EXISTS "vector";
+-- CREATE EXTENSION IF NOT EXISTS "vector";
 
 -- Create dedicated schema
 CREATE SCHEMA IF NOT EXISTS mailserver;
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS mailserver.message_contents (
     body_html TEXT,
     body_structure JSONB,
     text_search TSVECTOR,
-    embedding VECTOR(384),
+    embedding TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -255,9 +255,9 @@ CREATE INDEX IF NOT EXISTS idx_mc_text_search
 
 -- NOTE: ivfflat index requires data to exist for optimal lists parameter.
 -- We create with lists=1 initially; rebuild with more lists after loading data.
-CREATE INDEX IF NOT EXISTS idx_mc_embedding
-    ON mailserver.message_contents USING ivfflat(embedding vector_cosine_ops)
-    WITH (lists = 1);
+-- CREATE INDEX IF NOT EXISTS idx_mc_embedding
+--     ON mailserver.message_contents USING ivfflat(embedding vector_cosine_ops)
+--     WITH (lists = 1);
 
 CREATE INDEX IF NOT EXISTS idx_mm_uid
     ON mailserver.message_mailboxes(mailbox_id, uid);

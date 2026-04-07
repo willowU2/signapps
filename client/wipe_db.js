@@ -12,7 +12,8 @@ async function run() {
       const schemas = [
           'scheduling', 'drive', 'meet', 'mail', 'it', 'remote', 'pxe', 
           'calendar', 'ai', 'identity', 'containers', 'proxy', 'securelink', 
-          'storage', 'documents', 'scheduler', 'public', 'auth', 'core', 'config'
+          'storage', 'documents', 'scheduler', 'public', 'auth', 'core', 'config',
+          'social', 'crm', 'platform', 'billing'
       ];
       
       for (const schema of schemas) {

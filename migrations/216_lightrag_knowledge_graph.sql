@@ -13,7 +13,7 @@ CREATE TABLE ai.kg_entities (
     description TEXT,                       -- LLM-generated description
     source_document_ids UUID[] DEFAULT '{}', -- Which documents mention this entity
     attributes JSONB DEFAULT '{}',         -- Additional structured attributes
-    embedding vector(384),                 -- Embedding of name + description
+    embedding TEXT,                 -- Embedding of name + description
     mention_count INT DEFAULT 1,           -- How many times referenced
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now(),
@@ -23,7 +23,7 @@ CREATE TABLE ai.kg_entities (
 CREATE INDEX idx_kg_entities_collection ON ai.kg_entities(collection);
 CREATE INDEX idx_kg_entities_type ON ai.kg_entities(entity_type);
 CREATE INDEX idx_kg_entities_name ON ai.kg_entities USING gin(name gin_trgm_ops);
-CREATE INDEX idx_kg_entities_embedding ON ai.kg_entities USING hnsw(embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+-- CREATE INDEX idx_kg_entities_embedding ON ai.kg_entities USING hnsw(embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 
 -- ── Relations ──
 CREATE TABLE ai.kg_relations (
@@ -36,7 +36,7 @@ CREATE TABLE ai.kg_relations (
     weight REAL DEFAULT 1.0,               -- Relation strength
     source_document_ids UUID[] DEFAULT '{}',
     attributes JSONB DEFAULT '{}',
-    embedding vector(384),                 -- Embedding of source + relation + target description
+    embedding TEXT,                 -- Embedding of source + relation + target description
     created_at TIMESTAMPTZ DEFAULT now(),
     UNIQUE(collection, source_entity_id, target_entity_id, relation_type)
 );
@@ -45,7 +45,7 @@ CREATE INDEX idx_kg_relations_collection ON ai.kg_relations(collection);
 CREATE INDEX idx_kg_relations_source ON ai.kg_relations(source_entity_id);
 CREATE INDEX idx_kg_relations_target ON ai.kg_relations(target_entity_id);
 CREATE INDEX idx_kg_relations_type ON ai.kg_relations(relation_type);
-CREATE INDEX idx_kg_relations_embedding ON ai.kg_relations USING hnsw(embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+-- CREATE INDEX idx_kg_relations_embedding ON ai.kg_relations USING hnsw(embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 
 -- ── Communities (clusters of related entities) ──
 CREATE TABLE ai.kg_communities (
@@ -55,10 +55,10 @@ CREATE TABLE ai.kg_communities (
     title TEXT,                            -- LLM-generated community title
     summary TEXT,                          -- LLM-generated community summary
     entity_ids UUID[] DEFAULT '{}',        -- Entities in this community
-    embedding vector(384),                 -- Embedding of the summary
+    embedding TEXT,                 -- Embedding of the summary
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE INDEX idx_kg_communities_collection ON ai.kg_communities(collection);
 CREATE INDEX idx_kg_communities_level ON ai.kg_communities(level);
-CREATE INDEX idx_kg_communities_embedding ON ai.kg_communities USING hnsw(embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+-- CREATE INDEX idx_kg_communities_embedding ON ai.kg_communities USING hnsw(embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
