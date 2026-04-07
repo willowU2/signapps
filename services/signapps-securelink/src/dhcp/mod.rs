@@ -290,24 +290,39 @@ struct ResolvedScope {
 }
 
 /// Find the first active scope and load its full configuration.
+///
+/// Uses two separate static queries instead of string interpolation to avoid
+/// the SQL injection vector that existed in the previous `format!("id = '{id}'")`
+/// approach.
 async fn resolve_scope(pool: &PgPool, config: &DhcpListenerConfig) -> Option<ResolvedScope> {
-    let scope_filter = if let Some(id) = config.default_scope_id {
-        format!("id = '{id}'")
-    } else {
-        "TRUE".to_string()
-    };
+    type ScopeRow = (Uuid, Option<String>, Vec<String>, Vec<String>, Option<String>, i32, Option<String>, Option<String>);
 
-    let row: Option<(Uuid, Option<String>, Vec<String>, Vec<String>, Option<String>, i32, Option<String>, Option<String>)> =
-        sqlx::query_as(&format!(
-            "SELECT id, gateway, dns_servers, ntp_servers, domain_name, \
-             lease_duration_hours, pxe_server, pxe_bootfile \
-             FROM infrastructure.dhcp_scopes \
-             WHERE is_active = true AND {scope_filter} \
-             ORDER BY created_at LIMIT 1"
-        ))
-        .fetch_optional(pool)
-        .await
-        .ok()?;
+    const QUERY_ALL: &str =
+        "SELECT id, gateway, dns_servers, ntp_servers, domain_name, \
+         lease_duration_hours, pxe_server, pxe_bootfile \
+         FROM infrastructure.dhcp_scopes \
+         WHERE is_active = true \
+         ORDER BY created_at LIMIT 1";
+
+    const QUERY_BY_ID: &str =
+        "SELECT id, gateway, dns_servers, ntp_servers, domain_name, \
+         lease_duration_hours, pxe_server, pxe_bootfile \
+         FROM infrastructure.dhcp_scopes \
+         WHERE is_active = true AND id = $1 \
+         ORDER BY created_at LIMIT 1";
+
+    let row: Option<ScopeRow> = if let Some(scope_id) = config.default_scope_id {
+        sqlx::query_as(QUERY_BY_ID)
+            .bind(scope_id)
+            .fetch_optional(pool)
+            .await
+            .ok()?
+    } else {
+        sqlx::query_as(QUERY_ALL)
+            .fetch_optional(pool)
+            .await
+            .ok()?
+    };
 
     row.map(|(id, gateway, dns_servers, ntp_servers, domain_name, lease_hours, pxe_server, pxe_bootfile)| {
         ResolvedScope { id, gateway, dns_servers, ntp_servers, domain_name, lease_duration_hours: lease_hours, pxe_server, pxe_bootfile }
