@@ -92,10 +92,11 @@ pub async fn approve_leave(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Result<Json<Event>, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let event_repo = EventRepository::new(&state.pool);
 
     let event = event_repo
-        .find_by_id(id)
+        .find_by_id(id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
@@ -179,10 +180,11 @@ pub async fn reject_leave(
     Extension(claims): Extension<Claims>,
     Json(body): Json<RejectBody>,
 ) -> Result<Json<Event>, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let event_repo = EventRepository::new(&state.pool);
 
     let event = event_repo
-        .find_by_id(id)
+        .find_by_id(id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;

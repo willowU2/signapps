@@ -100,9 +100,10 @@ pub async fn get_calendar(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Calendar>, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let repo = CalendarRepository::new(&state.pool);
     let calendar = repo
-        .find_by_id(id)
+        .find_by_id(id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
@@ -156,10 +157,11 @@ pub async fn update_calendar(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateCalendar>,
 ) -> Result<Json<Calendar>, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     // Verify ownership before allowing update
     let repo = CalendarRepository::new(&state.pool);
     let existing = repo
-        .find_by_id(id)
+        .find_by_id(id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
@@ -195,10 +197,11 @@ pub async fn delete_calendar(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     // Verify ownership before allowing delete
     let repo = CalendarRepository::new(&state.pool);
     let existing = repo
-        .find_by_id(id)
+        .find_by_id(id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
@@ -234,10 +237,11 @@ pub async fn list_members(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<CalendarShareEntry>>, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     // Verify the calendar exists first
     let cal_repo = CalendarRepository::new(&state.pool);
     let calendar = cal_repo
-        .find_by_id(id)
+        .find_by_id(id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
@@ -298,10 +302,11 @@ pub async fn add_member(
     Path(id): Path<Uuid>,
     Json(payload): Json<AddMemberRequest>,
 ) -> Result<(StatusCode, Json<CalendarShareEntry>), CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     // Only the calendar owner can add members
     let cal_repo = CalendarRepository::new(&state.pool);
     let calendar = cal_repo
-        .find_by_id(id)
+        .find_by_id(id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
@@ -361,10 +366,11 @@ pub async fn remove_member(
     Extension(claims): Extension<Claims>,
     Path((calendar_id, user_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     // Only the calendar owner can remove members
     let cal_repo = CalendarRepository::new(&state.pool);
     let calendar = cal_repo
-        .find_by_id(calendar_id)
+        .find_by_id(calendar_id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
@@ -414,10 +420,11 @@ pub async fn update_member_role(
     Path((calendar_id, user_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<UpdateRoleRequest>,
 ) -> Result<StatusCode, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     // Only the calendar owner can update member roles
     let cal_repo = CalendarRepository::new(&state.pool);
     let calendar = cal_repo
-        .find_by_id(calendar_id)
+        .find_by_id(calendar_id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;

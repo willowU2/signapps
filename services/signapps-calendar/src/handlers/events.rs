@@ -18,16 +18,18 @@ use crate::{AppState, CalendarError};
 /// Verify the caller owns the calendar or has a sharing grant on it.
 ///
 /// Returns `Ok(())` if the user has access, `Err(CalendarError::NotFound)` otherwise.
+/// Tenant isolation is enforced: only calendars belonging to `tenant_id` are considered.
 async fn verify_calendar_access(
     state: &AppState,
     calendar_id: Uuid,
     user_id: Uuid,
+    tenant_id: Uuid,
 ) -> Result<(), CalendarError> {
     use signapps_db::CalendarRepository;
 
     let cal_repo = CalendarRepository::new(&state.pool);
     let calendar = cal_repo
-        .find_by_id(calendar_id)
+        .find_by_id(calendar_id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
@@ -110,8 +112,9 @@ pub async fn create_event(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateEvent>,
 ) -> Result<(StatusCode, Json<Event>), CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     // Verify the caller owns or is a member of this calendar
-    verify_calendar_access(&state, calendar_id, claims.sub).await?;
+    verify_calendar_access(&state, calendar_id, claims.sub, tenant_id).await?;
 
     // Basic validation
     if payload.end_time <= payload.start_time {
@@ -188,8 +191,9 @@ pub async fn list_events(
     Extension(claims): Extension<Claims>,
     Query(query): Query<DateRangeQuery>,
 ) -> Result<Json<Vec<Event>>, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     // Verify the caller owns or is a member of this calendar
-    verify_calendar_access(&state, calendar_id, claims.sub).await?;
+    verify_calendar_access(&state, calendar_id, claims.sub, tenant_id).await?;
 
     use chrono::Datelike;
 
@@ -240,15 +244,16 @@ pub async fn get_event(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Event>, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let repo = EventRepository::new(&state.pool);
     let event = repo
-        .find_by_id(id)
+        .find_by_id(id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
 
     // Verify the caller owns or is a member of the event's calendar
-    verify_calendar_access(&state, event.calendar_id, claims.sub).await?;
+    verify_calendar_access(&state, event.calendar_id, claims.sub, tenant_id).await?;
 
     Ok(Json(event))
 }
@@ -274,15 +279,16 @@ pub async fn update_event(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<UpdateEvent>,
 ) -> Result<Json<Event>, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     // Verify the caller owns or is a member of the event's calendar
     {
         let repo = EventRepository::new(&state.pool);
         let existing = repo
-            .find_by_id(id)
+            .find_by_id(id, tenant_id)
             .await
             .map_err(|_| CalendarError::InternalError)?
             .ok_or(CalendarError::NotFound)?;
-        verify_calendar_access(&state, existing.calendar_id, claims.sub).await?;
+        verify_calendar_access(&state, existing.calendar_id, claims.sub, tenant_id).await?;
     }
 
     // Validate dates if both provided
@@ -345,15 +351,16 @@ pub async fn delete_event(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Result<StatusCode, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     // Verify the caller owns or is a member of the event's calendar
     {
         let repo = EventRepository::new(&state.pool);
         let existing = repo
-            .find_by_id(id)
+            .find_by_id(id, tenant_id)
             .await
             .map_err(|_| CalendarError::InternalError)?
             .ok_or(CalendarError::NotFound)?;
-        verify_calendar_access(&state, existing.calendar_id, claims.sub).await?;
+        verify_calendar_access(&state, existing.calendar_id, claims.sub, tenant_id).await?;
     }
 
     let repo = EventRepository::new(&state.pool);
@@ -398,15 +405,16 @@ pub async fn add_attendee(
     Path(event_id): Path<Uuid>,
     Json(payload): Json<AddEventAttendee>,
 ) -> Result<(StatusCode, Json<EventAttendee>), CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     // Verify the caller owns or is a member of the event's calendar
     {
         let repo = EventRepository::new(&state.pool);
         let event = repo
-            .find_by_id(event_id)
+            .find_by_id(event_id, tenant_id)
             .await
             .map_err(|_| CalendarError::InternalError)?
             .ok_or(CalendarError::NotFound)?;
-        verify_calendar_access(&state, event.calendar_id, claims.sub).await?;
+        verify_calendar_access(&state, event.calendar_id, claims.sub, tenant_id).await?;
     }
 
     if payload.user_id.is_none() && payload.email.is_none() {
@@ -442,15 +450,16 @@ pub async fn list_attendees(
     Extension(claims): Extension<Claims>,
     Path(event_id): Path<Uuid>,
 ) -> Result<Json<Vec<EventAttendee>>, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     // Verify the caller owns or is a member of the event's calendar
     {
         let event_repo = EventRepository::new(&state.pool);
         let event = event_repo
-            .find_by_id(event_id)
+            .find_by_id(event_id, tenant_id)
             .await
             .map_err(|_| CalendarError::InternalError)?
             .ok_or(CalendarError::NotFound)?;
-        verify_calendar_access(&state, event.calendar_id, claims.sub).await?;
+        verify_calendar_access(&state, event.calendar_id, claims.sub, tenant_id).await?;
     }
 
     let repo = EventAttendeeRepository::new(&state.pool);

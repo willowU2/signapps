@@ -18,13 +18,18 @@ impl<'a> CalendarRepository<'a> {
         Self { pool }
     }
 
-    /// Find calendar by ID.
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Calendar>> {
-        let calendar =
-            sqlx::query_as::<_, Calendar>("SELECT * FROM calendar.calendars WHERE id = $1")
-                .bind(id)
-                .fetch_optional(self.pool.inner())
-                .await?;
+    /// Find calendar by ID, scoped to the given tenant.
+    ///
+    /// Returns `None` if the calendar does not exist **or** belongs to a different tenant,
+    /// preventing cross-tenant information disclosure.
+    pub async fn find_by_id(&self, id: Uuid, tenant_id: Uuid) -> Result<Option<Calendar>> {
+        let calendar = sqlx::query_as::<_, Calendar>(
+            "SELECT * FROM calendar.calendars WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_optional(self.pool.inner())
+        .await?;
 
         Ok(calendar)
     }
@@ -136,12 +141,23 @@ impl<'a> EventRepository<'a> {
         Self { pool }
     }
 
-    /// Find event by ID.
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Event>> {
+    /// Find event by ID, scoped to the given tenant.
+    ///
+    /// Events are tenant-scoped through their owning calendar. Returns `None` if
+    /// the event does not exist, is soft-deleted, or belongs to a calendar in a
+    /// different tenant — preventing cross-tenant information disclosure.
+    pub async fn find_by_id(&self, id: Uuid, tenant_id: Uuid) -> Result<Option<Event>> {
         let event = sqlx::query_as::<_, Event>(
-            "SELECT * FROM calendar.events WHERE id = $1 AND is_deleted = false",
+            r#"
+            SELECT e.* FROM calendar.events e
+            JOIN calendar.calendars c ON c.id = e.calendar_id
+            WHERE e.id = $1
+              AND e.is_deleted = false
+              AND c.tenant_id = $2
+            "#,
         )
         .bind(id)
+        .bind(tenant_id)
         .fetch_optional(self.pool.inner())
         .await?;
 
@@ -409,12 +425,24 @@ impl<'a> TaskRepository<'a> {
         Self { pool }
     }
 
-    /// Find task by ID.
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Task>> {
-        let task = sqlx::query_as::<_, Task>("SELECT * FROM calendar.tasks WHERE id = $1")
-            .bind(id)
-            .fetch_optional(self.pool.inner())
-            .await?;
+    /// Find task by ID, scoped to the given tenant.
+    ///
+    /// Tasks are tenant-scoped through their owning calendar. Returns `None` if
+    /// the task does not exist or belongs to a calendar in a different tenant —
+    /// preventing cross-tenant information disclosure.
+    pub async fn find_by_id(&self, id: Uuid, tenant_id: Uuid) -> Result<Option<Task>> {
+        let task = sqlx::query_as::<_, Task>(
+            r#"
+            SELECT t.* FROM calendar.tasks t
+            JOIN calendar.calendars c ON c.id = t.calendar_id
+            WHERE t.id = $1
+              AND c.tenant_id = $2
+            "#,
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_optional(self.pool.inner())
+        .await?;
 
         Ok(task)
     }

@@ -1,7 +1,7 @@
 //! Task CRUD and tree operation handlers
 
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::StatusCode,
     Json,
 };
@@ -19,15 +19,16 @@ use crate::{services, AppState, CalendarError};
 pub async fn create_task(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
-    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateTask>,
 ) -> Result<(StatusCode, Json<Task>), CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let repo = TaskRepository::new(&state.pool);
 
     // Validate parent if provided
     if let Some(parent_id) = payload.parent_task_id {
-        // Check if parent exists
-        repo.find_by_id(parent_id)
+        // Check if parent exists and belongs to the same tenant
+        repo.find_by_id(parent_id, tenant_id)
             .await
             .map_err(|_| CalendarError::InternalError)?
             .ok_or(CalendarError::InvalidInput(
@@ -61,11 +62,13 @@ pub async fn create_task(
 #[tracing::instrument(skip_all)]
 pub async fn get_task(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Task>, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let repo = TaskRepository::new(&state.pool);
     let task = repo
-        .find_by_id(id)
+        .find_by_id(id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
@@ -145,14 +148,16 @@ pub struct MoveTaskRequest {
 #[tracing::instrument(skip_all)]
 pub async fn move_task(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<MoveTaskRequest>,
 ) -> Result<Json<Task>, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let repo = TaskRepository::new(&state.pool);
 
-    // Get current task
+    // Get current task (scoped to tenant)
     let task = repo
-        .find_by_id(id)
+        .find_by_id(id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
