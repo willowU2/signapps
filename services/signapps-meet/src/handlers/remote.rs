@@ -1,3 +1,9 @@
+//! Remote desktop connection handlers (absorbed from signapps-remote).
+//!
+//! Provides CRUD for saved remote connections and a WebSocket gateway that
+//! bridges browser clients to guacd (Apache Guacamole daemon) via the
+//! Guacamole protocol.
+
 use axum::{
     extract::ws::{Message, WebSocket},
     extract::{Path, State, WebSocketUpgrade},
@@ -8,14 +14,14 @@ use futures::stream::StreamExt;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use uuid::Uuid;
 
-use crate::models::{CreateConnectionRequest, RemoteConnection, UpdateConnectionRequest};
+use crate::models::remote::{CreateConnectionRequest, RemoteConnection, UpdateConnectionRequest};
 use crate::AppState;
 
 #[utoipa::path(
     get,
     path = "/api/v1/remote/connections",
     responses(
-        (status = 200, description = "List of remote connections", body = Vec<crate::models::RemoteConnection>),
+        (status = 200, description = "List of remote connections", body = Vec<crate::models::remote::RemoteConnection>),
         (status = 500, description = "Database error"),
     ),
     security(("bearerAuth" = [])),
@@ -31,7 +37,7 @@ pub async fn list_connections(
         ORDER BY name ASC
         "#
     )
-    .fetch_all(state.db.inner())
+    .fetch_all(&state.pool)
     .await
     .map_err(|e| {
         tracing::error!("Failed to fetch remote connections: {}", e);
@@ -44,9 +50,9 @@ pub async fn list_connections(
 #[utoipa::path(
     post,
     path = "/api/v1/remote/connections",
-    request_body = crate::models::CreateConnectionRequest,
+    request_body = crate::models::remote::CreateConnectionRequest,
     responses(
-        (status = 201, description = "Connection created", body = crate::models::RemoteConnection),
+        (status = 201, description = "Connection created", body = crate::models::remote::RemoteConnection),
         (status = 500, description = "Database error"),
     ),
     security(("bearerAuth" = [])),
@@ -74,7 +80,7 @@ pub async fn create_connection(
     .bind(&payload.password)
     .bind(&payload.private_key)
     .bind(payload.parameters.unwrap_or_else(|| serde_json::json!({})))
-    .fetch_one(state.db.inner())
+    .fetch_one(&state.pool)
     .await
     .map_err(|e| {
         tracing::error!("Failed to save connection: {}", e);
@@ -89,7 +95,7 @@ pub async fn create_connection(
     path = "/api/v1/remote/connections/{id}",
     params(("id" = Uuid, Path, description = "Connection UUID")),
     responses(
-        (status = 200, description = "Remote connection found", body = crate::models::RemoteConnection),
+        (status = 200, description = "Remote connection found", body = crate::models::remote::RemoteConnection),
         (status = 404, description = "Connection not found"),
         (status = 500, description = "Database error"),
     ),
@@ -108,7 +114,7 @@ pub async fn get_connection(
         "#
     )
     .bind(id)
-    .fetch_optional(state.db.inner())
+    .fetch_optional(&state.pool)
     .await
     .map_err(|e| {
         tracing::error!("Failed to fetch connection: {}", e);
@@ -123,9 +129,9 @@ pub async fn get_connection(
     put,
     path = "/api/v1/remote/connections/{id}",
     params(("id" = Uuid, Path, description = "Connection UUID")),
-    request_body = crate::models::UpdateConnectionRequest,
+    request_body = crate::models::remote::UpdateConnectionRequest,
     responses(
-        (status = 200, description = "Connection updated", body = crate::models::RemoteConnection),
+        (status = 200, description = "Connection updated", body = crate::models::remote::RemoteConnection),
         (status = 404, description = "Connection not found"),
         (status = 500, description = "Database error"),
     ),
@@ -140,7 +146,7 @@ pub async fn update_connection(
     // First check if connection exists
     let _ = sqlx::query_as::<_, RemoteConnection>("SELECT * FROM remote.connections WHERE id = $1")
         .bind(id)
-        .fetch_optional(state.db.inner())
+        .fetch_optional(&state.pool)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
         .ok_or((StatusCode::NOT_FOUND, "Connection not found".to_string()))?;
@@ -170,7 +176,7 @@ pub async fn update_connection(
     .bind(&payload.private_key)
     .bind(&payload.parameters)
     .bind(id)
-    .fetch_one(state.db.inner())
+    .fetch_one(&state.pool)
     .await
     .map_err(|e| {
         tracing::error!("Failed to update connection: {}", e);
@@ -199,7 +205,7 @@ pub async fn delete_connection(
     // TODO: add created_by column to remote.connections for user isolation
     let result = sqlx::query("DELETE FROM remote.connections WHERE id = $1")
         .bind(id)
-        .execute(state.db.inner())
+        .execute(&state.pool)
         .await
         .map_err(|e| {
             tracing::error!("Failed to delete connection: {}", e);
@@ -248,7 +254,7 @@ async fn handle_guacamole_socket(mut socket: WebSocket, connection_id: Uuid, sta
            FROM remote.connections WHERE id = $1"#,
     )
     .bind(connection_id)
-    .fetch_one(state.db.inner())
+    .fetch_one(&state.pool)
     .await
     {
         Ok(c) => c,

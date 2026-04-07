@@ -3,6 +3,7 @@
 pub mod openapi;
 pub mod participants;
 pub mod recordings;
+pub mod remote;
 pub mod rooms;
 pub mod tokens;
 pub mod transcription;

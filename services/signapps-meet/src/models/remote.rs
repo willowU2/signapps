@@ -1,3 +1,5 @@
+//! Remote desktop connection models (absorbed from signapps-remote).
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;

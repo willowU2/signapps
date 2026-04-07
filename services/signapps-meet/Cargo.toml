@@ -39,6 +39,9 @@ dotenvy = "0.15"
 thiserror = "1.0"
 anyhow = "1.0"
 
+# Async streams (used by remote WebSocket handler)
+futures = { workspace = true }
+
 # Password hashing
 bcrypt = "0.15"
 

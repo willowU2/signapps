@@ -118,14 +118,16 @@ async fn meet_health() -> axum::Json<serde_json::Value> {
 fn build_router(state: AppState) -> Router {
     use axum::routing::{delete, get, patch, post};
     use handlers::{
-        openapi, participants, recordings, rooms, tokens, transcription, video_messages,
+        openapi, participants, recordings, remote, rooms, tokens, transcription, video_messages,
         voicemails, waiting_room,
     };
 
     // Public routes
     let public_routes = Router::new()
         .route("/health", get(meet_health))
-        .route("/api/v1/meet/config", get(handlers::get_config));
+        .route("/api/v1/meet/config", get(handlers::get_config))
+        // Remote health alias (backward compat — remote merged into this service)
+        .route("/api/v1/remote/health", get(meet_health));
 
     // Protected routes
     let protected_routes = Router::new()
@@ -173,6 +175,18 @@ fn build_router(state: AppState) -> Router {
             "/api/v1/meet/video-messages/:id/read",
             patch(video_messages::mark_video_message_read),
         )
+        // Remote desktop connections (absorbed from signapps-remote, port 3017)
+        .route(
+            "/api/v1/remote/connections",
+            get(remote::list_connections).post(remote::create_connection),
+        )
+        .route(
+            "/api/v1/remote/connections/:id",
+            get(remote::get_connection)
+                .put(remote::update_connection)
+                .delete(remote::delete_connection),
+        )
+        .route("/api/v1/remote/ws/:id", get(remote::connection_gateway_ws))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

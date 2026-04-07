@@ -41,10 +41,10 @@ SERVICES=(
     "docs:3010:Document editing, real-time collaboration, and office conversion"
     "calendar:3011:Calendar & scheduling"
     "mail:3012:Email service"
-    "meet:3014:Video conferencing"
+    "meet:3014:Video conferencing and remote desktop"
     "forms:3015:Form builder & submissions"
     "pxe:3016:PXE network boot"
-    "remote:3017:Remote desktop access"
+    # remote:3017 merged into meet:3014 (Refactor 35 Phase 2)
     "social:3019:Social media management"
     "chat:3020:Team messaging & channels"
     "contacts:3021:Contact management"

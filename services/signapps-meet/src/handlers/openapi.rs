@@ -68,6 +68,13 @@ impl Modify for SecurityAddon {
         crate::handlers::voicemails::list_voicemails,
         crate::handlers::voicemails::mark_voicemail_read,
         crate::handlers::voicemails::delete_voicemail,
+        // Remote desktop connections
+        crate::handlers::remote::list_connections,
+        crate::handlers::remote::create_connection,
+        crate::handlers::remote::get_connection,
+        crate::handlers::remote::update_connection,
+        crate::handlers::remote::delete_connection,
+        crate::handlers::remote::connection_gateway_ws,
     ),
     components(schemas(
         crate::models::CreateRoomRequest,
@@ -87,12 +94,15 @@ impl Modify for SecurityAddon {
         crate::handlers::video_messages::VideoMessage,
         crate::handlers::video_messages::CreateVideoMessageRequest,
         crate::handlers::voicemails::Voicemail,
+        crate::models::remote::RemoteConnection,
+        crate::models::remote::CreateConnectionRequest,
+        crate::models::remote::UpdateConnectionRequest,
     )),
     modifiers(&SecurityAddon),
     info(
         title = "SignApps Meet",
         version = "1.0.0",
-        description = "Video conferencing service — rooms, participants, recordings, waiting room, tokens"
+        description = "Real-time service — video conferencing (rooms, participants, recordings, waiting room, tokens) and remote desktop (Guacamole protocol)"
     )
 )]
 pub struct MeetApiDoc;
