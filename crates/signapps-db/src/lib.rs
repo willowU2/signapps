@@ -172,6 +172,12 @@ pub use signapps_db_shared as shared;
 /// Phase 3 of the signapps-db split.
 pub use signapps_db_calendar as calendar;
 
+/// Re-export the `signapps-db-forms` crate so that consumers can access
+/// forms domain types via `signapps_db::forms`.
+///
+/// Phase 4 of the signapps-db split.
+pub use signapps_db_forms as forms;
+
 /// Re-export the `signapps-db-mail` crate so that consumers can access
 /// mail domain types via `signapps_db::mail`.
 ///

@@ -43,7 +43,10 @@ pub mod storage_tier3 {
     pub use signapps_db_storage::models::storage_tier3::*;
 }
 pub mod entity_reference;
-pub mod form;
+// Forms domain models — now live in signapps-db-forms (Phase 4 split).
+pub mod form {
+    pub use signapps_db_forms::models::form::*;
+}
 pub mod generated_media;
 pub mod group;
 pub mod infrastructure;

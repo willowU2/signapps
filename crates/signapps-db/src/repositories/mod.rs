@@ -34,8 +34,8 @@ pub use backup_repository::{BackupRepository, DriveBackupRepository};
 pub mod certificate_repository;
 pub use certificate_repository::CertificateRepository;
 
-pub mod form_repository;
-pub use form_repository::*;
+// Forms repositories — now live in signapps-db-forms (Phase 4 split).
+pub use signapps_db_forms::repositories::FormRepository;
 pub mod vector_repository;
 pub use vector_repository::VectorRepository;
 

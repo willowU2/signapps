@@ -39,6 +39,7 @@ members = [
     "crates/signapps-dav",
     "crates/signapps-db",
     "crates/signapps-db-calendar",
+    "crates/signapps-db-forms",
     "crates/signapps-db-mail",
     "crates/signapps-db-shared",
     "crates/signapps-db-storage",
