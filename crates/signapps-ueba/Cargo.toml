@@ -1,0 +1,17 @@
+[package]
+name = "signapps-ueba"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "User and Entity Behavior Analytics (UEBA) for SignApps Platform"
+
+[dependencies]
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }

@@ -1,0 +1,19 @@
+[package]
+name = "signapps-data-connectors"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Multi-source data connector system for SignApps Platform"
+
+[dependencies]
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Concurrent collections
+dashmap = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }

@@ -9936,6 +9936,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-accounting-fec"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "signapps-ad-core"
 version = "0.1.0"
 dependencies = [
@@ -10051,6 +10059,20 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-bridge"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-test",
+ "tracing",
  "uuid",
 ]
 
@@ -10187,6 +10209,17 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "signapps-accounting-fec",
+ "signapps-bridge",
+ "signapps-data-connectors",
+ "signapps-dlp",
+ "signapps-e2e-crypto",
+ "signapps-graphql-layer",
+ "signapps-marketplace",
+ "signapps-plugins",
+ "signapps-reporting",
+ "signapps-sql-dashboard",
+ "signapps-ueba",
  "sqlx",
  "tantivy",
  "thiserror 1.0.69",
@@ -10258,6 +10291,16 @@ dependencies = [
  "tracing-subscriber",
  "utoipa",
  "utoipa-swagger-ui",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-data-connectors"
+version = "0.1.0"
+dependencies = [
+ "dashmap 6.1.0",
+ "serde",
+ "serde_json",
  "uuid",
 ]
 
@@ -10352,6 +10395,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-dlp"
+version = "0.1.0"
+dependencies = [
+ "regex",
+ "serde",
+ "serde_json",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-dns-server"
 version = "0.1.0"
 dependencies = [
@@ -10406,6 +10459,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-e2e-crypto"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-forms"
 version = "0.1.0"
 dependencies = [
@@ -10456,6 +10520,14 @@ dependencies = [
  "utoipa",
  "utoipa-swagger-ui",
  "uuid",
+]
+
+[[package]]
+name = "signapps-graphql-layer"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -10649,6 +10721,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-marketplace"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "signapps-media"
 version = "0.1.0"
 dependencies = [
@@ -10821,6 +10902,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-plugins"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum 0.7.9",
+ "serde",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
 name = "signapps-proxy"
 version = "0.1.0"
 dependencies = [
@@ -10910,6 +11003,18 @@ dependencies = [
  "tracing-subscriber",
  "utoipa",
  "utoipa-swagger-ui",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-reporting"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
  "uuid",
 ]
 
@@ -11100,6 +11205,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-sql-dashboard"
+version = "0.1.0"
+dependencies = [
+ "dashmap 6.1.0",
+ "serde",
+ "serde_json",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-storage"
 version = "0.1.0"
 dependencies = [
@@ -11152,6 +11267,16 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-shell",
  "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-ueba"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
  "uuid",
 ]
 

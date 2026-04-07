@@ -15,7 +15,7 @@
 //! ## Usage
 //!
 //! ```rust,ignore
-//! use signapps_common::bridge::{BridgeConfig, BridgeSource, BridgeManager};
+//! use signapps_bridge::{BridgeConfig, BridgeSource, BridgeManager};
 //! use std::collections::HashMap;
 //! use uuid::Uuid;
 //!

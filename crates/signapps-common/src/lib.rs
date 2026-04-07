@@ -58,18 +58,22 @@ pub mod approval;
 pub mod audit;
 pub mod auth;
 pub mod bootstrap;
-pub mod bridge;
+// bridge module extracted to signapps-bridge crate
+pub use signapps_bridge as bridge;
 pub mod comments;
 pub mod config;
-pub mod data_connectors;
-pub mod dlp;
+// data_connectors module extracted to signapps-data-connectors crate
+pub use signapps_data_connectors as data_connectors;
+// dlp module extracted to signapps-dlp crate
+pub use signapps_dlp as dlp;
 // e2e_crypto module extracted to signapps-e2e-crypto crate
 pub use signapps_e2e_crypto as e2e_crypto;
 /// Email template engine with `{{variable}}` substitution for transactional emails.
 pub mod email_templates;
 pub mod error;
 pub mod events;
-pub mod graphql_layer;
+// graphql_layer module extracted to signapps-graphql-layer crate
+pub use signapps_graphql_layer as graphql_layer;
 pub mod healthz;
 pub mod indexer;
 // marketplace module extracted to signapps-marketplace crate
@@ -90,7 +94,8 @@ pub use signapps_reporting as reporting;
 pub mod retention;
 #[cfg(feature = "search")]
 pub mod search;
-pub mod sql_dashboard;
+// sql_dashboard module extracted to signapps-sql-dashboard crate
+pub use signapps_sql_dashboard as sql_dashboard;
 pub mod sso;
 pub mod tenant;
 /// Shared traits for database crawling and cross-service entity linking.
@@ -98,7 +103,8 @@ pub mod traits;
 pub mod triggers;
 pub mod trust_level;
 pub mod types;
-pub mod ueba;
+// ueba module extracted to signapps-ueba crate
+pub use signapps_ueba as ueba;
 pub mod vault;
 pub mod webhooks;
 // Re-export commonly used items

@@ -14,6 +14,12 @@ signapps-e2e-crypto = { path = "../signapps-e2e-crypto" }
 signapps-marketplace = { path = "../signapps-marketplace" }
 signapps-plugins = { path = "../signapps-plugins" }
 signapps-reporting = { path = "../signapps-reporting" }
+signapps-bridge = { path = "../signapps-bridge" }
+signapps-dlp = { path = "../signapps-dlp" }
+signapps-graphql-layer = { path = "../signapps-graphql-layer" }
+signapps-ueba = { path = "../signapps-ueba" }
+signapps-sql-dashboard = { path = "../signapps-sql-dashboard" }
+signapps-data-connectors = { path = "../signapps-data-connectors" }
 
 # Serialization
 serde = { workspace = true }

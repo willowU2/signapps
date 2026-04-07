@@ -1,0 +1,29 @@
+[package]
+name = "signapps-bridge"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Slack/Teams bridge integrations for SignApps Platform"
+
+[dependencies]
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# HTTP client
+reqwest = { workspace = true }
+
+# Async
+tokio = { workspace = true }
+
+# Observability
+tracing = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
