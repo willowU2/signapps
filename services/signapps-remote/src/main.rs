@@ -9,7 +9,7 @@ use signapps_common::middleware::{
     logging_middleware, optional_auth_middleware, request_id_middleware,
 };
 use signapps_db::DatabasePool;
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 
 #[derive(Clone)]
@@ -91,9 +91,15 @@ async fn main() -> anyhow::Result<()> {
             app_state.clone(),
             optional_auth_middleware::<AppState>,
         ))
-        .layer(
+        .layer({
+            let allowed_origins: Vec<axum::http::HeaderValue> =
+                std::env::var("CORS_ALLOWED_ORIGINS")
+                    .unwrap_or_else(|_| "http://localhost:3000,http://127.0.0.1:3000".to_string())
+                    .split(',')
+                    .filter_map(|s| s.trim().parse().ok())
+                    .collect();
             CorsLayer::new()
-                .allow_origin(tower_http::cors::Any)
+                .allow_origin(AllowOrigin::list(allowed_origins))
                 .allow_methods([
                     axum::http::Method::GET,
                     axum::http::Method::POST,
@@ -107,8 +113,9 @@ async fn main() -> anyhow::Result<()> {
                     axum::http::header::AUTHORIZATION,
                     axum::http::HeaderName::from_static("x-request-id"),
                     axum::http::HeaderName::from_static("x-workspace-id"),
-                ]),
-        )
+                ])
+                .allow_credentials(true)
+        })
         .layer(TraceLayer::new_for_http())
         .layer(axum::middleware::from_fn(logging_middleware))
         .layer(axum::middleware::from_fn(request_id_middleware))

@@ -3,7 +3,7 @@ use axum::{
     Router,
 };
 use signapps_common::bootstrap::{env_or, init_tracing, load_env};
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -137,12 +137,22 @@ async fn main() {
 
         // Middleware
         .layer(TraceLayer::new_for_http())
-        .layer(
+        .layer({
+            let allowed_origins: Vec<axum::http::HeaderValue> =
+                std::env::var("CORS_ALLOWED_ORIGINS")
+                    .unwrap_or_else(|_| "http://localhost:3000,http://127.0.0.1:3000".to_string())
+                    .split(',')
+                    .filter_map(|s| s.trim().parse().ok())
+                    .collect();
             CorsLayer::new()
-                .allow_origin(tower_http::cors::Any)
+                .allow_origin(AllowOrigin::list(allowed_origins))
                 .allow_methods([
-                    axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT,
-                    axum::http::Method::DELETE, axum::http::Method::PATCH, axum::http::Method::OPTIONS,
+                    axum::http::Method::GET,
+                    axum::http::Method::POST,
+                    axum::http::Method::PUT,
+                    axum::http::Method::DELETE,
+                    axum::http::Method::PATCH,
+                    axum::http::Method::OPTIONS,
                 ])
                 .allow_headers([
                     axum::http::header::CONTENT_TYPE,
@@ -150,7 +160,8 @@ async fn main() {
                     axum::http::HeaderName::from_static("x-request-id"),
                     axum::http::HeaderName::from_static("x-workspace-id"),
                 ])
-        )
+                .allow_credentials(true)
+        })
         .with_state(state);
 
     // Start server
