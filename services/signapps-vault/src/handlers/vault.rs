@@ -10,7 +10,7 @@
 //! Audit (1): list_audit
 //! Browse (2): start_browse, end_browse
 
-use crate::services::vault_crypto::{self, PasswordFlags};
+use crate::vault_crypto::{self, PasswordFlags};
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -743,14 +743,14 @@ pub async fn get_vault_settings(
            LIMIT 1"#,
     )
     .bind(tenant_id)
-    .fetch_optional(&*state.pool)
+    .fetch_optional(&state.pool)
     .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| Error::Database(e.to_string()))?;
 
     let required = row
         .and_then(|(s,)| s)
-        .and_then(|s| s.get("vault_master_password_required").cloned())
-        .and_then(|v| v.as_bool())
+        .and_then(|s: serde_json::Value| s.get("vault_master_password_required").cloned())
+        .and_then(|v: serde_json::Value| v.as_bool())
         .unwrap_or(false);
 
     Ok(Json(VaultSettingsResponse {
@@ -803,9 +803,9 @@ pub async fn update_vault_settings(
     )
     .bind(tenant_id)
     .bind(payload.vault_master_password_required)
-    .execute(&*state.pool)
+    .execute(&state.pool)
     .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| Error::Database(e.to_string()))?;
 
     if result.rows_affected() == 0 {
         return Err(Error::NotFound("Workspace not found".to_string()));

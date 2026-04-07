@@ -1,0 +1,55 @@
+[package]
+name = "signapps-vault"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Vault service — encrypted password manager and credential store for SignApps Platform"
+
+[[bin]]
+name = "signapps-vault"
+path = "src/main.rs"
+
+[dependencies]
+# Internal crates
+signapps-common = { path = "../../crates/signapps-common" }
+signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
+signapps-db-vault = { path = "../../crates/signapps-db-vault", features = ["openapi"] }
+
+# Web framework
+axum = { workspace = true }
+tower-http = { workspace = true }
+
+# Async
+tokio = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Database
+sqlx = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+
+# Observability
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+
+# OpenAPI
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }
+
+# Cryptography (TOTP + password generator)
+totp-rs = { workspace = true }
+rand = "0.8"
+hmac = "0.12"
+sha2 = "0.10"
+hex = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }

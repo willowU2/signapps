@@ -50,6 +50,7 @@ SERVICES=(
     "contacts:3021:Contact management"
     "it-assets:3022:IT asset management"
     "workforce:3024:HR & workforce"
+    "vault:3025:Password vault & credential store"
     "notifications:8095:Push notifications"
     "billing:8096:Billing & invoicing"
     "gateway:3099:API gateway (aggregator)"

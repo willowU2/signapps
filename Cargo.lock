@@ -10329,15 +10329,54 @@ dependencies = [
  "serde",
  "serde_json",
  "signapps-common",
+ "signapps-db-ai",
+ "signapps-db-billing",
  "signapps-db-calendar",
+ "signapps-db-content",
  "signapps-db-forms",
+ "signapps-db-infrastructure",
+ "signapps-db-itam",
  "signapps-db-mail",
  "signapps-db-notifications",
  "signapps-db-shared",
  "signapps-db-storage",
+ "signapps-db-vault",
  "sqlx",
  "tokio",
  "tokio-test",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-db-ai"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "pgvector",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db-shared",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-db-billing"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db-shared",
+ "sqlx",
+ "tokio",
  "tracing",
  "utoipa",
  "uuid",
@@ -10360,7 +10399,55 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-db-content"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db-shared",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-db-forms"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db-shared",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-db-infrastructure"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db-shared",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-db-itam"
 version = "0.1.0"
 dependencies = [
  "chrono",
@@ -10424,6 +10511,22 @@ dependencies = [
 
 [[package]]
 name = "signapps-db-storage"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db-shared",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-db-vault"
 version = "0.1.0"
 dependencies = [
  "chrono",
@@ -11372,6 +11475,34 @@ dependencies = [
  "chrono",
  "serde",
  "serde_json",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-vault"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.7.9",
+ "chrono",
+ "hex",
+ "hmac",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "sha2",
+ "signapps-common",
+ "signapps-db",
+ "signapps-db-vault",
+ "sqlx",
+ "tokio",
+ "tokio-test",
+ "totp-rs",
+ "tower-http 0.5.2",
+ "tracing",
+ "tracing-subscriber",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 

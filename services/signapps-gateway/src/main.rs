@@ -129,6 +129,7 @@ const SERVICE_PORTS: &[(&str, u16)] = &[
     ("signapps-contacts", 3021),
     ("signapps-it-assets", 3022),
     ("signapps-workforce", 3024),
+    ("signapps-vault", 3025),
     ("signapps-notifications", 8095),
     ("signapps-billing", 8096),
 ];
@@ -191,17 +192,7 @@ fn static_frontend_apps() -> Vec<DiscoveredApp> {
             port: 0,
             status: "static".into(),
         },
-        DiscoveredApp {
-            id: "vault".into(),
-            label: "Coffre-fort".into(),
-            description: "Stockage sécurisé de secrets".into(),
-            icon: "Lock".into(),
-            category: "Productivité".into(),
-            color: "text-slate-600".into(),
-            href: "/vault".into(),
-            port: 0,
-            status: "static".into(),
-        },
+        // vault is now a real backend service (port 3025) — discovered dynamically via SERVICE_PORTS
         DiscoveredApp {
             id: "wiki".into(),
             label: "Wiki".into(),
@@ -632,6 +623,7 @@ async fn main() -> anyhow::Result<()> {
     let it_assets_url = env_or("IT_ASSETS_SERVICE_URL", "http://127.0.0.1:3015");
     let containers_url = env_or("CONTAINERS_SERVICE_URL", "http://127.0.0.1:3002");
     let pxe_url = env_or("PXE_SERVICE_URL", "http://127.0.0.1:3016");
+    let vault_url = env_or("VAULT_SERVICE_URL", "http://127.0.0.1:3025");
 
     // Ordered: more-specific prefixes first
     let service_map = Arc::new(ServiceMap::new(vec![
@@ -679,6 +671,8 @@ async fn main() -> anyhow::Result<()> {
         ("/api/v1/compose", &containers_url),
         // PXE service
         ("/api/v1/pxe", &pxe_url),
+        // Vault service (extracted from identity — Refactor 3 Phase 5)
+        ("/api/v1/vault", &vault_url),
         // Storage supplemental paths
         ("/api/v1/drive", &storage_url),
         ("/api/v1/tags", &storage_url),
