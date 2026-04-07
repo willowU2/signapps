@@ -672,22 +672,25 @@ impl SharingEngine {
         let system_role = claims.role;
 
         // ── L1 cache: group IDs ──────────────────────────────────────────
-        let group_ids = if let Some(ids) = self.cache.get_group_ids(user_id).await {
+        let group_ids = if let Some(ids) = self.cache.get_group_ids(tenant_id, user_id).await {
             ids
         } else {
             let ids = self.fetch_group_ids(user_id).await?;
-            self.cache.set_group_ids(user_id, &ids).await;
+            self.cache.set_group_ids(tenant_id, user_id, &ids).await;
             ids
         };
 
         // ── L1 cache: org ancestors ──────────────────────────────────────
-        let org_ancestors = if let Some(ids) = self.cache.get_org_ancestors(user_id).await {
-            ids
-        } else {
-            let ids = self.fetch_org_ancestors(user_id, tenant_id).await?;
-            self.cache.set_org_ancestors(user_id, &ids).await;
-            ids
-        };
+        let org_ancestors =
+            if let Some(ids) = self.cache.get_org_ancestors(tenant_id, user_id).await {
+                ids
+            } else {
+                let ids = self.fetch_org_ancestors(user_id, tenant_id).await?;
+                self.cache
+                    .set_org_ancestors(tenant_id, user_id, &ids)
+                    .await;
+                ids
+            };
 
         // group_roles: not cached; leave empty for now (used for group-level
         // role display only, not for the core permission check).
