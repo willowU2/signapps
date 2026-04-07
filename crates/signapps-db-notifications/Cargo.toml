@@ -1,0 +1,34 @@
+[package]
+name = "signapps-db-notifications"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Notifications domain database models and repositories for SignApps Platform"
+
+[dependencies]
+# Database
+sqlx = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Async
+tokio = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+tracing = { workspace = true }
+
+# Internal
+signapps-common = { path = "../signapps-common" }
+signapps-db-shared = { path = "../signapps-db-shared" }
+
+# OpenAPI schema derivation (optional feature)
+utoipa = { workspace = true, optional = true }
+
+[features]
+openapi = ["utoipa"]

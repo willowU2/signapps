@@ -48,8 +48,8 @@ pub use signapps_db_calendar::repositories::{
     TaskRepository, TimesheetRepository,
 };
 
-pub mod notification_repository;
-pub use notification_repository::{
+// Notification repositories — now live in signapps-db-notifications (Phase 4 split).
+pub use signapps_db_notifications::repositories::{
     NotificationDigestRepository, NotificationPreferencesRepository, NotificationSentRepository,
     NotificationTemplateRepository, PushSubscriptionRepository,
 };

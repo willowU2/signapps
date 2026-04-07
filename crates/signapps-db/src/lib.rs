@@ -178,6 +178,12 @@ pub use signapps_db_calendar as calendar;
 /// Phase 4 of the signapps-db split.
 pub use signapps_db_forms as forms;
 
+/// Re-export the `signapps-db-notifications` crate so that consumers can access
+/// notifications domain types via `signapps_db::notifications`.
+///
+/// Phase 4 of the signapps-db split.
+pub use signapps_db_notifications as notifications;
+
 /// Re-export the `signapps-db-mail` crate so that consumers can access
 /// mail domain types via `signapps_db::mail`.
 ///

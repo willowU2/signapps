@@ -58,7 +58,10 @@ pub mod mailserver {
     pub use signapps_db_mail::models::mailserver::*;
 }
 pub mod multimodal_vector;
-pub mod notification;
+// Notifications domain models — now live in signapps-db-notifications (Phase 4 split).
+pub mod notification {
+    pub use signapps_db_notifications::models::notification::*;
+}
 pub mod org_audit;
 pub mod org_boards;
 pub mod org_delegations;

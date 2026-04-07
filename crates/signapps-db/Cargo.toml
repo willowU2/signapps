@@ -31,13 +31,14 @@ signapps-db-shared = { path = "../signapps-db-shared" }
 signapps-db-calendar = { path = "../signapps-db-calendar" }
 signapps-db-forms = { path = "../signapps-db-forms" }
 signapps-db-mail = { path = "../signapps-db-mail" }
+signapps-db-notifications = { path = "../signapps-db-notifications" }
 signapps-db-storage = { path = "../signapps-db-storage" }
 
 # OpenAPI schema derivation (optional feature)
 utoipa = { workspace = true, optional = true }
 
 [features]
-openapi = ["utoipa", "signapps-db-calendar/openapi", "signapps-db-forms/openapi", "signapps-db-mail/openapi", "signapps-db-storage/openapi"]
+openapi = ["utoipa", "signapps-db-calendar/openapi", "signapps-db-forms/openapi", "signapps-db-mail/openapi", "signapps-db-notifications/openapi", "signapps-db-storage/openapi"]
 
 [dev-dependencies]
 tokio-test = { workspace = true }
