@@ -1,17 +1,23 @@
+use signapps_common::auth::Claims;
 use signapps_sharing::{
-    models::UserContext,
     types::{Action, ResourceRef, ResourceType},
     SharingEngine,
 };
 use sqlx::Row;
-use std::collections::HashMap;
 use uuid::Uuid;
 use yrs::{updates::decoder::Decode, Doc, ReadTxn, StateVector, Transact};
 
 /// Verify the user owns the document or has at least `viewer` access via the sharing engine.
 ///
-/// Returns `Ok(true)` if the user has access, `Ok(false)` otherwise.
-/// For new documents (not yet in DB), returns `Ok(true)` to allow creation.
+/// Uses `engine.build_user_context(claims)` to resolve the full `UserContext` — including
+/// tenant isolation, group membership, and org-node ancestors — before calling
+/// `engine.check(...)`. This ensures that:
+/// - users from a different tenant cannot access documents they do not own, and
+/// - users whose access is granted via a group or org-node delegation are not
+///   incorrectly rejected.
+///
+/// Returns `Ok(true)` if the user has access, `Ok(false)` if access is denied.
+/// For new documents (not yet in DB) the caller should skip this check to allow creation.
 ///
 /// # Errors
 ///
@@ -23,20 +29,15 @@ use yrs::{updates::decoder::Decode, Doc, ReadTxn, StateVector, Transact};
 async fn verify_document_access(
     engine: &SharingEngine,
     doc_uuid: Uuid,
-    user_id: Uuid,
+    claims: &Claims,
 ) -> Result<bool, String> {
-    // Build a minimal UserContext from the user_id alone.
-    // Full group/org resolution requires JWT claims; callers that have Claims
-    // should prefer engine.build_user_context(&claims).  This helper is used
-    // only for the legacy (user_id, Option<engine>) call sites.
-    let user_ctx = UserContext {
-        user_id,
-        tenant_id: Uuid::nil(), // tenant isolation enforced at the JWT layer
-        system_role: 0,
-        group_ids: vec![],
-        group_roles: HashMap::new(),
-        org_ancestors: vec![],
-    };
+    // Build a full UserContext from the JWT claims, resolving tenant_id,
+    // group memberships, and org-node ancestors via the sharing engine.
+    // This is the only correct way to enforce tenant isolation at this layer.
+    let user_ctx = engine
+        .build_user_context(claims)
+        .await
+        .map_err(|e| format!("Failed to build user context: {e}"))?;
 
     let resource = ResourceRef {
         resource_type: ResourceType::Document,
@@ -55,9 +56,16 @@ async fn verify_document_access(
 
 /// Save document state to PostgreSQL.
 ///
-/// When `user_id` is provided, verifies read/write access via the sharing
-/// engine before allowing writes.  For existing documents the user must hold
-/// at least `editor` role; new documents are always allowed.
+/// When `claims` is provided together with `engine`, verifies write access via the
+/// sharing engine before allowing the save.  The full `UserContext` is built from
+/// `claims` (including tenant isolation, group, and org-node resolution) so that
+/// cross-tenant access is correctly rejected.  For new documents the access check
+/// is skipped to allow creation.
+///
+/// **WebSocket note:** The WebSocket persistence path passes `None` for both
+/// `claims` and `engine`.  Authentication for WebSocket connections is enforced
+/// at connection-upgrade time; persistence calls within an already-authenticated
+/// session do not repeat the JWT check.  This is a known, intentional trade-off.
 ///
 /// # Errors
 ///
@@ -72,13 +80,13 @@ pub async fn save_document(
     doc_id: &str,
     doc_type: &str,
     doc: &Doc,
-    user_id: Option<Uuid>,
+    claims: Option<&Claims>,
     engine: Option<&SharingEngine>,
 ) -> Result<(), String> {
     let doc_uuid = Uuid::parse_str(doc_id).map_err(|e| format!("Invalid document ID: {}", e))?;
 
-    // Verify access if both user_id and engine are provided
-    if let (Some(uid), Some(eng)) = (user_id, engine) {
+    // Verify access if both claims and engine are provided
+    if let (Some(c), Some(eng)) = (claims, engine) {
         // Check if doc exists first — if it does, enforce access
         let exists = sqlx::query("SELECT 1 FROM documents WHERE id = $1")
             .bind(doc_uuid)
@@ -86,7 +94,7 @@ pub async fn save_document(
             .await
             .map_err(|e| format!("Database error: {}", e))?;
 
-        if exists.is_some() && !verify_document_access(eng, doc_uuid, uid).await? {
+        if exists.is_some() && !verify_document_access(eng, doc_uuid, c).await? {
             return Err("Access denied: insufficient permission on document".to_string());
         }
     }
@@ -119,8 +127,14 @@ pub async fn save_document(
 
 /// Load document state from PostgreSQL.
 ///
-/// When `user_id` is provided, verifies access via the sharing engine before
-/// loading.
+/// When `claims` is provided together with `engine`, verifies read access via the
+/// sharing engine before loading.  The full `UserContext` is built from `claims`
+/// (including tenant isolation, group, and org-node resolution) so that cross-tenant
+/// reads are correctly rejected.
+///
+/// **WebSocket note:** The WebSocket load path passes `None` for both `claims` and
+/// `engine`.  Authentication is enforced at connection-upgrade time; the in-session
+/// load does not repeat the JWT check.  This is a known, intentional trade-off.
 ///
 /// # Errors
 ///
@@ -133,13 +147,13 @@ pub async fn save_document(
 pub async fn load_document(
     pool: &sqlx::PgPool,
     doc_id: &str,
-    user_id: Option<Uuid>,
+    claims: Option<&Claims>,
     engine: Option<&SharingEngine>,
 ) -> Result<Option<Doc>, String> {
     let doc_uuid = Uuid::parse_str(doc_id).map_err(|e| format!("Invalid document ID: {}", e))?;
 
-    // Verify access if both user_id and engine are provided
-    if let (Some(uid), Some(eng)) = (user_id, engine) {
+    // Verify access if both claims and engine are provided
+    if let (Some(c), Some(eng)) = (claims, engine) {
         // Check if doc exists — if it does, enforce access
         let exists = sqlx::query("SELECT 1 FROM documents WHERE id = $1")
             .bind(doc_uuid)
@@ -147,7 +161,7 @@ pub async fn load_document(
             .await
             .map_err(|e| format!("Database error: {}", e))?;
 
-        if exists.is_some() && !verify_document_access(eng, doc_uuid, uid).await? {
+        if exists.is_some() && !verify_document_access(eng, doc_uuid, c).await? {
             return Err("Access denied: insufficient permission on document".to_string());
         }
     }
