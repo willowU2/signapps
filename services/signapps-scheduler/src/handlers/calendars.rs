@@ -61,11 +61,11 @@ pub async fn list_calendars(
 pub async fn get_calendar(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = CalendarRepository::new(&state.pool);
-    match repo.find_by_id(id).await {
+    match repo.find_by_id(id, ctx.tenant_id).await {
         Ok(Some(calendar)) => Ok(Json(json!(calendar))),
         Ok(None) => Err(StatusCode::NOT_FOUND),
         Err(e) => {

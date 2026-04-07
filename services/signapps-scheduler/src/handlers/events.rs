@@ -83,11 +83,11 @@ pub async fn list_events(
 pub async fn get_event(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = EventRepository::new(&state.pool);
-    match repo.find_by_id(id).await {
+    match repo.find_by_id(id, ctx.tenant_id).await {
         Ok(Some(event)) => Ok(Json(json!(event))),
         Ok(None) => Err(StatusCode::NOT_FOUND),
         Err(e) => {
