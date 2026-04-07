@@ -10,13 +10,14 @@ pub use signapps_db_infrastructure::repositories::{
 
 pub mod group_repository;
 pub mod ldap_repository;
-pub mod route_repository;
 pub mod user_repository;
 
 pub use group_repository::GroupRepository;
 pub use ldap_repository::LdapRepository;
-pub use route_repository::RouteRepository;
 pub use user_repository::UserRepository;
+
+// Billing/proxy repositories — now live in signapps-db-billing (Phase 5 split).
+pub use signapps_db_billing::repositories::{CertificateRepository, RouteRepository};
 
 // ITAM repositories — now live in signapps-db-itam (Phase 5 split).
 pub use signapps_db_itam::repositories::{ContainerRepository, DeviceRepository, RaidRepository};
@@ -26,9 +27,6 @@ pub use job_repository::JobRepository;
 
 pub mod backup_repository;
 pub use backup_repository::{BackupRepository, DriveBackupRepository};
-
-pub mod certificate_repository;
-pub use certificate_repository::CertificateRepository;
 
 // Forms repositories — now live in signapps-db-forms (Phase 4 split).
 pub use signapps_db_forms::repositories::FormRepository;

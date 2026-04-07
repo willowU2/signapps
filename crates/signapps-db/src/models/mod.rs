@@ -35,7 +35,13 @@ pub mod scheduling {
     pub use signapps_db_calendar::models::scheduling::*;
 }
 
-pub mod certificate;
+// Billing/proxy domain models — now live in signapps-db-billing (Phase 5 split).
+pub mod certificate {
+    pub use signapps_db_billing::models::certificate::*;
+}
+pub mod route {
+    pub use signapps_db_billing::models::route::*;
+}
 
 // ITAM domain models — now live in signapps-db-itam (Phase 5 split).
 pub mod container {
@@ -111,7 +117,6 @@ pub mod org_boards;
 pub mod org_delegations;
 pub mod org_groups;
 pub mod org_policies;
-pub mod route;
 pub mod signature;
 pub mod tenant;
 pub mod user;
