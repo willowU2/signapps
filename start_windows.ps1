@@ -18,6 +18,7 @@ if (Test-Path $portsFile) {
     }
 } else {
     # Initialize with default legacy ports to ensure smooth transition
+    $portMap["signapps-identity"]   = 3001
     $portMap["signapps-containers"] = 3002
     $portMap["signapps-proxy"]      = 3003
     $portMap["signapps-storage"]    = 3004
@@ -85,6 +86,7 @@ Write-Host "Waiting 20 seconds for identity migrations to complete..."
 Start-Sleep -Seconds 20
 
 foreach ($service in $services.GetEnumerator()) {
+    if ($service.Name -eq "signapps-identity") { continue }
     Write-Host "Starting $($service.Name) on port $($service.Value)..."
     $env:SERVER_PORT = $service.Value
     Start-Process "cmd.exe" -ArgumentList "/c .\target\debug\$($service.Name).exe > $($service.Name).log 2>&1" -WindowStyle Hidden

@@ -1,3 +1,7 @@
+-- Add 'dm' to allowed document types for Direct Messages
+ALTER TABLE documents DROP CONSTRAINT documents_doc_type_check;
+ALTER TABLE documents ADD CONSTRAINT documents_doc_type_check 
+    CHECK (doc_type IN ('text', 'sheet', 'slide', 'board', 'chat', 'dm'));
 -- SignApps Platform - Mail Improvements Migration
 -- Version: 060
 -- Date: 2026-04-01
@@ -127,7 +131,8 @@ CREATE INDEX IF NOT EXISTS idx_emails_message_id ON mail.emails(message_id) WHER
 -- ============================================================================
 -- 9. Template uniqueness constraint
 -- ============================================================================
-ALTER TABLE mail.email_templates ADD CONSTRAINT IF NOT EXISTS uq_templates_account_name UNIQUE (account_id, name);
+ALTER TABLE mail.email_templates DROP CONSTRAINT IF EXISTS uq_templates_account_name;
+ALTER TABLE mail.email_templates ADD CONSTRAINT uq_templates_account_name UNIQUE (account_id, name);
 
 -- ============================================================================
 -- 10. Ensure oauth_expires_at column exists on mail.accounts
