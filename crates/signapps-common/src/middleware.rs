@@ -656,8 +656,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_jwt_config_default() {
-        let config = JwtConfig::default();
+    fn test_jwt_config_for_test() {
+        let config = JwtConfig::for_test("test_secret_32_characters_long__x");
         assert_eq!(config.access_expiration, 900);
         assert_eq!(config.refresh_expiration, 604800);
     }

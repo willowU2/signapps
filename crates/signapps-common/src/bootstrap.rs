@@ -209,14 +209,33 @@ impl ServiceConfig {
             "postgres://signapps:password@localhost:5432/signapps",
         );
 
-        let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-            if std::env::var("SIGNAPPS_DEV").is_ok() || cfg!(debug_assertions) {
-                tracing::warn!("JWT_SECRET not set, using insecure dev default — set JWT_SECRET in production!");
-                "dev_secret_change_in_production_32chars".to_string()
-            } else {
-                panic!("JWT_SECRET environment variable must be set in production. Set SIGNAPPS_DEV=1 to use an insecure default for development.");
+        let jwt_secret = match std::env::var("JWT_SECRET") {
+            Ok(s) if s.len() >= 32 => s,
+            Ok(s) => {
+                panic!(
+                    "JWT_SECRET is too short ({} bytes). HS256 requires at least 32 bytes. \
+                     Please set a strong secret.",
+                    s.len()
+                );
             }
-        });
+            Err(_) => {
+                // Only allow the dev fallback when BOTH conditions are met:
+                // 1. compiled with debug_assertions (dev build)
+                // 2. SIGNAPPS_DEV env var is explicitly set
+                if cfg!(debug_assertions) && std::env::var("SIGNAPPS_DEV").is_ok() {
+                    tracing::error!(
+                        "JWT_SECRET not set — using insecure dev default. \
+                         This MUST NOT be used in production!"
+                    );
+                    "dev_secret_change_in_production_32chars".to_string()
+                } else {
+                    panic!(
+                        "JWT_SECRET environment variable must be set (minimum 32 bytes). \
+                         In a development build, set SIGNAPPS_DEV=1 to allow an insecure default."
+                    );
+                }
+            }
+        };
 
         let host = env_or("SERVER_HOST", "0.0.0.0");
         let port: u16 = env_or("SERVER_PORT", &default_port.to_string())

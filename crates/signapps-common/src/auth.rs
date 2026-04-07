@@ -55,14 +55,28 @@ pub struct JwtConfig {
     pub refresh_expiration: i64,
 }
 
-impl Default for JwtConfig {
-    fn default() -> Self {
+impl JwtConfig {
+    /// Create a `JwtConfig` for use in tests.
+    ///
+    /// The `secret` must be at least 32 bytes long (HS256 minimum).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `secret` is shorter than 32 bytes, to catch misconfigured
+    /// test helpers early.
+    #[cfg(test)]
+    pub fn for_test(secret: &str) -> Self {
+        assert!(
+            secret.len() >= 32,
+            "JWT test secret must be at least 32 bytes long, got {} bytes",
+            secret.len()
+        );
         Self {
-            secret: "change-me-in-production".to_string(),
+            secret: secret.to_string(),
             issuer: "signapps".to_string(),
             audience: "signapps".to_string(),
-            access_expiration: 900,     // 15 minutes
-            refresh_expiration: 604800, // 7 days
+            access_expiration: 900,
+            refresh_expiration: 604800,
         }
     }
 }
