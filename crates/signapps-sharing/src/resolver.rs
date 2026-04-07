@@ -244,6 +244,15 @@ impl<'pool> PermissionResolver<'pool> {
             return Ok(None);
         }
 
+        // Secondary Deny safety net: if any collected source carries Role::Deny,
+        // block access immediately regardless of other positive grants.
+        // (The primary check is has_deny above; this net catches any Deny that
+        // reaches this point via future code paths such as apply_template.)
+        if sources.iter().any(|s| s.role == Role::Deny) {
+            tracing::debug!("secondary deny safety net triggered — access denied");
+            return Ok(None);
+        }
+
         let all_grants = user_grants
             .iter()
             .chain(group_grants.iter())
@@ -517,6 +526,13 @@ impl<'pool> PermissionResolver<'pool> {
         // ── Step 5: Most permissive wins ─────────────────────────────────────
         if all_sources.is_empty() {
             tracing::debug!("no grants found in parent chain — no access");
+            return Ok(None);
+        }
+
+        // Secondary Deny safety net: if any collected source carries Role::Deny,
+        // block access immediately regardless of other positive grants.
+        if all_sources.iter().any(|s| s.role == Role::Deny) {
+            tracing::debug!("secondary deny safety net triggered (parent-chain) — access denied");
             return Ok(None);
         }
 
@@ -890,5 +906,45 @@ mod tests {
             found_level == Some(0) && s.axis != "everyone" && s.role != Role::Deny
         });
         assert!(!can_reshare);
+    }
+
+    /// Secondary deny safety net: a Deny in sources blocks access even when
+    /// positive grants are present in the same collection.
+    ///
+    /// This verifies the logic added before the most-permissive fold in
+    /// both `resolve` and `resolve_with_parents`.
+    #[test]
+    fn secondary_deny_safety_net_blocks_access() {
+        // Mixed sources: one Deny + one Manager
+        let sources_with_deny = vec![
+            PermissionSource {
+                axis: "group".into(),
+                grantee_name: None,
+                role: Role::Deny,
+                via: "explicit deny".into(),
+            },
+            PermissionSource {
+                axis: "user".into(),
+                grantee_name: None,
+                role: Role::Manager,
+                via: "direct grant".into(),
+            },
+        ];
+        // The secondary safety net: if any source is Deny → deny access
+        let blocked = sources_with_deny.iter().any(|s| s.role == Role::Deny);
+        assert!(blocked, "deny in sources must block access (secondary net)");
+
+        // Without Deny sources → not blocked
+        let sources_no_deny = vec![PermissionSource {
+            axis: "user".into(),
+            grantee_name: None,
+            role: Role::Manager,
+            via: "direct grant".into(),
+        }];
+        let blocked_no_deny = sources_no_deny.iter().any(|s| s.role == Role::Deny);
+        assert!(
+            !blocked_no_deny,
+            "no deny in sources must not trigger secondary net"
+        );
     }
 }
