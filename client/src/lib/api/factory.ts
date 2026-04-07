@@ -239,11 +239,15 @@ export function getServiceUrl(service: ServiceName): string {
 
   // Gateway fallback — strip /api/v1 if accidentally included
   const gatewayBase = GATEWAY_URL.replace(/\/api\/v1\/?$/, "");
+  let finalUrl = `http://localhost:${config.port}/api/v1`;
   if (gatewayBase !== "http://localhost:3099" && gatewayBase) {
-    return `${gatewayBase}/api/v1`;
+    finalUrl = `${gatewayBase}/api/v1`;
   }
-
-  return `http://localhost:${config.port}/api/v1`;
+  
+  if (typeof window !== 'undefined') {
+      console.log(`[API Factory] Resolving ${service} -> ${finalUrl}`);
+  }
+  return finalUrl;
 }
 
 /**

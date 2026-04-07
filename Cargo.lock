@@ -9936,6 +9936,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-accounting-fec"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "signapps-ad-core"
 version = "0.1.0"
 dependencies = [
@@ -10187,6 +10195,11 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "signapps-accounting-fec",
+ "signapps-e2e-crypto",
+ "signapps-marketplace",
+ "signapps-plugins",
+ "signapps-reporting",
  "sqlx",
  "tantivy",
  "thiserror 1.0.69",
@@ -10403,6 +10416,17 @@ dependencies = [
  "utoipa-swagger-ui",
  "uuid",
  "yrs",
+]
+
+[[package]]
+name = "signapps-e2e-crypto"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "uuid",
 ]
 
 [[package]]
@@ -10649,6 +10673,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-marketplace"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "signapps-media"
 version = "0.1.0"
 dependencies = [
@@ -10821,6 +10854,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-plugins"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum 0.7.9",
+ "serde",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
 name = "signapps-proxy"
 version = "0.1.0"
 dependencies = [
@@ -10910,6 +10955,18 @@ dependencies = [
  "tracing-subscriber",
  "utoipa",
  "utoipa-swagger-ui",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-reporting"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
  "uuid",
 ]
 
