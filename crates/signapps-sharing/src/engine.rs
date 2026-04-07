@@ -465,25 +465,30 @@ impl SharingEngine {
         let grant_defs: Vec<CreateGrant> = serde_json::from_value(template.grants.clone())
             .map_err(|e| Error::BadRequest(format!("invalid template grants JSON: {e}")))?;
 
-        // Create each grant.
+        // Create each grant via self.grant() to enforce:
+        //   - vault_entry + everyone restriction
+        //   - per-grant can_reshare / manager checks
+        //   - per-grant audit log and notifications
+        // Errors on individual grants are logged and skipped so that one
+        // bad entry does not abort the remaining template entries.
         let mut created = 0usize;
         for def in grant_defs {
-            SharingRepository::create_grant(
-                &self.pool,
-                CreateGrantInput {
-                    tenant_id: actor_ctx.tenant_id,
-                    resource_type: resource.resource_type.as_str(),
-                    resource_id: resource.resource_id,
-                    grantee_type: def.grantee_type.as_str(),
-                    grantee_id: def.resolved_grantee_id(),
-                    role: def.role.as_str(),
-                    can_reshare: def.can_reshare,
-                    expires_at: def.expires_at,
-                    granted_by: actor_ctx.user_id,
+            match self
+                .grant(actor_ctx, resource.clone(), owner_id, def.clone())
+                .await
+            {
+                Ok(_) => created += 1,
+                Err(e) => {
+                    tracing::warn!(
+                        actor_id    = %actor_ctx.user_id,
+                        resource    = %resource,
+                        template_id = %template_id,
+                        grantee     = ?def.grantee_type,
+                        error       = ?e,
+                        "apply_template: skipping grant due to error"
+                    );
                 },
-            )
-            .await?;
-            created += 1;
+            }
         }
 
         // Audit log.
