@@ -25,8 +25,8 @@ pub use signapps_db_itam::repositories::{ContainerRepository, DeviceRepository, 
 pub mod job_repository;
 pub use job_repository::JobRepository;
 
-pub mod backup_repository;
-pub use backup_repository::{BackupRepository, DriveBackupRepository};
+// Content repositories — now live in signapps-db-content (Phase 5 split).
+pub use signapps_db_content::repositories::{BackupRepository, DriveBackupRepository, SignatureRepository};
 
 // Forms repositories — now live in signapps-db-forms (Phase 4 split).
 pub use signapps_db_forms::repositories::FormRepository;
@@ -98,8 +98,6 @@ pub use entity_reference_repository::EntityReferenceRepository;
 pub mod activity_repository;
 pub use activity_repository::ActivityRepository;
 
-pub mod signature_repository;
-pub use signature_repository::SignatureRepository;
 
 
 // Drive ACL repositories — now live in signapps-db-storage (Phase 4 split).

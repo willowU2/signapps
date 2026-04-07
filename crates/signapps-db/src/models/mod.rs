@@ -20,7 +20,13 @@ pub mod infrastructure {
     pub use signapps_db_infrastructure::models::infrastructure::*;
 }
 
-pub mod backup;
+// Content domain models — now live in signapps-db-content (Phase 5 split).
+pub mod backup {
+    pub use signapps_db_content::models::backup::*;
+}
+pub mod signature {
+    pub use signapps_db_content::models::signature::*;
+}
 
 // Calendar domain models — now live in signapps-db-calendar (Phase 3 split).
 // Kept as re-export aliases so that `use signapps_db::models::calendar::*` still works.
@@ -117,7 +123,6 @@ pub mod org_boards;
 pub mod org_delegations;
 pub mod org_groups;
 pub mod org_policies;
-pub mod signature;
 pub mod tenant;
 pub mod user;
 pub mod user_preferences;

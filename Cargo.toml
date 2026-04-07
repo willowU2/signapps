@@ -49,6 +49,7 @@ members = [
     "crates/signapps-db-infrastructure",
     "crates/signapps-db-itam",
     "crates/signapps-db-billing",
+    "crates/signapps-db-content",
     "crates/signapps-dkim",
     "crates/signapps-dns-server",
     "crates/signapps-imap",
