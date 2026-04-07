@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import { Edit2, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,15 +16,14 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
- * Sanitize HTML to prevent XSS attacks.
- * Removes script tags, event handlers, javascript: URLs, and iframes.
+ * Sanitize HTML to prevent XSS attacks using DOMPurify.
+ * Forbids script/iframe/object/embed tags and dangerous event-handler attributes.
  */
 function sanitizeHtml(html: string): string {
-  return html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/\bon\w+\s*=\s*["'][^"']*["']/gi, '')
-    .replace(/javascript\s*:/gi, 'blocked:')
-    .replace(/<iframe\b[^>]*>/gi, '');
+  return DOMPurify.sanitize(html, {
+    FORBID_TAGS: ["script", "iframe", "object", "embed"],
+    FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover"],
+  });
 }
 
 interface TableOfContentsItem {
@@ -69,7 +69,10 @@ function extractTableOfContents(content: string): TableOfContentsItem[] {
 function markdownToHtml(content: string): string {
   let html = content
     // Headers
-    .replace(/^### (.*?)$/gm, "<h3 class='text-lg font-semibold mt-4 mb-2'>$1</h3>")
+    .replace(
+      /^### (.*?)$/gm,
+      "<h3 class='text-lg font-semibold mt-4 mb-2'>$1</h3>",
+    )
     .replace(/^## (.*?)$/gm, "<h2 class='text-xl font-bold mt-6 mb-3'>$1</h2>")
     .replace(/^# (.*?)$/gm, "<h1 class='text-2xl font-bold mt-8 mb-4'>$1</h1>")
     // Bold
@@ -77,9 +80,15 @@ function markdownToHtml(content: string): string {
     // Italic
     .replace(/_(.*?)_/g, "<em class='italic'>$1</em>")
     // Inline code
-    .replace(/`([^`]+)`/g, "<code class='bg-muted px-1.5 py-0.5 rounded font-mono text-sm'>$1</code>")
+    .replace(
+      /`([^`]+)`/g,
+      "<code class='bg-muted px-1.5 py-0.5 rounded font-mono text-sm'>$1</code>",
+    )
     // Links
-    .replace(/\[(.*?)\]\((.*?)\)/g, "<a href='$2' class='text-blue-600 hover:underline'>$1</a>")
+    .replace(
+      /\[(.*?)\]\((.*?)\)/g,
+      "<a href='$2' class='text-blue-600 hover:underline'>$1</a>",
+    )
     // Line breaks
     .replace(/\n\n/g, "</p><p>")
     // Lists (basic)
@@ -91,7 +100,10 @@ function markdownToHtml(content: string): string {
   }
 
   return html
-    .replace(/(<li[^>]*>[\s\S]*?<\/li>)/, "<ul class='list-disc space-y-1'>$1</ul>")
+    .replace(
+      /(<li[^>]*>[\s\S]*?<\/li>)/,
+      "<ul class='list-disc space-y-1'>$1</ul>",
+    )
     .replace(/\n/g, "<br/>");
 }
 
@@ -104,7 +116,7 @@ export function WikiPage({
 }: WikiPageProps) {
   const tableOfContents = useMemo(
     () => extractTableOfContents(content),
-    [content]
+    [content],
   );
 
   const htmlContent = useMemo(() => markdownToHtml(content), [content]);
@@ -164,7 +176,7 @@ export function WikiPage({
               "prose-p:text-muted-foreground prose-p:mb-4",
               "prose-a:text-blue-600 prose-a:hover:underline",
               "prose-code:bg-muted prose-code:px-2 prose-code:py-1 prose-code:rounded",
-              "prose-ul:list-disc prose-ul:pl-6 prose-li:text-muted-foreground"
+              "prose-ul:list-disc prose-ul:pl-6 prose-li:text-muted-foreground",
             )}
             dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlContent) }}
           />
@@ -187,7 +199,7 @@ export function WikiPage({
                     "text-sm text-muted-foreground hover:text-foreground transition-colors block truncate",
                     item.level === 1 && "font-medium",
                     item.level > 1 && "ml-4",
-                    item.level > 2 && "ml-8"
+                    item.level > 2 && "ml-8",
                   )}
                   title={item.title}
                 >
