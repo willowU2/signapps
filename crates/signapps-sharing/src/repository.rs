@@ -216,6 +216,43 @@ impl SharingRepository {
         .map_err(|e| Error::Database(e.to_string()))
     }
 
+    /// Atomically update role, `can_reshare`, and `expires_at` on an existing
+    /// grant within a tenant. Returns the updated grant, or `None` when the
+    /// grant does not exist or belongs to another tenant.
+    ///
+    /// Replaces the previous revoke-then-create pattern so that the caller
+    /// never loses access when the subsequent `create_grant` would fail.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Database`] if the `UPDATE` fails.
+    pub async fn update_grant_role(
+        pool: &PgPool,
+        tenant_id: Uuid,
+        grant_id: Uuid,
+        new_role: &str,
+        new_can_reshare: Option<bool>,
+        new_expires_at: Option<DateTime<Utc>>,
+    ) -> Result<Option<Grant>> {
+        sqlx::query_as::<_, Grant>(
+            r#"UPDATE sharing.grants
+               SET role        = $3,
+                   can_reshare = COALESCE($4, can_reshare),
+                   expires_at  = $5,
+                   updated_at  = NOW()
+               WHERE id = $1 AND tenant_id = $2
+               RETURNING *"#,
+        )
+        .bind(grant_id)
+        .bind(tenant_id)
+        .bind(new_role)
+        .bind(new_can_reshare)
+        .bind(new_expires_at)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))
+    }
+
     /// Delete a grant by ID within a tenant. Returns `true` if a row was deleted.
     ///
     /// # Errors
