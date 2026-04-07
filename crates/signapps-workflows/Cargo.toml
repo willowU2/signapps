@@ -1,0 +1,23 @@
+[package]
+name = "signapps-workflows"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "AI Workflow Automation Engine for SignApps Platform"
+
+[dependencies]
+# Common types (AppError, DomainEvent, EventEnvelope)
+signapps-common = { path = "../signapps-common" }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+
+# Observability
+tracing = { workspace = true }

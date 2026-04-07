@@ -8,7 +8,7 @@
 //! ## Usage
 //!
 //! ```rust,ignore
-//! use signapps_common::workflows::{
+//! use signapps_workflows::{
 //!     WorkflowDefinition, WorkflowTrigger, WorkflowAction, WorkflowEngine,
 //! };
 //!
@@ -31,7 +31,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::events::{DomainEvent, EventEnvelope};
+use signapps_common::events::{DomainEvent, EventEnvelope};
 
 // ---------------------------------------------------------------------------
 // Types
@@ -330,6 +330,7 @@ fn compare_numbers(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use signapps_common::events::{DomainEvent, EventEnvelope};
 
     fn sample_workflow(trigger_event: &str) -> WorkflowDefinition {
         WorkflowDefinition {
@@ -362,7 +363,7 @@ mod tests {
 
         let envelope = EventEnvelope {
             id: Uuid::new_v4(),
-            timestamp: Utc::now(),
+            timestamp: chrono::Utc::now(),
             event: DomainEvent::FileUploaded {
                 id: Uuid::new_v4(),
                 user_id: Uuid::new_v4(),
@@ -382,7 +383,7 @@ mod tests {
 
         let envelope = EventEnvelope {
             id: Uuid::new_v4(),
-            timestamp: Utc::now(),
+            timestamp: chrono::Utc::now(),
             event: DomainEvent::UserCreated { id: Uuid::new_v4() },
         };
 
@@ -399,7 +400,7 @@ mod tests {
 
         let envelope = EventEnvelope {
             id: Uuid::new_v4(),
-            timestamp: Utc::now(),
+            timestamp: chrono::Utc::now(),
             event: DomainEvent::UserCreated { id: Uuid::new_v4() },
         };
 
@@ -420,7 +421,7 @@ mod tests {
 
         let envelope = EventEnvelope {
             id: Uuid::new_v4(),
-            timestamp: Utc::now(),
+            timestamp: chrono::Utc::now(),
             event: DomainEvent::FileUploaded {
                 id: Uuid::new_v4(),
                 user_id: Uuid::new_v4(),
@@ -445,7 +446,7 @@ mod tests {
 
         let envelope = EventEnvelope {
             id: Uuid::new_v4(),
-            timestamp: Utc::now(),
+            timestamp: chrono::Utc::now(),
             event: DomainEvent::FileUploaded {
                 id: Uuid::new_v4(),
                 user_id: Uuid::new_v4(),
@@ -470,7 +471,7 @@ mod tests {
 
         let envelope = EventEnvelope {
             id: Uuid::new_v4(),
-            timestamp: Utc::now(),
+            timestamp: chrono::Utc::now(),
             event: DomainEvent::FileUploaded {
                 id: Uuid::new_v4(),
                 user_id: Uuid::new_v4(),
@@ -495,7 +496,7 @@ mod tests {
 
         let envelope = EventEnvelope {
             id: Uuid::new_v4(),
-            timestamp: Utc::now(),
+            timestamp: chrono::Utc::now(),
             event: DomainEvent::Custom {
                 event_type: "invoice.created".into(),
                 payload: serde_json::json!({}),
@@ -515,7 +516,7 @@ mod tests {
 
         let envelope = EventEnvelope {
             id: Uuid::new_v4(),
-            timestamp: Utc::now(),
+            timestamp: chrono::Utc::now(),
             event: DomainEvent::UserCreated { id: Uuid::new_v4() },
         };
 

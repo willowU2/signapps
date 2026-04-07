@@ -30,7 +30,7 @@
 //! - [`sso`] - Single Sign-On (SSO) foundation for SAML2 and OIDC providers
 //! - [`types`] - Value Objects (Email, Password, UserId, Username)
 //! - [`vault`] - Password manager vault with secure entry storage and password generation
-//! - [`workflows`] - AI Workflow Automation engine (trigger, conditions, actions)
+//! - `signapps-workflows` crate - AI Workflow Automation engine (trigger, conditions, actions)
 //! - [`graphql_layer`] - GraphQL federation configuration and playground support
 //! - [`marketplace`] - App Store marketplace with install/uninstall capabilities
 //! - [`sql_dashboard`] - SQL query builder with multiple chart visualization types
@@ -96,8 +96,6 @@ pub mod types;
 pub mod ueba;
 pub mod vault;
 pub mod webhooks;
-pub mod workflows;
-
 // Re-export commonly used items
 pub use accounting::{FecEntry, FecExporter};
 pub use alerts::{
@@ -141,11 +139,6 @@ pub use types::{Email, Password, PasswordHash, PgQueryResult, UserId, Username};
 pub use ueba::{Anomaly, AnomalyDetector, BehaviorBaseline, UserBehavior};
 pub use vault::{VaultEntry, VaultStore};
 pub use webhooks::{DeliveryStatus, WebhookConfig, WebhookDelivery, WebhookManager};
-pub use workflows::{
-    Condition, ConditionOp, WorkflowAction, WorkflowDefinition, WorkflowEngine, WorkflowExecution,
-    WorkflowTrigger,
-};
-
 /// Crate version from Cargo.toml
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

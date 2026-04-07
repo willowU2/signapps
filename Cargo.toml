@@ -8,6 +8,7 @@ members = [
     "crates/signapps-kerberos-kdc",
     "crates/signapps-cache",
     "crates/signapps-common",
+    "crates/signapps-workflows",
     "crates/signapps-sharing",
     "crates/signapps-dav",
     "crates/signapps-db",

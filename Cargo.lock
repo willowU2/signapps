@@ -11156,6 +11156,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-workflows"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-workforce"
 version = "0.1.0"
 dependencies = [
