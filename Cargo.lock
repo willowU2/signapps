@@ -10330,6 +10330,9 @@ dependencies = [
  "serde_json",
  "signapps-common",
  "signapps-db-calendar",
+ "signapps-db-forms",
+ "signapps-db-mail",
+ "signapps-db-notifications",
  "signapps-db-shared",
  "signapps-db-storage",
  "sqlx",
@@ -10342,6 +10345,54 @@ dependencies = [
 
 [[package]]
 name = "signapps-db-calendar"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db-shared",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-db-forms"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db-shared",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-db-mail"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db-shared",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-db-notifications"
 version = "0.1.0"
 dependencies = [
  "chrono",
