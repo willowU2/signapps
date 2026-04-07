@@ -3,6 +3,10 @@
 //! Provides in-memory audit logging for tracking user actions across services.
 //! Records mutations (POST/PUT/DELETE) automatically via middleware,
 //! and exposes a GET endpoint for querying recent entries.
+//!
+//! The middleware relies on the authentication layer having already inserted the
+//! actor's [`uuid::Uuid`] into request extensions (e.g. `claims.sub`).  It does
+//! **not** depend on `signapps-common` or any auth types.
 
 use axum::{
     extract::{Query, Request, State},
@@ -15,8 +19,6 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
-
-use crate::Claims;
 
 // =============================================================================
 // AuditAction
@@ -173,8 +175,8 @@ pub trait AuditState: Clone + Send + Sync + 'static {
 
 /// Axum middleware that automatically logs mutations (POST/PUT/PATCH/DELETE).
 ///
-/// Must be applied **after** `auth_middleware` so that `Claims` are available
-/// in request extensions.
+/// Must be applied **after** `auth_middleware` so that the actor's [`Uuid`] is
+/// available in request extensions (inserted as `claims.sub` by the auth layer).
 pub async fn audit_middleware<S: AuditState>(
     State(state): State<S>,
     request: Request,
@@ -192,7 +194,8 @@ pub async fn audit_middleware<S: AuditState>(
 
     let path = request.uri().path().to_string();
     let action = action_from_method(&method);
-    let actor_id = request.extensions().get::<Claims>().map(|c| c.sub);
+    // Auth middleware inserts `claims.sub` as a bare Uuid into extensions.
+    let actor_id = request.extensions().get::<Uuid>().copied();
 
     let ip_address = request
         .headers()

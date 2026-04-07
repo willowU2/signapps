@@ -10,7 +10,7 @@
 //! - [`alerts`] - Custom alerts system with rule-based conditions and multi-channel notifications
 //! - [`approval`] - Document approval workflow (multi-approver, status tracking, comments)
 //! - [`accounting`] - FEC (Fichier des Écritures Comptables) export for DGFiP compliance
-//! - [`audit`] - Audit trail / activity log (in-memory, middleware + query endpoint)
+//! - [`audit`] - Audit trail / activity log (in-memory, middleware + query endpoint) — re-exported from `signapps-audit`
 //! - [`auth`] - Authentication types (JWT claims, tokens)
 //! - [`bridge`] - Slack/Teams bridge for external messaging platform integrations
 //! - [`comments`] - Universal inline comments with @mentions, threads, reactions
@@ -59,7 +59,8 @@ pub use signapps_accounting_fec as accounting;
 pub use signapps_alerts as alerts;
 // approval module extracted to signapps-approval crate
 pub use signapps_approval as approval;
-pub mod audit;
+// audit module extracted to signapps-audit crate
+pub use signapps_audit as audit;
 pub mod auth;
 pub mod bootstrap;
 // bridge module extracted to signapps-bridge crate

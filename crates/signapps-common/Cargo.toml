@@ -9,6 +9,7 @@ description = "Shared utilities and types for SignApps Platform"
 
 [dependencies]
 # Extracted domain crates (re-exported for backward compat)
+signapps-audit = { path = "../signapps-audit" }
 signapps-accounting-fec = { path = "../signapps-accounting-fec" }
 signapps-e2e-crypto = { path = "../signapps-e2e-crypto" }
 signapps-marketplace = { path = "../signapps-marketplace" }

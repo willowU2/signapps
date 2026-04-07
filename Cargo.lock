@@ -10049,6 +10049,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-audit"
+version = "0.1.0"
+dependencies = [
+ "axum 0.7.9",
+ "chrono",
+ "serde",
+ "serde_json",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-billing"
 version = "0.1.0"
 dependencies = [
@@ -10222,6 +10234,7 @@ dependencies = [
  "signapps-accounting-fec",
  "signapps-alerts",
  "signapps-approval",
+ "signapps-audit",
  "signapps-bridge",
  "signapps-comments",
  "signapps-data-connectors",
