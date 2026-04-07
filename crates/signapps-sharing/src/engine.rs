@@ -85,7 +85,7 @@ impl SharingEngine {
         owner_id: Option<Uuid>,
     ) -> Result<()> {
         let chain = self.parent_chain(&resource).await;
-        let resolver = PermissionResolver::new(&self.pool);
+        let resolver = PermissionResolver::with_cache(&self.pool, &self.cache);
         resolver
             .check_action_with_parents(user_ctx, &chain, owner_id, &action)
             .await
@@ -113,7 +113,7 @@ impl SharingEngine {
         owner_id: Option<Uuid>,
     ) -> Result<Option<EffectivePermission>> {
         let chain = self.parent_chain(&resource).await;
-        let resolver = PermissionResolver::new(&self.pool);
+        let resolver = PermissionResolver::with_cache(&self.pool, &self.cache);
         resolver.resolve_with_parents(user_ctx, &chain, owner_id).await
     }
 
@@ -159,7 +159,7 @@ impl SharingEngine {
         }
 
         // Verify actor has manager role or is admin.
-        let resolver = PermissionResolver::new(&self.pool);
+        let resolver = PermissionResolver::with_cache(&self.pool, &self.cache);
         let effective = resolver.resolve(actor_ctx, &resource, owner_id).await?;
 
         let can_grant = actor_ctx.is_admin()
@@ -262,7 +262,7 @@ impl SharingEngine {
         grant_id: Uuid,
     ) -> Result<()> {
         // Verify actor has manager role or is admin.
-        let resolver = PermissionResolver::new(&self.pool);
+        let resolver = PermissionResolver::with_cache(&self.pool, &self.cache);
         let effective = resolver.resolve(actor_ctx, &resource, owner_id).await?;
 
         let can_revoke =
@@ -446,7 +446,7 @@ impl SharingEngine {
         template_id: Uuid,
     ) -> Result<usize> {
         // Verify actor is manager or admin.
-        let resolver = PermissionResolver::new(&self.pool);
+        let resolver = PermissionResolver::with_cache(&self.pool, &self.cache);
         let effective = resolver.resolve(actor_ctx, &resource, owner_id).await?;
 
         let can_apply =
