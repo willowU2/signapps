@@ -30,8 +30,9 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use signapps_common::auth::Claims;
-use signapps_common::Result;
+use signapps_common::{Error, Result};
 use signapps_sharing::models::{CreateGrant, EffectivePermission, Grant};
+use signapps_sharing::repository::SharingRepository;
 use signapps_sharing::types::{GranteeType, ResourceRef, ResourceType, Role};
 use uuid::Uuid;
 
@@ -106,18 +107,25 @@ pub struct EffectiveAclResponse {
 ///
 /// Queries `drive.nodes` to find out whether the node is a file or folder,
 /// defaulting to `File` when the type is unrecognised or the node is missing.
-async fn node_resource_type(pool: &sqlx::PgPool, node_id: Uuid) -> ResourceType {
+///
+/// # Errors
+///
+/// Returns [`Error::Database`] if the query fails (connection error, etc.).
+async fn node_resource_type(pool: &sqlx::PgPool, node_id: Uuid) -> Result<ResourceType> {
     let kind: Option<String> =
         sqlx::query_scalar("SELECT node_type FROM drive.nodes WHERE id = $1")
             .bind(node_id)
             .fetch_optional(pool)
             .await
-            .unwrap_or(None);
+            .map_err(|e| {
+                tracing::warn!(?e, %node_id, "failed to query node_type");
+                Error::Database(e.to_string())
+            })?;
 
-    match kind.as_deref() {
+    Ok(match kind.as_deref() {
         Some("folder") => ResourceType::Folder,
         _ => ResourceType::File,
-    }
+    })
 }
 
 // ============================================================================
@@ -145,7 +153,7 @@ pub async fn list_acl(
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<Grant>>> {
     let user_ctx = state.sharing.build_user_context(&claims).await?;
-    let rtype = node_resource_type(state.pool.inner(), id).await;
+    let rtype = node_resource_type(state.pool.inner(), id).await?;
     let resource = ResourceRef { resource_type: rtype, resource_id: id };
 
     let grants = state.sharing.list_grants(&user_ctx, resource).await?;
@@ -193,11 +201,17 @@ pub async fn create_acl(
     Json(payload): Json<CreateAclRequest>,
 ) -> Result<(StatusCode, Json<Grant>)> {
     let actor_ctx = state.sharing.build_user_context(&claims).await?;
-    let rtype = node_resource_type(state.pool.inner(), id).await;
+    let rtype = node_resource_type(state.pool.inner(), id).await?;
     let resource = ResourceRef { resource_type: rtype, resource_id: id };
 
     // Map legacy grantee_type string to typed GranteeType
-    let grantee_type: GranteeType = payload.grantee_type.parse().unwrap_or(GranteeType::User);
+    let grantee_type: GranteeType = payload
+        .grantee_type
+        .parse()
+        .map_err(|_| signapps_common::Error::BadRequest(format!(
+            "invalid grantee_type: {}",
+            payload.grantee_type
+        )))?;
     let role = map_legacy_role(&payload.role);
 
     let grant_req = CreateGrant {
@@ -258,10 +272,11 @@ pub async fn update_acl(
     Json(payload): Json<UpdateAclRequest>,
 ) -> Result<Json<Grant>> {
     let actor_ctx = state.sharing.build_user_context(&claims).await?;
-    let rtype = node_resource_type(state.pool.inner(), id).await;
+    let rtype = node_resource_type(state.pool.inner(), id).await?;
     let resource = ResourceRef { resource_type: rtype, resource_id: id };
 
-    // Fetch the existing grant so we know current grantee_type, grantee_id
+    // Fetch the existing grant so we can verify it exists and derive unchanged
+    // fields (grantee_type, grantee_id, role fallback, etc.)
     let grants = state.sharing.list_grants(&actor_ctx, resource.clone()).await?;
     let existing = grants
         .iter()
@@ -269,33 +284,28 @@ pub async fn update_acl(
         .cloned()
         .ok_or_else(|| signapps_common::Error::NotFound(format!("grant {acl_id} not found")))?;
 
-    // Revoke the old grant
-    state.sharing.revoke(&actor_ctx, resource.clone(), None, acl_id).await?;
-
-    // Determine new role and expiry (fall back to existing values)
+    // Determine new role, expiry, can_reshare (fall back to existing values).
     let new_role = payload
         .role
         .as_deref()
         .map(map_legacy_role)
         .unwrap_or_else(|| existing.parsed_role().unwrap_or(Role::Viewer));
 
-    let new_grantee_type: GranteeType = existing
-        .parsed_grantee_type()
-        .unwrap_or(GranteeType::User);
-
     let new_expires_at = payload.expires_at.or(existing.expires_at);
     let new_can_reshare = payload.can_reshare.or(existing.can_reshare);
 
-    // Create the replacement grant
-    let grant_req = CreateGrant {
-        grantee_type: new_grantee_type,
-        grantee_id: existing.grantee_id,
-        role: new_role,
-        can_reshare: new_can_reshare,
-        expires_at: new_expires_at,
-    };
-
-    let new_grant = state.sharing.grant(&actor_ctx, resource, None, grant_req).await?;
+    // Atomically UPDATE the grant in-place — avoids the revoke+create race
+    // where grant() failure would permanently remove the user's access.
+    let updated_grant = SharingRepository::update_grant_role(
+        state.pool.inner(),
+        actor_ctx.tenant_id,
+        acl_id,
+        new_role.as_str(),
+        new_can_reshare,
+        new_expires_at,
+    )
+    .await?
+    .ok_or_else(|| signapps_common::Error::NotFound(format!("grant {acl_id} not found")))?;
 
     let _ = audit_chain::log_audit(
         state.pool.inner(),
@@ -305,11 +315,11 @@ pub async fn update_acl(
         claims.sub,
         None,
         None,
-        Some(json!({ "old_grant_id": acl_id, "new_grant_id": new_grant.id, "role": new_grant.role })),
+        Some(json!({ "grant_id": acl_id, "role": updated_grant.role })),
     )
     .await;
 
-    Ok(Json(new_grant))
+    Ok(Json(updated_grant))
 }
 
 // ============================================================================
@@ -342,7 +352,7 @@ pub async fn delete_acl(
     Path((id, acl_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<serde_json::Value>> {
     let actor_ctx = state.sharing.build_user_context(&claims).await?;
-    let rtype = node_resource_type(state.pool.inner(), id).await;
+    let rtype = node_resource_type(state.pool.inner(), id).await?;
     let resource = ResourceRef { resource_type: rtype, resource_id: id };
 
     state.sharing.revoke(&actor_ctx, resource, None, acl_id).await?;
@@ -479,7 +489,7 @@ pub async fn effective_acl(
     Path(id): Path<Uuid>,
 ) -> Result<Json<EffectiveAclResponse>> {
     let user_ctx = state.sharing.build_user_context(&claims).await?;
-    let rtype = node_resource_type(state.pool.inner(), id).await;
+    let rtype = node_resource_type(state.pool.inner(), id).await?;
     let resource = ResourceRef { resource_type: rtype, resource_id: id };
 
     let permission = state.sharing.effective_role(&user_ctx, resource, None).await?;
