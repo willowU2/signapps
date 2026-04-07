@@ -1,12 +1,12 @@
 //! Database repositories for SignApps Platform.
 
-pub mod ad_dns_repository;
-pub mod ad_domain_repository;
-pub mod ad_principal_keys_repository;
-
-pub use ad_dns_repository::AdDnsRepository;
-pub use ad_domain_repository::AdDomainRepository;
-pub use ad_principal_keys_repository::AdPrincipalKeysRepository;
+// Infrastructure repositories — now live in signapps-db-infrastructure (Phase 5 split).
+pub use signapps_db_infrastructure::repositories::{
+    AdDnsRepository, AdDomainRepository, AdOuRepository, AdPrincipalKeysRepository,
+    AdSyncQueueRepository, AdUserAccountRepository, DeployProfileRepository,
+    DhcpLeaseRepository, DhcpScopeRepository, InfraCertificateRepository,
+    InfraDomainRepository,
+};
 
 pub mod container_repository;
 pub mod group_repository;
@@ -129,13 +129,5 @@ pub use signapps_db_mail::repositories::{
     AccountRepository, DomainRepository, MailboxRepository, MessageRepository,
 };
 
-pub mod infrastructure_repository;
-pub use infrastructure_repository::{
-    DeployProfileRepository, DhcpLeaseRepository, DhcpScopeRepository,
-    InfraCertificateRepository, InfraDomainRepository,
-};
-
-pub mod ad_sync_repository;
-pub use ad_sync_repository::{AdOuRepository, AdSyncQueueRepository, AdUserAccountRepository};
 
 pub mod test_helpers;

@@ -1,11 +1,23 @@
 //! Database models for SignApps Platform.
 
 pub mod activity;
-pub mod ad_dns;
-pub mod ad_sync;
-pub mod ad_domain;
-pub mod ad_principal_keys;
 pub mod audit_log;
+// Infrastructure domain models — now live in signapps-db-infrastructure (Phase 5 split).
+pub mod ad_dns {
+    pub use signapps_db_infrastructure::models::ad_dns::*;
+}
+pub mod ad_sync {
+    pub use signapps_db_infrastructure::models::ad_sync::*;
+}
+pub mod ad_domain {
+    pub use signapps_db_infrastructure::models::ad_domain::*;
+}
+pub mod ad_principal_keys {
+    pub use signapps_db_infrastructure::models::ad_principal_keys::*;
+}
+pub mod infrastructure {
+    pub use signapps_db_infrastructure::models::infrastructure::*;
+}
 pub mod backup;
 // Calendar domain models — now live in signapps-db-calendar (Phase 3 split).
 // Kept as re-export aliases so that `use signapps_db::models::calendar::*` still works.
@@ -62,7 +74,6 @@ pub mod form {
     pub use signapps_db_forms::models::form::*;
 }
 pub mod group;
-pub mod infrastructure;
 pub mod job;
 pub mod ldap;
 // Mail domain models — now live in signapps-db-mail (Phase 4 split).
