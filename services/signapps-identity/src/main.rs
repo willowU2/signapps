@@ -58,14 +58,10 @@ async fn main() -> anyhow::Result<()> {
         std::time::Duration::from_secs(900), // 15min default (matches access token TTL)
     );
 
-    // Create JWT config (custom: audience="signapps" for all services)
-    let jwt_config = JwtConfig {
-        secret: config.jwt_secret.clone(),
-        issuer: "signapps".to_string(),
-        audience: "signapps".to_string(),
-        access_expiration: 900,
-        refresh_expiration: 604800,
-    };
+    // Create JWT config — auto-detects RS256 (JWT_PRIVATE_KEY_PEM + JWT_PUBLIC_KEY_PEM)
+    // or HS256 (JWT_SECRET) from environment variables.
+    // JwtConfig::from_env() panics with a clear message if no key material is found.
+    let jwt_config = JwtConfig::from_env();
 
     // Spawn webhook event dispatcher background task (WH1)
     {
@@ -210,6 +206,10 @@ fn create_router(state: AppState) -> Router {
     let public_routes = Router::new()
         .merge(openapi_routes)
         .route("/health", get(handlers::health::health_check))
+        // JWKS endpoint — public, no auth required.
+        // Exposes the RS256 public key(s) so other services can validate tokens
+        // without calling back into the identity service (stateless validation).
+        .route("/.well-known/jwks.json", get(handlers::jwks::jwks_handler))
         .route("/api/v1/auth/register", post(handlers::auth::register))
         .route("/api/v1/auth/refresh", post(handlers::auth::refresh))
         .route("/api/v1/bootstrap", post(handlers::auth::bootstrap))

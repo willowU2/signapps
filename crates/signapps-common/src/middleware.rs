@@ -455,20 +455,44 @@ pub async fn correlation_id_middleware(mut request: Request, next: Next) -> Resp
 }
 
 /// Verify a JWT token and extract claims.
+///
+/// Supports both HS256 (shared secret) and RS256 (public key) based on the
+/// algorithm field in `config`.
 fn verify_token(token: &str, config: &JwtConfig) -> Result<Claims, Error> {
-    use jsonwebtoken::{decode, DecodingKey, Validation};
+    use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 
-    let mut validation = Validation::default();
-    validation.validate_aud = true;
-    validation.set_audience(&["signapps"]);
-    validation.set_issuer(&["signapps"]);
-    validation.set_required_spec_claims(&["exp", "sub"]);
+    use crate::auth::JwtAlgorithm;
 
-    let key = DecodingKey::from_secret(config.secret.as_bytes());
+    match config.algorithm {
+        JwtAlgorithm::Hs256 => {
+            let mut validation = Validation::new(Algorithm::HS256);
+            validation.validate_aud = true;
+            validation.set_audience(&["signapps"]);
+            validation.set_issuer(&["signapps"]);
+            validation.set_required_spec_claims(&["exp", "sub"]);
 
-    let token_data = decode::<Claims>(token, &key, &validation)?;
+            let key = DecodingKey::from_secret(config.secret.as_bytes());
+            let token_data = decode::<Claims>(token, &key, &validation)?;
+            Ok(token_data.claims)
+        }
+        JwtAlgorithm::Rs256 => {
+            let pem = config.public_key_pem.as_deref().ok_or_else(|| {
+                tracing::error!("RS256 mode: JWT_PUBLIC_KEY_PEM not configured");
+                Error::Internal("JWT public key not configured".to_string())
+            })?;
 
-    Ok(token_data.claims)
+            let mut validation = Validation::new(Algorithm::RS256);
+            validation.validate_aud = true;
+            validation.set_audience(&["signapps"]);
+            validation.set_issuer(&["signapps"]);
+            validation.set_required_spec_claims(&["exp", "sub"]);
+
+            let key = DecodingKey::from_rsa_pem(pem.as_bytes())
+                .map_err(|e| Error::Internal(format!("Invalid RSA public key: {e}")))?;
+            let token_data = decode::<Claims>(token, &key, &validation)?;
+            Ok(token_data.claims)
+        }
+    }
 }
 
 /// Extension trait to extract claims from request.

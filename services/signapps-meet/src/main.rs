@@ -2,7 +2,7 @@
 //! Video conferencing rooms management with LiveKit integration
 
 use axum::{middleware, Router};
-use signapps_common::bootstrap::{env_or, env_required, init_tracing, load_env};
+use signapps_common::bootstrap::{env_or, init_tracing, load_env};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::JwtConfig;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
@@ -54,15 +54,8 @@ async fn main() -> anyhow::Result<()> {
         .await?;
     tracing::info!("Database connected");
 
-    // JWT configuration (custom: audience="signapps" for all services)
-    let jwt_secret = env_required("JWT_SECRET");
-    let jwt_config = JwtConfig {
-        secret: jwt_secret,
-        issuer: "signapps".to_string(),
-        audience: "signapps".to_string(),
-        access_expiration: 900,
-        refresh_expiration: 604800,
-    };
+    // JWT configuration — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
 
     // LiveKit configuration
     let livekit_config = LiveKitConfig {

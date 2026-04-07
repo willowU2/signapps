@@ -8,7 +8,7 @@ use axum::{
     routing::{delete, get, patch, post},
     Router,
 };
-use signapps_common::bootstrap::{env_or, env_required, init_tracing, load_env};
+use signapps_common::bootstrap::{env_or, init_tracing, load_env};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::pg_events::PgEventBus;
 use signapps_common::JwtConfig;
@@ -350,14 +350,8 @@ async fn main() {
         .await
         .expect("Failed to connect to Postgres");
 
-    let jwt_secret = env_required("JWT_SECRET");
-    let jwt_config = JwtConfig {
-        secret: jwt_secret,
-        issuer: "signapps".to_string(),
-        audience: "signapps".to_string(),
-        access_expiration: 3600,
-        refresh_expiration: 86400 * 7,
-    };
+    // JWT configuration — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
 
     let event_bus = PgEventBus::new(pool.clone(), "signapps-social".to_string());
 

@@ -509,28 +509,14 @@ async fn main() -> anyhow::Result<()> {
         "DATABASE_URL",
         "postgres://signapps:password@localhost:5432/signapps",
     );
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-        if cfg!(debug_assertions) {
-            tracing::warn!("JWT_SECRET not set, using insecure dev default");
-            "dev_secret_change_in_production_32chars".to_string()
-        } else {
-            panic!("JWT_SECRET must be set in production — refusing to start with insecure default")
-        }
-    });
-
     let pool = PgPoolOptions::new()
         .max_connections(10)
         .connect(&database_url)
         .await?;
     tracing::info!("Database connected");
 
-    let jwt_config = JwtConfig {
-        secret: jwt_secret,
-        issuer: "signapps".to_string(),
-        audience: "signapps".to_string(),
-        access_expiration: 900,
-        refresh_expiration: 604800,
-    };
+    // JWT config — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
 
     let state = AppState {
         pool: pool.clone(),

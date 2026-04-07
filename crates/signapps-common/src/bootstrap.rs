@@ -143,18 +143,34 @@ pub fn validate_env(service_name: &str) {
         panic!("[{}] DATABASE_URL must be set", service_name);
     }
 
-    // JWT_SECRET check
-    match std::env::var("JWT_SECRET") {
-        Ok(s) if s.contains("dev-secret") || s.contains("change-me") => {
-            tracing::warn!(
-                "[{}] JWT_SECRET contains default value - change for production!",
-                service_name
-            );
-        },
-        Ok(_) => {},
-        Err(_) => {
-            tracing::warn!("[{}] JWT_SECRET not set", service_name);
-        },
+    // JWT key material check — warn if nothing is configured
+    let has_private = std::env::var("JWT_PRIVATE_KEY_PEM")
+        .map(|v| !v.trim().is_empty())
+        .unwrap_or(false);
+    let has_public = std::env::var("JWT_PUBLIC_KEY_PEM")
+        .map(|v| !v.trim().is_empty())
+        .unwrap_or(false);
+    let has_secret = std::env::var("JWT_SECRET")
+        .map(|v| !v.is_empty())
+        .unwrap_or(false);
+
+    if has_private || has_public {
+        tracing::info!("[{}] JWT: RS256 key material detected", service_name);
+    } else if has_secret {
+        match std::env::var("JWT_SECRET") {
+            Ok(s) if s.contains("dev-secret") || s.contains("change-me") => {
+                tracing::warn!(
+                    "[{}] JWT_SECRET contains default value - change for production!",
+                    service_name
+                );
+            }
+            _ => {}
+        }
+    } else {
+        tracing::warn!(
+            "[{}] No JWT key material found (JWT_PRIVATE_KEY_PEM, JWT_PUBLIC_KEY_PEM, or JWT_SECRET)",
+            service_name
+        );
     }
 
     // SERVER_PORT check
@@ -183,12 +199,15 @@ pub struct ServiceConfig {
     pub default_port: u16,
     /// Database URL
     pub database_url: String,
-    /// JWT secret
+    /// JWT secret (HS256 mode only — kept for backward compatibility)
     pub jwt_secret: String,
     /// Host to bind to
     pub host: String,
     /// Port to bind to
     pub port: u16,
+    /// Pre-built JWT config (auto-detected from env vars).
+    /// Use `jwt_config()` to access this.
+    jwt_config_inner: JwtConfig,
 }
 
 impl ServiceConfig {
@@ -197,8 +216,12 @@ impl ServiceConfig {
     /// Required:
     /// - `DATABASE_URL` (or uses fallback)
     ///
+    /// JWT key material (first match wins):
+    /// - `JWT_PRIVATE_KEY_PEM` + `JWT_PUBLIC_KEY_PEM` → RS256 signer (identity service)
+    /// - `JWT_PUBLIC_KEY_PEM` → RS256 verifier (all other services)
+    /// - `JWT_SECRET` → HS256 mode (legacy fallback, minimum 32 bytes)
+    ///
     /// Optional:
-    /// - `JWT_SECRET` (defaults to insecure dev secret)
     /// - `SERVER_HOST` (defaults to "0.0.0.0")
     /// - `SERVER_PORT` (defaults to provided default_port)
     pub fn from_env(name: &str, default_port: u16) -> Self {
@@ -209,32 +232,16 @@ impl ServiceConfig {
             "postgres://signapps:password@localhost:5432/signapps",
         );
 
-        let jwt_secret = match std::env::var("JWT_SECRET") {
-            Ok(s) if s.len() >= 32 => s,
-            Ok(s) => {
-                panic!(
-                    "JWT_SECRET is too short ({} bytes). HS256 requires at least 32 bytes. \
-                     Please set a strong secret.",
-                    s.len()
-                );
-            }
-            Err(_) => {
-                // Only allow the dev fallback when BOTH conditions are met:
-                // 1. compiled with debug_assertions (dev build)
-                // 2. SIGNAPPS_DEV env var is explicitly set
-                if cfg!(debug_assertions) && std::env::var("SIGNAPPS_DEV").is_ok() {
-                    tracing::error!(
-                        "JWT_SECRET not set — using insecure dev default. \
-                         This MUST NOT be used in production!"
-                    );
-                    "dev_secret_change_in_production_32chars".to_string()
-                } else {
-                    panic!(
-                        "JWT_SECRET environment variable must be set (minimum 32 bytes). \
-                         In a development build, set SIGNAPPS_DEV=1 to allow an insecure default."
-                    );
-                }
-            }
+        // Build JWT config using auto-detection.
+        // JwtConfig::from_env() handles all key-material validation and panics
+        // with clear messages when misconfigured.
+        let jwt_config_inner = JwtConfig::from_env();
+
+        // Keep jwt_secret populated for backward compatibility with code that
+        // reads `ServiceConfig::jwt_secret` directly.  In RS256 mode it is empty.
+        let jwt_secret = match &jwt_config_inner.algorithm {
+            crate::auth::JwtAlgorithm::Hs256 => jwt_config_inner.secret.clone(),
+            crate::auth::JwtAlgorithm::Rs256 => String::new(),
         };
 
         let host = env_or("SERVER_HOST", "0.0.0.0");
@@ -249,6 +256,7 @@ impl ServiceConfig {
             jwt_secret,
             host,
             port,
+            jwt_config_inner,
         }
     }
 
@@ -259,15 +267,12 @@ impl ServiceConfig {
             .expect("Invalid socket address")
     }
 
-    /// Create a JWT configuration for this service.
+    /// Return the JWT configuration for this service.
+    ///
+    /// The algorithm and keys are auto-detected from environment variables at
+    /// construction time (see [`ServiceConfig::from_env`]).
     pub fn jwt_config(&self) -> JwtConfig {
-        JwtConfig {
-            secret: self.jwt_secret.clone(),
-            issuer: "signapps".to_string(),
-            audience: self.name.clone(),
-            access_expiration: 900,     // 15 minutes
-            refresh_expiration: 604800, // 7 days
-        }
+        self.jwt_config_inner.clone()
     }
 
     /// Create a database pool.
@@ -573,7 +578,9 @@ mod tests {
 
     #[test]
     fn test_service_config() {
-        // Temporarily set env vars
+        // Temporarily set env vars — ensure RS256 vars are absent so we get HS256
+        std::env::remove_var("JWT_PRIVATE_KEY_PEM");
+        std::env::remove_var("JWT_PUBLIC_KEY_PEM");
         std::env::set_var("DATABASE_URL", "postgres://test:test@localhost/test");
         std::env::set_var("JWT_SECRET", "test_secret_32_characters_long__");
         std::env::set_var("SERVER_PORT", "9999");
@@ -593,19 +600,20 @@ mod tests {
 
     #[test]
     fn test_jwt_config() {
+        let jwt_config_inner = JwtConfig::hs256("test_secret_32_bytes_minimum_xxx".to_string());
         let config = ServiceConfig {
             name: "test-service".to_string(),
             default_port: 3000,
             database_url: "postgres://localhost/test".to_string(),
-            jwt_secret: "test_secret".to_string(),
+            jwt_secret: "test_secret_32_bytes_minimum_xxx".to_string(),
             host: "0.0.0.0".to_string(),
             port: 3000,
+            jwt_config_inner,
         };
 
         let jwt = config.jwt_config();
 
         assert_eq!(jwt.issuer, "signapps");
-        assert_eq!(jwt.audience, "test-service");
         assert_eq!(jwt.access_expiration, 900);
         assert_eq!(jwt.refresh_expiration, 604800);
     }

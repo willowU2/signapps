@@ -57,14 +57,8 @@ async fn main() -> Result<()> {
     // Create Prometheus exporter
     let exporter = Arc::new(PrometheusExporter::new(collector.clone()));
 
-    // Create JWT config (custom: audience="signapps" for all services)
-    let jwt_config = JwtConfig {
-        secret: config.jwt_secret.clone(),
-        issuer: "signapps".to_string(),
-        audience: "signapps".to_string(),
-        access_expiration: 3600,
-        refresh_expiration: 86400 * 7,
-    };
+    // JWT config — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
 
     // Create application state
     let state = AppState {

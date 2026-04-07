@@ -192,7 +192,7 @@ pub async fn saml_acs(
         1, // default user role
         None,
         None,
-        &state.jwt_secret,
+        &state.jwt_config,
     )?;
 
     Ok(Json(serde_json::json!({

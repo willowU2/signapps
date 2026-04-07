@@ -72,14 +72,8 @@ async fn main() -> anyhow::Result<()> {
     // Initialize route cache
     let route_cache = RouteCache::new(pool.clone());
 
-    // JWT configuration (custom: audience="signapps" for all services)
-    let jwt_config = JwtConfig {
-        secret: config.jwt_secret.clone(),
-        issuer: "signapps".to_string(),
-        audience: "signapps".to_string(),
-        access_expiration: 900,
-        refresh_expiration: 604800,
-    };
+    // JWT config — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
 
     // Initialize TLS resolver early so it can be shared with state
     let tls_resolver = if proxy_enabled {

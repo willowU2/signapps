@@ -68,15 +68,8 @@ async fn main() {
         .await
         .expect("Failed to connect to Postgres");
 
-    // JWT configuration (custom: audience="signapps" for all services)
-    let jwt_secret = env_required("JWT_SECRET");
-    let jwt_config = JwtConfig {
-        secret: jwt_secret,
-        issuer: "signapps".to_string(),
-        audience: "signapps".to_string(),
-        access_expiration: 3600,
-        refresh_expiration: 86400 * 7,
-    };
+    // JWT config — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
 
     let event_bus = PgEventBus::new(pool.clone(), "signapps-mail".to_string());
 

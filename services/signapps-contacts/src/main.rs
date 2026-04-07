@@ -815,13 +815,8 @@ async fn main() -> anyhow::Result<()> {
     let config = ServiceConfig::from_env("signapps-contacts", 3021);
     config.log_startup();
 
-    let jwt_config = JwtConfig {
-        secret: config.jwt_secret.clone(),
-        issuer: "signapps".to_string(),
-        audience: "signapps".to_string(),
-        access_expiration: 3600,
-        refresh_expiration: 86400 * 7,
-    };
+    // JWT config — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
 
     let pool = signapps_db::create_pool(&config.database_url)
         .await
