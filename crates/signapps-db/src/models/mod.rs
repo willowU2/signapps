@@ -21,10 +21,24 @@ pub mod scheduling {
 }
 pub mod certificate;
 pub mod container;
-pub mod conversation;
+// AI domain models — now live in signapps-db-ai (Phase 5 split).
+pub mod conversation {
+    pub use signapps_db_ai::models::conversation::*;
+}
+pub mod document_vector {
+    pub use signapps_db_ai::models::document_vector::*;
+}
+pub mod generated_media {
+    pub use signapps_db_ai::models::generated_media::*;
+}
+pub mod kg {
+    pub use signapps_db_ai::models::kg::*;
+}
+pub mod multimodal_vector {
+    pub use signapps_db_ai::models::multimodal_vector::*;
+}
 pub mod core_org;
 pub mod device;
-pub mod document_vector;
 // Storage domain models — now live in signapps-db-storage (Phase 4 split).
 // Kept as re-export aliases so that `use signapps_db::models::drive::*` still works.
 pub mod drive {
@@ -47,17 +61,14 @@ pub mod entity_reference;
 pub mod form {
     pub use signapps_db_forms::models::form::*;
 }
-pub mod generated_media;
 pub mod group;
 pub mod infrastructure;
 pub mod job;
-pub mod kg;
 pub mod ldap;
 // Mail domain models — now live in signapps-db-mail (Phase 4 split).
 pub mod mailserver {
     pub use signapps_db_mail::models::mailserver::*;
 }
-pub mod multimodal_vector;
 // Notifications domain models — now live in signapps-db-notifications (Phase 4 split).
 pub mod notification {
     pub use signapps_db_notifications::models::notification::*;
@@ -94,6 +105,7 @@ pub use form::*;
 pub use generated_media::*;
 pub use group::*;
 pub use job::*;
+pub use kg::*;
 pub use ldap::*;
 pub use mailserver::*;
 pub use multimodal_vector::*;

@@ -36,8 +36,16 @@ pub use certificate_repository::CertificateRepository;
 
 // Forms repositories — now live in signapps-db-forms (Phase 4 split).
 pub use signapps_db_forms::repositories::FormRepository;
-pub mod vector_repository;
-pub use vector_repository::VectorRepository;
+// AI repositories — now live in signapps-db-ai (Phase 5 split).
+pub use signapps_db_ai::repositories::{
+    ChunkInput, ConversationRepository, GeneratedMediaRepository, KgRepository,
+    MultimodalVectorRepository, VectorRepository,
+};
+// Re-export module alias for consumers that import via module path
+// e.g. `use signapps_db::repositories::vector_repository::{...}`
+pub mod vector_repository {
+    pub use signapps_db_ai::repositories::{ChunkInput, VectorRepository};
+}
 
 // Calendar repositories — now live in signapps-db-calendar (Phase 3 split).
 // Re-exported here so that `use signapps_db::repositories::CalendarRepository` still works.
@@ -99,14 +107,6 @@ pub use activity_repository::ActivityRepository;
 pub mod signature_repository;
 pub use signature_repository::SignatureRepository;
 
-pub mod multimodal_vector_repository;
-pub use multimodal_vector_repository::MultimodalVectorRepository;
-
-pub mod conversation_repository;
-pub use conversation_repository::ConversationRepository;
-
-pub mod generated_media_repository;
-pub use generated_media_repository::GeneratedMediaRepository;
 
 // Drive ACL repositories — now live in signapps-db-storage (Phase 4 split).
 pub use signapps_db_storage::repositories::{AuditAlertConfigRepository, DriveAuditLogRepository};
@@ -123,8 +123,6 @@ pub use signapps_db_vault::repositories::{
     VaultKeysRepository, VaultOrgKeyRepository, VaultShareRepository,
 };
 
-pub mod kg_repository;
-pub use kg_repository::KgRepository;
 
 // Mail repositories — now live in signapps-db-mail (Phase 4 split).
 pub use signapps_db_mail::repositories::{
