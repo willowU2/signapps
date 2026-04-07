@@ -72,8 +72,17 @@ import {
   trashApi,
   sharesApi,
 } from "@/lib/api";
+import dynamic from "next/dynamic";
 import { UploadSheet } from "@/components/storage/upload-sheet";
-import { FilePreviewDialog } from "@/components/storage/file-preview-dialog";
+// FilePreviewDialog pulls in ExcelJS (~2 MB) — lazy-loaded so it is excluded
+// from the initial storage page bundle.
+const FilePreviewDialog = dynamic(
+  () =>
+    import("@/components/storage/file-preview-dialog").then((m) => ({
+      default: m.FilePreviewDialog,
+    })),
+  { ssr: false, loading: () => null },
+);
 import { FolderTree } from "@/components/storage/folder-tree";
 import { PermissionsSheet } from "@/components/storage/permissions-sheet";
 import { FileUploadProgressBar } from "@/components/application/file-upload/file-upload-progress-bar";

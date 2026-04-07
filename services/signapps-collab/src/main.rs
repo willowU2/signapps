@@ -49,14 +49,8 @@ async fn main() -> anyhow::Result<()> {
     // Initialize database
     let pool = signapps_db::create_pool(&config.database_url).await?;
 
-    // Create JWT config (custom: audience="signapps" for all services)
-    let jwt_config = JwtConfig {
-        secret: config.jwt_secret.clone(),
-        issuer: "signapps".to_string(),
-        audience: "signapps".to_string(),
-        access_expiration: 900,
-        refresh_expiration: 604800,
-    };
+    // JWT config — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
 
     // Initialize cache
     let cache = Arc::new(CacheService::new(

@@ -1,12 +1,13 @@
 //! iCalendar import/export handlers
 
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::StatusCode,
     Json,
 };
 use chrono;
 use serde::{Deserialize, Serialize};
+use signapps_common::Claims;
 use signapps_db::{models::*, CalendarRepository, EventRepository};
 use uuid::Uuid;
 
@@ -33,14 +34,16 @@ pub struct ImportResult {
 #[allow(clippy::type_complexity)]
 pub async fn export_calendar(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(calendar_id): Path<Uuid>,
 ) -> Result<(StatusCode, [(String, String); 2], String), CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let cal_repo = CalendarRepository::new(&state.pool);
     let event_repo = EventRepository::new(&state.pool);
 
-    // Get calendar
+    // Get calendar (tenant-scoped)
     let calendar = cal_repo
-        .find_by_id(calendar_id)
+        .find_by_id(calendar_id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
@@ -94,14 +97,16 @@ pub async fn export_calendar(
 #[allow(clippy::type_complexity)]
 pub async fn get_calendar_feed(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(calendar_id): Path<Uuid>,
 ) -> Result<(StatusCode, [(String, String); 1], String), CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let cal_repo = CalendarRepository::new(&state.pool);
     let event_repo = EventRepository::new(&state.pool);
 
-    // Get calendar
+    // Get calendar (tenant-scoped)
     let calendar = cal_repo
-        .find_by_id(calendar_id)
+        .find_by_id(calendar_id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;

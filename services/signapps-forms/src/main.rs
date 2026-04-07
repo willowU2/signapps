@@ -771,13 +771,8 @@ async fn main() -> anyhow::Result<()> {
 
     let pool = db_pool.inner().clone();
 
-    let jwt_config = JwtConfig {
-        secret: config.jwt_secret.clone(),
-        issuer: "signapps".to_string(),
-        audience: "signapps".to_string(),
-        access_expiration: 3600,
-        refresh_expiration: 86400 * 7,
-    };
+    // JWT config — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
 
     let event_bus = PgEventBus::new(pool.clone(), "signapps-forms".to_string());
 

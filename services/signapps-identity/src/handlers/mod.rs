@@ -19,6 +19,7 @@ pub mod feature_flags;
 pub mod groups;
 pub mod guest_tokens;
 pub mod health;
+pub mod jwks;
 pub mod ip_allowlist;
 pub mod ldap;
 pub mod lms;

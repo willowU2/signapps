@@ -201,26 +201,14 @@ async fn main() -> anyhow::Result<()> {
         "DATABASE_URL",
         "postgres://signapps:password@localhost:5432/signapps",
     );
-    let jwt_secret = std::env::var("JWT_SECRET")
-        .expect("JWT_SECRET environment variable must be set (minimum 32 characters)");
-    assert!(
-        jwt_secret.len() >= 32,
-        "JWT_SECRET must be at least 32 characters long"
-    );
-
     let pool = PgPoolOptions::new()
         .max_connections(10)
         .connect(&database_url)
         .await?;
     tracing::info!("Database connected");
 
-    let jwt_config = JwtConfig {
-        secret: jwt_secret,
-        issuer: "signapps".to_string(),
-        audience: "signapps".to_string(),
-        access_expiration: 900,
-        refresh_expiration: 604800,
-    };
+    // JWT config — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
 
     let event_bus = PgEventBus::new(pool.clone(), "signapps-billing".to_string());
 

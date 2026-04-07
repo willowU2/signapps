@@ -1,12 +1,13 @@
 //! Handlers for recurring events and instances
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::StatusCode,
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use signapps_common::Claims;
 use signapps_db::{models::Event, EventRepository};
 use uuid::Uuid;
 
@@ -34,12 +35,14 @@ pub struct ExpandedEvent {
 #[tracing::instrument(skip_all)]
 pub async fn get_event_instances(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(event_id): Path<Uuid>,
     Query(query): Query<DateRangeQuery>,
 ) -> Result<Json<ExpandedEvent>, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let repo = EventRepository::new(&state.pool);
     let event = repo
-        .find_by_id(event_id)
+        .find_by_id(event_id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
@@ -79,12 +82,14 @@ pub struct CreateExceptionRequest {
 #[tracing::instrument(skip_all)]
 pub async fn create_exception(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(event_id): Path<Uuid>,
     Json(payload): Json<CreateExceptionRequest>,
 ) -> Result<StatusCode, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let repo = EventRepository::new(&state.pool);
     let event = repo
-        .find_by_id(event_id)
+        .find_by_id(event_id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;

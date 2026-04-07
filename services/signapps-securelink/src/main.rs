@@ -182,22 +182,8 @@ async fn main() -> std::io::Result<()> {
         },
     ];
 
-    // Initialize JWT config from environment
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-        if cfg!(debug_assertions) {
-            tracing::warn!("JWT_SECRET not set, using insecure dev default");
-            "dev_secret_change_in_production_32chars".to_string()
-        } else {
-            panic!("JWT_SECRET must be set in production");
-        }
-    });
-    let jwt_config = JwtConfig {
-        secret: jwt_secret,
-        issuer: "signapps".to_string(),
-        audience: "signapps-securelink".to_string(),
-        access_expiration: 900,
-        refresh_expiration: 604800,
-    };
+    // Initialize JWT config — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
 
     // Create application state
     let state = AppState {

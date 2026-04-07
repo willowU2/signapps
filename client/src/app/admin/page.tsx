@@ -34,39 +34,43 @@ export default function AdminDashboard() {
     <AppLayout>
       <div className="space-y-6">
         <PageHeader
-          title="Admin Dashboard"
+          title="Tableau de bord admin"
           icon={<ShieldCheck className="h-5 w-5 text-primary" />}
         />
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Utilisateurs totaux
+              </CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{users.length}</div>
               <p className="text-xs text-muted-foreground">
-                Active and inactive
+                Actifs et inactifs
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">CPU Usage</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Utilisation CPU
+              </CardTitle>
               <Cpu className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {metrics?.cpu_usage?.toFixed(1)}%
               </div>
-              <p className="text-xs text-muted-foreground">System wide</p>
+              <p className="text-xs text-muted-foreground">Système global</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Memory Usage
+                Utilisation mémoire
               </CardTitle>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -74,19 +78,21 @@ export default function AdminDashboard() {
               <div className="text-2xl font-bold">
                 {metrics?.memory_usage?.toFixed(1)}%
               </div>
-              <p className="text-xs text-muted-foreground">System wide</p>
+              <p className="text-xs text-muted-foreground">Système global</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Disk Usage</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Utilisation disque
+              </CardTitle>
               <HardDrive className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {metrics?.disk_usage?.toFixed(1)}%
               </div>
-              <p className="text-xs text-muted-foreground">Root volume</p>
+              <p className="text-xs text-muted-foreground">Volume racine</p>
             </CardContent>
           </Card>
         </div>
@@ -95,7 +101,7 @@ export default function AdminDashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
           <Card className="col-span-4">
             <CardHeader>
-              <CardTitle>Recent Users</CardTitle>
+              <CardTitle>Utilisateurs récents</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -115,7 +121,7 @@ export default function AdminDashboard() {
                     <div
                       className={`px-2 py-1 rounded text-xs ${isAdmin(user) ? "bg-primary/10 text-primary" : "bg-muted"}`}
                     >
-                      {isAdmin(user) ? "Admin" : "User"}
+                      {isAdmin(user) ? "Admin" : "Utilisateur"}
                     </div>
                   </div>
                 ))}
@@ -124,7 +130,7 @@ export default function AdminDashboard() {
           </Card>
           <Card className="col-span-3">
             <CardHeader>
-              <CardTitle>System Health</CardTitle>
+              <CardTitle>État du système</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -134,14 +140,14 @@ export default function AdminDashboard() {
                       className={`h-2 w-2 rounded-full ${service.status === "online" ? "bg-green-500" : "bg-red-500"}`}
                     />
                     <span className="text-sm">
-                      {service.name} Service:{" "}
-                      {service.status === "online" ? "Online" : "Offline"}
+                      {service.name} :{" "}
+                      {service.status === "online" ? "En ligne" : "Hors ligne"}
                     </span>
                   </div>
                 ))}
                 {!healthData && (
                   <div className="text-sm text-muted-foreground animate-pulse">
-                    Checking system health...
+                    Vérification de l&apos;état du système...
                   </div>
                 )}
               </div>

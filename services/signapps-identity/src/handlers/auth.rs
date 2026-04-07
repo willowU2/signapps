@@ -256,7 +256,7 @@ pub async fn login(
         user.role,
         user.tenant_id,
         workspace_ids,
-        &state.jwt_secret,
+        &state.jwt_config,
     )?;
 
     // Register this session in the active sessions store
@@ -351,7 +351,7 @@ pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result
 
     if let Some(token) = token {
         // Decode token to get expiration
-        if let Ok(claims) = verify_token(&token, &state.jwt_secret) {
+        if let Ok(claims) = verify_token(&token, &state.jwt_config) {
             let ttl = claims.exp - chrono::Utc::now().timestamp();
             if ttl > 0 {
                 // Blacklist token in cache with remaining TTL
@@ -479,7 +479,7 @@ pub async fn refresh(
     let refresh_token = refresh_token.ok_or(Error::InvalidToken)?;
 
     // Verify refresh token
-    let claims = verify_token(&refresh_token, &state.jwt_secret)?;
+    let claims = verify_token(&refresh_token, &state.jwt_config)?;
 
     // Ensure it's a refresh token
     if claims.token_type != "refresh" {
@@ -526,7 +526,7 @@ pub async fn refresh(
         user.role,
         user.tenant_id,
         workspace_ids,
-        &state.jwt_secret,
+        &state.jwt_config,
     )?;
 
     tracing::info!(user_id = %user.id, tenant_id = ?user.tenant_id, "Token refreshed");

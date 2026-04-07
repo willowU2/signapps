@@ -90,14 +90,7 @@ impl MediaConfig {
 impl AuthState for AppState {
     fn jwt_config(&self) -> &JwtConfig {
         static JWT_CONFIG: std::sync::OnceLock<JwtConfig> = std::sync::OnceLock::new();
-        JWT_CONFIG.get_or_init(|| JwtConfig {
-            secret: std::env::var("JWT_SECRET")
-                .unwrap_or_else(|_| "dev-secret-change-in-production".to_string()),
-            issuer: "signapps".to_string(),
-            audience: "signapps".to_string(),
-            access_expiration: 3600,
-            refresh_expiration: 86400 * 7,
-        })
+        JWT_CONFIG.get_or_init(JwtConfig::from_env)
     }
 }
 

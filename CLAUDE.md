@@ -529,6 +529,14 @@ RUST_LOG=info,signapps=debug,sqlx=warn
 
 Voir `.env.example` pour la liste complète.
 
+## Inter-service communication
+
+**Rule:** PgEventBus for async events. Direct DB query (via signapps-db) for synchronous reads. Direct HTTP between services is forbidden except for gateway → backend.
+
+See `docs/architecture/inter-service-communication.md` for details and patterns.
+
+---
+
 ## Préférences de développement
 
 - **Frontend port** : TOUJOURS port 3000

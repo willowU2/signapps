@@ -1,4 +1,4 @@
-import ExcelJS from "exceljs";
+import type ExcelJS from "exceljs";
 import * as mammoth from "mammoth";
 import { storageApi } from "./api";
 import type {
@@ -6,6 +6,9 @@ import type {
   CellStyle,
   CellValidation,
 } from "@/components/sheets/types";
+// ExcelJS runtime is ~2 MB — loaded dynamically inside parseSpreadsheet() so it
+// is excluded from the main bundle.  The `import type` above is erased at
+// compile time and does not contribute to the bundle.
 
 /**
  * Downloads a document from the storage API and parses it based on extension.
@@ -570,6 +573,7 @@ async function parseSpreadsheet(
   buffer: ArrayBuffer,
   ext: string,
 ): Promise<SpreadsheetParseResult> {
+  const ExcelJS = (await import("exceljs")).default;
   const workbook = new ExcelJS.Workbook();
   if (ext === "csv") {
     // ExcelJS csv.read: cast ReadableStream to NodeJS stream type expected by ExcelJS

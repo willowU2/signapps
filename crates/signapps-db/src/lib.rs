@@ -30,10 +30,20 @@ use sqlx::Row;
 use std::time::Duration;
 
 /// Create a new database connection pool.
+///
+/// Pool size is intentionally kept low: with ~33 services × N instances the
+/// aggregate connection count must stay well below PostgreSQL's `max_connections`
+/// (default 100–200). At 10 connections per service, 33 services consume at most
+/// 330 connections, leaving headroom for direct admin connections and future
+/// scaling. Raise only if profiling shows pool exhaustion under realistic load.
+///
+/// The acquire timeout is set to 5 s for fail-fast behaviour: a tight timeout
+/// surfaces pool exhaustion immediately rather than queueing requests silently
+/// for 30 seconds.
 pub async fn create_pool(database_url: &str) -> Result<DatabasePool, sqlx::Error> {
     let pool = PgPoolOptions::new()
-        .max_connections(20)
-        .acquire_timeout(Duration::from_secs(30))  // Increased from 5 to 30 for WSL Docker startup
+        .max_connections(10)
+        .acquire_timeout(Duration::from_secs(5))
         .idle_timeout(Duration::from_secs(600))
         .connect(database_url)
         .await?;

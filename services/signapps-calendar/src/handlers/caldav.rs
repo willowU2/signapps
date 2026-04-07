@@ -93,11 +93,13 @@ pub async fn propfind_principal(
 #[tracing::instrument(skip_all)]
 pub async fn propfind_calendar(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(calendar_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let repo = CalendarRepository::new(&state.pool);
     let calendar = repo
-        .find_by_id(calendar_id)
+        .find_by_id(calendar_id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
@@ -145,12 +147,14 @@ pub async fn propfind_calendar(
 #[tracing::instrument(skip_all)]
 pub async fn get_event_ics(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((_calendar_id, event_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let event_repo = EventRepository::new(&state.pool);
 
     let event = event_repo
-        .find_by_id(event_id)
+        .find_by_id(event_id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
@@ -258,12 +262,13 @@ pub async fn put_event_ics(
     Path((calendar_id, event_id)): Path<(Uuid, Uuid)>,
     body: String,
 ) -> Result<impl IntoResponse, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let event_repo = EventRepository::new(&state.pool);
     let calendar_repo = CalendarRepository::new(&state.pool);
 
-    // Verify the calendar exists and is accessible
+    // Verify the calendar exists and is accessible (tenant-scoped)
     calendar_repo
-        .find_by_id(calendar_id)
+        .find_by_id(calendar_id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;
@@ -279,9 +284,9 @@ pub async fn put_event_ics(
         .next()
         .ok_or_else(|| CalendarError::InvalidInput("No VEVENT found in ICS".to_string()))?;
 
-    // Check if event already exists
+    // Check if event already exists (tenant-scoped)
     let existing = event_repo
-        .find_by_id(event_id)
+        .find_by_id(event_id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?;
 
@@ -392,13 +397,15 @@ pub async fn put_event_ics(
 #[tracing::instrument(skip_all)]
 pub async fn delete_event_ics(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((_calendar_id, event_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let event_repo = EventRepository::new(&state.pool);
 
-    // Verify the event exists
+    // Verify the event exists and belongs to the caller's tenant
     event_repo
-        .find_by_id(event_id)
+        .find_by_id(event_id, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?
         .ok_or(CalendarError::NotFound)?;

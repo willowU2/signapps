@@ -16,7 +16,7 @@ use signapps_common::middleware::{
     logging_middleware, optional_auth_middleware, request_id_middleware,
 };
 use signapps_db::DatabasePool;
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
@@ -60,13 +60,8 @@ async fn main() -> anyhow::Result<()> {
     let config = ServiceConfig::from_env("signapps-pxe", 3016);
     config.log_startup();
 
-    let jwt_config = JwtConfig {
-        secret: config.jwt_secret.clone(),
-        issuer: "signapps".to_string(),
-        audience: "signapps".to_string(),
-        access_expiration: 900,
-        refresh_expiration: 604800,
-    };
+    // JWT config — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
 
     let db_pool = signapps_db::create_pool(&config.database_url).await?;
     let app_state = AppState {
@@ -160,12 +155,22 @@ async fn main() -> anyhow::Result<()> {
             app_state.clone(),
             optional_auth_middleware::<AppState>,
         ))
-        .layer(
+        .layer({
+            let allowed_origins: Vec<axum::http::HeaderValue> =
+                std::env::var("CORS_ALLOWED_ORIGINS")
+                    .unwrap_or_else(|_| "http://localhost:3000,http://127.0.0.1:3000".to_string())
+                    .split(',')
+                    .filter_map(|s| s.trim().parse().ok())
+                    .collect();
             CorsLayer::new()
-                .allow_origin(tower_http::cors::Any)
+                .allow_origin(AllowOrigin::list(allowed_origins))
                 .allow_methods([
-                    axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT,
-                    axum::http::Method::DELETE, axum::http::Method::PATCH, axum::http::Method::OPTIONS,
+                    axum::http::Method::GET,
+                    axum::http::Method::POST,
+                    axum::http::Method::PUT,
+                    axum::http::Method::DELETE,
+                    axum::http::Method::PATCH,
+                    axum::http::Method::OPTIONS,
                 ])
                 .allow_headers([
                     axum::http::header::CONTENT_TYPE,
@@ -173,7 +178,8 @@ async fn main() -> anyhow::Result<()> {
                     axum::http::HeaderName::from_static("x-request-id"),
                     axum::http::HeaderName::from_static("x-workspace-id"),
                 ])
-        )
+                .allow_credentials(true)
+        })
         .layer(TraceLayer::new_for_http())
         .layer(axum::middleware::from_fn(logging_middleware))
         .layer(axum::middleware::from_fn(request_id_middleware))

@@ -67,17 +67,22 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
+// Deterministic color palette for user avatars — hashed from display name so
+// the same person always gets the same color. These 8 colors are intentional
+// design tokens and should NOT be replaced with semantic bg-primary/muted.
+const AVATAR_PALETTE = [
+  "bg-blue-500",
+  "bg-green-500",
+  "bg-amber-500",
+  "bg-purple-500",
+  "bg-pink-500",
+  "bg-teal-500",
+  "bg-indigo-500",
+  "bg-orange-500",
+] as const;
+
 function getAvatarColor(name: string): string {
-  const colors = [
-    "bg-blue-500",
-    "bg-green-500",
-    "bg-amber-500",
-    "bg-purple-500",
-    "bg-pink-500",
-    "bg-teal-500",
-    "bg-indigo-500",
-    "bg-orange-500",
-  ];
+  const colors = AVATAR_PALETTE;
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);

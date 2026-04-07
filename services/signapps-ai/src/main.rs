@@ -85,12 +85,6 @@ async fn main() -> anyhow::Result<()> {
     // Load configuration
     let database_url =
         std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/signapps".into());
-    let jwt_secret = std::env::var("JWT_SECRET")
-        .expect("JWT_SECRET environment variable must be set (minimum 32 characters)");
-    assert!(
-        jwt_secret.len() >= 32,
-        "JWT_SECRET must be at least 32 characters long"
-    );
     let embeddings_url =
         std::env::var("EMBEDDINGS_URL").unwrap_or_else(|_| "http://localhost:8080".into());
 
@@ -297,14 +291,8 @@ async fn main() -> anyhow::Result<()> {
     let indexer = IndexPipeline::new(embeddings.clone(), vectors.clone(), ocr_url);
     tracing::info!("Index pipeline initialized");
 
-    // JWT configuration
-    let jwt_config = JwtConfig {
-        secret: jwt_secret,
-        issuer: "signapps".to_string(),
-        audience: "signapps-ai".to_string(),
-        access_expiration: 900,
-        refresh_expiration: 604800,
-    };
+    // JWT config — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
 
     let storage_root = std::env::var("STORAGE_ROOT").unwrap_or_else(|_| "./data/storage".into());
     let builder = opendal::services::Fs::default().root(&storage_root);

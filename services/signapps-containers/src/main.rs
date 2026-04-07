@@ -58,14 +58,8 @@ async fn main() -> anyhow::Result<()> {
         "Connected to Docker"
     );
 
-    // Create JWT config (custom: audience="signapps" for all services)
-    let jwt_config = JwtConfig {
-        secret: config.jwt_secret.clone(),
-        issuer: "signapps".to_string(),
-        audience: "signapps".to_string(),
-        access_expiration: 900,
-        refresh_expiration: 604800,
-    };
+    // JWT config — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
 
     // Create store manager
     let store = StoreManager::new(pool.clone());

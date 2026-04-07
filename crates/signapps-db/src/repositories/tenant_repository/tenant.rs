@@ -11,13 +11,13 @@ pub struct TenantRepository;
 impl TenantRepository {
     /// Set the current tenant context for RLS.
     pub async fn set_tenant_context(pool: &PgPool, tenant_id: Uuid) -> Result<()> {
-        sqlx::query(&format!(
-            "SET LOCAL app.current_tenant_id = '{}'",
-            tenant_id
-        ))
-        .execute(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        // Use set_config() with a bound parameter instead of string interpolation
+        // to eliminate the SQL injection vector in the previous format!() approach.
+        sqlx::query("SELECT set_config('app.current_tenant_id', $1::text, true)")
+            .bind(tenant_id.to_string())
+            .execute(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
         Ok(())
     }
 

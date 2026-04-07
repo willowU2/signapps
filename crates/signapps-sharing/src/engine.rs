@@ -85,7 +85,7 @@ impl SharingEngine {
         owner_id: Option<Uuid>,
     ) -> Result<()> {
         let chain = self.parent_chain(&resource).await;
-        let resolver = PermissionResolver::new(&self.pool);
+        let resolver = PermissionResolver::with_cache(&self.pool, &self.cache);
         resolver
             .check_action_with_parents(user_ctx, &chain, owner_id, &action)
             .await
@@ -113,7 +113,7 @@ impl SharingEngine {
         owner_id: Option<Uuid>,
     ) -> Result<Option<EffectivePermission>> {
         let chain = self.parent_chain(&resource).await;
-        let resolver = PermissionResolver::new(&self.pool);
+        let resolver = PermissionResolver::with_cache(&self.pool, &self.cache);
         resolver.resolve_with_parents(user_ctx, &chain, owner_id).await
     }
 
@@ -159,7 +159,7 @@ impl SharingEngine {
         }
 
         // Verify actor has manager role or is admin.
-        let resolver = PermissionResolver::new(&self.pool);
+        let resolver = PermissionResolver::with_cache(&self.pool, &self.cache);
         let effective = resolver.resolve(actor_ctx, &resource, owner_id).await?;
 
         let can_grant = actor_ctx.is_admin()
@@ -262,7 +262,7 @@ impl SharingEngine {
         grant_id: Uuid,
     ) -> Result<()> {
         // Verify actor has manager role or is admin.
-        let resolver = PermissionResolver::new(&self.pool);
+        let resolver = PermissionResolver::with_cache(&self.pool, &self.cache);
         let effective = resolver.resolve(actor_ctx, &resource, owner_id).await?;
 
         let can_revoke =
@@ -327,6 +327,7 @@ impl SharingEngine {
         actor_ctx: &UserContext,
         resource_type: crate::types::ResourceType,
         resource_ids: Vec<Uuid>,
+        owner_id: Option<Uuid>,
         request: CreateGrant,
     ) -> Result<crate::models::BulkGrantResult> {
         let mut created = 0usize;
@@ -337,7 +338,10 @@ impl SharingEngine {
                 resource_type,
                 resource_id,
             };
-            match self.grant(actor_ctx, resource, None, request.clone()).await {
+            match self
+                .grant(actor_ctx, resource, owner_id, request.clone())
+                .await
+            {
                 Ok(_) => created += 1,
                 Err(e) => errors.push(crate::models::BulkGrantError {
                     resource_id,
@@ -442,7 +446,7 @@ impl SharingEngine {
         template_id: Uuid,
     ) -> Result<usize> {
         // Verify actor is manager or admin.
-        let resolver = PermissionResolver::new(&self.pool);
+        let resolver = PermissionResolver::with_cache(&self.pool, &self.cache);
         let effective = resolver.resolve(actor_ctx, &resource, owner_id).await?;
 
         let can_apply =
@@ -465,25 +469,30 @@ impl SharingEngine {
         let grant_defs: Vec<CreateGrant> = serde_json::from_value(template.grants.clone())
             .map_err(|e| Error::BadRequest(format!("invalid template grants JSON: {e}")))?;
 
-        // Create each grant.
+        // Create each grant via self.grant() to enforce:
+        //   - vault_entry + everyone restriction
+        //   - per-grant can_reshare / manager checks
+        //   - per-grant audit log and notifications
+        // Errors on individual grants are logged and skipped so that one
+        // bad entry does not abort the remaining template entries.
         let mut created = 0usize;
         for def in grant_defs {
-            SharingRepository::create_grant(
-                &self.pool,
-                CreateGrantInput {
-                    tenant_id: actor_ctx.tenant_id,
-                    resource_type: resource.resource_type.as_str(),
-                    resource_id: resource.resource_id,
-                    grantee_type: def.grantee_type.as_str(),
-                    grantee_id: def.resolved_grantee_id(),
-                    role: def.role.as_str(),
-                    can_reshare: def.can_reshare,
-                    expires_at: def.expires_at,
-                    granted_by: actor_ctx.user_id,
+            match self
+                .grant(actor_ctx, resource.clone(), owner_id, def.clone())
+                .await
+            {
+                Ok(_) => created += 1,
+                Err(e) => {
+                    tracing::warn!(
+                        actor_id    = %actor_ctx.user_id,
+                        resource    = %resource,
+                        template_id = %template_id,
+                        grantee     = ?def.grantee_type,
+                        error       = ?e,
+                        "apply_template: skipping grant due to error"
+                    );
                 },
-            )
-            .await?;
-            created += 1;
+            }
         }
 
         // Audit log.
@@ -667,22 +676,25 @@ impl SharingEngine {
         let system_role = claims.role;
 
         // ── L1 cache: group IDs ──────────────────────────────────────────
-        let group_ids = if let Some(ids) = self.cache.get_group_ids(user_id).await {
+        let group_ids = if let Some(ids) = self.cache.get_group_ids(tenant_id, user_id).await {
             ids
         } else {
             let ids = self.fetch_group_ids(user_id).await?;
-            self.cache.set_group_ids(user_id, &ids).await;
+            self.cache.set_group_ids(tenant_id, user_id, &ids).await;
             ids
         };
 
         // ── L1 cache: org ancestors ──────────────────────────────────────
-        let org_ancestors = if let Some(ids) = self.cache.get_org_ancestors(user_id).await {
-            ids
-        } else {
-            let ids = self.fetch_org_ancestors(user_id, tenant_id).await?;
-            self.cache.set_org_ancestors(user_id, &ids).await;
-            ids
-        };
+        let org_ancestors =
+            if let Some(ids) = self.cache.get_org_ancestors(tenant_id, user_id).await {
+                ids
+            } else {
+                let ids = self.fetch_org_ancestors(user_id, tenant_id).await?;
+                self.cache
+                    .set_org_ancestors(tenant_id, user_id, &ids)
+                    .await;
+                ids
+            };
 
         // group_roles: not cached; leave empty for now (used for group-level
         // role display only, not for the core permission check).
@@ -787,49 +799,58 @@ impl SharingEngine {
     /// Walk `drive.nodes` upward from `resource`, building a chain of
     /// `[resource, parent_folder, grandparent_folder, …]`.
     ///
-    /// Stops when `parent_id IS NULL` (root reached) or after 32 levels
-    /// (infinite-loop guard for corrupt data).  All query errors are logged
-    /// and swallowed — the partial chain built so far is returned.
+    /// Uses a single recursive CTE to fetch the entire ancestor chain in one
+    /// round-trip instead of one query per level.  Stops when `parent_id IS NULL`
+    /// (root reached) or after 32 levels (infinite-loop guard for corrupt data).
+    ///
+    /// On query error the warning is logged and only the original resource ref is
+    /// returned so the caller's permission check still works via direct grants.
     async fn walk_drive_nodes(&self, resource: &ResourceRef) -> Vec<ResourceRef> {
-        let mut chain = vec![resource.clone()];
-        let mut current_id = resource.resource_id;
+        let result: std::result::Result<Vec<Uuid>, sqlx::Error> = sqlx::query_scalar(
+            r#"
+            WITH RECURSIVE ancestors AS (
+                SELECT id, parent_id, 0 AS depth
+                FROM drive.nodes
+                WHERE id = $1
+                UNION ALL
+                SELECT n.id, n.parent_id, a.depth + 1
+                FROM drive.nodes n
+                JOIN ancestors a ON n.id = a.parent_id
+                WHERE a.depth < 32
+            )
+            SELECT id FROM ancestors ORDER BY depth ASC
+            "#,
+        )
+        .bind(resource.resource_id)
+        .fetch_all(&self.pool)
+        .await;
 
-        for _ in 0..32 {
-            // Fetch the parent_id of current_id from drive.nodes.
-            // fetch_optional returns Ok(None) when the row is missing,
-            // Ok(Some(None)) when the row exists but parent_id IS NULL,
-            // and Ok(Some(Some(uuid))) when a parent exists.
-            let result: std::result::Result<Option<Option<Uuid>>, sqlx::Error> =
-                sqlx::query_scalar(
-                    "SELECT parent_id FROM drive.nodes WHERE id = $1",
-                )
-                .bind(current_id)
-                .fetch_optional(&self.pool)
-                .await;
-
-            match result {
-                Ok(Some(Some(parent_id))) => {
-                    // Parent is always a folder in drive.nodes.
-                    chain.push(ResourceRef::folder(parent_id));
-                    current_id = parent_id;
-                }
-                Ok(_) => {
-                    // parent_id IS NULL (root) or row not found — chain is complete.
-                    break;
-                }
-                Err(e) => {
-                    tracing::warn!(
-                        resource_id = %current_id,
-                        error = %e,
-                        "parent_chain: failed to fetch parent from drive.nodes; \
-                         returning partial chain"
-                    );
-                    break;
-                }
+        match result {
+            Ok(ids) => {
+                // The first row (depth 0) is the resource itself — preserve its
+                // original type (File or Folder).  All subsequent rows are parent
+                // folders.
+                ids.into_iter()
+                    .enumerate()
+                    .map(|(i, id)| {
+                        if i == 0 {
+                            resource.clone()
+                        } else {
+                            ResourceRef::folder(id)
+                        }
+                    })
+                    .collect()
+            }
+            Err(e) => {
+                tracing::warn!(
+                    resource_id = %resource.resource_id,
+                    error = %e,
+                    "parent_chain: recursive CTE failed on drive.nodes; \
+                     returning single-element chain"
+                );
+                vec![resource.clone()]
             }
         }
-
-        chain
     }
 
     /// Return `[event_ref, calendar_ref]` by looking up `calendar.events`.

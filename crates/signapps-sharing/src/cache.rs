@@ -41,81 +41,85 @@ impl SharingCache {
 
     // ─── L1: User context ─────────────────────────────────────────────────
 
-    /// Retrieve cached group IDs for a user.
+    /// Retrieve cached group IDs for a user within a tenant.
     ///
     /// Returns `None` on cache miss or deserialization failure.
     ///
     /// # Panics
     ///
     /// No panics — errors are logged and `None` is returned.
-    pub async fn get_group_ids(&self, user_id: Uuid) -> Option<Vec<Uuid>> {
-        let key = l1_group_key(user_id);
+    pub async fn get_group_ids(&self, tenant_id: Uuid, user_id: Uuid) -> Option<Vec<Uuid>> {
+        let key = l1_group_key(tenant_id, user_id);
         let raw = self.inner.get(&key).await?;
         match serde_json::from_str::<Vec<Uuid>>(&raw) {
             Ok(ids) => Some(ids),
             Err(e) => {
-                tracing::warn!(user_id = %user_id, error = %e, "failed to deserialize cached group_ids");
+                tracing::warn!(tenant_id = %tenant_id, user_id = %user_id, error = %e, "failed to deserialize cached group_ids");
                 None
             },
         }
     }
 
-    /// Store group IDs for a user with L1 TTL.
+    /// Store group IDs for a user within a tenant with L1 TTL.
     ///
     /// # Panics
     ///
     /// No panics — serialization failures are logged and the entry is skipped.
-    #[instrument(skip(self, ids), fields(user_id = %user_id))]
-    pub async fn set_group_ids(&self, user_id: Uuid, ids: &[Uuid]) {
+    #[instrument(skip(self, ids), fields(tenant_id = %tenant_id, user_id = %user_id))]
+    pub async fn set_group_ids(&self, tenant_id: Uuid, user_id: Uuid, ids: &[Uuid]) {
         match serde_json::to_string(ids) {
             Ok(json) => {
-                self.inner.set(&l1_group_key(user_id), &json, L1_TTL).await;
+                self.inner
+                    .set(&l1_group_key(tenant_id, user_id), &json, L1_TTL)
+                    .await;
             },
             Err(e) => {
-                tracing::warn!(user_id = %user_id, error = %e, "failed to serialize group_ids for cache");
+                tracing::warn!(tenant_id = %tenant_id, user_id = %user_id, error = %e, "failed to serialize group_ids for cache");
             },
         }
     }
 
-    /// Retrieve cached org-node ancestors for a user.
+    /// Retrieve cached org-node ancestors for a user within a tenant.
     ///
     /// Returns `None` on cache miss or deserialization failure.
     ///
     /// # Panics
     ///
     /// No panics — errors are logged and `None` is returned.
-    pub async fn get_org_ancestors(&self, user_id: Uuid) -> Option<Vec<Uuid>> {
-        let key = l1_org_key(user_id);
+    pub async fn get_org_ancestors(&self, tenant_id: Uuid, user_id: Uuid) -> Option<Vec<Uuid>> {
+        let key = l1_org_key(tenant_id, user_id);
         let raw = self.inner.get(&key).await?;
         match serde_json::from_str::<Vec<Uuid>>(&raw) {
             Ok(ids) => Some(ids),
             Err(e) => {
-                tracing::warn!(user_id = %user_id, error = %e, "failed to deserialize cached org_ancestors");
+                tracing::warn!(tenant_id = %tenant_id, user_id = %user_id, error = %e, "failed to deserialize cached org_ancestors");
                 None
             },
         }
     }
 
-    /// Store org-node ancestors for a user with L1 TTL.
+    /// Store org-node ancestors for a user within a tenant with L1 TTL.
     ///
     /// # Panics
     ///
     /// No panics — serialization failures are logged and the entry is skipped.
-    #[instrument(skip(self, ids), fields(user_id = %user_id))]
-    pub async fn set_org_ancestors(&self, user_id: Uuid, ids: &[Uuid]) {
+    #[instrument(skip(self, ids), fields(tenant_id = %tenant_id, user_id = %user_id))]
+    pub async fn set_org_ancestors(&self, tenant_id: Uuid, user_id: Uuid, ids: &[Uuid]) {
         match serde_json::to_string(ids) {
             Ok(json) => {
-                self.inner.set(&l1_org_key(user_id), &json, L1_TTL).await;
+                self.inner
+                    .set(&l1_org_key(tenant_id, user_id), &json, L1_TTL)
+                    .await;
             },
             Err(e) => {
-                tracing::warn!(user_id = %user_id, error = %e, "failed to serialize org_ancestors for cache");
+                tracing::warn!(tenant_id = %tenant_id, user_id = %user_id, error = %e, "failed to serialize org_ancestors for cache");
             },
         }
     }
 
     // ─── L2: Effective permissions ────────────────────────────────────────
 
-    /// Retrieve the cached effective role string for a (user, resource) pair.
+    /// Retrieve the cached effective role string for a (tenant, user, resource) triple.
     ///
     /// Returns `None` on cache miss.
     ///
@@ -124,28 +128,30 @@ impl SharingCache {
     /// No panics.
     pub async fn get_effective_role(
         &self,
+        tenant_id: Uuid,
         user_id: Uuid,
         resource_type: &str,
         resource_id: Uuid,
     ) -> Option<String> {
-        let key = l2_role_key(user_id, resource_type, resource_id);
+        let key = l2_role_key(tenant_id, user_id, resource_type, resource_id);
         self.inner.get(&key).await
     }
 
-    /// Store the effective role string for a (user, resource) pair with L2 TTL.
+    /// Store the effective role string for a (tenant, user, resource) triple with L2 TTL.
     ///
     /// # Panics
     ///
     /// No panics.
-    #[instrument(skip(self), fields(user_id = %user_id, resource_type, resource_id = %resource_id))]
+    #[instrument(skip(self), fields(tenant_id = %tenant_id, user_id = %user_id, resource_type, resource_id = %resource_id))]
     pub async fn set_effective_role(
         &self,
+        tenant_id: Uuid,
         user_id: Uuid,
         resource_type: &str,
         resource_id: Uuid,
         role: &str,
     ) {
-        let key = l2_role_key(user_id, resource_type, resource_id);
+        let key = l2_role_key(tenant_id, user_id, resource_type, resource_id);
         self.inner.set(&key, role, L2_TTL).await;
     }
 
@@ -153,7 +159,7 @@ impl SharingCache {
 
     /// Log that a resource's permission cache will expire via TTL.
     ///
-    /// Because all L2 entries are keyed by (user, resource_type, resource_id)
+    /// Because all L2 entries are keyed by (tenant, user, resource_type, resource_id)
     /// and we cannot enumerate all users, we rely on the moka TTL to expire
     /// stale entries automatically. This method exists for observability —
     /// callers should invoke it after any grant mutation so the log shows intent.
@@ -171,33 +177,34 @@ impl SharingCache {
         );
     }
 
-    /// Invalidate all L1 cache entries for a user (group_ids and org_ancestors).
+    /// Invalidate all L1 cache entries for a user within a tenant
+    /// (group_ids and org_ancestors).
     ///
     /// Call this when group membership or org-node assignments change for the user.
     ///
     /// # Panics
     ///
     /// No panics.
-    #[instrument(skip(self), fields(user_id = %user_id))]
-    pub async fn invalidate_user_context(&self, user_id: Uuid) {
-        self.inner.del(&l1_group_key(user_id)).await;
-        self.inner.del(&l1_org_key(user_id)).await;
-        tracing::debug!(user_id = %user_id, "invalidated L1 user context cache");
+    #[instrument(skip(self), fields(tenant_id = %tenant_id, user_id = %user_id))]
+    pub async fn invalidate_user_context(&self, tenant_id: Uuid, user_id: Uuid) {
+        self.inner.del(&l1_group_key(tenant_id, user_id)).await;
+        self.inner.del(&l1_org_key(tenant_id, user_id)).await;
+        tracing::debug!(tenant_id = %tenant_id, user_id = %user_id, "invalidated L1 user context cache");
     }
 }
 
 // ─── Key helpers ─────────────────────────────────────────────────────────────
 
-fn l1_group_key(user_id: Uuid) -> String {
-    format!("sharing:l1:groups:{user_id}")
+fn l1_group_key(tenant_id: Uuid, user_id: Uuid) -> String {
+    format!("sharing:l1:groups:{tenant_id}:{user_id}")
 }
 
-fn l1_org_key(user_id: Uuid) -> String {
-    format!("sharing:l1:org_ancestors:{user_id}")
+fn l1_org_key(tenant_id: Uuid, user_id: Uuid) -> String {
+    format!("sharing:l1:org_ancestors:{tenant_id}:{user_id}")
 }
 
-fn l2_role_key(user_id: Uuid, resource_type: &str, resource_id: Uuid) -> String {
-    format!("sharing:l2:role:{user_id}:{resource_type}:{resource_id}")
+fn l2_role_key(tenant_id: Uuid, user_id: Uuid, resource_type: &str, resource_id: Uuid) -> String {
+    format!("sharing:l2:role:{tenant_id}:{user_id}:{resource_type}:{resource_id}")
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -214,13 +221,14 @@ mod tests {
     #[tokio::test]
     async fn group_ids_roundtrip() {
         let cache = make_cache();
+        let tenant_id = Uuid::new_v4();
         let user_id = Uuid::new_v4();
         let ids = vec![Uuid::new_v4(), Uuid::new_v4()];
 
-        assert!(cache.get_group_ids(user_id).await.is_none());
-        cache.set_group_ids(user_id, &ids).await;
+        assert!(cache.get_group_ids(tenant_id, user_id).await.is_none());
+        cache.set_group_ids(tenant_id, user_id, &ids).await;
         let got = cache
-            .get_group_ids(user_id)
+            .get_group_ids(tenant_id, user_id)
             .await
             .expect("should be cached");
         assert_eq!(got, ids);
@@ -229,13 +237,14 @@ mod tests {
     #[tokio::test]
     async fn org_ancestors_roundtrip() {
         let cache = make_cache();
+        let tenant_id = Uuid::new_v4();
         let user_id = Uuid::new_v4();
         let ids = vec![Uuid::new_v4()];
 
-        assert!(cache.get_org_ancestors(user_id).await.is_none());
-        cache.set_org_ancestors(user_id, &ids).await;
+        assert!(cache.get_org_ancestors(tenant_id, user_id).await.is_none());
+        cache.set_org_ancestors(tenant_id, user_id, &ids).await;
         let got = cache
-            .get_org_ancestors(user_id)
+            .get_org_ancestors(tenant_id, user_id)
             .await
             .expect("should be cached");
         assert_eq!(got, ids);
@@ -244,18 +253,19 @@ mod tests {
     #[tokio::test]
     async fn effective_role_roundtrip() {
         let cache = make_cache();
+        let tenant_id = Uuid::new_v4();
         let user_id = Uuid::new_v4();
         let resource_id = Uuid::new_v4();
 
         assert!(cache
-            .get_effective_role(user_id, "file", resource_id)
+            .get_effective_role(tenant_id, user_id, "file", resource_id)
             .await
             .is_none());
         cache
-            .set_effective_role(user_id, "file", resource_id, "editor")
+            .set_effective_role(tenant_id, user_id, "file", resource_id, "editor")
             .await;
         let got = cache
-            .get_effective_role(user_id, "file", resource_id)
+            .get_effective_role(tenant_id, user_id, "file", resource_id)
             .await
             .expect("should be cached");
         assert_eq!(got, "editor");
@@ -264,15 +274,20 @@ mod tests {
     #[tokio::test]
     async fn invalidate_user_context_clears_l1() {
         let cache = make_cache();
+        let tenant_id = Uuid::new_v4();
         let user_id = Uuid::new_v4();
 
-        cache.set_group_ids(user_id, &[Uuid::new_v4()]).await;
-        cache.set_org_ancestors(user_id, &[Uuid::new_v4()]).await;
+        cache
+            .set_group_ids(tenant_id, user_id, &[Uuid::new_v4()])
+            .await;
+        cache
+            .set_org_ancestors(tenant_id, user_id, &[Uuid::new_v4()])
+            .await;
 
-        cache.invalidate_user_context(user_id).await;
+        cache.invalidate_user_context(tenant_id, user_id).await;
 
-        assert!(cache.get_group_ids(user_id).await.is_none());
-        assert!(cache.get_org_ancestors(user_id).await.is_none());
+        assert!(cache.get_group_ids(tenant_id, user_id).await.is_none());
+        assert!(cache.get_org_ancestors(tenant_id, user_id).await.is_none());
     }
 
     #[test]
@@ -284,13 +299,39 @@ mod tests {
 
     #[test]
     fn key_helpers_are_distinct() {
+        let t = Uuid::new_v4();
         let u = Uuid::new_v4();
         let r = Uuid::new_v4();
-        assert_ne!(l1_group_key(u), l1_org_key(u));
-        assert_ne!(l2_role_key(u, "file", r), l2_role_key(u, "folder", r));
+        assert_ne!(l1_group_key(t, u), l1_org_key(t, u));
+        assert_ne!(l2_role_key(t, u, "file", r), l2_role_key(t, u, "folder", r));
         assert_ne!(
-            l2_role_key(u, "file", r),
-            l2_role_key(u, "file", Uuid::new_v4())
+            l2_role_key(t, u, "file", r),
+            l2_role_key(t, u, "file", Uuid::new_v4())
+        );
+    }
+
+    /// Two users with the same UUID in different tenants must produce different keys.
+    #[test]
+    fn same_user_different_tenants_distinct_keys() {
+        let user_id = Uuid::new_v4(); // same UUID in both tenants
+        let tenant_a = Uuid::new_v4();
+        let tenant_b = Uuid::new_v4();
+        let resource_id = Uuid::new_v4();
+
+        assert_ne!(
+            l1_group_key(tenant_a, user_id),
+            l1_group_key(tenant_b, user_id),
+            "same user_id must yield different L1 group keys across tenants"
+        );
+        assert_ne!(
+            l1_org_key(tenant_a, user_id),
+            l1_org_key(tenant_b, user_id),
+            "same user_id must yield different L1 org keys across tenants"
+        );
+        assert_ne!(
+            l2_role_key(tenant_a, user_id, "file", resource_id),
+            l2_role_key(tenant_b, user_id, "file", resource_id),
+            "same user_id must yield different L2 role keys across tenants"
         );
     }
 }

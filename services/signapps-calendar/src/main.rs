@@ -66,14 +66,8 @@ async fn main() -> anyhow::Result<()> {
     let pool = signapps_db::create_pool(&config.database_url).await?;
     tracing::info!("Database initialized successfully");
 
-    // Create JWT config (custom: audience="signapps" for all services)
-    let jwt_config = JwtConfig {
-        secret: config.jwt_secret.clone(),
-        issuer: "signapps".to_string(),
-        audience: "signapps".to_string(),
-        access_expiration: 900,
-        refresh_expiration: 604800,
-    };
+    // JWT config — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
 
     let event_bus = PgEventBus::new(pool.inner().clone(), "signapps-calendar".to_string());
 

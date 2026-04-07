@@ -137,24 +137,31 @@ impl CreateGrant {
 
 /// A sharing policy row from `sharing.policies`.
 ///
-/// Policies provide tenant-level or resource-level overrides that can restrict
-/// or expand what the base grant resolution allows (e.g. disabling external
-/// sharing for a resource type).
+/// Policies define default sharing rules for a container (folder, calendar,
+/// form space, or channel group): they record which grantee gets which default
+/// role when new resources are created inside that container.
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct Policy {
     /// Unique identifier of this policy.
     pub id: Uuid,
     /// The tenant this policy belongs to.
     pub tenant_id: Uuid,
-    /// The resource type this policy applies to, or `NULL` for all types.
-    pub resource_type: Option<String>,
-    /// A machine-readable policy key (e.g. `"no_external_share"`).
-    pub policy_key: String,
-    /// JSON-encoded policy value / configuration.
-    #[schema(value_type = Object)]
-    pub policy_value: serde_json::Value,
-    /// Whether this policy is currently active.
-    pub enabled: Option<bool>,
+    /// The container kind this policy applies to (e.g. `"folder"`, `"calendar"`).
+    pub container_type: String,
+    /// The UUID of the specific container instance.
+    pub container_id: Uuid,
+    /// The kind of grantee: `"user"`, `"group"`, `"org_node"`, or `"everyone"`.
+    pub grantee_type: String,
+    /// The UUID of the grantee, or `NULL` for `"everyone"` policies.
+    pub grantee_id: Option<Uuid>,
+    /// The default role to assign (e.g. `"viewer"`, `"editor"`, `"manager"`).
+    pub default_role: String,
+    /// Whether the grantee can re-share resources created under this container.
+    pub can_reshare: bool,
+    /// Whether this policy should be applied retroactively to existing resources.
+    pub apply_to_existing: bool,
+    /// The user who created this policy.
+    pub created_by: Uuid,
     /// When this policy was created.
     pub created_at: Option<DateTime<Utc>>,
     /// When this policy was last modified.
@@ -222,7 +229,7 @@ pub struct Capability {
 
 // ─── DefaultVisibility ────────────────────────────────────────────────────────
 
-/// A default visibility row from `sharing.default_visibility`.
+/// A default visibility row from `sharing.defaults`.
 ///
 /// Controls whether newly created resources of a given type are visible to
 /// everyone in the tenant by default, or start as private.
@@ -400,6 +407,16 @@ pub struct BulkGrantRequest {
     pub can_reshare: bool,
     /// Optional expiry for time-limited grants.
     pub expires_at: Option<chrono::DateTime<chrono::Utc>>,
+    /// Optional resource owner UUID.
+    ///
+    /// When set, the owner-bypass rule in the permission resolver is activated,
+    /// allowing a resource owner who is not an admin to bulk-grant on their own
+    /// resources without holding the `Manager` role explicitly.
+    ///
+    /// The caller (handler) is responsible for supplying this field when the
+    /// acting user is the resource owner.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub owner_id: Option<uuid::Uuid>,
 }
 
 /// Aggregated outcome of a bulk grant operation.
