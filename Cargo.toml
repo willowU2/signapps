@@ -63,14 +63,14 @@ members = [
     "services/signapps-docs",
     "services/signapps-calendar",
     "services/signapps-ai",
-    "services/signapps-collab",
+    # signapps-collab merged into signapps-docs (port 3010)
     "services/signapps-media",
     "services/signapps-mail",
     "services/signapps-pxe",
     "services/signapps-it-assets",
     "services/signapps-remote",
     "services/signapps-meet",
-    "services/signapps-office",
+    # signapps-office merged into signapps-docs (port 3010)
     "services/signapps-workforce",
     "services/signapps-contacts",
     "services/signapps-forms",

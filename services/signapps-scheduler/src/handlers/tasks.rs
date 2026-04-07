@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use signapps_common::{Claims, TenantContext};
 use signapps_db::models::{CreateTimeItem, TimeItemsQuery, UpdateTimeItem};
-use signapps_db::repositories::calendar_repository::TaskRepository;
+use signapps_db::repositories::TaskRepository;
 use signapps_db::repositories::TimeItemRepository;
 use uuid::Uuid;
 

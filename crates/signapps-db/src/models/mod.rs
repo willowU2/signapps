@@ -7,7 +7,18 @@ pub mod ad_domain;
 pub mod ad_principal_keys;
 pub mod audit_log;
 pub mod backup;
-pub mod calendar;
+// Calendar domain models — now live in signapps-db-calendar (Phase 3 split).
+// Kept as re-export aliases so that `use signapps_db::models::calendar::*` still works.
+pub use signapps_db_calendar::models as calendar_domain;
+pub mod calendar {
+    pub use signapps_db_calendar::models::calendar::*;
+}
+pub mod external_sync {
+    pub use signapps_db_calendar::models::external_sync::*;
+}
+pub mod scheduling {
+    pub use signapps_db_calendar::models::scheduling::*;
+}
 pub mod certificate;
 pub mod container;
 pub mod conversation;
@@ -17,7 +28,6 @@ pub mod document_vector;
 pub mod drive;
 pub mod drive_acl;
 pub mod entity_reference;
-pub mod external_sync;
 pub mod form;
 pub mod generated_media;
 pub mod group;
@@ -35,7 +45,6 @@ pub mod org_groups;
 pub mod org_policies;
 pub mod raid;
 pub mod route;
-pub mod scheduling;
 pub mod signature;
 pub mod storage_quota;
 pub mod storage_tier2;

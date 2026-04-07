@@ -166,4 +166,10 @@ async fn fix_migration_checksums(
 /// The types defined here remain available via their existing `signapps_db::` paths.
 pub use signapps_db_shared as shared;
 
+/// Re-export the `signapps-db-calendar` crate so that consumers can access
+/// calendar domain types via `signapps_db::calendar`.
+///
+/// Phase 3 of the signapps-db split.
+pub use signapps_db_calendar as calendar;
+
 // forced touch build

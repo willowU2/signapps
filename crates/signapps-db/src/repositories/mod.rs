@@ -39,16 +39,13 @@ pub use form_repository::*;
 pub mod vector_repository;
 pub use vector_repository::VectorRepository;
 
-pub mod calendar_repository;
-pub use calendar_repository::{
-    CalendarRepository, EventAttendeeRepository, EventRepository,
-    FloorPlanRepository, ResourceRepository, TaskRepository,
-};
-
-pub mod calendar_hr_repository;
-pub use calendar_hr_repository::{
-    ApprovalWorkflowRepository, CategoryRepository, LeaveBalanceRepository, PresenceRuleRepository,
-    TimesheetRepository,
+// Calendar repositories — now live in signapps-db-calendar (Phase 3 split).
+// Re-exported here so that `use signapps_db::repositories::CalendarRepository` still works.
+pub use signapps_db_calendar::repositories::{
+    ApprovalWorkflowRepository, CalendarRepository, CategoryRepository,
+    EventAttendeeRepository, EventRepository, FloorPlanRepository,
+    LeaveBalanceRepository, PresenceRuleRepository, ResourceRepository,
+    TaskRepository, TimesheetRepository,
 };
 
 pub mod notification_repository;
@@ -70,8 +67,8 @@ pub use tenant_repository::{
     TenantTaskRepository, WorkspaceRepository,
 };
 
-pub mod external_sync_repository;
-pub use external_sync_repository::{
+// External sync repositories — now live in signapps-db-calendar (Phase 3 split).
+pub use signapps_db_calendar::repositories::{
     EventMappingRepository, ExternalCalendarRepository, OAuthStateRepository,
     ProviderConnectionRepository, SyncConfigRepository, SyncConflictRepository, SyncLogRepository,
 };
@@ -79,8 +76,8 @@ pub use external_sync_repository::{
 pub mod user_preferences_repository;
 pub use user_preferences_repository::UserPreferencesRepository;
 
-pub mod scheduling_repository;
-pub use scheduling_repository::{
+// Scheduling repositories — now live in signapps-db-calendar (Phase 3 split).
+pub use signapps_db_calendar::repositories::{
     RecurrenceRuleRepository, SchedulingPreferencesRepository, SchedulingResourceRepository,
     SchedulingTemplateRepository, TimeItemDependencyRepository, TimeItemGroupRepository,
     TimeItemRepository, TimeItemUserRepository,

@@ -9,7 +9,7 @@ use serde::Deserialize;
 use serde_json::json;
 use signapps_common::{Claims, TenantContext};
 use signapps_db::models::calendar::{AddEventAttendee, CreateEvent, UpdateEvent};
-use signapps_db::repositories::calendar_repository::{EventAttendeeRepository, EventRepository};
+use signapps_db::repositories::{EventAttendeeRepository, EventRepository};
 use uuid::Uuid;
 
 use crate::AppState;

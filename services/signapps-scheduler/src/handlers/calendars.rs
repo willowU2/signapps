@@ -7,7 +7,7 @@ use axum::{
 use serde_json::json;
 use signapps_common::{Claims, TenantContext};
 use signapps_db::models::calendar::{CreateCalendar, UpdateCalendar};
-use signapps_db::repositories::calendar_repository::CalendarRepository;
+use signapps_db::repositories::CalendarRepository;
 use uuid::Uuid;
 
 use crate::AppState;
