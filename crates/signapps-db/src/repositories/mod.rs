@@ -54,11 +54,10 @@ pub use notification_repository::{
     NotificationTemplateRepository, PushSubscriptionRepository,
 };
 
-pub mod storage_tier2_repository;
-pub use storage_tier2_repository::StorageTier2Repository;
-
-pub mod storage_tier3_repository;
-pub use storage_tier3_repository::StorageTier3Repository;
+// Storage repositories — now live in signapps-db-storage (Phase 4 split).
+pub use signapps_db_storage::repositories::{
+    StorageTier2Repository, StorageTier3Repository,
+};
 
 pub mod tenant_repository;
 pub use tenant_repository::{
@@ -85,8 +84,8 @@ pub use signapps_db_calendar::repositories::{
 pub mod metrics_repository;
 pub use metrics_repository::{MetricsRepository, ResourceMetrics, WorkloadMetrics};
 
-pub mod quota_repository;
-pub use quota_repository::QuotaRepository;
+// Quota repository — now lives in signapps-db-storage (Phase 4 split).
+pub use signapps_db_storage::repositories::QuotaRepository;
 
 pub mod audit_log_repository;
 pub use audit_log_repository::AuditLogRepository;
@@ -109,8 +108,8 @@ pub use conversation_repository::ConversationRepository;
 pub mod generated_media_repository;
 pub use generated_media_repository::GeneratedMediaRepository;
 
-pub mod drive_acl_repository;
-pub use drive_acl_repository::{AuditAlertConfigRepository, DriveAuditLogRepository};
+// Drive ACL repositories — now live in signapps-db-storage (Phase 4 split).
+pub use signapps_db_storage::repositories::{AuditAlertConfigRepository, DriveAuditLogRepository};
 
 pub mod core_org_repository;
 pub use core_org_repository::{

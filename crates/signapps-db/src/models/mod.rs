@@ -25,8 +25,23 @@ pub mod conversation;
 pub mod core_org;
 pub mod device;
 pub mod document_vector;
-pub mod drive;
-pub mod drive_acl;
+// Storage domain models — now live in signapps-db-storage (Phase 4 split).
+// Kept as re-export aliases so that `use signapps_db::models::drive::*` still works.
+pub mod drive {
+    pub use signapps_db_storage::models::drive::*;
+}
+pub mod drive_acl {
+    pub use signapps_db_storage::models::drive_acl::*;
+}
+pub mod storage_quota {
+    pub use signapps_db_storage::models::storage_quota::*;
+}
+pub mod storage_tier2 {
+    pub use signapps_db_storage::models::storage_tier2::*;
+}
+pub mod storage_tier3 {
+    pub use signapps_db_storage::models::storage_tier3::*;
+}
 pub mod entity_reference;
 pub mod form;
 pub mod generated_media;
@@ -46,9 +61,6 @@ pub mod org_policies;
 pub mod raid;
 pub mod route;
 pub mod signature;
-pub mod storage_quota;
-pub mod storage_tier2;
-pub mod storage_tier3;
 pub mod tenant;
 pub mod user;
 pub mod user_preferences;
@@ -64,6 +76,7 @@ pub use core_org::*;
 pub use device::*;
 pub use document_vector::*;
 pub use drive::*;
+pub use drive_acl::*;
 pub use external_sync::*;
 pub use form::*;
 pub use generated_media::*;
@@ -81,6 +94,7 @@ pub use raid::*;
 pub use route::*;
 pub use scheduling::*;
 pub use storage_quota::*;
+pub use storage_tier2::*;
 pub use storage_tier3::*;
 pub use tenant::*;
 pub use user::*;

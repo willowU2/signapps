@@ -1,16 +1,15 @@
 [package]
-name = "signapps-db"
+name = "signapps-db-storage"
 version.workspace = true
 edition = "2021"
 rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Database access layer for SignApps Platform"
+description = "Storage domain database models and repositories for SignApps Platform"
 
 [dependencies]
 # Database
 sqlx = { workspace = true }
-pgvector = { workspace = true }
 
 # Serialization
 serde = { workspace = true }
@@ -18,7 +17,6 @@ serde_json = { workspace = true }
 
 # Async
 tokio = { workspace = true }
-async-trait = { workspace = true }
 
 # Utilities
 uuid = { workspace = true }
@@ -28,15 +26,9 @@ tracing = { workspace = true }
 # Internal
 signapps-common = { path = "../signapps-common" }
 signapps-db-shared = { path = "../signapps-db-shared" }
-signapps-db-calendar = { path = "../signapps-db-calendar" }
-signapps-db-storage = { path = "../signapps-db-storage" }
 
 # OpenAPI schema derivation (optional feature)
 utoipa = { workspace = true, optional = true }
 
 [features]
-openapi = ["utoipa", "signapps-db-calendar/openapi", "signapps-db-storage/openapi"]
-
-[dev-dependencies]
-tokio-test = { workspace = true }
-argon2 = { workspace = true }
+openapi = ["utoipa"]

@@ -21,9 +21,7 @@ use signapps_common::Result;
 use signapps_db::models::drive_acl::{
     AuditAlertConfig, AuditLogFilters, ChainVerification, DriveAuditLog, UpdateAlertConfig,
 };
-use signapps_db::repositories::drive_acl_repository::{
-    AuditAlertConfigRepository, DriveAuditLogRepository,
-};
+use signapps_db::repositories::{AuditAlertConfigRepository, DriveAuditLogRepository};
 use uuid::Uuid;
 
 use crate::services::audit_chain;

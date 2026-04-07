@@ -6,7 +6,7 @@ use axum::{
 };
 
 use signapps_db::models::storage_tier2::{CreateTagRequest, UpdateTagRequest};
-use signapps_db::repositories::storage_tier2_repository::StorageTier2Repository;
+use signapps_db::repositories::StorageTier2Repository;
 use tracing::error;
 use uuid::Uuid;
 

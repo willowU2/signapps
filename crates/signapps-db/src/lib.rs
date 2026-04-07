@@ -172,4 +172,10 @@ pub use signapps_db_shared as shared;
 /// Phase 3 of the signapps-db split.
 pub use signapps_db_calendar as calendar;
 
+/// Re-export the `signapps-db-storage` crate so that consumers can access
+/// storage domain types via `signapps_db::storage`.
+///
+/// Phase 4 of the signapps-db split.
+pub use signapps_db_storage as storage;
+
 // forced touch build

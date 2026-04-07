@@ -1,4 +1,5 @@
 mod catalog;
+mod dc;
 mod dhcp_proxy;
 mod handlers;
 mod images;
@@ -16,12 +17,13 @@ use signapps_common::middleware::{
     logging_middleware, optional_auth_middleware, request_id_middleware,
 };
 use signapps_db::DatabasePool;
+use tokio::sync::watch;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
 #[derive(Clone)]
-/// Application state for  service.
+/// Application state for PXE + DC infrastructure service.
 pub struct AppState {
     pub db: DatabasePool,
     pub jwt_config: JwtConfig,
@@ -42,13 +44,23 @@ pub async fn health_check() -> axum::Json<serde_json::Value> {
         "app": {
             "id": "pxe",
             "label": "PXE Deploy",
-            "description": "Déploiement réseau PXE",
+            "description": "Déploiement réseau PXE + Domain Controller",
             "icon": "Server",
             "category": "Infrastructure",
             "color": "text-orange-600",
             "href": "/pxe",
             "port": 3016
         }
+    }))
+}
+
+/// Health endpoint for the Domain Controller subsystem.
+pub async fn dc_health_check() -> axum::Json<serde_json::Value> {
+    axum::Json(serde_json::json!({
+        "status": "ok",
+        "service": "signapps-dc",
+        "subsystem": "domain-controller",
+        "version": env!("CARGO_PKG_VERSION"),
     }))
 }
 
@@ -65,7 +77,7 @@ async fn main() -> anyhow::Result<()> {
 
     let db_pool = signapps_db::create_pool(&config.database_url).await?;
     let app_state = AppState {
-        db: db_pool,
+        db: db_pool.clone(),
         jwt_config,
     };
 
@@ -92,10 +104,23 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    // Shutdown channel — shared with DC protocol listeners so they stop cleanly
+    // when the main Axum server receives its shutdown signal.
+    let (shutdown_tx, shutdown_rx) = watch::channel(false);
+
+    // Spawn DC protocol listeners (LDAP, Kerberos KDC, NTP, AD sync, reconciliation).
+    // Each listener is an independent tokio task; a listener failure is logged
+    // but does NOT kill the PXE REST API — infrastructure is resilient.
+    if let Err(e) = dc::spawn_dc_listeners(db_pool, shutdown_rx).await {
+        tracing::warn!("DC listeners could not be started: {}", e);
+    }
+
     let app = Router::new()
         .route("/health", get(health_check))
+        .route("/dc/health", get(dc_health_check))
         .nest_service("/boot", ServeDir::new(http_boot_dir))
         .route("/api/v1/pxe/health", get(health_check))
+        .route("/api/v1/dc/health", get(dc_health_check))
         // Profiles
         .route(
             "/api/v1/pxe/profiles",
@@ -185,5 +210,37 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn(request_id_middleware))
         .with_state(app_state);
 
-    signapps_common::bootstrap::run_server(app, &config).await
+    // Use run_server_with_shutdown so we can also signal DC listeners on exit.
+    let result = signapps_common::bootstrap::run_server_with_shutdown(
+        app,
+        &config,
+        async move {
+            // Mirror the same shutdown triggers as run_server (Ctrl+C + SIGTERM on Unix)
+            let ctrl_c = async {
+                tokio::signal::ctrl_c()
+                    .await
+                    .expect("Failed to install Ctrl+C handler");
+            };
+
+            #[cfg(unix)]
+            {
+                use tokio::signal::unix::{signal, SignalKind};
+                let mut terminate =
+                    signal(SignalKind::terminate()).expect("Failed to install SIGTERM handler");
+                tokio::select! {
+                    _ = ctrl_c => {},
+                    _ = terminate.recv() => {},
+                }
+            }
+            #[cfg(not(unix))]
+            ctrl_c.await;
+
+            tracing::info!("Shutdown signal received — stopping DC protocol listeners");
+            let _ = shutdown_tx.send(true);
+        },
+    )
+    .await;
+
+    tracing::info!("=== signapps-pxe stopped ===");
+    result
 }

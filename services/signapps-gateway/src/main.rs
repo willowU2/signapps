@@ -119,10 +119,10 @@ const SERVICE_PORTS: &[(&str, u16)] = &[
     ("signapps-calendar", 3011),
     ("signapps-mail", 3012),
     // signapps-collab (3013) merged into signapps-docs (3010)
-    ("signapps-meet", 3014),
+    ("signapps-meet", 3014), // also serves remote desktop (port 3017 merged)
     ("signapps-forms", 3015),
-    ("signapps-pxe", 3016),
-    ("signapps-remote", 3017),
+    ("signapps-pxe", 3016), // also serves DC protocol listeners (LDAP/Kerberos/NTP) merged from signapps-dc
+    // signapps-remote (3017) merged into signapps-meet (3014)
     // signapps-office (3018) merged into signapps-docs (3010)
     ("signapps-social", 3019),
     ("signapps-chat", 3020),
@@ -613,7 +613,9 @@ async fn main() -> anyhow::Result<()> {
     // OFFICE_SERVICE_URL and COLLAB_SERVICE_URL env vars are kept for compatibility
     // but default to the docs service URL.
     let office_url = env_or("OFFICE_SERVICE_URL", "http://127.0.0.1:3010");
-    let remote_url = env_or("REMOTE_SERVICE_URL", "http://127.0.0.1:3017");
+    // Remote desktop is now served by signapps-meet on port 3014 (merged in Refactor 35 Phase 2).
+    // REMOTE_SERVICE_URL is kept for compatibility but defaults to the meet service URL.
+    let remote_url = env_or("REMOTE_SERVICE_URL", "http://127.0.0.1:3014");
     let mail_url = env_or("MAIL_SERVICE_URL", "http://127.0.0.1:3012");
     let proxy_url = env_or("PROXY_SERVICE_URL", "http://127.0.0.1:3003");
     let chat_url = env_or("CHAT_SERVICE_URL", "http://127.0.0.1:3020");

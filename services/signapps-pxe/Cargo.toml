@@ -20,9 +20,17 @@ dotenvy.workspace = true
 anyhow.workspace = true
 chrono.workspace = true
 tower-http.workspace = true
+tower.workspace = true
+config.workspace = true
+thiserror.workspace = true
 
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
+# DC protocol crates (merged from signapps-dc)
+signapps-ad-core = { path = "../../crates/signapps-ad-core" }
+signapps-ldap-server = { path = "../../crates/signapps-ldap-server" }
+signapps-kerberos-kdc = { path = "../../crates/signapps-kerberos-kdc" }
+signapps-dns-server = { path = "../../crates/signapps-dns-server" }
 ipnetwork = { version = "0.20", features = ["serde"] }
 async-tftp.workspace = true
 sha2 = "0.10"

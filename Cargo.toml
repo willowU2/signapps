@@ -40,6 +40,7 @@ members = [
     "crates/signapps-db",
     "crates/signapps-db-calendar",
     "crates/signapps-db-shared",
+    "crates/signapps-db-storage",
     "crates/signapps-dkim",
     "crates/signapps-dns-server",
     "crates/signapps-imap",
@@ -68,7 +69,7 @@ members = [
     "services/signapps-mail",
     "services/signapps-pxe",
     "services/signapps-it-assets",
-    "services/signapps-remote",
+    # signapps-remote merged into signapps-meet (port 3014)
     "services/signapps-meet",
     # signapps-office merged into signapps-docs (port 3010)
     "services/signapps-workforce",
@@ -78,7 +79,7 @@ members = [
     "services/signapps-billing",
     "services/signapps-notifications",
     "services/signapps-social",
-    "services/signapps-dc",
+    # signapps-dc merged into signapps-pxe (port 3016) — Refactor 35 Phase 3
     # Single-binary gateway (LT-05 POC)
     "services/signapps-gateway",
     # Endpoint management agent (standalone binary)

@@ -1,42 +1,40 @@
-//! SignApps Domain Controller — multi-protocol server.
+//! Domain Controller protocol listeners — LDAP, Kerberos KDC, NTP.
 //!
-//! Launches LDAP (:389/:636), Kerberos KDC (:88/:464), and NTP (:10123) listeners
-//! on a shared tokio runtime with a single PostgreSQL connection pool.
-//! DNS is delegated to signapps-securelink.
+//! These listeners are spawned as background tokio tasks from the merged
+//! `signapps-pxe` main process.  The HTTP REST API and health endpoint
+//! continue to be served by the parent Axum router on port 3016.
 
-mod config;
-mod health;
+pub mod config;
 
-use signapps_common::bootstrap::{env_or, init_tracing, load_env};
+use signapps_db::DatabasePool;
 use tokio::sync::watch;
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    init_tracing("signapps_dc");
-    load_env();
-
-    tracing::info!("=== SignApps Domain Controller ===");
-
+/// Spawn all DC protocol listeners onto the current tokio runtime.
+///
+/// Each listener runs as an independent background task.  A listener failure
+/// is logged but does NOT kill the parent process — PXE REST API stays up.
+///
+/// # Errors
+///
+/// Returns `Err` only if the `DcConfig` cannot be constructed (env parse
+/// errors) or if address parsing fails — not on runtime listener errors.
+pub async fn spawn_dc_listeners(
+    pool: DatabasePool,
+    shutdown_rx: watch::Receiver<bool>,
+) -> anyhow::Result<()> {
+    // Extract inner PgPool for crates that expect sqlx::PgPool directly.
+    let pool: sqlx::PgPool = pool.inner().clone();
     let config = config::DcConfig::from_env();
+
     tracing::info!(
         domain = %config.domain,
-        realm = %config.realm,
+        realm  = %config.realm,
         ldap_port = config.ldap_port,
-        kdc_port = config.kdc_port,
+        kdc_port  = config.kdc_port,
         "DC configuration loaded"
     );
 
-    // Database pool (shared with identity service)
-    let database_url =
-        env_or("DATABASE_URL", "postgres://signapps:password@localhost:5432/signapps");
-    let pool = sqlx::postgres::PgPoolOptions::new()
-        .max_connections(20)
-        .connect(&database_url)
-        .await?;
-
-    tracing::info!("Database connected");
-
-    // Load domain config from registry (if available).
+    // ── Load domain config from registry (if available) ────────────────────
     let domain_config_query: Option<(String, Option<String>, Option<String>, serde_json::Value)> =
         sqlx::query_as(
             "SELECT dns_name, realm, domain_sid, config \
@@ -53,11 +51,10 @@ async fn main() -> anyhow::Result<()> {
     if let Some((dns_name, realm, sid, db_config)) = domain_config_query {
         tracing::info!(
             domain = %dns_name,
-            realm = ?realm,
-            sid = ?sid,
+            realm  = ?realm,
+            sid    = ?sid,
             "Loaded domain config from registry"
         );
-        // Surface NTP configuration when present in the JSONB blob.
         if let Some(ntp) = db_config.get("ntp") {
             tracing::info!(ntp = %ntp, "NTP configuration loaded");
         }
@@ -68,19 +65,7 @@ async fn main() -> anyhow::Result<()> {
         );
     }
 
-    // Shutdown signal
-    let (shutdown_tx, shutdown_rx) = watch::channel(false);
-
-    // Health endpoint (Axum HTTP on a separate port)
-    let health_port = config.health_port;
-    let health_pool = pool.clone();
-    let health_handle = tokio::spawn(async move {
-        if let Err(e) = health::run_health_server(health_pool, health_port).await {
-            tracing::error!("Health server error: {}", e);
-        }
-    });
-
-    // LDAP listener
+    // ── LDAP listener ────────────────────────────────────────────────────────
     let ldap_config = signapps_ldap_server::listener::LdapListenerConfig {
         ldap_addr: format!("0.0.0.0:{}", config.ldap_port).parse()?,
         ldaps_addr: Some(format!("0.0.0.0:{}", config.ldaps_port).parse()?),
@@ -89,13 +74,14 @@ async fn main() -> anyhow::Result<()> {
     let ldap_listener = signapps_ldap_server::listener::LdapListener::new(ldap_config);
     let ldap_pool = pool.clone();
     let ldap_shutdown = shutdown_rx.clone();
-    let ldap_handle = tokio::spawn(async move {
+    tokio::spawn(async move {
         if let Err(e) = ldap_listener.run(ldap_pool, ldap_shutdown).await {
             tracing::error!("LDAP listener error: {}", e);
         }
     });
+    tracing::info!(port = config.ldap_port, ldaps_port = config.ldaps_port, "LDAP listener spawned");
 
-    // Kerberos KDC listener
+    // ── Kerberos KDC listener ────────────────────────────────────────────────
     let kdc_config = signapps_kerberos_kdc::listener::KdcListenerConfig {
         kdc_addr: format!("0.0.0.0:{}", config.kdc_port).parse()?,
         kpasswd_addr: format!("0.0.0.0:{}", config.kpasswd_port).parse()?,
@@ -104,16 +90,17 @@ async fn main() -> anyhow::Result<()> {
     let kdc_listener = signapps_kerberos_kdc::listener::KdcListener::new(kdc_config);
     let kdc_pool = pool.clone();
     let kdc_shutdown = shutdown_rx.clone();
-    let kdc_handle = tokio::spawn(async move {
+    tokio::spawn(async move {
         if let Err(e) = kdc_listener.run(kdc_pool, kdc_shutdown).await {
             tracing::error!("KDC listener error: {}", e);
         }
     });
+    tracing::info!(port = config.kdc_port, kpasswd_port = config.kpasswd_port, "KDC listener spawned");
 
-    // NTP listener
+    // ── NTP listener ─────────────────────────────────────────────────────────
     let ntp_port = config.ntp_port;
     let ntp_shutdown = shutdown_rx.clone();
-    let ntp_handle = tokio::spawn(async move {
+    tokio::spawn(async move {
         use signapps_dns_server::ntp::NtpPacket;
         use tokio::net::UdpSocket;
 
@@ -129,7 +116,7 @@ async fn main() -> anyhow::Result<()> {
         };
 
         let mut buf = [0u8; 48];
-        let mut shutdown_rx = ntp_shutdown;
+        let mut shutdown = ntp_shutdown;
 
         loop {
             tokio::select! {
@@ -137,7 +124,10 @@ async fn main() -> anyhow::Result<()> {
                     match result {
                         Ok((len, addr)) if len >= 48 => {
                             if let Some(client_pkt) = NtpPacket::from_bytes(&buf[..len]) {
-                                let response = NtpPacket::server_response(client_pkt.transmit_timestamp, 3);
+                                let response = NtpPacket::server_response(
+                                    client_pkt.transmit_timestamp,
+                                    3,
+                                );
                                 let resp_bytes = response.to_bytes();
                                 if let Err(e) = socket.send_to(&resp_bytes, addr).await {
                                     tracing::warn!(peer = %addr, "NTP send error: {}", e);
@@ -154,8 +144,8 @@ async fn main() -> anyhow::Result<()> {
                 }
                 _ = async {
                     loop {
-                        shutdown_rx.changed().await.ok();
-                        if *shutdown_rx.borrow() { break; }
+                        shutdown.changed().await.ok();
+                        if *shutdown.borrow() { break; }
                     }
                 } => {
                     tracing::info!("NTP server shutting down");
@@ -164,19 +154,20 @@ async fn main() -> anyhow::Result<()> {
             }
         }
     });
+    tracing::info!(port = ntp_port, "NTP listener spawned");
 
-    // AD Sync worker
+    // ── AD Sync worker ────────────────────────────────────────────────────────
     let sync_pool = pool.clone();
-    let sync_handle = tokio::spawn(async move {
+    tokio::spawn(async move {
         signapps_ad_core::sync_worker::run_sync_worker(sync_pool).await;
     });
-
     tracing::info!("AD sync worker spawned");
 
-    // AD Reconciliation cron — runs every 15 minutes
+    // ── AD Reconciliation cron (every 15 min) ─────────────────────────────────
     let recon_pool = pool.clone();
-    let recon_handle = tokio::spawn(async move {
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(900));
+    tokio::spawn(async move {
+        let mut interval =
+            tokio::time::interval(tokio::time::Duration::from_secs(900));
         loop {
             interval.tick().await;
             match signapps_ad_core::reconciliation::reconcile(&recon_pool).await {
@@ -189,19 +180,7 @@ async fn main() -> anyhow::Result<()> {
             }
         }
     });
-
     tracing::info!("AD reconciliation cron spawned (interval = 15 min)");
 
-    tracing::info!("All DC listeners started — press Ctrl+C to stop");
-
-    // Wait for shutdown
-    tokio::signal::ctrl_c().await?;
-    tracing::info!("Shutdown signal received");
-    let _ = shutdown_tx.send(true);
-
-    // Wait for listeners to finish
-    let _ = tokio::join!(health_handle, ldap_handle, kdc_handle, ntp_handle, sync_handle, recon_handle);
-
-    tracing::info!("=== SignApps DC stopped ===");
     Ok(())
 }
