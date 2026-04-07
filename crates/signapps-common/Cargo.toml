@@ -8,6 +8,9 @@ license.workspace = true
 description = "Shared utilities and types for SignApps Platform"
 
 [dependencies]
+# Extracted domain crates (re-exported for backward compat)
+signapps-marketplace = { path = "../signapps-marketplace" }
+
 # Serialization
 serde = { workspace = true }
 serde_json = { workspace = true }

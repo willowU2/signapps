@@ -70,7 +70,8 @@ pub mod events;
 pub mod graphql_layer;
 pub mod healthz;
 pub mod indexer;
-pub mod marketplace;
+// marketplace module extracted to signapps-marketplace crate
+pub use signapps_marketplace as marketplace;
 pub mod middleware;
 pub mod openapi;
 pub mod pg_events;
