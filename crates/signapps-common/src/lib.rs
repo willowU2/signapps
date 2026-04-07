@@ -51,7 +51,8 @@
 //! }
 //! ```
 
-pub mod accounting;
+// accounting module extracted to signapps-accounting-fec crate
+pub use signapps_accounting_fec as accounting;
 pub mod alerts;
 pub mod approval;
 pub mod audit;

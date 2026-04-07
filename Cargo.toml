@@ -8,6 +8,7 @@ members = [
     "crates/signapps-kerberos-kdc",
     "crates/signapps-cache",
     "crates/signapps-common",
+    "crates/signapps-accounting-fec",
     "crates/signapps-e2e-crypto",
     "crates/signapps-marketplace",
     "crates/signapps-plugins",

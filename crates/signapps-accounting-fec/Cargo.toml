@@ -1,0 +1,13 @@
+[package]
+name = "signapps-accounting-fec"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "FEC (Fichier des Écritures Comptables) DGFiP-compliant export for SignApps Platform"
+
+[dependencies]
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
