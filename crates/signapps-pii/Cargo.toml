@@ -1,0 +1,12 @@
+[package]
+name = "signapps-pii"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "AES-256-GCM cipher for PII field encryption in SignApps Platform"
+
+[dependencies]
+aes-gcm = { workspace = true }
+hex = { workspace = true }

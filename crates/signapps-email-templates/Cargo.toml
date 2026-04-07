@@ -1,0 +1,10 @@
+[package]
+name = "signapps-email-templates"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Email template engine with {{variable}} substitution for SignApps Platform"
+
+[dependencies]

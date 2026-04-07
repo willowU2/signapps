@@ -1,0 +1,12 @@
+[package]
+name = "signapps-sso"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Single Sign-On (SSO) SAML2/OIDC foundation for SignApps Platform"
+
+[dependencies]
+serde = { workspace = true }
+uuid = { workspace = true }

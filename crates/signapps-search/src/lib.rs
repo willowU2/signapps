@@ -238,7 +238,6 @@ impl SearchIndex {
 }
 
 #[cfg(test)]
-#[cfg(feature = "search")]
 mod tests {
     use super::*;
     use tempfile::TempDir;

@@ -7958,15 +7958,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "qrcode"
-version = "0.14.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d68782463e408eb1e668cf6152704bd856c78c5b6417adaee3203d8f4c1fc9ec"
-dependencies = [
- "image 0.25.9",
-]
-
-[[package]]
 name = "qrcodegen"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10038,6 +10029,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-alerts"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-approval"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "dashmap 6.1.0",
+ "serde",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-billing"
 version = "0.1.0"
 dependencies = [
@@ -10181,47 +10192,58 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-comments"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "dashmap 6.1.0",
+ "serde",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-common"
 version = "0.1.0"
 dependencies = [
- "aes-gcm",
  "anyhow",
  "argon2",
  "async-trait",
  "axum 0.7.9",
- "base64 0.22.1",
  "chrono",
- "config",
- "dashmap 6.1.0",
  "dotenvy",
- "hex",
- "hmac",
  "jsonwebtoken",
  "once_cell",
  "opentelemetry",
  "opentelemetry-otlp",
  "opentelemetry_sdk",
  "prometheus",
- "qrcode",
- "rand 0.8.5",
- "regex",
- "reqwest 0.12.28",
  "serde",
  "serde_json",
- "sha2",
  "signapps-accounting-fec",
+ "signapps-alerts",
+ "signapps-approval",
  "signapps-bridge",
+ "signapps-comments",
  "signapps-data-connectors",
  "signapps-dlp",
  "signapps-e2e-crypto",
+ "signapps-email-templates",
  "signapps-graphql-layer",
+ "signapps-indexer",
  "signapps-marketplace",
+ "signapps-pii",
  "signapps-plugins",
+ "signapps-rate-limit",
  "signapps-reporting",
+ "signapps-retention",
  "signapps-sql-dashboard",
+ "signapps-sso",
+ "signapps-triggers",
+ "signapps-trust",
  "signapps-ueba",
+ "signapps-vault-types",
+ "signapps-webhooks",
  "sqlx",
- "tantivy",
  "thiserror 1.0.69",
  "tokio",
  "tokio-test",
@@ -10470,6 +10492,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-email-templates"
+version = "0.1.0"
+
+[[package]]
 name = "signapps-forms"
 version = "0.1.0"
 dependencies = [
@@ -10578,6 +10604,16 @@ version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
  "chrono",
+]
+
+[[package]]
+name = "signapps-indexer"
+version = "0.1.0"
+dependencies = [
+ "reqwest 0.12.28",
+ "serde_json",
+ "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -10902,6 +10938,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-pii"
+version = "0.1.0"
+dependencies = [
+ "aes-gcm",
+ "hex",
+]
+
+[[package]]
 name = "signapps-plugins"
 version = "0.1.0"
 dependencies = [
@@ -10983,6 +11027,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-rate-limit"
+version = "0.1.0"
+dependencies = [
+ "axum 0.7.9",
+]
+
+[[package]]
 name = "signapps-remote"
 version = "0.1.0"
 dependencies = [
@@ -11015,6 +11066,15 @@ dependencies = [
  "serde_json",
  "thiserror 1.0.69",
  "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-retention"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
  "uuid",
 ]
 
@@ -11059,6 +11119,16 @@ dependencies = [
  "utoipa",
  "utoipa-swagger-ui",
  "uuid",
+]
+
+[[package]]
+name = "signapps-search"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "tantivy",
+ "tempfile",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -11215,6 +11285,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-sso"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-storage"
 version = "0.1.0"
 dependencies = [
@@ -11271,12 +11349,57 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-triggers"
+version = "0.1.0"
+dependencies = [
+ "dashmap 6.1.0",
+ "serde",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-trust"
+version = "0.1.0"
+dependencies = [
+ "axum 0.7.9",
+ "serde",
+ "tracing",
+]
+
+[[package]]
 name = "signapps-ueba"
 version = "0.1.0"
 dependencies = [
  "chrono",
  "serde",
  "serde_json",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-vault-types"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "dashmap 6.1.0",
+ "rand 0.8.5",
+ "serde",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-webhooks"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "hex",
+ "hmac",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "tracing",
  "uuid",
 ]
 

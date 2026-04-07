@@ -1,0 +1,16 @@
+[package]
+name = "signapps-search"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Tantivy-backed full-text search index for SignApps Platform"
+
+[dependencies]
+tantivy = { workspace = true }
+thiserror = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

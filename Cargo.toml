@@ -20,6 +20,20 @@ members = [
     "crates/signapps-ueba",
     "crates/signapps-sql-dashboard",
     "crates/signapps-data-connectors",
+    "crates/signapps-alerts",
+    "crates/signapps-approval",
+    "crates/signapps-comments",
+    "crates/signapps-email-templates",
+    "crates/signapps-indexer",
+    "crates/signapps-pii",
+    "crates/signapps-rate-limit",
+    "crates/signapps-retention",
+    "crates/signapps-search",
+    "crates/signapps-sso",
+    "crates/signapps-triggers",
+    "crates/signapps-trust",
+    "crates/signapps-vault-types",
+    "crates/signapps-webhooks",
     "crates/signapps-sharing",
     "crates/signapps-dav",
     "crates/signapps-db",
@@ -191,6 +205,7 @@ qrcode = { version = "0.14", features = ["svg"] }
 
 # Testing
 tokio-test = "0.4"
+tempfile = "3"
 
 # Tauri desktop framework
 tauri = { version = "2.2", features = ["devtools"] }

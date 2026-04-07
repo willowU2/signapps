@@ -1,0 +1,13 @@
+[package]
+name = "signapps-triggers"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Event-driven trigger rule engine for SignApps Platform"
+
+[dependencies]
+serde = { workspace = true }
+uuid = { workspace = true }
+dashmap = { workspace = true }

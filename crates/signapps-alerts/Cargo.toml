@@ -1,0 +1,13 @@
+[package]
+name = "signapps-alerts"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Rule-based alerting with multi-channel notifications for SignApps Platform"
+
+[dependencies]
+serde = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }

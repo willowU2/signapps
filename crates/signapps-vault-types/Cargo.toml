@@ -1,0 +1,15 @@
+[package]
+name = "signapps-vault-types"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Password vault entry types and in-memory store for SignApps Platform"
+
+[dependencies]
+serde = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+dashmap = { workspace = true }
+rand = { workspace = true }

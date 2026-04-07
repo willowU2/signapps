@@ -1,0 +1,14 @@
+[package]
+name = "signapps-comments"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Universal inline comments with @mentions, threads, and reactions for SignApps Platform"
+
+[dependencies]
+serde = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+dashmap = { workspace = true }

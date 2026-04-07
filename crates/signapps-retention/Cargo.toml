@@ -1,0 +1,13 @@
+[package]
+name = "signapps-retention"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "RGPD data retention policies (policy engine, expiry checks) for SignApps Platform"
+
+[dependencies]
+serde = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }

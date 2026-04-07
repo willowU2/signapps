@@ -20,6 +20,19 @@ signapps-graphql-layer = { path = "../signapps-graphql-layer" }
 signapps-ueba = { path = "../signapps-ueba" }
 signapps-sql-dashboard = { path = "../signapps-sql-dashboard" }
 signapps-data-connectors = { path = "../signapps-data-connectors" }
+signapps-alerts = { path = "../signapps-alerts" }
+signapps-approval = { path = "../signapps-approval" }
+signapps-comments = { path = "../signapps-comments" }
+signapps-email-templates = { path = "../signapps-email-templates" }
+signapps-indexer = { path = "../signapps-indexer" }
+signapps-pii = { path = "../signapps-pii" }
+signapps-rate-limit = { path = "../signapps-rate-limit" }
+signapps-retention = { path = "../signapps-retention" }
+signapps-sso = { path = "../signapps-sso" }
+signapps-triggers = { path = "../signapps-triggers" }
+signapps-trust = { path = "../signapps-trust" }
+signapps-vault-types = { path = "../signapps-vault-types" }
+signapps-webhooks = { path = "../signapps-webhooks" }
 
 # Serialization
 serde = { workspace = true }
@@ -40,7 +53,6 @@ sqlx = { workspace = true }
 axum = { workspace = true }
 tower = { workspace = true }
 tower-http = { workspace = true }
-reqwest = { workspace = true }
 
 # Async
 tokio = { workspace = true }
@@ -59,36 +71,12 @@ prometheus = { workspace = true }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
 
-# Crypto/HMAC signing
-base64 = { workspace = true }
-hmac = { workspace = true }
-sha2 = { workspace = true }
-hex = { workspace = true }
-aes-gcm = { workspace = true }
-
-# Concurrent collections
-dashmap = { workspace = true }
-
-# Random number generation
-rand = { workspace = true }
-
 # Utilities
 uuid = { workspace = true }
 chrono = { workspace = true }
-config = { workspace = true }
 dotenvy = { workspace = true }
 validator = { workspace = true }
 once_cell = { workspace = true }
-regex = "1"
-
-# QR Code generation
-qrcode = { workspace = true }
-
-# Full-text search (optional, behind feature flag)
-tantivy = { workspace = true, optional = true }
-
-[features]
-search = ["dep:tantivy"]
 
 [dev-dependencies]
 tokio-test = { workspace = true }
