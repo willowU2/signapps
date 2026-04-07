@@ -277,7 +277,9 @@ impl SharingRepository {
 
     // ─── Policies ─────────────────────────────────────────────────────────────
 
-    /// List all policies for a container (tenant-level or resource-specific).
+    /// List all policies for a container within a tenant.
+    ///
+    /// Pass `container_type` and/or `container_id` to filter results.
     ///
     /// # Errors
     ///
@@ -291,8 +293,8 @@ impl SharingRepository {
         sqlx::query_as::<_, Policy>(
             r#"SELECT * FROM sharing.policies
                WHERE tenant_id = $1
-                 AND ($2::text IS NULL OR resource_type = $2)
-                 AND ($3::uuid IS NULL OR id = $3)
+                 AND ($2::text IS NULL OR container_type = $2)
+                 AND ($3::uuid IS NULL OR container_id = $3)
                ORDER BY created_at ASC"#,
         )
         .bind(tenant_id)
@@ -311,22 +313,32 @@ impl SharingRepository {
     pub async fn create_policy(
         pool: &PgPool,
         tenant_id: Uuid,
-        resource_type: Option<&str>,
-        policy_key: &str,
-        policy_value: serde_json::Value,
-        enabled: Option<bool>,
+        container_type: &str,
+        container_id: Uuid,
+        grantee_type: &str,
+        grantee_id: Option<Uuid>,
+        default_role: &str,
+        can_reshare: bool,
+        apply_to_existing: bool,
+        created_by: Uuid,
     ) -> Result<Policy> {
         sqlx::query_as::<_, Policy>(
             r#"INSERT INTO sharing.policies
-                   (tenant_id, resource_type, policy_key, policy_value, enabled)
-               VALUES ($1, $2, $3, $4, $5)
+                   (tenant_id, container_type, container_id,
+                    grantee_type, grantee_id, default_role,
+                    can_reshare, apply_to_existing, created_by)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                RETURNING *"#,
         )
         .bind(tenant_id)
-        .bind(resource_type)
-        .bind(policy_key)
-        .bind(policy_value)
-        .bind(enabled)
+        .bind(container_type)
+        .bind(container_id)
+        .bind(grantee_type)
+        .bind(grantee_id)
+        .bind(default_role)
+        .bind(can_reshare)
+        .bind(apply_to_existing)
+        .bind(created_by)
         .fetch_one(pool)
         .await
         .map_err(|e| Error::Database(e.to_string()))
@@ -477,7 +489,7 @@ impl SharingRepository {
         resource_type: &str,
     ) -> Result<Option<DefaultVisibility>> {
         sqlx::query_as::<_, DefaultVisibility>(
-            r#"SELECT * FROM sharing.default_visibility
+            r#"SELECT * FROM sharing.defaults
                WHERE tenant_id = $1 AND resource_type = $2"#,
         )
         .bind(tenant_id)
