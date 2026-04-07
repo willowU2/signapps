@@ -13,6 +13,7 @@ signapps-accounting-fec = { path = "../signapps-accounting-fec" }
 signapps-e2e-crypto = { path = "../signapps-e2e-crypto" }
 signapps-marketplace = { path = "../signapps-marketplace" }
 signapps-plugins = { path = "../signapps-plugins" }
+signapps-reporting = { path = "../signapps-reporting" }
 
 # Serialization
 serde = { workspace = true }

@@ -10,6 +10,7 @@ members = [
     "crates/signapps-common",
     "crates/signapps-accounting-fec",
     "crates/signapps-e2e-crypto",
+    "crates/signapps-reporting",
     "crates/signapps-marketplace",
     "crates/signapps-plugins",
     "crates/signapps-workflows",

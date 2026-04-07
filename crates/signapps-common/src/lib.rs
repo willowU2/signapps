@@ -85,7 +85,8 @@ pub mod pii;
 pub use signapps_plugins as plugins;
 pub mod qrcode_gen;
 pub mod rate_limit;
-pub mod reporting;
+// reporting module extracted to signapps-reporting crate
+pub use signapps_reporting as reporting;
 pub mod retention;
 #[cfg(feature = "search")]
 pub mod search;
