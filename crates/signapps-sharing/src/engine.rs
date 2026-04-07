@@ -327,6 +327,7 @@ impl SharingEngine {
         actor_ctx: &UserContext,
         resource_type: crate::types::ResourceType,
         resource_ids: Vec<Uuid>,
+        owner_id: Option<Uuid>,
         request: CreateGrant,
     ) -> Result<crate::models::BulkGrantResult> {
         let mut created = 0usize;
@@ -337,7 +338,10 @@ impl SharingEngine {
                 resource_type,
                 resource_id,
             };
-            match self.grant(actor_ctx, resource, None, request.clone()).await {
+            match self
+                .grant(actor_ctx, resource, owner_id, request.clone())
+                .await
+            {
                 Ok(_) => created += 1,
                 Err(e) => errors.push(crate::models::BulkGrantError {
                     resource_id,
@@ -795,49 +799,58 @@ impl SharingEngine {
     /// Walk `drive.nodes` upward from `resource`, building a chain of
     /// `[resource, parent_folder, grandparent_folder, …]`.
     ///
-    /// Stops when `parent_id IS NULL` (root reached) or after 32 levels
-    /// (infinite-loop guard for corrupt data).  All query errors are logged
-    /// and swallowed — the partial chain built so far is returned.
+    /// Uses a single recursive CTE to fetch the entire ancestor chain in one
+    /// round-trip instead of one query per level.  Stops when `parent_id IS NULL`
+    /// (root reached) or after 32 levels (infinite-loop guard for corrupt data).
+    ///
+    /// On query error the warning is logged and only the original resource ref is
+    /// returned so the caller's permission check still works via direct grants.
     async fn walk_drive_nodes(&self, resource: &ResourceRef) -> Vec<ResourceRef> {
-        let mut chain = vec![resource.clone()];
-        let mut current_id = resource.resource_id;
+        let result: std::result::Result<Vec<Uuid>, sqlx::Error> = sqlx::query_scalar(
+            r#"
+            WITH RECURSIVE ancestors AS (
+                SELECT id, parent_id, 0 AS depth
+                FROM drive.nodes
+                WHERE id = $1
+                UNION ALL
+                SELECT n.id, n.parent_id, a.depth + 1
+                FROM drive.nodes n
+                JOIN ancestors a ON n.id = a.parent_id
+                WHERE a.depth < 32
+            )
+            SELECT id FROM ancestors ORDER BY depth ASC
+            "#,
+        )
+        .bind(resource.resource_id)
+        .fetch_all(&self.pool)
+        .await;
 
-        for _ in 0..32 {
-            // Fetch the parent_id of current_id from drive.nodes.
-            // fetch_optional returns Ok(None) when the row is missing,
-            // Ok(Some(None)) when the row exists but parent_id IS NULL,
-            // and Ok(Some(Some(uuid))) when a parent exists.
-            let result: std::result::Result<Option<Option<Uuid>>, sqlx::Error> =
-                sqlx::query_scalar(
-                    "SELECT parent_id FROM drive.nodes WHERE id = $1",
-                )
-                .bind(current_id)
-                .fetch_optional(&self.pool)
-                .await;
-
-            match result {
-                Ok(Some(Some(parent_id))) => {
-                    // Parent is always a folder in drive.nodes.
-                    chain.push(ResourceRef::folder(parent_id));
-                    current_id = parent_id;
-                }
-                Ok(_) => {
-                    // parent_id IS NULL (root) or row not found — chain is complete.
-                    break;
-                }
-                Err(e) => {
-                    tracing::warn!(
-                        resource_id = %current_id,
-                        error = %e,
-                        "parent_chain: failed to fetch parent from drive.nodes; \
-                         returning partial chain"
-                    );
-                    break;
-                }
+        match result {
+            Ok(ids) => {
+                // The first row (depth 0) is the resource itself — preserve its
+                // original type (File or Folder).  All subsequent rows are parent
+                // folders.
+                ids.into_iter()
+                    .enumerate()
+                    .map(|(i, id)| {
+                        if i == 0 {
+                            resource.clone()
+                        } else {
+                            ResourceRef::folder(id)
+                        }
+                    })
+                    .collect()
+            }
+            Err(e) => {
+                tracing::warn!(
+                    resource_id = %resource.resource_id,
+                    error = %e,
+                    "parent_chain: recursive CTE failed on drive.nodes; \
+                     returning single-element chain"
+                );
+                vec![resource.clone()]
             }
         }
-
-        chain
     }
 
     /// Return `[event_ref, calendar_ref]` by looking up `calendar.events`.

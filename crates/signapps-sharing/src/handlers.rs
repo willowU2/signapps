@@ -351,7 +351,13 @@ pub async fn bulk_grant_handler(
     };
 
     let result = engine
-        .bulk_grant(&actor_ctx, resource_type, body.resource_ids, create_grant)
+        .bulk_grant(
+            &actor_ctx,
+            resource_type,
+            body.resource_ids,
+            body.owner_id,
+            create_grant,
+        )
         .await?;
 
     Ok(Json(result))

@@ -407,6 +407,16 @@ pub struct BulkGrantRequest {
     pub can_reshare: bool,
     /// Optional expiry for time-limited grants.
     pub expires_at: Option<chrono::DateTime<chrono::Utc>>,
+    /// Optional resource owner UUID.
+    ///
+    /// When set, the owner-bypass rule in the permission resolver is activated,
+    /// allowing a resource owner who is not an admin to bulk-grant on their own
+    /// resources without holding the `Manager` role explicitly.
+    ///
+    /// The caller (handler) is responsible for supplying this field when the
+    /// acting user is the resource owner.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub owner_id: Option<uuid::Uuid>,
 }
 
 /// Aggregated outcome of a bulk grant operation.
