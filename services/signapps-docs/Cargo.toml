@@ -34,7 +34,38 @@ moka = { version = "0.12", features = ["future"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
 
-# Workspace crates
+# ─── Office sub-service dependencies (merged from signapps-office, port 3018) ──
+
+# Document formats
+docx-rs = "0.4"
+rust_xlsxwriter = "0.79"
+calamine = "0.26"
+shiva = { version = "1.4", features = ["all"] }
+
+# PDF
+printpdf = "0.7"
+lopdf = "0.33"
+
+# Markdown & HTML
+comrak = "0.31"
+scraper = "0.20"
+
+# EPUB
+rbook = "0.5"
+
+# Image rendering (for slide export)
+resvg = "0.44"
+usvg = "0.44"
+tiny-skia = "0.11"
+
+# Office-specific utilities
+tempfile = "3"
+bytes = { workspace = true }
+mime_guess = { workspace = true }
+base64 = "0.22"
+zip = { version = "2.0", default-features = false, features = ["deflate"] }
+
+# ─── Workspace crates ──────────────────────────────────────────────────────────
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
 signapps-cache = { path = "../../crates/signapps-cache" }

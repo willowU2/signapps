@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::handlers::conversion::{ConversionRequest, OutputFormat};
-use crate::AppState;
+use crate::office::handlers::conversion::{ConversionRequest, OutputFormat};
+use crate::office::OfficeState as AppState;
 
 // ─── JobStatus ───────────────────────────────────────────────────────────────
 
@@ -158,7 +158,7 @@ async fn run_conversion_job(
     job_id: String,
     req: JobConvertRequest,
     jobs: JobStore,
-    converter: crate::converter::DocumentConverter,
+    converter: crate::office::converter::DocumentConverter,
     cache: signapps_cache::BinaryCacheService,
 ) {
     // Mark as processing
@@ -179,7 +179,7 @@ async fn run_conversion_job(
 
     // Convert content string
     let content_str = match req.conversion.input_format {
-        crate::handlers::conversion::InputFormat::TiptapJson => {
+        crate::office::handlers::conversion::InputFormat::TiptapJson => {
             match serde_json::to_string(&req.conversion.content) {
                 Ok(s) => s,
                 Err(e) => {
@@ -188,8 +188,8 @@ async fn run_conversion_job(
                 },
             }
         },
-        crate::handlers::conversion::InputFormat::Html
-        | crate::handlers::conversion::InputFormat::Markdown => {
+        crate::office::handlers::conversion::InputFormat::Html
+        | crate::office::handlers::conversion::InputFormat::Markdown => {
             match req.conversion.content.as_str() {
                 Some(s) => s.to_string(),
                 None => {
@@ -201,21 +201,23 @@ async fn run_conversion_job(
     };
 
     let input_format = match req.conversion.input_format {
-        crate::handlers::conversion::InputFormat::TiptapJson => {
-            crate::converter::InputFormat::TiptapJson
+        crate::office::handlers::conversion::InputFormat::TiptapJson => {
+            crate::office::converter::InputFormat::TiptapJson
         },
-        crate::handlers::conversion::InputFormat::Html => crate::converter::InputFormat::Html,
-        crate::handlers::conversion::InputFormat::Markdown => {
-            crate::converter::InputFormat::Markdown
+        crate::office::handlers::conversion::InputFormat::Html => {
+            crate::office::converter::InputFormat::Html
+        },
+        crate::office::handlers::conversion::InputFormat::Markdown => {
+            crate::office::converter::InputFormat::Markdown
         },
     };
 
     // Convert external comments to internal format
-    let internal_comments: Option<Vec<crate::converter::comments::Comment>> =
+    let internal_comments: Option<Vec<crate::office::converter::comments::Comment>> =
         req.conversion.comments.map(|comments| {
             comments
                 .into_iter()
-                .map(|c| crate::converter::comments::Comment {
+                .map(|c| crate::office::converter::comments::Comment {
                     id: c.id,
                     author: c.author,
                     author_id: String::new(),
@@ -225,7 +227,7 @@ async fn run_conversion_job(
                     replies: c
                         .replies
                         .into_iter()
-                        .map(|r| crate::converter::comments::CommentReply {
+                        .map(|r| crate::office::converter::comments::CommentReply {
                             id: String::new(),
                             author: r.author,
                             author_id: String::new(),

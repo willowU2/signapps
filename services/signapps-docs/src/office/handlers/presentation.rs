@@ -6,7 +6,7 @@ use axum::{
     Json,
 };
 
-use crate::presentation::{
+use crate::office::presentation::{
     json_to_pptx, parse_json_to_presentation, presentation_to_pngs, presentation_to_svgs,
     slide_to_png, slide_to_svg,
 };
@@ -26,7 +26,7 @@ use crate::presentation::{
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn export_pptx(
-    axum::extract::State(state): axum::extract::State<crate::AppState>,
+    axum::extract::State(state): axum::extract::State<crate::office::OfficeState>,
     Json(payload): Json<serde_json::Value>,
 ) -> Response {
     use std::hash::{DefaultHasher, Hash, Hasher};
@@ -113,7 +113,7 @@ pub async fn export_pptx(
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn export_slides_pdf(
-    axum::extract::State(state): axum::extract::State<crate::AppState>,
+    axum::extract::State(state): axum::extract::State<crate::office::OfficeState>,
     Json(payload): Json<serde_json::Value>,
 ) -> Response {
     use std::hash::{DefaultHasher, Hash, Hasher};
@@ -161,7 +161,7 @@ pub async fn export_slides_pdf(
 
     // Generate PDF from slides
     // For now, we use the existing PDF generator
-    match crate::pdf::generate_slides_pdf(&presentation) {
+    match crate::office::pdf::generate_slides_pdf(&presentation) {
         Ok(data) => {
             let filename = payload
                 .get("filename")

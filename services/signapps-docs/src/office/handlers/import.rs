@@ -8,8 +8,8 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::importer::{ImportError, ImportFormat};
-use crate::AppState;
+use crate::office::importer::{ImportError, ImportFormat};
+use crate::office::OfficeState as AppState;
 
 /// Query parameters for import
 #[derive(Debug, Deserialize)]

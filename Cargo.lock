@@ -10171,39 +10171,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "signapps-collab"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum 0.7.9",
- "chrono",
- "dashmap 5.5.3",
- "dotenvy",
- "futures 0.3.31",
- "lib0",
- "moka",
- "serde",
- "serde_json",
- "signapps-cache",
- "signapps-common",
- "signapps-db",
- "sqlx",
- "thiserror 1.0.69",
- "tokio",
- "tokio-tungstenite 0.21.0",
- "tokio-util",
- "tower 0.4.13",
- "tower-http 0.5.2",
- "tower-layer 0.1.0",
- "tracing",
- "tracing-subscriber",
- "utoipa",
- "utoipa-swagger-ui",
- "uuid",
- "yrs",
-]
-
-[[package]]
 name = "signapps-comments"
 version = "0.1.0"
 dependencies = [
@@ -10943,45 +10910,6 @@ dependencies = [
  "utoipa",
  "utoipa-swagger-ui",
  "uuid",
-]
-
-[[package]]
-name = "signapps-office"
-version = "0.1.0"
-dependencies = [
- "axum 0.7.9",
- "base64 0.22.1",
- "bytes",
- "calamine 0.26.1",
- "chrono",
- "comrak 0.31.0",
- "dashmap 6.1.0",
- "docx-rs",
- "lopdf 0.33.0",
- "mime_guess",
- "moka",
- "printpdf",
- "rbook",
- "resvg 0.44.0",
- "rust_xlsxwriter 0.79.4",
- "scraper 0.20.0",
- "serde",
- "serde_json",
- "shiva",
- "signapps-cache",
- "signapps-common",
- "tempfile",
- "thiserror 1.0.69",
- "tiny-skia",
- "tokio",
- "tower-http 0.5.2",
- "tracing",
- "tracing-subscriber",
- "usvg 0.44.0",
- "utoipa",
- "utoipa-swagger-ui",
- "uuid",
- "zip 2.4.2",
 ]
 
 [[package]]

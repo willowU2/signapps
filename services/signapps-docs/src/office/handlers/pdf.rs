@@ -8,7 +8,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::pdf::{
+use crate::office::pdf::{
     extract_text, get_page_dimensions, get_pdf_info, merge_pdfs, split_pdf, PdfError,
 };
 

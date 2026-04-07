@@ -255,7 +255,7 @@ fn escape_xml(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::spreadsheet::{Cell, Sheet};
+    use crate::office::spreadsheet::{Cell, Sheet};
 
     #[test]
     fn test_ods_export() {

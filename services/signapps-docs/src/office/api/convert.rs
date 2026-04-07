@@ -1,7 +1,7 @@
 use axum::{extract::Multipart, http::StatusCode, response::IntoResponse, Json};
 use serde_json::json;
 
-use crate::converter::{ConversionFormat, DocumentConverter, InputFormat};
+use crate::office::converter::{ConversionFormat, DocumentConverter, InputFormat};
 
 pub async fn handle_convert(mut multipart: Multipart) -> impl IntoResponse {
     let mut input_format = None;

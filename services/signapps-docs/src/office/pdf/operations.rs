@@ -3,7 +3,7 @@
 #![allow(dead_code)]
 
 use super::PdfError;
-use crate::presentation::{Presentation, SlideContent};
+use crate::office::presentation::{Presentation, SlideContent};
 use ::lopdf::{Dictionary, Document, Object, ObjectId};
 use printpdf::{BuiltinFont, Color, Mm, PdfDocument, Rect, Rgb};
 use std::collections::BTreeMap;

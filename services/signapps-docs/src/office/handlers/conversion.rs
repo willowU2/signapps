@@ -9,8 +9,8 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::converter::{ConversionError, ConversionFormat};
-use crate::AppState;
+use crate::office::converter::{ConversionError, ConversionFormat};
+use crate::office::OfficeState as AppState;
 
 /// Supported input formats
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, utoipa::ToSchema)]
@@ -205,17 +205,17 @@ pub async fn convert_json(
     };
 
     let input_format = match request.input_format {
-        InputFormat::TiptapJson => crate::converter::InputFormat::TiptapJson,
-        InputFormat::Html => crate::converter::InputFormat::Html,
-        InputFormat::Markdown => crate::converter::InputFormat::Markdown,
+        InputFormat::TiptapJson => crate::office::converter::InputFormat::TiptapJson,
+        InputFormat::Html => crate::office::converter::InputFormat::Html,
+        InputFormat::Markdown => crate::office::converter::InputFormat::Markdown,
     };
 
     // Convert external comments to internal format
-    let internal_comments: Option<Vec<crate::converter::comments::Comment>> =
+    let internal_comments: Option<Vec<crate::office::converter::comments::Comment>> =
         request.comments.map(|comments| {
             comments
                 .into_iter()
-                .map(|c| crate::converter::comments::Comment {
+                .map(|c| crate::office::converter::comments::Comment {
                     id: c.id,
                     author: c.author,
                     author_id: String::new(),
@@ -225,7 +225,7 @@ pub async fn convert_json(
                     replies: c
                         .replies
                         .into_iter()
-                        .map(|r| crate::converter::comments::CommentReply {
+                        .map(|r| crate::office::converter::comments::CommentReply {
                             id: String::new(),
                             author: r.author,
                             author_id: String::new(),
@@ -311,7 +311,7 @@ pub async fn convert_upload(
     mut multipart: Multipart,
 ) -> Result<Response, ConversionErrorResponse> {
     let mut content: Option<String> = None;
-    let mut input_format: Option<crate::converter::InputFormat> = None;
+    let mut input_format: Option<crate::office::converter::InputFormat> = None;
 
     while let Some(field) = multipart
         .next_field()
@@ -430,21 +430,21 @@ pub async fn convert_upload(
         .expect("valid response"))
 }
 
-fn detect_format_from_filename(filename: &str) -> crate::converter::InputFormat {
+fn detect_format_from_filename(filename: &str) -> crate::office::converter::InputFormat {
     let ext = filename.rsplit('.').next().unwrap_or("").to_lowercase();
     match ext.as_str() {
-        "json" => crate::converter::InputFormat::TiptapJson,
-        "html" | "htm" => crate::converter::InputFormat::Html,
-        "md" | "markdown" => crate::converter::InputFormat::Markdown,
-        _ => crate::converter::InputFormat::Html,
+        "json" => crate::office::converter::InputFormat::TiptapJson,
+        "html" | "htm" => crate::office::converter::InputFormat::Html,
+        "md" | "markdown" => crate::office::converter::InputFormat::Markdown,
+        _ => crate::office::converter::InputFormat::Html,
     }
 }
 
-fn parse_input_format(s: &str) -> Result<crate::converter::InputFormat, ConversionError> {
+fn parse_input_format(s: &str) -> Result<crate::office::converter::InputFormat, ConversionError> {
     match s.to_lowercase().as_str() {
-        "tiptapjson" | "tiptap" | "json" => Ok(crate::converter::InputFormat::TiptapJson),
-        "html" => Ok(crate::converter::InputFormat::Html),
-        "markdown" | "md" => Ok(crate::converter::InputFormat::Markdown),
+        "tiptapjson" | "tiptap" | "json" => Ok(crate::office::converter::InputFormat::TiptapJson),
+        "html" => Ok(crate::office::converter::InputFormat::Html),
+        "markdown" | "md" => Ok(crate::office::converter::InputFormat::Markdown),
         _ => Err(ConversionError::InvalidInput(format!(
             "Unknown input format: {}",
             s
@@ -560,9 +560,9 @@ pub async fn convert_batch(
         };
 
         let input_format = match item.input_format {
-            InputFormat::TiptapJson => crate::converter::InputFormat::TiptapJson,
-            InputFormat::Html => crate::converter::InputFormat::Html,
-            InputFormat::Markdown => crate::converter::InputFormat::Markdown,
+            InputFormat::TiptapJson => crate::office::converter::InputFormat::TiptapJson,
+            InputFormat::Html => crate::office::converter::InputFormat::Html,
+            InputFormat::Markdown => crate::office::converter::InputFormat::Markdown,
         };
 
         // Build cache key for this batch item

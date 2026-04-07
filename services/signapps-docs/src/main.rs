@@ -3,6 +3,57 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
+use office::OfficeState;
+
+/// Build the office sub-router (all stateless document-conversion routes).
+/// Originally served from `signapps-office` on port 3018.
+fn office_router() -> Router<OfficeState> {
+    use office::handlers;
+    Router::new()
+        // Conversion routes
+        .route("/api/v1/convert/info", get(handlers::conversion::info))
+        .route("/api/v1/convert", post(handlers::conversion::convert_json))
+        .route("/api/v1/convert/upload", post(handlers::conversion::convert_upload))
+        .route("/api/v1/convert/batch", post(handlers::conversion::convert_batch))
+        .route("/api/v1/convert/legacy", post(office::api::convert::handle_convert))
+        // Import routes
+        .route("/api/v1/import/info", get(handlers::import::info))
+        .route("/api/v1/import", post(handlers::import::import_json))
+        .route("/api/v1/import/upload", post(handlers::import::import_upload))
+        // Spreadsheet routes
+        .route("/api/v1/spreadsheet/info", get(handlers::spreadsheet::spreadsheet_info))
+        .route("/api/v1/spreadsheet/export", post(handlers::spreadsheet::export_spreadsheet))
+        .route("/api/v1/spreadsheet/export/csv", post(handlers::spreadsheet::export_csv_handler))
+        .route("/api/v1/spreadsheet/export/ods", post(handlers::spreadsheet::export_ods_handler))
+        .route("/api/v1/spreadsheet/import", post(handlers::spreadsheet::import_spreadsheet))
+        .route("/api/v1/spreadsheet/import/csv", post(handlers::spreadsheet::import_csv_text))
+        // PDF routes
+        .route("/api/v1/pdf/info", get(handlers::pdf::pdf_info))
+        .route("/api/v1/pdf/extract-text", post(handlers::pdf::extract_pdf_text))
+        .route("/api/v1/pdf/document-info", post(handlers::pdf::get_pdf_document_info))
+        .route("/api/v1/pdf/pages", post(handlers::pdf::get_pdf_pages))
+        .route("/api/v1/pdf/merge", post(handlers::pdf::merge_pdf_files))
+        .route("/api/v1/pdf/split", post(handlers::pdf::split_pdf_file))
+        // Presentation routes
+        .route("/api/v1/presentation/info", get(handlers::presentation::presentation_info))
+        .route("/api/v1/presentation/export/pptx", post(handlers::presentation::export_pptx))
+        .route("/api/v1/presentation/export/pdf", post(handlers::presentation::export_slides_pdf))
+        .route("/api/v1/presentation/export/png", post(handlers::presentation::export_slide_png))
+        .route("/api/v1/presentation/export/svg", post(handlers::presentation::export_slide_svg))
+        .route("/api/v1/presentation/export/all/png", post(handlers::presentation::export_all_slides_png))
+        .route("/api/v1/presentation/export/all/svg", post(handlers::presentation::export_all_slides_svg))
+        // Data import/export routes
+        .route("/api/v1/data/import/info", get(handlers::data_import::import_info))
+        .route("/api/v1/data/import", post(handlers::data_import::import_data))
+        .route("/api/v1/data/export/info", get(handlers::data_export::export_info))
+        .route("/api/v1/data/export", post(handlers::data_export::export_data))
+        // Reports routes
+        .route("/api/v1/reports/info", get(handlers::report::report_info))
+        .route("/api/v1/reports/generate", post(handlers::report::generate_report))
+        // Async job queue routes
+        .route("/api/v1/office/jobs/convert", post(handlers::jobs::submit_convert_job))
+        .route("/api/v1/office/jobs/:id", get(handlers::jobs::get_job_status))
+}
 use signapps_cache::CacheService;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::auth_middleware;
@@ -19,6 +70,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 mod handlers;
 mod models;
+mod office;
 mod utils;
 
 use handlers::classify::classify_document;
@@ -143,6 +195,10 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/keep/notes", post(create_note))
         .route("/api/v1/keep/notes/:id", put(update_note))
         .route("/api/v1/keep/notes/:id", delete(delete_note))
+        // Collab WebSocket alias — originally signapps-collab (port 3013), now served from port 3010
+        // Old URL: ws://localhost:3013/api/v1/collab/ws/:doc_id
+        // New URL: ws://localhost:3010/api/v1/collab/ws/:doc_id
+        .route("/api/v1/collab/ws/:doc_id", get(handlers::collab::collab_websocket_handler))
         .route_layer(middleware::from_fn_with_state(
             app_state.clone(),
             auth_middleware::<AppState>,
@@ -152,9 +208,16 @@ async fn main() -> anyhow::Result<()> {
     let sharing_sub = sharing_routes("documents", ResourceType::Document)
         .with_state(app_state.sharing.clone());
 
+    // Office sub-router: stateless document conversion/import/export (formerly signapps-office, port 3018).
+    // Routes preserved: /api/v1/convert, /api/v1/import, /api/v1/spreadsheet,
+    //   /api/v1/pdf, /api/v1/presentation, /api/v1/data, /api/v1/reports, /api/v1/office/jobs
+    let office_state = OfficeState::new();
+    let office_sub = office_router().with_state(office_state);
+
     let app = public_routes
         .merge(protected_routes)
         .merge(sharing_sub)
+        .merge(office_sub)
         .merge(
             SwaggerUi::new("/swagger-ui")
                 .url("/api-docs/openapi.json", handlers::openapi::DocsApiDoc::openapi()),

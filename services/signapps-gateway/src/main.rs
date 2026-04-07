@@ -115,15 +115,15 @@ const SERVICE_PORTS: &[(&str, u16)] = &[
     ("signapps-scheduler", 3007),
     ("signapps-metrics", 3008),
     ("signapps-media", 3009),
-    ("signapps-docs", 3010),
+    ("signapps-docs", 3010), // also serves collab (port 3013 merged) and office (port 3018 merged)
     ("signapps-calendar", 3011),
     ("signapps-mail", 3012),
-    ("signapps-collab", 3013),
+    // signapps-collab (3013) merged into signapps-docs (3010)
     ("signapps-meet", 3014),
     ("signapps-forms", 3015),
     ("signapps-pxe", 3016),
     ("signapps-remote", 3017),
-    ("signapps-office", 3018),
+    // signapps-office (3018) merged into signapps-docs (3010)
     ("signapps-social", 3019),
     ("signapps-chat", 3020),
     ("signapps-contacts", 3021),
@@ -609,12 +609,15 @@ async fn main() -> anyhow::Result<()> {
     let calendar_url = env_or("CALENDAR_SERVICE_URL", "http://127.0.0.1:3011");
     let forms_url = env_or("FORMS_SERVICE_URL", "http://127.0.0.1:3022");
     let social_url = env_or("SOCIAL_SERVICE_URL", "http://127.0.0.1:3019");
-    let office_url = env_or("OFFICE_SERVICE_URL", "http://127.0.0.1:3018");
+    // Office and collab are now served by signapps-docs on port 3010.
+    // OFFICE_SERVICE_URL and COLLAB_SERVICE_URL env vars are kept for compatibility
+    // but default to the docs service URL.
+    let office_url = env_or("OFFICE_SERVICE_URL", "http://127.0.0.1:3010");
     let remote_url = env_or("REMOTE_SERVICE_URL", "http://127.0.0.1:3017");
     let mail_url = env_or("MAIL_SERVICE_URL", "http://127.0.0.1:3012");
     let proxy_url = env_or("PROXY_SERVICE_URL", "http://127.0.0.1:3003");
     let chat_url = env_or("CHAT_SERVICE_URL", "http://127.0.0.1:3020");
-    let collab_url = env_or("COLLAB_SERVICE_URL", "http://127.0.0.1:3013");
+    let collab_url = env_or("COLLAB_SERVICE_URL", "http://127.0.0.1:3010");
     let meet_url = env_or("MEET_SERVICE_URL", "http://127.0.0.1:3014");
     let notifications_url = env_or("NOTIFICATIONS_SERVICE_URL", "http://127.0.0.1:8095");
     let billing_url = env_or("BILLING_SERVICE_URL", "http://127.0.0.1:8096");

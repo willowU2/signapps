@@ -1,4 +1,5 @@
 pub mod classify;
+pub mod collab;
 pub mod designs;
 pub mod health;
 pub mod macros;
