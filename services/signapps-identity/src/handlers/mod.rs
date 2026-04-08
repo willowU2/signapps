@@ -12,7 +12,7 @@ pub mod comms;
 // compliance moved to signapps-compliance service (port 3032)
 // data_export moved to signapps-compliance service (port 3032)
 pub mod entity_links;
-pub mod feature_flags;
+// feature_flags moved to signapps-tenant-config service (port 3029)
 pub mod groups;
 pub mod guest_tokens;
 pub mod health;
@@ -34,4 +34,5 @@ pub mod user_profile;
 // user_signatures moved to signapps-signatures service (port 3028)
 pub mod users;
 // webhooks moved to signapps-webhooks service (port 3027)
+// workspace_features: GET moved to tenant-config; PUT update kept here (gateway /api/v1/workspaces → identity)
 pub mod workspace_features;

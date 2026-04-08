@@ -286,8 +286,9 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/tenant", get(handlers::tenants::get_my_tenant))
         // WL1: Branding for current tenant (used by frontend on startup)
         .route("/api/v1/tenants/me/branding", get(handlers::branding::get_my_branding))
-        // WL3: Workspace feature flags per tenant
-        .route("/api/v1/workspace/features", get(handlers::workspace_features::get_workspace_features))
+        // WL3: GET workspace features moved to signapps-tenant-config service (port 3029).
+        // Gateway routes /api/v1/workspace/* (singular) → signapps-tenant-config:3029.
+        // PUT /api/v1/workspaces/:id/features stays here (gateway /api/v1/workspaces → identity).
         .route("/api/v1/workspaces/:wid/features", put(handlers::workspace_features::update_workspace_features))
         // Workspaces
         .route("/api/v1/workspaces", get(handlers::tenants::list_workspaces))
@@ -431,11 +432,8 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/admin/security/events/summary",
             get(handlers::security_events::summary),
         )
-        // Feature flags
-        .route("/api/v1/admin/feature-flags", get(handlers::feature_flags::list))
-        .route("/api/v1/admin/feature-flags", post(handlers::feature_flags::create))
-        .route("/api/v1/admin/feature-flags/:id", put(handlers::feature_flags::update))
-        .route("/api/v1/admin/feature-flags/:id", delete(handlers::feature_flags::delete))
+        // Feature flags moved to signapps-tenant-config service (port 3029).
+        // Gateway forwards /api/v1/admin/feature-flags/* → signapps-tenant-config:3029.
         // Tenant CSS override moved to signapps-tenant-config service (port 3029)
         // Gateway forwards /api/v1/admin/tenants/:id/css → signapps-tenant-config:3029
         // WL1: Tenant branding (admin manages all tenants' branding) — kept in identity

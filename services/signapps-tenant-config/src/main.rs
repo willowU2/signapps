@@ -70,11 +70,24 @@ fn create_router(state: AppState) -> Router {
 
     let public_routes = Router::new().route("/health", get(health_check));
 
-    // Tenant-scoped branding route accessible without admin (used on login page)
+    // Tenant-scoped routes (auth + tenant context required)
     let tenant_routes = Router::new()
         .route(
             "/api/v1/tenants/me/branding",
             get(handlers::branding::get_my_branding),
+        )
+        // WL3: Workspace feature flags GET (moved from identity — Refactor 34 Phase 9)
+        // GET /api/v1/workspace/features — routed here via /api/v1/workspace prefix in gateway
+        .route(
+            "/api/v1/workspace/features",
+            get(handlers::workspace_features::get_workspace_features),
+        )
+        // PUT /api/v1/workspaces/:id/features — also handled here (gateway routes /api/v1/workspace prefix)
+        // For the PUT under /api/v1/workspaces (plural), the route is duplicated in identity for
+        // backwards-compat since /api/v1/workspaces → identity in the gateway catch-all.
+        .route(
+            "/api/v1/workspaces/:wid/features",
+            put(handlers::workspace_features::update_workspace_features),
         )
         .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
@@ -82,7 +95,7 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
-    // Admin-only branding and CSS routes
+    // Admin-only branding, CSS, and feature flag routes
     let admin_routes = Router::new()
         // Branding (WL1) — admin manages all tenants
         .route(
@@ -109,6 +122,15 @@ fn create_router(state: AppState) -> Router {
         .route(
             "/api/v1/admin/tenants/:id/css",
             delete(handlers::tenant_css::clear_css),
+        )
+        // Feature flags (moved from identity — Refactor 34 Phase 9)
+        .route(
+            "/api/v1/admin/feature-flags",
+            get(handlers::feature_flags::list).post(handlers::feature_flags::create),
+        )
+        .route(
+            "/api/v1/admin/feature-flags/:id",
+            put(handlers::feature_flags::update).delete(handlers::feature_flags::delete),
         )
         .route_layer(middleware::from_fn(require_admin))
         .route_layer(middleware::from_fn_with_state(

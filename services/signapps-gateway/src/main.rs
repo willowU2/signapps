@@ -703,6 +703,11 @@ async fn main() -> anyhow::Result<()> {
         // due to shared prefix with tenant CRUD — they are duplicated in tenant-config
         // for future migration when the gateway supports parameterized routing.
         ("/api/v1/admin/tenants", &tenant_config_url),
+        // Feature flags (moved from identity — Refactor 34 Phase 9)
+        ("/api/v1/admin/feature-flags", &tenant_config_url),
+        // Workspace features GET (moved from identity — Refactor 34 Phase 9)
+        // /api/v1/workspace (singular) → tenant-config; PUT /workspaces/:id/features stays in identity
+        ("/api/v1/workspace/features", &tenant_config_url),
         // Storage supplemental paths
         ("/api/v1/drive", &storage_url),
         ("/api/v1/tags", &storage_url),
