@@ -1,41 +1,49 @@
-import { test as setup, expect } from '@playwright/test';
-import path from 'path';
+import { test as setup, expect } from "@playwright/test";
+import path from "path";
 
-const authFile = path.join(__dirname, '../playwright/.auth/user.json');
+const authFile = path.join(__dirname, "../playwright/.auth/user.json");
 
 /**
  * Authentication setup - runs before all tests that depend on 'setup'
  * Creates an authenticated session that can be reused across tests
  */
-setup('authenticate', async ({ page }) => {
+setup("authenticate", async ({ page }) => {
   // Navigate to login page
-  await page.goto('/login');
-  await page.waitForLoadState('domcontentloaded');
+  await page.goto("/login");
+  await page.waitForLoadState("domcontentloaded");
 
   // Fill in login credentials
-  const usernameInput = page.locator('#username');
+  const usernameInput = page.locator("#username");
   await usernameInput.click({ force: true });
-  await usernameInput.fill('admin');
+  await usernameInput.fill("admin");
 
-  const passwordInput = page.locator('#password');
+  const passwordInput = page.locator("#password");
   await passwordInput.click();
-  await passwordInput.fill('admin');
+  await passwordInput.fill("admin");
 
   // Click the sign in button
-  const signInBtn = page.locator('form').getByRole('button', { name: /sign in|se connecter|connexion/i });
+  const signInBtn = page
+    .locator("form")
+    .getByRole("button", { name: /sign in|se connecter|connexion/i });
   await signInBtn.click();
 
   // Wait for redirect to dashboard
   await page.waitForURL(/\/(dashboard|login\/verify)/, { timeout: 30000 });
 
   // Pre-dismiss all onboarding/changelog dialogs via localStorage
-  // These will be persisted in the storage state file for all subsequent tests
+  // These will be persisted in the storage state file for all subsequent tests.
+  // IMPORTANT: the ChangelogDialog compares against CHANGELOG[0].version
+  // (currently "2.6.0", NO "v" prefix). Any future bump of CHANGELOG[0].version
+  // must be mirrored here or the "Quoi de neuf ?" modal re-appears.
   await page.evaluate(() => {
-    localStorage.setItem('signapps-onboarding-completed', new Date().toISOString());
-    localStorage.setItem('signapps-onboarding-dismissed', 'true');
-    localStorage.setItem('signapps-changelog-seen', 'v2.6.0');
-    localStorage.setItem('signapps_initialized', new Date().toISOString());
-    localStorage.setItem('signapps_seed_dismissed', 'true');
+    localStorage.setItem(
+      "signapps-onboarding-completed",
+      new Date().toISOString(),
+    );
+    localStorage.setItem("signapps-onboarding-dismissed", "true");
+    localStorage.setItem("signapps-changelog-seen", "2.6.0");
+    localStorage.setItem("signapps_initialized", new Date().toISOString());
+    localStorage.setItem("signapps_seed_dismissed", "true");
   });
 
   // Save the authentication state (including localStorage with dismissed dialogs)
