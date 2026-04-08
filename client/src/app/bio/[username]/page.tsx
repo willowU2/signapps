@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { use, useEffect, useState } from "react";
+import { ExternalLink } from "lucide-react";
 
-const STORAGE_KEY = 'signapps_link_in_bio';
+const STORAGE_KEY = "signapps_link_in_bio";
 
 interface BioLink {
   id: string;
@@ -22,26 +22,32 @@ interface BioProfile {
 }
 
 function loadProfile(): BioProfile | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
   } catch {
     return null;
   }
 }
 
-export default function BioPage({ params }: { params: { username: string } }) {
+export default function BioPage({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}) {
+  // Next.js 15+ — params is a Promise and must be unwrapped with React's `use`.
+  const { username } = use(params);
   const [profile, setProfile] = useState<BioProfile | null>(null);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     const p = loadProfile();
-    if (!p || p.username !== params.username) {
+    if (!p || p.username !== username) {
       setNotFound(true);
     } else {
       setProfile(p);
     }
-  }, [params.username]);
+  }, [username]);
 
   if (notFound) {
     return (
@@ -49,7 +55,7 @@ export default function BioPage({ params }: { params: { username: string } }) {
         <div className="text-center">
           <p className="text-6xl mb-4">🔍</p>
           <h1 className="text-2xl font-bold mb-2">Page not found</h1>
-          <p className="text-muted-foreground">@{params.username} does not exist</p>
+          <p className="text-muted-foreground">@{username} does not exist</p>
         </div>
       </div>
     );
@@ -77,7 +83,7 @@ export default function BioPage({ params }: { params: { username: string } }) {
             />
           ) : (
             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-4xl font-bold shadow-lg">
-              {profile.name ? profile.name.charAt(0).toUpperCase() : '?'}
+              {profile.name ? profile.name.charAt(0).toUpperCase() : "?"}
             </div>
           )}
           <h1 className="text-2xl font-bold mt-3">{profile.name}</h1>
@@ -111,7 +117,7 @@ export default function BioPage({ params }: { params: { username: string } }) {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground mt-8">
-          Powered by{' '}
+          Powered by{" "}
           <a href="/" className="underline hover:text-foreground">
             SignApps
           </a>

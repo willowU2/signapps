@@ -1,12 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { use, useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -14,8 +20,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { FileText, Receipt, Ticket, LogIn, Mail, ArrowRight, ExternalLink } from 'lucide-react';
+} from "@/components/ui/table";
+import {
+  FileText,
+  Receipt,
+  Ticket,
+  LogIn,
+  Mail,
+  ArrowRight,
+  ExternalLink,
+} from "lucide-react";
 
 // ── Types ──
 interface PortalInvoice {
@@ -25,7 +39,7 @@ interface PortalInvoice {
   dueDate: string;
   amount: number;
   currency: string;
-  status: 'paid' | 'pending' | 'overdue';
+  status: "paid" | "pending" | "overdue";
 }
 
 interface PortalDocument {
@@ -40,60 +54,123 @@ interface PortalDocument {
 interface PortalTicket {
   id: string;
   title: string;
-  status: 'open' | 'in-progress' | 'resolved' | 'closed';
+  status: "open" | "in-progress" | "resolved" | "closed";
   createdAt: string;
   updatedAt: string;
-  priority: 'high' | 'medium' | 'low';
+  priority: "high" | "medium" | "low";
 }
 
 // ── Mock data for client portal ──
 const MOCK_INVOICES: PortalInvoice[] = [
-  { id: '1', number: 'INV-2025-001', date: '2025-01-15', dueDate: '2025-02-15', amount: 1200, currency: 'EUR', status: 'paid' },
-  { id: '2', number: 'INV-2025-002', date: '2025-02-15', dueDate: '2025-03-15', amount: 850, currency: 'EUR', status: 'pending' },
-  { id: '3', number: 'INV-2025-003', date: '2025-03-01', dueDate: '2025-03-31', amount: 2300, currency: 'EUR', status: 'overdue' },
+  {
+    id: "1",
+    number: "INV-2025-001",
+    date: "2025-01-15",
+    dueDate: "2025-02-15",
+    amount: 1200,
+    currency: "EUR",
+    status: "paid",
+  },
+  {
+    id: "2",
+    number: "INV-2025-002",
+    date: "2025-02-15",
+    dueDate: "2025-03-15",
+    amount: 850,
+    currency: "EUR",
+    status: "pending",
+  },
+  {
+    id: "3",
+    number: "INV-2025-003",
+    date: "2025-03-01",
+    dueDate: "2025-03-31",
+    amount: 2300,
+    currency: "EUR",
+    status: "overdue",
+  },
 ];
 
 const MOCK_DOCUMENTS: PortalDocument[] = [
-  { id: '1', name: 'Contrat de service 2025.pdf', type: 'PDF', sharedAt: '2025-01-10', size: '2.3 MB' },
-  { id: '2', name: 'Conditions generales.pdf', type: 'PDF', sharedAt: '2025-01-10', size: '450 KB' },
-  { id: '3', name: 'Rapport mensuel Fevrier.xlsx', type: 'Excel', sharedAt: '2025-03-01', size: '1.1 MB' },
+  {
+    id: "1",
+    name: "Contrat de service 2025.pdf",
+    type: "PDF",
+    sharedAt: "2025-01-10",
+    size: "2.3 MB",
+  },
+  {
+    id: "2",
+    name: "Conditions generales.pdf",
+    type: "PDF",
+    sharedAt: "2025-01-10",
+    size: "450 KB",
+  },
+  {
+    id: "3",
+    name: "Rapport mensuel Fevrier.xlsx",
+    type: "Excel",
+    sharedAt: "2025-03-01",
+    size: "1.1 MB",
+  },
 ];
 
 const MOCK_TICKETS: PortalTicket[] = [
-  { id: 'TKT-001', title: 'Probleme de connexion', status: 'resolved', createdAt: '2025-02-20', updatedAt: '2025-02-22', priority: 'high' },
-  { id: 'TKT-002', title: 'Demande d\'information facturation', status: 'in-progress', createdAt: '2025-03-10', updatedAt: '2025-03-12', priority: 'medium' },
-  { id: 'TKT-003', title: 'Nouvelle fonctionnalite requise', status: 'open', createdAt: '2025-03-25', updatedAt: '2025-03-25', priority: 'low' },
+  {
+    id: "TKT-001",
+    title: "Probleme de connexion",
+    status: "resolved",
+    createdAt: "2025-02-20",
+    updatedAt: "2025-02-22",
+    priority: "high",
+  },
+  {
+    id: "TKT-002",
+    title: "Demande d'information facturation",
+    status: "in-progress",
+    createdAt: "2025-03-10",
+    updatedAt: "2025-03-12",
+    priority: "medium",
+  },
+  {
+    id: "TKT-003",
+    title: "Nouvelle fonctionnalite requise",
+    status: "open",
+    createdAt: "2025-03-25",
+    updatedAt: "2025-03-25",
+    priority: "low",
+  },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  paid: 'bg-green-100 text-green-800',
-  pending: 'bg-yellow-100 text-yellow-800',
-  overdue: 'bg-red-100 text-red-800',
-  open: 'bg-blue-100 text-blue-800',
-  'in-progress': 'bg-orange-100 text-orange-800',
-  resolved: 'bg-green-100 text-green-800',
-  closed: 'bg-gray-100 text-gray-800',
+  paid: "bg-green-100 text-green-800",
+  pending: "bg-yellow-100 text-yellow-800",
+  overdue: "bg-red-100 text-red-800",
+  open: "bg-blue-100 text-blue-800",
+  "in-progress": "bg-orange-100 text-orange-800",
+  resolved: "bg-green-100 text-green-800",
+  closed: "bg-gray-100 text-gray-800",
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  paid: 'Paye',
-  pending: 'En attente',
-  overdue: 'En retard',
-  open: 'Ouvert',
-  'in-progress': 'En cours',
-  resolved: 'Resolu',
-  closed: 'Ferme',
+  paid: "Paye",
+  pending: "En attente",
+  overdue: "En retard",
+  open: "Ouvert",
+  "in-progress": "En cours",
+  resolved: "Resolu",
+  closed: "Ferme",
 };
 
 // ── Login Form ──
 function PortalLoginForm({ onLogin }: { onLogin: (email: string) => void }) {
-  const [email, setEmail] = useState('');
-  const [step, setStep] = useState<'email' | 'sent'>('email');
+  const [email, setEmail] = useState("");
+  const [step, setStep] = useState<"email" | "sent">("email");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
-    setStep('sent');
+    setStep("sent");
     setTimeout(() => onLogin(email), 1500);
   };
 
@@ -110,7 +187,7 @@ function PortalLoginForm({ onLogin }: { onLogin: (email: string) => void }) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {step === 'email' ? (
+          {step === "email" ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="portal-email">Adresse email</Label>
@@ -130,7 +207,8 @@ function PortalLoginForm({ onLogin }: { onLogin: (email: string) => void }) {
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
               <p className="text-xs text-center text-muted-foreground">
-                Nous enverrons un lien magique a votre adresse email. Aucun mot de passe requis.
+                Nous enverrons un lien magique a votre adresse email. Aucun mot
+                de passe requis.
               </p>
             </form>
           ) : (
@@ -140,9 +218,12 @@ function PortalLoginForm({ onLogin }: { onLogin: (email: string) => void }) {
               </div>
               <p className="font-medium">Lien envoye !</p>
               <p className="text-sm text-muted-foreground">
-                Verifiez votre boite mail <strong>{email}</strong> et cliquez sur le lien de connexion.
+                Verifiez votre boite mail <strong>{email}</strong> et cliquez
+                sur le lien de connexion.
               </p>
-              <p className="text-xs text-muted-foreground">Redirection automatique...</p>
+              <p className="text-xs text-muted-foreground">
+                Redirection automatique...
+              </p>
             </div>
           )}
         </CardContent>
@@ -152,7 +233,13 @@ function PortalLoginForm({ onLogin }: { onLogin: (email: string) => void }) {
 }
 
 // ── Portal Content ──
-function PortalContent({ tenantId, userEmail }: { tenantId: string; userEmail: string }) {
+function PortalContent({
+  tenantId,
+  userEmail,
+}: {
+  tenantId: string;
+  userEmail: string;
+}) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-background">
       {/* Header */}
@@ -160,16 +247,22 @@ function PortalContent({ tenantId, userEmail }: { tenantId: string; userEmail: s
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">S</span>
+              <span className="text-primary-foreground font-bold text-sm">
+                S
+              </span>
             </div>
             <div>
               <div className="font-semibold text-sm">SignApps</div>
-              <div className="text-xs text-muted-foreground">Portail Client</div>
+              <div className="text-xs text-muted-foreground">
+                Portail Client
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>{userEmail}</span>
-            <Badge variant="secondary" className="text-xs">Connecte</Badge>
+            <Badge variant="secondary" className="text-xs">
+              Connecte
+            </Badge>
           </div>
         </div>
       </header>
@@ -177,7 +270,9 @@ function PortalContent({ tenantId, userEmail }: { tenantId: string; userEmail: s
       <main id="main-content" className="max-w-5xl mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Bienvenue sur votre portail</h1>
-          <p className="text-muted-foreground text-sm mt-1">Tenant: {tenantId}</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            Tenant: {tenantId}
+          </p>
         </div>
 
         <Tabs defaultValue="invoices">
@@ -218,11 +313,17 @@ function PortalContent({ tenantId, userEmail }: { tenantId: string; userEmail: s
                   <TableBody>
                     {MOCK_INVOICES.map((inv) => (
                       <TableRow key={inv.id}>
-                        <TableCell className="font-medium">{inv.number}</TableCell>
-                        <TableCell>{new Date(inv.date).toLocaleDateString('fr-FR')}</TableCell>
-                        <TableCell>{new Date(inv.dueDate).toLocaleDateString('fr-FR')}</TableCell>
+                        <TableCell className="font-medium">
+                          {inv.number}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(inv.date).toLocaleDateString("fr-FR")}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(inv.dueDate).toLocaleDateString("fr-FR")}
+                        </TableCell>
                         <TableCell className="text-right font-medium">
-                          {inv.amount.toLocaleString('fr-FR')} {inv.currency}
+                          {inv.amount.toLocaleString("fr-FR")} {inv.currency}
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge className={STATUS_COLORS[inv.status]}>
@@ -230,7 +331,11 @@ function PortalContent({ tenantId, userEmail }: { tenantId: string; userEmail: s
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm" aria-label={`Telecharger ${inv.number}`}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            aria-label={`Telecharger ${inv.number}`}
+                          >
                             <ExternalLink className="w-3 h-3" />
                           </Button>
                         </TableCell>
@@ -247,22 +352,34 @@ function PortalContent({ tenantId, userEmail }: { tenantId: string; userEmail: s
             <Card>
               <CardHeader>
                 <CardTitle>Mes Documents</CardTitle>
-                <CardDescription>Documents partages par votre gestionnaire de compte</CardDescription>
+                <CardDescription>
+                  Documents partages par votre gestionnaire de compte
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {MOCK_DOCUMENTS.map((doc) => (
-                    <div key={doc.id} className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                    <div
+                      key={doc.id}
+                      className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    >
                       <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
                         <FileText className="w-5 h-5 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm truncate">{doc.name}</div>
+                        <div className="font-medium text-sm truncate">
+                          {doc.name}
+                        </div>
                         <div className="text-xs text-muted-foreground">
-                          {doc.type} · {doc.size} · Partage le {new Date(doc.sharedAt).toLocaleDateString('fr-FR')}
+                          {doc.type} · {doc.size} · Partage le{" "}
+                          {new Date(doc.sharedAt).toLocaleDateString("fr-FR")}
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" aria-label={`Ouvrir ${doc.name}`}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        aria-label={`Ouvrir ${doc.name}`}
+                      >
                         <ExternalLink className="w-3 h-3 mr-1" />
                         Ouvrir
                       </Button>
@@ -280,7 +397,9 @@ function PortalContent({ tenantId, userEmail }: { tenantId: string; userEmail: s
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Mes Tickets</CardTitle>
-                    <CardDescription>Suivi de vos demandes de support</CardDescription>
+                    <CardDescription>
+                      Suivi de vos demandes de support
+                    </CardDescription>
                   </div>
                   <Button size="sm">
                     <Ticket className="w-4 h-4 mr-2" />
@@ -303,15 +422,28 @@ function PortalContent({ tenantId, userEmail }: { tenantId: string; userEmail: s
                   <TableBody>
                     {MOCK_TICKETS.map((ticket) => (
                       <TableRow key={ticket.id}>
-                        <TableCell className="font-mono text-sm">{ticket.id}</TableCell>
-                        <TableCell className="font-medium">{ticket.title}</TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {ticket.id}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {ticket.title}
+                        </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={
-                            ticket.priority === 'high' ? 'border-red-300 text-red-700' :
-                            ticket.priority === 'medium' ? 'border-orange-300 text-orange-700' :
-                            'border-green-300 text-green-700'
-                          }>
-                            {ticket.priority === 'high' ? 'Haute' : ticket.priority === 'medium' ? 'Moyenne' : 'Basse'}
+                          <Badge
+                            variant="outline"
+                            className={
+                              ticket.priority === "high"
+                                ? "border-red-300 text-red-700"
+                                : ticket.priority === "medium"
+                                  ? "border-orange-300 text-orange-700"
+                                  : "border-green-300 text-green-700"
+                            }
+                          >
+                            {ticket.priority === "high"
+                              ? "Haute"
+                              : ticket.priority === "medium"
+                                ? "Moyenne"
+                                : "Basse"}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-center">
@@ -320,10 +452,14 @@ function PortalContent({ tenantId, userEmail }: { tenantId: string; userEmail: s
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {new Date(ticket.createdAt).toLocaleDateString('fr-FR')}
+                          {new Date(ticket.createdAt).toLocaleDateString(
+                            "fr-FR",
+                          )}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {new Date(ticket.updatedAt).toLocaleDateString('fr-FR')}
+                          {new Date(ticket.updatedAt).toLocaleDateString(
+                            "fr-FR",
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -339,26 +475,34 @@ function PortalContent({ tenantId, userEmail }: { tenantId: string; userEmail: s
 }
 
 // ── Main Page ──
-export default function ClientPortalPage({ params }: { params: { tenantId: string } }) {
+export default function ClientPortalPage({
+  params,
+}: {
+  params: Promise<{ tenantId: string }>;
+}) {
+  // Next.js 15+ — params is a Promise.
+  const { tenantId } = use(params);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
+  const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
     // Check for stored portal session
-    const stored = sessionStorage.getItem(`portal-session-${params.tenantId}`);
+    const stored = sessionStorage.getItem(`portal-session-${tenantId}`);
     if (stored) {
       try {
         const session = JSON.parse(stored);
         setUserEmail(session.email);
         setIsAuthenticated(true);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
-  }, [params.tenantId]);
+  }, [tenantId]);
 
   const handleLogin = (email: string) => {
     sessionStorage.setItem(
-      `portal-session-${params.tenantId}`,
-      JSON.stringify({ email, loginAt: new Date().toISOString() })
+      `portal-session-${tenantId}`,
+      JSON.stringify({ email, loginAt: new Date().toISOString() }),
     );
     setUserEmail(email);
     setIsAuthenticated(true);
@@ -368,5 +512,5 @@ export default function ClientPortalPage({ params }: { params: { tenantId: strin
     return <PortalLoginForm onLogin={handleLogin} />;
   }
 
-  return <PortalContent tenantId={params.tenantId} userEmail={userEmail} />;
+  return <PortalContent tenantId={tenantId} userEmail={userEmail} />;
 }
