@@ -60,26 +60,27 @@ export function MoveToSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex flex-col h-full sm:max-w-md w-full">
         <SheetHeader>
-          <SheetTitle>Move {item?.name} to...</SheetTitle>
+          <SheetTitle>Déplacer &ldquo;{item?.name}&rdquo; vers…</SheetTitle>
         </SheetHeader>
-        
+
         <div className="flex-1 flex flex-col gap-4 mt-6 min-h-0">
           <div className="flex-1 border rounded-md overflow-hidden">
             <ScrollArea className="h-full p-4">
               <FolderTree
                 bucket={currentBucket}
-                currentPath={selectedPath} // Highlight selected?
+                currentPath={selectedPath}
                 onSelectFolder={(path) => {
-                  // path is like "folder1/folder2/"
                   setSelectedPath(path);
                 }}
               />
             </ScrollArea>
           </div>
-          
+
           <div className="text-sm font-medium text-muted-foreground p-3 border rounded-md bg-muted/30 break-all">
-            <span className="text-foreground font-semibold mr-2">Selected:</span>
-            {selectedPath || "Root"}
+            <span className="text-foreground font-semibold mr-2">
+              Destination :
+            </span>
+            {selectedPath || "Racine (Mon Drive)"}
           </div>
         </div>
 
@@ -90,10 +91,10 @@ export function MoveToSheet({
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            Cancel
+            Annuler
           </Button>
           <Button type="button" onClick={handleSubmit} disabled={loading}>
-            {loading ? "Moving..." : "Move Here"}
+            {loading ? "Déplacement…" : "Déplacer ici"}
           </Button>
         </div>
       </SheetContent>

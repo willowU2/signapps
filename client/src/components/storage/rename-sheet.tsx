@@ -62,17 +62,17 @@ export function RenameSheet({
       <SheetContent>
         <SheetHeader>
           <SheetTitle>
-            Rename {item?.type === "folder" ? "Folder" : "File"}
+            Renommer {item?.type === "folder" ? "le dossier" : "le fichier"}
           </SheetTitle>
         </SheetHeader>
         <form onSubmit={handleSubmit} className="space-y-6 mt-6">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">Nom</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter new name"
+              placeholder="Saisir le nouveau nom"
               autoFocus
               disabled={loading}
             />
@@ -84,10 +84,10 @@ export function RenameSheet({
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >
-              Cancel
+              Annuler
             </Button>
             <Button type="submit" disabled={loading || !name.trim()}>
-              {loading ? "Renaming..." : "Rename"}
+              {loading ? "Renommage…" : "Renommer"}
             </Button>
           </div>
         </form>
