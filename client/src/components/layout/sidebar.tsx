@@ -47,6 +47,9 @@ import {
   MapPin,
   Server,
   ChevronDown,
+  FileSignature,
+  Webhook,
+  ClipboardCheck,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import {
@@ -199,6 +202,13 @@ const navSections: NavSection[] = [
         badgeKey: null,
       },
       {
+        href: "/signatures",
+        icon: FileSignature,
+        label: "Signatures",
+        color: "text-indigo-500",
+        badgeKey: null,
+      },
+      {
         href: "/admin/ai/lightrag",
         icon: Brain,
         label: "LightRAG",
@@ -251,6 +261,20 @@ const navSections: NavSection[] = [
         icon: History,
         label: "Audit Drive",
         color: "text-amber-500",
+        badgeKey: null,
+      },
+      {
+        href: "/admin/webhooks",
+        icon: Webhook,
+        label: "Webhooks",
+        color: "text-orange-500",
+        badgeKey: null,
+      },
+      {
+        href: "/compliance",
+        icon: ClipboardCheck,
+        label: "Conformité",
+        color: "text-blue-500",
         badgeKey: null,
       },
     ],

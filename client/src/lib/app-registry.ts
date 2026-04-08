@@ -434,6 +434,33 @@ export const APP_REGISTRY: AppEntry[] = [
     category: "Productivité",
     color: "text-slate-600",
   },
+  {
+    id: "signatures",
+    href: "/signatures",
+    icon: "FileSignature",
+    label: "Signatures électroniques",
+    description: "Créez et gérez vos enveloppes de signature",
+    category: "Productivité",
+    color: "text-indigo-500",
+  },
+  {
+    id: "webhooks",
+    href: "/admin/webhooks",
+    icon: "Webhook",
+    label: "Webhooks",
+    description: "Gestion des webhooks sortants",
+    category: "Administration",
+    color: "text-orange-500",
+  },
+  {
+    id: "compliance",
+    href: "/compliance",
+    icon: "ClipboardCheck",
+    label: "Conformité",
+    description: "RGPD, audit, rétention des données",
+    category: "Administration",
+    color: "text-blue-500",
+  },
 
   // Avancé
   {
