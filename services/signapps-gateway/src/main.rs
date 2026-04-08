@@ -136,6 +136,7 @@ const SERVICE_PORTS: &[(&str, u16)] = &[
     ("signapps-tenant-config", 3029),
     ("signapps-integrations", 3030),
     ("signapps-backup", 3031),
+    ("signapps-compliance", 3032),
     ("signapps-notifications", 8095),
     ("signapps-billing", 8096),
 ];
@@ -636,10 +637,13 @@ async fn main() -> anyhow::Result<()> {
     let tenant_config_url = env_or("TENANT_CONFIG_SERVICE_URL", "http://127.0.0.1:3029");
     let integrations_url = env_or("INTEGRATIONS_SERVICE_URL", "http://127.0.0.1:3030");
     let backup_url = env_or("BACKUP_SERVICE_URL", "http://127.0.0.1:3031");
+    let compliance_url = env_or("COMPLIANCE_SERVICE_URL", "http://127.0.0.1:3032");
 
     // Ordered: more-specific prefixes first
     let service_map = Arc::new(ServiceMap::new(vec![
         ("/api/v1/auth", &identity_url),
+        // Compliance: data-export is under /api/v1/users/me/export — must appear before /api/v1/users
+        ("/api/v1/users/me/export", &compliance_url),
         ("/api/v1/users", &identity_url),
         ("/api/v1/workspaces", &identity_url),
         ("/api/v1/tenant", &identity_url),
@@ -719,6 +723,8 @@ async fn main() -> anyhow::Result<()> {
         ("/api/v1/integrations", &integrations_url),
         // Backup service (extracted from identity — Refactor 34 Phase 7)
         ("/api/v1/admin/backup", &backup_url),
+        // Compliance service (extracted from identity — Refactor 34 Phase 7)
+        ("/api/v1/compliance", &compliance_url),
         // Identity catch-all: any /api/v1/* not matched above → identity
         ("/api/v1", &identity_url),
         // Health check fallback

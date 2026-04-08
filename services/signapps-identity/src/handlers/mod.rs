@@ -9,8 +9,8 @@ pub mod auth;
 pub mod branding;
 pub mod bulk_users;
 pub mod comms;
-pub mod compliance;
-pub mod data_export;
+// compliance moved to signapps-compliance service (port 3032)
+// data_export moved to signapps-compliance service (port 3032)
 pub mod entity_links;
 pub mod feature_flags;
 pub mod groups;
@@ -23,7 +23,7 @@ pub mod mfa;
 pub mod migration;
 pub mod openapi;
 pub mod preferences;
-pub mod retention_purge;
+// retention_purge moved to signapps-compliance service (port 3032)
 pub mod roles;
 pub mod security_events;
 pub mod sessions;

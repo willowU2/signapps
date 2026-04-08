@@ -89,18 +89,7 @@ use utoipa::OpenApi;
         // Persons moved to signapps-contacts service (port 3021)
         // Sites moved to signapps-it-assets service (port 3022)
         // Vault endpoints moved to signapps-vault service (port 3025)
-        // Compliance
-        crate::handlers::compliance::save_dpia,
-        crate::handlers::compliance::list_dpias,
-        crate::handlers::compliance::create_dsar,
-        crate::handlers::compliance::list_dsars,
-        crate::handlers::compliance::update_dsar,
-        crate::handlers::compliance::save_retention_policies,
-        crate::handlers::compliance::get_retention_policies,
-        crate::handlers::compliance::save_consent,
-        crate::handlers::compliance::get_consent,
-        crate::handlers::compliance::save_cookie_banner,
-        crate::handlers::compliance::get_cookie_banner,
+        // Compliance endpoints moved to signapps-compliance service (port 3032)
         // Resources moved to signapps-it-assets service (port 3022)
         // Audit logs
         crate::handlers::audit_logs::list_audit_logs,
@@ -172,15 +161,7 @@ use utoipa::OpenApi;
             // Person schemas moved to signapps-contacts OpenAPI
             // Site schemas moved to signapps-it-assets OpenAPI
             // Vault schemas moved to signapps-vault service OpenAPI
-            // Compliance schemas
-            crate::handlers::compliance::SaveDpiaRequest,
-            crate::handlers::compliance::DpiaRecord,
-            crate::handlers::compliance::CreateDsarRequest,
-            crate::handlers::compliance::DsarRecord,
-            crate::handlers::compliance::UpdateDsarRequest,
-            crate::handlers::compliance::RetentionPoliciesRequest,
-            crate::handlers::compliance::RetentionPoliciesResponse,
-            crate::handlers::compliance::SaveConsentRequest,
+            // Compliance schemas moved to signapps-compliance service OpenAPI (port 3032)
             // Resource schemas moved to signapps-it-assets OpenAPI
             // Audit log schemas
             crate::handlers::audit_logs::AuditLog,
@@ -206,7 +187,7 @@ use utoipa::OpenApi;
         (name = "tenants", description = "Tenant management (super-admin)"),
         (name = "workspaces", description = "Workspace management"),
         // org tag moved to signapps-org OpenAPI (port 3026)
-        (name = "compliance", description = "GDPR compliance — DPIA, DSAR, retention, consent"),
+        // compliance tag moved to signapps-compliance OpenAPI (port 3032)
         (name = "audit", description = "Platform audit logs"),
         (name = "comms", description = "Internal communications — announcements, polls, news feed"),
         // Accounting tag moved to signapps-billing OpenAPI

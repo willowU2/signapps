@@ -289,7 +289,7 @@ pub async fn update_dsar(
 
     // CO2: Publish compliance.dsar.approved event when status becomes "fulfilled"
     if req.status == "fulfilled" {
-        let bus = PgEventBus::new(state.pool.inner().clone(), "signapps-identity".to_string());
+        let bus = PgEventBus::new(state.pool.inner().clone(), "signapps-compliance".to_string());
         if let Err(e) = bus
             .publish(NewEvent {
                 event_type: "compliance.dsar.approved".to_string(),

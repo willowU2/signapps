@@ -10257,6 +10257,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-compliance"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.7.9",
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db",
+ "sqlx",
+ "tokio",
+ "tokio-test",
+ "tower-http 0.5.2",
+ "tracing",
+ "tracing-subscriber",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-contacts"
 version = "0.1.0"
 dependencies = [

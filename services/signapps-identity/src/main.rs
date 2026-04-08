@@ -71,13 +71,7 @@ async fn main() -> anyhow::Result<()> {
         });
     }
 
-    // Spawn daily data retention purge job (CO3)
-    {
-        let purge_pool = pool.clone();
-        tokio::spawn(async move {
-            handlers::retention_purge::run_daily(purge_pool).await;
-        });
-    }
+    // NOTE: Retention purge job moved to signapps-compliance service (port 3032).
 
     // Create application state
     let state = AppState {
@@ -89,7 +83,6 @@ async fn main() -> anyhow::Result<()> {
         active_sessions: handlers::admin_security::ActiveSessionsStore::new(),
         login_attempts: handlers::admin_security::LoginAttemptsStore::new(),
         migration: handlers::migration::MigrationStore::new(),
-        data_export: handlers::data_export::DataExportStore::new(),
     };
 
     // Build router
@@ -114,8 +107,7 @@ pub struct AppState {
     pub login_attempts: handlers::admin_security::LoginAttemptsStore,
     /// In-memory migration job store (V2-15).
     pub migration: handlers::migration::MigrationStore,
-    /// In-memory RGPD data export job store (V3-02).
-    pub data_export: handlers::data_export::DataExportStore,
+    // data_export moved to signapps-compliance service (port 3032)
 }
 
 impl AuthState for AppState {
@@ -238,10 +230,7 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/users/me/preferences/reset", post(handlers::preferences::reset_preferences))
         .route("/api/v1/users/me/preferences/export", get(handlers::preferences::export_preferences))
         .route("/api/v1/users/me/preferences/import", post(handlers::preferences::import_preferences))
-        // RGPD data export (V3-02)
-        .route("/api/v1/users/me/export", post(handlers::data_export::request_export))
-        .route("/api/v1/users/me/export/status", get(handlers::data_export::export_status))
-        .route("/api/v1/users/me/export/download", get(handlers::data_export::download_export))
+        // RGPD data export moved to signapps-compliance service (port 3032)
         // Activities
         .route("/api/v1/activities", get(handlers::activities::list_activities))
         .route("/api/v1/activity/cross-module", get(handlers::activities::cross_module_activity))
@@ -292,18 +281,8 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/guest-tokens", post(handlers::guest_tokens::create_guest_token))
         .route("/api/v1/guest-tokens", get(handlers::guest_tokens::list_guest_tokens))
         .route("/api/v1/guest-tokens/:id", delete(handlers::guest_tokens::revoke_guest_token))
-        // CO1/CO2/CO4: Compliance endpoints
-        .route("/api/v1/compliance/dpia", post(handlers::compliance::save_dpia))
-        .route("/api/v1/compliance/dpia", get(handlers::compliance::list_dpias))
-        .route("/api/v1/compliance/dsar", post(handlers::compliance::create_dsar))
-        .route("/api/v1/compliance/dsar", get(handlers::compliance::list_dsars))
-        .route("/api/v1/compliance/dsar/:id", patch(handlers::compliance::update_dsar))
-        .route("/api/v1/compliance/retention-policies", put(handlers::compliance::save_retention_policies))
-        .route("/api/v1/compliance/retention-policies", get(handlers::compliance::get_retention_policies))
-        .route("/api/v1/compliance/consent", put(handlers::compliance::save_consent))
-        .route("/api/v1/compliance/consent", get(handlers::compliance::get_consent))
-        .route("/api/v1/compliance/cookie-banner", put(handlers::compliance::save_cookie_banner))
-        .route("/api/v1/compliance/cookie-banner", get(handlers::compliance::get_cookie_banner))
+        // CO1/CO2/CO4: Compliance endpoints moved to signapps-compliance service (port 3032).
+        // Gateway forwards /api/v1/compliance/* and /api/v1/users/me/export/* → signapps-compliance:3032.
         // Persons moved to signapps-contacts service (port 3021).
         // Org structure + Assignments moved to signapps-org service (port 3026).
         // Gateway forwards /api/v1/org/* and /api/v1/assignments/* → signapps-org:3026.

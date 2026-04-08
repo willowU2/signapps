@@ -57,6 +57,7 @@ SERVICES=(
     "tenant-config:3029:Tenant branding and CSS customization"
     "integrations:3030:External integrations (Slack, Teams, Discord)"
     "backup:3031:Database & file backup management"
+    "compliance:3032:Compliance, RGPD, data export, retention"
     "notifications:8095:Push notifications"
     "billing:8096:Billing & invoicing"
     "gateway:3099:API gateway (aggregator)"
