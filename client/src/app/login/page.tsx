@@ -178,9 +178,22 @@ export default function LoginPage() {
           setLockoutUntil(lockoutEnd);
         }
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [failedAttempts, lockoutUntil, rememberMe, trustDevice, redirectAfterLogin],
+    // router, setMfaSessionToken, setRedirectAfterLogin and setUser are stable
+    // references (router is stable in Next.js App Router; setters are from
+    // useState/useAuthStore and never change identity), so including them
+    // doesn't cause extra re-renders but satisfies the exhaustive-deps rule.
+    [
+      failedAttempts,
+      lockoutUntil,
+      rememberMe,
+      trustDevice,
+      redirectAfterLogin,
+      router,
+      setMfaSessionToken,
+      setRedirectAfterLogin,
+      setUser,
+    ],
   );
 
   // Auto-login logic for Development Environment

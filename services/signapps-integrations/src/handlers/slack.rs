@@ -226,7 +226,7 @@ pub async fn get_slack_config(
             String::new()
         } else {
             // Never expose full webhook URL — mask it
-            format!("https://hooks.slack.com/services/***")
+            "https://hooks.slack.com/services/***".to_string()
         },
         channel: std::env::var("SLACK_DEFAULT_CHANNEL").unwrap_or_else(|_| "#général".to_string()),
         enabled: !webhook_url.is_empty(),
