@@ -10,6 +10,10 @@ import { type Page, expect } from "@playwright/test";
  *     went wrong" fallback text anywhere on the page
  *   - No uncaught page errors or console errors (with noise filters)
  *
+ * Onboarding/changelog modals are suppressed via `storageState` in
+ * `auth.setup.ts`, not per-test — the relevant localStorage flags are
+ * persisted across the whole browser context.
+ *
  * Intended for parametric smoke specs that iterate over a module's routes.
  * Form interactions and data assertions are deliberately out of scope.
  */
@@ -52,27 +56,4 @@ export async function assertPageLoadsCleanly(
   ).toHaveCount(0);
 
   expect(errors, `uncaught page errors at ${path}`).toEqual([]);
-}
-
-/**
- * Pre-populate the localStorage flags that suppress the "Quoi de neuf ?"
- * changelog modal and the onboarding wizard. Should be called from the
- * spec's `beforeEach` via `addInitScript` so every page load in the test
- * sees the flags before the app's useEffect runs.
- */
-export function suppressOnboardingModals(): () => void {
-  return () => {
-    try {
-      localStorage.setItem("signapps-changelog-seen", "2.6.0");
-      localStorage.setItem(
-        "signapps-onboarding-completed",
-        new Date().toISOString(),
-      );
-      localStorage.setItem("signapps-onboarding-dismissed", "true");
-      localStorage.setItem("signapps_initialized", new Date().toISOString());
-      localStorage.setItem("signapps_seed_dismissed", "true");
-    } catch {
-      // ignore
-    }
-  };
 }

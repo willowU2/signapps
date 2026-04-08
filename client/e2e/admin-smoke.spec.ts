@@ -10,10 +10,7 @@
  */
 
 import { test } from "./fixtures";
-import {
-  assertPageLoadsCleanly,
-  suppressOnboardingModals,
-} from "./helpers/smoke";
+import { assertPageLoadsCleanly } from "./helpers/smoke";
 
 const ADMIN_PAGES: Array<{ path: string; label: string }> = [
   { path: "/admin", label: "Admin hub" },
@@ -95,10 +92,6 @@ const ADMIN_PAGES: Array<{ path: string; label: string }> = [
 ];
 
 test.describe("Admin — smoke", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.addInitScript(suppressOnboardingModals());
-  });
-
   for (const { path, label } of ADMIN_PAGES) {
     test(`${label} (${path}) loads without crashing`, async ({ page }) => {
       await assertPageLoadsCleanly(page, path);

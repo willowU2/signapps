@@ -57,45 +57,12 @@ test.describe("Calendar — Entry types", () => {
   let dialog: EventFormDialog;
 
   test.beforeEach(async ({ page }) => {
-    // Suppress the changelog modal (see calendar-manipulation.spec.ts for
-    // the long story about this dismissal).
-    await page.addInitScript(() => {
-      try {
-        localStorage.setItem("signapps-changelog-seen", "2.6.0");
-        localStorage.setItem(
-          "signapps-onboarding-completed",
-          new Date().toISOString(),
-        );
-        localStorage.setItem("signapps-onboarding-dismissed", "true");
-        localStorage.setItem("signapps_initialized", new Date().toISOString());
-        localStorage.setItem("signapps_seed_dismissed", "true");
-      } catch {
-        // ignore
-      }
-    });
-
+    // Onboarding/changelog localStorage flags are persisted via `storageState`
+    // (see auth.setup.ts), so no addInitScript is needed here.
     await ensureCalendarExists(page);
     calendar = new CalendarPage(page);
     dialog = new EventFormDialog(page);
     await calendar.goto();
-
-    // MutationObserver to kill any changelog modal that opens later.
-    await page.evaluate(() => {
-      const kill = () => {
-        document.querySelectorAll('[role="dialog"]').forEach((el) => {
-          if (el.textContent?.includes("Quoi de neuf")) {
-            (el as HTMLElement).style.display = "none";
-          }
-        });
-      };
-      kill();
-      new MutationObserver(kill).observe(document.body, {
-        childList: true,
-        subtree: true,
-      });
-      setTimeout(kill, 3000);
-    });
-
     await dismissDialogs(page);
     await calendar.switchView("Semaine").catch(() => {});
   });

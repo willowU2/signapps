@@ -7,10 +7,7 @@
  */
 
 import { test } from "./fixtures";
-import {
-  assertPageLoadsCleanly,
-  suppressOnboardingModals,
-} from "./helpers/smoke";
+import { assertPageLoadsCleanly } from "./helpers/smoke";
 
 const COMMS_PAGES: Array<{ path: string; label: string }> = [
   { path: "/comms", label: "Comms hub" },
@@ -25,10 +22,6 @@ const COMMS_PAGES: Array<{ path: string; label: string }> = [
 ];
 
 test.describe("Comms — smoke", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.addInitScript(suppressOnboardingModals());
-  });
-
   for (const { path, label } of COMMS_PAGES) {
     test(`${label} (${path}) loads without crashing`, async ({ page }) => {
       await assertPageLoadsCleanly(page, path);

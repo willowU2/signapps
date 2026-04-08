@@ -13,10 +13,7 @@
  */
 
 import { test } from "./fixtures";
-import {
-  assertPageLoadsCleanly,
-  suppressOnboardingModals,
-} from "./helpers/smoke";
+import { assertPageLoadsCleanly } from "./helpers/smoke";
 
 const MISC_PAGES: Array<{ path: string; label: string }> = [
   { path: "/accounting", label: "Accounting" },
@@ -58,10 +55,6 @@ const MISC_PAGES: Array<{ path: string; label: string }> = [
 ];
 
 test.describe("Misc modules — smoke", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.addInitScript(suppressOnboardingModals());
-  });
-
   for (const { path, label } of MISC_PAGES) {
     test(`${label} (${path}) loads without crashing`, async ({ page }) => {
       await assertPageLoadsCleanly(page, path);

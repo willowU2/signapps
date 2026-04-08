@@ -8,10 +8,7 @@
  */
 
 import { test } from "./fixtures";
-import {
-  assertPageLoadsCleanly,
-  suppressOnboardingModals,
-} from "./helpers/smoke";
+import { assertPageLoadsCleanly } from "./helpers/smoke";
 
 const LMS_PAGES: Array<{ path: string; label: string }> = [
   { path: "/lms", label: "LMS hub" },
@@ -25,10 +22,6 @@ const LMS_PAGES: Array<{ path: string; label: string }> = [
 ];
 
 test.describe("LMS — smoke", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.addInitScript(suppressOnboardingModals());
-  });
-
   for (const { path, label } of LMS_PAGES) {
     test(`${label} (${path}) loads without crashing`, async ({ page }) => {
       await assertPageLoadsCleanly(page, path);

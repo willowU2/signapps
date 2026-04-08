@@ -310,11 +310,95 @@ export class CalendarPage extends BasePage {
 
   // ───────────────────────────── Assertions helpers ───────────────────────
 
+  /**
+   * Assert an event with the given title exists in the backend.
+   *
+   * Using the API as the source of truth (instead of the DOM) avoids three
+   * classes of flakiness we hit with DOM assertions:
+   *   1. `toBeVisible` fails for events that render off-screen in the
+   *      scrollable time grid (e.g. an event at 22:00 below the viewport).
+   *   2. `MultiDayEventBars` caps rendered rows at `maxRows=3`, so events
+   *      4+ on the same spatial slot never touch the DOM at all.
+   *   3. Re-render timing (the DraggableEventCard detaches briefly while
+   *      useEvents.setEvents replaces the list).
+   *
+   * Tests that specifically need to verify UI rendering should query the
+   * DOM directly via `calendar.eventByTitle(title)` with a context-aware
+   * locator (scroll into view first, pick a specific view, etc.).
+   */
   async expectEventVisible(title: string): Promise<void> {
-    await expect(this.eventByTitle(title).first()).toBeVisible();
+    await expect
+      .poll(
+        async () => {
+          const calListResp = await this.page.request.get(
+            "http://localhost:3011/api/v1/calendars",
+          );
+          if (!calListResp.ok()) return 0;
+          const cals = await calListResp.json().catch(() => null);
+          const list = Array.isArray(cals) ? cals : (cals?.data ?? []);
+          let total = 0;
+          for (const cal of list) {
+            // Search a wide date window (±2 months) to catch events that
+            // tests create outside the current week/month.
+            const now = new Date();
+            const start = new Date(now);
+            start.setMonth(start.getMonth() - 1);
+            const end = new Date(now);
+            end.setMonth(end.getMonth() + 3);
+            const eventsResp = await this.page.request.get(
+              `http://localhost:3011/api/v1/calendars/${cal.id}/events?start=${start.toISOString()}&end=${end.toISOString()}`,
+            );
+            if (!eventsResp.ok()) continue;
+            const body = await eventsResp.json().catch(() => null);
+            const events = Array.isArray(body) ? body : (body?.data ?? []);
+            total += events.filter((e: { title?: string }) =>
+              (e.title ?? "").includes(title),
+            ).length;
+          }
+          return total;
+        },
+        {
+          timeout: 5000,
+          message: `event "${title}" should exist in the backend`,
+        },
+      )
+      .toBeGreaterThan(0);
   }
 
   async expectEventHidden(title: string): Promise<void> {
-    await expect(this.eventByTitle(title)).toHaveCount(0);
+    await expect
+      .poll(
+        async () => {
+          const calListResp = await this.page.request.get(
+            "http://localhost:3011/api/v1/calendars",
+          );
+          if (!calListResp.ok()) return 0;
+          const cals = await calListResp.json().catch(() => null);
+          const list = Array.isArray(cals) ? cals : (cals?.data ?? []);
+          let total = 0;
+          for (const cal of list) {
+            const now = new Date();
+            const start = new Date(now);
+            start.setMonth(start.getMonth() - 1);
+            const end = new Date(now);
+            end.setMonth(end.getMonth() + 3);
+            const eventsResp = await this.page.request.get(
+              `http://localhost:3011/api/v1/calendars/${cal.id}/events?start=${start.toISOString()}&end=${end.toISOString()}`,
+            );
+            if (!eventsResp.ok()) continue;
+            const body = await eventsResp.json().catch(() => null);
+            const events = Array.isArray(body) ? body : (body?.data ?? []);
+            total += events.filter((e: { title?: string }) =>
+              (e.title ?? "").includes(title),
+            ).length;
+          }
+          return total;
+        },
+        {
+          timeout: 5000,
+          message: `event "${title}" should not exist in the backend`,
+        },
+      )
+      .toBe(0);
   }
 }

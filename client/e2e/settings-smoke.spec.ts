@@ -12,7 +12,8 @@
  * writing detailed interactions for every surface.
  */
 
-import { test, expect, dismissDialogs } from "./fixtures";
+import { test } from "./fixtures";
+import { assertPageLoadsCleanly } from "./helpers/smoke";
 
 /**
  * Pages under `/settings`. The OAuth callback (`/settings/calendar/callback`)
@@ -34,70 +35,9 @@ const SETTINGS_PAGES: Array<{ path: string; label: string }> = [
 ];
 
 test.describe("Settings — smoke", () => {
-  test.beforeEach(async ({ page }) => {
-    // Pre-dismiss the changelog modal (see calendar-manipulation.spec.ts).
-    await page.addInitScript(() => {
-      try {
-        localStorage.setItem("signapps-changelog-seen", "2.6.0");
-        localStorage.setItem(
-          "signapps-onboarding-completed",
-          new Date().toISOString(),
-        );
-        localStorage.setItem("signapps-onboarding-dismissed", "true");
-        localStorage.setItem("signapps_initialized", new Date().toISOString());
-        localStorage.setItem("signapps_seed_dismissed", "true");
-      } catch {
-        // ignore
-      }
-    });
-  });
-
   for (const { path, label } of SETTINGS_PAGES) {
     test(`${label} (${path}) loads without crashing`, async ({ page }) => {
-      const errors: string[] = [];
-      page.on("pageerror", (err) => errors.push(err.message));
-      // Ignore noisy React / Next / dev-only warnings but capture real errors.
-      page.on("console", (msg) => {
-        if (msg.type() === "error") {
-          const text = msg.text();
-          if (
-            text.includes("Failed to load resource") ||
-            text.includes("favicon") ||
-            text.includes("Download the React DevTools")
-          ) {
-            return;
-          }
-          errors.push(`[console] ${text}`);
-        }
-      });
-
-      const response = await page.goto(path);
-      // 2xx or 3xx — some routes may redirect (e.g. / → /dashboard before
-      // the AppLayout kicks in). A 4xx/5xx is a smoke failure.
-      expect(response?.status() ?? 0, `HTTP status for ${path}`).toBeLessThan(
-        400,
-      );
-
-      // Wait for the app shell to hydrate.
-      await page.waitForLoadState("domcontentloaded");
-      await dismissDialogs(page);
-
-      // The main <body> should have content (no blank page).
-      const bodyText = (await page.locator("body").textContent()) ?? "";
-      expect(
-        bodyText.trim().length,
-        `body text length at ${path}`,
-      ).toBeGreaterThan(50);
-
-      // No explicit error fallbacks in view.
-      await expect(
-        page.getByText(
-          /^404$|Page not found|Une erreur est survenue|Something went wrong/i,
-        ),
-      ).toHaveCount(0);
-
-      // No uncaught JS errors captured during the nav.
-      expect(errors, `uncaught page errors at ${path}`).toEqual([]);
+      await assertPageLoadsCleanly(page, path);
     });
   }
 });

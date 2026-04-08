@@ -7,10 +7,7 @@
  */
 
 import { test } from "./fixtures";
-import {
-  assertPageLoadsCleanly,
-  suppressOnboardingModals,
-} from "./helpers/smoke";
+import { assertPageLoadsCleanly } from "./helpers/smoke";
 
 const SUPPLY_CHAIN_PAGES: Array<{ path: string; label: string }> = [
   { path: "/supply-chain", label: "Supply chain hub" },
@@ -25,10 +22,6 @@ const SUPPLY_CHAIN_PAGES: Array<{ path: string; label: string }> = [
 ];
 
 test.describe("Supply Chain — smoke", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.addInitScript(suppressOnboardingModals());
-  });
-
   for (const { path, label } of SUPPLY_CHAIN_PAGES) {
     test(`${label} (${path}) loads without crashing`, async ({ page }) => {
       await assertPageLoadsCleanly(page, path);

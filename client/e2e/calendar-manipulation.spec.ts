@@ -95,85 +95,101 @@ function uniq(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
+/**
+ * Seed an event via the backend API on a specific future day + hour, then
+ * navigate the Week view to that day. Returns the event ID and ISO date
+ * so callers can poll the API later.
+ *
+ * This pattern isolates tests from the "all events stack at today's hour"
+ * overflow problem that breaks DOM-based `clickEvent()` lookups when tests
+ * run in sequence on the same time slot.
+ */
+async function seedEventAndNavigate(
+  page: import("@playwright/test").Page,
+  calendar: CalendarPage,
+  opts: { title: string; daysFromNow: number; hour: number },
+): Promise<{ eventId: string; isoDate: string }> {
+  const start = new Date();
+  start.setDate(start.getDate() + opts.daysFromNow);
+  start.setHours(opts.hour, 0, 0, 0);
+  const end = new Date(start);
+  end.setHours(opts.hour + 1);
+
+  const calListResp = await page.request.get(
+    "http://localhost:3011/api/v1/calendars",
+  );
+  const cals = await calListResp.json();
+  const list = Array.isArray(cals) ? cals : (cals?.data ?? []);
+  const calendarId: string = list[0].id;
+
+  const seedResp = await page.request.post(
+    `http://localhost:3011/api/v1/calendars/${calendarId}/events`,
+    {
+      data: {
+        title: opts.title,
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+        is_all_day: false,
+        timezone: "Europe/Paris",
+      },
+    },
+  );
+  const seeded = await seedResp.json();
+  const eventId: string = seeded.id ?? seeded.data?.id;
+
+  // Navigate week view forward until the seeded day is in range.
+  // We advance by the number of weeks between today's week-start and the
+  // target's week-start (Monday-based). Computing this directly avoids
+  // off-by-one bugs from naive `Math.ceil(daysFromNow / 7)` math when the
+  // seeded day falls in a week that crosses the divisor.
+  await calendar.switchView("Semaine");
+  const today = new Date();
+  const mondayOf = (d: Date): Date => {
+    const monday = new Date(d);
+    const dow = monday.getDay(); // 0=Sun, 1=Mon, ...
+    const diff = dow === 0 ? -6 : 1 - dow;
+    monday.setDate(monday.getDate() + diff);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  };
+  const weeksToAdvance = Math.round(
+    (mondayOf(start).getTime() - mondayOf(today).getTime()) /
+      (7 * 24 * 60 * 60 * 1000),
+  );
+
+  const startLabel =
+    (await calendar.currentPeriodLabel.textContent())?.trim() ?? "";
+  for (let i = 0; i < weeksToAdvance; i++) {
+    await calendar.goToNextPeriod();
+  }
+  if (weeksToAdvance > 0) {
+    await expect
+      .poll(
+        async () => (await calendar.currentPeriodLabel.textContent())?.trim(),
+        { timeout: 3000 },
+      )
+      .not.toBe(startLabel);
+  }
+
+  const isoDate = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`;
+  return { eventId, isoDate };
+}
+
 test.describe("Calendar — Direct manipulation", () => {
   let calendar: CalendarPage;
   let dialog: EventFormDialog;
 
   test.beforeEach(async ({ page }) => {
-    // The ChangelogDialog component is mounted TWICE (header + global-header),
-    // each with its own local React state, and auto-opens via setTimeout(2s).
-    // We belt-and-brace this three ways:
-    //   1. Pre-populate localStorage with the "seen" version (useEffect early-out)
-    //   2. Inject CSS to hide any Radix portal with the "Quoi de neuf ?" title
-    //   3. Dismiss any remaining blocking dialog via dismissDialogs()
-    await page.addInitScript(() => {
-      try {
-        localStorage.setItem("signapps-changelog-seen", "2.6.0");
-        localStorage.setItem(
-          "signapps-onboarding-completed",
-          new Date().toISOString(),
-        );
-        localStorage.setItem("signapps-onboarding-dismissed", "true");
-        localStorage.setItem("signapps_initialized", new Date().toISOString());
-        localStorage.setItem("signapps_seed_dismissed", "true");
-      } catch {
-        // ignore
-      }
-    });
-
+    // The onboarding/changelog localStorage flags are persisted via
+    // `storageState` (see auth.setup.ts) so no addInitScript is needed.
     await ensureCalendarExists(page);
     calendar = new CalendarPage(page);
     dialog = new EventFormDialog(page);
     await calendar.goto();
-    // Default tests to Week view — Month view truncates to 4 events/day which
-    // hides recently-created events behind "X autres" overflow and breaks
-    // `expectEventVisible`. Tests that specifically need Month view switch to
-    // it explicitly inside the test body.
+    // Default to Week view — Month view truncates at 4 events/day which
+    // breaks `expectEventVisible` for tests that land on crowded cells.
+    // Tests that explicitly need Month view switch inside the test body.
     await calendar.switchView("Semaine").catch(() => {});
-
-    // Inject CSS that forcibly hides any Radix Dialog whose content includes
-    // "Quoi de neuf" — also hides the backdrop overlay so the grid is interactive.
-    await page
-      .addStyleTag({
-        content: `
-        [role="dialog"]:has(h2:has-text("Quoi de neuf")),
-        [data-state="open"][role="dialog"]:has(:has-text("Quoi de neuf")),
-        [data-radix-popper-content-wrapper]:has(:has-text("Quoi de neuf")) {
-          display: none !important;
-        }
-      `.trim(),
-      })
-      .catch(() => {
-        // addStyleTag may reject on strict CSP; ignore.
-      });
-
-    // JS-level removal as a safety net (CSS :has is fine in modern Chrome but
-    // fragile with :has-text — Playwright-only syntax, not real CSS).
-    await page.evaluate(() => {
-      const removeChangelogs = () => {
-        document.querySelectorAll('[role="dialog"]').forEach((el) => {
-          if (el.textContent?.includes("Quoi de neuf")) {
-            (el as HTMLElement).style.display = "none";
-            // Also remove the backdrop
-            let parent = el.parentElement;
-            while (parent && parent !== document.body) {
-              if (parent.getAttribute?.("data-state") === "open") {
-                (parent as HTMLElement).style.display = "none";
-              }
-              parent = parent.parentElement;
-            }
-          }
-        });
-      };
-      removeChangelogs();
-      // Set up a mutation observer to kill any dialog that appears LATER
-      // (the ChangelogDialog has a 2s setTimeout before opening).
-      const mo = new MutationObserver(() => removeChangelogs());
-      mo.observe(document.body, { childList: true, subtree: true });
-      // Also run again after 3s to be sure the delayed modal is caught
-      setTimeout(removeChangelogs, 3000);
-    });
-
     await dismissDialogs(page);
   });
 
@@ -224,13 +240,18 @@ test.describe("Calendar — Direct manipulation", () => {
   // EDIT
   // ─────────────────────────────────────────────────────────────────────────
 
-  test("opens edit form on event click and updates title", async () => {
+  test("opens edit form on event click and updates title", async ({ page }) => {
     const id = uniq();
     const before = `Titre original ${id}`;
     const after = `Titre modifié ${id}`;
 
-    await calendar.clickNewEvent();
-    await dialog.createSimpleEvent(before);
+    // Seed on a future day so the event isn't drowned in today's multi-day
+    // overflow and clickEvent can actually hit it.
+    await seedEventAndNavigate(page, calendar, {
+      title: before,
+      daysFromNow: 35,
+      hour: 8,
+    });
 
     await calendar.clickEvent(before);
     await dialog.waitOpen();
@@ -337,10 +358,13 @@ test.describe("Calendar — Direct manipulation", () => {
   // DELETE — via dialog button
   // ─────────────────────────────────────────────────────────────────────────
 
-  test("deletes an event via the dialog delete button", async () => {
+  test("deletes an event via the dialog delete button", async ({ page }) => {
     const title = `Event à supprimer ${uniq()}`;
-    await calendar.clickNewEvent();
-    await dialog.createSimpleEvent(title);
+    await seedEventAndNavigate(page, calendar, {
+      title,
+      daysFromNow: 37,
+      hour: 9,
+    });
     await calendar.expectEventVisible(title);
 
     await calendar.clickEvent(title);
@@ -356,8 +380,11 @@ test.describe("Calendar — Direct manipulation", () => {
     page,
   }) => {
     const title = `Event temporaire ${uniq()}`;
-    await calendar.clickNewEvent();
-    await dialog.createSimpleEvent(title);
+    await seedEventAndNavigate(page, calendar, {
+      title,
+      daysFromNow: 39,
+      hour: 10,
+    });
     await calendar.expectEventVisible(title);
 
     // Click to select (updates selectedEventId in the store). Also opens the
