@@ -45,6 +45,7 @@ import {
   PanelLeft,
   X,
   Plus,
+  Share2,
 } from "lucide-react";
 import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
@@ -59,6 +60,7 @@ import { useCalendarStore, type ViewType } from "@/stores/calendar-store";
 import { MiniCalendar } from "./mini-calendar";
 import { LayerPanel } from "./LayerPanel";
 import { EventForm } from "./EventForm";
+import { ShareDialog } from "./ShareDialog";
 import { calendarApi } from "@/lib/api/calendar";
 import { Calendar, Event } from "@/types/calendar";
 import { useEvents } from "@/hooks/use-events";
@@ -286,6 +288,9 @@ export function CalendarHub() {
   const [editingEvent, setEditingEvent] = useState<Event | undefined>(
     undefined,
   );
+
+  // ── ShareDialog state ────────────────────────────────────────────────────
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   // Events hook — exposes CRUD for drag-drop, delete-key, and undo.
   const { events, updateEvent, deleteEvent, createEvent } =
@@ -739,6 +744,28 @@ export function CalendarHub() {
           </TooltipTrigger>
           <TooltipContent side="bottom">Couches</TooltipContent>
         </Tooltip>
+
+        {/* Share calendar */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              data-testid="calendar-share-btn"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setShareDialogOpen(true)}
+              disabled={!selectedCalendarId}
+              aria-label="Partager le calendrier"
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {selectedCalendarId
+              ? "Partager le calendrier"
+              : "Aucun calendrier sélectionné"}
+          </TooltipContent>
+        </Tooltip>
       </header>
 
       {/* ── Body ────────────────────────────────────────────────────────── */}
@@ -830,6 +857,17 @@ export function CalendarHub() {
           defaultStartDate={formDefaultStart}
         />
       )}
+
+      {/* ── ShareDialog ──────────────────────────────────────────────────── */}
+      <ShareDialog
+        calendarId={selectedCalendarId ?? null}
+        calendarName={
+          calendars.find((c) => c.id === selectedCalendarId)?.name ??
+          "Calendrier"
+        }
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+      />
     </div>
   );
 }
