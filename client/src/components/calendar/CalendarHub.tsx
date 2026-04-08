@@ -46,6 +46,8 @@ import {
   X,
   Plus,
   Share2,
+  Upload,
+  Download,
 } from "lucide-react";
 import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
@@ -61,6 +63,8 @@ import { MiniCalendar } from "./mini-calendar";
 import { LayerPanel } from "./LayerPanel";
 import { EventForm } from "./EventForm";
 import { ShareDialog } from "./ShareDialog";
+import { ImportDialog } from "./ImportDialog";
+import { ExportDialog } from "./ExportDialog";
 import { calendarApi } from "@/lib/api/calendar";
 import { Calendar, Event } from "@/types/calendar";
 import { useEvents } from "@/hooks/use-events";
@@ -289,8 +293,10 @@ export function CalendarHub() {
     undefined,
   );
 
-  // ── ShareDialog state ────────────────────────────────────────────────────
+  // ── ShareDialog / Import / Export state ─────────────────────────────────
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   // Events hook — exposes CRUD for drag-drop, delete-key, and undo.
   const { events, updateEvent, deleteEvent, createEvent } =
@@ -766,6 +772,42 @@ export function CalendarHub() {
               : "Aucun calendrier sélectionné"}
           </TooltipContent>
         </Tooltip>
+
+        {/* Import .ics */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              data-testid="calendar-import-btn"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setImportDialogOpen(true)}
+              disabled={!selectedCalendarId}
+              aria-label="Importer des événements"
+            >
+              <Upload className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Importer (.ics)</TooltipContent>
+        </Tooltip>
+
+        {/* Export .ics / .json */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              data-testid="calendar-export-btn"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setExportDialogOpen(true)}
+              disabled={!selectedCalendarId}
+              aria-label="Exporter le calendrier"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Exporter</TooltipContent>
+        </Tooltip>
       </header>
 
       {/* ── Body ────────────────────────────────────────────────────────── */}
@@ -867,6 +909,24 @@ export function CalendarHub() {
         }
         open={shareDialogOpen}
         onOpenChange={setShareDialogOpen}
+      />
+
+      {/* ── ImportDialog ─────────────────────────────────────────────────── */}
+      <ImportDialog
+        calendarId={selectedCalendarId ?? null}
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+      />
+
+      {/* ── ExportDialog ─────────────────────────────────────────────────── */}
+      <ExportDialog
+        calendarId={selectedCalendarId ?? null}
+        calendarName={
+          calendars.find((c) => c.id === selectedCalendarId)?.name ??
+          "Calendrier"
+        }
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
       />
     </div>
   );
