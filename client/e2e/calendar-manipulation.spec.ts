@@ -245,45 +245,92 @@ test.describe("Calendar — Direct manipulation", () => {
   // RESIZE
   // ─────────────────────────────────────────────────────────────────────────
 
-  // FIXME: The backend resize DOES work (PUT /api/v1/events/:id returns 200,
-  // the event's end_time is updated, the drag-scoped mouse handlers fire
-  // correctly). What fails in this test is the POST-resize re-render: the
-  // event element is briefly unmounted while useEvents.setEvents replaces
-  // the list, and Playwright's subsequent `toBeVisible` times out looking
-  // for a detached DOM node. Revisit by polling the API after resize to
-  // confirm end_time changed, instead of relying on the re-mounted element.
-  test.fixme("resizes an event by dragging its bottom edge (week view)", async () => {
+  test("resizes an event by dragging its bottom edge (week view)", async ({
+    page,
+  }) => {
     const title = `Event à redimensionner ${uniq()}`;
-    await calendar.switchView("Semaine");
 
-    // Create the event via drag-to-create at hour 5 so it doesn't spatially
-    // overlap with other events at the "current hour" (21:xx) left over from
-    // other tests. Overlapping events would make the ResizeHandle click hit
-    // the wrong card.
-    const today = new Date();
-    const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    await calendar.dragToCreateInColumn(iso, 5, 60); // 1h event at 05:00
-    await dialog.waitOpen();
-    await dialog.fillTitle(title);
-    await dialog.save();
+    // Seed the event via the API so we don't fight with form state or
+    // month-view overflow. Use the same "future month" pattern as the move
+    // test to keep this test isolated from other tests' events on today.
+    const futureDay = new Date();
+    futureDay.setMonth(futureDay.getMonth() + 2);
+    futureDay.setDate(10);
+    futureDay.setHours(5, 0, 0, 0);
+    const endTime = new Date(futureDay);
+    endTime.setHours(6); // initial duration = 1h
+
+    const calListResp = await page.request.get(
+      "http://localhost:3011/api/v1/calendars",
+    );
+    expect(calListResp.ok()).toBeTruthy();
+    const calListBody = await calListResp.json();
+    const cals = Array.isArray(calListBody)
+      ? calListBody
+      : (calListBody?.data ?? []);
+    const calendarId: string = cals[0].id;
+
+    const seedResp = await page.request.post(
+      `http://localhost:3011/api/v1/calendars/${calendarId}/events`,
+      {
+        data: {
+          title,
+          start_time: futureDay.toISOString(),
+          end_time: endTime.toISOString(),
+          is_all_day: false,
+          timezone: "Europe/Paris",
+        },
+      },
+    );
+    expect(seedResp.ok()).toBeTruthy();
+    const seeded = await seedResp.json();
+    const eventId: string = seeded.id ?? seeded.data?.id;
+    expect(eventId).toBeTruthy();
+    const originalEndTime: string = seeded.end_time ?? seeded.data?.end_time;
+
+    // Navigate the UI to the seeded event's week.
+    await calendar.switchView("Semaine");
+    const startLabel =
+      (await calendar.currentPeriodLabel.textContent())?.trim() ?? "";
+    // Jump to the future week — navigateForward in week view advances 7 days,
+    // so ~9 clicks covers 2 months.
+    for (let i = 0; i < 9; i++) {
+      await calendar.goToNextPeriod();
+    }
+    await expect
+      .poll(
+        async () => (await calendar.currentPeriodLabel.textContent())?.trim(),
+        { timeout: 3000 },
+      )
+      .not.toBe(startLabel);
+
+    // The event should be visible at 5:00 on the seeded day.
     await calendar.expectEventVisible(title);
 
-    const event = calendar.eventByTitle(title).first();
-    const before = await event.boundingBox();
-    expect(before).not.toBeNull();
-
+    // Trigger the resize via the ResizeHandle's mouse events. The backend
+    // PUT happens asynchronously; we verify SUCCESS by polling the API
+    // for the event's end_time to advance, NOT by re-measuring the DOM
+    // element (which is briefly detached during the refetch cycle and
+    // breaks `toBeVisible` timing).
     await calendar.resizeEventBy(title, 60);
 
-    // After the resize, the useEvents hook re-fetches and the event element
-    // is remounted. Wait for it to re-appear (visible) before reading its
-    // new bounding box.
-    const eventAfter = calendar.eventByTitle(title).first();
-    await expect(eventAfter).toBeVisible({ timeout: 5000 });
-    const after = await eventAfter.boundingBox();
-    expect(after).not.toBeNull();
-    if (before && after) {
-      expect(after.height).toBeGreaterThan(before.height + 20);
-    }
+    await expect
+      .poll(
+        async () => {
+          const resp = await page.request.get(
+            `http://localhost:3011/api/v1/events/${eventId}`,
+          );
+          if (!resp.ok()) return null;
+          const body = await resp.json();
+          const ev = body?.data ?? body;
+          return ev.end_time;
+        },
+        {
+          timeout: 5000,
+          message: "event end_time should advance after resize",
+        },
+      )
+      .not.toBe(originalEndTime);
   });
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -408,69 +455,94 @@ test.describe("Calendar — Direct manipulation", () => {
   // DRAG & DROP — month view (only view with DndContext drop targets wired)
   // ─────────────────────────────────────────────────────────────────────────
 
-  // Passes in isolation — cross-test state (probably selectedEventId leaked
-  // from a previous test's interaction) breaks the day-cell click flow when
-  // this test runs after the full suite. Marked fixme until test isolation
-  // is improved (e.g., store reset helper in beforeEach).
-  test.fixme("moves an event between days in month view", async () => {
+  test("moves an event between days in month view", async ({ page }) => {
     const title = `Event à déplacer ${uniq()}`;
 
-    // Work exclusively in Month view. Create the event by CLICKING a future
-    // day cell — MonthCalendar's onClick calls `onCreateEvent(startOfDay(day))`,
-    // so the event lands on exactly that day (instead of "today", which is
-    // crowded with leftover events from other tests and overflows the 4-per-cell
-    // render limit, hiding our freshly-created event).
+    // Rather than racing against form state and Month-view's 4-events/cell
+    // overflow, seed the event directly via the calendar API on a date two
+    // months ahead — where no other test writes. Then navigate the UI there
+    // and drag it. This isolates the drag-drop interaction from all the
+    // create-flow fragility we've debugged elsewhere.
+    const futureMonth = new Date();
+    futureMonth.setMonth(futureMonth.getMonth() + 2);
+    futureMonth.setDate(10);
+    futureMonth.setHours(10, 0, 0, 0);
+    const endTime = new Date(futureMonth);
+    endTime.setHours(11);
+    const targetDate = new Date(futureMonth);
+    targetDate.setDate(15);
+
+    // Find the first calendar belonging to this user so we can seed into it.
+    const calListResp = await page.request.get(
+      "http://localhost:3011/api/v1/calendars",
+    );
+    expect(calListResp.ok()).toBeTruthy();
+    const calListBody = await calListResp.json();
+    const cals = Array.isArray(calListBody)
+      ? calListBody
+      : (calListBody?.data ?? []);
+    expect(cals.length).toBeGreaterThan(0);
+    const calendarId: string = cals[0].id;
+
+    // Seed the event.
+    const seedResp = await page.request.post(
+      `http://localhost:3011/api/v1/calendars/${calendarId}/events`,
+      {
+        data: {
+          title,
+          start_time: futureMonth.toISOString(),
+          end_time: endTime.toISOString(),
+          is_all_day: false,
+          timezone: "Europe/Paris",
+        },
+      },
+    );
+    expect(
+      seedResp.ok(),
+      `event seed failed (${seedResp.status()})`,
+    ).toBeTruthy();
+
+    // Switch to Month view, navigate two months forward so the seeded event
+    // is visible, and wait for the period label to actually update before
+    // touching the grid.
     await calendar.switchView("Mois");
     await calendar.expectViewActive("Mois");
+    const startLabel =
+      (await calendar.currentPeriodLabel.textContent())?.trim() ?? "";
+    await calendar.goToNextPeriod();
+    await calendar.goToNextPeriod();
+    await expect
+      .poll(
+        async () => (await calendar.currentPeriodLabel.textContent())?.trim(),
+        { timeout: 3000 },
+      )
+      .not.toBe(startLabel);
 
-    const today = new Date();
-    const source = new Date(today);
-    source.setDate(today.getDate() + 1); // tomorrow — definitely visible
-    const target = new Date(today);
-    target.setDate(today.getDate() + 4); // tomorrow + 3 days
-
-    const toIso = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-        d.getDate(),
-      ).padStart(2, "0")}`;
-    const sourceIso = toIso(source);
-    const targetIso = toIso(target);
-
-    // Click the source day cell → opens the form pre-filled with that date.
-    // `force: true` bypasses Playwright's actionability check — the day cell
-    // can be interleaved with child elements (day number, event overflow)
-    // that shift hit-testing but don't actually block the underlying click.
-    await calendar.dayCell(sourceIso).click({ force: true });
-    await dialog.waitOpen();
-    await dialog.fillTitle(title);
-    await dialog.save();
-
-    // The event should now live on the source day
+    // The seeded event should now be visible in the future month cell.
     await calendar.expectEventVisible(title);
-    const sourceCellBox = await calendar.dayCell(sourceIso).boundingBox();
     const eventBeforeBox = await calendar
       .eventByTitle(title)
       .first()
       .boundingBox();
+    expect(eventBeforeBox).not.toBeNull();
 
-    // Drag the event to the target day
+    // Drag it to day 15 of the same future month.
+    const toIso = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+        d.getDate(),
+      ).padStart(2, "0")}`;
+    const targetIso = toIso(targetDate);
     await calendar.moveEventInMonthViewTo(title, targetIso);
-    await calendar.page.waitForTimeout(500);
+    await page.waitForTimeout(600); // @dnd-kit dragEnd + PUT + refetch
 
-    // The event should still exist (drag didn't destroy it) and its X position
-    // should have changed, indicating it landed in a different day column.
+    // Event still visible, and its X position changed → drop target was hit.
     await calendar.expectEventVisible(title);
     const eventAfterBox = await calendar
       .eventByTitle(title)
       .first()
       .boundingBox();
-    expect(eventBeforeBox).not.toBeNull();
     expect(eventAfterBox).not.toBeNull();
-    expect(sourceCellBox).not.toBeNull();
     if (eventBeforeBox && eventAfterBox) {
-      // A successful drag moves the event at least 1 day width horizontally.
-      // We don't hard-assert the exact target to avoid brittle pixel math,
-      // but the new X must differ from the source cell's X.
       expect(Math.abs(eventAfterBox.x - eventBeforeBox.x)).toBeGreaterThan(30);
     }
   });
