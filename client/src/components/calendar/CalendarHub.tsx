@@ -48,6 +48,7 @@ import {
   Share2,
   Upload,
   Download,
+  CalendarClock,
 } from "lucide-react";
 import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
@@ -65,6 +66,7 @@ import { EventForm } from "./EventForm";
 import { ShareDialog } from "./ShareDialog";
 import { ImportDialog } from "./ImportDialog";
 import { ExportDialog } from "./ExportDialog";
+import { FindSlot } from "./find-slot";
 import { calendarApi } from "@/lib/api/calendar";
 import { Calendar, Event } from "@/types/calendar";
 import { useEvents } from "@/hooks/use-events";
@@ -293,10 +295,11 @@ export function CalendarHub() {
     undefined,
   );
 
-  // ── ShareDialog / Import / Export state ─────────────────────────────────
+  // ── Dialog states (share / import / export / find-slot) ─────────────────
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [findSlotOpen, setFindSlotOpen] = useState(false);
 
   // Events hook — exposes CRUD for drag-drop, delete-key, and undo.
   const { events, updateEvent, deleteEvent, createEvent } =
@@ -808,6 +811,24 @@ export function CalendarHub() {
           </TooltipTrigger>
           <TooltipContent side="bottom">Exporter</TooltipContent>
         </Tooltip>
+
+        {/* Find a slot (AI-assisted) */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              data-testid="calendar-find-slot-btn"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setFindSlotOpen(true)}
+              disabled={!selectedCalendarId}
+              aria-label="Trouver un créneau"
+            >
+              <CalendarClock className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Trouver un créneau</TooltipContent>
+        </Tooltip>
       </header>
 
       {/* ── Body ────────────────────────────────────────────────────────── */}
@@ -928,6 +949,15 @@ export function CalendarHub() {
         open={exportDialogOpen}
         onOpenChange={setExportDialogOpen}
       />
+
+      {/* ── FindSlot (AI-assisted meeting scheduling) ────────────────────── */}
+      {selectedCalendarId && (
+        <FindSlot
+          calendarId={selectedCalendarId}
+          open={findSlotOpen}
+          onOpenChange={setFindSlotOpen}
+        />
+      )}
     </div>
   );
 }
