@@ -337,6 +337,35 @@ export const sharingApi = {
   },
 
   /**
+   * Update the role of an existing sharing grant.
+   *
+   * @param resourceType - Type of the shared resource.
+   * @param resourceId   - UUID of the resource.
+   * @param grantId      - UUID of the grant to update.
+   * @param role         - New role to assign.
+   * @returns The updated {@link SharingGrant}.
+   *
+   * @example
+   * ```ts
+   * const updated = await sharingApi.updateGrantRole('file', fileId, grantId, 'editor');
+   * ```
+   */
+  async updateGrantRole(
+    resourceType: SharingResourceType,
+    resourceId: string,
+    grantId: string,
+    role: import("@/types/sharing").SharingRole,
+  ): Promise<SharingGrant> {
+    const client = getClient(resolveService(resourceType));
+    const prefix = resolvePrefix(resourceType);
+    const { data } = await client.patch<SharingGrant>(
+      `/api/v1/${prefix}/${resourceId}/grants/${grantId}`,
+      { role },
+    );
+    return data;
+  },
+
+  /**
    * Delete a sharing template by ID (admin only).
    *
    * System templates cannot be deleted and the server will return 404.

@@ -428,6 +428,7 @@ export default function MailPage() {
       setSearchResults(null);
       setActiveFilters(new Set());
       setSmartFolderFilter(null);
+      setActiveLabelFilter(null);
       loadFolder(folder);
     },
     [loadFolder, clearSelection],
@@ -1492,7 +1493,20 @@ export default function MailPage() {
                           key={label.id}
                           className="group/label flex items-center gap-1 pr-1"
                         >
-                          <button className="flex flex-1 items-center gap-3 px-6 py-2 text-[13px] text-foreground/80 hover:bg-muted dark:hover:bg-gray-800 rounded-r-full transition-colors text-left">
+                          <button
+                            onClick={() => {
+                              setActiveLabelFilter((prev) =>
+                                prev === label.name ? null : label.name,
+                              );
+                              clearSelection();
+                            }}
+                            className={cn(
+                              "flex flex-1 items-center gap-3 px-6 py-2 text-[13px] rounded-r-full transition-colors text-left",
+                              activeLabelFilter === label.name
+                                ? "bg-primary/10 text-primary font-semibold"
+                                : "text-foreground/80 hover:bg-muted dark:hover:bg-gray-800",
+                            )}
+                          >
                             {/* Idea 29: Colored dot next to label */}
                             <span
                               className="h-2.5 w-2.5 rounded-full shrink-0 flex-none"

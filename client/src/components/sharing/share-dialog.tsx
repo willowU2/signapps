@@ -241,10 +241,11 @@ export function ShareDialog({
   open,
   onOpenChange,
 }: ShareDialogProps) {
-  const { grants, loading, createGrant, revokeGrant } = useSharing(
-    open ? resourceType : null,
-    open ? resourceId : null,
-  );
+  const { grants, loading, createGrant, revokeGrant, updateGrantRole } =
+    useSharing(
+      open ? resourceType : null,
+      open ? resourceId : null,
+    );
 
   // Form state
   const [granteeType, setGranteeType] = useState<SharingGranteeType>("user");
@@ -279,11 +280,14 @@ export function ShareDialog({
   };
 
   const handleRoleChange = async (grantId: string, newRole: SharingRole) => {
-    // Optimistic UI: not natively supported by the hook (revokeGrant + createGrant)
-    // For now, just a no-op visual — full inline edit would require a PATCH endpoint.
-    // The existing API only has create/delete; role changes are handled via delete+re-create.
-    void grantId;
-    void newRole;
+    setMutating(true);
+    try {
+      await updateGrantRole(grantId, newRole);
+    } catch {
+      // toast already shown by the hook
+    } finally {
+      setMutating(false);
+    }
   };
 
   const handleDelete = async (grantId: string) => {

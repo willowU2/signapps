@@ -20,6 +20,7 @@ import type {
   CreateSharingGrant,
   EffectivePermission,
   SharingResourceType,
+  SharingRole,
 } from "@/types/sharing";
 
 // ─── Return type ──────────────────────────────────────────────────────────────
@@ -54,6 +55,14 @@ export interface UseSharingReturn {
    * @throws Re-throws on API error (after showing a toast).
    */
   revokeGrant: (grantId: string) => Promise<void>;
+  /**
+   * Update the role of an existing sharing grant.
+   *
+   * @param grantId - UUID of the grant to update.
+   * @param role    - New role to assign.
+   * @throws Re-throws on API error (after showing a toast).
+   */
+  updateGrantRole: (grantId: string, role: SharingRole) => Promise<void>;
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -164,6 +173,30 @@ export function useSharing(
     [resourceType, resourceId],
   );
 
+  const updateGrantRole = useCallback(
+    async (grantId: string, role: SharingRole): Promise<void> => {
+      if (!resourceType || !resourceId) return;
+      try {
+        const updated = await sharingApi.updateGrantRole(
+          resourceType,
+          resourceId,
+          grantId,
+          role,
+        );
+        setGrants((prev) =>
+          prev.map((g) => (g.id === updated.id ? updated : g)),
+        );
+        toast.success("Rôle mis à jour");
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : "Échec de la mise à jour";
+        toast.error(msg);
+        throw err;
+      }
+    },
+    [resourceType, resourceId],
+  );
+
   useEffect(() => {
     loadGrants();
     loadPermission();
@@ -178,5 +211,6 @@ export function useSharing(
     loadPermission,
     createGrant,
     revokeGrant,
+    updateGrantRole,
   };
 }

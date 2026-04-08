@@ -627,7 +627,7 @@ async fn main() -> anyhow::Result<()> {
     let media_url = env_or("MEDIA_SERVICE_URL", "http://127.0.0.1:3009");
     let scheduler_url = env_or("SCHEDULER_SERVICE_URL", "http://127.0.0.1:3007");
     let securelink_url = env_or("SECURELINK_SERVICE_URL", "http://127.0.0.1:3006");
-    let it_assets_url = env_or("IT_ASSETS_SERVICE_URL", "http://127.0.0.1:3015");
+    let it_assets_url = env_or("IT_ASSETS_SERVICE_URL", "http://127.0.0.1:3022");
     let containers_url = env_or("CONTAINERS_SERVICE_URL", "http://127.0.0.1:3002");
     let pxe_url = env_or("PXE_SERVICE_URL", "http://127.0.0.1:3016");
     let vault_url = env_or("VAULT_SERVICE_URL", "http://127.0.0.1:3025");
@@ -736,6 +736,13 @@ async fn main() -> anyhow::Result<()> {
         // Activity feed (moved from identity to compliance — Refactor 34 Phase 9)
         ("/api/v1/activities", &compliance_url),
         ("/api/v1/activity", &compliance_url),
+        // Sharing engine — global routes (templates, audit, bulk-grant, shared-with-me).
+        // Must appear BEFORE the identity catch-all so they are not swallowed by /api/v1.
+        // Per-resource grant routes (/api/v1/files/:id/grants, etc.) are forwarded to the
+        // service that owns the resource type (storage, calendar, docs…) via the
+        // more-specific prefixes registered above.
+        ("/api/v1/sharing", &storage_url),
+        ("/api/v1/shared-with-me", &storage_url),
         // Identity catch-all: any /api/v1/* not matched above → identity
         ("/api/v1", &identity_url),
         // Health check fallback
