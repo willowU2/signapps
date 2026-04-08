@@ -49,3 +49,4 @@ sha2 = "0.10"
 
 [dev-dependencies]
 tokio-test = { workspace = true }
+tower = { workspace = true }

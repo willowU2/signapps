@@ -102,6 +102,42 @@ async fn health_check() -> axum::Json<serde_json::Value> {
 }
 
 // ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::Body;
+    use axum::http::{Request, StatusCode};
+    use tower::ServiceExt;
+
+    fn make_state() -> AppState {
+        let jwt_config = JwtConfig::hs256("test-secret-that-is-at-least-32-bytes-long".to_string());
+        AppState { jwt_config }
+    }
+
+    /// Verify the router can be constructed without panicking.
+    /// Catches regressions like duplicate route registration or handler signature mismatches.
+    #[tokio::test]
+    async fn router_builds_successfully() {
+        let app = create_router(make_state());
+        assert!(std::mem::size_of_val(&app) > 0);
+    }
+
+    /// Verify the health endpoint exists and returns 200.
+    #[tokio::test]
+    async fn health_endpoint_returns_200() {
+        let app = create_router(make_state());
+        let response = app
+            .oneshot(Request::builder().uri("/health").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
 
