@@ -3,6 +3,147 @@
 Tous les changements notables de ce projet sont documentés dans ce fichier.
 Format basé sur [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [Unreleased] — 2026-04-08
+
+### Security
+
+- `5a78336f` **fix(storage):** enforce per-resource permission check on `/files` endpoints — BOLA vulnerability eliminated; callers can no longer read arbitrary files by guessing IDs
+- `0ea78aeb` **fix(sharing):** include `tenant_id` in cache keys to prevent cross-tenant permission leaks via shared cache entries
+- `7e951bd6` **fix(db):** replace SQL string interpolation with parameterized queries — eliminates SQL injection vectors across multiple repositories
+- `0f901fdd` **fix(security):** replace `CORS Any` with explicit origin allowlist on `signapps-remote`, `signapps-pxe`, and `signapps-office`
+- `879900a5` **fix(calendar):** add `tenant_id` filter to calendar/event/task `find_by_id` queries — tenant isolation
+- `6a4ba22e` **fix(scheduler):** pass `tenant_id` to `find_by_id` calls — tenant isolation
+- `2fd31dc8` **fix(docs):** use real `Claims` for tenant isolation in document access checks
+- `ec063df6` **fix(storage):** reject invalid `grantee_type` and propagate DB errors in ACL handlers
+- `6b1f2ca5` **fix(storage):** wrap update ACL in atomic operation
+- `1c1d3f59` **fix(sharing):** block access if any source contains Deny role — deny bypass fixed
+- `9e438a60` **fix(sharing):** `has_deny` now matches `everyone` grantee type correctly
+- `7998c3ff` **fix(sharing):** `apply_template` now goes through `grant()` for full validation — template bypass fixed
+- `0833aaf5` **fix(storage):** replace `.unwrap()` panics in WebDAV with safe response builder
+- `1a301628` **fix(db):** reduce pool size to prevent PostgreSQL connection exhaustion
+
+### Features
+
+#### Unified Sharing System
+
+- `5246a616` **feat(docs):** integrate `signapps-sharing` alongside `document_permissions`
+- `941da106` **feat(storage):** integrate `signapps-sharing` alongside `drive.acl`
+- `dbf0f387` **feat(client):** add sharing API client, types, and hook
+- `c625c52b` **feat(client):** add `ShareDialog` component for unified sharing
+- `c8e7d75f` **feat(client):** add `PermissionBadge` component
+- `912f37ba` **feat(client):** add `/shared-with-me` page
+- `c124b5d6` **feat(client):** add searchable `GranteePicker` for ShareDialog
+- `5397bc6d` **test(sharing):** implement live DB integration tests for 8 critical sharing scenarios
+- `115be04d` **feat(sharing):** migrate legacy ACL data to `sharing.grants` (idempotent, additive)
+- `597186eb` **feat(client):** add Template types and API methods for sharing
+- `4ab5003f` **feat(sharing):** implement parent chain walk-up in resolver
+- `b581d70b` **feat(client):** add `TemplatePicker` component
+- `42c9bd8d` **feat(client):** add admin page for managing sharing templates
+- `7a27afb2` **feat(sharing):** Phase B — populate parent chain for files, folders, and events
+- `0f2c1e92` **feat(sharing):** add `delete_template` and audit list endpoints
+- `03674f88` **feat(client):** add admin sharing-audit page
+- `144cbdcb` **feat(sharing):** add OpenAPI documentation via utoipa
+- `082178f4` **feat(sharing):** add `bulk_grant` endpoint for applying grants to multiple resources
+- `4bd24366` **feat(client):** add `BulkShareDialog` component for sharing multiple resources
+- `2ac4fe27` **feat(sharing):** emit notification when a user is directly granted access
+- `9ba66423` **feat(sharing):** drop legacy ACL tables (`drive.acl`, `calendar_members`, `document_permissions`)
+- `dfe893ea` **refactor(storage):** replace `drive.acl` with `signapps-sharing` engine
+- `c059e994` **refactor(calendar):** replace `calendar_members` with `signapps-sharing` engine
+- `52cafa53` **refactor(docs):** replace `document_permissions` with `signapps-sharing` engine
+
+#### JWT RS256 + JWKS
+
+- `3b500156` **feat(common):** support RS256 JWT with JWKS endpoint for stateless validation — services validate tokens locally without calling identity; endpoint at `/.well-known/jwks.json`
+
+#### New Services (Identity Phase 4 extraction)
+
+- `9fe38a8f` **feat(identity):** extract vault handlers → **signapps-vault** (port 3025)
+- `6d34a582` **refactor(identity):** extract org domain handlers → **signapps-org** (port 3026)
+- `7810ebd1` **feat(webhooks):** extract webhook handlers → **signapps-webhooks** (port 3027)
+- `c57b2963` **feat(signatures):** extract signature handlers → **signapps-signatures** (port 3028)
+- `0a9c8142` **feat(tenant-config):** extract tenant CSS handler → **signapps-tenant-config** (port 3029)
+- `86d340ae` **feat(integrations):** extract Slack handlers → **signapps-integrations** (port 3030)
+- `4c185193` **feat(backup):** extract backup handlers → **signapps-backup** (port 3031)
+- `913b09b2` **feat(compliance):** extract compliance/data-export/retention → **signapps-compliance** (port 3032)
+
+#### Frontend Quality
+
+- `f5d7d387` **feat(client):** add error boundaries for 9 major app sections
+- `cc43f8e3` **feat(client):** group sidebar items into collapsible sections
+- `ba07ca40` **fix(client):** replace custom HTML sanitizer with DOMPurify
+
+### Refactor — Architecture
+
+#### signapps-db split into 13 bounded-context sub-crates
+
+- `32b8f9f0` extract `signapps-db-shared` (pool, tenant, job, activity)
+- `5a9469f7` replace duplicates with re-exports from `signapps-db-shared`
+- `949689f1` extract `signapps-db-calendar`
+- `6c1351d6` extract `signapps-db-storage` (drive, quota, tier2, tier3, drive-acl)
+- `e5766402` extract `signapps-db-mail` (mailserver, CalDAV, CardDAV)
+- `24d304bb` extract `signapps-db-forms` (form definitions, responses)
+- `64fdc10c` extract `signapps-db-notifications` (preferences, templates, sent, digest, push)
+- `52cdf1e1` extract `signapps-db-vault` (vault items, folders, shares, keys)
+- `3d8fc176` extract `signapps-db-ai` (vectors, conversations, media, KG)
+- `b5de9a72` extract `signapps-db-infrastructure` (AD, DNS, DHCP, infra domain)
+- `391c88ab` extract `signapps-db-itam` (device, container, RAID)
+- `8345579c` extract `signapps-db-billing` (TLS certificates, proxy routes)
+- `fe7e861c` extract `signapps-db-content` (backup profiles, signature envelopes)
+- `fb491bad` update Cargo.lock after refactor wave
+
+#### signapps-common slimmed (11k → ~4k lines, 27 crates extracted)
+
+- `f0ea932d` extract `signapps-workflows` engine
+- `4495b20a` extract `signapps-marketplace`
+- `8e47627f` extract `signapps-plugins`
+- `093497c3` extract `signapps-e2e-crypto`
+- `881fa671` extract `signapps-accounting-fec`
+- `1e6df4c9` extract `signapps-reporting`
+- `13a9b871` extract 6 zero-consumer modules to dedicated crates
+- `87308eef` extract 14 low-coupling modules (round 3)
+- `062b5b4d` extract `signapps-audit`
+- `feaf22ad` finalize deletion of extracted module files
+- `adb26438` remove 5 orphan files not declared in `lib.rs`
+
+#### signapps-identity broken up (51 → ~27 handlers remaining)
+
+- `f6f819eb` move accounting/FEC handlers → `signapps-billing`
+- `c0796800` move CRM/persons handlers → `signapps-contacts`
+- `9830cad3` extract LMS and supply chain handlers → `signapps-workforce`
+- `e94222fe` move sites and resources handlers → `signapps-it-assets`
+- `c83214c0` **refactor(gateway):** add proxy rules for Phase 4 identity extractions
+- `65573ac0` remove dead handler files left from extraction copies
+- `8aa0bfa0` move `audit_logs` handler → `signapps-compliance`
+
+#### Service mergers (empty services absorbed)
+
+- `06f004aa` merge `signapps-collab` + `signapps-office` → `signapps-docs` (port 3010)
+- `c67569d3` merge `signapps-remote` → `signapps-meet` (port 3014)
+
+### Performance
+
+- `0b2184e2` **perf(sharing):** wire L2 cache into permission resolver — repeated permission checks served from memory
+- `4e926795` **perf(sharing):** cache capabilities in `OnceLock` to eliminate repeated DB queries
+- `ad17c3cc` **perf(client):** lazy load heavy editor libs (`pdfjs`, `exceljs`, `pptxgenjs`, `fabric`) — initial bundle size reduced
+- `98ce795c` **perf(ai):** move ONNX inference to `spawn_blocking` to unblock Tokio runtime
+
+### Documentation
+
+- `10cc483d` **docs(arch):** adopt `PgEventBus` + outbox as the single inter-service communication strategy
+- `b1010da4` **docs(arch):** add design docs for 4 architecture refactors (split-db, slim-common, break-identity, merge-empty)
+
+### Chores / Fixes
+
+- `5c9da43e` **style(client):** replace hardcoded colors with semantic Tailwind tokens in core layout, sharing, and admin components
+- `4c9a0858` **fix(client):** translate admin dashboard to French
+- `41ddc696` **fix(sharing):** `bulk_grant` now accepts `owner_id` for owner-bypass support
+- `7495bd1a` **fix(gateway):** add missing proxy routes for storage and logging
+- `8c8308d4` **fix(identity):** resolve 404 proxy fallback and fix schemas for local authentication
+- `f321b5d6` **fix(sharing):** move shared-with-me to global routes to avoid double registration
+- `0ee11e45` **fix(migrations):** defer presentation enum value to after migration 058
+
+---
+
 ## [Non publié] — 2026-04-05
 
 ### Ajouté
