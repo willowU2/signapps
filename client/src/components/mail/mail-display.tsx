@@ -133,6 +133,9 @@ interface MailDisplayProps {
   onSnooze?: (id: string, time: string) => void;
   onArchive?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onMarkUnread?: (id: string) => void;
+  onMarkRead?: (id: string) => void;
+  onReportSpam?: (id: string) => void;
   accountId?: string;
   /** Full list of emails in the current folder — used to build thread view */
   allMails?: Mail[];
@@ -144,6 +147,9 @@ export function MailDisplay({
   onSnooze,
   onArchive,
   onDelete,
+  onMarkUnread,
+  onMarkRead,
+  onReportSpam,
   accountId,
   allMails,
   onSelectMail,
@@ -367,10 +373,14 @@ export function MailDisplay({
   const scrollToReplyBox = (mode: "reply" | "replyAll" | "forward") => {
     setReplyMode(mode);
     setTimeout(() => {
+      // Match any reply/forward textarea in the composer area
       const textarea = document.querySelector(
-        'textarea[placeholder^="Write your reply"]',
+        "textarea",
       ) as HTMLTextAreaElement;
-      if (textarea) textarea.focus();
+      if (textarea) {
+        textarea.focus();
+        textarea.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
     }, 50);
   };
 
@@ -527,6 +537,30 @@ export function MailDisplay({
     return () => window.removeEventListener("mail:shortcut", handleShortcut);
   }, []);
 
+  // Listen for mark-read/unread/spam events dispatched from the toolbar More Actions menu
+  useEffect(() => {
+    const handleMarkUnreadEvent = (e: Event) => {
+      const { id } = (e as CustomEvent).detail;
+      if (mail && id === mail.id) onMarkUnread?.(id);
+    };
+    const handleMarkReadEvent = (e: Event) => {
+      const { id } = (e as CustomEvent).detail;
+      if (mail && id === mail.id) onMarkRead?.(id);
+    };
+    const handleReportSpamEvent = (e: Event) => {
+      const { id } = (e as CustomEvent).detail;
+      if (mail && id === mail.id) onReportSpam?.(id);
+    };
+    window.addEventListener("mail:markUnread", handleMarkUnreadEvent);
+    window.addEventListener("mail:markRead", handleMarkReadEvent);
+    window.addEventListener("mail:reportSpam", handleReportSpamEvent);
+    return () => {
+      window.removeEventListener("mail:markUnread", handleMarkUnreadEvent);
+      window.removeEventListener("mail:markRead", handleMarkReadEvent);
+      window.removeEventListener("mail:reportSpam", handleReportSpamEvent);
+    };
+  }, [mail, onMarkUnread, onMarkRead, onReportSpam]);
+
   // Idea 41: link email to deal
   const handleLinkDeal = async () => {
     if (!mail || !dealSearchQ.trim()) return;
@@ -624,12 +658,23 @@ export function MailDisplay({
             >
               <Archive className="h-4 w-4" />
             </ToolbarButton>
-            <ToolbarButton disabled={!mail} title="Move to junk">
+            <ToolbarButton
+              disabled={!mail}
+              title="Spam"
+              onClick={() => {
+                if (!mail) return;
+                window.dispatchEvent(
+                  new CustomEvent("mail:reportSpam", {
+                    detail: { id: mail.id },
+                  }),
+                );
+              }}
+            >
               <ArchiveX className="h-4 w-4" />
             </ToolbarButton>
             <ToolbarButton
               disabled={!mail}
-              title="Move to trash"
+              title="Corbeille"
               onClick={() => mail && onDelete?.(mail.id)}
             >
               <Trash2 className="h-4 w-4" />
@@ -652,9 +697,41 @@ export function MailDisplay({
           <ToolbarDivider />
 
           <ToolbarGroup>
-            <ToolbarButton disabled={!mail} title="More actions">
-              <MoreVertical className="h-4 w-4" />
-            </ToolbarButton>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <span>
+                  <ToolbarButton disabled={!mail} title="Plus d'actions">
+                    <MoreVertical className="h-4 w-4" />
+                  </ToolbarButton>
+                </span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  onClick={() =>
+                    mail &&
+                    window.dispatchEvent(
+                      new CustomEvent("mail:markUnread", {
+                        detail: { id: mail.id },
+                      }),
+                    )
+                  }
+                >
+                  Marquer comme non lu
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    mail &&
+                    window.dispatchEvent(
+                      new CustomEvent("mail:markRead", {
+                        detail: { id: mail.id },
+                      }),
+                    )
+                  }
+                >
+                  Marquer comme lu
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </ToolbarGroup>
 
           <ToolbarGroup className="ml-auto">
@@ -700,7 +777,7 @@ export function MailDisplay({
                 ) : (
                   <Sparkles className="h-3.5 w-3.5 mr-2 text-purple-500" />
                 )}
-                Summarize Context
+                Résumer
               </Button>
             )}
             {/* A4: Translate button */}
@@ -1220,7 +1297,7 @@ export function MailDisplay({
                   ) : (
                     <Bot className="h-4 w-4 mr-2" />
                   )}
-                  Suggest Replies
+                  Suggestions IA
                 </Button>
               ) : (
                 smartReplies.map((reply, i) => (
@@ -1260,12 +1337,12 @@ export function MailDisplay({
                 <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
                   <div className="text-[13px] font-medium text-muted-foreground/80 flex items-center gap-1.5 pl-2 pointer-events-auto">
                     <Bot className="w-4 h-4" />
-                    <span>AI available via '/'</span>
+                    <span>IA disponible via &apos;/&apos;</span>
                   </div>
                   {sending ? (
                     <div className="flex items-center gap-3 bg-background/90 py-1.5 px-2 rounded-xl border border-border backdrop-blur-md shadow-sm pointer-events-auto">
                       <span className="text-sm font-bold text-muted-foreground ml-2">
-                        Sending in {countdown}s
+                        Envoi dans {countdown}s
                       </span>
                       <Button
                         onClick={(e) => {
@@ -1276,7 +1353,7 @@ export function MailDisplay({
                         variant="outline"
                         className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/30 rounded-lg h-8"
                       >
-                        Undo Action
+                        Annuler l&apos;envoi
                       </Button>
                     </div>
                   ) : (
@@ -1365,7 +1442,7 @@ export function MailDisplay({
                         className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-5 h-9 shadow-md hover:shadow-lg transition-all"
                       >
                         <Send className="w-4 h-4 mr-2 shrink-0" />
-                        Send Reply
+                        Envoyer
                       </Button>
                     </div>
                   )}
@@ -1376,7 +1453,7 @@ export function MailDisplay({
         </div>
       ) : (
         <div className="p-8 text-center text-muted-foreground">
-          No message selected
+          Aucun message sélectionné
         </div>
       )}
 

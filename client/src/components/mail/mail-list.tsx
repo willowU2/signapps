@@ -439,11 +439,34 @@ function MailRow({
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent className="w-56">
-          <ContextMenuItem onClick={() => onSelect(item.id)}>
-            <Reply className="h-3.5 w-3.5 mr-2" /> Repondre
+          <ContextMenuItem
+            onClick={() => {
+              onSelect(item.id);
+              // Trigger reply mode after selection settles
+              setTimeout(() => {
+                window.dispatchEvent(
+                  new CustomEvent("mail:shortcut", {
+                    detail: { action: "reply" },
+                  }),
+                );
+              }, 100);
+            }}
+          >
+            <Reply className="h-3.5 w-3.5 mr-2" /> Répondre
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => onSelect(item.id)}>
-            <Forward className="h-3.5 w-3.5 mr-2" /> Transferer
+          <ContextMenuItem
+            onClick={() => {
+              onSelect(item.id);
+              setTimeout(() => {
+                window.dispatchEvent(
+                  new CustomEvent("mail:shortcut", {
+                    detail: { action: "forward" },
+                  }),
+                );
+              }, 100);
+            }}
+          >
+            <Forward className="h-3.5 w-3.5 mr-2" /> Transférer
           </ContextMenuItem>
           <ContextMenuSeparator />
           {/* Interop actions — Features 1, 2, 12, 19 */}

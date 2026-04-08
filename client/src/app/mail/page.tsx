@@ -145,6 +145,11 @@ export default function MailPage() {
   const { setSelectedId, clearSelection } = useMailSelectionActions();
   const { setMailList, updateMail, removeMail } = useMailDataActions();
 
+  // replyTo state for ComposeRichDialog — set when user clicks Reply/Forward
+  const [composeReplyTo, setComposeReplyTo] = useState<
+    { email: string; subject: string } | undefined
+  >(undefined);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Mail[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -332,7 +337,14 @@ export default function MailPage() {
         if (folder === "starred") query.is_starred = true;
         else if (folder === "snoozed")
           query.folder_type = "inbox"; // snoozed emails stay in inbox
-        else query.folder_type = folder;
+        else if (folder === "archive") {
+          // Archived emails are flagged with is_archived — use folder_type="archive" if present,
+          // otherwise the backend may store them without a dedicated folder_type, so query broadly.
+          query.folder_type = "archive";
+        } else if (folder === "important") {
+          query.folder_type = "inbox";
+          // is_important filter applied client-side below
+        } else query.folder_type = folder;
 
         const emails = await mailApi.list(query);
         const uiMails: Mail[] = emails.map((email) => ({
@@ -830,6 +842,62 @@ export default function MailPage() {
       refreshStats();
     } catch {
       toast.error("Impossible de supprimer la conversation.");
+    }
+  };
+
+  // ── Mark read/unread ────────────────────────────────────────────────────────
+  const handleMarkUnread = async (id: string) => {
+    updateMail(id, { read: false });
+    try {
+      await mailApi.update(id, { is_read: false });
+    } catch {
+      updateMail(id, { read: true });
+      toast.error("Impossible de marquer comme non lu.");
+    }
+  };
+
+  const handleMarkRead = async (id: string) => {
+    updateMail(id, { read: true });
+    try {
+      await mailApi.update(id, { is_read: true });
+    } catch {
+      updateMail(id, { read: false });
+    }
+  };
+
+  // Auto-mark as read when an email is selected
+  const handleSelectMail = useCallback(
+    (id: string) => {
+      setSelectedId(id);
+      const mail = filteredMailList.find((m) => m.id === id);
+      if (mail && !mail.read) {
+        handleMarkRead(id);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setSelectedId, filteredMailList],
+  );
+
+  // ── Report spam ─────────────────────────────────────────────────────────────
+  const handleReportSpam = async (id: string) => {
+    try {
+      await mailApi.update(id, { folder_id: undefined, is_deleted: false });
+      removeMail(id);
+      toast.success("Email signalé comme spam.");
+      refreshStats();
+    } catch {
+      toast.error("Impossible de signaler comme spam.");
+    }
+  };
+
+  // ── Move to folder ──────────────────────────────────────────────────────────
+  const handleMoveToFolder = async (id: string, folderId: string) => {
+    try {
+      await mailApi.update(id, { folder_id: folderId });
+      removeMail(id);
+      toast.success("Email déplacé.");
+    } catch {
+      toast.error("Impossible de déplacer l'email.");
     }
   };
 
@@ -1717,11 +1785,13 @@ export default function MailPage() {
                   <MailList
                     items={filteredMailList}
                     selectedId={selectedId}
-                    onSelect={setSelectedId}
+                    onSelect={handleSelectMail}
                     onSnooze={handleSnooze}
                     onArchive={handleArchive}
                     onDelete={handleDelete}
                     onStar={handleStar}
+                    onMarkUnread={handleMarkUnread}
+                    onReportSpam={handleReportSpam}
                     starredIds={starredIds}
                     checkedIds={checkedIds}
                     onToggleChecked={toggleChecked}
@@ -1781,7 +1851,12 @@ export default function MailPage() {
                     onSnooze={handleSnooze}
                     onArchive={handleArchive}
                     onDelete={handleDelete}
+                    onMarkUnread={handleMarkUnread}
+                    onMarkRead={handleMarkRead}
+                    onReportSpam={handleReportSpam}
                     accountId={activeAccountId}
+                    allMails={filteredMailList}
+                    onSelectMail={handleSelectMail}
                   />
                 </div>
               </div>
@@ -1797,8 +1872,12 @@ export default function MailPage() {
       />
       <ComposeRichDialog
         open={composeRichOpen}
-        onOpenChange={setComposeRichOpen}
+        onOpenChange={(v) => {
+          setComposeRichOpen(v);
+          if (!v) setComposeReplyTo(undefined);
+        }}
         accountId={activeAccountId}
+        replyTo={composeReplyTo}
       />
 
       {/* Label create / edit dialog */}

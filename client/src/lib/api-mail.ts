@@ -724,7 +724,9 @@ export type MailFolderType =
   | "drafts"
   | "trash"
   | "junk"
-  | "archive";
+  | "archive"
+  | "spam"
+  | "important";
 
 export interface UIMail {
   id: string;
