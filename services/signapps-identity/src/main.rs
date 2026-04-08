@@ -336,20 +336,8 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/workspaces/:id/members/:uid", delete(handlers::tenants::remove_workspace_member))
         // Resources/reservations moved to signapps-it-assets service (port 3022).
         // Gateway forwards /api/v1/resources/* and /api/v1/reservations/* → signapps-it-assets:3022.
-        // Signature workflow
-        .route("/api/v1/signatures", post(handlers::signatures::create_envelope))
-        .route("/api/v1/signatures", get(handlers::signatures::list_envelopes))
-        .route("/api/v1/signatures/:id", get(handlers::signatures::get_envelope))
-        .route("/api/v1/signatures/:id/send", post(handlers::signatures::send_envelope))
-        .route("/api/v1/signatures/:id/void", post(handlers::signatures::void_envelope))
-        .route("/api/v1/signatures/:id/steps", post(handlers::signatures::add_step))
-        .route("/api/v1/signatures/:id/steps", get(handlers::signatures::list_steps))
-        .route("/api/v1/signatures/:id/steps/:step_id/sign", post(handlers::signatures::sign_step))
-        .route("/api/v1/signatures/:id/steps/:step_id/decline", post(handlers::signatures::decline_step))
-        .route("/api/v1/signatures/:id/transitions", get(handlers::signatures::list_transitions))
-        // User signature/stamp management (AQ-SIGRT)
-        .route("/api/v1/user-signatures", get(handlers::user_signatures::list_user_signatures).post(handlers::user_signatures::create_user_signature))
-        .route("/api/v1/user-signatures/:id", get(handlers::user_signatures::get_user_signature).put(handlers::user_signatures::update_user_signature).delete(handlers::user_signatures::delete_user_signature))
+        // Signatures + user-signatures moved to signapps-signatures service (port 3028).
+        // Gateway forwards /api/v1/signatures/* and /api/v1/user-signatures/* → signapps-signatures:3028.
         .layer(axum_middleware::from_fn(tenant_context_middleware))
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),

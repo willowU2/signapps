@@ -27,11 +27,11 @@ pub mod retention_purge;
 pub mod roles;
 pub mod security_events;
 pub mod sessions;
-pub mod signatures;
+// signatures moved to signapps-signatures service (port 3028)
 pub mod tenant_css;
 pub mod tenants;
 pub mod user_profile;
-pub mod user_signatures;
+// user_signatures moved to signapps-signatures service (port 3028)
 pub mod users;
 // webhooks moved to signapps-webhooks service (port 3027)
 pub mod workspace_features;
