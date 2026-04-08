@@ -128,6 +128,14 @@ pub struct CreateChannelRequest {
 }
 
 #[derive(Debug, Deserialize)]
+/// Request payload for UpdateChannel operation — all fields optional.
+pub struct UpdateChannelRequest {
+    pub name: Option<String>,
+    pub topic: Option<String>,
+    pub is_private: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
 /// Request payload for SendMessage operation.
 pub struct SendMessageRequest {
     pub content: String,

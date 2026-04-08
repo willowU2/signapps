@@ -478,6 +478,151 @@ pub async fn delete_template_handler(
     Ok(Json(()))
 }
 
+// ─── Apply-template handler ───────────────────────────────────────────────────
+
+/// Path parameters for the apply-template endpoint.
+#[derive(Debug, Deserialize)]
+pub struct ApplyTemplatePath {
+    /// UUID of the target resource.
+    pub resource_id: Uuid,
+    /// UUID of the template to apply.
+    pub template_id: Uuid,
+}
+
+/// Response body for the apply-template endpoint.
+#[derive(Debug, serde::Serialize, utoipa::ToSchema)]
+pub struct ApplyTemplateResponse {
+    /// Number of grants that were created from the template.
+    pub count: usize,
+}
+
+/// Apply a sharing template to a resource.
+///
+/// `POST /api/v1/{prefix}/:resource_id/apply-template/:template_id`
+///
+/// Expands all grant definitions from the named template onto the target
+/// resource.  Requires `manager` role on the resource or admin JWT.
+/// Individual grant failures are skipped; the response always reports how
+/// many grants were actually created.
+///
+/// # Errors
+///
+/// Returns [`Error::Unauthorized`] if no valid JWT is present.
+/// Returns [`Error::Forbidden`] if the actor lacks manager role.
+/// Returns [`Error::NotFound`] if the template does not exist.
+/// Returns [`Error::Database`] if the DB query fails.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+#[utoipa::path(
+    post,
+    path = "/api/v1/{prefix}/{resource_id}/apply-template/{template_id}",
+    params(
+        ("prefix" = String, Path, description = "Resource type prefix (e.g. `files`, `calendars`)"),
+        ("resource_id" = Uuid, Path, description = "UUID of the target resource"),
+        ("template_id" = Uuid, Path, description = "UUID of the template to apply"),
+    ),
+    responses(
+        (status = 200, description = "Template applied — number of grants created", body = ApplyTemplateResponse),
+        (status = 401, description = "Unauthorized — missing or invalid JWT"),
+        (status = 403, description = "Forbidden — caller lacks manager role"),
+        (status = 404, description = "Template not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "Sharing"
+)]
+#[instrument(skip(engine, claims), fields(
+    user_id     = %claims.sub,
+    resource_id = %path.resource_id,
+    template_id = %path.template_id,
+))]
+pub async fn apply_template_handler(
+    State(engine): State<SharingEngine>,
+    Extension(claims): Extension<Claims>,
+    Path(path): Path<ApplyTemplatePath>,
+    Extension(resource_type): Extension<ResourceType>,
+) -> Result<Json<ApplyTemplateResponse>> {
+    let user_ctx = engine.build_user_context(&claims).await?;
+    let resource = crate::types::ResourceRef {
+        resource_type,
+        resource_id: path.resource_id,
+    };
+    let count = engine
+        .apply_template(&user_ctx, resource, None, path.template_id)
+        .await?;
+    Ok(Json(ApplyTemplateResponse { count }))
+}
+
+// ─── Update-grant handler ────────────────────────────────────────────────────
+
+/// Request body for updating the role of an existing grant.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct UpdateGrantRoleRequest {
+    /// New role to assign on the grant.
+    pub role: crate::types::Role,
+}
+
+/// Update the role of an existing grant on a resource.
+///
+/// `PATCH /api/v1/{prefix}/:resource_id/grants/:grant_id`
+///
+/// Requires `manager` role on the resource or admin JWT.
+///
+/// # Errors
+///
+/// Returns [`Error::Unauthorized`] if no valid JWT is present.
+/// Returns [`Error::Forbidden`] if the actor lacks manager role.
+/// Returns [`Error::NotFound`] if the grant does not exist.
+/// Returns [`Error::Database`] if the DB query fails.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+#[utoipa::path(
+    patch,
+    path = "/api/v1/{prefix}/{resource_id}/grants/{grant_id}",
+    params(
+        ("prefix" = String, Path, description = "Resource type prefix (e.g. `files`, `calendars`)"),
+        ("resource_id" = Uuid, Path, description = "UUID of the resource"),
+        ("grant_id" = Uuid, Path, description = "UUID of the grant to update"),
+    ),
+    request_body = UpdateGrantRoleRequest,
+    responses(
+        (status = 200, description = "Grant updated successfully", body = Grant),
+        (status = 400, description = "Invalid role value"),
+        (status = 401, description = "Unauthorized — missing or invalid JWT"),
+        (status = 403, description = "Forbidden — caller lacks manager role"),
+        (status = 404, description = "Grant not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "Sharing"
+)]
+#[instrument(skip(engine, claims, body), fields(
+    user_id     = %claims.sub,
+    resource_id = %path.resource_id,
+    grant_id    = %path.grant_id,
+))]
+pub async fn update_grant_handler(
+    State(engine): State<SharingEngine>,
+    Extension(claims): Extension<Claims>,
+    Path(path): Path<GrantPath>,
+    Extension(resource_type): Extension<ResourceType>,
+    Json(body): Json<UpdateGrantRoleRequest>,
+) -> Result<Json<Grant>> {
+    let user_ctx = engine.build_user_context(&claims).await?;
+    let resource = crate::types::ResourceRef {
+        resource_type,
+        resource_id: path.resource_id,
+    };
+    let grant = engine
+        .update_grant_role(&user_ctx, resource, None, path.grant_id, body.role)
+        .await?;
+    Ok(Json(grant))
+}
+
 // ─── Audit handler ────────────────────────────────────────────────────────────
 
 /// Query parameters for the audit log endpoint.

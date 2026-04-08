@@ -211,6 +211,11 @@ export default function MailPage() {
     null,
   );
 
+  // Active label filter — filters mail list by label name
+  const [activeLabelFilter, setActiveLabelFilter] = useState<string | null>(
+    null,
+  );
+
   // Mailing lists state
   const [mailingLists, setMailingLists] = useState<MailingListEntry[]>([]);
   const [mailingListsLoading, setMailingListsLoading] = useState(false);
@@ -252,6 +257,16 @@ export default function MailPage() {
   // Idea 32: Apply smart folder filter
   const filteredMailList = React.useMemo(() => {
     let list = mailList;
+    // Label filter — when user clicks a label in the sidebar
+    if (activeLabelFilter) {
+      list = list.filter((mail) =>
+        mail.labels?.some((lbl) =>
+          typeof lbl === "string"
+            ? lbl === activeLabelFilter
+            : (lbl as { name?: string }).name === activeLabelFilter,
+        ),
+      );
+    }
     // Smart folder keyword filter (Idea 32)
     if (smartFolderFilter) {
       list = list.filter((mail) => {
@@ -295,7 +310,7 @@ export default function MailPage() {
       if (activeFilters.has("important") && !mail.is_important) return false;
       return true;
     });
-  }, [mailList, activeFilters, smartFolderFilter]);
+  }, [mailList, activeFilters, smartFolderFilter, activeLabelFilter]);
 
   const toggleFilter = (key: string) => {
     setActiveFilters((prev) => {

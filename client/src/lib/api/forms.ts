@@ -4,7 +4,7 @@
  * Provides CRUD operations for forms, publishing, and response collection.
  * The respond endpoint is public (no auth required).
  */
-import { getClient, ServiceName } from './factory';
+import { getClient, ServiceName } from "./factory";
 
 // ============================================================================
 // Types
@@ -12,7 +12,18 @@ import { getClient, ServiceName } from './factory';
 
 // Matches Rust FieldType enum (PascalCase, serde default)
 // PageBreak, File, Signature are frontend-only extensions not yet in the backend enum
-export type FieldType = 'Text' | 'TextArea' | 'SingleChoice' | 'MultipleChoice' | 'Rating' | 'Date' | 'Email' | 'Number' | 'PageBreak' | 'File' | 'Signature';
+export type FieldType =
+  | "Text"
+  | "TextArea"
+  | "SingleChoice"
+  | "MultipleChoice"
+  | "Rating"
+  | "Date"
+  | "Email"
+  | "Number"
+  | "PageBreak"
+  | "File"
+  | "Signature";
 
 export interface FormField {
   id: string;
@@ -31,16 +42,26 @@ export interface Form {
   description?: string;
   fields: FormField[];
   is_published: boolean;
-  created_by: string;
+  /** UUID of the form owner — matches backend `owner_id` */
+  owner_id: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface FormAnswerEntry {
+  field_id: string;
+  value: unknown;
 }
 
 export interface FormResponse {
   id: string;
   form_id: string;
-  answers: Record<string, unknown>;
+  /** Array of field answers — matches backend Vec<Answer> serialization */
+  answers: FormAnswerEntry[];
   submitted_at: string;
+  /** Email/identifier of respondent — backend field is `respondent` */
+  respondent?: string;
+  /** @deprecated Alias kept for backward compatibility — prefer `respondent` */
   respondent_email?: string;
 }
 
@@ -68,37 +89,34 @@ const formsClient = () => getClient(ServiceName.FORMS);
 
 export interface FormAnswer {
   field_id: string;
-  value: any;
+  // Intentionally permissive: form answers can be string, number, string[], File, etc.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  value: any; // noqa
 }
 
 export const formsApi = {
   /** List all forms */
-  list: () =>
-    formsClient().get<Form[]>('/forms'),
+  list: () => formsClient().get<Form[]>("/forms"),
 
   /** Get a single form by ID */
-  get: (id: string) =>
-    formsClient().get<Form>(`/forms/${id}`),
+  get: (id: string) => formsClient().get<Form>(`/forms/${id}`),
 
   /** Create a new form */
-  create: (data: CreateFormRequest) =>
-    formsClient().post<Form>('/forms', data),
+  create: (data: CreateFormRequest) => formsClient().post<Form>("/forms", data),
 
   /** Update an existing form */
   update: (id: string, data: UpdateFormRequest) =>
     formsClient().put<Form>(`/forms/${id}`, data),
 
   /** Delete a form */
-  delete: (id: string) =>
-    formsClient().delete(`/forms/${id}`),
+  delete: (id: string) => formsClient().delete(`/forms/${id}`),
 
   /** Toggle the publish status of a form */
-  publish: (id: string) =>
-    formsClient().post<Form>(`/forms/${id}/publish`),
+  publish: (id: string) => formsClient().post<Form>(`/forms/${id}/publish`),
 
   /** Unpublish a published form */
   unpublish: (id: string) =>
-    formsClient().patch<Form>('/forms/' + id + '/unpublish'),
+    formsClient().patch<Form>("/forms/" + id + "/unpublish"),
 
   /** List all responses for a form */
   responses: (id: string) =>
@@ -108,6 +126,8 @@ export const formsApi = {
    * Submit a response to a published form.
    * This endpoint is public and does not require authentication.
    */
-  respond: (id: string, payload: { respondent?: string, answers: FormAnswer[] }) =>
-    formsClient().post(`/forms/${id}/respond`, payload),
+  respond: (
+    id: string,
+    payload: { respondent?: string; answers: FormAnswer[] },
+  ) => formsClient().post(`/forms/${id}/respond`, payload),
 };

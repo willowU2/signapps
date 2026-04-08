@@ -1,7 +1,7 @@
 //! Channel CRUD handlers (DB-backed).
 
 use crate::state::AppState;
-use crate::types::{Channel, CreateChannelRequest};
+use crate::types::{Channel, CreateChannelRequest, UpdateChannelRequest};
 use axum::{
     extract::{Extension, Path, State},
     http::StatusCode,
@@ -79,13 +79,13 @@ pub async fn get_channel(
     }
 }
 
-/// Create a new channel.
+/// Create a new channel and auto-join the creator as owner.
 pub async fn create_channel(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateChannelRequest>,
 ) -> impl IntoResponse {
-    match sqlx::query_as::<_, Channel>(
+    let channel_res = sqlx::query_as::<_, Channel>(
         r#"
         INSERT INTO chat.channels (name, topic, is_private, created_by)
         VALUES ($1, $2, $3, $4)
@@ -97,10 +97,23 @@ pub async fn create_channel(
     .bind(payload.is_private.unwrap_or(false))
     .bind(claims.sub)
     .fetch_one(&state.pool)
-    .await
-    {
+    .await;
+
+    match channel_res {
         Ok(channel) => {
             tracing::info!(id = %channel.id, name = %channel.name, "Channel created");
+            // Auto-join: insert creator as owner so the channel appears in their list.
+            // Ignore any conflict (table may not exist in older DB versions).
+            let _ = sqlx::query(
+                "INSERT INTO chat.channel_members (channel_id, user_id, role) \
+                 VALUES ($1, $2, 'owner') \
+                 ON CONFLICT (channel_id, user_id) DO NOTHING",
+            )
+            .bind(channel.id)
+            .bind(claims.sub)
+            .execute(&state.pool)
+            .await;
+
             (
                 StatusCode::CREATED,
                 Json(serde_json::to_value(channel).unwrap_or_default()),
@@ -116,22 +129,22 @@ pub async fn create_channel(
     }
 }
 
-/// Update an existing channel.
+/// Update an existing channel (partial update — all fields optional).
 ///
 /// Only the channel creator can update it.
 pub async fn update_channel(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Json(payload): Json<CreateChannelRequest>,
+    Json(payload): Json<UpdateChannelRequest>,
 ) -> impl IntoResponse {
     match sqlx::query_as::<_, Channel>(
         r#"
         UPDATE chat.channels
-        SET name = $1,
-            topic = COALESCE($2, topic),
-            is_private = COALESCE($3, is_private),
-            updated_at = NOW()
+        SET name        = COALESCE($1, name),
+            topic       = COALESCE($2, topic),
+            is_private  = COALESCE($3, is_private),
+            updated_at  = NOW()
         WHERE id = $4 AND created_by = $5
         RETURNING id, name, topic, is_private, created_by, created_at, updated_at
         "#,

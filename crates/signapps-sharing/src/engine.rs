@@ -884,6 +884,66 @@ impl SharingEngine {
             }
         }
     }
+
+    /// Update the role of an existing grant on a resource.
+    ///
+    /// Requires `manager` role on the resource or admin JWT.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::Unauthorized`] — no valid JWT.
+    /// - [`Error::Forbidden`]   — actor lacks manager role.
+    /// - [`Error::NotFound`]    — grant does not exist.
+    /// - [`Error::Database`]    — a repository call failed.
+    ///
+    /// # Panics
+    ///
+    /// No panics — all errors are propagated via `Result`.
+    #[instrument(skip(self, actor_ctx), fields(
+        actor_id    = %actor_ctx.user_id,
+        resource    = %resource,
+        grant_id    = %grant_id,
+        new_role    = %new_role,
+    ))]
+    pub async fn update_grant_role(
+        &self,
+        actor_ctx: &UserContext,
+        resource: ResourceRef,
+        owner_id: Option<Uuid>,
+        grant_id: Uuid,
+        new_role: Role,
+    ) -> Result<Grant> {
+        // Verify actor has manager role or is admin.
+        let resolver = PermissionResolver::with_cache(&self.pool, &self.cache);
+        let effective = resolver.resolve(actor_ctx, &resource, owner_id).await?;
+
+        let can_update =
+            actor_ctx.is_admin() || effective.is_some_and(|ep| ep.role == Role::Manager);
+
+        if !can_update {
+            return Err(Error::Forbidden(format!(
+                "actor {} is not allowed to update grants on {}",
+                actor_ctx.user_id, resource
+            )));
+        }
+
+        let updated = SharingRepository::update_grant_role(
+            &self.pool,
+            actor_ctx.tenant_id,
+            grant_id,
+            new_role.as_str(),
+            None,
+            None,
+        )
+        .await?
+        .ok_or_else(|| Error::NotFound(format!("grant {grant_id} not found")))?;
+
+        // Invalidate L2 cache for this resource.
+        self.cache
+            .invalidate_resource(resource.resource_type.as_str(), resource.resource_id);
+
+        Ok(updated)
+    }
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

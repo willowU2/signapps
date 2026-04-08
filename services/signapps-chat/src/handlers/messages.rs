@@ -114,10 +114,12 @@ pub async fn send_message(
         Ok(row) => {
             let msg = ChatMessage::from(row);
             tracing::info!(id = %msg.id, channel = %channel_id, "Message sent");
+            // Broadcast with the shape expected by the frontend WS handler:
+            // { type: "new_message", message: <ChatMessage> }
             broadcast(
                 &state,
                 "new_message",
-                serde_json::to_value(&msg).unwrap_or_default(),
+                serde_json::json!({ "message": msg }),
             );
             let _ = state
                 .event_bus
@@ -182,7 +184,7 @@ pub async fn edit_message(
             broadcast(
                 &state,
                 "message_edited",
-                serde_json::to_value(&msg).unwrap_or_default(),
+                serde_json::json!({ "message": msg }),
             );
             return (
                 StatusCode::OK,
@@ -209,7 +211,7 @@ pub async fn edit_message(
             msg.content = payload.content.clone();
             msg.updated_at = Utc::now().to_rfc3339();
             let val = serde_json::to_value(msg.clone()).unwrap_or_default();
-            broadcast(&state, "message_edited", val.clone());
+            broadcast(&state, "message_edited", serde_json::json!({ "message": msg.clone() }));
             return (StatusCode::OK, Json(val));
         }
     }
@@ -238,6 +240,7 @@ pub async fn delete_message(
     match result {
         Ok(r) if r.rows_affected() > 0 => {
             tracing::info!(id = %message_id, channel = %channel_id, "Message deleted");
+            // Broadcast with shape expected by frontend: { type: "message_deleted", message_id }
             broadcast(
                 &state,
                 "message_deleted",

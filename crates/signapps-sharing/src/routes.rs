@@ -14,7 +14,9 @@
 //! GET    /api/v1/{prefix}/:resource_id/grants
 //! POST   /api/v1/{prefix}/:resource_id/grants
 //! DELETE /api/v1/{prefix}/:resource_id/grants/:grant_id
+//! PATCH  /api/v1/{prefix}/:resource_id/grants/:grant_id
 //! GET    /api/v1/{prefix}/:resource_id/permissions
+//! POST   /api/v1/{prefix}/:resource_id/apply-template/:template_id
 //!
 //! // sharing_global_routes() — mount ONCE per service
 //! GET    /api/v1/sharing/templates
@@ -45,9 +47,9 @@ use axum::{
 
 use crate::engine::SharingEngine;
 use crate::handlers::{
-    bulk_grant_handler, create_grant_handler, create_template_handler, delete_template_handler,
-    list_audit_handler, list_grants_handler, list_templates_handler, permissions_handler,
-    revoke_grant_handler, shared_with_me_handler,
+    apply_template_handler, bulk_grant_handler, create_grant_handler, create_template_handler,
+    delete_template_handler, list_audit_handler, list_grants_handler, list_templates_handler,
+    permissions_handler, revoke_grant_handler, shared_with_me_handler, update_grant_handler,
 };
 use crate::types::ResourceType;
 
@@ -86,11 +88,15 @@ pub fn sharing_routes(prefix: &str, resource_type: ResourceType) -> Router<Shari
         )
         .route(
             &format!("/api/v1/{prefix}/:resource_id/grants/:grant_id"),
-            delete(revoke_grant_handler),
+            delete(revoke_grant_handler).patch(update_grant_handler),
         )
         .route(
             &format!("/api/v1/{prefix}/:resource_id/permissions"),
             get(permissions_handler),
+        )
+        .route(
+            &format!("/api/v1/{prefix}/:resource_id/apply-template/:template_id"),
+            post(apply_template_handler),
         )
         // Inject the resource_type so handlers know which type they serve.
         .layer(axum::Extension(resource_type))
