@@ -29,6 +29,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { ResourceSelector } from "./ResourceSelector";
 import { AttendeeList } from "./AttendeeList";
+import { RecurrenceEditor } from "./RecurrenceEditor";
 import {
   Users,
   Package,
@@ -111,7 +112,9 @@ function LeaveSection({
   onHardViolation,
 }: LeaveSectionProps) {
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
-  const [prediction, setPrediction] = useState<LeaveBalancePrediction | null>(null);
+  const [prediction, setPrediction] = useState<LeaveBalancePrediction | null>(
+    null,
+  );
   const [teamConflicts, setTeamConflicts] = useState<TeamConflict[]>([]);
   const [violations, setViolations] = useState<PresenceViolation[]>([]);
   const [loadingBalances, setLoadingBalances] = useState(false);
@@ -213,7 +216,7 @@ function LeaveSection({
 
   // Current balance for the selected leave type
   const currentBalance = balances.find(
-    (b) => b.leave_type === leaveType || b.label === leaveType
+    (b) => b.leave_type === leaveType || b.label === leaveType,
   );
 
   const days = computeDays();
@@ -277,12 +280,19 @@ function LeaveSection({
         ) : currentBalance ? (
           <div className="rounded-md border bg-card p-3 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Solde actuel</span>
+              <span className="text-sm text-muted-foreground">
+                Solde actuel
+              </span>
               <Badge
-                variant={currentBalance.days_remaining >= days ? "default" : "destructive"}
+                variant={
+                  currentBalance.days_remaining >= days
+                    ? "default"
+                    : "destructive"
+                }
                 className="text-sm"
               >
-                {currentBalance.days_remaining} jour{currentBalance.days_remaining > 1 ? "s" : ""}
+                {currentBalance.days_remaining} jour
+                {currentBalance.days_remaining > 1 ? "s" : ""}
               </Badge>
             </div>
             <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -296,7 +306,9 @@ function LeaveSection({
                 style={{
                   width: `${Math.min(
                     100,
-                    (currentBalance.days_remaining / currentBalance.days_total) * 100
+                    (currentBalance.days_remaining /
+                      currentBalance.days_total) *
+                      100,
                   )}%`,
                 }}
               />
@@ -334,7 +346,9 @@ function LeaveSection({
             <div className="flex items-center gap-2">
               <TrendingDown
                 className={`h-4 w-4 ${
-                  prediction.is_sufficient ? "text-green-600" : "text-destructive"
+                  prediction.is_sufficient
+                    ? "text-green-600"
+                    : "text-destructive"
                 }`}
               />
               <span className="text-sm font-medium">
@@ -378,13 +392,20 @@ function LeaveSection({
         ) : teamConflicts.length > 0 ? (
           <div className="rounded-md border bg-card divide-y">
             {teamConflicts.map((conflict, idx) => (
-              <div key={idx} className="flex items-center justify-between px-3 py-2">
+              <div
+                key={idx}
+                className="flex items-center justify-between px-3 py-2"
+              >
                 <div className="flex items-center gap-2">
                   <UserX className="h-4 w-4 text-orange-500 shrink-0" />
                   <div>
-                    <p className="text-sm font-medium leading-tight">{conflict.user_name}</p>
+                    <p className="text-sm font-medium leading-tight">
+                      {conflict.user_name}
+                    </p>
                     {conflict.department && (
-                      <p className="text-xs text-muted-foreground">{conflict.department}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {conflict.department}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -393,9 +414,13 @@ function LeaveSection({
                     {conflict.leave_type}
                   </Badge>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {format(parseISO(conflict.leave_start), "dd/MM", { locale: fr })}
+                    {format(parseISO(conflict.leave_start), "dd/MM", {
+                      locale: fr,
+                    })}
                     {" – "}
-                    {format(parseISO(conflict.leave_end), "dd/MM", { locale: fr })}
+                    {format(parseISO(conflict.leave_end), "dd/MM", {
+                      locale: fr,
+                    })}
                   </p>
                 </div>
               </div>
@@ -413,7 +438,11 @@ function LeaveSection({
       {softViolations.length > 0 && (
         <div className="space-y-2">
           {softViolations.map((v, idx) => (
-            <Alert key={idx} variant="default" className="border-yellow-400/60 bg-yellow-50 dark:bg-yellow-950/30">
+            <Alert
+              key={idx}
+              variant="default"
+              className="border-yellow-400/60 bg-yellow-50 dark:bg-yellow-950/30"
+            >
               <AlertTriangle className="h-4 w-4 text-yellow-600" />
               <AlertTitle className="text-yellow-800 dark:text-yellow-300 text-sm">
                 Avertissement — {v.rule_name}
@@ -529,7 +558,7 @@ export function EventForm({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -544,7 +573,7 @@ export function EventForm({
 
     if (eventType === "leave" && hasHardViolation) {
       toast.error(
-        "Impossible de soumettre : des règles de présence obligatoires sont violées."
+        "Impossible de soumettre : des règles de présence obligatoires sont violées.",
       );
       return;
     }
@@ -560,6 +589,7 @@ export function EventForm({
           start_time: formData.start_time,
           end_time: formData.end_time,
           is_all_day: formData.is_all_day,
+          rrule: formData.rrule || undefined,
         };
         await updateEvent(initialEvent.id, updateData);
         toast.success("Événement mis à jour");
@@ -576,18 +606,19 @@ export function EventForm({
           end_time: formData.end_time || new Date().toISOString(),
           is_all_day: formData.is_all_day,
           timezone: formData.timezone,
+          rrule: formData.rrule || undefined,
         };
         await createEvent(createData);
         toast.success(
           eventType === "leave"
             ? "Demande de congé soumise avec succès"
-            : "Événement créé"
+            : "Événement créé",
         );
       }
       onOpenChange(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Une erreur est survenue"
+        error instanceof Error ? error.message : "Une erreur est survenue",
       );
     } finally {
       setIsSubmitting(false);
@@ -604,7 +635,7 @@ export function EventForm({
       onOpenChange(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Une erreur est survenue"
+        error instanceof Error ? error.message : "Une erreur est survenue",
       );
     } finally {
       setIsSubmitting(false);
@@ -765,7 +796,10 @@ export function EventForm({
                     }))
                   }
                 />
-                <Label htmlFor="is_all_day" className="font-normal cursor-pointer">
+                <Label
+                  htmlFor="is_all_day"
+                  className="font-normal cursor-pointer"
+                >
                   Toute la journée
                 </Label>
               </div>
@@ -803,8 +837,8 @@ export function EventForm({
                 </div>
                 {selectedResourceIds.length > 0 && (
                   <div className="text-sm text-muted-foreground">
-                    {selectedResourceIds.length} ressource(s) seront réservées pour
-                    cet événement
+                    {selectedResourceIds.length} ressource(s) seront réservées
+                    pour cet événement
                   </div>
                 )}
               </div>
@@ -829,6 +863,25 @@ export function EventForm({
                       : "Ajouter des participants"}
                   </Button>
                 </div>
+              </div>
+            )}
+
+            {/* Recurrence section — hidden for leave (leave is a one-off request) */}
+            {!isLeave && (
+              <div
+                className="space-y-2 border-t pt-4"
+                data-testid="event-recurrence-section"
+              >
+                <Label className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  Récurrence
+                </Label>
+                <RecurrenceEditor
+                  value={formData.rrule}
+                  onChange={(rrule) =>
+                    setFormData((prev) => ({ ...prev, rrule }))
+                  }
+                />
               </div>
             )}
 
