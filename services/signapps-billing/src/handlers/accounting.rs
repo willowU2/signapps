@@ -13,6 +13,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use signapps_common::{Error, Result};
+use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
 // ── Shared row ────────────────────────────────────────────────────────────────
@@ -60,7 +61,7 @@ pub struct ReportQuery {
 
 // ── DB helpers ────────────────────────────────────────────────────────────────
 
-async fn ensure_table(pool: &signapps_db::DatabasePool) -> Result<()> {
+async fn ensure_table(pool: &Pool<Postgres>) -> Result<()> {
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS platform.accounting_data (
@@ -72,17 +73,13 @@ async fn ensure_table(pool: &signapps_db::DatabasePool) -> Result<()> {
         )
         "#,
     )
-    .execute(pool.inner())
+    .execute(pool)
     .await
     .map_err(|e| Error::Internal(format!("ensure accounting table: {}", e)))?;
     Ok(())
 }
 
-async fn insert_row(
-    pool: &signapps_db::DatabasePool,
-    entity_type: &str,
-    data: &Value,
-) -> Result<AccRow> {
+async fn insert_row(pool: &Pool<Postgres>, entity_type: &str, data: &Value) -> Result<AccRow> {
     if let Err(e) = ensure_table(pool).await {
         tracing::warn!("accounting_data ensure failed: {}", e);
     }
@@ -95,13 +92,13 @@ async fn insert_row(
     )
     .bind(entity_type)
     .bind(data)
-    .fetch_one(pool.inner())
+    .fetch_one(pool)
     .await
     .map_err(|e| Error::Internal(format!("accounting insert: {}", e)))?;
     Ok(row)
 }
 
-async fn list_rows(pool: &signapps_db::DatabasePool, entity_type: &str) -> Result<Vec<AccRow>> {
+async fn list_rows(pool: &Pool<Postgres>, entity_type: &str) -> Result<Vec<AccRow>> {
     if let Err(e) = ensure_table(pool).await {
         tracing::warn!("accounting_data ensure failed: {}", e);
     }
@@ -109,7 +106,7 @@ async fn list_rows(pool: &signapps_db::DatabasePool, entity_type: &str) -> Resul
         "SELECT * FROM platform.accounting_data WHERE entity_type = $1 ORDER BY created_at DESC",
     )
     .bind(entity_type)
-    .fetch_all(pool.inner())
+    .fetch_all(pool)
     .await
     .map_err(|e| Error::Internal(format!("accounting list: {}", e)))?;
     Ok(rows)

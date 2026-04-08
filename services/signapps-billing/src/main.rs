@@ -175,6 +175,20 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/billing/stripe/checkout",
             post(handlers::stripe::create_stripe_checkout),
         )
+        // Accounting — journal entries, chart of accounts, reports
+        // (moved from signapps-identity — Refactor 34 Phase 3)
+        .route(
+            "/api/v1/accounting/entries",
+            get(handlers::accounting::list_entries).post(handlers::accounting::create_entry),
+        )
+        .route(
+            "/api/v1/accounting/accounts",
+            get(handlers::accounting::list_accounts).post(handlers::accounting::create_account),
+        )
+        .route(
+            "/api/v1/accounting/reports",
+            get(handlers::accounting::get_reports),
+        )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

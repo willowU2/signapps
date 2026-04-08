@@ -98,16 +98,7 @@ use utoipa::OpenApi;
         crate::handlers::org_nodes::get_node_permissions,
         crate::handlers::org_nodes::set_node_permissions,
         crate::handlers::org_nodes::get_orgchart,
-        // Persons
-        crate::handlers::persons::list_persons,
-        crate::handlers::persons::create_person,
-        crate::handlers::persons::get_person,
-        crate::handlers::persons::update_person,
-        crate::handlers::persons::get_person_assignments,
-        crate::handlers::persons::get_person_history,
-        crate::handlers::persons::link_user,
-        crate::handlers::persons::unlink_user,
-        crate::handlers::persons::get_effective_permissions,
+        // Persons moved to signapps-contacts service (port 3021)
         // Sites
         crate::handlers::sites::list_sites,
         crate::handlers::sites::create_site,
@@ -149,18 +140,7 @@ use utoipa::OpenApi;
         crate::handlers::audit_logs::get_audit_log,
         crate::handlers::audit_logs::export_audit_logs,
         crate::handlers::audit_logs::query_audit,
-        // CRM
-        crate::handlers::crm::list_deals,
-        crate::handlers::crm::get_deal,
-        crate::handlers::crm::create_deal,
-        crate::handlers::crm::update_deal,
-        crate::handlers::crm::delete_deal,
-        crate::handlers::crm::list_leads,
-        crate::handlers::crm::get_lead,
-        crate::handlers::crm::create_lead,
-        crate::handlers::crm::update_lead,
-        crate::handlers::crm::delete_lead,
-        crate::handlers::crm::get_pipeline,
+        // CRM moved to signapps-contacts service (port 3021)
         // LMS
         crate::handlers::lms::list_courses,
         crate::handlers::lms::create_course,
@@ -187,12 +167,7 @@ use utoipa::OpenApi;
         crate::handlers::comms::patch_poll,
         crate::handlers::comms::list_news,
         crate::handlers::comms::create_news,
-        // Accounting
-        crate::handlers::accounting::list_entries,
-        crate::handlers::accounting::create_entry,
-        crate::handlers::accounting::list_accounts,
-        crate::handlers::accounting::create_account,
-        crate::handlers::accounting::get_reports,
+        // Accounting paths moved to signapps-billing OpenAPI
     ),
     components(
         schemas(
@@ -254,14 +229,7 @@ use utoipa::OpenApi;
             signapps_db::models::core_org::PermissionProfile,
             signapps_db::models::core_org::EffectivePermissions,
             signapps_db::models::core_org::UpsertPermissionProfile,
-            // Person schemas
-            crate::handlers::persons::CreatePersonRequest,
-            crate::handlers::persons::UpdatePersonRequest,
-            crate::handlers::persons::LinkUserRequest,
-            crate::handlers::persons::PersonDetailResponse,
-            signapps_db::models::core_org::Person,
-            signapps_db::models::core_org::PersonRole,
-            signapps_db::models::core_org::AssignmentHistory,
+            // Person schemas moved to signapps-contacts OpenAPI
             // Site schemas
             crate::handlers::sites::CreateSiteRequest,
             crate::handlers::sites::UpdateSiteRequest,
@@ -293,22 +261,14 @@ use utoipa::OpenApi;
             crate::handlers::audit_logs::AuditLog,
             crate::handlers::audit_logs::AuditLogListResponse,
             crate::handlers::audit_logs::AuditQueryRequest,
-            // CRM schemas
-            crate::handlers::crm::Deal,
-            crate::handlers::crm::CreateDealRequest,
-            crate::handlers::crm::UpdateDealRequest,
-            crate::handlers::crm::Lead,
-            crate::handlers::crm::CreateLeadRequest,
-            crate::handlers::crm::UpdateLeadRequest,
-            crate::handlers::crm::PipelineStage,
+            // CRM schemas moved to signapps-contacts OpenAPI
             // LMS schemas
             crate::handlers::lms::LmsRecord,
             // Supply chain schemas
             crate::handlers::supply_chain::ScRecord,
             // Comms schemas
             crate::handlers::comms::CommsRecord,
-            // Accounting schemas
-            crate::handlers::accounting::AccRecord,
+            // Accounting schemas moved to signapps-billing OpenAPI
         )
     ),
     tags(
@@ -323,16 +283,14 @@ use utoipa::OpenApi;
         (name = "tenants", description = "Tenant management (super-admin)"),
         (name = "workspaces", description = "Workspace management"),
         (name = "org", description = "Organisational structure (nodes, trees, orgchart)"),
-        (name = "persons", description = "Person (party model) management"),
         (name = "sites", description = "Physical site management"),
         (name = "compliance", description = "GDPR compliance — DPIA, DSAR, retention, consent"),
         (name = "resources", description = "Resource booking — rooms, equipment, reservations"),
         (name = "audit", description = "Platform audit logs"),
-        (name = "crm", description = "CRM — deals, leads, pipeline"),
         (name = "lms", description = "Learning Management System — courses, progress, discussions"),
         (name = "supply_chain", description = "Supply chain — purchase orders, warehouses, inventory"),
         (name = "comms", description = "Internal communications — announcements, polls, news feed"),
-        (name = "accounting", description = "Accounting — journal entries, chart of accounts, reports"),
+        // Accounting tag moved to signapps-billing OpenAPI
     ),
     modifiers(&SecurityAddon),
 )]

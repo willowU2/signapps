@@ -346,35 +346,7 @@ fn create_router(state: AppState) -> Router {
             get(handlers::org_nodes::get_node_permissions)
                 .put(handlers::org_nodes::set_node_permissions),
         )
-        // Persons
-        .route(
-            "/api/v1/persons",
-            get(handlers::persons::list_persons).post(handlers::persons::create_person),
-        )
-        .route(
-            "/api/v1/persons/:id",
-            get(handlers::persons::get_person).put(handlers::persons::update_person),
-        )
-        .route(
-            "/api/v1/persons/:id/assignments",
-            get(handlers::persons::get_person_assignments),
-        )
-        .route(
-            "/api/v1/persons/:id/history",
-            get(handlers::persons::get_person_history),
-        )
-        .route(
-            "/api/v1/persons/:id/link-user",
-            post(handlers::persons::link_user),
-        )
-        .route(
-            "/api/v1/persons/:id/unlink-user",
-            post(handlers::persons::unlink_user),
-        )
-        .route(
-            "/api/v1/persons/:id/effective-permissions",
-            get(handlers::persons::get_effective_permissions),
-        )
+        // Persons moved to signapps-contacts service (port 3021).
         // Assignments
         .route(
             "/api/v1/assignments",
@@ -693,24 +665,8 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
-    // Accounting routes (protected)
-    let accounting_routes = Router::new()
-        .route(
-            "/api/v1/accounting/entries",
-            get(handlers::accounting::list_entries).post(handlers::accounting::create_entry),
-        )
-        .route(
-            "/api/v1/accounting/accounts",
-            get(handlers::accounting::list_accounts).post(handlers::accounting::create_account),
-        )
-        .route(
-            "/api/v1/accounting/reports",
-            get(handlers::accounting::get_reports),
-        )
-        .layer(axum_middleware::from_fn_with_state(
-            state.clone(),
-            auth_middleware::<AppState>,
-        ));
+    // Accounting routes moved to signapps-billing service (port 8096).
+    // Gateway forwards /api/v1/accounting/* → signapps-billing:8096.
 
     // Enterprise Org Structure routes (auth required)
     let org_routes = Router::new()
@@ -725,33 +681,8 @@ fn create_router(state: AppState) -> Router {
     // Vault routes moved to signapps-vault service (port 3025).
     // Gateway forwards /api/v1/vault/* → signapps-vault:3025.
 
-    // CRM routes (protected)
-    let crm_routes = Router::new()
-        .route(
-            "/api/v1/crm/deals",
-            get(handlers::crm::list_deals).post(handlers::crm::create_deal),
-        )
-        .route(
-            "/api/v1/crm/deals/:id",
-            get(handlers::crm::get_deal)
-                .put(handlers::crm::update_deal)
-                .delete(handlers::crm::delete_deal),
-        )
-        .route(
-            "/api/v1/crm/leads",
-            get(handlers::crm::list_leads).post(handlers::crm::create_lead),
-        )
-        .route(
-            "/api/v1/crm/leads/:id",
-            get(handlers::crm::get_lead)
-                .put(handlers::crm::update_lead)
-                .delete(handlers::crm::delete_lead),
-        )
-        .route("/api/v1/crm/pipeline", get(handlers::crm::get_pipeline))
-        .layer(axum_middleware::from_fn_with_state(
-            state.clone(),
-            auth_middleware::<AppState>,
-        ));
+    // CRM routes moved to signapps-contacts service (port 3021).
+    // Gateway forwards /api/v1/crm/* → signapps-contacts:3021.
 
     // Combine all routes
     Router::new()
@@ -762,9 +693,7 @@ fn create_router(state: AppState) -> Router {
         .merge(supply_chain_routes)
         .merge(lms_routes)
         .merge(comms_routes)
-        .merge(accounting_routes)
         .merge(org_routes)
-        .merge(crm_routes)
         .layer(axum_middleware::from_fn(logging_middleware))
         .layer(axum_middleware::from_fn(request_id_middleware))
         .layer(axum_middleware::from_fn(security_headers_middleware))

@@ -10082,6 +10082,7 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
+ "utoipa",
  "uuid",
 ]
 
@@ -10253,6 +10254,7 @@ dependencies = [
  "signapps-common",
  "signapps-db",
  "signapps-sharing",
+ "sqlx",
  "thiserror 1.0.69",
  "tokio",
  "tower-http 0.5.2",

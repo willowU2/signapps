@@ -676,6 +676,8 @@ async fn main() -> anyhow::Result<()> {
         // Storage supplemental paths
         ("/api/v1/drive", &storage_url),
         ("/api/v1/tags", &storage_url),
+        // Accounting (extracted from identity — Refactor 34 Phase 3)
+        ("/api/v1/accounting", &billing_url),
         // Identity catch-all: any /api/v1/* not matched above → identity
         ("/api/v1", &identity_url),
         // Health check fallback

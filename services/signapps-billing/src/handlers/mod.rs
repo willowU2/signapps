@@ -1,5 +1,6 @@
 //! Handler modules for signapps-billing.
 
+pub mod accounting;
 pub mod events;
 pub mod health;
 pub mod invoices;
