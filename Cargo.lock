@@ -10061,6 +10061,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-backup"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.7.9",
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "tokio",
+ "tokio-test",
+ "tower-http 0.5.2",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "signapps-billing"
 version = "0.1.0"
 dependencies = [
@@ -10793,6 +10810,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-integrations"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.7.9",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db",
+ "sqlx",
+ "tokio",
+ "tokio-test",
+ "tower-http 0.5.2",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "signapps-it-assets"
 version = "0.1.0"
 dependencies = [
@@ -11347,6 +11383,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-signatures"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.7.9",
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db",
+ "sqlx",
+ "tokio",
+ "tokio-test",
+ "tower-http 0.5.2",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-smb-sysvol"
 version = "0.1.0"
 dependencies = [
@@ -11493,6 +11549,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-tenant-config"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.7.9",
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db",
+ "sqlx",
+ "tokio",
+ "tokio-test",
+ "tower-http 0.5.2",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "validator",
+]
+
+[[package]]
 name = "signapps-triggers"
 version = "0.1.0"
 dependencies = [
@@ -11572,6 +11649,30 @@ dependencies = [
  "sha2",
  "tokio",
  "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-webhooks-svc"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.7.9",
+ "chrono",
+ "hmac",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2",
+ "signapps-common",
+ "signapps-db",
+ "sqlx",
+ "tokio",
+ "tokio-test",
+ "tower-http 0.5.2",
+ "tracing",
+ "tracing-subscriber",
+ "url",
  "uuid",
 ]
 

@@ -477,9 +477,8 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/tenants/:id/branding", get(handlers::branding::get_branding))
         .route("/api/v1/tenants/:id/branding", put(handlers::branding::update_branding))
         .route("/api/v1/tenants/:id/branding", delete(handlers::branding::reset_branding))
-        // Database backup (admin-only)
-        .route("/api/v1/admin/backup", post(handlers::backup::create_backup))
-        .route("/api/v1/admin/backups", get(handlers::backup::list_backups))
+        // Database backup moved to signapps-backup service (port 3031).
+        // Gateway forwards /api/v1/admin/backup* → signapps-backup:3031.
         .layer(axum_middleware::from_fn(require_admin))
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),

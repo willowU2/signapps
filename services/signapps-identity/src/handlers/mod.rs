@@ -5,7 +5,7 @@ pub mod admin_security;
 pub mod api_keys;
 pub mod audit_logs;
 pub mod auth;
-pub mod backup;
+// backup moved to signapps-backup service (port 3031)
 pub mod branding;
 pub mod bulk_users;
 pub mod comms;

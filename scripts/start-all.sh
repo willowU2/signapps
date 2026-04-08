@@ -55,6 +55,8 @@ SERVICES=(
     "webhooks:3027:Outbound webhook management and incoming webhook receiver"
     "signatures:3028:Electronic signature workflow and user stamp management"
     "tenant-config:3029:Tenant branding and CSS customization"
+    "integrations:3030:External integrations (Slack, Teams, Discord)"
+    "backup:3031:Database & file backup management"
     "notifications:8095:Push notifications"
     "billing:8096:Billing & invoicing"
     "gateway:3099:API gateway (aggregator)"

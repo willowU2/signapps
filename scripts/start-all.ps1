@@ -68,6 +68,7 @@ $AllServices = @(
     @{ Short = "workforce";     Port = 3019;  Desc = "HR & workforce management" },
     @{ Short = "it-assets";     Port = 3015;  Desc = "IT asset management" },
     @{ Short = "contacts";      Port = 3014;  Desc = "Contact management" },
+    @{ Short = "backup";        Port = 3031;  Desc = "Database & file backup management" },
     @{ Short = "notifications"; Port = 8095;  Desc = "Push notifications" },
     @{ Short = "billing";       Port = 8096;  Desc = "Billing & invoicing" },
     @{ Short = "gateway";       Port = 3099;  Desc = "API gateway (aggregator)" }

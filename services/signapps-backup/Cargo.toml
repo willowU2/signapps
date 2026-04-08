@@ -1,0 +1,38 @@
+[package]
+name = "signapps-backup"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Backup service — PostgreSQL dump and file backup management for SignApps Platform"
+
+[[bin]]
+name = "signapps-backup"
+path = "src/main.rs"
+
+[dependencies]
+# Internal crates
+signapps-common = { path = "../../crates/signapps-common" }
+
+# Web framework
+axum = { workspace = true }
+tower-http = { workspace = true }
+
+# Async
+tokio = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Utilities
+chrono = { workspace = true }
+
+# Observability
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }

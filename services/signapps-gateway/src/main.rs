@@ -134,6 +134,8 @@ const SERVICE_PORTS: &[(&str, u16)] = &[
     ("signapps-webhooks", 3027),
     ("signapps-signatures", 3028),
     ("signapps-tenant-config", 3029),
+    ("signapps-integrations", 3030),
+    ("signapps-backup", 3031),
     ("signapps-notifications", 8095),
     ("signapps-billing", 8096),
 ];
@@ -632,6 +634,8 @@ async fn main() -> anyhow::Result<()> {
     let webhooks_url = env_or("WEBHOOKS_SERVICE_URL", "http://127.0.0.1:3027");
     let signatures_url = env_or("SIGNATURES_SERVICE_URL", "http://127.0.0.1:3028");
     let tenant_config_url = env_or("TENANT_CONFIG_SERVICE_URL", "http://127.0.0.1:3029");
+    let integrations_url = env_or("INTEGRATIONS_SERVICE_URL", "http://127.0.0.1:3030");
+    let backup_url = env_or("BACKUP_SERVICE_URL", "http://127.0.0.1:3031");
 
     // Ordered: more-specific prefixes first
     let service_map = Arc::new(ServiceMap::new(vec![
@@ -711,6 +715,10 @@ async fn main() -> anyhow::Result<()> {
         // LMS + Supply Chain (extracted from identity — Refactor 34 Phase 4)
         ("/api/v1/lms", &workforce_url),
         ("/api/v1/supply-chain", &workforce_url),
+        // Integrations service (extracted from identity — Refactor 34 Phase 7)
+        ("/api/v1/integrations", &integrations_url),
+        // Backup service (extracted from identity — Refactor 34 Phase 7)
+        ("/api/v1/admin/backup", &backup_url),
         // Identity catch-all: any /api/v1/* not matched above → identity
         ("/api/v1", &identity_url),
         // Health check fallback
