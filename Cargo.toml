@@ -93,6 +93,7 @@ members = [
     "services/signapps-org",
     "services/signapps-webhooks",
     "services/signapps-signatures",
+    "services/signapps-tenant-config",
     # signapps-dc merged into signapps-pxe (port 3016) — Refactor 35 Phase 3
     # Single-binary gateway (LT-05 POC)
     "services/signapps-gateway",

@@ -470,11 +470,10 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/admin/feature-flags", post(handlers::feature_flags::create))
         .route("/api/v1/admin/feature-flags/:id", put(handlers::feature_flags::update))
         .route("/api/v1/admin/feature-flags/:id", delete(handlers::feature_flags::delete))
-        // Tenant CSS override
-        .route("/api/v1/admin/tenants/:id/css", get(handlers::tenant_css::get_css))
-        .route("/api/v1/admin/tenants/:id/css", put(handlers::tenant_css::set_css))
-        .route("/api/v1/admin/tenants/:id/css", delete(handlers::tenant_css::clear_css))
-        // WL1: Tenant branding (admin manages all tenants' branding)
+        // Tenant CSS override moved to signapps-tenant-config service (port 3029)
+        // Gateway forwards /api/v1/admin/tenants/:id/css → signapps-tenant-config:3029
+        // WL1: Tenant branding (admin manages all tenants' branding) — kept in identity
+        // because /api/v1/tenants/:id/branding shares prefix with tenant CRUD routes
         .route("/api/v1/tenants/:id/branding", get(handlers::branding::get_branding))
         .route("/api/v1/tenants/:id/branding", put(handlers::branding::update_branding))
         .route("/api/v1/tenants/:id/branding", delete(handlers::branding::reset_branding))

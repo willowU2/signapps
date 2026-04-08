@@ -133,6 +133,7 @@ const SERVICE_PORTS: &[(&str, u16)] = &[
     ("signapps-org", 3026),
     ("signapps-webhooks", 3027),
     ("signapps-signatures", 3028),
+    ("signapps-tenant-config", 3029),
     ("signapps-notifications", 8095),
     ("signapps-billing", 8096),
 ];
@@ -630,6 +631,7 @@ async fn main() -> anyhow::Result<()> {
     let org_url = env_or("ORG_SERVICE_URL", "http://127.0.0.1:3026");
     let webhooks_url = env_or("WEBHOOKS_SERVICE_URL", "http://127.0.0.1:3027");
     let signatures_url = env_or("SIGNATURES_SERVICE_URL", "http://127.0.0.1:3028");
+    let tenant_config_url = env_or("TENANT_CONFIG_SERVICE_URL", "http://127.0.0.1:3029");
 
     // Ordered: more-specific prefixes first
     let service_map = Arc::new(ServiceMap::new(vec![
@@ -687,6 +689,12 @@ async fn main() -> anyhow::Result<()> {
         // Signatures service (extracted from identity — Refactor 34 Phase 6)
         ("/api/v1/signatures", &signatures_url),
         ("/api/v1/user-signatures", &signatures_url),
+        // Tenant config service (extracted from identity — Refactor 34 Phase 6)
+        // /api/v1/admin/tenants/:id/css routes are cleanly routed here.
+        // Branding routes under /api/v1/tenants/:id/branding remain in identity
+        // due to shared prefix with tenant CRUD — they are duplicated in tenant-config
+        // for future migration when the gateway supports parameterized routing.
+        ("/api/v1/admin/tenants", &tenant_config_url),
         // Storage supplemental paths
         ("/api/v1/drive", &storage_url),
         ("/api/v1/tags", &storage_url),

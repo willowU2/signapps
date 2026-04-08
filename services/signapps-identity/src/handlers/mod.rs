@@ -28,7 +28,7 @@ pub mod roles;
 pub mod security_events;
 pub mod sessions;
 // signatures moved to signapps-signatures service (port 3028)
-pub mod tenant_css;
+// tenant_css moved to signapps-tenant-config service (port 3029)
 pub mod tenants;
 pub mod user_profile;
 // user_signatures moved to signapps-signatures service (port 3028)
