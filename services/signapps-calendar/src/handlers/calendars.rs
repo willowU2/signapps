@@ -46,9 +46,10 @@ pub async fn create_calendar(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateCalendar>,
 ) -> Result<(StatusCode, Json<Calendar>), CalendarError> {
+    let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
     let repo = CalendarRepository::new(&state.pool);
     let calendar = repo
-        .create(payload, claims.sub)
+        .create(payload, claims.sub, tenant_id)
         .await
         .map_err(|_| CalendarError::InternalError)?;
 

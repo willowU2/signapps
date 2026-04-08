@@ -69,15 +69,27 @@ impl<'a> CalendarRepository<'a> {
     }
 
     /// Create a new calendar.
-    pub async fn create(&self, calendar: CreateCalendar, owner_id: Uuid) -> Result<Calendar> {
+    ///
+    /// `tenant_id` is required and stored alongside the calendar so downstream
+    /// access checks (`find_by_id`, `verify_calendar_access`) can enforce
+    /// tenant isolation. Calendars created without a tenant can't be retrieved
+    /// by any endpoint that filters by tenant — which was the cause of the
+    /// "200 list / 404 events" regression debugged in this PR.
+    pub async fn create(
+        &self,
+        calendar: CreateCalendar,
+        owner_id: Uuid,
+        tenant_id: Uuid,
+    ) -> Result<Calendar> {
         let created = sqlx::query_as::<_, Calendar>(
             r#"
-            INSERT INTO calendar.calendars (owner_id, name, description, timezone, color, is_shared)
-            VALUES ($1, $2, $3, COALESCE($4, 'UTC'), COALESCE($5, '#3b82f6'), COALESCE($6, false))
+            INSERT INTO calendar.calendars (owner_id, tenant_id, name, description, timezone, color, is_shared)
+            VALUES ($1, $2, $3, $4, COALESCE($5, 'UTC'), COALESCE($6, '#3b82f6'), COALESCE($7, false))
             RETURNING *
             "#,
         )
         .bind(owner_id)
+        .bind(tenant_id)
         .bind(&calendar.name)
         .bind(&calendar.description)
         .bind(&calendar.timezone)
