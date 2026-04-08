@@ -66,6 +66,7 @@ function DraggableEventCard({
           containerRef as React.MutableRefObject<HTMLDivElement | null>
         ).current = el;
       }}
+      data-testid="calendar-event"
       {...attributes}
       {...listeners}
       onClick={(e) => {
@@ -314,6 +315,8 @@ export function WeekCalendar({
           {weekDays.map((day) => (
             <div
               key={day.toString()}
+              data-testid={`day-column-${format(day, "yyyy-MM-dd")}`}
+              data-hour-height={hourHeight}
               className="border-r relative h-[1440px] flex-1 min-w-[100px]"
             >
               {/* Hour lines */}

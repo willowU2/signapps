@@ -249,6 +249,8 @@ export function CalendarHub() {
     setSearchQuery,
     selectedEventId,
     selectEvent,
+    pushUndo,
+    popUndo,
   } = useCalendarStore();
 
   const [searchExpanded, setSearchExpanded] = useState(false);
@@ -285,8 +287,9 @@ export function CalendarHub() {
     undefined,
   );
 
-  // Events hook for drag-and-drop updates
-  const { events, updateEvent } = useEvents(selectedCalendarId);
+  // Events hook — exposes CRUD for drag-drop, delete-key, and undo.
+  const { events, updateEvent, deleteEvent, createEvent } =
+    useEvents(selectedCalendarId);
 
   /** Open form to create a new event (optionally with a preselected time slot) */
   const handleCreateEvent = useCallback((startTime?: Date, endTime?: Date) => {
@@ -317,17 +320,15 @@ export function CalendarHub() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEventId]);
 
-  // Close form and deselect event
-  const handleFormOpenChange = useCallback(
-    (open: boolean) => {
-      setFormOpen(open);
-      if (!open) {
-        selectEvent(null);
-        setEditingEvent(undefined);
-      }
-    },
-    [selectEvent],
-  );
+  // Close form — keeps `selectedEventId` intact so Delete key / Ctrl+Z still
+  // have a target after the user cancels. `editingEvent` is cleared because
+  // the dialog's internal state is scoped to a single open cycle.
+  const handleFormOpenChange = useCallback((open: boolean) => {
+    setFormOpen(open);
+    if (!open) {
+      setEditingEvent(undefined);
+    }
+  }, []);
 
   // ── Drag-and-drop (month view) ───────────────────────────────────────────
   const handleDragEnd = useCallback(
@@ -372,11 +373,150 @@ export function CalendarHub() {
     [events, updateEvent],
   );
 
+  // ── Delete key handler ──────────────────────────────────────────────────
+  const handleDeleteSelectedEvent = useCallback(async () => {
+    if (!selectedEventId) return;
+    const ev = events.find((e) => e.id === selectedEventId);
+    if (!ev) return;
+    try {
+      await deleteEvent(selectedEventId);
+      pushUndo({ type: "delete", event: ev });
+      selectEvent(null);
+      toast.success("Événement supprimé — Ctrl+Z pour annuler");
+    } catch {
+      toast.error("Impossible de supprimer l'événement");
+    }
+  }, [selectedEventId, events, deleteEvent, pushUndo, selectEvent]);
+
+  // ── Undo handler (Ctrl+Z / Meta+Z) ──────────────────────────────────────
+  const handleUndo = useCallback(async () => {
+    const action = popUndo();
+    if (!action) return;
+    if (action.type === "delete") {
+      try {
+        await createEvent({
+          title: action.event.title,
+          start_time: action.event.start_time,
+          end_time: action.event.end_time,
+          description: action.event.description ?? undefined,
+          location: action.event.location ?? undefined,
+          is_all_day: action.event.is_all_day ?? false,
+          timezone: action.event.timezone,
+          event_type: action.event.event_type,
+        });
+        toast.success("Suppression annulée");
+      } catch {
+        toast.error("Impossible d'annuler la suppression");
+      }
+    }
+  }, [popUndo, createEvent]);
+
+  // ── Global keyboard shortcuts ───────────────────────────────────────────
+  // Skipped when focus is inside an input / textarea / select / contentEditable
+  // or when the EventForm dialog is open (prevents shortcuts from firing while
+  // the user is typing).
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName ?? "";
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      if (formOpen) return;
+
+      // Ctrl/Cmd + Z → undo
+      if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z")) {
+        e.preventDefault();
+        handleUndo();
+        return;
+      }
+      // Other modifier combinations are ignored (don't interfere with browser shortcuts)
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      switch (e.key.toLowerCase()) {
+        case "c":
+          e.preventDefault();
+          handleCreateEvent();
+          break;
+        case "j":
+          e.preventDefault();
+          setView("day");
+          break;
+        case "s":
+          e.preventDefault();
+          setView("week");
+          break;
+        case "m":
+          e.preventDefault();
+          setView("month");
+          break;
+        case "a":
+          e.preventDefault();
+          setView("agenda");
+          break;
+        case "t":
+          e.preventDefault();
+          setView("timeline");
+          break;
+        case "k":
+          e.preventDefault();
+          setView("kanban");
+          break;
+        case "p":
+          e.preventDefault();
+          setView("roster");
+          break;
+        case "x":
+          e.preventDefault();
+          setView("tasks");
+          break;
+        case "v":
+          e.preventDefault();
+          setView("availability");
+          break;
+        case "r":
+          e.preventDefault();
+          setView("presence");
+          break;
+        case "home":
+          e.preventDefault();
+          goToToday();
+          break;
+        case "delete":
+        case "backspace":
+          if (selectedEventId) {
+            e.preventDefault();
+            handleDeleteSelectedEvent();
+          }
+          break;
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [
+    formOpen,
+    handleCreateEvent,
+    handleDeleteSelectedEvent,
+    handleUndo,
+    selectedEventId,
+    setView,
+    goToToday,
+  ]);
+
   const ViewComponent = VIEW_MAP[view];
   const dateTitle = getDateTitle(view, currentDate);
 
   return (
-    <div className="flex flex-col h-full bg-background text-foreground overflow-hidden">
+    <div
+      data-testid="calendar-view"
+      className="flex flex-col h-full bg-background text-foreground overflow-hidden"
+    >
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <header className="shrink-0 flex items-center gap-2 px-3 h-12 border-b border-border bg-card">
         {/* Sidebar toggle */}
@@ -399,10 +539,12 @@ export function CalendarHub() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              data-testid="calendar-new-event-btn"
               size="sm"
               className="h-8 gap-1.5 px-3"
               onClick={() => handleCreateEvent()}
               disabled={!selectedCalendarId}
+              aria-label="Nouveau"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline text-xs font-medium">
@@ -448,7 +590,10 @@ export function CalendarHub() {
         </div>
 
         {/* Date title */}
-        <span className="text-sm font-semibold text-foreground min-w-0 truncate capitalize">
+        <span
+          data-testid="calendar-period-label"
+          className="text-sm font-semibold text-foreground min-w-0 truncate capitalize"
+        >
           {dateTitle}
         </span>
 
@@ -483,8 +628,10 @@ export function CalendarHub() {
               <Tooltip key={cfg.id}>
                 <TooltipTrigger asChild>
                   <button
+                    data-view-id={cfg.id}
                     onClick={() => setView(cfg.id)}
                     aria-pressed={active}
+                    aria-label={cfg.label}
                     className={cn(
                       "flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium transition-colors",
                       active
@@ -518,8 +665,10 @@ export function CalendarHub() {
             return (
               <button
                 key={cfg.id}
+                data-view-id={cfg.id}
                 onClick={() => setView(cfg.id)}
                 aria-pressed={active}
+                aria-label={cfg.label}
                 className={cn(
                   "flex items-center justify-center h-7 w-7 rounded-md text-xs transition-colors",
                   active

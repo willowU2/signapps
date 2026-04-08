@@ -4,7 +4,12 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useShallow } from "zustand/react/shallow";
 import { Calendar, Event } from "@/types/calendar";
-import type { TimeItem, UpdateTimeItemInput, CreateTimeItemInput, Scope } from "@/lib/scheduling/types";
+import type {
+  TimeItem,
+  UpdateTimeItemInput,
+  CreateTimeItemInput,
+  Scope,
+} from "@/lib/scheduling/types";
 import { schedulingApi } from "@/lib/scheduling/api/scheduling-api";
 
 // Re-export usePreferencesStore for convenience
@@ -116,7 +121,17 @@ interface CalendarState {
   fetchTimeItems: (range: { start: Date; end: Date }) => Promise<void>;
   updateTimeItem: (id: string, updates: UpdateTimeItemInput) => Promise<void>;
   createTimeItem: (input: CreateTimeItemInput) => Promise<TimeItem>;
+
+  // Undo stack — records recently-destructive actions so Ctrl+Z can revert them.
+  // Minimal shape: only delete is tracked for now (most common "oops" action).
+  undoStack: UndoAction[];
+  pushUndo: (action: UndoAction) => void;
+  popUndo: () => UndoAction | null;
+  clearUndo: () => void;
 }
+
+/** A reversible action tracked in the calendar undo stack. */
+export type UndoAction = { type: "delete"; event: Event };
 
 export const useCalendarStore = create<CalendarState>()(
   persist(
@@ -186,13 +201,13 @@ export const useCalendarStore = create<CalendarState>()(
       toggleLayer: (layerId) =>
         set((state) => ({
           layers: state.layers.map((l) =>
-            l.layer_id === layerId ? { ...l, enabled: !l.enabled } : l
+            l.layer_id === layerId ? { ...l, enabled: !l.enabled } : l,
           ),
         })),
       setLayerOpacity: (layerId, opacity) =>
         set((state) => ({
           layers: state.layers.map((l) =>
-            l.layer_id === layerId ? { ...l, opacity } : l
+            l.layer_id === layerId ? { ...l, opacity } : l,
           ),
         })),
 
@@ -238,7 +253,8 @@ export const useCalendarStore = create<CalendarState>()(
           return { selectedCalendarIds: updated };
         }),
       selectEvent: (eventId) => set({ selectedEventId: eventId }),
-      setSelectedCalendars: (calendars) => set({ selectedCalendars: calendars }),
+      setSelectedCalendars: (calendars) =>
+        set({ selectedCalendars: calendars }),
       setFilterText: (text) => set({ filterText: text }),
       setEvents: (events) => set({ events }),
       setCalendars: (calendars) => set({ calendars }),
@@ -268,7 +284,10 @@ export const useCalendarStore = create<CalendarState>()(
       fetchTimeItems: async (range) => {
         set({ isLoading: true });
         try {
-          const response = await schedulingApi.getTimeItemsInRange(range.start.toISOString(), range.end.toISOString());
+          const response = await schedulingApi.getTimeItemsInRange(
+            range.start.toISOString(),
+            range.end.toISOString(),
+          );
           set({ timeItems: response, isLoading: false });
         } catch {
           set({ isLoading: false });
@@ -285,6 +304,22 @@ export const useCalendarStore = create<CalendarState>()(
         set((state) => ({ timeItems: [...state.timeItems, item] }));
         return item;
       },
+
+      // ---- Undo stack ----
+      undoStack: [],
+      pushUndo: (action) =>
+        set((state) => ({
+          // Cap the stack at 20 to avoid unbounded growth
+          undoStack: [...state.undoStack.slice(-19), action],
+        })),
+      popUndo: () => {
+        const stack = useCalendarStore.getState().undoStack;
+        if (stack.length === 0) return null;
+        const action = stack[stack.length - 1];
+        set({ undoStack: stack.slice(0, -1) });
+        return action;
+      },
+      clearUndo: () => set({ undoStack: [] }),
     }),
     {
       name: "signapps-calendar",
@@ -296,8 +331,8 @@ export const useCalendarStore = create<CalendarState>()(
         selectedColleagues: state.selectedColleagues,
         selectedResources: state.selectedResources,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // ============================================================================
@@ -309,7 +344,7 @@ export const useCalendarViewState = () =>
     useShallow((state) => ({
       viewMode: state.viewMode,
       currentDate: state.currentDate,
-    }))
+    })),
   );
 
 export const useCalendarNavigation = () =>
@@ -319,7 +354,7 @@ export const useCalendarNavigation = () =>
       prevMonth: state.prevMonth,
       today: state.today,
       setCurrentDate: state.setCurrentDate,
-    }))
+    })),
   );
 
 export const useCalendarSelection = () =>
@@ -327,7 +362,7 @@ export const useCalendarSelection = () =>
     useShallow((state) => ({
       selectedEventId: state.selectedEventId,
       selectEvent: state.selectEvent,
-    }))
+    })),
   );
 
 export const useCalendarData = () =>
@@ -336,7 +371,8 @@ export const useCalendarData = () =>
       events: state.events,
       calendars: state.calendars,
       isLoading: state.isLoading,
-    }))
+    })),
   );
 
-export const useCalendarTimezones = () => useCalendarStore((state) => state.timezones);
+export const useCalendarTimezones = () =>
+  useCalendarStore((state) => state.timezones);

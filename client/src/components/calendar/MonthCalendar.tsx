@@ -16,7 +16,7 @@ import {
 } from "@/stores/calendar-store";
 import { useEvents } from "@/hooks/use-events";
 import { Event } from "@/types/calendar";
-import { useDroppable } from "@dnd-kit/core";
+import { useDroppable, useDraggable } from "@dnd-kit/core";
 
 // ────────────────────────────────────────────────────────────────────────────
 // DroppableDay — each cell in month grid is a DnD drop target
@@ -42,6 +42,7 @@ function DroppableDay({
   onCreateEvent,
 }: DroppableDayProps) {
   const dayStr = day.toDateString();
+  const dayIso = format(day, "yyyy-MM-dd");
   const { isOver, setNodeRef } = useDroppable({
     id: `calendar-day-${dayStr}`,
     data: {
@@ -53,6 +54,7 @@ function DroppableDay({
   return (
     <div
       ref={setNodeRef}
+      data-testid={`day-cell-${dayIso}`}
       className={`border-r border-border p-1 flex flex-col relative transition-colors cursor-pointer ${
         !isCurrentMonth ? "bg-muted/50" : "bg-background"
       } ${isOver ? "bg-blue-50 ring-2 ring-blue-500 ring-inset z-10" : ""}`}
@@ -76,20 +78,12 @@ function DroppableDay({
       {/* Events */}
       <div className="flex-1 space-y-[2px] overflow-y-auto px-1 hide-scrollbar">
         {dayEvents.slice(0, 4).map((event) => (
-          <div
+          <DraggableMonthEvent
             key={event.id}
-            onClick={(e) => {
-              e.stopPropagation();
-              selectEvent(event.id);
-            }}
-            className={`text-[11px] px-2 py-[2px] rounded-sm cursor-pointer truncate font-medium leading-tight ${
-              selectedEventId === event.id
-                ? "bg-blue-800 text-white ring-1 ring-blue-900"
-                : "bg-[#039be5] text-white hover:opacity-90"
-            }`}
-          >
-            {event.title}
-          </div>
+            event={event}
+            isSelected={selectedEventId === event.id}
+            onSelect={() => selectEvent(event.id)}
+          />
         ))}
         {dayEvents.length > 4 && (
           <div className="text-[11px] font-medium text-[#3c4043] dark:text-gray-400 hover:bg-muted rounded px-1 cursor-pointer">
@@ -97,6 +91,50 @@ function DroppableDay({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// DraggableMonthEvent — individual event card that can be picked up and
+// dropped onto another DroppableDay cell.
+// ────────────────────────────────────────────────────────────────────────────
+
+interface DraggableMonthEventProps {
+  event: Event;
+  isSelected: boolean;
+  onSelect: () => void;
+}
+
+function DraggableMonthEvent({
+  event,
+  isSelected,
+  onSelect,
+}: DraggableMonthEventProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: event.id,
+    data: { event },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      data-testid="calendar-event"
+      {...attributes}
+      {...listeners}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect();
+      }}
+      className={`text-[11px] px-2 py-[2px] rounded-sm cursor-pointer truncate font-medium leading-tight ${
+        isDragging
+          ? "opacity-50"
+          : isSelected
+            ? "bg-blue-800 text-white ring-1 ring-blue-900"
+            : "bg-[#039be5] text-white hover:opacity-90"
+      }`}
+    >
+      {event.title}
     </div>
   );
 }
