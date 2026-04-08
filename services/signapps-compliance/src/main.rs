@@ -72,6 +72,9 @@ fn create_router(state: AppState) -> Router {
     let public_routes = Router::new().route("/health", get(health_check));
 
     let protected_routes = Router::new()
+        // Activity feed (moved from signapps-identity — Refactor 34 Phase 9)
+        .route("/api/v1/activities", get(handlers::activities::list_activities))
+        .route("/api/v1/activity/cross-module", get(handlers::activities::cross_module_activity))
         // Audit logs (moved from signapps-identity — Refactor 34 Phase 8)
         .route("/api/v1/audit-logs", get(handlers::audit_logs::list_audit_logs))
         .route("/api/v1/audit-logs/export", get(handlers::audit_logs::export_audit_logs))

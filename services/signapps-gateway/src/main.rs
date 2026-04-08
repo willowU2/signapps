@@ -728,6 +728,9 @@ async fn main() -> anyhow::Result<()> {
         // Audit logs (moved from identity to compliance — Refactor 34 Phase 8)
         ("/api/v1/audit-logs", &compliance_url),
         ("/api/v1/audit", &compliance_url),
+        // Activity feed (moved from identity to compliance — Refactor 34 Phase 9)
+        ("/api/v1/activities", &compliance_url),
+        ("/api/v1/activity", &compliance_url),
         // Identity catch-all: any /api/v1/* not matched above → identity
         ("/api/v1", &identity_url),
         // Health check fallback

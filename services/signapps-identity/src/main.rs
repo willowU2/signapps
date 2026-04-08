@@ -231,9 +231,8 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/users/me/preferences/export", get(handlers::preferences::export_preferences))
         .route("/api/v1/users/me/preferences/import", post(handlers::preferences::import_preferences))
         // RGPD data export moved to signapps-compliance service (port 3032)
-        // Activities
-        .route("/api/v1/activities", get(handlers::activities::list_activities))
-        .route("/api/v1/activity/cross-module", get(handlers::activities::cross_module_activity))
+        // Activities moved to signapps-compliance service (port 3032).
+        // Gateway forwards /api/v1/activities and /api/v1/activity/* → signapps-compliance:3032.
         // Audit logs moved to signapps-compliance service (port 3032).
         // Gateway forwards /api/v1/audit-logs/* and /api/v1/audit → signapps-compliance:3032.
         // Entity links — SYNC-CROSSLINKS
