@@ -681,6 +681,14 @@ async fn main() -> anyhow::Result<()> {
         // CRM + Persons (extracted from identity — Refactor 34 Phase 2)
         ("/api/v1/crm", &contacts_url),
         ("/api/v1/persons", &contacts_url),
+        // Sites + Resources + Reservations (extracted from identity — Refactor 34 Phase 4)
+        ("/api/v1/sites", &it_assets_url),
+        ("/api/v1/resources", &it_assets_url),
+        ("/api/v1/reservations", &it_assets_url),
+        ("/api/v1/resource-types", &it_assets_url),
+        // LMS + Supply Chain (extracted from identity — Refactor 34 Phase 4)
+        ("/api/v1/lms", &workforce_url),
+        ("/api/v1/supply-chain", &workforce_url),
         // Identity catch-all: any /api/v1/* not matched above → identity
         ("/api/v1", &identity_url),
         // Health check fallback
