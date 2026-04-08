@@ -16,6 +16,8 @@ pub mod delegations;
 pub mod employees;
 pub mod groups;
 pub mod learning;
+pub mod lms;
+pub mod supply_chain;
 pub mod openapi;
 pub mod org;
 pub mod policies;

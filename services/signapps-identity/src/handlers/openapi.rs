@@ -99,14 +99,7 @@ use utoipa::OpenApi;
         crate::handlers::org_nodes::set_node_permissions,
         crate::handlers::org_nodes::get_orgchart,
         // Persons moved to signapps-contacts service (port 3021)
-        // Sites
-        crate::handlers::sites::list_sites,
-        crate::handlers::sites::create_site,
-        crate::handlers::sites::get_site,
-        crate::handlers::sites::update_site,
-        crate::handlers::sites::list_site_persons,
-        crate::handlers::sites::attach_node,
-        crate::handlers::sites::attach_person,
+        // Sites moved to signapps-it-assets service (port 3022)
         // Vault endpoints moved to signapps-vault service (port 3025)
         // Compliance
         crate::handlers::compliance::save_dpia,
@@ -120,45 +113,15 @@ use utoipa::OpenApi;
         crate::handlers::compliance::get_consent,
         crate::handlers::compliance::save_cookie_banner,
         crate::handlers::compliance::get_cookie_banner,
-        // Resources
-        crate::handlers::resources::list_resource_types,
-        crate::handlers::resources::create_resource_type,
-        crate::handlers::resources::delete_resource_type,
-        crate::handlers::resources::list_resources,
-        crate::handlers::resources::get_resource,
-        crate::handlers::resources::create_resource,
-        crate::handlers::resources::update_resource,
-        crate::handlers::resources::delete_resource,
-        crate::handlers::resources::list_reservations,
-        crate::handlers::resources::list_pending_reservations,
-        crate::handlers::resources::list_my_reservations,
-        crate::handlers::resources::get_reservation,
-        crate::handlers::resources::create_reservation,
-        crate::handlers::resources::update_reservation_status,
+        // Resources moved to signapps-it-assets service (port 3022)
         // Audit logs
         crate::handlers::audit_logs::list_audit_logs,
         crate::handlers::audit_logs::get_audit_log,
         crate::handlers::audit_logs::export_audit_logs,
         crate::handlers::audit_logs::query_audit,
         // CRM moved to signapps-contacts service (port 3021)
-        // LMS
-        crate::handlers::lms::list_courses,
-        crate::handlers::lms::create_course,
-        crate::handlers::lms::get_course,
-        crate::handlers::lms::patch_course,
-        crate::handlers::lms::list_progress,
-        crate::handlers::lms::track_progress,
-        crate::handlers::lms::list_discussions,
-        crate::handlers::lms::create_discussion,
-        // Supply chain
-        crate::handlers::supply_chain::list_purchase_orders,
-        crate::handlers::supply_chain::create_purchase_order,
-        crate::handlers::supply_chain::get_purchase_order,
-        crate::handlers::supply_chain::patch_purchase_order,
-        crate::handlers::supply_chain::delete_purchase_order,
-        crate::handlers::supply_chain::list_warehouses,
-        crate::handlers::supply_chain::create_warehouse,
-        crate::handlers::supply_chain::list_inventory,
+        // LMS moved to signapps-workforce service (port 3024)
+        // Supply chain moved to signapps-workforce service (port 3024)
         // Comms
         crate::handlers::comms::list_announcements,
         crate::handlers::comms::create_announcement,
@@ -230,14 +193,7 @@ use utoipa::OpenApi;
             signapps_db::models::core_org::EffectivePermissions,
             signapps_db::models::core_org::UpsertPermissionProfile,
             // Person schemas moved to signapps-contacts OpenAPI
-            // Site schemas
-            crate::handlers::sites::CreateSiteRequest,
-            crate::handlers::sites::UpdateSiteRequest,
-            crate::handlers::sites::AttachNodeRequest,
-            crate::handlers::sites::AttachPersonRequest,
-            signapps_db::models::core_org::Site,
-            signapps_db::models::core_org::NodeSite,
-            signapps_db::models::core_org::PersonSite,
+            // Site schemas moved to signapps-it-assets OpenAPI
             // Vault schemas moved to signapps-vault service OpenAPI
             // Compliance schemas
             crate::handlers::compliance::SaveDpiaRequest,
@@ -248,24 +204,14 @@ use utoipa::OpenApi;
             crate::handlers::compliance::RetentionPoliciesRequest,
             crate::handlers::compliance::RetentionPoliciesResponse,
             crate::handlers::compliance::SaveConsentRequest,
-            // Resource schemas
-            crate::handlers::resources::ResourceTypeResponse,
-            crate::handlers::resources::CreateResourceTypeRequest,
-            crate::handlers::resources::ResourceResponse,
-            crate::handlers::resources::CreateResourceRequest,
-            crate::handlers::resources::UpdateResourceRequest,
-            crate::handlers::resources::ReservationResponse,
-            crate::handlers::resources::CreateReservationRequest,
-            crate::handlers::resources::UpdateReservationStatusRequest,
+            // Resource schemas moved to signapps-it-assets OpenAPI
             // Audit log schemas
             crate::handlers::audit_logs::AuditLog,
             crate::handlers::audit_logs::AuditLogListResponse,
             crate::handlers::audit_logs::AuditQueryRequest,
             // CRM schemas moved to signapps-contacts OpenAPI
-            // LMS schemas
-            crate::handlers::lms::LmsRecord,
-            // Supply chain schemas
-            crate::handlers::supply_chain::ScRecord,
+            // LMS schemas moved to signapps-workforce OpenAPI
+            // Supply chain schemas moved to signapps-workforce OpenAPI
             // Comms schemas
             crate::handlers::comms::CommsRecord,
             // Accounting schemas moved to signapps-billing OpenAPI
@@ -283,12 +229,8 @@ use utoipa::OpenApi;
         (name = "tenants", description = "Tenant management (super-admin)"),
         (name = "workspaces", description = "Workspace management"),
         (name = "org", description = "Organisational structure (nodes, trees, orgchart)"),
-        (name = "sites", description = "Physical site management"),
         (name = "compliance", description = "GDPR compliance — DPIA, DSAR, retention, consent"),
-        (name = "resources", description = "Resource booking — rooms, equipment, reservations"),
         (name = "audit", description = "Platform audit logs"),
-        (name = "lms", description = "Learning Management System — courses, progress, discussions"),
-        (name = "supply_chain", description = "Supply chain — purchase orders, warehouses, inventory"),
         (name = "comms", description = "Internal communications — announcements, polls, news feed"),
         // Accounting tag moved to signapps-billing OpenAPI
     ),

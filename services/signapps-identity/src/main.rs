@@ -361,27 +361,8 @@ fn create_router(state: AppState) -> Router {
             put(handlers::assignments::update_assignment)
                 .delete(handlers::assignments::end_assignment),
         )
-        // Sites
-        .route(
-            "/api/v1/sites",
-            get(handlers::sites::list_sites).post(handlers::sites::create_site),
-        )
-        .route(
-            "/api/v1/sites/:id",
-            get(handlers::sites::get_site).put(handlers::sites::update_site),
-        )
-        .route(
-            "/api/v1/sites/:id/persons",
-            get(handlers::sites::list_site_persons),
-        )
-        .route(
-            "/api/v1/sites/:id/attach-node",
-            post(handlers::sites::attach_node),
-        )
-        .route(
-            "/api/v1/sites/:id/attach-person",
-            post(handlers::sites::attach_person),
-        )
+        // Sites moved to signapps-it-assets service (port 3022).
+        // Gateway forwards /api/v1/sites/* → signapps-it-assets:3022.
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
@@ -407,23 +388,8 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/workspaces/:id/members", post(handlers::tenants::add_workspace_member))
         .route("/api/v1/workspaces/:id/members/:uid", put(handlers::tenants::update_workspace_member_role))
         .route("/api/v1/workspaces/:id/members/:uid", delete(handlers::tenants::remove_workspace_member))
-        // Resource types
-        .route("/api/v1/resource-types", get(handlers::resources::list_resource_types))
-        .route("/api/v1/resource-types", post(handlers::resources::create_resource_type))
-        .route("/api/v1/resource-types/:id", delete(handlers::resources::delete_resource_type))
-        // Resources (rooms, equipment, etc.)
-        .route("/api/v1/resources", get(handlers::resources::list_resources))
-        .route("/api/v1/resources", post(handlers::resources::create_resource))
-        .route("/api/v1/resources/:id", get(handlers::resources::get_resource))
-        .route("/api/v1/resources/:id", put(handlers::resources::update_resource))
-        .route("/api/v1/resources/:id", delete(handlers::resources::delete_resource))
-        // Reservations
-        .route("/api/v1/reservations", get(handlers::resources::list_reservations))
-        .route("/api/v1/reservations", post(handlers::resources::create_reservation))
-        .route("/api/v1/reservations/mine", get(handlers::resources::list_my_reservations))
-        .route("/api/v1/reservations/pending", get(handlers::resources::list_pending_reservations))
-        .route("/api/v1/reservations/:id", get(handlers::resources::get_reservation))
-        .route("/api/v1/reservations/:id/status", put(handlers::resources::update_reservation_status))
+        // Resources/reservations moved to signapps-it-assets service (port 3022).
+        // Gateway forwards /api/v1/resources/* and /api/v1/reservations/* → signapps-it-assets:3022.
         // Signature workflow
         .route("/api/v1/signatures", post(handlers::signatures::create_envelope))
         .route("/api/v1/signatures", get(handlers::signatures::list_envelopes))
@@ -592,55 +558,11 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
-    // Supply Chain routes (protected)
-    let supply_chain_routes = Router::new()
-        .route(
-            "/api/v1/supply-chain/purchase-orders",
-            get(handlers::supply_chain::list_purchase_orders)
-                .post(handlers::supply_chain::create_purchase_order),
-        )
-        .route(
-            "/api/v1/supply-chain/purchase-orders/:id",
-            get(handlers::supply_chain::get_purchase_order)
-                .patch(handlers::supply_chain::patch_purchase_order)
-                .delete(handlers::supply_chain::delete_purchase_order),
-        )
-        .route(
-            "/api/v1/supply-chain/warehouses",
-            get(handlers::supply_chain::list_warehouses)
-                .post(handlers::supply_chain::create_warehouse),
-        )
-        .route(
-            "/api/v1/supply-chain/inventory",
-            get(handlers::supply_chain::list_inventory),
-        )
-        .layer(axum_middleware::from_fn_with_state(
-            state.clone(),
-            auth_middleware::<AppState>,
-        ));
+    // Supply Chain routes moved to signapps-workforce service (port 3024).
+    // Gateway forwards /api/v1/supply-chain/* → signapps-workforce:3024/api/v1/workforce/supply-chain/*.
 
-    // LMS routes (protected)
-    let lms_routes = Router::new()
-        .route(
-            "/api/v1/lms/courses",
-            get(handlers::lms::list_courses).post(handlers::lms::create_course),
-        )
-        .route(
-            "/api/v1/lms/courses/:id",
-            get(handlers::lms::get_course).patch(handlers::lms::patch_course),
-        )
-        .route(
-            "/api/v1/lms/progress",
-            get(handlers::lms::list_progress).post(handlers::lms::track_progress),
-        )
-        .route(
-            "/api/v1/lms/discussions",
-            get(handlers::lms::list_discussions).post(handlers::lms::create_discussion),
-        )
-        .layer(axum_middleware::from_fn_with_state(
-            state.clone(),
-            auth_middleware::<AppState>,
-        ));
+    // LMS routes moved to signapps-workforce service (port 3024).
+    // Gateway forwards /api/v1/lms/* → signapps-workforce:3024/api/v1/lms/*.
 
     // Comms routes (protected)
     let comms_routes = Router::new()
@@ -690,8 +612,6 @@ fn create_router(state: AppState) -> Router {
         .merge(protected_routes)
         .merge(tenant_routes)
         .merge(admin_routes)
-        .merge(supply_chain_routes)
-        .merge(lms_routes)
         .merge(comms_routes)
         .merge(org_routes)
         .layer(axum_middleware::from_fn(logging_middleware))

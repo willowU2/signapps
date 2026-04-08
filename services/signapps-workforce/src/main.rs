@@ -481,6 +481,53 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
+    // LMS routes (extracted from signapps-identity)
+    let lms_routes = Router::new()
+        .route(
+            "/courses",
+            get(handlers::lms::list_courses).post(handlers::lms::create_course),
+        )
+        .route(
+            "/courses/:id",
+            get(handlers::lms::get_course).patch(handlers::lms::patch_course),
+        )
+        .route(
+            "/progress",
+            get(handlers::lms::list_progress).post(handlers::lms::track_progress),
+        )
+        .route(
+            "/discussions",
+            get(handlers::lms::list_discussions).post(handlers::lms::create_discussion),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Supply Chain routes (extracted from signapps-identity)
+    let supply_chain_routes = Router::new()
+        .route(
+            "/purchase-orders",
+            get(handlers::supply_chain::list_purchase_orders)
+                .post(handlers::supply_chain::create_purchase_order),
+        )
+        .route(
+            "/purchase-orders/:id",
+            get(handlers::supply_chain::get_purchase_order)
+                .patch(handlers::supply_chain::patch_purchase_order)
+                .delete(handlers::supply_chain::delete_purchase_order),
+        )
+        .route(
+            "/warehouses",
+            get(handlers::supply_chain::list_warehouses)
+                .post(handlers::supply_chain::create_warehouse),
+        )
+        .route("/inventory", get(handlers::supply_chain::list_inventory))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
     // Combine all routes
     Router::new()
         .nest("/api/v1/workforce/ad", ad_routes)
@@ -499,6 +546,8 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/workforce/delegations", delegation_routes)
         .nest("/api/v1/workforce/audit", audit_routes)
         .nest("/api/v1/learning", learning_routes)
+        .nest("/api/v1/lms", lms_routes)
+        .nest("/api/v1/workforce/supply-chain", supply_chain_routes)
         .nest("/health", health_routes)
         .merge(handlers::openapi::swagger_router())
         .layer(TraceLayer::new_for_http())
