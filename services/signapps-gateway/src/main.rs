@@ -725,6 +725,9 @@ async fn main() -> anyhow::Result<()> {
         ("/api/v1/admin/backup", &backup_url),
         // Compliance service (extracted from identity — Refactor 34 Phase 7)
         ("/api/v1/compliance", &compliance_url),
+        // Audit logs (moved from identity to compliance — Refactor 34 Phase 8)
+        ("/api/v1/audit-logs", &compliance_url),
+        ("/api/v1/audit", &compliance_url),
         // Identity catch-all: any /api/v1/* not matched above → identity
         ("/api/v1", &identity_url),
         // Health check fallback

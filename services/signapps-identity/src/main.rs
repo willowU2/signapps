@@ -234,20 +234,8 @@ fn create_router(state: AppState) -> Router {
         // Activities
         .route("/api/v1/activities", get(handlers::activities::list_activities))
         .route("/api/v1/activity/cross-module", get(handlers::activities::cross_module_activity))
-        // Audit logs — SYNC-AUDIT-ROUTES
-        .route(
-            "/api/v1/audit-logs",
-            get(handlers::audit_logs::list_audit_logs),
-        )
-        .route(
-            "/api/v1/audit-logs/export",
-            get(handlers::audit_logs::export_audit_logs),
-        )
-        .route(
-            "/api/v1/audit-logs/:id",
-            get(handlers::audit_logs::get_audit_log),
-        )
-        .route("/api/v1/audit", post(handlers::audit_logs::query_audit))
+        // Audit logs moved to signapps-compliance service (port 3032).
+        // Gateway forwards /api/v1/audit-logs/* and /api/v1/audit → signapps-compliance:3032.
         // Entity links — SYNC-CROSSLINKS
         .route(
             "/api/v1/links",

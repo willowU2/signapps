@@ -91,11 +91,7 @@ use utoipa::OpenApi;
         // Vault endpoints moved to signapps-vault service (port 3025)
         // Compliance endpoints moved to signapps-compliance service (port 3032)
         // Resources moved to signapps-it-assets service (port 3022)
-        // Audit logs
-        crate::handlers::audit_logs::list_audit_logs,
-        crate::handlers::audit_logs::get_audit_log,
-        crate::handlers::audit_logs::export_audit_logs,
-        crate::handlers::audit_logs::query_audit,
+        // Audit logs moved to signapps-compliance service (port 3032)
         // CRM moved to signapps-contacts service (port 3021)
         // LMS moved to signapps-workforce service (port 3024)
         // Supply chain moved to signapps-workforce service (port 3024)
@@ -163,10 +159,7 @@ use utoipa::OpenApi;
             // Vault schemas moved to signapps-vault service OpenAPI
             // Compliance schemas moved to signapps-compliance service OpenAPI (port 3032)
             // Resource schemas moved to signapps-it-assets OpenAPI
-            // Audit log schemas
-            crate::handlers::audit_logs::AuditLog,
-            crate::handlers::audit_logs::AuditLogListResponse,
-            crate::handlers::audit_logs::AuditQueryRequest,
+            // Audit log schemas moved to signapps-compliance service OpenAPI (port 3032)
             // CRM schemas moved to signapps-contacts OpenAPI
             // LMS schemas moved to signapps-workforce OpenAPI
             // Supply chain schemas moved to signapps-workforce OpenAPI
@@ -188,7 +181,7 @@ use utoipa::OpenApi;
         (name = "workspaces", description = "Workspace management"),
         // org tag moved to signapps-org OpenAPI (port 3026)
         // compliance tag moved to signapps-compliance OpenAPI (port 3032)
-        (name = "audit", description = "Platform audit logs"),
+        // audit tag moved to signapps-compliance OpenAPI (port 3032)
         (name = "comms", description = "Internal communications — announcements, polls, news feed"),
         // Accounting tag moved to signapps-billing OpenAPI
     ),

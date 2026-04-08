@@ -3,7 +3,7 @@
 pub mod activities;
 pub mod admin_security;
 pub mod api_keys;
-pub mod audit_logs;
+// audit_logs moved to signapps-compliance service (port 3032)
 pub mod auth;
 // backup moved to signapps-backup service (port 3031)
 pub mod branding;
