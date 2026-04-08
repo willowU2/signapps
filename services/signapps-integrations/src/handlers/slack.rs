@@ -13,7 +13,6 @@
 use crate::AppState;
 use axum::{
     extract::State,
-    http::StatusCode,
     Json,
 };
 use serde::{Deserialize, Serialize};
@@ -24,6 +23,7 @@ use signapps_common::{Error, Result};
 /// Body sent by Slack for slash commands (application/x-www-form-urlencoded).
 /// Axum's `Form` extractor handles this automatically.
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 /// SlashCommandPayload data transfer object.
 pub struct SlashCommandPayload {
     /// The slash command (e.g. "/signapps")
@@ -101,7 +101,6 @@ pub struct SaveSlackConfigRequest {
 ///
 /// Slack sends a URL-encoded POST. We decode it, parse the subcommand,
 /// execute via internal APIs, and return a Slack-formatted response.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn slack_webhook(
     State(_state): State<AppState>,
@@ -188,14 +187,13 @@ fn handle_help() -> SlackResponse {
 
 /// Save Slack integration config (admin only — middleware enforces this).
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn save_slack_config(
     State(_state): State<AppState>,
     Json(payload): Json<SaveSlackConfigRequest>,
 ) -> Result<Json<serde_json::Value>> {
     // Validate webhook URL format
     if !payload.webhook_url.starts_with("https://hooks.slack.com/") {
-        return Err(Error::bad_request("URL de webhook Slack invalide"));
+        return Err(Error::BadRequest("URL de webhook Slack invalide".to_string()));
     }
 
     // In a full implementation, persist to DB or env config.
@@ -217,7 +215,6 @@ pub async fn save_slack_config(
 }
 
 /// Get current Slack config (admin only).
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_slack_config(
     State(_state): State<AppState>,
@@ -243,7 +240,7 @@ pub async fn get_slack_config(
 /// Send a notification to Slack (called internally on events like deal.won, task.overdue).
 ///
 /// This is not an HTTP handler — it's called from the event bus listener.
-#[tracing::instrument(skip_all)]
+#[allow(dead_code)]
 #[tracing::instrument(skip_all)]
 pub async fn notify_slack(webhook_url: &str, message: &str) -> anyhow::Result<()> {
     let client = reqwest::Client::new();
