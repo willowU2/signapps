@@ -9,6 +9,8 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig = {
+  // Standalone output enables minimal Docker images (copies only required node_modules)
+  output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
   async headers() {
     return [
       {

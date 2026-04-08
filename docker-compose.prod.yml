@@ -1,0 +1,548 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SignApps Platform — Production Docker Compose
+#
+# Usage:
+#   cp .env.example .env.prod && $EDITOR .env.prod   # fill in secrets
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+#
+# All services pull from the same image (ghcr.io/your-org/signapps-platform).
+# Replace "your-org" with your actual GitHub organisation or user name.
+#
+# Required secrets in .env.prod:
+#   POSTGRES_PASSWORD, JWT_PUBLIC_KEY_PEM, JWT_PRIVATE_KEY_PEM
+#   (see .env.example for the full reference)
+#
+# SECURITY: Images are private — push to ghcr.io only, never to Docker Hub.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: signapps-prod
+
+# ─── Shared defaults ─────────────────────────────────────────────────────────
+
+x-backend: &backend
+  image: ghcr.io/your-org/signapps-platform:${SIGNAPPS_VERSION:-latest}
+  restart: unless-stopped
+  networks:
+    - signapps-prod
+  depends_on:
+    postgres:
+      condition: service_healthy
+  environment: &backend-env
+    DATABASE_URL: postgres://signapps:${POSTGRES_PASSWORD}@postgres:5432/signapps
+    # RS256 mode (recommended): set both keys on identity, only public on others
+    JWT_PUBLIC_KEY_PEM: ${JWT_PUBLIC_KEY_PEM}
+    RUST_LOG: ${RUST_LOG:-info,signapps=info}
+    RUST_LOG_FORMAT: json
+    MODELS_DIR: /data/models
+    GPU_BACKEND: ${GPU_BACKEND:-cpu}
+    STORAGE_MODE: ${STORAGE_MODE:-fs}
+    STORAGE_FS_ROOT: /data/storage
+  healthcheck: &healthcheck
+    test: ["CMD-SHELL", "wget -qO- http://localhost:$${SERVER_PORT:-3099}/health || exit 1"]
+    interval: 15s
+    timeout: 5s
+    retries: 5
+    start_period: 10s
+
+# ─── Services ─────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Infrastructure ──────────────────────────────────────────────────────────
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: signapps
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: signapps
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - signapps-prod
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U signapps"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    # Do NOT expose port 5432 publicly in production.
+    # Access is internal-only via the signapps-prod network.
+
+  # ── Backend Services ────────────────────────────────────────────────────────
+
+  identity:
+    <<: *backend
+    command: ["/app/bin/signapps-identity"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3001"
+      # identity is the only service that needs the private key for JWT signing
+      JWT_PRIVATE_KEY_PEM: ${JWT_PRIVATE_KEY_PEM}
+      JWT_SECRET: ${JWT_SECRET:-}
+      LDAP_URL: ${LDAP_URL:-}
+      LDAP_BIND_DN: ${LDAP_BIND_DN:-}
+      LDAP_BIND_PASSWORD: ${LDAP_BIND_PASSWORD:-}
+      LDAP_BASE_DN: ${LDAP_BASE_DN:-}
+      LDAP_ENCRYPTION_KEY: ${LDAP_ENCRYPTION_KEY:-}
+    ports:
+      - "${IDENTITY_PORT:-3001}:3001"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
+
+  containers:
+    <<: *backend
+    command: ["/app/bin/signapps-containers"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3002"
+    ports:
+      - "${CONTAINERS_PORT:-3002}:3002"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3002/health || exit 1"]
+
+  proxy:
+    <<: *backend
+    command: ["/app/bin/signapps-proxy"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3003"
+      ACME_EMAIL: ${ACME_EMAIL:-admin@example.com}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "${PROXY_PORT:-3003}:3003"
+    volumes:
+      - proxy_tls:/data/tls
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3003/health || exit 1"]
+
+  storage:
+    <<: *backend
+    command: ["/app/bin/signapps-storage"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3004"
+      STORAGE_MODE: ${STORAGE_MODE:-fs}
+      STORAGE_FS_ROOT: /data/storage
+      STORAGE_S3_ENDPOINT: ${STORAGE_S3_ENDPOINT:-}
+      STORAGE_S3_ACCESS_KEY: ${STORAGE_S3_ACCESS_KEY:-}
+      STORAGE_S3_SECRET_KEY: ${STORAGE_S3_SECRET_KEY:-}
+      STORAGE_S3_REGION: ${STORAGE_S3_REGION:-us-east-1}
+      STORAGE_S3_BUCKET: ${STORAGE_S3_BUCKET:-signapps}
+    ports:
+      - "${STORAGE_PORT:-3004}:3004"
+    volumes:
+      - storage_data:/data/storage
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3004/health || exit 1"]
+
+  ai:
+    <<: *backend
+    command: ["/app/bin/signapps-ai"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3005"
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      OLLAMA_URL: ${OLLAMA_URL:-}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+      EMBEDDINGS_URL: ${EMBEDDINGS_URL:-}
+      EMBEDDINGS_MODEL: ${EMBEDDINGS_MODEL:-nomic-embed-text}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+      HF_TOKEN: ${HF_TOKEN:-}
+    ports:
+      - "${AI_PORT:-3005}:3005"
+    volumes:
+      - models_data:/data/models
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3005/health || exit 1"]
+
+  securelink:
+    <<: *backend
+    command: ["/app/bin/signapps-securelink"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3006"
+    ports:
+      - "${SECURELINK_PORT:-3006}:3006"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3006/health || exit 1"]
+
+  scheduler:
+    <<: *backend
+    command: ["/app/bin/signapps-scheduler"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3007"
+    ports:
+      - "${SCHEDULER_PORT:-3007}:3007"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3007/health || exit 1"]
+
+  metrics:
+    <<: *backend
+    command: ["/app/bin/signapps-metrics"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3008"
+    ports:
+      - "${METRICS_PORT:-3008}:3008"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3008/health || exit 1"]
+
+  media:
+    <<: *backend
+    command: ["/app/bin/signapps-media"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3009"
+      STT_MODEL: ${STT_MODEL:-medium}
+      TTS_VOICE: ${TTS_VOICE:-fr_FR-siwis-medium}
+    ports:
+      - "${MEDIA_PORT:-3009}:3009"
+    volumes:
+      - models_data:/data/models
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3009/health || exit 1"]
+
+  docs:
+    <<: *backend
+    command: ["/app/bin/signapps-docs"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3010"
+    ports:
+      - "${DOCS_PORT:-3010}:3010"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3010/health || exit 1"]
+
+  calendar:
+    <<: *backend
+    command: ["/app/bin/signapps-calendar"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3011"
+    ports:
+      - "${CALENDAR_PORT:-3011}:3011"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3011/health || exit 1"]
+
+  mail:
+    <<: *backend
+    command: ["/app/bin/signapps-mail"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3012"
+      MAIL_SERVICE_URL: http://mail:3012
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID:-}
+      MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET:-}
+    ports:
+      - "${MAIL_PORT:-3012}:3012"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3012/health || exit 1"]
+
+  meet:
+    <<: *backend
+    command: ["/app/bin/signapps-meet"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3014"
+    ports:
+      - "${MEET_PORT:-3014}:3014"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3014/health || exit 1"]
+
+  forms:
+    <<: *backend
+    command: ["/app/bin/signapps-forms"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3015"
+    ports:
+      - "${FORMS_PORT:-3015}:3015"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3015/health || exit 1"]
+
+  pxe:
+    <<: *backend
+    command: ["/app/bin/signapps-pxe"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3016"
+    ports:
+      - "${PXE_PORT:-3016}:3016"
+      - "69:69/udp"    # TFTP
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3016/health || exit 1"]
+
+  social:
+    <<: *backend
+    command: ["/app/bin/signapps-social"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3019"
+    ports:
+      - "${SOCIAL_PORT:-3019}:3019"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3019/health || exit 1"]
+
+  chat:
+    <<: *backend
+    command: ["/app/bin/signapps-chat"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3020"
+    ports:
+      - "${CHAT_PORT:-3020}:3020"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3020/health || exit 1"]
+
+  contacts:
+    <<: *backend
+    command: ["/app/bin/signapps-contacts"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3021"
+    ports:
+      - "${CONTACTS_PORT:-3021}:3021"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3021/health || exit 1"]
+
+  it-assets:
+    <<: *backend
+    command: ["/app/bin/signapps-it-assets"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3022"
+    ports:
+      - "${IT_ASSETS_PORT:-3022}:3022"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3022/health || exit 1"]
+
+  workforce:
+    <<: *backend
+    command: ["/app/bin/signapps-workforce"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3024"
+    ports:
+      - "${WORKFORCE_PORT:-3024}:3024"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3024/health || exit 1"]
+
+  vault:
+    <<: *backend
+    command: ["/app/bin/signapps-vault"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3025"
+    ports:
+      - "${VAULT_PORT:-3025}:3025"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3025/health || exit 1"]
+
+  org:
+    <<: *backend
+    command: ["/app/bin/signapps-org"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3026"
+    ports:
+      - "${ORG_PORT:-3026}:3026"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3026/health || exit 1"]
+
+  webhooks:
+    <<: *backend
+    command: ["/app/bin/signapps-webhooks"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3027"
+    ports:
+      - "${WEBHOOKS_PORT:-3027}:3027"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3027/health || exit 1"]
+
+  signatures:
+    <<: *backend
+    command: ["/app/bin/signapps-signatures"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3028"
+    ports:
+      - "${SIGNATURES_PORT:-3028}:3028"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3028/health || exit 1"]
+
+  tenant-config:
+    <<: *backend
+    command: ["/app/bin/signapps-tenant-config"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3029"
+    ports:
+      - "${TENANT_CONFIG_PORT:-3029}:3029"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3029/health || exit 1"]
+
+  integrations:
+    <<: *backend
+    command: ["/app/bin/signapps-integrations"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3030"
+    ports:
+      - "${INTEGRATIONS_PORT:-3030}:3030"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3030/health || exit 1"]
+
+  backup:
+    <<: *backend
+    command: ["/app/bin/signapps-backup"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3031"
+    ports:
+      - "${BACKUP_PORT:-3031}:3031"
+    volumes:
+      - backup_data:/data/backups
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3031/health || exit 1"]
+
+  compliance:
+    <<: *backend
+    command: ["/app/bin/signapps-compliance"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3032"
+    ports:
+      - "${COMPLIANCE_PORT:-3032}:3032"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3032/health || exit 1"]
+
+  notifications:
+    <<: *backend
+    command: ["/app/bin/signapps-notifications"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "8095"
+    ports:
+      - "${NOTIFICATIONS_PORT:-8095}:8095"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8095/health || exit 1"]
+
+  billing:
+    <<: *backend
+    command: ["/app/bin/signapps-billing"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "8096"
+    ports:
+      - "${BILLING_PORT:-8096}:8096"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8096/health || exit 1"]
+
+  gateway:
+    <<: *backend
+    command: ["/app/bin/signapps-gateway"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3099"
+    ports:
+      - "${GATEWAY_PORT:-3099}:3099"
+    depends_on:
+      identity:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3099/health || exit 1"]
+
+  # ── Frontend ─────────────────────────────────────────────────────────────────
+
+  frontend:
+    image: ghcr.io/your-org/signapps-frontend:${SIGNAPPS_VERSION:-latest}
+    restart: unless-stopped
+    networks:
+      - signapps-prod
+    environment:
+      NODE_ENV: production
+      # Public API base URL — must be reachable from the browser
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3099}
+      NEXT_PUBLIC_DOCS_URL: ${NEXT_PUBLIC_DOCS_URL:-ws://localhost:3010}
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+# ─── Volumes ──────────────────────────────────────────────────────────────────
+
+volumes:
+  postgres_data:
+    driver: local
+  storage_data:
+    driver: local
+  models_data:
+    driver: local
+  backup_data:
+    driver: local
+  proxy_tls:
+    driver: local
+
+# ─── Networks ─────────────────────────────────────────────────────────────────
+
+networks:
+  signapps-prod:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "172.20.0.0/16"

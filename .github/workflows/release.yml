@@ -1,4 +1,5 @@
 # SECURITY: All artifacts are PRIVATE. DO NOT enable GitHub Pages or public hosting.
+# Images are pushed to ghcr.io (GitHub Container Registry) with private visibility.
 name: Release
 
 on:
@@ -8,30 +9,29 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository }}
+  # The repository name is used as the image prefix (e.g. ghcr.io/your-org/signapps-platform)
+  BACKEND_IMAGE: ghcr.io/${{ github.repository }}
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository }}-frontend
 
 jobs:
-  build-and-push:
-    name: Build and Push Docker Images
+  # ─── Build & push backend image (all Rust services in one image) ─────────────
+  backend:
+    name: Build backend image
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
 
-    strategy:
-      matrix:
-        service:
-          - signapps-identity
-          - signapps-containers
-          - signapps-proxy
-          - signapps-storage
-          - signapps-ai
-          - signapps-securelink
-          - signapps-scheduler
-          - signapps-metrics
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+      version: ${{ steps.meta.outputs.version }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to Container Registry
         uses: docker/login-action@v3
@@ -40,43 +40,199 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
+      - name: Extract image metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}
+          images: ${{ env.BACKEND_IMAGE }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=SignApps Platform
+            org.opencontainers.image.description=SignApps microservices — all Rust service binaries
+            org.opencontainers.image.vendor=SignApps
+
+      - name: Build and push backend
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # GHA cache speeds up rebuilds when only source (not deps) changes
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+      - name: Image digest
+        run: echo "Backend image digest ${{ steps.push.outputs.digest }}"
+
+  # ─── Build & push frontend image ─────────────────────────────────────────────
+  frontend:
+    name: Build frontend image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push
-        uses: docker/build-push-action@v5
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
         with:
-          context: .
-          file: services/${{ matrix.service }}/Dockerfile
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.FRONTEND_IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=SignApps Frontend
+            org.opencontainers.image.description=SignApps Next.js 16 frontend
+            org.opencontainers.image.vendor=SignApps
+
+      - name: Build and push frontend
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./client
+          target: runner
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+          build-args: |
+            DOCKER_BUILD=1
 
-  create-release:
+      - name: Image digest
+        run: echo "Frontend image digest ${{ steps.push.outputs.digest }}"
+
+  # ─── Extract release binaries as CI artifacts ─────────────────────────────────
+  # Produces one .tar.gz per service binary for air-gapped / non-Docker deployments.
+  binaries:
+    name: Build release binaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.82"
+
+      - name: Cache Rust build (sccache)
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libssl-dev libpq-dev protobuf-compiler
+
+      - name: Build release binaries (workspace, skip Tauri)
+        env:
+          SQLX_OFFLINE: "true"
+        run: |
+          cargo build --release --workspace --exclude src-tauri
+
+      - name: Collect binaries
+        run: |
+          mkdir -p dist
+          for bin in target/release/signapps-*; do
+            name=$(basename "$bin")
+            # Skip .d dependency files
+            [[ "$name" == *.* ]] && continue
+            tar -czf "dist/${name}-linux-x86_64.tar.gz" -C target/release "$name"
+            echo "Packaged $name"
+          done
+          ls -lh dist/
+
+      - name: Upload binaries as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: signapps-binaries-${{ github.ref_name }}
+          path: dist/*.tar.gz
+          retention-days: 90
+          if-no-files-found: error
+
+  # ─── Create GitHub Release ────────────────────────────────────────────────────
+  release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs: [backend, frontend, binaries]
     permissions:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download binaries artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: signapps-binaries-${{ github.ref_name }}
+          path: dist/
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+          files: dist/*.tar.gz
+          body: |
+            ## Docker Images (private — ghcr.io)
+
+            **Backend (all services):**
+            ```
+            docker pull ${{ env.BACKEND_IMAGE }}:${{ needs.backend.outputs.version }}
+            ```
+
+            **Frontend:**
+            ```
+            docker pull ${{ env.FRONTEND_IMAGE }}:${{ needs.backend.outputs.version }}
+            ```
+
+            ## Quick Start
+
+            ```bash
+            # 1. Copy and fill in secrets
+            cp .env.example .env.prod
+
+            # 2. Start the full stack
+            SIGNAPPS_VERSION=${{ github.ref_name }} \
+              docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+            ```
+
+            See [docker-compose.prod.yml](docker-compose.prod.yml) for full configuration.

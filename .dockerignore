@@ -1,0 +1,41 @@
+# ─── Build artifacts ─────────────────────────────────────────────────────────
+target/
+**/target/
+.next/
+client/.next/
+client/node_modules/
+client/.pnpm-store/
+
+# ─── Dev environment ─────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+data/
+*.log
+*.err.log
+
+# ─── Source control ──────────────────────────────────────────────────────────
+.git/
+.gitignore
+.github/
+
+# ─── Tauri desktop app (not needed in server image) ──────────────────────────
+src-tauri/
+
+# ─── Documentation & tests ───────────────────────────────────────────────────
+docs/
+*.md
+!CLAUDE.md
+lcov.info
+coverage/
+
+# ─── IDE / OS ─────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ─── CI artifacts ────────────────────────────────────────────────────────────
+dist/
