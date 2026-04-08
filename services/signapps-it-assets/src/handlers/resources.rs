@@ -17,7 +17,7 @@ use signapps_db::repositories::{
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::AppState;
+use crate::handlers::AppState;
 
 // ============================================================================
 // Resource Type Endpoints

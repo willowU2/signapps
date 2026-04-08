@@ -85,6 +85,15 @@ use crate::handlers::tickets::{
     update_psa_integration, update_ticket,
 };
 use crate::handlers::wol::wake_on_lan;
+use crate::handlers::sites::{
+    attach_node, attach_person, create_site, get_site, list_site_persons, list_sites, update_site,
+};
+use crate::handlers::resources::{
+    create_reservation, create_resource, create_resource_type, delete_resource,
+    delete_resource_type, get_reservation, get_resource, list_my_reservations,
+    list_pending_reservations, list_reservations, list_resource_types, list_resources,
+    update_reservation_status, update_resource,
+};
 use crate::handlers::{
     create_hardware, delete_hardware, get_hardware, list_hardware, update_hardware,
 };
@@ -520,6 +529,34 @@ fn playbook_routes(state: AppState) -> Router {
         .with_state(state)
 }
 
+/// Physical site and office management routes (extracted from signapps-identity).
+#[inline(never)]
+fn site_routes(state: AppState) -> Router {
+    Router::new()
+        .route("/sites", get(list_sites).post(create_site))
+        .route("/sites/:id", get(get_site).put(update_site))
+        .route("/sites/:id/persons", get(list_site_persons))
+        .route("/sites/:id/attach-node", post(attach_node))
+        .route("/sites/:id/attach-person", post(attach_person))
+        .with_state(state)
+}
+
+/// Bookable resource and reservation routes (extracted from signapps-identity).
+#[inline(never)]
+fn resource_routes(state: AppState) -> Router {
+    Router::new()
+        .route("/resource-types", get(list_resource_types).post(create_resource_type))
+        .route("/resource-types/:id", delete(delete_resource_type))
+        .route("/resources", get(list_resources).post(create_resource))
+        .route("/resources/:id", get(get_resource).put(update_resource).delete(delete_resource))
+        .route("/reservations", get(list_reservations).post(create_reservation))
+        .route("/reservations/mine", get(list_my_reservations))
+        .route("/reservations/pending", get(list_pending_reservations))
+        .route("/reservations/:id", get(get_reservation))
+        .route("/reservations/:id/status", put(update_reservation_status))
+        .with_state(state)
+}
+
 // ─── Aggregated API routes ───────────────────────────────────────────────────
 
 /// Build all API routes by merging type-erased (`Router<()>`) sub-routers.
@@ -558,7 +595,11 @@ pub fn api_routes(state: AppState) -> Router {
     r = r.merge(script_library_routes(s.clone()));
     r = r.merge(ticket_routes(s.clone()));
     r = r.merge(integration_routes(s.clone()));
-    r = r.merge(playbook_routes(s));
+    r = r.merge(playbook_routes(s.clone()));
+
+    // Third batch: facilities and resource booking (extracted from signapps-identity).
+    r = r.merge(site_routes(s.clone()));
+    r = r.merge(resource_routes(s));
 
     r
 }

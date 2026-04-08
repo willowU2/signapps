@@ -1,6 +1,6 @@
 //! Site handlers: CRUD, list persons, attach node/person.
 
-use crate::AppState;
+use crate::handlers::AppState;
 use axum::{
     extract::{Extension, Path, State},
     http::StatusCode,

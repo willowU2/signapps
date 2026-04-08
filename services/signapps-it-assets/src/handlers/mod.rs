@@ -1,5 +1,7 @@
 pub mod agent;
 pub mod automation;
+pub mod resources;
+pub mod sites;
 pub mod cmdb;
 pub mod commands;
 pub mod custom_fields;

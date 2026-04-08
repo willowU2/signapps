@@ -22,12 +22,13 @@ chrono.workspace = true
 tower-http.workspace = true
 
 signapps-common = { path = "../../crates/signapps-common" }
-signapps-db = { path = "../../crates/signapps-db" }
+signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 signapps-sharing = { path = "../../crates/signapps-sharing" }
 signapps-cache = { path = "../../crates/signapps-cache" }
 ipnetwork = { version = "0.20", features = ["serde"] }
 dashmap.workspace = true
 futures.workspace = true
 reqwest.workspace = true
+validator.workspace = true
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
