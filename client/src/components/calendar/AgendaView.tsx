@@ -1,11 +1,15 @@
-// cache-bust-v2
+// cache-bust-v3
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, addMonths } from "date-fns";
 import { fr } from "date-fns/locale";
-import { useCalendarStore } from "@/stores/calendar-store";
+import {
+  useCalendarStore,
+  useCalendarSelection,
+} from "@/stores/calendar-store";
 import { calendarApi } from "@/lib/api/calendar";
+import { MapPin } from "lucide-react";
 
 interface AgendaEvent {
   id: string;
@@ -18,8 +22,13 @@ interface AgendaEvent {
   event_type?: string;
 }
 
-export function AgendaView() {
+interface AgendaViewProps {
+  selectedCalendarId?: string;
+}
+
+export function AgendaView({ selectedCalendarId }: AgendaViewProps) {
   const currentDate = useCalendarStore((s) => s.currentDate);
+  const { selectEvent } = useCalendarSelection();
   const [events, setEvents] = useState<AgendaEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,12 +38,22 @@ export function AgendaView() {
 
     (async () => {
       try {
-        const calsRes = await calendarApi.listCalendars().catch(() => null);
-        const calendars = calsRes?.data;
-        const calId = Array.isArray(calendars) && calendars.length > 0 ? calendars[0].id : null;
+        // Use provided calendarId or fetch first available
+        let calId = selectedCalendarId ?? null;
+        if (!calId) {
+          const calsRes = await calendarApi.listCalendars().catch(() => null);
+          const calendars = calsRes?.data;
+          calId =
+            Array.isArray(calendars) && calendars.length > 0
+              ? calendars[0].id
+              : null;
+        }
 
         if (calId) {
-          const eventsRes = await calendarApi.listEvents(calId, currentDate).catch(() => null);
+          const end = addMonths(currentDate, 3);
+          const eventsRes = await calendarApi
+            .listEvents(calId, currentDate, end)
+            .catch(() => null);
           const data = eventsRes?.data;
           if (!cancelled) {
             setEvents(Array.isArray(data) ? data : []);
@@ -49,19 +68,21 @@ export function AgendaView() {
       }
     })();
 
-    return () => { cancelled = true; };
-  }, [currentDate]);
+    return () => {
+      cancelled = true;
+    };
+  }, [currentDate, selectedCalendarId]);
 
   const groupedEvents = useMemo(() => {
     const grouped = new Map<string, AgendaEvent[]>();
 
-    // Triple-guard: ensure events is an array
     if (!events || !Array.isArray(events) || events.length === 0) {
       return grouped;
     }
 
-    const sorted = [...events].sort((a, b) =>
-      new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+    const sorted = [...events].sort(
+      (a, b) =>
+        new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
     );
 
     for (const event of sorted) {
@@ -73,16 +94,16 @@ export function AgendaView() {
     }
 
     return new Map(
-      [...grouped.entries()].sort((a, b) =>
-        new Date(a[0]).getTime() - new Date(b[0]).getTime()
-      )
+      [...grouped.entries()].sort(
+        (a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime(),
+      ),
     );
   }, [events]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
-        Chargement...
+        Chargement…
       </div>
     );
   }
@@ -91,7 +112,9 @@ export function AgendaView() {
     return (
       <div className="text-center text-muted-foreground py-12">
         <p className="text-lg">Aucun événement à venir</p>
-        <p className="text-sm mt-2">Les événements apparaîtront ici une fois créés.</p>
+        <p className="text-sm mt-2">
+          Les événements apparaîtront ici une fois créés.
+        </p>
       </div>
     );
   }
@@ -102,43 +125,49 @@ export function AgendaView() {
         const date = new Date(dateStr);
         return (
           <div key={dateStr}>
-            <div className="sticky top-0 bg-background py-2 border-b border-border">
-              <h3 className="font-semibold text-lg">
+            <div className="sticky top-0 bg-background py-2 border-b border-border z-10">
+              <h3 className="font-semibold text-base capitalize">
                 {format(date, "EEEE d MMMM yyyy", { locale: fr })}
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {dayEvents.length} événement{dayEvents.length !== 1 ? "s" : ""}
               </p>
             </div>
-            <div className="space-y-3 py-4">
+            <div className="space-y-2 py-3">
               {dayEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="p-4 rounded-lg border border-border hover:bg-muted cursor-pointer transition"
+                  onClick={() => selectEvent(event.id)}
+                  className="p-3 rounded-lg border border-border hover:bg-muted cursor-pointer transition-colors"
                 >
-                  <div className="flex items-baseline justify-between mb-2">
-                    <h4 className="font-semibold text-base">{event.title}</h4>
+                  <div className="flex items-baseline justify-between mb-1">
+                    <h4 className="font-medium text-sm">{event.title}</h4>
                     {event.is_all_day ? (
-                      <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
+                      <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">
                         Journée entière
                       </span>
                     ) : (
-                      <span className="text-sm text-muted-foreground">
-                        {format(new Date(event.start_time), "HH:mm")} - {format(new Date(event.end_time), "HH:mm")}
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(event.start_time), "H:mm")}
+                        {" – "}
+                        {format(new Date(event.end_time), "H:mm")}
                       </span>
                     )}
                   </div>
                   {event.description && (
-                    <p className="text-sm text-muted-foreground mb-2">{event.description}</p>
+                    <p className="text-xs text-muted-foreground mb-1 line-clamp-2">
+                      {event.description}
+                    </p>
                   )}
                   {event.location && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>📍</span><span>{event.location}</span>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{event.location}</span>
                     </div>
                   )}
                   {event.event_type && event.event_type !== "event" && (
-                    <div className="mt-2">
-                      <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                    <div className="mt-1">
+                      <span className="text-xs font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                         {event.event_type}
                       </span>
                     </div>
