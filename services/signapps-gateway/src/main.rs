@@ -605,7 +605,7 @@ async fn main() -> anyhow::Result<()> {
     let storage_url = env_or("STORAGE_SERVICE_URL", "http://127.0.0.1:3004");
     let ai_url = env_or("AI_SERVICE_URL", "http://127.0.0.1:3005");
     let calendar_url = env_or("CALENDAR_SERVICE_URL", "http://127.0.0.1:3011");
-    let forms_url = env_or("FORMS_SERVICE_URL", "http://127.0.0.1:3022");
+    let forms_url = env_or("FORMS_SERVICE_URL", "http://127.0.0.1:3015");
     let social_url = env_or("SOCIAL_SERVICE_URL", "http://127.0.0.1:3019");
     // Office and collab are now served by signapps-docs on port 3010.
     // OFFICE_SERVICE_URL and COLLAB_SERVICE_URL env vars are kept for compatibility
