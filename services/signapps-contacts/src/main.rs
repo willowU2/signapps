@@ -3,6 +3,7 @@
 
 mod carddav;
 mod carddav_sync;
+mod handlers;
 mod openapi;
 
 use axum::{
@@ -20,6 +21,7 @@ use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::pg_events::{NewEvent, PgEventBus};
 use signapps_common::{Claims, JwtConfig};
+use signapps_db::DatabasePool;
 use signapps_sharing::routes::sharing_routes;
 use signapps_sharing::{ResourceType, SharingEngine};
 use std::sync::{Arc, Mutex};
@@ -110,8 +112,9 @@ pub struct AddGroupMemberRequest {
 // ---------------------------------------------------------------------------
 
 #[derive(Clone)]
-/// Application state for  service.
+/// Application state for the Contacts service.
 pub struct AppState {
+    pub pool: DatabasePool,
     pub jwt_config: JwtConfig,
     pub contacts: Arc<Mutex<Vec<Contact>>>,
     pub groups: Arc<Mutex<Vec<ContactGroup>>>,
@@ -794,8 +797,73 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
     let sharing_sub = sharing_routes("contacts", ResourceType::ContactBook)
         .with_state(sharing_engine);
 
+    // Persons routes (protected)
+    let persons_routes = Router::new()
+        .route(
+            "/api/v1/persons",
+            get(handlers::persons::list_persons).post(handlers::persons::create_person),
+        )
+        .route(
+            "/api/v1/persons/:id",
+            get(handlers::persons::get_person).put(handlers::persons::update_person),
+        )
+        .route(
+            "/api/v1/persons/:id/assignments",
+            get(handlers::persons::get_person_assignments),
+        )
+        .route(
+            "/api/v1/persons/:id/history",
+            get(handlers::persons::get_person_history),
+        )
+        .route(
+            "/api/v1/persons/:id/link-user",
+            post(handlers::persons::link_user),
+        )
+        .route(
+            "/api/v1/persons/:id/unlink-user",
+            post(handlers::persons::unlink_user),
+        )
+        .route(
+            "/api/v1/persons/:id/effective-permissions",
+            get(handlers::persons::get_effective_permissions),
+        )
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    // CRM routes (protected)
+    let crm_routes = Router::new()
+        .route(
+            "/api/v1/crm/deals",
+            get(handlers::crm::list_deals).post(handlers::crm::create_deal),
+        )
+        .route(
+            "/api/v1/crm/deals/:id",
+            get(handlers::crm::get_deal)
+                .put(handlers::crm::update_deal)
+                .delete(handlers::crm::delete_deal),
+        )
+        .route(
+            "/api/v1/crm/leads",
+            get(handlers::crm::list_leads).post(handlers::crm::create_lead),
+        )
+        .route(
+            "/api/v1/crm/leads/:id",
+            get(handlers::crm::get_lead)
+                .put(handlers::crm::update_lead)
+                .delete(handlers::crm::delete_lead),
+        )
+        .route("/api/v1/crm/pipeline", get(handlers::crm::get_pipeline))
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
     public_routes
         .merge(protected_routes)
+        .merge(persons_routes)
+        .merge(crm_routes)
         .merge(sharing_sub)
         .merge(openapi::swagger_router())
         .layer(TraceLayer::new_for_http())
@@ -826,6 +894,7 @@ async fn main() -> anyhow::Result<()> {
     let event_bus = PgEventBus::new(pool.inner().clone(), "signapps-contacts".to_string());
 
     let state = AppState {
+        pool: pool.clone(),
         jwt_config,
         contacts: Arc::new(Mutex::new(Vec::new())),
         groups: Arc::new(Mutex::new(Vec::new())),
