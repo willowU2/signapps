@@ -69,6 +69,7 @@ import { fetchAndParseDocument } from "@/lib/file-parsers";
 import { GenericFeatureModal } from "@/components/editor/generic-feature-modal";
 import { driveApi } from "@/lib/api";
 import { saveUserTemplate } from "@/lib/document-templates";
+import { ShareDialog } from "@/components/docs/share-dialog";
 
 // Utility to dynamically load Google Fonts without freezing the browser
 export const loadGoogleFont = (fontFamily: string) => {
@@ -1181,6 +1182,9 @@ const Editor = ({
 
   // Trash confirm
   const [showTrashDialog, setShowTrashDialog] = useState(false);
+
+  // Share dialog
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   // IDEA-001: Focus mode
   const [isFocusMode, setIsFocusMode] = useState(false);
@@ -2869,6 +2873,7 @@ ${html}
     "insert2Columns",
     "insert3Columns",
     "saveAsTemplate",
+    "share_advanced",
   ];
 
   // Handle Menu Actions
@@ -2930,6 +2935,10 @@ ${html}
       }
       if (action === "trash") {
         setShowTrashDialog(true);
+        return;
+      }
+      if (action === "share_advanced") {
+        setShowShareDialog(true);
         return;
       }
       if (action === "open") {
@@ -3162,8 +3171,8 @@ ${html}
 
       // Focus back
       editor.view.focus();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       editor,
       handleSummarize,
@@ -4821,11 +4830,20 @@ ${html}
         onOpenChange={setMailMergeOpen}
       />
 
+      {/* Share Dialog */}
+      <ShareDialog
+        open={showShareDialog}
+        onClose={() => setShowShareDialog(false)}
+        docId={documentId !== "new" ? documentId : ""}
+        docTitle={documentName || "Document sans titre"}
+      />
+
       <GenericFeatureModal
         isOpen={!!activeModal}
         actionId={activeModal?.id || null}
         actionLabel={activeModal?.label}
         onClose={() => setActiveModal(null)}
+        documentId={documentId !== "new" ? documentId : undefined}
       />
 
       {/* Slash command: Image URL */}
@@ -5204,10 +5222,20 @@ ${html}
             </Button>
             <Button
               variant="destructive"
-              onClick={() => {
+              onClick={async () => {
                 setShowTrashDialog(false);
-                toast.success("Document placé dans la corbeille.");
-                window.location.href = "/drive";
+                try {
+                  if (documentId && documentId !== "new") {
+                    const node = await driveApi.findNodeByTargetId(documentId);
+                    if (node) {
+                      await driveApi.deleteNode(node.id);
+                    }
+                  }
+                  toast.success("Document placé dans la corbeille.");
+                } catch {
+                  toast.error("Erreur lors de la suppression.");
+                }
+                window.location.href = "/docs";
               }}
             >
               Supprimer
