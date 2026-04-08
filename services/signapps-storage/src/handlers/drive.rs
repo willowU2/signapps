@@ -1,10 +1,12 @@
 use axum::{
+    body::Body,
     extract::{Path, State},
-    http::HeaderMap,
+    http::{header, HeaderMap, StatusCode},
+    response::Response,
     Extension, Json,
 };
 use signapps_common::auth::Claims;
-use signapps_common::Result;
+use signapps_common::{Error, Result};
 use signapps_db::models::drive::{CreateDriveNodeRequest, DriveNode, UpdateDriveNodeRequest};
 use uuid::Uuid;
 
@@ -213,6 +215,96 @@ pub async fn delete_node(
         .map_err(|e: sqlx::Error| signapps_common::Error::Database(e.to_string()))?;
 
     Ok(Json(()))
+}
+
+/// Download a file by its Drive node ID.
+///
+/// Resolves the storage bucket and key from the drive node's `target_id`,
+/// then streams the file content back to the caller.
+///
+/// # Errors
+///
+/// - [`Error::NotFound`] if the node or its backing storage file do not exist.
+/// - [`Error::Forbidden`] if the caller does not own the node.
+#[utoipa::path(
+    get,
+    path = "/api/v1/drive/nodes/{id}/download",
+    params(("id" = uuid::Uuid, Path, description = "Drive node ID")),
+    responses(
+        (status = 200, description = "File content (binary download)"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Node or storage file not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "drive"
+)]
+#[tracing::instrument(skip_all)]
+pub async fn download_node(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Result<Response> {
+    use sqlx::Row as _;
+
+    let user_id = claims.sub;
+
+    // Fetch the drive node — verify ownership
+    let node_row = sqlx::query(
+        r#"
+        SELECT n.name, n.node_type::text, n.owner_id, n.target_id
+        FROM drive.nodes n
+        WHERE n.id = $1 AND n.deleted_at IS NULL
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&*state.pool)
+    .await
+    .map_err(|e| Error::Database(e.to_string()))?
+    .ok_or_else(|| Error::NotFound("Drive node not found".into()))?;
+
+    let owner_id: Uuid = node_row.try_get("owner_id").map_err(|e| Error::Database(e.to_string()))?;
+    if owner_id != user_id {
+        return Err(Error::Forbidden("Accès refusé".into()));
+    }
+
+    let target_id: Option<Uuid> = node_row.try_get("target_id").map_err(|e| Error::Database(e.to_string()))?;
+    let node_name: String = node_row.try_get("name").map_err(|e| Error::Database(e.to_string()))?;
+
+    let target_id = target_id.ok_or_else(|| Error::NotFound("Ce nœud n'a pas de fichier associé".into()))?;
+
+    // Look up the storage file record
+    let file_row = sqlx::query(
+        "SELECT bucket, key FROM storage.files WHERE id = $1 LIMIT 1",
+    )
+    .bind(target_id)
+    .fetch_optional(&*state.pool)
+    .await
+    .map_err(|e| Error::Database(e.to_string()))?
+    .ok_or_else(|| Error::NotFound("Fichier de stockage introuvable".into()))?;
+
+    let bucket: String = file_row.try_get("bucket").map_err(|e| Error::Database(e.to_string()))?;
+    let key: String = file_row.try_get("key").map_err(|e| Error::Database(e.to_string()))?;
+
+    // Stream file from storage backend
+    let object = state.storage.get_object(&bucket, &key).await?;
+
+    let content_type = object.content_type;
+    let content_length = object.content_length;
+    let filename = node_name;
+
+    let response = Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, content_type)
+        .header(header::CONTENT_LENGTH, content_length)
+        .header(
+            header::CONTENT_DISPOSITION,
+            format!("attachment; filename=\"{}\"", filename),
+        )
+        .body(Body::from(object.data))
+        .map_err(|e| Error::Internal(e.to_string()))?;
+
+    Ok(response)
 }
 
 #[cfg(test)]

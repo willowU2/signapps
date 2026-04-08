@@ -177,6 +177,7 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         )
         .route("/drive/nodes/root", get(drive::list_nodes))
         .route("/drive/nodes/:id/children", get(drive::list_nodes))
+        .route("/drive/nodes/:id/download", get(drive::download_node))
         .route("/drive/nodes/:id", put(drive::update_node))
         .route("/drive/nodes/:id", delete(drive::delete_node));
 
