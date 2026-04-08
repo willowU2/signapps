@@ -131,6 +131,7 @@ const SERVICE_PORTS: &[(&str, u16)] = &[
     ("signapps-workforce", 3024),
     ("signapps-vault", 3025),
     ("signapps-org", 3026),
+    ("signapps-webhooks", 3027),
     ("signapps-notifications", 8095),
     ("signapps-billing", 8096),
 ];
@@ -626,6 +627,7 @@ async fn main() -> anyhow::Result<()> {
     let pxe_url = env_or("PXE_SERVICE_URL", "http://127.0.0.1:3016");
     let vault_url = env_or("VAULT_SERVICE_URL", "http://127.0.0.1:3025");
     let org_url = env_or("ORG_SERVICE_URL", "http://127.0.0.1:3026");
+    let webhooks_url = env_or("WEBHOOKS_SERVICE_URL", "http://127.0.0.1:3027");
 
     // Ordered: more-specific prefixes first
     let service_map = Arc::new(ServiceMap::new(vec![
@@ -678,6 +680,8 @@ async fn main() -> anyhow::Result<()> {
         // Org service (extracted from identity — Refactor 34 Phase 5)
         ("/api/v1/org", &org_url),
         ("/api/v1/assignments", &org_url),
+        // Webhooks service (extracted from identity — Refactor 34 Phase 6)
+        ("/api/v1/webhooks", &webhooks_url),
         // Storage supplemental paths
         ("/api/v1/drive", &storage_url),
         ("/api/v1/tags", &storage_url),

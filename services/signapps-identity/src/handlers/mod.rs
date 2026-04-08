@@ -33,5 +33,5 @@ pub mod tenants;
 pub mod user_profile;
 pub mod user_signatures;
 pub mod users;
-pub mod webhooks;
+// webhooks moved to signapps-webhooks service (port 3027)
 pub mod workspace_features;
