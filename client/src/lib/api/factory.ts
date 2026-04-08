@@ -57,6 +57,11 @@ export enum ServiceName {
   SOCIAL = "social",
   NOTIFICATIONS = "notifications",
   BILLING = "billing",
+  VAULT_SVC = "vault-svc",
+  ORG_SVC = "org-svc",
+  WEBHOOKS_SVC = "webhooks-svc",
+  SIGNATURES_SVC = "signatures-svc",
+  COMPLIANCE_SVC = "compliance-svc",
 }
 
 interface ServiceConfig {
@@ -191,6 +196,31 @@ const SERVICE_CONFIG: Record<ServiceName, ServiceConfig> = {
     envVar: "NEXT_PUBLIC_BILLING_URL",
     healthPath: "/health",
   },
+  [ServiceName.VAULT_SVC]: {
+    port: 3025,
+    envVar: "NEXT_PUBLIC_VAULT_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.ORG_SVC]: {
+    port: 3026,
+    envVar: "NEXT_PUBLIC_ORG_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.WEBHOOKS_SVC]: {
+    port: 3027,
+    envVar: "NEXT_PUBLIC_WEBHOOKS_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.SIGNATURES_SVC]: {
+    port: 3028,
+    envVar: "NEXT_PUBLIC_SIGNATURES_URL",
+    healthPath: "/health",
+  },
+  [ServiceName.COMPLIANCE_SVC]: {
+    port: 3032,
+    envVar: "NEXT_PUBLIC_COMPLIANCE_URL",
+    healthPath: "/health",
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -282,6 +312,21 @@ export function getServiceUrl(service: ServiceName): string {
       break;
     case ServiceName.BILLING:
       envValue = process.env.NEXT_PUBLIC_BILLING_URL || null;
+      break;
+    case ServiceName.VAULT_SVC:
+      envValue = process.env.NEXT_PUBLIC_VAULT_URL || null;
+      break;
+    case ServiceName.ORG_SVC:
+      envValue = process.env.NEXT_PUBLIC_ORG_URL || null;
+      break;
+    case ServiceName.WEBHOOKS_SVC:
+      envValue = process.env.NEXT_PUBLIC_WEBHOOKS_URL || null;
+      break;
+    case ServiceName.SIGNATURES_SVC:
+      envValue = process.env.NEXT_PUBLIC_SIGNATURES_URL || null;
+      break;
+    case ServiceName.COMPLIANCE_SVC:
+      envValue = process.env.NEXT_PUBLIC_COMPLIANCE_URL || null;
       break;
   }
 
@@ -382,6 +427,21 @@ export function getServiceBaseUrl(service: ServiceName): string {
       break;
     case ServiceName.BILLING:
       envValue = process.env.NEXT_PUBLIC_BILLING_URL || null;
+      break;
+    case ServiceName.VAULT_SVC:
+      envValue = process.env.NEXT_PUBLIC_VAULT_URL || null;
+      break;
+    case ServiceName.ORG_SVC:
+      envValue = process.env.NEXT_PUBLIC_ORG_URL || null;
+      break;
+    case ServiceName.WEBHOOKS_SVC:
+      envValue = process.env.NEXT_PUBLIC_WEBHOOKS_URL || null;
+      break;
+    case ServiceName.SIGNATURES_SVC:
+      envValue = process.env.NEXT_PUBLIC_SIGNATURES_URL || null;
+      break;
+    case ServiceName.COMPLIANCE_SVC:
+      envValue = process.env.NEXT_PUBLIC_COMPLIANCE_URL || null;
       break;
   }
 
