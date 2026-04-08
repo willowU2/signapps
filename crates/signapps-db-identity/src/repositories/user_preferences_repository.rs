@@ -1,7 +1,7 @@
 //! User preferences repository for database operations.
 
-use crate::models::{UserPreferences, UserPreferencesUpdate};
-use crate::DatabasePool;
+use crate::models::user_preferences::{UserPreferences, UserPreferencesUpdate};
+use signapps_db_shared::DatabasePool;
 use chrono::Utc;
 use signapps_common::Result;
 use uuid::Uuid;

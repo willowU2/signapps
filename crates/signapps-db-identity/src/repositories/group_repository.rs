@@ -1,9 +1,9 @@
 //! Group repository for RBAC operations.
 
-use crate::models::{
+use crate::models::group::{
     CreateGroup, CreateRole, CreateWebhook, Group, GroupMember, GroupMemberWithUser, Role, Webhook,
 };
-use crate::DatabasePool;
+use signapps_db_shared::DatabasePool;
 use signapps_common::Result;
 use uuid::Uuid;
 

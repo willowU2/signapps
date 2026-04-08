@@ -1,7 +1,10 @@
 //! Database models for SignApps Platform.
 
 pub mod activity;
-pub mod audit_log;
+// Identity domain models — now live in signapps-db-identity (Phase 6 split).
+pub mod audit_log {
+    pub use signapps_db_identity::models::audit_log::*;
+}
 
 // Infrastructure domain models — now live in signapps-db-infrastructure (Phase 5 split).
 pub mod ad_dns {
@@ -77,7 +80,10 @@ pub mod multimodal_vector {
     pub use signapps_db_ai::models::multimodal_vector::*;
 }
 
-pub mod core_org;
+// Identity domain models — now live in signapps-db-identity (Phase 6 split).
+pub mod core_org {
+    pub use signapps_db_identity::models::core_org::*;
+}
 
 // Storage domain models — now live in signapps-db-storage (Phase 4 split).
 // Kept as re-export aliases so that `use signapps_db::models::drive::*` still works.
@@ -104,9 +110,14 @@ pub mod form {
     pub use signapps_db_forms::models::form::*;
 }
 
-pub mod group;
+// Identity domain models — now live in signapps-db-identity (Phase 6 split).
+pub mod group {
+    pub use signapps_db_identity::models::group::*;
+}
 pub mod job;
-pub mod ldap;
+pub mod ldap {
+    pub use signapps_db_identity::models::ldap::*;
+}
 
 // Mail domain models — now live in signapps-db-mail (Phase 4 split).
 pub mod mailserver {
@@ -118,14 +129,29 @@ pub mod notification {
     pub use signapps_db_notifications::models::notification::*;
 }
 
-pub mod org_audit;
-pub mod org_boards;
-pub mod org_delegations;
-pub mod org_groups;
-pub mod org_policies;
+// Identity domain models — now live in signapps-db-identity (Phase 6 split).
+pub mod org_audit {
+    pub use signapps_db_identity::models::org_audit::*;
+}
+pub mod org_boards {
+    pub use signapps_db_identity::models::org_boards::*;
+}
+pub mod org_delegations {
+    pub use signapps_db_identity::models::org_delegations::*;
+}
+pub mod org_groups {
+    pub use signapps_db_identity::models::org_groups::*;
+}
+pub mod org_policies {
+    pub use signapps_db_identity::models::org_policies::*;
+}
 pub mod tenant;
-pub mod user;
-pub mod user_preferences;
+pub mod user {
+    pub use signapps_db_identity::models::user::*;
+}
+pub mod user_preferences {
+    pub use signapps_db_identity::models::user_preferences::*;
+}
 
 // Vault domain models — now live in signapps-db-vault (Phase 5 split).
 pub mod vault {

@@ -3,7 +3,6 @@
 pub mod activities;
 pub mod admin_security;
 pub mod api_keys;
-pub mod assignments;
 pub mod audit_logs;
 pub mod auth;
 pub mod backup;
@@ -23,9 +22,6 @@ pub mod ldap;
 pub mod mfa;
 pub mod migration;
 pub mod openapi;
-pub mod org_context;
-pub mod org_nodes;
-pub mod org_trees;
 pub mod preferences;
 pub mod retention_purge;
 pub mod roles;

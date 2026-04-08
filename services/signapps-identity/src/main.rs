@@ -304,63 +304,9 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/compliance/consent", get(handlers::compliance::get_consent))
         .route("/api/v1/compliance/cookie-banner", put(handlers::compliance::save_cookie_banner))
         .route("/api/v1/compliance/cookie-banner", get(handlers::compliance::get_cookie_banner))
-        // Org structure — trees
-        .route(
-            "/api/v1/org/trees",
-            get(handlers::org_trees::list_trees).post(handlers::org_trees::create_tree),
-        )
-        .route(
-            "/api/v1/org/trees/:id/full",
-            get(handlers::org_trees::get_full_tree),
-        )
-        // Org structure — nodes
-        .route(
-            "/api/v1/org/nodes/:id",
-            get(handlers::org_nodes::get_node)
-                .put(handlers::org_nodes::update_node)
-                .delete(handlers::org_nodes::delete_node),
-        )
-        .route("/api/v1/org/nodes", post(handlers::org_nodes::create_node))
-        .route(
-            "/api/v1/org/nodes/:id/move",
-            post(handlers::org_nodes::move_node),
-        )
-        .route(
-            "/api/v1/org/nodes/:id/children",
-            get(handlers::org_nodes::get_children),
-        )
-        .route(
-            "/api/v1/org/nodes/:id/descendants",
-            get(handlers::org_nodes::get_descendants),
-        )
-        .route(
-            "/api/v1/org/nodes/:id/ancestors",
-            get(handlers::org_nodes::get_ancestors),
-        )
-        .route(
-            "/api/v1/org/nodes/:id/assignments",
-            get(handlers::org_nodes::get_node_assignments),
-        )
-        .route(
-            "/api/v1/org/nodes/:id/permissions",
-            get(handlers::org_nodes::get_node_permissions)
-                .put(handlers::org_nodes::set_node_permissions),
-        )
         // Persons moved to signapps-contacts service (port 3021).
-        // Assignments
-        .route(
-            "/api/v1/assignments",
-            post(handlers::assignments::create_assignment),
-        )
-        .route(
-            "/api/v1/assignments/history",
-            get(handlers::assignments::list_history),
-        )
-        .route(
-            "/api/v1/assignments/:id",
-            put(handlers::assignments::update_assignment)
-                .delete(handlers::assignments::end_assignment),
-        )
+        // Org structure + Assignments moved to signapps-org service (port 3026).
+        // Gateway forwards /api/v1/org/* and /api/v1/assignments/* → signapps-org:3026.
         // Sites moved to signapps-it-assets service (port 3022).
         // Gateway forwards /api/v1/sites/* → signapps-it-assets:3022.
         .layer(axum_middleware::from_fn_with_state(
@@ -590,15 +536,8 @@ fn create_router(state: AppState) -> Router {
     // Accounting routes moved to signapps-billing service (port 8096).
     // Gateway forwards /api/v1/accounting/* → signapps-billing:8096.
 
-    // Enterprise Org Structure routes (auth required)
-    let org_routes = Router::new()
-        // Only non-duplicate org routes (trees/nodes CRUD already registered in protected_routes above)
-        .route("/api/v1/org/orgchart", get(handlers::org_nodes::get_orgchart))
-        .route("/api/v1/org/context", get(handlers::org_context::get_context))
-        .layer(axum_middleware::from_fn_with_state(
-            state.clone(),
-            auth_middleware::<AppState>,
-        ));
+    // Org structure routes moved to signapps-org service (port 3026).
+    // Gateway forwards /api/v1/org/* and /api/v1/assignments/* → signapps-org:3026.
 
     // Vault routes moved to signapps-vault service (port 3025).
     // Gateway forwards /api/v1/vault/* → signapps-vault:3025.
@@ -613,7 +552,6 @@ fn create_router(state: AppState) -> Router {
         .merge(tenant_routes)
         .merge(admin_routes)
         .merge(comms_routes)
-        .merge(org_routes)
         .layer(axum_middleware::from_fn(logging_middleware))
         .layer(axum_middleware::from_fn(request_id_middleware))
         .layer(axum_middleware::from_fn(security_headers_middleware))

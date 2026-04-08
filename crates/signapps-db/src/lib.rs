@@ -196,4 +196,10 @@ pub use signapps_db_mail as mail;
 /// Phase 4 of the signapps-db split.
 pub use signapps_db_storage as storage;
 
+/// Re-export the `signapps-db-identity` crate so that consumers can access
+/// identity domain types via `signapps_db::identity`.
+///
+/// Phase 6 of the signapps-db split.
+pub use signapps_db_identity as identity;
+
 // forced touch build

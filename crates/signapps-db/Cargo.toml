@@ -39,12 +39,13 @@ signapps-db-infrastructure = { path = "../signapps-db-infrastructure" }
 signapps-db-itam = { path = "../signapps-db-itam" }
 signapps-db-billing = { path = "../signapps-db-billing" }
 signapps-db-content = { path = "../signapps-db-content" }
+signapps-db-identity = { path = "../signapps-db-identity" }
 
 # OpenAPI schema derivation (optional feature)
 utoipa = { workspace = true, optional = true }
 
 [features]
-openapi = ["utoipa", "signapps-db-calendar/openapi", "signapps-db-forms/openapi", "signapps-db-mail/openapi", "signapps-db-notifications/openapi", "signapps-db-storage/openapi", "signapps-db-vault/openapi", "signapps-db-ai/openapi", "signapps-db-infrastructure/openapi", "signapps-db-itam/openapi", "signapps-db-billing/openapi", "signapps-db-content/openapi"]
+openapi = ["utoipa", "signapps-db-calendar/openapi", "signapps-db-forms/openapi", "signapps-db-mail/openapi", "signapps-db-notifications/openapi", "signapps-db-storage/openapi", "signapps-db-vault/openapi", "signapps-db-ai/openapi", "signapps-db-infrastructure/openapi", "signapps-db-itam/openapi", "signapps-db-billing/openapi", "signapps-db-content/openapi", "signapps-db-identity/openapi"]
 
 [dev-dependencies]
 tokio-test = { workspace = true }

@@ -85,19 +85,7 @@ use utoipa::OpenApi;
         crate::handlers::tenants::add_workspace_member,
         crate::handlers::tenants::update_workspace_member_role,
         crate::handlers::tenants::remove_workspace_member,
-        // Org nodes
-        crate::handlers::org_nodes::get_node,
-        crate::handlers::org_nodes::create_node,
-        crate::handlers::org_nodes::update_node,
-        crate::handlers::org_nodes::delete_node,
-        crate::handlers::org_nodes::move_node,
-        crate::handlers::org_nodes::get_children,
-        crate::handlers::org_nodes::get_descendants,
-        crate::handlers::org_nodes::get_ancestors,
-        crate::handlers::org_nodes::get_node_assignments,
-        crate::handlers::org_nodes::get_node_permissions,
-        crate::handlers::org_nodes::set_node_permissions,
-        crate::handlers::org_nodes::get_orgchart,
+        // Org structure moved to signapps-org service (port 3026)
         // Persons moved to signapps-contacts service (port 3021)
         // Sites moved to signapps-it-assets service (port 3022)
         // Vault endpoints moved to signapps-vault service (port 3025)
@@ -180,18 +168,7 @@ use utoipa::OpenApi;
             crate::handlers::tenants::UpdateWorkspaceRequest,
             crate::handlers::tenants::AddMemberRequest,
             crate::handlers::tenants::UpdateMemberRoleRequest,
-            // Org node schemas
-            crate::handlers::org_nodes::CreateOrgNodeRequest,
-            crate::handlers::org_nodes::UpdateOrgNodeRequest,
-            crate::handlers::org_nodes::MoveNodeRequest,
-            crate::handlers::org_nodes::SetPermissionsRequest,
-            crate::handlers::org_nodes::OrgchartPerson,
-            signapps_db::models::core_org::OrgNode,
-            signapps_db::models::core_org::OrgTree,
-            signapps_db::models::core_org::Assignment,
-            signapps_db::models::core_org::PermissionProfile,
-            signapps_db::models::core_org::EffectivePermissions,
-            signapps_db::models::core_org::UpsertPermissionProfile,
+            // Org schemas moved to signapps-org OpenAPI (port 3026)
             // Person schemas moved to signapps-contacts OpenAPI
             // Site schemas moved to signapps-it-assets OpenAPI
             // Vault schemas moved to signapps-vault service OpenAPI
@@ -228,7 +205,7 @@ use utoipa::OpenApi;
         (name = "api_keys", description = "API key management"),
         (name = "tenants", description = "Tenant management (super-admin)"),
         (name = "workspaces", description = "Workspace management"),
-        (name = "org", description = "Organisational structure (nodes, trees, orgchart)"),
+        // org tag moved to signapps-org OpenAPI (port 3026)
         (name = "compliance", description = "GDPR compliance — DPIA, DSAR, retention, consent"),
         (name = "audit", description = "Platform audit logs"),
         (name = "comms", description = "Internal communications — announcements, polls, news feed"),

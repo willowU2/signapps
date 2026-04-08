@@ -8,13 +8,8 @@ pub use signapps_db_infrastructure::repositories::{
     InfraDomainRepository,
 };
 
-pub mod group_repository;
-pub mod ldap_repository;
-pub mod user_repository;
-
-pub use group_repository::GroupRepository;
-pub use ldap_repository::LdapRepository;
-pub use user_repository::UserRepository;
+// Identity repositories — now live in signapps-db-identity (Phase 6 split).
+pub use signapps_db_identity::repositories::{GroupRepository, LdapRepository, UserRepository};
 
 // Billing/proxy repositories — now live in signapps-db-billing (Phase 5 split).
 pub use signapps_db_billing::repositories::{CertificateRepository, RouteRepository};
@@ -74,8 +69,8 @@ pub use signapps_db_calendar::repositories::{
     ProviderConnectionRepository, SyncConfigRepository, SyncConflictRepository, SyncLogRepository,
 };
 
-pub mod user_preferences_repository;
-pub use user_preferences_repository::UserPreferencesRepository;
+// Identity repositories — now live in signapps-db-identity (Phase 6 split).
+pub use signapps_db_identity::repositories::UserPreferencesRepository;
 
 // Scheduling repositories — now live in signapps-db-calendar (Phase 3 split).
 pub use signapps_db_calendar::repositories::{
@@ -89,8 +84,8 @@ pub use metrics_repository::{MetricsRepository, ResourceMetrics, WorkloadMetrics
 // Quota repository — now lives in signapps-db-storage (Phase 4 split).
 pub use signapps_db_storage::repositories::QuotaRepository;
 
-pub mod audit_log_repository;
-pub use audit_log_repository::AuditLogRepository;
+// Identity repositories — now live in signapps-db-identity (Phase 6 split).
+pub use signapps_db_identity::repositories::AuditLogRepository;
 
 pub mod entity_reference_repository;
 pub use entity_reference_repository::EntityReferenceRepository;
@@ -103,11 +98,24 @@ pub use activity_repository::ActivityRepository;
 // Drive ACL repositories — now live in signapps-db-storage (Phase 4 split).
 pub use signapps_db_storage::repositories::{AuditAlertConfigRepository, DriveAuditLogRepository};
 
-pub mod core_org_repository;
-pub use core_org_repository::{
-    AssignmentRepository, OrgNodeRepository, OrgTreeRepository, PermissionProfileRepository,
-    PersonRepository, SiteRepository,
+// Identity repositories — now live in signapps-db-identity (Phase 6 split).
+pub use signapps_db_identity::repositories::{
+    AssignmentRepository, AuditRepository, BoardRepository, DelegationRepository,
+    OrgGroupRepository, OrgNodeRepository, OrgTreeRepository, PermissionProfileRepository,
+    PersonRepository, PolicyRepository, PolicyResolver, SiteRepository,
 };
+
+// Backward-compatibility module alias: `use signapps_db::repositories::core_org_repository::Foo`
+// continues to work for services that import via the sub-module path.
+// Note: GroupRepository here is the org-group (cross-functional) repository,
+// distinct from the RBAC GroupRepository exported at the top level.
+pub mod core_org_repository {
+    pub use signapps_db_identity::repositories::core_org_repository::{
+        AssignmentRepository, AuditRepository, BoardRepository, DelegationRepository,
+        GroupRepository, OrgNodeRepository, OrgTreeRepository, PermissionProfileRepository,
+        PersonRepository, PolicyRepository, PolicyResolver, SiteRepository,
+    };
+}
 
 // Vault repositories — now live in signapps-db-vault (Phase 5 split).
 pub use signapps_db_vault::repositories::{

@@ -10336,6 +10336,7 @@ dependencies = [
  "signapps-db-calendar",
  "signapps-db-content",
  "signapps-db-forms",
+ "signapps-db-identity",
  "signapps-db-infrastructure",
  "signapps-db-itam",
  "signapps-db-mail",
@@ -10418,6 +10419,22 @@ dependencies = [
 
 [[package]]
 name = "signapps-db-forms"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db-shared",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-db-identity"
 version = "0.1.0"
 dependencies = [
  "chrono",
@@ -11051,6 +11068,28 @@ dependencies = [
  "sqlx",
  "thiserror 1.0.69",
  "tokio",
+ "tower-http 0.5.2",
+ "tracing",
+ "tracing-subscriber",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-org"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.7.9",
+ "chrono",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db",
+ "sqlx",
+ "tokio",
+ "tokio-test",
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",

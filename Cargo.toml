@@ -50,6 +50,7 @@ members = [
     "crates/signapps-db-itam",
     "crates/signapps-db-billing",
     "crates/signapps-db-content",
+    "crates/signapps-db-identity",
     "crates/signapps-dkim",
     "crates/signapps-dns-server",
     "crates/signapps-imap",
@@ -89,6 +90,7 @@ members = [
     "services/signapps-notifications",
     "services/signapps-social",
     "services/signapps-vault",
+    "services/signapps-org",
     # signapps-dc merged into signapps-pxe (port 3016) — Refactor 35 Phase 3
     # Single-binary gateway (LT-05 POC)
     "services/signapps-gateway",
