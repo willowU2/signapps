@@ -1,6 +1,6 @@
 CREATE SCHEMA IF NOT EXISTS signature;
 
-CREATE TABLE signature.envelopes (
+CREATE TABLE IF NOT EXISTS signature.envelopes (
     id UUID PRIMARY KEY DEFAULT gen_uuid_v7(),
     title TEXT NOT NULL,
     document_id UUID NOT NULL REFERENCES drive.nodes(id),
@@ -13,12 +13,12 @@ CREATE TABLE signature.envelopes (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     deleted_at TIMESTAMPTZ
 );
-CREATE INDEX idx_envelopes_status ON signature.envelopes(status);
-CREATE INDEX idx_envelopes_creator ON signature.envelopes(created_by, created_at DESC);
-CREATE INDEX idx_envelopes_document ON signature.envelopes(document_id);
-CREATE INDEX idx_envelopes_metadata ON signature.envelopes USING GIN(metadata);
+CREATE INDEX IF NOT EXISTS idx_envelopes_status ON signature.envelopes(status);
+CREATE INDEX IF NOT EXISTS idx_envelopes_creator ON signature.envelopes(created_by, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_envelopes_document ON signature.envelopes(document_id);
+CREATE INDEX IF NOT EXISTS idx_envelopes_metadata ON signature.envelopes USING GIN(metadata);
 
-CREATE TABLE signature.steps (
+CREATE TABLE IF NOT EXISTS signature.steps (
     id UUID PRIMARY KEY DEFAULT gen_uuid_v7(),
     envelope_id UUID NOT NULL REFERENCES signature.envelopes(id) ON DELETE CASCADE,
     step_order SMALLINT NOT NULL,
@@ -38,11 +38,11 @@ CREATE TABLE signature.steps (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE(envelope_id, step_order)
 );
-CREATE INDEX idx_steps_envelope ON signature.steps(envelope_id, step_order);
-CREATE INDEX idx_steps_signer ON signature.steps(signer_user_id);
-CREATE INDEX idx_steps_status ON signature.steps(status);
+CREATE INDEX IF NOT EXISTS idx_steps_envelope ON signature.steps(envelope_id, step_order);
+CREATE INDEX IF NOT EXISTS idx_steps_signer ON signature.steps(signer_user_id);
+CREATE INDEX IF NOT EXISTS idx_steps_status ON signature.steps(status);
 
-CREATE TABLE signature.transitions (
+CREATE TABLE IF NOT EXISTS signature.transitions (
     id UUID PRIMARY KEY DEFAULT gen_uuid_v7(),
     envelope_id UUID NOT NULL REFERENCES signature.envelopes(id),
     step_id UUID REFERENCES signature.steps(id),
@@ -53,4 +53,4 @@ CREATE TABLE signature.transitions (
     metadata JSONB DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_transitions_envelope ON signature.transitions(envelope_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_transitions_envelope ON signature.transitions(envelope_id, created_at);

@@ -594,7 +594,7 @@ async function handleAuthError(
     return Promise.reject(error);
   }
 
-  if (status === 401 && !originalRequest._retry) {
+  if (status === 401 && !originalRequest._retry && !requestUrl.includes("/auth/login") && !requestUrl.includes("/auth/refresh")) {
     originalRequest._retry = true;
 
     if (typeof window !== "undefined") {

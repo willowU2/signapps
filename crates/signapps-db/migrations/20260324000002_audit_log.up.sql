@@ -1,6 +1,6 @@
 CREATE SCHEMA IF NOT EXISTS platform;
 
-CREATE TABLE platform.audit_log (
+CREATE TABLE IF NOT EXISTS platform.audit_log (
     id UUID PRIMARY KEY DEFAULT gen_uuid_v7(),
     actor_id UUID,
     actor_ip TEXT,
@@ -24,6 +24,6 @@ CREATE TRIGGER audit_immutable
     BEFORE UPDATE OR DELETE ON platform.audit_log
     FOR EACH ROW EXECUTE FUNCTION platform.prevent_audit_mutation();
 
-CREATE INDEX idx_audit_entity ON platform.audit_log(entity_type, entity_id, created_at DESC);
-CREATE INDEX idx_audit_actor ON platform.audit_log(actor_id, created_at DESC);
-CREATE INDEX idx_audit_action ON platform.audit_log(action, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_entity ON platform.audit_log(entity_type, entity_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_actor ON platform.audit_log(actor_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_action ON platform.audit_log(action, created_at DESC);

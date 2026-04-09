@@ -33,6 +33,12 @@ pub struct Claims {
     pub iat: i64,
     /// Token type ("access" or "refresh")
     pub token_type: String,
+    /// Audience
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aud: Option<String>,
+    /// Issuer
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub iss: Option<String>,
 }
 
 impl Claims {

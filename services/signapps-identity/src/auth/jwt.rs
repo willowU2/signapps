@@ -27,6 +27,10 @@ pub struct Claims {
     pub exp: i64,           // Expiration timestamp
     pub iat: i64,           // Issued at timestamp
     pub token_type: String, // "access" or "refresh"
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aud: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub iss: Option<String>,
 }
 
 /// Token pair (access + refresh).
@@ -66,6 +70,8 @@ pub fn create_tokens(
         exp: access_exp.timestamp(),
         iat: now.timestamp(),
         token_type: "access".to_string(),
+        aud: Some(config.audience.clone()),
+        iss: Some(config.issuer.clone()),
     };
 
     let (header, encoding_key) = build_encoding_key(config)?;
@@ -84,6 +90,8 @@ pub fn create_tokens(
         exp: refresh_exp.timestamp(),
         iat: now.timestamp(),
         token_type: "refresh".to_string(),
+        aud: Some(config.audience.clone()),
+        iss: Some(config.issuer.clone()),
     };
 
     let refresh_token = encode(&header, &refresh_claims, &encoding_key)

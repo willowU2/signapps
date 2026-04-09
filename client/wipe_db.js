@@ -6,42 +6,19 @@ const client = new Client({
 
 async function run() {
   await client.connect();
-  console.log("Connected to DB. Wiping ALL schemas...");
+  console.log("Connected to DB. Wiping ALL schemas dynamically...");
 
   try {
-    const schemas = [
-      "scheduling",
-      "drive",
-      "meet",
-      "mail",
-      "it",
-      "remote",
-      "pxe",
-      "calendar",
-      "ai",
-      "identity",
-      "containers",
-      "proxy",
-      "securelink",
-      "storage",
-      "documents",
-      "scheduler",
-      "public",
-      "auth",
-      "core",
-      "config",
-      "social",
-      "crm",
-      "platform",
-      "billing",
-    ];
+    const res = await client.query("SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('information_schema', 'pg_catalog', 'pg_toast');");
+    const schemas = res.rows.map(r => r.schema_name);
 
     for (const schema of schemas) {
-      await client.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE;`);
+      console.log(`Dropping schema: ${schema}`);
+      await client.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE;`);
     }
 
     await client.query("CREATE SCHEMA public;");
-    console.log("Complete database wipe successful! All 20 namespaces purged!");
+    console.log("Complete database wipe successful! All user namespaces purged!");
   } catch (e) {
     console.error("Error wiping DB:", e);
   } finally {

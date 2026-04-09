@@ -206,10 +206,12 @@ export default function LoginPage() {
       }
       // Direct API call to avoid useCallback timing issues
       (async () => {
+        // Add a short delay to ensure microservices (like Identity) are fully bound
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         try {
           const response = await authApi.login({
             username: "admin",
-            password: "admin123",
+            password: "admin",
             remember_me: true,
           });
           if (response.data.access_token && response.data.refresh_token) {

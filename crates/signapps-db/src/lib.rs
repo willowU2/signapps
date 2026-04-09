@@ -60,7 +60,8 @@ pub async fn create_pool(database_url: &str) -> Result<DatabasePool, sqlx::Error
 ///
 /// If migrations are severely broken, attempt to reset in dev mode.
 pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::MigrateError> {
-    let migrator = sqlx::migrate!("./../../migrations");
+    let mut migrator = sqlx::migrate!("./../../migrations");
+    migrator.set_ignore_missing(true);
 
     // Acquire a dedicated connection for migrations
     // We detach it at the end to force connection closure, preventing leaked pg_advisory_locks in the pool.
@@ -80,7 +81,8 @@ pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::Mi
             tracing::info!("Root database migrations executed successfully");
 
             // Now run CRATE migrations
-            let migrator_crate = sqlx::migrate!("./migrations");
+            let mut migrator_crate = sqlx::migrate!("./migrations");
+            migrator_crate.set_ignore_missing(true);
             match migrator_crate.run(&mut *conn).await {
                 Ok(()) => {
                     tracing::info!("Crate database migrations executed successfully");

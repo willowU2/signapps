@@ -1,4 +1,4 @@
-CREATE TABLE platform.activities (
+CREATE TABLE IF NOT EXISTS platform.activities (
     id UUID PRIMARY KEY DEFAULT gen_uuid_v7(),
     actor_id UUID NOT NULL,
     action VARCHAR(32) NOT NULL,
@@ -9,7 +9,7 @@ CREATE TABLE platform.activities (
     workspace_id UUID,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_activities_actor ON platform.activities(actor_id, created_at DESC);
-CREATE INDEX idx_activities_workspace ON platform.activities(workspace_id, created_at DESC);
-CREATE INDEX idx_activities_entity ON platform.activities(entity_type, entity_id, created_at DESC);
-CREATE INDEX idx_activities_metadata ON platform.activities USING GIN(metadata);
+CREATE INDEX IF NOT EXISTS idx_activities_actor ON platform.activities(actor_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_activities_workspace ON platform.activities(workspace_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_activities_entity ON platform.activities(entity_type, entity_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_activities_metadata ON platform.activities USING GIN(metadata);
