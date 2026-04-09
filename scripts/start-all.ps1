@@ -68,10 +68,20 @@ $AllServices = @(
     @{ Short = "workforce";     Port = 3019;  Desc = "HR & workforce management" },
     @{ Short = "it-assets";     Port = 3015;  Desc = "IT asset management" },
     @{ Short = "contacts";      Port = 3014;  Desc = "Contact management" },
-    @{ Short = "backup";        Port = 3031;  Desc = "Database & file backup management" },
-    @{ Short = "notifications"; Port = 8095;  Desc = "Push notifications" },
-    @{ Short = "billing";       Port = 8096;  Desc = "Billing & invoicing" },
-    @{ Short = "gateway";       Port = 3099;  Desc = "API gateway (aggregator)" }
+    @{ Short = "vault";          Port = 3025;  Desc = "Encrypted secrets vault" },
+    @{ Short = "org";            Port = 3026;  Desc = "Organization structure & GPO" },
+    @{ Short = "webhooks";       Port = 3027;  Desc = "Webhook dispatch & management" },
+    @{ Short = "signatures";     Port = 3028;  Desc = "Electronic signatures (PAdES)" },
+    @{ Short = "tenant-config";  Port = 3029;  Desc = "Tenant configuration" },
+    @{ Short = "integrations";   Port = 3030;  Desc = "Integration triggers & automations" },
+    @{ Short = "backup";         Port = 3031;  Desc = "Database & file backup management" },
+    @{ Short = "compliance";     Port = 3032;  Desc = "GDPR/RGPD compliance & DPIA" },
+    @{ Short = "gamification";   Port = 3033;  Desc = "XP, badges, streaks, leaderboard" },
+    @{ Short = "collaboration";  Port = 3034;  Desc = "Mind maps, brainstorming boards" },
+    @{ Short = "agent";          Port = 9999;  Desc = "AI agent orchestration" },
+    @{ Short = "notifications";  Port = 8095;  Desc = "Push notifications" },
+    @{ Short = "billing";        Port = 8096;  Desc = "Billing & invoicing" },
+    @{ Short = "gateway";        Port = 3099;  Desc = "API gateway (aggregator)" }
 )
 
 # -”€-”€ Filter services if --Only is set -”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€-”€
@@ -84,9 +94,11 @@ if ($Only) {
         exit 1
     }
 } else {
-    # Default: start core services (skip those that share ports by default)
+    # Default: start all services except those that share ports with others
+    # (workforce=3019 conflicts with social, it-assets=3015 conflicts with forms,
+    #  contacts=3014 conflicts with meet, agent=9999 is optional)
     $Services = $AllServices | Where-Object {
-        $_.Short -notin @("it-assets", "workforce", "contacts")
+        $_.Short -notin @("it-assets", "workforce", "contacts", "agent")
     }
 }
 

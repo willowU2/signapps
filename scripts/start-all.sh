@@ -58,6 +58,8 @@ SERVICES=(
     "integrations:3030:External integrations (Slack, Teams, Discord)"
     "backup:3031:Database & file backup management"
     "compliance:3032:Compliance, RGPD, data export, retention"
+    "gamification:3033:XP, badges, streaks, leaderboard"
+    "collaboration:3034:Mind maps, brainstorming boards"
     "notifications:8095:Push notifications"
     "billing:8096:Billing & invoicing"
     "gateway:3099:API gateway (aggregator)"
