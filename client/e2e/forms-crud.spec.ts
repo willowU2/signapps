@@ -88,14 +88,19 @@ test.describe("Forms — CRUD and builder", () => {
     expect(await forms.fieldCount()).toBe(1);
   });
 
-  // FIXME: New form may not be visible in listing (pagination/sort — 23+ forms exist)
+  // New forms are appended at the end of a 23+ item grid — not visible without
+  // sorting by date desc or scrolling. Needs a sort button or API filter.
   test.fixme("toggle publish state of a form", async ({ page }) => {
     const forms = new FormsPage(page);
     await forms.gotoListing();
     const id = await forms.createForm(`E2E Publish ${Date.now()}`);
-    // Navigate back to listing to toggle publish.
+    // Navigate back to listing. The new form should be at the end — scroll.
     await forms.gotoListing();
-    // Wait for the listing to reload and the card to appear (query refetch).
+    // Scroll down to find the new card (listing may have 20+ forms).
+    await forms
+      .formCard(id)
+      .scrollIntoViewIfNeeded()
+      .catch(() => {});
     await expect
       .poll(
         () =>
@@ -103,9 +108,7 @@ test.describe("Forms — CRUD and builder", () => {
             .formCard(id)
             .isVisible()
             .catch(() => false),
-        {
-          timeout: 10000,
-        },
+        { timeout: 10000 },
       )
       .toBe(true);
     expect(await forms.formStatus(id)).toBe("draft");
@@ -119,13 +122,17 @@ test.describe("Forms — CRUD and builder", () => {
       .toBe("draft");
   });
 
-  // FIXME: New form may not be visible in listing (pagination/sort — 23+ forms exist)
+  // Same as toggle publish — new form not visible in grid
   test.fixme("delete a form from the listing", async ({ page }) => {
     const forms = new FormsPage(page);
     await forms.gotoListing();
     const id = await forms.createForm(`E2E Delete ${Date.now()}`);
-    // Navigate back to listing to delete.
+    // Navigate back to listing.
     await forms.gotoListing();
+    await forms
+      .formCard(id)
+      .scrollIntoViewIfNeeded()
+      .catch(() => {});
     await expect
       .poll(
         () =>
@@ -133,9 +140,7 @@ test.describe("Forms — CRUD and builder", () => {
             .formCard(id)
             .isVisible()
             .catch(() => false),
-        {
-          timeout: 10000,
-        },
+        { timeout: 10000 },
       )
       .toBe(true);
     await forms.deleteForm(id);

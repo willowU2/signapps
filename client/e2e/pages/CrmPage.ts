@@ -55,9 +55,24 @@ export class CrmPage extends BasePage {
     if (value !== undefined) {
       await this.page.getByTestId("crm-deal-value-input").fill(String(value));
     }
-    await this.page.getByTestId("crm-deal-submit-button").click();
-    // Wait for the API call to complete and the dialog to close.
-    // The dialog may stay open briefly while the backend processes.
+    // Click submit and wait for the API response before checking dialog state.
+    const [response] = await Promise.all([
+      this.page
+        .waitForResponse(
+          (r) =>
+            r.url().includes("/api/v1/crm/deals") &&
+            r.request().method() === "POST",
+          { timeout: 15000 },
+        )
+        .catch(() => null),
+      this.page.getByTestId("crm-deal-submit-button").click(),
+    ]);
+    if (response && !response.ok()) {
+      throw new Error(
+        `Deal creation API failed: ${response.status()} ${response.url()}`,
+      );
+    }
+    // Wait for the dialog to close after the API call completes.
     await expect(this.page.locator('[role="dialog"]')).toBeHidden({
       timeout: 10000,
     });

@@ -16,7 +16,9 @@ test.describe("CRM — deals", () => {
     await expect(page.getByTestId("crm-root")).toBeVisible();
   });
 
-  // FIXME: Dialog doesn't close after deal creation — CRM form submit handler issue
+  // Backend bug: POST /crm/deals returns 500 "cannot insert multiple commands
+  // into a prepared statement" in ensure_crm_tables(). Fix needed in
+  // services/signapps-contacts/src/handlers/crm.rs
   test.fixme("create a new deal", async ({ page }) => {
     const crm = new CrmPage(page);
     await crm.gotoCrm();
@@ -56,7 +58,7 @@ test.describe("CRM — deals", () => {
     );
   });
 
-  // FIXME: Depends on createDeal which is broken (dialog doesn't close)
+  // Depends on createDeal which hits the backend bug above
   test.fixme("open deal detail", async ({ page }) => {
     const crm = new CrmPage(page);
     await crm.gotoCrm();
