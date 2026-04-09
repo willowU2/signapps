@@ -357,7 +357,11 @@ export default function FormsPage() {
               Créez et gérez vos formulaires en ligne.
             </p>
           </div>
-          <Button onClick={openCreate} className="shadow-lg shadow-primary/20">
+          <Button
+            onClick={openCreate}
+            className="shadow-lg shadow-primary/20"
+            data-testid="forms-new-button"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Nouveau Formulaire
           </Button>
@@ -440,6 +444,9 @@ export default function FormsPage() {
                   <Card
                     key={form.id}
                     className="border-border/50 bg-card hover:shadow-md transition-shadow min-w-0 overflow-hidden flex flex-col"
+                    data-testid={`forms-list-item-${form.id}`}
+                    data-form-status={form.status}
+                    data-form-title={form.title}
                   >
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between gap-2">
@@ -481,6 +488,7 @@ export default function FormsPage() {
                           variant="default"
                           className="w-full text-xs"
                           asChild
+                          data-testid={`forms-list-item-edit-${form.id}`}
                         >
                           <Link href={`/forms/${form.id}`}>
                             <Edit className="h-3 w-3 mr-1" /> Éditeur
@@ -499,6 +507,7 @@ export default function FormsPage() {
                           variant="outline"
                           className={`w-full text-xs ${form.status === "draft" ? "col-span-2" : ""}`}
                           onClick={() => togglePublish(form)}
+                          data-testid={`forms-list-item-publish-${form.id}`}
                         >
                           <Globe className="h-3 w-3 mr-1" />
                           {form.status === "published"
@@ -521,6 +530,7 @@ export default function FormsPage() {
                           variant="ghost"
                           className="col-span-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 mt-1"
                           onClick={() => handleDelete(form.id)}
+                          data-testid={`forms-list-item-delete-${form.id}`}
                         >
                           <Trash className="h-3 w-3 mr-1" /> Mettre à la
                           corbeille
@@ -605,7 +615,7 @@ export default function FormsPage() {
 
       {/* Create / Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent data-testid="form-create-dialog">
           <DialogHeader>
             <DialogTitle>
               {editingForm ? "Modifier le formulaire" : "Nouveau formulaire"}
@@ -620,6 +630,7 @@ export default function FormsPage() {
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 autoFocus
+                data-testid="form-create-dialog-title"
               />
             </div>
             <div className="space-y-1">
@@ -630,6 +641,7 @@ export default function FormsPage() {
                 rows={3}
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
+                data-testid="form-create-dialog-description"
               />
             </div>
             {editingForm && (
@@ -642,7 +654,11 @@ export default function FormsPage() {
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Annuler
             </Button>
-            <Button onClick={handleSave} disabled={!newTitle.trim()}>
+            <Button
+              onClick={handleSave}
+              disabled={!newTitle.trim()}
+              data-testid="form-create-dialog-submit"
+            >
               {editingForm ? "Enregistrer" : "Créer"}
             </Button>
           </DialogFooter>
@@ -664,7 +680,10 @@ export default function FormsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm}>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              data-testid="forms-delete-confirm"
+            >
               Mettre à la corbeille
             </AlertDialogAction>
           </AlertDialogFooter>

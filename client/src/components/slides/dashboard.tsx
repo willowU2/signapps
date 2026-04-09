@@ -252,6 +252,7 @@ export default function SlidesDashboard() {
             {/* Blank presentation */}
             <div className="flex flex-col gap-3 group shrink-0 snap-start">
               <Card
+                data-testid="slides-new-button"
                 onClick={openCreateModal}
                 className="h-[185px] w-[220px] rounded border border-border/50 bg-background cursor-pointer flex items-center justify-center transition-all duration-300 relative overflow-hidden group-hover:border-muted-foreground/30 group-hover:shadow-md group-hover:-translate-y-1 shadow-sm"
               >
@@ -380,7 +381,11 @@ export default function SlidesDashboard() {
                 : 'Cliquez sur "Présentation vierge" ci-dessus pour commencer'}
             </p>
             {!searchQuery && !activeTagFilter && (
-              <Button className="mt-4" onClick={openCreateModal}>
+              <Button
+                data-testid="slides-new-button"
+                className="mt-4"
+                onClick={openCreateModal}
+              >
                 <Plus className="mr-2 h-4 w-4" /> Nouvelle présentation
               </Button>
             )}
@@ -390,6 +395,7 @@ export default function SlidesDashboard() {
             {filteredDocs.map((doc) => (
               <Card
                 key={doc.id}
+                data-testid={`slides-presentation-${doc.id}`}
                 onClick={() => handleOpenDoc(doc)}
                 className="group cursor-pointer flex flex-col bg-background overflow-hidden border border-border/60 hover:border-muted-foreground/30 hover:shadow-md hover:-translate-y-1 transition-all duration-300 h-[200px]"
               >

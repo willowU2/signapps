@@ -40,7 +40,12 @@ import {
   TAB_COLORS,
   getEffectiveRows,
 } from "./types";
-import { evaluateFormula, indexToCol, colToIndex } from "@/lib/sheets/formula";
+import {
+  evaluateFormula,
+  indexToCol,
+  colToIndex,
+  adjustFormulaReferences,
+} from "@/lib/sheets/formula";
 import { fetchAndParseDocument } from "@/lib/file-parsers";
 import { sanitizeAllSheets } from "@/lib/sheets/sanitize-cells";
 import { importXlsxToYjs } from "@/lib/sheets/import-xlsx";
@@ -2301,6 +2306,34 @@ export function Spreadsheet({
     const srcRows = maxR - minR + 1,
       srcCols = maxC - minC + 1;
 
+    /**
+     * Copy a source cell to a target position, adjusting formulas by
+     * (dr, dc). If the source's `value` or `formula` starts with "=",
+     * its relative references are shifted so the filled cell computes
+     * against the correct rows/columns — matching Excel/Sheets behavior.
+     *
+     * Cells without formulas are copied verbatim.
+     */
+    const copyCellWithFormulaAdjust = (
+      src: CellData,
+      dr: number,
+      dc: number,
+    ): CellData => {
+      const hasFormula =
+        typeof src.formula === "string" && src.formula.startsWith("=");
+      const valueIsFormula =
+        typeof src.value === "string" && src.value.startsWith("=");
+      if (!hasFormula && !valueIsFormula) return { ...src };
+      const adjustedFormula = hasFormula
+        ? adjustFormulaReferences(src.formula as string, dr, dc)
+        : adjustFormulaReferences(src.value, dr, dc);
+      return {
+        ...src,
+        value: adjustedFormula,
+        formula: hasFormula ? adjustedFormula : src.formula,
+      };
+    };
+
     if (dragFillEnd.r > maxR) {
       // Fill down: for each column, detect pattern in source cells
       for (let c = minC; c <= maxC; c++) {
@@ -2308,15 +2341,22 @@ export function Spreadsheet({
           { length: srcRows },
           (_, i) => data[`${minR + i},${c}`]?.value || "",
         );
-        const seqFn = detectSequence(srcValues);
+        // Skip sequence detection if any source cell is a formula —
+        // detectSequence would otherwise see "=A1*2" as non-numeric
+        // and fall into the literal-copy branch, which skips the
+        // relative-reference adjustment.
+        const anyFormula = srcValues.some((v) => v.startsWith("="));
+        const seqFn = anyFormula ? null : detectSequence(srcValues);
         for (let r = maxR + 1; r <= dragFillEnd.r; r++) {
+          const srcR = minR + ((r - minR) % srcRows);
+          const src = data[`${srcR},${c}`];
           if (seqFn) {
-            const src = data[`${minR + ((r - minR) % srcRows)},${c}`];
             setCellFull(r, c, { value: seqFn(r - minR), style: src?.style });
+          } else if (src) {
+            const dr = r - srcR;
+            setCellFull(r, c, copyCellWithFormulaAdjust(src, dr, 0));
           } else {
-            const src = data[`${minR + ((r - minR) % srcRows)},${c}`];
-            if (src) setCellFull(r, c, { ...src });
-            else deleteCell(r, c);
+            deleteCell(r, c);
           }
         }
       }
@@ -2331,15 +2371,18 @@ export function Spreadsheet({
           { length: srcCols },
           (_, i) => data[`${r},${minC + i}`]?.value || "",
         );
-        const seqFn = detectSequence(srcValues);
+        const anyFormula = srcValues.some((v) => v.startsWith("="));
+        const seqFn = anyFormula ? null : detectSequence(srcValues);
         for (let c = maxC + 1; c <= dragFillEnd.c; c++) {
+          const srcC = minC + ((c - minC) % srcCols);
+          const src = data[`${r},${srcC}`];
           if (seqFn) {
-            const src = data[`${r},${minC + ((c - minC) % srcCols)}`];
             setCellFull(r, c, { value: seqFn(c - minC), style: src?.style });
+          } else if (src) {
+            const dc = c - srcC;
+            setCellFull(r, c, copyCellWithFormulaAdjust(src, 0, dc));
           } else {
-            const src = data[`${r},${minC + ((c - minC) % srcCols)}`];
-            if (src) setCellFull(r, c, { ...src });
-            else deleteCell(r, c);
+            deleteCell(r, c);
           }
         }
       }
@@ -3554,6 +3597,10 @@ export function Spreadsheet({
   return (
     <div
       ref={mainContainerRef}
+      data-testid="spreadsheet-root"
+      data-active-cell={activeCell ? `${activeCell.r},${activeCell.c}` : ""}
+      data-active-sheet-id={sheets[activeSheetIndex]?.id ?? ""}
+      data-editing={isEditing ? "true" : "false"}
       className={cn(
         "spreadsheet-root w-full h-full flex flex-col bg-background dark:bg-[#1f1f1f] text-[#202124] dark:text-[#e8eaed] outline-none font-sans text-sm select-none",
         paintFormat && "cursor-cell",
@@ -5210,10 +5257,14 @@ export function Spreadsheet({
       {/* ===== FORMULA BAR ===== */}
       {showFormulaBar && (
         <div
+          data-testid="sheet-formula-bar"
           data-print-hide
           className="flex items-center gap-2 px-4 py-2 border-b border-[#e3e3e3] dark:border-[#3c4043] bg-background dark:bg-[#1a1a1a] shrink-0 h-10 shadow-[0_1px_2px_rgba(0,0,0,0.02)] z-10"
         >
-          <div className="w-12 h-6 flex items-center justify-center bg-[#f1f3f4] dark:bg-[#3c4043] rounded font-medium text-[12px] shrink-0 tracking-wide select-text border border-[#e3e3e3] dark:border-[#5f6368]">
+          <div
+            data-testid="sheet-cell-ref"
+            className="w-12 h-6 flex items-center justify-center bg-[#f1f3f4] dark:bg-[#3c4043] rounded font-medium text-[12px] shrink-0 tracking-wide select-text border border-[#e3e3e3] dark:border-[#5f6368]"
+          >
             {activeCell ? `${indexToCol(activeCell.c)}${activeCell.r + 1}` : ""}
           </div>
           <div className="w-px h-5 bg-[#e3e3e3] dark:bg-[#5f6368] shrink-0 mx-1" />
@@ -5225,6 +5276,7 @@ export function Spreadsheet({
           </div>
           <input
             ref={formulaBarRef}
+            data-testid="sheet-formula-input"
             className="flex-1 outline-none text-[13px] bg-transparent font-mono text-[#202124] dark:text-[#e8eaed] placeholder:text-[#9aa0a6] placeholder:font-sans"
             placeholder={activeCell ? "Saisir une formule ou un texte..." : ""}
             value={activeCell ? editValue : ""}
@@ -5256,6 +5308,9 @@ export function Spreadsheet({
       {/* ===== GRID (Virtualized) ===== */}
       <div
         ref={gridRef}
+        data-testid="sheet-grid"
+        data-rows={effectiveRows}
+        data-cols={COLS}
         className="relative flex-1 overflow-auto bg-background dark:bg-[#1f1f1f] will-change-transform"
         style={{
           transform: `scale(${zoomLevel / 100})`,
@@ -5319,6 +5374,8 @@ export function Spreadsheet({
             style={{ height: COL_HEADER_HEIGHT }}
           >
             <div
+              data-testid="sheet-select-all"
+              aria-label="Tout sélectionner"
               className="bg-[#f8f9fa] dark:bg-[#202124] border-r border-b border-[#c0c0c0] dark:border-[#5f6368] shrink-0 sticky left-0 z-40 relative cursor-pointer hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] transition-colors"
               style={{
                 width: ROW_HEADER_WIDTH,
@@ -5361,6 +5418,10 @@ export function Spreadsheet({
               return (
                 <div
                   key={c}
+                  data-testid={`sheet-col-header-${c}`}
+                  data-col={c}
+                  data-col-label={indexToCol(c)}
+                  data-col-selected={inSel ? "true" : "false"}
                   className={cn(
                     "flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] font-medium shrink-0 transition-colors relative group cursor-pointer",
                     inSel
@@ -5398,6 +5459,7 @@ export function Spreadsheet({
                 >
                   {indexToCol(c)}
                   <div
+                    data-testid={`sheet-col-resize-${c}`}
                     className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-[#1a73e8] opacity-0 group-hover:opacity-100 transition-opacity z-10"
                     onMouseDown={(e) => {
                       e.preventDefault();
@@ -5484,6 +5546,10 @@ export function Spreadsheet({
               >
                 {/* Row header */}
                 <div
+                  data-testid={`sheet-row-header-${r}`}
+                  data-row={r}
+                  data-row-label={r + 1}
+                  data-row-selected={inSelRow ? "true" : "false"}
                   className={cn(
                     "flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] shrink-0 sticky left-0 z-20 transition-colors relative group cursor-pointer",
                     inSelRow
@@ -5512,6 +5578,7 @@ export function Spreadsheet({
                 >
                   {r + 1}
                   <div
+                    data-testid={`sheet-row-resize-${r}`}
                     className="absolute left-0 right-0 bottom-0 h-1.5 cursor-row-resize hover:bg-[#1a73e8] opacity-0 group-hover:opacity-100 transition-opacity z-10"
                     onMouseDown={(e) => {
                       e.preventDefault();
@@ -5712,6 +5779,22 @@ export function Spreadsheet({
                   return (
                     <div
                       key={c}
+                      data-testid={`sheet-cell-${r}-${c}`}
+                      data-row={r}
+                      data-col={c}
+                      data-cell-ref={`${indexToCol(c)}${r + 1}`}
+                      data-active={isActive ? "true" : "false"}
+                      data-in-selection={inRect ? "true" : "false"}
+                      data-editing={isActive && isEditing ? "true" : "false"}
+                      data-has-formula={
+                        cellData?.formula ||
+                        (typeof cellData?.value === "string" &&
+                          cellData.value.startsWith("="))
+                          ? "true"
+                          : "false"
+                      }
+                      data-display-value={displayValue}
+                      data-error={isErrorVal ? "true" : "false"}
                       className={cn(
                         "border-r border-b text-[13px] px-1 flex items-center outline-none relative shrink-0 overflow-hidden",
                         showGridlines
@@ -5844,6 +5927,7 @@ export function Spreadsheet({
                       {isActive && isEditing ? (
                         <input
                           ref={inputRef}
+                          data-testid="sheet-cell-editor"
                           className="w-full h-full border-none outline-none bg-background dark:bg-[#2d2e30] px-0.5 m-0 text-[13px] z-30 relative text-[#202124] dark:text-white"
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
@@ -5925,6 +6009,8 @@ export function Spreadsheet({
                       )}
                       {isBottomRight && !isEditing && (
                         <div
+                          data-testid="sheet-autofill-handle"
+                          aria-label="Poignée de recopie"
                           className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#1a73e8] border border-white dark:border-[#1a1a1a] rounded-sm cursor-crosshair z-30"
                           onMouseDown={(e) => {
                             e.preventDefault();
@@ -5959,10 +6045,15 @@ export function Spreadsheet({
 
       {/* ===== SHEET TABS + STATUS BAR ===== */}
       <div
+        data-testid="sheet-tabs"
         data-sheet-tabs
+        role="tablist"
+        aria-label="Feuilles du classeur"
         className="flex items-center h-10 border-t border-[#e3e3e3] dark:border-[#3c4043] bg-[#f8f9fa] dark:bg-[#202124] px-1 shrink-0 z-20 shadow-[0_-1px_3px_0_rgba(0,0,0,0.05)]"
       >
         <button
+          data-testid="sheet-tab-add"
+          aria-label="Ajouter une feuille"
           className="p-2 hover:bg-[#e8eaed] dark:hover:bg-[#303134] rounded-full text-[#5f6368] mx-1 transition-colors"
           onClick={() => addSheet(`Sheet${sheets.length + 1}`)}
         >
@@ -5971,6 +6062,14 @@ export function Spreadsheet({
         {sheets.map((sheet, i) => (
           <div
             key={i}
+            data-testid={`sheet-tab-${i}`}
+            data-sheet-id={sheet.id}
+            data-sheet-index={i}
+            data-sheet-name={sheet.name}
+            data-active={i === activeSheetIndex ? "true" : "false"}
+            role="tab"
+            aria-selected={i === activeSheetIndex}
+            aria-label={`Feuille ${sheet.name}`}
             className={cn(
               "px-5 py-2.5 text-[13px] font-medium transition-colors h-10 flex items-center mb-0 mt-auto relative group",
               i === activeSheetIndex
@@ -5994,6 +6093,7 @@ export function Spreadsheet({
           >
             {editingTabIndex === i ? (
               <input
+                data-testid="sheet-tab-rename-input"
                 className="bg-transparent outline-none text-[13px] w-20 text-center"
                 value={editingTabName}
                 onChange={(e) => setEditingTabName(e.target.value)}
@@ -6014,6 +6114,8 @@ export function Spreadsheet({
             )}
             {sheets.length > 1 && i === activeSheetIndex && (
               <button
+                data-testid={`sheet-tab-close-${i}`}
+                aria-label={`Supprimer la feuille ${sheet.name}`}
                 className="ml-2 opacity-0 group-hover:opacity-100 text-[#5f6368] hover:text-red-500 transition-all"
                 onClick={(e) => {
                   e.stopPropagation();

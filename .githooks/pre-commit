@@ -1,8 +1,9 @@
 #!/bin/sh
 # Pre-commit Hook - AgentIQ / SignApps Platform
 # 1. Security scanner (secrets detection)
-# 2. Cargo fmt --check (Rust formatting)
-# 3. Cargo clippy (Rust lints)
+# 2. Cargo fmt --check + clippy (Rust formatting + lints)
+# 3. License policy (cargo deny check licenses, only if Cargo.toml touched)
+# 4. TypeScript type check (warn-only unless TSC_STRICT=1)
 
 echo "Running pre-commit checks..."
 
@@ -44,7 +45,23 @@ if [ -n "$RUST_FILES" ]; then
     echo "cargo clippy check done."
 fi
 
-# --- 3. TypeScript type check (only if .ts/.tsx files changed) ---
+# --- 3. License policy check (only if Cargo.toml files changed) ---
+# Politique : voir deny.toml + memory/feedback_license_policy.md
+# Usage commercial illimité uniquement — GPL/AGPL/LGPL/SSPL/BSL sont bloqués.
+CARGO_TOML_FILES=$(echo "$FILES" | grep -E '(^|/)Cargo\.toml$|(^|/)Cargo\.lock$|(^|/)deny\.toml$')
+if [ -n "$CARGO_TOML_FILES" ]; then
+    echo "Running cargo deny check licenses (Cargo.toml/Cargo.lock/deny.toml modified)..."
+    if ! cargo deny check licenses 2>/dev/null; then
+        echo ""
+        echo "LICENSE CHECK FAILED: A dependency uses a forbidden license."
+        echo "Run 'cargo deny check licenses' to see details."
+        echo "Policy: see deny.toml comments and memory/feedback_license_policy.md"
+        exit 1
+    fi
+    echo "License check passed."
+fi
+
+# --- 4. TypeScript type check (only if .ts/.tsx files changed) ---
 # NOTE: The project has pre-existing TS errors acknowledged via ignoreBuildErrors: true
 # in next.config.ts. The check runs in warn-only mode until those are resolved.
 # Set TSC_STRICT=1 in your environment to make this check blocking.

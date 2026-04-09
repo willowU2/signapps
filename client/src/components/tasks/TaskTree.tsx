@@ -87,7 +87,13 @@ function TaskItem({
     node.task.priority === 3 || node.task.title.includes("Freebox");
 
   return (
-    <div className="border-b border-border/30 last:border-none">
+    <div
+      data-testid={`task-tree-item-${node.task.id}`}
+      data-task-id={node.task.id}
+      data-priority={node.task.priority}
+      data-status={node.task.status}
+      className="border-b border-border/30 last:border-none"
+    >
       <div
         className={`flex items-start gap-3 py-3 px-4 hover:bg-muted/50 group cursor-pointer transition-colors ${
           isCompleted ? "opacity-60" : ""

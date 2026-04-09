@@ -15,26 +15,64 @@ all-features = true
 ignore = []
 
 [licenses]
+# Politique — autoriser uniquement les licences qui permettent un usage
+# commercial illimité sans imposer d'obligation de publication de notre code
+# propriétaire. Voir memory/feedback_license_policy.md pour la règle complète.
+#
+# PRÉFÉRÉES  : MIT, Apache-2.0 (cibles pour tout code que NOUS écrivons).
+# PERMISES   : autres permissives et weak-copyleft utilisées uniquement
+#              comme dépendances (pas de fork/modification de fichiers).
+# INTERDITES : GPL-*, AGPL-*, LGPL-*, SSPL, BSL (Business Source),
+#              Elastic License, Commons Clause, CC BY-NC/ND, CC BY-SA,
+#              Sentry FSL, Creative Commons non-commercial, toute licence
+#              "source-available" qui restreint l'usage commercial.
 allow = [
+    # === Cibles principales pour notre code ===
     "MIT",
     "Apache-2.0",
     "Apache-2.0 WITH LLVM-exception",
+
+    # === Équivalents fonctionnels à MIT (permissives, usage commercial illimité) ===
     "BSD-2-Clause",
     "BSD-3-Clause",
     "ISC",
     "Zlib",
     "0BSD",
+
+    # === Domaine public ou quasi-public ===
     "CC0-1.0",
+    "Unlicense",
+    "WTFPL", # ffmpeg-next/ffmpeg-sys-next — équivalent domaine public
+
+    # === Données / contenu permissif ===
     "CDLA-Permissive-2.0",
-    "Unicode-DFS-2016",
     "Unicode-3.0",
-    "MPL-2.0",
+
+    # === Boost Software License — très permissive, équivalent MIT pour le C++ ===
     "BSL-1.0",
+
+    # === OpenSSL License — permissive avec attribution (comme Apache 2.0) ===
+    # Historiquement conflit avec GPL v2 à cause d'une clause publicité, mais
+    # usage commercial et redistribution illimités. Exigée par aws-lc-sys,
+    # openssl-sys, ring (via clarify). OK vu qu'on n'a aucun code GPL.
     "OpenSSL",
+
+    # === Weak copyleft — OK comme consommateur, PAS comme modifieur ===
+    # MPL-2.0 oblige à publier les modifications des fichiers MPL, mais n'impose
+    # aucune contrainte sur le reste de notre code. Tant qu'on utilise ces
+    # crates sans forker/modifier leurs fichiers, notre code reste propriétaire.
+    # Liste d'usage : cssparser/selectors/resvg (SVG rendering), symphonia
+    # (audio decoding), option-ext (dirs).
+    # ⚠️ Si vous ajoutez une dépendance MPL-2.0 et pensez devoir modifier ses
+    # fichiers, contactez le lead avant — la copie dans notre repo déclenche
+    # l'obligation de publication.
+    "MPL-2.0",
 ]
 confidence-threshold = 0.8
 exceptions = []
 
+# ring utilise historiquement "OpenSSL + MIT + ISC" dans son fichier LICENSE.
+# On garde la clarify pour que cargo-deny associe un hash stable au fichier.
 [[licenses.clarify]]
 name = "ring"
 expression = "MIT AND ISC AND OpenSSL"

@@ -153,6 +153,10 @@ function SortableField({
       ref={setNodeRef}
       style={style}
       className={`relative group border-border/60 hover:border-primary/50 transition-colors shadow-sm bg-card ${isDragging ? "shadow-lg border-primary outline outline-1 outline-primary" : ""}`}
+      data-testid={`form-field-item-${index}`}
+      data-field-id={field.id}
+      data-field-type={field.field_type}
+      data-field-required={field.required ? "true" : "false"}
     >
       {/* DRAG HANDLE */}
       <div
@@ -175,6 +179,7 @@ function SortableField({
               onChange={(e) => updateField(field.id, { label: e.target.value })}
               className="text-lg font-medium border-none shadow-none px-0 h-auto focus-visible:ring-0 focus-visible:bg-muted/50 rounded-sm"
               placeholder="Titre de la question"
+              data-testid={`form-field-label-${index}`}
             />
           </div>
           <Button
@@ -182,6 +187,7 @@ function SortableField({
             size="icon"
             className="text-destructive/70 hover:text-destructive hover:bg-destructive/10"
             onClick={() => removeField(field.id)}
+            data-testid={`form-field-delete-${index}`}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -523,7 +529,12 @@ export default function FormBuilderPage() {
 
   return (
     <AppLayout>
-      <div className="flex-1 space-y-6 w-full p-4 md:p-8">
+      <div
+        className="flex-1 space-y-6 w-full p-4 md:p-8"
+        data-testid="form-editor-root"
+        data-form-id={formId}
+        data-form-title={form.title}
+      >
         {/* Header Navbar */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-4 rounded-xl border shadow-sm">
           <div className="flex items-center gap-4">
@@ -540,7 +551,7 @@ export default function FormBuilderPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" asChild>
+            <Button variant="outline" asChild data-testid="form-editor-preview">
               <Link href={`/f/${formId}`} target="_blank">
                 <Eye className="h-4 w-4 mr-2" /> Aperçu public
               </Link>
@@ -549,6 +560,7 @@ export default function FormBuilderPage() {
               onClick={handleSave}
               disabled={saving}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md"
+              data-testid="form-editor-save"
             >
               <Save className="h-4 w-4 mr-2" />
               {saving ? "Enregistrement..." : "Sauvegarder"}
@@ -558,17 +570,28 @@ export default function FormBuilderPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="builder">
-          <TabsList>
-            <TabsTrigger value="builder">Éditeur</TabsTrigger>
-            <TabsTrigger value="analytics">
+          <TabsList data-testid="form-editor-tabs">
+            <TabsTrigger value="builder" data-testid="form-editor-tab-builder">
+              Éditeur
+            </TabsTrigger>
+            <TabsTrigger
+              value="analytics"
+              data-testid="form-editor-tab-analytics"
+            >
               <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
               Analyses {responses.length > 0 && `(${responses.length})`}
             </TabsTrigger>
-            <TabsTrigger value="branding">
+            <TabsTrigger
+              value="branding"
+              data-testid="form-editor-tab-branding"
+            >
               <Palette className="h-3.5 w-3.5 mr-1.5" />
               Apparence
             </TabsTrigger>
-            <TabsTrigger value="settings">
+            <TabsTrigger
+              value="settings"
+              data-testid="form-editor-tab-settings"
+            >
               <Settings className="h-3.5 w-3.5 mr-1.5" />
               Paramètres
             </TabsTrigger>
@@ -578,7 +601,11 @@ export default function FormBuilderPage() {
           <TabsContent value="builder" className="mt-4">
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Fields List */}
-              <div className="flex-1 space-y-4">
+              <div
+                className="flex-1 space-y-4"
+                data-testid="form-field-list"
+                data-field-count={fields.length}
+              >
                 {fields.length === 0 ? (
                   <div className="border-2 border-dashed rounded-xl p-12 text-center text-muted-foreground bg-muted/20">
                     <Plus className="h-12 w-12 mx-auto mb-4 opacity-20" />
@@ -626,11 +653,15 @@ export default function FormBuilderPage() {
                         Ajoutez des champs au formulaire
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="p-4 grid grid-cols-2 gap-2">
+                    <CardContent
+                      className="p-4 grid grid-cols-2 gap-2"
+                      data-testid="form-field-palette"
+                    >
                       <Button
                         variant="outline"
                         className="justify-start h-auto py-3 px-3 hover:border-primary/50"
                         onClick={() => addField("Text")}
+                        data-testid="form-field-palette-text"
                       >
                         <Type className="h-4 w-4 mr-2 text-blue-500" />
                         <span className="text-xs">Texte Court</span>
@@ -639,6 +670,7 @@ export default function FormBuilderPage() {
                         variant="outline"
                         className="justify-start h-auto py-3 px-3 hover:border-primary/50"
                         onClick={() => addField("TextArea")}
+                        data-testid="form-field-palette-textarea"
                       >
                         <List className="h-4 w-4 mr-2 text-indigo-500" />
                         <span className="text-xs">Paragraphe</span>
@@ -647,6 +679,7 @@ export default function FormBuilderPage() {
                         variant="outline"
                         className="justify-start h-auto py-3 px-3 hover:border-primary/50"
                         onClick={() => addField("SingleChoice")}
+                        data-testid="form-field-palette-singlechoice"
                       >
                         <CircleDot className="h-4 w-4 mr-2 text-emerald-500" />
                         <span className="text-xs">Choix unique</span>
@@ -655,6 +688,7 @@ export default function FormBuilderPage() {
                         variant="outline"
                         className="justify-start h-auto py-3 px-3 hover:border-primary/50"
                         onClick={() => addField("MultipleChoice")}
+                        data-testid="form-field-palette-multiplechoice"
                       >
                         <CheckSquare className="h-4 w-4 mr-2 text-emerald-500" />
                         <span className="text-xs">Choix multiple</span>
@@ -663,6 +697,7 @@ export default function FormBuilderPage() {
                         variant="outline"
                         className="justify-start h-auto py-3 px-3 hover:border-primary/50"
                         onClick={() => addField("Number")}
+                        data-testid="form-field-palette-number"
                       >
                         <Hash className="h-4 w-4 mr-2 text-orange-500" />
                         <span className="text-xs">Nombre</span>
@@ -671,6 +706,7 @@ export default function FormBuilderPage() {
                         variant="outline"
                         className="justify-start h-auto py-3 px-3 hover:border-primary/50"
                         onClick={() => addField("Email")}
+                        data-testid="form-field-palette-email"
                       >
                         <Mail className="h-4 w-4 mr-2 text-sky-500" />
                         <span className="text-xs">Email</span>
@@ -679,6 +715,7 @@ export default function FormBuilderPage() {
                         variant="outline"
                         className="justify-start h-auto py-3 px-3 hover:border-primary/50"
                         onClick={() => addField("Date")}
+                        data-testid="form-field-palette-date"
                       >
                         <Calendar className="h-4 w-4 mr-2 text-rose-500" />
                         <span className="text-xs">Date</span>
@@ -687,6 +724,7 @@ export default function FormBuilderPage() {
                         variant="outline"
                         className="justify-start h-auto py-3 px-3 hover:border-primary/50"
                         onClick={() => addField("File")}
+                        data-testid="form-field-palette-file"
                       >
                         <ImageIcon className="h-4 w-4 mr-2 text-fuchsia-500" />
                         <span className="text-xs">Fichier</span>
@@ -695,6 +733,7 @@ export default function FormBuilderPage() {
                         variant="outline"
                         className="justify-start h-auto py-3 px-3 hover:border-primary/50"
                         onClick={() => addField("Signature")}
+                        data-testid="form-field-palette-signature"
                       >
                         <PenLine className="h-4 w-4 mr-2 text-cyan-500" />
                         <span className="text-xs">Signature</span>
@@ -703,6 +742,7 @@ export default function FormBuilderPage() {
                         variant="outline"
                         className="justify-start h-auto py-3 px-3 hover:border-primary/50"
                         onClick={() => addField("PageBreak")}
+                        data-testid="form-field-palette-pagebreak"
                       >
                         <Layers className="h-4 w-4 mr-2 text-violet-500" />
                         <span className="text-xs">Saut de page</span>

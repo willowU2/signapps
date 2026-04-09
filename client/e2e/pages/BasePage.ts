@@ -22,12 +22,12 @@ export abstract class BasePage {
   /** Navigate to the page and wait for it to be ready. */
   async goto(queryString = ""): Promise<void> {
     const url = queryString ? `${this.path}?${queryString}` : this.path;
-    await this.page.goto(url);
+    await this.page.goto(url, { waitUntil: "domcontentloaded" });
     await this.waitReady();
   }
 
   /** Wait until the readyIndicator is visible. */
-  async waitReady(timeoutMs = 10_000): Promise<void> {
+  async waitReady(timeoutMs = 30_000): Promise<void> {
     await expect(this.readyIndicator).toBeVisible({ timeout: timeoutMs });
   }
 

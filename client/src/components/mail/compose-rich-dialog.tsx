@@ -503,6 +503,7 @@ export function ComposeRichDialog({
             ? "w-screen h-screen max-w-none max-h-none rounded-none"
             : "w-[calc(100vw-2rem)] max-w-4xl h-[85vh] max-h-[calc(100vh-2rem)]",
         )}
+        data-testid="mail-compose-dialog"
       >
         <DialogHeader className="px-4 py-3 border-b flex flex-row items-center justify-between space-y-0">
           <DialogTitle className="text-lg font-semibold">
@@ -542,6 +543,7 @@ export function ComposeRichDialog({
                 onChange={(e) => setRecipient(e.target.value)}
                 placeholder="destinataire@exemple.com"
                 className="flex-1 border-0 bg-transparent focus-visible:ring-0 px-0"
+                data-testid="mail-compose-to"
               />
               {/* Feature 9: Contact suggestions from calendar events */}
               <CalendarContactSuggestions

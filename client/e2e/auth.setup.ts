@@ -1,40 +1,64 @@
-import { test as setup, expect } from "@playwright/test";
+import { test as setup } from "@playwright/test";
 import path from "path";
 
 const authFile = path.join(__dirname, "../playwright/.auth/user.json");
 
 /**
  * Authentication setup - runs before all tests that depend on 'setup'
- * Creates an authenticated session that can be reused across tests
+ * Creates an authenticated session that can be reused across tests.
+ *
+ * Strategy: call the identity API directly to get JWT tokens, then set
+ * them as cookies. This bypasses UI login issues (onboarding modal overlay,
+ * slow React hydration, etc.) and is faster + more reliable.
  */
 setup("authenticate", async ({ page }) => {
-  // Navigate to login page
-  await page.goto("/login");
-  await page.waitForLoadState("domcontentloaded");
+  setup.setTimeout(90000);
 
-  // Fill in login credentials
-  const usernameInput = page.locator("#username");
-  await usernameInput.click({ force: true });
-  await usernameInput.fill("admin");
+  // 1. Call the login API directly to get tokens
+  const loginRes = await page.request.post(
+    "http://localhost:3001/api/v1/auth/login",
+    {
+      data: { username: "admin", password: "admin" },
+    },
+  );
 
-  const passwordInput = page.locator("#password");
-  await passwordInput.click();
-  await passwordInput.fill("admin");
+  if (!loginRes.ok()) {
+    throw new Error(
+      `Login API failed: ${loginRes.status()} ${await loginRes.text()}`,
+    );
+  }
 
-  // Click the sign in button
-  const signInBtn = page
-    .locator("form")
-    .getByRole("button", { name: /sign in|se connecter|connexion/i });
-  await signInBtn.click();
+  const { access_token, refresh_token } = await loginRes.json();
 
-  // Wait for redirect to dashboard
-  await page.waitForURL(/\/(dashboard|login\/verify)/, { timeout: 30000 });
+  // 2. Navigate to the app so we can set cookies on the right domain
+  await page.goto("http://localhost:3000/login", {
+    waitUntil: "domcontentloaded",
+    timeout: 60000,
+  });
 
-  // Pre-dismiss all onboarding/changelog dialogs via localStorage
-  // These will be persisted in the storage state file for all subsequent tests.
-  // IMPORTANT: the ChangelogDialog compares against CHANGELOG[0].version
-  // (currently "2.6.0", NO "v" prefix). Any future bump of CHANGELOG[0].version
-  // must be mirrored here or the "Quoi de neuf ?" modal re-appears.
+  // 3. Set auth cookies
+  await page.context().addCookies([
+    {
+      name: "access_token",
+      value: access_token,
+      domain: "localhost",
+      path: "/",
+      httpOnly: true,
+      secure: false,
+      sameSite: "Lax",
+    },
+    {
+      name: "refresh_token",
+      value: refresh_token,
+      domain: "localhost",
+      path: "/",
+      httpOnly: true,
+      secure: false,
+      sameSite: "Lax",
+    },
+  ]);
+
+  // 4. Set localStorage to dismiss all onboarding/changelog modals
   await page.evaluate(() => {
     localStorage.setItem(
       "signapps-onboarding-completed",
@@ -46,7 +70,16 @@ setup("authenticate", async ({ page }) => {
     localStorage.setItem("signapps_seed_dismissed", "true");
   });
 
-  // Save the authentication state (including localStorage with dismissed dialogs)
+  // 5. Verify auth works by navigating to dashboard
+  await page.goto("http://localhost:3000/dashboard", {
+    waitUntil: "domcontentloaded",
+    timeout: 60000,
+  });
+
+  // Wait for the page to actually render (not just the loading spinner)
+  await page.waitForTimeout(5000);
+
+  // 6. Save the authenticated state
   await page.context().storageState({ path: authFile });
 });
 

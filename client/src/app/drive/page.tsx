@@ -440,13 +440,19 @@ export default function GlobalDrivePage() {
         onChange={handleFileInputChange}
       />
 
-      <div className="flex flex-col md:flex-row min-h-0 flex-1 -m-4 overflow-hidden bg-background dark:bg-[#1a1a1a]">
+      <div
+        className="flex flex-col md:flex-row min-h-0 flex-1 -m-4 overflow-hidden bg-background dark:bg-[#1a1a1a]"
+        data-testid="drive-root"
+      >
         {/* Sidebar */}
         <div className="w-full md:w-[256px] flex flex-col h-full bg-background dark:bg-[#1a1a1a] pb-4 gap-2 border-r border-[#dadce0] dark:border-[#3c4043]">
           <div className="px-4 py-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="w-full md:w-auto h-14 px-4 rounded-2xl bg-background hover:bg-[#f8f9fa] shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] dark:bg-[#1a1a1a] dark:hover:bg-[#303134] dark:shadow-[0_1px_2px_0_rgba(0,0,0,0.6),0_1px_3px_1px_rgba(0,0,0,0.3)] transition-all flex items-center justify-start gap-3 text-[#3c4043] dark:text-[#e8eaed]">
+                <Button
+                  className="w-full md:w-auto h-14 px-4 rounded-2xl bg-background hover:bg-[#f8f9fa] shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] dark:bg-[#1a1a1a] dark:hover:bg-[#303134] dark:shadow-[0_1px_2px_0_rgba(0,0,0,0.6),0_1px_3px_1px_rgba(0,0,0,0.3)] transition-all flex items-center justify-start gap-3 text-[#3c4043] dark:text-[#e8eaed]"
+                  data-testid="drive-new-button"
+                >
                   <Plus className="h-6 w-6 text-blue-500" />
                   <span className="font-medium text-[14px]">Nouveau</span>
                 </Button>
@@ -455,6 +461,7 @@ export default function GlobalDrivePage() {
                 <DropdownMenuItem
                   onClick={handleCreateFolder}
                   className="gap-3 py-2"
+                  data-testid="drive-new-folder-button"
                 >
                   <Folder className="h-4 w-4 text-blue-500 fill-blue-100" />
                   Nouveau dossier
@@ -464,6 +471,7 @@ export default function GlobalDrivePage() {
                   onClick={() => fileInputRef.current?.click()}
                   className="gap-3 py-2"
                   disabled={uploading}
+                  data-testid="drive-upload-button"
                 >
                   <UploadCloud className="h-4 w-4 text-blue-500" />
                   Importer des fichiers
@@ -599,6 +607,7 @@ export default function GlobalDrivePage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-8 pr-3 h-9 text-sm rounded-full border border-[#dadce0] dark:border-[#3c4043] bg-[#f1f3f4] dark:bg-[#303134] focus:outline-none focus:ring-1 focus:ring-blue-500 w-48 transition-all focus:w-64"
+                  data-testid="drive-search-input"
                 />
               </div>
               <Button
@@ -626,7 +635,10 @@ export default function GlobalDrivePage() {
           )}
 
           {/* Files / Folders List */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div
+            className="flex-1 overflow-y-auto p-6"
+            data-testid="drive-file-container"
+          >
             {loading ? (
               <DataTableSkeleton count={4} />
             ) : filteredNodes.length === 0 ? (
@@ -662,6 +674,9 @@ export default function GlobalDrivePage() {
                         key={node.id}
                         className="hover:bg-accent hover:text-accent-foreground transition-colors group cursor-pointer"
                         onDoubleClick={() => handleNodeDoubleClick(node)}
+                        data-testid={`drive-file-item-${node.id}`}
+                        data-node-type={node.node_type}
+                        data-file-name={node.name}
                       >
                         <td className="px-6 py-4 flex items-center gap-3">
                           {node.node_type === "folder" ? (
@@ -839,6 +854,9 @@ export default function GlobalDrivePage() {
                     <div
                       className="group border rounded-xl p-4 flex flex-col items-center gap-3 hover:bg-accent hover:shadow-md transition-all cursor-pointer bg-card relative"
                       onDoubleClick={() => handleNodeDoubleClick(node)}
+                      data-testid={`drive-file-item-${node.id}`}
+                      data-node-type={node.node_type}
+                      data-file-name={node.name}
                     >
                       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <DropdownMenu>
@@ -1048,7 +1066,7 @@ export default function GlobalDrivePage() {
 
       {/* Create Folder Dialog */}
       <Dialog open={showFolderPrompt} onOpenChange={setShowFolderPrompt}>
-        <DialogContent>
+        <DialogContent data-testid="drive-folder-dialog">
           <DialogHeader>
             <DialogTitle>Nouveau dossier</DialogTitle>
           </DialogHeader>
@@ -1060,6 +1078,7 @@ export default function GlobalDrivePage() {
             onKeyDown={(e) => {
               if (e.key === "Enter") handleCreateFolderConfirm();
             }}
+            data-testid="drive-folder-name-input"
           />
           <DialogFooter>
             <Button
@@ -1071,6 +1090,7 @@ export default function GlobalDrivePage() {
             <Button
               onClick={handleCreateFolderConfirm}
               disabled={!folderName.trim()}
+              data-testid="drive-folder-create-button"
             >
               Créer
             </Button>
@@ -1141,7 +1161,10 @@ export default function GlobalDrivePage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm}>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              data-testid="drive-delete-confirm"
+            >
               Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>

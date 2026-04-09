@@ -50,6 +50,11 @@ audit:
 deny:
     cargo deny check
 
+# Audit licences uniquement — rapide, utilisé par les hooks et CI
+# Politique : voir deny.toml + memory/feedback_license_policy.md
+deny-licenses:
+    cargo deny check licenses
+
 # ─────────────────────────── Tests ───────────────────────────
 
 # Tests rapides (nextest)

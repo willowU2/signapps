@@ -1193,285 +1193,212 @@ export default function MailPage() {
   ];
 
   return (
-    <TooltipProvider delayDuration={0}>
-      <WorkspaceShell
-        className="bg-muted dark:bg-[#111111] text-foreground font-sans"
-        header={<WorkspaceHeader />}
-        sidebar={
-          <nav
-            role="navigation"
-            aria-label="Navigation mail"
-            className={cn(
-              "shrink-0 flex flex-col gap-2 overflow-y-auto transition-all duration-200",
-              sidebarCollapsed
-                ? "w-14 px-1 pt-2 items-center"
-                : "w-[256px] px-4 pt-4",
-            )}
-          >
-            {/* Account switcher + sidebar toggle */}
-            {!sidebarCollapsed && accounts.length > 0 ? (
-              <div className="flex items-center gap-1">
-                <div className="flex-1 min-w-0">
-                  <AccountSwitcher isCollapsed={false} accounts={accounts} />
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
-                  onClick={() => setSidebarCollapsed((v) => !v)}
-                  title="Réduire le menu"
-                >
-                  <PanelLeftClose className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="flex justify-center">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  onClick={() => setSidebarCollapsed((v) => !v)}
-                  title="Développer le menu"
-                >
-                  <PanelLeftOpen className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-            {sidebarCollapsed && accounts.length > 0 && (
-              <div className="flex flex-col items-center gap-1 py-1">
-                {accounts.slice(0, 3).map((acc) => (
-                  <div
-                    key={acc.id}
-                    className={cn(
-                      "h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer transition-colors",
-                      acc.id === activeAccountId
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-accent",
-                    )}
-                    title={acc.email}
-                    onClick={() => setActiveAccountId(acc.id)}
-                  >
-                    {acc.name.charAt(0).toUpperCase()}
+    <div data-testid="mail-root">
+      <TooltipProvider delayDuration={0}>
+        <WorkspaceShell
+          className="bg-muted dark:bg-[#111111] text-foreground font-sans"
+          header={<WorkspaceHeader />}
+          sidebar={
+            <nav
+              role="navigation"
+              aria-label="Navigation mail"
+              className={cn(
+                "shrink-0 flex flex-col gap-2 overflow-y-auto transition-all duration-200",
+                sidebarCollapsed
+                  ? "w-14 px-1 pt-2 items-center"
+                  : "w-[256px] px-4 pt-4",
+              )}
+            >
+              {/* Account switcher + sidebar toggle */}
+              {!sidebarCollapsed && accounts.length > 0 ? (
+                <div className="flex items-center gap-1">
+                  <div className="flex-1 min-w-0">
+                    <AccountSwitcher isCollapsed={false} accounts={accounts} />
                   </div>
-                ))}
-              </div>
-            )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => setSidebarCollapsed((v) => !v)}
+                    title="Réduire le menu"
+                  >
+                    <PanelLeftClose className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex justify-center">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    onClick={() => setSidebarCollapsed((v) => !v)}
+                    title="Développer le menu"
+                  >
+                    <PanelLeftOpen className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+              {sidebarCollapsed && accounts.length > 0 && (
+                <div className="flex flex-col items-center gap-1 py-1">
+                  {accounts.slice(0, 3).map((acc) => (
+                    <div
+                      key={acc.id}
+                      className={cn(
+                        "h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer transition-colors",
+                        acc.id === activeAccountId
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-accent",
+                      )}
+                      title={acc.email}
+                      onClick={() => setActiveAccountId(acc.id)}
+                    >
+                      {acc.name.charAt(0).toUpperCase()}
+                    </div>
+                  ))}
+                </div>
+              )}
 
-            {/* Compose Buttons */}
-            {!sidebarCollapsed ? (
-              <div className="flex flex-col gap-2">
-                <Button
-                  className="w-fit gap-4 rounded-2xl h-14 shadow-lg font-medium bg-primary/10 hover:bg-primary/20 hover:shadow-xl text-primary transition-all duration-200 justify-start px-6 text-[15px] border-0"
-                  onClick={() => setComposeRichOpen(true)}
-                >
-                  <Pencil className="h-6 w-6 text-primary" />
-                  Nouveau message
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-fit gap-2 rounded-xl h-9 text-sm text-muted-foreground hover:text-foreground justify-start px-4"
-                  onClick={() => setComposeAiOpen(true)}
-                >
-                  <Sparkles className="h-4 w-4 text-purple-500" />
-                  Rédiger avec l&apos;IA
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-1">
-                <Button
-                  size="icon"
-                  className="h-10 w-10 rounded-2xl shadow-md bg-primary/10 hover:bg-primary/20 text-primary border-0"
-                  onClick={() => setComposeRichOpen(true)}
-                  title="Nouveau message"
-                >
-                  <Pencil className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 rounded-xl text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20"
-                  onClick={() => setComposeAiOpen(true)}
-                  title="Rédiger avec l'IA"
-                >
-                  <Sparkles className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
+              {/* Compose Buttons */}
+              {!sidebarCollapsed ? (
+                <div className="flex flex-col gap-2">
+                  <Button
+                    className="w-fit gap-4 rounded-2xl h-14 shadow-lg font-medium bg-primary/10 hover:bg-primary/20 hover:shadow-xl text-primary transition-all duration-200 justify-start px-6 text-[15px] border-0"
+                    onClick={() => setComposeRichOpen(true)}
+                    data-testid="mail-compose-button"
+                  >
+                    <Pencil className="h-6 w-6 text-primary" />
+                    Nouveau message
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-fit gap-2 rounded-xl h-9 text-sm text-muted-foreground hover:text-foreground justify-start px-4"
+                    onClick={() => setComposeAiOpen(true)}
+                    data-testid="mail-compose-ai-button"
+                  >
+                    <Sparkles className="h-4 w-4 text-purple-500" />
+                    Rédiger avec l&apos;IA
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-1">
+                  <Button
+                    size="icon"
+                    className="h-10 w-10 rounded-2xl shadow-md bg-primary/10 hover:bg-primary/20 text-primary border-0"
+                    onClick={() => setComposeRichOpen(true)}
+                    title="Nouveau message"
+                  >
+                    <Pencil className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-xl text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                    onClick={() => setComposeAiOpen(true)}
+                    title="Rédiger avec l'IA"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
 
-            {/* Navigation Links */}
-            <MailNav isCollapsed={sidebarCollapsed} links={navLinks} />
+              {/* Navigation Links */}
+              <MailNav isCollapsed={sidebarCollapsed} links={navLinks} />
 
-            {/* More folders — only in expanded mode */}
-            {!sidebarCollapsed && (
-              <div className="px-2 py-1">
-                <Collapsible>
-                  <CollapsibleTrigger asChild>
-                    <button className="flex items-center gap-3 text-[14px] text-muted-foreground hover:bg-muted dark:hover:bg-gray-800 rounded-r-full px-4 py-2 w-full transition-colors">
-                      <ChevronDown className="h-5 w-5" />
-                      Plus
-                    </button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="flex flex-col gap-0.5 mt-1">
-                    {(
-                      [
-                        {
-                          key: "spam" as const,
-                          label: "Spam",
-                          Icon: ShieldAlert,
-                        },
-                        {
-                          key: "trash" as const,
-                          label: "Corbeille",
-                          Icon: Trash2,
-                        },
-                        {
-                          key: "important" as const,
-                          label: "Important",
-                          Icon: AlertCircle,
-                        },
-                        {
-                          key: "archive" as const,
-                          label: "Tous les messages",
-                          Icon: Archive,
-                        },
-                      ] as const
-                    ).map(({ key, label, Icon }) => (
+              {/* More folders — only in expanded mode */}
+              {!sidebarCollapsed && (
+                <div className="px-2 py-1">
+                  <Collapsible>
+                    <CollapsibleTrigger asChild>
+                      <button className="flex items-center gap-3 text-[14px] text-muted-foreground hover:bg-muted dark:hover:bg-gray-800 rounded-r-full px-4 py-2 w-full transition-colors">
+                        <ChevronDown className="h-5 w-5" />
+                        Plus
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="flex flex-col gap-0.5 mt-1">
+                      {(
+                        [
+                          {
+                            key: "spam" as const,
+                            label: "Spam",
+                            Icon: ShieldAlert,
+                          },
+                          {
+                            key: "trash" as const,
+                            label: "Corbeille",
+                            Icon: Trash2,
+                          },
+                          {
+                            key: "important" as const,
+                            label: "Important",
+                            Icon: AlertCircle,
+                          },
+                          {
+                            key: "archive" as const,
+                            label: "Tous les messages",
+                            Icon: Archive,
+                          },
+                        ] as const
+                      ).map(({ key, label, Icon }) => (
+                        <button
+                          key={key}
+                          onClick={() => handleFolderChange(key)}
+                          className={`flex items-center gap-3 text-[14px] rounded-r-full px-4 py-2 w-full transition-colors ${activeFolder === key ? "bg-primary text-primary-foreground font-medium" : "text-muted-foreground hover:bg-muted dark:hover:bg-gray-800"}`}
+                        >
+                          <Icon className="h-5 w-5" />
+                          {label}
+                        </button>
+                      ))}
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
+              )}
+
+              {/* Idea 32: Smart Folders — only in expanded mode */}
+              {!sidebarCollapsed && (
+                <div className="mt-3 border-t border-border/60 pt-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-4 mb-1">
+                    Dossiers intelligents
+                  </p>
+                  <nav className="flex flex-col gap-0.5">
+                    {[
+                      { key: "factures", label: "Factures", Icon: Receipt },
+                      {
+                        key: "newsletters",
+                        label: "Newsletters",
+                        Icon: Newspaper,
+                      },
+                      { key: "personnel", label: "Personnel", Icon: User },
+                      { key: "projets", label: "Projets", Icon: FolderKanban },
+                    ].map(({ key, label, Icon }) => (
                       <button
                         key={key}
-                        onClick={() => handleFolderChange(key)}
-                        className={`flex items-center gap-3 text-[14px] rounded-r-full px-4 py-2 w-full transition-colors ${activeFolder === key ? "bg-primary text-primary-foreground font-medium" : "text-muted-foreground hover:bg-muted dark:hover:bg-gray-800"}`}
+                        onClick={() => {
+                          setSmartFolderFilter((f) => (f === key ? null : key));
+                          clearSelection();
+                        }}
+                        className={cn(
+                          "flex items-center gap-3 px-6 py-2 text-[13px] rounded-r-full transition-colors text-left",
+                          smartFolderFilter === key
+                            ? "bg-primary/10 text-primary font-semibold"
+                            : "text-foreground/80 hover:bg-muted dark:hover:bg-gray-800",
+                        )}
                       >
-                        <Icon className="h-5 w-5" />
-                        {label}
+                        <Icon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{label}</span>
                       </button>
                     ))}
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
-            )}
+                  </nav>
+                </div>
+              )}
 
-            {/* Idea 32: Smart Folders — only in expanded mode */}
-            {!sidebarCollapsed && (
-              <div className="mt-3 border-t border-border/60 pt-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-4 mb-1">
-                  Dossiers intelligents
-                </p>
-                <nav className="flex flex-col gap-0.5">
-                  {[
-                    { key: "factures", label: "Factures", Icon: Receipt },
-                    {
-                      key: "newsletters",
-                      label: "Newsletters",
-                      Icon: Newspaper,
-                    },
-                    { key: "personnel", label: "Personnel", Icon: User },
-                    { key: "projets", label: "Projets", Icon: FolderKanban },
-                  ].map(({ key, label, Icon }) => (
-                    <button
-                      key={key}
-                      onClick={() => {
-                        setSmartFolderFilter((f) => (f === key ? null : key));
-                        clearSelection();
-                      }}
-                      className={cn(
-                        "flex items-center gap-3 px-6 py-2 text-[13px] rounded-r-full transition-colors text-left",
-                        smartFolderFilter === key
-                          ? "bg-primary/10 text-primary font-semibold"
-                          : "text-foreground/80 hover:bg-muted dark:hover:bg-gray-800",
-                      )}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      <span className="truncate">{label}</span>
-                    </button>
-                  ))}
-                </nav>
-              </div>
-            )}
-
-            {/* Mailing Lists Section — only in expanded mode */}
-            {!sidebarCollapsed && mailingLists.length > 0 && (
-              <div className="mt-3 border-t border-border/60 pt-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-4 mb-1">
-                  Listes de diffusion
-                </p>
-                <nav className="flex flex-col gap-0.5">
-                  {mailingListsLoading ? (
-                    <>
-                      {Array.from({ length: 3 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-3 px-6 py-2"
-                        >
-                          <div className="h-4 w-4 rounded bg-muted animate-pulse" />
-                          <div className="h-3 w-28 rounded bg-muted animate-pulse" />
-                        </div>
-                      ))}
-                    </>
-                  ) : (
-                    mailingLists.slice(0, 10).map((ml) => (
-                      <div
-                        key={ml.list_id}
-                        className="group/ml flex items-center gap-1 pr-1"
-                      >
-                        <button
-                          onClick={() => handleMailingListClick(ml)}
-                          className={cn(
-                            "flex flex-1 items-center gap-3 px-6 py-2 text-[13px] rounded-r-full transition-colors text-left min-w-0",
-                            activeMailingList === ml.list_id
-                              ? "bg-primary/10 text-primary font-semibold"
-                              : "text-foreground/80 hover:bg-muted dark:hover:bg-gray-800",
-                          )}
-                        >
-                          <MailIcon className="h-4 w-4 shrink-0" />
-                          <span className="truncate">{ml.name}</span>
-                          <span className="ml-auto text-[11px] text-muted-foreground shrink-0">
-                            {ml.email_count}
-                          </span>
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleUnsubscribe(ml);
-                          }}
-                          disabled={unsubscribing}
-                          className="opacity-0 group-hover/ml:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10 text-destructive"
-                          title="Se desabonner"
-                        >
-                          <ListX className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </nav>
-              </div>
-            )}
-
-            {/* Labels Section — only in expanded mode */}
-            {!sidebarCollapsed && (
-              <div className="mt-3 border-t border-border/60 pt-4">
-                <button
-                  onClick={toggleLabelsExpanded}
-                  className="flex items-center justify-between w-full px-4 py-1.5 group"
-                >
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Libellés
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <Plus
-                      onClick={openCreateLabelDialog}
-                      className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-muted rounded"
-                    />
-                    {labelsExpanded ? (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </div>
-                </button>
-
-                {labelsExpanded && (
-                  <nav className="mt-2 flex flex-col gap-0.5">
-                    {labelsLoading ? (
+              {/* Mailing Lists Section — only in expanded mode */}
+              {!sidebarCollapsed && mailingLists.length > 0 && (
+                <div className="mt-3 border-t border-border/60 pt-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-4 mb-1">
+                    Listes de diffusion
+                  </p>
+                  <nav className="flex flex-col gap-0.5">
+                    {mailingListsLoading ? (
                       <>
                         {Array.from({ length: 3 }).map((_, i) => (
                           <div
@@ -1483,487 +1410,569 @@ export default function MailPage() {
                           </div>
                         ))}
                       </>
-                    ) : labels.length === 0 ? (
-                      <p className="px-6 py-2 text-[13px] text-muted-foreground">
-                        Aucun libellé
-                      </p>
                     ) : (
-                      labels.map((label) => (
+                      mailingLists.slice(0, 10).map((ml) => (
                         <div
-                          key={label.id}
-                          className="group/label flex items-center gap-1 pr-1"
+                          key={ml.list_id}
+                          className="group/ml flex items-center gap-1 pr-1"
                         >
                           <button
-                            onClick={() => {
-                              setActiveLabelFilter((prev) =>
-                                prev === label.name ? null : label.name,
-                              );
-                              clearSelection();
-                            }}
+                            onClick={() => handleMailingListClick(ml)}
                             className={cn(
-                              "flex flex-1 items-center gap-3 px-6 py-2 text-[13px] rounded-r-full transition-colors text-left",
-                              activeLabelFilter === label.name
+                              "flex flex-1 items-center gap-3 px-6 py-2 text-[13px] rounded-r-full transition-colors text-left min-w-0",
+                              activeMailingList === ml.list_id
                                 ? "bg-primary/10 text-primary font-semibold"
                                 : "text-foreground/80 hover:bg-muted dark:hover:bg-gray-800",
                             )}
                           >
-                            {/* Idea 29: Colored dot next to label */}
-                            <span
-                              className="h-2.5 w-2.5 rounded-full shrink-0 flex-none"
-                              style={{
-                                backgroundColor:
-                                  label.color || "hsl(var(--muted-foreground))",
-                              }}
-                            />
-                            <Tag
-                              className="h-4 w-4"
-                              style={
-                                label.color ? { color: label.color } : undefined
-                              }
-                            />
-                            <span className="truncate">{label.name}</span>
+                            <MailIcon className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{ml.name}</span>
+                            <span className="ml-auto text-[11px] text-muted-foreground shrink-0">
+                              {ml.email_count}
+                            </span>
                           </button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                className="opacity-0 group-hover/label:opacity-100 transition-opacity p-1 rounded hover:bg-muted"
-                                title="Options du libellé"
-                              >
-                                <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40">
-                              <DropdownMenuItem
-                                onClick={() => openEditLabelDialog(label)}
-                              >
-                                <Pencil className="h-3.5 w-3.5 mr-2" />
-                                Renommer
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteLabel(label)}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="h-3.5 w-3.5 mr-2" />
-                                Supprimer
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUnsubscribe(ml);
+                            }}
+                            disabled={unsubscribing}
+                            className="opacity-0 group-hover/ml:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10 text-destructive"
+                            title="Se desabonner"
+                          >
+                            <ListX className="h-4 w-4" />
+                          </button>
                         </div>
                       ))
                     )}
                   </nav>
-                )}
-              </div>
-            )}
-
-            {/* C2: Calendar drop zone */}
-            <div className="mt-auto px-4 pb-4 pt-2">
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setCalDropOver(true);
-                }}
-                onDragLeave={() => setCalDropOver(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setCalDropOver(false);
-                  const raw = e.dataTransfer.getData(
-                    "application/signapps-email",
-                  );
-                  if (!raw) return;
-                  try {
-                    const data = JSON.parse(raw);
-                    setCalDropMailData(data);
-                    setCalDropEventOpen(true);
-                  } catch {
-                    /* ignore */
-                  }
-                }}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed transition-colors py-3 px-2 text-center",
-                  calDropOver
-                    ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                    : "border-border/60 text-muted-foreground",
-                )}
-              >
-                <CalendarPlus className="h-5 w-5" />
-                <span className="text-[11px] font-medium leading-tight">
-                  Glisser un email
-                  <br />
-                  pour créer un événement
-                </span>
-              </div>
-            </div>
-          </nav>
-        }
-      >
-        {/* C2: EmailToEventDialog triggered from drag-drop */}
-        {calDropMailData && (
-          <EmailToEventDialog
-            open={calDropEventOpen}
-            onOpenChange={(v) => {
-              setCalDropEventOpen(v);
-              if (!v) setCalDropMailData(null);
-            }}
-            mail={{
-              id: calDropMailData.id,
-              name: calDropMailData.sender,
-              email: calDropMailData.sender,
-              subject: calDropMailData.subject,
-              text: "",
-              date: calDropMailData.date,
-              read: true,
-              labels: [],
-              folder: "inbox" as const,
-            }}
-          />
-        )}
-        {/* Unified inbox toggle — shown when multiple accounts */}
-        {accounts.length > 1 && (
-          <div className="flex items-center gap-2 px-2 pb-1">
-            <button
-              onClick={() => setUnifiedView((v) => !v)}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium border transition-all",
-                unifiedView
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground",
-              )}
-            >
-              {unifiedView ? "Vue unifiée" : "Par compte"}
-            </button>
-            <span className="text-xs text-muted-foreground">
-              {unifiedView
-                ? "Toutes les boîtes fusionnées"
-                : `${accounts.length} comptes`}
-            </span>
-          </div>
-        )}
-
-        {/* Unified inbox panel (when unified view is active) */}
-        {unifiedView && accounts.length > 1 && (
-          <div className="flex-1 bg-background dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0">
-            <UnifiedInbox />
-          </div>
-        )}
-
-        {/* Content Area (List + Display) — hidden when unified view is active */}
-        {(!unifiedView || accounts.length <= 1) && (
-          <div
-            ref={splitContainerRef}
-            className={cn(
-              "flex-1 flex bg-background dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0 relative",
-              // Idea 15: split-pane on wide screens when email is selected
-              isWide && selectedId ? "flex-row" : "flex-col",
-            )}
-          >
-            {/* Left pane: search + list + filter chips */}
-            <div
-              className={cn(
-                "flex flex-col",
-                isWide && selectedId ? "shrink-0" : "flex-1",
-              )}
-              style={
-                isWide && selectedId ? { width: mailListWidth } : undefined
-              }
-            >
-              {/* Search bar + density switcher */}
-              <div className="px-4 py-2 border-b border-border dark:border-[#333] flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                  <Input
-                    ref={searchInputRef}
-                    className="pl-9 pr-8 h-9 rounded-full bg-muted dark:bg-[#303134] border-0 focus-visible:ring-1"
-                    placeholder="Rechercher… (from: to: has:attachment is:unread after:YYYY-MM)"
-                    aria-label="Rechercher dans les emails"
-                    value={searchQuery}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    disabled={isSearching}
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => {
-                        setSearchQuery("");
-                        setSearchResults(null);
-                      }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
                 </div>
-                {/* Idea 16: Density switcher */}
-                <div className="flex items-center gap-0.5 border border-border rounded-lg p-0.5 shrink-0">
-                  {(["compact", "default", "spacious"] as Density[]).map(
-                    (d) => (
-                      <button
-                        key={d}
-                        onClick={() => setDensityPref(d)}
-                        title={
-                          d === "compact"
-                            ? "Compact"
-                            : d === "spacious"
-                              ? "Spacieux"
-                              : "Normal"
-                        }
-                        className={cn(
-                          "px-2 py-1 rounded text-[11px] font-medium transition-colors",
-                          density === d
-                            ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted",
-                        )}
-                      >
-                        {d === "compact" ? "S" : d === "default" ? "M" : "L"}
-                      </button>
-                    ),
-                  )}
-                </div>
-              </div>
+              )}
 
-              {/* Idea 17: Filter chips */}
-              <div className="px-3 py-2 border-b border-border/60 dark:border-gray-800/60 flex items-center gap-1.5 overflow-x-auto scrollbar-hide flex-shrink-0">
-                {filterChips.map((chip) => (
+              {/* Labels Section — only in expanded mode */}
+              {!sidebarCollapsed && (
+                <div className="mt-3 border-t border-border/60 pt-4">
                   <button
-                    key={chip.key}
-                    onClick={() => toggleFilter(chip.key)}
-                    className={cn(
-                      "px-3 py-1 rounded-full text-[12px] font-medium whitespace-nowrap transition-all border",
-                      activeFilters.has(chip.key)
-                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                        : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground",
-                    )}
+                    onClick={toggleLabelsExpanded}
+                    className="flex items-center justify-between w-full px-4 py-1.5 group"
                   >
-                    {chip.label}
-                  </button>
-                ))}
-              </div>
-
-              {isLoading ? (
-                <div className="flex-1 flex flex-col gap-2 p-3">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="flex items-start gap-3 p-3 rounded-lg border border-border/40"
-                    >
-                      <Skeleton className="h-8 w-8 rounded-full shrink-0" />
-                      <div className="flex-1 space-y-1.5">
-                        <Skeleton className="h-3.5 w-1/3" />
-                        <Skeleton className="h-3 w-2/3" />
-                        <Skeleton className="h-3 w-full" />
-                      </div>
-                      <Skeleton className="h-3 w-10 shrink-0" />
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Libellés
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <Plus
+                        onClick={openCreateLabelDialog}
+                        className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-muted rounded"
+                      />
+                      {labelsExpanded ? (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      )}
                     </div>
-                  ))}
+                  </button>
+
+                  {labelsExpanded && (
+                    <nav className="mt-2 flex flex-col gap-0.5">
+                      {labelsLoading ? (
+                        <>
+                          {Array.from({ length: 3 }).map((_, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-3 px-6 py-2"
+                            >
+                              <div className="h-4 w-4 rounded bg-muted animate-pulse" />
+                              <div className="h-3 w-28 rounded bg-muted animate-pulse" />
+                            </div>
+                          ))}
+                        </>
+                      ) : labels.length === 0 ? (
+                        <p className="px-6 py-2 text-[13px] text-muted-foreground">
+                          Aucun libellé
+                        </p>
+                      ) : (
+                        labels.map((label) => (
+                          <div
+                            key={label.id}
+                            className="group/label flex items-center gap-1 pr-1"
+                          >
+                            <button
+                              onClick={() => {
+                                setActiveLabelFilter((prev) =>
+                                  prev === label.name ? null : label.name,
+                                );
+                                clearSelection();
+                              }}
+                              className={cn(
+                                "flex flex-1 items-center gap-3 px-6 py-2 text-[13px] rounded-r-full transition-colors text-left",
+                                activeLabelFilter === label.name
+                                  ? "bg-primary/10 text-primary font-semibold"
+                                  : "text-foreground/80 hover:bg-muted dark:hover:bg-gray-800",
+                              )}
+                            >
+                              {/* Idea 29: Colored dot next to label */}
+                              <span
+                                className="h-2.5 w-2.5 rounded-full shrink-0 flex-none"
+                                style={{
+                                  backgroundColor:
+                                    label.color ||
+                                    "hsl(var(--muted-foreground))",
+                                }}
+                              />
+                              <Tag
+                                className="h-4 w-4"
+                                style={
+                                  label.color
+                                    ? { color: label.color }
+                                    : undefined
+                                }
+                              />
+                              <span className="truncate">{label.name}</span>
+                            </button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  className="opacity-0 group-hover/label:opacity-100 transition-opacity p-1 rounded hover:bg-muted"
+                                  title="Options du libellé"
+                                >
+                                  <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuItem
+                                  onClick={() => openEditLabelDialog(label)}
+                                >
+                                  <Pencil className="h-3.5 w-3.5 mr-2" />
+                                  Renommer
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteLabel(label)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                  Supprimer
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        ))
+                      )}
+                    </nav>
+                  )}
                 </div>
-              ) : loadError ? (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                  <Inbox className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                  <h3 className="text-base font-medium text-muted-foreground mb-1">
-                    Service mail indisponible
-                  </h3>
-                  <p className="text-sm text-muted-foreground/70 max-w-sm mb-4">
-                    {loadError}
-                  </p>
-                  <Button variant="outline" size="sm" onClick={loadData}>
-                    Réessayer
-                  </Button>
-                </div>
-              ) : (
-                /* Idea 16: density class wrapper */
+              )}
+
+              {/* C2: Calendar drop zone */}
+              <div className="mt-auto px-4 pb-4 pt-2">
                 <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setCalDropOver(true);
+                  }}
+                  onDragLeave={() => setCalDropOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setCalDropOver(false);
+                    const raw = e.dataTransfer.getData(
+                      "application/signapps-email",
+                    );
+                    if (!raw) return;
+                    try {
+                      const data = JSON.parse(raw);
+                      setCalDropMailData(data);
+                      setCalDropEventOpen(true);
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
                   className={cn(
-                    "flex-1 flex flex-col overflow-hidden",
-                    getDensityClass(density),
+                    "flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed transition-colors py-3 px-2 text-center",
+                    calDropOver
+                      ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                      : "border-border/60 text-muted-foreground",
                   )}
                 >
-                  {/* PW2: cached indicator */}
-                  {fromCache && (
-                    <div className="px-3 py-1 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 flex items-center gap-1">
-                      <span>Cache hors-ligne</span>
-                      <span className="text-muted-foreground">
-                        — reconnectez-vous pour actualiser
-                      </span>
-                    </div>
-                  )}
-                  {/* Mailing list unsubscribe bar */}
-                  {activeMailingList &&
-                    (() => {
-                      const ml = mailingLists.find(
-                        (m) => m.list_id === activeMailingList,
-                      );
-                      return ml ? (
-                        <div className="px-3 py-2 text-sm bg-orange-50 dark:bg-orange-900/20 border-b border-orange-200 dark:border-orange-800 flex items-center gap-2">
-                          <MailIcon className="h-4 w-4 text-orange-600 dark:text-orange-400 shrink-0" />
-                          <span className="text-orange-700 dark:text-orange-300 truncate">
-                            Liste : <strong>{ml.name}</strong> ({ml.email_count}{" "}
-                            emails)
-                          </span>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="ml-auto gap-1.5 shrink-0"
-                            disabled={unsubscribing}
-                            onClick={() => handleUnsubscribe(ml)}
-                          >
-                            <ListX className="h-4 w-4" />
-                            {unsubscribing ? "Traitement..." : "Se desabonner"}
-                          </Button>
-                        </div>
-                      ) : null;
-                    })()}
-                  <MailList
-                    items={filteredMailList}
-                    selectedId={selectedId}
-                    onSelect={handleSelectMail}
-                    onSnooze={handleSnooze}
-                    onArchive={handleArchive}
-                    onDelete={handleDelete}
-                    onStar={handleStar}
-                    onMarkUnread={handleMarkUnread}
-                    onReportSpam={handleReportSpam}
-                    starredIds={starredIds}
-                    checkedIds={checkedIds}
-                    onToggleChecked={toggleChecked}
-                    onToggleCheckAll={toggleCheckAll}
-                    isSearchActive={searchResults !== null}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Resize handle between list and display */}
-            {isWide && selectedId && (
-              <div
-                role="separator"
-                aria-orientation="vertical"
-                aria-label="Redimensionner le panneau"
-                className="shrink-0 w-[5px] cursor-col-resize relative group/resize border-r border-border/60 dark:border-gray-800/60 hover:border-primary/50 active:border-primary transition-colors"
-                onMouseDown={handleResizeMouseDown}
-              >
-                {/* Visual grip dots */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col gap-[3px] opacity-0 group-hover/resize:opacity-100 transition-opacity">
-                  <span className="block w-[3px] h-[3px] rounded-full bg-muted-foreground/50" />
-                  <span className="block w-[3px] h-[3px] rounded-full bg-muted-foreground/50" />
-                  <span className="block w-[3px] h-[3px] rounded-full bg-muted-foreground/50" />
-                  <span className="block w-[3px] h-[3px] rounded-full bg-muted-foreground/50" />
-                  <span className="block w-[3px] h-[3px] rounded-full bg-muted-foreground/50" />
+                  <CalendarPlus className="h-5 w-5" />
+                  <span className="text-[11px] font-medium leading-tight">
+                    Glisser un email
+                    <br />
+                    pour créer un événement
+                  </span>
                 </div>
               </div>
-            )}
+            </nav>
+          }
+        >
+          {/* C2: EmailToEventDialog triggered from drag-drop */}
+          {calDropMailData && (
+            <EmailToEventDialog
+              open={calDropEventOpen}
+              onOpenChange={(v) => {
+                setCalDropEventOpen(v);
+                if (!v) setCalDropMailData(null);
+              }}
+              mail={{
+                id: calDropMailData.id,
+                name: calDropMailData.sender,
+                email: calDropMailData.sender,
+                subject: calDropMailData.subject,
+                text: "",
+                date: calDropMailData.date,
+                read: true,
+                labels: [],
+                folder: "inbox" as const,
+              }}
+            />
+          )}
+          {/* Unified inbox toggle — shown when multiple accounts */}
+          {accounts.length > 1 && (
+            <div className="flex items-center gap-2 px-2 pb-1">
+              <button
+                onClick={() => setUnifiedView((v) => !v)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium border transition-all",
+                  unifiedView
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground",
+                )}
+              >
+                {unifiedView ? "Vue unifiée" : "Par compte"}
+              </button>
+              <span className="text-xs text-muted-foreground">
+                {unifiedView
+                  ? "Toutes les boîtes fusionnées"
+                  : `${accounts.length} comptes`}
+              </span>
+            </div>
+          )}
 
-            {/* Right pane / full-screen view on narrow screens */}
-            {selectedId && (
+          {/* Unified inbox panel (when unified view is active) */}
+          {unifiedView && accounts.length > 1 && (
+            <div className="flex-1 bg-background dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0">
+              <UnifiedInbox />
+            </div>
+          )}
+
+          {/* Content Area (List + Display) — hidden when unified view is active */}
+          {(!unifiedView || accounts.length <= 1) && (
+            <div
+              ref={splitContainerRef}
+              className={cn(
+                "flex-1 flex bg-background dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0 relative",
+                // Idea 15: split-pane on wide screens when email is selected
+                isWide && selectedId ? "flex-row" : "flex-col",
+              )}
+            >
+              {/* Left pane: search + list + filter chips */}
               <div
                 className={cn(
                   "flex flex-col",
-                  isWide
-                    ? "flex-1 overflow-y-auto"
-                    : "absolute inset-0 bg-background dark:bg-[#1f1f1f] z-10 flex flex-col",
+                  isWide && selectedId ? "shrink-0" : "flex-1",
                 )}
+                style={
+                  isWide && selectedId ? { width: mailListWidth } : undefined
+                }
               >
-                {/* Back button — always shown for accessibility, hidden on wide split view */}
-                {!isWide && (
-                  <div className="p-2 border-b flex items-center bg-background dark:bg-[#1f1f1f] sticky top-0 z-10 w-full">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearSelection}
-                      className="gap-2 rounded-full hover:bg-muted dark:hover:bg-gray-800"
+                {/* Search bar + density switcher */}
+                <div className="px-4 py-2 border-b border-border dark:border-[#333] flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <Input
+                      ref={searchInputRef}
+                      className="pl-9 pr-8 h-9 rounded-full bg-muted dark:bg-[#303134] border-0 focus-visible:ring-1"
+                      placeholder="Rechercher… (from: to: has:attachment is:unread after:YYYY-MM)"
+                      aria-label="Rechercher dans les emails"
+                      value={searchQuery}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      disabled={isSearching}
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => {
+                          setSearchQuery("");
+                          setSearchResults(null);
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  {/* Idea 16: Density switcher */}
+                  <div className="flex items-center gap-0.5 border border-border rounded-lg p-0.5 shrink-0">
+                    {(["compact", "default", "spacious"] as Density[]).map(
+                      (d) => (
+                        <button
+                          key={d}
+                          onClick={() => setDensityPref(d)}
+                          title={
+                            d === "compact"
+                              ? "Compact"
+                              : d === "spacious"
+                                ? "Spacieux"
+                                : "Normal"
+                          }
+                          className={cn(
+                            "px-2 py-1 rounded text-[11px] font-medium transition-colors",
+                            density === d
+                              ? "bg-primary text-primary-foreground"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                          )}
+                        >
+                          {d === "compact" ? "S" : d === "default" ? "M" : "L"}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </div>
+
+                {/* Idea 17: Filter chips */}
+                <div className="px-3 py-2 border-b border-border/60 dark:border-gray-800/60 flex items-center gap-1.5 overflow-x-auto scrollbar-hide flex-shrink-0">
+                  {filterChips.map((chip) => (
+                    <button
+                      key={chip.key}
+                      onClick={() => toggleFilter(chip.key)}
+                      className={cn(
+                        "px-3 py-1 rounded-full text-[12px] font-medium whitespace-nowrap transition-all border",
+                        activeFilters.has(chip.key)
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                          : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground",
+                      )}
                     >
-                      &larr; Retour
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+
+                {isLoading ? (
+                  <div className="flex-1 flex flex-col gap-2 p-3">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="flex items-start gap-3 p-3 rounded-lg border border-border/40"
+                      >
+                        <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                        <div className="flex-1 space-y-1.5">
+                          <Skeleton className="h-3.5 w-1/3" />
+                          <Skeleton className="h-3 w-2/3" />
+                          <Skeleton className="h-3 w-full" />
+                        </div>
+                        <Skeleton className="h-3 w-10 shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                ) : loadError ? (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                    <Inbox className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                    <h3 className="text-base font-medium text-muted-foreground mb-1">
+                      Service mail indisponible
+                    </h3>
+                    <p className="text-sm text-muted-foreground/70 max-w-sm mb-4">
+                      {loadError}
+                    </p>
+                    <Button variant="outline" size="sm" onClick={loadData}>
+                      Réessayer
                     </Button>
                   </div>
+                ) : (
+                  /* Idea 16: density class wrapper */
+                  <div
+                    className={cn(
+                      "flex-1 flex flex-col overflow-hidden",
+                      getDensityClass(density),
+                    )}
+                  >
+                    {/* PW2: cached indicator */}
+                    {fromCache && (
+                      <div className="px-3 py-1 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                        <span>Cache hors-ligne</span>
+                        <span className="text-muted-foreground">
+                          — reconnectez-vous pour actualiser
+                        </span>
+                      </div>
+                    )}
+                    {/* Mailing list unsubscribe bar */}
+                    {activeMailingList &&
+                      (() => {
+                        const ml = mailingLists.find(
+                          (m) => m.list_id === activeMailingList,
+                        );
+                        return ml ? (
+                          <div className="px-3 py-2 text-sm bg-orange-50 dark:bg-orange-900/20 border-b border-orange-200 dark:border-orange-800 flex items-center gap-2">
+                            <MailIcon className="h-4 w-4 text-orange-600 dark:text-orange-400 shrink-0" />
+                            <span className="text-orange-700 dark:text-orange-300 truncate">
+                              Liste : <strong>{ml.name}</strong> (
+                              {ml.email_count} emails)
+                            </span>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="ml-auto gap-1.5 shrink-0"
+                              disabled={unsubscribing}
+                              onClick={() => handleUnsubscribe(ml)}
+                            >
+                              <ListX className="h-4 w-4" />
+                              {unsubscribing
+                                ? "Traitement..."
+                                : "Se desabonner"}
+                            </Button>
+                          </div>
+                        ) : null;
+                      })()}
+                    <MailList
+                      items={filteredMailList}
+                      selectedId={selectedId}
+                      onSelect={handleSelectMail}
+                      onSnooze={handleSnooze}
+                      onArchive={handleArchive}
+                      onDelete={handleDelete}
+                      onStar={handleStar}
+                      onMarkUnread={handleMarkUnread}
+                      onReportSpam={handleReportSpam}
+                      starredIds={starredIds}
+                      checkedIds={checkedIds}
+                      onToggleChecked={toggleChecked}
+                      onToggleCheckAll={toggleCheckAll}
+                      isSearchActive={searchResults !== null}
+                    />
+                  </div>
                 )}
-                <div className={cn("flex-1", !isWide && "overflow-y-auto")}>
-                  <MailDisplay
-                    mail={selectedMail}
-                    onSnooze={handleSnooze}
-                    onArchive={handleArchive}
-                    onDelete={handleDelete}
-                    onMarkUnread={handleMarkUnread}
-                    onMarkRead={handleMarkRead}
-                    onReportSpam={handleReportSpam}
-                    accountId={activeAccountId}
-                    allMails={filteredMailList}
-                    onSelectMail={handleSelectMail}
+              </div>
+
+              {/* Resize handle between list and display */}
+              {isWide && selectedId && (
+                <div
+                  role="separator"
+                  aria-orientation="vertical"
+                  aria-label="Redimensionner le panneau"
+                  className="shrink-0 w-[5px] cursor-col-resize relative group/resize border-r border-border/60 dark:border-gray-800/60 hover:border-primary/50 active:border-primary transition-colors"
+                  onMouseDown={handleResizeMouseDown}
+                >
+                  {/* Visual grip dots */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col gap-[3px] opacity-0 group-hover/resize:opacity-100 transition-opacity">
+                    <span className="block w-[3px] h-[3px] rounded-full bg-muted-foreground/50" />
+                    <span className="block w-[3px] h-[3px] rounded-full bg-muted-foreground/50" />
+                    <span className="block w-[3px] h-[3px] rounded-full bg-muted-foreground/50" />
+                    <span className="block w-[3px] h-[3px] rounded-full bg-muted-foreground/50" />
+                    <span className="block w-[3px] h-[3px] rounded-full bg-muted-foreground/50" />
+                  </div>
+                </div>
+              )}
+
+              {/* Right pane / full-screen view on narrow screens */}
+              {selectedId && (
+                <div
+                  className={cn(
+                    "flex flex-col",
+                    isWide
+                      ? "flex-1 overflow-y-auto"
+                      : "absolute inset-0 bg-background dark:bg-[#1f1f1f] z-10 flex flex-col",
+                  )}
+                >
+                  {/* Back button — always shown for accessibility, hidden on wide split view */}
+                  {!isWide && (
+                    <div className="p-2 border-b flex items-center bg-background dark:bg-[#1f1f1f] sticky top-0 z-10 w-full">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearSelection}
+                        className="gap-2 rounded-full hover:bg-muted dark:hover:bg-gray-800"
+                      >
+                        &larr; Retour
+                      </Button>
+                    </div>
+                  )}
+                  <div className={cn("flex-1", !isWide && "overflow-y-auto")}>
+                    <MailDisplay
+                      mail={selectedMail}
+                      onSnooze={handleSnooze}
+                      onArchive={handleArchive}
+                      onDelete={handleDelete}
+                      onMarkUnread={handleMarkUnread}
+                      onMarkRead={handleMarkRead}
+                      onReportSpam={handleReportSpam}
+                      accountId={activeAccountId}
+                      allMails={filteredMailList}
+                      onSelectMail={handleSelectMail}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </WorkspaceShell>
+
+        <ComposeAiDialog
+          open={composeAiOpen}
+          onOpenChange={setComposeAiOpen}
+          accountId={activeAccountId}
+        />
+        <ComposeRichDialog
+          open={composeRichOpen}
+          onOpenChange={(v) => {
+            setComposeRichOpen(v);
+            if (!v) setComposeReplyTo(undefined);
+          }}
+          accountId={activeAccountId}
+          replyTo={composeReplyTo}
+        />
+
+        {/* Label create / edit dialog */}
+        <Dialog open={labelDialogOpen} onOpenChange={setLabelDialogOpen}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>
+                {labelDialogMode === "create"
+                  ? "Nouveau libellé"
+                  : "Modifier le libellé"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Nom</label>
+                <Input
+                  autoFocus
+                  value={labelDialogName}
+                  onChange={(e) => setLabelDialogName(e.target.value)}
+                  placeholder="Nom du libellé…"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleLabelDialogSave();
+                  }}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Couleur</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={labelDialogColor}
+                    onChange={(e) => setLabelDialogColor(e.target.value)}
+                    className="h-8 w-14 cursor-pointer rounded border border-input bg-background p-0.5"
                   />
+                  <span className="text-sm text-muted-foreground">
+                    {labelDialogColor}
+                  </span>
                 </div>
               </div>
-            )}
-          </div>
-        )}
-      </WorkspaceShell>
-
-      <ComposeAiDialog
-        open={composeAiOpen}
-        onOpenChange={setComposeAiOpen}
-        accountId={activeAccountId}
-      />
-      <ComposeRichDialog
-        open={composeRichOpen}
-        onOpenChange={(v) => {
-          setComposeRichOpen(v);
-          if (!v) setComposeReplyTo(undefined);
-        }}
-        accountId={activeAccountId}
-        replyTo={composeReplyTo}
-      />
-
-      {/* Label create / edit dialog */}
-      <Dialog open={labelDialogOpen} onOpenChange={setLabelDialogOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>
-              {labelDialogMode === "create"
-                ? "Nouveau libellé"
-                : "Modifier le libellé"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Nom</label>
-              <Input
-                autoFocus
-                value={labelDialogName}
-                onChange={(e) => setLabelDialogName(e.target.value)}
-                placeholder="Nom du libellé…"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleLabelDialogSave();
-                }}
-              />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Couleur</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={labelDialogColor}
-                  onChange={(e) => setLabelDialogColor(e.target.value)}
-                  className="h-8 w-14 cursor-pointer rounded border border-input bg-background p-0.5"
-                />
-                <span className="text-sm text-muted-foreground">
-                  {labelDialogColor}
-                </span>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setLabelDialogOpen(false)}
-              disabled={labelDialogSaving}
-            >
-              Annuler
-            </Button>
-            <Button
-              onClick={handleLabelDialogSave}
-              disabled={labelDialogSaving || !labelDialogName.trim()}
-            >
-              {labelDialogSaving ? "Sauvegarde…" : "Sauvegarder"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </TooltipProvider>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setLabelDialogOpen(false)}
+                disabled={labelDialogSaving}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleLabelDialogSave}
+                disabled={labelDialogSaving || !labelDialogName.trim()}
+              >
+                {labelDialogSaving ? "Sauvegarde…" : "Sauvegarder"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </TooltipProvider>
+    </div>
   );
 }

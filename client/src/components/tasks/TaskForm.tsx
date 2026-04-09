@@ -67,7 +67,7 @@ export function TaskForm({
   const availabilitySlots = useCalendarAvailability(assigneeEmail);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -84,7 +84,9 @@ export function TaskForm({
         title: formData.title || "Untitled Task",
         description: formData.description || undefined,
         priority: parseInt(formData.priority),
-        due_date: formData.due_date ? new Date(formData.due_date).toISOString() : undefined,
+        due_date: formData.due_date
+          ? new Date(formData.due_date).toISOString()
+          : undefined,
         assignee_id: formData.assignee_id || undefined,
         reminder_enabled: formData.reminder_enabled,
       };
@@ -92,15 +94,24 @@ export function TaskForm({
       await createTask(createData);
       toast.success("Tâche créée avec succès", {
         action: {
-          label: 'Voir',
-          onClick: () => router.push('/tasks'),
+          label: "Voir",
+          onClick: () => router.push("/tasks"),
         },
       });
       onOpenChange(false);
-      setFormData({ title: "", description: "", priority: "1", due_date: "", assignee_id: null, reminder_enabled: false });
+      setFormData({
+        title: "",
+        description: "",
+        priority: "1",
+        due_date: "",
+        assignee_id: null,
+        reminder_enabled: false,
+      });
       onTaskCreated?.();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Une erreur est survenue");
+      toast.error(
+        error instanceof Error ? error.message : "Une erreur est survenue",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -108,7 +119,10 @@ export function TaskForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent
+        data-testid="task-form-dialog"
+        className="sm:max-w-[500px]"
+      >
         <DialogHeader>
           <DialogTitle>Créer une tâche</DialogTitle>
           <DialogDescription>
@@ -125,6 +139,7 @@ export function TaskForm({
             <Input
               id="title"
               name="title"
+              data-testid="task-form-title-input"
               placeholder="Titre de la tâche"
               value={formData.title}
               onChange={handleInputChange}
@@ -149,9 +164,12 @@ export function TaskForm({
           {/* Priority */}
           <div className="space-y-2">
             <Label htmlFor="priority">Priorité</Label>
-            <Select value={formData.priority} onValueChange={(val) => {
-              setFormData((prev) => ({ ...prev, priority: val }));
-            }}>
+            <Select
+              value={formData.priority}
+              onValueChange={(val) => {
+                setFormData((prev) => ({ ...prev, priority: val }));
+              }}
+            >
               <SelectTrigger id="priority">
                 <SelectValue />
               </SelectTrigger>
@@ -191,7 +209,12 @@ export function TaskForm({
             {/* Feature 24: Show next free slot */}
             {availabilitySlots.length > 0 && (
               <p className="text-xs text-muted-foreground">
-                Prochain créneau libre : {new Date(availabilitySlots[0].start).toLocaleString("fr-FR", { weekday: "short", hour: "2-digit", minute: "2-digit" })}
+                Prochain créneau libre :{" "}
+                {new Date(availabilitySlots[0].start).toLocaleString("fr-FR", {
+                  weekday: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </p>
             )}
           </div>
@@ -206,7 +229,10 @@ export function TaskForm({
                 id="reminder"
                 checked={formData.reminder_enabled}
                 onCheckedChange={(checked) =>
-                  setFormData((prev) => ({ ...prev, reminder_enabled: checked }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    reminder_enabled: checked,
+                  }))
                 }
               />
             </div>
@@ -221,7 +247,11 @@ export function TaskForm({
             >
               Annuler
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              data-testid="task-form-submit"
+              type="submit"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Création..." : "Créer la tâche"}
             </Button>
           </DialogFooter>

@@ -1,2 +1,25 @@
 #!/bin/sh
-cd client && npx lint-staged
+# Husky pre-commit hook
+# 1. Frontend lint-staged (eslint, prettier, tsc on staged files)
+# 2. Rust license policy check (only if Cargo.toml / Cargo.lock / deny.toml touched)
+#    Policy: usage commercial illimité uniquement — voir deny.toml et
+#    memory/feedback_license_policy.md
+set -e
+
+# --- 1. Frontend lint-staged ---
+(cd client && npx lint-staged)
+
+# --- 2. Rust license policy check ---
+CARGO_CHANGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '(^|/)Cargo\.(toml|lock)$|^deny\.toml$' || true)
+if [ -n "$CARGO_CHANGED" ]; then
+    echo "Cargo.toml/Cargo.lock/deny.toml modified — running cargo deny check licenses..."
+    if ! cargo deny check licenses 2>&1; then
+        echo ""
+        echo "LICENSE CHECK FAILED: a dependency uses a forbidden license."
+        echo "Policy: permissive licenses + MPL-2.0 (as consumer) only."
+        echo "Forbidden: GPL/AGPL/LGPL/SSPL/BSL/Elastic/Commons-Clause."
+        echo "See deny.toml and memory/feedback_license_policy.md for details."
+        exit 1
+    fi
+    echo "License check passed."
+fi
