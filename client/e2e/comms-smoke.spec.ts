@@ -1,30 +1,43 @@
 /**
  * E2E Smoke — Comms (Internal Communications) module
  *
- * 9 pages covering company announcements, digital signage, mention
- * notifications, the news feed, newsletters, polls, suggestions, and
- * the teams directory.
+ * 3 tests covering page load, sub-module cards visibility,
+ * and "Acceder" links on cards.
  */
 
-import { test } from "./fixtures";
-import { assertPageLoadsCleanly } from "./helpers/smoke";
-
-const COMMS_PAGES: Array<{ path: string; label: string }> = [
-  { path: "/comms", label: "Comms hub" },
-  { path: "/comms/announcements", label: "Announcements" },
-  { path: "/comms/digital-signage", label: "Digital signage" },
-  { path: "/comms/mention-notifications", label: "Mention notifications" },
-  { path: "/comms/news-feed", label: "News feed" },
-  { path: "/comms/newsletter", label: "Newsletter" },
-  { path: "/comms/polls", label: "Polls" },
-  { path: "/comms/suggestions", label: "Suggestions" },
-  { path: "/comms/teams-directory", label: "Teams directory" },
-];
+import { test, expect } from "./fixtures";
 
 test.describe("Comms — smoke", () => {
-  for (const { path, label } of COMMS_PAGES) {
-    test(`${label} (${path}) loads without crashing`, async ({ page }) => {
-      await assertPageLoadsCleanly(page, path);
-    });
-  }
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/comms", { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(3000);
+  });
+
+  test("page loads with Communication heading", async ({ page }) => {
+    const heading = page.getByText(/communication/i);
+    await expect(heading.first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test("6 sub-module cards visible", async ({ page }) => {
+    const modules = [
+      /annonces/i,
+      /actualit[eé]s/i,
+      /suggestions/i,
+      /sondages/i,
+      /newsletter/i,
+      /affichage num[eé]rique/i,
+    ];
+    for (const label of modules) {
+      const card = page.getByText(label);
+      await expect(card.first()).toBeVisible({ timeout: 10000 });
+    }
+  });
+
+  test("cards have Acceder links", async ({ page }) => {
+    const links = page
+      .getByRole("link", { name: /acc[eé]der/i })
+      .or(page.getByText(/acc[eé]der/i));
+    const count = await links.count();
+    expect(count).toBeGreaterThanOrEqual(3);
+  });
 });

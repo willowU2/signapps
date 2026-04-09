@@ -116,6 +116,21 @@ UI et contenus dans au moins : français, anglais, espagnol, allemand, italien, 
 | 37 | **Media Tools (Outils Média)** — OCR, TTS, STT, vidéo, éditeur images, encodage | [37-media-tools.md](37-media-tools.md) | ✅ |
 | 38 | **Print & Physical (Impression)** — cartes visite, certificats, étiquettes, badges, en-tête | [38-print.md](38-print.md) | ✅ |
 | 39 | **Containers (Conteneurs)** — Docker management, images, volumes, logs, stats, stacks | [39-containers.md](39-containers.md) | ✅ |
+| 48 | **App Shell & Launcher** — navigation hub, sidebar, command palette, mobile bottom nav, quick actions | [48-app-shell.md](48-app-shell.md) | ✅ |
+| 49 | **App Store** — marketplace self-hosted apps, Docker install, sources, lifecycle management | [49-app-store.md](49-app-store.md) | ✅ |
+| 50 | **Corbeille globale (Trash)** — corbeille unifiee cross-module, retention, purge, RGPD | [50-trash.md](50-trash.md) | ✅ |
+| 51 | **Favoris (Bookmarks)** — favoris cross-module, collections, tags, etoile depuis tout module | [51-bookmarks.md](51-bookmarks.md) | ✅ |
+| 52 | **Centre d'aide (Help)** — FAQ par categorie, health check services, support ticket, assistant IA | [52-help.md](52-help.md) | ✅ |
+| 53 | **Hub Equipe & Organigramme (Team)** — organigramme hierarchique, annuaire, vues multi-axes | [53-team.md](53-team.md) | ✅ |
+| 54 | **Status Page** — uptime global, latence par service, incidents, maintenance planifiee, badges | [54-status-page.md](54-status-page.md) | ✅ |
+| 55 | **Gestion des Ressources (Resources)** — salles, equipements, vehicules, reservation, calendrier | [55-resources.md](55-resources.md) | ✅ |
+| 56 | **Planificateur CRON (Scheduler)** — taches planifiees, cron visuel, execution, retry, audit | [56-scheduler.md](56-scheduler.md) | ✅ |
+| 57 | **Communication interne (Comms)** — annonces, actualites, suggestions, sondages, newsletter, affichage numerique | [57-comms.md](57-comms.md) | ✅ |
+| 58 | **Outils (Tools)** — import/export CSV/ODS, PDF tools, conversion presentations | [58-tools.md](58-tools.md) | ✅ |
+| 59 | **Constructeur de Rapports (Reports)** — builder visuel, sources multiples, graphiques, export, scheduling | [59-reports.md](59-reports.md) | ✅ |
+| 60 | **Data Management** — masking, GDPR deletion, PII detection, anonymization, regles par environnement | [60-data-management.md](60-data-management.md) | ✅ |
+| 61 | **SecureLink** — tunnels securises, relay servers, DNS management, dashboard trafic | [61-securelink.md](61-securelink.md) | ✅ |
+| 62 | **Partages (Shared With Me)** — aggregation cross-module des ressources partagees, filtres, actions | [62-shared-with-me.md](62-shared-with-me.md) | ✅ |
 
 ### P2 — Modules restants (à spécifier ultérieurement)
 

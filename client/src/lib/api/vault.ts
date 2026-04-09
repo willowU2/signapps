@@ -1,5 +1,5 @@
 /**
- * Vault API — Identity service (port 3001) endpoints under /vault/*
+ * Vault API — Vault service (port 3025) endpoints under /vault/*
  */
 import { getClient, ServiceName } from "./factory";
 import type {
@@ -11,7 +11,7 @@ import type {
   BrowseSession,
 } from "@/types/vault";
 
-const client = getClient(ServiceName.IDENTITY);
+const client = getClient(ServiceName.VAULT_SVC);
 
 export const vaultApi = {
   // ──────────────────────────────────────────────
