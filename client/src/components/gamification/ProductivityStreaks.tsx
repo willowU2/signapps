@@ -1,64 +1,52 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Flame, Calendar, TrendingUp, Award } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getClient, ServiceName } from '@/lib/api/factory';
-
-const client = () => getClient(ServiceName.IDENTITY);
-const STORAGE_KEY = 'signapps-streak';
+import { useState, useEffect } from "react";
+import { Flame, Calendar, TrendingUp, Award } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { gamificationApi } from "@/lib/api/gamification";
 
 interface StreakData {
   current: number;
   longest: number;
   lastActive: string;
-  weekDays: boolean[]; // last 7 days active?
-  monthActivity: boolean[]; // last 30 days
+  weekDays: boolean[];
+  monthActivity: boolean[];
 }
 
-function loadStreak(): StreakData {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return { current: 0, longest: 0, lastActive: '', weekDays: Array(7).fill(false), monthActivity: Array(30).fill(false) };
-    return JSON.parse(stored);
-  } catch {
-    return { current: 0, longest: 0, lastActive: '', weekDays: Array(7).fill(false), monthActivity: Array(30).fill(false) };
-  }
-}
-
-export function updateStreak() {
-  const data = loadStreak();
-  const today = new Date().toDateString();
-  if (data.lastActive === today) return data; // already counted today
-
-  const yesterday = new Date(Date.now() - 86400000).toDateString();
-  const current = data.lastActive === yesterday ? data.current + 1 : 1;
-  const longest = Math.max(data.longest, current);
-
-  const weekDays = [...data.weekDays.slice(1), true];
-  const monthActivity = [...data.monthActivity.slice(1), true];
-
-  const updated: StreakData = { current, longest, lastActive: today, weekDays, monthActivity };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  return updated;
+function defaultStreak(): StreakData {
+  return {
+    current: 0,
+    longest: 0,
+    lastActive: "",
+    weekDays: Array(7).fill(false),
+    monthActivity: Array(30).fill(false),
+  };
 }
 
 export function ProductivityStreaks() {
-  const [streak, setStreak] = useState<StreakData>(loadStreak);
+  const [streak, setStreak] = useState<StreakData>(defaultStreak);
 
   useEffect(() => {
-    // Update streak on mount (daily login)
-    const updated = updateStreak();
-    setStreak(updated);
-
-    // Also try fetching from API
-    client().get<StreakData>('/gamification/streak')
-      .then(({ data }) => { setStreak(data); localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); })
+    gamificationApi
+      .getStreak()
+      .then((data) => {
+        setStreak({
+          current: data.current,
+          longest: data.longest,
+          lastActive: data.last_active,
+          weekDays: Array(7)
+            .fill(false)
+            .map((_, i) => i >= 7 - data.current),
+          monthActivity: Array(30)
+            .fill(false)
+            .map((_, i) => i >= 30 - data.current),
+        });
+      })
       .catch(() => {});
   }, []);
 
-  const days = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+  const days = ["L", "M", "M", "J", "V", "S", "D"];
 
   return (
     <div className="space-y-4 p-4">
@@ -70,16 +58,26 @@ export function ProductivityStreaks() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className={`p-4 rounded-xl border-2 text-center transition-all ${
-          streak.current > 0 ? 'border-orange-300 bg-orange-50 dark:bg-orange-950/20' : 'border-border bg-muted/30'
-        }`}>
+        <div
+          className={`p-4 rounded-xl border-2 text-center transition-all ${
+            streak.current > 0
+              ? "border-orange-300 bg-orange-50 dark:bg-orange-950/20"
+              : "border-border bg-muted/30"
+          }`}
+        >
           <div className="flex items-center justify-center gap-1 mb-1">
-            <Flame className={`w-5 h-5 ${streak.current > 0 ? 'text-orange-500' : 'text-muted-foreground'}`} />
+            <Flame
+              className={`w-5 h-5 ${streak.current > 0 ? "text-orange-500" : "text-muted-foreground"}`}
+            />
             <p className="text-4xl font-bold">{streak.current}</p>
           </div>
           <p className="text-xs text-muted-foreground">Streak actuel</p>
           <p className="text-xs font-medium">
-            {streak.current === 0 ? 'Connectez-vous !' : streak.current === 1 ? '1 jour' : `${streak.current} jours`}
+            {streak.current === 0
+              ? "Connectez-vous !"
+              : streak.current === 1
+                ? "1 jour"
+                : `${streak.current} jours`}
           </p>
         </div>
 
@@ -100,9 +98,11 @@ export function ProductivityStreaks() {
         <div className="flex gap-1.5">
           {days.map((day, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
-              <div className={`w-full aspect-square rounded-md transition-colors ${
-                streak.weekDays[i] ? 'bg-orange-400' : 'bg-muted'
-              }`} />
+              <div
+                className={`w-full aspect-square rounded-md transition-colors ${
+                  streak.weekDays[i] ? "bg-orange-400" : "bg-muted"
+                }`}
+              />
               <span className="text-xs text-muted-foreground">{day}</span>
             </div>
           ))}
@@ -117,7 +117,7 @@ export function ProductivityStreaks() {
           {streak.monthActivity.map((active, i) => (
             <div
               key={i}
-              className={`aspect-square rounded-sm transition-colors ${active ? 'bg-orange-400' : 'bg-muted'}`}
+              className={`aspect-square rounded-sm transition-colors ${active ? "bg-orange-400" : "bg-muted"}`}
               title={`Jour ${i + 1}`}
             />
           ))}
@@ -126,7 +126,9 @@ export function ProductivityStreaks() {
 
       {streak.current >= 7 && (
         <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 text-center">
-          <p className="text-sm font-medium text-orange-700">🔥 Impressionnant ! {streak.current} jours de suite !</p>
+          <p className="text-sm font-medium text-orange-700">
+            🔥 Impressionnant ! {streak.current} jours de suite !
+          </p>
         </div>
       )}
     </div>

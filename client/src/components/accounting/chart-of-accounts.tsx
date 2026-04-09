@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ChevronDown, ChevronRight, Plus, Edit2 } from "lucide-react";
+import { accountingApi, type AccountingAccount } from "@/lib/api/accounting";
 
 interface Account {
   id: string;
@@ -12,210 +13,40 @@ interface Account {
   children?: Account[];
 }
 
-const DEFAULT_COA: Account[] = [
-  {
-    id: "1",
-    number: "1",
-    name: "Assets",
-    balance: 0,
-    type: "asset",
-    children: [
-      {
-        id: "11",
-        number: "1.1",
-        name: "Current Assets",
-        balance: 0,
-        type: "asset",
-        children: [
-          {
-            id: "111",
-            number: "1.1.1",
-            name: "Cash",
-            balance: 25000,
-            type: "asset",
-          },
-          {
-            id: "112",
-            number: "1.1.2",
-            name: "Accounts Receivable",
-            balance: 15000,
-            type: "asset",
-          },
-          {
-            id: "113",
-            number: "1.1.3",
-            name: "Inventory",
-            balance: 8000,
-            type: "asset",
-          },
-        ],
-      },
-      {
-        id: "12",
-        number: "1.2",
-        name: "Fixed Assets",
-        balance: 0,
-        type: "asset",
-        children: [
-          {
-            id: "121",
-            number: "1.2.1",
-            name: "Property & Equipment",
-            balance: 50000,
-            type: "asset",
-          },
-          {
-            id: "122",
-            number: "1.2.2",
-            name: "Accumulated Depreciation",
-            balance: -10000,
-            type: "asset",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "2",
-    number: "2",
-    name: "Liabilities",
-    balance: 0,
-    type: "liability",
-    children: [
-      {
-        id: "21",
-        number: "2.1",
-        name: "Current Liabilities",
-        balance: 0,
-        type: "liability",
-        children: [
-          {
-            id: "211",
-            number: "2.1.1",
-            name: "Accounts Payable",
-            balance: 5000,
-            type: "liability",
-          },
-          {
-            id: "212",
-            number: "2.1.2",
-            name: "Short-term Debt",
-            balance: 10000,
-            type: "liability",
-          },
-        ],
-      },
-      {
-        id: "22",
-        number: "2.2",
-        name: "Long-term Liabilities",
-        balance: 0,
-        type: "liability",
-        children: [
-          {
-            id: "221",
-            number: "2.2.1",
-            name: "Long-term Debt",
-            balance: 25000,
-            type: "liability",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "3",
-    number: "3",
-    name: "Equity",
-    balance: 0,
-    type: "equity",
-    children: [
-      {
-        id: "31",
-        number: "3.1",
-        name: "Capital Stock",
-        balance: 50000,
-        type: "equity",
-      },
-      {
-        id: "32",
-        number: "3.2",
-        name: "Retained Earnings",
-        balance: 8000,
-        type: "equity",
-      },
-    ],
-  },
-  {
-    id: "4",
-    number: "4",
-    name: "Revenue",
-    balance: 0,
-    type: "revenue",
-    children: [
-      {
-        id: "41",
-        number: "4.1",
-        name: "Service Revenue",
-        balance: 120000,
-        type: "revenue",
-      },
-      {
-        id: "42",
-        number: "4.2",
-        name: "Product Sales",
-        balance: 80000,
-        type: "revenue",
-      },
-    ],
-  },
-  {
-    id: "5",
-    number: "5",
-    name: "Expenses",
-    balance: 0,
-    type: "expense",
-    children: [
-      {
-        id: "51",
-        number: "5.1",
-        name: "Operating Expenses",
-        balance: 0,
-        type: "expense",
-        children: [
-          {
-            id: "511",
-            number: "5.1.1",
-            name: "Salaries & Wages",
-            balance: 60000,
-            type: "expense",
-          },
-          {
-            id: "512",
-            number: "5.1.2",
-            name: "Rent",
-            balance: 12000,
-            type: "expense",
-          },
-          {
-            id: "513",
-            number: "5.1.3",
-            name: "Utilities",
-            balance: 2400,
-            type: "expense",
-          },
-        ],
-      },
-      {
-        id: "52",
-        number: "5.2",
-        name: "COGS",
-        balance: 40000,
-        type: "expense",
-      },
-    ],
-  },
-];
+/** Convert flat API accounts into a nested tree structure. */
+function buildTree(flat: AccountingAccount[]): Account[] {
+  const map = new Map<string, Account>();
+  const roots: Account[] = [];
+
+  // First pass: create Account nodes
+  for (const a of flat) {
+    map.set(a.id, {
+      id: a.id,
+      number: a.code,
+      name: a.name,
+      balance: a.balance / 100, // cents to euros
+      type: a.account_type as Account["type"],
+      children: [],
+    });
+  }
+
+  // Second pass: link children to parents
+  for (const a of flat) {
+    const node = map.get(a.id);
+    if (!node) continue;
+    if (a.parent_id && map.has(a.parent_id)) {
+      const parent = map.get(a.parent_id);
+      if (parent) {
+        if (!parent.children) parent.children = [];
+        parent.children.push(node);
+      }
+    } else {
+      roots.push(node);
+    }
+  }
+
+  return roots;
+}
 
 function getTypeColor(type: string): string {
   switch (type) {
@@ -252,7 +83,10 @@ function AccountRow({
     <>
       <tr className="hover:bg-muted border-b">
         <td className="px-4 py-3">
-          <div style={{ marginLeft: `${level * 20}px` }} className="flex items-center gap-2">
+          <div
+            style={{ marginLeft: `${level * 20}px` }}
+            className="flex items-center gap-2"
+          >
             {hasChildren ? (
               <button
                 onClick={() => onToggle(account.id)}
@@ -276,13 +110,16 @@ function AccountRow({
           <p className="font-medium text-foreground">{account.name}</p>
         </td>
         <td className="px-4 py-3">
-          <span className={`text-xs font-semibold px-2 py-1 rounded ${getTypeColor(account.type)}`}>
+          <span
+            className={`text-xs font-semibold px-2 py-1 rounded ${getTypeColor(account.type)}`}
+          >
             {account.type}
           </span>
         </td>
         <td className="px-4 py-3 text-right">
           <p className="font-semibold text-foreground">
-            €{account.balance.toLocaleString("de-DE", {
+            €
+            {account.balance.toLocaleString("de-DE", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -310,9 +147,42 @@ function AccountRow({
 }
 
 export function ChartOfAccounts() {
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(
-    new Set(["1", "2", "3", "4", "5"])
-  );
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [loading, setLoading] = useState(true);
+  const seedAttempted = useRef(false);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const fetchAccounts = useCallback(async () => {
+    try {
+      const res = await accountingApi.listAccounts();
+      const flat: AccountingAccount[] = res.data;
+
+      // Auto-seed if no accounts exist
+      if (flat.length === 0 && !seedAttempted.current) {
+        seedAttempted.current = true;
+        const seedRes = await accountingApi.seedDefaultCOA();
+        const seeded: AccountingAccount[] = seedRes.data;
+        const tree = buildTree(seeded);
+        setAccounts(tree);
+        // Expand root nodes
+        setExpandedIds(new Set(tree.map((a) => a.id)));
+      } else {
+        const tree = buildTree(flat);
+        setAccounts(tree);
+        if (expandedIds.size === 0) {
+          setExpandedIds(new Set(tree.map((a) => a.id)));
+        }
+      }
+    } catch {
+      // Backend unavailable -- silently degrade
+    } finally {
+      setLoading(false);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    fetchAccounts();
+  }, [fetchAccounts]);
 
   const handleToggle = (id: string) => {
     const newExpanded = new Set(expandedIds);
@@ -324,8 +194,8 @@ export function ChartOfAccounts() {
     setExpandedIds(newExpanded);
   };
 
-  const calculateBalances = (accounts: Account[]): number => {
-    return accounts.reduce((sum, acc) => {
+  const calculateBalances = (accts: Account[]): number => {
+    return accts.reduce((sum, acc) => {
       let balance = acc.balance;
       if (acc.children) {
         balance += calculateBalances(acc.children);
@@ -334,7 +204,15 @@ export function ChartOfAccounts() {
     }, 0);
   };
 
-  const totalBalance = calculateBalances(DEFAULT_COA);
+  const totalBalance = calculateBalances(accounts);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <p className="text-muted-foreground">Loading accounts...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -343,7 +221,9 @@ export function ChartOfAccounts() {
           <h2 className="text-2xl font-bold text-foreground">
             Chart of Accounts
           </h2>
-          <p className="text-muted-foreground">Manage account structure and balances</p>
+          <p className="text-muted-foreground">
+            Manage account structure and balances
+          </p>
         </div>
         <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex items-center gap-2">
           <Plus className="w-4 h-4" />
@@ -352,9 +232,12 @@ export function ChartOfAccounts() {
       </div>
 
       <div className="rounded-lg border bg-blue-50 p-4">
-        <p className="text-sm text-muted-foreground font-medium">Total Balance</p>
+        <p className="text-sm text-muted-foreground font-medium">
+          Total Balance
+        </p>
         <p className="text-2xl font-bold text-blue-900">
-          €{totalBalance.toLocaleString("de-DE", {
+          €
+          {totalBalance.toLocaleString("de-DE", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })}
@@ -384,7 +267,7 @@ export function ChartOfAccounts() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {DEFAULT_COA.map((account) => (
+              {accounts.map((account) => (
                 <AccountRow
                   key={account.id}
                   account={account}
@@ -407,7 +290,7 @@ export function ChartOfAccounts() {
           { label: "Expenses", type: "expense", color: "text-orange-600" },
         ].map(({ label, type, color }) => {
           const sum = calculateBalances(
-            DEFAULT_COA.filter((a) => a.type === type)
+            accounts.filter((a) => a.type === type),
           );
           return (
             <div key={type} className="rounded-lg border bg-background p-3">

@@ -1,13 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { TimeEntryForm, type TimeEntryFormValues } from '@/components/timesheet/time-entry-form';
-import { usePageTitle } from '@/hooks/use-page-title';
+import { useState, useRef, useEffect, useCallback } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  TimeEntryForm,
+  type TimeEntryFormValues,
+} from "@/components/timesheet/time-entry-form";
+import { usePageTitle } from "@/hooks/use-page-title";
 import {
   Play,
   Pause,
@@ -18,9 +21,13 @@ import {
   DollarSign,
   Calendar,
   Timer,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import {
+  timesheetApi,
+  type TimesheetEntry as ApiEntry,
+} from "@/lib/api/timesheet";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,7 +37,7 @@ interface TimeEntry {
   date: string;
   durationSeconds: number;
   billable: boolean;
-  source: 'timer' | 'manual';
+  source: "timer" | "manual";
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -39,8 +46,8 @@ function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-  if (h > 0) return `${h}h ${m.toString().padStart(2, '0')}m`;
-  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  if (h > 0) return `${h}h ${m.toString().padStart(2, "0")}m`;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
 function getWeekStart(date: Date): Date {
@@ -61,29 +68,39 @@ function isSameWeek(dateStr: string): boolean {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function TimesheetPage() {
-  usePageTitle('Pointage');
+  usePageTitle("Pointage");
 
-  const [entries, setEntries] = useState<TimeEntry[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      return JSON.parse(localStorage.getItem('timesheet-entries') ?? '[]');
-    } catch {
-      return [];
-    }
-  });
+  const [entries, setEntries] = useState<TimeEntry[]>([]);
 
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
-  const [currentTaskName, setCurrentTaskName] = useState('');
+  const [currentTaskName, setCurrentTaskName] = useState("");
   const [timerBillable, setTimerBillable] = useState(true);
   const [showManualForm, setShowManualForm] = useState(false);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Persist entries
+  // Load entries from API
+  const reloadEntries = useCallback(async () => {
+    try {
+      const res = await timesheetApi.listEntries();
+      const apiEntries: TimeEntry[] = (res.data || []).map((e: ApiEntry) => ({
+        id: e.id,
+        taskName: e.task_name || "Tache sans titre",
+        date: e.start_time.slice(0, 10),
+        durationSeconds: e.duration_seconds,
+        billable: e.is_billable,
+        source: e.end_time ? ("manual" as const) : ("timer" as const),
+      }));
+      setEntries(apiEntries);
+    } catch {
+      // silently fail — service may be offline
+    }
+  }, []);
+
   useEffect(() => {
-    localStorage.setItem('timesheet-entries', JSON.stringify(entries));
-  }, [entries]);
+    reloadEntries();
+  }, [reloadEntries]);
 
   // Timer tick
   useEffect(() => {
@@ -101,63 +118,92 @@ export default function TimesheetPage() {
 
   const handleStartPause = () => {
     if (!timerRunning && timerSeconds === 0 && !currentTaskName.trim()) {
-      toast.error('Entrez le nom de la tache avant de demarrer.');
+      toast.error("Entrez le nom de la tache avant de demarrer.");
       return;
     }
     setTimerRunning((r) => !r);
   };
 
-  const handleStop = () => {
+  const handleStop = async () => {
     if (timerSeconds === 0) return;
     setTimerRunning(false);
-    const entry: TimeEntry = {
-      id: `te-${Date.now()}`,
-      taskName: currentTaskName.trim() || 'Tache sans titre',
-      date: new Date().toISOString().slice(0, 10),
-      durationSeconds: timerSeconds,
-      billable: timerBillable,
-      source: 'timer',
-    };
-    setEntries((prev) => [entry, ...prev]);
-    setTimerSeconds(0);
-    setCurrentTaskName('');
-    toast.success('Entree enregistree.');
+    try {
+      const now = new Date();
+      const startTime = new Date(now.getTime() - timerSeconds * 1000);
+      await timesheetApi.createEntry({
+        task_name: currentTaskName.trim() || "Tache sans titre",
+        start_time: startTime.toISOString(),
+        end_time: now.toISOString(),
+        duration_seconds: timerSeconds,
+        is_billable: timerBillable,
+      });
+      setTimerSeconds(0);
+      setCurrentTaskName("");
+      toast.success("Entree enregistree.");
+      reloadEntries();
+    } catch {
+      toast.error("Erreur lors de l'enregistrement.");
+    }
   };
 
-  const handleManualSubmit = useCallback((values: TimeEntryFormValues) => {
-    const entry: TimeEntry = {
-      id: `te-${Date.now()}`,
-      taskName: values.taskName,
-      date: values.date,
-      durationSeconds: values.hours * 3600 + values.minutes * 60,
-      billable: values.billable,
-      source: 'manual',
-    };
-    setEntries((prev) => [entry, ...prev]);
-    setShowManualForm(false);
-    toast.success('Entree ajoutee.');
-  }, []);
+  const handleManualSubmit = useCallback(
+    async (values: TimeEntryFormValues) => {
+      try {
+        const startTime = new Date(values.date + "T09:00:00Z");
+        const durationSec = values.hours * 3600 + values.minutes * 60;
+        await timesheetApi.createEntry({
+          task_name: values.taskName,
+          start_time: startTime.toISOString(),
+          end_time: new Date(
+            startTime.getTime() + durationSec * 1000,
+          ).toISOString(),
+          duration_seconds: durationSec,
+          is_billable: values.billable,
+        });
+        setShowManualForm(false);
+        toast.success("Entree ajoutee.");
+        reloadEntries();
+      } catch {
+        toast.error("Erreur lors de l'ajout.");
+      }
+    },
+    [reloadEntries],
+  );
 
-  const handleDeleteEntry = (id: string) => {
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+  const handleDeleteEntry = async (id: string) => {
+    try {
+      await timesheetApi.deleteEntry(id);
+      reloadEntries();
+    } catch {
+      toast.error("Erreur lors de la suppression.");
+    }
   };
 
   // Weekly summary
   const weekEntries = entries.filter((e) => isSameWeek(e.date));
-  const totalWeekSeconds = weekEntries.reduce((a, e) => a + e.durationSeconds, 0);
-  const billableWeekSeconds = weekEntries.filter((e) => e.billable).reduce((a, e) => a + e.durationSeconds, 0);
+  const totalWeekSeconds = weekEntries.reduce(
+    (a, e) => a + e.durationSeconds,
+    0,
+  );
+  const billableWeekSeconds = weekEntries
+    .filter((e) => e.billable)
+    .reduce((a, e) => a + e.durationSeconds, 0);
 
   // Export to billing (placeholder — dispatches custom event that billing module can listen to)
   const exportToBilling = () => {
     const billableEntries = weekEntries.filter((e) => e.billable);
     if (billableEntries.length === 0) {
-      toast.info('Aucune entree facturable cette semaine.');
+      toast.info("Aucune entree facturable cette semaine.");
       return;
     }
     window.dispatchEvent(
-      new CustomEvent('billing:import-time-entries', { detail: billableEntries }),
+      new CustomEvent("billing:import-time-entries", {
+        detail: billableEntries,
+      }),
     );
-    toast.success(`${billableEntries.length} entree(s) exportee(s) vers Billing.`);
+    toast.success(
+      `${billableEntries.length} entree(s) exportee(s) vers Billing.`,
+    );
   };
 
   return (
@@ -189,7 +235,9 @@ export default function TimesheetPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4">
-              <p className="text-2xl font-bold">{formatDuration(totalWeekSeconds)}</p>
+              <p className="text-2xl font-bold">
+                {formatDuration(totalWeekSeconds)}
+              </p>
             </CardContent>
           </Card>
           <Card>
@@ -248,19 +296,23 @@ export default function TimesheetPage() {
             <div className="flex items-center gap-4">
               <span
                 className={cn(
-                  'text-4xl font-mono font-bold tabular-nums min-w-[120px]',
-                  timerRunning && 'text-primary',
+                  "text-4xl font-mono font-bold tabular-nums min-w-[120px]",
+                  timerRunning && "text-primary",
                 )}
               >
                 {formatDuration(timerSeconds)}
               </span>
               <Button
-                variant={timerRunning ? 'outline' : 'default'}
+                variant={timerRunning ? "outline" : "default"}
                 size="icon"
                 onClick={handleStartPause}
-                title={timerRunning ? 'Pause' : 'Demarrer'}
+                title={timerRunning ? "Pause" : "Demarrer"}
               >
-                {timerRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                {timerRunning ? (
+                  <Pause className="h-4 w-4" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
               </Button>
               <Button
                 variant="outline"
@@ -306,7 +358,8 @@ export default function TimesheetPage() {
         <div className="space-y-2">
           {entries.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-8">
-              Aucune entree enregistree. Demarrez le chronometre ou ajoutez une saisie manuelle.
+              Aucune entree enregistree. Demarrez le chronometre ou ajoutez une
+              saisie manuelle.
             </p>
           )}
           {entries.map((entry) => (
@@ -320,14 +373,14 @@ export default function TimesheetPage() {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Badge
-                  variant={entry.billable ? 'default' : 'secondary'}
+                  variant={entry.billable ? "default" : "secondary"}
                   className={cn(
-                    'text-[10px]',
+                    "text-[10px]",
                     entry.billable &&
-                      'bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30',
+                      "bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30",
                   )}
                 >
-                  {entry.billable ? 'Facturable' : 'Non facturable'}
+                  {entry.billable ? "Facturable" : "Non facturable"}
                 </Badge>
                 <span className="font-mono text-sm font-semibold">
                   {formatDuration(entry.durationSeconds)}
@@ -339,7 +392,13 @@ export default function TimesheetPage() {
                   onClick={() => handleDeleteEntry(entry.id)}
                 >
                   <span className="sr-only">Supprimer</span>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    className="h-3.5 w-3.5"
+                  >
                     <path d="M18 6L6 18M6 6l12 12" />
                   </svg>
                 </Button>
