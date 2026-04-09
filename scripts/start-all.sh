@@ -152,12 +152,22 @@ for entry in "${SERVICES[@]}"; do
     echo -e "  ${GRAY}Started ${CYAN}signapps-$name${GRAY} (PID $pid, port $port)${NC}"
 done
 
-# ── Step 5: Start frontend ──────────────────────────────────────────────────
+# ── Step 5: Wait for backend services to grab their ports ───────────────────
+# Critical: give identity (port 3001) time to bind BEFORE starting the frontend,
+# because Next.js dev server HMR can steal port 3001 if it starts first.
+echo ""
+echo -e "  Waiting for backend services to bind ports..."
+sleep 3
+
+# ── Step 6: Start frontend ──────────────────────────────────────────────────
 if ! $SKIP_FRONTEND; then
     echo ""
     echo -e "  Starting frontend..."
     if [[ -d "$BASE_DIR/client" ]]; then
-        (cd "$BASE_DIR/client" && npm run dev) > "$LOG_DIR/frontend.log" 2> "$LOG_DIR/frontend.err.log" &
+        # Use PORT=3000 explicitly. The --experimental-https or turbo HMR may
+        # try to grab other ports; this is unavoidable in dev mode but identity
+        # should already hold port 3001 by now.
+        (cd "$BASE_DIR/client" && PORT=3000 npm run dev) > "$LOG_DIR/frontend.log" 2> "$LOG_DIR/frontend.err.log" &
         PIDS+=("$!")
         echo -e "  ${GRAY}Started ${CYAN}frontend${GRAY} (PID $!, port 3000)${NC}"
     else
