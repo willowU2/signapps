@@ -175,19 +175,45 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/billing/stripe/checkout",
             post(handlers::stripe::create_stripe_checkout),
         )
-        // Accounting — journal entries, chart of accounts, reports
+        // Accounting — chart of accounts, journal entries, reports, seed
         // (moved from signapps-identity — Refactor 34 Phase 3)
-        .route(
-            "/api/v1/accounting/entries",
-            get(handlers::accounting::list_entries).post(handlers::accounting::create_entry),
-        )
         .route(
             "/api/v1/accounting/accounts",
             get(handlers::accounting::list_accounts).post(handlers::accounting::create_account),
         )
         .route(
+            "/api/v1/accounting/accounts/:id",
+            get(handlers::accounting::get_account)
+                .put(handlers::accounting::update_account)
+                .delete(handlers::accounting::delete_account),
+        )
+        .route(
+            "/api/v1/accounting/entries",
+            get(handlers::accounting::list_entries).post(handlers::accounting::create_entry),
+        )
+        .route(
+            "/api/v1/accounting/entries/:id/post",
+            post(handlers::accounting::post_entry),
+        )
+        .route(
             "/api/v1/accounting/reports",
             get(handlers::accounting::get_reports),
+        )
+        .route(
+            "/api/v1/accounting/reports/balance-sheet",
+            get(handlers::accounting::get_balance_sheet),
+        )
+        .route(
+            "/api/v1/accounting/reports/profit-loss",
+            get(handlers::accounting::get_profit_loss),
+        )
+        .route(
+            "/api/v1/accounting/reports/trial-balance",
+            get(handlers::accounting::get_trial_balance),
+        )
+        .route(
+            "/api/v1/accounting/seed",
+            post(handlers::accounting::seed_default_coa),
         )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),

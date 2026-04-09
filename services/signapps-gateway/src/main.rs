@@ -137,6 +137,8 @@ const SERVICE_PORTS: &[(&str, u16)] = &[
     ("signapps-integrations", 3030),
     ("signapps-backup", 3031),
     ("signapps-compliance", 3032),
+    ("signapps-gamification", 3033),
+    ("signapps-collaboration", 3034),
     ("signapps-notifications", 8095),
     ("signapps-billing", 8096),
 ];
@@ -638,6 +640,8 @@ async fn main() -> anyhow::Result<()> {
     let integrations_url = env_or("INTEGRATIONS_SERVICE_URL", "http://127.0.0.1:3030");
     let backup_url = env_or("BACKUP_SERVICE_URL", "http://127.0.0.1:3031");
     let compliance_url = env_or("COMPLIANCE_SERVICE_URL", "http://127.0.0.1:3032");
+    let gamification_url = env_or("GAMIFICATION_SERVICE_URL", "http://127.0.0.1:3033");
+    let collaboration_url = env_or("COLLABORATION_SERVICE_URL", "http://127.0.0.1:3034");
 
     // Ordered: more-specific prefixes first
     let service_map = Arc::new(ServiceMap::new(vec![
@@ -736,6 +740,10 @@ async fn main() -> anyhow::Result<()> {
         // Activity feed (moved from identity to compliance — Refactor 34 Phase 9)
         ("/api/v1/activities", &compliance_url),
         ("/api/v1/activity", &compliance_url),
+        // Gamification service (port 3033)
+        ("/api/v1/gamification", &gamification_url),
+        // Collaboration service (port 3034)
+        ("/api/v1/collaboration", &collaboration_url),
         // Sharing engine — global routes (templates, audit, bulk-grant, shared-with-me).
         // Must appear BEFORE the identity catch-all so they are not swallowed by /api/v1.
         // Per-resource grant routes (/api/v1/files/:id/grants, etc.) are forwarded to the

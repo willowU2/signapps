@@ -528,6 +528,35 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
+    // Expenses routes (CRUD + approval workflow)
+    let expenses_routes = Router::new()
+        .route("/", get(handlers::expenses::list_expenses))
+        .route("/", post(handlers::expenses::create_expense))
+        .route("/:id", put(handlers::expenses::update_expense))
+        .route("/:id", delete(handlers::expenses::delete_expense))
+        .route("/:id/submit", post(handlers::expenses::submit_expense))
+        .route("/:id/approve", post(handlers::expenses::approve_expense))
+        .route("/:id/reject", post(handlers::expenses::reject_expense))
+        .route("/:id/mark-paid", post(handlers::expenses::mark_paid))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Timesheet routes (CRUD + timer start/stop + stats)
+    let timesheet_routes = Router::new()
+        .route("/", get(handlers::timesheet::list_entries))
+        .route("/", post(handlers::timesheet::create_entry))
+        .route("/start", post(handlers::timesheet::start_timer))
+        .route("/stop", post(handlers::timesheet::stop_timer))
+        .route("/stats", get(handlers::timesheet::get_stats))
+        .route("/:id", put(handlers::timesheet::update_entry))
+        .route("/:id", delete(handlers::timesheet::delete_entry))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
     // Combine all routes
     Router::new()
         .nest("/api/v1/workforce/ad", ad_routes)
@@ -548,6 +577,8 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/learning", learning_routes)
         .nest("/api/v1/lms", lms_routes)
         .nest("/api/v1/workforce/supply-chain", supply_chain_routes)
+        .nest("/api/v1/workforce/expenses", expenses_routes)
+        .nest("/api/v1/workforce/timesheet", timesheet_routes)
         .nest("/health", health_routes)
         .merge(handlers::openapi::swagger_router())
         .layer(TraceLayer::new_for_http())

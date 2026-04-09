@@ -14,6 +14,7 @@ pub mod boards;
 pub mod coverage;
 pub mod delegations;
 pub mod employees;
+pub mod expenses;
 pub mod groups;
 pub mod learning;
 pub mod lms;
@@ -21,6 +22,7 @@ pub mod supply_chain;
 pub mod openapi;
 pub mod org;
 pub mod policies;
+pub mod timesheet;
 pub mod validation;
 
 use axum::Json;

@@ -10190,6 +10190,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-collaboration"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.7.9",
+ "chrono",
+ "dotenvy",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db",
+ "sqlx",
+ "tokio",
+ "tower-http 0.5.2",
+ "tracing",
+ "tracing-subscriber",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-comments"
 version = "0.1.0"
 dependencies = [
@@ -10729,6 +10751,28 @@ dependencies = [
  "signapps-sharing",
  "sqlx",
  "thiserror 1.0.69",
+ "tokio",
+ "tower-http 0.5.2",
+ "tracing",
+ "tracing-subscriber",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+]
+
+[[package]]
+name = "signapps-gamification"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.7.9",
+ "chrono",
+ "dotenvy",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db",
+ "sqlx",
  "tokio",
  "tower-http 0.5.2",
  "tracing",

@@ -1,0 +1,30 @@
+[package]
+name = "signapps-gamification"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Gamification service for SignApps Platform — XP, badges, streaks, leaderboards"
+
+[[bin]]
+name = "signapps-gamification"
+path = "src/main.rs"
+
+[dependencies]
+signapps-common = { path = "../../crates/signapps-common" }
+signapps-db = { path = "../../crates/signapps-db" }
+sqlx = { workspace = true }
+axum = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+dotenvy = { workspace = true }
+tower-http = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true }
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }

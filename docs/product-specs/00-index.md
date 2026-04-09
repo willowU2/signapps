@@ -110,23 +110,23 @@ UI et contenus dans au moins : français, anglais, espagnol, allemand, italien, 
 | 31 | **Compliance (RGPD)** — DPIA wizard, registre traitements, consentement, rétention, DSAR, audit | [31-compliance.md](31-compliance.md) | ✅ |
 | 32 | **Collaboration Visuelle** — mind map, kanban, brainstorm, meeting board, canvas infini | [32-collaboration.md](32-collaboration.md) | ✅ |
 | 33 | **Gamification** — XP, niveaux, badges, streaks, leaderboard, quêtes onboarding | [33-gamification.md](33-gamification.md) | ✅ |
+| 34 | **Accounting (Comptabilité)** — plan comptable, écritures, rapprochement bancaire, bilan, TVA, FEC | [34-accounting.md](34-accounting.md) | ✅ |
+| 35 | **Backups (Sauvegardes)** — profils, monitoring, cross-region, incrémental, vérification | [35-backups.md](35-backups.md) | ✅ |
+| 36 | **Integrations & Automatisations** — triggers, webhooks, API, scheduler, API keys | [36-integrations.md](36-integrations.md) | ✅ |
+| 37 | **Media Tools (Outils Média)** — OCR, TTS, STT, vidéo, éditeur images, encodage | [37-media-tools.md](37-media-tools.md) | ✅ |
+| 38 | **Print & Physical (Impression)** — cartes visite, certificats, étiquettes, badges, en-tête | [38-print.md](38-print.md) | ✅ |
+| 39 | **Containers (Conteneurs)** — Docker management, images, volumes, logs, stats, stacks | [39-containers.md](39-containers.md) | ✅ |
 
 ### P2 — Modules restants (à spécifier ultérieurement)
 
 Ces modules existent déjà dans SignApps mais ont des specs plus légères. À prioriser selon les besoins business :
 
-- **Accounting** (comptabilité complète, au-delà du Billing)
-- **Backups** (stratégie de sauvegarde inter-modules)
 - **Bookmarks** (favoris partagés)
 - **Collaboration** (espaces de travail partagés inter-modules — voir aussi [32-collaboration.md](32-collaboration.md))
-- **Containers** (Docker management intégré)
 - **Data Management** (ETL, data pipelines, quality)
 - **Gamification** (leaderboards, achievements organisationnels — voir [33-gamification.md](33-gamification.md))
-- **Integrations** (marketplace d'intégrations tierces)
 - **Keep** (notes rapides, Google Keep-style)
-- **Media** (bibliothèque multimédia unifiée)
 - **Monitoring** (APM, logs, metrics — voir [30-monitoring.md](30-monitoring.md))
-- **Print** (impression unifiée, print management)
 - **Proxy** (reverse proxy, ACME, WAF léger)
 - **Remote** (accès remote desktop, VPN)
 - **Reports** (BI/Reporting transverse)
@@ -334,3 +334,4 @@ Les specs sont **vivantes** et doivent évoluer avec :
 | Date | Action |
 |---|---|
 | 2026-04-09 | Création initiale des 23 specs principales (P0 + P1) + index |
+| 2026-04-09 | Ajout de 6 specs P2 : Accounting (34), Backups (35), Integrations (36), Media Tools (37), Print (38), Containers (39) |

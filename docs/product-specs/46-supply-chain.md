@@ -98,6 +98,28 @@ Detection automatique des livraisons en retard (date prevue depassee). Notificat
 
 ---
 
+## Categorie 5 — Portail fournisseurs et reporting
+
+### 5.1 Portail fournisseurs
+Page dediee listant les fournisseurs : nom, contact, email, telephone, categorie de produits, nombre de POs, total commande, note qualite. Ajout, edition, suppression.
+
+### 5.2 Fiche fournisseur
+Detail d'un fournisseur avec historique des commandes, delais de livraison moyens, taux de conformite, contact principal. Liens vers les POs associes.
+
+### 5.3 Catalogue produits
+Table des produits referencables dans les bons de commande : reference, nom, description, fournisseur(s), prix unitaire, unite, categorie. Import CSV pour le referentiel.
+
+### 5.4 Rapports de stock
+Rapports pre-configures : valorisation du stock par zone, rotation des stocks (items les plus/moins mouvementes), historique des ruptures, previsions de reapprovisionnement.
+
+### 5.5 Export des rapports
+Export CSV, Excel ou PDF des rapports de stock, des mouvements, et des bons de commande. Utile pour la comptabilite et l'audit.
+
+### 5.6 Notifications et alertes
+Notifications automatiques : stock bas (push), PO en attente d'approbation (push + email), livraison en retard (push + email). Configurable par l'admin.
+
+---
+
 ## Sources d'inspiration
 
 ### Aides utilisateur publiques et demos
