@@ -36,6 +36,11 @@ use utoipa_swagger_ui::SwaggerUi;
         crate::handlers::experiments::delete_experiment,
         crate::handlers::pool_stats::get_pool_stats,
         crate::handlers::slow_queries::list_slow_queries,
+        // Status page
+        crate::handlers::status::list_services,
+        crate::handlers::status::get_history,
+        crate::handlers::status::list_incidents,
+        crate::handlers::status::create_incident,
     ),
     components(schemas(
         crate::handlers::metrics::HealthResponse,
@@ -69,6 +74,11 @@ use utoipa_swagger_ui::SwaggerUi;
         crate::handlers::pool_stats::PoolStats,
         crate::handlers::slow_queries::SlowQuery,
         crate::handlers::slow_queries::SlowQueriesResponse,
+        // Status page schemas
+        crate::handlers::status::ServiceStatus,
+        crate::handlers::status::HealthCheckRecord,
+        crate::handlers::status::Incident,
+        crate::handlers::status::CreateIncidentRequest,
     )),
     modifiers(&SecurityAddon),
     info(title = "SignApps Metrics", version = "1.0.0", description = "Monitoring and metrics service for SignApps Platform")

@@ -10611,6 +10611,7 @@ dependencies = [
 name = "signapps-db-vault"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "chrono",
  "serde",
  "serde_json",
@@ -11128,9 +11129,11 @@ dependencies = [
  "axum 0.7.9",
  "chrono",
  "dotenvy",
+ "futures 0.3.31",
  "futures-util",
  "once_cell",
  "prometheus",
+ "reqwest 0.12.28",
  "serde",
  "serde_json",
  "signapps-common",

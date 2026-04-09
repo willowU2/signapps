@@ -93,7 +93,8 @@ pub use entity_reference_repository::EntityReferenceRepository;
 pub mod activity_repository;
 pub use activity_repository::ActivityRepository;
 
-
+// Resource booking (standalone `resources` schema) — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::ResourceBookingRepository;
 
 // Drive ACL repositories — now live in signapps-db-storage (Phase 4 split).
 pub use signapps_db_storage::repositories::{AuditAlertConfigRepository, DriveAuditLogRepository};

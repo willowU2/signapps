@@ -45,7 +45,7 @@ signapps-db-identity = { path = "../signapps-db-identity" }
 utoipa = { workspace = true, optional = true }
 
 [features]
-openapi = ["utoipa", "signapps-db-calendar/openapi", "signapps-db-forms/openapi", "signapps-db-mail/openapi", "signapps-db-notifications/openapi", "signapps-db-storage/openapi", "signapps-db-vault/openapi", "signapps-db-ai/openapi", "signapps-db-infrastructure/openapi", "signapps-db-itam/openapi", "signapps-db-billing/openapi", "signapps-db-content/openapi", "signapps-db-identity/openapi"]
+openapi = ["utoipa", "signapps-db-shared/openapi", "signapps-db-calendar/openapi", "signapps-db-forms/openapi", "signapps-db-mail/openapi", "signapps-db-notifications/openapi", "signapps-db-storage/openapi", "signapps-db-vault/openapi", "signapps-db-ai/openapi", "signapps-db-infrastructure/openapi", "signapps-db-itam/openapi", "signapps-db-billing/openapi", "signapps-db-content/openapi", "signapps-db-identity/openapi"]
 
 [dev-dependencies]
 tokio-test = { workspace = true }

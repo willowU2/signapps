@@ -307,7 +307,8 @@ pub async fn create(
         is_shared: Some(false),
     };
     let calendar_repo = CalendarRepository::new(&state.pool);
-    let calendar = calendar_repo.create(calendar_params, user.id).await?;
+    let tenant_id = claims.tenant_id.unwrap_or(user.id);
+    let calendar = calendar_repo.create(calendar_params, user.id, tenant_id).await?;
 
     // Initialize Default Tasks List (Root task for the calendar)
     let task_params = CreateTask {

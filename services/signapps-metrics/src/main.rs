@@ -171,12 +171,19 @@ fn create_router(state: AppState) -> Router {
             get(handlers::esg::get_esg_quarterly).put(handlers::esg::upsert_esg_quarterly),
         );
 
+    // Status page routes (auth required — read endpoints)
+    let status_routes = Router::new()
+        .route("/api/v1/status/services", get(handlers::status::list_services))
+        .route("/api/v1/status/history", get(handlers::status::get_history))
+        .route("/api/v1/status/incidents", get(handlers::status::list_incidents));
+
     // Protected routes (auth required)
     let protected_routes = Router::new()
         .nest("/api/v1/system", metrics_routes)
         .nest("/api/v1/alerts", alert_routes)
         .merge(experiment_routes)
         .merge(esg_routes)
+        .merge(status_routes)
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
@@ -197,6 +204,8 @@ fn create_router(state: AppState) -> Router {
     let admin_routes = Router::new()
         .nest("/api/v1/admin/analytics", analytics_routes)
         .merge(quota_routes)
+        // Status incidents — admin only for creation
+        .route("/api/v1/status/incidents", post(handlers::status::create_incident))
         .layer(middleware::from_fn(require_admin))
         .layer(middleware::from_fn_with_state(
             state.clone(),

@@ -10,6 +10,7 @@ use super::devops::{
 use super::events::UpdateRsvpPayload;
 use super::health_stream::{HealthSnapshot, ServiceStatus};
 use super::jobs::{CleanupRequest, CleanupResponse, HealthResponse, RunJobResponse};
+use super::scheduler_tasks::ExecutionStatsResponse;
 use super::tasks::{AddAttachmentRequest, TaskAttachmentResponse};
 use super::time_items::{QueryUsersEventsInput, UpdateRsvpInput, UpdateStatusInput};
 use crate::scheduler::service::RunningJob;
@@ -102,9 +103,21 @@ use crate::scheduler::service::RunningJob;
         super::workspaces::get_workspace,
         // Users
         super::users::list_users,
-        // Resources
+        // Resources (full CRUD + reservations)
         super::resources::list_resources,
         super::resources::get_resource,
+        super::resources::create_resource,
+        super::resources::update_resource,
+        super::resources::delete_resource,
+        super::resources::list_resource_reservations,
+        super::resources::create_reservation,
+        super::resources::cancel_reservation,
+        super::resources::list_my_reservations,
+        // Scheduler tasks
+        super::scheduler_tasks::list_scheduler_tasks,
+        // create_scheduler_task omitted: CreateJob lacks ToSchema
+        super::scheduler_tasks::list_task_executions,
+        super::scheduler_tasks::get_execution_stats,
         // Backups
         super::backups::list_backups,
         super::backups::trigger_backup,
@@ -151,6 +164,7 @@ use crate::scheduler::service::RunningJob;
         CreateDeploymentRequest,
         ServiceStatus,
         HealthSnapshot,
+        ExecutionStatsResponse,
     )),
     tags(
         (name = "Jobs", description = "CRON job management"),
@@ -164,7 +178,8 @@ use crate::scheduler::service::RunningJob;
         (name = "Tenants", description = "Tenant management"),
         (name = "Workspaces", description = "Workspace management"),
         (name = "Users", description = "User management"),
-        (name = "Resources", description = "Resource management"),
+        (name = "Resources", description = "Resource management and booking"),
+        (name = "Scheduler", description = "Scheduled task management and execution history"),
         (name = "Backups", description = "Automatic backup system"),
         (name = "Notifications", description = "Real-time SSE notifications"),
         (name = "Health", description = "Health check endpoints"),

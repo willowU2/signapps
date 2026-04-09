@@ -319,11 +319,40 @@ fn create_router(state: AppState) -> Router {
 
     // Resource routes (require tenant context)
     let resource_routes = Router::new()
-        .route("/", get(handlers::resources::list_resources))
-        .route("/{id}", get(handlers::resources::get_resource))
+        .route("/", get(handlers::resources::list_resources).post(handlers::resources::create_resource))
+        .route("/{id}", get(handlers::resources::get_resource).put(handlers::resources::update_resource).delete(handlers::resources::delete_resource))
+        .route("/{id}/reservations", get(handlers::resources::list_resource_reservations))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Reservation routes (require auth)
+    let reservation_routes = Router::new()
+        .route("/", post(handlers::resources::create_reservation))
+        .route("/{id}", delete(handlers::resources::cancel_reservation))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // My reservations route (require auth)
+    let my_reservations_routes = Router::new()
+        .route("/", get(handlers::resources::list_my_reservations))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Scheduler tasks routes (admin)
+    let scheduler_task_routes = Router::new()
+        .route("/", get(handlers::scheduler_tasks::list_scheduler_tasks).post(handlers::scheduler_tasks::create_scheduler_task))
+        .route("/stats", get(handlers::scheduler_tasks::get_execution_stats))
+        .route("/{id}/executions", get(handlers::scheduler_tasks::list_task_executions))
+        .layer(axum::middleware::from_fn(require_admin))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             signapps_common::middleware::auth_middleware::<AppState>,
@@ -517,6 +546,9 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/events", event_routes)
         .nest("/api/v1/attendees", attendee_routes)
         .nest("/api/v1/resources", resource_routes)
+        .nest("/api/v1/reservations", reservation_routes)
+        .nest("/api/v1/my-reservations", my_reservations_routes)
+        .nest("/api/v1/scheduler/tasks", scheduler_task_routes)
         .nest("/api/v1/projects", project_routes)
         .nest("/api/v1/tasks", task_routes)
         // Unified Scheduling API

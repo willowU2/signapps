@@ -86,7 +86,7 @@ pub async fn create_calendar(
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = CalendarRepository::new(&state.pool);
     let user_id = claims.sub;
-    match repo.create(payload, user_id).await {
+    match repo.create(payload, user_id, _ctx.tenant_id).await {
         Ok(calendar) => Ok((StatusCode::CREATED, Json(json!(calendar)))),
         Err(e) => {
             tracing::error!("Failed to create calendar: {}", e);

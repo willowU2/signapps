@@ -98,11 +98,26 @@ use utoipa::OpenApi;
         // Comms
         crate::handlers::comms::list_announcements,
         crate::handlers::comms::create_announcement,
+        crate::handlers::comms::mark_read,
+        crate::handlers::comms::acknowledge,
         crate::handlers::comms::list_polls,
         crate::handlers::comms::create_poll,
-        crate::handlers::comms::patch_poll,
+        crate::handlers::comms::cast_vote,
+        crate::handlers::comms::poll_results,
         crate::handlers::comms::list_news,
         crate::handlers::comms::create_news,
+        // Reports
+        crate::handlers::reports::list_reports,
+        crate::handlers::reports::create_report,
+        crate::handlers::reports::update_report,
+        crate::handlers::reports::delete_report,
+        crate::handlers::reports::execute_report,
+        crate::handlers::reports::list_executions,
+        // Help Center
+        crate::handlers::help::list_faq,
+        crate::handlers::help::get_faq,
+        crate::handlers::help::create_ticket,
+        crate::handlers::help::list_tickets,
         // Accounting paths moved to signapps-billing OpenAPI
     ),
     components(
@@ -164,7 +179,22 @@ use utoipa::OpenApi;
             // LMS schemas moved to signapps-workforce OpenAPI
             // Supply chain schemas moved to signapps-workforce OpenAPI
             // Comms schemas
+            crate::handlers::comms::AnnouncementResponse,
+            crate::handlers::comms::CreateAnnouncementRequest,
+            crate::handlers::comms::PollResponse,
+            crate::handlers::comms::CreatePollRequest,
+            crate::handlers::comms::CastVoteRequest,
+            crate::handlers::comms::PollResultsResponse,
+            crate::handlers::comms::PollOptionTally,
             crate::handlers::comms::CommsRecord,
+            // Reports schemas
+            crate::handlers::reports::ReportResponse,
+            crate::handlers::reports::SaveReportRequest,
+            crate::handlers::reports::ExecutionResponse,
+            // Help Center schemas
+            crate::handlers::help::FaqArticle,
+            crate::handlers::help::SupportTicket,
+            crate::handlers::help::CreateTicketRequest,
             // Accounting schemas moved to signapps-billing OpenAPI
         )
     ),
@@ -183,6 +213,8 @@ use utoipa::OpenApi;
         // compliance tag moved to signapps-compliance OpenAPI (port 3032)
         // audit tag moved to signapps-compliance OpenAPI (port 3032)
         (name = "comms", description = "Internal communications — announcements, polls, news feed"),
+        (name = "reports", description = "Report Builder — saved definitions, execution, and history"),
+        (name = "help", description = "Help Center — FAQ articles and support tickets"),
         // Accounting tag moved to signapps-billing OpenAPI
     ),
     modifiers(&SecurityAddon),

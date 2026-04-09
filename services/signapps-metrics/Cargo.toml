@@ -33,3 +33,5 @@ async-stream = { workspace = true }
 futures-util = { workspace = true }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
+reqwest = { workspace = true }
+futures = { workspace = true }

@@ -1,211 +1,477 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, Plus, Trash2, Check, X, Clock } from 'lucide-react';
-import { toast } from 'sonner';
-import { formatDistanceToNow } from 'date-fns';
-import { usePageTitle } from '@/hooks/use-page-title';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  BarChart3,
+  Plus,
+  Trash2,
+  Check,
+  Clock,
+  AlertTriangle,
+  Users,
+  EyeOff,
+} from "lucide-react";
+import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
+import { usePageTitle } from "@/hooks/use-page-title";
+import {
+  commsApi,
+  type Poll,
+  type PollResults,
+  type CreatePollRequest,
+} from "@/lib/api/comms";
 
-interface PollOption {
-  id: string;
-  text: string;
-  votes: number;
+// ── Poll card ────────────────────────────────────────────────────────────────
+
+function PollCard({ poll, onRefresh }: { poll: Poll; onRefresh: () => void }) {
+  const queryClient = useQueryClient();
+  const isClosed = poll.closes_at
+    ? new Date(poll.closes_at) < new Date()
+    : false;
+
+  // Fetch results for this poll
+  const { data: results } = useQuery<PollResults>({
+    queryKey: ["comms-poll-results", poll.id],
+    queryFn: async () => {
+      const res = await commsApi.getResults(poll.id);
+      return res.data;
+    },
+  });
+
+  // Vote mutation
+  const voteMutation = useMutation({
+    mutationFn: (optionId: string) => commsApi.vote(poll.id, optionId),
+    onSuccess: () => {
+      toast.success("Vote recorded!");
+      queryClient.invalidateQueries({
+        queryKey: ["comms-poll-results", poll.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["comms-polls"] });
+      onRefresh();
+    },
+    onError: () => toast.error("Failed to submit vote"),
+  });
+
+  // Use results data if available, otherwise fall back to poll options
+  const displayOptions = results?.options ?? poll.options;
+  const totalVotes =
+    results?.total_votes ??
+    displayOptions.reduce((s, o) => s + o.vote_count, 0);
+
+  return (
+    <Card>
+      <CardContent className="p-6 space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Badge variant={isClosed ? "secondary" : "default"}>
+                {isClosed ? "Closed" : "Active"}
+              </Badge>
+              {poll.is_anonymous && (
+                <Badge variant="outline" className="text-xs">
+                  <EyeOff className="h-3 w-3 mr-1" />
+                  Anonymous
+                </Badge>
+              )}
+              {poll.multiple_choice && (
+                <Badge variant="outline" className="text-xs">
+                  Multiple choice
+                </Badge>
+              )}
+            </div>
+            <h3 className="font-semibold text-lg">{poll.question}</h3>
+            <p className="text-xs text-muted-foreground">
+              <Users className="h-3 w-3 inline mr-1" />
+              {totalVotes} vote{totalVotes !== 1 ? "s" : ""}
+              {" · "}
+              Created{" "}
+              {formatDistanceToNow(new Date(poll.created_at), {
+                addSuffix: true,
+              })}
+              {poll.closes_at && !isClosed && (
+                <span>
+                  {" · "}
+                  <Clock className="h-3 w-3 inline mr-1" />
+                  Closes{" "}
+                  {formatDistanceToNow(new Date(poll.closes_at), {
+                    addSuffix: true,
+                  })}
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {displayOptions.map((opt) => {
+            const pct =
+              totalVotes > 0
+                ? Math.round((opt.vote_count / totalVotes) * 100)
+                : 0;
+            const isWinner =
+              isClosed &&
+              opt.vote_count ===
+                Math.max(...displayOptions.map((o) => o.vote_count)) &&
+              opt.vote_count > 0;
+
+            return (
+              <div key={opt.id}>
+                <div className="flex items-center justify-between mb-1">
+                  <button
+                    onClick={() => voteMutation.mutate(opt.id)}
+                    disabled={isClosed || voteMutation.isPending}
+                    className={`text-sm font-medium flex items-center gap-1 ${
+                      isClosed
+                        ? "cursor-default"
+                        : "hover:text-primary cursor-pointer"
+                    }`}
+                  >
+                    {isWinner && (
+                      <Check className="h-3.5 w-3.5 text-green-500" />
+                    )}
+                    {opt.label}
+                  </button>
+                  <span className="text-sm text-muted-foreground">
+                    {pct}% ({opt.vote_count})
+                  </span>
+                </div>
+                <Progress value={pct} className="h-2" />
+              </div>
+            );
+          })}
+        </div>
+
+        {!isClosed && (
+          <p className="text-xs text-muted-foreground text-center">
+            Click an option to vote
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
-interface Poll {
-  id: string;
-  question: string;
-  options: PollOption[];
-  voted: string | null;
-  createdAt: Date;
-  closedAt?: Date;
-  status: 'active' | 'closed';
-  totalVotes: number;
+// ── Create poll dialog ───────────────────────────────────────────────────────
+
+function CreatePollDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+  isPending,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (data: CreatePollRequest) => void;
+  isPending: boolean;
+}) {
+  const [question, setQuestion] = useState("");
+  const [options, setOptions] = useState(["", "", ""]);
+  const [multipleChoice, setMultipleChoice] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [closesAt, setClosesAt] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const validOptions = options.filter((o) => o.trim());
+    if (!question.trim() || validOptions.length < 2) {
+      toast.error("A question and at least 2 options are required");
+      return;
+    }
+    onSubmit({
+      question: question.trim(),
+      options: validOptions.map((o) => o.trim()),
+      multiple_choice: multipleChoice,
+      is_anonymous: isAnonymous,
+      closes_at: closesAt || undefined,
+    });
+    setQuestion("");
+    setOptions(["", "", ""]);
+    setMultipleChoice(false);
+    setIsAnonymous(false);
+    setClosesAt("");
+  };
+
+  const updateOption = (index: number, value: string) => {
+    const next = [...options];
+    next[index] = value;
+    setOptions(next);
+  };
+
+  const removeOption = (index: number) => {
+    if (options.length <= 2) return;
+    setOptions(options.filter((_, i) => i !== index));
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Poll
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Create a Poll</DialogTitle>
+          <DialogDescription>
+            Ask your team a question and collect votes.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="poll-question">Question</Label>
+            <Input
+              id="poll-question"
+              placeholder="What would you like to ask?"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Options</Label>
+            {options.map((opt, i) => (
+              <div key={i} className="flex gap-2">
+                <Input
+                  placeholder={`Option ${i + 1}`}
+                  value={opt}
+                  onChange={(e) => updateOption(i, e.target.value)}
+                />
+                {options.length > 2 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeOption(i)}
+                  >
+                    <Trash2 className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => setOptions([...options, ""])}
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Add Option
+            </Button>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="poll-multiple"
+                checked={multipleChoice}
+                onCheckedChange={setMultipleChoice}
+              />
+              <Label htmlFor="poll-multiple">Allow multiple choices</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="poll-anonymous"
+                checked={isAnonymous}
+                onCheckedChange={setIsAnonymous}
+              />
+              <Label htmlFor="poll-anonymous">Anonymous voting</Label>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="poll-closes">Closes at (optional)</Label>
+            <Input
+              id="poll-closes"
+              type="datetime-local"
+              value={closesAt}
+              onChange={(e) => setClosesAt(e.target.value)}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Creating..." : "Create Poll"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
-const INITIAL_POLLS: Poll[] = [
-  {
-    id: '1', question: 'Which day works best for the team-building event?', status: 'active',
-    options: [{ id: 'a', text: 'Friday April 11', votes: 23 }, { id: 'b', text: 'Saturday April 12', votes: 41 }, { id: 'c', text: 'Sunday April 13', votes: 12 }],
-    voted: null, createdAt: new Date(Date.now() - 86400000), totalVotes: 76,
-  },
-  {
-    id: '2', question: 'Should we switch to a 4-day work week?', status: 'active',
-    options: [{ id: 'a', text: 'Yes, full 4-day week', votes: 67 }, { id: 'b', text: 'No, keep 5 days', votes: 18 }, { id: 'c', text: 'Try it for 3 months', votes: 45 }],
-    voted: null, createdAt: new Date(Date.now() - 2 * 86400000), totalVotes: 130,
-  },
-  {
-    id: '3', question: 'Preferred lunch option for the office?', status: 'closed',
-    options: [{ id: 'a', text: 'Catered meals', votes: 55 }, { id: 'b', text: 'Food delivery allowance', votes: 89 }, { id: 'c', text: 'Company restaurant', votes: 34 }],
-    voted: 'b', createdAt: new Date(Date.now() - 7 * 86400000), closedAt: new Date(Date.now() - 86400000), totalVotes: 178,
-  },
-];
+// ── Main page ────────────────────────────────────────────────────────────────
 
 export default function PollsPage() {
-  usePageTitle('Sondages');
-  const { data: apiPolls } = useQuery<Poll[]>({
-    queryKey: ['comms-polls'],
-    queryFn: () => fetch('/api/comms/polls').then(r => r.json()).catch(() => INITIAL_POLLS),
+  usePageTitle("Sondages");
+  const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Fetch polls
+  const {
+    data: polls = [],
+    isLoading,
+    isError,
+  } = useQuery<Poll[]>({
+    queryKey: ["comms-polls"],
+    queryFn: async () => {
+      const res = await commsApi.listPolls();
+      return res.data;
+    },
   });
-  const [polls, setPolls] = useState<Poll[]>(INITIAL_POLLS);
 
-  // Seed local state from API once data arrives (keeps interactions working)
-  useEffect(() => { if (apiPolls && apiPolls.length > 0) setPolls(apiPolls); }, [apiPolls]);
-  const [open, setOpen] = useState(false);
-  const [question, setQuestion] = useState('');
-  const [options, setOptions] = useState(['', '', '']);
+  // Create poll mutation
+  const createMutation = useMutation({
+    mutationFn: (data: CreatePollRequest) => commsApi.createPoll(data),
+    onSuccess: () => {
+      toast.success("Poll created!");
+      queryClient.invalidateQueries({ queryKey: ["comms-polls"] });
+      setDialogOpen(false);
+    },
+    onError: () => toast.error("Failed to create poll"),
+  });
 
-  const vote = (pollId: string, optionId: string) => {
-    setPolls(prev => prev.map(p => {
-      if (p.id !== pollId || p.voted || p.status === 'closed') return p;
-      return { ...p, voted: optionId, totalVotes: p.totalVotes + 1, options: p.options.map(o => o.id === optionId ? { ...o, votes: o.votes + 1 } : o) };
-    }));
-    const poll = polls.find(p => p.id === pollId);
-    if (poll) {
-      const updatedOptions = poll.options.map(o => o.id === optionId ? { ...o, votes: o.votes + 1 } : o);
-      fetch(`/api/comms/polls/${pollId}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ voted: optionId, options: updatedOptions, totalVotes: poll.totalVotes + 1 }),
-      }).catch(() => {});
-    }
-    toast.success('Vote enregistré !');
-  };
+  const now = new Date();
+  const active = polls.filter(
+    (p) => !p.closes_at || new Date(p.closes_at) > now,
+  );
+  const closed = polls.filter(
+    (p) => p.closes_at && new Date(p.closes_at) <= now,
+  );
 
-  const closePoll = (id: string) => {
-    setPolls(prev => prev.map(p => p.id === id ? { ...p, status: 'closed', closedAt: new Date() } : p));
-    fetch(`/api/comms/polls/${id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'closed' }),
-    }).catch(() => {});
-    toast.success('Sondage fermé');
-  };
-
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    const validOptions = options.filter(o => o.trim());
-    if (!question.trim() || validOptions.length < 2) { toast.error('Question et au moins 2 options requises'); return; }
-    const pollData = {
-      question, status: 'active', totalVotes: 0, voted: null, createdAt: new Date().toISOString(),
-      options: validOptions.map((text, i) => ({ id: String(i), text, votes: 0 })),
-    };
-    fetch('/api/comms/polls', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pollData),
-    }).catch(() => {});
-    const poll: Poll = {
-      id: Date.now().toString(), question, status: 'active', totalVotes: 0, voted: null, createdAt: new Date(),
-      options: validOptions.map((text, i) => ({ id: String(i), text, votes: 0 })),
-    };
-    setPolls([poll, ...polls]);
-    setQuestion(''); setOptions(['', '', '']); setOpen(false);
-    toast.success('Sondage créé !');
-  };
-
-  const active = polls.filter(p => p.status === 'active');
-  const closed = polls.filter(p => p.status === 'closed');
-
-  const PollCard = ({ poll }: { poll: Poll }) => {
-    const max = Math.max(...poll.options.map(o => o.votes), 1);
-    return (
-      <Card>
-        <CardContent className="p-6 space-y-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <Badge variant={poll.status === 'active' ? 'default' : 'secondary'} className="mb-2">
-                {poll.status === 'active' ? 'Active' : 'Closed'}
-              </Badge>
-              <h3 className="font-semibold">{poll.question}</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                {poll.totalVotes} votes · {formatDistanceToNow(poll.createdAt, { addSuffix: true })}
-              </p>
-            </div>
-            {poll.status === 'active' && !poll.voted && (
-              <Button variant="outline" size="sm" onClick={() => closePoll(poll.id)} className="shrink-0"><X className="h-3 w-3 mr-1" />Fermer</Button>
-            )}
-          </div>
-          <div className="space-y-2">
-            {poll.options.map(opt => {
-              const pct = poll.totalVotes > 0 ? Math.round((opt.votes / poll.totalVotes) * 100) : 0;
-              const isVoted = poll.voted === opt.id;
-              const isWinner = poll.status === 'closed' && opt.votes === Math.max(...poll.options.map(o => o.votes));
-              return (
-                <div key={opt.id}>
-                  <div className="flex items-center justify-between mb-1">
-                    <button
-                      onClick={() => vote(poll.id, opt.id)}
-                      disabled={!!poll.voted || poll.status === 'closed'}
-                      className={`text-sm font-medium flex items-center gap-1 ${!!poll.voted || poll.status === 'closed' ? '' : 'hover:text-primary cursor-pointer'}`}
-                    >
-                      {(isVoted || isWinner) && <Check className="h-3.5 w-3.5 text-green-500" />}
-                      {opt.text}
-                    </button>
-                    <span className="text-sm text-muted-foreground">{pct}% ({opt.votes})</span>
-                  </div>
-                  <Progress value={pct} className="h-2" />
-                </div>
-              );
-            })}
-          </div>
-          {!poll.voted && poll.status === 'active' && (
-            <p className="text-xs text-muted-foreground text-center">Click an option to vote</p>
-          )}
-        </CardContent>
-      </Card>
-    );
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["comms-polls"] });
   };
 
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
               <BarChart3 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Internal Polls</h1>
-              <p className="text-sm text-muted-foreground">Quick polls with live results</p>
+              <h1 className="text-2xl font-bold">Polls</h1>
+              <p className="text-sm text-muted-foreground">
+                {active.length} active · {closed.length} closed
+              </p>
             </div>
           </div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Create Poll</Button></DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Create a Poll</DialogTitle></DialogHeader>
-              <form onSubmit={handleCreate} className="space-y-4">
-                <Input placeholder="Your question..." value={question} onChange={e => setQuestion(e.target.value)} />
-                <div className="space-y-2">
-                  {options.map((opt, i) => (
-                    <Input key={i} placeholder={`Option ${i + 1}`} value={opt} onChange={e => { const a = [...options]; a[i] = e.target.value; setOptions(a); }} />
-                  ))}
-                  <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => setOptions([...options, ''])}><Plus className="h-3 w-3 mr-1" />Add Option</Button>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-                  <Button type="submit">Create Poll</Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <CreatePollDialog
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            onSubmit={(data) => createMutation.mutate(data)}
+            isPending={createMutation.isPending}
+          />
         </div>
 
-        <Tabs defaultValue="active">
-          <TabsList><TabsTrigger value="active">Active ({active.length})</TabsTrigger><TabsTrigger value="closed">Closed ({closed.length})</TabsTrigger></TabsList>
-          <TabsContent value="active" className="space-y-4 mt-4">
-            {active.map(p => <PollCard key={p.id} poll={p} />)}
-            {active.length === 0 && <Card className="border-dashed"><CardContent className="flex flex-col items-center py-12 text-muted-foreground"><BarChart3 className="h-8 w-8 mb-2 opacity-30" /><p>No active polls</p></CardContent></Card>}
-          </TabsContent>
-          <TabsContent value="closed" className="space-y-4 mt-4">
-            {closed.map(p => <PollCard key={p.id} poll={p} />)}
-          </TabsContent>
-        </Tabs>
+        {/* Loading state */}
+        {isLoading && (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i}>
+                <CardContent className="p-6 space-y-3">
+                  <Skeleton className="h-5 w-16" />
+                  <Skeleton className="h-6 w-3/4" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Error state */}
+        {isError && (
+          <Card className="border-destructive">
+            <CardContent className="flex flex-col items-center py-12 text-muted-foreground">
+              <AlertTriangle className="h-8 w-8 mb-2 text-destructive opacity-60" />
+              <p>Failed to load polls</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={() =>
+                  queryClient.invalidateQueries({ queryKey: ["comms-polls"] })
+                }
+              >
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Tabs for active / closed */}
+        {!isLoading && !isError && (
+          <Tabs defaultValue="active">
+            <TabsList>
+              <TabsTrigger value="active">Active ({active.length})</TabsTrigger>
+              <TabsTrigger value="closed">Closed ({closed.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="active" className="space-y-4 mt-4">
+              {active.length === 0 && (
+                <Card className="border-dashed">
+                  <CardContent className="flex flex-col items-center py-12 text-muted-foreground">
+                    <BarChart3 className="h-8 w-8 mb-2 opacity-30" />
+                    <p>No active polls</p>
+                    <p className="text-xs">Create one to get started</p>
+                  </CardContent>
+                </Card>
+              )}
+              {active.map((poll) => (
+                <PollCard key={poll.id} poll={poll} onRefresh={handleRefresh} />
+              ))}
+            </TabsContent>
+
+            <TabsContent value="closed" className="space-y-4 mt-4">
+              {closed.length === 0 && (
+                <Card className="border-dashed">
+                  <CardContent className="flex flex-col items-center py-12 text-muted-foreground">
+                    <Clock className="h-8 w-8 mb-2 opacity-30" />
+                    <p>No closed polls yet</p>
+                  </CardContent>
+                </Card>
+              )}
+              {closed.map((poll) => (
+                <PollCard key={poll.id} poll={poll} onRefresh={handleRefresh} />
+              ))}
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     </AppLayout>
   );

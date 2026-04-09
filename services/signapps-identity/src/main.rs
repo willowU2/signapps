@@ -275,6 +275,48 @@ fn create_router(state: AppState) -> Router {
         // Gateway forwards /api/v1/org/* and /api/v1/assignments/* → signapps-org:3026.
         // Sites moved to signapps-it-assets service (port 3022).
         // Gateway forwards /api/v1/sites/* → signapps-it-assets:3022.
+        // Unified trash (cross-module soft-delete tracking)
+        // NOTE: gateway /api/v1/trash routes to storage (file trash).
+        // Unified trash uses /api/v1/unified-trash to avoid collision.
+        .route(
+            "/api/v1/unified-trash",
+            get(handlers::trash::list_trash)
+                .post(handlers::trash::create_trash)
+                .delete(handlers::trash::purge_expired),
+        )
+        .route(
+            "/api/v1/unified-trash/:id/restore",
+            post(handlers::trash::restore_trash),
+        )
+        .route(
+            "/api/v1/unified-trash/:id",
+            delete(handlers::trash::delete_trash),
+        )
+        // Cross-module bookmarks (favorites)
+        .route(
+            "/api/v1/bookmarks",
+            get(handlers::bookmarks::list_bookmarks).post(handlers::bookmarks::create_bookmark),
+        )
+        .route(
+            "/api/v1/bookmarks/:id",
+            delete(handlers::bookmarks::delete_bookmark),
+        )
+        // Bookmark collections
+        .route(
+            "/api/v1/bookmark-collections",
+            get(handlers::bookmarks::list_collections).post(handlers::bookmarks::create_collection),
+        )
+        .route(
+            "/api/v1/bookmark-collections/:id",
+            delete(handlers::bookmarks::delete_collection),
+        )
+        // Help Center — FAQ articles and support tickets
+        .route("/api/v1/help/faq", get(handlers::help::list_faq))
+        .route("/api/v1/help/faq/:id", get(handlers::help::get_faq))
+        .route(
+            "/api/v1/help/tickets",
+            get(handlers::help::list_tickets).post(handlers::help::create_ticket),
+        )
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
@@ -462,16 +504,51 @@ fn create_router(state: AppState) -> Router {
             get(handlers::comms::list_announcements).post(handlers::comms::create_announcement),
         )
         .route(
+            "/api/v1/comms/announcements/:id/read",
+            post(handlers::comms::mark_read),
+        )
+        .route(
+            "/api/v1/comms/announcements/:id/acknowledge",
+            post(handlers::comms::acknowledge),
+        )
+        .route(
             "/api/v1/comms/polls",
             get(handlers::comms::list_polls).post(handlers::comms::create_poll),
         )
         .route(
-            "/api/v1/comms/polls/:id",
-            patch(handlers::comms::patch_poll),
+            "/api/v1/comms/polls/:id/vote",
+            post(handlers::comms::cast_vote),
+        )
+        .route(
+            "/api/v1/comms/polls/:id/results",
+            get(handlers::comms::poll_results),
         )
         .route(
             "/api/v1/comms/news-feed",
             get(handlers::comms::list_news).post(handlers::comms::create_news),
+        )
+        .layer(axum_middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    // Reports routes (protected)
+    let reports_routes = Router::new()
+        .route(
+            "/api/v1/reports",
+            get(handlers::reports::list_reports).post(handlers::reports::create_report),
+        )
+        .route(
+            "/api/v1/reports/:id",
+            put(handlers::reports::update_report).delete(handlers::reports::delete_report),
+        )
+        .route(
+            "/api/v1/reports/:id/execute",
+            post(handlers::reports::execute_report),
+        )
+        .route(
+            "/api/v1/reports/:id/executions",
+            get(handlers::reports::list_executions),
         )
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
@@ -497,6 +574,7 @@ fn create_router(state: AppState) -> Router {
         .merge(tenant_routes)
         .merge(admin_routes)
         .merge(comms_routes)
+        .merge(reports_routes)
         .layer(axum_middleware::from_fn(logging_middleware))
         .layer(axum_middleware::from_fn(request_id_middleware))
         .layer(axum_middleware::from_fn(security_headers_middleware))

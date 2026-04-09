@@ -11,6 +11,7 @@ pub mod notifications;
 pub mod openapi;
 pub mod projects;
 pub mod resources;
+pub mod scheduler_tasks;
 pub mod tasks;
 pub mod tenants;
 pub mod time_items;

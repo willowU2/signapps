@@ -9,5 +9,6 @@ pub mod metrics;
 pub mod openapi;
 pub mod pool_stats;
 pub mod slow_queries;
+pub mod status;
 
 pub use metrics::*;
