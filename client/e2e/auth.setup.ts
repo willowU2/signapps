@@ -67,7 +67,24 @@ setup("authenticate", async ({ page }) => {
     timeout: 60000,
   });
 
-  // 4. Set localStorage for client-side AuthProvider + dismiss modals
+  // 4. Unregister any service workers that might cache stale chunks
+  await page.evaluate(async () => {
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const reg of regs) {
+        await reg.unregister();
+      }
+    }
+    // Clear all caches
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      for (const key of keys) {
+        await caches.delete(key);
+      }
+    }
+  });
+
+  // 5. Set localStorage for client-side AuthProvider + dismiss modals
   await page.evaluate(() => {
     localStorage.setItem(
       "auth-storage",

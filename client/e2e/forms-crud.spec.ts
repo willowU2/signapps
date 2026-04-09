@@ -88,8 +88,7 @@ test.describe("Forms — CRUD and builder", () => {
     expect(await forms.fieldCount()).toBe(1);
   });
 
-  // New forms are appended at the end of a 23+ item grid — not visible without
-  // sorting by date desc or scrolling. Needs a sort button or API filter.
+  // Needs backend sort by created_at DESC or frontend useMemo sort
   test.fixme("toggle publish state of a form", async ({ page }) => {
     const forms = new FormsPage(page);
     await forms.gotoListing();
@@ -122,7 +121,7 @@ test.describe("Forms — CRUD and builder", () => {
       .toBe("draft");
   });
 
-  // Same as toggle publish — new form not visible in grid
+  // Needs backend sort by created_at DESC or frontend useMemo sort
   test.fixme("delete a form from the listing", async ({ page }) => {
     const forms = new FormsPage(page);
     await forms.gotoListing();

@@ -147,10 +147,11 @@ pub struct PipelineStage {
 // ── Ensure schema/tables exist (auto-create on first use) ─────────────────────
 
 async fn ensure_tables(pool: &signapps_db::DatabasePool) -> Result<()> {
-    sqlx::query(
-        r#"
-        CREATE SCHEMA IF NOT EXISTS crm;
-        CREATE TABLE IF NOT EXISTS crm.deals (
+    // Each statement must be executed separately — sqlx prepared statements
+    // do not support multiple commands in a single query string.
+    let stmts = [
+        "CREATE SCHEMA IF NOT EXISTS crm",
+        r#"CREATE TABLE IF NOT EXISTS crm.deals (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             title VARCHAR(500) NOT NULL,
             stage VARCHAR(50) NOT NULL DEFAULT 'prospect',
@@ -167,10 +168,10 @@ async fn ensure_tables(pool: &signapps_db::DatabasePool) -> Result<()> {
             metadata JSONB DEFAULT '{}',
             created_at TIMESTAMPTZ DEFAULT now(),
             updated_at TIMESTAMPTZ DEFAULT now()
-        );
-        CREATE INDEX IF NOT EXISTS idx_deals_owner ON crm.deals(owner_id);
-        CREATE INDEX IF NOT EXISTS idx_deals_stage ON crm.deals(stage);
-        CREATE TABLE IF NOT EXISTS crm.leads (
+        )"#,
+        "CREATE INDEX IF NOT EXISTS idx_deals_owner ON crm.deals(owner_id)",
+        "CREATE INDEX IF NOT EXISTS idx_deals_stage ON crm.deals(stage)",
+        r#"CREATE TABLE IF NOT EXISTS crm.leads (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(200) NOT NULL,
             email VARCHAR(200),
@@ -185,13 +186,15 @@ async fn ensure_tables(pool: &signapps_db::DatabasePool) -> Result<()> {
             metadata JSONB DEFAULT '{}',
             created_at TIMESTAMPTZ DEFAULT now(),
             updated_at TIMESTAMPTZ DEFAULT now()
-        );
-        CREATE INDEX IF NOT EXISTS idx_leads_owner ON crm.leads(owner_id);
-        "#,
-    )
-    .execute(pool.inner())
-    .await
-    .map_err(|e| Error::Internal(format!("ensure crm tables: {e}")))?;
+        )"#,
+        "CREATE INDEX IF NOT EXISTS idx_leads_owner ON crm.leads(owner_id)",
+    ];
+    for stmt in stmts {
+        sqlx::query(stmt)
+            .execute(pool.inner())
+            .await
+            .map_err(|e| Error::Internal(format!("ensure crm tables: {e}")))?;
+    }
     Ok(())
 }
 
