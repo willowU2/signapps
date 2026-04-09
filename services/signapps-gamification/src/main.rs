@@ -103,7 +103,7 @@ pub struct LeaderboardQuery {
 }
 
 /// Leaderboard entry returned to the client.
-#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct LeaderEntry {
     /// Rank position.
     pub rank: i64,
