@@ -96,7 +96,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
     },
     restoreClient: async () => {
       try {
-        return await get("react-query-cache");
+        // Add a 5s timeout to prevent blocking the Suspense boundary
+        // indefinitely when IndexedDB is slow (e.g., Playwright headless).
+        const result = await Promise.race([
+          get("react-query-cache"),
+          new Promise<undefined>((resolve) =>
+            setTimeout(() => resolve(undefined), 5000),
+          ),
+        ]);
+        return result;
       } catch (e) {
         return undefined;
       }
