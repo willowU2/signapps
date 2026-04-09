@@ -88,8 +88,9 @@ test.describe("Forms — CRUD and builder", () => {
     expect(await forms.fieldCount()).toBe(1);
   });
 
-  // Listing loads 65+ forms with N+1 response count queries — takes >60s.
-  // Fix: batch response counts in the backend or use a separate query.
+  // Production build: navigating to /forms a 2nd time in the same context
+  // triggers "Failed to load chunk 050fad2a9291ec68" — Turbopack chunk split bug.
+  // Works on first visit but fails on subsequent SPA navigations.
   test.fixme("toggle publish state of a form", async ({ page }) => {
     test.setTimeout(60000);
     const forms = new FormsPage(page);
@@ -123,7 +124,7 @@ test.describe("Forms — CRUD and builder", () => {
       .toBe("draft");
   });
 
-  // Same N+1 issue as toggle publish
+  // Same Turbopack chunk bug as toggle publish
   test.fixme("delete a form from the listing", async ({ page }) => {
     test.setTimeout(60000);
     const forms = new FormsPage(page);

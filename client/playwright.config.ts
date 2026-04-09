@@ -1,7 +1,7 @@
-import { defineConfig, devices } from '@playwright/test';
-import path from 'path';
+import { defineConfig, devices } from "@playwright/test";
+import path from "path";
 
-const authFile = path.join(__dirname, 'playwright/.auth/user.json');
+const authFile = path.join(__dirname, "playwright/.auth/user.json");
 
 /**
  * Playwright E2E Test Configuration for SignApps Platform
@@ -9,7 +9,7 @@ const authFile = path.join(__dirname, 'playwright/.auth/user.json');
  */
 export default defineConfig({
   // Test directory
-  testDir: './e2e',
+  testDir: "./e2e",
 
   // Run tests in files in parallel
   fullyParallel: true,
@@ -24,50 +24,50 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
 
   // Reporter to use
-  reporter: [
-    ['html', { open: 'never' }],
-    ['list'],
-  ],
+  reporter: [["html", { open: "never" }], ["list"]],
 
   // Shared settings for all projects
   use: {
     // Base URL to use in actions like `await page.goto('/')`
-    baseURL: 'http://localhost:3000',
+    baseURL: "http://localhost:3000",
+
+    // Block service workers to prevent stale chunk caching across builds
+    serviceWorkers: "block",
 
     // Collect trace when retrying the failed test
-    trace: 'on-first-retry',
+    trace: "on-first-retry",
 
     // Screenshot on failure
-    screenshot: 'only-on-failure',
+    screenshot: "only-on-failure",
 
     // Video on failure
-    video: 'on-first-retry',
+    video: "on-first-retry",
   },
 
   // Configure projects — chromium + firefox only (webkit has known auth state issues)
   projects: [
     // Setup project for authentication state
     {
-      name: 'setup',
+      name: "setup",
       testMatch: /.*\.setup\.ts/,
     },
 
     {
-      name: 'chromium',
+      name: "chromium",
       use: {
-        ...devices['Desktop Chrome'],
+        ...devices["Desktop Chrome"],
         storageState: authFile,
       },
-      dependencies: ['setup'],
+      dependencies: ["setup"],
     },
 
     {
-      name: 'firefox',
+      name: "firefox",
       use: {
-        ...devices['Desktop Firefox'],
+        ...devices["Desktop Firefox"],
         storageState: authFile,
       },
-      dependencies: ['setup'],
+      dependencies: ["setup"],
     },
   ],
 
