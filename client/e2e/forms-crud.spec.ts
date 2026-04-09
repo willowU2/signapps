@@ -88,8 +88,10 @@ test.describe("Forms — CRUD and builder", () => {
     expect(await forms.fieldCount()).toBe(1);
   });
 
-  // Needs backend sort by created_at DESC or frontend useMemo sort
+  // Listing loads 65+ forms with N+1 response count queries — takes >60s.
+  // Fix: batch response counts in the backend or use a separate query.
   test.fixme("toggle publish state of a form", async ({ page }) => {
+    test.setTimeout(60000);
     const forms = new FormsPage(page);
     await forms.gotoListing();
     const id = await forms.createForm(`E2E Publish ${Date.now()}`);
@@ -121,8 +123,9 @@ test.describe("Forms — CRUD and builder", () => {
       .toBe("draft");
   });
 
-  // Needs backend sort by created_at DESC or frontend useMemo sort
+  // Same N+1 issue as toggle publish
   test.fixme("delete a form from the listing", async ({ page }) => {
+    test.setTimeout(60000);
     const forms = new FormsPage(page);
     await forms.gotoListing();
     const id = await forms.createForm(`E2E Delete ${Date.now()}`);
