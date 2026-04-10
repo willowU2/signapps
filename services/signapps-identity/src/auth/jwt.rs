@@ -31,6 +31,39 @@ pub struct Claims {
     pub aud: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub iss: Option<String>,
+    /// Person ID (unified person model).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub person_id: Option<Uuid>,
+    /// Active login context ID.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context_id: Option<Uuid>,
+    /// Context type: `employee`, `client`, `supplier`, `partner`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context_type: Option<String>,
+    /// Company ID for the active context.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub company_id: Option<Uuid>,
+    /// Company display name for the active context.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub company_name: Option<String>,
+}
+
+/// Optional context fields injected into JWT tokens during context selection.
+///
+/// All fields are optional so callers can pass [`TokenContext::default()`] when
+/// no context has been selected yet (e.g. plain login without a context picker).
+#[derive(Debug, Default, Clone)]
+pub struct TokenContext {
+    /// Person ID (unified person model).
+    pub person_id: Option<Uuid>,
+    /// Active login context ID.
+    pub context_id: Option<Uuid>,
+    /// Context type: `employee`, `client`, `supplier`, `partner`.
+    pub context_type: Option<String>,
+    /// Company ID for the active context.
+    pub company_id: Option<Uuid>,
+    /// Company display name for the active context.
+    pub company_name: Option<String>,
 }
 
 /// Token pair (access + refresh).
@@ -45,6 +78,10 @@ pub struct TokenPair {
 ///
 /// Supports both HS256 and RS256 depending on `config.algorithm`.
 ///
+/// Pass [`TokenContext::default()`] when no login context has been selected yet
+/// (plain login without context picker). Context fields will be omitted from the
+/// token when `None`.
+///
 /// # Errors
 ///
 /// Returns `Error::Internal` if encoding fails or if the config lacks the
@@ -55,6 +92,7 @@ pub fn create_tokens(
     role: i16,
     tenant_id: Option<Uuid>,
     workspace_ids: Option<Vec<Uuid>>,
+    context: TokenContext,
     config: &JwtConfig,
 ) -> Result<TokenPair> {
     let now = Utc::now();
@@ -72,6 +110,11 @@ pub fn create_tokens(
         token_type: "access".to_string(),
         aud: Some(config.audience.clone()),
         iss: Some(config.issuer.clone()),
+        person_id: context.person_id,
+        context_id: context.context_id,
+        context_type: context.context_type.clone(),
+        company_id: context.company_id,
+        company_name: context.company_name.clone(),
     };
 
     let (header, encoding_key) = build_encoding_key(config)?;
@@ -92,6 +135,11 @@ pub fn create_tokens(
         token_type: "refresh".to_string(),
         aud: Some(config.audience.clone()),
         iss: Some(config.issuer.clone()),
+        person_id: context.person_id,
+        context_id: context.context_id,
+        context_type: context.context_type,
+        company_id: context.company_id,
+        company_name: context.company_name,
     };
 
     let refresh_token = encode(&header, &refresh_claims, &encoding_key)
@@ -182,8 +230,16 @@ mod tests {
     /// `create_tokens` produces a token pair where the access token expires in 900s.
     #[test]
     fn test_create_tokens_access_expires_in_900() {
-        let pair = create_tokens(test_user_id(), "alice", 1, None, None, &hs256_config())
-            .expect("should succeed");
+        let pair = create_tokens(
+            test_user_id(),
+            "alice",
+            1,
+            None,
+            None,
+            TokenContext::default(),
+            &hs256_config(),
+        )
+        .expect("should succeed");
         assert_eq!(pair.expires_in, 900, "access token TTL must be 900 seconds");
     }
 
@@ -197,6 +253,7 @@ mod tests {
             2,
             Some(tenant_id),
             None,
+            TokenContext::default(),
             &hs256_config(),
         )
         .expect("should succeed");
@@ -212,8 +269,16 @@ mod tests {
     /// The refresh token carries `token_type = "refresh"`.
     #[test]
     fn test_create_tokens_refresh_type() {
-        let pair = create_tokens(test_user_id(), "carol", 1, None, None, &hs256_config())
-            .expect("should succeed");
+        let pair = create_tokens(
+            test_user_id(),
+            "carol",
+            1,
+            None,
+            None,
+            TokenContext::default(),
+            &hs256_config(),
+        )
+        .expect("should succeed");
         let claims =
             verify_token(&pair.refresh_token, &hs256_config()).expect("should decode refresh");
         assert_eq!(claims.token_type, "refresh");
@@ -222,8 +287,16 @@ mod tests {
     /// `verify_token` with the wrong secret returns an error.
     #[test]
     fn test_verify_token_wrong_secret_fails() {
-        let pair = create_tokens(test_user_id(), "dave", 1, None, None, &hs256_config())
-            .expect("should succeed");
+        let pair = create_tokens(
+            test_user_id(),
+            "dave",
+            1,
+            None,
+            None,
+            TokenContext::default(),
+            &hs256_config(),
+        )
+        .expect("should succeed");
         let wrong_config = JwtConfig::hs256("completely-wrong-secret-value-xyz".to_string());
         let result = verify_token(&pair.access_token, &wrong_config);
         assert!(result.is_err(), "wrong secret must be rejected");
@@ -240,6 +313,7 @@ mod tests {
             1,
             None,
             Some(vec![ws1, ws2]),
+            TokenContext::default(),
             &hs256_config(),
         )
         .expect("should succeed");
@@ -252,11 +326,48 @@ mod tests {
     /// Access and refresh tokens differ from each other.
     #[test]
     fn test_create_tokens_access_and_refresh_are_different() {
-        let pair = create_tokens(test_user_id(), "frank", 1, None, None, &hs256_config())
-            .expect("should succeed");
+        let pair = create_tokens(
+            test_user_id(),
+            "frank",
+            1,
+            None,
+            None,
+            TokenContext::default(),
+            &hs256_config(),
+        )
+        .expect("should succeed");
         assert_ne!(
             pair.access_token, pair.refresh_token,
             "access and refresh tokens must be distinct"
         );
+    }
+
+    /// Context fields are embedded into the token and survive a round-trip.
+    #[test]
+    fn test_create_tokens_context_fields_roundtrip() {
+        let company_id = Uuid::new_v4();
+        let context_id = Uuid::new_v4();
+        let ctx = TokenContext {
+            person_id: Some(Uuid::new_v4()),
+            context_id: Some(context_id),
+            context_type: Some("employee".to_string()),
+            company_id: Some(company_id),
+            company_name: Some("Acme Corp".to_string()),
+        };
+        let pair = create_tokens(
+            test_user_id(),
+            "grace",
+            1,
+            None,
+            None,
+            ctx,
+            &hs256_config(),
+        )
+        .expect("should succeed");
+        let claims = verify_token(&pair.access_token, &hs256_config()).expect("should decode");
+        assert_eq!(claims.context_id, Some(context_id));
+        assert_eq!(claims.context_type.as_deref(), Some("employee"));
+        assert_eq!(claims.company_id, Some(company_id));
+        assert_eq!(claims.company_name.as_deref(), Some("Acme Corp"));
     }
 }

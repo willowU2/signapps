@@ -39,6 +39,21 @@ pub struct Claims {
     /// Issuer
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub iss: Option<String>,
+    /// Person ID (unified person model — links the user to a person record).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub person_id: Option<Uuid>,
+    /// Login context ID — identifies which context (employee/client/supplier) is active.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context_id: Option<Uuid>,
+    /// Context type: `employee`, `client`, `supplier`, `partner`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context_type: Option<String>,
+    /// Company ID for the active context.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub company_id: Option<Uuid>,
+    /// Company display name for the active context.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub company_name: Option<String>,
 }
 
 impl Claims {

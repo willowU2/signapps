@@ -12,7 +12,7 @@ use signapps_db::repositories::{LdapRepository, UserRepository, WorkspaceReposit
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::auth::{create_tokens, verify_password, verify_token};
+use crate::auth::{create_tokens, verify_password, verify_token, TokenContext};
 use crate::handlers::admin_security::ActiveSession;
 use crate::ldap::LdapService;
 use crate::AppState;
@@ -62,6 +62,12 @@ pub struct LoginResponse {
     pub token_type: String,
     /// Access token lifetime in seconds.
     pub expires_in: i64,
+    /// Available login contexts for this user (only present on first login).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub contexts: Option<Vec<signapps_db::shared::models::LoginContextDisplay>>,
+    /// Whether the client should prompt the user to pick a context before proceeding.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub requires_context: Option<bool>,
 }
 
 /// Registration request payload.
@@ -279,13 +285,14 @@ pub async fn login(
         None
     };
 
-    // Generate tokens with tenant and workspace context
+    // Generate tokens with tenant and workspace context (no login context selected yet)
     let tokens = create_tokens(
         user.id,
         &user.username,
         user.role,
         user.tenant_id,
         workspace_ids,
+        TokenContext::default(),
         &state.jwt_config,
     )?;
 
@@ -333,6 +340,17 @@ pub async fn login(
         response_headers.append(header::SET_COOKIE, c);
     }
 
+    // Fetch available contexts for this user so the frontend can present the context picker
+    let contexts = signapps_db::repositories::CompanyRepository::list_contexts_for_user(
+        state.pool.inner(),
+        user.id,
+    )
+    .await
+    .unwrap_or_default();
+
+    let requires_context = if contexts.is_empty() { None } else { Some(true) };
+    let contexts_payload = if contexts.is_empty() { None } else { Some(contexts) };
+
     Ok((
         response_headers,
         Json(LoginResponse {
@@ -340,6 +358,8 @@ pub async fn login(
             refresh_token: tokens.refresh_token,
             token_type: "Bearer".to_string(),
             expires_in: tokens.expires_in,
+            contexts: contexts_payload,
+            requires_context,
         }),
     ))
 }
@@ -549,13 +569,23 @@ pub async fn refresh(
         None
     };
 
-    // Generate new tokens with tenant and workspace context
+    // Preserve context from the existing refresh token claims
+    let preserved_context = TokenContext {
+        person_id: claims.person_id,
+        context_id: claims.context_id,
+        context_type: claims.context_type.clone(),
+        company_id: claims.company_id,
+        company_name: claims.company_name.clone(),
+    };
+
+    // Generate new tokens preserving the active context
     let tokens = create_tokens(
         user.id,
         &user.username,
         user.role,
         user.tenant_id,
         workspace_ids,
+        preserved_context,
         &state.jwt_config,
     )?;
 
@@ -585,6 +615,8 @@ pub async fn refresh(
             refresh_token: tokens.refresh_token,
             token_type: "Bearer".to_string(),
             expires_in: tokens.expires_in,
+            contexts: None,
+            requires_context: None,
         }),
     ))
 }
@@ -879,6 +911,218 @@ pub async fn password_reset_confirm(
     Ok(Json(serde_json::json!({
         "message": "Password reset successfully."
     })))
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Context selection endpoints (Task 4 — Unified Person Model)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Request body for context selection.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct SelectContextRequest {
+    /// ID of the login context to activate.
+    pub context_id: Uuid,
+}
+
+/// Response returned after selecting a context — contains fresh tokens with context claims.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ContextTokenResponse {
+    /// Short-lived access token embedding the selected context.
+    pub access_token: String,
+    /// Long-lived refresh token.
+    pub refresh_token: String,
+    /// Always `"Bearer"`.
+    pub token_type: String,
+    /// Access token lifetime in seconds.
+    pub expires_in: i64,
+    /// The context that is now active.
+    pub context: signapps_db::shared::models::LoginContextDisplay,
+}
+
+/// List available login contexts for the authenticated user.
+///
+/// Returns all active contexts associated with the user so the frontend
+/// can display the context picker (employee / client portal / supplier portal …).
+#[utoipa::path(
+    get,
+    path = "/api/v1/auth/contexts",
+    tag = "auth",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "List of available login contexts"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
+pub async fn list_contexts(
+    State(state): State<AppState>,
+    Extension(claims): Extension<signapps_common::Claims>,
+) -> Result<Json<Vec<signapps_db::shared::models::LoginContextDisplay>>> {
+    let contexts = signapps_db::repositories::CompanyRepository::list_contexts_for_user(
+        state.pool.inner(),
+        claims.sub,
+    )
+    .await
+    .map_err(|e| Error::Internal(format!("Failed to list contexts: {e}")))?;
+
+    tracing::info!(user_id = %claims.sub, count = contexts.len(), "Listed login contexts");
+    Ok(Json(contexts))
+}
+
+/// Select (activate) a login context and receive fresh JWT tokens.
+///
+/// Generates a new token pair with the selected context embedded in the claims
+/// (`context_id`, `context_type`, `company_id`, `company_name`).
+/// Also updates `last_used_at` for the chosen context.
+#[utoipa::path(
+    post,
+    path = "/api/v1/auth/select-context",
+    tag = "auth",
+    security(("bearerAuth" = [])),
+    request_body = SelectContextRequest,
+    responses(
+        (status = 200, description = "Context selected — fresh tokens returned", body = ContextTokenResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Context not found or does not belong to user"),
+    )
+)]
+#[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub, context_id = %payload.context_id))]
+pub async fn select_context(
+    State(state): State<AppState>,
+    Extension(claims): Extension<signapps_common::Claims>,
+    Json(payload): Json<SelectContextRequest>,
+) -> Result<Json<ContextTokenResponse>> {
+    issue_context_tokens(&state, &claims, payload.context_id).await
+}
+
+/// Switch to a different login context and receive fresh JWT tokens.
+///
+/// Functionally identical to `select_context` — provided as a separate route
+/// to match frontend expectations when switching contexts from the header picker.
+#[utoipa::path(
+    post,
+    path = "/api/v1/auth/switch-context",
+    tag = "auth",
+    security(("bearerAuth" = [])),
+    request_body = SelectContextRequest,
+    responses(
+        (status = 200, description = "Context switched — fresh tokens returned", body = ContextTokenResponse),
+        (status = 401, description = "Not authenticated"),
+        (status = 404, description = "Context not found or does not belong to user"),
+    )
+)]
+#[tracing::instrument(skip(state, payload), fields(user_id = %claims.sub, context_id = %payload.context_id))]
+pub async fn switch_context(
+    State(state): State<AppState>,
+    Extension(claims): Extension<signapps_common::Claims>,
+    Json(payload): Json<SelectContextRequest>,
+) -> Result<Json<ContextTokenResponse>> {
+    issue_context_tokens(&state, &claims, payload.context_id).await
+}
+
+/// Return the currently active context extracted from the JWT claims.
+///
+/// Returns `null` for the context fields when no context has been selected.
+#[utoipa::path(
+    get,
+    path = "/api/v1/auth/current-context",
+    tag = "auth",
+    security(("bearerAuth" = [])),
+    responses(
+        (status = 200, description = "Current context info (may be empty if no context selected)"),
+        (status = 401, description = "Not authenticated"),
+    )
+)]
+#[tracing::instrument(skip(_state), fields(user_id = %claims.sub))]
+pub async fn current_context(
+    State(_state): State<AppState>,
+    Extension(claims): Extension<signapps_common::Claims>,
+) -> Result<Json<serde_json::Value>> {
+    Ok(Json(serde_json::json!({
+        "context_id": claims.context_id,
+        "context_type": claims.context_type,
+        "company_id": claims.company_id,
+        "company_name": claims.company_name,
+        "person_id": claims.person_id,
+    })))
+}
+
+/// Shared logic: look up context, touch `last_used_at`, mint fresh tokens.
+async fn issue_context_tokens(
+    state: &AppState,
+    claims: &signapps_common::Claims,
+    context_id: Uuid,
+) -> Result<Json<ContextTokenResponse>> {
+    // Verify the context belongs to this user
+    let ctx = signapps_db::repositories::CompanyRepository::find_context(
+        state.pool.inner(),
+        context_id,
+        claims.sub,
+    )
+    .await
+    .map_err(|e| Error::Internal(format!("Failed to fetch context: {e}")))?
+    .ok_or_else(|| Error::NotFound(format!("Login context {context_id}")))?;
+
+    // Update last_used_at (fire-and-forget — do not fail the request on error)
+    let _ = signapps_db::repositories::CompanyRepository::touch_context(
+        state.pool.inner(),
+        context_id,
+    )
+    .await;
+
+    // Fetch workspace IDs for the token (re-use existing workspace resolution)
+    let user = signapps_db::repositories::UserRepository::find_by_id(&state.pool, claims.sub)
+        .await
+        .map_err(|e| Error::Internal(format!("Failed to fetch user: {e}")))?
+        .ok_or_else(|| Error::NotFound("User not found".to_string()))?;
+
+    let workspace_ids = if user.tenant_id.is_some() {
+        let workspaces =
+            signapps_db::repositories::WorkspaceRepository::list_by_user(&state.pool, user.id)
+                .await
+                .unwrap_or_default();
+        if workspaces.is_empty() {
+            None
+        } else {
+            Some(workspaces.into_iter().map(|w| w.id).collect())
+        }
+    } else {
+        None
+    };
+
+    let token_context = TokenContext {
+        person_id: None, // person_id resolved in a later task when person records exist
+        context_id: Some(ctx.id),
+        context_type: Some(ctx.context_type.clone()),
+        company_id: Some(ctx.company_id),
+        company_name: Some(ctx.company_name.clone()),
+    };
+
+    let tokens = create_tokens(
+        user.id,
+        &user.username,
+        user.role,
+        user.tenant_id,
+        workspace_ids,
+        token_context,
+        &state.jwt_config,
+    )?;
+
+    tracing::info!(
+        user_id = %claims.sub,
+        context_id = %context_id,
+        context_type = %ctx.context_type,
+        company_id = %ctx.company_id,
+        "Login context selected"
+    );
+
+    Ok(Json(ContextTokenResponse {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        token_type: "Bearer".to_string(),
+        expires_in: tokens.expires_in,
+        context: ctx,
+    }))
 }
 
 /// Decrypt LDAP bind password using XOR with LDAP_ENCRYPTION_KEY env var.

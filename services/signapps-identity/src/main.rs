@@ -214,6 +214,11 @@ fn create_router(state: AppState) -> Router {
     let protected_routes = Router::new()
         .route("/api/v1/auth/logout", post(handlers::auth::logout))
         .route("/api/v1/auth/me", get(handlers::auth::me))
+        // Context selection (Unified Person Model — Task 4)
+        .route("/api/v1/auth/contexts", get(handlers::auth::list_contexts))
+        .route("/api/v1/auth/select-context", post(handlers::auth::select_context))
+        .route("/api/v1/auth/switch-context", post(handlers::auth::switch_context))
+        .route("/api/v1/auth/current-context", get(handlers::auth::current_context))
         // MFA endpoints
         .route("/api/v1/auth/mfa/setup", post(handlers::mfa::setup))
         .route("/api/v1/auth/mfa/verify", post(handlers::mfa::verify))
