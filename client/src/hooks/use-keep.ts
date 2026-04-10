@@ -1,14 +1,22 @@
-'use client';
+"use client";
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { keepApi, type KeepNote, type KeepLabel, type KeepData } from '@/lib/api/keep';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import {
+  keepApi,
+  type KeepNote,
+  type KeepLabel,
+  type KeepData,
+} from "@/lib/api/keep";
+
+// Re-export types for consumers
+export type { KeepNote, KeepLabel, KeepData };
 
 // Query keys
 export const keepKeys = {
-  all: ['keep'] as const,
-  notes: () => [...keepKeys.all, 'notes'] as const,
-  labels: () => [...keepKeys.all, 'labels'] as const,
+  all: ["keep"] as const,
+  notes: () => [...keepKeys.all, "notes"] as const,
+  labels: () => [...keepKeys.all, "labels"] as const,
 };
 
 // Default data for optimistic updates when no data exists
@@ -28,7 +36,7 @@ export function useCreateNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (note: Omit<KeepNote, 'id' | 'createdAt' | 'updatedAt'>) =>
+    mutationFn: (note: Omit<KeepNote, "id" | "createdAt" | "updatedAt">) =>
       keepApi.createNote(note),
 
     onMutate: async (newNoteData) => {
@@ -61,7 +69,7 @@ export function useCreateNote() {
       if (context?.previousData) {
         queryClient.setQueryData(keepKeys.all, context.previousData);
       }
-      toast.error('Erreur lors de la création de la note');
+      toast.error("Erreur lors de la création de la note");
     },
 
     onSuccess: (createdNote) => {
@@ -71,7 +79,7 @@ export function useCreateNote() {
         return {
           ...old,
           notes: old.notes.map((n) =>
-            n.id.startsWith('temp-') ? createdNote : n
+            n.id.startsWith("temp-") ? createdNote : n,
           ),
         };
       });
@@ -100,7 +108,7 @@ export function useUpdateNote() {
           notes: old.notes.map((note) =>
             note.id === id
               ? { ...note, ...updates, updatedAt: new Date().toISOString() }
-              : note
+              : note,
           ),
         };
       });
@@ -112,7 +120,7 @@ export function useUpdateNote() {
       if (context?.previousData) {
         queryClient.setQueryData(keepKeys.all, context.previousData);
       }
-      toast.error('Erreur lors de la mise à jour de la note');
+      toast.error("Erreur lors de la mise à jour de la note");
     },
   });
 }
@@ -135,8 +143,12 @@ export function useTogglePin() {
           ...old,
           notes: old.notes.map((n) =>
             n.id === note.id
-              ? { ...n, isPinned: !n.isPinned, updatedAt: new Date().toISOString() }
-              : n
+              ? {
+                  ...n,
+                  isPinned: !n.isPinned,
+                  updatedAt: new Date().toISOString(),
+                }
+              : n,
           ),
         };
       });
@@ -152,7 +164,7 @@ export function useTogglePin() {
   });
 }
 
-// Hook for archiving/unarchiving a note with optimistic update
+// Hook for archiving/unarchiving a note with optimistic update and toast undo
 export function useToggleArchive() {
   const queryClient = useQueryClient();
 
@@ -179,12 +191,39 @@ export function useToggleArchive() {
                   isPinned: n.isArchived ? n.isPinned : false,
                   updatedAt: new Date().toISOString(),
                 }
-              : n
+              : n,
           ),
         };
       });
 
-      return { previousData };
+      return { previousData, wasArchived: note.isArchived };
+    },
+
+    onSuccess: (_result, note, context) => {
+      const message = context?.wasArchived
+        ? "Note desarchivee"
+        : "Note archivee";
+      toast(message, {
+        duration: 5000,
+        action: {
+          label: "Annuler",
+          onClick: () => {
+            // Undo: revert the archive toggle
+            keepApi
+              .updateNote(note.id, {
+                isArchived: context?.wasArchived ?? false,
+                isPinned: note.isPinned,
+              })
+              .then(() => {
+                queryClient.invalidateQueries({ queryKey: keepKeys.all });
+              });
+            // Optimistically revert
+            if (context?.previousData) {
+              queryClient.setQueryData(keepKeys.all, context.previousData);
+            }
+          },
+        },
+      });
     },
 
     onError: (_err, _vars, context) => {
@@ -196,7 +235,7 @@ export function useToggleArchive() {
   });
 }
 
-// Hook for moving to trash with optimistic update
+// Hook for moving to trash with optimistic update and toast undo
 export function useMoveToTrash() {
   const queryClient = useQueryClient();
 
@@ -225,7 +264,7 @@ export function useMoveToTrash() {
                   isPinned: false,
                   updatedAt: new Date().toISOString(),
                 }
-              : n
+              : n,
           ),
         };
       });
@@ -233,11 +272,30 @@ export function useMoveToTrash() {
       return { previousData };
     },
 
+    onSuccess: (_result, note, context) => {
+      toast("Note mise a la corbeille", {
+        duration: 5000,
+        action: {
+          label: "Annuler",
+          onClick: () => {
+            // Undo: restore from trash
+            keepApi.updateNote(note.id, { isTrashed: false }).then(() => {
+              queryClient.invalidateQueries({ queryKey: keepKeys.all });
+            });
+            // Optimistically revert
+            if (context?.previousData) {
+              queryClient.setQueryData(keepKeys.all, context.previousData);
+            }
+          },
+        },
+      });
+    },
+
     onError: (_err, _vars, context) => {
       if (context?.previousData) {
         queryClient.setQueryData(keepKeys.all, context.previousData);
       }
-      toast.error('Erreur lors de la suppression');
+      toast.error("Erreur lors de la suppression");
     },
   });
 }
@@ -247,7 +305,8 @@ export function useRestoreFromTrash() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (note: KeepNote) => keepApi.updateNote(note.id, { isTrashed: false }),
+    mutationFn: (note: KeepNote) =>
+      keepApi.updateNote(note.id, { isTrashed: false }),
 
     onMutate: async (note) => {
       await queryClient.cancelQueries({ queryKey: keepKeys.all });
@@ -260,7 +319,7 @@ export function useRestoreFromTrash() {
           notes: old.notes.map((n) =>
             n.id === note.id
               ? { ...n, isTrashed: false, updatedAt: new Date().toISOString() }
-              : n
+              : n,
           ),
         };
       });
@@ -272,7 +331,7 @@ export function useRestoreFromTrash() {
       if (context?.previousData) {
         queryClient.setQueryData(keepKeys.all, context.previousData);
       }
-      toast.error('Erreur lors de la restauration');
+      toast.error("Erreur lors de la restauration");
     },
   });
 }
@@ -303,7 +362,7 @@ export function useDeleteNote() {
       if (context?.previousData) {
         queryClient.setQueryData(keepKeys.all, context.previousData);
       }
-      toast.error('Erreur lors de la suppression définitive');
+      toast.error("Erreur lors de la suppression définitive");
     },
   });
 }
@@ -313,7 +372,8 @@ export function useEmptyTrash() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (trashedNoteIds: string[]) => keepApi.deleteNotes(trashedNoteIds),
+    mutationFn: (trashedNoteIds: string[]) =>
+      keepApi.deleteNotes(trashedNoteIds),
 
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: keepKeys.all });
@@ -334,7 +394,7 @@ export function useEmptyTrash() {
       if (context?.previousData) {
         queryClient.setQueryData(keepKeys.all, context.previousData);
       }
-      toast.error('Erreur lors du vidage de la corbeille');
+      toast.error("Erreur lors du vidage de la corbeille");
     },
   });
 }
@@ -358,7 +418,7 @@ export function useChangeColor() {
           notes: old.notes.map((n) =>
             n.id === noteId
               ? { ...n, color, updatedAt: new Date().toISOString() }
-              : n
+              : n,
           ),
         };
       });
@@ -381,7 +441,7 @@ export function useToggleChecklistItem() {
   return useMutation({
     mutationFn: ({ note, itemId }: { note: KeepNote; itemId: string }) => {
       const updatedItems = note.checklistItems.map((item) =>
-        item.id === itemId ? { ...item, checked: !item.checked } : item
+        item.id === itemId ? { ...item, checked: !item.checked } : item,
       );
       return keepApi.updateNote(note.id, { checklistItems: updatedItems });
     },
@@ -399,11 +459,13 @@ export function useToggleChecklistItem() {
               ? {
                   ...n,
                   checklistItems: n.checklistItems.map((item) =>
-                    item.id === itemId ? { ...item, checked: !item.checked } : item
+                    item.id === itemId
+                      ? { ...item, checked: !item.checked }
+                      : item,
                   ),
                   updatedAt: new Date().toISOString(),
                 }
-              : n
+              : n,
           ),
         };
       });
@@ -447,7 +509,7 @@ export function useCreateLabel() {
       if (context?.previousData) {
         queryClient.setQueryData(keepKeys.all, context.previousData);
       }
-      toast.error('Erreur lors de la création du libellé');
+      toast.error("Erreur lors de la création du libellé");
     },
 
     onSuccess: (createdLabel) => {
@@ -456,7 +518,7 @@ export function useCreateLabel() {
         return {
           ...old,
           labels: old.labels.map((l) =>
-            l.id.startsWith('temp-') ? createdLabel : l
+            l.id.startsWith("temp-") ? createdLabel : l,
           ),
         };
       });
@@ -496,7 +558,7 @@ export function useDeleteLabel() {
       if (context?.previousData) {
         queryClient.setQueryData(keepKeys.all, context.previousData);
       }
-      toast.error('Erreur lors de la suppression du libellé');
+      toast.error("Erreur lors de la suppression du libellé");
     },
   });
 }
@@ -504,9 +566,9 @@ export function useDeleteLabel() {
 // Selector helpers for components
 export function selectNotesByView(
   data: KeepData | undefined,
-  view: 'notes' | 'reminders' | 'archive' | 'trash',
-  searchQuery: string = '',
-  labelFilter: string | null = null
+  view: "notes" | "reminders" | "archive" | "trash",
+  searchQuery: string = "",
+  labelFilter: string | null = null,
 ): KeepNote[] {
   if (!data) return [];
 
@@ -514,10 +576,10 @@ export function selectNotesByView(
 
   // Filter by view
   switch (view) {
-    case 'archive':
+    case "archive":
       filtered = filtered.filter((n) => n.isArchived && !n.isTrashed);
       break;
-    case 'trash':
+    case "trash":
       filtered = filtered.filter((n) => n.isTrashed);
       break;
     default:
@@ -532,7 +594,9 @@ export function selectNotesByView(
         n.title.toLowerCase().includes(query) ||
         n.content.toLowerCase().includes(query) ||
         n.labels.some((l) => l.toLowerCase().includes(query)) ||
-        n.checklistItems.some((item) => item.text.toLowerCase().includes(query))
+        n.checklistItems.some((item) =>
+          item.text.toLowerCase().includes(query),
+        ),
     );
   }
 
