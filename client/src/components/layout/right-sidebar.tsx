@@ -377,9 +377,9 @@ export function RightSidebar() {
                     </p>
                   ) : (
                     <div className="grid grid-cols-4 gap-1">
-                      {filteredApps.map((app) => (
+                      {filteredApps.map((app, i) => (
                         <div
-                          key={app.href}
+                          key={`${app.href}-${i}`}
                           draggable
                           onDragStart={(e) => handleDragStart(e, app)}
                           onClick={() => router.push(app.href)}
@@ -410,9 +410,9 @@ export function RightSidebar() {
                           {cat}
                         </p>
                         <div className="grid grid-cols-4 gap-1">
-                          {apps.map((app) => (
+                          {apps.map((app, i) => (
                             <div
-                              key={app.href}
+                              key={`${app.href}-${i}`}
                               draggable
                               onDragStart={(e) => handleDragStart(e, app)}
                               onClick={() => router.push(app.href)}

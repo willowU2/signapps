@@ -559,7 +559,8 @@ export async function fetchAppRegistry(): Promise<AppEntry[]> {
           timestamp: number;
         };
         if (Date.now() - timestamp < CACHE_TTL_MS) {
-          return apps;
+          // Deduplicate cached apps to fix existing corrupted caches
+          return Array.from(new Map(apps.map((a) => [a.href, a])).values());
         }
       }
     } catch {
@@ -574,7 +575,7 @@ export async function fetchAppRegistry(): Promise<AppEntry[]> {
     if (!res.ok) return APP_REGISTRY;
 
     const data: DiscoverResponse = await res.json();
-    const apps: AppEntry[] = data.apps.map((a) => ({
+    const rawApps: AppEntry[] = data.apps.map((a) => ({
       id: a.id,
       href: a.href,
       icon: a.icon,
@@ -583,6 +584,9 @@ export async function fetchAppRegistry(): Promise<AppEntry[]> {
       category: a.category,
       color: a.color,
     }));
+
+    // Deduplicate apps by href to prevent React key collision errors
+    const apps = Array.from(new Map(rawApps.map((a) => [a.href, a])).values());
 
     // Cache the result
     if (typeof window !== "undefined") {
