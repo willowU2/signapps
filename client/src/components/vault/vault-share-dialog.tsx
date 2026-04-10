@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, User, Users, Shield, Eye, Lock, Calendar, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useVaultStore } from '@/stores/vault-store';
 import type { DecryptedVaultItem, ShareType, AccessLevel } from '@/types/vault';
+import { usersApi, groupsApi } from '@/lib/api/identity';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Access level config
@@ -62,26 +63,8 @@ const ACCESS_LEVELS: {
   },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Mock data — in production, query identity service
-// ─────────────────────────────────────────────────────────────────────────────
-
 interface Person { id: string; name: string; email: string; }
 interface Group  { id: string; name: string; memberCount: number; }
-
-const MOCK_PERSONS: Person[] = [
-  { id: 'u1', name: 'Alice Martin',   email: 'alice@exemple.com' },
-  { id: 'u2', name: 'Bob Dupont',     email: 'bob@exemple.com' },
-  { id: 'u3', name: 'Claire Bernard', email: 'claire@exemple.com' },
-  { id: 'u4', name: 'David Leroy',    email: 'david@exemple.com' },
-];
-
-const MOCK_GROUPS: Group[] = [
-  { id: 'g1', name: 'Équipe Dev',        memberCount: 8 },
-  { id: 'g2', name: 'Direction',         memberCount: 4 },
-  { id: 'g3', name: 'Support',           memberCount: 12 },
-  { id: 'g4', name: 'Finance',           memberCount: 6 },
-];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Props
@@ -106,17 +89,47 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState('');
   const [loading, setLoading] = useState(false);
+  const [persons, setPersons] = useState<Person[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [loadingData, setLoadingData] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setLoadingData(true);
+      Promise.all([
+        usersApi.list(0, 100).catch(() => ({ data: { users: [] } })),
+        groupsApi.list().catch(() => ({ data: [] }))
+      ]).then(([usersRes, groupsRes]) => {
+        // Handle axios responses structure (sometimes data is nested in .data)
+        const userList = (usersRes as any).data?.users || (usersRes as any).users || [];
+        const groupList = (groupsRes as any).data || groupsRes || [];
+        
+        setPersons(userList.map((u: any) => ({
+          id: u.id,
+          name: u.display_name || u.username,
+          email: u.email || ''
+        })));
+        setGroups(groupList.map((g: any) => ({
+          id: g.id,
+          name: g.name,
+          memberCount: g.member_count || 0
+        })));
+      }).finally(() => {
+        setLoadingData(false);
+      });
+    }
+  }, [open]);
 
   // ── Filter ──────────────────────────────────────────────────────────────
 
-  const filteredPersons = MOCK_PERSONS.filter(
+  const filteredPersons = persons.filter(
     (p) =>
       !searchQuery ||
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.email.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const filteredGroups = MOCK_GROUPS.filter(
+  const filteredGroups = groups.filter(
     (g) => !searchQuery || g.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
@@ -205,32 +218,38 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
             </div>
 
             <ScrollArea className="h-40 rounded-md border border-border">
-              <div className="p-1 space-y-0.5">
-                {shareType === 'person' &&
-                  filteredPersons.map((p) => (
-                    <PersonItem
-                      key={p.id}
-                      person={p}
-                      selected={selectedId === p.id}
-                      onClick={() => setSelectedId(p.id)}
-                    />
-                  ))}
-                {shareType === 'group' &&
-                  filteredGroups.map((g) => (
-                    <GroupItem
-                      key={g.id}
-                      group={g}
-                      selected={selectedId === g.id}
-                      onClick={() => setSelectedId(g.id)}
-                    />
-                  ))}
-                {shareType === 'person' && filteredPersons.length === 0 && (
-                  <p className="text-center text-xs text-muted-foreground py-4">Aucune personne trouvée</p>
-                )}
-                {shareType === 'group' && filteredGroups.length === 0 && (
-                  <p className="text-center text-xs text-muted-foreground py-4">Aucun groupe trouvé</p>
-                )}
-              </div>
+              {loadingData ? (
+                <div className="flex items-center justify-center p-8 text-sm text-muted-foreground">
+                  Chargement...
+                </div>
+              ) : (
+                <div className="p-1 space-y-0.5">
+                  {shareType === 'person' &&
+                    filteredPersons.map((p) => (
+                      <PersonItem
+                        key={p.id}
+                        person={p}
+                        selected={selectedId === p.id}
+                        onClick={() => setSelectedId(p.id)}
+                      />
+                    ))}
+                  {shareType === 'group' &&
+                    filteredGroups.map((g) => (
+                      <GroupItem
+                        key={g.id}
+                        group={g}
+                        selected={selectedId === g.id}
+                        onClick={() => setSelectedId(g.id)}
+                      />
+                    ))}
+                  {shareType === 'person' && filteredPersons.length === 0 && (
+                    <p className="text-center text-xs text-muted-foreground py-4">Aucune personne trouvée</p>
+                  )}
+                  {shareType === 'group' && filteredGroups.length === 0 && (
+                    <p className="text-center text-xs text-muted-foreground py-4">Aucun groupe trouvé</p>
+                  )}
+                </div>
+              )}
             </ScrollArea>
           </div>
 

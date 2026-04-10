@@ -6,7 +6,7 @@
 
 import { getClient, ServiceName } from "./factory";
 
-const client = () => getClient(ServiceName.IDENTITY);
+const client = () => getClient(ServiceName.GAMIFICATION_SVC);
 
 // ---------------------------------------------------------------------------
 // Types

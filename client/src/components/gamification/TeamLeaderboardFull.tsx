@@ -130,9 +130,9 @@ export function TeamLeaderboardFull() {
         trend: "stable" as const,
         trend_value: 0,
       }));
-      setEntries(mapped.length > 0 ? mapped : MOCK_ENTRIES);
+      setEntries(mapped);
     } catch {
-      setEntries(MOCK_ENTRIES);
+      setEntries([]);
     } finally {
       setLoading(false);
     }
