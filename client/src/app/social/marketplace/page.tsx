@@ -1,150 +1,48 @@
-'use client';
+"use client";
 
-import { useState, useMemo, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useState, useMemo, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Separator } from '@/components/ui/separator';
-import { Store, Search, Filter, Plus, Users, Star, Send } from 'lucide-react';
-import { toast } from 'sonner';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-type Platform = 'twitter' | 'instagram' | 'linkedin' | 'tiktok' | 'youtube' | 'facebook';
-type Niche = 'tech' | 'fashion' | 'fitness' | 'food' | 'travel' | 'business' | 'gaming' | 'other';
-
-interface MarketplaceOffer {
-  id: string;
-  authorName: string;
-  authorAvatar: string;
-  platform: Platform;
-  followers: number;
-  niche: Niche;
-  description: string;
-  price: number; // EUR
-  rating: number;
-  reviewCount: number;
-  turnaround: string; // e.g. "3 days"
-  status: 'available' | 'pending' | 'accepted';
-  createdAt: string;
-}
-
-// ---------------------------------------------------------------------------
-// Mock data (ready for backend)
-// ---------------------------------------------------------------------------
-
-const MOCK_OFFERS: MarketplaceOffer[] = [
-  {
-    id: 'offer_1',
-    authorName: 'Sarah M.',
-    authorAvatar: 'SM',
-    platform: 'instagram',
-    followers: 45000,
-    niche: 'fashion',
-    description: "I'll create a genuine story + feed post about your product to my engaged fashion audience.",
-    price: 150,
-    rating: 4.8,
-    reviewCount: 34,
-    turnaround: '3 days',
-    status: 'available',
-    createdAt: '2026-03-01T10:00:00Z',
-  },
-  {
-    id: 'offer_2',
-    authorName: 'Alex K.',
-    authorAvatar: 'AK',
-    platform: 'twitter',
-    followers: 12000,
-    niche: 'tech',
-    description: 'Thread + tweet about your SaaS product to my tech-savvy followers.',
-    price: 80,
-    rating: 4.5,
-    reviewCount: 19,
-    turnaround: '1 day',
-    status: 'available',
-    createdAt: '2026-03-05T14:30:00Z',
-  },
-  {
-    id: 'offer_3',
-    authorName: 'Maria L.',
-    authorAvatar: 'ML',
-    platform: 'tiktok',
-    followers: 200000,
-    niche: 'fitness',
-    description: '60s Reel/TikTok featuring your product in an authentic workout context.',
-    price: 400,
-    rating: 4.9,
-    reviewCount: 71,
-    turnaround: '5 days',
-    status: 'available',
-    createdAt: '2026-03-10T09:15:00Z',
-  },
-  {
-    id: 'offer_4',
-    authorName: 'James T.',
-    authorAvatar: 'JT',
-    platform: 'linkedin',
-    followers: 8500,
-    niche: 'business',
-    description: 'Professional article or post promoting your B2B product/service.',
-    price: 200,
-    rating: 4.7,
-    reviewCount: 28,
-    turnaround: '2 days',
-    status: 'available',
-    createdAt: '2026-03-12T11:00:00Z',
-  },
-  {
-    id: 'offer_5',
-    authorName: 'Yuki N.',
-    authorAvatar: 'YN',
-    platform: 'youtube',
-    followers: 55000,
-    niche: 'gaming',
-    description: 'Product placement or dedicated review in my weekly gaming video.',
-    price: 600,
-    rating: 4.6,
-    reviewCount: 42,
-    turnaround: '7 days',
-    status: 'available',
-    createdAt: '2026-03-15T16:00:00Z',
-  },
-];
-
-const STORAGE_KEY = 'signapps_marketplace_offers';
-
-function loadOffers(): MarketplaceOffer[] {
-  if (typeof window === 'undefined') return MOCK_OFFERS;
-  try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
-    return stored ?? MOCK_OFFERS;
-  } catch {
-    return MOCK_OFFERS;
-  }
-}
-
-function saveOffers(offers: MarketplaceOffer[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(offers));
-}
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Store,
+  Search,
+  Filter,
+  Plus,
+  Users,
+  Star,
+  Send,
+  AlertCircle,
+  RefreshCw,
+  Inbox,
+} from "lucide-react";
+import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  socialApi,
+  type MarketplaceOffer,
+  type MarketplacePlatform,
+  type MarketplaceNiche,
+} from "@/lib/api/social";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -156,14 +54,91 @@ function formatFollowers(n: number): string {
   return String(n);
 }
 
-const PLATFORM_COLORS: Record<Platform, string> = {
-  twitter: 'bg-black text-white',
-  instagram: 'bg-pink-500 text-white',
-  linkedin: 'bg-blue-600 text-white',
-  tiktok: 'bg-gray-900 text-white',
-  youtube: 'bg-red-600 text-white',
-  facebook: 'bg-blue-500 text-white',
+const PLATFORM_COLORS: Record<MarketplacePlatform, string> = {
+  twitter: "bg-black text-white",
+  instagram: "bg-pink-500 text-white",
+  linkedin: "bg-blue-600 text-white",
+  tiktok: "bg-gray-900 text-white",
+  youtube: "bg-red-600 text-white",
+  facebook: "bg-blue-500 text-white",
 };
+
+// ---------------------------------------------------------------------------
+// Skeleton loaders
+// ---------------------------------------------------------------------------
+
+function OfferCardSkeleton() {
+  return (
+    <Card className="flex flex-col h-full">
+      <CardContent className="pt-5 flex flex-col flex-1 gap-3">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+          <div className="space-y-1 text-right">
+            <Skeleton className="h-4 w-12 ml-auto" />
+            <Skeleton className="h-3 w-16 ml-auto" />
+          </div>
+        </div>
+        <Skeleton className="h-5 w-16 rounded-full" />
+        <div className="space-y-1 flex-1">
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-4/5" />
+          <Skeleton className="h-3 w-3/5" />
+        </div>
+        <Skeleton className="h-3 w-24" />
+        <Separator />
+        <Skeleton className="h-8 w-full" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function OffersGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <OfferCardSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Error / Empty states
+// ---------------------------------------------------------------------------
+
+function ErrorState({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <AlertCircle className="w-10 h-10 text-destructive mb-3" />
+      <p className="text-sm text-muted-foreground mb-4">{message}</p>
+      <Button variant="outline" size="sm" onClick={onRetry}>
+        <RefreshCw className="w-3.5 h-3.5 mr-2" />
+        Retry
+      </Button>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <Inbox className="w-10 h-10 text-muted-foreground mb-3" />
+      <p className="text-sm text-muted-foreground">
+        No offers match your filters
+      </p>
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Offer card
@@ -172,9 +147,10 @@ const PLATFORM_COLORS: Record<Platform, string> = {
 interface OfferCardProps {
   offer: MarketplaceOffer;
   onRequest: (offer: MarketplaceOffer) => void;
+  isRequesting: boolean;
 }
 
-function OfferCard({ offer, onRequest }: OfferCardProps) {
+function OfferCard({ offer, onRequest, isRequesting }: OfferCardProps) {
   return (
     <Card className="flex flex-col h-full">
       <CardContent className="pt-5 flex flex-col flex-1 gap-3">
@@ -199,7 +175,7 @@ function OfferCard({ offer, onRequest }: OfferCardProps) {
             </div>
           </div>
           <div className="text-right shrink-0">
-            <p className="font-bold text-sm">{offer.price}€</p>
+            <p className="font-bold text-sm">{offer.price}&#8364;</p>
             <p className="text-xs text-muted-foreground">{offer.turnaround}</p>
           </div>
         </div>
@@ -210,7 +186,9 @@ function OfferCard({ offer, onRequest }: OfferCardProps) {
         </Badge>
 
         {/* Description */}
-        <p className="text-sm text-muted-foreground flex-1 line-clamp-3">{offer.description}</p>
+        <p className="text-sm text-muted-foreground flex-1 line-clamp-3">
+          {offer.description}
+        </p>
 
         {/* Rating */}
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -225,11 +203,15 @@ function OfferCard({ offer, onRequest }: OfferCardProps) {
         <Button
           size="sm"
           className="w-full"
-          disabled={offer.status !== 'available'}
+          disabled={offer.status !== "available" || isRequesting}
           onClick={() => onRequest(offer)}
         >
           <Send className="h-3.5 w-3.5 mr-1" />
-          {offer.status === 'available' ? 'Request' : offer.status === 'pending' ? 'Pending…' : 'Accepted'}
+          {offer.status === "available"
+            ? "Request"
+            : offer.status === "pending"
+              ? "Pending..."
+              : "Accepted"}
         </Button>
       </CardContent>
     </Card>
@@ -241,43 +223,47 @@ function OfferCard({ offer, onRequest }: OfferCardProps) {
 // ---------------------------------------------------------------------------
 
 interface NewOfferFormProps {
-  onCreated: (offer: MarketplaceOffer) => void;
   onClose: () => void;
 }
 
-function NewOfferForm({ onCreated, onClose }: NewOfferFormProps) {
+function NewOfferForm({ onClose }: NewOfferFormProps) {
+  const queryClient = useQueryClient();
   const [form, setForm] = useState({
-    platform: 'instagram' as Platform,
-    followers: '',
-    niche: 'other' as Niche,
-    description: '',
-    price: '',
-    turnaround: '3 days',
+    platform: "instagram" as MarketplacePlatform,
+    followers: "",
+    niche: "other" as MarketplaceNiche,
+    description: "",
+    price: "",
+    turnaround: "3 days",
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (
+      data: Parameters<typeof socialApi.marketplace.createOffer>[0],
+    ) => socialApi.marketplace.createOffer(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketplace", "offers"] });
+      toast.success("Offer published");
+      onClose();
+    },
+    onError: () => {
+      toast.error("Failed to publish offer");
+    },
   });
 
   const handleSubmit = () => {
     if (!form.description.trim() || !form.price || !form.followers) {
-      toast.error('Please fill all required fields');
+      toast.error("Please fill all required fields");
       return;
     }
-    const offer: MarketplaceOffer = {
-      id: `offer_${Date.now()}`,
-      authorName: 'You',
-      authorAvatar: 'ME',
+    createMutation.mutate({
       platform: form.platform,
       followers: parseInt(form.followers) || 0,
       niche: form.niche,
       description: form.description,
       price: parseFloat(form.price) || 0,
-      rating: 0,
-      reviewCount: 0,
       turnaround: form.turnaround,
-      status: 'available',
-      createdAt: new Date().toISOString(),
-    };
-    onCreated(offer);
-    toast.success('Offer published');
-    onClose();
+    });
   };
 
   return (
@@ -285,22 +271,60 @@ function NewOfferForm({ onCreated, onClose }: NewOfferFormProps) {
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <Label className="text-xs">Platform *</Label>
-          <Select value={form.platform} onValueChange={(v) => setForm({ ...form, platform: v as Platform })}>
-            <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+          <Select
+            value={form.platform}
+            onValueChange={(v) =>
+              setForm({ ...form, platform: v as MarketplacePlatform })
+            }
+          >
+            <SelectTrigger className="text-sm">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
-              {(['twitter', 'instagram', 'linkedin', 'tiktok', 'youtube', 'facebook'] as Platform[]).map((p) => (
-                <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>
+              {(
+                [
+                  "twitter",
+                  "instagram",
+                  "linkedin",
+                  "tiktok",
+                  "youtube",
+                  "facebook",
+                ] as MarketplacePlatform[]
+              ).map((p) => (
+                <SelectItem key={p} value={p} className="capitalize">
+                  {p}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Niche *</Label>
-          <Select value={form.niche} onValueChange={(v) => setForm({ ...form, niche: v as Niche })}>
-            <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+          <Select
+            value={form.niche}
+            onValueChange={(v) =>
+              setForm({ ...form, niche: v as MarketplaceNiche })
+            }
+          >
+            <SelectTrigger className="text-sm">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
-              {(['tech', 'fashion', 'fitness', 'food', 'travel', 'business', 'gaming', 'other'] as Niche[]).map((n) => (
-                <SelectItem key={n} value={n} className="capitalize">{n}</SelectItem>
+              {(
+                [
+                  "tech",
+                  "fashion",
+                  "fitness",
+                  "food",
+                  "travel",
+                  "business",
+                  "gaming",
+                  "other",
+                ] as MarketplaceNiche[]
+              ).map((n) => (
+                <SelectItem key={n} value={n} className="capitalize">
+                  {n}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -319,7 +343,7 @@ function NewOfferForm({ onCreated, onClose }: NewOfferFormProps) {
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Price (€) *</Label>
+          <Label className="text-xs">Price (&#8364;) *</Label>
           <Input
             type="number"
             placeholder="150"
@@ -351,8 +375,16 @@ function NewOfferForm({ onCreated, onClose }: NewOfferFormProps) {
       </div>
 
       <div className="flex gap-2 justify-end">
-        <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
-        <Button size="sm" onClick={handleSubmit}>Publish Offer</Button>
+        <Button variant="outline" size="sm" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          size="sm"
+          onClick={handleSubmit}
+          disabled={createMutation.isPending}
+        >
+          {createMutation.isPending ? "Publishing..." : "Publish Offer"}
+        </Button>
       </div>
     </div>
   );
@@ -363,37 +395,69 @@ function NewOfferForm({ onCreated, onClose }: NewOfferFormProps) {
 // ---------------------------------------------------------------------------
 
 export default function SocialMarketplacePage() {
-  const [offers, setOffers] = useState<MarketplaceOffer[]>(loadOffers);
-  const [search, setSearch] = useState('');
-  const [filterPlatform, setFilterPlatform] = useState<Platform | 'all'>('all');
-  const [filterNiche, setFilterNiche] = useState<Niche | 'all'>('all');
-  const [maxPrice, setMaxPrice] = useState('');
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [filterPlatform, setFilterPlatform] = useState<
+    MarketplacePlatform | "all"
+  >("all");
+  const [filterNiche, setFilterNiche] = useState<MarketplaceNiche | "all">(
+    "all",
+  );
+  const [maxPrice, setMaxPrice] = useState("");
   const [newOfferOpen, setNewOfferOpen] = useState(false);
+
+  const {
+    data: offersResp,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["marketplace", "offers"],
+    queryFn: () => socialApi.marketplace.listOffers(),
+  });
+
+  const offers: MarketplaceOffer[] = useMemo(
+    () => offersResp?.data ?? [],
+    [offersResp?.data],
+  );
+
+  const requestMutation = useMutation({
+    mutationFn: (offerId: string) =>
+      socialApi.marketplace.requestOffer(offerId),
+    onSuccess: (_data, offerId) => {
+      queryClient.invalidateQueries({ queryKey: ["marketplace", "offers"] });
+      const offer = offers.find((o) => o.id === offerId);
+      if (offer) {
+        toast.success(`Request sent to ${offer.authorName}`);
+      }
+    },
+    onError: () => {
+      toast.error("Failed to send request");
+    },
+  });
 
   const filtered = useMemo(() => {
     return offers.filter((o) => {
-      if (filterPlatform !== 'all' && o.platform !== filterPlatform) return false;
-      if (filterNiche !== 'all' && o.niche !== filterNiche) return false;
+      if (filterPlatform !== "all" && o.platform !== filterPlatform)
+        return false;
+      if (filterNiche !== "all" && o.niche !== filterNiche) return false;
       if (maxPrice && o.price > parseFloat(maxPrice)) return false;
-      if (search && !o.description.toLowerCase().includes(search.toLowerCase()) && !o.authorName.toLowerCase().includes(search.toLowerCase())) return false;
+      if (
+        search &&
+        !o.description.toLowerCase().includes(search.toLowerCase()) &&
+        !o.authorName.toLowerCase().includes(search.toLowerCase())
+      )
+        return false;
       return true;
     });
   }, [offers, filterPlatform, filterNiche, maxPrice, search]);
 
-  const handleRequest = useCallback((offer: MarketplaceOffer) => {
-    const updated = offers.map((o) =>
-      o.id === offer.id ? { ...o, status: 'pending' as const } : o
-    );
-    setOffers(updated);
-    saveOffers(updated);
-    toast.success(`Request sent to ${offer.authorName}`);
-  }, [offers]);
-
-  const handleCreated = useCallback((offer: MarketplaceOffer) => {
-    const updated = [offer, ...offers];
-    setOffers(updated);
-    saveOffers(updated);
-  }, [offers]);
+  const handleRequest = useCallback(
+    (offer: MarketplaceOffer) => {
+      requestMutation.mutate(offer.id);
+    },
+    [requestMutation],
+  );
 
   return (
     <div className="flex flex-col h-full overflow-y-auto p-6 space-y-6">
@@ -419,7 +483,7 @@ export default function SocialMarketplacePage() {
             <DialogHeader>
               <DialogTitle>Post a New Offer</DialogTitle>
             </DialogHeader>
-            <NewOfferForm onCreated={handleCreated} onClose={() => setNewOfferOpen(false)} />
+            <NewOfferForm onClose={() => setNewOfferOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>
@@ -433,7 +497,7 @@ export default function SocialMarketplacePage() {
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
-                  placeholder="Search offers…"
+                  placeholder="Search offers..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-8 text-sm"
@@ -443,12 +507,30 @@ export default function SocialMarketplacePage() {
 
             <div className="space-y-1">
               <Label className="text-xs">Platform</Label>
-              <Select value={filterPlatform} onValueChange={(v) => setFilterPlatform(v as any)}>
-                <SelectTrigger className="text-sm w-[130px]"><SelectValue /></SelectTrigger>
+              <Select
+                value={filterPlatform}
+                onValueChange={(v) =>
+                  setFilterPlatform(v as MarketplacePlatform | "all")
+                }
+              >
+                <SelectTrigger className="text-sm w-[130px]">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All platforms</SelectItem>
-                  {(['twitter', 'instagram', 'linkedin', 'tiktok', 'youtube', 'facebook'] as Platform[]).map((p) => (
-                    <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>
+                  {(
+                    [
+                      "twitter",
+                      "instagram",
+                      "linkedin",
+                      "tiktok",
+                      "youtube",
+                      "facebook",
+                    ] as MarketplacePlatform[]
+                  ).map((p) => (
+                    <SelectItem key={p} value={p} className="capitalize">
+                      {p}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -456,19 +538,39 @@ export default function SocialMarketplacePage() {
 
             <div className="space-y-1">
               <Label className="text-xs">Niche</Label>
-              <Select value={filterNiche} onValueChange={(v) => setFilterNiche(v as any)}>
-                <SelectTrigger className="text-sm w-[120px]"><SelectValue /></SelectTrigger>
+              <Select
+                value={filterNiche}
+                onValueChange={(v) =>
+                  setFilterNiche(v as MarketplaceNiche | "all")
+                }
+              >
+                <SelectTrigger className="text-sm w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All niches</SelectItem>
-                  {(['tech', 'fashion', 'fitness', 'food', 'travel', 'business', 'gaming', 'other'] as Niche[]).map((n) => (
-                    <SelectItem key={n} value={n} className="capitalize">{n}</SelectItem>
+                  {(
+                    [
+                      "tech",
+                      "fashion",
+                      "fitness",
+                      "food",
+                      "travel",
+                      "business",
+                      "gaming",
+                      "other",
+                    ] as MarketplaceNiche[]
+                  ).map((n) => (
+                    <SelectItem key={n} value={n} className="capitalize">
+                      {n}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs">Max price (€)</Label>
+              <Label className="text-xs">Max price (&#8364;)</Label>
               <Input
                 type="number"
                 placeholder="500"
@@ -481,7 +583,12 @@ export default function SocialMarketplacePage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { setSearch(''); setFilterPlatform('all'); setFilterNiche('all'); setMaxPrice(''); }}
+              onClick={() => {
+                setSearch("");
+                setFilterPlatform("all");
+                setFilterNiche("all");
+                setMaxPrice("");
+              }}
             >
               <Filter className="h-4 w-4 mr-1" />
               Clear
@@ -492,17 +599,33 @@ export default function SocialMarketplacePage() {
 
       {/* Results */}
       <div>
-        <p className="text-sm text-muted-foreground mb-3">{filtered.length} offer{filtered.length !== 1 ? 's' : ''} found</p>
-        {filtered.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground text-sm">
-            No offers match your filters
-          </div>
+        {isLoading ? (
+          <OffersGridSkeleton />
+        ) : isError ? (
+          <ErrorState
+            message="Failed to load marketplace offers."
+            onRetry={() => refetch()}
+          />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filtered.map((offer) => (
-              <OfferCard key={offer.id} offer={offer} onRequest={handleRequest} />
-            ))}
-          </div>
+          <>
+            <p className="text-sm text-muted-foreground mb-3">
+              {filtered.length} offer{filtered.length !== 1 ? "s" : ""} found
+            </p>
+            {filtered.length === 0 ? (
+              <EmptyState />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {filtered.map((offer) => (
+                  <OfferCard
+                    key={offer.id}
+                    offer={offer}
+                    onRequest={handleRequest}
+                    isRequesting={requestMutation.isPending}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

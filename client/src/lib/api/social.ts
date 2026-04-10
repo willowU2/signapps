@@ -670,6 +670,21 @@ export const socialApi = {
       s.put<AiThread>(`/ai-threads/${id}`, data),
     delete: (id: string) => s.delete(`/ai-threads/${id}`),
   },
+
+  // Marketplace — /api/v1/social/marketplace
+  marketplace: {
+    listOffers: (params?: {
+      platform?: string;
+      niche?: string;
+      maxPrice?: number;
+      search?: string;
+    }) => s.get<MarketplaceOffer[]>("/marketplace/offers", { params }),
+    createOffer: (data: CreateMarketplaceOfferRequest) =>
+      s.post<MarketplaceOffer>("/marketplace/offers", data),
+    requestOffer: (offerId: string) =>
+      s.post<MarketplaceOffer>(`/marketplace/offers/${offerId}/request`),
+    deleteOffer: (id: string) => s.delete(`/marketplace/offers/${id}`),
+  },
 };
 
 // ============================================================================
@@ -683,4 +698,51 @@ export interface AiThread {
   messages: unknown; // JSON array of message objects
   createdAt: string;
   updatedAt: string;
+}
+
+// ============================================================================
+// Marketplace types
+// ============================================================================
+
+export type MarketplacePlatform =
+  | "twitter"
+  | "instagram"
+  | "linkedin"
+  | "tiktok"
+  | "youtube"
+  | "facebook";
+
+export type MarketplaceNiche =
+  | "tech"
+  | "fashion"
+  | "fitness"
+  | "food"
+  | "travel"
+  | "business"
+  | "gaming"
+  | "other";
+
+export interface MarketplaceOffer {
+  id: string;
+  authorName: string;
+  authorAvatar: string;
+  platform: MarketplacePlatform;
+  followers: number;
+  niche: MarketplaceNiche;
+  description: string;
+  price: number;
+  rating: number;
+  reviewCount: number;
+  turnaround: string;
+  status: "available" | "pending" | "accepted";
+  createdAt: string;
+}
+
+export interface CreateMarketplaceOfferRequest {
+  platform: MarketplacePlatform;
+  followers: number;
+  niche: MarketplaceNiche;
+  description: string;
+  price: number;
+  turnaround: string;
 }
