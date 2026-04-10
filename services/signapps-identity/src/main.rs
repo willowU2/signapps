@@ -317,6 +317,30 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/help/tickets",
             get(handlers::help::list_tickets).post(handlers::help::create_ticket),
         )
+        // Dashboard widget layouts
+        .route("/api/v1/dashboard/layout", get(handlers::dashboard::get_layout).put(handlers::dashboard::save_layout))
+        .route("/api/v1/dashboard/widgets/summary", get(handlers::dashboard::widgets_summary))
+        // Keep notes
+        .route(
+            "/api/v1/keep/notes",
+            get(handlers::keep::list_notes).post(handlers::keep::create_note),
+        )
+        .route(
+            "/api/v1/keep/notes/:id",
+            put(handlers::keep::update_note).delete(handlers::keep::delete_note),
+        )
+        .route(
+            "/api/v1/keep/notes/:id/restore",
+            post(handlers::keep::restore_note),
+        )
+        .route(
+            "/api/v1/keep/labels",
+            get(handlers::keep::list_labels).post(handlers::keep::create_label),
+        )
+        .route(
+            "/api/v1/keep/labels/:id",
+            delete(handlers::keep::delete_label),
+        )
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
@@ -532,6 +556,30 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    // Search routes (protected)
+    let search_routes = Router::new()
+        .route("/api/v1/search", get(handlers::search::global_search))
+        .route(
+            "/api/v1/search/suggestions",
+            get(handlers::search::suggestions),
+        )
+        .route(
+            "/api/v1/search/history",
+            get(handlers::search::list_history).delete(handlers::search::clear_history),
+        )
+        .route(
+            "/api/v1/search/saved",
+            get(handlers::search::list_saved).post(handlers::search::create_saved),
+        )
+        .route(
+            "/api/v1/search/saved/:id",
+            delete(handlers::search::delete_saved),
+        )
+        .layer(axum_middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
     // Reports routes (protected)
     let reports_routes = Router::new()
         .route(
@@ -574,6 +622,7 @@ fn create_router(state: AppState) -> Router {
         .merge(tenant_routes)
         .merge(admin_routes)
         .merge(comms_routes)
+        .merge(search_routes)
         .merge(reports_routes)
         .layer(axum_middleware::from_fn(logging_middleware))
         .layer(axum_middleware::from_fn(request_id_middleware))

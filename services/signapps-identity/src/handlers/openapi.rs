@@ -106,6 +106,14 @@ use utoipa::OpenApi;
         crate::handlers::comms::poll_results,
         crate::handlers::comms::list_news,
         crate::handlers::comms::create_news,
+        // Search
+        crate::handlers::search::global_search,
+        crate::handlers::search::suggestions,
+        crate::handlers::search::list_history,
+        crate::handlers::search::clear_history,
+        crate::handlers::search::list_saved,
+        crate::handlers::search::create_saved,
+        crate::handlers::search::delete_saved,
         // Reports
         crate::handlers::reports::list_reports,
         crate::handlers::reports::create_report,
@@ -187,6 +195,13 @@ use utoipa::OpenApi;
             crate::handlers::comms::PollResultsResponse,
             crate::handlers::comms::PollOptionTally,
             crate::handlers::comms::CommsRecord,
+            // Search schemas
+            crate::handlers::search::SearchResult,
+            crate::handlers::search::SearchResponse,
+            crate::handlers::search::SearchSuggestion,
+            crate::handlers::search::SearchHistoryItem,
+            crate::handlers::search::SavedSearch,
+            crate::handlers::search::SaveSearchRequest,
             // Reports schemas
             crate::handlers::reports::ReportResponse,
             crate::handlers::reports::SaveReportRequest,
@@ -212,6 +227,7 @@ use utoipa::OpenApi;
         // org tag moved to signapps-org OpenAPI (port 3026)
         // compliance tag moved to signapps-compliance OpenAPI (port 3032)
         // audit tag moved to signapps-compliance OpenAPI (port 3032)
+        (name = "search", description = "Global search — unified search, suggestions, history, saved searches"),
         (name = "comms", description = "Internal communications — announcements, polls, news feed"),
         (name = "reports", description = "Report Builder — saved definitions, execution, and history"),
         (name = "help", description = "Help Center — FAQ articles and support tickets"),

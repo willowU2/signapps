@@ -1,6 +1,7 @@
 //! SignApps Notifications Service
 //! Per-user notification feed with read/unread state management
 
+mod handlers;
 mod openapi;
 
 use axum::{
@@ -8,7 +9,7 @@ use axum::{
     http::StatusCode,
     middleware,
     response::IntoResponse,
-    routing::{get, patch, post},
+    routing::{delete, get, patch, post, put},
     Extension, Json, Router,
 };
 use chrono::{DateTime, Utc};
@@ -486,8 +487,42 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    // v1 routes — rich notification model (notifications.items table)
+    let v1_routes = Router::new()
+        .route(
+            "/api/v1/notifications",
+            get(handlers::notifications::list_notifications)
+                .post(handlers::notifications::create_notification),
+        )
+        .route(
+            "/api/v1/notifications/unread-count",
+            get(handlers::notifications::unread_count),
+        )
+        .route(
+            "/api/v1/notifications/read-all",
+            put(handlers::notifications::mark_all_read),
+        )
+        .route(
+            "/api/v1/notifications/preferences",
+            get(handlers::notifications::get_preferences)
+                .put(handlers::notifications::update_preferences),
+        )
+        .route(
+            "/api/v1/notifications/:id/read",
+            put(handlers::notifications::mark_read),
+        )
+        .route(
+            "/api/v1/notifications/:id",
+            delete(handlers::notifications::delete_notification),
+        )
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
     public_routes
         .merge(protected_routes)
+        .merge(v1_routes)
         .merge(openapi::swagger_router())
         .layer(TraceLayer::new_for_http())
         .layer(axum::extract::DefaultBodyLimit::max(10 * 1024 * 1024))

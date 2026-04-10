@@ -11,6 +11,7 @@ pub mod branding;
 pub mod bulk_users;
 pub mod comms;
 // compliance moved to signapps-compliance service (port 3032)
+pub mod dashboard;
 // data_export moved to signapps-compliance service (port 3032)
 pub mod entity_links;
 // feature_flags moved to signapps-tenant-config service (port 3029)
@@ -20,6 +21,7 @@ pub mod health;
 pub mod help;
 pub mod jwks;
 pub mod ip_allowlist;
+pub mod keep;
 pub mod ldap;
 pub mod mfa;
 pub mod migration;
@@ -28,6 +30,7 @@ pub mod preferences;
 pub mod reports;
 // retention_purge moved to signapps-compliance service (port 3032)
 pub mod roles;
+pub mod search;
 pub mod security_events;
 pub mod sessions;
 // signatures moved to signapps-signatures service (port 3028)

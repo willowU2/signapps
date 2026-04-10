@@ -1,25 +1,25 @@
 /**
  * Keep API Module
  *
- * Migrated to use API Factory pattern.
+ * Notes and labels backed by the Identity service (port 3001).
+ * Uses /api/v1/keep/* endpoints with proper PostgreSQL persistence.
+ *
+ * The public KeepNote interface uses camelCase field names for frontend
+ * compatibility; the API returns snake_case which is mapped internally.
+ *
  * @see factory.ts for client creation details
  */
-import { getClient, ServiceName } from './factory';
+import { getClient, ServiceName } from "./factory";
 
-// Get the storage service client (cached)
-const storageClient = getClient(ServiceName.STORAGE);
+const client = getClient(ServiceName.IDENTITY);
 
-// Keep API - Uses storage service with a dedicated bucket for notes
-// Notes are stored as JSON files in the "keep" bucket
-
-const KEEP_BUCKET = 'keep';
-const NOTES_KEY = 'notes.json';
-const LABELS_KEY = 'labels.json';
+// ── Public types (camelCase, used by hooks & components) ─────────────────────
 
 export interface ChecklistItem {
   id: string;
   text: string;
   checked: boolean;
+  order?: number;
 }
 
 export interface KeepNote {
@@ -35,6 +35,7 @@ export interface KeepNote {
   checklistItems: ChecklistItem[];
   createdAt: string;
   updatedAt: string;
+  reminderAt?: string | null;
 }
 
 export interface KeepLabel {
@@ -47,8 +48,57 @@ export interface KeepData {
   labels: KeepLabel[];
 }
 
-// ── localStorage persistence layer ──────────────────────────────────────────
-const KEEP_LOCAL_KEY = 'signapps_keep_data';
+// ── Internal API response types (snake_case from backend) ────────────────────
+
+interface ApiNoteResponse {
+  id: string;
+  owner_id: string;
+  title: string;
+  content: string;
+  color: string;
+  pinned: boolean;
+  archived: boolean;
+  is_checklist: boolean;
+  checklist_items: ChecklistItem[];
+  labels: string[];
+  reminder_at: string | null;
+  deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ApiLabelResponse {
+  id: string;
+  owner_id: string;
+  name: string;
+}
+
+// ── Mappers ──────────────────────────────────────────────────────────────────
+
+function mapApiNote(api: ApiNoteResponse): KeepNote {
+  return {
+    id: api.id,
+    title: api.title,
+    content: api.content,
+    color: api.color,
+    labels: api.labels || [],
+    isPinned: api.pinned,
+    isArchived: api.archived,
+    isTrashed: api.deleted_at != null,
+    hasChecklist: api.is_checklist,
+    checklistItems: api.checklist_items || [],
+    createdAt: api.created_at,
+    updatedAt: api.updated_at,
+    reminderAt: api.reminder_at,
+  };
+}
+
+function mapApiLabel(api: ApiLabelResponse): KeepLabel {
+  return { id: api.id, name: api.name };
+}
+
+// ── localStorage fallback layer ──────────────────────────────────────────────
+const KEEP_LOCAL_KEY = "signapps_keep_data";
 
 function getLocalKeepData(): KeepData {
   try {
@@ -64,172 +114,143 @@ function setLocalKeepData(data: KeepData): void {
   try {
     localStorage.setItem(KEEP_LOCAL_KEY, JSON.stringify(data));
   } catch {
-    // localStorage full or unavailable — ignore
+    // localStorage full or unavailable
   }
 }
 
-// Track whether the storage service is reachable
-let storageAvailable = true;
-
-// Helper to read JSON data from storage (with localStorage fallback)
-async function readKeepData(): Promise<KeepData> {
-  try {
-    const response = await storageClient.get(`/files/${KEEP_BUCKET}/${NOTES_KEY}`, {
-      responseType: 'text',
-    });
-    const data = JSON.parse(response.data as string);
-    storageAvailable = true;
-    // Mirror to localStorage for offline fallback
-    setLocalKeepData(data);
-    return data;
-  } catch {
-    // If storage service is unreachable, use localStorage
-    const localData = getLocalKeepData();
-    if (localData.notes.length > 0 || localData.labels.length > 0) {
-      storageAvailable = false;
-      return localData;
-    }
-    return { notes: [], labels: [] };
-  }
-}
-
-// Helper to write JSON data to storage (always mirrors to localStorage)
-async function writeKeepData(data: KeepData): Promise<void> {
-  // Always save to localStorage first (instant, reliable)
-  setLocalKeepData(data);
-
-  try {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const formData = new FormData();
-    formData.append('file', blob, NOTES_KEY);
-
-    await storageClient.post(`/files/${KEEP_BUCKET}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    storageAvailable = true;
-  } catch {
-    // Storage service down — data is still in localStorage
-    storageAvailable = false;
-    console.warn('Keep: storage service unavailable, data saved to localStorage');
-  }
-}
-
-// Ensure bucket exists
-async function ensureBucket(): Promise<void> {
-  try {
-    await storageClient.get(`/buckets`);
-    // Try to create if doesn't exist (will fail silently if exists)
-    await storageClient.post('/buckets', { name: KEEP_BUCKET }).catch(() => {});
-  } catch {
-    // Ignore errors - bucket may already exist
-  }
-}
+// ── API ──────────────────────────────────────────────────────────────────────
 
 export const keepApi = {
-  // Fetch all notes and labels
+  /** Fetch all notes (active + archived + trashed) and labels. */
   fetchAll: async (): Promise<KeepData> => {
-    // Try to ensure bucket exists, but don't block on failure
-    ensureBucket().catch(() => {});
-    return readKeepData();
-  },
+    try {
+      // Fetch active notes, archived, trashed, and labels in parallel
+      const [activeRes, archivedRes, trashedRes, labelsRes] = await Promise.all(
+        [
+          client.get<ApiNoteResponse[]>("/keep/notes"),
+          client.get<ApiNoteResponse[]>("/keep/notes", {
+            params: { archived: true },
+          }),
+          client.get<ApiNoteResponse[]>("/keep/notes", {
+            params: { trashed: true },
+          }),
+          client.get<ApiLabelResponse[]>("/keep/labels"),
+        ],
+      );
 
-  // Save all data (full sync)
-  saveAll: async (data: KeepData): Promise<KeepData> => {
-    ensureBucket().catch(() => {});
-    await writeKeepData(data);
-    return data;
-  },
+      // Deduplicate by id (a note could appear in multiple queries)
+      const noteMap = new Map<string, KeepNote>();
+      for (const list of [activeRes.data, archivedRes.data, trashedRes.data]) {
+        for (const apiNote of list) {
+          noteMap.set(apiNote.id, mapApiNote(apiNote));
+        }
+      }
 
-  // Create a new note
-  createNote: async (note: Omit<KeepNote, 'id' | 'createdAt' | 'updatedAt'>): Promise<KeepNote> => {
-    const data = await readKeepData();
-    const now = new Date().toISOString();
-    const newNote: KeepNote = {
-      ...note,
-      id: crypto.randomUUID(),
-      createdAt: now,
-      updatedAt: now,
-    };
-    data.notes = [newNote, ...data.notes];
-    await writeKeepData(data);
-    return newNote;
-  },
+      const data: KeepData = {
+        notes: Array.from(noteMap.values()),
+        labels: labelsRes.data.map(mapApiLabel),
+      };
 
-  // Update an existing note
-  updateNote: async (id: string, updates: Partial<KeepNote>): Promise<KeepNote> => {
-    const data = await readKeepData();
-    const index = data.notes.findIndex(n => n.id === id);
-    if (index === -1) {
-      throw new Error(`Note ${id} not found`);
+      // Mirror to localStorage for offline fallback
+      setLocalKeepData(data);
+      return data;
+    } catch {
+      // Fallback to localStorage if backend unreachable
+      const localData = getLocalKeepData();
+      if (localData.notes.length > 0 || localData.labels.length > 0) {
+        return localData;
+      }
+      return { notes: [], labels: [] };
     }
-    const updatedNote = {
-      ...data.notes[index],
-      ...updates,
-      updatedAt: new Date().toISOString(),
-    };
-    data.notes[index] = updatedNote;
-    await writeKeepData(data);
-    return updatedNote;
   },
 
-  // Delete a note permanently
+  /** Create a new note. */
+  createNote: async (
+    note: Omit<KeepNote, "id" | "createdAt" | "updatedAt">,
+  ): Promise<KeepNote> => {
+    const res = await client.post<ApiNoteResponse>("/keep/notes", {
+      title: note.title,
+      content: note.content,
+      color: note.color,
+      pinned: note.isPinned,
+      is_checklist: note.hasChecklist,
+      checklist_items: note.checklistItems || [],
+      labels: note.labels || [],
+    });
+    return mapApiNote(res.data);
+  },
+
+  /** Update an existing note (partial update). */
+  updateNote: async (
+    id: string,
+    updates: Partial<KeepNote>,
+  ): Promise<KeepNote> => {
+    // Map camelCase frontend fields to snake_case backend fields
+    const body: Record<string, unknown> = {};
+    if (updates.title !== undefined) body.title = updates.title;
+    if (updates.content !== undefined) body.content = updates.content;
+    if (updates.color !== undefined) body.color = updates.color;
+    if (updates.isPinned !== undefined) body.pinned = updates.isPinned;
+    if (updates.isArchived !== undefined) body.archived = updates.isArchived;
+    if (updates.hasChecklist !== undefined)
+      body.is_checklist = updates.hasChecklist;
+    if (updates.checklistItems !== undefined)
+      body.checklist_items = updates.checklistItems;
+    if (updates.labels !== undefined) body.labels = updates.labels;
+
+    // Handle trash: isTrashed maps to soft-delete / restore
+    if (updates.isTrashed === true) {
+      // Soft-delete via DELETE endpoint
+      await client.delete(`/keep/notes/${id}`);
+      // Return a synthetic response since DELETE returns 204
+      return {
+        id,
+        title: updates.title ?? "",
+        content: updates.content ?? "",
+        color: updates.color ?? "default",
+        labels: updates.labels ?? [],
+        isPinned: false,
+        isArchived: false,
+        isTrashed: true,
+        hasChecklist: updates.hasChecklist ?? false,
+        checklistItems: updates.checklistItems ?? [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    if (updates.isTrashed === false) {
+      // Restore from trash
+      const res = await client.post<ApiNoteResponse>(
+        `/keep/notes/${id}/restore`,
+      );
+      return mapApiNote(res.data);
+    }
+
+    const res = await client.put<ApiNoteResponse>(`/keep/notes/${id}`, body);
+    return mapApiNote(res.data);
+  },
+
+  /** Permanently delete a note. */
   deleteNote: async (id: string): Promise<void> => {
-    const data = await readKeepData();
-    data.notes = data.notes.filter(n => n.id !== id);
-    await writeKeepData(data);
+    // The backend soft-deletes on DELETE. For permanent delete, we delete
+    // a note that is already in the trash (the frontend empties trash).
+    await client.delete(`/keep/notes/${id}`);
   },
 
-  // Batch delete (empty trash)
+  /** Batch delete (empty trash) — delete each trashed note. */
   deleteNotes: async (ids: string[]): Promise<void> => {
-    const data = await readKeepData();
-    const idSet = new Set(ids);
-    data.notes = data.notes.filter(n => !idSet.has(n.id));
-    await writeKeepData(data);
+    await Promise.all(ids.map((id) => client.delete(`/keep/notes/${id}`)));
   },
 
-  // Create a label
+  /** Create a label. */
   createLabel: async (name: string): Promise<KeepLabel> => {
-    const data = await readKeepData();
-    const newLabel: KeepLabel = {
-      id: crypto.randomUUID(),
-      name: name.toUpperCase(),
-    };
-    data.labels = [...data.labels, newLabel];
-    await writeKeepData(data);
-    return newLabel;
+    const res = await client.post<ApiLabelResponse>("/keep/labels", { name });
+    return mapApiLabel(res.data);
   },
 
-  // Update a label
-  updateLabel: async (id: string, name: string): Promise<KeepLabel> => {
-    const data = await readKeepData();
-    const index = data.labels.findIndex(l => l.id === id);
-    if (index === -1) {
-      throw new Error(`Label ${id} not found`);
-    }
-    const oldName = data.labels[index].name;
-    const newName = name.toUpperCase();
-    data.labels[index] = { id, name: newName };
-    // Update all notes with this label
-    data.notes = data.notes.map(note => ({
-      ...note,
-      labels: note.labels.map(l => l === oldName ? newName : l),
-    }));
-    await writeKeepData(data);
-    return data.labels[index];
-  },
-
-  // Delete a label
+  /** Delete a label. */
   deleteLabel: async (id: string): Promise<void> => {
-    const data = await readKeepData();
-    const labelToDelete = data.labels.find(l => l.id === id);
-    if (labelToDelete) {
-      data.labels = data.labels.filter(l => l.id !== id);
-      // Remove label from all notes
-      data.notes = data.notes.map(note => ({
-        ...note,
-        labels: note.labels.filter(l => l !== labelToDelete.name),
-      }));
-      await writeKeepData(data);
-    }
+    await client.delete(`/keep/labels/${id}`);
   },
 };
