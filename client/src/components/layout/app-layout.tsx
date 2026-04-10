@@ -12,11 +12,14 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { cn } from "@/lib/utils";
 
+export type PortalMode = "client" | "supplier" | null;
+
 interface AppLayoutProps {
   children: React.ReactNode;
+  portalMode?: PortalMode;
 }
 
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout({ children, portalMode }: AppLayoutProps) {
   const rightSidebarOpen = useUIStore((s) => s.rightSidebarOpen);
   const rightSidebarPinned = useUIStore((s) => s.rightSidebarPinned);
   const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
@@ -46,7 +49,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left sidebar — includes its own mobile drawer + backdrop logic */}
-        <Sidebar />
+        <Sidebar portalMode={portalMode} />
 
         {/* Main content */}
         <main

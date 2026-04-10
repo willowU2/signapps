@@ -7,11 +7,13 @@ import { AppLogo } from "@/components/layout/app-logo";
 import { cn } from "@/lib/utils";
 import {
   useUIStore,
+  useAuthStore,
   useLabelsStore,
   usePinnedAppsStore,
   type AppPin,
   type PinFolder,
 } from "@/lib/store";
+import type { PortalMode } from "@/components/layout/app-layout";
 import { Pin } from "lucide-react";
 import { useSidebarBadges } from "@/hooks/use-sidebar-badges";
 import {
@@ -299,9 +301,37 @@ const labelColors = [
   "#1a73e8",
 ];
 
-export function Sidebar() {
+// Nav item labels visible per portal context
+const PORTAL_CLIENT_ITEMS = new Set([
+  "/dashboard",
+  "/all-apps",
+  "/mail",
+  "/storage",
+  "/tasks",
+]);
+
+const PORTAL_CLIENT_SECTION_ITEMS = new Set(["/mail", "/storage", "/tasks"]);
+
+// For client portal: Dashboard + subset of workspace
+const CLIENT_PORTAL_TOP = topNavItems; // Dashboard + Applications always shown
+
+// For supplier portal: Dashboard + similar subset
+const PORTAL_SUPPLIER_ITEMS = new Set([
+  "/dashboard",
+  "/all-apps",
+  "/mail",
+  "/storage",
+  "/tasks",
+]);
+
+interface SidebarProps {
+  portalMode?: PortalMode;
+}
+
+export function Sidebar({ portalMode }: SidebarProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
+  const activeContext = useAuthStore((s) => s.activeContext);
   const {
     sidebarCollapsed,
     sidebarPinned,
@@ -309,6 +339,49 @@ export function Sidebar() {
     setSidebarCollapsed,
     setSidebarPinned,
   } = useUIStore();
+
+  // Resolve effective portal mode: explicit prop overrides store context
+  const effectivePortalMode: PortalMode =
+    portalMode ??
+    (activeContext?.context_type === "client"
+      ? "client"
+      : activeContext?.context_type === "supplier"
+        ? "supplier"
+        : null);
+
+  // Filter nav sections based on portal mode
+  const visibleNavSections = effectivePortalMode
+    ? navSections
+        .filter((section) => {
+          if (effectivePortalMode === "client") {
+            // Clients see only workspace section items that are relevant
+            return section.id === "workspace";
+          }
+          if (effectivePortalMode === "supplier") {
+            return section.id === "workspace";
+          }
+          return true;
+        })
+        .map((section) => {
+          if (effectivePortalMode === "client") {
+            return {
+              ...section,
+              items: section.items.filter((item) =>
+                PORTAL_CLIENT_SECTION_ITEMS.has(item.href),
+              ),
+            };
+          }
+          if (effectivePortalMode === "supplier") {
+            return {
+              ...section,
+              items: section.items.filter((item) =>
+                PORTAL_SUPPLIER_ITEMS.has(item.href),
+              ),
+            };
+          }
+          return section;
+        })
+    : navSections;
   const { labels, addLabel, removeLabel } = useLabelsStore();
   const { data: badges } = useSidebarBadges();
   const {
@@ -748,7 +821,7 @@ export function Sidebar() {
           {topNavItems.map((item) => renderNavLink(item))}
 
           {/* Grouped collapsible sections */}
-          {navSections.map((section) => {
+          {visibleNavSections.map((section) => {
             const isOpen = !!openSections[section.id];
             const hasActive = section.items.some((item) =>
               pathname.startsWith(item.href),
