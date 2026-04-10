@@ -82,6 +82,10 @@ export interface LoginResponse {
   user: User;
   mfa_required?: boolean;
   mfa_session_token?: string;
+  /** Set to true when the user has multiple company affiliations and must pick one */
+  requires_context?: boolean;
+  /** Available login contexts when requires_context is true */
+  contexts?: import("./companies").LoginContextDisplay[];
 }
 
 export interface RefreshResponse {

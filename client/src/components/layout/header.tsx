@@ -16,6 +16,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { NotificationPopover } from "@/components/notifications/notification-popover";
 import { ChangelogDialog } from "@/components/onboarding/ChangelogDialog";
+import { ContextSwitcher } from "@/components/layout/context-switcher";
 import Link from "next/link";
 
 const LABEL_MAP: Record<string, string> = {
@@ -203,6 +204,7 @@ export function Header() {
 
       {/* Right: actions */}
       <div className="flex items-center gap-1 md:min-w-[240px] justify-end">
+        <ContextSwitcher />
         <span className="hidden md:inline-flex">
           <ChangelogDialog />
         </span>

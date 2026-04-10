@@ -25,6 +25,8 @@ import { parseApiError } from "@/lib/errors";
 import { logActivity } from "@/hooks/use-activity-tracker";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { AppLogo } from "@/components/layout/app-logo";
+import { ContextPicker } from "@/components/auth/context-picker";
+import { contextApi, type LoginContextDisplay } from "@/lib/api/companies";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Le nom d'utilisateur est requis"),
@@ -44,12 +46,20 @@ export default function LoginPage() {
     setMfaSessionToken,
     redirectAfterLogin,
     setRedirectAfterLogin,
+    setActiveContext,
+    setAvailableContexts,
   } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [showLdapDialog, setShowLdapDialog] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [trustDevice, setTrustDevice] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Context selection state (shown after login when multiple affiliations exist)
+  const [pendingContexts, setPendingContexts] = useState<
+    LoginContextDisplay[] | null
+  >(null);
+  const [contextSelecting, setContextSelecting] = useState(false);
 
   // Rate limiting state
   const [failedAttempts, setFailedAttempts] = useState(0);
@@ -145,6 +155,18 @@ export default function LoginPage() {
             localStorage.setItem(TRUST_DEVICE_KEY, until);
           }
 
+          // Check if context selection is required (multi-affiliation user)
+          if (
+            response.data.requires_context &&
+            Array.isArray(response.data.contexts) &&
+            response.data.contexts.length > 0
+          ) {
+            // Store available contexts for the switcher even before selection
+            setAvailableContexts(response.data.contexts);
+            setPendingContexts(response.data.contexts);
+            return;
+          }
+
           // Set user data from response or fetch it
           if (response.data.user) {
             setUser(response.data.user);
@@ -193,6 +215,63 @@ export default function LoginPage() {
       setMfaSessionToken,
       setRedirectAfterLogin,
       setUser,
+      setAvailableContexts,
+    ],
+  );
+
+  // Context selection handler — called when user picks a context card
+  const handleContextSelect = useCallback(
+    async (contextId: string) => {
+      if (!pendingContexts) return;
+      setContextSelecting(true);
+      try {
+        const response = await contextApi.select(contextId);
+        const { access_token, refresh_token } = response.data;
+
+        localStorage.setItem("access_token", access_token);
+        localStorage.setItem("refresh_token", refresh_token);
+
+        // Find selected context and store it
+        const selected = pendingContexts.find((c) => c.id === contextId);
+        if (selected) {
+          setActiveContext(selected);
+        }
+
+        // Set user into store
+        const userResponse = await authApi.me();
+        setUser(userResponse.data);
+
+        // Sync cookie
+        const cookieValue = JSON.stringify({
+          state: { isAuthenticated: true },
+        });
+        document.cookie = `auth-storage=${encodeURIComponent(cookieValue)}; path=/; max-age=31536000; SameSite=Lax`;
+
+        setPendingContexts(null);
+
+        // Redirect based on context type
+        const contextType = selected?.context_type ?? "employee";
+        let redirectPath: string;
+        if (contextType === "client") {
+          redirectPath = "/portal/client";
+        } else if (contextType === "supplier") {
+          redirectPath = "/portal/supplier";
+        } else {
+          redirectPath = redirectAfterLogin || "/dashboard";
+        }
+        setRedirectAfterLogin(null);
+        router.push(redirectPath);
+      } catch {
+        setContextSelecting(false);
+      }
+    },
+    [
+      pendingContexts,
+      redirectAfterLogin,
+      router,
+      setActiveContext,
+      setRedirectAfterLogin,
+      setUser,
     ],
   );
 
@@ -229,6 +308,19 @@ export default function LoginPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoParam]);
+
+  // Show context picker when login returned requires_context
+  if (pendingContexts) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <ContextPicker
+          contexts={pendingContexts}
+          onSelect={handleContextSelect}
+          isLoading={contextSelecting}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
