@@ -1,6 +1,7 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { authApi, type User } from './api';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { authApi, type User } from "./api";
+import type { LoginContextDisplay } from "./api/companies";
 
 export type { User };
 
@@ -10,10 +11,14 @@ interface AuthState {
   isLoading: boolean;
   mfaSessionToken: string | null;
   redirectAfterLogin: string | null;
+  activeContext: LoginContextDisplay | null;
+  availableContexts: LoginContextDisplay[];
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
   setMfaSessionToken: (token: string | null) => void;
   setRedirectAfterLogin: (path: string | null) => void;
+  setActiveContext: (ctx: LoginContextDisplay | null) => void;
+  setAvailableContexts: (contexts: LoginContextDisplay[]) => void;
   logout: () => void;
 }
 
@@ -25,27 +30,43 @@ export const useAuthStore = create<AuthState>()(
       isLoading: true,
       mfaSessionToken: null,
       redirectAfterLogin: null,
+      activeContext: null,
+      availableContexts: [],
       setUser: (user) =>
-        set({ user, isAuthenticated: !!user, isLoading: false, mfaSessionToken: null }),
+        set({
+          user,
+          isAuthenticated: !!user,
+          isLoading: false,
+          mfaSessionToken: null,
+        }),
       setLoading: (isLoading) => set({ isLoading }),
       setMfaSessionToken: (mfaSessionToken) => set({ mfaSessionToken }),
-      setRedirectAfterLogin: (redirectAfterLogin) => set({ redirectAfterLogin }),
+      setRedirectAfterLogin: (redirectAfterLogin) =>
+        set({ redirectAfterLogin }),
+      setActiveContext: (ctx) => set({ activeContext: ctx }),
+      setAvailableContexts: (contexts) => set({ availableContexts: contexts }),
       logout: () => {
         // Invalidate server session (fire-and-forget)
         authApi.logout().catch(() => {
           // Ignore errors - we still want to clear local state
         });
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
         // Clear cookie immediately so middleware sees unauthenticated state
-        if (typeof document !== 'undefined') {
-          document.cookie = 'auth-storage=; path=/; max-age=0';
+        if (typeof document !== "undefined") {
+          document.cookie = "auth-storage=; path=/; max-age=0";
         }
-        set({ user: null, isAuthenticated: false, mfaSessionToken: null });
+        set({
+          user: null,
+          isAuthenticated: false,
+          mfaSessionToken: null,
+          activeContext: null,
+          availableContexts: [],
+        });
       },
     }),
     {
-      name: 'auth-storage',
+      name: "auth-storage",
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
@@ -53,17 +74,24 @@ export const useAuthStore = create<AuthState>()(
       }),
       // Sync to cookie for middleware access
       onRehydrateStorage: () => (state) => {
-        if (typeof document !== 'undefined' && state) {
-          const value = JSON.stringify({ state: { isAuthenticated: state.isAuthenticated } });
+        if (typeof document !== "undefined" && state) {
+          const value = JSON.stringify({
+            state: { isAuthenticated: state.isAuthenticated },
+          });
           document.cookie = `auth-storage=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
         }
       },
-    }
-  )
+    },
+  ),
 );
 
 // Right sidebar widget types
-export type RightWidgetType = 'chat' | 'calendar' | 'tasks' | 'notes' | 'details';
+export type RightWidgetType =
+  | "chat"
+  | "calendar"
+  | "tasks"
+  | "notes"
+  | "details";
 
 // UI State
 interface UIState {
@@ -72,7 +100,7 @@ interface UIState {
   rightSidebarOpen: boolean;
   rightSidebarPinned: boolean;
   activeRightWidget: RightWidgetType;
-  theme: 'light' | 'dark' | 'system';
+  theme: "light" | "dark" | "system";
   // Modal state
   createWorkspaceModalOpen: boolean;
   createProjectModalOpen: boolean;
@@ -84,7 +112,7 @@ interface UIState {
   setRightSidebarOpen: (open: boolean) => void;
   setRightSidebarPinned: (pinned: boolean) => void;
   setActiveRightWidget: (widget: RightWidgetType) => void;
-  setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  setTheme: (theme: "light" | "dark" | "system") => void;
   setCreateWorkspaceModalOpen: (open: boolean) => void;
   setCreateProjectModalOpen: (open: boolean) => void;
   setCreateTaskModalOpen: (open: boolean) => void;
@@ -97,27 +125,32 @@ export const useUIStore = create<UIState>()(
       sidebarPinned: true,
       rightSidebarOpen: false,
       rightSidebarPinned: false,
-      activeRightWidget: 'chat' as RightWidgetType,
-      theme: 'system',
+      activeRightWidget: "chat" as RightWidgetType,
+      theme: "system",
       createWorkspaceModalOpen: false,
       createProjectModalOpen: false,
       createTaskModalOpen: false,
-      toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+      toggleSidebar: () =>
+        set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
       setSidebarPinned: (pinned) => set({ sidebarPinned: pinned }),
-      toggleRightSidebar: () => set((state) => ({ rightSidebarOpen: !state.rightSidebarOpen })),
+      toggleRightSidebar: () =>
+        set((state) => ({ rightSidebarOpen: !state.rightSidebarOpen })),
       setRightSidebarOpen: (open) => set({ rightSidebarOpen: open }),
       setRightSidebarPinned: (pinned) => set({ rightSidebarPinned: pinned }),
-      setActiveRightWidget: (widget) => set({ activeRightWidget: widget, rightSidebarOpen: true }),
+      setActiveRightWidget: (widget) =>
+        set({ activeRightWidget: widget, rightSidebarOpen: true }),
       setTheme: (theme) => set({ theme }),
-      setCreateWorkspaceModalOpen: (open) => set({ createWorkspaceModalOpen: open }),
-      setCreateProjectModalOpen: (open) => set({ createProjectModalOpen: open }),
+      setCreateWorkspaceModalOpen: (open) =>
+        set({ createWorkspaceModalOpen: open }),
+      setCreateProjectModalOpen: (open) =>
+        set({ createProjectModalOpen: open }),
       setCreateTaskModalOpen: (open) => set({ createTaskModalOpen: open }),
     }),
     {
-      name: 'ui-storage',
-    }
-  )
+      name: "ui-storage",
+    },
+  ),
 );
 
 // Labels State
@@ -138,9 +171,9 @@ export const useLabelsStore = create<LabelsState>()(
   persist(
     (set) => ({
       labels: [
-        { id: '1', name: 'Important', color: '#ef4444' },
-        { id: '2', name: 'Production', color: '#22c55e' },
-        { id: '3', name: 'Review', color: '#8b5cf6' },
+        { id: "1", name: "Important", color: "#ef4444" },
+        { id: "2", name: "Production", color: "#22c55e" },
+        { id: "3", name: "Review", color: "#8b5cf6" },
       ],
       addLabel: (name, color) =>
         set((state) => ({
@@ -152,11 +185,13 @@ export const useLabelsStore = create<LabelsState>()(
         })),
       updateLabel: (id, name, color) =>
         set((state) => ({
-          labels: state.labels.map((l) => (l.id === id ? { ...l, name, color } : l)),
+          labels: state.labels.map((l) =>
+            l.id === id ? { ...l, name, color } : l,
+          ),
         })),
     }),
-    { name: 'labels-storage' }
-  )
+    { name: "labels-storage" },
+  ),
 );
 
 // Notes State
@@ -179,7 +214,10 @@ export const useNotesStore = create<NotesState>()(
       notes: [],
       addNote: (content) =>
         set((state) => ({
-          notes: [{ id: Date.now().toString(), content, createdAt: Date.now() }, ...state.notes],
+          notes: [
+            { id: Date.now().toString(), content, createdAt: Date.now() },
+            ...state.notes,
+          ],
         })),
       updateNote: (id, content) =>
         set((state) => ({
@@ -188,8 +226,8 @@ export const useNotesStore = create<NotesState>()(
       removeNote: (id) =>
         set((state) => ({ notes: state.notes.filter((n) => n.id !== id) })),
     }),
-    { name: 'notes-storage' }
-  )
+    { name: "notes-storage" },
+  ),
 );
 
 // Pinned Apps State with folder support
@@ -239,12 +277,15 @@ export const usePinnedAppsStore = create<PinnedAppsState>()(
       moveToFolder: (href, folderId) =>
         set((state) => ({
           pinnedApps: state.pinnedApps.map((p) =>
-            p.href === href ? { ...p, folderId } : p
+            p.href === href ? { ...p, folderId } : p,
           ),
         })),
       createFolder: (name, parentId) =>
         set((state) => ({
-          folders: [...state.folders, { id: crypto.randomUUID(), name, parentId }],
+          folders: [
+            ...state.folders,
+            { id: crypto.randomUUID(), name, parentId },
+          ],
         })),
       renameFolder: (id, name) =>
         set((state) => ({
@@ -252,20 +293,22 @@ export const usePinnedAppsStore = create<PinnedAppsState>()(
         })),
       deleteFolder: (id) =>
         set((state) => ({
-          folders: state.folders.filter((f) => f.id !== id && f.parentId !== id),
+          folders: state.folders.filter(
+            (f) => f.id !== id && f.parentId !== id,
+          ),
           pinnedApps: state.pinnedApps.map((p) =>
-            p.folderId === id ? { ...p, folderId: undefined } : p
+            p.folderId === id ? { ...p, folderId: undefined } : p,
           ),
         })),
       toggleFolder: (id) =>
         set((state) => ({
           folders: state.folders.map((f) =>
-            f.id === id ? { ...f, collapsed: !f.collapsed } : f
+            f.id === id ? { ...f, collapsed: !f.collapsed } : f,
           ),
         })),
     }),
-    { name: 'signapps_pinned_apps' }
-  )
+    { name: "signapps_pinned_apps" },
+  ),
 );
 
 // Quick Tasks State
@@ -314,19 +357,24 @@ export const useQuickTasksStore = create<QuickTasksState>()(
   persist(
     (set) => ({
       tasks: [
-        { id: '1', label: 'Vérifier les logs containers', done: false },
-        { id: '2', label: 'Mettre à jour les certificats SSL', done: false },
-        { id: '3', label: 'Valider les backups', done: true },
+        { id: "1", label: "Vérifier les logs containers", done: false },
+        { id: "2", label: "Mettre à jour les certificats SSL", done: false },
+        { id: "3", label: "Valider les backups", done: true },
       ],
-      lists: [{ id: 'default', name: 'My Tasks' }],
+      lists: [{ id: "default", name: "My Tasks" }],
       selectedListId: null,
       addTask: (label, dueDate) =>
         set((state) => ({
-          tasks: [...state.tasks, { id: Date.now().toString(), label, done: false, dueDate }],
+          tasks: [
+            ...state.tasks,
+            { id: Date.now().toString(), label, done: false, dueDate },
+          ],
         })),
       toggleTask: (id) =>
         set((state) => ({
-          tasks: state.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
+          tasks: state.tasks.map((t) =>
+            t.id === id ? { ...t, done: !t.done } : t,
+          ),
         })),
       removeTask: (id) =>
         set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) })),
@@ -334,8 +382,13 @@ export const useQuickTasksStore = create<QuickTasksState>()(
         set((state) => ({
           tasks: state.tasks.map((t) =>
             t.id === taskId
-              ? { ...t, attachedFiles: (t.attachedFiles || []).filter((f) => f.id !== fileId) }
-              : t
+              ? {
+                  ...t,
+                  attachedFiles: (t.attachedFiles || []).filter(
+                    (f) => f.id !== fileId,
+                  ),
+                }
+              : t,
           ),
         })),
       setSelectedList: (listId) => set({ selectedListId: listId }),
@@ -344,16 +397,16 @@ export const useQuickTasksStore = create<QuickTasksState>()(
           tasks: state.tasks.map((t) =>
             t.id === taskId
               ? { ...t, attachedFiles: [...(t.attachedFiles || []), file] }
-              : t
+              : t,
           ),
         })),
       linkEventToTask: (taskId, eventId) =>
         set((state) => ({
           tasks: state.tasks.map((t) =>
-            t.id === taskId ? { ...t, linkedEventId: eventId } : t
+            t.id === taskId ? { ...t, linkedEventId: eventId } : t,
           ),
         })),
     }),
-    { name: 'quick-tasks-storage' }
-  )
+    { name: "quick-tasks-storage" },
+  ),
 );
