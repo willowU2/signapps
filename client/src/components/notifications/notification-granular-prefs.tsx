@@ -1,14 +1,27 @@
-'use client';
+"use client";
 
 // IDEA-114: Granular notification preferences — per-module, per-event-type toggles
 
-import { useState, useEffect } from 'react';
-import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { notificationsApi } from '@/lib/api/notifications';
-import { toast } from 'sonner';
-import { Bell, Mail, Calendar, CheckSquare, FileText, Users } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Switch } from "@/components/ui/switch";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { notificationsApi } from "@/lib/api/notifications";
+import { toast } from "sonner";
+import {
+  Bell,
+  Mail,
+  Calendar,
+  CheckSquare,
+  FileText,
+  Users,
+} from "lucide-react";
 
 interface ModulePrefs {
   [module: string]: {
@@ -16,59 +29,64 @@ interface ModulePrefs {
   };
 }
 
-const MODULE_EVENTS: { module: string; icon: React.ReactNode; label: string; events: { key: string; label: string }[] }[] = [
+const MODULE_EVENTS: {
+  module: string;
+  icon: React.ReactNode;
+  label: string;
+  events: { key: string; label: string }[];
+}[] = [
   {
-    module: 'mail',
+    module: "mail",
     icon: <Mail className="h-4 w-4" />,
-    label: 'Mail',
+    label: "Mail",
     events: [
-      { key: 'new_message', label: 'Nouveau message' },
-      { key: 'reply', label: 'Réponse reçue' },
-      { key: 'mention', label: 'Mention (@)' },
+      { key: "new_message", label: "Nouveau message" },
+      { key: "reply", label: "Réponse reçue" },
+      { key: "mention", label: "Mention (@)" },
     ],
   },
   {
-    module: 'calendar',
+    module: "calendar",
     icon: <Calendar className="h-4 w-4" />,
-    label: 'Calendrier',
+    label: "Calendrier",
     events: [
-      { key: 'event_reminder', label: 'Rappel d\'événement' },
-      { key: 'invitation', label: 'Invitation reçue' },
-      { key: 'rsvp_update', label: 'Mise à jour RSVP' },
+      { key: "event_reminder", label: "Rappel d'événement" },
+      { key: "invitation", label: "Invitation reçue" },
+      { key: "rsvp_update", label: "Mise à jour RSVP" },
     ],
   },
   {
-    module: 'tasks',
+    module: "tasks",
     icon: <CheckSquare className="h-4 w-4" />,
-    label: 'Tâches',
+    label: "Tâches",
     events: [
-      { key: 'assigned', label: 'Tâche assignée' },
-      { key: 'due_soon', label: 'Échéance proche' },
-      { key: 'completed', label: 'Tâche terminée' },
+      { key: "assigned", label: "Tâche assignée" },
+      { key: "due_soon", label: "Échéance proche" },
+      { key: "completed", label: "Tâche terminée" },
     ],
   },
   {
-    module: 'docs',
+    module: "docs",
     icon: <FileText className="h-4 w-4" />,
-    label: 'Documents',
+    label: "Documents",
     events: [
-      { key: 'mention', label: 'Mention dans un doc' },
-      { key: 'shared', label: 'Document partagé' },
-      { key: 'comment', label: 'Nouveau commentaire' },
+      { key: "mention", label: "Mention dans un doc" },
+      { key: "shared", label: "Document partagé" },
+      { key: "comment", label: "Nouveau commentaire" },
     ],
   },
   {
-    module: 'team',
+    module: "team",
     icon: <Users className="h-4 w-4" />,
-    label: 'Équipe',
+    label: "Équipe",
     events: [
-      { key: 'message', label: 'Message d\'équipe' },
-      { key: 'join', label: 'Nouveau membre' },
+      { key: "message", label: "Message d'équipe" },
+      { key: "join", label: "Nouveau membre" },
     ],
   },
 ];
 
-const STORAGE_KEY = 'notification_granular_prefs';
+const STORAGE_KEY = "notification_granular_prefs";
 
 function loadPrefs(): ModulePrefs {
   try {
@@ -104,15 +122,18 @@ export function NotificationGranularPrefs() {
     savePrefs(next);
     setSaving(true);
     try {
-      await notificationsApi.patchPreferences({
+      await notificationsApi.updatePreferences({
         per_service: Object.fromEntries(
           Object.entries(next).flatMap(([mod, events]) =>
-            Object.entries(events).map(([ev, enabled]) => [`${mod}:${ev}`, enabled])
-          )
+            Object.entries(events).map(([ev, enabled]) => [
+              `${mod}:${ev}`,
+              enabled,
+            ]),
+          ),
         ),
       });
     } catch {
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error("Erreur lors de la sauvegarde");
     } finally {
       setSaving(false);
     }
@@ -126,7 +147,8 @@ export function NotificationGranularPrefs() {
           Préférences granulaires
         </CardTitle>
         <CardDescription>
-          Activez ou désactivez les notifications par module et type d&apos;événement.
+          Activez ou désactivez les notifications par module et type
+          d&apos;événement.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -136,13 +158,19 @@ export function NotificationGranularPrefs() {
               <span className="text-muted-foreground">{icon}</span>
               <span className="font-semibold text-sm">{label}</span>
               <Badge variant="secondary" className="text-xs ml-auto">
-                {events.filter(e => isEnabled(prefs, module, e.key)).length}/{events.length} actifs
+                {events.filter((e) => isEnabled(prefs, module, e.key)).length}/
+                {events.length} actifs
               </Badge>
             </div>
             <div className="pl-6 space-y-2">
               {events.map(({ key, label: evLabel }) => (
-                <div key={key} className="flex items-center justify-between py-1">
-                  <span className="text-sm text-muted-foreground">{evLabel}</span>
+                <div
+                  key={key}
+                  className="flex items-center justify-between py-1"
+                >
+                  <span className="text-sm text-muted-foreground">
+                    {evLabel}
+                  </span>
                   <Switch
                     checked={isEnabled(prefs, module, key)}
                     onCheckedChange={(v) => toggle(module, key, v)}

@@ -1,39 +1,47 @@
-'use client';
+"use client";
 
 // IDEA-116: Do-not-disturb schedule — time ranges when notifications are muted
 
-import { useState, useEffect } from 'react';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Moon, Sun, BellOff } from 'lucide-react';
-import { notificationsApi } from '@/lib/api/notifications';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Moon, Sun, BellOff } from "lucide-react";
+import { notificationsApi } from "@/lib/api/notifications";
+import { toast } from "sonner";
 
 interface DndSchedule {
   enabled: boolean;
   startTime: string; // HH:MM
-  endTime: string;   // HH:MM
+  endTime: string; // HH:MM
 }
 
-const STORAGE_KEY = 'notification_dnd_schedule';
+const STORAGE_KEY = "notification_dnd_schedule";
 
 function loadSchedule(): DndSchedule {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : { enabled: false, startTime: '22:00', endTime: '08:00' };
+    return raw
+      ? JSON.parse(raw)
+      : { enabled: false, startTime: "22:00", endTime: "08:00" };
   } catch {
-    return { enabled: false, startTime: '22:00', endTime: '08:00' };
+    return { enabled: false, startTime: "22:00", endTime: "08:00" };
   }
 }
 
 export function isDndActive(schedule: DndSchedule): boolean {
   if (!schedule.enabled) return false;
   const now = new Date();
-  const [sh, sm] = schedule.startTime.split(':').map(Number);
-  const [eh, em] = schedule.endTime.split(':').map(Number);
+  const [sh, sm] = schedule.startTime.split(":").map(Number);
+  const [eh, em] = schedule.endTime.split(":").map(Number);
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const startMin = sh * 60 + sm;
   const endMin = eh * 60 + em;
@@ -57,13 +65,13 @@ export function NotificationDndSchedule() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await notificationsApi.patchPreferences({
+      await notificationsApi.updatePreferences({
         quiet_hours_start: schedule.startTime,
         quiet_hours_end: schedule.endTime,
       });
-      toast.success('Plage horaire DND enregistrée');
+      toast.success("Plage horaire DND enregistrée");
     } catch {
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error("Erreur lors de la sauvegarde");
     } finally {
       setSaving(false);
     }
@@ -77,17 +85,20 @@ export function NotificationDndSchedule() {
           Ne pas déranger (DND)
         </CardTitle>
         <CardDescription>
-          Définissez une plage horaire pendant laquelle les notifications sont silencieuses.
+          Définissez une plage horaire pendant laquelle les notifications sont
+          silencieuses.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Active indicator */}
         {schedule.enabled && (
-          <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
-            active
-              ? 'bg-orange-50 text-orange-700 border border-orange-200'
-              : 'bg-green-50 text-green-700 border border-green-200'
-          }`}>
+          <div
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
+              active
+                ? "bg-orange-50 text-orange-700 border border-orange-200"
+                : "bg-green-50 text-green-700 border border-green-200"
+            }`}
+          >
             {active ? (
               <>
                 <Moon className="h-4 w-4" />
@@ -115,9 +126,14 @@ export function NotificationDndSchedule() {
         </div>
 
         {/* Time range */}
-        <div className={`grid grid-cols-2 gap-4 transition-opacity ${schedule.enabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
+        <div
+          className={`grid grid-cols-2 gap-4 transition-opacity ${schedule.enabled ? "opacity-100" : "opacity-50 pointer-events-none"}`}
+        >
           <div className="space-y-1.5">
-            <Label htmlFor="dnd-start" className="text-sm flex items-center gap-1.5">
+            <Label
+              htmlFor="dnd-start"
+              className="text-sm flex items-center gap-1.5"
+            >
               <Moon className="h-3.5 w-3.5" />
               Début
             </Label>
@@ -125,11 +141,16 @@ export function NotificationDndSchedule() {
               id="dnd-start"
               type="time"
               value={schedule.startTime}
-              onChange={(e) => setSchedule((s) => ({ ...s, startTime: e.target.value }))}
+              onChange={(e) =>
+                setSchedule((s) => ({ ...s, startTime: e.target.value }))
+              }
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="dnd-end" className="text-sm flex items-center gap-1.5">
+            <Label
+              htmlFor="dnd-end"
+              className="text-sm flex items-center gap-1.5"
+            >
               <Sun className="h-3.5 w-3.5" />
               Fin
             </Label>
@@ -137,7 +158,9 @@ export function NotificationDndSchedule() {
               id="dnd-end"
               type="time"
               value={schedule.endTime}
-              onChange={(e) => setSchedule((s) => ({ ...s, endTime: e.target.value }))}
+              onChange={(e) =>
+                setSchedule((s) => ({ ...s, endTime: e.target.value }))
+              }
             />
           </div>
         </div>
@@ -147,7 +170,7 @@ export function NotificationDndSchedule() {
         </p>
 
         <Button onClick={handleSave} disabled={saving} size="sm">
-          {saving ? 'Enregistrement...' : 'Enregistrer'}
+          {saving ? "Enregistrement..." : "Enregistrer"}
         </Button>
       </CardContent>
     </Card>

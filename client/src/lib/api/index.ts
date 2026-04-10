@@ -51,16 +51,36 @@ export * from "./workforce";
 export * from "./office";
 export * from "./spreadsheet";
 export * from "./pdf";
-export * from "./search";
+export {
+  searchApi as globalSearchApi,
+  type SearchHistoryItem,
+  type SavedSearch,
+} from "./search";
 export * from "./org";
 export * from "./vault";
 export * from "./expenses";
 export * from "./timesheet";
 export * from "./gamification";
 export * from "./collaboration";
-export * from "./trash";
+export {
+  trashApi as unifiedTrashApi,
+  type TrashItem as UnifiedTrashItem,
+} from "./trash";
 export * from "./bookmarks";
-export * from "./help";
+export {
+  helpApi,
+  type FaqItem,
+  type SupportTicket,
+  type TicketStatus,
+} from "./help";
 export * from "./status";
-export * from "./comms";
+export {
+  commsApi,
+  type Announcement,
+  type PollResults,
+  type Newsletter,
+  type NewsItem,
+  type MentionNotification,
+  type Suggestion,
+} from "./comms";
 export * from "./reports";

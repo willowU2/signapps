@@ -10,21 +10,21 @@ import { toast } from "sonner";
 import { NotificationGranularPrefs } from "@/components/notifications/notification-granular-prefs";
 import { NotificationDndSchedule } from "@/components/notifications/notification-dnd-schedule";
 import { NotificationSounds } from "@/components/notifications/notification-sounds";
-import { usePageTitle } from '@/hooks/use-page-title';
+import { usePageTitle } from "@/hooks/use-page-title";
 
 // ─── Known services ───────────────────────────────────────────────────────────
 
 const KNOWN_SERVICES: { slug: string; label: string }[] = [
-  { slug: "mail",      label: "Mail"          },
-  { slug: "calendar",  label: "Calendrier"    },
-  { slug: "drive",     label: "Drive"         },
-  { slug: "chat",      label: "Chat"          },
-  { slug: "meet",      label: "Meet"          },
-  { slug: "tasks",     label: "Tâches"        },
-  { slug: "docs",      label: "Documents"     },
-  { slug: "storage",   label: "Stockage"      },
-  { slug: "identity",  label: "Identité"      },
-  { slug: "billing",   label: "Facturation"   },
+  { slug: "mail", label: "Mail" },
+  { slug: "calendar", label: "Calendrier" },
+  { slug: "drive", label: "Drive" },
+  { slug: "chat", label: "Chat" },
+  { slug: "meet", label: "Meet" },
+  { slug: "tasks", label: "Tâches" },
+  { slug: "docs", label: "Documents" },
+  { slug: "storage", label: "Stockage" },
+  { slug: "identity", label: "Identité" },
+  { slug: "billing", label: "Facturation" },
 ];
 
 const DEFAULT_PREFS: NotificationPreferences = {
@@ -32,7 +32,9 @@ const DEFAULT_PREFS: NotificationPreferences = {
   push_enabled: true,
   quiet_hours_start: "22:00",
   quiet_hours_end: "07:00",
-  per_service: Object.fromEntries(KNOWN_SERVICES.map(({ slug }) => [slug, true])),
+  per_service: Object.fromEntries(
+    KNOWN_SERVICES.map(({ slug }) => [slug, true]),
+  ),
 };
 
 // ─── Toggle switch ────────────────────────────────────────────────────────────
@@ -117,7 +119,7 @@ function PrefsRow({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function NotificationPreferencesPage() {
-  usePageTitle('Preferences notifications');
+  usePageTitle("Preferences notifications");
   const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_PREFS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -145,7 +147,7 @@ export default function NotificationPreferencesPage() {
 
   function setField<K extends keyof NotificationPreferences>(
     key: K,
-    value: NotificationPreferences[K]
+    value: NotificationPreferences[K],
   ) {
     setPrefs((prev) => ({ ...prev, [key]: value }));
   }
@@ -160,7 +162,7 @@ export default function NotificationPreferencesPage() {
   async function handleSave() {
     setSaving(true);
     try {
-      await notificationsApi.patchPreferences(prefs);
+      await notificationsApi.updatePreferences(prefs);
       toast.success("Préférences enregistrées");
     } catch {
       toast.error("Impossible d'enregistrer les préférences");
@@ -222,9 +224,7 @@ export default function NotificationPreferencesPage() {
             >
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 space-y-1">
-                  <label className="text-sm font-medium">
-                    Début
-                  </label>
+                  <label className="text-sm font-medium">Début</label>
                   <input
                     type="time"
                     value={prefs.quiet_hours_start}
@@ -236,9 +236,7 @@ export default function NotificationPreferencesPage() {
                   />
                 </div>
                 <div className="flex-1 space-y-1">
-                  <label className="text-sm font-medium">
-                    Fin
-                  </label>
+                  <label className="text-sm font-medium">Fin</label>
                   <input
                     type="time"
                     value={prefs.quiet_hours_end}
