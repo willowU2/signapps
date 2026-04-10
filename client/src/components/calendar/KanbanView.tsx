@@ -11,7 +11,7 @@ import { SpinnerInfinity } from 'spinners-react';
  */
 
 import * as React from 'react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useCalendarStore } from '@/stores/calendar-store';
@@ -48,7 +48,7 @@ interface KanbanViewProps {
   groupBy?: 'status' | 'priority' | 'assignee' | 'project';
   onItemClick?: (item: TimeItem) => void;
   onItemDoubleClick?: (item: TimeItem) => void;
-  onCreateItem?: (column: string) => void;
+  onCreateEvent?: (startTime?: Date, endTime?: Date) => void;
 }
 
 interface KanbanColumn {
@@ -93,19 +93,38 @@ export function KanbanView({
   groupBy = 'status',
   onItemClick,
   onItemDoubleClick,
-  onCreateItem,
+  onCreateEvent,
 }: KanbanViewProps) {
   const storeItems = useCalendarStore((state) => state.timeItems);
   const isLoading = useCalendarStore((state) => state.isLoading);
   const updateTimeItem = useCalendarStore((state) => state.updateTimeItem);
+  const fetchTimeItems = useCalendarStore((state) => state.fetchTimeItems);
+  const currentDate = useCalendarStore((state) => state.currentDate);
 
   const items = propItems || storeItems;
+
+  // Kanban view usually shows a wide range of tasks
+  const dateRange = React.useMemo(() => ({
+    start: addDays(currentDate, -30),
+    end: addDays(currentDate, 90),
+  }), [currentDate]);
+
+  const rangeStartISO = dateRange.start.toISOString();
+  const rangeEndISO = dateRange.end.toISOString();
+
+  React.useEffect(() => {
+    if (!propItems) {
+      fetchTimeItems(dateRange);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propItems, rangeStartISO, rangeEndISO]);
 
   // Filter to only tasks
   const tasks = React.useMemo(
     () => items.filter((item) => item.type === 'task'),
     [items]
   );
+
 
   // Build columns based on groupBy
   const columns = React.useMemo((): KanbanColumn[] => {
@@ -285,7 +304,7 @@ export function KanbanView({
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6"
-                  onClick={() => onCreateItem?.(column.id)}
+                  onClick={() => onCreateEvent?.()}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -313,7 +332,7 @@ export function KanbanView({
                         variant="ghost"
                         size="sm"
                         className="mt-2"
-                        onClick={() => onCreateItem?.(column.id)}
+                        onClick={() => onCreateEvent?.()}
                       >
                         <Plus className="mr-1 h-4 w-4" />
                         Ajouter

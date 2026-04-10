@@ -307,10 +307,15 @@ export function CalendarHub() {
 
   /** Open form to create a new event (optionally with a preselected time slot) */
   const handleCreateEvent = useCallback((startTime?: Date, endTime?: Date) => {
+    if (!selectedCalendarId) {
+      toast.error("Veuillez d'abord sélectionner ou créer un agenda dans le panneau de gauche.");
+      return;
+    }
     setEditingEvent(undefined);
     setFormDefaultStart(startTime);
     setFormOpen(true);
-  }, []);
+  }, [selectedCalendarId]);
+
 
   /** Open form to edit an existing event */
   const handleEditEvent = useCallback(
