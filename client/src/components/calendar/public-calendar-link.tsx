@@ -64,17 +64,8 @@ export function PublicCalendarLink({ calendarId, calendarName }: PublicCalendarL
             setIsPublic(true)
             toast.success("Lien de calendrier public généré")
         } catch {
-            // Fallback: generate a local demo token for UI purposes
-            const token = `pub_${calendarId.slice(0, 8)}_${Date.now().toString(36)}`
-            const base = typeof window !== "undefined" ? window.location.origin : ""
-            setPublicLink({
-                token,
-                icalUrl: `${base}/api/calendar/public/${token}/feed.ics`,
-                htmlUrl: `${base}/cal/public/${token}`,
-                createdAt: new Date().toISOString(),
-            })
-            setIsPublic(true)
-            toast.success("Lien public généré")
+            toast.error("Impossible de générer le lien public")
+            setIsPublic(false)
         } finally {
             setLoading(false)
         }

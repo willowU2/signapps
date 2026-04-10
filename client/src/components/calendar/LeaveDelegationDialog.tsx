@@ -138,18 +138,8 @@ function WorkloadBar({ value }: { value?: number }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Mock data generator (fallback when API has no data)
+// (removed mock generator)
 // ─────────────────────────────────────────────────────────────────────────────
-
-function generateMockColleagues(): DelegationColleague[] {
-  return [
-    { id: "c1", name: "Marie Dupont", department: "RH", workload: 42 },
-    { id: "c2", name: "Thomas Martin", department: "IT", workload: 68 },
-    { id: "c3", name: "Sophie Bernard", department: "Finance", workload: 31 },
-    { id: "c4", name: "Lucas Petit", department: "Opérations", workload: 55 },
-    { id: "c5", name: "Camille Moreau", department: "IT", workload: 80 },
-  ];
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Component
@@ -210,7 +200,7 @@ export function LeaveDelegationDialog({
 
     // If no tasks provided, use empty list — API would normally provide them
     const taskList = initialTasks ?? [];
-    const colleagueList = initialColleagues ?? generateMockColleagues();
+    const colleagueList = initialColleagues ?? [];
     initData(taskList, colleagueList);
   }, [open, initialTasks, initialColleagues, initData]);
 

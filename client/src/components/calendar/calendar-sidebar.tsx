@@ -65,7 +65,7 @@ export function CalendarSidebar({
              </div>
           </div>
 
-          {/* Side Panels area (Mocking the Checkbox lists) */}
+          {/* Side Panels area (Checkbox lists) */}
           <div className="flex-1 overflow-y-auto w-[240px] px-1 mt-4">
              {/* Accordion 1 */}
              <div className="flex items-center justify-between py-2 px-2 hover:bg-muted rounded cursor-pointer group">

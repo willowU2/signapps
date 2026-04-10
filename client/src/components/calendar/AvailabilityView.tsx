@@ -133,42 +133,6 @@ function getInitials(label: string): string {
 }
 
 // ============================================================================
-// Mock data for development
-// ============================================================================
-
-function generateMockEvents(entityId: string, date: Date): Event[] {
-  const base = new Date(date);
-  base.setHours(0, 0, 0, 0);
-
-  const hash = entityId.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const slots: Array<[number, number, string]> = [
-    [8 + (hash % 3), 9 + (hash % 2), "Réunion"],
-    [10 + (hash % 2), 11, "Appel"],
-    [14 + (hash % 2), 15 + (hash % 2), "Workshop"],
-  ];
-
-  return slots.map((s, i) => {
-    const start = new Date(base);
-    start.setHours(s[0], 0, 0, 0);
-    const end = new Date(base);
-    end.setHours(s[1], 0, 0, 0);
-    return {
-      id: `mock-${entityId}-${i}`,
-      calendar_id: entityId,
-      title: s[2],
-      start_time: start.toISOString(),
-      end_time: end.toISOString(),
-      timezone: "UTC",
-      created_by: entityId,
-      is_all_day: false,
-      is_deleted: false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-  });
-}
-
-// ============================================================================
 // Time Axis
 // ============================================================================
 
@@ -604,7 +568,7 @@ export default function AvailabilityView() {
           const res = await calendarApi.listEvents(entity.id, dayStart, dayEnd);
           newMap.set(entity.id, res.data ?? []);
         } catch {
-          newMap.set(entity.id, generateMockEvents(entity.id, selectedDay));
+          newMap.set(entity.id, []);
         }
       })
     );
