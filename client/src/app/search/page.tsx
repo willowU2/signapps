@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,62 +19,63 @@ import {
   CalendarDays,
   CheckSquare,
   HardDrive,
+  Globe,
   ArrowRight,
   X,
   Clock,
   Loader2,
-  Sparkles,
+  Bookmark,
+  BookmarkPlus,
+  Trash2,
+  History,
 } from "lucide-react";
-import { getClient, ServiceName } from "@/lib/api/factory";
-import { storageApi } from "@/lib/api/storage";
-import { schedulerApi } from "@/lib/api";
-import { calendarApi } from "@/lib/api/calendar";
-import { fetchOmniSearch } from "@/lib/api/search";
-import { SemanticSearchGlobal } from "@/components/search/semantic-search-global";
-import { FacetedSearch, type FacetFilters, type FacetType } from "@/components/search/faceted-search";
-import { SavedSearches } from "@/components/search/saved-searches";
-import { VoiceSearch } from "@/components/search/voice-search";
-import { addRecentSearch } from "@/components/search/search-suggestions";
+import {
+  searchApi,
+  type SearchResult,
+  type SearchResponse,
+  type SearchParams,
+  type SearchHistoryItem,
+  type SavedSearch,
+} from "@/lib/api/search";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Scope configuration ────────────────────────────────────────────────────
 
-type ModuleType =
-  | "all"
-  | "documents"
-  | "emails"
-  | "contacts"
-  | "events"
-  | "tasks"
-  | "files";
-
-interface SearchResult {
-  id: string;
-  module: ModuleType;
-  title: string;
-  subtitle?: string;
-  snippet?: string;
-  icon: ModuleType;
-  url: string;
-  date?: string;
-  meta?: Record<string, string>;
-}
-
-interface ModuleConfig {
-  key: ModuleType;
+interface ScopeConfig {
+  key: string;
   label: string;
   icon: React.ReactNode;
   color: string;
 }
 
-const MODULE_CONFIG: ModuleConfig[] = [
+const SCOPE_CONFIG: ScopeConfig[] = [
   {
-    key: "documents",
+    key: "all",
+    label: "Tous",
+    icon: <Globe className="h-4 w-4" />,
+    color: "text-foreground",
+  },
+  {
+    key: "files",
+    label: "Fichiers",
+    icon: <HardDrive className="h-4 w-4" />,
+    color: "text-cyan-500",
+  },
+  {
+    key: "docs",
     label: "Documents",
     icon: <FileText className="h-4 w-4" />,
     color: "text-blue-500",
   },
   {
-    key: "emails",
+    key: "mail",
     label: "Emails",
     icon: <Mail className="h-4 w-4" />,
     color: "text-red-500",
@@ -86,426 +87,263 @@ const MODULE_CONFIG: ModuleConfig[] = [
     color: "text-green-500",
   },
   {
-    key: "events",
-    label: "Calendrier",
-    icon: <CalendarDays className="h-4 w-4" />,
-    color: "text-purple-500",
-  },
-  {
     key: "tasks",
     label: "Taches",
     icon: <CheckSquare className="h-4 w-4" />,
     color: "text-amber-500",
   },
   {
-    key: "files",
-    label: "Fichiers",
-    icon: <HardDrive className="h-4 w-4" />,
-    color: "text-cyan-500",
+    key: "calendar",
+    label: "Calendrier",
+    icon: <CalendarDays className="h-4 w-4" />,
+    color: "text-purple-500",
   },
 ];
 
-// ─── Data fetching helpers ───────────────────────────────────────────────────
-
-async function searchContacts(query: string): Promise<SearchResult[]> {
-  try {
-    const client = getClient(ServiceName.CONTACTS);
-    const res = await client.get<
-      Array<{
-        id: string;
-        name: string;
-        email: string;
-        company?: string;
-        phone?: string;
-      }>
-    >("/contacts");
-    const contacts = res.data ?? [];
-    const q = query.toLowerCase();
-    return contacts
-      .filter(
-        (c) =>
-          c.name?.toLowerCase().includes(q) ||
-          c.email?.toLowerCase().includes(q) ||
-          c.company?.toLowerCase().includes(q)
-      )
-      .map((c) => ({
-        id: c.id,
-        module: "contacts" as ModuleType,
-        title: c.name,
-        subtitle: c.email,
-        snippet: c.company ? `Entreprise: ${c.company}` : undefined,
-        icon: "contacts" as ModuleType,
-        url: `/contacts`,
-        meta: c.phone ? { phone: c.phone } : undefined,
-      }));
-  } catch {
-    return [];
+// Icon for entity_type from results
+function entityIcon(entityType: string) {
+  switch (entityType) {
+    case "file":
+      return <HardDrive className="h-4 w-4 text-cyan-500" />;
+    case "document":
+    case "doc":
+      return <FileText className="h-4 w-4 text-blue-500" />;
+    case "email":
+    case "mail":
+      return <Mail className="h-4 w-4 text-red-500" />;
+    case "contact":
+      return <Users className="h-4 w-4 text-green-500" />;
+    case "task":
+      return <CheckSquare className="h-4 w-4 text-amber-500" />;
+    case "event":
+    case "calendar":
+      return <CalendarDays className="h-4 w-4 text-purple-500" />;
+    default:
+      return <Search className="h-4 w-4 text-muted-foreground" />;
   }
 }
 
-async function searchEmails(query: string): Promise<SearchResult[]> {
-  try {
-    const client = getClient(ServiceName.MAIL);
-    const res = await client.get<{
-      messages: Array<{
-        id: string;
-        message_id?: string;
-        subject: string;
-        from_address: string;
-        date?: string;
-        snippet?: string;
-      }>;
-    }>("/messages", { params: { search: query, limit: 20 } });
-    const messages = res.data?.messages ?? [];
-    return messages.map((m) => ({
-      id: m.id || m.message_id || "",
-      module: "emails" as ModuleType,
-      title: m.subject || "(sans sujet)",
-      subtitle: m.from_address,
-      snippet: m.snippet,
-      icon: "emails" as ModuleType,
-      url: `/mail`,
-      date: m.date,
-    }));
-  } catch {
-    return [];
+function entityBadgeColor(entityType: string) {
+  switch (entityType) {
+    case "file":
+      return "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400";
+    case "document":
+    case "doc":
+      return "bg-blue-500/10 text-blue-700 dark:text-blue-400";
+    case "email":
+    case "mail":
+      return "bg-red-500/10 text-red-700 dark:text-red-400";
+    case "contact":
+      return "bg-green-500/10 text-green-700 dark:text-green-400";
+    case "task":
+      return "bg-amber-500/10 text-amber-700 dark:text-amber-400";
+    case "event":
+    case "calendar":
+      return "bg-purple-500/10 text-purple-700 dark:text-purple-400";
+    default:
+      return "bg-muted text-muted-foreground";
   }
 }
 
-async function searchEvents(query: string): Promise<SearchResult[]> {
+function formatDate(dateStr?: string): string | null {
+  if (!dateStr) return null;
   try {
-    const calendarsRes = await calendarApi.listCalendars();
-    const calendars = calendarsRes.data || [];
-    if (calendars.length === 0) return [];
-
-    const now = new Date();
-    const start = new Date(now.getFullYear() - 1, 0, 1);
-    const end = new Date(now.getFullYear() + 1, 11, 31);
-    const eventsRes = await calendarApi.listEvents(calendars[0].id, start, end);
-    const events = (eventsRes.data || []) as Array<{
-      id: string;
-      title: string;
-      description?: string;
-      start_time: string;
-      location?: string;
-    }>;
-    const q = query.toLowerCase();
-    return events
-      .filter(
-        (e) =>
-          e.title?.toLowerCase().includes(q) ||
-          e.description?.toLowerCase().includes(q) ||
-          e.location?.toLowerCase().includes(q)
-      )
-      .map((e) => ({
-        id: e.id,
-        module: "events" as ModuleType,
-        title: e.title,
-        subtitle: e.location,
-        snippet: e.description?.substring(0, 120),
-        icon: "events" as ModuleType,
-        url: `/calendar`,
-        date: e.start_time,
-      }));
+    return new Date(dateStr).toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   } catch {
-    return [];
+    return null;
   }
 }
 
-async function searchTasks(query: string): Promise<SearchResult[]> {
-  try {
-    const res = await schedulerApi.listJobs();
-    const jobs = (res.data || []) as Array<{
-      id: string;
-      name: string;
-      description?: string;
-      cron_expression: string;
-      enabled: boolean;
-      last_status?: string;
-    }>;
-    const q = query.toLowerCase();
-    return jobs
-      .filter(
-        (j) =>
-          j.name?.toLowerCase().includes(q) ||
-          j.description?.toLowerCase().includes(q)
-      )
-      .map((j) => ({
-        id: j.id,
-        module: "tasks" as ModuleType,
-        title: j.name,
-        subtitle: j.cron_expression,
-        snippet: j.description,
-        icon: "tasks" as ModuleType,
-        url: `/scheduler`,
-        meta: {
-          status: j.enabled ? "actif" : "inactif",
-          last: j.last_status || "-",
-        },
-      }));
-  } catch {
-    return [];
-  }
-}
-
-async function searchFiles(query: string): Promise<SearchResult[]> {
-  try {
-    const res = await storageApi.listFiles("default", "");
-    const files = (res.data?.objects || []) as Array<{
-      id?: string;
-      key: string;
-      name?: string;
-      size?: number;
-      mime_type?: string;
-      is_directory?: boolean;
-    }>;
-    const q = query.toLowerCase();
-    return files
-      .filter((f) => {
-        const name = f.name || f.key?.split("/").pop() || "";
-        return name.toLowerCase().includes(q);
-      })
-      .map((f) => {
-        const name = f.name || f.key?.split("/").pop() || "";
-        const sizeStr = f.size
-          ? f.size > 1048576
-            ? `${(f.size / 1048576).toFixed(1)} Mo`
-            : `${(f.size / 1024).toFixed(1)} Ko`
-          : "";
-        return {
-          id: f.id || f.key,
-          module: "files" as ModuleType,
-          title: name,
-          subtitle: f.mime_type || "",
-          snippet: sizeStr ? `Taille: ${sizeStr}` : undefined,
-          icon: "files" as ModuleType,
-          url: `/drive`,
-        };
-      });
-  } catch {
-    return [];
-  }
-}
-
-async function searchDocuments(query: string): Promise<SearchResult[]> {
-  // Try the omni search API for documents
-  try {
-    const omniResults = await fetchOmniSearch(query, 20);
-    return omniResults.results
-      .filter(
-        (r) =>
-          r.entity_type === "document" ||
-          r.entity_type === "doc" ||
-          r.entity_type === "file"
-      )
-      .map((r) => ({
-        id: r.id,
-        module: "documents" as ModuleType,
-        title: r.title,
-        snippet: r.snippet,
-        icon: "documents" as ModuleType,
-        url: r.url || `/docs`,
-        date: r.updated_at,
-      }));
-  } catch {
-    // Fallback: search docs API directly
-    try {
-      const client = getClient(ServiceName.DOCS);
-      const res = await client.get<
-        Array<{
-          id: string;
-          title: string;
-          content?: string;
-          updated_at?: string;
-        }>
-      >("/documents", { params: { search: query, limit: 20 } });
-      const docs = Array.isArray(res.data) ? res.data : [];
-      const q = query.toLowerCase();
-      return docs
-        .filter(
-          (d) =>
-            d.title?.toLowerCase().includes(q) ||
-            d.content?.toLowerCase().includes(q)
-        )
-        .map((d) => ({
-          id: d.id,
-          module: "documents" as ModuleType,
-          title: d.title || "Sans titre",
-          snippet: d.content?.substring(0, 120),
-          icon: "documents" as ModuleType,
-          url: `/docs/${d.id}`,
-          date: d.updated_at,
-        }));
-    } catch {
-      return [];
-    }
-  }
-}
-
-// ─── Module icon component ───────────────────────────────────────────────────
-
-function ModuleIcon({
-  module,
-  className,
-}: {
-  module: ModuleType;
-  className?: string;
-}) {
-  const config = MODULE_CONFIG.find((m) => m.key === module);
-  if (!config) return <Search className={className} />;
-  return (
-    <span className={config.color}>
-      {config.icon}
-    </span>
-  );
-}
-
-// ─── Page ────────────────────────────────────────────────────────────────────
+// ─── Page ───────────────────────────────────────────────────────────────────
 
 export default function SearchPage() {
   usePageTitle("Recherche avancee");
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const initialQuery = searchParams.get("q") || "";
-  const initialMode = searchParams.get("mode") || "standard";
 
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
-  const [activeTab, setActiveTab] = useState<ModuleType>("all");
-  const [searchMode, setSearchMode] = useState<'standard' | 'semantic'>(
-    initialMode === 'semantic' ? 'semantic' : 'standard'
-  );
-  const [facetFilters, setFacetFilters] = useState<FacetFilters>({
-    types: [], dateFrom: null, dateTo: null, author: '', tags: [],
-  });
-  const [showFacets, setShowFacets] = useState(false);
+  const [activeScope, setActiveScope] = useState("all");
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Debounce search
+  // Debounce 200ms
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query);
-    }, 300);
+      setSelectedIndex(-1);
+    }, 200);
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Update URL when query changes
+  // Update URL
   useEffect(() => {
     if (debouncedQuery) {
       const url = new URL(window.location.href);
       url.searchParams.set("q", debouncedQuery);
+      if (activeScope !== "all") url.searchParams.set("scope", activeScope);
+      else url.searchParams.delete("scope");
       window.history.replaceState({}, "", url.toString());
     }
-  }, [debouncedQuery]);
+  }, [debouncedQuery, activeScope]);
 
-  // Search all modules in parallel
+  // ── Search query ─────────────────────────────────────────────────────────
+
+  const searchQueryParams = useMemo<SearchParams>(() => {
+    const p: SearchParams = { q: debouncedQuery, limit: 50 };
+    if (activeScope !== "all") p.scope = activeScope;
+    return p;
+  }, [debouncedQuery, activeScope]);
+
   const {
-    data: results = [],
+    data: searchResponse,
     isLoading,
     isFetching,
-  } = useQuery<SearchResult[]>({
-    queryKey: ["global-search", debouncedQuery],
+  } = useQuery({
+    queryKey: ["search", searchQueryParams],
     queryFn: async () => {
-      if (!debouncedQuery || debouncedQuery.trim().length < 2) return [];
-
-      const [docs, emails, contacts, events, tasks, files] =
-        await Promise.allSettled([
-          searchDocuments(debouncedQuery),
-          searchEmails(debouncedQuery),
-          searchContacts(debouncedQuery),
-          searchEvents(debouncedQuery),
-          searchTasks(debouncedQuery),
-          searchFiles(debouncedQuery),
-        ]);
-
-      const all: SearchResult[] = [
-        ...(docs.status === "fulfilled" ? docs.value : []),
-        ...(emails.status === "fulfilled" ? emails.value : []),
-        ...(contacts.status === "fulfilled" ? contacts.value : []),
-        ...(events.status === "fulfilled" ? events.value : []),
-        ...(tasks.status === "fulfilled" ? tasks.value : []),
-        ...(files.status === "fulfilled" ? files.value : []),
-      ];
-
-      return all;
+      const res = await searchApi.search(searchQueryParams);
+      return res.data as SearchResponse;
     },
     enabled: debouncedQuery.trim().length >= 2,
     staleTime: 30_000,
   });
 
-  // Group by module
-  const grouped = useMemo(() => {
-    const map: Record<ModuleType, SearchResult[]> = {
-      all: [],
-      documents: [],
-      emails: [],
-      contacts: [],
-      events: [],
-      tasks: [],
-      files: [],
-    };
-    for (const r of results) {
-      map[r.module]?.push(r);
+  const results = useMemo(
+    () => searchResponse?.results ?? [],
+    [searchResponse],
+  );
+  const totalCount = searchResponse?.total ?? 0;
+  const tookMs = searchResponse?.took_ms ?? 0;
+
+  // ── History ──────────────────────────────────────────────────────────────
+
+  const { data: historyItems = [] } = useQuery({
+    queryKey: ["search-history"],
+    queryFn: async () => {
+      const res = await searchApi.listHistory();
+      return (res.data ?? []) as SearchHistoryItem[];
+    },
+    staleTime: 60_000,
+  });
+
+  const clearHistoryMutation = useMutation({
+    mutationFn: () => searchApi.clearHistory(),
+    onSuccess: () => {
+      toast.success("Historique efface.");
+      queryClient.invalidateQueries({ queryKey: ["search-history"] });
+    },
+    onError: () => {
+      toast.error("Impossible d'effacer l'historique.");
+    },
+  });
+
+  // ── Saved searches ───────────────────────────────────────────────────────
+
+  const { data: savedSearches = [] } = useQuery({
+    queryKey: ["saved-searches"],
+    queryFn: async () => {
+      const res = await searchApi.listSaved();
+      return (res.data ?? []) as SavedSearch[];
+    },
+    staleTime: 60_000,
+  });
+
+  const saveSearchMutation = useMutation({
+    mutationFn: searchApi.createSaved,
+    onSuccess: () => {
+      toast.success("Recherche sauvegardee.");
+      setShowSaveDialog(false);
+      setSaveName("");
+      queryClient.invalidateQueries({ queryKey: ["saved-searches"] });
+    },
+    onError: () => {
+      toast.error("Impossible de sauvegarder la recherche.");
+    },
+  });
+
+  const deleteSavedMutation = useMutation({
+    mutationFn: searchApi.deleteSaved,
+    onSuccess: () => {
+      toast.success("Recherche supprimee.");
+      queryClient.invalidateQueries({ queryKey: ["saved-searches"] });
+    },
+    onError: () => {
+      toast.error("Impossible de supprimer la recherche sauvegardee.");
+    },
+  });
+
+  // ── Keyboard navigation ──────────────────────────────────────────────────
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (results.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : 0));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : results.length - 1));
+      } else if (e.key === "Enter" && selectedIndex >= 0) {
+        e.preventDefault();
+        const r = results[selectedIndex];
+        if (r?.url) router.push(r.url);
+      }
+    },
+    [results, selectedIndex, router],
+  );
+
+  // Scroll selected item into view
+  useEffect(() => {
+    if (selectedIndex >= 0 && resultsRef.current) {
+      const cards = resultsRef.current.querySelectorAll("[data-result-card]");
+      cards[selectedIndex]?.scrollIntoView({ block: "nearest" });
     }
-    return map;
-  }, [results]);
+  }, [selectedIndex]);
 
-  // Module counts
-  const counts = useMemo(() => {
-    const c: Record<string, number> = {};
-    for (const mod of MODULE_CONFIG) {
-      c[mod.key] = grouped[mod.key]?.length || 0;
-    }
-    c["all"] = results.length;
-    return c;
-  }, [grouped, results]);
+  // ── Handlers ─────────────────────────────────────────────────────────────
 
-  // Apply facet filters to results
-  const facetedResults = useMemo(() => {
-    return results.filter(r => {
-      if (facetFilters.types.length > 0) {
-        const typeMap: Record<string, string> = { emails: 'email', documents: 'document', contacts: 'contact', tasks: 'task', events: 'event' };
-        const ft = typeMap[r.module] ?? r.module;
-        if (!facetFilters.types.includes(ft as FacetType)) return false;
-      }
-      if (facetFilters.dateFrom && r.date) {
-        if (new Date(r.date) < facetFilters.dateFrom) return false;
-      }
-      if (facetFilters.dateTo && r.date) {
-        if (new Date(r.date) > facetFilters.dateTo) return false;
-      }
-      return true;
-    });
-  }, [results, facetFilters]);
+  const handleNavigate = useCallback(
+    (result: SearchResult) => {
+      if (result.url) router.push(result.url);
+    },
+    [router],
+  );
 
-  // Filtered results for active tab
-  const displayResults = useMemo(() => {
-    const base = facetFilters.types.length > 0 || facetFilters.dateFrom || facetFilters.dateTo ? facetedResults : results;
-    if (activeTab === "all") return base;
-    return base.filter(r => r.module === activeTab);
-  }, [activeTab, results, facetedResults, facetFilters]);
-
-  const handleNavigate = (result: SearchResult) => {
-    router.push(result.url);
-  };
-
-  const handleVoiceResult = useCallback((transcript: string) => {
-    setQuery(transcript);
-    setDebouncedQuery(transcript);
-    addRecentSearch(transcript);
+  const handleRunSaved = useCallback((s: SavedSearch) => {
+    setQuery(s.query);
+    setDebouncedQuery(s.query);
+    if (s.scope) setActiveScope(s.scope);
   }, []);
 
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return null;
-    try {
-      return new Date(dateStr).toLocaleDateString("fr-FR", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      });
-    } catch {
-      return null;
+  const handleRunHistory = useCallback((h: SearchHistoryItem) => {
+    setQuery(h.query);
+    setDebouncedQuery(h.query);
+    if (h.scope) setActiveScope(h.scope);
+  }, []);
+
+  const handleSaveSearch = useCallback(() => {
+    if (!saveName.trim()) {
+      toast.error("Nom requis");
+      return;
     }
-  };
+    saveSearchMutation.mutate({
+      name: saveName.trim(),
+      query: debouncedQuery,
+      scope: activeScope !== "all" ? activeScope : undefined,
+    });
+  }, [saveName, debouncedQuery, activeScope, saveSearchMutation]);
+
+  const hasQuery = debouncedQuery.trim().length >= 2;
 
   return (
     <AppLayout>
@@ -523,271 +361,316 @@ export default function SearchPage() {
           </div>
         </div>
 
-        {/* Mode toggle */}
+        {/* Search input */}
         <div className="flex gap-2">
-          <button
-            onClick={() => setSearchMode('standard')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              searchMode === 'standard'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Search className="h-3.5 w-3.5" />
-            Recherche standard
-          </button>
-          <button
-            onClick={() => setSearchMode('semantic')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              searchMode === 'semantic'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Recherche intelligente
-          </button>
-        </div>
-
-        {/* Semantic search panel */}
-        {searchMode === 'semantic' && (
-          <div className="rounded-xl border p-4">
-            <SemanticSearchGlobal
-              autoFocus
-              placeholder="Recherche intelligente par signification..."
-              onSelect={(result) => {
-                // Navigate based on result type derived from filename
-                const fn = result.filename?.toLowerCase() ?? '';
-                if (fn.includes('email') || fn.endsWith('.eml')) router.push('/mail');
-                else if (fn.endsWith('.vcf') || fn.includes('contact')) router.push('/contacts');
-                else router.push('/drive');
-              }}
-            />
-          </div>
-        )}
-
-        {/* Standard search input */}
-        {searchMode === 'standard' && <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
             <Input
               className="pl-10 pr-20 h-12 text-lg"
-              placeholder="Rechercher des documents, emails, contacts, evenements, taches, fichiers..."
+              placeholder="Rechercher des documents, emails, contacts, evenements..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               autoFocus
             />
             {query && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-10 top-1"
+                className="absolute right-2 top-1"
                 onClick={() => {
                   setQuery("");
                   setDebouncedQuery("");
+                  setSelectedIndex(-1);
                 }}
               >
                 <X className="h-4 w-4" />
               </Button>
             )}
             {isFetching && (
-              <Loader2 className="absolute right-12 top-3.5 h-5 w-5 animate-spin text-muted-foreground" />
+              <Loader2 className="absolute right-10 top-3.5 h-5 w-5 animate-spin text-muted-foreground" />
             )}
-            <VoiceSearch onResult={handleVoiceResult} className="absolute right-1 top-1" />
           </div>
-          <Button
-            variant={showFacets ? 'secondary' : 'outline'}
-            className="h-12 gap-2 shrink-0"
-            onClick={() => setShowFacets(v => !v)}
-          >
-            <Search className="h-4 w-4" />Filtres
-          </Button>
-        </div>}
-
-        {/* Faceted filters panel */}
-        {searchMode === 'standard' && showFacets && (
-          <div className="p-4 border rounded-xl bg-card">
-            <FacetedSearch
-              facetCounts={{
-                document: grouped.documents?.length ?? 0,
-                email: grouped.emails?.length ?? 0,
-                contact: grouped.contacts?.length ?? 0,
-                task: grouped.tasks?.length ?? 0,
-                event: grouped.events?.length ?? 0,
+          {hasQuery && (
+            <Button
+              variant="outline"
+              className="h-12 gap-2 shrink-0"
+              onClick={() => {
+                setSaveName(debouncedQuery);
+                setShowSaveDialog(true);
               }}
-              onChange={setFacetFilters}
-            />
-          </div>
-        )}
+            >
+              <BookmarkPlus className="h-4 w-4" />
+              Sauvegarder
+            </Button>
+          )}
+        </div>
 
-        {/* Saved searches */}
-        {searchMode === 'standard' && (
-          <div className="p-4 border rounded-xl bg-card">
-            <SavedSearches
-              currentQuery={query}
-              currentFilters={facetFilters as unknown as Record<string, unknown>}
-              onRun={(s) => { setQuery(s.query); setDebouncedQuery(s.query); }}
-            />
-          </div>
-        )}
-
-        {/* Standard mode results */}
-        {searchMode === 'standard' && (debouncedQuery.trim().length < 2 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <Search className="h-12 w-12 text-muted-foreground/30 mb-4" />
-              <h3 className="text-lg font-medium text-muted-foreground">
-                Tapez au moins 2 caracteres pour lancer la recherche
-              </h3>
-              <p className="text-sm text-muted-foreground/60 mt-1">
-                Utilisez Ctrl+K pour un acces rapide a la recherche depuis
-                n&apos;importe quelle page.
-              </p>
-            </CardContent>
-          </Card>
-        ) : isLoading ? (
-          <div className="space-y-4">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-20 w-full rounded-lg" />
-            ))}
-          </div>
-        ) : (
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) => setActiveTab(v as ModuleType)}
-          >
-            <div className="overflow-x-auto pb-1">
-              <TabsList className="inline-flex w-auto">
-                <TabsTrigger value="all" className="text-xs sm:text-sm gap-1.5">
-                  Tous
-                  <Badge variant="secondary" className="ml-1 h-5 min-w-[20px] px-1">
-                    {counts["all"]}
-                  </Badge>
+        {/* Scope tabs */}
+        <Tabs
+          value={activeScope}
+          onValueChange={(v) => {
+            setActiveScope(v);
+            setSelectedIndex(-1);
+          }}
+        >
+          <div className="overflow-x-auto pb-1">
+            <TabsList className="inline-flex w-auto">
+              {SCOPE_CONFIG.map((scope) => (
+                <TabsTrigger
+                  key={scope.key}
+                  value={scope.key}
+                  className="text-xs sm:text-sm gap-1.5"
+                >
+                  <span className={scope.color}>{scope.icon}</span>
+                  <span className="hidden sm:inline">{scope.label}</span>
                 </TabsTrigger>
-                {MODULE_CONFIG.map((mod) => (
-                  <TabsTrigger
-                    key={mod.key}
-                    value={mod.key}
-                    className="text-xs sm:text-sm gap-1.5"
-                  >
-                    <span className={mod.color}>{mod.icon}</span>
-                    <span className="hidden sm:inline">{mod.label}</span>
-                    <Badge
-                      variant="secondary"
-                      className="ml-1 h-5 min-w-[20px] px-1"
-                    >
-                      {counts[mod.key]}
-                    </Badge>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
+              ))}
+            </TabsList>
+          </div>
 
-            {/* Tab content for all tabs */}
-            <TabsContent value={activeTab} className="mt-4">
-              {displayResults.length === 0 ? (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                    <Search className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                    <h3 className="text-lg font-medium text-muted-foreground">
-                      Aucun resultat
-                    </h3>
-                    <p className="text-sm text-muted-foreground/60 mt-1">
-                      Aucun resultat pour &quot;{debouncedQuery}&quot;
-                      {activeTab !== "all" && (
-                        <>
-                          {" "}
-                          dans{" "}
-                          {MODULE_CONFIG.find((m) => m.key === activeTab)
-                            ?.label || activeTab}
-                        </>
-                      )}
-                      . Essayez un autre terme.
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : activeTab === "all" ? (
-                // Grouped view for "all" tab
-                <div className="space-y-6">
-                  {MODULE_CONFIG.filter((mod) => (grouped[mod.key]?.length || 0) > 0).map(
-                    (mod) => (
-                      <div key={mod.key}>
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className={mod.color}>{mod.icon}</span>
-                          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                            {mod.label}
-                          </h2>
-                          <Badge variant="outline" className="ml-1">
-                            {grouped[mod.key]?.length}
-                          </Badge>
-                          {(grouped[mod.key]?.length || 0) > 5 && (
-                            <Button
-                              variant="link"
-                              size="sm"
-                              className="ml-auto text-xs"
-                              onClick={() => setActiveTab(mod.key)}
-                            >
-                              Voir tout
-                              <ArrowRight className="h-3 w-3 ml-1" />
-                            </Button>
-                          )}
-                        </div>
-                        <div className="space-y-2">
-                          {grouped[mod.key]?.slice(0, 5).map((result) => (
-                            <ResultCard
-                              key={`${result.module}-${result.id}`}
-                              result={result}
-                              onClick={() => handleNavigate(result)}
-                              formatDate={formatDate}
-                            />
-                          ))}
-                        </div>
+          <TabsContent value={activeScope} className="mt-4">
+            {/* Before search: show history + saved searches */}
+            {!hasQuery ? (
+              <div className="space-y-6">
+                {/* Recent searches */}
+                {historyItems.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <History className="h-4 w-4 text-muted-foreground" />
+                        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                          Recherches recentes
+                        </h2>
                       </div>
-                    )
-                  )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-7 gap-1"
+                        onClick={() => clearHistoryMutation.mutate()}
+                        disabled={clearHistoryMutation.isPending}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Effacer
+                      </Button>
+                    </div>
+                    <div className="space-y-1">
+                      {historyItems.slice(0, 10).map((h) => (
+                        <button
+                          key={h.id}
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/50 transition-colors text-left"
+                          onClick={() => handleRunHistory(h)}
+                        >
+                          <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <span className="text-sm flex-1 truncate">
+                            {h.query}
+                          </span>
+                          {h.scope && h.scope !== "all" && (
+                            <Badge
+                              variant="secondary"
+                              className="text-xs shrink-0"
+                            >
+                              {h.scope}
+                            </Badge>
+                          )}
+                          <span className="text-xs text-muted-foreground shrink-0">
+                            {h.result_count} resultat
+                            {h.result_count !== 1 ? "s" : ""}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Saved searches */}
+                {savedSearches.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Bookmark className="h-4 w-4 text-muted-foreground" />
+                      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                        Recherches sauvegardees
+                      </h2>
+                    </div>
+                    <div className="space-y-1">
+                      {savedSearches.map((s) => (
+                        <div
+                          key={s.id}
+                          className="group flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <button
+                            className="flex-1 flex items-center gap-3 text-left min-w-0"
+                            onClick={() => handleRunSaved(s)}
+                          >
+                            <Bookmark className="h-4 w-4 text-primary shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {s.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {s.query}
+                                {s.scope && ` (${s.scope})`}
+                              </p>
+                            </div>
+                          </button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 opacity-0 group-hover:opacity-100 shrink-0"
+                            onClick={() => deleteSavedMutation.mutate(s.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty state when no history and no saved */}
+                {historyItems.length === 0 && savedSearches.length === 0 && (
+                  <Card>
+                    <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                      <Search className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                      <h3 className="text-lg font-medium text-muted-foreground">
+                        Tapez au moins 2 caracteres pour lancer la recherche
+                      </h3>
+                      <p className="text-sm text-muted-foreground/60 mt-1">
+                        Utilisez Ctrl+K pour un acces rapide a la recherche
+                        depuis n&apos;importe quelle page.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            ) : isLoading ? (
+              /* Loading skeleton */
+              <div className="space-y-3">
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className="h-20 w-full rounded-lg" />
+                ))}
+              </div>
+            ) : results.length === 0 ? (
+              /* No results */
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                  <Search className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                  <h3 className="text-lg font-medium text-muted-foreground">
+                    Aucun resultat
+                  </h3>
+                  <p className="text-sm text-muted-foreground/60 mt-1">
+                    Aucun resultat pour &quot;{debouncedQuery}&quot;
+                    {activeScope !== "all" && (
+                      <>
+                        {" "}
+                        dans{" "}
+                        {SCOPE_CONFIG.find((s) => s.key === activeScope)
+                          ?.label ?? activeScope}
+                      </>
+                    )}
+                    . Essayez un autre terme.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              /* Results */
+              <div ref={resultsRef}>
+                {/* Result count + timing */}
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-sm text-muted-foreground">
+                    {totalCount} resultat{totalCount !== 1 ? "s" : ""}
+                    {tookMs > 0 && <span className="ml-1">({tookMs} ms)</span>}
+                  </p>
                 </div>
-              ) : (
-                // Flat list for specific module tab
+
+                {/* Result cards */}
                 <div className="space-y-2">
-                  {displayResults.map((result) => (
+                  {results.map((result, index) => (
                     <ResultCard
-                      key={`${result.module}-${result.id}`}
+                      key={`${result.entity_type}-${result.id}`}
                       result={result}
+                      isSelected={index === selectedIndex}
                       onClick={() => handleNavigate(result)}
-                      formatDate={formatDate}
                     />
                   ))}
                 </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        {/* Save search dialog */}
+        <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Sauvegarder la recherche</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <Input
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+                placeholder="Nom de la recherche"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSaveSearch();
+                }}
+              />
+              <p className="text-xs text-muted-foreground">
+                Requete : &quot;
+                <span className="font-medium">{debouncedQuery}</span>&quot;
+                {activeScope !== "all" && (
+                  <span className="ml-1">
+                    (scope:{" "}
+                    {SCOPE_CONFIG.find((s) => s.key === activeScope)?.label})
+                  </span>
+                )}
+              </p>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowSaveDialog(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleSaveSearch}
+                disabled={saveSearchMutation.isPending}
+              >
+                Sauvegarder
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
 }
 
-// ─── Result Card ─────────────────────────────────────────────────────────────
+// ─── Result Card ────────────────────────────────────────────────────────────
 
 function ResultCard({
   result,
+  isSelected,
   onClick,
-  formatDate,
 }: {
   result: SearchResult;
+  isSelected: boolean;
   onClick: () => void;
-  formatDate: (d?: string) => string | null;
 }) {
-  const dateStr = formatDate(result.date);
+  const dateStr = formatDate(result.updated_at);
 
   return (
     <Card
-      className="cursor-pointer border-border/50 transition-all hover:border-primary/30 hover:shadow-sm hover:bg-muted/30 active:scale-[0.995]"
+      data-result-card
+      className={`cursor-pointer border-border/50 transition-all hover:border-primary/30 hover:shadow-sm hover:bg-muted/30 active:scale-[0.995] ${
+        isSelected ? "ring-2 ring-primary border-primary/40 bg-muted/40" : ""
+      }`}
       onClick={onClick}
     >
       <CardContent className="flex items-start gap-3 p-4">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-          <ModuleIcon module={result.module} className="h-4 w-4" />
+          {entityIcon(result.entity_type)}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -799,25 +682,23 @@ function ResultCard({
               </span>
             )}
           </div>
-          {result.subtitle && (
-            <p className="text-xs text-muted-foreground truncate mt-0.5">
-              {result.subtitle}
-            </p>
-          )}
           {result.snippet && (
             <p className="text-xs text-muted-foreground/80 mt-1 line-clamp-2">
               {result.snippet}
             </p>
           )}
-          {result.meta && (
-            <div className="flex gap-2 mt-1.5 flex-wrap">
-              {Object.entries(result.meta).map(([key, value]) => (
-                <Badge key={key} variant="secondary" className="text-xs">
-                  {value}
-                </Badge>
-              ))}
-            </div>
-          )}
+          <div className="flex gap-2 mt-1.5 flex-wrap">
+            <span
+              className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${entityBadgeColor(result.entity_type)}`}
+            >
+              {result.entity_type}
+            </span>
+            {result.score > 0 && (
+              <span className="text-[10px] text-muted-foreground">
+                pertinence: {Math.round(result.score * 100)}%
+              </span>
+            )}
+          </div>
         </div>
         <ArrowRight className="h-4 w-4 text-muted-foreground/50 shrink-0 mt-1" />
       </CardContent>
