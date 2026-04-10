@@ -62,31 +62,6 @@ const PIPELINE_STEPS: Omit<PipelineStep, "resultSummary">[] = [
   { label: "Optimizing for platform...", icon: Target, delay: 1000 },
 ];
 
-// ---------------------------------------------------------------------------
-// Mock content generation helpers
-// ---------------------------------------------------------------------------
-
-const HASHTAG_POOL: Record<string, string[]> = {
-  tech: ["#Tech", "#Innovation", "#AI", "#DigitalTransformation", "#Future"],
-  marketing: ["#Marketing", "#Growth", "#Branding", "#ContentStrategy", "#ROI"],
-  business: ["#Business", "#Leadership", "#Startup", "#Entrepreneurship", "#Strategy"],
-  lifestyle: ["#Lifestyle", "#Wellness", "#Motivation", "#MindfulLiving", "#Growth"],
-  default: ["#Trending", "#MustRead", "#Insights", "#Community", "#Inspiration"],
-};
-
-function pickHashtags(topic: string, count: number): string[] {
-  const lower = topic.toLowerCase();
-  let pool = HASHTAG_POOL.default;
-  for (const [key, tags] of Object.entries(HASHTAG_POOL)) {
-    if (lower.includes(key)) {
-      pool = tags;
-      break;
-    }
-  }
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
-}
-
 function generateStepSummaries(topic: string): string[] {
   return [
     `Found 12 relevant sources about "${topic.slice(0, 40)}..."`,
@@ -96,71 +71,6 @@ function generateStepSummaries(topic: string): string[] {
     "Drafted content with optimized structure",
     "Adjusted length, hashtags, and formatting for platform",
   ];
-}
-
-function generateMockContent(
-  topic: string,
-  format: OutputFormat,
-  tone: VoiceTone,
-  platform: SocialAccount["platform"]
-): string[] {
-  const pronoun = tone === "personal" ? "I" : "We";
-  const possessive = tone === "personal" ? "my" : "our";
-  const verb = tone === "personal" ? "I've been" : "We've been";
-  const hashtags = pickHashtags(topic, 3).join(" ");
-  const limit = getPlatformCharLimit(platform);
-
-  const hooks = [
-    `${pronoun} spent the last month diving deep into ${topic}, and here's what most people get wrong:`,
-    `Everyone talks about ${topic}, but nobody mentions this crucial detail:`,
-    `After ${tone === "personal" ? "years of" : "extensive"} research on ${topic}, the data finally speaks for itself.`,
-  ];
-  const hook = hooks[Math.floor(Math.random() * hooks.length)];
-
-  if (format === "short") {
-    const body = `${hook}\n\nThe key insight? Success comes from consistency, not complexity. ${verb} testing this approach and the results are remarkable.\n\n${hashtags}`;
-    return [body.slice(0, limit)];
-  }
-
-  if (format === "long") {
-    const body = `${hook}\n\nHere's what ${pronoun} discovered:\n\n1. Most strategies around ${topic} focus on the wrong metrics. Instead, ${pronoun === "I" ? "focus" : "we focus"} on leading indicators that predict outcomes weeks in advance.\n\n2. The 80/20 rule applies heavily. About 20% of ${possessive} efforts drove 80% of the results. Identifying those high-leverage activities was a game-changer.\n\n3. Consistency beats intensity every single time. Small daily actions compound into extraordinary results over 90 days.\n\nThe bottom line: Stop overcomplicating ${topic}. Start with one clear goal, measure what matters, and iterate weekly.\n\nWhat's ${possessive === "my" ? "your" : "your team's"} experience with this? ${pronoun === "I" ? "I'd" : "We'd"} love to hear your perspective.\n\n${hashtags}`;
-    return [body.slice(0, limit)];
-  }
-
-  // Thread formats
-  const threadPosts: string[] = [];
-  const isLong = format === "thread-long";
-
-  threadPosts.push(
-    `${hook}\n\nA thread on what ${pronoun === "I" ? "I learned" : "we learned"} ${String.fromCodePoint(0x1F9F5)}`
-  );
-
-  if (isLong) {
-    threadPosts.push(
-      `First, let's establish why ${topic} matters right now.\n\nThe landscape has shifted dramatically. What worked 2 years ago is now outdated. ${verb} tracking these changes closely, and the data tells a compelling story.\n\nHere are the numbers that caught ${possessive} attention...`
-    );
-    threadPosts.push(
-      `The strategy that's working:\n\n${String.fromCodePoint(0x2705)} Focus on quality over quantity\n${String.fromCodePoint(0x2705)} Build systems, not just goals\n${String.fromCodePoint(0x2705)} Measure leading indicators\n${String.fromCodePoint(0x2705)} Iterate weekly based on data\n\nThis framework has transformed ${possessive} approach to ${topic} entirely.`
-    );
-    threadPosts.push(
-      `The biggest mistake ${pronoun} see people make?\n\nTrying to do everything at once. Start with ONE thing. Master it. Then expand.\n\n${topic} rewards depth over breadth. Every successful case ${verb} studying confirms this.`
-    );
-    threadPosts.push(
-      `TL;DR:\n\n1. The old playbook for ${topic} is broken\n2. Focus on leading indicators\n3. Consistency > intensity\n4. Start small, iterate fast\n\nSave this thread and revisit it in 30 days. You'll thank yourself.\n\n${hashtags}`
-    );
-  } else {
-    threadPosts.push(
-      `Why it matters: The landscape around ${topic} changed. Old tactics don't work anymore.`
-    );
-    threadPosts.push(
-      `The fix: Focus on systems over goals. Measure what moves the needle. Iterate weekly.`
-    );
-    threadPosts.push(
-      `Bottom line: Start small, stay consistent, and let compounding do the work.\n\nSave this. ${hashtags}`
-    );
-  }
-
-  return threadPosts.map((p) => p.slice(0, limit));
 }
 
 // ---------------------------------------------------------------------------
@@ -310,42 +220,41 @@ export function AiResearchPipeline({
 
     if (abortRef.current) return;
 
-    // Use real API content or fall back to mock
+    // Use real API content
     let content: string[];
-    if (!apiError && apiContent) {
-      // Append hashtags if we got them
-      const hashtagSuffix = apiHashtags.length > 0 ? `\n\n${apiHashtags.join(" ")}` : "";
-      const limit = getPlatformCharLimit(platform);
-      const isThread = format === "thread-short" || format === "thread-long";
+    if (apiError || !apiContent) {
+      toast.error("AI generation failed. Please check the backend connection.");
+      setRunning(false);
+      setCurrentStep(-1);
+      return;
+    }
 
-      if (isThread) {
-        // Split API content into thread-sized pieces
-        const fullText = apiContent + hashtagSuffix;
-        const chunkSize = Math.floor(limit * 0.9);
-        const posts: string[] = [];
-        let remaining = fullText;
-        while (remaining.length > 0) {
-          if (remaining.length <= limit) {
-            posts.push(remaining);
-            break;
-          }
-          // Find a good break point
-          let breakPoint = remaining.lastIndexOf("\n", chunkSize);
-          if (breakPoint < chunkSize * 0.3) breakPoint = remaining.lastIndexOf(" ", chunkSize);
-          if (breakPoint < chunkSize * 0.3) breakPoint = chunkSize;
-          posts.push(remaining.slice(0, breakPoint).trim());
-          remaining = remaining.slice(breakPoint).trim();
+    // Append hashtags if we got them
+    const hashtagSuffix = apiHashtags.length > 0 ? `\n\n${apiHashtags.join(" ")}` : "";
+    const limit = getPlatformCharLimit(platform);
+    const isThread = format === "thread-short" || format === "thread-long";
+
+    if (isThread) {
+      // Split API content into thread-sized pieces
+      const fullText = apiContent + hashtagSuffix;
+      const chunkSize = Math.floor(limit * 0.9);
+      const posts: string[] = [];
+      let remaining = fullText;
+      while (remaining.length > 0) {
+        if (remaining.length <= limit) {
+          posts.push(remaining);
+          break;
         }
-        content = posts;
-      } else {
-        content = [(apiContent + hashtagSuffix).slice(0, limit)];
+        // Find a good break point
+        let breakPoint = remaining.lastIndexOf("\n", chunkSize);
+        if (breakPoint < chunkSize * 0.3) breakPoint = remaining.lastIndexOf(" ", chunkSize);
+        if (breakPoint < chunkSize * 0.3) breakPoint = chunkSize;
+        posts.push(remaining.slice(0, breakPoint).trim());
+        remaining = remaining.slice(breakPoint).trim();
       }
+      content = posts;
     } else {
-      // Fallback to mock
-      content = generateMockContent(topic, format, tone, platform);
-      if (apiError) {
-        toast.error("AI service unavailable, using locally generated content");
-      }
+      content = [(apiContent + hashtagSuffix).slice(0, limit)];
     }
 
     setGeneratedContent(content);

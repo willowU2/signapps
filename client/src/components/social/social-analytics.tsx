@@ -98,42 +98,32 @@ export function SocialAnalytics() {
   const platformsInHistory = [...new Set(followerHistory.map((d) => d.platform))];
 
   // ---------------------------------------------------------------------------
-  // Stories & Reels mock data (structure ready for real API)
+  // Stories & Reels placeholder (waiting for real API)
   // ---------------------------------------------------------------------------
-  const storiesTimelineData = Array.from({ length: 14 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (13 - i));
-    return {
-      date: date.toISOString().slice(0, 10),
-      views: Math.floor(Math.random() * 3000) + 500,
-      completionRate: Math.round(Math.random() * 40 + 45),
-      swipeUps: Math.floor(Math.random() * 80),
-      replies: Math.floor(Math.random() * 25),
-    };
-  });
+  const storiesTimelineData: Array<{date: string; views: number; completionRate: number; swipeUps: number; replies: number}> = [];
 
   const storiesStats = [
     {
       title: 'Total Views',
-      value: storiesTimelineData.reduce((s, d) => s + d.views, 0).toLocaleString(),
+      value: "0",
       icon: Eye,
       color: 'text-blue-500',
     },
     {
       title: 'Avg Completion',
-      value: `${Math.round(storiesTimelineData.reduce((s, d) => s + d.completionRate, 0) / storiesTimelineData.length)}%`,
+      value: "0%",
       icon: Film,
       color: 'text-purple-500',
     },
     {
       title: 'Swipe-Ups',
-      value: storiesTimelineData.reduce((s, d) => s + d.swipeUps, 0).toLocaleString(),
+      value: "0",
       icon: ChevronUp,
       color: 'text-green-500',
     },
     {
       title: 'Replies',
-      value: storiesTimelineData.reduce((s, d) => s + d.replies, 0).toLocaleString(),
+      value: "0",
       icon: MessageSquare,
       color: 'text-orange-500',
     },
@@ -354,7 +344,6 @@ export function SocialAnalytics() {
               <CardTitle className="text-base flex items-center gap-2">
                 <Film className="h-4 w-4 text-muted-foreground" />
                 Stories &amp; Reels (14 days)
-                <Badge variant="secondary" className="text-xs ml-2">Mock data</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>

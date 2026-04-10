@@ -31,19 +31,8 @@ function linearRegression(data: DataPoint[]) {
   return { slope, intercept }
 }
 
-function genMockData(period: "30d" | "90d"): DataPoint[] {
-  const points = period === "30d" ? 30 : 90
-  const base = 40 + Math.random() * 20
-  return Array.from({ length: points }, (_, i) => ({
-    time: `D${i + 1}`,
-    value: Math.max(0, Math.min(100, base + i * 0.3 + (Math.random() - 0.4) * 15)),
-  }))
-}
-
-export function TrendAnalysis({ metric, data: externalData, color = "#3b82f6" }: Props) {
+export function TrendAnalysis({ metric, data, color = "#3b82f6" }: Props) {
   const [period, setPeriod] = useState<"30d" | "90d">("30d")
-  const mockData = useMemo(() => genMockData(period), [period])
-  const data = externalData.length > 0 ? externalData : mockData
 
   const regression = useMemo(() => linearRegression(data), [data])
 
@@ -52,7 +41,7 @@ export function TrendAnalysis({ metric, data: externalData, color = "#3b82f6" }:
     trend: regression ? +(regression.intercept + regression.slope * i).toFixed(2) : undefined,
   })), [data, regression])
 
-  const avgValue = data.reduce((s, d) => s + d.value, 0) / data.length
+  const avgValue = data.length > 0 ? data.reduce((s, d) => s + d.value, 0) / data.length : 0
   const trendDir = (regression?.slope ?? 0) > 0.1 ? "up" : (regression?.slope ?? 0) < -0.1 ? "down" : "stable"
   const trendLabel = trendDir === "up" ? "Increasing" : trendDir === "down" ? "Decreasing" : "Stable"
   const trendColor = trendDir === "up" ? "text-orange-600" : trendDir === "down" ? "text-emerald-600" : "text-blue-600"

@@ -18,43 +18,13 @@ import {
 } from 'recharts';
 
 // ---------------------------------------------------------------------------
-// Mock data (structure ready for real platform API)
+// Demographics waiting for backend API support
 // ---------------------------------------------------------------------------
 
-const AGE_DATA = [
-  { label: '13-17', value: 4, color: '#f97316' },
-  { label: '18-24', value: 28, color: '#8b5cf6' },
-  { label: '25-34', value: 35, color: '#3b82f6' },
-  { label: '35-44', value: 19, color: '#22c55e' },
-  { label: '45-54', value: 9, color: '#eab308' },
-  { label: '55+', value: 5, color: '#6b7280' },
-];
-
-const GENDER_DATA = [
-  { label: 'Female', value: 52, color: '#ec4899' },
-  { label: 'Male', value: 44, color: '#3b82f6' },
-  { label: 'Other / Unknown', value: 4, color: '#94a3b8' },
-];
-
-const TOP_COUNTRIES = [
-  { country: 'France', value: 34 },
-  { country: 'Belgium', value: 18 },
-  { country: 'Switzerland', value: 11 },
-  { country: 'Canada', value: 9 },
-  { country: 'USA', value: 8 },
-  { country: 'Morocco', value: 6 },
-  { country: 'Algeria', value: 5 },
-  { country: 'Other', value: 9 },
-];
-
-const TOP_CITIES = [
-  { city: 'Paris', value: 18 },
-  { city: 'Lyon', value: 9 },
-  { city: 'Brussels', value: 7 },
-  { city: 'Marseille', value: 6 },
-  { city: 'Montréal', value: 5 },
-  { city: 'Geneva', value: 4 },
-];
+const AGE_DATA: any[] = [];
+const GENDER_DATA: any[] = [];
+const TOP_COUNTRIES: any[] = [];
+const TOP_CITIES: any[] = [];
 
 // ---------------------------------------------------------------------------
 // Custom tooltip
@@ -99,7 +69,6 @@ export function AudienceDemographics() {
       <div className="flex items-center gap-2">
         <Users className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-semibold">Audience Demographics</h2>
-        <Badge variant="secondary" className="text-xs">Mock data — real data requires platform API</Badge>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
