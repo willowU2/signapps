@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Share2, X, ExternalLink, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,8 +39,10 @@ export function QuickShare({ text, showButton = true }: QuickShareProps) {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const activePlatforms = accounts.filter((a) => a.isActive).map((a) => a.platform);
-  const uniquePlatforms = [...new Set(activePlatforms)];
+  const uniquePlatforms = useMemo(() => {
+    const activePlatforms = accounts.filter((a) => a.isActive).map((a) => a.platform);
+    return [...new Set(activePlatforms)];
+  }, [accounts]);
 
   const buildDefaultContent = useCallback(() => {
     if (text) return text;

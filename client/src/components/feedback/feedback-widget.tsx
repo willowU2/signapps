@@ -252,5 +252,5 @@ export function initFeedbackWidget(config: FeedbackWidgetProps) {
     document.body.appendChild(div);
   }
   // In production: dynamically import React + render FeedbackWidget here
-  console.info('[SignApps Feedback] Widget initialized', config);
+  // console.info('[SignApps Feedback] Widget initialized', config);
 }

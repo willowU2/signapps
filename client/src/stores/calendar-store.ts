@@ -139,14 +139,14 @@ export const useCalendarStore = create<CalendarState>()(
       // ---- Legacy state ----
       viewMode: "month",
       selectedCalendarIds: new Set(),
-      selectedEventId: null,
-      selectedCalendars: [],
+      selectedEventId: null as string | null,
+      selectedCalendars: [] as Calendar[],
       filterText: "",
-      events: [],
-      calendars: [],
+      events: [] as Event[],
+      calendars: [] as Calendar[],
       timezones: [Intl.DateTimeFormat().resolvedOptions().timeZone, "UTC"],
       isLoading: false,
-      error: null,
+      error: null as string | null,
 
       // ---- Unified view ----
       view: "month",
@@ -212,7 +212,7 @@ export const useCalendarStore = create<CalendarState>()(
         })),
 
       // ---- Colleagues overlay ----
-      selectedColleagues: [],
+      selectedColleagues: [] as string[],
       toggleColleague: (id) =>
         set((state) => ({
           selectedColleagues: state.selectedColleagues.includes(id)
@@ -221,7 +221,7 @@ export const useCalendarStore = create<CalendarState>()(
         })),
 
       // ---- Resources overlay ----
-      selectedResources: [],
+      selectedResources: [] as string[],
       toggleResource: (id) =>
         set((state) => ({
           selectedResources: state.selectedResources.includes(id)

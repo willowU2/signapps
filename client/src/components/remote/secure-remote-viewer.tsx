@@ -167,17 +167,6 @@ export function SecureRemoteViewer({
 
   // ─── Handle incoming agent messages ─────────────────────────────────────────
 
-  const handleAgentMessage = useCallback((msg: AgentMessage) => {
-    if (msg.type === "session_started") {
-      setScreenSize({ w: msg.screen_width, h: msg.screen_height })
-      if (msg.monitor_count && msg.monitor_count > 1) {
-        setMonitorCount(msg.monitor_count)
-      }
-    } else if (msg.type === "frame") {
-      renderFrame(msg)
-    }
-  }, [])
-
   const renderFrame = useCallback((frame: RemoteFrame) => {
     // Determine target canvas: per-monitor canvas (for "All" view) or main canvas
     const monIdx = frame.monitor_index ?? 1
@@ -202,6 +191,17 @@ export function SecureRemoteViewer({
     img.src = `data:image/webp;base64,${frame.data}`
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMonitor])
+
+  const handleAgentMessage = useCallback((msg: AgentMessage) => {
+    if (msg.type === "session_started") {
+      setScreenSize({ w: msg.screen_width, h: msg.screen_height })
+      if (msg.monitor_count && msg.monitor_count > 1) {
+        setMonitorCount(msg.monitor_count)
+      }
+    } else if (msg.type === "frame") {
+      renderFrame(msg)
+    }
+  }, [renderFrame])
 
   // ─── Stop session ────────────────────────────────────────────────────────────
 

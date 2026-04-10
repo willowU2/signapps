@@ -886,7 +886,7 @@ pub async fn seed_default_coa(
     let mut created: Vec<Account> = Vec::new();
 
     for (code, name, account_type, parent_code, balance) in &seed_accounts {
-        let parent_id = parent_code.and_then(|pc| code_to_id.get(*pc).copied());
+        let parent_id = parent_code.and_then(|pc| code_to_id.get(pc).copied());
 
         let row: Account = sqlx::query_as(
             "INSERT INTO accounting.accounts (parent_id, code, name, account_type, balance, owner_id)

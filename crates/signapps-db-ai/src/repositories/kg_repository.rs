@@ -11,6 +11,34 @@ use pgvector::Vector;
 use signapps_common::{Error, Result};
 use uuid::Uuid;
 
+type EntityRow = (
+    Uuid,
+    String,
+    String,
+    String,
+    Option<String>,
+    Vec<Uuid>,
+    serde_json::Value,
+    i32,
+    chrono::DateTime<chrono::Utc>,
+    chrono::DateTime<chrono::Utc>,
+    f32,
+);
+
+type RelationRow = (
+    Uuid,
+    String,
+    Uuid,
+    Uuid,
+    String,
+    Option<String>,
+    f32,
+    Vec<Uuid>,
+    serde_json::Value,
+    chrono::DateTime<chrono::Utc>,
+    f32,
+);
+
 /// Repository for LightRAG knowledge graph operations.
 pub struct KgRepository;
 
@@ -153,19 +181,7 @@ impl KgRepository {
     ) -> Result<Vec<(KgEntity, f32)>> {
         let vec = Vector::from(query_embedding.to_vec());
 
-        let rows: Vec<(
-            Uuid,
-            String,
-            String,
-            String,
-            Option<String>,
-            Vec<Uuid>,
-            serde_json::Value,
-            i32,
-            chrono::DateTime<chrono::Utc>,
-            chrono::DateTime<chrono::Utc>,
-            f32,
-        )> = sqlx::query_as(
+        let rows: Vec<EntityRow> = sqlx::query_as(
             r#"
             SELECT
                 id, collection, name, entity_type, description,
@@ -229,19 +245,7 @@ impl KgRepository {
     ) -> Result<Vec<(KgRelation, f32)>> {
         let vec = Vector::from(query_embedding.to_vec());
 
-        let rows: Vec<(
-            Uuid,
-            String,
-            Uuid,
-            Uuid,
-            String,
-            Option<String>,
-            f32,
-            Vec<Uuid>,
-            serde_json::Value,
-            chrono::DateTime<chrono::Utc>,
-            f32,
-        )> = sqlx::query_as(
+        let rows: Vec<RelationRow> = sqlx::query_as(
             r#"
             SELECT
                 id, collection, source_entity_id, target_entity_id,

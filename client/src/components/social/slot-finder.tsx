@@ -41,19 +41,19 @@ export function SlotFinder({ onSchedule }: SlotFinderProps) {
   const [timeSlots, setTimeSlots] = useState<{ dayOfWeek: number; hour: number }[]>([]);
 
   useEffect(() => {
+    const loadTimeSlots = async () => {
+      try {
+        const res = await socialApi.timeSlots.list();
+        setTimeSlots(res.data.map((s: { dayOfWeek: number; hour: number }) => ({ dayOfWeek: s.dayOfWeek, hour: s.hour })));
+      } catch {
+        // silent — use best-time fallback only
+      }
+    };
+
     if (accounts.length === 0) fetchAccounts();
     fetchPosts();
     loadTimeSlots();
-  }, []);
-
-  const loadTimeSlots = async () => {
-    try {
-      const res = await socialApi.timeSlots.list();
-      setTimeSlots(res.data.map((s: { dayOfWeek: number; hour: number }) => ({ dayOfWeek: s.dayOfWeek, hour: s.hour })));
-    } catch {
-      // silent — use best-time fallback only
-    }
-  };
+  }, [accounts.length, fetchAccounts, fetchPosts]);
 
   const activePlatforms = useMemo(
     () => [...new Set(accounts.filter((a) => a.isActive).map((a) => a.platform))],

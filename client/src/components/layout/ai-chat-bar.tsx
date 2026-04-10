@@ -616,7 +616,7 @@ export function AiChatBar() {
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [value, isStreaming, attachments, conversationId, mediaGenMode],
+    [value, isStreaming, attachments, conversationId, mediaGenMode, tryNavigate],
   );
 
   const handleSuggestion = (suggestion: string) => {
