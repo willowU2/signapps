@@ -35,15 +35,15 @@ export function GoogleImportWizard({
         </DialogHeader>
 
         <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
-          <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-            <ExternalLink className="h-6 w-6 text-blue-600" />
+          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+            <ExternalLink className="h-6 w-6 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold">Google Integration Pending</h3>
+          <h3 className="text-lg font-semibold text-foreground">Google Integration Pending</h3>
           <p className="text-sm text-muted-foreground">
             The Google Contacts and Google Drive integration is currently pending backend OAuth setup. 
             Once the gateway is configured, you will be able to securely import your contacts directly into SignApps.
           </p>
-          <Badge variant="outline" className="mt-2 text-blue-600 bg-blue-50">
+          <Badge variant="secondary" className="mt-2 text-primary">
             Coming Soon
           </Badge>
         </div>

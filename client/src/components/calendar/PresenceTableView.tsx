@@ -982,7 +982,12 @@ export default function PresenceTableView() {
                   </tr>
                 </thead>
 
-                <tbody>
+                <tbody
+                  className={cn(
+                    "transition-all duration-300",
+                    isFetchingEmployees && !isLoadingEmployees && "opacity-40 blur-[1px]"
+                  )}
+                >
                   {isLoadingEmployees ? (
                     <TableSkeleton columns={dateRange.length} />
                   ) : filteredEmployees.length === 0 ? (

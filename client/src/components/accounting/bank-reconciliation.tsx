@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Check, X, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface Transaction {
   id: string;
@@ -182,35 +184,35 @@ export function BankReconciliation() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-lg border bg-blue-50 p-4">
+        <div className="rounded-lg border bg-primary/10 p-4">
           <p className="text-sm text-muted-foreground font-medium">Bank Balance</p>
-          <p className="text-2xl font-bold text-blue-900">
+          <p className="text-2xl font-bold text-primary">
             €{bankBalance.toFixed(2)}
           </p>
         </div>
-        <div className="rounded-lg border bg-green-50 p-4">
+        <div className="rounded-lg border bg-emerald-500/10 p-4">
           <p className="text-sm text-muted-foreground font-medium">Ledger Balance</p>
-          <p className="text-2xl font-bold text-green-900">
+          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
             €{ledgerBalance.toFixed(2)}
           </p>
         </div>
         <div
-          className={`rounded-lg border p-4 ${
+          className={`rounded-lg border p-4 transition-colors ${
             isReconciled
-              ? "bg-green-50"
+              ? "bg-emerald-500/10"
               : balanceDiff > 100
-                ? "bg-red-50"
-                : "bg-yellow-50"
+                ? "bg-destructive/10"
+                : "bg-amber-500/10"
           }`}
         >
           <p className="text-sm text-muted-foreground font-medium">Difference</p>
           <p
-            className={`text-2xl font-bold ${
+            className={`text-2xl font-bold transition-colors ${
               isReconciled
-                ? "text-green-900"
+                ? "text-emerald-600 dark:text-emerald-400"
                 : balanceDiff > 100
-                  ? "text-red-900"
-                  : "text-yellow-900"
+                  ? "text-destructive"
+                  : "text-amber-600 dark:text-amber-500"
             }`}
           >
             €{balanceDiff.toFixed(2)}
@@ -219,13 +221,13 @@ export function BankReconciliation() {
       </div>
 
       {!isReconciled && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 flex gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 flex gap-3 animate-in fade-in">
+          <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-amber-900">
+            <p className="font-semibold text-amber-700 dark:text-amber-500">
               Reconciliation Incomplete
             </p>
-            <p className="text-sm text-amber-800">
+            <p className="text-sm text-amber-600 dark:text-amber-400/80">
               Match remaining transactions to complete reconciliation
             </p>
           </div>
@@ -246,11 +248,11 @@ export function BankReconciliation() {
               <div
                 key={txn.id}
                 onClick={() => setSelectedBank(txn.id)}
-                className={`p-3 cursor-pointer transition ${
+                className={`p-3 cursor-pointer transition-all ${
                   selectedBank === txn.id
-                    ? "bg-blue-100 border-l-4 border-blue-500"
+                    ? "bg-primary/10 border-l-4 border-l-primary"
                     : txn.matched
-                      ? "bg-green-50 hover:bg-green-100"
+                      ? "bg-emerald-500/5 hover:bg-emerald-500/10"
                       : "hover:bg-muted"
                 }`}
               >
@@ -266,20 +268,22 @@ export function BankReconciliation() {
                       {txn.type === "debit" ? "-" : "+"}€{txn.amount.toFixed(2)}
                     </p>
                     {txn.matched && (
-                      <Check className="w-4 h-4 text-green-600" />
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
                     )}
                   </div>
                 </div>
                 {txn.matched && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleUnmatch("bank", txn.id);
                     }}
-                    className="mt-2 text-xs text-red-600 hover:text-red-800 font-medium"
+                    className="mt-2 h-6 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     Unmatch
-                  </button>
+                  </Button>
                 )}
               </div>
             ))}
@@ -299,11 +303,11 @@ export function BankReconciliation() {
               <div
                 key={txn.id}
                 onClick={() => setSelectedLedger(txn.id)}
-                className={`p-3 cursor-pointer transition ${
+                className={`p-3 cursor-pointer transition-all ${
                   selectedLedger === txn.id
-                    ? "bg-blue-100 border-l-4 border-blue-500"
+                    ? "bg-primary/10 border-l-4 border-l-primary"
                     : txn.matched
-                      ? "bg-green-50 hover:bg-green-100"
+                      ? "bg-emerald-500/5 hover:bg-emerald-500/10"
                       : "hover:bg-muted"
                 }`}
               >
@@ -321,20 +325,22 @@ export function BankReconciliation() {
                       €{txn.amount.toFixed(2)}
                     </p>
                     {txn.matched && (
-                      <Check className="w-4 h-4 text-green-600" />
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
                     )}
                   </div>
                 </div>
                 {txn.matched && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleUnmatch("ledger", txn.id);
                     }}
-                    className="mt-2 text-xs text-red-600 hover:text-red-800 font-medium"
+                    className="mt-2 h-6 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     Unmatch
-                  </button>
+                  </Button>
                 )}
               </div>
             ))}
@@ -342,14 +348,14 @@ export function BankReconciliation() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-background p-4">
-        <button
+      <div className="rounded-lg border bg-card p-4 shadow-sm">
+        <Button
           onClick={handleMatch}
           disabled={!selectedBank || !selectedLedger}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-medium py-2 px-4 rounded transition"
+          className="w-full transition-all"
         >
           Match Selected Transactions
-        </button>
+        </Button>
       </div>
     </div>
   );
