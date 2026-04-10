@@ -10,6 +10,7 @@ pub mod bookmarks;
 pub mod branding;
 pub mod bulk_users;
 pub mod comms;
+pub mod companies;
 // compliance moved to signapps-compliance service (port 3032)
 pub mod dashboard;
 // data_export moved to signapps-compliance service (port 3032)

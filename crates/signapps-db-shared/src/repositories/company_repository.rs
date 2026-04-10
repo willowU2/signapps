@@ -3,7 +3,7 @@
 
 use crate::models::{
     Company, CreateCompany, CreatePersonCompany, LoginContext, LoginContextDisplay, PersonCompany,
-    UpdateCompany,
+    UpdateCompany, UpdatePersonCompany,
 };
 use signapps_common::{Error, Result};
 use sqlx::PgPool;
@@ -310,6 +310,58 @@ impl CompanyRepository {
         .fetch_one(pool)
         .await
         .map_err(|e| Error::Database(e.to_string()))?;
+        Ok(row)
+    }
+
+    /// Update an existing person-company affiliation.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Error::Database` on query failure.
+    /// Returns `Error::NotFound` if no matching row exists.
+    ///
+    /// # Panics
+    ///
+    /// No panics possible -- all errors are propagated via `Result`.
+    pub async fn update_affiliation(
+        pool: &PgPool,
+        id: Uuid,
+        input: UpdatePersonCompany,
+    ) -> Result<PersonCompany> {
+        let row = sqlx::query_as::<_, PersonCompany>(
+            r#"UPDATE core.person_companies SET
+                role_in_company = COALESCE($2, role_in_company),
+                job_title       = COALESCE($3, job_title),
+                department      = COALESCE($4, department),
+                is_primary      = COALESCE($5, is_primary),
+                start_date      = COALESCE($6, start_date),
+                end_date        = COALESCE($7, end_date),
+                portal_access   = COALESCE($8, portal_access),
+                portal_modules  = COALESCE($9, portal_modules),
+                metadata        = COALESCE($10, metadata),
+                updated_at      = NOW()
+               WHERE id = $1
+               RETURNING *"#,
+        )
+        .bind(id)
+        .bind(&input.role_in_company)
+        .bind(&input.job_title)
+        .bind(&input.department)
+        .bind(input.is_primary)
+        .bind(input.start_date)
+        .bind(input.end_date)
+        .bind(input.portal_access)
+        .bind(&input.portal_modules)
+        .bind(&input.metadata)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| {
+            if e.to_string().contains("no rows returned") {
+                Error::NotFound(format!("PersonCompany {id}"))
+            } else {
+                Error::Database(e.to_string())
+            }
+        })?;
         Ok(row)
     }
 

@@ -245,6 +245,30 @@ pub struct CreatePersonCompany {
     pub metadata: Option<serde_json::Value>,
 }
 
+/// Request payload to update an existing person-company affiliation.
+#[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+pub struct UpdatePersonCompany {
+    /// Role in the company.
+    pub role_in_company: Option<String>,
+    /// Job title.
+    pub job_title: Option<String>,
+    /// Department.
+    pub department: Option<String>,
+    /// Primary affiliation flag.
+    pub is_primary: Option<bool>,
+    /// Start date.
+    pub start_date: Option<NaiveDate>,
+    /// End date.
+    pub end_date: Option<NaiveDate>,
+    /// Portal access flag.
+    pub portal_access: Option<bool>,
+    /// Portal modules list.
+    pub portal_modules: Option<Vec<String>>,
+    /// Arbitrary metadata.
+    pub metadata: Option<serde_json::Value>,
+}
+
 // ============================================================================
 // LoginContext
 // ============================================================================

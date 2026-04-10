@@ -620,6 +620,40 @@ fn create_router(state: AppState) -> Router {
     // CRM routes moved to signapps-contacts service (port 3021).
     // Gateway forwards /api/v1/crm/* → signapps-contacts:3021.
 
+    // Company + person-company affiliation routes (Unified Person Model — Task 5)
+    let company_routes = Router::new()
+        .route(
+            "/api/v1/companies",
+            get(handlers::companies::list_companies).post(handlers::companies::create_company),
+        )
+        .route(
+            "/api/v1/companies/:id",
+            get(handlers::companies::get_company)
+                .put(handlers::companies::update_company)
+                .delete(handlers::companies::deactivate_company),
+        )
+        .route(
+            "/api/v1/companies/:id/persons",
+            get(handlers::companies::list_company_persons)
+                .post(handlers::companies::add_company_person),
+        )
+        .route(
+            "/api/v1/companies/:cid/persons/:pid",
+            delete(handlers::companies::remove_company_person),
+        )
+        .route(
+            "/api/v1/persons/:id/companies",
+            get(handlers::companies::list_person_companies),
+        )
+        .route(
+            "/api/v1/person-companies/:id",
+            put(handlers::companies::update_affiliation),
+        )
+        .layer(axum_middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
     // Combine all routes
     Router::new()
         .merge(public_routes)
@@ -629,6 +663,7 @@ fn create_router(state: AppState) -> Router {
         .merge(comms_routes)
         .merge(search_routes)
         .merge(reports_routes)
+        .merge(company_routes)
         .layer(axum_middleware::from_fn(logging_middleware))
         .layer(axum_middleware::from_fn(request_id_middleware))
         .layer(axum_middleware::from_fn(security_headers_middleware))
