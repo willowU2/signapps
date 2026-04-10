@@ -269,12 +269,27 @@ export function CalendarHub() {
     string | undefined
   >(undefined);
 
-  // Load calendars on mount, auto-select first one
+  // Load calendars on mount, auto-select first one, or create one if none exists
   useEffect(() => {
     calendarApi
       .listCalendars()
-      .then((res) => {
-        const cals: Calendar[] = Array.isArray(res.data) ? res.data : [];
+      .then(async (res) => {
+        let cals: Calendar[] = Array.isArray(res.data) ? res.data : [];
+        
+        // Auto-create a default calendar if absolutely none exists
+        if (cals.length === 0) {
+          try {
+            const newCal = await calendarApi.createCalendar({
+              name: "Mon agenda",
+              color: "#3b82f6",
+              timezone: "Europe/Paris",
+            });
+            cals = [newCal.data || newCal as unknown as Calendar];
+          } catch (e) {
+            console.error("Failed to auto-create default calendar:", e);
+          }
+        }
+        
         setCalendars(cals);
         if (cals.length > 0 && !selectedCalendarId) {
           setSelectedCalendarId(cals[0].id);
@@ -284,6 +299,24 @@ export function CalendarHub() {
         // silently ignore — user may not be authenticated yet
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleCreateDefaultCalendar = useCallback(async () => {
+    const toastId = toast.loading("Création de votre agenda...");
+    try {
+      const res = await calendarApi.createCalendar({
+        name: "Mon agenda",
+        color: "#3b82f6",
+        timezone: "Europe/Paris",
+      });
+      const newCal = res.data || res as unknown as Calendar;
+      setCalendars((prev) => [...prev, newCal]);
+      setSelectedCalendarId(newCal.id);
+      toast.success("Agenda créé avec succès !", { id: toastId });
+    } catch (e: any) {
+      console.error("Failed to create calendar:", e);
+      toast.error(e?.response?.data?.message || "Impossible de créer l'agenda. Contactez le support.", { id: toastId });
+    }
   }, []);
 
   // ── EventForm state ──────────────────────────────────────────────────────
@@ -852,11 +885,23 @@ export function CalendarHub() {
             </div>
 
             {/* Calendar list in sidebar */}
-            {calendars.length > 0 && (
-              <div className="p-3 border-b border-border">
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+            <div className="p-3 border-b border-border">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                   Mes agendas
                 </p>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-5 w-5" 
+                  onClick={handleCreateDefaultCalendar}
+                  aria-label="Créer un agenda"
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
+              
+              {calendars.length > 0 ? (
                 <div className="space-y-1">
                   {calendars.map((cal) => (
                     <button
@@ -877,8 +922,15 @@ export function CalendarHub() {
                     </button>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="text-center py-4 bg-muted/30 rounded-md border border-dashed flex flex-col items-center justify-center gap-2">
+                  <p className="text-[10px] text-muted-foreground italic px-2">Aucun agenda trouvé.</p>
+                  <Button variant="default" size="sm" className="h-7 text-xs px-2" onClick={handleCreateDefaultCalendar}>
+                    Créer mon agenda
+                  </Button>
+                </div>
+              )}
+            </div>
 
             {/* Layer panel */}
             <div className="flex-1 min-h-0 overflow-y-auto">

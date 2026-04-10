@@ -9,7 +9,8 @@ import {
   useCalendarSelection,
 } from "@/stores/calendar-store";
 import { calendarApi } from "@/lib/api/calendar";
-import { MapPin } from "lucide-react";
+import { MapPin, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface AgendaEvent {
   id: string;
@@ -24,9 +25,10 @@ interface AgendaEvent {
 
 interface AgendaViewProps {
   selectedCalendarId?: string;
+  onCreateEvent?: (startTime?: Date, endTime?: Date) => void;
 }
 
-export function AgendaView({ selectedCalendarId }: AgendaViewProps) {
+export function AgendaView({ selectedCalendarId, onCreateEvent }: AgendaViewProps) {
   const currentDate = useCalendarStore((s) => s.currentDate);
   const { selectEvent } = useCalendarSelection();
   const [events, setEvents] = useState<AgendaEvent[]>([]);
@@ -110,11 +112,15 @@ export function AgendaView({ selectedCalendarId }: AgendaViewProps) {
 
   if (!groupedEvents || groupedEvents.size === 0) {
     return (
-      <div className="text-center text-muted-foreground py-12">
-        <p className="text-lg">Aucun événement à venir</p>
-        <p className="text-sm mt-2">
-          Les événements apparaîtront ici une fois créés.
+      <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-20 px-4">
+        <p className="text-lg font-medium text-foreground mb-2">Aucun événement à venir</p>
+        <p className="text-sm max-w-sm mb-6">
+          Votre agenda est vide pour la période affichée. Les événements apparaîtront ici une fois créés.
         </p>
+        <Button onClick={() => onCreateEvent?.()} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Ajouter un événement
+        </Button>
       </div>
     );
   }

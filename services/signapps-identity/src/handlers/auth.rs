@@ -145,7 +145,7 @@ pub async fn login(
         .map_err(|e| Error::Validation(e.to_string()))?;
 
     // Find user by username
-    let user = UserRepository::find_by_username(&state.pool, &payload.username)
+    let mut user = UserRepository::find_by_username(&state.pool, &payload.username)
         .await?
         .ok_or(Error::InvalidCredentials)?;
 
@@ -236,6 +236,36 @@ pub async fn login(
 
     // Update last login
     UserRepository::update_last_login(&state.pool, user.id).await?;
+
+    // Auto-assign default tenant for admin if none exists
+    if user.role >= 2 && user.tenant_id.is_none() {
+        let tenant_opt: Option<Uuid> = sqlx::query_scalar("SELECT id FROM identity.tenants WHERE slug = 'default'")
+            .fetch_optional(&*state.pool)
+            .await
+            .unwrap_or(None);
+            
+        let new_tenant_id = match tenant_opt {
+            Some(id) => id,
+            None => {
+                let new_id = Uuid::new_v4();
+                sqlx::query("INSERT INTO identity.tenants (id, name, slug, max_users, max_resources, max_workspaces) VALUES ($1, 'Default', 'default', 1000, 1000, 1000)")
+                    .bind(new_id)
+                    .execute(&*state.pool)
+                    .await
+                    .ok();
+                new_id
+            }
+        };
+        
+        sqlx::query("UPDATE identity.users SET tenant_id = $1 WHERE id = $2")
+            .bind(new_tenant_id)
+            .bind(user.id)
+            .execute(&*state.pool)
+            .await
+            .ok();
+            
+        user.tenant_id = Some(new_tenant_id);
+    }
 
     // Get user's workspace IDs if they have a tenant
     let workspace_ids = if user.tenant_id.is_some() {

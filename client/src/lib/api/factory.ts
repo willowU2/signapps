@@ -588,8 +588,14 @@ function addAuthHeader(
   config: InternalAxiosRequestConfig,
 ): InternalAxiosRequestConfig {
   // Cookies are automatically sent via withCredentials: true
-  // Add workspace context header
+  // We also inject the access_token in Authorization header to ensure cross-origin APIs (on different ports) receive it.
   if (typeof window !== "undefined") {
+    const accessToken = localStorage.getItem("access_token");
+    if (accessToken) {
+      config.headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+
+    // Add workspace context header
     const workspaceId = useEntityStore.getState().selectedWorkspaceId;
     if (workspaceId) {
       config.headers["X-Workspace-ID"] = workspaceId;
