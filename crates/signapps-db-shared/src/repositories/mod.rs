@@ -3,6 +3,9 @@
 pub mod activity_repository;
 pub use activity_repository::ActivityRepository;
 
+pub mod company_repository;
+pub use company_repository::CompanyRepository;
+
 pub mod entity_reference_repository;
 pub use entity_reference_repository::EntityReferenceRepository;
 

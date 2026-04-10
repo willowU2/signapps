@@ -145,6 +145,9 @@ pub mod org_groups {
 pub mod org_policies {
     pub use signapps_db_identity::models::org_policies::*;
 }
+pub mod company {
+    pub use signapps_db_shared::models::company::*;
+}
 pub mod resource_booking {
     pub use signapps_db_shared::models::resource_booking::*;
 }
@@ -188,6 +191,7 @@ pub use org_delegations::*;
 pub use org_groups::*;
 pub use org_policies::*;
 pub use raid::*;
+pub use company::*;
 pub use resource_booking::*;
 pub use route::*;
 pub use scheduling::*;
