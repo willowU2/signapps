@@ -11,7 +11,7 @@ interface JournalLine {
   credit: number | "";
 }
 
-interface JournalEntry {
+interface IJournalEntry {
   id: string;
   date: string;
   reference: string;
@@ -28,7 +28,7 @@ const ACCOUNTS = [
   "5.2 - COGS", "3.1 - Capital", "3.2 - Résultats cumulés",
 ];
 
-const INIT_ENTRIES: JournalEntry[] = [
+const INIT_ENTRIES: IJournalEntry[] = [
   {
     id: "je1", date: "2026-03-25", reference: "VTE-001", description: "Vente de services au client ABC",
     posted: true,
@@ -44,26 +44,33 @@ function newLine(): JournalLine {
 }
 
 export function JournalEntry() {
-  const [entries, setEntries] = useState<JournalEntry[]>(INIT_ENTRIES);
-  const [draft, setDraft] = useState<JournalEntry>({
-    id: "", date: new Date().toISOString().split("T")[0], reference: "", description: "",
-    lines: [newLine(), newLine()], posted: false,
-  });
+  const [entries, setEntries] = useState<IJournalEntry[]>(INIT_ENTRIES);
+  const [draft, setDraft] = useState<IJournalEntry | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  const totalDebit = draft.lines.reduce((s, l) => s + (Number(l.debit) || 0), 0);
-  const totalCredit = draft.lines.reduce((s, l) => s + (Number(l.credit) || 0), 0);
+  // Initialize draft strictly on client to prevent hydration mismatches
+  useState(() => {
+    if (typeof window !== "undefined") {
+      setDraft({
+        id: "", date: new Date().toISOString().split("T")[0], reference: "", description: "",
+        lines: [newLine(), newLine()], posted: false,
+      });
+    }
+  });
+
+  const totalDebit = draft?.lines.reduce((s, l) => s + (Number(l.debit) || 0), 0) || 0;
+  const totalCredit = draft?.lines.reduce((s, l) => s + (Number(l.credit) || 0), 0) || 0;
   const isBalanced = Math.abs(totalDebit - totalCredit) < 0.01 && totalDebit > 0;
 
   const updateLine = (id: string, field: keyof JournalLine, value: string | number) => {
-    setDraft(d => ({ ...d, lines: d.lines.map(l => l.id === id ? { ...l, [field]: value } : l) }));
+    setDraft(d => d ? ({ ...d, lines: d.lines.map(l => l.id === id ? { ...l, [field]: value } : l) }) : null);
   };
 
-  const addLine = () => setDraft(d => ({ ...d, lines: [...d.lines, newLine()] }));
-  const removeLine = (id: string) => setDraft(d => ({ ...d, lines: d.lines.filter(l => l.id !== id) }));
+  const addLine = () => setDraft(d => d ? ({ ...d, lines: [...d.lines, newLine()] }) : null);
+  const removeLine = (id: string) => setDraft(d => d ? ({ ...d, lines: d.lines.filter(l => l.id !== id) }) : null);
 
   const handlePost = () => {
-    if (!isBalanced || !draft.date || !draft.description) return;
+    if (!draft || !isBalanced || !draft.date || !draft.description) return;
     const newEntry = { ...draft, id: String(Date.now()), posted: true };
     // Persist to API (fire-and-forget; local state is source of truth)
     const totalDebit = draft.lines.reduce((s, l) => s + (Number(l.debit) || 0), 0);
@@ -89,21 +96,21 @@ export function JournalEntry() {
         </button>
       </div>
 
-      {showForm && (
+      {showForm && draft && (
         <div className="rounded-lg border bg-background p-5 space-y-4">
           <h3 className="font-semibold text-foreground">Nouvelle écriture</h3>
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">Date</label>
-              <input type="date" value={draft.date} onChange={e => setDraft(d => ({ ...d, date: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" />
+              <input type="date" value={draft.date} onChange={e => setDraft(d => d ? ({ ...d, date: e.target.value }) : null)} className="w-full border rounded px-3 py-2 text-sm" />
             </div>
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">Référence</label>
-              <input value={draft.reference} onChange={e => setDraft(d => ({ ...d, reference: e.target.value }))} placeholder="VTE-001" className="w-full border rounded px-3 py-2 text-sm" />
+              <input value={draft.reference} onChange={e => setDraft(d => d ? ({ ...d, reference: e.target.value }) : null)} placeholder="VTE-001" className="w-full border rounded px-3 py-2 text-sm" />
             </div>
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">Description</label>
-              <input value={draft.description} onChange={e => setDraft(d => ({ ...d, description: e.target.value }))} placeholder="Description..." className="w-full border rounded px-3 py-2 text-sm" />
+              <input value={draft.description} onChange={e => setDraft(d => d ? ({ ...d, description: e.target.value }) : null)} placeholder="Description..." className="w-full border rounded px-3 py-2 text-sm" />
             </div>
           </div>
 

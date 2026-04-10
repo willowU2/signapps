@@ -87,11 +87,11 @@ export default function AccountingPage() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto">
           <div className="p-6">
             {renderContent()}
           </div>
-        </main>
+        </div>
       </div>
     </AppLayout>
   );

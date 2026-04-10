@@ -219,7 +219,7 @@ export function ChartOfAccounts() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">
-            Chart of Accounts
+            Plan comptable
           </h2>
           <p className="text-muted-foreground">
             Manage account structure and balances
@@ -227,7 +227,7 @@ export function ChartOfAccounts() {
         </div>
         <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex items-center gap-2">
           <Plus className="w-4 h-4" />
-          New Account
+          Nouveau Compte
         </button>
       </div>
 
@@ -250,7 +250,7 @@ export function ChartOfAccounts() {
             <thead className="bg-muted border-b sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-3 text-left font-semibold text-foreground">
-                  Account #
+                  Ligne #
                 </th>
                 <th className="px-4 py-3 text-left font-semibold text-foreground">
                   Name
@@ -259,7 +259,7 @@ export function ChartOfAccounts() {
                   Type
                 </th>
                 <th className="px-4 py-3 text-right font-semibold text-foreground">
-                  Balance
+                  Solde
                 </th>
                 <th className="px-4 py-3 text-right font-semibold text-foreground">
                   Actions
@@ -283,11 +283,11 @@ export function ChartOfAccounts() {
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {[
-          { label: "Assets", type: "asset", color: "text-blue-600" },
-          { label: "Liabilities", type: "liability", color: "text-red-600" },
-          { label: "Equity", type: "equity", color: "text-green-600" },
-          { label: "Revenue", type: "revenue", color: "text-emerald-600" },
-          { label: "Expenses", type: "expense", color: "text-orange-600" },
+          { label: "Actif", type: "asset", color: "text-blue-600" },
+          { label: "Passif", type: "liability", color: "text-red-600" },
+          { label: "Capital", type: "equity", color: "text-green-600" },
+          { label: "Chiffre d'affaires", type: "revenue", color: "text-emerald-600" },
+          { label: "Charges", type: "expense", color: "text-orange-600" },
         ].map(({ label, type, color }) => {
           const sum = calculateBalances(
             accounts.filter((a) => a.type === type),
