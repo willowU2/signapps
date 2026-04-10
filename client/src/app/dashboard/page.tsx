@@ -74,34 +74,23 @@ export default function DashboardPage() {
   } = useDashboardStore();
   const { user } = useAuthStore();
   const [addWidgetOpen, setAddWidgetOpen] = useState(false);
-  const [initialized, setInitialized] = useState(false);
-
-  // Load layout from backend on first visit, fallback to role-based default
+  // Initialize immediately with defaults, hydrate from backend when ready
   useEffect(() => {
-    if (initialized || isLayoutLoading) return;
+    if (widgets.length === 0) {
+      setWidgets(getDefaultLayout(user?.role ?? 1));
+    }
+  }, [user?.role, widgets.length, setWidgets]);
 
-    // If backend has a saved layout, hydrate from it
-    if (backendLayout?.widgets && backendLayout.widgets.length > 0) {
+  // Hydrate from backend when layout loads (non-blocking)
+  useEffect(() => {
+    if (
+      !isLayoutLoading &&
+      backendLayout?.widgets &&
+      backendLayout.widgets.length > 0
+    ) {
       hydrateFromBackend(backendLayout.widgets);
-      setInitialized(true);
-      return;
     }
-
-    // Otherwise, initialize from role-based defaults if store is empty
-    if (user?.role !== undefined && widgets.length === 0) {
-      const defaultLayout = getDefaultLayout(user.role);
-      setWidgets(defaultLayout);
-    }
-    setInitialized(true);
-  }, [
-    user?.role,
-    widgets.length,
-    initialized,
-    setWidgets,
-    hydrateFromBackend,
-    backendLayout,
-    isLayoutLoading,
-  ]);
+  }, [isLayoutLoading, backendLayout, hydrateFromBackend]);
 
   const handlePrint = () => {
     const header = buildPrintHeader();
@@ -149,7 +138,7 @@ export default function DashboardPage() {
     },
   ];
 
-  if ((loading || isLayoutLoading) && !initialized) {
+  if (loading && widgets.length === 0) {
     return (
       <AppLayout>
         <div className="space-y-6">

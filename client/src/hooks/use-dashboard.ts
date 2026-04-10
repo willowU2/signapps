@@ -56,7 +56,7 @@ export function useDashboardData() {
       if (containersRes.status === "fulfilled" && containersRes.value.data) {
         const containers = containersRes.value.data;
         containerCount = containers.length;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         runningCount = containers.filter(
           (c: any) =>
             c.docker_info?.state === "running" || c.state === "running",
@@ -158,6 +158,7 @@ export function useDashboardBackendLayout() {
     },
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: false,
+    retry: false,
   });
 
   const saveLayoutMutation = useMutation({
