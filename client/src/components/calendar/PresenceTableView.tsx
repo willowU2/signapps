@@ -91,6 +91,8 @@ interface ApiUserPresenceStatus {
   user_id: string;
   display_name: string;
   presence_mode: string;
+  role: string;
+  team?: string;
 }
 
 /** Shape returned by the backend headcount endpoint per slot */
@@ -208,6 +210,8 @@ async function fetchTeamStatusForRange(
     string,
     {
       displayName: string;
+      role: string;
+      team?: string;
       presenceByDay: Record<string, PresenceStatus>;
       violationsByDay: Record<string, string[]>;
     }
@@ -223,6 +227,8 @@ async function fetchTeamStatusForRange(
       if (!userMap.has(userId)) {
         userMap.set(userId, {
           displayName: item.display_name ?? userId,
+          role: item.role ?? "N/A",
+          team: item.team,
           presenceByDay: {},
           violationsByDay: {},
         });
@@ -245,7 +251,8 @@ async function fetchTeamStatusForRange(
   return Array.from(userMap.entries()).map(([userId, entry]) => ({
     userId,
     displayName: entry.displayName,
-    role: "N/A",
+    role: entry.role,
+    team: entry.team,
     presenceByDay: entry.presenceByDay,
     violationsByDay: entry.violationsByDay,
   }));
@@ -600,7 +607,7 @@ export default function PresenceTableView() {
   const { currentDate, setCurrentDate } = useCalendarStore();
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"week" | "month">("week");
-  const [thresholds] = useState([{ role: "Bureau", min: 4 }]);
+  const [thresholds] = useState<{ role: string; min: number }[]>([]);
   // Local overrides for status changes (optimistic UI before save)
   const [localOverrides, setLocalOverrides] = useState<
     Record<string, Record<string, PresenceStatus>>

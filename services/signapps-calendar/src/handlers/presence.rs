@@ -64,6 +64,8 @@ pub struct UserPresenceStatus {
     pub user_id: Uuid,
     pub display_name: String,
     pub presence_mode: String,
+    pub role: String,
+    pub team: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -382,13 +384,15 @@ pub async fn team_status(
         .ok_or_else(|| CalendarError::InvalidInput("Invalid date".to_string()))?;
 
     // One row per (user, event) — we take the first presence_mode found per user.
-    // The join with identity.users gives us the display name.
-    let rows: Vec<(Uuid, String, Option<String>)> = sqlx::query_as(
+    // The join with identity.users gives us the display name, role, and team.
+    let rows: Vec<(Uuid, String, Option<String>, Option<String>, Option<String>)> = sqlx::query_as(
         r#"
         SELECT DISTINCT ON (e.created_by)
             e.created_by                                        AS user_id,
             COALESCE(u.display_name, u.username, 'Unknown')    AS display_name,
-            e.presence_mode
+            e.presence_mode,
+            u.job_title                                         AS role,
+            u.department                                        AS team
         FROM calendar.events e
         LEFT JOIN identity.users u ON u.id = e.created_by
         WHERE e.event_type IN ('shift', 'leave')
@@ -407,10 +411,12 @@ pub async fn team_status(
     let statuses = rows
         .into_iter()
         .map(
-            |(user_id, display_name, presence_mode)| UserPresenceStatus {
+            |(user_id, display_name, presence_mode, role, team)| UserPresenceStatus {
                 user_id,
                 display_name,
                 presence_mode: presence_mode.unwrap_or_else(|| "onsite".to_string()),
+                role: role.unwrap_or_else(|| "N/A".to_string()),
+                team,
             },
         )
         .collect();
