@@ -598,7 +598,8 @@ export async function fetchAppRegistry(): Promise<AppEntry[]> {
 
     return apps;
   } catch {
-    return APP_REGISTRY; // fallback to static registry
+    // Fallback to static registry on error
+    return APP_REGISTRY; 
   }
 }
 

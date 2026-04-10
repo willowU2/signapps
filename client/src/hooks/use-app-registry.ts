@@ -31,6 +31,7 @@ export function useAppRegistry(): {
     fetchAppRegistry()
       .then((result) => {
         if (!cancelled) {
+          // console.log("Registry fetched successfully");
           setApps(result);
           setLoading(false);
         }
