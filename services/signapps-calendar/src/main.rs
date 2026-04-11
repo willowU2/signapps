@@ -323,11 +323,11 @@ fn build_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .route("/api/v1/cron-jobs/:id", put(cron_jobs::update_cron_job))
         .route("/api/v1/cron-jobs/:id", delete(cron_jobs::delete_cron_job))
         .route("/api/v1/cron-jobs/:id/run", post(cron_jobs::run_cron_job))
+        .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ))
-        .route_layer(middleware::from_fn(tenant_context_middleware));
+        ));
 
     use tower_http::cors::{AllowOrigin, CorsLayer};
     let cors = CorsLayer::new()
