@@ -153,8 +153,10 @@ async fn seed_startup(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::error::Err
     info!("mode=startup: seeding Startup scenario");
     let tenant_id = tenants::seed_tenant(pool, "Startup SAS", false).await?;
     let user_ids = users::seed_startup(pool, tenant_id).await?;
+    companies::seed_startup(pool, tenant_id).await?;
     org::seed_startup(pool, tenant_id, &user_ids).await?;
     calendars::seed_startup(pool, tenant_id, &user_ids).await?;
+    mail::seed_startup(pool, tenant_id, &user_ids).await?;
     drive::seed_startup(pool, tenant_id, &user_ids).await?;
     chat::seed_startup(pool, tenant_id, &user_ids).await?;
     billing::seed_startup(pool, tenant_id, &user_ids).await?;

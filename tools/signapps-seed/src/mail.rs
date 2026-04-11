@@ -1,4 +1,4 @@
-//! Mail seeding — inserts mailboxes and sample emails for the Acme Corp scenario.
+//! Mail seeding — inserts mailboxes and sample emails for all tenant scenarios.
 
 use rand::Rng;
 use tracing::info;
@@ -306,5 +306,233 @@ pub async fn seed_acme(
 
     info!(emails = email_count, "emails created");
 
+    Ok(())
+}
+
+/// Seeds Startup SAS mailboxes and sample emails.
+///
+/// Creates one `mail.accounts` per startup user with `@startup.signapps.dev`
+/// addresses, plus 30 emails covering typical startup communication.
+///
+/// # Errors
+///
+/// Returns an error if any database operation fails.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+pub async fn seed_startup(
+    pool: &sqlx::PgPool,
+    tenant_id: Uuid,
+    user_ids: &[(Uuid, Uuid, String)],
+) -> Result<(), Box<dyn std::error::Error>> {
+    info!(%tenant_id, users = user_ids.len(), "seeding startup mail");
+
+    if user_ids.is_empty() {
+        info!("no users available — skipping startup mail seed");
+        return Ok(());
+    }
+
+    let mut rng = rand::thread_rng();
+
+    let first_names = [
+        "lea", "alex", "sofia", "noah", "emma", "lucas", "jade",
+        "ethan", "chloe", "liam", "maya", "hugo", "amelia", "leo", "zoe",
+    ];
+
+    let mut account_ids: Vec<(Uuid, Uuid)> = Vec::with_capacity(user_ids.len());
+
+    for (idx, (user_id, _, _)) in user_ids.iter().enumerate() {
+        let account_id = Uuid::new_v4();
+        let first = first_names[idx % first_names.len()];
+        let email = format!("{}@startup.signapps.dev", first);
+        let display = format!(
+            "{} {}",
+            &first[0..1].to_uppercase(),
+            &first[1..]
+        );
+
+        sqlx::query(
+            r#"
+            INSERT INTO mail.accounts
+                (id, user_id, email_address, display_name, provider,
+                 imap_server, imap_port, imap_use_tls,
+                 smtp_server, smtp_port, smtp_use_tls,
+                 status, created_at, updated_at)
+            VALUES
+                ($1, $2, $3, $4, 'custom',
+                 'imap.startup.signapps.dev', 993, TRUE,
+                 'smtp.startup.signapps.dev', 587, TRUE,
+                 'active', NOW(), NOW())
+            ON CONFLICT (user_id, email_address) DO NOTHING
+            "#,
+        )
+        .bind(account_id)
+        .bind(user_id)
+        .bind(&email)
+        .bind(&display)
+        .execute(pool)
+        .await?;
+
+        account_ids.push((account_id, *user_id));
+    }
+
+    info!(accounts = account_ids.len(), "startup mail accounts created");
+
+    // Labels per account
+    let label_defs = [
+        ("urgent", "#EF4444"),
+        ("product", "#8B5CF6"),
+        ("growth", "#10B981"),
+    ];
+
+    for (account_id, _) in &account_ids {
+        for (label_name, color) in &label_defs {
+            sqlx::query(
+                r#"
+                INSERT INTO mail.labels (id, account_id, name, color, created_at)
+                VALUES ($1, $2, $3, $4, NOW())
+                ON CONFLICT (account_id, name) DO NOTHING
+                "#,
+            )
+            .bind(Uuid::new_v4())
+            .bind(account_id)
+            .bind(*label_name)
+            .bind(*color)
+            .execute(pool)
+            .await?;
+        }
+    }
+
+    let subjects = [
+        "Sprint planning next week",
+        "Investor update — Q1 metrics",
+        "User feedback from beta cohort",
+        "Hiring: backend engineer needed",
+        "Prod incident — 2026-04-10 postmortem",
+        "New feature proposal: team dashboard",
+        "Re: Partnership with DevTools Co",
+        "Budget review Q2",
+        "Onboarding checklist for new devs",
+        "Security audit scheduled",
+    ];
+
+    let bodies = [
+        "Hi team,\n\nJust a quick update on this week's priorities. Let's sync tomorrow.\nCheers.",
+        "Hey,\n\nFollowing up on our earlier conversation. Please review and share feedback.\nThanks.",
+        "All,\n\nHere's the summary of what was discussed. Action items are at the bottom.\nBest.",
+        "Team,\n\nFYI — this is time-sensitive. Please respond by EOD.\nThanks.",
+        "Hi,\n\nGreat work this week! A few notes before the weekend.\nSee you Monday.",
+    ];
+
+    let mut email_count = 0usize;
+
+    // 2 thread chains of 3 emails each
+    for thread_idx in 0..2usize {
+        let thread_id = Uuid::new_v4();
+        let subject = subjects[thread_idx % subjects.len()];
+        for msg_in_chain in 0..3usize {
+            let (from_acc, _) = account_ids[(thread_idx + msg_in_chain) % account_ids.len()];
+            let from_first = first_names[(thread_idx + msg_in_chain) % first_names.len()];
+            let to_first = first_names[(thread_idx + msg_in_chain + 1) % first_names.len()];
+            let sender_email = format!("{}@startup.signapps.dev", from_first);
+            let recip_email = format!("{}@startup.signapps.dev", to_first);
+            let is_read = rng.gen_bool(0.6);
+            let days_ago: i64 = -(msg_in_chain as i64);
+            let body = bodies[msg_in_chain % bodies.len()];
+            let snippet: String = body.chars().take(200).collect();
+
+            sqlx::query(
+                r#"
+                INSERT INTO mail.emails
+                    (id, account_id, thread_id, sender, sender_name,
+                     recipient, subject, body_text, snippet,
+                     is_read, labels, received_at, created_at, updated_at)
+                VALUES
+                    ($1, $2, $3, $4, $5,
+                     $6, $7, $8, $9,
+                     $10, '{}', NOW() + ($11 || ' days')::INTERVAL,
+                     NOW(), NOW())
+                ON CONFLICT DO NOTHING
+                "#,
+            )
+            .bind(Uuid::new_v4())
+            .bind(from_acc)
+            .bind(thread_id)
+            .bind(&sender_email)
+            .bind(format!(
+                "{} {}",
+                &from_first[0..1].to_uppercase(),
+                &from_first[1..]
+            ))
+            .bind(&recip_email)
+            .bind(if msg_in_chain > 0 {
+                format!("Re: {}", subject)
+            } else {
+                subject.to_string()
+            })
+            .bind(body)
+            .bind(&snippet)
+            .bind(is_read)
+            .bind(days_ago.to_string())
+            .execute(pool)
+            .await?;
+
+            email_count += 1;
+        }
+    }
+
+    // Standalone emails up to 30 total
+    for i in 0..(30usize.saturating_sub(email_count)) {
+        let (from_acc, _) = account_ids[i % account_ids.len()];
+        let from_first = first_names[i % first_names.len()];
+        let to_first = first_names[(i + 1) % first_names.len()];
+        let sender_email = format!("{}@startup.signapps.dev", from_first);
+        let recip_email = format!("{}@startup.signapps.dev", to_first);
+        let subject = subjects[i % subjects.len()];
+        let body = bodies[i % bodies.len()];
+        let snippet: String = body.chars().take(200).collect();
+        let is_read = rng.gen_bool(0.5);
+        let is_starred = rng.gen_bool(0.15);
+        let days_ago: i64 = -rng.gen_range(0i64..30);
+
+        sqlx::query(
+            r#"
+            INSERT INTO mail.emails
+                (id, account_id, sender, sender_name, recipient,
+                 subject, body_text, snippet,
+                 is_read, is_starred, labels,
+                 received_at, created_at, updated_at)
+            VALUES
+                ($1, $2, $3, $4, $5,
+                 $6, $7, $8,
+                 $9, $10, '{}',
+                 NOW() + ($11 || ' days')::INTERVAL,
+                 NOW(), NOW())
+            ON CONFLICT DO NOTHING
+            "#,
+        )
+        .bind(Uuid::new_v4())
+        .bind(from_acc)
+        .bind(&sender_email)
+        .bind(format!(
+            "{} {}",
+            &from_first[0..1].to_uppercase(),
+            &from_first[1..]
+        ))
+        .bind(&recip_email)
+        .bind(subject)
+        .bind(body)
+        .bind(&snippet)
+        .bind(is_read)
+        .bind(is_starred)
+        .bind(days_ago.to_string())
+        .execute(pool)
+        .await?;
+
+        email_count += 1;
+    }
+
+    info!(emails = email_count, "startup emails created");
     Ok(())
 }

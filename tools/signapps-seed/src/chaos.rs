@@ -12,6 +12,7 @@
 //! - Chat chaos: messages with problematic content
 //! - Billing chaos: extreme amounts (zero, negative, overflow-adjacent)
 
+use crate::companies;
 use tracing::info;
 use uuid::Uuid;
 
@@ -33,7 +34,9 @@ pub async fn seed_chaos(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::error::E
     let tenant_id = seed_chaos_tenant(pool).await?;
     let user_ids = seed_chaos_users(pool, tenant_id).await?;
 
-    seed_volume_tasks(pool, tenant_id, &user_ids).await?;
+    companies::seed_chaos(pool, tenant_id).await?;
+    let chaos_project_id = seed_chaos_project(pool, tenant_id, &user_ids).await?;
+    seed_volume_tasks(pool, tenant_id, &user_ids, Some(chaos_project_id)).await?;
     seed_volume_events(pool, tenant_id, &user_ids).await?;
     seed_deep_org_tree(pool, tenant_id).await?;
     seed_orphaned_assignee(pool, tenant_id, &user_ids).await?;
@@ -43,6 +46,42 @@ pub async fn seed_chaos(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::error::E
 
     info!("chaos seeding complete");
     Ok(())
+}
+
+// ─── Chaos project ───────────────────────────────────────────────────────────
+
+/// Creates a project in `calendar.projects` for the Chaos Corp tenant.
+///
+/// This project is used as the `project_id` for the 2 000 volume tasks.
+async fn seed_chaos_project(
+    pool: &sqlx::PgPool,
+    tenant_id: Uuid,
+    user_ids: &[Uuid],
+) -> Result<Uuid, Box<dyn std::error::Error>> {
+    let chaos_project_id = Uuid::new_v4();
+    let owner_id = user_ids.first().copied().unwrap_or_else(Uuid::new_v4);
+
+    sqlx::query(
+        r#"
+        INSERT INTO calendar.projects
+            (id, tenant_id, name, status, color, owner_id, created_at, updated_at)
+        VALUES ($1, $2, 'Chaos Mega Project', 'active', '#ef4444', $3, NOW(), NOW())
+        ON CONFLICT DO NOTHING
+        "#,
+    )
+    .bind(chaos_project_id)
+    .bind(tenant_id)
+    .bind(owner_id)
+    .execute(pool)
+    .await?;
+
+    info!(
+        project_id = %chaos_project_id,
+        %tenant_id,
+        "chaos project seeded in calendar.projects"
+    );
+
+    Ok(chaos_project_id)
 }
 
 // ─── Tenant ──────────────────────────────────────────────────────────────────
@@ -158,15 +197,22 @@ async fn seed_chaos_users(
 /// Creates 2 000 tasks via `scheduling.time_items` — stresses pagination and list rendering.
 ///
 /// Includes date chaos: some tasks get epoch `deadline`, some get far-future,
-/// and some have NULL dates.
+/// and some have NULL dates.  When `project_id` is `Some`, all tasks are linked
+/// to that project in `calendar.projects`.
 async fn seed_volume_tasks(
     pool: &sqlx::PgPool,
     tenant_id: Uuid,
     user_ids: &[Uuid],
+    project_id: Option<Uuid>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let owner_id = user_ids.first().copied().unwrap_or_else(Uuid::new_v4);
 
     info!(owner = %owner_id, "inserting 2000 chaos tasks into scheduling.time_items");
+
+    let project_sql = match project_id {
+        Some(pid) => format!("'{pid}'::uuid"),
+        None => "NULL".to_string(),
+    };
 
     for i in 0..2000usize {
         let id = Uuid::new_v4();
@@ -192,7 +238,7 @@ async fn seed_volume_tasks(
                 ($1, 'task', $2, $3, $4, $5,
                  NULL, NULL, 0, FALSE,
                  'moi', 'private', 'todo', 'medium',
-                 NULL, {deadline_sql},
+                 {project_sql}, {deadline_sql},
                  NOW(), NOW())
             ON CONFLICT DO NOTHING
             "#

@@ -301,3 +301,182 @@ pub async fn seed_acme(
     info!("acme company seeding complete");
     Ok(())
 }
+
+/// Seeds Startup SAS company data for a given tenant.
+///
+/// Creates one internal company ("Startup SAS") and affiliates all persons
+/// in the tenant as employees.
+///
+/// # Errors
+///
+/// Returns an error if any database operation fails.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+pub async fn seed_startup(
+    pool: &sqlx::PgPool,
+    tenant_id: Uuid,
+) -> Result<(), Box<dyn std::error::Error>> {
+    info!(%tenant_id, "seeding startup company");
+
+    let company_id = Uuid::new_v4();
+    sqlx::query(
+        r#"
+        INSERT INTO core.companies
+            (id, tenant_id, name, company_type, is_active, created_at, updated_at)
+        VALUES ($1, $2, 'Startup SAS', 'internal', TRUE, NOW(), NOW())
+        ON CONFLICT DO NOTHING
+        "#,
+    )
+    .bind(company_id)
+    .bind(tenant_id)
+    .execute(pool)
+    .await?;
+
+    info!(company_id = %company_id, "seeded Startup SAS company");
+
+    // Affiliate all persons in this tenant as employees.
+    let persons: Vec<(Uuid, String)> = sqlx::query_as(
+        r#"
+        SELECT p.id, COALESCE(u.job_title, 'employee')
+        FROM core.persons p
+        LEFT JOIN identity.users u ON u.id = p.user_id
+        WHERE p.tenant_id = $1
+        "#,
+    )
+    .bind(tenant_id)
+    .fetch_all(pool)
+    .await?;
+
+    for (person_id, job_title) in &persons {
+        sqlx::query(
+            r#"
+            INSERT INTO core.person_companies
+                (id, person_id, company_id, role_in_company, job_title, is_primary,
+                 start_date, created_at, updated_at)
+            VALUES ($1, $2, $3, 'employee', $4, TRUE, CURRENT_DATE, NOW(), NOW())
+            ON CONFLICT (person_id, company_id, role_in_company) DO NOTHING
+            "#,
+        )
+        .bind(Uuid::new_v4())
+        .bind(person_id)
+        .bind(company_id)
+        .bind(job_title)
+        .execute(pool)
+        .await?;
+    }
+
+    info!(
+        persons = persons.len(),
+        "startup persons affiliated to company"
+    );
+
+    // Create login contexts for all startup users linked to this company.
+    let user_pc_rows: Vec<(Uuid, Uuid)> = sqlx::query_as(
+        r#"
+        SELECT u.id AS user_id, pc.id AS person_company_id
+        FROM identity.users u
+        INNER JOIN core.persons p ON p.user_id = u.id
+        INNER JOIN core.person_companies pc ON pc.person_id = p.id
+        WHERE u.tenant_id = $1
+          AND pc.company_id = $2
+        "#,
+    )
+    .bind(tenant_id)
+    .bind(company_id)
+    .fetch_all(pool)
+    .await?;
+
+    for (user_id, person_company_id) in &user_pc_rows {
+        sqlx::query(
+            r#"
+            INSERT INTO identity.login_contexts
+                (id, user_id, person_company_id, context_type, company_id,
+                 label, is_active, created_at)
+            VALUES ($1, $2, $3, 'employee', $4, 'Startup SAS', TRUE, NOW())
+            ON CONFLICT (user_id, person_company_id) DO NOTHING
+            "#,
+        )
+        .bind(Uuid::new_v4())
+        .bind(user_id)
+        .bind(person_company_id)
+        .bind(company_id)
+        .execute(pool)
+        .await?;
+    }
+
+    info!(
+        login_contexts = user_pc_rows.len(),
+        "startup login contexts created"
+    );
+    info!("startup company seeding complete");
+    Ok(())
+}
+
+/// Seeds Chaos Corp company data for a given tenant.
+///
+/// Creates one internal company ("Chaos Industries") and affiliates all persons
+/// in the tenant as employees.
+///
+/// # Errors
+///
+/// Returns an error if any database operation fails.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+pub async fn seed_chaos(
+    pool: &sqlx::PgPool,
+    tenant_id: Uuid,
+) -> Result<(), Box<dyn std::error::Error>> {
+    info!(%tenant_id, "seeding chaos company");
+
+    let company_id = Uuid::new_v4();
+    sqlx::query(
+        r#"
+        INSERT INTO core.companies
+            (id, tenant_id, name, company_type, is_active, created_at, updated_at)
+        VALUES ($1, $2, 'Chaos Industries', 'internal', TRUE, NOW(), NOW())
+        ON CONFLICT DO NOTHING
+        "#,
+    )
+    .bind(company_id)
+    .bind(tenant_id)
+    .execute(pool)
+    .await?;
+
+    info!(company_id = %company_id, "seeded Chaos Industries company");
+
+    // Affiliate all persons in this tenant as employees.
+    let persons: Vec<(Uuid,)> = sqlx::query_as(
+        "SELECT id FROM core.persons WHERE tenant_id = $1",
+    )
+    .bind(tenant_id)
+    .fetch_all(pool)
+    .await?;
+
+    for (person_id,) in &persons {
+        sqlx::query(
+            r#"
+            INSERT INTO core.person_companies
+                (id, person_id, company_id, role_in_company, is_primary,
+                 start_date, created_at, updated_at)
+            VALUES ($1, $2, $3, 'employee', TRUE, CURRENT_DATE, NOW(), NOW())
+            ON CONFLICT (person_id, company_id, role_in_company) DO NOTHING
+            "#,
+        )
+        .bind(Uuid::new_v4())
+        .bind(person_id)
+        .bind(company_id)
+        .execute(pool)
+        .await?;
+    }
+
+    info!(
+        persons = persons.len(),
+        "chaos persons affiliated to company"
+    );
+    info!("chaos company seeding complete");
+    Ok(())
+}
