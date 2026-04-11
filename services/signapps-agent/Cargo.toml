@@ -3,6 +3,8 @@ name = "signapps-agent"
 version = "1.0.0"
 edition = "2021"
 description = "SignApps endpoint agent — inventory, scripts, patches, remote access"
+license.workspace = true
+publish = false
 
 [[bin]]
 name = "signapps-agent"
