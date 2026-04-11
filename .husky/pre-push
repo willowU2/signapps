@@ -1,0 +1,4 @@
+#!/bin/sh
+echo "Pre-push: compilation check..."
+cargo check --workspace --quiet || { echo "Compilation failed"; exit 1; }
+echo "Pre-push checks passed."

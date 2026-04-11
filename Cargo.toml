@@ -104,6 +104,8 @@ members = [
     "services/signapps-gateway",
     # Endpoint management agent (standalone binary)
     "services/signapps-agent",
+    # Developer tooling
+    "tools/signapps-seed",
 ]
 
 [workspace.package]
