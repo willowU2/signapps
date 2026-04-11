@@ -270,4 +270,40 @@ export const adApi = {
     expireLeases: () =>
       client.post<{ expired: number }>(`/workforce/ad/dhcp/leases/expire`),
   },
+
+  // ── Provisioning ──
+  provisioning: {
+    provision: (personId: string) =>
+      client.post(`/workforce/ad/provision/${personId}`),
+    preview: (personId: string) =>
+      client.get(`/workforce/ad/provision/${personId}/preview`),
+    bulk: () => client.post("/workforce/ad/provision/bulk"),
+  },
+
+  // ── Manager delegation (My Team AD) ──
+  myTeamAd: {
+    accounts: () => client.get("/workforce/ad/my-team/accounts"),
+    computers: () => client.get("/workforce/ad/my-team/computers"),
+    gpo: () => client.get("/workforce/ad/my-team/gpo"),
+    disableAccount: (id: string) =>
+      client.post(`/workforce/ad/my-team/accounts/${id}/disable`),
+    enableAccount: (id: string) =>
+      client.post(`/workforce/ad/my-team/accounts/${id}/enable`),
+    resetPassword: (id: string) =>
+      client.post(`/workforce/ad/my-team/accounts/${id}/reset-password`),
+    moveAccount: (id: string, data: { target_ou_id: string }) =>
+      client.put(`/workforce/ad/my-team/accounts/${id}/move`, data),
+  },
+
+  // ── GPO (effective / hierarchy) ──
+  gpo: {
+    effective: (nodeId: string) =>
+      client.get(`/workforce/ad/gpo/effective/${nodeId}`),
+    hierarchy: (nodeId: string) =>
+      client.get(`/workforce/ad/gpo/hierarchy/${nodeId}`),
+    toggleNoInherit: (nodeId: string, noInherit: boolean) =>
+      client.put(`/workforce/ad/gpo/no-inherit/${nodeId}`, {
+        no_inherit: noInherit,
+      }),
+  },
 };

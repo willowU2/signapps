@@ -1,6 +1,6 @@
 "use client";
 
-import { Users } from "lucide-react";
+import { Users, Server } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { useMyTeam } from "@/hooks/use-my-team";
 import { TeamToday } from "@/components/team/team-today";
 import { TeamDirectory } from "@/components/team/team-directory";
 import { TeamIndicators } from "@/components/team/team-indicators";
+import { TeamInfrastructure } from "@/components/team/team-infrastructure";
 
 export default function MyTeamPage() {
   const { data, isLoading } = useMyTeam();
@@ -57,6 +58,10 @@ export default function MyTeamPage() {
           <TabsTrigger value="today">Aujourd&apos;hui</TabsTrigger>
           <TabsTrigger value="team">Équipe</TabsTrigger>
           <TabsTrigger value="indicators">Indicateurs</TabsTrigger>
+          <TabsTrigger value="infrastructure">
+            <Server className="h-4 w-4 mr-1.5" />
+            Infrastructure
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="today">
@@ -69,6 +74,10 @@ export default function MyTeamPage() {
 
         <TabsContent value="indicators">
           <TeamIndicators />
+        </TabsContent>
+
+        <TabsContent value="infrastructure">
+          <TeamInfrastructure />
         </TabsContent>
       </Tabs>
     </div>
