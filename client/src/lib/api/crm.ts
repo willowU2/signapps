@@ -154,10 +154,14 @@ function mapLead(l: any): Lead {
 
 export const dealsApi = {
   list: async (stage?: string): Promise<Deal[]> => {
-    const params = stage ? { stage } : {};
-    const res = await contactsClient().get("/crm/deals", { params });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (res.data as any[]).map(mapDeal);
+    try {
+      const params = stage ? { stage } : {};
+      const res = await contactsClient().get("/crm/deals", { params });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (res.data as any[]).map(mapDeal);
+    } catch {
+      return [];
+    }
   },
 
   get: async (id: string): Promise<Deal | undefined> => {
@@ -214,10 +218,14 @@ export const dealsApi = {
 
 export const leadsApi = {
   list: async (status?: string): Promise<Lead[]> => {
-    const params = status ? { status } : {};
-    const res = await contactsClient().get("/crm/leads", { params });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (res.data as any[]).map(mapLead);
+    try {
+      const params = status ? { status } : {};
+      const res = await contactsClient().get("/crm/leads", { params });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (res.data as any[]).map(mapLead);
+    } catch {
+      return [];
+    }
   },
 
   get: async (id: string): Promise<Lead | undefined> => {
@@ -275,8 +283,12 @@ export const leadsApi = {
 
 export const pipelineApi = {
   getStages: async (): Promise<PipelineStage[]> => {
-    const res = await contactsClient().get("/crm/pipeline");
-    return res.data as PipelineStage[];
+    try {
+      const res = await contactsClient().get("/crm/pipeline");
+      return res.data as PipelineStage[];
+    } catch {
+      return [];
+    }
   },
 };
 
