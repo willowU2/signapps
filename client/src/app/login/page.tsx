@@ -261,7 +261,8 @@ export default function LoginPage() {
         }
         setRedirectAfterLogin(null);
         router.push(redirectPath);
-      } catch {
+      } catch (err: unknown) {
+        console.error("Context select failed:", err);
         setContextSelecting(false);
       }
     },
@@ -277,47 +278,85 @@ export default function LoginPage() {
 
   // Auto-login logic for Development Environment
   useEffect(() => {
-    if (process.env.NODE_ENV === "development" && autoParam === "admin") {
+    if (process.env.NODE_ENV !== "development" || autoParam !== "admin") return;
+
+    (async () => {
       const savedToken = localStorage.getItem("access_token");
+
+      // Helper: force auth into localStorage + cookie (zustand persist is too slow)
+      const forceAuth = (user: Record<string, unknown>) => {
+        localStorage.setItem(
+          "auth-storage",
+          JSON.stringify({
+            state: { user, isAuthenticated: true, redirectAfterLogin: null },
+            version: 0,
+          }),
+        );
+        document.cookie = `auth-storage=${encodeURIComponent(
+          JSON.stringify({ state: { isAuthenticated: true } }),
+        )}; path=/; max-age=31536000; SameSite=Lax`;
+      };
+
+      // If token exists from a previous auto-login, validate and redirect
       if (savedToken) {
-        router.push(redirectAfterLogin || "/dashboard");
-        return;
-      }
-      // Direct API call to avoid useCallback timing issues
-      (async () => {
-        // Add a short delay to ensure microservices (like Identity) are fully bound
-        await new Promise((resolve) => setTimeout(resolve, 1000));
         try {
-          const response = await authApi.login({
-            username: "admin",
-            password: "admin",
-            remember_me: true,
-          });
-          if (response.data.access_token && response.data.refresh_token) {
-            localStorage.setItem("access_token", response.data.access_token);
-            localStorage.setItem("refresh_token", response.data.refresh_token);
+          const resp = await authApi.me();
+          forceAuth(resp.data);
+          window.location.replace(redirectAfterLogin || "/dashboard");
+          return;
+        } catch {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+        }
+      }
 
-            // Show context picker if multiple tenants/contexts available
-            if (
-              response.data.requires_context &&
-              Array.isArray(response.data.contexts) &&
-              response.data.contexts.length > 0
-            ) {
-              setAvailableContexts(response.data.contexts);
-              setPendingContexts(response.data.contexts);
-              return;
-            }
+      // Fresh login
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      try {
+        const response = await authApi.login({
+          username: "admin",
+          password: "admin",
+          remember_me: true,
+        });
+        if (!response.data.access_token) return;
 
-            window.location.href = redirectAfterLogin || "/dashboard";
-          }
-        } catch (e: any) {
-          console.error("Auto-login failed:", e);
-          if (e.config) {
-            console.error("Failed URL:", e.config.baseURL, e.config.url);
+        localStorage.setItem("access_token", response.data.access_token);
+        localStorage.setItem("refresh_token", response.data.refresh_token);
+
+        // Auto-select first context (tenant) if required
+        if (
+          response.data.requires_context &&
+          Array.isArray(response.data.contexts) &&
+          response.data.contexts.length > 0
+        ) {
+          try {
+            const ctxResponse = await contextApi.select(
+              response.data.contexts[0].id,
+            );
+            localStorage.setItem("access_token", ctxResponse.data.access_token);
+            localStorage.setItem(
+              "refresh_token",
+              ctxResponse.data.refresh_token,
+            );
+            setAvailableContexts(response.data.contexts);
+            setActiveContext(response.data.contexts[0]);
+          } catch (ctxErr) {
+            console.error("Auto context select failed:", ctxErr);
           }
         }
-      })();
-    }
+
+        // Persist auth state directly and hard-navigate
+        try {
+          const userResponse = await authApi.me();
+          forceAuth(userResponse.data);
+        } catch {
+          forceAuth({ username: "admin", role: 3 });
+        }
+        window.location.replace(redirectAfterLogin || "/dashboard");
+      } catch (e: unknown) {
+        console.error("Auto-login failed:", e);
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoParam]);
 

@@ -72,13 +72,21 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
         redirectAfterLogin: state.redirectAfterLogin,
       }),
-      // Sync to cookie for middleware access
+      // Sync to cookie for middleware access on every state change
       onRehydrateStorage: () => (state) => {
         if (typeof document !== "undefined" && state) {
           const value = JSON.stringify({
             state: { isAuthenticated: state.isAuthenticated },
           });
           document.cookie = `auth-storage=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
+
+          // Subscribe to future changes so cookie stays in sync
+          useAuthStore.subscribe((s) => {
+            const v = JSON.stringify({
+              state: { isAuthenticated: s.isAuthenticated },
+            });
+            document.cookie = `auth-storage=${encodeURIComponent(v)}; path=/; max-age=31536000; SameSite=Lax`;
+          });
         }
       },
     },
