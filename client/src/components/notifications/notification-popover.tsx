@@ -138,14 +138,9 @@ export function NotificationPopover() {
       setIsLoading(true);
       const response = await notificationsApi.getHistory({ limit: 20 });
       const mapped = response.data.notifications.map(mapApiToNotification);
-      if (mapped.length > 0) {
-        setNotifications(mapped);
-        // Persist to localStorage for offline access
-        try { localStorage.setItem('signapps-notifications-cache', JSON.stringify(mapped)); } catch {}
-      } else {
-        // Load cached or local notifications
-        loadLocalNotifications();
-      }
+      setNotifications(mapped);
+      // Persist to localStorage for offline access
+      try { localStorage.setItem('signapps-notifications-cache', JSON.stringify(mapped)); } catch {}
     } catch (err) {
       console.warn('Failed to load notifications:', err);
       loadLocalNotifications();
