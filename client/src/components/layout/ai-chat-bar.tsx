@@ -129,6 +129,13 @@ export function AiChatBar() {
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true);
+  
+  // ── Drag state ──
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef({ x: 0, y: 0, startX: 0, startY: 0, moved: false });
+  
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [interimText, setInterimText] = useState("");
@@ -177,6 +184,55 @@ export function AiChatBar() {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, expanded]);
+
+  // ── Drag & Drop Handlers ──
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if (!isMinimized) return;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      x: position.x,
+      y: position.y,
+      moved: false,
+    };
+  }, [isMinimized, position.x, position.y]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isMinimized || !e.currentTarget.hasPointerCapture(e.pointerId)) return;
+    
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    
+    if (!dragRef.current.moved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+      dragRef.current.moved = true;
+      setIsDragging(true);
+    }
+    
+    if (dragRef.current.moved) {
+      setPosition({
+        x: dragRef.current.x + dx,
+        y: dragRef.current.y + dy
+      });
+    }
+  }, [isMinimized]);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    if (!isMinimized) return;
+    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    
+    if (dragRef.current.moved) {
+      setTimeout(() => setIsDragging(false), 50);
+    } else {
+      setIsDragging(false);
+    }
+  }, [isMinimized]);
+
+  const handleBotClick = useCallback(() => {
+    if (isDragging) return;
+    setIsMinimized(!isMinimized);
+  }, [isDragging, isMinimized]);
+
 
   // Load conversation when selected from history
   useEffect(() => {
@@ -677,9 +733,16 @@ export function AiChatBar() {
         rightSidebarOpen ? "md:pr-[24rem]" : "md:pr-16",
       )}
     >
-      <div className="w-full max-w-2xl px-4 pointer-events-auto flex flex-col">
+      <div 
+        className="w-full max-w-2xl px-4 pointer-events-auto flex flex-col items-center"
+        style={{
+          transform: `translate(${position.x}px, ${position.y}px)`,
+          transitionDuration: isDragging ? '0ms' : '300ms',
+          transitionProperty: isDragging ? 'none' : 'transform',
+        }}
+      >
         {/* Suggestions (only when collapsed and focused) */}
-        {focused && !expanded && (
+        {!isMinimized && focused && !expanded && (
           <div className="mb-3 rounded-lg border border-border bg-card p-3 shadow-xl">
             <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
               Essayez...
@@ -703,7 +766,7 @@ export function AiChatBar() {
         )}
 
         {/* Expanded chat panel */}
-        {expanded && (
+        {!isMinimized && expanded && (
           <div className="mb-3 flex flex-col rounded-xl border border-border bg-card shadow-xl overflow-hidden">
             {/* Chat header with conversation selector */}
             <div className="flex items-center justify-between border-b border-border px-4 py-2">
@@ -936,7 +999,7 @@ export function AiChatBar() {
         )}
 
         {/* Attachment previews */}
-        {attachments.length > 0 && (
+        {!isMinimized && attachments.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2 px-2">
             {attachments.map((att) => (
               <div
@@ -981,153 +1044,171 @@ export function AiChatBar() {
         )}
 
         {/* Input bar */}
-        <div className="glass-panel flex items-center rounded-full p-2 shadow-2xl ai-glow">
+        <div 
+          className={cn(
+            "glass-panel flex items-center rounded-full p-2 shadow-2xl transition-all", 
+            !isMinimized ? "ai-glow w-full duration-300" : "w-14",
+            isDragging && "scale-105 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+          )}
+        >
           {/* Bot icon */}
-          <div
-            className={cn(
-              "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-lg shadow-primary/30",
-              isStreaming ? "bg-ai-purple animate-pulse" : "bg-primary",
-            )}
-          >
-            <Bot className="h-5 w-5" />
-          </div>
-
-          {/* Attachment button */}
           <button
-            onClick={() => fileInputRef.current?.click()}
-            className="ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-background/10 hover:text-white"
-            title="Joindre un fichier"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            onClick={handleBotClick}
+            title={isMinimized ? "Déployer la recherche (ou glisser pour déplacer)" : "Réduire la recherche"}
+            className={cn(
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-lg shadow-primary/30 transition-transform active:scale-[0.98]",
+              isStreaming ? "bg-ai-purple animate-pulse" : "bg-primary",
+              isMinimized && "cursor-grab",
+              isDragging && "cursor-grabbing"
+            )}
           >
-            <Paperclip className="h-4 w-4" />
+            <Bot className={cn("transition-all", isMinimized ? "h-6 w-6" : "h-5 w-5")} />
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept={ACCEPTED_FILE_TYPES}
-            onChange={handleFileSelect}
-            className="hidden"
-          />
 
-          {/* Input */}
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Rechercher, naviguer (/docs, /mail...) ou poser une question IA..."
-            value={displayValue}
-            onChange={(e) => {
-              setValue(e.target.value);
-              setInterimText("");
-            }}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setTimeout(() => setFocused(false), 150)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend(displayValue);
-              }
-            }}
-            className="flex-1 border-none bg-transparent px-3 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-0"
-          />
-
-          {/* Actions */}
-          <div className="flex items-center gap-1 pr-2">
-            {/* Media generation mode dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className={cn(
-                    "flex h-8 items-center gap-1 rounded-full px-2 text-xs transition-colors",
-                    mediaGenMode !== "auto"
-                      ? "bg-ai-purple/20 text-ai-purple"
-                      : "text-slate-400 hover:bg-background/10 hover:text-white",
-                  )}
-                  title={`Génération média : ${MEDIA_MODE_LABELS[mediaGenMode].label}`}
-                >
-                  <MediaIcon className="h-3.5 w-3.5" />
-                  {mediaGenMode !== "auto" && (
-                    <span className="hidden sm:inline">
-                      {MEDIA_MODE_LABELS[mediaGenMode].label}
-                    </span>
-                  )}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuLabel className="text-xs">
-                  Génération média
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuRadioGroup
-                  value={mediaGenMode}
-                  onValueChange={(v) => setMediaGenMode(v as MediaGenMode)}
-                >
-                  {(Object.keys(MEDIA_MODE_LABELS) as MediaGenMode[]).map(
-                    (mode) => {
-                      const { label, icon: Icon } = MEDIA_MODE_LABELS[mode];
-                      return (
-                        <DropdownMenuRadioItem
-                          key={mode}
-                          value={mode}
-                          className="text-xs cursor-pointer"
-                        >
-                          <Icon className="mr-2 h-3.5 w-3.5" />
-                          {label}
-                        </DropdownMenuRadioItem>
-                      );
-                    },
-                  )}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Expand/collapse toggle */}
-            {messages.length > 0 && (
+          {!isMinimized && (
+            <>
+              {/* Attachment button */}
               <button
-                onClick={() => setExpanded(!expanded)}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-background/10 hover:text-white"
-                title={expanded ? "Réduire" : "Voir la conversation"}
+                onClick={() => fileInputRef.current?.click()}
+                className="ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-background/10 hover:text-white"
+                title="Joindre un fichier"
               >
-                {expanded ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronUp className="h-4 w-4" />
-                )}
+                <Paperclip className="h-4 w-4" />
               </button>
-            )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept={ACCEPTED_FILE_TYPES}
+                onChange={handleFileSelect}
+                className="hidden"
+              />
 
-            {/* Stop streaming */}
-            {isStreaming ? (
-              <button
-                onClick={stopStreaming}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/20 text-red-400 transition-colors hover:bg-red-500/30"
-                title="Arrêter"
-              >
-                <Square className="h-3.5 w-3.5" />
-              </button>
-            ) : (
-              <>
-                <VoiceInput onTranscription={handleTranscription} />
-                <button
-                  onClick={() => handleSend(displayValue)}
-                  disabled={
-                    !(
-                      value.trim() ||
-                      interimText.trim() ||
-                      attachments.length > 0
-                    )
+              {/* Input */}
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Rechercher, naviguer (/docs, /mail...) ou poser une question IA..."
+                value={displayValue}
+                onChange={(e) => {
+                  setValue(e.target.value);
+                  setInterimText("");
+                }}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setTimeout(() => setFocused(false), 150)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend(displayValue);
                   }
-                  className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-full transition-all",
-                    value.trim() || attachments.length > 0
-                      ? "bg-background/20 text-white hover:bg-background/30"
-                      : "text-slate-500",
-                  )}
-                >
-                  <ArrowUp className="h-4 w-4" />
-                </button>
-              </>
-            )}
-          </div>
+                }}
+                className="flex-1 border-none bg-transparent px-3 text-sm text-foreground sm:text-white placeholder:text-slate-400 focus:outline-none focus:ring-0 min-w-0"
+              />
+
+              {/* Actions */}
+              <div className="flex items-center gap-1 pr-2 shrink-0">
+                {/* Media generation mode dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={cn(
+                        "flex h-8 items-center gap-1 rounded-full px-2 text-xs transition-colors",
+                        mediaGenMode !== "auto"
+                          ? "bg-ai-purple/20 text-ai-purple"
+                          : "text-slate-400 hover:bg-background/10 hover:text-white",
+                      )}
+                      title={`Génération média : ${MEDIA_MODE_LABELS[mediaGenMode].label}`}
+                    >
+                      <MediaIcon className="h-3.5 w-3.5" />
+                      {mediaGenMode !== "auto" && (
+                        <span className="hidden sm:inline">
+                          {MEDIA_MODE_LABELS[mediaGenMode].label}
+                        </span>
+                      )}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuLabel className="text-xs">
+                      Génération média
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuRadioGroup
+                      value={mediaGenMode}
+                      onValueChange={(v) => setMediaGenMode(v as MediaGenMode)}
+                    >
+                      {(Object.keys(MEDIA_MODE_LABELS) as MediaGenMode[]).map(
+                        (mode) => {
+                          const { label, icon: Icon } = MEDIA_MODE_LABELS[mode];
+                          return (
+                            <DropdownMenuRadioItem
+                              key={mode}
+                              value={mode}
+                              className="text-xs cursor-pointer"
+                            >
+                              <Icon className="mr-2 h-3.5 w-3.5" />
+                              {label}
+                            </DropdownMenuRadioItem>
+                          );
+                        },
+                      )}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Expand/collapse toggle */}
+                {messages.length > 0 && (
+                  <button
+                    onClick={() => setExpanded(!expanded)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-background/10 hover:text-white"
+                    title={expanded ? "Réduire" : "Voir la conversation"}
+                  >
+                    {expanded ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronUp className="h-4 w-4" />
+                    )}
+                  </button>
+                )}
+
+                {/* Stop streaming */}
+                {isStreaming ? (
+                  <button
+                    onClick={stopStreaming}
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/20 text-red-400 transition-colors hover:bg-red-500/30"
+                    title="Arrêter"
+                  >
+                    <Square className="h-3.5 w-3.5" />
+                  </button>
+                ) : (
+                  <>
+                    <VoiceInput onTranscription={handleTranscription} />
+                    <button
+                      onClick={() => handleSend(displayValue)}
+                      disabled={
+                        !(
+                          value.trim() ||
+                          interimText.trim() ||
+                          attachments.length > 0
+                        )
+                      }
+                      className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-full transition-all",
+                        value.trim() || attachments.length > 0
+                          ? "bg-background/20 text-white hover:bg-background/30"
+                          : "text-slate-500",
+                      )}
+                    >
+                      <ArrowUp className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
