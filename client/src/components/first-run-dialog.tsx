@@ -60,6 +60,12 @@ export function FirstRunDialog() {
 
   // Check if this is the first run
   useEffect(() => {
+    // Never show on login page (avoids blocking the context picker)
+    if (
+      typeof window !== "undefined" &&
+      window.location.pathname.startsWith("/login")
+    )
+      return;
     if (!isAuthenticated) return;
 
     const alreadyInitialized = localStorage.getItem(STORAGE_KEY);
