@@ -35,27 +35,12 @@ interface FinancialStatementsProps {
 
 export function FinancialStatements({
   balanceSheet = {
-    assets: [
-      { label: "Liquidités", amount: 50000 },
-      { label: "Comptes clients", amount: 30000 },
-      { label: "Immobilisations", amount: 120000 },
-    ],
-    liabilities: [
-      { label: "Dettes fournisseurs", amount: 20000 },
-      { label: "Dettes bancaires", amount: 80000 },
-      { label: "Capital social", amount: 100000 },
-    ],
+    assets: [],
+    liabilities: [],
   },
   incomeStatement = {
-    revenue: [
-      { label: "Ventes de produits", amount: 250000 },
-      { label: "Services", amount: 80000 },
-    ],
-    expenses: [
-      { label: "Coût des ventes", amount: 120000 },
-      { label: "Salaires", amount: 90000 },
-      { label: "Loyer", amount: 24000 },
-    ],
+    revenue: [],
+    expenses: [],
   },
   onExportPDF,
 }: FinancialStatementsProps) {

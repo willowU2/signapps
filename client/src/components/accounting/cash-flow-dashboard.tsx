@@ -12,26 +12,9 @@ interface CashEntry {
   category: string;
 }
 
-const ENTRIES: CashEntry[] = [
-  { date: "2026-03-01", label: "Facture ABC Corp", amount: 8000, type: "in", category: "Ventes" },
-  { date: "2026-03-03", label: "Loyer bureaux", amount: 3200, type: "out", category: "Charges fixes" },
-  { date: "2026-03-05", label: "Facture XYZ SAS", amount: 5200, type: "in", category: "Ventes" },
-  { date: "2026-03-07", label: "Salaires", amount: 18000, type: "out", category: "Masse salariale" },
-  { date: "2026-03-10", label: "Facture DEF SARL", amount: 3100, type: "in", category: "Ventes" },
-  { date: "2026-03-12", label: "Fournisseur IT", amount: 2400, type: "out", category: "Achats" },
-  { date: "2026-03-15", label: "Abonnements SaaS", amount: 890, type: "out", category: "Charges fixes" },
-  { date: "2026-03-17", label: "Facture GHI Tech", amount: 4500, type: "in", category: "Ventes" },
-  { date: "2026-03-19", label: "Frais télécom", amount: 340, type: "out", category: "Charges fixes" },
-  { date: "2026-03-21", label: "Remboursement client", amount: 800, type: "in", category: "Autres" },
-  { date: "2026-03-24", label: "Formation équipe", amount: 1200, type: "out", category: "RH" },
-  { date: "2026-03-26", label: "Facture JKL Group", amount: 6700, type: "in", category: "Ventes" },
-  { date: "2026-04-01", label: "Loyer (prévision)", amount: 3200, type: "out", category: "Charges fixes" },
-  { date: "2026-04-07", label: "Salaires (prévision)", amount: 18000, type: "out", category: "Masse salariale" },
-  { date: "2026-04-10", label: "Encaissement prévu", amount: 12000, type: "in", category: "Ventes" },
-  { date: "2026-04-15", label: "TVA Q1", amount: 3800, type: "out", category: "Taxes" },
-];
+const ENTRIES: CashEntry[] = [];
 
-const OPENING_BALANCE = 25000;
+const OPENING_BALANCE = 0;
 
 function buildChartData(entries: CashEntry[]) {
   let balance = OPENING_BALANCE;

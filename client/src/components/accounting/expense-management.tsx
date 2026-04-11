@@ -20,14 +20,7 @@ interface Expense {
 
 const CATEGORIES = ["Transport", "Hébergement", "Repas", "Fournitures", "Formation", "Télécom", "Autre"];
 
-const INIT_EXPENSES: Expense[] = [
-  { id: "1", submittedBy: "Alice Martin", date: "2026-03-24", category: "Transport", description: "Train Paris-Lyon aller-retour", amount: 185, vatRate: 10, hasReceipt: true, status: "pending" },
-  { id: "2", submittedBy: "Bob Dupont", date: "2026-03-22", category: "Repas", description: "Déjeuner client ABC Corp", amount: 87.50, vatRate: 10, hasReceipt: true, status: "approved" },
-  { id: "3", submittedBy: "Claire Bernard", date: "2026-03-20", category: "Hébergement", description: "Hôtel conférence Lyon", amount: 220, vatRate: 10, hasReceipt: false, status: "rejected", notes: "Justificatif manquant" },
-  { id: "4", submittedBy: "David Petit", date: "2026-03-18", category: "Fournitures", description: "Achat stylos et cahiers", amount: 34.90, vatRate: 20, hasReceipt: true, status: "approved" },
-  { id: "5", submittedBy: "Emma Leroy", date: "2026-03-26", category: "Formation", description: "Cours Figma Advanced", amount: 299, vatRate: 20, hasReceipt: true, status: "pending" },
-];
-
+const INIT_EXPENSES: Expense[] = [];
 const STATUS_CONFIG: Record<ExpenseStatus, { label: string; color: string }> = {
   pending: { label: "En attente", color: "bg-amber-100 text-amber-700" },
   approved: { label: "Approuvée", color: "bg-green-100 text-green-700" },

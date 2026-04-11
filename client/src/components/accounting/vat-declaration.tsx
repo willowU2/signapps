@@ -17,24 +17,11 @@ interface VatPeriod {
   status: "draft" | "validated" | "submitted";
 }
 
-const SALES_LINES: VatLine[] = [
-  { label: "Ventes de services", base: 85000, rate: 20, vat: 17000, account: "4.1" },
-  { label: "Ventes de produits", base: 32000, rate: 20, vat: 6400, account: "4.2" },
-  { label: "Prestations inter-entreprises", base: 12000, rate: 20, vat: 2400, account: "4.3" },
-];
+const SALES_LINES: VatLine[] = [];
 
-const PURCHASE_LINES: VatLine[] = [
-  { label: "Achats fournisseurs", base: 28000, rate: 20, vat: 5600, account: "5.1" },
-  { label: "Frais généraux", base: 8500, rate: 20, vat: 1700, account: "5.2" },
-  { label: "Investissements", base: 5000, rate: 20, vat: 1000, account: "5.3" },
-  { label: "Déplacements & repas", base: 3200, rate: 10, vat: 320, account: "5.4" },
-];
+const PURCHASE_LINES: VatLine[] = [];
 
-const PERIODS: VatPeriod[] = [
-  { period: "2026-Q1", label: "T1 2026 (Jan-Mar)", status: "draft" },
-  { period: "2025-Q4", label: "T4 2025 (Oct-Déc)", status: "submitted" },
-  { period: "2025-Q3", label: "T3 2025 (Jul-Sep)", status: "submitted" },
-];
+const PERIODS: VatPeriod[] = [];
 
 const fmt = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
 const fmtBase = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);

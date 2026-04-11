@@ -22,84 +22,8 @@ interface LedgerEntry extends Transaction {
   account: string;
 }
 
-const DEFAULT_BANK: BankStmt[] = [
-  {
-    id: "b1",
-    date: "2026-03-20",
-    description: "Customer Payment ABC Inc",
-    amount: 5000,
-    type: "credit",
-    matched: true,
-  },
-  {
-    id: "b2",
-    date: "2026-03-19",
-    description: "Vendor Payment XYZ Ltd",
-    amount: 2500,
-    type: "debit",
-    matched: true,
-  },
-  {
-    id: "b3",
-    date: "2026-03-18",
-    description: "Operating Expenses",
-    amount: 1200,
-    type: "debit",
-    matched: false,
-  },
-  {
-    id: "b4",
-    date: "2026-03-17",
-    description: "Loan Repayment",
-    amount: 3000,
-    type: "debit",
-    matched: false,
-  },
-];
-
-const DEFAULT_LEDGER: LedgerEntry[] = [
-  {
-    id: "l1",
-    date: "2026-03-20",
-    description: "Invoice #2024-001",
-    amount: 5000,
-    account: "Accounts Receivable",
-    matched: true,
-  },
-  {
-    id: "l2",
-    date: "2026-03-19",
-    description: "Invoice Payment",
-    amount: 2500,
-    account: "Accounts Payable",
-    matched: true,
-  },
-  {
-    id: "l3",
-    date: "2026-03-18",
-    description: "Utilities Bill",
-    amount: 800,
-    account: "Operating Expenses",
-    matched: false,
-  },
-  {
-    id: "l4",
-    date: "2026-03-17",
-    description: "Loan Payment",
-    amount: 3000,
-    account: "Debt",
-    matched: false,
-  },
-  {
-    id: "l5",
-    date: "2026-03-16",
-    description: "Office Supplies",
-    amount: 450,
-    account: "Operating Expenses",
-    matched: false,
-  },
-];
-
+const DEFAULT_BANK: BankStmt[] = [];
+const DEFAULT_LEDGER: LedgerEntry[] = [];
 export function BankReconciliation() {
   const [bankTxns, setBankTxns] = useState<BankStmt[]>(DEFAULT_BANK);
   const [ledgerTxns, setLedgerTxns] = useState<LedgerEntry[]>(DEFAULT_LEDGER);

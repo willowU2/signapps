@@ -33,16 +33,7 @@ const STATUS_CONFIG: Record<InvoiceStatus, { label: string; color: string; icon:
   overdue: { label: "En retard", color: "bg-red-100 text-red-700", icon: <AlertCircle className="w-3.5 h-3.5" /> },
 };
 
-const INIT_INVOICES: Invoice[] = [
-  { id: "i1", number: "FA-2026-001", client: "ABC Corp", clientEmail: "billing@abc.com", issueDate: "2026-03-01", dueDate: "2026-03-31", status: "paid", notes: "",
-    lines: [{ id: "l1", description: "Développement application", qty: 10, unit: "jour", unitPrice: 800, vatRate: 20 }] },
-  { id: "i2", number: "FA-2026-002", client: "XYZ SAS", clientEmail: "compta@xyz.fr", issueDate: "2026-03-15", dueDate: "2026-04-14", status: "sent", notes: "Merci de virer sous 30 jours",
-    lines: [{ id: "l2", description: "Audit sécurité", qty: 3, unit: "jour", unitPrice: 1200, vatRate: 20 }, { id: "l3", description: "Rapport écrit", qty: 1, unit: "forfait", unitPrice: 500, vatRate: 20 }] },
-  { id: "i3", number: "FA-2026-003", client: "DEF SARL", clientEmail: "achat@def.fr", issueDate: "2026-02-20", dueDate: "2026-03-20", status: "overdue", notes: "",
-    lines: [{ id: "l4", description: "Formation React avancé", qty: 2, unit: "jour", unitPrice: 950, vatRate: 20 }] },
-  { id: "i4", number: "FA-2026-004", client: "GHI Tech", clientEmail: "finance@ghi.tech", issueDate: "2026-03-28", dueDate: "2026-04-27", status: "draft", notes: "",
-    lines: [{ id: "l5", description: "Intégration API", qty: 5, unit: "jour", unitPrice: 700, vatRate: 20 }] },
-];
+const INIT_INVOICES: Invoice[] = [];
 
 function calcTotals(lines: InvoiceLine[]) {
   const ht = lines.reduce((s, l) => s + l.qty * l.unitPrice, 0);

@@ -14,51 +14,33 @@ interface CostCenter {
 
 const MONTHS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun"];
 
-const INIT_CENTERS: CostCenter[] = [
-  {
-    id: "1", name: "Technologie", budget: 48000, actual: 43200,
-    months: [
-      { month: "Jan", budget: 8000, actual: 7200 }, { month: "Fév", budget: 8000, actual: 8100 },
-      { month: "Mar", budget: 8000, actual: 7900 }, { month: "Avr", budget: 8000, actual: 7800 },
-      { month: "Mai", budget: 8000, actual: 7100 }, { month: "Jun", budget: 8000, actual: 5100 },
-    ],
-  },
-  {
-    id: "2", name: "Commercial", budget: 30000, actual: 31500,
-    months: [
-      { month: "Jan", budget: 5000, actual: 4800 }, { month: "Fév", budget: 5000, actual: 5200 },
-      { month: "Mar", budget: 5000, actual: 5700 }, { month: "Avr", budget: 5000, actual: 5400 },
-      { month: "Mai", budget: 5000, actual: 5600 }, { month: "Jun", budget: 5000, actual: 4800 },
-    ],
-  },
-  {
-    id: "3", name: "Finance & RH", budget: 24000, actual: 22800,
-    months: [
-      { month: "Jan", budget: 4000, actual: 3900 }, { month: "Fév", budget: 4000, actual: 3800 },
-      { month: "Mar", budget: 4000, actual: 3800 }, { month: "Avr", budget: 4000, actual: 3700 },
-      { month: "Mai", budget: 4000, actual: 3800 }, { month: "Jun", budget: 4000, actual: 3800 },
-    ],
-  },
-  {
-    id: "4", name: "Direction", budget: 18000, actual: 17100,
-    months: [
-      { month: "Jan", budget: 3000, actual: 2800 }, { month: "Fév", budget: 3000, actual: 3000 },
-      { month: "Mar", budget: 3000, actual: 2900 }, { month: "Avr", budget: 3000, actual: 2800 },
-      { month: "Mai", budget: 3000, actual: 2900 }, { month: "Jun", budget: 3000, actual: 2700 },
-    ],
-  },
-];
+const INIT_CENTERS: CostCenter[] = [];
 
 const fmt = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 const pct = (actual: number, budget: number) => budget > 0 ? ((actual / budget - 1) * 100).toFixed(1) : "0";
 
 export function BudgetForecast() {
   const [centers, setCenters] = useState<CostCenter[]>(INIT_CENTERS);
-  const [selectedCenter, setSelectedCenter] = useState<string>(INIT_CENTERS[0].id);
+  const [selectedCenter, setSelectedCenter] = useState<string>(INIT_CENTERS[0]?.id || "");
   const [editBudget, setEditBudget] = useState<string | null>(null);
   const [budgetInput, setBudgetInput] = useState("");
 
-  const center = centers.find(c => c.id === selectedCenter)!;
+  const center = centers.find(c => c.id === selectedCenter);
+  
+  if (centers.length === 0 || !center) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Budget prévisionnel par centre de coûts</h2>
+          </div>
+        </div>
+        <div className="h-64 flex flex-col items-center justify-center text-muted-foreground border rounded-lg border-dashed">
+          <p>Aucune donnée budgétaire disponible</p>
+        </div>
+      </div>
+    );
+  }
   const totalBudget = centers.reduce((s, c) => s + c.budget, 0);
   const totalActual = centers.reduce((s, c) => s + c.actual, 0);
   const variance = totalActual - totalBudget;

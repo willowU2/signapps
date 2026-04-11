@@ -28,16 +28,7 @@ const ACCOUNTS = [
   "5.2 - COGS", "3.1 - Capital", "3.2 - Résultats cumulés",
 ];
 
-const INIT_ENTRIES: IJournalEntry[] = [
-  {
-    id: "je1", date: "2026-03-25", reference: "VTE-001", description: "Vente de services au client ABC",
-    posted: true,
-    lines: [
-      { id: "l1", account: "1.1.2 - Clients", label: "Facture ABC Corp", debit: 3000, credit: "" },
-      { id: "l2", account: "4.1 - Ventes services", label: "CA services Q1", debit: "", credit: 3000 },
-    ],
-  },
-];
+const INIT_ENTRIES: IJournalEntry[] = [];
 
 function newLine(): JournalLine {
   return { id: String(Date.now() + Math.random()), account: "", label: "", debit: "", credit: "" };
