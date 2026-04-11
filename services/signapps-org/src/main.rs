@@ -164,7 +164,7 @@ async fn health_check() -> axum::Json<serde_json::Value> {
             "icon": "Network",
             "category": "Administration",
             "color": "text-indigo-600",
-            "href": "/org",
+            "href": "/admin/org-structure",
             "port": 3026
         }
     }))
