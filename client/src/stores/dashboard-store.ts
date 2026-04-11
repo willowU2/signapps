@@ -115,7 +115,7 @@ const LAYOUT_USER: WidgetConfig[] = [
   { id: "recent-files", type: "recent-files", x: 6, y: 9, w: 6, h: 4 },
   { id: "favorites", type: "favorites", x: 0, y: 13, w: 4, h: 3 },
   { id: "quick-notes", type: "quick-notes", x: 4, y: 13, w: 4, h: 3 },
-  { id: "quick-actions", type: "quick-actions", x: 8, y: 13, w: 4, h: 3 },
+  { id: "quick-actions", type: "quick-actions", x: 8, y: 13, w: 4, h: 5 },
 ];
 
 /** Manager layout: hybrid productivity + team oversight */
@@ -127,9 +127,9 @@ const LAYOUT_MANAGER: WidgetConfig[] = [
   { id: "team-activity", type: "team-activity", x: 0, y: 9, w: 6, h: 4 },
   { id: "recent-emails", type: "recent-emails", x: 6, y: 9, w: 6, h: 4 },
   { id: "kpi-cards", type: "kpi-cards", x: 0, y: 13, w: 8, h: 3 },
-  { id: "quick-actions", type: "quick-actions", x: 8, y: 13, w: 4, h: 3 },
+  { id: "quick-actions", type: "quick-actions", x: 8, y: 13, w: 4, h: 5 },
   { id: "activity-heatmap", type: "activity-heatmap", x: 0, y: 16, w: 8, h: 3 },
-  { id: "notifications", type: "notifications", x: 8, y: 16, w: 4, h: 3 },
+  { id: "notifications", type: "notifications", x: 8, y: 18, w: 4, h: 3 },
 ];
 
 /**
@@ -638,7 +638,7 @@ export const useDashboardStore = create<DashboardStore>()(
     }),
     {
       name: "dashboard-layout",
-      version: 3,
+      version: 4,
       migrate: (persisted: unknown) => {
         const state = persisted as Record<string, unknown>;
         // On version upgrade, reset to new user layout (role-based init happens on page load)

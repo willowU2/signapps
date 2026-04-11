@@ -49,9 +49,9 @@ const actions = [
 
 export function WidgetQuickActions() {
   return (
-    <Card className="h-full overflow-hidden border-border/50 bg-gradient-to-br from-background to-muted/20 relative shadow-sm">
+    <Card className="h-full flex flex-col overflow-hidden border-border/50 bg-gradient-to-br from-background to-muted/20 relative shadow-sm">
       <div className="absolute inset-0 bg-grid-white/5 opacity-[0.02] pointer-events-none" />
-      <CardHeader className="pb-4 relative z-10">
+      <CardHeader className="pb-4 relative z-10 shrink-0">
         <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
           Quick Actions
         </CardTitle>
@@ -59,7 +59,7 @@ export function WidgetQuickActions() {
           Raccourcis vers vos outils majeurs
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3 relative z-10">
+      <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3 relative z-10 overflow-y-auto min-h-0 pb-6 [scrollbar-width:thin]">
         {actions.map((action, i) => (
           <Link 
             href={action.href} 
