@@ -47,6 +47,40 @@ async fn insert_node(
     Ok(node_id)
 }
 
+/// Mirrors a node into `workforce_org_nodes` using the same UUID.
+///
+/// The `trg_workforce_org_node_insert_closure` trigger automatically populates
+/// `workforce_org_closure` on each INSERT, so no explicit closure insert is
+/// needed here.
+///
+/// Uses `ON CONFLICT (id) DO NOTHING` for idempotency.
+pub async fn mirror_to_workforce(
+    pool: &sqlx::PgPool,
+    node_id: Uuid,
+    tenant_id: Uuid,
+    parent_id: Option<Uuid>,
+    node_type: &str,
+    name: &str,
+    sort_order: i32,
+) -> Result<(), Box<dyn std::error::Error>> {
+    sqlx::query(
+        r#"INSERT INTO workforce_org_nodes
+            (id, tenant_id, parent_id, node_type, name, sort_order, is_active,
+             lifecycle_state, attributes, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, TRUE, 'live', '{}', NOW(), NOW())
+           ON CONFLICT (id) DO NOTHING"#,
+    )
+    .bind(node_id)
+    .bind(tenant_id)
+    .bind(parent_id)
+    .bind(node_type)
+    .bind(name)
+    .bind(sort_order)
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
 /// Assigns a person to an org node.
 ///
 /// Uses `ON CONFLICT DO NOTHING` — safe to call multiple times.
@@ -130,50 +164,67 @@ pub async fn seed_acme(
 
     // ── 2. Root node: Company ─────────────────────────────────────────────────
     let company_node = insert_node(pool, tree_id, None, "company", "Acme Corp", "ACME", 0).await?;
+    mirror_to_workforce(pool, company_node, tenant_id, None, "company", "Acme Corp", 0).await?;
 
     // ── 3. Direction level ────────────────────────────────────────────────────
     let dir_dga =
         insert_node(pool, tree_id, Some(company_node), "department", "Direction Générale Adjointe", "DGA", 0).await?;
+    mirror_to_workforce(pool, dir_dga, tenant_id, Some(company_node), "department", "Direction Générale Adjointe", 0).await?;
     let dir_ops =
         insert_node(pool, tree_id, Some(company_node), "department", "Direction des Opérations", "DIR-OPS", 1).await?;
+    mirror_to_workforce(pool, dir_ops, tenant_id, Some(company_node), "department", "Direction des Opérations", 1).await?;
     let dir_fin =
         insert_node(pool, tree_id, Some(company_node), "department", "Direction Financière", "DIR-FIN", 2).await?;
+    mirror_to_workforce(pool, dir_fin, tenant_id, Some(company_node), "department", "Direction Financière", 2).await?;
     let dir_tech =
         insert_node(pool, tree_id, Some(company_node), "department", "Direction Technique", "DIR-TECH", 3).await?;
+    mirror_to_workforce(pool, dir_tech, tenant_id, Some(company_node), "department", "Direction Technique", 3).await?;
 
     // ── 4. Department level ───────────────────────────────────────────────────
 
     // Under DGA
     let dept_hr =
         insert_node(pool, tree_id, Some(dir_dga), "department", "Ressources Humaines", "DEPT-RH", 0).await?;
+    mirror_to_workforce(pool, dept_hr, tenant_id, Some(dir_dga), "department", "Ressources Humaines", 0).await?;
     let dept_comm =
         insert_node(pool, tree_id, Some(dir_dga), "department", "Communication", "DEPT-COM", 1).await?;
+    mirror_to_workforce(pool, dept_comm, tenant_id, Some(dir_dga), "department", "Communication", 1).await?;
     let dept_legal =
         insert_node(pool, tree_id, Some(dir_dga), "department", "Juridique", "DEPT-JUR", 2).await?;
+    mirror_to_workforce(pool, dept_legal, tenant_id, Some(dir_dga), "department", "Juridique", 2).await?;
 
     // Under Ops
     let dept_logistic =
         insert_node(pool, tree_id, Some(dir_ops), "department", "Logistique", "DEPT-LOG", 0).await?;
+    mirror_to_workforce(pool, dept_logistic, tenant_id, Some(dir_ops), "department", "Logistique", 0).await?;
     let dept_purchasing =
         insert_node(pool, tree_id, Some(dir_ops), "department", "Achats", "DEPT-ACH", 1).await?;
+    mirror_to_workforce(pool, dept_purchasing, tenant_id, Some(dir_ops), "department", "Achats", 1).await?;
     let dept_quality =
         insert_node(pool, tree_id, Some(dir_ops), "department", "Qualité", "DEPT-QUA", 2).await?;
+    mirror_to_workforce(pool, dept_quality, tenant_id, Some(dir_ops), "department", "Qualité", 2).await?;
 
     // Under Finance
     let dept_accounting =
         insert_node(pool, tree_id, Some(dir_fin), "department", "Comptabilité", "DEPT-CPT", 0).await?;
+    mirror_to_workforce(pool, dept_accounting, tenant_id, Some(dir_fin), "department", "Comptabilité", 0).await?;
     let dept_sales =
         insert_node(pool, tree_id, Some(dir_fin), "department", "Commercial", "DEPT-COM-V", 1).await?;
+    mirror_to_workforce(pool, dept_sales, tenant_id, Some(dir_fin), "department", "Commercial", 1).await?;
     let dept_marketing =
         insert_node(pool, tree_id, Some(dir_fin), "department", "Marketing", "DEPT-MKT", 2).await?;
+    mirror_to_workforce(pool, dept_marketing, tenant_id, Some(dir_fin), "department", "Marketing", 2).await?;
 
     // Under Tech
     let dept_dev =
         insert_node(pool, tree_id, Some(dir_tech), "department", "Développement", "DEPT-DEV", 0).await?;
+    mirror_to_workforce(pool, dept_dev, tenant_id, Some(dir_tech), "department", "Développement", 0).await?;
     let dept_it =
         insert_node(pool, tree_id, Some(dir_tech), "department", "Infrastructure IT", "DEPT-IT", 1).await?;
+    mirror_to_workforce(pool, dept_it, tenant_id, Some(dir_tech), "department", "Infrastructure IT", 1).await?;
     let dept_security =
         insert_node(pool, tree_id, Some(dir_tech), "department", "Sécurité", "DEPT-SEC", 2).await?;
+    mirror_to_workforce(pool, dept_security, tenant_id, Some(dir_tech), "department", "Sécurité", 2).await?;
 
     // ── 5. Team level ─────────────────────────────────────────────────────────
 
@@ -181,42 +232,53 @@ pub async fn seed_acme(
     let team_backend = insert_node(
         pool, tree_id, Some(dept_dev), "team", "Backend", "TEAM-BE", 0,
     ).await?;
+    mirror_to_workforce(pool, team_backend, tenant_id, Some(dept_dev), "team", "Backend", 0).await?;
     let team_frontend = insert_node(
         pool, tree_id, Some(dept_dev), "team", "Frontend", "TEAM-FE", 1,
     ).await?;
+    mirror_to_workforce(pool, team_frontend, tenant_id, Some(dept_dev), "team", "Frontend", 1).await?;
     let team_devops = insert_node(
         pool, tree_id, Some(dept_dev), "team", "DevOps & Cloud", "TEAM-DO", 2,
     ).await?;
+    mirror_to_workforce(pool, team_devops, tenant_id, Some(dept_dev), "team", "DevOps & Cloud", 2).await?;
     let team_qa = insert_node(
         pool, tree_id, Some(dept_dev), "team", "Qualité Logicielle", "TEAM-QA", 3,
     ).await?;
+    mirror_to_workforce(pool, team_qa, tenant_id, Some(dept_dev), "team", "Qualité Logicielle", 3).await?;
     let team_data = insert_node(
         pool, tree_id, Some(dept_dev), "team", "Data & IA", "TEAM-DATA", 4,
     ).await?;
+    mirror_to_workforce(pool, team_data, tenant_id, Some(dept_dev), "team", "Data & IA", 4).await?;
 
     // IT teams
     let team_sysadmin = insert_node(
         pool, tree_id, Some(dept_it), "team", "Systèmes & Réseaux", "TEAM-SYS", 0,
     ).await?;
+    mirror_to_workforce(pool, team_sysadmin, tenant_id, Some(dept_it), "team", "Systèmes & Réseaux", 0).await?;
     let team_support = insert_node(
         pool, tree_id, Some(dept_it), "team", "Support Utilisateurs", "TEAM-SUP", 1,
     ).await?;
+    mirror_to_workforce(pool, team_support, tenant_id, Some(dept_it), "team", "Support Utilisateurs", 1).await?;
 
     // HR teams
     let team_recruitment = insert_node(
         pool, tree_id, Some(dept_hr), "team", "Recrutement", "TEAM-REC", 0,
     ).await?;
+    mirror_to_workforce(pool, team_recruitment, tenant_id, Some(dept_hr), "team", "Recrutement", 0).await?;
     let team_payroll = insert_node(
         pool, tree_id, Some(dept_hr), "team", "Paie & Administration", "TEAM-PAY", 1,
     ).await?;
+    mirror_to_workforce(pool, team_payroll, tenant_id, Some(dept_hr), "team", "Paie & Administration", 1).await?;
 
     // Sales teams
     let team_sales_fr = insert_node(
         pool, tree_id, Some(dept_sales), "team", "Commercial France", "TEAM-COM-FR", 0,
     ).await?;
+    mirror_to_workforce(pool, team_sales_fr, tenant_id, Some(dept_sales), "team", "Commercial France", 0).await?;
     let team_sales_export = insert_node(
         pool, tree_id, Some(dept_sales), "team", "Commercial Export", "TEAM-COM-EX", 1,
     ).await?;
+    mirror_to_workforce(pool, team_sales_export, tenant_id, Some(dept_sales), "team", "Commercial Export", 1).await?;
 
     info!("org nodes created — assigning persons");
 
@@ -381,6 +443,7 @@ pub async fn seed_startup(
 
     // ── Root node ─────────────────────────────────────────────────────────
     let root_id = insert_node(pool, tree_id, None, "company", "Startup SAS", "STARTUP", 0).await?;
+    mirror_to_workforce(pool, root_id, tenant_id, None, "company", "Startup SAS", 0).await?;
 
     // Self-reference in closure table (defensive insert for envs without trigger)
     sqlx::query(

@@ -215,6 +215,9 @@ async fn reset_seed_data(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::error::
         "mail.labels",
         // Documents
         "documents.files",
+        // Workforce org structure (mirrors core.org_nodes for the workforce service)
+        "workforce_org_closure",
+        "workforce_org_nodes",
         // Org structure
         "core.org_closure",
         "core.assignments",

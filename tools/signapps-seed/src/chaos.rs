@@ -13,6 +13,7 @@
 //! - Billing chaos: extreme amounts (zero, negative, overflow-adjacent)
 
 use crate::companies;
+use crate::org::mirror_to_workforce;
 use tracing::info;
 use uuid::Uuid;
 
@@ -367,6 +368,7 @@ async fn seed_deep_org_tree(
     let mut parent_id: Option<Uuid> = None;
     for depth in 1..=25usize {
         let node_id = Uuid::new_v4();
+        let node_name = format!("Deep Node L{depth:02}");
         sqlx::query(
             r#"
             INSERT INTO core.org_nodes
@@ -377,10 +379,11 @@ async fn seed_deep_org_tree(
         .bind(node_id)
         .bind(tree_id)
         .bind(parent_id)
-        .bind(format!("Deep Node L{depth:02}"))
+        .bind(&node_name)
         .bind(depth as i32)
         .execute(pool)
         .await?;
+        mirror_to_workforce(pool, node_id, tenant_id, parent_id, "department", &node_name, depth as i32).await?;
 
         parent_id = Some(node_id);
     }
@@ -399,9 +402,11 @@ async fn seed_deep_org_tree(
     .bind(tree_id)
     .execute(pool)
     .await?;
+    mirror_to_workforce(pool, root_id, tenant_id, None, "division", "Wide Root Node", 0).await?;
 
     for child_i in 0..100usize {
         let child_id = Uuid::new_v4();
+        let child_name = format!("Child Node #{child_i:03}");
         sqlx::query(
             r#"
             INSERT INTO core.org_nodes
@@ -412,10 +417,11 @@ async fn seed_deep_org_tree(
         .bind(child_id)
         .bind(tree_id)
         .bind(root_id)
-        .bind(format!("Child Node #{child_i:03}"))
+        .bind(&child_name)
         .bind(child_i as i32)
         .execute(pool)
         .await?;
+        mirror_to_workforce(pool, child_id, tenant_id, Some(root_id), "team", &child_name, child_i as i32).await?;
     }
 
     info!("org tree seeded (25 deep + 100 wide)");
