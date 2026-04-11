@@ -11,7 +11,7 @@ use axum::{
 };
 use signapps_cache::CacheService;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
-use signapps_common::middleware::auth_middleware;
+use signapps_common::middleware::{auth_middleware, tenant_context_middleware};
 use signapps_common::pg_events::PgEventBus;
 use signapps_sharing::routes::sharing_routes;
 use signapps_sharing::{ResourceType, SharingEngine};
@@ -97,7 +97,8 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ));
+        ))
+        .route_layer(middleware::from_fn(tenant_context_middleware));
 
     // Sharing sub-router: State<SharingEngine> — separate from AppState.
     let sharing_sub = sharing_routes("chat", ResourceType::Channel)

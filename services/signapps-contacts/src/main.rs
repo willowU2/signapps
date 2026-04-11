@@ -18,7 +18,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use signapps_cache::CacheService;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
-use signapps_common::middleware::{auth_middleware, AuthState};
+use signapps_common::middleware::{auth_middleware, tenant_context_middleware, AuthState};
 use signapps_common::pg_events::{NewEvent, PgEventBus};
 use signapps_common::{Claims, JwtConfig};
 use signapps_db::DatabasePool;
@@ -791,7 +791,8 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ));
+        ))
+        .route_layer(middleware::from_fn(tenant_context_middleware));
 
     // Sharing sub-router: State<SharingEngine> — separate from AppState.
     let sharing_sub = sharing_routes("contacts", ResourceType::ContactBook)
@@ -830,7 +831,8 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ));
+        ))
+        .route_layer(middleware::from_fn(tenant_context_middleware));
 
     // CRM routes (protected)
     let crm_routes = Router::new()
@@ -858,7 +860,8 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ));
+        ))
+        .route_layer(middleware::from_fn(tenant_context_middleware));
 
     public_routes
         .merge(protected_routes)
