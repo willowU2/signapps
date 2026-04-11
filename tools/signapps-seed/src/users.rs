@@ -49,7 +49,7 @@ async fn insert_user_and_person(
             (id, username, email, password_hash, role, display_name,
              tenant_id, job_title, auth_provider, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'local', NOW(), NOW())
-        ON CONFLICT (id) DO NOTHING
+        ON CONFLICT DO NOTHING
         "#,
     )
     .bind(user_id)
