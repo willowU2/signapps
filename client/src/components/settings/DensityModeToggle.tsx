@@ -30,41 +30,15 @@ const MODES: { value: DensityMode; label: string; description: string; icon: Rea
   },
 ];
 
-function applyDensity(density: DensityMode) {
-  if (typeof document === 'undefined') return;
-  document.documentElement.setAttribute('data-density', density);
-  // Inject CSS for density
-  const STYLE_ID = 'signapps-density';
-  let el = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
-  if (!el) {
-    el = document.createElement('style');
-    el.id = STYLE_ID;
-    document.head.appendChild(el);
-  }
-  const scales = { compact: '0.875', comfortable: '1', spacious: '1.125' };
-  const paddings = { compact: '0.375rem 0.625rem', comfortable: '0.5rem 0.75rem', spacious: '0.75rem 1rem' };
-  el.textContent = `
-    [data-density="${density}"] .btn, [data-density="${density}"] button:not(.icon-btn) {
-      font-size: ${scales[density]}rem;
-      padding: ${paddings[density]};
-    }
-    [data-density="${density}"] .p-4 { padding: ${density === 'compact' ? '0.75rem' : density === 'spacious' ? '1.5rem' : '1rem'}; }
-    [data-density="${density}"] .space-y-4 > * + * { margin-top: ${density === 'compact' ? '0.75rem' : density === 'spacious' ? '1.5rem' : '1rem'}; }
-    [data-density="${density}"] .text-sm { font-size: ${density === 'compact' ? '0.8rem' : density === 'spacious' ? '0.95rem' : '0.875rem'}; }
-  `;
-}
-
 export function DensityModeToggle() {
   const layout = usePreferencesStore(selectLayout);
   const updateLayout = usePreferencesStore(s => s.updateLayout);
 
-  useEffect(() => {
-    applyDensity(layout.density);
-  }, [layout.density]);
-
   const setDensity = (density: DensityMode) => {
     updateLayout({ density });
-    applyDensity(density);
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-density', density);
+    }
   };
 
   return (

@@ -36,7 +36,7 @@ const DEFAULT_PREFS: ThemePreferences = {
   compactMode: false,
   borderRadius: 'rounded',
   highContrast: false,
-  fontSizePx: 15,
+  fontSizePx: 16,
 };
 
 const COLOR_OPTIONS = [
