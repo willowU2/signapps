@@ -28,6 +28,17 @@ const FunnelChart: React.FC<FunnelChartProps> = ({
 
   const steps = customSteps || defaultSteps;
 
+  if (steps.length === 0) {
+    return (
+      <div className="w-full bg-background rounded-lg border border-border p-8 shadow-sm">
+        <h2 className="text-2xl font-bold text-foreground mb-8">{title}</h2>
+        <div className="h-64 flex items-center justify-center text-muted-foreground">
+          Aucune donnée d'entonnoir disponible
+        </div>
+      </div>
+    );
+  }
+
   // Find the maximum count for width calculation
   const maxCount = Math.max(...steps.map((s) => s.count));
 

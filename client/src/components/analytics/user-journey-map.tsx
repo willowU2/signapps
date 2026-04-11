@@ -18,32 +18,28 @@ interface JourneyPath {
   steps: JourneyStep[];
 }
 
-const PATHS: JourneyPath[] = [
-  {
-    id: '1', label: 'Onboarding Path', users: 1240,
-    steps: [
-      { page: '/login', visits: 1240, dropoff: 2 },
-      { page: '/dashboard', visits: 1215, dropoff: 8 },
-      { page: '/settings/profile', visits: 1118, dropoff: 15 },
-      { page: '/drive', visits: 950, dropoff: 20 },
-      { page: '/docs', visits: 760, dropoff: 12 },
-    ],
-  },
-  {
-    id: '2', label: 'Admin Path', users: 180,
-    steps: [
-      { page: '/admin', visits: 180, dropoff: 5 },
-      { page: '/admin/users', visits: 171, dropoff: 10 },
-      { page: '/admin/settings', visits: 154, dropoff: 8 },
-      { page: '/admin/audit', visits: 142, dropoff: 20 },
-      { page: '/admin/security', visits: 114, dropoff: 0 },
-    ],
-  },
-];
+const PATHS: JourneyPath[] = [];
 
 export function UserJourneyMap() {
   const [selected, setSelected] = useState('1');
-  const path = PATHS.find(p => p.id === selected)!;
+  const path = PATHS.find(p => p.id === selected);
+  
+  if (!path || path.steps.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Map className="h-5 w-5" />
+          <h2 className="text-xl font-semibold">User Journey Map</h2>
+        </div>
+        <Card>
+          <CardContent className="h-64 flex flex-col items-center justify-center text-muted-foreground">
+            <p>Aucune donnée disponible</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const maxVisits = path.steps[0].visits;
 
   return (

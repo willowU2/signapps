@@ -23,6 +23,21 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { usePageTitle } from '@/hooks/use-page-title';
 import { toast } from 'sonner';
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-xl border border-border/50 bg-card/90 p-3 shadow-2xl backdrop-blur-md">
+        <p className="font-medium text-sm mb-1">{label}</p>
+        <p className="text-2xl font-bold" style={{ color: payload[0].payload.color }}>
+          {payload[0].value}
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">tâches dans cet état</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function AnalyticsPage() {
   usePageTitle('Analytique');
   const searchParams = useSearchParams();
@@ -176,17 +191,60 @@ export default function AnalyticsPage() {
                   </Card>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card className="border border-border/50 shadow-sm">
-                    <CardHeader><CardTitle className="text-base font-semibold">Distribution de la Charge</CardTitle></CardHeader>
-                    <CardContent className="h-80">
+                  <Card className="border border-border/50 shadow-sm relative overflow-hidden group">
+                    {/* Subtle decorative background gradient */}
+                    <div className="absolute top-0 right-0 -mr-16 -mt-16 h-32 w-32 rounded-full bg-primary/10 blur-3xl transition-opacity group-hover:bg-primary/20 pointer-events-none" />
+                    
+                    <CardHeader>
+                      <CardTitle className="text-base font-semibold flex items-center gap-2 relative z-10">
+                        <BarChart3 className="h-4 w-4 text-primary" />
+                        Distribution de la Charge
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-80 relative z-10">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={workloadData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                          <YAxis axisLine={false} tickLine={false} />
-                          <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }} />
-                          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                            {workloadData.map((entry, index) => <Cell key={`cell-bar-${index}`} fill={entry.color} />)}
+                        <BarChart data={workloadData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
+                          <defs>
+                            {workloadData.map((entry, index) => (
+                              <linearGradient key={`gradient-${index}`} id={`colorGradient-${index}`} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={entry.color} stopOpacity={0.9}/>
+                                <stop offset="95%" stopColor={entry.color} stopOpacity={0.3}/>
+                              </linearGradient>
+                            ))}
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="opacity-10" />
+                          <XAxis 
+                            dataKey="name" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fill: 'currentColor', opacity: 0.6, fontSize: 12 }} 
+                            dy={10} 
+                          />
+                          <YAxis 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fill: 'currentColor', opacity: 0.6, fontSize: 12 }} 
+                            dx={-10} 
+                          />
+                          <Tooltip 
+                            content={<CustomTooltip />} 
+                            cursor={{ fill: 'currentColor', opacity: 0.05 }} 
+                            isAnimationActive={true}
+                          />
+                          <Bar 
+                            dataKey="value" 
+                            radius={[6, 6, 0, 0]} 
+                            animationDuration={1500} 
+                            animationEasing="ease-out"
+                            maxBarSize={60}
+                          >
+                            {workloadData.map((entry, index) => (
+                              <Cell 
+                                key={`cell-bar-${index}`} 
+                                fill={`url(#colorGradient-${index})`} 
+                                className="hover:opacity-80 transition-all cursor-pointer" 
+                              />
+                            ))}
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
@@ -209,9 +267,8 @@ export default function AnalyticsPage() {
               </div>
             )}
           </TabsContent>
-
-          <TabsContent value="funnel"><FunnelChart /></TabsContent>
-          <TabsContent value="cohort"><CohortHeatmap /></TabsContent>
+          <TabsContent value="funnel"><FunnelChart steps={[]} /></TabsContent>
+          <TabsContent value="cohort"><CohortHeatmap data={[]} /></TabsContent>
           <TabsContent value="abtest"><ABTestViewer /></TabsContent>
           <TabsContent value="heatmap"><ClickHeatmap /></TabsContent>
           <TabsContent value="journey"><UserJourneyMap /></TabsContent>

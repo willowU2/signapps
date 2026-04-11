@@ -23,24 +23,7 @@ interface ABTest {
   confidence_level: number;
 }
 
-const SAMPLE: ABTest[] = [
-  {
-    id: '1', name: 'Homepage CTA Button Color', status: 'running', goal: 'signup_click',
-    variants: [
-      { name: 'Control (Blue)', visitors: 4820, conversions: 312 },
-      { name: 'Variant A (Green)', visitors: 4756, conversions: 387 },
-    ],
-    started_at: new Date(Date.now() - 86400000 * 14).toISOString(), confidence_level: 95,
-  },
-  {
-    id: '2', name: 'Onboarding Flow Length', status: 'completed', goal: 'activation',
-    variants: [
-      { name: 'Control (7 steps)', visitors: 2100, conversions: 945 },
-      { name: 'Variant A (4 steps)', visitors: 2090, conversions: 1192 },
-    ],
-    started_at: new Date(Date.now() - 86400000 * 45).toISOString(), confidence_level: 99,
-  },
-];
+const SAMPLE: ABTest[] = [];
 
 function zScore(n1: number, c1: number, n2: number, c2: number): number {
   if (!n1 || !n2) return 0;

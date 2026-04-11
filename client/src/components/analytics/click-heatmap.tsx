@@ -35,7 +35,7 @@ function generatePoints(count: number): ClickPoint[] {
 export function ClickHeatmap() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [page, setPage] = useState('dashboard');
-  const [points, setPoints] = useState<ClickPoint[]>(generatePoints(80));
+  const [points, setPoints] = useState<ClickPoint[]>([]);
   const [visible, setVisible] = useState(true);
   const [totalClicks] = useState(points.reduce((s, p) => s + p.count, 0));
 
@@ -47,15 +47,21 @@ export function ClickHeatmap() {
     const { width, height } = canvas;
     ctx.clearRect(0, 0, width, height);
 
+    // Use screen mode to prevent muddy colors and make overlaps glow brilliantly
+    ctx.globalCompositeOperation = 'screen';
+
     points.forEach(p => {
       const x = p.x * width;
       const y = p.y * height;
-      const r = 30 + p.count * 4;
+      const r = 35 + p.count * 5;
       const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
-      const alpha = Math.min(0.8, p.count / 10);
-      grad.addColorStop(0, `rgba(255, 50, 0, ${alpha})`);
-      grad.addColorStop(0.4, `rgba(255, 150, 0, ${alpha * 0.5})`);
-      grad.addColorStop(1, 'rgba(255, 200, 0, 0)');
+      const intensity = Math.min(1, p.count / 15);
+      
+      grad.addColorStop(0, `rgba(255, 255, 0, ${intensity})`); // Yellow/White hot
+      grad.addColorStop(0.3, `rgba(255, 80, 0, ${intensity * 0.8})`); // Red-hot ring
+      grad.addColorStop(0.6, `rgba(120, 0, 255, ${intensity * 0.4})`); // Purple/Blue warm
+      grad.addColorStop(1, 'rgba(0, 0, 255, 0)'); // Cold fade
+      
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
@@ -66,7 +72,7 @@ export function ClickHeatmap() {
   useEffect(() => { drawHeatmap(); }, [drawHeatmap]);
 
   const regenerate = () => {
-    setPoints(generatePoints(80));
+    setPoints([]);
   };
 
   return (
@@ -94,17 +100,29 @@ export function ClickHeatmap() {
           <CardDescription>Aggregated click positions. Redder = more clicks.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="relative bg-muted rounded-lg overflow-hidden" style={{ aspectRatio: '16/9' }}>
-            {/* Wireframe page skeleton */}
-            <div className="absolute inset-0 p-4 pointer-events-none">
-              <div className="h-8 bg-background/50 rounded mb-3 w-full" />
-              <div className="flex gap-2 mb-4">
-                {[...Array(5)].map((_, i) => <div key={i} className="h-6 bg-background/40 rounded flex-1" />)}
+          <div className="relative bg-slate-900 border border-slate-800 rounded-lg overflow-hidden shadow-inner" style={{ aspectRatio: '16/9' }}>
+            {/* Wireframe page skeleton - Modern Edition */}
+            <div className="absolute inset-0 p-5 pointer-events-none flex gap-4">
+              {/* Sidebar */}
+              <div className="w-48 bg-slate-800/40 rounded-lg flex flex-col gap-3 p-3 border border-slate-700/50">
+                <div className="h-6 w-3/4 bg-primary/30 rounded" />
+                <div className="mt-4 flex flex-col gap-2">
+                  {[...Array(6)].map((_, i) => <div key={i} className="h-4 bg-slate-700/60 rounded w-full" />)}
+                </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                {[...Array(3)].map((_, i) => <div key={i} className="h-16 bg-background/40 rounded" />)}
+              {/* Main Content */}
+              <div className="flex-1 flex flex-col gap-4">
+                <div className="flex justify-between items-center bg-slate-800/40 p-3 rounded-lg border border-slate-700/50">
+                  <div className="h-5 w-1/4 bg-slate-700/60 rounded" />
+                  <div className="h-8 w-8 rounded-full bg-primary/30" />
+                </div>
+                <div className="flex gap-4">
+                  {[...Array(4)].map((_, i) => <div key={i} className="h-20 bg-slate-800/40 border border-slate-700/50 rounded-lg flex-1" />)}
+                </div>
+                <div className="flex-1 bg-slate-800/40 border border-slate-700/50 rounded-lg p-4">
+                  <div className="h-full bg-slate-700/40 rounded-md" />
+                </div>
               </div>
-              <div className="h-32 bg-background/40 rounded" />
             </div>
             {/* Heatmap overlay */}
             {visible && (
@@ -112,7 +130,7 @@ export function ClickHeatmap() {
                 ref={canvasRef}
                 width={800}
                 height={450}
-                className="absolute inset-0 w-full h-full mix-blend-multiply"
+                className="absolute inset-0 w-full h-full opacity-90 blur-[3px]"
               />
             )}
           </div>

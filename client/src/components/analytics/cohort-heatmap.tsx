@@ -33,12 +33,23 @@ const CohortHeatmap: React.FC<CohortHeatmapProps> = ({
 
   const data = customData || defaultData;
 
+  if (data.length === 0) {
+    return (
+      <div className="w-full bg-background rounded-lg border border-border p-8 shadow-sm">
+        <h2 className="text-2xl font-bold text-foreground mb-8">{title}</h2>
+        <div className="h-64 flex flex-col items-center justify-center text-muted-foreground">
+          <p>Aucune donnée de cohorte disponible</p>
+        </div>
+      </div>
+    );
+  }
+
   // Get color based on retention percentage
   const getHeatmapColor = (value: number) => {
-    // Green (high) to Red (low): HSL-based
-    const hue = (value / 100) * 120; // 0-120 (red to green)
-    const saturation = Math.max(30, 50 + (value - 50) * 0.6);
-    return `hsl(${hue}, ${saturation}%, 45%)`;
+    // Native blending with the app's primary color
+    // Use an opacity between 0.05 and 1 based on the value
+    const opacity = Math.max(0.05, value / 100);
+    return `hsl(var(--primary) / ${opacity})`;
   };
 
   // Day labels: 0, 1, 2... days since cohort start
@@ -82,7 +93,8 @@ const CohortHeatmap: React.FC<CohortHeatmapProps> = ({
               {row.dayData.map((value, dayIdx) => (
                 <div
                   key={dayIdx}
-                  className="w-12 h-12 flex-shrink-0 rounded-md flex items-center justify-center text-xs font-semibold text-white transition-all hover:scale-110 cursor-pointer"
+                  // Text turns white only over very dark/opaque primary backgrounds to keep contrast sharp
+                  className={`w-12 h-12 flex-shrink-0 rounded-md flex items-center justify-center text-xs font-semibold transition-all hover:scale-110 cursor-pointer ring-1 ring-inset ring-black/5 dark:ring-white/5 ${value > 60 ? 'text-primary-foreground' : 'text-foreground/80'}`}
                   style={{
                     backgroundColor: getHeatmapColor(value),
                   }}

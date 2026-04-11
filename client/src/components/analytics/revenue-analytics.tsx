@@ -11,23 +11,28 @@ import { TrendingUp, TrendingDown, DollarSign, Users, AlertCircle } from 'lucide
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const MRR_DATA = MONTHS.map((m, i) => ({
-  month: m,
-  mrr: 18000 + i * 1200 + Math.sin(i) * 400,
-  churn_mrr: 800 + i * 50 + Math.random() * 200,
-  new_mrr: 2000 + i * 300 + Math.random() * 400,
-}));
-
-const LTV_DATA = [
-  { segment: 'Basic', ltv: 480, arpu: 40, months: 12 },
-  { segment: 'Pro', ltv: 2160, arpu: 90, months: 24 },
-  { segment: 'Enterprise', ltv: 12000, arpu: 400, months: 30 },
-];
+const MRR_DATA: any[] = [];
+const LTV_DATA: any[] = [];
 
 const PERIOD_LABELS: Record<string, string> = { month: 'This Month', quarter: 'This Quarter', year: 'This Year' };
 
 export function RevenueAnalytics() {
   const [period, setPeriod] = useState<'month' | 'quarter' | 'year'>('year');
+
+  if (MRR_DATA.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold flex items-center gap-2"><DollarSign className="h-5 w-5" /> Revenue Analytics</h2>
+        </div>
+        <Card>
+          <CardContent className="h-64 flex flex-col items-center justify-center text-muted-foreground">
+            <p>Aucune donnée financière disponible</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const currentMRR = MRR_DATA[MRR_DATA.length - 1].mrr;
   const prevMRR = MRR_DATA[MRR_DATA.length - 2].mrr;

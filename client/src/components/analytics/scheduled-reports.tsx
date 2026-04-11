@@ -38,40 +38,7 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
   onReportsChange,
 }) => {
   // Default sample data
-  const defaultReports: ReportConfig[] = [
-    {
-      id: 'daily-exec',
-      name: 'Daily Executive Summary',
-      schedule: 'daily',
-      format: 'PDF',
-      recipients: ['ceo@company.com', 'cfo@company.com'],
-      enabled: true,
-    },
-    {
-      id: 'weekly-sales',
-      name: 'Weekly Sales Report',
-      schedule: 'weekly',
-      format: 'Excel',
-      recipients: ['sales@company.com', 'manager@company.com', 'director@company.com'],
-      enabled: true,
-    },
-    {
-      id: 'monthly-full',
-      name: 'Monthly Full Analytics',
-      schedule: 'monthly',
-      format: 'PDF',
-      recipients: ['analytics@company.com'],
-      enabled: false,
-    },
-    {
-      id: 'weekly-csv',
-      name: 'Weekly Data Export',
-      schedule: 'weekly',
-      format: 'CSV',
-      recipients: ['data-team@company.com'],
-      enabled: true,
-    },
-  ];
+  const defaultReports: ReportConfig[] = [];
 
   const [reports, setReports] = useState<ReportConfig[]>(customReports || defaultReports);
   const [showForm, setShowForm] = useState(false);
