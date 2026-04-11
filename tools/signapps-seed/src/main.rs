@@ -2,13 +2,19 @@
 //!
 //! Seeds realistic data for development and testing across all services.
 
-mod calendar;
+mod billing;
+mod calendars;
 mod chaos;
+mod chat;
 mod companies;
 mod documents;
+mod drive;
+mod gamification;
+mod helpers;
 mod mail;
+mod notifications;
 mod org;
-mod projects;
+mod sharing;
 mod tenants;
 mod users;
 mod verify;
@@ -121,18 +127,30 @@ async fn seed_acme(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::error::Error>
     let user_ids = users::seed_acme(pool, tenant_id).await?;
     companies::seed_acme(pool, tenant_id).await?;
     org::seed_acme(pool, tenant_id, &user_ids).await?;
-    projects::seed_acme(pool, tenant_id, &user_ids).await?;
-    calendar::seed_acme(pool, tenant_id, &user_ids).await?;
+    calendars::seed_acme(pool, tenant_id, &user_ids).await?;
     mail::seed_acme(pool, tenant_id, &user_ids).await?;
     documents::seed_acme(pool, tenant_id, &user_ids).await?;
+    drive::seed_acme(pool, tenant_id, &user_ids).await?;
+    chat::seed_acme(pool, tenant_id, &user_ids).await?;
+    billing::seed_acme(pool, tenant_id, &user_ids).await?;
+    gamification::seed_acme(pool, tenant_id, &user_ids).await?;
+    notifications::seed_acme(pool, tenant_id, &user_ids).await?;
+    sharing::seed_acme(pool, tenant_id, &user_ids).await?;
     Ok(())
 }
 
 async fn seed_startup(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::error::Error>> {
     info!("mode=startup: seeding Startup scenario");
     let tenant_id = tenants::seed_tenant(pool, "Startup SAS", false).await?;
-    let _users: Vec<(uuid::Uuid, uuid::Uuid, String)> =
-        users::seed_startup(pool, tenant_id).await?;
+    let user_ids = users::seed_startup(pool, tenant_id).await?;
+    org::seed_startup(pool, tenant_id, &user_ids).await?;
+    calendars::seed_startup(pool, tenant_id, &user_ids).await?;
+    drive::seed_startup(pool, tenant_id, &user_ids).await?;
+    chat::seed_startup(pool, tenant_id, &user_ids).await?;
+    billing::seed_startup(pool, tenant_id, &user_ids).await?;
+    gamification::seed_startup(pool, tenant_id, &user_ids).await?;
+    notifications::seed_startup(pool, tenant_id, &user_ids).await?;
+    sharing::seed_startup(pool, tenant_id, &user_ids).await?;
     Ok(())
 }
 

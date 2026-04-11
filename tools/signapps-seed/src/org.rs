@@ -345,3 +345,60 @@ pub async fn seed_acme(
     info!("acme org seeding complete");
     Ok(())
 }
+
+/// Seeds Startup SAS org structure — flat hierarchy (1 tree, 1 root node).
+///
+/// All users are assigned directly to the root company node.
+///
+/// # Errors
+///
+/// Returns an error if any database operation fails.
+///
+/// # Panics
+///
+/// No panics — all errors are propagated via `Result`.
+pub async fn seed_startup(
+    pool: &sqlx::PgPool,
+    tenant_id: Uuid,
+    user_ids: &[(Uuid, Uuid, String)],
+) -> Result<(), Box<dyn std::error::Error>> {
+    info!(%tenant_id, users = user_ids.len(), "seeding startup org structure");
+
+    // ── Org tree ──────────────────────────────────────────────────────────
+    let tree_id = Uuid::new_v4();
+    sqlx::query(
+        r#"
+        INSERT INTO core.org_trees
+            (id, tenant_id, tree_type, name, created_at, updated_at)
+        VALUES ($1, $2, 'internal', 'Startup SAS', NOW(), NOW())
+        ON CONFLICT (tenant_id, tree_type) DO NOTHING
+        "#,
+    )
+    .bind(tree_id)
+    .bind(tenant_id)
+    .execute(pool)
+    .await?;
+
+    // ── Root node ─────────────────────────────────────────────────────────
+    let root_id = insert_node(pool, tree_id, None, "company", "Startup SAS", "STARTUP", 0).await?;
+
+    // Self-reference in closure table (defensive insert for envs without trigger)
+    sqlx::query(
+        r#"
+        INSERT INTO core.org_closure (ancestor_id, descendant_id, depth)
+        VALUES ($1, $1, 0)
+        ON CONFLICT DO NOTHING
+        "#,
+    )
+    .bind(root_id)
+    .execute(pool)
+    .await?;
+
+    // ── Assign all users to root ───────────────────────────────────────────
+    for (_, person_id, _) in user_ids.iter() {
+        assign_person(pool, *person_id, root_id, "holder", "hierarchical", true).await?;
+    }
+
+    info!("startup org seeding complete");
+    Ok(())
+}
