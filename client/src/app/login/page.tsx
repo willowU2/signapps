@@ -296,6 +296,18 @@ export default function LoginPage() {
           if (response.data.access_token && response.data.refresh_token) {
             localStorage.setItem("access_token", response.data.access_token);
             localStorage.setItem("refresh_token", response.data.refresh_token);
+
+            // Show context picker if multiple tenants/contexts available
+            if (
+              response.data.requires_context &&
+              Array.isArray(response.data.contexts) &&
+              response.data.contexts.length > 0
+            ) {
+              setAvailableContexts(response.data.contexts);
+              setPendingContexts(response.data.contexts);
+              return;
+            }
+
             window.location.href = redirectAfterLogin || "/dashboard";
           }
         } catch (e: any) {

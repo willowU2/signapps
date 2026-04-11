@@ -341,12 +341,45 @@ pub async fn login(
     }
 
     // Fetch available contexts for this user so the frontend can present the context picker
-    let contexts = signapps_db::repositories::CompanyRepository::list_contexts_for_user(
+    let mut contexts = signapps_db::repositories::CompanyRepository::list_contexts_for_user(
         state.pool.inner(),
         user.id,
     )
     .await
     .unwrap_or_default();
+
+    // For super-admins (role=3) with no company-level contexts, offer tenant switching.
+    // Synthesise one context per tenant so the frontend context picker works unchanged.
+    if contexts.is_empty() && user.role >= 3 {
+        let tenants: Vec<(Uuid, String)> = sqlx::query_as(
+            "SELECT id, name FROM identity.tenants ORDER BY name",
+        )
+        .fetch_all(&*state.pool)
+        .await
+        .unwrap_or_default();
+
+        if tenants.len() > 1 {
+            for (tid, tname) in &tenants {
+                contexts.push(signapps_db::shared::models::LoginContextDisplay {
+                    id: *tid, // use tenant_id as context id
+                    user_id: user.id,
+                    person_company_id: *tid, // placeholder
+                    context_type: "employee".to_string(),
+                    company_id: *tid, // placeholder
+                    label: tname.clone(),
+                    icon: Some("building".to_string()),
+                    color: None,
+                    is_active: true,
+                    last_used_at: None,
+                    created_at: chrono::Utc::now(),
+                    company_name: tname.clone(),
+                    company_logo: None,
+                    role_in_company: "admin".to_string(),
+                    job_title: Some("Platform Administrator".to_string()),
+                });
+            }
+        }
+    }
 
     let requires_context = if contexts.is_empty() { None } else { Some(true) };
     let contexts_payload = if contexts.is_empty() { None } else { Some(contexts) };
@@ -1053,28 +1086,89 @@ async fn issue_context_tokens(
     claims: &signapps_common::Claims,
     context_id: Uuid,
 ) -> Result<Json<ContextTokenResponse>> {
-    // Verify the context belongs to this user
-    let ctx = signapps_db::repositories::CompanyRepository::find_context(
+    // Fetch user first — needed in all paths.
+    let user = signapps_db::repositories::UserRepository::find_by_id(&state.pool, claims.sub)
+        .await
+        .map_err(|e| Error::Internal(format!("Failed to fetch user: {e}")))?
+        .ok_or_else(|| Error::NotFound("User not found".to_string()))?;
+
+    // Try to find a real login_context first.
+    let ctx_opt = signapps_db::repositories::CompanyRepository::find_context(
         state.pool.inner(),
         context_id,
         claims.sub,
     )
     .await
-    .map_err(|e| Error::Internal(format!("Failed to fetch context: {e}")))?
-    .ok_or_else(|| Error::NotFound(format!("Login context {context_id}")))?;
+    .unwrap_or(None);
 
-    // Update last_used_at (fire-and-forget — do not fail the request on error)
-    let _ = signapps_db::repositories::CompanyRepository::touch_context(
-        state.pool.inner(),
-        context_id,
-    )
-    .await;
+    // For super-admins, context_id may be a tenant_id (tenant switching).
+    let (token_context, response_ctx) = if let Some(ctx) = ctx_opt {
+        // Standard company-level context selection.
+        let _ = signapps_db::repositories::CompanyRepository::touch_context(
+            state.pool.inner(),
+            context_id,
+        )
+        .await;
 
-    // Fetch workspace IDs for the token (re-use existing workspace resolution)
-    let user = signapps_db::repositories::UserRepository::find_by_id(&state.pool, claims.sub)
+        let tc = TokenContext {
+            person_id: None,
+            context_id: Some(ctx.id),
+            context_type: Some(ctx.context_type.clone()),
+            company_id: Some(ctx.company_id),
+            company_name: Some(ctx.company_name.clone()),
+        };
+        (tc, ctx)
+    } else if user.role >= 3 {
+        // Admin tenant switching: context_id is actually a tenant_id.
+        let tenant: Option<(Uuid, String)> = sqlx::query_as(
+            "SELECT id, name FROM identity.tenants WHERE id = $1",
+        )
+        .bind(context_id)
+        .fetch_optional(&*state.pool)
         .await
-        .map_err(|e| Error::Internal(format!("Failed to fetch user: {e}")))?
-        .ok_or_else(|| Error::NotFound("User not found".to_string()))?;
+        .unwrap_or(None);
+
+        let (tid, tname) = tenant
+            .ok_or_else(|| Error::NotFound(format!("Tenant {context_id}")))?;
+
+        // Switch the admin's tenant_id in the database so subsequent requests use it.
+        sqlx::query("UPDATE identity.users SET tenant_id = $1 WHERE id = $2")
+            .bind(tid)
+            .bind(user.id)
+            .execute(&*state.pool)
+            .await
+            .ok();
+
+        let tc = TokenContext {
+            person_id: None,
+            context_id: Some(tid),
+            context_type: Some("employee".to_string()),
+            company_id: Some(tid), // placeholder
+            company_name: Some(tname.clone()),
+        };
+
+        // Synthesise a LoginContextDisplay for the response
+        let synth = signapps_db::shared::models::LoginContextDisplay {
+            id: tid,
+            user_id: user.id,
+            person_company_id: tid,
+            context_type: "employee".to_string(),
+            company_id: tid,
+            label: tname.clone(),
+            icon: Some("building".to_string()),
+            color: None,
+            is_active: true,
+            last_used_at: Some(chrono::Utc::now()),
+            created_at: chrono::Utc::now(),
+            company_name: tname,
+            company_logo: None,
+            role_in_company: "admin".to_string(),
+            job_title: Some("Platform Administrator".to_string()),
+        };
+        (tc, synth)
+    } else {
+        return Err(Error::NotFound(format!("Login context {context_id}")));
+    };
 
     let workspace_ids = if user.tenant_id.is_some() {
         let workspaces =
@@ -1090,19 +1184,17 @@ async fn issue_context_tokens(
         None
     };
 
-    let token_context = TokenContext {
-        person_id: None, // person_id resolved in a later task when person records exist
-        context_id: Some(ctx.id),
-        context_type: Some(ctx.context_type.clone()),
-        company_id: Some(ctx.company_id),
-        company_name: Some(ctx.company_name.clone()),
-    };
+    // Use the potentially updated tenant_id for the token.
+    let effective_tenant = token_context
+        .context_id
+        .filter(|_| user.role >= 3)
+        .or(user.tenant_id);
 
     let tokens = create_tokens(
         user.id,
         &user.username,
         user.role,
-        user.tenant_id,
+        effective_tenant,
         workspace_ids,
         token_context,
         &state.jwt_config,
@@ -1111,8 +1203,6 @@ async fn issue_context_tokens(
     tracing::info!(
         user_id = %claims.sub,
         context_id = %context_id,
-        context_type = %ctx.context_type,
-        company_id = %ctx.company_id,
         "Login context selected"
     );
 
@@ -1121,7 +1211,7 @@ async fn issue_context_tokens(
         refresh_token: tokens.refresh_token,
         token_type: "Bearer".to_string(),
         expires_in: tokens.expires_in,
-        context: ctx,
+        context: response_ctx,
     }))
 }
 
