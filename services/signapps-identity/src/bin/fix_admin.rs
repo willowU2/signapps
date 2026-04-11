@@ -9,7 +9,7 @@ use std::time::Duration;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Use ADMIN_PASSWORD env var or default dev password
     let password =
-        std::env::var("ADMIN_PASSWORD").unwrap_or_else(|_| "ChangeMeInProduction123!".to_string());
+        std::env::var("ADMIN_PASSWORD").unwrap_or_else(|_| "admin".to_string());
     let salt = SaltString::generate(&mut OsRng);
 
     // Explicitly using signapps_identity configuration logic if needed,
@@ -32,9 +32,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     sqlx::query(
         r#"
         INSERT INTO identity.users (username, email, password_hash, role, auth_provider)
-        VALUES ('admin', 'admin@signapps.local', $1, 1, 'local')
-        ON CONFLICT (username) 
-        DO UPDATE SET password_hash = EXCLUDED.password_hash
+        VALUES ('admin', 'admin@signapps.dev', $1, 3, 'local')
+        ON CONFLICT (username)
+        DO UPDATE SET password_hash = EXCLUDED.password_hash, role = 3
         "#,
     )
     .bind(&hash)

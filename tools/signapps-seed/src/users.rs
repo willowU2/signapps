@@ -15,6 +15,11 @@ const PASSWORD_HASH: &str =
     "$argon2id$v=19$m=65536,t=3,p=4$c2lnbmFwcHNkZXZzZWVk$\
      6W5XfZLvlvTjDJpBGjgqyNkBe1rPnkVfRBM2Z5QFxGE";
 
+/// Pre-computed argon2id hash of `"admin"` — used for the dev super-admin account.
+const ADMIN_PASSWORD_HASH: &str =
+    "$argon2id$v=19$m=19456,t=2,p=1$cnX8EzbWNrtOZUQaGFp2KA$\
+     Jmz/rru/FcSHziAcsg08VJvqcdLfayKVWulgYkuxW8g";
+
 // ─── Fixed UUIDs for minimal scenario ────────────────────────────────────────
 
 const ADMIN_ID: Uuid = uuid::uuid!("00000000-0000-0000-0000-000000000001");
@@ -205,6 +210,16 @@ pub async fn seed_acme(
     // (username, email_local, display_name, first_name, last_name, role, job_title)
     // Usernames are ASCII-safe; display names use full Unicode.
     let users: &[(&str, &str, &str, &str, &str, i16, &str)] = &[
+        // ── Dev super-admin (auto-login target: admin / password) ───────────
+        (
+            "admin",
+            "admin",
+            "Admin SignApps",
+            "Admin",
+            "SignApps",
+            3,
+            "Platform Administrator",
+        ),
         // ── CEO ──────────────────────────────────────────────────────────────
         (
             "pierre.durand",
@@ -855,6 +870,15 @@ pub async fn seed_acme(
         results.push((uid, person_id, role_name.to_string()));
         info!(user_id = %uid, %username, "seeded acme user");
     }
+
+    // Override the admin password hash to "admin" instead of "password".
+    sqlx::query(
+        "UPDATE identity.users SET password_hash = $1 WHERE username = 'admin' AND tenant_id = $2",
+    )
+    .bind(ADMIN_PASSWORD_HASH)
+    .bind(tenant_id)
+    .execute(pool)
+    .await?;
 
     info!(count = results.len(), "acme users seeded");
     Ok(results)
