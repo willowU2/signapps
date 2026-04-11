@@ -557,6 +557,54 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
+    // AD Provisioning routes
+    let ad_provision_routes = Router::new()
+        // bulk BEFORE /:person_id to avoid path-param conflict
+        .route("/bulk", post(handlers::ad_provisioning::bulk_provision))
+        .route("/:person_id", post(handlers::ad_provisioning::provision_person))
+        .route("/:person_id/preview", get(handlers::ad_provisioning::preview_provision))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // AD Delegation routes (manager-scoped)
+    let ad_delegation_routes = Router::new()
+        .route("/my-team/ad-accounts", get(handlers::ad_delegation::my_team_ad_accounts))
+        .route("/my-team/computers", get(handlers::ad_delegation::my_team_computers))
+        .route("/my-team/gpo", get(handlers::ad_delegation::my_team_gpo))
+        .route("/my-team/ad-accounts/:id/disable", post(handlers::ad_delegation::disable_account))
+        .route("/my-team/ad-accounts/:id/enable", post(handlers::ad_delegation::enable_account))
+        .route(
+            "/my-team/ad-accounts/:id/reset-password",
+            post(handlers::ad_delegation::reset_password),
+        )
+        .route("/my-team/ad-accounts/:id/move", put(handlers::ad_delegation::move_account))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // AD GPO resolution routes
+    let ad_gpo_routes = Router::new()
+        // /hierarchy/:node_id BEFORE /:node_id to avoid conflict
+        .route("/hierarchy/:node_id", get(handlers::ad_gpo::gpo_hierarchy))
+        .route("/no-inherit/:node_id", put(handlers::ad_gpo::toggle_no_inherit))
+        .route("/:node_id", get(handlers::ad_gpo::effective_gpo))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
     // My Team routes (manager/direct-reports resolution)
     let my_team_routes = Router::new()
         .route("/", get(handlers::my_team::get_my_team))
@@ -611,6 +659,9 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/workforce/expenses", expenses_routes)
         .nest("/api/v1/workforce/timesheet", timesheet_routes)
         .nest("/api/v1/workforce/my-team", my_team_routes)
+        .nest("/api/v1/workforce/ad/provision", ad_provision_routes)
+        .nest("/api/v1/workforce/ad/delegation", ad_delegation_routes)
+        .nest("/api/v1/workforce/ad/gpo", ad_gpo_routes)
         .nest("/health", health_routes)
         .merge(handlers::openapi::swagger_router())
         .layer(TraceLayer::new_for_http())

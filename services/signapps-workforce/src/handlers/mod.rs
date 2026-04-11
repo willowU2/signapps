@@ -7,6 +7,9 @@
 //! - validation: Gap analysis and leave simulation
 
 pub mod ad;
+pub mod ad_delegation;
+pub mod ad_gpo;
+pub mod ad_provisioning;
 pub mod ad_sync;
 pub mod attendance;
 pub mod audit;
