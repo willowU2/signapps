@@ -1,6 +1,8 @@
-use axum::Router;
+use axum::{middleware, Router};
 use signapps_cache::CacheService;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
+use signapps_common::middleware::{auth_middleware, tenant_context_middleware};
+use signapps_common::JwtConfig;
 use signapps_sharing::routes::sharing_routes;
 use signapps_sharing::{ResourceType, SharingEngine};
 use tower_http::cors::{AllowOrigin, CorsLayer};
@@ -25,8 +27,11 @@ async fn main() -> anyhow::Result<()> {
     let pool = signapps_db::create_pool(&config.database_url).await?;
     tracing::info!("Database connected");
 
+    // JWT config — auto-detects RS256 or HS256 from environment
+    let jwt_config = JwtConfig::from_env();
+
     // Build extended AppState (DB + live agent WS channels)
-    let state = handlers::AppState::new(pool.clone());
+    let state = handlers::AppState::new(pool.clone(), jwt_config);
 
     let sharing_engine = SharingEngine::new(pool.inner().clone(), CacheService::default_config());
 
@@ -57,13 +62,20 @@ async fn main() -> anyhow::Result<()> {
     let sharing_sub = sharing_routes("assets", ResourceType::Asset)
         .with_state(sharing_engine);
 
+    let protected_routes = routes::api_routes(state.clone())
+        .route_layer(middleware::from_fn(tenant_context_middleware))
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<handlers::AppState>,
+        ));
+
     let app = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url(
             "/api-docs/openapi.json",
             handlers::openapi::ItAssetsApiDoc::openapi(),
         ))
         .merge(routes::public_routes().with_state(state.pool.clone()))
-        .nest("/api/v1/it-assets", routes::api_routes(state))
+        .nest("/api/v1/it-assets", protected_routes)
         .merge(sharing_sub)
         .layer(cors)
         .layer(TraceLayer::new_for_http());

@@ -8,6 +8,7 @@ use axum::{
 use signapps_common::bootstrap::{env_or, init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin,
+    tenant_context_middleware,
 };
 use signapps_common::pg_events::PgEventBus;
 use signapps_common::{AiIndexerClient, AuthState, JwtConfig};
@@ -437,6 +438,7 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .merge(audit_routes)
         .merge(backup_routes)
         .route_layer(axum_mw::from_fn(require_admin))
+        .route_layer(axum_mw::from_fn(tenant_context_middleware))
         .route_layer(axum_mw::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
@@ -461,6 +463,7 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .merge(tags_routes)
         .merge(versions_routes)
         .merge(stats_routes)
+        .route_layer(axum_mw::from_fn(tenant_context_middleware))
         .route_layer(axum_mw::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

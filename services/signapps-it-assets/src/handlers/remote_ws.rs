@@ -21,6 +21,8 @@ use axum::{
 use dashmap::DashMap;
 use futures::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
+use signapps_common::middleware::AuthState;
+use signapps_common::JwtConfig;
 use signapps_db::DatabasePool;
 use std::sync::Arc;
 use tokio::sync::broadcast;
@@ -32,6 +34,7 @@ use uuid::Uuid;
 #[derive(Clone)]
 pub struct AppState {
     pub pool: DatabasePool,
+    pub jwt_config: JwtConfig,
     /// Map of agent_id → broadcast sender for commands directed to that agent.
     pub agent_channels: Arc<DashMap<Uuid, broadcast::Sender<String>>>,
     /// Map of agent_id → broadcast sender for frames coming from that agent.
@@ -42,13 +45,20 @@ pub struct AppState {
 
 impl AppState {
     /// Create a new AppState wrapping the database pool.
-    pub fn new(pool: DatabasePool) -> Self {
+    pub fn new(pool: DatabasePool, jwt_config: JwtConfig) -> Self {
         Self {
             pool,
+            jwt_config,
             agent_channels: Arc::new(DashMap::new()),
             frame_channels: Arc::new(DashMap::new()),
             recording_paths: Arc::new(DashMap::new()),
         }
+    }
+}
+
+impl AuthState for AppState {
+    fn jwt_config(&self) -> &JwtConfig {
+        &self.jwt_config
     }
 }
 
