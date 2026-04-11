@@ -154,7 +154,7 @@ pub async fn list_entries(
     Extension(claims): Extension<Claims>,
     Query(params): Query<TimesheetQueryParams>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let owner_id = claims.sub.parse::<Uuid>().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let owner_id = claims.sub;
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
 
@@ -239,7 +239,7 @@ pub async fn create_entry(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateEntryRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let owner_id = claims.sub.parse::<Uuid>().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let owner_id = claims.sub;
 
     // Calculate duration from end_time if not explicitly provided
     let duration = payload.duration_seconds.unwrap_or_else(|| {
@@ -305,7 +305,7 @@ pub async fn update_entry(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateEntryRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let owner_id = claims.sub.parse::<Uuid>().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let owner_id = claims.sub;
 
     let record: Option<TimesheetEntry> = sqlx::query_as(
         r#"UPDATE timesheet.entries
@@ -369,7 +369,7 @@ pub async fn delete_entry(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let owner_id = claims.sub.parse::<Uuid>().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let owner_id = claims.sub;
 
     let result = sqlx::query(
         r#"DELETE FROM timesheet.entries WHERE id = $1 AND owner_id = $2"#,
@@ -422,7 +422,7 @@ pub async fn start_timer(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<StartTimerRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let owner_id = claims.sub.parse::<Uuid>().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let owner_id = claims.sub;
 
     // Check for existing running timer
     let running: Option<Uuid> = sqlx::query_scalar(
@@ -492,7 +492,7 @@ pub async fn stop_timer(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let owner_id = claims.sub.parse::<Uuid>().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let owner_id = claims.sub;
 
     let record: Option<TimesheetEntry> = sqlx::query_as(
         r#"UPDATE timesheet.entries
@@ -546,7 +546,7 @@ pub async fn get_stats(
     Extension(claims): Extension<Claims>,
     Query(params): Query<StatsQueryParams>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let owner_id = claims.sub.parse::<Uuid>().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let owner_id = claims.sub;
 
     // Determine interval based on period
     let interval = match params.period.as_deref().unwrap_or("week") {

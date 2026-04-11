@@ -402,6 +402,13 @@ pub async fn webdav_auth(
         exp: now + 3600,
         iat: now,
         token_type: "access".into(),
+        person_id: None,
+        context_id: None,
+        context_type: None,
+        company_id: None,
+        company_name: None,
+        aud: None,
+        iss: None,
     };
 
     request.extensions_mut().insert(user_id);

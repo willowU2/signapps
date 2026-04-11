@@ -142,7 +142,7 @@ pub async fn list_expenses(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ExpenseQueryParams>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let owner_id = claims.sub.parse::<Uuid>().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let owner_id = claims.sub;
     let limit = params.limit.unwrap_or(100);
     let offset = params.offset.unwrap_or(0);
 
@@ -209,7 +209,7 @@ pub async fn create_expense(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateExpenseRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let owner_id = claims.sub.parse::<Uuid>().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let owner_id = claims.sub;
 
     let record: ExpenseReport = sqlx::query_as(
         r#"INSERT INTO expenses.expense_reports
@@ -269,7 +269,7 @@ pub async fn update_expense(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateExpenseRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let owner_id = claims.sub.parse::<Uuid>().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let owner_id = claims.sub;
 
     let record: Option<ExpenseReport> = sqlx::query_as(
         r#"UPDATE expenses.expense_reports
@@ -336,7 +336,7 @@ pub async fn delete_expense(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let owner_id = claims.sub.parse::<Uuid>().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let owner_id = claims.sub;
 
     let result = sqlx::query(
         r#"DELETE FROM expenses.expense_reports
@@ -389,7 +389,7 @@ pub async fn submit_expense(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let owner_id = claims.sub.parse::<Uuid>().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let owner_id = claims.sub;
 
     let record: Option<ExpenseReport> = sqlx::query_as(
         r#"UPDATE expenses.expense_reports
@@ -447,7 +447,7 @@ pub async fn approve_expense(
     Path(id): Path<Uuid>,
     Json(_payload): Json<ApprovalRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let approver_id = claims.sub.parse::<Uuid>().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let approver_id = claims.sub;
 
     let record: Option<ExpenseReport> = sqlx::query_as(
         r#"UPDATE expenses.expense_reports
@@ -505,7 +505,7 @@ pub async fn reject_expense(
     Path(id): Path<Uuid>,
     Json(_payload): Json<ApprovalRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let approver_id = claims.sub.parse::<Uuid>().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let approver_id = claims.sub;
 
     let record: Option<ExpenseReport> = sqlx::query_as(
         r#"UPDATE expenses.expense_reports
