@@ -16,6 +16,7 @@ import {
 import type { PortalMode } from "@/components/layout/app-layout";
 import { Pin } from "lucide-react";
 import { useSidebarBadges } from "@/hooks/use-sidebar-badges";
+import { useTeamStore } from "@/stores/team-store";
 import {
   LayoutDashboard,
   Mail,
@@ -332,6 +333,7 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
   const activeContext = useAuthStore((s) => s.activeContext);
+  const hasReports = useTeamStore((s) => s.hasReports);
   const {
     sidebarCollapsed,
     sidebarPinned,
@@ -382,6 +384,24 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
           return section;
         })
     : navSections;
+
+  // Conditionally inject "Mon équipe" into the workspace section for managers
+  const visibleNavSectionsWithTeam = visibleNavSections.map((section) => {
+    if (section.id !== "workspace") return section;
+    const myTeamItem: NavItem = {
+      href: "/my-team",
+      icon: Users,
+      label: "Mon équipe",
+      color: "text-blue-500",
+      badgeKey: null,
+    };
+    const alreadyPresent = section.items.some((i) => i.href === "/my-team");
+    if (hasReports && !alreadyPresent) {
+      return { ...section, items: [...section.items, myTeamItem] };
+    }
+    return section;
+  });
+
   const { labels, addLabel, removeLabel } = useLabelsStore();
   const { data: badges } = useSidebarBadges();
   const {
@@ -821,7 +841,7 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
           {topNavItems.map((item) => renderNavLink(item))}
 
           {/* Grouped collapsible sections */}
-          {visibleNavSections.map((section) => {
+          {visibleNavSectionsWithTeam.map((section) => {
             const isOpen = !!openSections[section.id];
             const hasActive = section.items.some((item) =>
               pathname.startsWith(item.href),
