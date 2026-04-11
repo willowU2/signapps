@@ -91,7 +91,9 @@ export function OrgTreeList({
       );
     } catch (err) {
       setError('Erreur lors du chargement de l\'arborescence');
-      console.error('Failed to load org tree:', err);
+      if ((err as any)?.response?.status !== 401 && (err as any)?.response?.status !== 403) {
+        console.error('Failed to load org tree:', err);
+      }
     } finally {
       setLoading(false);
     }

@@ -149,45 +149,7 @@ type ActiveTab =
 
 // ─── Seed (shown only when API is unavailable) ───────────────────────────────
 
-const SEED_CONTACTS: Contact[] = [
-  {
-    id: "1",
-    name: "Alice Martin",
-    email: "alice@example.com",
-    phone: "+33 6 11 22 33 44",
-    company: "Acme Corp",
-    tags: ["client"],
-    favorite: true,
-    group: "Clients",
-    birthday: "03-15",
-    city: "Paris",
-    country: "France",
-  },
-  {
-    id: "2",
-    name: "Bob Dupont",
-    email: "bob@example.com",
-    phone: "+33 6 55 66 77 88",
-    company: "Beta Ltd",
-    tags: ["partner"],
-    favorite: false,
-    group: "Partenaires",
-    birthday: "07-22",
-    city: "Lyon",
-    country: "France",
-  },
-  {
-    id: "3",
-    name: "Carol Blanc",
-    email: "carol@example.com",
-    company: "Gamma SAS",
-    tags: ["prospect"],
-    favorite: false,
-    group: "Prospects",
-    city: "Marseille",
-    country: "France",
-  },
-];
+const SEED_CONTACTS: Contact[] = [];
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
