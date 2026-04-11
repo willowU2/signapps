@@ -13,7 +13,7 @@ use axum::{
     Router,
 };
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
-use signapps_common::middleware::{auth_middleware, AuthState};
+use signapps_common::middleware::{auth_middleware, tenant_context_middleware, AuthState};
 use signapps_common::JwtConfig;
 use tower_http::{
     cors::{AllowOrigin, CorsLayer},
@@ -104,7 +104,8 @@ fn create_router(state: AppState) -> Router {
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ));
+        ))
+        .route_layer(middleware::from_fn(tenant_context_middleware));
 
     public_routes
         .merge(vault_routes)

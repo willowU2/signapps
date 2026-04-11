@@ -3,7 +3,7 @@
 
 use axum::{middleware, Router};
 use signapps_common::bootstrap::{env_or, init_tracing, load_env};
-use signapps_common::middleware::{auth_middleware, AuthState};
+use signapps_common::middleware::{auth_middleware, tenant_context_middleware, AuthState};
 use signapps_common::JwtConfig;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
@@ -190,7 +190,8 @@ fn build_router(state: AppState) -> Router {
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ));
+        ))
+        .route_layer(middleware::from_fn(tenant_context_middleware));
 
     let cors = CorsLayer::new()
         .allow_origin(tower_http::cors::Any)

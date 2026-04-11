@@ -9,7 +9,7 @@ use axum::{
     Router,
 };
 use signapps_common::bootstrap::{env_or, init_tracing, load_env};
-use signapps_common::middleware::{auth_middleware, AuthState};
+use signapps_common::middleware::{auth_middleware, tenant_context_middleware, AuthState};
 use signapps_common::pg_events::PgEventBus;
 use signapps_common::JwtConfig;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
@@ -318,7 +318,8 @@ fn create_router(state: AppState) -> Router {
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ));
+        ))
+        .route_layer(middleware::from_fn(tenant_context_middleware));
 
     public_routes
         .merge(protected_routes)
