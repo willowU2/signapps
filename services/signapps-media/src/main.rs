@@ -6,7 +6,7 @@ use axum::{
 };
 use dashmap::DashMap;
 use signapps_common::bootstrap::{env_or, init_tracing, load_env};
-use signapps_common::middleware::auth_middleware;
+use signapps_common::middleware::{auth_middleware, tenant_context_middleware};
 use signapps_common::{AuthState, JwtConfig};
 use signapps_runtime::ModelManager;
 use sqlx::PgPool;
@@ -254,7 +254,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route_layer(middleware::from_fn_with_state(
             (*state).clone(),
             auth_middleware::<AppState>,
-        ));
+        ))
+        .route_layer(middleware::from_fn(tenant_context_middleware));
 
     let cors = CorsLayer::new()
         .allow_origin(tower_http::cors::Any)

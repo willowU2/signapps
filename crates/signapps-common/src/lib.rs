@@ -25,6 +25,7 @@
 //! - [`middleware::metrics`] - Prometheus metrics middleware and handlers
 //! - [`pii`] - PII Cipher (AES-256-GCM) for encrypting PII fields before DB storage
 //! - [`plugins`] - Plugin system architecture (trait, manifest, registry)
+//! - [`portal`] - Portal context utilities (employee vs client/supplier/partner detection)
 //! - [`rate_limit`] - Token bucket rate limiter middleware
 //! - [`reporting`] - Auto-PDF reporting with scheduling and multi-recipient delivery
 //! - [`retention`] - RGPD data retention policies (policy engine, expiry checks)
@@ -89,6 +90,7 @@ pub mod openapi;
 pub mod pg_events;
 /// PostgreSQL NOTIFY listener that forwards database events to a broadcast channel.
 pub mod pg_listener;
+pub mod portal;
 // pii module extracted to signapps-pii crate
 pub use signapps_pii as pii;
 // plugins module extracted to signapps-plugins crate
