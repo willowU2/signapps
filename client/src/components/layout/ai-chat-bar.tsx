@@ -135,6 +135,26 @@ export function AiChatBar() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef({ x: 0, y: 0, startX: 0, startY: 0, moved: false });
+
+  // Load saved position on mount (client-side only)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("ai-chat-pos");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Clamp it safely using window size (assuming icon is ~60x60, origin is at bottom center)
+        const maxX = window.innerWidth / 2 - 30;
+        const minX = -window.innerWidth / 2 + 30;
+        const minY = -window.innerHeight + 100;
+        const maxY = 20;
+
+        const clampedX = Math.max(minX, Math.min(maxX, parsed.x || 0));
+        const clampedY = Math.max(minY, Math.min(maxY, parsed.y || 0));
+        
+        setPosition({ x: clampedX, y: clampedY });
+      }
+    } catch {}
+  }, []);
   
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -223,10 +243,13 @@ export function AiChatBar() {
     
     if (dragRef.current.moved) {
       setTimeout(() => setIsDragging(false), 50);
+      try {
+        localStorage.setItem("ai-chat-pos", JSON.stringify(position));
+      } catch {}
     } else {
       setIsDragging(false);
     }
-  }, [isMinimized]);
+  }, [isMinimized, position]);
 
   const handleBotClick = useCallback(() => {
     if (isDragging) return;
@@ -734,11 +757,14 @@ export function AiChatBar() {
       )}
     >
       <div 
-        className="w-full max-w-2xl px-4 pointer-events-auto flex flex-col items-center"
+        className={cn(
+          "px-4 pointer-events-auto flex flex-col items-center",
+          isMinimized ? "w-auto" : "w-full max-w-2xl"
+        )}
         style={{
-          transform: `translate(${position.x}px, ${position.y}px)`,
+          transform: isMinimized ? `translate(${position.x}px, ${position.y}px)` : `translate(0px, 0px)`,
           transitionDuration: isDragging ? '0ms' : '300ms',
-          transitionProperty: isDragging ? 'none' : 'transform',
+          transitionProperty: isDragging ? 'none' : 'transform, width',
         }}
       >
         {/* Suggestions (only when collapsed and focused) */}

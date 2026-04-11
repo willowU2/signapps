@@ -636,7 +636,15 @@ async function handleAuthError(
             .post(`${identityUrl}/auth/refresh`, null, {
               withCredentials: true,
             })
-            .then(() => {})
+            .then((res) => {
+              const { access_token, refresh_token } = res.data;
+              if (access_token) {
+                localStorage.setItem("access_token", access_token);
+              }
+              if (refresh_token) {
+                localStorage.setItem("refresh_token", refresh_token);
+              }
+            })
             .finally(() => {
               refreshPromise = null;
             });
