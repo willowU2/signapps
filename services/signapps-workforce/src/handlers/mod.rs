@@ -18,6 +18,7 @@ pub mod expenses;
 pub mod groups;
 pub mod learning;
 pub mod lms;
+pub mod my_team;
 pub mod supply_chain;
 pub mod openapi;
 pub mod org;

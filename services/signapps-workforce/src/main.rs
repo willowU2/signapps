@@ -557,6 +557,37 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
+    // My Team routes (manager/direct-reports resolution)
+    let my_team_routes = Router::new()
+        .route("/", get(handlers::my_team::get_my_team))
+        .route("/extended", get(handlers::my_team::get_extended_team))
+        .route("/manager", get(handlers::my_team::get_manager))
+        .route("/peers", get(handlers::my_team::get_peers))
+        .route("/summary", get(handlers::my_team::get_team_summary))
+        .route(
+            "/pending-actions",
+            get(handlers::my_team::get_pending_actions),
+        )
+        .route(
+            "/leaves/:id/approve",
+            post(handlers::my_team::approve_leave),
+        )
+        .route(
+            "/leaves/:id/reject",
+            post(handlers::my_team::reject_leave),
+        )
+        .route(
+            "/timesheets/:id/approve",
+            post(handlers::my_team::approve_timesheet),
+        )
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
     // Combine all routes
     Router::new()
         .nest("/api/v1/workforce/ad", ad_routes)
@@ -579,6 +610,7 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/workforce/supply-chain", supply_chain_routes)
         .nest("/api/v1/workforce/expenses", expenses_routes)
         .nest("/api/v1/workforce/timesheet", timesheet_routes)
+        .nest("/api/v1/workforce/my-team", my_team_routes)
         .nest("/health", health_routes)
         .merge(handlers::openapi::swagger_router())
         .layer(TraceLayer::new_for_http())
