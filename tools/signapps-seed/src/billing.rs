@@ -75,15 +75,20 @@ async fn seed_invoices(
     for inv_idx in 0..count {
         let invoice_id = Uuid::new_v4();
 
-        // billing.invoices has only `id`
+        // billing.invoices requires: number (NOT NULL), amount_cents, currency, status, issued_at, metadata
+        let number = format!("INV-SEED-{:06}", inv_idx + 1);
+        let total_invoice_cents: i32 = rng.gen_range(10_000i32..=500_000);
         sqlx::query(
             r#"
-            INSERT INTO billing.invoices (id)
-            VALUES ($1)
+            INSERT INTO billing.invoices
+                (id, number, amount_cents, currency, status, issued_at, metadata)
+            VALUES ($1, $2, $3, 'EUR', 'draft', NOW(), '{}')
             ON CONFLICT DO NOTHING
             "#,
         )
         .bind(invoice_id)
+        .bind(&number)
+        .bind(total_invoice_cents)
         .execute(pool)
         .await?;
 

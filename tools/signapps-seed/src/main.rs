@@ -14,6 +14,7 @@ mod helpers;
 mod mail;
 mod notifications;
 mod org;
+mod schema;
 mod sharing;
 mod tenants;
 mod users;
@@ -79,6 +80,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let pool = sqlx::PgPool::connect(&cli.database_url).await?;
 
+    // Ensure all required schema DDL is applied before seeding.
+    // This handles environments where some migrations are pending.
+    schema::ensure_schema(&pool).await;
+
     if cli.reset {
         info!("reset requested — truncating seed data");
         reset_seed_data(&pool).await?;
@@ -90,10 +95,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         SeedMode::Startup => seed_startup(&pool).await?,
         SeedMode::Chaos => seed_chaos(&pool).await?,
         SeedMode::Full => {
-            info!("mode=full: seeding all 3 tenants (Acme + Startup + Chaos)");
+            info!("mode=full: seeding all 3 tenants");
             seed_acme(&pool).await?;
             seed_startup(&pool).await?;
             seed_chaos(&pool).await?;
+            // Make admin platform-level (no tenant)
+            info!("setting admin as platform-level user");
+            sqlx::query("UPDATE identity.users SET tenant_id = NULL WHERE username = 'admin'")
+                .execute(&pool)
+                .await?;
         }
     }
 
@@ -171,6 +181,21 @@ async fn reset_seed_data(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::error::
     // Truncate in dependency order (CASCADE handles FK references).
     // We truncate only the tables that the seed populates.
     let tables = [
+        // New modules — leaf tables with no dependents
+        "sharing.grants",
+        "sharing.policies",
+        "notifications.items",
+        "notifications.preferences",
+        "gamification.xp_events",
+        "gamification.badges",
+        "gamification.user_xp",
+        "billing.payments",
+        "billing.line_items",
+        "billing.invoices",
+        "chat.messages",
+        "chat.channels",
+        "drive.permissions",
+        "drive.nodes",
         // Calendar / scheduling (leaf tables first, but CASCADE handles it)
         "calendar.events",
         "calendar.event_attendees",

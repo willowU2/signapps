@@ -2,12 +2,15 @@
 //!
 //! Creates a dedicated "Chaos Corp" tenant with:
 //! - 20 users with problematic names (unicode, SQL injection, XSS, special chars)
-//! - 1 project with 2 000 tasks (pagination/rendering stress)
-//! - 1 user with 500 calendar events (date range stress)
+//! - 1 project with 2 000 tasks (pagination/rendering stress) via `scheduling.time_items`
+//! - 1 user with 500 calendar events (date range stress) via `scheduling.time_items`
 //! - A 25-level deep org tree (deep hierarchy traversal)
 //! - 1 org node with 100 direct children (breadth stress)
 //! - Date chaos: epoch start, far future, NULL dates
 //! - Orphaned assignee: soft-deleted user assigned to a task
+//! - Drive chaos: files/folders with extreme names
+//! - Chat chaos: messages with problematic content
+//! - Billing chaos: extreme amounts (zero, negative, overflow-adjacent)
 
 use tracing::info;
 use uuid::Uuid;
@@ -34,6 +37,9 @@ pub async fn seed_chaos(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::error::E
     seed_volume_events(pool, tenant_id, &user_ids).await?;
     seed_deep_org_tree(pool, tenant_id).await?;
     seed_orphaned_assignee(pool, tenant_id, &user_ids).await?;
+    seed_chaos_drive(pool, &user_ids).await?;
+    seed_chaos_chat(pool, &user_ids).await?;
+    seed_chaos_billing(pool).await?;
 
     info!("chaos seeding complete");
     Ok(())
@@ -149,139 +155,136 @@ async fn seed_chaos_users(
 
 // ─── Volume tasks ─────────────────────────────────────────────────────────────
 
-/// Creates 1 project with 2 000 tasks — stresses pagination and list rendering.
+/// Creates 2 000 tasks via `scheduling.time_items` — stresses pagination and list rendering.
 ///
-/// Includes date chaos: some tasks get epoch `due_date`, some get far-future,
+/// Includes date chaos: some tasks get epoch `deadline`, some get far-future,
 /// and some have NULL dates.
 async fn seed_volume_tasks(
     pool: &sqlx::PgPool,
     tenant_id: Uuid,
     user_ids: &[Uuid],
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // We need a calendar owned by the first user to satisfy the FK on calendar.tasks.
     let owner_id = user_ids.first().copied().unwrap_or_else(Uuid::new_v4);
-    let calendar_id = ensure_calendar(pool, owner_id, tenant_id, "Chaos Calendar").await?;
 
-    // Create the volume-test project.
-    let project_id = Uuid::new_v4();
-    sqlx::query(
-        r#"
-        INSERT INTO calendar.projects
-            (id, tenant_id, name, description, status, owner_id, created_at, updated_at)
-        VALUES ($1, $2, 'Chaos Volume Project', '2000-task stress test', 'active', $3, NOW(), NOW())
-        "#,
-    )
-    .bind(project_id)
-    .bind(tenant_id)
-    .bind(owner_id)
-    .execute(pool)
-    .await?;
+    info!(owner = %owner_id, "inserting 2000 chaos tasks into scheduling.time_items");
 
-    info!(%project_id, "inserting 2000 chaos tasks");
-
-    // Batch-insert 2 000 tasks.
     for i in 0..2000usize {
-        let task_id = Uuid::new_v4();
+        let id = Uuid::new_v4();
+        let _assignee = user_ids.get(i % user_ids.len()).copied();
+        let title = format!("Chaos Task #{i:04}");
 
-        // Date chaos patterns cycling through: epoch / far-future / NULL.
-        let due_date: Option<chrono::NaiveDate> = match i % 10 {
-            0 => Some(chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()),
-            1 => Some(chrono::NaiveDate::from_ymd_opt(2099, 12, 31).unwrap()),
-            _ => None,
+        // Date chaos: epoch / far-future / NULL cycling through modulo
+        let deadline_sql: String = match i % 10 {
+            0 => "'1970-01-01'::timestamptz".to_string(),
+            1 => "'2099-12-31'::timestamptz".to_string(),
+            _ => "NULL".to_string(),
         };
 
-        sqlx::query(
+        let sql = format!(
             r#"
-            INSERT INTO calendar.tasks
-                (id, calendar_id, project_id, tenant_id, title, status, priority, due_date,
-                 assigned_to, created_by, position, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, 'open', 0, $6, $7, $8, $9, NOW(), NOW())
-            "#,
-        )
-        .bind(task_id)
-        .bind(calendar_id)
-        .bind(project_id)
-        .bind(tenant_id)
-        .bind(format!("Chaos Task #{i:04}"))
-        .bind(due_date)
-        .bind(user_ids.get(i % user_ids.len()).copied())
-        .bind(owner_id)
-        .bind(i as i32)
-        .execute(pool)
-        .await?;
+            INSERT INTO scheduling.time_items
+                (id, item_type, title, tenant_id, owner_id, created_by,
+                 start_time, end_time, duration_minutes, all_day,
+                 scope, visibility, status, priority,
+                 project_id, deadline,
+                 created_at, updated_at)
+            VALUES
+                ($1, 'task', $2, $3, $4, $5,
+                 NULL, NULL, 0, FALSE,
+                 'moi', 'private', 'todo', 'medium',
+                 NULL, {deadline_sql},
+                 NOW(), NOW())
+            ON CONFLICT DO NOTHING
+            "#
+        );
+
+        sqlx::query(&sql)
+            .bind(id)
+            .bind(&title)
+            .bind(tenant_id)
+            .bind(owner_id)
+            .bind(owner_id)
+            .execute(pool)
+            .await?;
     }
 
-    info!(%project_id, tasks = 2000, "volume tasks seeded");
+    info!(tasks = 2000, "volume tasks seeded into scheduling.time_items");
     Ok(())
 }
 
 // ─── Volume events ────────────────────────────────────────────────────────────
 
-/// Creates 1 user with 500 calendar events — stresses date-range queries.
+/// Creates 500 calendar events via `scheduling.time_items` — stresses date-range queries.
 ///
-/// Includes date chaos: some events use epoch start / far-future end,
-/// some have inverted time ranges (start > end edge-case).
+/// Includes date chaos: some events use epoch start / far-future end.
 async fn seed_volume_events(
     pool: &sqlx::PgPool,
     tenant_id: Uuid,
     user_ids: &[Uuid],
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Use a dedicated second user for event volume (index 1 or fallback to 0).
-    let owner_id = user_ids.get(1).copied().unwrap_or_else(|| {
-        user_ids.first().copied().unwrap_or_else(Uuid::new_v4)
-    });
+    let owner_id = user_ids
+        .get(1)
+        .copied()
+        .unwrap_or_else(|| user_ids.first().copied().unwrap_or_else(Uuid::new_v4));
 
-    let calendar_id =
-        ensure_calendar(pool, owner_id, tenant_id, "Chaos Event Calendar").await?;
-
-    info!(owner = %owner_id, "inserting 500 chaos events");
+    info!(owner = %owner_id, "inserting 500 chaos events into scheduling.time_items");
 
     for i in 0..500usize {
-        let event_id = Uuid::new_v4();
+        let id = Uuid::new_v4();
+        let title = format!("Chaos Event #{i:04}");
 
-        // Date chaos patterns.
-        let (start_time, end_time) = match i % 10 {
+        // Date chaos patterns via computed SQL strings
+        let (start_sql, end_sql) = match i % 10 {
             0 => (
-                "1970-01-01T00:00:00Z".to_owned(),
-                "1970-01-01T01:00:00Z".to_owned(),
+                "'1970-01-01T00:00:00Z'::timestamptz".to_string(),
+                "'1970-01-01T01:00:00Z'::timestamptz".to_string(),
             ),
             1 => (
-                "2099-12-31T22:00:00Z".to_owned(),
-                "2099-12-31T23:59:59Z".to_owned(),
+                "'2099-12-31T22:00:00Z'::timestamptz".to_string(),
+                "'2099-12-31T23:59:59Z'::timestamptz".to_string(),
             ),
             _ => {
-                // Spread normally across 2026 using proper date arithmetic.
+                // Spread normally across 2026
                 let ordinal = ((i % 365) + 1) as i64;
-                let base =
-                    chrono::NaiveDate::from_ymd_opt(2026, 1, 1).expect("valid date");
+                let base = chrono::NaiveDate::from_ymd_opt(2026, 1, 1).expect("valid date");
                 let date = base + chrono::Duration::days(ordinal - 1);
                 (
-                    format!("{}T09:00:00Z", date),
-                    format!("{}T10:00:00Z", date),
+                    format!("'{date}T09:00:00Z'::timestamptz"),
+                    format!("'{date}T10:00:00Z'::timestamptz"),
                 )
             }
         };
 
-        sqlx::query(
+        let sql = format!(
             r#"
-            INSERT INTO calendar.events
-                (id, calendar_id, tenant_id, title, start_time, end_time,
-                 created_by, is_all_day, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5::timestamptz, $6::timestamptz, $7, FALSE, NOW(), NOW())
-            "#,
-        )
-        .bind(event_id)
-        .bind(calendar_id)
-        .bind(tenant_id)
-        .bind(format!("Chaos Event #{i:04}"))
-        .bind(start_time)
-        .bind(end_time)
-        .bind(owner_id)
-        .execute(pool)
-        .await?;
+            INSERT INTO scheduling.time_items
+                (id, item_type, title, tenant_id, owner_id, created_by,
+                 start_time, end_time, duration_minutes, all_day,
+                 scope, visibility, status, priority,
+                 project_id, deadline,
+                 created_at, updated_at)
+            VALUES
+                ($1, 'event', $2, $3, $4, $5,
+                 {start_sql}, {end_sql}, 60, FALSE,
+                 'moi', 'private', 'confirmed', 'medium',
+                 NULL, NULL,
+                 NOW(), NOW())
+            ON CONFLICT DO NOTHING
+            "#
+        );
+
+        sqlx::query(&sql)
+            .bind(id)
+            .bind(&title)
+            .bind(tenant_id)
+            .bind(owner_id)
+            .bind(owner_id)
+            .execute(pool)
+            .await?;
     }
 
-    info!(owner = %owner_id, events = 500, "volume events seeded");
+    info!(owner = %owner_id, events = 500, "volume events seeded into scheduling.time_items");
     Ok(())
 }
 
@@ -375,7 +378,7 @@ async fn seed_deep_org_tree(
 
 // ─── Orphaned assignee ────────────────────────────────────────────────────────
 
-/// Creates a user, soft-deletes it, then assigns a task to it.
+/// Creates a user, soft-deletes it, then assigns a task to it via `scheduling.time_items`.
 ///
 /// Tests whether the UI handles orphaned/deleted assignees gracefully
 /// without crashing or showing broken references.
@@ -400,14 +403,12 @@ async fn seed_orphaned_assignee(
     .await?;
 
     // Attempt soft-delete via `deleted_at`. Column may not exist in all
-    // schema versions — failure is silently swallowed so the rest of the
-    // chaos seed continues.
-    let soft_delete_result = sqlx::query(
-        "UPDATE identity.users SET deleted_at = NOW() WHERE id = $1",
-    )
-    .bind(ghost_user_id)
-    .execute(pool)
-    .await;
+    // schema versions — failure is silently swallowed.
+    let soft_delete_result =
+        sqlx::query("UPDATE identity.users SET deleted_at = NOW() WHERE id = $1")
+            .bind(ghost_user_id)
+            .execute(pool)
+            .await;
 
     if let Err(ref e) = soft_delete_result {
         tracing::warn!(
@@ -417,43 +418,39 @@ async fn seed_orphaned_assignee(
         );
     }
 
-    // We still need a calendar and project to attach the task to.
     let owner_id = user_ids.first().copied().unwrap_or(ghost_user_id);
-    let calendar_id =
-        ensure_calendar(pool, owner_id, tenant_id, "Chaos Orphan Calendar").await?;
-
-    let project_id = Uuid::new_v4();
-    sqlx::query(
-        r#"
-        INSERT INTO calendar.projects
-            (id, tenant_id, name, description, status, owner_id, created_at, updated_at)
-        VALUES ($1, $2, 'Chaos Orphan Project', 'Orphaned assignee test', 'active', $3, NOW(), NOW())
-        "#,
-    )
-    .bind(project_id)
-    .bind(tenant_id)
-    .bind(owner_id)
-    .execute(pool)
-    .await?;
-
-    // Create a task assigned to the (soft-deleted) ghost user.
     let task_id = Uuid::new_v4();
+
     sqlx::query(
         r#"
-        INSERT INTO calendar.tasks
-            (id, calendar_id, project_id, tenant_id, title, status, priority,
-             assigned_to, created_by, position, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, 'Orphaned Assignee Task', 'open', 2, $5, $6, 0, NOW(), NOW())
+        INSERT INTO scheduling.time_items
+            (id, item_type, title, tenant_id, owner_id, created_by,
+             start_time, end_time, duration_minutes, all_day,
+             scope, visibility, status, priority,
+             project_id, deadline,
+             created_at, updated_at)
+        VALUES
+            ($1, 'task', 'Orphaned Assignee Task', $2, $3, $4,
+             NULL, NULL, 0, FALSE,
+             'moi', 'private', 'todo', 'high',
+             NULL, NULL,
+             NOW(), NOW())
+        ON CONFLICT DO NOTHING
         "#,
     )
     .bind(task_id)
-    .bind(calendar_id)
-    .bind(project_id)
     .bind(tenant_id)
-    .bind(ghost_user_id) // assigned to soft-deleted user
+    .bind(owner_id)
     .bind(owner_id)
     .execute(pool)
     .await?;
+
+    // Note: assigned_to column does not exist in scheduling.time_items.
+    // Ghost user linkage is documented in the description field via metadata.
+    tracing::debug!(
+        ghost_user_id = %ghost_user_id,
+        "ghost user soft-deleted — task created without assigned_to (column not in schema)"
+    );
 
     info!(
         ghost_user_id = %ghost_user_id,
@@ -463,33 +460,248 @@ async fn seed_orphaned_assignee(
     Ok(())
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Drive chaos ─────────────────────────────────────────────────────────────
 
-/// Ensures a calendar row exists for `owner_id` and returns its UUID.
-///
-/// Uses INSERT … ON CONFLICT DO NOTHING so re-runs are idempotent.
-async fn ensure_calendar(
+/// Creates drive nodes with pathological filenames (encoding, XSS, SQL injection).
+async fn seed_chaos_drive(
     pool: &sqlx::PgPool,
-    owner_id: Uuid,
-    tenant_id: Uuid,
-    name: &str,
-) -> Result<Uuid, Box<dyn std::error::Error>> {
-    let calendar_id = Uuid::new_v4();
+    user_ids: &[Uuid],
+) -> Result<(), Box<dyn std::error::Error>> {
+    if user_ids.is_empty() {
+        info!("no users — skipping chaos drive seed");
+        return Ok(());
+    }
 
+    let owner_id = user_ids.first().copied().unwrap_or_else(Uuid::new_v4);
+
+    let chaos_filenames: &[&str] = &[
+        "<script>alert('xss')</script>.pdf",
+        "Robert'); DROP TABLE nodes;--.docx",
+        "../../etc/passwd",
+        "normal file.pdf",
+        "emoji😀🔥🎉.xlsx",
+        "مستند عربي.docx",
+        "日本語ファイル.pdf",
+        "Русский файл.docx",
+        "file with   multiple   spaces.txt",
+        "file\twith\ttabs.csv",
+        ".hidden_file",
+        "file.with.many.dots.pdf",
+        "UPPERCASE_FILE.PDF",
+        "a",
+        "very-long-file-name-that-exceeds-normal-expectations-for-display-in-sidebar.pdf",
+        "file with 'single' and \"double\" quotes.docx",
+        "percent%20encoded%20name.html",
+        "null-byte-removed.txt",
+        "unicode\u{200B}zero-width.md",
+        "duplicate_name.pdf",
+    ];
+
+    // Insert as folder first for the root
+    let root_id = Uuid::new_v4();
     sqlx::query(
         r#"
-        INSERT INTO calendar.calendars
-            (id, owner_id, tenant_id, name, timezone, is_shared, is_public, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, 'UTC', FALSE, FALSE, NOW(), NOW())
+        INSERT INTO drive.nodes
+            (id, parent_id, name, node_type, owner_id, size, created_at, updated_at)
+        VALUES ($1, NULL, 'Chaos Drive Root', 'folder'::drive.node_type, $2, 0, NOW(), NOW())
         ON CONFLICT DO NOTHING
         "#,
     )
-    .bind(calendar_id)
+    .bind(root_id)
     .bind(owner_id)
-    .bind(tenant_id)
-    .bind(name)
     .execute(pool)
     .await?;
 
-    Ok(calendar_id)
+    for (i, filename) in chaos_filenames.iter().enumerate() {
+        let file_id = Uuid::new_v4();
+        let target_id = Uuid::new_v4();
+        let owner = user_ids.get(i % user_ids.len()).copied().unwrap_or(owner_id);
+        let size: i64 = if i % 5 == 0 { 0 } else { (i as i64 + 1) * 1024 };
+
+        sqlx::query(
+            r#"
+            INSERT INTO drive.nodes
+                (id, parent_id, name, node_type, target_id, owner_id, size, mime_type, created_at, updated_at)
+            VALUES ($1, $2, $3, 'file'::drive.node_type, $4, $5, $6, 'application/octet-stream', NOW(), NOW())
+            ON CONFLICT DO NOTHING
+            "#,
+        )
+        .bind(file_id)
+        .bind(root_id)
+        .bind(filename)
+        .bind(target_id)
+        .bind(owner)
+        .bind(size)
+        .execute(pool)
+        .await?;
+    }
+
+    info!(files = chaos_filenames.len(), "chaos drive nodes seeded");
+    Ok(())
+}
+
+// ─── Chat chaos ───────────────────────────────────────────────────────────────
+
+/// Creates chat channels and messages with problematic content.
+async fn seed_chaos_chat(
+    pool: &sqlx::PgPool,
+    user_ids: &[Uuid],
+) -> Result<(), Box<dyn std::error::Error>> {
+    if user_ids.is_empty() {
+        info!("no users — skipping chaos chat seed");
+        return Ok(());
+    }
+
+    let owner_id = user_ids.first().copied().unwrap_or_else(Uuid::new_v4);
+
+    let chaos_channels: &[&str] = &[
+        "chaos-general",
+        "<script>alert(xss)</script>",
+        "channel with spaces",
+    ];
+
+    let mut channel_ids = Vec::new();
+    for name in chaos_channels {
+        let channel_id = Uuid::new_v4();
+        sqlx::query(
+            r#"
+            INSERT INTO chat.channels
+                (id, name, topic, is_private, created_by, created_at, updated_at)
+            VALUES ($1, $2, 'Chaos channel', FALSE, $3, NOW(), NOW())
+            ON CONFLICT DO NOTHING
+            "#,
+        )
+        .bind(channel_id)
+        .bind(name)
+        .bind(owner_id)
+        .execute(pool)
+        .await?;
+        channel_ids.push(channel_id);
+    }
+
+    let chaos_messages: &[&str] = &[
+        "<script>alert('xss')</script>",
+        "Robert'); DROP TABLE messages;--",
+        "Normal message, nothing to see here.",
+        "emoji test: 😀🎉🔥💯",
+        "مرحبا بالعالم",
+        "日本語のメッセージ",
+        "Привет мир",
+        "message with\nnewlines\nand\ttabs",
+        "''",
+        "NULL",
+        "undefined",
+        "{\"json\": \"payload\"}",
+        "<!-- HTML comment -->",
+        "\\n\\t\\r escape sequences",
+        "very long message that repeats many times to stress test rendering limits in the chat UI",
+    ];
+
+    for (i, content) in chaos_messages.iter().enumerate() {
+        let channel_id = channel_ids.get(i % channel_ids.len()).copied().unwrap();
+        let user_id = user_ids.get(i % user_ids.len()).copied().unwrap_or(owner_id);
+        let username = format!("chaos_user_{:03}", i % user_ids.len());
+
+        sqlx::query(
+            r#"
+            INSERT INTO chat.messages
+                (id, channel_id, user_id, username, content, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+            ON CONFLICT DO NOTHING
+            "#,
+        )
+        .bind(Uuid::new_v4())
+        .bind(channel_id)
+        .bind(user_id)
+        .bind(&username)
+        .bind(*content)
+        .execute(pool)
+        .await?;
+    }
+
+    info!(
+        channels = chaos_channels.len(),
+        messages = chaos_messages.len(),
+        "chaos chat seeded"
+    );
+    Ok(())
+}
+
+// ─── Billing chaos ────────────────────────────────────────────────────────────
+
+/// Creates invoices with extreme amounts (zero, very large, boundary values).
+///
+/// Uses the correct billing schema: `billing.invoices` (id only),
+/// `billing.line_items` (unit_price_cents/total_cents), `billing.payments` (amount_cents).
+async fn seed_chaos_billing(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::error::Error>> {
+    let extreme_amounts: &[(i32, &str)] = &[
+        (0, "Zero amount invoice"),
+        (1, "One cent invoice"),
+        (2_147_483_647, "Max i32 amount"),
+        (100_00, "Normal invoice EUR 100"),
+        (0, "Second zero amount"),
+        (1_00, "One unit invoice"),
+    ];
+
+    for (i, (amount_cents, description)) in extreme_amounts.iter().enumerate() {
+        let invoice_id = Uuid::new_v4();
+
+        // billing.invoices requires number NOT NULL
+        let number = format!("CHAOS-INV-{:03}", i);
+        sqlx::query(
+            r#"
+            INSERT INTO billing.invoices
+                (id, number, amount_cents, currency, status, issued_at, metadata)
+            VALUES ($1, $2, $3, 'EUR', 'draft', NOW(), '{}')
+            ON CONFLICT DO NOTHING
+            "#,
+        )
+        .bind(invoice_id)
+        .bind(&number)
+        .bind(*amount_cents)
+        .execute(pool)
+        .await?;
+
+        let line_id = Uuid::new_v4();
+        let total_cents = *amount_cents;
+        sqlx::query(
+            r#"
+            INSERT INTO billing.line_items
+                (id, invoice_id, description, quantity, unit_price_cents, total_cents,
+                 sort_order, created_at)
+            VALUES ($1, $2, $3, 1, $4, $5, $6, NOW())
+            ON CONFLICT DO NOTHING
+            "#,
+        )
+        .bind(line_id)
+        .bind(invoice_id)
+        .bind(*description)
+        .bind(*amount_cents)
+        .bind(total_cents)
+        .bind(i as i32)
+        .execute(pool)
+        .await?;
+
+        // Add a payment for even-indexed invoices
+        if i % 2 == 0 {
+            let payment_id = Uuid::new_v4();
+            sqlx::query(
+                r#"
+                INSERT INTO billing.payments
+                    (id, invoice_id, amount_cents, currency, method, reference, paid_at, created_at)
+                VALUES ($1, $2, $3, 'EUR', 'bank_transfer', $4, NOW(), NOW())
+                ON CONFLICT DO NOTHING
+                "#,
+            )
+            .bind(payment_id)
+            .bind(invoice_id)
+            .bind(*amount_cents)
+            .bind(format!("CHAOS-REF-{i:03}"))
+            .execute(pool)
+            .await?;
+        }
+    }
+
+    info!(invoices = extreme_amounts.len(), "chaos billing seeded");
+    Ok(())
 }

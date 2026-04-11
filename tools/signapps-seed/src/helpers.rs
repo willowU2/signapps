@@ -106,8 +106,8 @@ pub async fn insert_time_item(
         None => "NULL".to_string(),
     };
 
-    let project_bind = p.project_id.map(|_| "");
-    let calendar_bind = p.calendar_id.map(|_| "");
+    // calendar_id does not exist as a column in scheduling.time_items — silently ignored.
+    let _ = p.calendar_id;
 
     // Use string formatting for computed SQL expressions
     let sql = format!(
@@ -116,19 +116,17 @@ pub async fn insert_time_item(
             (id, item_type, title, tenant_id, owner_id, created_by,
              start_time, end_time, duration_minutes, all_day,
              scope, visibility, status, priority,
-             project_id, calendar_id, deadline,
+             project_id, deadline,
              created_at, updated_at)
         VALUES
             ($1, $2, $3, $4, $5, $6,
              {start_sql}, {end_sql}, $7, $8,
              $9, $10, $11, $12,
-             $13, $14, {deadline_sql},
+             $13, {deadline_sql},
              NOW(), NOW())
         ON CONFLICT DO NOTHING
         "#
     );
-
-    let _ = (project_bind, calendar_bind);
 
     sqlx::query(&sql)
         .bind(id)
@@ -144,7 +142,6 @@ pub async fn insert_time_item(
         .bind(p.status)
         .bind(p.priority)
         .bind(p.project_id)
-        .bind(p.calendar_id)
         .execute(pool)
         .await?;
 

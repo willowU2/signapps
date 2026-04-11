@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS mail.spam_model (
     UNIQUE(account_id, word)
 );
 
-CREATE INDEX idx_spam_model_account ON mail.spam_model(account_id);
+CREATE INDEX IF NOT EXISTS idx_spam_model_account ON mail.spam_model(account_id);
 
 -- Spam filter settings per account
 CREATE TABLE IF NOT EXISTS mail.spam_settings (
@@ -30,4 +30,4 @@ CREATE TABLE IF NOT EXISTS mail.spam_settings (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_spam_settings_account ON mail.spam_settings(account_id);
+CREATE INDEX IF NOT EXISTS idx_spam_settings_account ON mail.spam_settings(account_id);

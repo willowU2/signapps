@@ -4,6 +4,7 @@
 //! failures without panicking. Returns `Err` only when one or more checks fail,
 //! so the caller (main) can surface a non-zero exit code.
 
+use uuid::Uuid;
 use tracing;
 
 /// Runs integrity checks against seeded data.
@@ -46,9 +47,35 @@ pub async fn run(
 
     // ── Chaos-specific high-volume assertions ─────────────────────────────────
     if mode == "chaos" || mode == "full" {
-        check_table_count(pool, "calendar.tasks", 2000, &mut errors).await;
-        check_table_count(pool, "calendar.events", 500, &mut errors).await;
+        check_table_count(pool, "scheduling.time_items", 2500, &mut errors).await;
         check_table_count(pool, "core.org_nodes", 25, &mut errors).await;
+    }
+
+    // ── New modules (full mode) ───────────────────────────────────────────────
+    if mode == "full" {
+        check_table_count(pool, "drive.nodes", 100, &mut errors).await;
+        check_table_count(pool, "chat.channels", 7, &mut errors).await;
+        check_table_count(pool, "chat.messages", 200, &mut errors).await;
+        check_table_count(pool, "billing.invoices", 25, &mut errors).await;
+        check_table_count(pool, "gamification.user_xp", 80, &mut errors).await;
+        check_table_count(pool, "notifications.items", 50, &mut errors).await;
+        check_table_count(pool, "sharing.grants", 30, &mut errors).await;
+
+        // Admin must be platform-level (tenant_id = NULL) in full mode
+        let admin_tenant: Option<(Option<Uuid>,)> = sqlx::query_as(
+            "SELECT tenant_id FROM identity.users WHERE username = 'admin'",
+        )
+        .fetch_optional(pool)
+        .await
+        .unwrap_or(None);
+
+        match admin_tenant {
+            Some((None,)) => tracing::info!("  OK  admin.tenant_id = NULL (platform-level)"),
+            Some((Some(tid),)) => {
+                errors.push(format!("admin.tenant_id = {tid}, expected NULL"));
+            }
+            None => errors.push("admin user not found".to_string()),
+        }
     }
 
     // ── Result ────────────────────────────────────────────────────────────────

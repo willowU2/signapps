@@ -120,7 +120,7 @@ async fn seed_notifications(
             sqlx::query(
                 r#"
                 INSERT INTO notifications.items
-                    (id, user_id, type, title, body, module, entity_type, entity_id,
+                    (id, user_id, notification_type, title, body, module, entity_type, entity_id,
                      deep_link, read, read_at, created_at)
                 VALUES
                     ($1, $2, $3, $4, $5, $6, $7, $8,
@@ -145,7 +145,7 @@ async fn seed_notifications(
             sqlx::query(
                 r#"
                 INSERT INTO notifications.items
-                    (id, user_id, type, title, body, module, entity_type, entity_id,
+                    (id, user_id, notification_type, title, body, module, entity_type, entity_id,
                      deep_link, read, created_at)
                 VALUES
                     ($1, $2, $3, $4, $5, $6, $7, $8,
