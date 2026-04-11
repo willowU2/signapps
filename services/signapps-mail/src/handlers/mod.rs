@@ -31,3 +31,8 @@ pub mod templates;
 pub mod threads;
 pub mod tracking;
 pub(crate) mod utils;
+pub mod distribution_lists;
+pub mod naming_rules;
+pub mod portal_messages;
+pub mod provisioning;
+pub mod shared_mailboxes;

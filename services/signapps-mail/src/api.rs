@@ -343,6 +343,91 @@ pub fn router() -> Router<AppState> {
             "/api/v1/mail/internal/accounts/:email",
             axum::routing::delete(crate::handlers::internal_server::delete_account),
         )
+        // ── Naming rules ────────────────────────────────────────────────────
+        .route(
+            "/api/v1/mailserver/naming-rules",
+            get(crate::handlers::naming_rules::list_naming_rules)
+                .post(crate::handlers::naming_rules::create_naming_rule),
+        )
+        .route(
+            "/api/v1/mailserver/naming-rules/:id",
+            axum::routing::put(crate::handlers::naming_rules::update_naming_rule)
+                .delete(crate::handlers::naming_rules::delete_naming_rule),
+        )
+        .route(
+            "/api/v1/mailserver/naming-rules/resolve/:person_id",
+            get(crate::handlers::naming_rules::resolve_address),
+        )
+        // ── Provisioning ─────────────────────────────────────────────────────
+        .route(
+            "/api/v1/mailserver/provision/bulk",
+            axum::routing::post(crate::handlers::provisioning::bulk_provision),
+        )
+        .route(
+            "/api/v1/mailserver/provision/:person_id",
+            axum::routing::post(crate::handlers::provisioning::provision_person),
+        )
+        .route(
+            "/api/v1/mailserver/provision/:person_id/preview",
+            get(crate::handlers::provisioning::preview_provision),
+        )
+        // ── Distribution lists ───────────────────────────────────────────────
+        .route(
+            "/api/v1/mailserver/distribution-lists",
+            get(crate::handlers::distribution_lists::list_distribution_lists)
+                .post(crate::handlers::distribution_lists::create_distribution_list),
+        )
+        .route(
+            "/api/v1/mailserver/distribution-lists/:id",
+            axum::routing::put(crate::handlers::distribution_lists::update_distribution_list)
+                .delete(crate::handlers::distribution_lists::delete_distribution_list),
+        )
+        .route(
+            "/api/v1/mailserver/distribution-lists/:id/members",
+            get(crate::handlers::distribution_lists::get_distribution_list_members),
+        )
+        // ── Shared mailboxes ─────────────────────────────────────────────────
+        .route(
+            "/api/v1/mailserver/shared-mailboxes",
+            get(crate::handlers::shared_mailboxes::list_shared_mailboxes)
+                .post(crate::handlers::shared_mailboxes::create_shared_mailbox),
+        )
+        .route(
+            "/api/v1/mailserver/shared-mailboxes/:id",
+            get(crate::handlers::shared_mailboxes::get_shared_mailbox)
+                .put(crate::handlers::shared_mailboxes::update_shared_mailbox)
+                .delete(crate::handlers::shared_mailboxes::delete_shared_mailbox),
+        )
+        .route(
+            "/api/v1/mailserver/shared-mailboxes/:id/members",
+            axum::routing::post(crate::handlers::shared_mailboxes::add_shared_mailbox_member),
+        )
+        .route(
+            "/api/v1/mailserver/shared-mailboxes/:id/members/:person_id",
+            axum::routing::delete(crate::handlers::shared_mailboxes::remove_shared_mailbox_member),
+        )
+        // ── Portal messages ──────────────────────────────────────────────────
+        .route(
+            "/api/v1/mail/portal-messages",
+            get(crate::handlers::portal_messages::list_portal_messages)
+                .post(crate::handlers::portal_messages::send_portal_message),
+        )
+        .route(
+            "/api/v1/mail/portal-messages/unread-count",
+            get(crate::handlers::portal_messages::portal_unread_count),
+        )
+        .route(
+            "/api/v1/mail/portal-messages/threads/:thread_id",
+            get(crate::handlers::portal_messages::get_portal_thread),
+        )
+        .route(
+            "/api/v1/mail/portal-messages/:id",
+            get(crate::handlers::portal_messages::get_portal_message),
+        )
+        .route(
+            "/api/v1/mail/portal-messages/:id/read",
+            axum::routing::put(crate::handlers::portal_messages::mark_portal_read),
+        )
 }
 
 fn patch<H, T, S>(handler: H) -> axum::routing::MethodRouter<S>
