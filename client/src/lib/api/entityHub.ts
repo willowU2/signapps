@@ -18,9 +18,30 @@ export const entityHubApi = {
   getProject: (id: string) => schedulerClient().get(`/projects/${id}`),
   createProject: (data: Record<string, unknown>) =>
     schedulerClient().post("/projects", data),
+  myProjects: () => schedulerClient().get("/projects/my-projects"),
+  projectProgress: (projectId: string) =>
+    schedulerClient().get(`/projects/${projectId}/progress`),
+  teamWorkload: () => schedulerClient().get("/projects/team-workload"),
+
+  // Project members
+  listProjectMembers: (projectId: string) =>
+    schedulerClient().get(`/projects/${projectId}/members`),
+  addProjectMember: (
+    projectId: string,
+    data: { person_id: string; role: string; context_type?: string },
+  ) => schedulerClient().post(`/projects/${projectId}/members`, data),
+  updateProjectMemberRole: (
+    projectId: string,
+    personId: string,
+    data: { role: string },
+  ) =>
+    schedulerClient().put(`/projects/${projectId}/members/${personId}`, data),
+  removeProjectMember: (projectId: string, personId: string) =>
+    schedulerClient().delete(`/projects/${projectId}/members/${personId}`),
 
   // Tasks
   listTasks: () => schedulerClient().get("/tasks"),
+  myTasks: () => schedulerClient().get("/tasks/my-tasks"),
   getTask: (id: string) => schedulerClient().get(`/tasks/${id}`),
   createTask: (data: Record<string, unknown>) =>
     schedulerClient().post("/tasks", data),

@@ -9,6 +9,7 @@ import {
   LayoutGrid,
   CheckSquare,
   Settings,
+  User,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -30,8 +31,10 @@ export interface TasksHeaderProps {
   onExportTasks: () => void;
   onImportTasks: () => void;
   onAddTask: () => void;
-  viewMode: "list" | "board" | "custom-board";
-  onViewModeChange: (mode: "list" | "board" | "custom-board") => void;
+  viewMode: "list" | "board" | "custom-board" | "my-tasks";
+  onViewModeChange: (
+    mode: "list" | "board" | "custom-board" | "my-tasks",
+  ) => void;
 }
 
 export function TasksHeader({
@@ -44,6 +47,7 @@ export function TasksHeader({
   viewMode,
   onViewModeChange,
 }: TasksHeaderProps) {
+  type ViewMode = "list" | "board" | "custom-board" | "my-tasks";
   const selectedProjectName =
     projects.find((p) => p.id === selectedProjectId)?.name ||
     "Sélectionnez un projet";
@@ -170,9 +174,7 @@ export function TasksHeader({
       <div className="flex items-center justify-between w-full pt-1">
         <Tabs
           value={viewMode}
-          onValueChange={(v) =>
-            onViewModeChange(v as "list" | "board" | "custom-board")
-          }
+          onValueChange={(v) => onViewModeChange(v as ViewMode)}
           className="w-auto"
         >
           <TabsList className="h-9 p-1 bg-muted/40 rounded-lg">
@@ -196,6 +198,13 @@ export function TasksHeader({
               className="rounded-md px-3 text-xs font-medium transition-all data-[state=active]:bg-background data-[state=active]:shadow-sm"
             >
               <LayoutGrid className="h-3.5 w-3.5 mr-2 opacity-70" /> Custom
+            </TabsTrigger>
+            <TabsTrigger
+              data-testid="tasks-view-selector-my-tasks"
+              value="my-tasks"
+              className="rounded-md px-3 text-xs font-medium transition-all data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <User className="h-3.5 w-3.5 mr-2 opacity-70" /> Mes tâches
             </TabsTrigger>
           </TabsList>
         </Tabs>

@@ -26,6 +26,7 @@ import { TasksHeader } from "@/components/tasks/tasks-header";
 import { ExportDialog } from "@/components/calendar/ExportDialog";
 import { ImportDialog } from "@/components/calendar/ImportDialog";
 import { useEntityStore } from "@/stores/entity-hub-store";
+import { entityHubApi } from "@/lib/api/entityHub";
 import { AppLayout } from "@/components/layout/app-layout";
 import {
   DropdownMenu,
@@ -45,10 +46,12 @@ export default function TasksPage() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [parentTaskId, setParentTaskId] = useState<string | undefined>();
   const [treeKey, setTreeKey] = useState(0);
-  const [viewMode, setViewMode] = useState<"list" | "board" | "custom-board">(
-    "list",
-  );
+  const [viewMode, setViewMode] = useState<
+    "list" | "board" | "custom-board" | "my-tasks"
+  >("list");
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [myTasks, setMyTasks] = useState<any[]>([]);
+  const [myTasksLoading, setMyTasksLoading] = useState(false);
 
   // Unified Entity Hub sync
   const { projects, fetchTasks, fetchProjects, isLoading } = useEntityStore();
@@ -74,6 +77,17 @@ export default function TasksPage() {
       setSelectedProjectId(projects[0].id);
     }
   }, [projects, selectedProjectId]);
+
+  useEffect(() => {
+    if (viewMode === "my-tasks") {
+      setMyTasksLoading(true);
+      entityHubApi
+        .myTasks()
+        .then((res) => setMyTasks(Array.isArray(res.data) ? res.data : []))
+        .catch(() => setMyTasks([]))
+        .finally(() => setMyTasksLoading(false));
+    }
+  }, [viewMode]);
 
   const handleAddTask = () => {
     setParentTaskId(undefined);
@@ -141,6 +155,52 @@ export default function TasksPage() {
                   window.location.href = "/projects";
                 }}
               />
+            ) : viewMode === "my-tasks" ? (
+              <div
+                data-testid="my-tasks-root"
+                className="pb-32 h-full z-10 relative p-4"
+              >
+                {myTasksLoading ? (
+                  <div className="flex items-center justify-center h-32 text-muted-foreground">
+                    <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                    <span>Chargement de vos tâches...</span>
+                  </div>
+                ) : myTasks.length === 0 ? (
+                  <EmptyState
+                    icon={CheckSquare}
+                    context="empty"
+                    title="Aucune tâche assignée"
+                    description="Vous n'avez aucune tâche assignée pour le moment."
+                  />
+                ) : (
+                  <ul className="space-y-2">
+                    {myTasks.map((task: any) => (
+                      <li
+                        key={task.id}
+                        className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-sm"
+                      >
+                        <CheckSquare className="h-4 w-4 text-primary shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{task.title}</p>
+                          {task.due_date && (
+                            <p className="text-xs text-muted-foreground">
+                              Échéance :{" "}
+                              {new Date(task.due_date).toLocaleDateString(
+                                "fr-FR",
+                              )}
+                            </p>
+                          )}
+                        </div>
+                        {task.assignee_id && (
+                          <span className="text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5">
+                            {task.assignee_name ?? task.assignee_id.slice(0, 8)}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             ) : (
               selectedProjectId && (
                 <div

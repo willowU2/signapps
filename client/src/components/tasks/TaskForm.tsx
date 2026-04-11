@@ -58,6 +58,7 @@ export function TaskForm({
     priority: "1",
     due_date: "",
     assignee_id: null as string | null,
+    contributor_ids: "",
     reminder_enabled: false,
   });
 
@@ -78,6 +79,11 @@ export function TaskForm({
     setIsSubmitting(true);
 
     try {
+      const rawContributors = formData.contributor_ids
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
       const createData = {
         project_id: projectId,
         parent_id: parentTaskId,
@@ -88,6 +94,8 @@ export function TaskForm({
           ? new Date(formData.due_date).toISOString()
           : undefined,
         assignee_id: formData.assignee_id || undefined,
+        contributor_ids:
+          rawContributors.length > 0 ? rawContributors : undefined,
         reminder_enabled: formData.reminder_enabled,
       };
 
@@ -105,6 +113,7 @@ export function TaskForm({
         priority: "1",
         due_date: "",
         assignee_id: null,
+        contributor_ids: "",
         reminder_enabled: false,
       });
       onTaskCreated?.();
@@ -217,6 +226,22 @@ export function TaskForm({
                 })}
               </p>
             )}
+          </div>
+
+          {/* Contributors */}
+          <div className="space-y-2">
+            <Label htmlFor="contributor_ids">Contributeurs</Label>
+            <Input
+              id="contributor_ids"
+              name="contributor_ids"
+              placeholder="UUIDs séparés par des virgules"
+              value={formData.contributor_ids}
+              onChange={handleInputChange}
+            />
+            <p className="text-xs text-muted-foreground">
+              Saisissez les identifiants des contributeurs, séparés par des
+              virgules.
+            </p>
           </div>
 
           {/* Due date reminder */}
