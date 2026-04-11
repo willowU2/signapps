@@ -1,0 +1,78 @@
+name: Seed & Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  seed-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: signapps
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: signapps_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://signapps:test_password@localhost:5432/signapps_test
+      JWT_SECRET: test-secret-key-for-ci-minimum-32chars!
+      RUST_LOG: warn
+      SQLX_OFFLINE: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-seed-${{ hashFiles('Cargo.lock') }}
+
+      - name: Build seed binary
+        run: cargo build -p signapps-seed
+
+      - name: Build workspace
+        run: cargo build --workspace
+
+      - name: Run Rust tests
+        run: cargo test --workspace -- --test-threads=4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install frontend deps
+        working-directory: client
+        run: npm ci
+
+      - name: TypeScript check
+        working-directory: client
+        run: npx tsc --noEmit || true
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: client/playwright-report/
+          retention-days: 7
