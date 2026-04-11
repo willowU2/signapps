@@ -85,7 +85,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if cli.verify {
         info!("running post-seed verification");
-        verify::run(&pool).await?;
+        let mode_str = match cli.mode {
+            SeedMode::Minimal => "minimal",
+            SeedMode::Acme => "acme",
+            SeedMode::Startup => "startup",
+            SeedMode::Chaos => "chaos",
+        };
+        verify::run(&pool, mode_str).await?;
     }
 
     info!("seeding complete");
@@ -95,7 +101,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 async fn seed_minimal(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::error::Error>> {
     info!("mode=minimal: seeding primary tenant + admin user");
     let tenant_id = tenants::seed_tenant(pool, "SignApps Dev", true).await?;
-    let _users = users::seed_minimal(pool, tenant_id).await?;
+    let _users: Vec<(uuid::Uuid, uuid::Uuid, String)> =
+        users::seed_minimal(pool, tenant_id).await?;
     Ok(())
 }
 
@@ -115,7 +122,8 @@ async fn seed_acme(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::error::Error>
 async fn seed_startup(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::error::Error>> {
     info!("mode=startup: seeding Startup scenario");
     let tenant_id = tenants::seed_tenant(pool, "Startup SAS", false).await?;
-    let _users = users::seed_startup(pool, tenant_id).await?;
+    let _users: Vec<(uuid::Uuid, uuid::Uuid, String)> =
+        users::seed_startup(pool, tenant_id).await?;
     Ok(())
 }
 
