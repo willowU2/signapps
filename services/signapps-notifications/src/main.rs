@@ -482,11 +482,11 @@ fn create_router(state: AppState) -> Router {
         )
         .route("/api/notifications/read-all", post(mark_all_read))
         .route("/api/notifications/:id/read", patch(mark_read))
+        .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ))
-        .route_layer(middleware::from_fn(tenant_context_middleware));
+        ));
 
     // v1 routes — rich notification model (notifications.items table)
     let v1_routes = Router::new()
@@ -516,11 +516,11 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/notifications/:id",
             delete(handlers::notifications::delete_notification),
         )
+        .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ))
-        .route_layer(middleware::from_fn(tenant_context_middleware));
+        ));
 
     public_routes
         .merge(protected_routes)
