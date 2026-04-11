@@ -45,7 +45,7 @@ pub async fn run(
     }
 
     // ── Chaos-specific high-volume assertions ─────────────────────────────────
-    if mode == "chaos" {
+    if mode == "chaos" || mode == "full" {
         check_table_count(pool, "calendar.tasks", 2000, &mut errors).await;
         check_table_count(pool, "calendar.events", 500, &mut errors).await;
         check_table_count(pool, "core.org_nodes", 25, &mut errors).await;

@@ -95,9 +95,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         info!("running post-seed verification");
         let mode_str = match cli.mode {
             SeedMode::Minimal => "minimal",
-            SeedMode::Acme | SeedMode::Full => "acme",
+            SeedMode::Acme => "acme",
             SeedMode::Startup => "startup",
             SeedMode::Chaos => "chaos",
+            SeedMode::Full => "full",
         };
         verify::run(&pool, mode_str).await?;
     }
