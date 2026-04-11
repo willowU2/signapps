@@ -26,6 +26,8 @@ enum SeedMode {
     Startup,
     /// Chaos mode: large volume of randomized data for stress testing
     Chaos,
+    /// Full: Acme + Startup + Chaos (all 3 tenants)
+    Full,
 }
 
 #[derive(Debug, Parser)]
@@ -81,13 +83,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         SeedMode::Acme => seed_acme(&pool).await?,
         SeedMode::Startup => seed_startup(&pool).await?,
         SeedMode::Chaos => seed_chaos(&pool).await?,
+        SeedMode::Full => {
+            info!("mode=full: seeding all 3 tenants (Acme + Startup + Chaos)");
+            seed_acme(&pool).await?;
+            seed_startup(&pool).await?;
+            seed_chaos(&pool).await?;
+        }
     }
 
     if cli.verify {
         info!("running post-seed verification");
         let mode_str = match cli.mode {
             SeedMode::Minimal => "minimal",
-            SeedMode::Acme => "acme",
+            SeedMode::Acme | SeedMode::Full => "acme",
             SeedMode::Startup => "startup",
             SeedMode::Chaos => "chaos",
         };
@@ -140,8 +148,52 @@ async fn seed_chaos(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::error::Error
 /// Returns an error if the database truncation query fails.
 async fn reset_seed_data(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::error::Error>> {
     info!("truncating seed tables");
-    // In a real implementation this would TRUNCATE the relevant tables in dependency order.
-    // Left as a no-op stub so the binary compiles and can be extended incrementally.
-    let _ = pool;
+
+    // Truncate in dependency order (CASCADE handles FK references).
+    // We truncate only the tables that the seed populates.
+    let tables = [
+        // Calendar / scheduling (leaf tables first, but CASCADE handles it)
+        "calendar.events",
+        "calendar.event_attendees",
+        "calendar.calendars",
+        "calendar.projects",
+        "calendar.project_members",
+        "calendar.tasks",
+        "scheduling.time_items",
+        "scheduling.time_item_users",
+        // Mail
+        "mail.emails",
+        "mail.attachments",
+        "mail.accounts",
+        "mail.folders",
+        "mail.labels",
+        // Documents
+        "documents.files",
+        // Org structure
+        "core.org_closure",
+        "core.assignments",
+        "core.org_nodes",
+        "core.org_trees",
+        // Companies / persons
+        "core.person_companies",
+        "identity.login_contexts",
+        "core.persons",
+        "core.companies",
+        // Users / tenants (last — everything depends on these)
+        "identity.users",
+        "identity.tenants",
+    ];
+
+    for table in &tables {
+        let query = format!("TRUNCATE TABLE {table} CASCADE");
+        match sqlx::query(&query).execute(pool).await {
+            Ok(_) => info!(table, "truncated"),
+            Err(e) => {
+                // Table may not exist in some DB versions — warn and continue.
+                tracing::warn!(table, error = %e, "skipping truncation");
+            }
+        }
+    }
+
     Ok(())
 }

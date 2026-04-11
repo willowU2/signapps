@@ -184,9 +184,9 @@ async fn seed_volume_tasks(
         let task_id = Uuid::new_v4();
 
         // Date chaos patterns cycling through: epoch / far-future / NULL.
-        let due_date: Option<&str> = match i % 10 {
-            0 => Some("1970-01-01"),
-            1 => Some("2099-12-31"),
+        let due_date: Option<chrono::NaiveDate> = match i % 10 {
+            0 => Some(chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()),
+            1 => Some(chrono::NaiveDate::from_ymd_opt(2099, 12, 31).unwrap()),
             _ => None,
         };
 
@@ -250,11 +250,14 @@ async fn seed_volume_events(
                 "2099-12-31T23:59:59Z".to_owned(),
             ),
             _ => {
-                // Spread normally across 2026.
-                let day = (i % 365) + 1;
+                // Spread normally across 2026 using proper date arithmetic.
+                let ordinal = ((i % 365) + 1) as i64;
+                let base =
+                    chrono::NaiveDate::from_ymd_opt(2026, 1, 1).expect("valid date");
+                let date = base + chrono::Duration::days(ordinal - 1);
                 (
-                    format!("2026-01-{day:03}T09:00:00Z"),
-                    format!("2026-01-{day:03}T10:00:00Z"),
+                    format!("{}T09:00:00Z", date),
+                    format!("{}T10:00:00Z", date),
                 )
             }
         };
