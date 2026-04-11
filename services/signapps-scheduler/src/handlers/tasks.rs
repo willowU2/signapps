@@ -4,12 +4,14 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use signapps_common::{Claims, TenantContext};
 use signapps_db::models::{CreateTimeItem, TimeItemsQuery, UpdateTimeItem};
 use signapps_db::repositories::TaskRepository;
 use signapps_db::repositories::TimeItemRepository;
+use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -74,6 +76,30 @@ pub async fn list(
     }
 }
 
+/// Request body for creating a task with org-aware assignment fields.
+#[derive(Debug, Deserialize)]
+pub struct CreateTaskRequest {
+    /// Underlying time-item fields.
+    #[serde(flatten)]
+    pub inner: CreateTimeItem,
+    /// Optional assignee person ID (from core.persons).
+    pub assignee_id: Option<Uuid>,
+    /// Optional list of contributor person IDs.
+    pub contributor_ids: Option<Vec<Uuid>>,
+}
+
+/// Request body for updating a task with org-aware assignment fields.
+#[derive(Debug, Deserialize)]
+pub struct UpdateTaskRequest {
+    /// Underlying time-item update fields.
+    #[serde(flatten)]
+    pub inner: UpdateTimeItem,
+    /// Optional new assignee person ID.
+    pub assignee_id: Option<Uuid>,
+    /// Optional new contributor person IDs.
+    pub contributor_ids: Option<Vec<Uuid>>,
+}
+
 /// Create a task.
 #[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
@@ -81,21 +107,42 @@ pub async fn create(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(ctx): Extension<TenantContext>,
-    Json(mut payload): Json<CreateTimeItem>,
+    Json(mut payload): Json<CreateTaskRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = TimeItemRepository::new(&state.pool);
-    payload.item_type = "task".to_string(); // Force task type to ensure correctness
+    payload.inner.item_type = "task".to_string(); // Force task type to ensure correctness
 
-    match repo
-        .create(ctx.tenant_id, claims.sub, claims.sub, payload)
+    let task = repo
+        .create(ctx.tenant_id, claims.sub, claims.sub, payload.inner)
         .await
-    {
-        Ok(task) => Ok((StatusCode::CREATED, Json(json!({ "data": task })))),
-        Err(e) => {
+        .map_err(|e| {
             tracing::error!("Failed to create task: {}", e);
-            Err(StatusCode::INTERNAL_SERVER_ERROR)
-        },
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    // Patch assignee_id and contributor_ids if provided
+    if payload.assignee_id.is_some() || payload.contributor_ids.is_some() {
+        let contributor_ids = payload.contributor_ids.unwrap_or_default();
+        sqlx::query(
+            r#"
+            UPDATE scheduling.time_items
+            SET assignee_id = COALESCE($2, assignee_id),
+                contributor_ids = COALESCE($3, contributor_ids)
+            WHERE id = $1
+            "#,
+        )
+        .bind(task.id)
+        .bind(payload.assignee_id)
+        .bind(contributor_ids)
+        .execute(state.pool.inner())
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to patch task assignee/contributors: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
     }
+
+    Ok((StatusCode::CREATED, Json(json!({ "data": task }))))
 }
 
 /// Get a task by ID.
@@ -145,16 +192,37 @@ pub async fn update(
     Extension(_claims): Extension<Claims>,
     Extension(_ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
-    Json(payload): Json<UpdateTimeItem>,
+    Json(payload): Json<UpdateTaskRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = TimeItemRepository::new(&state.pool);
-    match repo.update(id, payload).await {
-        Ok(task) => Ok(Json(json!({ "data": task }))),
-        Err(e) => {
-            tracing::error!("Failed to update task: {}", e);
-            Err(StatusCode::INTERNAL_SERVER_ERROR)
-        },
+    let task = repo.update(id, payload.inner).await.map_err(|e| {
+        tracing::error!("Failed to update task: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    // Patch assignee_id and contributor_ids if provided
+    if payload.assignee_id.is_some() || payload.contributor_ids.is_some() {
+        let contributor_ids = payload.contributor_ids.unwrap_or_default();
+        sqlx::query(
+            r#"
+            UPDATE scheduling.time_items
+            SET assignee_id = COALESCE($2, assignee_id),
+                contributor_ids = COALESCE($3, contributor_ids)
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .bind(payload.assignee_id)
+        .bind(contributor_ids)
+        .execute(state.pool.inner())
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to patch task assignee/contributors: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
     }
+
+    Ok(Json(json!({ "data": task })))
 }
 
 /// Delete a task.
@@ -186,6 +254,91 @@ pub async fn delete(
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         },
     }
+}
+
+// ============================================================================
+// Org-aware task handlers
+// ============================================================================
+
+/// Minimal task row returned by my_tasks query.
+#[derive(Debug, FromRow, Serialize)]
+struct MyTaskRow {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub title: String,
+    pub description: Option<String>,
+    pub status: Option<String>,
+    pub priority: Option<String>,
+    pub project_id: Option<Uuid>,
+    pub assignee_id: Option<Uuid>,
+    pub contributor_ids: Option<Vec<Uuid>>,
+    pub start_time: Option<DateTime<Utc>>,
+    pub end_time: Option<DateTime<Utc>>,
+    pub deadline: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+/// List tasks assigned to or contributed to by the current user.
+#[utoipa::path(
+    get,
+    path = "/api/v1/tasks/my-tasks",
+    responses(
+        (status = 200, description = "Tasks for the current user"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Tasks"
+)]
+#[tracing::instrument(skip_all)]
+pub async fn my_tasks(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(ctx): Extension<TenantContext>,
+) -> Result<impl IntoResponse, StatusCode> {
+    // Resolve person_id from claims.sub (user_id) via core.persons
+    let person_id: Option<Uuid> = sqlx::query_scalar(
+        "SELECT id FROM core.persons WHERE user_id = $1 AND tenant_id = $2 LIMIT 1",
+    )
+    .bind(claims.sub)
+    .bind(ctx.tenant_id)
+    .fetch_optional(state.pool.inner())
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to resolve person for my_tasks: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let tasks = sqlx::query_as::<_, MyTaskRow>(
+        r#"
+        SELECT id, tenant_id, title, description, status, priority,
+               project_id, assignee_id, contributor_ids, start_time, end_time,
+               deadline, created_at, updated_at
+        FROM scheduling.time_items
+        WHERE tenant_id = $1
+          AND item_type = 'task'
+          AND deleted_at IS NULL
+          AND (
+              assignee_id = $3
+              OR ($3::uuid IS NOT NULL AND $3 = ANY(contributor_ids))
+              OR ($2::uuid IS NOT NULL AND assignee_id = $2)
+              OR ($2::uuid IS NOT NULL AND $2 = ANY(contributor_ids))
+          )
+        ORDER BY created_at DESC
+        "#,
+    )
+    .bind(ctx.tenant_id)
+    .bind(person_id)
+    .bind(claims.sub)
+    .fetch_all(state.pool.inner())
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list my tasks: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    Ok(Json(json!({ "data": tasks })))
 }
 
 // ============================================================================

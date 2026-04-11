@@ -362,9 +362,22 @@ fn create_router(state: AppState) -> Router {
     let project_routes = Router::new()
         .route("/", get(handlers::projects::list))
         .route("/", post(handlers::projects::create))
+        // Static paths BEFORE /{id} to prevent Axum treating them as params
+        .route("/my-projects", get(handlers::projects::my_projects))
+        .route("/team-workload", get(handlers::projects::team_workload))
         .route("/{id}", get(handlers::projects::get_by_id))
         .route("/{id}", put(handlers::projects::update))
         .route("/{id}", delete(handlers::projects::delete))
+        .route(
+            "/{id}/members",
+            get(handlers::projects::list_members).post(handlers::projects::add_member),
+        )
+        .route(
+            "/{id}/members/{person_id}",
+            put(handlers::projects::update_member_role)
+                .delete(handlers::projects::remove_member),
+        )
+        .route("/{id}/progress", get(handlers::projects::project_progress))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))
@@ -377,6 +390,8 @@ fn create_router(state: AppState) -> Router {
     let task_routes = Router::new()
         .route("/", get(handlers::tasks::list))
         .route("/", post(handlers::tasks::create))
+        // Static path BEFORE /{id} to prevent Axum treating it as a param
+        .route("/my-tasks", get(handlers::tasks::my_tasks))
         .route("/{id}", get(handlers::tasks::get_by_id))
         .route("/{id}", put(handlers::tasks::update))
         .route("/{id}", delete(handlers::tasks::delete))
