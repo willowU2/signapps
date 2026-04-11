@@ -11413,6 +11413,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-seed"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "clap",
+ "rand 0.8.5",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-service"
 version = "0.1.0"
 dependencies = [

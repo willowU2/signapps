@@ -93,7 +93,7 @@ export function ContextSwitcher() {
   const [switchingId, setSwitchingId] = useState<string | null>(null);
 
   // Only render when the user has more than one context
-  if (availableContexts.length <= 1) return null;
+  if (!availableContexts || availableContexts.length <= 1) return null;
 
   const handleSwitch = async (ctx: LoginContextDisplay) => {
     if (ctx.id === activeContext?.id || switchingId) return;
