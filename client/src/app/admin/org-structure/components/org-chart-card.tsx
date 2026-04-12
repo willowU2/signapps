@@ -394,7 +394,13 @@ export function OrgChartCard({
   onSelect,
   boardMap,
 }: OrgChartCardProps) {
-  if (nodes.length === 0) {
+  // Filter out any invalid nodes (missing id or node_type)
+  const validNodes = useMemo(
+    () => nodes?.filter((n) => n && n.id && n.node_type) ?? [],
+    [nodes],
+  );
+
+  if (!validNodes.length) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
         Aucun noeud a afficher
@@ -406,7 +412,7 @@ export function OrgChartCard({
     <div className="w-full h-full">
       <ReactFlowProvider>
         <OrgChartFlow
-          nodes={nodes}
+          nodes={validNodes}
           selectedId={selectedId}
           onSelect={onSelect}
           boardMap={boardMap}
