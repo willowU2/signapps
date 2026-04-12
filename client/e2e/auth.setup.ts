@@ -26,7 +26,24 @@ setup("authenticate", async ({ page }) => {
       `Login API failed: ${loginRes.status()} ${await loginRes.text()}`,
     );
   }
-  const { access_token, refresh_token } = await loginRes.json();
+  const loginData = await loginRes.json();
+  let { access_token, refresh_token } = loginData;
+
+  // 1b. If requires_context (admin platform-level), auto-select first tenant
+  if (loginData.requires_context && loginData.contexts?.length > 0) {
+    const ctxRes = await page.request.post(
+      "http://localhost:3001/api/v1/auth/select-context",
+      {
+        data: { context_id: loginData.contexts[0].id },
+        headers: { Authorization: `Bearer ${access_token}` },
+      },
+    );
+    if (ctxRes.ok()) {
+      const ctxData = await ctxRes.json();
+      access_token = ctxData.access_token;
+      refresh_token = ctxData.refresh_token;
+    }
+  }
 
   // 2. Set all 3 cookies BEFORE any navigation
   await page.context().addCookies([
@@ -88,7 +105,14 @@ setup("authenticate", async ({ page }) => {
   await page.evaluate(() => {
     localStorage.setItem(
       "auth-storage",
-      JSON.stringify({ state: { isAuthenticated: true } }),
+      JSON.stringify({
+        state: {
+          user: { username: "admin", role: 3 },
+          isAuthenticated: true,
+          redirectAfterLogin: null,
+        },
+        version: 0,
+      }),
     );
     localStorage.setItem(
       "signapps-onboarding-completed",
@@ -114,7 +138,14 @@ setup("authenticate", async ({ page }) => {
   await page.evaluate(() => {
     localStorage.setItem(
       "auth-storage",
-      JSON.stringify({ state: { isAuthenticated: true } }),
+      JSON.stringify({
+        state: {
+          user: { username: "admin", role: 3 },
+          isAuthenticated: true,
+          redirectAfterLogin: null,
+        },
+        version: 0,
+      }),
     );
     localStorage.setItem(
       "signapps-onboarding-completed",

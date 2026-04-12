@@ -26,10 +26,22 @@ export default defineConfig({
   // Reporter to use
   reporter: [["html", { open: "never" }], ["list"]],
 
+  // Global timeout: 60s per test (Next.js dev server compiles on first visit)
+  timeout: 60_000,
+
+  // Navigation timeout
+  expect: {
+    timeout: 15_000,
+  },
+
   // Shared settings for all projects
   use: {
     // Base URL to use in actions like `await page.goto('/')`
     baseURL: "http://localhost:3000",
+
+    // Navigation timeout (first page load can be slow in dev)
+    navigationTimeout: 45_000,
+    actionTimeout: 15_000,
 
     // Block service workers to prevent stale chunk caching across builds
     serviceWorkers: "block",
