@@ -154,7 +154,14 @@ export const useOrgStore = create<OrgState>()(
           ]);
           const root = rootRes.data;
           const descendants = descRes.data ?? [];
-          const allNodes = root ? [root, ...descendants] : descendants;
+          const merged = root ? [root, ...descendants] : descendants;
+          // Deduplicate by id and filter out nodes missing required fields
+          const seen = new Set<string>();
+          const allNodes = merged.filter((n: OrgNode) => {
+            if (!n?.id || !n.node_type || seen.has(n.id)) return false;
+            seen.add(n.id);
+            return true;
+          });
           set({ nodes: allNodes, nodesLoading: false });
         } catch (err: unknown) {
           const message =

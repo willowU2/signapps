@@ -146,6 +146,7 @@ function layoutTree(nodes: OrgNode[]): Map<string, { x: number; y: number }> {
 
 function OrgNodeCard({ data }: { data: OrgNodeData }) {
   const { orgNode, selectedId, onSelect, boardInfo, cfg } = data;
+  if (!orgNode?.node_type) return null;
   const isSelected = selectedId === orgNode.id;
 
   return (
@@ -265,23 +266,25 @@ function OrgChartFlow({
   const positions = useMemo(() => layoutTree(orgNodes), [orgNodes]);
 
   const initialNodes = useMemo<Node<OrgNodeData>[]>(() => {
-    return orgNodes.map((orgNode) => {
-      const pos = positions.get(orgNode.id) ?? { x: 0, y: 0 };
-      const cfg = getNodeTypeConfig(orgNode.node_type);
-      return {
-        id: orgNode.id,
-        type: "orgNode",
-        position: pos,
-        data: {
-          orgNode,
-          selectedId,
-          onSelect,
-          boardInfo: boardMap?.[orgNode.id],
-          cfg,
-        },
-        draggable: false,
-      };
-    });
+    return orgNodes
+      .filter((n) => n?.node_type)
+      .map((orgNode) => {
+        const pos = positions.get(orgNode.id) ?? { x: 0, y: 0 };
+        const cfg = getNodeTypeConfig(orgNode.node_type);
+        return {
+          id: orgNode.id,
+          type: "orgNode",
+          position: pos,
+          data: {
+            orgNode,
+            selectedId,
+            onSelect,
+            boardInfo: boardMap?.[orgNode.id],
+            cfg,
+          },
+          draggable: false,
+        };
+      });
   }, [orgNodes, positions, selectedId, onSelect, boardMap]);
 
   const initialEdges = useMemo<Edge[]>(() => {
@@ -304,23 +307,25 @@ function OrgChartFlow({
 
   useEffect(() => {
     setNodes(
-      orgNodes.map((orgNode) => {
-        const pos = positions.get(orgNode.id) ?? { x: 0, y: 0 };
-        const cfg = getNodeTypeConfig(orgNode.node_type);
-        return {
-          id: orgNode.id,
-          type: "orgNode",
-          position: pos,
-          data: {
-            orgNode,
-            selectedId,
-            onSelect,
-            boardInfo: boardMap?.[orgNode.id],
-            cfg,
-          },
-          draggable: false,
-        };
-      }),
+      orgNodes
+        .filter((n) => n?.node_type)
+        .map((orgNode) => {
+          const pos = positions.get(orgNode.id) ?? { x: 0, y: 0 };
+          const cfg = getNodeTypeConfig(orgNode.node_type);
+          return {
+            id: orgNode.id,
+            type: "orgNode",
+            position: pos,
+            data: {
+              orgNode,
+              selectedId,
+              onSelect,
+              boardInfo: boardMap?.[orgNode.id],
+              cfg,
+            },
+            draggable: false,
+          };
+        }),
     );
   }, [orgNodes, positions, selectedId, onSelect, boardMap, setNodes]);
 
