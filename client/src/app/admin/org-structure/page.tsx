@@ -128,9 +128,6 @@ export default function OrgStructurePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 200);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [orgchartCollapsed, setOrgchartCollapsed] = useState<Set<string>>(
-    new Set(),
-  );
   const [detailOpen, setDetailOpen] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
@@ -341,14 +338,6 @@ export default function OrgStructurePage() {
 
   const handleToggleExpand = useCallback((id: string) => {
     setExpanded((prev) => {
-      const n = new Set(prev);
-      n.has(id) ? n.delete(id) : n.add(id);
-      return n;
-    });
-  }, []);
-
-  const handleToggleOrgchartCollapse = useCallback((id: string) => {
-    setOrgchartCollapsed((prev) => {
       const n = new Set(prev);
       n.has(id) ? n.delete(id) : n.add(id);
       return n;
@@ -656,20 +645,13 @@ export default function OrgStructurePage() {
                       ))}
                     </div>
                   ) : viewMode === "orgchart" ? (
-                    <div className="p-8 overflow-auto min-h-full">
-                      <div className="flex flex-col items-center gap-0">
-                        {treeHierarchy.map((root) => (
-                          <OrgChartCard
-                            key={root.id}
-                            node={root}
-                            selectedId={selectedNode?.id ?? null}
-                            onSelect={handleSelectNode}
-                            collapsed={orgchartCollapsed}
-                            onToggleCollapse={handleToggleOrgchartCollapse}
-                            boardMap={boardMap}
-                          />
-                        ))}
-                      </div>
+                    <div className="h-full min-h-[500px]">
+                      <OrgChartCard
+                        nodes={nodes}
+                        selectedId={selectedNode?.id ?? null}
+                        onSelect={handleSelectNode}
+                        boardMap={boardMap}
+                      />
                     </div>
                   ) : (
                     <ListView
