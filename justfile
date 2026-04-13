@@ -96,6 +96,10 @@ run svc:
 dev:
     cd client && npm run dev
 
+# Health check complet (DB, services, auth, compilation)
+doctor:
+    bash scripts/doctor.sh
+
 # Lancer tous les services (PowerShell, auto-loads .env)
 start:
     powershell.exe -File scripts/start-all.ps1
