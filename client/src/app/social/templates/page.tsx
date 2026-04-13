@@ -1,9 +1,9 @@
-import { TemplateLibrary } from '@/components/social/template-library';
+"use client";
 
-export const metadata = { title: 'SignSocial — Templates' };
+import { usePageTitle } from "@/hooks/use-page-title";
+import { TemplateLibrary } from "@/components/social/template-library";
 
 export default function SocialTemplatesPage() {
-  return (
-    <TemplateLibrary />
-  );
+  usePageTitle("Social — Modèles");
+  return <TemplateLibrary />;
 }

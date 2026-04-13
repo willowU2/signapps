@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +55,7 @@ const STAGE_BADGE: Record<
 };
 
 export default function DealDetailPage() {
+  usePageTitle("Détail opportunité");
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 

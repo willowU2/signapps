@@ -1,7 +1,9 @@
-import { LinkInBioEditor } from '@/components/social/link-in-bio-editor';
+"use client";
 
-export const metadata = { title: 'Link in Bio — SignApps' };
+import { usePageTitle } from "@/hooks/use-page-title";
+import { LinkInBioEditor } from "@/components/social/link-in-bio-editor";
 
 export default function LinkInBioPage() {
+  usePageTitle("Social — Link in Bio");
   return <LinkInBioEditor />;
 }

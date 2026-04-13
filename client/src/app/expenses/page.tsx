@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useRef, useCallback, useMemo } from "react";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -539,6 +540,7 @@ function ApprovalDialog({ expense, onClose, onDecision }: ApprovalDialogProps) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ExpensesPage() {
+  usePageTitle("Notes de frais");
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [approvalTarget, setApprovalTarget] = useState<Expense | null>(null);

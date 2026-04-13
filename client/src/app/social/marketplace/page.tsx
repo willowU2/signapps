@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -395,6 +396,7 @@ function NewOfferForm({ onClose }: NewOfferFormProps) {
 // ---------------------------------------------------------------------------
 
 export default function SocialMarketplacePage() {
+  usePageTitle("Social — Marketplace");
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [filterPlatform, setFilterPlatform] = useState<

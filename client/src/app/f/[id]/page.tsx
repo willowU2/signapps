@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, FormEvent } from "react";
 import { useParams } from "next/navigation";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { formsApi } from "@/lib/api/forms";
 import type { Form, FormField, FormAnswer } from "@/lib/api/forms";
 import {
@@ -63,6 +64,7 @@ function validateField(field: FormField, value: any): string {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PublicFormPage() {
+  usePageTitle("Formulaire");
   const params = useParams();
   const formId = params.id as string;
 

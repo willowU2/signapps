@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { AppLayout } from "@/components/layout/app-layout";
 import {
   Card,
@@ -143,6 +144,7 @@ function QualityRow({ dim }: { dim: QualityDimension }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AITrainingPage() {
+  usePageTitle("Entraînement IA");
   const [stats, setStats] = useState<TrainingStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);

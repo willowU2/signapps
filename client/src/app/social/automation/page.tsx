@@ -1,10 +1,12 @@
-import { RssManager } from '@/components/social/rss-manager';
-import { RssAutoShare } from '@/components/social/rss-auto-share';
-import { EvergreenQueue } from '@/components/social/evergreen-queue';
+"use client";
 
-export const metadata = { title: 'SignSocial — Automation' };
+import { usePageTitle } from "@/hooks/use-page-title";
+import { RssManager } from "@/components/social/rss-manager";
+import { RssAutoShare } from "@/components/social/rss-auto-share";
+import { EvergreenQueue } from "@/components/social/evergreen-queue";
 
 export default function SocialAutomationPage() {
+  usePageTitle("Social — Automatisation");
   return (
     <div className="space-y-10 p-6">
       <div>

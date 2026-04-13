@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,6 +61,7 @@ function useCurrentUserEmail(): string {
 }
 
 export default function VaultPage() {
+  usePageTitle("Coffre-fort");
   const { locked, loading, masterPasswordRequired, autoUnlock } =
     useVaultStore();
   const email = useCurrentUserEmail();

@@ -1,18 +1,16 @@
-import { Metadata } from 'next';
-import DesignDashboard from '@/components/design/design-dashboard';
-import { AppLayout } from '@/components/layout/app-layout';
+"use client";
 
-export const metadata: Metadata = {
-    title: 'Design — SignApps',
-    description: 'Design tool - Create stunning visuals',
-};
+import DesignDashboard from "@/components/design/design-dashboard";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { AppLayout } from "@/components/layout/app-layout";
 
 export default function DesignPage() {
-    return (
-        <AppLayout>
-            <div className="flex-1 flex flex-col min-h-0 overflow-hidden glass-panel rounded-2xl shadow-premium border border-border/50">
-                <DesignDashboard />
-            </div>
-        </AppLayout>
-    );
+  usePageTitle("Design");
+  return (
+    <AppLayout>
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden glass-panel rounded-2xl shadow-premium border border-border/50">
+        <DesignDashboard />
+      </div>
+    </AppLayout>
+  );
 }

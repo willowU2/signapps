@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
+import { useState, useEffect, useCallback } from "react";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { AppLayout } from "@/components/layout/app-layout";
 import {
   Table,
   TableBody,
@@ -9,9 +10,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -19,19 +20,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { PageHeader } from '@/components/ui/page-header';
-import { toast } from 'sonner';
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { PageHeader } from "@/components/ui/page-header";
+import { toast } from "sonner";
 import {
   ArchiveRestore,
   CheckCircle,
@@ -45,53 +46,69 @@ import {
   RefreshCw,
   Trash2,
   XCircle,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   backupApi,
   type BackupPlan,
   type BackupSnapshot,
   type BackupSnapshotDetail,
   type CreateBackupPlan,
-} from '@/lib/api/storage';
+} from "@/lib/api/storage";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function formatDate(iso: string | null): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 o';
+  if (bytes === 0) return "0 o";
   const k = 1024;
-  const sizes = ['o', 'Ko', 'Mo', 'Go', 'To'];
+  const sizes = ["o", "Ko", "Mo", "Go", "To"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }
 
 function backupTypeLabel(t: string): string {
   switch (t) {
-    case 'full': return 'Complète';
-    case 'incremental': return 'Incrémentale';
-    case 'differential': return 'Différentielle';
-    default: return t;
+    case "full":
+      return "Complète";
+    case "incremental":
+      return "Incrémentale";
+    case "differential":
+      return "Différentielle";
+    default:
+      return t;
   }
 }
 
 function SnapshotStatusBadge({ status }: { status: string }) {
-  if (status === 'completed')
-    return <Badge className="bg-green-500/15 text-green-600 border-green-500/30">Terminée</Badge>;
-  if (status === 'running')
-    return <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30">En cours</Badge>;
-  return <Badge className="bg-red-500/15 text-red-600 border-red-500/30">Échouée</Badge>;
+  if (status === "completed")
+    return (
+      <Badge className="bg-green-500/15 text-green-600 border-green-500/30">
+        Terminée
+      </Badge>
+    );
+  if (status === "running")
+    return (
+      <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30">
+        En cours
+      </Badge>
+    );
+  return (
+    <Badge className="bg-red-500/15 text-red-600 border-red-500/30">
+      Échouée
+    </Badge>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -106,19 +123,25 @@ interface PlanFormProps {
 }
 
 function PlanFormDialog({ open, onClose, onSave, initial }: PlanFormProps) {
-  const [name, setName] = useState(initial?.name ?? '');
-  const [schedule, setSchedule] = useState(initial?.schedule ?? '0 2 * * *');
-  const [backupType, setBackupType] = useState<string>(initial?.backup_type ?? 'incremental');
-  const [retentionDays, setRetentionDays] = useState(String(initial?.retention_days ?? 30));
-  const [maxSnapshots, setMaxSnapshots] = useState(String(initial?.max_snapshots ?? 10));
+  const [name, setName] = useState(initial?.name ?? "");
+  const [schedule, setSchedule] = useState(initial?.schedule ?? "0 2 * * *");
+  const [backupType, setBackupType] = useState<string>(
+    initial?.backup_type ?? "incremental",
+  );
+  const [retentionDays, setRetentionDays] = useState(
+    String(initial?.retention_days ?? 30),
+  );
+  const [maxSnapshots, setMaxSnapshots] = useState(
+    String(initial?.max_snapshots ?? 10),
+  );
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setName(initial?.name ?? '');
-      setSchedule(initial?.schedule ?? '0 2 * * *');
-      setBackupType(initial?.backup_type ?? 'incremental');
+      setName(initial?.name ?? "");
+      setSchedule(initial?.schedule ?? "0 2 * * *");
+      setBackupType(initial?.backup_type ?? "incremental");
       setRetentionDays(String(initial?.retention_days ?? 30));
       setMaxSnapshots(String(initial?.max_snapshots ?? 10));
       setEnabled(initial?.enabled ?? true);
@@ -127,7 +150,7 @@ function PlanFormDialog({ open, onClose, onSave, initial }: PlanFormProps) {
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      toast.error('Le nom du plan est requis');
+      toast.error("Le nom du plan est requis");
       return;
     }
     setSaving(true);
@@ -135,7 +158,7 @@ function PlanFormDialog({ open, onClose, onSave, initial }: PlanFormProps) {
       await onSave({
         name: name.trim(),
         schedule,
-        backup_type: backupType as 'full' | 'incremental' | 'differential',
+        backup_type: backupType as "full" | "incremental" | "differential",
         retention_days: parseInt(retentionDays, 10) || 30,
         max_snapshots: parseInt(maxSnapshots, 10) || 10,
         enabled,
@@ -150,7 +173,9 @@ function PlanFormDialog({ open, onClose, onSave, initial }: PlanFormProps) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{initial ? 'Modifier le plan' : 'Nouveau plan de sauvegarde'}</DialogTitle>
+          <DialogTitle>
+            {initial ? "Modifier le plan" : "Nouveau plan de sauvegarde"}
+          </DialogTitle>
           <DialogDescription>
             Configurez la planification et la politique de rétention.
           </DialogDescription>
@@ -176,7 +201,8 @@ function PlanFormDialog({ open, onClose, onSave, initial }: PlanFormProps) {
               placeholder="0 2 * * *"
             />
             <p className="text-xs text-muted-foreground">
-              Format : minute heure jour mois jour-semaine. Ex : <code>0 2 * * *</code> = chaque nuit à 2 h.
+              Format : minute heure jour mois jour-semaine. Ex :{" "}
+              <code>0 2 * * *</code> = chaque nuit à 2 h.
             </p>
           </div>
 
@@ -220,7 +246,9 @@ function PlanFormDialog({ open, onClose, onSave, initial }: PlanFormProps) {
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div>
               <p className="text-sm font-medium">Plan actif</p>
-              <p className="text-xs text-muted-foreground">Les sauvegardes seront exécutées automatiquement</p>
+              <p className="text-xs text-muted-foreground">
+                Les sauvegardes seront exécutées automatiquement
+              </p>
             </div>
             <Switch checked={enabled} onCheckedChange={setEnabled} />
           </div>
@@ -232,7 +260,7 @@ function PlanFormDialog({ open, onClose, onSave, initial }: PlanFormProps) {
           </Button>
           <Button onClick={handleSubmit} disabled={saving}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {initial ? 'Enregistrer' : 'Créer'}
+            {initial ? "Enregistrer" : "Créer"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -251,11 +279,11 @@ interface RestoreDialogProps {
 }
 
 function RestoreDialog({ snapshot, onClose, onRestore }: RestoreDialogProps) {
-  const [nodePath, setNodePath] = useState('');
+  const [nodePath, setNodePath] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (snapshot) setNodePath('');
+    if (snapshot) setNodePath("");
   }, [snapshot]);
 
   const handleRestore = async () => {
@@ -287,19 +315,31 @@ function RestoreDialog({ snapshot, onClose, onRestore }: RestoreDialogProps) {
               placeholder="Laisser vide pour tout restaurer"
             />
             <p className="text-xs text-muted-foreground">
-              Ex : <code>/Documents/Projets</code>. Vide = restauration complète.
+              Ex : <code>/Documents/Projets</code>. Vide = restauration
+              complète.
             </p>
           </div>
           {snapshot && (
             <div className="rounded-lg border p-3 text-sm space-y-1">
-              <p><span className="text-muted-foreground">Date :</span> {formatDate(snapshot.started_at)}</p>
-              <p><span className="text-muted-foreground">Fichiers :</span> {snapshot.files_count}</p>
-              <p><span className="text-muted-foreground">Taille :</span> {formatBytes(snapshot.total_size)}</p>
+              <p>
+                <span className="text-muted-foreground">Date :</span>{" "}
+                {formatDate(snapshot.started_at)}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Fichiers :</span>{" "}
+                {snapshot.files_count}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Taille :</span>{" "}
+                {formatBytes(snapshot.total_size)}
+              </p>
             </div>
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={loading}>Annuler</Button>
+          <Button variant="outline" onClick={onClose} disabled={loading}>
+            Annuler
+          </Button>
           <Button onClick={handleRestore} disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Restaurer
@@ -336,7 +376,7 @@ function SnapshotRow({
         const res = await backupApi.getSnapshot(snapshot.id);
         setDetail(res.data);
       } catch {
-        toast.error('Impossible de charger les détails');
+        toast.error("Impossible de charger les détails");
       } finally {
         setLoadingDetail(false);
       }
@@ -346,7 +386,10 @@ function SnapshotRow({
 
   return (
     <>
-      <TableRow className="cursor-pointer hover:bg-muted/50" onClick={toggleExpand}>
+      <TableRow
+        className="cursor-pointer hover:bg-muted/50"
+        onClick={toggleExpand}
+      >
         <TableCell>
           {loadingDetail ? (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -365,8 +408,11 @@ function SnapshotRow({
         <TableCell>{snapshot.files_count}</TableCell>
         <TableCell>{formatBytes(snapshot.total_size)}</TableCell>
         <TableCell>
-          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-            {snapshot.status === 'completed' && (
+          <div
+            className="flex items-center gap-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {snapshot.status === "completed" && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -395,24 +441,36 @@ function SnapshotRow({
           <TableCell colSpan={8} className="bg-muted/30 p-0">
             <div className="px-8 py-3">
               {detail.error_message && (
-                <p className="text-sm text-red-500 mb-2">Erreur : {detail.error_message}</p>
+                <p className="text-sm text-red-500 mb-2">
+                  Erreur : {detail.error_message}
+                </p>
               )}
               {detail.entries.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucun fichier dans ce snapshot.</p>
+                <p className="text-sm text-muted-foreground">
+                  Aucun fichier dans ce snapshot.
+                </p>
               ) : (
                 <div className="max-h-48 overflow-auto rounded border">
                   <table className="w-full text-xs">
                     <thead className="bg-muted sticky top-0">
                       <tr>
-                        <th className="text-left px-3 py-1.5 font-medium">Chemin</th>
-                        <th className="text-right px-3 py-1.5 font-medium">Taille</th>
+                        <th className="text-left px-3 py-1.5 font-medium">
+                          Chemin
+                        </th>
+                        <th className="text-right px-3 py-1.5 font-medium">
+                          Taille
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {detail.entries.map((e) => (
                         <tr key={e.id} className="border-t hover:bg-muted/50">
-                          <td className="px-3 py-1 font-mono text-muted-foreground">{e.node_path}</td>
-                          <td className="px-3 py-1 text-right tabular-nums">{formatBytes(e.file_size)}</td>
+                          <td className="px-3 py-1 font-mono text-muted-foreground">
+                            {e.node_path}
+                          </td>
+                          <td className="px-3 py-1 text-right tabular-nums">
+                            {formatBytes(e.file_size)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -432,13 +490,16 @@ function SnapshotRow({
 // ---------------------------------------------------------------------------
 
 export default function DriveBackupsPage() {
+  usePageTitle("Sauvegardes Drive");
   const [plans, setPlans] = useState<BackupPlan[]>([]);
   const [snapshots, setSnapshots] = useState<BackupSnapshot[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [loadingSnapshots, setLoadingSnapshots] = useState(true);
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<BackupPlan | null>(null);
-  const [restoreSnapshot, setRestoreSnapshot] = useState<BackupSnapshot | null>(null);
+  const [restoreSnapshot, setRestoreSnapshot] = useState<BackupSnapshot | null>(
+    null,
+  );
 
   const fetchPlans = useCallback(async () => {
     setLoadingPlans(true);
@@ -446,7 +507,7 @@ export default function DriveBackupsPage() {
       const res = await backupApi.listPlans();
       setPlans(res.data);
     } catch {
-      toast.error('Impossible de charger les plans');
+      toast.error("Impossible de charger les plans");
     } finally {
       setLoadingPlans(false);
     }
@@ -458,7 +519,7 @@ export default function DriveBackupsPage() {
       const res = await backupApi.listSnapshots();
       setSnapshots(res.data);
     } catch {
-      toast.error('Impossible de charger les snapshots');
+      toast.error("Impossible de charger les snapshots");
     } finally {
       setLoadingSnapshots(false);
     }
@@ -474,33 +535,34 @@ export default function DriveBackupsPage() {
   const handleSavePlan = async (data: CreateBackupPlan) => {
     if (editingPlan) {
       await backupApi.updatePlan(editingPlan.id, data);
-      toast.success('Plan mis à jour');
+      toast.success("Plan mis à jour");
     } else {
       await backupApi.createPlan(data);
-      toast.success('Plan créé');
+      toast.success("Plan créé");
     }
     await fetchPlans();
   };
 
   const handleDeletePlan = async (id: string) => {
-    if (!confirm('Supprimer ce plan de sauvegarde et tous ses snapshots ?')) return;
+    if (!confirm("Supprimer ce plan de sauvegarde et tous ses snapshots ?"))
+      return;
     try {
       await backupApi.deletePlan(id);
-      toast.success('Plan supprimé');
+      toast.success("Plan supprimé");
       fetchPlans();
       fetchSnapshots();
     } catch {
-      toast.error('Erreur lors de la suppression');
+      toast.error("Erreur lors de la suppression");
     }
   };
 
   const handleRunPlan = async (id: string) => {
     try {
       await backupApi.runPlan(id);
-      toast.success('Sauvegarde démarrée');
+      toast.success("Sauvegarde démarrée");
       setTimeout(fetchSnapshots, 2000);
     } catch {
-      toast.error('Impossible de déclencher la sauvegarde');
+      toast.error("Impossible de déclencher la sauvegarde");
     }
   };
 
@@ -509,35 +571,38 @@ export default function DriveBackupsPage() {
       await backupApi.updatePlan(plan.id, { enabled: !plan.enabled });
       fetchPlans();
     } catch {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error("Erreur lors de la mise à jour");
     }
   };
 
   // Snapshots handlers
 
   const handleDeleteSnapshot = async (id: string) => {
-    if (!confirm('Supprimer ce snapshot ?')) return;
+    if (!confirm("Supprimer ce snapshot ?")) return;
     try {
       await backupApi.deleteSnapshot(id);
-      toast.success('Snapshot supprimé');
+      toast.success("Snapshot supprimé");
       fetchSnapshots();
     } catch {
-      toast.error('Erreur lors de la suppression du snapshot');
+      toast.error("Erreur lors de la suppression du snapshot");
     }
   };
 
   const handleRestore = async (snapshotId: string, nodePath?: string) => {
     try {
-      const res = await backupApi.restore({ snapshot_id: snapshotId, node_path: nodePath });
+      const res = await backupApi.restore({
+        snapshot_id: snapshotId,
+        node_path: nodePath,
+      });
       toast.success(res.data.message);
     } catch {
-      toast.error('Erreur lors de la restauration');
+      toast.error("Erreur lors de la restauration");
     }
   };
 
   // Plan name lookup
   const planNameById = (id: string) =>
-    plans.find((p) => p.id === id)?.name ?? id.slice(0, 8) + '…';
+    plans.find((p) => p.id === id)?.name ?? id.slice(0, 8) + "…";
 
   return (
     <AppLayout>
@@ -555,8 +620,15 @@ export default function DriveBackupsPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Plans de sauvegarde</h2>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={fetchPlans} disabled={loadingPlans}>
-                <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${loadingPlans ? 'animate-spin' : ''}`} />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchPlans}
+                disabled={loadingPlans}
+              >
+                <RefreshCw
+                  className={`mr-1.5 h-3.5 w-3.5 ${loadingPlans ? "animate-spin" : ""}`}
+                />
                 Actualiser
               </Button>
               <Button
@@ -588,14 +660,20 @@ export default function DriveBackupsPage() {
               <TableBody>
                 {loadingPlans ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell
+                      colSpan={7}
+                      className="text-center py-8 text-muted-foreground"
+                    >
                       <Loader2 className="inline h-4 w-4 animate-spin mr-2" />
                       Chargement…
                     </TableCell>
                   </TableRow>
                 ) : plans.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell
+                      colSpan={7}
+                      className="text-center py-8 text-muted-foreground"
+                    >
                       Aucun plan configuré. Créez votre premier plan.
                     </TableCell>
                   </TableRow>
@@ -604,10 +682,14 @@ export default function DriveBackupsPage() {
                     <TableRow key={plan.id}>
                       <TableCell className="font-medium">{plan.name}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{backupTypeLabel(plan.backup_type)}</Badge>
+                        <Badge variant="outline">
+                          {backupTypeLabel(plan.backup_type)}
+                        </Badge>
                       </TableCell>
                       <TableCell>
-                        <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{plan.schedule}</code>
+                        <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                          {plan.schedule}
+                        </code>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {plan.last_run_at ? (
@@ -680,8 +762,15 @@ export default function DriveBackupsPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Historique des snapshots</h2>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={fetchSnapshots} disabled={loadingSnapshots}>
-                <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${loadingSnapshots ? 'animate-spin' : ''}`} />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchSnapshots}
+                disabled={loadingSnapshots}
+              >
+                <RefreshCw
+                  className={`mr-1.5 h-3.5 w-3.5 ${loadingSnapshots ? "animate-spin" : ""}`}
+                />
                 Actualiser
               </Button>
             </div>
@@ -691,15 +780,16 @@ export default function DriveBackupsPage() {
           <div className="flex gap-3 text-sm">
             <span className="flex items-center gap-1 text-muted-foreground">
               <CheckCircle className="h-3.5 w-3.5 text-green-500" />
-              {snapshots.filter((s) => s.status === 'completed').length} terminées
+              {snapshots.filter((s) => s.status === "completed").length}{" "}
+              terminées
             </span>
             <span className="flex items-center gap-1 text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 text-blue-500" />
-              {snapshots.filter((s) => s.status === 'running').length} en cours
+              {snapshots.filter((s) => s.status === "running").length} en cours
             </span>
             <span className="flex items-center gap-1 text-muted-foreground">
               <XCircle className="h-3.5 w-3.5 text-red-500" />
-              {snapshots.filter((s) => s.status === 'failed').length} échouées
+              {snapshots.filter((s) => s.status === "failed").length} échouées
             </span>
           </div>
 
@@ -720,14 +810,20 @@ export default function DriveBackupsPage() {
               <TableBody>
                 {loadingSnapshots ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell
+                      colSpan={8}
+                      className="text-center py-8 text-muted-foreground"
+                    >
                       <Loader2 className="inline h-4 w-4 animate-spin mr-2" />
                       Chargement…
                     </TableCell>
                   </TableRow>
                 ) : snapshots.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell
+                      colSpan={8}
+                      className="text-center py-8 text-muted-foreground"
+                    >
                       Aucun snapshot. Lancez une sauvegarde pour commencer.
                     </TableCell>
                   </TableRow>

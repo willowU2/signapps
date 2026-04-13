@@ -1,6 +1,7 @@
 "use client";
 
 import { Users, Server } from "lucide-react";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,7 @@ import { TeamIndicators } from "@/components/team/team-indicators";
 import { TeamInfrastructure } from "@/components/team/team-infrastructure";
 
 export default function MyTeamPage() {
+  usePageTitle("Mon équipe");
   const { data, isLoading } = useMyTeam();
 
   if (isLoading) {

@@ -1,11 +1,18 @@
 "use client";
 
 import { use } from "react";
+import { usePageTitle } from "@/hooks/use-page-title";
 import dynamic from "next/dynamic";
 
 const PollVoteView = dynamic(
-  () => import("@/components/calendar/scheduling-poll").then((m) => m.PollVoteView),
-  { ssr: false, loading: () => <div className="flex items-center justify-center h-64">Chargement...</div> }
+  () =>
+    import("@/components/calendar/scheduling-poll").then((m) => m.PollVoteView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-64">Chargement...</div>
+    ),
+  },
 );
 
 interface PollPageProps {
@@ -14,6 +21,7 @@ interface PollPageProps {
 
 export default function PollPage({ params }: PollPageProps) {
   const { id } = use(params);
+  usePageTitle("Sondage");
 
   return (
     <div className="min-h-screen bg-background">
@@ -22,7 +30,9 @@ export default function PollPage({ params }: PollPageProps) {
           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary shadow-sm">
             <span className="text-sm font-bold text-primary-foreground">S</span>
           </div>
-          <span className="text-sm font-semibold text-muted-foreground">SignApps Poll</span>
+          <span className="text-sm font-semibold text-muted-foreground">
+            SignApps Poll
+          </span>
         </div>
       </div>
       <PollVoteView pollId={id} />

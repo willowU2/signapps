@@ -1,12 +1,13 @@
-'use client';
+"use client";
 
-import { use, useEffect, useState, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Shield, X, Clock } from 'lucide-react';
-import { vaultApi } from '@/lib/api/vault';
-import { toast } from 'sonner';
+import { use, useEffect, useState, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Shield, X, Clock } from "lucide-react";
+import { vaultApi } from "@/lib/api/vault";
+import { toast } from "sonner";
 
 interface BrowsePageProps {
   params: Promise<{ token: string }>;
@@ -15,7 +16,7 @@ interface BrowsePageProps {
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
 // Session duration: 30 minutes
@@ -23,6 +24,7 @@ const SESSION_DURATION_SECONDS = 30 * 60;
 
 export default function BrowsePage({ params }: BrowsePageProps) {
   const { token } = use(params);
+  usePageTitle("Navigation sécurisée");
   const router = useRouter();
   const [remaining, setRemaining] = useState(SESSION_DURATION_SECONDS);
   const [ending, setEnding] = useState(false);
@@ -57,8 +59,8 @@ export default function BrowsePage({ params }: BrowsePageProps) {
       // Session may already be expired
     }
 
-    toast.info('Session de navigation terminée');
-    router.push('/vault');
+    toast.info("Session de navigation terminée");
+    router.push("/vault");
   }, [token, router, ending]);
 
   const isExpiringSoon = remaining <= 60;
@@ -85,7 +87,7 @@ export default function BrowsePage({ params }: BrowsePageProps) {
           {/* Timer */}
           <div
             className={`flex items-center gap-1.5 text-sm font-mono ${
-              isExpiringSoon ? 'text-red-400' : 'text-zinc-300'
+              isExpiringSoon ? "text-red-400" : "text-zinc-300"
             }`}
           >
             <Clock className="h-3.5 w-3.5" />

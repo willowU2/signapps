@@ -1,9 +1,9 @@
-import { SocialDashboard } from '@/components/social/social-dashboard';
+"use client";
 
-export const metadata = { title: 'Social — SignApps' };
+import { usePageTitle } from "@/hooks/use-page-title";
+import { SocialDashboard } from "@/components/social/social-dashboard";
 
 export default function SocialPage() {
-  return (
-    <SocialDashboard />
-  );
+  usePageTitle("Social");
+  return <SocialDashboard />;
 }

@@ -1,13 +1,11 @@
-import { Metadata } from "next";
+"use client";
+
 import SlidesDashboard from "@/components/slides/dashboard";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { AppLayout } from "@/components/layout/app-layout";
 
-export const metadata: Metadata = {
-  title: "Présentations — SignApps",
-  description: "Présentations collaboratives",
-};
-
 export default function SlidesPage() {
+  usePageTitle("Présentations");
   return (
     <AppLayout>
       <div

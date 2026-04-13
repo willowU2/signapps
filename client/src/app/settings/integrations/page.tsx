@@ -1,14 +1,21 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { useState, useEffect } from "react";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { AppLayout } from "@/components/layout/app-layout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +23,7 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   MessageSquare,
   Webhook,
@@ -29,9 +36,9 @@ import {
   Save,
   Loader2,
   Info,
-} from 'lucide-react';
-import { api } from '@/lib/api';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -48,7 +55,7 @@ interface Integration {
   name: string;
   description: string;
   icon: React.ReactNode;
-  status: 'connected' | 'disconnected' | 'error';
+  status: "connected" | "disconnected" | "error";
   configurable: boolean;
 }
 
@@ -73,8 +80,8 @@ function SlackConfigDialog({
   }, [initial, open]);
 
   const handleSave = async () => {
-    if (!config.webhook_url.startsWith('https://hooks.slack.com/')) {
-      toast.error('URL de webhook Slack invalide');
+    if (!config.webhook_url.startsWith("https://hooks.slack.com/")) {
+      toast.error("URL de webhook Slack invalide");
       return;
     }
     setSaving(true);
@@ -95,14 +102,17 @@ function SlackConfigDialog({
             Configuration Slack
           </DialogTitle>
           <DialogDescription>
-            Connectez SignApps à votre workspace Slack pour recevoir des notifications et utiliser les commandes.
+            Connectez SignApps à votre workspace Slack pour recevoir des
+            notifications et utiliser les commandes.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           {/* Enable toggle */}
           <div className="flex items-center justify-between">
-            <Label htmlFor="slack-enabled" className="text-sm">Activer l'intégration Slack</Label>
+            <Label htmlFor="slack-enabled" className="text-sm">
+              Activer l'intégration Slack
+            </Label>
             <Switch
               id="slack-enabled"
               checked={config.enabled}
@@ -114,17 +124,21 @@ function SlackConfigDialog({
 
           {/* Webhook URL */}
           <div className="space-y-1.5">
-            <Label htmlFor="slack-webhook" className="text-sm">URL du Webhook entrant</Label>
+            <Label htmlFor="slack-webhook" className="text-sm">
+              URL du Webhook entrant
+            </Label>
             <Input
               id="slack-webhook"
               placeholder="https://hooks.slack.com/services/..."
               value={config.webhook_url}
-              onChange={(e) => setConfig((c) => ({ ...c, webhook_url: e.target.value }))}
+              onChange={(e) =>
+                setConfig((c) => ({ ...c, webhook_url: e.target.value }))
+              }
               disabled={!config.enabled}
             />
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Info className="h-3 w-3" />
-              Créez un webhook dans votre{' '}
+              Créez un webhook dans votre{" "}
               <a
                 href="https://api.slack.com/apps"
                 target="_blank"
@@ -138,12 +152,16 @@ function SlackConfigDialog({
 
           {/* Channel */}
           <div className="space-y-1.5">
-            <Label htmlFor="slack-channel" className="text-sm">Canal par défaut</Label>
+            <Label htmlFor="slack-channel" className="text-sm">
+              Canal par défaut
+            </Label>
             <Input
               id="slack-channel"
               placeholder="#général"
               value={config.channel}
-              onChange={(e) => setConfig((c) => ({ ...c, channel: e.target.value }))}
+              onChange={(e) =>
+                setConfig((c) => ({ ...c, channel: e.target.value }))
+              }
               disabled={!config.enabled}
             />
           </div>
@@ -157,11 +175,15 @@ function SlackConfigDialog({
             <div className="flex items-center justify-between">
               <div>
                 <Label className="text-sm">Deal remporté</Label>
-                <p className="text-xs text-muted-foreground">Notifie quand un deal passe à "Gagné"</p>
+                <p className="text-xs text-muted-foreground">
+                  Notifie quand un deal passe à "Gagné"
+                </p>
               </div>
               <Switch
                 checked={config.notify_on_deal_won}
-                onCheckedChange={(v) => setConfig((c) => ({ ...c, notify_on_deal_won: v }))}
+                onCheckedChange={(v) =>
+                  setConfig((c) => ({ ...c, notify_on_deal_won: v }))
+                }
                 disabled={!config.enabled}
               />
             </div>
@@ -169,11 +191,15 @@ function SlackConfigDialog({
             <div className="flex items-center justify-between">
               <div>
                 <Label className="text-sm">Tâche en retard</Label>
-                <p className="text-xs text-muted-foreground">Notifie quand une tâche dépasse sa deadline</p>
+                <p className="text-xs text-muted-foreground">
+                  Notifie quand une tâche dépasse sa deadline
+                </p>
               </div>
               <Switch
                 checked={config.notify_on_task_overdue}
-                onCheckedChange={(v) => setConfig((c) => ({ ...c, notify_on_task_overdue: v }))}
+                onCheckedChange={(v) =>
+                  setConfig((c) => ({ ...c, notify_on_task_overdue: v }))
+                }
                 disabled={!config.enabled}
               />
             </div>
@@ -182,15 +208,25 @@ function SlackConfigDialog({
           {/* Commands info */}
           <div className="p-3 bg-muted/50 rounded-lg text-xs space-y-1">
             <p className="font-medium">Commandes Slack disponibles :</p>
-            <p className="font-mono text-muted-foreground">/signapps task "Faire le rapport"</p>
-            <p className="font-mono text-muted-foreground">/signapps search "projet alpha"</p>
+            <p className="font-mono text-muted-foreground">
+              /signapps task "Faire le rapport"
+            </p>
+            <p className="font-mono text-muted-foreground">
+              /signapps search "projet alpha"
+            </p>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button variant="outline" onClick={onClose}>
+            Annuler
+          </Button>
           <Button onClick={handleSave} disabled={saving} className="gap-1.5">
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            {saving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Save className="h-3.5 w-3.5" />
+            )}
             Enregistrer
           </Button>
         </DialogFooter>
@@ -209,38 +245,56 @@ function IntegrationCard({
   onConfigure: () => void;
 }) {
   const statusIcon =
-    integration.status === 'connected' ? (
+    integration.status === "connected" ? (
       <CheckCircle2 className="h-4 w-4 text-green-500" />
-    ) : integration.status === 'error' ? (
+    ) : integration.status === "error" ? (
       <XCircle className="h-4 w-4 text-red-500" />
     ) : (
       <XCircle className="h-4 w-4 text-muted-foreground" />
     );
 
   const statusBadge =
-    integration.status === 'connected' ? (
-      <Badge variant="default" className="text-xs bg-green-500 hover:bg-green-500">Connecté</Badge>
-    ) : integration.status === 'error' ? (
-      <Badge variant="destructive" className="text-xs">Erreur</Badge>
+    integration.status === "connected" ? (
+      <Badge
+        variant="default"
+        className="text-xs bg-green-500 hover:bg-green-500"
+      >
+        Connecté
+      </Badge>
+    ) : integration.status === "error" ? (
+      <Badge variant="destructive" className="text-xs">
+        Erreur
+      </Badge>
     ) : (
-      <Badge variant="outline" className="text-xs">Non connecté</Badge>
+      <Badge variant="outline" className="text-xs">
+        Non connecté
+      </Badge>
     );
 
   return (
     <div className="p-4 rounded-lg border bg-card hover:border-border/80 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 p-2 rounded-lg bg-muted">{integration.icon}</div>
+          <div className="mt-0.5 p-2 rounded-lg bg-muted">
+            {integration.icon}
+          </div>
           <div>
             <div className="flex items-center gap-2 mb-0.5">
               <p className="font-medium text-sm">{integration.name}</p>
               {statusBadge}
             </div>
-            <p className="text-xs text-muted-foreground">{integration.description}</p>
+            <p className="text-xs text-muted-foreground">
+              {integration.description}
+            </p>
           </div>
         </div>
         {integration.configurable && (
-          <Button variant="ghost" size="sm" onClick={onConfigure} className="shrink-0 gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onConfigure}
+            className="shrink-0 gap-1.5"
+          >
             <Settings className="h-3.5 w-3.5" />
             Configurer
           </Button>
@@ -253,24 +307,29 @@ function IntegrationCard({
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function IntegrationsPage() {
+  usePageTitle("Intégrations");
   const [slackDialogOpen, setSlackDialogOpen] = useState(false);
   const [slackConfig, setSlackConfig] = useState<SlackConfig>({
-    webhook_url: '',
-    channel: '#général',
+    webhook_url: "",
+    channel: "#général",
     enabled: false,
     notify_on_deal_won: true,
     notify_on_task_overdue: true,
   });
-  const [slackStatus, setSlackStatus] = useState<'connected' | 'disconnected' | 'error'>('disconnected');
+  const [slackStatus, setSlackStatus] = useState<
+    "connected" | "disconnected" | "error"
+  >("disconnected");
 
   // Load Slack config from localStorage (would be API in production)
   useEffect(() => {
-    const saved = localStorage.getItem('signapps_slack_config');
+    const saved = localStorage.getItem("signapps_slack_config");
     if (saved) {
       try {
         const cfg: SlackConfig = JSON.parse(saved);
         setSlackConfig(cfg);
-        setSlackStatus(cfg.enabled && cfg.webhook_url ? 'connected' : 'disconnected');
+        setSlackStatus(
+          cfg.enabled && cfg.webhook_url ? "connected" : "disconnected",
+        );
       } catch {
         // ignore
       }
@@ -280,51 +339,57 @@ export default function IntegrationsPage() {
   const saveSlackConfig = async (config: SlackConfig) => {
     // Persist to backend (identity service webhook config)
     try {
-      await api.post('/api/v1/integrations/slack/config', config).catch(() => {
+      await api.post("/api/v1/integrations/slack/config", config).catch(() => {
         // Fallback to localStorage if endpoint not yet available
-        localStorage.setItem('signapps_slack_config', JSON.stringify(config));
+        localStorage.setItem("signapps_slack_config", JSON.stringify(config));
       });
-      localStorage.setItem('signapps_slack_config', JSON.stringify(config));
+      localStorage.setItem("signapps_slack_config", JSON.stringify(config));
       setSlackConfig(config);
-      setSlackStatus(config.enabled && config.webhook_url ? 'connected' : 'disconnected');
-      toast.success('Configuration Slack enregistrée');
+      setSlackStatus(
+        config.enabled && config.webhook_url ? "connected" : "disconnected",
+      );
+      toast.success("Configuration Slack enregistrée");
     } catch {
-      toast.error('Erreur lors de la sauvegarde');
-      throw new Error('Save failed');
+      toast.error("Erreur lors de la sauvegarde");
+      throw new Error("Save failed");
     }
   };
 
   const integrations: Integration[] = [
     {
-      id: 'slack',
-      name: 'Slack',
-      description: 'Recevez des notifications et exécutez des commandes SignApps depuis Slack.',
+      id: "slack",
+      name: "Slack",
+      description:
+        "Recevez des notifications et exécutez des commandes SignApps depuis Slack.",
       icon: <MessageSquare className="h-5 w-5 text-[#4A154B]" />,
       status: slackStatus,
       configurable: true,
     },
     {
-      id: 'zapier',
-      name: 'Zapier / n8n',
-      description: 'Connectez SignApps à 5 000+ applications via webhook générique.',
+      id: "zapier",
+      name: "Zapier / n8n",
+      description:
+        "Connectez SignApps à 5 000+ applications via webhook générique.",
       icon: <Zap className="h-5 w-5 text-orange-500" />,
-      status: 'connected', // Generic webhook is always available
+      status: "connected", // Generic webhook is always available
       configurable: false,
     },
     {
-      id: 'caldav',
-      name: 'CalDAV',
-      description: 'Synchronisez votre calendrier avec Thunderbird, Apple Calendar, Evolution.',
+      id: "caldav",
+      name: "CalDAV",
+      description:
+        "Synchronisez votre calendrier avec Thunderbird, Apple Calendar, Evolution.",
       icon: <Globe className="h-5 w-5 text-blue-500" />,
-      status: 'connected',
+      status: "connected",
       configurable: false,
     },
     {
-      id: 'stripe',
-      name: 'Stripe',
-      description: 'Acceptez des paiements en ligne directement depuis vos factures.',
+      id: "stripe",
+      name: "Stripe",
+      description:
+        "Acceptez des paiements en ligne directement depuis vos factures.",
       icon: <Webhook className="h-5 w-5 text-violet-500" />,
-      status: 'disconnected',
+      status: "disconnected",
       configurable: false,
     },
   ];
@@ -346,8 +411,10 @@ export default function IntegrationsPage() {
             CalDAV — Clients supportés
           </p>
           <p>
-            Synchronisation disponible sur <code className="bg-background px-1 rounded">/caldav/</code>.
-            Compatible Thunderbird, Apple Calendar, Evolution, et tout client RFC 4791.
+            Synchronisation disponible sur{" "}
+            <code className="bg-background px-1 rounded">/caldav/</code>.
+            Compatible Thunderbird, Apple Calendar, Evolution, et tout client
+            RFC 4791.
           </p>
           <a
             href="/settings/interop"
@@ -364,9 +431,15 @@ export default function IntegrationsPage() {
             Webhook générique (n8n / Zapier)
           </p>
           <p>
-            Endpoint : <code className="bg-background px-1 rounded">POST /api/v1/webhooks/incoming/:source</code>
+            Endpoint :{" "}
+            <code className="bg-background px-1 rounded">
+              POST /api/v1/webhooks/incoming/:source
+            </code>
           </p>
-          <p>Envoyez des payloads JSON — ils seront convertis en événements de plateforme.</p>
+          <p>
+            Envoyez des payloads JSON — ils seront convertis en événements de
+            plateforme.
+          </p>
           <a
             href="/admin/webhooks"
             className="flex items-center gap-1 text-primary hover:underline mt-1"
@@ -381,7 +454,11 @@ export default function IntegrationsPage() {
             <IntegrationCard
               key={integration.id}
               integration={integration}
-              onConfigure={integration.id === 'slack' ? () => setSlackDialogOpen(true) : () => {}}
+              onConfigure={
+                integration.id === "slack"
+                  ? () => setSlackDialogOpen(true)
+                  : () => {}
+              }
             />
           ))}
         </div>
@@ -393,10 +470,15 @@ export default function IntegrationsPage() {
             Paiements Stripe
           </p>
           <p>
-            Pour activer les paiements en ligne, configurez{' '}
-            <code className="bg-background px-1 rounded">STRIPE_SECRET_KEY</code> et{' '}
-            <code className="bg-background px-1 rounded">STRIPE_WEBHOOK_SECRET</code> dans votre{' '}
-            <code className="bg-background px-1 rounded">.env</code>.
+            Pour activer les paiements en ligne, configurez{" "}
+            <code className="bg-background px-1 rounded">
+              STRIPE_SECRET_KEY
+            </code>{" "}
+            et{" "}
+            <code className="bg-background px-1 rounded">
+              STRIPE_WEBHOOK_SECRET
+            </code>{" "}
+            dans votre <code className="bg-background px-1 rounded">.env</code>.
             Le bouton "Payer en ligne" apparaîtra alors sur vos factures.
           </p>
         </div>

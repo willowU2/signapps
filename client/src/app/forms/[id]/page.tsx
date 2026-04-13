@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { AppLayout } from "@/components/layout/app-layout";
 import { formsApi } from "@/lib/api/forms";
 import type { Form, FormField } from "@/lib/api/forms";
@@ -406,6 +407,7 @@ function SortableField({
 }
 
 export default function FormBuilderPage() {
+  usePageTitle("Éditeur de formulaire");
   const params = useParams();
   const formId = params.id as string;
   const setCustomLabel = useBreadcrumbStore((s) => s.setCustomLabel);

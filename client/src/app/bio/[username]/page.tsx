@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { ExternalLink } from "lucide-react";
 
 const STORAGE_KEY = "signapps_link_in_bio";
@@ -37,6 +38,7 @@ export default function BioPage({
 }) {
   // Next.js 15+ — params is a Promise and must be unwrapped with React's `use`.
   const { username } = use(params);
+  usePageTitle(`@${username}`);
   const [profile, setProfile] = useState<BioProfile | null>(null);
   const [notFound, setNotFound] = useState(false);
 

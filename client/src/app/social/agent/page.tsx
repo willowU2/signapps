@@ -1,7 +1,9 @@
-import { AgentChat } from '@/components/social/agent-chat';
+"use client";
 
-export const metadata = { title: 'SignSocial — AI Agent' };
+import { usePageTitle } from "@/hooks/use-page-title";
+import { AgentChat } from "@/components/social/agent-chat";
 
 export default function AgentPage() {
+  usePageTitle("Social — Agent IA");
   return <AgentChat />;
 }

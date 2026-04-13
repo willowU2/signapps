@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
+import { usePageTitle } from "@/hooks/use-page-title";
 import {
   Card,
   CardContent,
@@ -645,6 +646,7 @@ export default function ClientPortalPage({
 }) {
   // Next.js 15+ — params is a Promise.
   const { tenantId } = use(params);
+  usePageTitle("Portail client");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState("");
 
