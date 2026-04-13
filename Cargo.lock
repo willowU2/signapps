@@ -10049,6 +10049,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-audio-capture"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "signapps-audit"
 version = "0.1.0"
 dependencies = [
