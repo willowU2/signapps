@@ -6,6 +6,8 @@
 
 use axum::{extract::State, http::StatusCode, Json};
 use serde::{Deserialize, Serialize};
+use signapps_transcription::tiptap::to_tiptap_doc;
+use signapps_transcription::{Segment, SessionMeta, Speaker, TranscriptionResult, TranscriptionSource};
 use uuid::Uuid;
 
 use crate::AppState;
@@ -57,7 +59,6 @@ pub struct TranscriptionJob {
     ),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn handle_session_ended(
     State(state): State<AppState>,
@@ -125,81 +126,273 @@ pub async fn handle_session_ended(
 
 // ── Transcription pipeline ─────────────────────────────────────────────────
 
-/// Background transcription pipeline:
+/// Background transcription pipeline (5 steps):
 ///
-/// 1. Fetch recording file path from DB
-/// 2. NOTE: Fetch audio bytes from storage service — tracked in backlog
-/// 3. NOTE: POST audio to AI service `/ai/transcribe` endpoint — tracked in backlog
-/// 4. Create a text document in the docs service with the transcript (placeholder for now)
-/// 5. Mark recording as `transcribed`
+/// 1. Fetch recording metadata from `meet.recordings`
+/// 2. Fetch audio bytes from the storage service
+/// 3. Transcribe via STT (media service)
+/// 4. Build `TranscriptionResult` with participant speaker labels, create Tiptap document
+/// 5. POST document to docs service, mark job completed
+///
+/// # Errors
+///
+/// Returns `anyhow::Error` on any step failure (DB, HTTP, JSON parsing).
+///
+/// # Panics
+///
+/// None — all errors are propagated via `Result`.
 async fn run_transcription_pipeline(
     pool: &sqlx::Pool<sqlx::Postgres>,
     recording_id: Uuid,
     room_id: Uuid,
 ) -> anyhow::Result<()> {
-    tracing::info!(recording_id = %recording_id, "Starting transcription pipeline");
+    tracing::info!(recording_id = %recording_id, room_id = %room_id, "Starting transcription pipeline");
 
-    // Step 1: Get recording details
+    let client = reqwest::Client::new();
+    let storage_url =
+        std::env::var("STORAGE_URL").unwrap_or_else(|_| "http://localhost:3004".into());
+    let media_url =
+        std::env::var("MEDIA_URL").unwrap_or_else(|_| "http://localhost:3009".into());
+    let docs_url =
+        std::env::var("DOCS_URL").unwrap_or_else(|_| "http://localhost:3010".into());
+
+    // ── Step 1: Fetch recording metadata ────────────────────────────────────
+
     let (storage_path, duration_seconds): (Option<String>, Option<i32>) =
         sqlx::query_as("SELECT storage_path, duration_seconds FROM meet.recordings WHERE id = $1")
             .bind(recording_id)
             .fetch_one(pool)
             .await?;
 
+    let storage_path = storage_path
+        .ok_or_else(|| anyhow::anyhow!("recording {recording_id} has no storage_path"))?;
+
     tracing::info!(
         recording_id = %recording_id,
-        storage_path = ?storage_path,
+        storage_path = %storage_path,
         duration_seconds = ?duration_seconds,
-        "Recording details fetched"
+        "Step 1: recording metadata fetched"
     );
 
-    // NOTE Step 2: Fetch audio from storage service — tracked in backlog
-    // let audio_url = format!("{}/api/v1/storage/files/{}", STORAGE_URL, path);
-    // let audio_bytes = reqwest::get(&audio_url).await?.bytes().await?;
+    // ── Step 2: Fetch audio bytes from storage service ──────────────────────
 
-    // NOTE Step 3: POST to AI transcription endpoint — tracked in backlog
-    // let ai_url = std::env::var("AI_SERVICE_URL").unwrap_or("http://localhost:3010".into());
-    // let transcript_text = reqwest::Client::new()
-    //     .post(format!("{}/ai/transcribe", ai_url))
-    //     .multipart(form_with_audio_bytes)
-    //     .send().await?
-    //     .json::<TranscribeResponse>().await?
-    //     .text;
+    let audio_url = format!("{storage_url}/api/v1/storage/files/{storage_path}");
+    let audio_resp = client
+        .get(&audio_url)
+        .send()
+        .await
+        .map_err(|e| anyhow::anyhow!("storage fetch failed: {e}"))?;
 
-    // For now, generate a placeholder transcript document
-    let placeholder_transcript = format!(
-        "# Meeting Transcript\n\nRoom: {room_id}\nRecording: {recording_id}\nDuration: {}s\n\n\
-        [Transcription pending — audio file will be processed by AI Whisper once the storage \
-        fetch and AI service integration is complete.]\n\n\
-        ## Pending steps\n- Fetch audio from storage path: {storage_path:?}\n\
-        - POST to /ai/transcribe\n- Parse transcript segments with timestamps",
-        duration_seconds.unwrap_or(0)
-    );
+    if !audio_resp.status().is_success() {
+        return Err(anyhow::anyhow!(
+            "storage returned HTTP {} for {audio_url}",
+            audio_resp.status()
+        ));
+    }
 
-    // Step 4: Create document in docs service.
-    // NOTE: Use internal HTTP client to call the docs service — tracked in backlog.
-    // let docs_url = std::env::var("DOCS_SERVICE_URL").unwrap_or("http://localhost:3002".into());
-    // reqwest::Client::new()
-    //     .post(format!("{}/api/v1/docs", docs_url))
-    //     .json(&serde_json::json!({
-    //         "name": format!("Transcript — {}", chrono::Utc::now().format("%Y-%m-%d")),
-    //         "content": placeholder_transcript,
-    //         "source": "meet-transcription",
-    //         "metadata": { "recording_id": recording_id, "room_id": room_id }
-    //     }))
-    //     .send().await?;
+    let audio_bytes = audio_resp
+        .bytes()
+        .await
+        .map_err(|e| anyhow::anyhow!("failed to read audio bytes: {e}"))?;
 
     tracing::info!(
         recording_id = %recording_id,
-        transcript_len = placeholder_transcript.len(),
-        "Transcription pipeline completed (placeholder)"
+        audio_bytes = audio_bytes.len(),
+        "Step 2: audio bytes fetched from storage"
     );
 
-    // Step 5: Mark recording as transcribed
+    // ── Step 3: Transcribe via STT (media service) ──────────────────────────
+
+    let stt_url = format!("{media_url}/api/v1/stt/transcribe?word_timestamps=true");
+
+    let part = reqwest::multipart::Part::bytes(audio_bytes.to_vec())
+        .file_name(storage_path.clone())
+        .mime_str("audio/webm")
+        .map_err(|e| anyhow::anyhow!("multipart mime error: {e}"))?;
+
+    let form = reqwest::multipart::Form::new().part("file", part);
+
+    let stt_resp = client
+        .post(&stt_url)
+        .multipart(form)
+        .send()
+        .await
+        .map_err(|e| anyhow::anyhow!("STT request failed: {e}"))?;
+
+    if !stt_resp.status().is_success() {
+        let status = stt_resp.status();
+        let body = stt_resp.text().await.unwrap_or_default();
+        return Err(anyhow::anyhow!("STT returned HTTP {status}: {body}"));
+    }
+
+    #[derive(Deserialize)]
+    struct SttSegment {
+        start: f64,
+        end: f64,
+        text: String,
+        #[serde(default)]
+        avg_logprob: Option<f64>,
+    }
+
+    #[derive(Deserialize)]
+    struct SttResponse {
+        language: String,
+        segments: Vec<SttSegment>,
+    }
+
+    let stt: SttResponse = stt_resp
+        .json()
+        .await
+        .map_err(|e| anyhow::anyhow!("failed to parse STT response: {e}"))?;
+
+    tracing::info!(
+        recording_id = %recording_id,
+        language = %stt.language,
+        segment_count = stt.segments.len(),
+        "Step 3: STT transcription complete"
+    );
+
+    // ── Step 4: Build TranscriptionResult ───────────────────────────────────
+
+    // Query participants joined with identity.users and core.persons for speaker labels
+    #[derive(sqlx::FromRow)]
+    struct ParticipantRow {
+        user_id: Option<Uuid>,
+        display_name: Option<String>,
+    }
+
+    let participants: Vec<ParticipantRow> = sqlx::query_as(
+        r#"
+        SELECT
+            p.user_id,
+            COALESCE(per.display_name, u.username, p.display_name) AS display_name
+        FROM meet.participants p
+        LEFT JOIN identity.users u ON u.id = p.user_id
+        LEFT JOIN core.persons per ON per.user_id = p.user_id
+        WHERE p.room_id = $1
+        "#,
+    )
+    .bind(room_id)
+    .fetch_all(pool)
+    .await
+    .unwrap_or_default();
+
+    let speakers: Vec<Speaker> = participants
+        .iter()
+        .enumerate()
+        .map(|(i, p)| Speaker {
+            id: format!("s{i}"),
+            label: p
+                .display_name
+                .clone()
+                .unwrap_or_else(|| format!("Speaker {}", i + 1)),
+            person_id: p.user_id,
+        })
+        .collect();
+
+    let duration_ms = duration_seconds.unwrap_or(0) as u64 * 1000;
+
+    let segments: Vec<Segment> = stt
+        .segments
+        .iter()
+        .map(|s| {
+            let confidence = s
+                .avg_logprob
+                .map(|lp| (1.0 + lp as f32).clamp(0.0, 1.0))
+                .unwrap_or(0.0);
+            Segment {
+                id: Uuid::new_v4(),
+                start_ms: (s.start * 1000.0) as u64,
+                end_ms: (s.end * 1000.0) as u64,
+                text: s.text.trim().to_string(),
+                speaker: None, // diarization not yet available
+                confidence,
+            }
+        })
+        .collect();
+
+    let result = TranscriptionResult {
+        meta: SessionMeta {
+            session_id: room_id,
+            source: TranscriptionSource::Meet,
+            source_app: None,
+            duration_ms,
+            language: stt.language.clone(),
+            speakers,
+            created_at: chrono::Utc::now(),
+            recording_id: Some(recording_id),
+        },
+        segments,
+    };
+
+    tracing::info!(
+        recording_id = %recording_id,
+        segments = result.segments.len(),
+        speakers = result.meta.speakers.len(),
+        "Step 4: TranscriptionResult built"
+    );
+
+    // ── Step 5: Create Tiptap document and update job status ────────────────
+
+    let tiptap_doc = to_tiptap_doc(&result);
+
+    let create_doc_url = format!("{docs_url}/api/v1/docs");
+    let doc_payload = serde_json::json!({
+        "name": format!("Transcription — {}", chrono::Utc::now().format("%Y-%m-%d %H:%M")),
+        "content": tiptap_doc,
+        "source": "meet-transcription",
+        "metadata": {
+            "recording_id": recording_id,
+            "room_id": room_id,
+            "language": stt.language,
+        }
+    });
+
+    let doc_resp = client
+        .post(&create_doc_url)
+        .json(&doc_payload)
+        .send()
+        .await
+        .map_err(|e| anyhow::anyhow!("docs service request failed: {e}"))?;
+
+    let doc_id: Option<Uuid> = if doc_resp.status().is_success() {
+        let body: serde_json::Value = doc_resp.json().await.unwrap_or_default();
+        body.get("id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| s.parse().ok())
+    } else {
+        tracing::warn!(
+            recording_id = %recording_id,
+            status = %doc_resp.status(),
+            "docs service returned non-success — transcription saved without doc link"
+        );
+        None
+    };
+
+    // Update transcription_jobs status to completed (if the table exists)
+    let _ = sqlx::query(
+        r#"
+        UPDATE meet.transcription_jobs
+        SET status = 'completed', doc_id = $2, updated_at = NOW()
+        WHERE recording_id = $1
+        "#,
+    )
+    .bind(recording_id)
+    .bind(doc_id)
+    .execute(pool)
+    .await;
+
+    // Mark recording as transcribed
     sqlx::query("UPDATE meet.recordings SET status = 'transcribed' WHERE id = $1")
         .bind(recording_id)
         .execute(pool)
         .await?;
+
+    tracing::info!(
+        recording_id = %recording_id,
+        doc_id = ?doc_id,
+        "Step 5: transcription pipeline completed successfully"
+    );
 
     Ok(())
 }
