@@ -70,135 +70,8 @@ const ALL_ACTIONS: AuditEntry["action"][] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Sample data (pre-populated)
+// (No sample data — all entries come from the audit API)
 // ---------------------------------------------------------------------------
-
-function generateSampleEntries(): AuditEntry[] {
-  const now = Date.now();
-  const h = 3_600_000;
-  return [
-    {
-      id: "a1",
-      timestamp: new Date(now - 0.1 * h).toISOString(),
-      user: "admin@signapps.local",
-      action: "login",
-      target: "Session",
-      details: "IP 192.168.1.10 - Chrome / Windows",
-    },
-    {
-      id: "a2",
-      timestamp: new Date(now - 0.5 * h).toISOString(),
-      user: "admin@signapps.local",
-      action: "settings_change",
-      target: "LDAP Configuration",
-      details: "Enabled LDAP authentication",
-    },
-    {
-      id: "a3",
-      timestamp: new Date(now - 1 * h).toISOString(),
-      user: "admin@signapps.local",
-      action: "create",
-      target: "User: jean.dupont@corp.local",
-      details: "Role: user, Group: Engineering",
-    },
-    {
-      id: "a4",
-      timestamp: new Date(now - 2 * h).toISOString(),
-      user: "jean.dupont@corp.local",
-      action: "login",
-      target: "Session",
-      details: "IP 10.0.0.42 - Firefox / Linux",
-    },
-    {
-      id: "a5",
-      timestamp: new Date(now - 3 * h).toISOString(),
-      user: "jean.dupont@corp.local",
-      action: "create",
-      target: "Document: rapport-q4.docx",
-      details: "Uploaded to /shared/reports/",
-    },
-    {
-      id: "a6",
-      timestamp: new Date(now - 4 * h).toISOString(),
-      user: "admin@signapps.local",
-      action: "edit",
-      target: "Document: budget-2026.xlsx",
-      details: 'Updated sheet "Previsionnel"',
-    },
-    {
-      id: "a7",
-      timestamp: new Date(now - 5 * h).toISOString(),
-      user: "marie.martin@corp.local",
-      action: "login",
-      target: "Session",
-      details: "IP 172.16.0.5 - Safari / macOS",
-    },
-    {
-      id: "a8",
-      timestamp: new Date(now - 6 * h).toISOString(),
-      user: "marie.martin@corp.local",
-      action: "delete",
-      target: "Document: brouillon-v1.pdf",
-      details: "Permanently deleted from trash",
-    },
-    {
-      id: "a9",
-      timestamp: new Date(now - 8 * h).toISOString(),
-      user: "admin@signapps.local",
-      action: "delete",
-      target: "User: ancien.employe@corp.local",
-      details: "Account deactivated and data archived",
-    },
-    {
-      id: "a10",
-      timestamp: new Date(now - 10 * h).toISOString(),
-      user: "admin@signapps.local",
-      action: "settings_change",
-      target: "SMTP Configuration",
-      details: "Changed outgoing mail server to mail.corp.local:587",
-    },
-    {
-      id: "a11",
-      timestamp: new Date(now - 12 * h).toISOString(),
-      user: "jean.dupont@corp.local",
-      action: "edit",
-      target: "Document: specs-api-v2.md",
-      details: 'Added section "Authentication"',
-    },
-    {
-      id: "a12",
-      timestamp: new Date(now - 14 * h).toISOString(),
-      user: "marie.martin@corp.local",
-      action: "logout",
-      target: "Session",
-      details: "Manual logout",
-    },
-    {
-      id: "a13",
-      timestamp: new Date(now - 24 * h).toISOString(),
-      user: "admin@signapps.local",
-      action: "create",
-      target: "Group: Marketing",
-      details: "Created group with 5 initial members",
-    },
-    {
-      id: "a14",
-      timestamp: new Date(now - 48 * h).toISOString(),
-      user: "admin@signapps.local",
-      action: "settings_change",
-      target: "Security Policy",
-      details: "Enforced 2FA for admin accounts",
-    },
-    {
-      id: "a15",
-      timestamp: new Date(now - 72 * h).toISOString(),
-      user: "admin@signapps.local",
-      action: "create",
-      target: "User: marie.martin@corp.local",
-      details: "Role: user, Group: Marketing",
-    },
-  ];
-}
 
 /** Map an API AuditLogEntry to the local AuditEntry shape for display */
 function normalizeApiEntry(e: ApiAuditLogEntry): AuditEntry {
@@ -231,7 +104,7 @@ function normalizeApiEntry(e: ApiAuditLogEntry): AuditEntry {
   };
 }
 
-function loadLocalFallback(): AuditEntry[] {
+function loadLocalCache(): AuditEntry[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -240,11 +113,9 @@ function loadLocalFallback(): AuditEntry[] {
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch {
-    // Corrupted
+    // Corrupted — ignore
   }
-  const sample = generateSampleEntries();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(sample));
-  return sample;
+  return [];
 }
 
 function saveEntries(entries: AuditEntry[]) {
@@ -275,12 +146,12 @@ export default function AuditLogPage() {
         setEntries(normalized);
         saveEntries(normalized);
       } else {
-        // API returned empty — fall back to localStorage
-        setEntries(loadLocalFallback());
+        // API returned empty — try cached data from previous fetch
+        setEntries(loadLocalCache());
       }
     } catch {
-      // API unavailable — fall back to localStorage
-      setEntries(loadLocalFallback());
+      // API unavailable — try cached data from previous fetch
+      setEntries(loadLocalCache());
     } finally {
       setLoading(false);
     }
@@ -369,10 +240,9 @@ export default function AuditLogPage() {
   };
 
   const clearAuditLog = () => {
-    const fresh = generateSampleEntries();
-    saveEntries(fresh);
-    setEntries(fresh);
-    toast.success("Journal d'audit réinitialisé (données locales)");
+    saveEntries([]);
+    setEntries([]);
+    toast.success("Journal d'audit réinitialisé");
   };
 
   const hasFilters = search || actionFilter !== "all" || dateFrom || dateTo;
