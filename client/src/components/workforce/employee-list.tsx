@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Employee List Component
@@ -6,7 +6,7 @@
  * Data table for employee management with filtering and actions.
  */
 
-import * as React from 'react';
+import * as React from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -18,7 +18,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table';
+} from "@tanstack/react-table";
 import {
   MoreHorizontal,
   ArrowUpDown,
@@ -31,19 +31,20 @@ import {
   Trash2,
   Link,
   Unlink,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Checkbox } from '@/components/ui/checkbox';
+  Users,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -51,24 +52,34 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import type { EmployeeWithDetails, EmployeeStatus, ContractType } from '@/types/workforce';
+} from "@/components/ui/table";
+import type {
+  EmployeeWithDetails,
+  EmployeeStatus,
+  ContractType,
+} from "@/types/workforce";
 
 // Status badge variants
-const STATUS_VARIANTS: Record<EmployeeStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  active: { label: 'Actif', variant: 'default' },
-  on_leave: { label: 'En congé', variant: 'secondary' },
-  suspended: { label: 'Suspendu', variant: 'destructive' },
-  terminated: { label: 'Terminé', variant: 'outline' },
+const STATUS_VARIANTS: Record<
+  EmployeeStatus,
+  {
+    label: string;
+    variant: "default" | "secondary" | "destructive" | "outline";
+  }
+> = {
+  active: { label: "Actif", variant: "default" },
+  on_leave: { label: "En congé", variant: "secondary" },
+  suspended: { label: "Suspendu", variant: "destructive" },
+  terminated: { label: "Terminé", variant: "outline" },
 };
 
 // Contract type labels
 const CONTRACT_LABELS: Record<ContractType, string> = {
-  'full-time': 'CDI',
-  'part-time': 'Temps partiel',
-  contract: 'CDD',
-  intern: 'Stage',
-  temporary: 'Intérim',
+  "full-time": "CDI",
+  "part-time": "Temps partiel",
+  contract: "CDD",
+  intern: "Stage",
+  temporary: "Intérim",
 };
 
 interface EmployeeListProps {
@@ -91,14 +102,17 @@ export function EmployeeList({
   className,
 }: EmployeeListProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
   // Column definitions
   const columns: ColumnDef<EmployeeWithDetails>[] = [
     {
-      id: 'select',
+      id: "select",
       header: ({ table }) => (
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
@@ -117,11 +131,11 @@ export function EmployeeList({
       enableHiding: false,
     },
     {
-      accessorKey: 'name',
+      accessorKey: "name",
       header: ({ column }) => (
         <Button
           variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="-ml-4"
         >
           Employé
@@ -130,7 +144,8 @@ export function EmployeeList({
       ),
       cell: ({ row }) => {
         const employee = row.original;
-        const initials = `${employee.first_name[0]}${employee.last_name[0]}`.toUpperCase();
+        const initials =
+          `${employee.first_name[0]}${employee.last_name[0]}`.toUpperCase();
 
         return (
           <div className="flex items-center gap-3">
@@ -152,20 +167,20 @@ export function EmployeeList({
       },
     },
     {
-      accessorKey: 'org_node_name',
-      header: 'Unité',
+      accessorKey: "org_node_name",
+      header: "Unité",
       cell: ({ row }) => (
         <div className="flex items-center gap-1.5 text-sm">
           <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-          {row.getValue('org_node_name')}
+          {row.getValue("org_node_name")}
         </div>
       ),
     },
     {
-      accessorKey: 'function_names',
-      header: 'Fonctions',
+      accessorKey: "function_names",
+      header: "Fonctions",
       cell: ({ row }) => {
-        const functions = row.getValue('function_names') as string[];
+        const functions = row.getValue("function_names") as string[];
         return (
           <div className="flex flex-wrap gap-1">
             {functions.slice(0, 2).map((fn) => (
@@ -183,20 +198,18 @@ export function EmployeeList({
       },
     },
     {
-      accessorKey: 'contract_type',
-      header: 'Contrat',
+      accessorKey: "contract_type",
+      header: "Contrat",
       cell: ({ row }) => {
-        const type = row.getValue('contract_type') as ContractType;
-        return (
-          <span className="text-sm">{CONTRACT_LABELS[type] || type}</span>
-        );
+        const type = row.getValue("contract_type") as ContractType;
+        return <span className="text-sm">{CONTRACT_LABELS[type] || type}</span>;
       },
     },
     {
-      accessorKey: 'fte_ratio',
-      header: 'ETP',
+      accessorKey: "fte_ratio",
+      header: "ETP",
       cell: ({ row }) => {
-        const ratio = row.getValue('fte_ratio') as number;
+        const ratio = row.getValue("fte_ratio") as number;
         return (
           <span className="text-sm font-medium">
             {Math.round(ratio * 100)}%
@@ -205,23 +218,21 @@ export function EmployeeList({
       },
     },
     {
-      accessorKey: 'status',
-      header: 'Statut',
+      accessorKey: "status",
+      header: "Statut",
       cell: ({ row }) => {
-        const status = row.getValue('status') as EmployeeStatus;
+        const status = row.getValue("status") as EmployeeStatus;
         const config = STATUS_VARIANTS[status];
-        return (
-          <Badge variant={config.variant}>{config.label}</Badge>
-        );
+        return <Badge variant={config.variant}>{config.label}</Badge>;
       },
     },
     {
-      accessorKey: 'user_id',
-      header: 'Compte',
+      accessorKey: "user_id",
+      header: "Compte",
       cell: ({ row }) => {
         const hasUser = !!row.original.user_id;
         return (
-          <Badge variant={hasUser ? 'default' : 'outline'} className="gap-1">
+          <Badge variant={hasUser ? "default" : "outline"} className="gap-1">
             {hasUser ? (
               <>
                 <Link className="h-3 w-3" />
@@ -238,7 +249,7 @@ export function EmployeeList({
       },
     },
     {
-      id: 'actions',
+      id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
         const employee = row.original;
@@ -301,7 +312,7 @@ export function EmployeeList({
   });
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn("space-y-4", className)}>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -313,7 +324,7 @@ export function EmployeeList({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -325,21 +336,30 @@ export function EmployeeList({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
+                  data-state={row.getIsSelected() && "selected"}
                   className="cursor-pointer"
                   onClick={() => onSelect?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Aucun employé trouvé
+                <TableCell colSpan={columns.length} className="py-10">
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                    <h3 className="text-lg font-semibold">Aucun employe</h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                      Aucun employe ne correspond aux criteres de recherche.
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
@@ -350,7 +370,7 @@ export function EmployeeList({
       {/* Pagination */}
       <div className="flex items-center justify-between px-2">
         <div className="text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} sur{' '}
+          {table.getFilteredSelectedRowModel().rows.length} sur{" "}
           {table.getFilteredRowModel().rows.length} ligne(s) sélectionnée(s)
         </div>
         <div className="flex items-center space-x-2">

@@ -32,6 +32,7 @@ import {
   Upload,
   DollarSign,
   Download,
+  Handshake,
 } from "lucide-react";
 import { DealKanban } from "@/components/crm/deal-kanban";
 import { DealTable } from "@/components/crm/deal-table";
@@ -231,7 +232,18 @@ export default function CRMPage() {
             className="mt-4"
             data-testid="crm-kanban-root"
           >
-            <DealKanban deals={deals} onMove={moveDeal} />
+            {deals.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Handshake className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                <h3 className="text-lg font-semibold">Aucune opportunité</h3>
+                <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                  Créez votre première opportunité pour commencer à suivre votre
+                  pipeline commercial.
+                </p>
+              </div>
+            ) : (
+              <DealKanban deals={deals} onMove={moveDeal} />
+            )}
           </TabsContent>
 
           <TabsContent value="table" className="mt-4">

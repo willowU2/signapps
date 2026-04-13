@@ -792,8 +792,8 @@ ${header}
           <div className="flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
             <Users className="h-5 w-5 text-amber-600 shrink-0" />
             <p className="text-sm text-amber-700 dark:text-amber-400">
-              Service contacts indisponible. Veuillez vérifier votre connexion ou
-              vous reconnecter.
+              Service contacts indisponible. Veuillez vérifier votre connexion
+              ou vous reconnecter.
             </p>
             <Button
               variant="outline"
@@ -1861,9 +1861,13 @@ ${header}
                   />
                 ))}
                 {sortedFiltered.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    Aucun contact à afficher.
-                  </p>
+                  <div className="flex flex-col items-center justify-center py-16 text-center col-span-full">
+                    <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                    <h3 className="text-lg font-semibold">Aucun contact</h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                      Aucun contact a afficher dans cette vue.
+                    </p>
+                  </div>
                 )}
                 {sortedFiltered.length > 20 && (
                   <p className="text-xs text-muted-foreground text-center">

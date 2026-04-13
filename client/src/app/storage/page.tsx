@@ -1016,14 +1016,16 @@ export default function StoragePage() {
                         ))}
                       </div>
                     ) : displayFiles.length === 0 ? (
-                      <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
-                        <FolderOpen className="h-16 w-16 mb-4" />
-                        <p>
+                      <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <FolderOpen className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                        <h3 className="text-lg font-semibold">
+                          {search ? "Aucun resultat" : "Dossier vide"}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1 max-w-sm">
                           {search
-                            ? "No files found matching search"
-                            : "Empty folder"}
+                            ? "Aucun fichier ne correspond a la recherche."
+                            : "Glissez des fichiers ici ou cliquez sur Nouveau."}
                         </p>
-                        <p className="text-sm">Drag files here or click New</p>
                       </div>
                     ) : (
                       <div className="space-y-2">

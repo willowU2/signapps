@@ -20,6 +20,7 @@ import {
   HardDrive,
   AlertTriangle,
   ShieldCheck,
+  BarChart2,
 } from "lucide-react";
 import {
   LineChart,
@@ -200,8 +201,15 @@ export default function MonitoringPage() {
           </Card>
         ) : chartData.length === 0 ? (
           <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              No metrics data for this machine in the selected range
+            <CardContent className="py-12">
+              <div className="flex flex-col items-center justify-center text-center">
+                <BarChart2 className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                <h3 className="text-lg font-semibold">Aucune metrique</h3>
+                <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                  Aucune donnee de metriques pour cette machine sur la periode
+                  selectionnee.
+                </p>
+              </div>
             </CardContent>
           </Card>
         ) : (

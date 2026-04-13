@@ -1,39 +1,71 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { AppLayout } from "@/components/layout/app-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Progress } from "@/components/ui/progress"
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
-  Shield, ShieldAlert, Download, FileText, Calendar,
-  CheckCircle2, XCircle,
-} from "lucide-react"
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts"
-import { toast } from "sonner"
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
+import {
+  Shield,
+  ShieldAlert,
+  Download,
+  FileText,
+  Calendar,
+  CheckCircle2,
+  XCircle,
+  MonitorSmartphone,
+} from "lucide-react";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+import { toast } from "sonner";
 import {
   itAssetsApi,
   HardwareAsset,
   PatchComplianceStats,
   AvFleetSummary,
   EncryptionFleetSummary,
-} from "@/lib/api/it-assets"
-import { usePageTitle } from "@/hooks/use-page-title"
+} from "@/lib/api/it-assets";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface PolicyCompliance {
-  total_machines: number
-  compliant: number
-  non_compliant: number
-  compliance_pct: number
+  total_machines: number;
+  compliant: number;
+  non_compliant: number;
+  compliance_pct: number;
 }
 
 // ─── Donut Chart ────────────────────────────────────────────────────────────────
@@ -44,16 +76,16 @@ function DonutChart({
   color,
   detail,
 }: {
-  title: string
-  pct: number
-  color: string
-  detail?: string
+  title: string;
+  pct: number;
+  color: string;
+  detail?: string;
 }) {
   const data = [
     { name: "Compliant", value: pct },
     { name: "Non-compliant", value: 100 - pct },
-  ]
-  const colors = [color, "#e5e7eb"]
+  ];
+  const colors = [color, "#e5e7eb"];
 
   return (
     <Card>
@@ -87,50 +119,72 @@ function DonutChart({
           <div className="text-3xl font-bold" style={{ color }}>
             {pct.toFixed(1)}%
           </div>
-          {detail && <div className="text-xs text-muted-foreground mt-1">{detail}</div>}
+          {detail && (
+            <div className="text-xs text-muted-foreground mt-1">{detail}</div>
+          )}
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 // ─── CSV Export ─────────────────────────────────────────────────────────────────
 
 function exportCsv(data: Record<string, unknown>[], filename: string) {
-  if (data.length === 0) { toast.error("No data to export"); return }
-  const headers = Object.keys(data[0])
-  const rows = data.map(row => headers.map(h => JSON.stringify(row[h] ?? "")).join(","))
-  const csv = [headers.join(","), ...rows].join("\n")
-  const blob = new Blob([csv], { type: "text/csv" })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
-  toast.success(`Exported ${data.length} rows`)
+  if (data.length === 0) {
+    toast.error("No data to export");
+    return;
+  }
+  const headers = Object.keys(data[0]);
+  const rows = data.map((row) =>
+    headers.map((h) => JSON.stringify(row[h] ?? "")).join(","),
+  );
+  const csv = [headers.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success(`Exported ${data.length} rows`);
 }
 
 // ─── PDF Export via print ─────────────────────────────────────────────────────
 
 function exportPdf() {
-  window.print()
+  window.print();
 }
 
 // ─── Scheduled Report Dialog ──────────────────────────────────────────────────
 
-function ScheduleDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [freq, setFreq] = useState("weekly")
-  const [email, setEmail] = useState("")
+function ScheduleDialog({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [freq, setFreq] = useState("weekly");
+  const [email, setEmail] = useState("");
 
   function save() {
-    if (!email.trim()) { toast.error("Email required"); return }
-    const schedule = { frequency: freq, email, created_at: new Date().toISOString() }
-    const existing = JSON.parse(localStorage.getItem("compliance_schedules") ?? "[]") as unknown[]
-    existing.push(schedule)
-    localStorage.setItem("compliance_schedules", JSON.stringify(existing))
-    toast.success(`Report scheduled (${freq}) → ${email}`)
-    onClose()
+    if (!email.trim()) {
+      toast.error("Email required");
+      return;
+    }
+    const schedule = {
+      frequency: freq,
+      email,
+      created_at: new Date().toISOString(),
+    };
+    const existing = JSON.parse(
+      localStorage.getItem("compliance_schedules") ?? "[]",
+    ) as unknown[];
+    existing.push(schedule);
+    localStorage.setItem("compliance_schedules", JSON.stringify(existing));
+    toast.success(`Report scheduled (${freq}) → ${email}`);
+    onClose();
   }
 
   return (
@@ -143,7 +197,9 @@ function ScheduleDialog({ open, onClose }: { open: boolean; onClose: () => void 
           <div>
             <Label>Frequency</Label>
             <Select value={freq} onValueChange={setFreq}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="daily">Daily</SelectItem>
                 <SelectItem value="weekly">Weekly</SelectItem>
@@ -157,7 +213,7 @@ function ScheduleDialog({ open, onClose }: { open: boolean; onClose: () => void 
               type="email"
               placeholder="admin@company.com"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <p className="text-xs text-muted-foreground">
@@ -165,70 +221,74 @@ function ScheduleDialog({ open, onClose }: { open: boolean; onClose: () => void 
           </p>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
           <Button onClick={save}>Save Schedule</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function CompliancePage() {
-  usePageTitle("Compliance Dashboard")
-  const [showSchedule, setShowSchedule] = useState(false)
+  usePageTitle("Compliance Dashboard");
+  const [showSchedule, setShowSchedule] = useState(false);
 
   const { data: hardware = [] } = useQuery<HardwareAsset[]>({
     queryKey: ["hardware"],
-    queryFn: () => itAssetsApi.listHardware().then(r => r.data),
-  })
+    queryFn: () => itAssetsApi.listHardware().then((r) => r.data),
+  });
 
   const { data: patchStats } = useQuery<PatchComplianceStats>({
     queryKey: ["patch-compliance"],
-    queryFn: () => itAssetsApi.patchCompliance().then(r => r.data),
-  })
+    queryFn: () => itAssetsApi.patchCompliance().then((r) => r.data),
+  });
 
   const { data: avStats } = useQuery<AvFleetSummary>({
     queryKey: ["av-fleet"],
-    queryFn: () => itAssetsApi.getAvFleetSummary().then(r => r.data),
-  })
+    queryFn: () => itAssetsApi.getAvFleetSummary().then((r) => r.data),
+  });
 
   const { data: encStats } = useQuery<EncryptionFleetSummary>({
     queryKey: ["enc-fleet"],
-    queryFn: () => itAssetsApi.getEncryptionFleetSummary().then(r => r.data),
-  })
+    queryFn: () => itAssetsApi.getEncryptionFleetSummary().then((r) => r.data),
+  });
 
   // Derived percentages
-  const patchPct = patchStats?.compliance_pct ?? 0
+  const patchPct = patchStats?.compliance_pct ?? 0;
   const avPct = avStats
-    ? (avStats.total_machines > 0 ? (avStats.protected / avStats.total_machines) * 100 : 0)
-    : 0
-  const encPct = encStats?.compliance_pct ?? 0
+    ? avStats.total_machines > 0
+      ? (avStats.protected / avStats.total_machines) * 100
+      : 0
+    : 0;
+  const encPct = encStats?.compliance_pct ?? 0;
   // Policy compliance stub (would come from policies API)
-  const policyPct = 85
+  const policyPct = 85;
 
-  const overallScore = (patchPct + avPct + encPct + policyPct) / 4
+  const overallScore = (patchPct + avPct + encPct + policyPct) / 4;
 
   // Non-compliant devices table data (from hardware list)
-  const nonCompliantDevices = hardware.map(h => ({
+  const nonCompliantDevices = hardware.map((h) => ({
     id: h.id,
     name: h.name,
     type: h.type,
     status: h.status ?? "unknown",
     location: h.location ?? "—",
-  }))
+  }));
 
   function handleExportCsv() {
     exportCsv(
-      nonCompliantDevices.map(d => ({
+      nonCompliantDevices.map((d) => ({
         Name: d.name,
         Type: d.type,
         Status: d.status,
         Location: d.location,
       })),
-      "compliance-report.csv"
-    )
+      "compliance-report.csv",
+    );
   }
 
   return (
@@ -247,7 +307,11 @@ export default function CompliancePage() {
             <Button variant="outline" size="sm" onClick={exportPdf}>
               <FileText className="h-4 w-4 mr-1" /> Export PDF
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowSchedule(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSchedule(true)}
+            >
               <Calendar className="h-4 w-4 mr-1" /> Schedule Report
             </Button>
           </div>
@@ -258,12 +322,22 @@ export default function CompliancePage() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-6">
               <div>
-                <div className="text-5xl font-bold" style={{
-                  color: overallScore >= 80 ? "#10b981" : overallScore >= 60 ? "#f59e0b" : "#ef4444"
-                }}>
+                <div
+                  className="text-5xl font-bold"
+                  style={{
+                    color:
+                      overallScore >= 80
+                        ? "#10b981"
+                        : overallScore >= 60
+                          ? "#f59e0b"
+                          : "#ef4444",
+                  }}
+                >
                   {overallScore.toFixed(1)}%
                 </div>
-                <div className="text-sm text-muted-foreground mt-1">Overall compliance score</div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  Overall compliance score
+                </div>
               </div>
               <div className="flex-1">
                 <Progress value={overallScore} className="h-3" />
@@ -328,12 +402,16 @@ export default function CompliancePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {nonCompliantDevices.slice(0, 20).map(d => (
+                {nonCompliantDevices.slice(0, 20).map((d) => (
                   <TableRow key={d.id}>
                     <TableCell className="font-medium">{d.name}</TableCell>
                     <TableCell>{d.type}</TableCell>
                     <TableCell>
-                      <Badge variant={d.status === "online" ? "default" : "secondary"}>
+                      <Badge
+                        variant={
+                          d.status === "online" ? "default" : "secondary"
+                        }
+                      >
                         {d.status}
                       </Badge>
                     </TableCell>
@@ -342,8 +420,17 @@ export default function CompliancePage() {
                 ))}
                 {hardware.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                      No devices found
+                    <TableCell colSpan={4} className="py-8">
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <MonitorSmartphone className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                        <h3 className="text-lg font-semibold">
+                          Aucun equipement
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                          Ajoutez des equipements pour suivre la conformite de
+                          votre parc.
+                        </p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}
@@ -358,16 +445,25 @@ export default function CompliancePage() {
         </div>
       </div>
 
-      <ScheduleDialog open={showSchedule} onClose={() => setShowSchedule(false)} />
+      <ScheduleDialog
+        open={showSchedule}
+        onClose={() => setShowSchedule(false)}
+      />
 
       {/* Print styles */}
       <style jsx global>{`
         @media print {
-          body > * { display: none; }
-          #compliance-report { display: block !important; }
-          .print\\:hidden { display: none !important; }
+          body > * {
+            display: none;
+          }
+          #compliance-report {
+            display: block !important;
+          }
+          .print\\:hidden {
+            display: none !important;
+          }
         }
       `}</style>
     </AppLayout>
-  )
+  );
 }

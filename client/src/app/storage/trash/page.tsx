@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useEffect, useState, useCallback } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useEffect, useState, useCallback } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,18 +19,30 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Trash2, RotateCcw, Search, File, FileText, FileImage, FileArchive, Folder, Clock, HardDrive, AlertTriangle } from 'lucide-react';
-import { trashApi, TrashItem, TrashStats } from '@/lib/api';
-import { toast } from 'sonner';
-import { usePageTitle } from '@/hooks/use-page-title';
+} from "@/components/ui/alert-dialog";
+import {
+  Trash2,
+  RotateCcw,
+  Search,
+  File,
+  FileText,
+  FileImage,
+  FileArchive,
+  Folder,
+  Clock,
+  HardDrive,
+  AlertTriangle,
+} from "lucide-react";
+import { trashApi, TrashItem, TrashStats } from "@/lib/api";
+import { toast } from "sonner";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function TrashPage() {
-  usePageTitle('Corbeille');
+  usePageTitle("Corbeille");
   const [items, setItems] = useState<TrashItem[]>([]);
   const [stats, setStats] = useState<TrashStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [restoring, setRestoring] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -46,7 +58,7 @@ export default function TrashPage() {
       setItems(itemsResponse.data.items);
       setStats(statsResponse.data);
     } catch {
-      toast.error('Failed to load trash');
+      toast.error("Failed to load trash");
     } finally {
       setLoading(false);
     }
@@ -74,7 +86,7 @@ export default function TrashPage() {
       setSelectedItems(new Set());
       fetchTrash();
     } catch {
-      toast.error('Failed to restore items');
+      toast.error("Failed to restore items");
     } finally {
       setRestoring(false);
     }
@@ -90,7 +102,7 @@ export default function TrashPage() {
       setSelectedItems(new Set());
       fetchTrash();
     } catch {
-      toast.error('Impossible de supprimer items');
+      toast.error("Impossible de supprimer items");
     } finally {
       setDeleting(false);
     }
@@ -100,11 +112,11 @@ export default function TrashPage() {
     setDeleting(true);
     try {
       await trashApi.empty();
-      toast.success('Trash emptied');
+      toast.success("Trash emptied");
       setEmptyDialogOpen(false);
       fetchTrash();
     } catch {
-      toast.error('Failed to empty trash');
+      toast.error("Failed to empty trash");
     } finally {
       setDeleting(false);
     }
@@ -129,16 +141,19 @@ export default function TrashPage() {
   };
 
   const getFileIcon = (item: TrashItem) => {
-    const contentType = item.content_type || '';
+    const contentType = item.content_type || "";
     const name = item.filename.toLowerCase();
 
-    if (contentType.startsWith('image/') || /\.(png|jpg|jpeg|gif|webp)$/.test(name)) {
+    if (
+      contentType.startsWith("image/") ||
+      /\.(png|jpg|jpeg|gif|webp)$/.test(name)
+    ) {
       return <FileImage className="h-5 w-5 text-green-500" />;
     }
-    if (contentType.includes('zip') || /\.(zip|tar|gz|rar)$/.test(name)) {
+    if (contentType.includes("zip") || /\.(zip|tar|gz|rar)$/.test(name)) {
       return <FileArchive className="h-5 w-5 text-yellow-500" />;
     }
-    if (contentType.includes('pdf') || name.endsWith('.pdf')) {
+    if (contentType.includes("pdf") || name.endsWith(".pdf")) {
       return <FileText className="h-5 w-5 text-red-500" />;
     }
     return <File className="h-5 w-5 text-muted-foreground" />;
@@ -147,24 +162,27 @@ export default function TrashPage() {
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes < 1024 * 1024 * 1024)
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getDaysUntilExpiry = (expiresAt: string) => {
     const now = new Date();
     const expiry = new Date(expiresAt);
-    const days = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const days = Math.ceil(
+      (expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+    );
     return days;
   };
 
@@ -231,7 +249,13 @@ export default function TrashPage() {
                     disabled={restoring}
                   >
                     {restoring ? (
-                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+                      <SpinnerInfinity
+                        size={24}
+                        secondaryColor="rgba(128,128,128,0.2)"
+                        color="currentColor"
+                        speed={120}
+                        className="mr-2 h-4 w-4 "
+                      />
                     ) : (
                       <RotateCcw className="mr-2 h-4 w-4" />
                     )}
@@ -244,7 +268,13 @@ export default function TrashPage() {
                     disabled={deleting}
                   >
                     {deleting ? (
-                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+                      <SpinnerInfinity
+                        size={24}
+                        secondaryColor="rgba(128,128,128,0.2)"
+                        color="currentColor"
+                        speed={120}
+                        className="mr-2 h-4 w-4 "
+                      />
                     ) : (
                       <Trash2 className="mr-2 h-4 w-4" />
                     )}
@@ -273,7 +303,9 @@ export default function TrashPage() {
             <div className="grid grid-cols-12 text-xs font-medium text-muted-foreground items-center">
               <div className="col-span-1">
                 <Checkbox
-                  checked={items.length > 0 && selectedItems.size === items.length}
+                  checked={
+                    items.length > 0 && selectedItems.size === items.length
+                  }
                   onCheckedChange={selectAll}
                 />
               </div>
@@ -301,7 +333,9 @@ export default function TrashPage() {
                     </div>
                     <div className="col-span-4 flex items-center gap-3">
                       {getFileIcon(item)}
-                      <span className="font-medium truncate">{item.filename}</span>
+                      <span className="font-medium truncate">
+                        {item.filename}
+                      </span>
                     </div>
                     <div className="col-span-2 text-sm text-muted-foreground truncate">
                       {item.original_bucket}/{item.original_key}
@@ -315,10 +349,10 @@ export default function TrashPage() {
                     </div>
                     <div className="col-span-1">
                       <Badge
-                        variant={daysLeft <= 7 ? 'destructive' : 'secondary'}
+                        variant={daysLeft <= 7 ? "destructive" : "secondary"}
                         className="text-xs"
                       >
-                        {daysLeft <= 0 ? 'Expiring' : `${daysLeft}d`}
+                        {daysLeft <= 0 ? "Expiring" : `${daysLeft}d`}
                       </Badge>
                     </div>
                   </div>
@@ -326,10 +360,12 @@ export default function TrashPage() {
               })}
 
               {items.length === 0 && (
-                <div className="py-12 text-center text-muted-foreground">
-                  <Trash2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Trash is empty</p>
-                  <p className="text-sm">Supprimé files will appear here for 30 days</p>
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Trash2 className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                  <h3 className="text-lg font-semibold">Corbeille vide</h3>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                    Les fichiers supprimes apparaitront ici pendant 30 jours.
+                  </p>
                 </div>
               )}
             </div>
@@ -345,8 +381,9 @@ export default function TrashPage() {
                 Empty Trash?
               </AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete all {stats?.total_items || 0} items (
-                {formatSize(stats?.total_size || 0)}) from trash. This action cannot be undone.
+                This will permanently delete all {stats?.total_items || 0} items
+                ({formatSize(stats?.total_size || 0)}) from trash. This action
+                cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -357,7 +394,13 @@ export default function TrashPage() {
                 disabled={deleting}
               >
                 {deleting ? (
-                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="mr-2 h-4 w-4 "
+                  />
                 ) : (
                   <Trash2 className="mr-2 h-4 w-4" />
                 )}

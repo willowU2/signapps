@@ -1,24 +1,32 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Plus, Trash2, FileText, ArrowRight } from 'lucide-react';
-import { useSocialStore } from '@/stores/social-store';
-import { PostTemplate } from '@/lib/api/social';
-import { useRouter } from 'next/navigation';
+} from "@/components/ui/dialog";
+import { Plus, Trash2, FileText, ArrowRight } from "lucide-react";
+import { useSocialStore } from "@/stores/social-store";
+import { PostTemplate } from "@/lib/api/social";
+import { useRouter } from "next/navigation";
 
-const CATEGORIES = ['Announcement', 'Product Update', 'Tip', 'Question', 'Event', 'Promotion', 'Other'];
+const CATEGORIES = [
+  "Announcement",
+  "Product Update",
+  "Tip",
+  "Question",
+  "Event",
+  "Promotion",
+  "Other",
+];
 
 function CreateTemplateDialog({
   open,
@@ -27,21 +35,23 @@ function CreateTemplateDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  onCreate: (data: Omit<PostTemplate, 'id' | 'createdAt' | 'userId'>) => Promise<void>;
+  onCreate: (
+    data: Omit<PostTemplate, "id" | "createdAt" | "userId">,
+  ) => Promise<void>;
 }) {
-  const [name, setName] = useState('');
-  const [content, setContent] = useState('');
-  const [hashtagInput, setHashtagInput] = useState('');
+  const [name, setName] = useState("");
+  const [content, setContent] = useState("");
+  const [hashtagInput, setHashtagInput] = useState("");
   const [hashtags, setHashtags] = useState<string[]>([]);
-  const [category, setCategory] = useState('Other');
+  const [category, setCategory] = useState("Other");
   const [isSaving, setIsSaving] = useState(false);
 
   const addHashtag = () => {
-    const tag = hashtagInput.replace('#', '').trim();
+    const tag = hashtagInput.replace("#", "").trim();
     if (tag && !hashtags.includes(tag)) {
       setHashtags((prev) => [...prev, tag]);
     }
-    setHashtagInput('');
+    setHashtagInput("");
   };
 
   const handleCreate = async () => {
@@ -49,11 +59,11 @@ function CreateTemplateDialog({
     setIsSaving(true);
     try {
       await onCreate({ name, content, hashtags, category });
-      setName('');
-      setContent('');
+      setName("");
+      setContent("");
       setHashtags([]);
-      setHashtagInput('');
-      setCategory('Other');
+      setHashtagInput("");
+      setCategory("Other");
       onClose();
     } finally {
       setIsSaving(false);
@@ -84,8 +94,8 @@ function CreateTemplateDialog({
                   onClick={() => setCategory(cat)}
                   className={`px-3 py-1 rounded-full text-sm border transition-colors ${
                     category === cat
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'border-border hover:border-primary/50'
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "border-border hover:border-primary/50"
                   }`}
                 >
                   {cat}
@@ -110,13 +120,15 @@ function CreateTemplateDialog({
                 value={hashtagInput}
                 onChange={(e) => setHashtagInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
+                  if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     addHashtag();
                   }
                 }}
               />
-              <Button variant="outline" onClick={addHashtag}>Add</Button>
+              <Button variant="outline" onClick={addHashtag}>
+                Add
+              </Button>
             </div>
             {hashtags.length > 0 && (
               <div className="flex flex-wrap gap-1">
@@ -125,7 +137,9 @@ function CreateTemplateDialog({
                     key={tag}
                     variant="secondary"
                     className="cursor-pointer"
-                    onClick={() => setHashtags((prev) => prev.filter((h) => h !== tag))}
+                    onClick={() =>
+                      setHashtags((prev) => prev.filter((h) => h !== tag))
+                    }
                   >
                     #{tag} ×
                   </Badge>
@@ -134,10 +148,16 @@ function CreateTemplateDialog({
             )}
           </div>
           <div className="flex gap-2 pt-2">
-            <Button className="flex-1" onClick={handleCreate} disabled={isSaving || !name || !content}>
-              {isSaving ? 'Creating…' : 'Create Template'}
+            <Button
+              className="flex-1"
+              onClick={handleCreate}
+              disabled={isSaving || !name || !content}
+            >
+              {isSaving ? "Creating…" : "Create Template"}
             </Button>
-            <Button variant="outline" onClick={onClose}>Annuler</Button>
+            <Button variant="outline" onClick={onClose}>
+              Annuler
+            </Button>
           </div>
         </div>
       </DialogContent>
@@ -146,28 +166,36 @@ function CreateTemplateDialog({
 }
 
 export function TemplateLibrary() {
-  const { templates, fetchTemplates, createTemplate, deleteTemplate } = useSocialStore();
+  const { templates, fetchTemplates, createTemplate, deleteTemplate } =
+    useSocialStore();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState('All');
-  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [search, setSearch] = useState("");
   const router = useRouter();
 
   useEffect(() => {
     fetchTemplates();
   }, [fetchTemplates]);
 
-  const allCategories = ['All', ...CATEGORIES];
+  const allCategories = ["All", ...CATEGORIES];
 
   const filtered = templates.filter((t) => {
-    const matchCat = categoryFilter === 'All' || t.category === categoryFilter;
-    const matchSearch = !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.content.toLowerCase().includes(search.toLowerCase());
+    const matchCat = categoryFilter === "All" || t.category === categoryFilter;
+    const matchSearch =
+      !search ||
+      t.name.toLowerCase().includes(search.toLowerCase()) ||
+      t.content.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
 
   const applyTemplate = (template: PostTemplate) => {
     // Navigate to compose with pre-filled content via URL params
     const params = new URLSearchParams({
-      content: template.content + (template.hashtags.length ? '\n\n' + template.hashtags.map((h) => `#${h}`).join(' ') : ''),
+      content:
+        template.content +
+        (template.hashtags.length
+          ? "\n\n" + template.hashtags.map((h) => `#${h}`).join(" ")
+          : ""),
     });
     router.push(`/social/compose?${params.toString()}`);
   };
@@ -177,7 +205,9 @@ export function TemplateLibrary() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Template Library</h2>
-          <p className="text-sm text-muted-foreground">{templates.length} template{templates.length !== 1 ? 's' : ''}</p>
+          <p className="text-sm text-muted-foreground">
+            {templates.length} template{templates.length !== 1 ? "s" : ""}
+          </p>
         </div>
         <Button onClick={() => setIsCreateOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
@@ -200,8 +230,8 @@ export function TemplateLibrary() {
               onClick={() => setCategoryFilter(cat)}
               className={`px-3 py-1 rounded-full text-sm border transition-colors ${
                 categoryFilter === cat
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'border-border hover:border-primary/50'
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "border-border hover:border-primary/50"
               }`}
             >
               {cat}
@@ -211,37 +241,55 @@ export function TemplateLibrary() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="border-2 border-dashed rounded-xl p-12 text-center">
-          <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-50" />
-          <p className="font-medium">
-            {templates.length === 0 ? 'No templates yet' : 'No templates match your filters'}
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <FileText className="h-12 w-12 text-muted-foreground/30 mb-4" />
+          <h3 className="text-lg font-semibold">
+            {templates.length === 0 ? "Aucun modele" : "Aucun resultat"}
+          </h3>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+            {templates.length === 0
+              ? "Creez votre premier modele de publication."
+              : "Aucun modele ne correspond aux filtres actuels."}
           </p>
           {templates.length === 0 && (
             <Button className="mt-4" onClick={() => setIsCreateOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Create your first template
+              Creer un modele
             </Button>
           )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((template) => (
-            <Card key={template.id} className="group hover:shadow-md transition-shadow">
+            <Card
+              key={template.id}
+              className="group hover:shadow-md transition-shadow"
+            >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-sm font-semibold leading-tight">{template.name}</CardTitle>
-                  <Badge variant="outline" className="text-xs shrink-0">{template.category}</Badge>
+                  <CardTitle className="text-sm font-semibold leading-tight">
+                    {template.name}
+                  </CardTitle>
+                  <Badge variant="outline" className="text-xs shrink-0">
+                    {template.category}
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground line-clamp-4">{template.content}</p>
+                <p className="text-sm text-muted-foreground line-clamp-4">
+                  {template.content}
+                </p>
                 {template.hashtags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {template.hashtags.slice(0, 5).map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">#{tag}</Badge>
+                      <Badge key={tag} variant="secondary" className="text-xs">
+                        #{tag}
+                      </Badge>
                     ))}
                     {template.hashtags.length > 5 && (
-                      <Badge variant="secondary" className="text-xs">+{template.hashtags.length - 5}</Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        +{template.hashtags.length - 5}
+                      </Badge>
                     )}
                   </div>
                 )}

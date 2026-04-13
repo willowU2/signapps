@@ -1,44 +1,59 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useEffect, useState, useCallback } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useEffect, useState, useCallback } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Share2, Link, Copy, MoreVertical, Trash2, Edit, Eye, Download, FileEdit, Lock, Clock, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
-import { sharesApi, ShareLink, UpdateShareRequest } from '@/lib/api';
-import { ConfirmDialog } from '@/components/confirm-dialog';
-import { toast } from 'sonner';
-import { usePageTitle } from '@/hooks/use-page-title';
+} from "@/components/ui/select";
+import {
+  Share2,
+  Link,
+  Copy,
+  MoreVertical,
+  Trash2,
+  Edit,
+  Eye,
+  Download,
+  FileEdit,
+  Lock,
+  Clock,
+  CheckCircle,
+  XCircle,
+  ExternalLink,
+} from "lucide-react";
+import { sharesApi, ShareLink, UpdateShareRequest } from "@/lib/api";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { toast } from "sonner";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function SharesPage() {
-  usePageTitle('Liens partages');
+  usePageTitle("Liens partages");
   const [shares, setShares] = useState<ShareLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -47,10 +62,12 @@ export default function SharesPage() {
   const [deleteShareId, setDeleteShareId] = useState<string | null>(null);
 
   // Edit form state
-  const [editExpiresHours, setEditExpiresHours] = useState<string>('');
-  const [editPassword, setEditPassword] = useState('');
-  const [editMaxDownloads, setEditMaxDownloads] = useState<string>('');
-  const [editAccessType, setEditAccessType] = useState<'view' | 'download' | 'edit'>('download');
+  const [editExpiresHours, setEditExpiresHours] = useState<string>("");
+  const [editPassword, setEditPassword] = useState("");
+  const [editMaxDownloads, setEditMaxDownloads] = useState<string>("");
+  const [editAccessType, setEditAccessType] = useState<
+    "view" | "download" | "edit"
+  >("download");
   const [editIsActive, setEditIsActive] = useState(true);
 
   const fetchShares = useCallback(async () => {
@@ -59,7 +76,7 @@ export default function SharesPage() {
       const response = await sharesApi.list();
       setShares(response.data.shares);
     } catch {
-      toast.error('Impossible de charger les partages');
+      toast.error("Impossible de charger les partages");
     } finally {
       setLoading(false);
     }
@@ -71,9 +88,9 @@ export default function SharesPage() {
 
   const openEditDialog = (share: ShareLink) => {
     setSelectedShare(share);
-    setEditExpiresHours('');
-    setEditPassword('');
-    setEditMaxDownloads(share.max_downloads?.toString() || '');
+    setEditExpiresHours("");
+    setEditPassword("");
+    setEditMaxDownloads(share.max_downloads?.toString() || "");
     setEditAccessType(share.access_type);
     setEditIsActive(share.is_active);
     setEditDialogOpen(true);
@@ -100,11 +117,11 @@ export default function SharesPage() {
       }
 
       await sharesApi.update(selectedShare.id, updates);
-      toast.success('Partage mis à jour');
+      toast.success("Partage mis à jour");
       setEditDialogOpen(false);
       fetchShares();
     } catch {
-      toast.error('Impossible de mettre à jour le partage');
+      toast.error("Impossible de mettre à jour le partage");
     } finally {
       setSaving(false);
     }
@@ -113,27 +130,27 @@ export default function SharesPage() {
   const handleDelete = async (id: string) => {
     try {
       await sharesApi.delete(id);
-      toast.success('Lien de partage révoqué');
+      toast.success("Lien de partage révoqué");
       fetchShares();
     } catch {
-      toast.error('Impossible de révoquer le partage');
+      toast.error("Impossible de révoquer le partage");
     }
   };
 
   const copyLink = (share: ShareLink) => {
     const url = `${window.location.origin}/share/${share.token}`;
     navigator.clipboard.writeText(url);
-    toast.success('Lien copié dans le presse-papiers');
+    toast.success("Lien copié dans le presse-papiers");
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -144,11 +161,11 @@ export default function SharesPage() {
 
   const getAccessIcon = (type: string) => {
     switch (type) {
-      case 'view':
+      case "view":
         return <Eye className="h-4 w-4" />;
-      case 'download':
+      case "download":
         return <Download className="h-4 w-4" />;
-      case 'edit':
+      case "edit":
         return <FileEdit className="h-4 w-4" />;
       default:
         return <Eye className="h-4 w-4" />;
@@ -190,7 +207,7 @@ export default function SharesPage() {
             const active = share.is_active && !expired;
 
             return (
-              <Card key={share.id} className={!active ? 'opacity-60' : ''}>
+              <Card key={share.id} className={!active ? "opacity-60" : ""}>
                 <CardContent className="py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -199,13 +216,17 @@ export default function SharesPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{share.key.split('/').pop()}</span>
+                          <span className="font-medium">
+                            {share.key.split("/").pop()}
+                          </span>
                           {share.password_protected && (
                             <Lock className="h-4 w-4 text-muted-foreground" />
                           )}
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>{share.bucket}/{share.key}</span>
+                          <span>
+                            {share.bucket}/{share.key}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -213,15 +234,22 @@ export default function SharesPage() {
                     <div className="flex items-center gap-4">
                       {/* Status badges */}
                       <div className="flex items-center gap-2">
-                        <Badge variant={active ? 'default' : 'secondary'}>
+                        <Badge variant={active ? "default" : "secondary"}>
                           {active ? (
                             <CheckCircle className="mr-1 h-3 w-3" />
                           ) : (
                             <XCircle className="mr-1 h-3 w-3" />
                           )}
-                          {expired ? 'Expired' : share.is_active ? 'Active' : 'Disabled'}
+                          {expired
+                            ? "Expired"
+                            : share.is_active
+                              ? "Active"
+                              : "Disabled"}
                         </Badge>
-                        <Badge variant="outline" className="flex items-center gap-1">
+                        <Badge
+                          variant="outline"
+                          className="flex items-center gap-1"
+                        >
                           {getAccessIcon(share.access_type)}
                           {share.access_type}
                         </Badge>
@@ -244,7 +272,11 @@ export default function SharesPage() {
 
                       {/* Actions */}
                       <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => copyLink(share)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyLink(share)}
+                        >
                           <Copy className="mr-2 h-4 w-4" />
                           Copy Link
                         </Button>
@@ -255,11 +287,17 @@ export default function SharesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => window.open(`/share/${share.token}`, '_blank')}>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                window.open(`/share/${share.token}`, "_blank")
+                              }
+                            >
                               <ExternalLink className="mr-2 h-4 w-4" />
                               Open Link
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openEditDialog(share)}>
+                            <DropdownMenuItem
+                              onClick={() => openEditDialog(share)}
+                            >
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Settings
                             </DropdownMenuItem>
@@ -281,20 +319,23 @@ export default function SharesPage() {
           })}
 
           {shares.length === 0 && (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                <Share2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No shared links yet</p>
-                <p className="text-sm">Share files from the Storage page</p>
-              </CardContent>
-            </Card>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Share2 className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <h3 className="text-lg font-semibold">Aucun lien partage</h3>
+              <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                Partagez des fichiers depuis le stockage pour creer des liens de
+                partage.
+              </p>
+            </div>
           )}
         </div>
 
         {/* Revoke Share Confirmation */}
         <ConfirmDialog
           open={deleteShareId !== null}
-          onOpenChange={(open) => { if (!open) setDeleteShareId(null); }}
+          onOpenChange={(open) => {
+            if (!open) setDeleteShareId(null);
+          }}
           title="Revoke Share Link"
           description="Are you sure you want to revoke this share link? Anyone with the link will no longer be able to access the file."
           onConfirm={() => {
@@ -312,7 +353,12 @@ export default function SharesPage() {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Access Type</Label>
-                <Select value={editAccessType} onValueChange={(v) => setEditAccessType(v as 'view' | 'download' | 'edit')}>
+                <Select
+                  value={editAccessType}
+                  onValueChange={(v) =>
+                    setEditAccessType(v as "view" | "download" | "edit")
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -364,11 +410,22 @@ export default function SharesPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setEditDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button onClick={handleSaveEdit} disabled={saving}>
-                {saving && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+                {saving && (
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="mr-2 h-4 w-4 "
+                  />
+                )}
                 Save Changes
               </Button>
             </DialogFooter>

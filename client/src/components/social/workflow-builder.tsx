@@ -152,7 +152,7 @@ export function WorkflowBuilder() {
 
   const handleToggle = (id: string) => {
     setWorkflows((prev) =>
-      prev.map((w) => (w.id === id ? { ...w, enabled: !w.enabled } : w))
+      prev.map((w) => (w.id === id ? { ...w, enabled: !w.enabled } : w)),
     );
   };
 
@@ -224,19 +224,21 @@ export function WorkflowBuilder() {
                 </Label>
                 <Select
                   value={draft.trigger}
-                  onValueChange={(v) => setDraft({ ...draft, trigger: v as TriggerType })}
+                  onValueChange={(v) =>
+                    setDraft({ ...draft, trigger: v as TriggerType })
+                  }
                 >
                   <SelectTrigger className="h-8 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(Object.entries(TRIGGER_LABELS) as [TriggerType, string][]).map(
-                      ([val, label]) => (
-                        <SelectItem key={val} value={val} className="text-xs">
-                          {label}
-                        </SelectItem>
-                      )
-                    )}
+                    {(
+                      Object.entries(TRIGGER_LABELS) as [TriggerType, string][]
+                    ).map(([val, label]) => (
+                      <SelectItem key={val} value={val} className="text-xs">
+                        {label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {draft.trigger === "rss" && (
@@ -244,7 +246,10 @@ export function WorkflowBuilder() {
                     placeholder="Feed URL..."
                     value={draft.triggerConfig.url ?? ""}
                     onChange={(e) =>
-                      setDraft({ ...draft, triggerConfig: { url: e.target.value } })
+                      setDraft({
+                        ...draft,
+                        triggerConfig: { url: e.target.value },
+                      })
                     }
                     className="h-7 text-xs"
                   />
@@ -254,7 +259,10 @@ export function WorkflowBuilder() {
                     placeholder="Cron (e.g. 0 9 * * 1)..."
                     value={draft.triggerConfig.cron ?? ""}
                     onChange={(e) =>
-                      setDraft({ ...draft, triggerConfig: { cron: e.target.value } })
+                      setDraft({
+                        ...draft,
+                        triggerConfig: { cron: e.target.value },
+                      })
                     }
                     className="h-7 text-xs"
                   />
@@ -278,13 +286,16 @@ export function WorkflowBuilder() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(Object.entries(CONDITION_LABELS) as [ConditionType, string][]).map(
-                      ([val, label]) => (
-                        <SelectItem key={val} value={val} className="text-xs">
-                          {label}
-                        </SelectItem>
-                      )
-                    )}
+                    {(
+                      Object.entries(CONDITION_LABELS) as [
+                        ConditionType,
+                        string,
+                      ][]
+                    ).map(([val, label]) => (
+                      <SelectItem key={val} value={val} className="text-xs">
+                        {label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {draft.condition === "keyword" && (
@@ -292,7 +303,10 @@ export function WorkflowBuilder() {
                     placeholder="Keyword..."
                     value={draft.conditionConfig.keyword ?? ""}
                     onChange={(e) =>
-                      setDraft({ ...draft, conditionConfig: { keyword: e.target.value } })
+                      setDraft({
+                        ...draft,
+                        conditionConfig: { keyword: e.target.value },
+                      })
                     }
                     className="h-7 text-xs"
                   />
@@ -302,7 +316,10 @@ export function WorkflowBuilder() {
                     placeholder="Category name..."
                     value={draft.conditionConfig.category ?? ""}
                     onChange={(e) =>
-                      setDraft({ ...draft, conditionConfig: { category: e.target.value } })
+                      setDraft({
+                        ...draft,
+                        conditionConfig: { category: e.target.value },
+                      })
                     }
                     className="h-7 text-xs"
                   />
@@ -315,7 +332,10 @@ export function WorkflowBuilder() {
                       onChange={(e) =>
                         setDraft({
                           ...draft,
-                          conditionConfig: { ...draft.conditionConfig, from: e.target.value },
+                          conditionConfig: {
+                            ...draft.conditionConfig,
+                            from: e.target.value,
+                          },
                         })
                       }
                       className="h-7 text-xs"
@@ -326,7 +346,10 @@ export function WorkflowBuilder() {
                       onChange={(e) =>
                         setDraft({
                           ...draft,
-                          conditionConfig: { ...draft.conditionConfig, to: e.target.value },
+                          conditionConfig: {
+                            ...draft.conditionConfig,
+                            to: e.target.value,
+                          },
                         })
                       }
                       className="h-7 text-xs"
@@ -344,19 +367,21 @@ export function WorkflowBuilder() {
                 </Label>
                 <Select
                   value={draft.action}
-                  onValueChange={(v) => setDraft({ ...draft, action: v as ActionType })}
+                  onValueChange={(v) =>
+                    setDraft({ ...draft, action: v as ActionType })
+                  }
                 >
                   <SelectTrigger className="h-8 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(Object.entries(ACTION_LABELS) as [ActionType, string][]).map(
-                      ([val, label]) => (
-                        <SelectItem key={val} value={val} className="text-xs">
-                          {label}
-                        </SelectItem>
-                      )
-                    )}
+                    {(
+                      Object.entries(ACTION_LABELS) as [ActionType, string][]
+                    ).map(([val, label]) => (
+                      <SelectItem key={val} value={val} className="text-xs">
+                        {label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {draft.action === "post_platforms" && (
@@ -364,7 +389,10 @@ export function WorkflowBuilder() {
                     placeholder="Platforms (comma-sep)..."
                     value={draft.actionConfig.platforms ?? ""}
                     onChange={(e) =>
-                      setDraft({ ...draft, actionConfig: { platforms: e.target.value } })
+                      setDraft({
+                        ...draft,
+                        actionConfig: { platforms: e.target.value },
+                      })
                     }
                     className="h-7 text-xs"
                   />
@@ -374,7 +402,10 @@ export function WorkflowBuilder() {
                     placeholder="Recipient email..."
                     value={draft.actionConfig.email ?? ""}
                     onChange={(e) =>
-                      setDraft({ ...draft, actionConfig: { email: e.target.value } })
+                      setDraft({
+                        ...draft,
+                        actionConfig: { email: e.target.value },
+                      })
                     }
                     className="h-7 text-xs"
                   />
@@ -391,7 +422,12 @@ export function WorkflowBuilder() {
               >
                 Cancel
               </Button>
-              <Button size="sm" className="h-7 text-xs gap-1" onClick={handleSave} disabled={saving}>
+              <Button
+                size="sm"
+                className="h-7 text-xs gap-1"
+                onClick={handleSave}
+                disabled={saving}
+              >
                 {saving ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
                 ) : (
@@ -405,9 +441,13 @@ export function WorkflowBuilder() {
 
         {/* Workflow list */}
         {workflows.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-4">
-            No workflows yet. Create one to automate your social posting.
-          </p>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Workflow className="h-10 w-10 text-muted-foreground/30 mb-3" />
+            <p className="text-sm font-medium">Aucun workflow</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Creez un workflow pour automatiser vos publications.
+            </p>
+          </div>
         ) : (
           <div className="space-y-2">
             {workflows.map((wf) => (

@@ -1,28 +1,28 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { AppLayout } from "@/components/layout/app-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -30,7 +30,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   BookOpen,
   Play,
@@ -43,44 +43,44 @@ import {
   XCircle,
   Clock,
   Loader2,
-} from "lucide-react"
-import { itAssetsApi } from "@/lib/api/it-assets"
-import { usePageTitle } from "@/hooks/use-page-title"
+} from "lucide-react";
+import { itAssetsApi } from "@/lib/api/it-assets";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface PlaybookStep {
-  action_type: string
-  config: Record<string, unknown>
-  on_failure: "continue" | "stop" | "escalate"
+  action_type: string;
+  config: Record<string, unknown>;
+  on_failure: "continue" | "stop" | "escalate";
 }
 
 interface Playbook {
-  id: string
-  name: string
-  description?: string
-  steps: PlaybookStep[]
-  enabled: boolean
-  created_at: string
-  updated_at: string
+  id: string;
+  name: string;
+  description?: string;
+  steps: PlaybookStep[];
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 interface PlaybookRun {
-  id: string
-  playbook_id: string
-  hardware_id?: string
-  status: string
+  id: string;
+  playbook_id: string;
+  hardware_id?: string;
+  status: string;
   step_results: Array<{
-    step_index: number
-    action_type: string
-    status: string
-    output?: string
-    error?: string
-    started_at?: string
-    completed_at?: string
-  }>
-  started_at: string
-  completed_at?: string
+    step_index: number;
+    action_type: string;
+    status: string;
+    output?: string;
+    error?: string;
+    started_at?: string;
+    completed_at?: string;
+  }>;
+  started_at: string;
+  completed_at?: string;
 }
 
 // ─── Step editor ─────────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ const ACTION_TYPES = [
   { value: "create_ticket", label: "Create ticket" },
   { value: "send_alert", label: "Send alert" },
   { value: "reboot", label: "Reboot machine" },
-]
+];
 
 function StepRow({
   step,
@@ -104,13 +104,13 @@ function StepRow({
   onMoveUp,
   onMoveDown,
 }: {
-  step: PlaybookStep
-  index: number
-  total: number
-  onChange: (s: PlaybookStep) => void
-  onRemove: () => void
-  onMoveUp: () => void
-  onMoveDown: () => void
+  step: PlaybookStep;
+  index: number;
+  total: number;
+  onChange: (s: PlaybookStep) => void;
+  onRemove: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
 }) {
   return (
     <div className="flex items-center gap-2 p-3 border rounded-lg bg-gray-50">
@@ -136,14 +136,12 @@ function StepRow({
         className="flex-1 h-8 text-sm"
         placeholder="Config JSON (optional)"
         value={
-          Object.keys(step.config).length
-            ? JSON.stringify(step.config)
-            : ""
+          Object.keys(step.config).length ? JSON.stringify(step.config) : ""
         }
         onChange={(e) => {
           try {
-            const cfg = e.target.value ? JSON.parse(e.target.value) : {}
-            onChange({ ...step, config: cfg })
+            const cfg = e.target.value ? JSON.parse(e.target.value) : {};
+            onChange({ ...step, config: cfg });
           } catch {
             // keep as-is while user types
           }
@@ -195,7 +193,7 @@ function StepRow({
         </Button>
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Playbook dialog ──────────────────────────────────────────────────────────
@@ -205,65 +203,69 @@ function PlaybookDialog({
   onClose,
   existing,
 }: {
-  open: boolean
-  onClose: () => void
-  existing?: Playbook
+  open: boolean;
+  onClose: () => void;
+  existing?: Playbook;
 }) {
-  const qc = useQueryClient()
-  const [name, setName] = useState(existing?.name ?? "")
-  const [description, setDescription] = useState(existing?.description ?? "")
-  const [steps, setSteps] = useState<PlaybookStep[]>(
-    existing?.steps ?? []
-  )
+  const qc = useQueryClient();
+  const [name, setName] = useState(existing?.name ?? "");
+  const [description, setDescription] = useState(existing?.description ?? "");
+  const [steps, setSteps] = useState<PlaybookStep[]>(existing?.steps ?? []);
 
   const createMut = useMutation({
-    mutationFn: (data: { name: string; description?: string; steps: PlaybookStep[] }) =>
-      itAssetsApi.createPlaybook(data),
+    mutationFn: (data: {
+      name: string;
+      description?: string;
+      steps: PlaybookStep[];
+    }) => itAssetsApi.createPlaybook(data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["playbooks"] })
-      onClose()
+      qc.invalidateQueries({ queryKey: ["playbooks"] });
+      onClose();
     },
-  })
+  });
   const updateMut = useMutation({
-    mutationFn: (data: { name: string; description?: string; steps: PlaybookStep[] }) =>
-      itAssetsApi.updatePlaybook(existing!.id, data),
+    mutationFn: (data: {
+      name: string;
+      description?: string;
+      steps: PlaybookStep[];
+    }) => itAssetsApi.updatePlaybook(existing!.id, data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["playbooks"] })
-      onClose()
+      qc.invalidateQueries({ queryKey: ["playbooks"] });
+      onClose();
     },
-  })
+  });
 
-  const isLoading = createMut.isPending || updateMut.isPending
+  const isLoading = createMut.isPending || updateMut.isPending;
 
   function addStep() {
     setSteps((prev) => [
       ...prev,
       { action_type: "check_service", config: {}, on_failure: "stop" },
-    ])
+    ]);
   }
 
   function updateStep(i: number, s: PlaybookStep) {
-    setSteps((prev) => prev.map((x, idx) => (idx === i ? s : x)))
+    setSteps((prev) => prev.map((x, idx) => (idx === i ? s : x)));
   }
 
   function removeStep(i: number) {
-    setSteps((prev) => prev.filter((_, idx) => idx !== i))
+    setSteps((prev) => prev.filter((_, idx) => idx !== i));
   }
 
   function moveStep(i: number, dir: -1 | 1) {
     setSteps((prev) => {
-      const arr = [...prev]
-      const tmp = arr[i]
-      arr[i] = arr[i + dir]
-      arr[i + dir] = tmp
-      return arr
-    })
+      const arr = [...prev];
+      const tmp = arr[i];
+      arr[i] = arr[i + dir];
+      arr[i + dir] = tmp;
+      return arr;
+    });
   }
 
   function save() {
-    const payload = { name, description: description || undefined, steps }
-    if (existing) updateMut.mutate(payload)
-    else createMut.mutate(payload)
+    const payload = { name, description: description || undefined, steps };
+    if (existing) updateMut.mutate(payload);
+    else createMut.mutate(payload);
   }
 
   return (
@@ -348,59 +350,81 @@ function PlaybookDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 // ─── Run status badge ─────────────────────────────────────────────────────────
 
 function RunStatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-    running:   { label: "Running",   color: "bg-blue-100 text-blue-800",   icon: <Loader2 className="h-3 w-3 animate-spin" /> },
-    completed: { label: "Completed", color: "bg-green-100 text-green-800", icon: <CheckCircle2 className="h-3 w-3" /> },
-    failed:    { label: "Failed",    color: "bg-red-100 text-red-800",     icon: <XCircle className="h-3 w-3" /> },
-    escalated: { label: "Escalated", color: "bg-orange-100 text-orange-800", icon: <Clock className="h-3 w-3" /> },
-  }
-  const cfg = map[status] ?? map.running
+  const map: Record<
+    string,
+    { label: string; color: string; icon: React.ReactNode }
+  > = {
+    running: {
+      label: "Running",
+      color: "bg-blue-100 text-blue-800",
+      icon: <Loader2 className="h-3 w-3 animate-spin" />,
+    },
+    completed: {
+      label: "Completed",
+      color: "bg-green-100 text-green-800",
+      icon: <CheckCircle2 className="h-3 w-3" />,
+    },
+    failed: {
+      label: "Failed",
+      color: "bg-red-100 text-red-800",
+      icon: <XCircle className="h-3 w-3" />,
+    },
+    escalated: {
+      label: "Escalated",
+      color: "bg-orange-100 text-orange-800",
+      icon: <Clock className="h-3 w-3" />,
+    },
+  };
+  const cfg = map[status] ?? map.running;
   return (
-    <Badge variant="outline" className={`flex items-center gap-1 text-xs ${cfg.color}`}>
+    <Badge
+      variant="outline"
+      className={`flex items-center gap-1 text-xs ${cfg.color}`}
+    >
       {cfg.icon} {cfg.label}
     </Badge>
-  )
+  );
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function PlaybooksPage() {
-  usePageTitle("Remediation Playbooks")
+  usePageTitle("Remediation Playbooks");
 
-  const qc = useQueryClient()
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editTarget, setEditTarget] = useState<Playbook | undefined>()
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const qc = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Playbook | undefined>();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const { data: playbooks = [], isLoading } = useQuery({
     queryKey: ["playbooks"],
-    queryFn: () => itAssetsApi.listPlaybooks().then(r => r.data),
-  })
+    queryFn: () => itAssetsApi.listPlaybooks().then((r) => r.data),
+  });
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => itAssetsApi.deletePlaybook(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["playbooks"] }),
-  })
+  });
 
   const runMut = useMutation({
     mutationFn: (id: string) => itAssetsApi.runPlaybook(id, {}),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["playbooks"] }),
-  })
+  });
 
   function openCreate() {
-    setEditTarget(undefined)
-    setDialogOpen(true)
+    setEditTarget(undefined);
+    setDialogOpen(true);
   }
 
   function openEdit(pb: Playbook) {
-    setEditTarget(pb)
-    setDialogOpen(true)
+    setEditTarget(pb);
+    setDialogOpen(true);
   }
 
   return (
@@ -415,7 +439,8 @@ export default function PlaybooksPage() {
             <div>
               <h1 className="text-2xl font-bold">Remediation Playbooks</h1>
               <p className="text-sm text-gray-500">
-                Define automated sequences of actions triggered on alerts or manually.
+                Define automated sequences of actions triggered on alerts or
+                manually.
               </p>
             </div>
           </div>
@@ -427,7 +452,9 @@ export default function PlaybooksPage() {
         {/* Table */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Playbooks ({playbooks.length})</CardTitle>
+            <CardTitle className="text-base">
+              Playbooks ({playbooks.length})
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {isLoading ? (
@@ -435,8 +462,12 @@ export default function PlaybooksPage() {
                 <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
               </div>
             ) : playbooks.length === 0 ? (
-              <div className="text-center py-10 text-gray-400">
-                No playbooks yet. Create one to automate remediation.
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <BookOpen className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                <h3 className="text-lg font-semibold">Aucun playbook</h3>
+                <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                  Creez un playbook pour automatiser la remediation d'incidents.
+                </p>
               </div>
             ) : (
               <Table>
@@ -469,7 +500,8 @@ export default function PlaybooksPage() {
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
-                            {pb.steps.length} step{pb.steps.length !== 1 ? "s" : ""}
+                            {pb.steps.length} step
+                            {pb.steps.length !== 1 ? "s" : ""}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -535,7 +567,7 @@ export default function PlaybooksPage() {
                                   </span>
                                   <span className="font-medium text-gray-700">
                                     {ACTION_TYPES.find(
-                                      (a) => a.value === step.action_type
+                                      (a) => a.value === step.action_type,
                                     )?.label ?? step.action_type}
                                   </span>
                                   {Object.keys(step.config).length > 0 && (
@@ -549,8 +581,8 @@ export default function PlaybooksPage() {
                                       step.on_failure === "escalate"
                                         ? "bg-orange-50 text-orange-700"
                                         : step.on_failure === "continue"
-                                        ? "bg-blue-50 text-blue-700"
-                                        : "bg-red-50 text-red-700"
+                                          ? "bg-blue-50 text-blue-700"
+                                          : "bg-red-50 text-red-700"
                                     }`}
                                   >
                                     on failure: {step.on_failure}
@@ -578,5 +610,5 @@ export default function PlaybooksPage() {
         />
       )}
     </AppLayout>
-  )
+  );
 }
