@@ -903,7 +903,7 @@ mod tests {
 
     #[test]
     fn test_parse_rfc2822_date() {
-        let date = parse_rfc2822_date("Thu, 3 Apr 2026 10:30:00 +0200");
+        let date = parse_rfc2822_date("Fri, 3 Apr 2026 10:30:00 +0200");
         assert!(date.is_some());
     }
 
