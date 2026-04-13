@@ -19,6 +19,7 @@ import {
   Presentation,
   HardDrive,
   Contact,
+  Users,
 } from "lucide-react";
 import {
   CommandDialog,
@@ -174,7 +175,16 @@ const quickActions = [
 
 interface CrossAppResult {
   id: string;
-  category: "document" | "email" | "event" | "file" | "contact";
+  category:
+    | "user"
+    | "contact"
+    | "event"
+    | "document"
+    | "file"
+    | "email"
+    | "task"
+    | "chat"
+    | "note";
   title: string;
   subtitle: string;
   href: string;
@@ -183,22 +193,30 @@ interface CrossAppResult {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  document: "Documents",
-  email: "Emails",
-  event: "Events",
-  file: "Files",
+  user: "Utilisateurs",
   contact: "Contacts",
+  event: "Événements",
+  document: "Documents",
+  file: "Fichiers",
+  email: "Emails",
+  task: "Tâches",
+  chat: "Messages",
+  note: "Notes",
 };
 
 const CATEGORY_ICONS: Record<
   string,
   React.ComponentType<{ className?: string }>
 > = {
-  document: FileText,
-  email: Mail,
-  event: Calendar,
-  file: HardDrive,
+  user: Users,
   contact: Contact,
+  event: Calendar,
+  document: FileText,
+  file: HardDrive,
+  email: Mail,
+  task: CheckSquare,
+  chat: MessageCircle,
+  note: StickyNote,
 };
 
 function docTypeIcon(
@@ -228,101 +246,147 @@ function useCrossAppSearch(query: string) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(async () => {
-      try {
-        const searchFns = [
-          // Documents search
-          import("@/lib/api/docs").then(async ({ docsApi }) => {
-            try {
-              // Search across doc types — the docs service has a listing endpoint
-              // We filter client-side since there's no search endpoint
-              const items: CrossAppResult[] = [];
-              // Text docs, sheets, slides are all created via the docs API
-              // Use generic listing if available
-              return items;
-            } catch {
-              return [] as CrossAppResult[];
-            }
-          }),
+      const q = query.toLowerCase();
 
-          // Mail search
-          import("@/lib/api/mail").then(async ({ mailApi }) => {
-            try {
-              const res = await mailApi.searchEmails({ q: query, limit: 5 });
-              const emails = res.data || [];
-              return emails.map(
-                (e): CrossAppResult => ({
-                  id: `mail-${e.id}`,
-                  category: "email",
-                  title: e.subject || "(no subject)",
-                  subtitle: `${e.sender_name || e.sender} ${e.snippet ? "- " + e.snippet.slice(0, 60) : ""}`,
-                  href: `/mail?id=${e.id}`,
-                  icon: Mail,
-                  date: e.received_at || e.created_at,
+      const searchFns: Promise<CrossAppResult[]>[] = [
+        // ── 1. Identity users ─────────────────────────────────────────
+        import("@/lib/api/identity").then(async ({ usersApi }) => {
+          try {
+            const res = await usersApi.list(0, 50);
+            const users = res.data?.users || [];
+            return users
+              .filter(
+                (u) =>
+                  u.username?.toLowerCase().includes(q) ||
+                  u.display_name?.toLowerCase().includes(q) ||
+                  u.email?.toLowerCase().includes(q),
+              )
+              .slice(0, 5)
+              .map(
+                (u): CrossAppResult => ({
+                  id: `user-${u.id}`,
+                  category: "user",
+                  title: u.display_name || u.username || "",
+                  subtitle: [u.email, u.department].filter(Boolean).join(" - "),
+                  href: `/workforce?user=${u.id}`,
+                  icon: Users,
+                  date: u.last_login,
                 }),
               );
-            } catch {
-              return [] as CrossAppResult[];
-            }
-          }),
+          } catch {
+            return [] as CrossAppResult[];
+          }
+        }),
 
-          // Calendar events search
-          import("@/lib/api/calendar").then(async ({ calendarApi }) => {
-            try {
-              const calendarsRes = await calendarApi.listCalendars();
-              const calendars = calendarsRes.data || [];
-              const now = new Date();
-              const futureEnd = new Date(
-                now.getTime() + 365 * 24 * 60 * 60 * 1000,
+        // ── 2. Contacts ───────────────────────────────────────────────
+        import("@/lib/api/contacts").then(async ({ contactsApi }) => {
+          try {
+            const res = await contactsApi.list();
+            const contacts = res.data || [];
+            return contacts
+              .filter(
+                (c) =>
+                  c.first_name?.toLowerCase().includes(q) ||
+                  c.last_name?.toLowerCase().includes(q) ||
+                  c.email?.toLowerCase().includes(q) ||
+                  c.company?.toLowerCase().includes(q) ||
+                  c.organization?.toLowerCase().includes(q),
+              )
+              .slice(0, 5)
+              .map(
+                (c): CrossAppResult => ({
+                  id: `contact-${c.id}`,
+                  category: "contact",
+                  title: `${c.first_name} ${c.last_name}`.trim(),
+                  subtitle: [c.email, c.organization || c.company]
+                    .filter(Boolean)
+                    .join(" - "),
+                  href: `/contacts?id=${c.id}`,
+                  icon: Contact,
+                }),
               );
-              const allEvents: CrossAppResult[] = [];
+          } catch {
+            return [] as CrossAppResult[];
+          }
+        }),
 
-              for (const cal of calendars.slice(0, 3)) {
-                try {
-                  const eventsRes = await calendarApi.listEvents(
-                    cal.id,
-                    now,
-                    futureEnd,
-                  );
-                  const events = eventsRes.data || [];
-                  const matching = events
-                    .filter((ev) =>
-                      ev.title?.toLowerCase().includes(query.toLowerCase()),
-                    )
-                    .slice(0, 3);
-                  matching.forEach((ev) => {
+        // ── 3. Calendar events ────────────────────────────────────────
+        import("@/lib/api/calendar").then(async ({ calendarApi }) => {
+          try {
+            const calendarsRes = await calendarApi.listCalendars();
+            const calendars = calendarsRes.data || [];
+            const now = new Date();
+            const futureEnd = new Date(
+              now.getTime() + 365 * 24 * 60 * 60 * 1000,
+            );
+            const allEvents: CrossAppResult[] = [];
+
+            for (const cal of calendars.slice(0, 3)) {
+              try {
+                const eventsRes = await calendarApi.listEvents(
+                  cal.id,
+                  now,
+                  futureEnd,
+                );
+                const events = eventsRes.data || [];
+                events
+                  .filter((ev) => ev.title?.toLowerCase().includes(q))
+                  .slice(0, 3)
+                  .forEach((ev) => {
                     allEvents.push({
                       id: `cal-${ev.id}`,
                       category: "event",
                       title: ev.title,
-                      subtitle: ev.start_time
-                        ? new Date(ev.start_time).toLocaleDateString()
-                        : "",
+                      subtitle: `Événements${ev.start_time ? " - " + new Date(ev.start_time).toLocaleDateString("fr-FR") : ""}`,
                       href: `/cal?event=${ev.id}`,
                       icon: Calendar,
                       date: ev.start_time,
                     });
                   });
-                } catch {
-                  // skip calendar
-                }
+              } catch {
+                /* skip calendar */
               }
-              return allEvents.slice(0, 5);
-            } catch {
-              return [] as CrossAppResult[];
             }
-          }),
+            return allEvents.slice(0, 5);
+          } catch {
+            return [] as CrossAppResult[];
+          }
+        }),
 
-          // Files search (via storage search API)
-          import("@/lib/api/storage").then(async ({ searchApi }) => {
+        // ── 4. Drive files (nodes) ────────────────────────────────────
+        import("@/lib/api/drive").then(async ({ driveApi }) => {
+          try {
+            const nodes = await driveApi.listNodes();
+            const items = (Array.isArray(nodes) ? nodes : [])
+              .filter((n) => n.name?.toLowerCase().includes(q))
+              .slice(0, 5);
+            return items.map(
+              (n): CrossAppResult => ({
+                id: `drive-${n.id}`,
+                category: "file",
+                title: n.name,
+                subtitle: `Fichiers - ${n.node_type}${n.size ? " - " + formatSize(n.size) : ""}`,
+                href:
+                  n.node_type === "folder"
+                    ? `/drive?folder=${n.id}`
+                    : `/drive?file=${n.id}`,
+                icon: HardDrive,
+                date: n.updated_at,
+              }),
+            );
+          } catch {
+            // Fallback to storage search API
             try {
-              const res = await searchApi.quickSearch(query, 5);
+              const { searchApi: storageSearchApi } =
+                await import("@/lib/api/storage");
+              const res = await storageSearchApi.quickSearch(query, 5);
               const files = res.data?.results || [];
               return files.map(
                 (f): CrossAppResult => ({
                   id: `file-${f.bucket}-${f.key}`,
                   category: "file",
                   title: f.filename,
-                  subtitle: `${f.bucket}/${f.key}`,
+                  subtitle: `Fichiers - ${f.bucket}/${f.key}`,
                   href: `/drive?bucket=${f.bucket}&file=${encodeURIComponent(f.key)}`,
                   icon: HardDrive,
                 }),
@@ -330,53 +394,231 @@ function useCrossAppSearch(query: string) {
             } catch {
               return [] as CrossAppResult[];
             }
-          }),
+          }
+        }),
 
-          // Contacts search
-          import("@/lib/api/contacts").then(async ({ contactsApi }) => {
+        // ── 5. Documents (text, sheets, slides) ──────────────────────
+        import("@/lib/api/docs").then(async ({ docsApi }) => {
+          try {
+            // The docs service doesn't have a search endpoint,
+            // so we list templates and designs, and also fetch via
+            // the drive nodes of type document/spreadsheet/presentation
+            const items: CrossAppResult[] = [];
+
+            // Try listing designs which have names
             try {
-              const res = await contactsApi.list();
-              const contacts = res.data || [];
-              const q = query.toLowerCase();
-              return contacts
-                .filter(
-                  (c) =>
-                    c.first_name?.toLowerCase().includes(q) ||
-                    c.last_name?.toLowerCase().includes(q) ||
-                    c.email?.toLowerCase().includes(q) ||
-                    c.company?.toLowerCase().includes(q),
+              const designsRes = await docsApi.listDesigns();
+              const raw = designsRes.data;
+              const designs = Array.isArray(raw)
+                ? raw
+                : ((raw as { data?: unknown[] })?.data ?? []);
+              (Array.isArray(designs) ? designs : [])
+                .filter((d: { name?: string }) =>
+                  d.name?.toLowerCase().includes(q),
                 )
-                .slice(0, 5)
-                .map(
-                  (c): CrossAppResult => ({
-                    id: `contact-${c.id}`,
-                    category: "contact",
-                    title: `${c.first_name} ${c.last_name}`.trim(),
-                    subtitle: [c.email, c.company].filter(Boolean).join(" - "),
-                    href: `/contacts?id=${c.id}`,
-                    icon: Contact,
-                  }),
+                .slice(0, 3)
+                .forEach(
+                  (d: { id: string; name?: string; created_at?: string }) => {
+                    items.push({
+                      id: `doc-design-${d.id}`,
+                      category: "document",
+                      title: d.name || "Design",
+                      subtitle: "Documents - Design",
+                      href: `/docs/${d.id}`,
+                      icon: FileText,
+                      date: d.created_at,
+                    });
+                  },
                 );
             } catch {
-              return [] as CrossAppResult[];
+              /* skip designs */
             }
-          }),
-        ];
 
-        const settled = await Promise.allSettled(searchFns);
-        const allResults: CrossAppResult[] = [];
-        settled.forEach((r) => {
-          if (r.status === "fulfilled" && Array.isArray(r.value)) {
-            allResults.push(...r.value);
+            // Try listing templates
+            try {
+              const templatesRes = await docsApi.listTemplates();
+              const templates = templatesRes.data || [];
+              (Array.isArray(templates) ? templates : [])
+                .filter((t: { name?: string }) =>
+                  t.name?.toLowerCase().includes(q),
+                )
+                .slice(0, 2)
+                .forEach(
+                  (t: { id: string; name?: string; created_at?: string }) => {
+                    items.push({
+                      id: `doc-tpl-${t.id}`,
+                      category: "document",
+                      title: t.name || "Template",
+                      subtitle: "Documents - Modèle",
+                      href: `/docs?template=${t.id}`,
+                      icon: FileText,
+                      date: t.created_at,
+                    });
+                  },
+                );
+            } catch {
+              /* skip templates */
+            }
+
+            return items.slice(0, 5);
+          } catch {
+            return [] as CrossAppResult[];
           }
-        });
+        }),
 
-        setResults(allResults);
-      } catch {
-        setResults([]);
-      } finally {
-        setIsSearching(false);
-      }
+        // ── 6. Mail ───────────────────────────────────────────────────
+        import("@/lib/api/mail").then(async ({ mailApi }) => {
+          try {
+            const res = await mailApi.searchEmails({ q: query, limit: 5 });
+            const emails = res.data || [];
+            return (Array.isArray(emails) ? emails : []).map(
+              (e: {
+                id: string;
+                subject?: string;
+                sender_name?: string;
+                sender?: string;
+                snippet?: string;
+                received_at?: string;
+                created_at?: string;
+              }): CrossAppResult => ({
+                id: `mail-${e.id}`,
+                category: "email",
+                title: e.subject || "(Sans objet)",
+                subtitle: `Emails - ${e.sender_name || e.sender || ""}${e.snippet ? " - " + e.snippet.slice(0, 50) : ""}`,
+                href: `/mail?id=${e.id}`,
+                icon: Mail,
+                date: e.received_at || e.created_at,
+              }),
+            );
+          } catch {
+            return [] as CrossAppResult[];
+          }
+        }),
+
+        // ── 7. Tasks (calendar tasks) ─────────────────────────────────
+        import("@/lib/api/calendar").then(async ({ calendarApi, tasksApi }) => {
+          try {
+            const calendarsRes = await calendarApi.listCalendars();
+            const calendars = calendarsRes.data || [];
+            if (calendars.length === 0) return [] as CrossAppResult[];
+            const calId = calendars[0].id;
+            const tasksRes = await tasksApi.listTasks(calId);
+            const raw = tasksRes.data;
+            const tasks = Array.isArray(raw)
+              ? raw
+              : ((raw as { data?: unknown[] })?.data ?? []);
+            return (Array.isArray(tasks) ? tasks : [])
+              .filter(
+                (t: { title?: string; description?: string }) =>
+                  t.title?.toLowerCase().includes(q) ||
+                  t.description?.toLowerCase().includes(q),
+              )
+              .slice(0, 5)
+              .map(
+                (t: {
+                  id: string;
+                  title?: string;
+                  due_date?: string;
+                  created_at?: string;
+                }): CrossAppResult => ({
+                  id: `task-${t.id}`,
+                  category: "task",
+                  title: t.title || "Tâche",
+                  subtitle: `Tâches${t.due_date ? " - Échéance: " + new Date(t.due_date).toLocaleDateString("fr-FR") : ""}`,
+                  href: `/tasks?id=${t.id}`,
+                  icon: CheckSquare,
+                  date: t.due_date || t.created_at,
+                }),
+              );
+          } catch {
+            return [] as CrossAppResult[];
+          }
+        }),
+
+        // ── 8. Chat messages ──────────────────────────────────────────
+        import("@/lib/api/chat").then(async ({ chatApi }) => {
+          try {
+            const channelsRes = await chatApi.getChannels();
+            const channels = channelsRes.data || [];
+            const allMessages: CrossAppResult[] = [];
+
+            // Search across first few channels
+            for (const ch of (Array.isArray(channels) ? channels : []).slice(
+              0,
+              5,
+            )) {
+              try {
+                const msgs = await chatApi.searchMessages(ch.id, query);
+                const messages = msgs.data || [];
+                (Array.isArray(messages) ? messages : [])
+                  .slice(0, 3)
+                  .forEach(
+                    (m: {
+                      id: string;
+                      content?: string;
+                      created_at?: string;
+                    }) => {
+                      allMessages.push({
+                        id: `chat-${m.id}`,
+                        category: "chat",
+                        title: (m.content || "").slice(0, 80) || "Message",
+                        subtitle: `Messages - #${ch.name || "canal"}`,
+                        href: `/chat?channel=${ch.id}&message=${m.id}`,
+                        icon: MessageCircle,
+                        date: m.created_at,
+                      });
+                    },
+                  );
+              } catch {
+                /* skip channel */
+              }
+            }
+            return allMessages.slice(0, 5);
+          } catch {
+            return [] as CrossAppResult[];
+          }
+        }),
+
+        // ── 9. Keep notes ─────────────────────────────────────────────
+        import("@/lib/api/keep").then(async ({ keepApi }) => {
+          try {
+            const data = await keepApi.fetchAll();
+            const notes = data.notes || [];
+            return notes
+              .filter(
+                (n) =>
+                  !n.isTrashed &&
+                  (n.title?.toLowerCase().includes(q) ||
+                    n.content?.toLowerCase().includes(q)),
+              )
+              .slice(0, 5)
+              .map(
+                (n): CrossAppResult => ({
+                  id: `note-${n.id}`,
+                  category: "note",
+                  title: n.title || "Note sans titre",
+                  subtitle: `Notes${n.content ? " - " + n.content.slice(0, 50) : ""}`,
+                  href: `/keep?note=${n.id}`,
+                  icon: StickyNote,
+                  date: n.updatedAt || n.createdAt,
+                }),
+              );
+          } catch {
+            return [] as CrossAppResult[];
+          }
+        }),
+      ];
+
+      const settled = await Promise.allSettled(searchFns);
+      const allResults: CrossAppResult[] = [];
+      settled.forEach((r) => {
+        if (r.status === "fulfilled" && Array.isArray(r.value)) {
+          allResults.push(...r.value);
+        }
+      });
+
+      setResults(allResults);
+      setIsSearching(false);
     }, 300);
 
     return () => {
@@ -385,6 +627,13 @@ function useCrossAppSearch(query: string) {
   }, [query]);
 
   return { results, isSearching };
+}
+
+/** Format byte size for display */
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} o`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
 }
 
 // ── Group results by category ──────────────────────────────────────────────
