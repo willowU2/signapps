@@ -56,7 +56,8 @@ function TypeIcon({ type }: { type: SharingGranteeType }) {
 
 async function loadUsers(): Promise<GranteeOption[]> {
   // Fetch up to 200 users for client-side filtering.
-  // TODO: replace with a server-side search endpoint once available.
+  // For larger tenants, consider adding a server-side search endpoint
+  // (e.g. GET /users/search?q=) and debounced query-based fetching.
   const res = await usersApi.list(0, 200);
   const users = res.data?.users ?? [];
   return users.map((u) => ({
