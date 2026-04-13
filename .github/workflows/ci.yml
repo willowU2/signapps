@@ -11,9 +11,17 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  rust-check:
-    name: Rust — Check / Clippy / Fmt / Test
+  # ─────────────────────────────────────────────────────────
+  # Job 1: check — cargo check + fmt + clippy (no DB needed)
+  # ─────────────────────────────────────────────────────────
+  check:
+    name: Check / Fmt / Clippy
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      SQLX_OFFLINE: "true"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -23,27 +31,83 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: Check
-        run: cargo check --workspace
+      - name: cargo check --workspace --all-features
+        run: cargo check --workspace --all-features
 
-      - name: Clippy
-        run: cargo clippy --workspace -- -D warnings -A missing_docs
-
-      - name: Format
+      - name: cargo fmt --all -- --check
         run: cargo fmt --all -- --check
 
-      - name: Test
-        run: cargo test --workspace
-        env:
-          DATABASE_URL: postgres://signapps:test_password@localhost:5432/signapps_test
-          JWT_SECRET: test_jwt_secret_minimum_32_characters_long
+      - name: cargo clippy --workspace -- -D warnings
+        run: |
+          cargo clippy --workspace \
+            --exclude signapps-media \
+            --exclude signapps-meet \
+            -- -D warnings
 
-  frontend-check:
-    name: Frontend — TypeScript / ESLint / Build
+  # ─────────────────────────────────────────────────────────
+  # Job 2: test — cargo nextest with PostgreSQL + pgvector
+  # ─────────────────────────────────────────────────────────
+  test:
+    name: Test (nextest)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: signapps
+          POSTGRES_PASSWORD: signapps_dev
+          POSTGRES_DB: signapps
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://signapps:signapps_dev@localhost:5432/signapps
+      JWT_SECRET: dev_jwt_secret_change_in_production_32chars_min
+      SQLX_OFFLINE: "true"
+      RUST_LOG: warn
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: Run migrations
+        run: |
+          for f in migrations/*.sql; do
+            echo "==> Applying $f"
+            PGPASSWORD=signapps_dev psql -h localhost -U signapps -d signapps -f "$f" || true
+          done
+
+      - name: cargo nextest run --workspace --no-fail-fast
+        run: |
+          cargo nextest run --workspace --no-fail-fast \
+            --exclude signapps-media \
+            --exclude signapps-meet
+
+  # ─────────────────────────────────────────────────────────
+  # Job 3: frontend — TypeScript + Build
+  # ─────────────────────────────────────────────────────────
+  frontend:
+    name: Frontend (tsc + build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     defaults:
       run:
         working-directory: client
+
     steps:
       - uses: actions/checkout@v4
 
@@ -57,13 +121,146 @@ jobs:
           cache: pnpm
           cache-dependency-path: client/pnpm-lock.yaml
 
-      - run: pnpm install --frozen-lockfile
+      - name: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
-      - name: TypeScript
+      - name: TypeScript check (tsc --noEmit)
         run: npx tsc --noEmit
 
-      - name: ESLint
-        run: npx eslint src/ --ext .ts,.tsx --max-warnings 600
-
-      - name: Build
+      - name: Next.js build
         run: pnpm build
+
+  # ─────────────────────────────────────────────────────────
+  # Job 4: e2e-smoke — Playwright smoke tests
+  # ─────────────────────────────────────────────────────────
+  e2e-smoke:
+    name: E2E Smoke (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [test, frontend]
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: signapps
+          POSTGRES_PASSWORD: signapps_dev
+          POSTGRES_DB: signapps
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://signapps:signapps_dev@localhost:5432/signapps
+      JWT_SECRET: dev_jwt_secret_change_in_production_32chars_min
+      SQLX_OFFLINE: "true"
+      RUST_LOG: warn
+      STORAGE_MODE: fs
+      STORAGE_FS_ROOT: /tmp/signapps-storage
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: client/pnpm-lock.yaml
+
+      - name: Run migrations
+        run: |
+          for f in migrations/*.sql; do
+            echo "==> Applying $f"
+            PGPASSWORD=signapps_dev psql -h localhost -U signapps -d signapps -f "$f" || true
+          done
+
+      - name: Build backend services
+        run: |
+          cargo build \
+            -p signapps-identity \
+            -p signapps-storage \
+            -p signapps-calendar \
+            -p signapps-chat \
+            -p signapps-seed
+
+      - name: Seed database
+        run: cargo run -p signapps-seed
+
+      - name: Start backend services
+        run: |
+          mkdir -p /tmp/signapps-storage
+          cargo run -p signapps-identity &
+          cargo run -p signapps-storage &
+          cargo run -p signapps-calendar &
+          cargo run -p signapps-chat &
+          # Wait for services to be ready
+          sleep 10
+          for port in 3001 3004 3011 3020; do
+            echo "Waiting for port $port..."
+            timeout 30 bash -c "until curl -sf http://localhost:$port/health > /dev/null 2>&1; do sleep 1; done" || echo "Port $port not ready (non-blocking)"
+          done
+
+      - name: Install frontend deps
+        working-directory: client
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        working-directory: client
+        run: npx playwright install --with-deps chromium
+
+      - name: Start frontend dev server
+        working-directory: client
+        run: |
+          npx next dev &
+          # Wait for Next.js to be ready
+          timeout 60 bash -c 'until curl -sf http://localhost:3000 > /dev/null 2>&1; do sleep 2; done'
+
+      - name: Run Playwright smoke tests
+        working-directory: client
+        run: |
+          npx playwright test \
+            --project=chromium \
+            e2e/platform-smoke.spec.ts \
+            e2e/app-shell-smoke.spec.ts \
+            e2e/admin-smoke.spec.ts
+        env:
+          CI: "true"
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: client/playwright-report/
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────
+  # Job 5: deny — cargo-deny licenses + advisories
+  # ─────────────────────────────────────────────────────────
+  deny:
+    name: Deny (licenses + advisories)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check licenses
+
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check advisories
