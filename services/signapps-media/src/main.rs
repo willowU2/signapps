@@ -247,6 +247,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             post(handlers::stt::transcribe_stream),
         )
         .route("/api/v1/stt/models", get(handlers::stt::list_models))
+        .route(
+            "/api/v1/stt/transcription-result",
+            post(handlers::transcription_result::ingest_transcription_result),
+        )
         // Voice pipeline (WebSocket)
         .route("/api/v1/voice", get(handlers::voice::voice_ws))
         // Jobs/Status

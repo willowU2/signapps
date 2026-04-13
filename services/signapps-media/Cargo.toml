@@ -25,6 +25,9 @@ sqlx = { version = "0.7", features = ["postgres", "runtime-tokio", "uuid", "chro
 # Auth & common
 signapps-common = { path = "../../crates/signapps-common" }
 
+# Transcription types (shared with Tauri CapturePipeline)
+signapps-transcription = { path = "../../crates/signapps-transcription" }
+
 # Runtime (hardware detection, model management)
 signapps-runtime = { path = "../../crates/signapps-runtime" }
 
