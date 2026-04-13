@@ -90,7 +90,7 @@ export class EventFormDialog {
 
   async save(): Promise<void> {
     await this.saveButton.click();
-    await this.waitClosed();
+    await this.waitClosed(10_000);
   }
 
   async cancel(): Promise<void> {

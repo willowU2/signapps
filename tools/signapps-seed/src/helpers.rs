@@ -22,22 +22,34 @@ pub async fn ensure_calendar(
     owner_id: Uuid,
     name: &str,
 ) -> Result<Uuid, Box<dyn std::error::Error>> {
+    // Resolve the tenant_id from the owner's user row so that the calendar
+    // inherits the correct multi-tenant scope. This is required because the
+    // calendar API's `find_by_id` filters by `tenant_id` (migration 031).
+    let tenant_id: Option<Uuid> = sqlx::query_scalar(
+        "SELECT tenant_id FROM identity.users WHERE id = $1",
+    )
+    .bind(owner_id)
+    .fetch_optional(pool)
+    .await?
+    .flatten();
+
     let id = Uuid::new_v4();
     sqlx::query(
         r#"
         INSERT INTO calendar.calendars
-            (id, owner_id, name, timezone, created_at, updated_at)
-        VALUES ($1, $2, $3, 'Europe/Paris', NOW(), NOW())
+            (id, owner_id, name, timezone, tenant_id, created_at, updated_at)
+        VALUES ($1, $2, $3, 'Europe/Paris', $4, NOW(), NOW())
         ON CONFLICT DO NOTHING
         "#,
     )
     .bind(id)
     .bind(owner_id)
     .bind(name)
+    .bind(tenant_id)
     .execute(pool)
     .await?;
 
-    info!(calendar_id = %id, owner_id = %owner_id, name, "calendar ensured");
+    info!(calendar_id = %id, owner_id = %owner_id, ?tenant_id, name, "calendar ensured");
     Ok(id)
 }
 
