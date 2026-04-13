@@ -1,7 +1,10 @@
 //! SignApps Tauri Library
 //!
 //! This module provides Tauri commands and integration for the SignApps desktop application.
-//! Demonstrates full integration with SeaORM for database operations.
+//! Includes audio capture and local transcription via the media service.
+
+pub mod capture;
+pub mod transcribe;
 
 use serde::{Deserialize, Serialize};
 use tauri::{Manager, State};
@@ -100,6 +103,7 @@ pub fn run() {
         .manage(AppState {
             // DB state removed
         })
+        .manage(capture::CaptureState::new())
         .setup(|app| {
             #[cfg(debug_assertions)]
             {
@@ -117,7 +121,11 @@ pub fn run() {
             list_accounts,
             get_account_by_username,
             delete_account,
-            verify_db_connection
+            verify_db_connection,
+            capture::list_audio_sources,
+            capture::start_capture,
+            capture::stop_capture,
+            transcribe::transcribe_captured_audio,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
