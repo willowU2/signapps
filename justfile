@@ -243,6 +243,15 @@ clean:
 rotate-logs:
     bash scripts/rotate-logs.sh
 
+# Verify middleware order across all services
+check-middleware:
+    bash scripts/check-middleware-order.sh
+
+# Full quality gate (pre-push check)
+quality: check-middleware lint test
+    cd client && npx tsc --noEmit
+    @echo "Quality gate passed."
+
 # Mise à jour des outils Cargo
 update-tools:
     cargo binstall -y cargo-nextest bacon cargo-mutants git-cliff just cargo-deny cargo-audit

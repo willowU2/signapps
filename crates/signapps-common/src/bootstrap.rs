@@ -183,6 +183,13 @@ pub fn validate_env(service_name: &str) {
         }
     }
 
+    // Warn about required env vars from .env.required
+    for var in ["DATABASE_URL", "JWT_SECRET"] {
+        if std::env::var(var).is_err() {
+            tracing::warn!("Required env var {var} is not set — check .env file");
+        }
+    }
+
     tracing::info!("[{}] Environment validated", service_name);
 }
 
