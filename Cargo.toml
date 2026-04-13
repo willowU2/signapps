@@ -61,6 +61,7 @@ members = [
     "crates/signapps-sieve",
     "crates/signapps-smtp",
     "crates/signapps-spam",
+    "crates/signapps-transcription",
     # Tauri desktop app
     "src-tauri",
     # Backend services
