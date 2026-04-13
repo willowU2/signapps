@@ -10,6 +10,7 @@ import { AiChatBar } from "./ai-chat-bar";
 import { SkipLink } from "@/components/accessibility/skip-link";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { PageTransition } from "@/components/layout/page-transition";
 import { cn } from "@/lib/utils";
 
 export type PortalMode = "client" | "supplier" | null;
@@ -59,11 +60,10 @@ export function AppLayout({ children, portalMode }: AppLayoutProps) {
             "flex-1 min-w-0 overflow-y-auto rounded-tl-2xl border-l border-t border-border bg-card p-4 md:p-6 pb-28 transition-all duration-200 smooth-scroll",
           )}
         >
-          {/* key on pathname forces page-enter to re-trigger on every page navigation */}
           <ErrorBoundary>
-            <div key={pathname} className="w-full page-enter">
-              {children}
-            </div>
+            <PageTransition>
+              <div className="w-full">{children}</div>
+            </PageTransition>
           </ErrorBoundary>
         </main>
 
