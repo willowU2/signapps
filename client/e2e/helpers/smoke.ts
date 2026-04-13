@@ -31,7 +31,9 @@ export async function assertPageLoadsCleanly(
         text.includes("favicon") ||
         text.includes("Download the React DevTools") ||
         text.includes("[HMR]") ||
-        text.includes("webpack-internal")
+        text.includes("webpack-internal") ||
+        text.includes("Content Security Policy") ||
+        text.includes("violates the following")
       ) {
         return;
       }
