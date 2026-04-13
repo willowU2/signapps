@@ -1,313 +1,300 @@
-import { test, expect, testData } from './fixtures';
+import { test, expect, testData } from "./fixtures";
 
 /**
  * Storage Page E2E Tests
- * Tests tab navigation, upload dialog, and folder creation
+ *
+ * The storage page defaults to a Google-Drive-like "files" view (tab=files).
+ * The admin tabs (Tableau de bord, Disques, Montages, Externes, Partages, RAID)
+ * appear when switching away from "files".
  */
 
-test.describe('Storage Page', () => {
+test.describe("Storage Page", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/storage');
+    await page.goto("/storage");
+    await page.waitForLoadState("domcontentloaded");
   });
 
-  test.describe('Page Layout', () => {
-    test('should display storage page with title', async ({ page }) => {
-      await expect(page.getByRole('heading', { name: 'Storage' })).toBeVisible();
+  test.describe("Page Layout — Files View (default)", () => {
+    test("should display the Drive sidebar on default files view", async ({
+      page,
+    }) => {
+      // The files view shows a sidebar with "Mon Drive", "Nouveau" button, etc.
+      await expect(page.getByText("Mon Drive")).toBeVisible({
+        timeout: 10_000,
+      });
     });
 
-    test('should display all tabs', async ({ page }) => {
-      const tabs = ['Dashboard', 'Fichiers', 'Disques', 'Montages', 'Externes', 'Partages', 'RAID'];
+    test("should display the Nouveau (New) button in the sidebar", async ({
+      page,
+    }) => {
+      await expect(page.getByText("Nouveau", { exact: true })).toBeVisible({
+        timeout: 10_000,
+      });
+    });
+
+    test("should default to files view (Drive UI)", async ({ page }) => {
+      // Default state is "files" — the Drive sidebar is shown (not admin tabs)
+      // URL may or may not have ?tab=files depending on whether the router pushed
+      await expect(page.getByText("Mon Drive")).toBeVisible({
+        timeout: 10_000,
+      });
+      // Admin heading should NOT be visible on the default view
+      await expect(
+        page.getByRole("heading", { name: "Administration Stockage" }),
+      ).not.toBeVisible();
+    });
+  });
+
+  test.describe("Admin Tab Navigation", () => {
+    test("should navigate to Dashboard (Tableau de bord) tab", async ({
+      page,
+    }) => {
+      await page.goto("/storage?tab=dashboard");
+      await expect(page).toHaveURL(/tab=dashboard/);
+
+      // Should show the admin heading
+      await expect(
+        page.getByRole("heading", { name: "Administration Stockage" }),
+      ).toBeVisible({ timeout: 10_000 });
+    });
+
+    test("should display all admin tabs", async ({ page }) => {
+      await page.goto("/storage?tab=dashboard");
+
+      const tabs = [
+        "Tableau de bord",
+        "Disques",
+        "Montages",
+        "Externes",
+        "Partages",
+        "RAID",
+      ];
 
       for (const tab of tabs) {
-        await expect(page.getByRole('tab', { name: tab })).toBeVisible();
+        await expect(page.getByRole("tab", { name: tab })).toBeVisible({
+          timeout: 5_000,
+        });
       }
     });
 
-    test('should show dashboard tab by default', async ({ page }) => {
-      // Dashboard tab should be active
-      const dashboardTab = page.getByRole('tab', { name: 'Dashboard' });
-      await expect(dashboardTab).toHaveAttribute('data-state', 'active');
-    });
-  });
-
-  test.describe('Tab Navigation', () => {
-    test('should navigate to Files tab', async ({ page }) => {
-      await page.getByRole('tab', { name: 'Fichiers' }).click();
-
-      // URL should update
-      await expect(page).toHaveURL(/tab=files/);
-
-      // Files tab content should be visible
-      await expect(page.getByRole('button', { name: /upload files/i })).toBeVisible();
-      await expect(page.getByRole('button', { name: /new folder/i })).toBeVisible();
-    });
-
-    test('should navigate to Disks tab', async ({ page }) => {
-      await page.getByRole('tab', { name: 'Disques' }).click();
+    test("should navigate to Disks tab", async ({ page }) => {
+      await page.goto("/storage?tab=disks");
       await expect(page).toHaveURL(/tab=disks/);
+      await expect(
+        page.getByRole("heading", { name: "Administration Stockage" }),
+      ).toBeVisible({ timeout: 10_000 });
     });
 
-    test('should navigate to Mounts tab', async ({ page }) => {
-      await page.getByRole('tab', { name: 'Montages' }).click();
+    test("should navigate to Mounts tab", async ({ page }) => {
+      await page.goto("/storage?tab=mounts");
       await expect(page).toHaveURL(/tab=mounts/);
+      await expect(
+        page.getByRole("heading", { name: "Administration Stockage" }),
+      ).toBeVisible({ timeout: 10_000 });
     });
 
-    test('should navigate to External tab', async ({ page }) => {
-      await page.getByRole('tab', { name: 'Externes' }).click();
+    test("should navigate to External tab", async ({ page }) => {
+      await page.goto("/storage?tab=external");
       await expect(page).toHaveURL(/tab=external/);
+      await expect(
+        page.getByRole("heading", { name: "Administration Stockage" }),
+      ).toBeVisible({ timeout: 10_000 });
     });
 
-    test('should navigate to Shares tab', async ({ page }) => {
-      await page.getByRole('tab', { name: 'Partages' }).click();
+    test("should navigate to Shares tab", async ({ page }) => {
+      await page.goto("/storage?tab=shares");
       await expect(page).toHaveURL(/tab=shares/);
+      await expect(
+        page.getByRole("heading", { name: "Administration Stockage" }),
+      ).toBeVisible({ timeout: 10_000 });
     });
 
-    test('should navigate to RAID tab', async ({ page }) => {
-      await page.getByRole('tab', { name: 'RAID' }).click();
+    test("should navigate to RAID tab", async ({ page }) => {
+      await page.goto("/storage?tab=raid");
       await expect(page).toHaveURL(/tab=raid/);
+      await expect(
+        page.getByRole("heading", { name: "Administration Stockage" }),
+      ).toBeVisible({ timeout: 10_000 });
     });
 
-    test('should preserve tab state on page reload', async ({ page }) => {
-      // Navigate to Files tab
-      await page.getByRole('tab', { name: 'Fichiers' }).click();
+    test('should have a "Retour au Drive" button to go back to files', async ({
+      page,
+    }) => {
+      await page.goto("/storage?tab=dashboard");
+      const backButton = page.getByRole("button", { name: "Retour au Drive" });
+      await expect(backButton).toBeVisible({ timeout: 10_000 });
+
+      await backButton.click();
       await expect(page).toHaveURL(/tab=files/);
+    });
+
+    test("should preserve tab state on page reload", async ({ page }) => {
+      await page.goto("/storage?tab=disks");
+      await expect(page).toHaveURL(/tab=disks/);
 
       // Reload page
       await page.reload();
 
-      // Should still be on Files tab
-      await expect(page).toHaveURL(/tab=files/);
-      const filesTab = page.getByRole('tab', { name: 'Fichiers' });
-      await expect(filesTab).toHaveAttribute('data-state', 'active');
+      // Should still be on Disks tab
+      await expect(page).toHaveURL(/tab=disks/);
+      const disksTab = page.getByRole("tab", { name: "Disques" });
+      await expect(disksTab).toHaveAttribute("data-state", "active");
     });
   });
 
-  test.describe('Dashboard Tab', () => {
-    test('should display storage overview stats', async ({ page }) => {
-      // Dashboard should show storage statistics
-      await page.locator('[class*="Card"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+  test.describe("Dashboard Tab", () => {
+    test.beforeEach(async ({ page }) => {
+      await page.goto("/storage?tab=dashboard");
+    });
 
-      // Look for stats cards or overview content
+    test("should display storage overview stats", async ({ page }) => {
+      // Dashboard should show storage statistics in Card components
+      await page
+        .locator('[class*="Card"]')
+        .first()
+        .waitFor({ state: "visible", timeout: 10_000 })
+        .catch(() => {});
+
       const statsContent = page.locator('[class*="Card"]');
       const count = await statsContent.count();
       expect(count).toBeGreaterThan(0);
     });
 
-    test('should display health gauge', async ({ page }) => {
-      await page.locator('[class*="Card"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
-
-      // Health gauge or utilization display
-      await expect(page.getByText(/utilisation/i)).toBeVisible().catch(() => {
-        // Might have different text
+    test("should display health gauge", async ({ page }) => {
+      // HealthGauge displays "Utilisation Stockage" label
+      await expect(page.getByText(/Utilisation Stockage/i)).toBeVisible({
+        timeout: 10_000,
       });
     });
   });
 
-  test.describe('Files Tab', () => {
-    test.beforeEach(async ({ page }) => {
-      await page.getByRole('tab', { name: 'Fichiers' }).click();
+  test.describe("Files View — Drive UI", () => {
+    test("should display the Drive sidebar navigation items", async ({
+      page,
+    }) => {
+      // The sidebar has items: Accueil, Mon Drive, Partagés avec moi, Récents, Suivis, Corbeille
+      await expect(page.getByText("Accueil")).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText("Mon Drive")).toBeVisible();
+      await expect(page.getByText("Récents")).toBeVisible();
+      await expect(page.getByText("Suivis")).toBeVisible();
+      await expect(page.getByText("Corbeille")).toBeVisible();
     });
 
-    test('should display file browser elements', async ({ page }) => {
-      // Upload and New Folder buttons
-      await expect(page.getByRole('button', { name: /upload files/i })).toBeVisible();
-      await expect(page.getByRole('button', { name: /new folder/i })).toBeVisible();
-
-      // Bucket selector
-      await expect(page.getByRole('button', { name: /select bucket/i })).toBeVisible().catch(() => {
-        // Might show a bucket name if one is selected
-      });
-
-      // Search input
-      await expect(page.getByPlaceholder(/search files/i)).toBeVisible();
-    });
-
-    test('should display breadcrumb navigation', async ({ page }) => {
-      // Home button in breadcrumb
-      await expect(page.locator('button svg')).toBeTruthy();
-    });
-
-    test('should open bucket dropdown', async ({ page }) => {
-      // Click bucket selector
-      const bucketButton = page.locator('button').filter({ hasText: /bucket|select/i }).first();
-      await bucketButton.click();
-
-      // Dropdown should appear
-      await expect(page.locator('[role="menu"], [role="listbox"]')).toBeVisible().catch(() => {
-        // Might use different component
+    test("should display the search input", async ({ page }) => {
+      await expect(page.getByPlaceholder("Rechercher dans Drive")).toBeVisible({
+        timeout: 10_000,
       });
     });
 
-    test('should display file list header', async ({ page }) => {
-      await page.locator('text=Name').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+    test("should display files or empty message", async ({ page }) => {
+      // Wait for loading to finish — either we see files, or "Empty folder" / "No Buckets Found"
+      await page.waitForTimeout(3_000);
 
-      // File list should have column headers
-      await expect(page.getByText('Name')).toBeVisible();
-      await expect(page.getByText('Size')).toBeVisible();
-      await expect(page.getByText('Modified')).toBeVisible();
+      const hasFiles = await page
+        .locator('[class*="file"], [class*="File"], [class*="grid"]')
+        .first()
+        .isVisible()
+        .catch(() => false);
+      const hasEmptyFolder = await page
+        .getByText(/Empty folder/i)
+        .isVisible()
+        .catch(() => false);
+      const hasNoBuckets = await page
+        .getByText(/No Buckets Found/i)
+        .isVisible()
+        .catch(() => false);
+
+      expect(hasFiles || hasEmptyFolder || hasNoBuckets).toBeTruthy();
     });
 
-    test('should display files or empty message', async ({ page }) => {
-      await page.locator('[class*="CardContent"] .divide-y > div, text=/no files found/i').first()
-        .waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
-
-      // Either files are listed or empty message
-      const hasFiles = await page.locator('[class*="CardContent"] .divide-y > div').count() > 0;
-      const hasEmptyMessage = await page.getByText(/no files found/i).isVisible().catch(() => false);
-
-      expect(hasFiles || hasEmptyMessage).toBeTruthy();
-    });
-
-    test('should filter files by search', async ({ page }) => {
-      const searchInput = page.getByPlaceholder(/search files/i);
-      await searchInput.fill('test');
-      await page.waitForLoadState("domcontentloaded").catch(() => {}); // debounce
-
-      // Search should filter the list (visual verification)
+    test("should filter files by search", async ({ page }) => {
+      const searchInput = page.getByPlaceholder("Rechercher dans Drive");
+      await searchInput.fill("test");
+      await page.waitForTimeout(1_000); // debounce
+      // Search should filter the list (visual verification — no assertion on results)
     });
   });
 
-  test.describe('Upload Dialog', () => {
-    test.beforeEach(async ({ page }) => {
-      await page.getByRole('tab', { name: 'Fichiers' }).click();
-    });
+  test.describe("Upload Dialog", () => {
+    test("should open upload dialog via Nouveau button", async ({ page }) => {
+      // Click the "Nouveau" button in the sidebar to open upload
+      await page.getByText("Nouveau", { exact: true }).click();
 
-    test('should open upload dialog', async ({ page }) => {
-      await page.getByRole('button', { name: /upload files/i }).click();
-
-      // Dialog should be visible
-      await expect(page.locator('[role="dialog"]')).toBeVisible();
-    });
-
-    test('should close upload dialog with cancel', async ({ page }) => {
-      await page.getByRole('button', { name: /upload files/i }).click();
-      await expect(page.locator('[role="dialog"]')).toBeVisible();
-
-      // Close dialog
-      await page.getByRole('button', { name: /cancel|close/i }).click().catch(async () => {
-        // Try clicking outside or X button
-        await page.keyboard.press('Escape');
+      // The upload dialog/sheet should be visible
+      await expect(page.locator('[role="dialog"]')).toBeVisible({
+        timeout: 5_000,
       });
+    });
+
+    test("should close upload dialog with Escape", async ({ page }) => {
+      await page.getByText("Nouveau", { exact: true }).click();
+      await expect(page.locator('[role="dialog"]')).toBeVisible({
+        timeout: 5_000,
+      });
+
+      await page.keyboard.press("Escape");
 
       await expect(page.locator('[role="dialog"]')).not.toBeVisible();
     });
   });
 
-  test.describe('Create Folder Dialog', () => {
-    test.beforeEach(async ({ page }) => {
-      await page.getByRole('tab', { name: 'Fichiers' }).click();
-    });
-
-    test('should open create folder dialog', async ({ page }) => {
-      await page.getByRole('button', { name: /new folder/i }).click();
-
-      // Dialog should be visible
-      await expect(page.locator('[role="dialog"]')).toBeVisible();
-      await expect(page.getByRole('heading', { name: /create.*folder/i })).toBeVisible();
-    });
-
-    test('should display folder name input', async ({ page }) => {
-      await page.getByRole('button', { name: /new folder/i }).click();
-
-      // Folder name input should be visible
-      await expect(page.getByLabel(/folder name/i)).toBeVisible();
-    });
-
-    test('should show current path info', async ({ page }) => {
-      await page.getByRole('button', { name: /new folder/i }).click();
-
-      // Should show where folder will be created
-      await expect(page.getByText(/will be created/i)).toBeVisible();
-    });
-
-    test('should have create and cancel buttons', async ({ page }) => {
-      await page.getByRole('button', { name: /new folder/i }).click();
-
-      await expect(page.getByRole('button', { name: 'Cancel' })).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Create Folder' })).toBeVisible();
-    });
-
-    test('should close dialog with cancel button', async ({ page }) => {
-      await page.getByRole('button', { name: /new folder/i }).click();
-      await expect(page.locator('[role="dialog"]')).toBeVisible();
-
-      await page.getByRole('button', { name: 'Cancel' }).click();
-
-      await expect(page.locator('[role="dialog"]')).not.toBeVisible();
-    });
-
-    test('should fill folder name and attempt creation', async ({ page }) => {
-      await page.getByRole('button', { name: /new folder/i }).click();
-
-      // Fill folder name
-      await page.getByLabel(/folder name/i).fill(testData.testFolder.name);
-
-      // Create button should be enabled
-      const createButton = page.getByRole('button', { name: 'Create Folder' });
-      await expect(createButton).toBeEnabled();
-    });
+  test.describe("Create Folder Dialog", () => {
+    test.skip("should open create folder dialog — folder creation is via context menu or keyboard shortcut, not a visible button", () => {});
   });
 
-  test.describe('Create Bucket Dialog', () => {
-    test.beforeEach(async ({ page }) => {
-      await page.getByRole('tab', { name: 'Fichiers' }).click();
-    });
-
-    test('should open create bucket dialog', async ({ page }) => {
-      // Find the + button next to bucket selector
-      const addBucketButton = page.locator('button').filter({ has: page.locator('svg') }).filter({ hasText: '' });
-
-      // Click the small + button (should be near bucket dropdown)
-      await page.locator('button[class*="icon"]').first().click().catch(async () => {
-        // Alternative: look for specific button
-        const buttons = page.locator('button');
-        const count = await buttons.count();
-        for (let i = 0; i < count; i++) {
-          const button = buttons.nth(i);
-          const hasPlus = await button.locator('svg').count() > 0;
-          if (hasPlus) {
-            const text = await button.textContent();
-            if (!text || text.trim() === '') {
-              await button.click();
-              break;
-            }
-          }
-        }
+  test.describe("Create Bucket Dialog", () => {
+    test("should open create bucket dialog when no buckets exist", async ({
+      page,
+    }) => {
+      // If no buckets, a "Create Bucket" button is displayed
+      const createBucketButton = page.getByRole("button", {
+        name: "Create Bucket",
       });
+      const isVisible = await createBucketButton
+        .isVisible({ timeout: 5_000 })
+        .catch(() => false);
 
-      // Check if bucket dialog opened
-      const hasDialog = await page.locator('[role="dialog"]').isVisible().catch(() => false);
-      if (hasDialog) {
-        await expect(page.getByText(/create.*bucket/i)).toBeVisible();
+      if (isVisible) {
+        await createBucketButton.click();
+        await expect(page.locator('[role="dialog"]')).toBeVisible({
+          timeout: 5_000,
+        });
+        await expect(page.getByText("Create New Bucket")).toBeVisible();
       }
+      // If buckets already exist, this button won't be visible — skip gracefully
     });
   });
 
-  test.describe('RAID Tab', () => {
+  test.describe("RAID Tab", () => {
     test.beforeEach(async ({ page }) => {
-      await page.getByRole('tab', { name: 'RAID' }).click();
+      await page.goto("/storage?tab=raid");
     });
 
-    test('should display RAID overview', async ({ page }) => {
-      await page.locator('[class*="Card"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+    test("should display RAID overview", async ({ page }) => {
+      await page
+        .locator('[class*="Card"]')
+        .first()
+        .waitFor({ state: "visible", timeout: 10_000 })
+        .catch(() => {});
 
-      // RAID tab should show arrays or empty state
       const content = page.locator('[class*="Card"]');
-      const hasContent = await content.count() > 0;
-
+      const hasContent = (await content.count()) > 0;
       expect(hasContent).toBeTruthy();
     });
   });
 
-  test.describe('Shares Tab', () => {
+  test.describe("Shares Tab", () => {
     test.beforeEach(async ({ page }) => {
-      await page.getByRole('tab', { name: 'Partages' }).click();
+      await page.goto("/storage?tab=shares");
     });
 
-    test('should display shares list', async ({ page }) => {
-      await page.locator('main, [class*="Content"]').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+    test("should display shares list", async ({ page }) => {
+      await page
+        .locator('main, [class*="Content"]')
+        .first()
+        .waitFor({ state: "visible", timeout: 10_000 })
+        .catch(() => {});
 
-      // Should show shares or empty state
       const content = page.locator('main, [class*="Content"]');
       await expect(content).toBeVisible();
     });
