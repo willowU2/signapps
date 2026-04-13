@@ -36,7 +36,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useChatNotifications } from "@/hooks/use-chat-notifications";
 import { chatApi, ChatAttachment as Attachment } from "@/lib/api/chat";
 import { FEATURES } from "@/lib/features";
-import { notify } from "@/lib/notify";
+import { notify as sendNotification } from "@/lib/notify";
 import {
   Tooltip,
   TooltipContent,
@@ -193,7 +193,7 @@ export function ChatWindow({
     }
     sendMessage(content, undefined, attachment);
     if (content.includes("@")) {
-      notify({
+      sendNotification({
         title: "Mention dans le chat",
         body: content.slice(0, 100),
         module: "chat",
