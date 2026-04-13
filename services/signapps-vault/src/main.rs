@@ -101,11 +101,11 @@ fn create_router(state: AppState) -> Router {
         // Browse sessions (2)
         .route("/api/v1/vault/browse/start", post(handlers::vault::start_browse))
         .route("/api/v1/vault/browse/:token", delete(handlers::vault::end_browse))
+        .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ))
-        .route_layer(middleware::from_fn(tenant_context_middleware));
+        ));
 
     public_routes
         .merge(vault_routes)

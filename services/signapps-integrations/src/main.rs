@@ -79,11 +79,11 @@ fn create_router(state: AppState) -> Router {
             post(handlers::slack::save_slack_config).get(handlers::slack::get_slack_config),
         )
         .route_layer(middleware::from_fn(require_admin))
+        .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ))
-        .route_layer(middleware::from_fn(tenant_context_middleware));
+        ));
 
     public_routes
         .merge(slack_public_routes)

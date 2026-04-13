@@ -199,11 +199,11 @@ async fn main() -> anyhow::Result<()> {
         // Old URL: ws://localhost:3013/api/v1/collab/ws/:doc_id
         // New URL: ws://localhost:3010/api/v1/collab/ws/:doc_id
         .route("/api/v1/collab/ws/:doc_id", get(handlers::collab::collab_websocket_handler))
+        .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             app_state.clone(),
             auth_middleware::<AppState>,
-        ))
-        .route_layer(middleware::from_fn(tenant_context_middleware));
+        ));
 
     // Sharing sub-router: State<SharingEngine> — uses the same engine as AppState.
     let sharing_sub = sharing_routes("documents", ResourceType::Document)

@@ -94,11 +94,11 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         )
         // WebSocket
         .route("/api/v1/ws", get(handlers::websocket::ws_upgrade))
+        .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ))
-        .route_layer(middleware::from_fn(tenant_context_middleware));
+        ));
 
     // Sharing sub-router: State<SharingEngine> — separate from AppState.
     let sharing_sub = sharing_routes("chat", ResourceType::Channel)

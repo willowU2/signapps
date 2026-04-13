@@ -96,11 +96,11 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/users/me/export", post(handlers::data_export::request_export))
         .route("/api/v1/users/me/export/status", get(handlers::data_export::export_status))
         .route("/api/v1/users/me/export/download", get(handlers::data_export::download_export))
+        .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ))
-        .route_layer(middleware::from_fn(tenant_context_middleware));
+        ));
 
     public_routes
         .merge(protected_routes)

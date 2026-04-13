@@ -788,11 +788,11 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
             "/api/v1/contacts/:id",
             get(get_contact).put(update_contact).delete(delete_contact),
         )
+        .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ))
-        .route_layer(middleware::from_fn(tenant_context_middleware));
+        ));
 
     // Sharing sub-router: State<SharingEngine> — separate from AppState.
     let sharing_sub = sharing_routes("contacts", ResourceType::ContactBook)
@@ -828,11 +828,11 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
             "/api/v1/persons/:id/effective-permissions",
             get(handlers::persons::get_effective_permissions),
         )
+        .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ))
-        .route_layer(middleware::from_fn(tenant_context_middleware));
+        ));
 
     // CRM routes (protected)
     let crm_routes = Router::new()
@@ -857,11 +857,11 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
                 .delete(handlers::crm::delete_lead),
         )
         .route("/api/v1/crm/pipeline", get(handlers::crm::get_pipeline))
+        .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ))
-        .route_layer(middleware::from_fn(tenant_context_middleware));
+        ));
 
     public_routes
         .merge(protected_routes)

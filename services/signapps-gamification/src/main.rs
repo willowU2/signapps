@@ -542,11 +542,11 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/gamification/badges", get(get_my_badges))
         .route("/api/v1/gamification/streak", get(get_streak))
         .route("/api/v1/gamification/leaderboard", get(get_leaderboard))
+        .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ))
-        .route_layer(middleware::from_fn(tenant_context_middleware));
+        ));
 
     public_routes
         .merge(protected_routes)

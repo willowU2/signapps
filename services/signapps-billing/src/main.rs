@@ -215,11 +215,11 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/accounting/seed",
             post(handlers::accounting::seed_default_coa),
         )
+        .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
-        ))
-        .route_layer(middleware::from_fn(tenant_context_middleware));
+        ));
 
     public_routes
         .merge(protected_routes)
