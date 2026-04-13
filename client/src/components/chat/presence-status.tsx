@@ -1,10 +1,10 @@
-/* eslint-disable @next/next/no-img-element */
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { User } from 'lucide-react';
+import { useState } from "react";
+import NextImage from "next/image";
+import { User } from "lucide-react";
 
-type StatusType = 'online' | 'away' | 'busy' | 'offline';
+type StatusType = "online" | "away" | "busy" | "offline";
 
 interface PresenceStatusProps {
   userName?: string;
@@ -14,8 +14,8 @@ interface PresenceStatusProps {
 }
 
 export function PresenceStatus({
-  userName = 'User',
-  status = 'online',
+  userName = "User",
+  status = "online",
   avatarUrl,
   avatarInitials,
 }: PresenceStatusProps) {
@@ -23,31 +23,37 @@ export function PresenceStatus({
 
   const getStatusColor = (status: StatusType) => {
     switch (status) {
-      case 'online':
-        return 'bg-green-500';
-      case 'away':
-        return 'bg-yellow-500';
-      case 'busy':
-        return 'bg-red-500';
-      case 'offline':
-        return 'bg-gray-400';
+      case "online":
+        return "bg-green-500";
+      case "away":
+        return "bg-yellow-500";
+      case "busy":
+        return "bg-red-500";
+      case "offline":
+        return "bg-gray-400";
     }
   };
 
   const getStatusLabel = (status: StatusType) => {
     switch (status) {
-      case 'online':
-        return 'Online';
-      case 'away':
-        return 'Away';
-      case 'busy':
-        return 'Busy';
-      case 'offline':
-        return 'Offline';
+      case "online":
+        return "Online";
+      case "away":
+        return "Away";
+      case "busy":
+        return "Busy";
+      case "offline":
+        return "Offline";
     }
   };
 
-  const initials = avatarInitials || userName.split(' ').map((n) => n[0]).join('').substring(0, 2);
+  const initials =
+    avatarInitials ||
+    userName
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2);
 
   return (
     <div
@@ -57,10 +63,12 @@ export function PresenceStatus({
     >
       <div className="relative h-10 w-10 flex-shrink-0">
         {avatarUrl ? (
-          <img
+          <NextImage
             src={avatarUrl}
             alt={userName}
-            className="h-full w-full rounded-full object-cover border border-slate-200"
+            width={40}
+            height={40}
+            className="rounded-full object-cover border border-slate-200"
           />
         ) : (
           <div className="h-full w-full rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center border border-slate-200">

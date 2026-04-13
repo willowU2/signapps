@@ -1,4 +1,4 @@
-import {
+import React, {
   ComponentProps,
   useRef,
   useState,
@@ -129,7 +129,7 @@ interface MailRowProps {
   allItems?: Mail[];
 }
 
-function MailRow({
+const MailRow = React.memo(function MailRow({
   item,
   selectedId,
   onSelect,
@@ -540,7 +540,7 @@ function MailRow({
       </ContextMenu>
     </>
   );
-}
+});
 
 // ─── MailList ────────────────────────────────────────────────────────────────
 

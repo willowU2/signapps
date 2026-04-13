@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,7 +60,10 @@ export function BrandingConfig() {
   return (
     <div className="grid grid-cols-2 gap-8">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 col-span-1">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-4 col-span-1"
+        >
           <FormItem>
             <FormLabel>Logo</FormLabel>
             <div className="border-2 border-dashed rounded-lg p-4 text-center">
@@ -71,7 +75,10 @@ export function BrandingConfig() {
                 className="hidden"
                 id="logo-upload"
               />
-              <label htmlFor="logo-upload" className="cursor-pointer text-sm text-blue-600">
+              <label
+                htmlFor="logo-upload"
+                className="cursor-pointer text-sm text-blue-600"
+              >
                 Click to upload
               </label>
             </div>
@@ -89,7 +96,10 @@ export function BrandingConfig() {
                     {...field}
                     onChange={(e) => {
                       field.onChange(e);
-                      setPreview((prev) => ({ ...prev, orgName: e.target.value }));
+                      setPreview((prev) => ({
+                        ...prev,
+                        orgName: e.target.value,
+                      }));
                     }}
                   />
                 </FormControl>
@@ -111,7 +121,10 @@ export function BrandingConfig() {
                       {...field}
                       onChange={(e) => {
                         field.onChange(e);
-                        setPreview((prev) => ({ ...prev, primaryColor: e.target.value }));
+                        setPreview((prev) => ({
+                          ...prev,
+                          primaryColor: e.target.value,
+                        }));
                       }}
                       className="h-10 w-16"
                     />
@@ -122,7 +135,10 @@ export function BrandingConfig() {
                       {...field}
                       onChange={(e) => {
                         field.onChange(e);
-                        setPreview((prev) => ({ ...prev, primaryColor: e.target.value }));
+                        setPreview((prev) => ({
+                          ...prev,
+                          primaryColor: e.target.value,
+                        }));
                       }}
                     />
                   </FormControl>
@@ -143,16 +159,22 @@ export function BrandingConfig() {
           className="border rounded-lg p-6 w-full max-w-xs"
           style={{ borderColor: preview.primaryColor }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={logoUrl}
             alt="Logo preview"
-            className="w-24 h-24 object-contain mx-auto mb-4"
+            width={96}
+            height={96}
+            className="object-contain mx-auto mb-4"
           />
-          <h2 className="text-xl font-bold text-center" style={{ color: preview.primaryColor }}>
+          <h2
+            className="text-xl font-bold text-center"
+            style={{ color: preview.primaryColor }}
+          >
             {preview.orgName}
           </h2>
-          <p className="text-sm text-muted-foreground text-center mt-2">Preview Card</p>
+          <p className="text-sm text-muted-foreground text-center mt-2">
+            Preview Card
+          </p>
         </div>
       </div>
     </div>

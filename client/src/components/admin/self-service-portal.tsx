@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { User, Bell, Moon, Globe, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -101,7 +102,9 @@ export function SelfServicePortal() {
   return (
     <div className="space-y-6 w-full max-w-4xl">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Self-Service Portal</h1>
+        <h1 className="text-3xl font-bold text-foreground">
+          Self-Service Portal
+        </h1>
         <p className="text-muted-foreground mt-2">
           Manage your profile, preferences, and module subscriptions
         </p>
@@ -112,14 +115,17 @@ export function SelfServicePortal() {
         <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-24" />
         <div className="px-6 pb-6">
           <div className="flex items-end gap-4 -mt-10 mb-6">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={user.avatar}
               alt={user.name}
-              className="w-24 h-24 rounded-lg border-4 border-white shadow"
+              width={96}
+              height={96}
+              className="rounded-lg border-4 border-white shadow"
             />
             <div>
-              <h2 className="text-2xl font-bold text-foreground">{user.name}</h2>
+              <h2 className="text-2xl font-bold text-foreground">
+                {user.name}
+              </h2>
               <p className="text-muted-foreground">{user.role}</p>
             </div>
           </div>
@@ -131,9 +137,7 @@ export function SelfServicePortal() {
             </div>
             <div className="flex items-center gap-2">
               <Badge className="bg-blue-100 text-blue-800">Admin Access</Badge>
-              <Badge className="bg-green-100 text-green-800">
-                2FA Enabled
-              </Badge>
+              <Badge className="bg-green-100 text-green-800">2FA Enabled</Badge>
             </div>
           </div>
         </div>
@@ -150,7 +154,9 @@ export function SelfServicePortal() {
             <div className="flex items-center gap-3">
               <Bell className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="font-medium text-foreground">Push Notifications</p>
+                <p className="font-medium text-foreground">
+                  Push Notifications
+                </p>
                 <p className="text-sm text-muted-foreground">
                   Get notified about important events
                 </p>

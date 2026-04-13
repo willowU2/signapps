@@ -33,9 +33,17 @@ import { VideoPreview } from "./previews/video-preview";
 import { ArchivePreview } from "./previews/archive-preview";
 import { DocumentPreview } from "./previews/document-preview";
 import { CodePreview } from "./previews/code-preview";
-import { PDFPreview } from "./previews/pdf-preview";
 import { MarkdownPreview } from "./previews/markdown-preview";
 import dynamic from "next/dynamic";
+
+const PDFPreview = dynamic(
+  () =>
+    import("./previews/pdf-preview").then((m) => ({ default: m.PDFPreview })),
+  {
+    loading: () => <div className="h-96 animate-pulse rounded bg-muted" />,
+    ssr: false,
+  },
+);
 import mammoth from "mammoth";
 import { CellData } from "@/components/sheets/types";
 // ExcelJS (~2 MB) is imported dynamically inside loadContent() — only loaded

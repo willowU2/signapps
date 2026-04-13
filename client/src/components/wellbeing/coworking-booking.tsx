@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Coworking Booking Component
@@ -7,10 +7,11 @@
  * Includes date picker and book button for reservations.
  */
 
-import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import * as React from "react";
+import Image from "next/image";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -18,10 +19,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { MapPin, Euro, Calendar, Check } from 'lucide-react';
-import { toast } from 'sonner';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { MapPin, Euro, Calendar, Check } from "lucide-react";
+import { toast } from "sonner";
 
 export interface CoworkingSpace {
   id: string;
@@ -49,12 +50,13 @@ function CoworkingSpaceCard({
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       {space.image && (
-        <div className="h-40 bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+        <div className="relative h-40 bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
+          <Image
             src={space.image}
             alt={space.name}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover"
           />
         </div>
       )}
@@ -111,17 +113,17 @@ function BookingDialog({
   onOpenChange: (open: boolean) => void;
   onConfirm: (spaceId: string, date: string) => void;
 }) {
-  const [selectedDate, setSelectedDate] = React.useState('');
-  const today = new Date().toISOString().split('T')[0];
+  const [selectedDate, setSelectedDate] = React.useState("");
+  const today = new Date().toISOString().split("T")[0];
 
   const handleConfirm = () => {
     if (!selectedDate) {
-      toast.error('Veuillez sélectionner une date');
+      toast.error("Veuillez sélectionner une date");
       return;
     }
     if (space) {
       onConfirm(space.id, selectedDate);
-      setSelectedDate('');
+      setSelectedDate("");
       onOpenChange(false);
     }
   };
@@ -133,9 +135,7 @@ function BookingDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Réserver un Space</DialogTitle>
-          <DialogDescription>
-            Réservation pour {space.name}
-          </DialogDescription>
+          <DialogDescription>Réservation pour {space.name}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -189,12 +189,10 @@ function BookingDialog({
   );
 }
 
-export function CoworkingBooking({
-  spaces,
-  onBook,
-}: CoworkingBookingProps) {
+export function CoworkingBooking({ spaces, onBook }: CoworkingBookingProps) {
   const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [selectedSpace, setSelectedSpace] = React.useState<CoworkingSpace | null>(null);
+  const [selectedSpace, setSelectedSpace] =
+    React.useState<CoworkingSpace | null>(null);
 
   const handleBookClick = (space: CoworkingSpace) => {
     setSelectedSpace(space);
@@ -203,13 +201,15 @@ export function CoworkingBooking({
 
   const handleConfirm = (spaceId: string, date: string) => {
     onBook?.(spaceId, date);
-    toast.success('Réservation confirmée');
+    toast.success("Réservation confirmée");
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Réservation Coworking</h2>
+        <h2 className="text-2xl font-bold tracking-tight">
+          Réservation Coworking
+        </h2>
       </div>
 
       <BookingDialog
