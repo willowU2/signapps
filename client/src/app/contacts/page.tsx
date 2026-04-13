@@ -88,7 +88,11 @@ import { getClient, ServiceName } from "@/lib/api/factory";
 import { contactsApi } from "@/lib/api/contacts";
 import { ExportButton } from "@/components/ui/export-button";
 import { EntityLinks } from "@/components/crosslinks/EntityLinks";
-import { CrossLinks, crossLinkHelpers, type CrossLink } from "@/components/interop/cross-links";
+import {
+  CrossLinks,
+  crossLinkHelpers,
+  type CrossLink,
+} from "@/components/interop/cross-links";
 import {
   ContactGroups,
   type Group,
@@ -1093,11 +1097,18 @@ ${header}
                     const c = contacts.find((x) => x.id === editingId);
                     if (!c) return null;
                     const cl: CrossLink[] = [];
-                    if (c.email) cl.push(crossLinkHelpers.toMail(c.email, `Emails de ${c.first_name}`));
-                    cl.push(crossLinkHelpers.toCalendarEvent(editingId, `Événements`));
+                    if (c.email)
+                      cl.push(
+                        crossLinkHelpers.toMail(c.email, `Emails de ${c.name}`),
+                      );
+                    cl.push(
+                      crossLinkHelpers.toCalendarEvent(editingId, `Événements`),
+                    );
                     return cl.length > 0 ? (
                       <div className="mt-3">
-                        <p className="text-xs text-muted-foreground mb-1.5">Liens croisés</p>
+                        <p className="text-xs text-muted-foreground mb-1.5">
+                          Liens croisés
+                        </p>
                         <CrossLinks links={cl} />
                       </div>
                     ) : null;
