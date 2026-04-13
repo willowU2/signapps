@@ -3,6 +3,7 @@
 //! Shared between server-side (MeetPipeline) and desktop (CapturePipeline).
 
 pub mod pipeline;
+pub mod tiptap;
 pub mod types;
 
 pub use pipeline::{AudioInput, TranscriptionError};
