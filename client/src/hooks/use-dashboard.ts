@@ -9,6 +9,13 @@ import {
 import type { SystemMetrics } from "@/lib/api/monitoring";
 import { getServiceBreaker } from "@/lib/circuit-breaker";
 import { ServiceName } from "@/lib/api/factory";
+import { mailApi as mailApiModule } from "@/lib/api/mail";
+import { calendarApi, tasksApi } from "@/lib/api/calendar";
+import { quotasApi } from "@/lib/api/storage";
+import { contactsApi } from "@/lib/api/contacts";
+import { chatApi } from "@/lib/api/chat";
+import { notificationsApi as notifApiModule } from "@/lib/api/notifications";
+import { meetApi } from "@/lib/api/meet";
 
 export interface DashboardData {
   containers: number;
@@ -56,7 +63,7 @@ export function useDashboardData() {
       if (containersRes.status === "fulfilled" && containersRes.value.data) {
         const containers = containersRes.value.data;
         containerCount = containers.length;
-         
+
         runningCount = containers.filter(
           (c: any) =>
             c.docker_info?.state === "running" || c.state === "running",
@@ -113,25 +120,178 @@ export function useDashboardData() {
 }
 
 // ============================================================================
-// Dashboard Summary — widget KPI counts from dashboardApi
+// Dashboard Summary — real-time aggregated KPI data from individual services
 // ============================================================================
 
+/** Default summary with zero counts (used as fallback). */
+const EMPTY_SUMMARY: DashboardSummary = {
+  unread_emails: 0,
+  tasks_due_today: 0,
+  upcoming_events: 0,
+  recent_files: 0,
+  storage_used_bytes: 0,
+  contacts_count: 0,
+  chat_unread: 0,
+  notifications_unread: 0,
+  active_meetings: 0,
+  next_event_title: null,
+  next_event_time: null,
+};
+
+/**
+ * Fetches aggregated dashboard KPIs from individual service APIs.
+ * Each call is independent -- a single service failure does not
+ * block the others (Promise.allSettled + circuit breakers).
+ */
 export function useDashboardSummary() {
   return useQuery<DashboardSummary>({
     queryKey: ["dashboard", "summary"],
     queryFn: async () => {
-      try {
-        const res = await dashboardApi.getSummary();
-        return res.data;
-      } catch {
-        // Return zero counts on failure to avoid breaking the dashboard
-        return {
-          unread_emails: 0,
-          tasks_due_today: 0,
-          upcoming_events: 0,
-          recent_files: 0,
-        };
+      const [
+        mailRes,
+        eventsRes,
+        tasksRes,
+        filesRes,
+        storageRes,
+        contactsRes,
+        chatRes,
+        notifRes,
+        meetRes,
+      ] = await Promise.allSettled([
+        // 1. Mail — unread count
+        guarded(ServiceName.MAIL, () => mailApiModule.getStats()),
+        // 2. Calendar — today's events
+        guarded(ServiceName.CALENDAR, async () => {
+          const todayStart = new Date();
+          todayStart.setHours(0, 0, 0, 0);
+          const todayEnd = new Date();
+          todayEnd.setHours(23, 59, 59, 999);
+          const calRes = await calendarApi.listCalendars();
+          const calendars = calRes.data ?? [];
+          const nested = await Promise.all(
+            calendars.map((cal: { id: string }) =>
+              calendarApi
+                .listEvents(cal.id, todayStart, todayEnd)
+                .then((r) => r.data ?? [])
+                .catch(() => []),
+            ),
+          );
+          return nested.flat();
+        }),
+        // 3. Tasks — open tasks count
+        guarded(ServiceName.CALENDAR, async () => {
+          const calRes = await calendarApi.listCalendars();
+          const calendars = calRes.data ?? [];
+          const allTasks: { status: string }[] = [];
+          for (const cal of calendars) {
+            try {
+              const r = await tasksApi.listTasks(cal.id);
+              allTasks.push(...((r.data ?? []) as { status: string }[]));
+            } catch {
+              /* skip */
+            }
+          }
+          return allTasks;
+        }),
+        // 4. Storage — recent files count (default bucket)
+        guarded(ServiceName.STORAGE, () => storageApi.listFiles("default", "")),
+        // 5. Storage — quota usage
+        guarded(ServiceName.STORAGE, () => quotasApi.getMyQuota()),
+        // 6. Contacts — total count
+        guarded(ServiceName.CONTACTS, () => contactsApi.list()),
+        // 7. Chat — unread messages
+        guarded(ServiceName.CHAT, () => chatApi.getAllUnreadCounts()),
+        // 8. Notifications — unread count
+        guarded(ServiceName.NOTIFICATIONS, () => notifApiModule.unreadCount()),
+        // 9. Meet — active rooms
+        guarded(ServiceName.MEET, () => meetApi.listRooms()),
+      ]);
+
+      const summary: DashboardSummary = { ...EMPTY_SUMMARY };
+
+      // Mail: unread_emails
+      if (mailRes.status === "fulfilled" && mailRes.value?.data) {
+        summary.unread_emails = mailRes.value.data.unread_count ?? 0;
       }
+
+      // Calendar: upcoming_events + next event info
+      if (eventsRes.status === "fulfilled") {
+        const events = eventsRes.value as {
+          title: string;
+          start_time: string;
+        }[];
+        summary.upcoming_events = events.length;
+        // Find next event that hasn't started yet
+        const now = new Date();
+        const upcoming = events
+          .filter((e) => new Date(e.start_time) > now)
+          .sort(
+            (a, b) =>
+              new Date(a.start_time).getTime() -
+              new Date(b.start_time).getTime(),
+          );
+        if (upcoming.length > 0) {
+          summary.next_event_title = upcoming[0].title;
+          summary.next_event_time = new Date(
+            upcoming[0].start_time,
+          ).toLocaleTimeString("fr-FR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+      }
+
+      // Tasks: tasks_due_today (open tasks)
+      if (tasksRes.status === "fulfilled") {
+        const tasks = tasksRes.value as { status: string }[];
+        summary.tasks_due_today = tasks.filter(
+          (t) => t.status !== "done",
+        ).length;
+      }
+
+      // Files: recent_files
+      if (filesRes.status === "fulfilled" && filesRes.value?.data) {
+        summary.recent_files = filesRes.value.data.objects?.length ?? 0;
+      }
+
+      // Storage: storage_used_bytes
+      if (storageRes.status === "fulfilled" && storageRes.value?.data) {
+        summary.storage_used_bytes = storageRes.value.data.storage?.used ?? 0;
+      }
+
+      // Contacts: contacts_count
+      if (contactsRes.status === "fulfilled" && contactsRes.value?.data) {
+        const contacts = contactsRes.value.data;
+        summary.contacts_count = Array.isArray(contacts) ? contacts.length : 0;
+      }
+
+      // Chat: chat_unread (sum all channel unread counts)
+      if (chatRes.status === "fulfilled" && chatRes.value?.data) {
+        const statuses = chatRes.value.data;
+        summary.chat_unread = Array.isArray(statuses)
+          ? statuses.reduce(
+              (sum: number, s: { unread_count?: number }) =>
+                sum + (s.unread_count ?? 0),
+              0,
+            )
+          : 0;
+      }
+
+      // Notifications: notifications_unread
+      if (notifRes.status === "fulfilled" && notifRes.value?.data) {
+        summary.notifications_unread = notifRes.value.data.count ?? 0;
+      }
+
+      // Meet: active_meetings
+      if (meetRes.status === "fulfilled" && meetRes.value?.data) {
+        const rooms = meetRes.value.data;
+        summary.active_meetings = Array.isArray(rooms)
+          ? rooms.filter((r: { status: string }) => r.status === "active")
+              .length
+          : 0;
+      }
+
+      return summary;
     },
     staleTime: 2 * 60_000, // 2 minutes
     refetchInterval: 5 * 60_000, // Refresh every 5 minutes

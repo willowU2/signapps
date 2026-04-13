@@ -4,6 +4,7 @@ import { Task } from '@/lib/scheduling/types/scheduling';
 import { CollaborativeEditor } from '@/components/ai/collaborative-editor';
 import { EntityLinks } from '@/components/crosslinks/EntityLinks';
 import { ActivityFeed } from '@/components/crosslinks/ActivityFeed';
+import { CrossLinks, crossLinkHelpers, type CrossLink } from '@/components/interop/cross-links';
 
 interface TaskSheetProps {
   task: Task | null;
@@ -45,6 +46,17 @@ export function TaskSheet({ task, open, onOpenChange }: TaskSheetProps) {
             {/* Crosslinks & Activity */}
             <div className="border-t p-4 space-y-4">
               <EntityLinks entityType="task" entityId={task.id} />
+              {(() => {
+                const cl: CrossLink[] = [];
+                if (task.assigneeId) cl.push(crossLinkHelpers.toContact(task.assigneeId, "Assigné"));
+                if (task.projectId) cl.push(crossLinkHelpers.toCalendarEvent(task.id, "Calendrier"));
+                return cl.length > 0 ? (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1.5">Liens croisés</p>
+                    <CrossLinks links={cl} />
+                  </div>
+                ) : null;
+              })()}
               <ActivityFeed entityType="task" entityId={task.id} limit={5} />
             </div>
         </div>

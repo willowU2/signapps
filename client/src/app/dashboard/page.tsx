@@ -16,7 +16,11 @@ import {
   Mail,
   CalendarDays,
   CheckCircle2,
-  FileText,
+  Users,
+  MessageSquare,
+  Bell,
+  Video,
+  HardDrive,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -102,10 +106,19 @@ export default function DashboardPage() {
     }, 500);
   };
 
-  // KPI summary cards configuration
+  // Helper: format bytes to human-readable
+  const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return "0 o";
+    const units = ["o", "Ko", "Mo", "Go", "To"];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+  };
+
+  // KPI summary cards configuration — real data from all services
   const kpiCards = [
     {
-      label: "Emails non lus",
+      label:
+        summary?.unread_emails === 1 ? "message non lu" : "messages non lus",
       value: summary?.unread_emails ?? 0,
       icon: Mail,
       color: "text-amber-500",
@@ -113,28 +126,69 @@ export default function DashboardPage() {
       href: "/mail",
     },
     {
-      label: "Taches du jour",
+      label:
+        summary?.tasks_due_today === 1 ? "tache en cours" : "taches en cours",
       value: summary?.tasks_due_today ?? 0,
       icon: CheckCircle2,
       color: "text-green-500",
       bgColor: "bg-green-500/10",
-      href: "/tasks",
+      href: "/scheduler",
     },
     {
-      label: "Evenements a venir",
-      value: summary?.upcoming_events ?? 0,
+      label: summary?.next_event_title
+        ? `Prochain: ${summary.next_event_title}${summary.next_event_time ? ` a ${summary.next_event_time}` : ""}`
+        : summary?.upcoming_events === 1
+          ? "evenement aujourd'hui"
+          : "evenements aujourd'hui",
+      value: summary?.next_event_title ? "" : (summary?.upcoming_events ?? 0),
       icon: CalendarDays,
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
       href: "/cal",
     },
     {
-      label: "Fichiers recents",
-      value: summary?.recent_files ?? 0,
-      icon: FileText,
+      label: "utilises",
+      value: formatBytes(summary?.storage_used_bytes ?? 0),
+      icon: HardDrive,
       color: "text-purple-500",
       bgColor: "bg-purple-500/10",
       href: "/drive",
+    },
+    {
+      label: summary?.contacts_count === 1 ? "contact" : "contacts",
+      value: summary?.contacts_count ?? 0,
+      icon: Users,
+      color: "text-teal-500",
+      bgColor: "bg-teal-500/10",
+      href: "/contacts",
+    },
+    {
+      label: summary?.chat_unread === 1 ? "message non lu" : "messages non lus",
+      value: summary?.chat_unread ?? 0,
+      icon: MessageSquare,
+      color: "text-indigo-500",
+      bgColor: "bg-indigo-500/10",
+      href: "/chat",
+    },
+    {
+      label:
+        summary?.notifications_unread === 1 ? "notification" : "notifications",
+      value: summary?.notifications_unread ?? 0,
+      icon: Bell,
+      color: "text-rose-500",
+      bgColor: "bg-rose-500/10",
+      href: "/notifications",
+    },
+    {
+      label:
+        summary?.active_meetings === 1
+          ? "reunion en cours"
+          : "reunions en cours",
+      value: summary?.active_meetings ?? 0,
+      icon: Video,
+      color: "text-orange-500",
+      bgColor: "bg-orange-500/10",
+      href: "/meet",
     },
   ];
 
@@ -144,8 +198,8 @@ export default function DashboardPage() {
         <div className="space-y-6">
           <Skeleton className="h-8 w-64" />
           {/* KPI skeleton */}
-          <div className="grid gap-4 md:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+            {[...Array(8)].map((_, i) => (
               <Skeleton key={i} className="h-24 rounded-xl" />
             ))}
           </div>
@@ -230,10 +284,10 @@ export default function DashboardPage() {
         </header>
 
         {/* KPI Summary Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
           {kpiCards.map((kpi) => (
             <Card
-              key={kpi.label}
+              key={kpi.href}
               className="cursor-pointer transition-all duration-200 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
               onClick={() => {
                 if (typeof window !== "undefined") {
@@ -249,11 +303,13 @@ export default function DashboardPage() {
                     <div className={cn("rounded-lg p-2.5", kpi.bgColor)}>
                       <kpi.icon className={cn("h-5 w-5", kpi.color)} />
                     </div>
-                    <div>
-                      <p className="text-2xl font-bold tabular-nums">
-                        {kpi.value}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="min-w-0">
+                      {kpi.value !== "" && (
+                        <p className="text-2xl font-bold tabular-nums leading-tight">
+                          {kpi.value}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground truncate">
                         {kpi.label}
                       </p>
                     </div>

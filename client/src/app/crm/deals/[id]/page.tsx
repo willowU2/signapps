@@ -40,6 +40,7 @@ import {
   STAGE_LABELS,
 } from "@/lib/api/crm";
 import { DealDetailPanel } from "@/components/interop/DealDetailPanel";
+import { CrossLinks, crossLinkHelpers, type CrossLink } from "@/components/interop/cross-links";
 import { toast } from "sonner";
 
 const STAGE_BADGE: Record<
@@ -177,6 +178,20 @@ export default function DealDetailPage() {
             </div>
           ))}
         </div>
+
+        {/* Cross-module links */}
+        {(() => {
+          const cl: CrossLink[] = [];
+          if (deal.contactId) cl.push(crossLinkHelpers.toContact(deal.contactId, deal.company || "Contact"));
+          if (deal.contactEmail) cl.push(crossLinkHelpers.toMail(deal.contactEmail, `Emails ${deal.company}`));
+          cl.push(crossLinkHelpers.toCalendarEvent(id, `Rendez-vous ${deal.title}`));
+          return cl.length > 0 ? (
+            <div>
+              <p className="text-xs text-muted-foreground mb-1.5">Liens croisés</p>
+              <CrossLinks links={cl} />
+            </div>
+          ) : null;
+        })()}
 
         {/* Edit form */}
         {editing && (

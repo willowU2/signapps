@@ -43,6 +43,20 @@ export interface DashboardSummary {
   tasks_due_today: number;
   upcoming_events: number;
   recent_files: number;
+  /** Storage used in bytes (from quota API). */
+  storage_used_bytes: number;
+  /** Total contacts count. */
+  contacts_count: number;
+  /** Unread chat messages total. */
+  chat_unread: number;
+  /** Unread notifications count. */
+  notifications_unread: number;
+  /** Active meeting rooms count. */
+  active_meetings: number;
+  /** Next event title (for "Prochain: ..." display). */
+  next_event_title: string | null;
+  /** Next event formatted time. */
+  next_event_time: string | null;
 }
 
 // ============================================================================

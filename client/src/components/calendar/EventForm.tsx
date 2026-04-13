@@ -42,6 +42,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { EntityLinks } from "@/components/crosslinks/EntityLinks";
+import { CrossLinks, crossLinkHelpers } from "@/components/interop/cross-links";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { leaveApi, presenceApi } from "@/lib/api/calendar";
 import { notify } from "@/lib/notify";
@@ -897,6 +898,17 @@ export function EventForm({
                 <EntityLinks
                   entityType="calendar_event"
                   entityId={initialEvent.id}
+                />
+              </div>
+            )}
+
+            {attendees.length > 0 && (
+              <div className="border-t pt-3">
+                <p className="text-xs text-muted-foreground mb-1.5">Liens croisés</p>
+                <CrossLinks
+                  links={attendees
+                    .filter((a: any) => a.email || a.name)
+                    .map((a: any) => crossLinkHelpers.toContact(a.id ?? a.email ?? "", a.name ?? a.email ?? "Participant"))}
                 />
               </div>
             )}

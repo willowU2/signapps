@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { MeetRecordingToDoc } from "@/components/interop/meet-doc-bridge";
+import { CrossLinks, crossLinkHelpers } from "@/components/interop/cross-links";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -754,6 +755,18 @@ export default function MeetPage() {
                 Chargement...
               </div>
             ) : (
+              <div className="space-y-4">
+                {selectedRoom && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1.5">Liens croisés</p>
+                    <CrossLinks
+                      links={[
+                        crossLinkHelpers.toCalendarEvent(selectedRoom.id, `Événement calendrier`),
+                        ...(recordings.filter((r) => r.status === "ready").map((r) => crossLinkHelpers.toDoc(r.id, `Enregistrement`)))
+                      ]}
+                    />
+                  </div>
+                )}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Participants */}
                 <Card>
@@ -1026,6 +1039,7 @@ export default function MeetPage() {
                     )}
                   </CardContent>
                 </Card>
+              </div>
               </div>
             )}
           </TabsContent>
