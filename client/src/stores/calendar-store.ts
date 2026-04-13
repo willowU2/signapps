@@ -135,9 +135,9 @@ export type UndoAction = { type: "delete"; event: Event };
 
 export const useCalendarStore = create<CalendarState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // ---- Legacy state ----
-      viewMode: "month",
+      viewMode: "month" as ViewMode,
       selectedCalendarIds: new Set(),
       selectedEventId: null as string | null,
       selectedCalendars: [] as Calendar[],
@@ -149,7 +149,7 @@ export const useCalendarStore = create<CalendarState>()(
       error: null as string | null,
 
       // ---- Unified view ----
-      view: "month",
+      view: "month" as ViewType,
       setView: (view) => set({ view }),
 
       // ---- Date navigation ----
@@ -277,10 +277,10 @@ export const useCalendarStore = create<CalendarState>()(
       today: () => set({ currentDate: new Date() }),
 
       // ---- TimeItems (scheduling) ----
-      timeItems: [],
+      timeItems: [] as TimeItem[],
       isLoadingTimeItems: false,
-      weekStartsOn: 1,
-      scope: null,
+      weekStartsOn: 1 as 0 | 1,
+      scope: null as Scope | null,
       fetchTimeItems: async (range) => {
         set({ isLoading: true });
         try {
@@ -306,14 +306,14 @@ export const useCalendarStore = create<CalendarState>()(
       },
 
       // ---- Undo stack ----
-      undoStack: [],
+      undoStack: [] as UndoAction[],
       pushUndo: (action) =>
         set((state) => ({
           // Cap the stack at 20 to avoid unbounded growth
           undoStack: [...state.undoStack.slice(-19), action],
         })),
-      popUndo: () => {
-        const stack = useCalendarStore.getState().undoStack;
+      popUndo: (): UndoAction | null => {
+        const stack = get().undoStack;
         if (stack.length === 0) return null;
         const action = stack[stack.length - 1];
         set({ undoStack: stack.slice(0, -1) });
@@ -323,7 +323,7 @@ export const useCalendarStore = create<CalendarState>()(
     }),
     {
       name: "signapps-calendar",
-      partialize: (state) => ({
+      partialize: (state: CalendarState) => ({
         view: state.view,
         layers: state.layers,
         sidebarOpen: state.sidebarOpen,

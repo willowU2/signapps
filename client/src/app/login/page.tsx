@@ -284,7 +284,8 @@ export default function LoginPage() {
       const savedToken = localStorage.getItem("access_token");
 
       // Helper: force auth into localStorage + cookie (zustand persist is too slow)
-      const forceAuth = (user: Record<string, unknown>) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const forceAuth = (user: any) => {
         localStorage.setItem(
           "auth-storage",
           JSON.stringify({

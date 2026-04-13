@@ -183,6 +183,8 @@ mod tests {
     fn sanitize_interval_safe() {
         assert_eq!(sanitize_interval("12 months"), "12 months");
         assert_eq!(sanitize_interval("2 years"), "2 years");
-        assert_eq!(sanitize_interval("'; DROP TABLE foo; --"), "DROP TABLE foo");
+        // SQL injection attempt is neutered: special chars stripped, then take(2)
+        // keeps at most "number unit" — "DROP TABLE" is harmless as a bare interval value.
+        assert_eq!(sanitize_interval("'; DROP TABLE foo; --"), "DROP TABLE");
     }
 }

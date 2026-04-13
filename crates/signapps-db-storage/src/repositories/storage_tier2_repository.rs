@@ -299,8 +299,9 @@ mod tests {
         // The function signature is the contract — the compiler enforces it.
         // A real DB call is gated behind #[ignore]; this test always passes when
         // the crate compiles, confirming the ERR-RUST-001 pattern is in place.
-        let _type_check: fn(&PgPool, Uuid, Uuid) -> _ = StorageTier2Repository::delete_tag;
-        let _ = _type_check; // suppress unused-variable warning
+        async fn _assert_return_type(pool: &PgPool, tag: Uuid, user: Uuid) -> Result<u64, sqlx::Error> {
+            StorageTier2Repository::delete_tag(pool, tag, user).await
+        }
     }
 
     /// Regression test for ERR-RUST-001 (async/DB path)
