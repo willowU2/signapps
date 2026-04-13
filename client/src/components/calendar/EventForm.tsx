@@ -44,6 +44,7 @@ import {
 import { EntityLinks } from "@/components/crosslinks/EntityLinks";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { leaveApi, presenceApi } from "@/lib/api/calendar";
+import { notify } from "@/lib/notify";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -614,6 +615,12 @@ export function EventForm({
             ? "Demande de congé soumise avec succès"
             : "Événement créé",
         );
+        notify({
+          title: "Événement créé",
+          body: createData.title,
+          module: "calendar",
+          deep_link: "/cal",
+        });
       }
       onOpenChange(false);
     } catch (error) {

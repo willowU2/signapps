@@ -21,6 +21,7 @@ import {
 } from "@/lib/data-table";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { PageHeader } from "@/components/ui/page-header";
+import { AppLayout } from "@/components/layout/app-layout";
 
 export default function RolesPage() {
   usePageTitle("Roles");
@@ -92,47 +93,49 @@ export default function RolesPage() {
   });
 
   return (
-    <div className="w-full space-y-6">
-      <PageHeader
-        title="Rôles & Permissions"
-        description="Gérez les rôles RBAC et configurez les permissions d'accès aux ressources."
-        icon={<Lock className="h-5 w-5" />}
-        actions={
-          <Button onClick={handleCreate} size="sm">
-            <Plus className="h-4 w-4" />
-            Nouveau Rôle
-          </Button>
-        }
-      />
+    <AppLayout>
+      <div className="w-full space-y-6">
+        <PageHeader
+          title="Rôles & Permissions"
+          description="Gérez les rôles RBAC et configurez les permissions d'accès aux ressources."
+          icon={<Lock className="h-5 w-5" />}
+          actions={
+            <Button onClick={handleCreate} size="sm">
+              <Plus className="h-4 w-4" />
+              Nouveau Rôle
+            </Button>
+          }
+        />
 
-      <GenericDataTable
-        config={extendedConfig}
-        data={(roles as RoleEntity[]) ?? []}
-        isLoading={isLoading}
-        error={error ? "Erreur lors du chargement des rôles." : undefined}
-        actions={actions}
-        emptyState={{
-          title: "Aucun rôle trouvé",
-          description:
-            "Créez votre premier rôle pour commencer à gérer les permissions.",
-          action: {
-            label: "Créer un rôle",
-            onClick: handleCreate,
-          },
-        }}
-      />
+        <GenericDataTable
+          config={extendedConfig}
+          data={(roles as RoleEntity[]) ?? []}
+          isLoading={isLoading}
+          error={error ? "Erreur lors du chargement des rôles." : undefined}
+          actions={actions}
+          emptyState={{
+            title: "Aucun rôle trouvé",
+            description:
+              "Créez votre premier rôle pour commencer à gérer les permissions.",
+            action: {
+              label: "Créer un rôle",
+              onClick: handleCreate,
+            },
+          }}
+        />
 
-      <RoleSheet
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        initialData={selectedRole}
-      />
+        <RoleSheet
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
+          initialData={selectedRole}
+        />
 
-      <RoleDeleteDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        role={selectedRole}
-      />
-    </div>
+        <RoleDeleteDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          role={selectedRole}
+        />
+      </div>
+    </AppLayout>
   );
 }

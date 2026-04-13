@@ -27,6 +27,7 @@ import { CategoryManager } from '@/components/calendar/category-colors';
 import { PublicCalendarLink } from '@/components/calendar/public-calendar-link';
 import { Palette, Globe } from 'lucide-react';
 import { usePageTitle } from '@/hooks/use-page-title';
+import { AppLayout } from "@/components/layout/app-layout";
 
 // ============================================================================
 // Sync Logs Tab
@@ -202,6 +203,7 @@ export default function CalendarSettingsPage() {
   }, [loadConnections]);
 
   return (
+    <AppLayout>
     <div className="w-full py-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Paramètres du calendrier</h1>
@@ -297,5 +299,6 @@ export default function CalendarSettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </AppLayout>
   );
 }

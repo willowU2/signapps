@@ -26,6 +26,7 @@ import { useEntityStore } from "@/stores/entity-hub-store";
 import { toast } from "sonner";
 import { TaskAssigneeSelector } from "./task-assignee-selector";
 import { useCalendarAvailability } from "@/components/interop/CalendarContactSuggestions";
+import { notify } from "@/lib/notify";
 
 interface TaskFormProps {
   open: boolean;
@@ -105,6 +106,12 @@ export function TaskForm({
           label: "Voir",
           onClick: () => router.push("/tasks"),
         },
+      });
+      notify({
+        title: "Tâche créée",
+        body: createData.title,
+        module: "tasks",
+        deep_link: "/tasks",
       });
       onOpenChange(false);
       setFormData({

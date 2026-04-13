@@ -46,6 +46,7 @@ import {
 import { usePageTitle } from "@/hooks/use-page-title";
 import { PageHeader } from "@/components/ui/page-header";
 import { useBrandingStore } from "@/stores/branding-store";
+import { AppLayout } from "@/components/layout/app-layout";
 
 // ─── General Settings ───────────────────────────────────────────────
 interface GeneralSettings {
@@ -360,6 +361,7 @@ export default function AdminSettingsPage() {
   };
 
   return (
+    <AppLayout>
     <div className="space-y-6">
       {/* Header */}
       <PageHeader
@@ -1272,5 +1274,6 @@ export default function AdminSettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </AppLayout>
   );
 }

@@ -22,6 +22,7 @@ import { FileUploadField } from "@/components/forms/file-upload-field";
 import { SignatureField } from "@/components/forms/signature-field";
 import { MultiPageWizard } from "@/components/forms/multi-page-wizard";
 import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 
 type ExtendedFormField = FormField & {
   show_if?: { field_id: string; operator: string; value: string };
@@ -234,6 +235,14 @@ export default function PublicFormPage() {
         answers: formattedAnswers,
       });
 
+      notify({
+        title: "Réponse reçue",
+        body: form?.title,
+        module: "forms",
+        entity_type: "form",
+        entity_id: formId,
+        deep_link: `/forms/${formId}`,
+      });
       setSubmitted(true);
     } catch (err) {
       console.error("Submission failed:", err);

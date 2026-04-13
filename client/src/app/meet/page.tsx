@@ -85,6 +85,7 @@ import {
   MeetingHistory,
   MeetConfig,
 } from "@/lib/api/meet";
+import { notify } from "@/lib/notify";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -399,6 +400,12 @@ export default function MeetPage() {
     try {
       const res = await meetApi.stopRecording(recordingId);
       toast.success("Enregistrement arrêté");
+      notify({
+        title: "Enregistrement disponible",
+        body: selectedRoom?.name,
+        module: "meet",
+        deep_link: "/meet",
+      });
       setRecordings((rs) =>
         rs.map((r) => (r.id === recordingId ? res.data : r)),
       );

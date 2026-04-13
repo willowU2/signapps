@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ComposeEncryptToggle } from "./pgp-indicator";
 import { encryptMessage } from "./pgp-settings";
+import { notify } from "@/lib/notify";
 
 import { CALENDAR_URL } from "@/lib/api/core";
 // ─── A2: Tone options ────────────────────────────────────────────────────────
@@ -440,6 +441,12 @@ export function ComposeRichDialog({
             },
           },
         );
+        notify({
+          title: "Message envoyé",
+          body: `À ${recipient.trim()}`,
+          module: "mail",
+          deep_link: "/mail",
+        });
         // Feature 5: auto-log sent email in activity timeline
         interopStore.logActivity({
           type: "mail_sent",

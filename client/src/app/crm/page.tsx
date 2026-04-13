@@ -52,6 +52,7 @@ import { BillingForecast } from "@/components/interop/BillingForecast";
 import { OverdueInvoicesCrmFlag } from "@/components/interop/OverdueInvoicesCrmFlag";
 import { DealsExportCsv } from "@/components/interop/DealsExportCsv";
 import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 
 export default function CRMPage() {
   usePageTitle("CRM");
@@ -88,14 +89,29 @@ export default function CRMPage() {
     setIsOpen(false);
     setForm({ stage: "prospect", probability: 20, value: 0 });
     toast.success("Opportunité créée.");
+    notify({
+      title: "Opportunité créée",
+      body: form.title?.trim(),
+      module: "crm",
+      deep_link: "/crm",
+    });
   };
 
   const moveDeal = useCallback(
     async (id: string, stage: DealStage) => {
       await dealsApi.update(id, { stage });
+      if (stage === "won") {
+        const deal = deals.find((d) => d.id === id);
+        notify({
+          title: "Opportunité gagnée",
+          body: deal?.title,
+          module: "crm",
+          deep_link: "/crm",
+        });
+      }
       await reload();
     },
-    [reload],
+    [reload, deals],
   );
 
   const deleteDeal = useCallback(

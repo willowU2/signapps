@@ -51,6 +51,7 @@ import { NotificationGranularPrefs } from "@/components/notifications/notificati
 import { NotificationSounds } from "@/components/notifications/notification-sounds";
 import { NotificationDndSchedule } from "@/components/notifications/notification-dnd-schedule";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { AppLayout } from "@/components/layout/app-layout";
 
 interface NotificationPreferences {
   id: string;
@@ -181,6 +182,7 @@ export default function NotificationSettingsPage() {
 
   if (loading) {
     return (
+      <AppLayout>
       <div className="container mx-auto py-10 flex items-center justify-center">
         <SpinnerInfinity
           size={24}
@@ -190,11 +192,13 @@ export default function NotificationSettingsPage() {
           className="h-8 w-8  text-muted-foreground"
         />
       </div>
+      </AppLayout>
     );
   }
 
   if (!prefs) {
     return (
+      <AppLayout>
       <div className="container mx-auto py-10">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -203,10 +207,12 @@ export default function NotificationSettingsPage() {
           </AlertDescription>
         </Alert>
       </div>
+      </AppLayout>
     );
   }
 
   return (
+    <AppLayout>
     <div className="container mx-auto py-10 max-w-2xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">
@@ -541,5 +547,6 @@ export default function NotificationSettingsPage() {
         </Button>
       </div>
     </div>
+    </AppLayout>
   );
 }

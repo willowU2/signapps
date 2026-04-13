@@ -63,6 +63,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { expensesApi, type ExpenseReport } from "@/lib/api/expenses";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { AppLayout } from "@/components/layout/app-layout";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -704,6 +705,7 @@ export default function ExpensesPage() {
   };
 
   return (
+    <AppLayout>
     <div className="container max-w-5xl py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -987,5 +989,6 @@ export default function ExpensesPage() {
         />
       )}
     </div>
+    </AppLayout>
   );
 }

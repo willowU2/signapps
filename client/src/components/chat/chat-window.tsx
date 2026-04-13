@@ -36,6 +36,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useChatNotifications } from "@/hooks/use-chat-notifications";
 import { chatApi, ChatAttachment as Attachment } from "@/lib/api/chat";
 import { FEATURES } from "@/lib/features";
+import { notify } from "@/lib/notify";
 import {
   Tooltip,
   TooltipContent,
@@ -191,6 +192,14 @@ export function ChatWindow({
       return;
     }
     sendMessage(content, undefined, attachment);
+    if (content.includes("@")) {
+      notify({
+        title: "Mention dans le chat",
+        body: content.slice(0, 100),
+        module: "chat",
+        deep_link: "/chat",
+      });
+    }
   };
 
   const handleSendVoice = async (blob: Blob, durationSec: number) => {

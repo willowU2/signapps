@@ -82,6 +82,7 @@ import { SecureShareDialog } from "@/components/drive/secure-share";
 import { AclPanel } from "@/components/storage/acl-panel";
 import { AuditTimeline } from "@/components/storage/audit-timeline";
 import { ShieldCheck, History } from "lucide-react";
+import { notify } from "@/lib/notify";
 
 export default function GlobalDrivePage() {
   usePageTitle("Drive");
@@ -412,6 +413,12 @@ export default function GlobalDrivePage() {
 
     if (successCount > 0) {
       toast.success(`${successCount} fichier(s) importé(s)`, { id: toastId });
+      notify({
+        title: "Fichier importé",
+        body: `${successCount} fichier(s)`,
+        module: "drive",
+        deep_link: "/drive",
+      });
       fetchNodes();
     } else {
       toast.dismiss(toastId);

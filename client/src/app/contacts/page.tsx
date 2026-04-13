@@ -116,6 +116,7 @@ import {
   autoCreateLeadFromContact,
   mergeContactReferences,
 } from "@/lib/api/interop";
+import { notify } from "@/lib/notify";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -366,6 +367,15 @@ export default function ContactsPage() {
             ? prev.map((c) => (c.id === editingId ? payload : c))
             : [...prev, payload],
       );
+    }
+
+    if (isNew) {
+      notify({
+        title: "Contact ajouté",
+        body: payload.name,
+        module: "contacts",
+        deep_link: "/contacts",
+      });
     }
 
     // Feature 15: Contact import → auto-create CRM lead (only for new contacts)
