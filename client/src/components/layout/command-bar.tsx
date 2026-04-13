@@ -508,19 +508,19 @@ const NAV_ITEMS = [
     label: "Dashboard",
     icon: LayoutDashboard,
     href: "/dashboard",
-    shortcut: "⌘D",
+    shortcut: "Alt+1",
   },
-  { label: "Docs", icon: FileText, href: "/docs" },
+  { label: "Mail", icon: Mail, href: "/mail", shortcut: "Alt+2" },
+  { label: "Calendar", icon: Calendar, href: "/calendar", shortcut: "Alt+3" },
+  { label: "Drive", icon: HardDrive, href: "/drive", shortcut: "Alt+4" },
+  { label: "Chat", icon: MessageSquare, href: "/chat", shortcut: "Alt+5" },
+  { label: "Tasks", icon: CheckSquare, href: "/tasks", shortcut: "Alt+6" },
+  { label: "Contacts", icon: User, href: "/contacts", shortcut: "Alt+7" },
+  { label: "Docs", icon: FileText, href: "/docs", shortcut: "Alt+8" },
+  { label: "Meet", icon: Video, href: "/meet", shortcut: "Alt+9" },
   { label: "Sheets", icon: FileText, href: "/sheets" },
   { label: "Slides", icon: FileText, href: "/slides" },
-  { label: "Calendar", icon: Calendar, href: "/calendar" },
-  { label: "Mail", icon: Mail, href: "/mail" },
-  { label: "Chat", icon: MessageSquare, href: "/chat" },
-  { label: "Drive", icon: HardDrive, href: "/drive" },
-  { label: "Tasks", icon: CheckSquare, href: "/tasks" },
   { label: "Projects", icon: FolderOpen, href: "/projects" },
-  { label: "Meet", icon: Video, href: "/meet" },
-  { label: "Contacts", icon: User, href: "/contacts" },
   { label: "App Store", icon: Monitor, href: "/apps" },
   { label: "Containers", icon: Monitor, href: "/containers" },
   { label: "AI Assistant", icon: MessageSquare, href: "/ai" },
@@ -897,6 +897,28 @@ export function CommandBar() {
               >
                 <Monitor className="mr-3 h-4 w-4 shrink-0" />
                 <span>System Settings</span>
+              </Command.Item>
+              <Command.Item
+                value="keyboard shortcuts help raccourcis clavier"
+                onSelect={() =>
+                  runCommand(() => {
+                    // Dispatch Ctrl+/ equivalent to open shortcuts overlay
+                    window.dispatchEvent(
+                      new KeyboardEvent("keydown", {
+                        key: "/",
+                        ctrlKey: true,
+                        bubbles: true,
+                      }),
+                    );
+                  })
+                }
+                className={itemCls}
+              >
+                <Settings className="mr-3 h-4 w-4 shrink-0" />
+                <span>Raccourcis clavier</span>
+                <kbd className="ml-auto text-[10px] text-muted-foreground tracking-widest">
+                  Ctrl+/
+                </kbd>
               </Command.Item>
             </Command.Group>
           </Command.List>

@@ -64,6 +64,56 @@ export function getShortcutsList(pathname: string = "/"): KeyboardShortcut[] {
       description: "Aller aux Settings",
       category: "navigation",
     },
+    {
+      keys: "Alt+1",
+      description: "Dashboard",
+      category: "navigation",
+    },
+    {
+      keys: "Alt+2",
+      description: "Mail",
+      category: "navigation",
+    },
+    {
+      keys: "Alt+3",
+      description: "Calendrier",
+      category: "navigation",
+    },
+    {
+      keys: "Alt+4",
+      description: "Drive",
+      category: "navigation",
+    },
+    {
+      keys: "Alt+5",
+      description: "Chat",
+      category: "navigation",
+    },
+    {
+      keys: "Alt+6",
+      description: "Tâches",
+      category: "navigation",
+    },
+    {
+      keys: "Alt+7",
+      description: "Contacts",
+      category: "navigation",
+    },
+    {
+      keys: "Alt+8",
+      description: "Documents",
+      category: "navigation",
+    },
+    {
+      keys: "Alt+9",
+      description: "Meet",
+      category: "navigation",
+    },
+    {
+      keys: "Alt+N",
+      description: "Nouveau (contextuel)",
+      category: "global",
+    },
   ];
 
   if (pathname.startsWith("/mail")) {
@@ -188,6 +238,39 @@ export function useKeyboardShortcuts() {
         if (dest) {
           e.preventDefault();
           router.push(dest);
+          return;
+        }
+
+        // Alt+number quick navigation (1-9)
+        const altNumNavMap: Record<string, string> = {
+          "1": "/dashboard",
+          "2": "/mail",
+          "3": "/cal",
+          "4": "/drive",
+          "5": "/chat",
+          "6": "/tasks",
+          "7": "/contacts",
+          "8": "/docs",
+          "9": "/meet",
+        };
+        const numDest = altNumNavMap[e.key];
+        if (numDest) {
+          e.preventDefault();
+          router.push(numDest);
+          return;
+        }
+
+        // Alt+N — click contextual "New" button
+        if (e.key.toLowerCase() === "n") {
+          e.preventDefault();
+          const newBtn =
+            document.querySelector<HTMLButtonElement>("[data-new-button]");
+          if (newBtn) {
+            newBtn.click();
+          } else {
+            // Fallback: dispatch the global create-new event
+            document.dispatchEvent(new CustomEvent("create-new"));
+          }
           return;
         }
       }
