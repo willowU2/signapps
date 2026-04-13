@@ -45,6 +45,7 @@ pub type JobStore = Arc<DashMap<Uuid, JobEntry>>;
 pub struct AppState {
     pub pool: PgPool,
     pub config: MediaConfig,
+    pub jwt_config: JwtConfig,
     pub ocr: Arc<dyn OcrBackend>,
     pub tts: Arc<dyn TtsBackend>,
     pub stt: Arc<dyn SttBackend>,
@@ -89,8 +90,7 @@ impl MediaConfig {
 
 impl AuthState for AppState {
     fn jwt_config(&self) -> &JwtConfig {
-        static JWT_CONFIG: std::sync::OnceLock<JwtConfig> = std::sync::OnceLock::new();
-        JWT_CONFIG.get_or_init(JwtConfig::from_env)
+        &self.jwt_config
     }
 }
 
@@ -209,9 +209,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
 
+    let jwt_config = JwtConfig::from_env();
+
     let state = Arc::new(AppState {
         pool,
         config,
+        jwt_config,
         ocr,
         tts,
         stt,
@@ -255,11 +258,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/v1/voice", get(handlers::voice::voice_ws))
         // Jobs/Status
         .route("/api/v1/jobs/:id", get(handlers::jobs::get_job_status))
+        .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             (*state).clone(),
             auth_middleware::<AppState>,
-        ))
-        .route_layer(middleware::from_fn(tenant_context_middleware));
+        ));
 
     let cors = CorsLayer::new()
         .allow_origin(tower_http::cors::Any)

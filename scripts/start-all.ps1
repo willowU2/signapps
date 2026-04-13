@@ -150,6 +150,21 @@ if (-not $SkipBuild) {
     Write-Ok "Build succeeded"
 }
 
+# --- Step 2b: Load .env ---
+$EnvFile = Join-Path $BaseDir ".env"
+if (Test-Path $EnvFile) {
+    $envVars = 0
+    Get-Content $EnvFile | ForEach-Object {
+        if ($_ -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$' -and $_ -notmatch '^\s*#') {
+            [System.Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], "Process")
+            $envVars++
+        }
+    }
+    Write-Ok "Loaded .env ($envVars vars) - JWT_SECRET aligned across all services"
+} else {
+    Write-Warn "No .env file found - services will use defaults"
+}
+
 # --- Step 3: Ensure log directory ---
 New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 

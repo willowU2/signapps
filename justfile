@@ -88,21 +88,45 @@ test-e2e:
 
 # ─────────────────────────── Run ─────────────────────────────
 
-# Lancer un service
+# Lancer un service (avec .env)
 run svc:
-    cargo run -p signapps-{{svc}}
+    @set -a && . .env && set +a && cargo run -p signapps-{{svc}}
 
 # Lancer le frontend
 dev:
     cd client && npm run dev
 
-# Lancer tous les services (PowerShell)
+# Lancer tous les services (PowerShell, auto-loads .env)
 start:
     powershell.exe -File scripts/start-all.ps1
 
 # Stopper tous les services
 stop:
     powershell.exe -File scripts/stop-test-services.ps1
+
+# Rebuild + restart specific services (loads .env for JWT_SECRET alignment)
+restart-svc +svcs:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    set -a && source .env && set +a
+    for svc in {{svcs}}; do
+        echo "Stopping signapps-$svc..."
+        taskkill //F //IM "signapps-$svc.exe" 2>/dev/null || true
+    done
+    echo "Building..."
+    cargo build --release $(printf -- '-p signapps-%s ' {{svcs}})
+    for svc in {{svcs}}; do
+        echo "Starting signapps-$svc..."
+        nohup target/release/signapps-$svc.exe > data/logs/signapps-$svc.log 2> data/logs/signapps-$svc.err.log &
+        echo "  PID: $!"
+    done
+    sleep 2
+    echo "Health check:"
+    for svc in {{svcs}}; do
+        port=$(grep -o "\"signapps-$svc\".*port.*[0-9]*" services/signapps-$svc/src/main.rs 2>/dev/null | grep -o '[0-9]*' | tail -1 || echo "?")
+        status=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$port/health" 2>/dev/null || echo "???")
+        echo "  signapps-$svc :$port → HTTP $status"
+    done
 
 # Status de tous les services
 status:

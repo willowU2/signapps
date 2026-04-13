@@ -26,6 +26,19 @@ done
 
 BIN_DIR="$BASE_DIR/target/$(if $RELEASE; then echo release; else echo debug; fi)"
 
+# ── Load .env ───────────────────────────────────────────────────────────────
+# Source .env so all services inherit the same JWT_SECRET, DATABASE_URL, etc.
+ENV_FILE="$BASE_DIR/.env"
+if [[ -f "$ENV_FILE" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source <(grep -v '^\s*#' "$ENV_FILE" | grep -v '^\s*$')
+    set +a
+    echo -e "  ${GREEN}[OK]${NC}   Loaded .env ($(grep -c -v '^\s*#\|^\s*$' "$ENV_FILE") vars)"
+else
+    echo -e "  ${YELLOW}[!!]${NC}   No .env file found — services will use defaults"
+fi
+
 # ── Service registry ─────────────────────────────────────────────────────────
 # Format: "short_name:port:description"
 SERVICES=(
